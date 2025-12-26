@@ -612,6 +612,20 @@ const Booking = () => {
                         <p className="text-xs text-destructive mt-1">Digite um número válido</p>
                       )}
                     </div>
+
+                    {/* Mobile confirm button */}
+                    {isMobileOrTablet && (
+                      <Button
+                        variant="hero"
+                        size="lg"
+                        onClick={handleConfirmBooking}
+                        disabled={!canProceed()}
+                        className="w-full mt-4"
+                      >
+                        <Check className="w-4 h-4 mr-2" />
+                        Confirmar Agendamento
+                      </Button>
+                    )}
                   </div>
                 </div>
               )}
