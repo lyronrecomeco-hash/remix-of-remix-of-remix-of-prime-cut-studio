@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Scissors, Menu, X, Calendar } from 'lucide-react';
+import { Scissors, Menu, X, Calendar, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useLocation } from 'react-router-dom';
-import { shopInfo } from '@/lib/data';
+import { useApp } from '@/contexts/AppContext';
 
 const navLinks = [
   { href: '#sobre', label: 'Sobre' },
@@ -16,6 +16,7 @@ const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { shopSettings } = useApp();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -42,7 +43,7 @@ const Header = () => {
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
               <Scissors className="w-4 h-4 text-primary" />
             </div>
-            <span className="text-lg font-bold hidden sm:inline">{shopInfo.name}</span>
+            <span className="text-lg font-bold hidden sm:inline">{shopSettings.name}</span>
           </Link>
 
           {/* Desktop Nav */}
@@ -61,7 +62,13 @@ const Header = () => {
           )}
 
           {/* CTA */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Button asChild variant="ghost" size="sm" className="hidden sm:flex">
+              <Link to="/meus-agendamentos">
+                <ClipboardList className="w-4 h-4" />
+                Meus Agendamentos
+              </Link>
+            </Button>
             <Button asChild variant="hero" size="sm" className="hidden sm:flex">
               <Link to="/agendar">
                 <Calendar className="w-4 h-4" />
@@ -101,6 +108,14 @@ const Header = () => {
                     {link.label}
                   </a>
                 ))}
+              <Link 
+                to="/meus-agendamentos" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-lg font-medium text-muted-foreground hover:text-foreground transition-colors py-2 flex items-center gap-2"
+              >
+                <ClipboardList className="w-5 h-5" />
+                Meus Agendamentos
+              </Link>
               <Button asChild variant="hero" size="lg" className="mt-2">
                 <Link to="/agendar" onClick={() => setIsMobileMenuOpen(false)}>
                   <Calendar className="w-4 h-4" />
