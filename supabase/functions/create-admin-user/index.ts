@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { decode } from "https://deno.land/x/djwt@v3.0.1/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,11 +18,10 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
 
-    console.log('Environment check - URL:', !!supabaseUrl, 'Service:', !!supabaseServiceKey, 'Anon:', !!supabaseAnonKey);
+    console.log('Environment check - URL:', !!supabaseUrl, 'Service:', !!supabaseServiceKey);
 
-    if (!supabaseUrl || !supabaseServiceKey || !supabaseAnonKey) {
+    if (!supabaseUrl || !supabaseServiceKey) {
       console.error('Missing environment variables');
       return new Response(
         JSON.stringify({ error: 'Configuração do servidor inválida' }),
@@ -47,19 +47,34 @@ serve(async (req) => {
       );
     }
 
-    // Extract the token
+    // Extract the token and decode it to get user ID
     const token = authHeader.replace('Bearer ', '');
     console.log('Token extracted, length:', token.length);
 
-    // Verify the user with the admin client
-    const { data: { user: requestingUser }, error: userError } = await supabaseAdmin.auth.getUser(token);
-    
-    console.log('User verification result:', requestingUser?.id, userError?.message);
-
-    if (userError || !requestingUser) {
-      console.error('User verification failed:', userError);
+    let requestingUserId: string;
+    try {
+      const [_header, payload, _signature] = decode(token);
+      const jwtPayload = payload as { sub?: string; exp?: number };
+      
+      if (!jwtPayload.sub) {
+        throw new Error('No user ID in token');
+      }
+      
+      // Check if token is expired
+      if (jwtPayload.exp && jwtPayload.exp * 1000 < Date.now()) {
+        console.error('Token expired');
+        return new Response(
+          JSON.stringify({ error: 'Token expirado, faça login novamente' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      requestingUserId = jwtPayload.sub;
+      console.log('User ID from token:', requestingUserId);
+    } catch (decodeError) {
+      console.error('Token decode error:', decodeError);
       return new Response(
-        JSON.stringify({ error: 'Token inválido ou expirado' }),
+        JSON.stringify({ error: 'Token inválido' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -68,7 +83,7 @@ serve(async (req) => {
     const { data: roleData, error: roleError } = await supabaseAdmin
       .from('user_roles')
       .select('role')
-      .eq('user_id', requestingUser.id)
+      .eq('user_id', requestingUserId)
       .maybeSingle();
 
     console.log('Role check:', roleData, roleError?.message);
