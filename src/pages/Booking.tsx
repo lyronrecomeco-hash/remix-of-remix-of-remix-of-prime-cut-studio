@@ -7,7 +7,8 @@ import { useApp } from '@/contexts/AppContext';
 import { useNotification } from '@/contexts/NotificationContext';
 import { usePhoneMask } from '@/hooks/usePhoneMask';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Service, Barber, TimeSlot } from '@/lib/data';
+import { TimeSlot } from '@/lib/data';
+import { Service, Barber } from '@/contexts/AppContext';
 import Header from '@/components/landing/Header';
 
 const steps = [
@@ -429,7 +430,9 @@ const Booking = () => {
                             </p>
                             <div className="flex items-center gap-1 text-sm">
                               <span className="text-primary">★ {barber.rating}</span>
-                              <span className="text-muted-foreground">({barber.reviewCount} avaliações)</span>
+                              {barber.experience && (
+                                <span className="text-muted-foreground">• {barber.experience}</span>
+                              )}
                             </div>
                           </div>
                         </div>

@@ -14,7 +14,321 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      appointments: {
+        Row: {
+          barber_id: string
+          client_name: string
+          client_phone: string
+          created_at: string
+          date: string
+          id: string
+          protocol: string
+          service_id: string
+          status: string
+          time: string
+          updated_at: string
+        }
+        Insert: {
+          barber_id: string
+          client_name: string
+          client_phone: string
+          created_at?: string
+          date: string
+          id?: string
+          protocol: string
+          service_id: string
+          status?: string
+          time: string
+          updated_at?: string
+        }
+        Update: {
+          barber_id?: string
+          client_name?: string
+          client_phone?: string
+          created_at?: string
+          date?: string
+          id?: string
+          protocol?: string
+          service_id?: string
+          status?: string
+          time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      barber_availability: {
+        Row: {
+          available_slots: string[]
+          barber_id: string
+          created_at: string
+          date: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          available_slots?: string[]
+          barber_id: string
+          created_at?: string
+          date: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          available_slots?: string[]
+          barber_id?: string
+          created_at?: string
+          date?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "barber_availability_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      barbers: {
+        Row: {
+          available: boolean | null
+          created_at: string
+          experience: string | null
+          id: string
+          name: string
+          photo: string | null
+          rating: number | null
+          specialties: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          available?: boolean | null
+          created_at?: string
+          experience?: string | null
+          id?: string
+          name: string
+          photo?: string | null
+          rating?: number | null
+          specialties?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          available?: boolean | null
+          created_at?: string
+          experience?: string | null
+          id?: string
+          name?: string
+          photo?: string | null
+          rating?: number | null
+          specialties?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      blocked_slots: {
+        Row: {
+          barber_id: string
+          created_at: string
+          date: string
+          end_time: string
+          id: string
+          reason: string | null
+          start_time: string
+        }
+        Insert: {
+          barber_id: string
+          created_at?: string
+          date: string
+          end_time: string
+          id?: string
+          reason?: string | null
+          start_time: string
+        }
+        Update: {
+          barber_id?: string
+          created_at?: string
+          date?: string
+          end_time?: string
+          id?: string
+          reason?: string | null
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocked_slots_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      queue: {
+        Row: {
+          appointment_id: string
+          called_at: string | null
+          created_at: string
+          estimated_wait: number
+          id: string
+          onway_at: string | null
+          position: number
+          status: string
+        }
+        Insert: {
+          appointment_id: string
+          called_at?: string | null
+          created_at?: string
+          estimated_wait?: number
+          id?: string
+          onway_at?: string | null
+          position: number
+          status?: string
+        }
+        Update: {
+          appointment_id?: string
+          called_at?: string | null
+          created_at?: string
+          estimated_wait?: number
+          id?: string
+          onway_at?: string | null
+          position?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "queue_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration: number
+          icon: string | null
+          id: string
+          name: string
+          price: number
+          updated_at: string
+          visible: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration?: number
+          icon?: string | null
+          id?: string
+          name: string
+          price?: number
+          updated_at?: string
+          visible?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration?: number
+          icon?: string | null
+          id?: string
+          name?: string
+          price?: number
+          updated_at?: string
+          visible?: boolean | null
+        }
+        Relationships: []
+      }
+      shop_settings: {
+        Row: {
+          address: string | null
+          created_at: string
+          description: string | null
+          facebook: string | null
+          hours_saturday: string | null
+          hours_sunday: string | null
+          hours_weekdays: string | null
+          id: string
+          instagram: string | null
+          logo: string | null
+          lunch_break_end: string | null
+          lunch_break_start: string | null
+          maps_link: string | null
+          max_queue_size: number | null
+          name: string
+          phone: string | null
+          queue_enabled: boolean | null
+          tagline: string | null
+          theme: string | null
+          updated_at: string
+          whatsapp: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          description?: string | null
+          facebook?: string | null
+          hours_saturday?: string | null
+          hours_sunday?: string | null
+          hours_weekdays?: string | null
+          id?: string
+          instagram?: string | null
+          logo?: string | null
+          lunch_break_end?: string | null
+          lunch_break_start?: string | null
+          maps_link?: string | null
+          max_queue_size?: number | null
+          name?: string
+          phone?: string | null
+          queue_enabled?: boolean | null
+          tagline?: string | null
+          theme?: string | null
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          description?: string | null
+          facebook?: string | null
+          hours_saturday?: string | null
+          hours_sunday?: string | null
+          hours_weekdays?: string | null
+          id?: string
+          instagram?: string | null
+          logo?: string | null
+          lunch_break_end?: string | null
+          lunch_break_start?: string | null
+          maps_link?: string | null
+          max_queue_size?: number | null
+          name?: string
+          phone?: string | null
+          queue_enabled?: boolean | null
+          tagline?: string | null
+          theme?: string | null
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

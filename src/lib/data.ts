@@ -15,8 +15,9 @@ export interface Barber {
   name: string;
   photo: string;
   specialties: string[];
+  experience?: string;
   rating: number;
-  reviewCount: number;
+  reviewCount?: number;
   available: boolean;
 }
 
