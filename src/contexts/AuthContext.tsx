@@ -43,12 +43,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkUserRole = useCallback(async (userId: string) => {
     try {
-      // Use direct query to user_roles table with type casting
-      const client = supabase as unknown as { from: (table: string) => { select: (cols: string) => { eq: (col: string, val: string) => { single: () => Promise<{ data: { role: string } | null; error: unknown }> } } } };
-      
-      const { data, error } = await client.from('user_roles').select('role').eq('user_id', userId).single();
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .maybeSingle();
 
-      if (error || !data) {
+      if (error) {
+        console.error('Error checking user role:', error.message);
+        setRole(null);
+        setIsAdmin(false);
+        setIsSuperAdmin(false);
+        return;
+      }
+
+      if (!data) {
         setRole(null);
         setIsAdmin(false);
         setIsSuperAdmin(false);
@@ -59,7 +68,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRole(userRole);
       setIsAdmin(userRole === 'admin' || userRole === 'super_admin');
       setIsSuperAdmin(userRole === 'super_admin');
-    } catch {
+    } catch (err) {
+      console.error('Exception checking user role:', err);
       setRole(null);
       setIsAdmin(false);
       setIsSuperAdmin(false);
@@ -70,21 +80,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isAdmin) return;
 
     try {
-      const client = supabase as unknown as { from: (table: string) => { select: (cols: string) => { order: (col: string, opts: { ascending: boolean }) => Promise<{ data: Record<string, unknown>[] | null; error: unknown }> } } };
-      
-      const { data, error } = await client.from('admin_users').select('*').order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('admin_users')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching admin users:', error.message);
+        return;
+      }
 
       setAdminUsers(
         (data || []).map((u) => ({
-          id: u.id as string,
-          userId: u.user_id as string,
-          email: u.email as string,
-          name: u.name as string,
-          expiresAt: u.expires_at as string | null,
-          isActive: u.is_active as boolean,
-          createdAt: u.created_at as string,
+          id: u.id,
+          userId: u.user_id,
+          email: u.email,
+          name: u.name,
+          expiresAt: u.expires_at,
+          isActive: u.is_active,
+          createdAt: u.created_at,
         }))
       );
     } catch (error) {
@@ -139,9 +153,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Check if user has a role
-      const client = supabase as unknown as { from: (table: string) => { select: (cols: string) => { eq: (col: string, val: string) => { single: () => Promise<{ data: { role: string } | null; error: unknown }> } } } };
-      
-      const { data: roleData } = await client.from('user_roles').select('role').eq('user_id', data.user.id).single();
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', data.user.id)
+        .maybeSingle();
+
+      if (roleError) {
+        console.error('Error checking role on login:', roleError.message);
+      }
 
       if (!roleData) {
         await supabase.auth.signOut();
@@ -225,11 +245,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (updates.expiresAt !== undefined) dbUpdates.expires_at = updates.expiresAt;
       if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive;
 
-      const client = supabase as unknown as { from: (table: string) => { update: (data: Record<string, unknown>) => { eq: (col: string, val: string) => Promise<{ error: unknown }> } } };
-      
-      const { error } = await client.from('admin_users').update(dbUpdates).eq('user_id', userId);
+      const { error } = await supabase
+        .from('admin_users')
+        .update(dbUpdates)
+        .eq('user_id', userId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating admin user:', error.message);
+        return { error: new Error(error.message) };
+      }
 
       await refreshAdminUsers();
       return { error: null };
