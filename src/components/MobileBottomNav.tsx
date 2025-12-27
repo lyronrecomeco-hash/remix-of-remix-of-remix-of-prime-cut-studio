@@ -7,8 +7,8 @@ const MobileBottomNav = () => {
   const location = useLocation();
   const { hasClientAppointments } = useApp();
   
-  // Don't show on admin panel
-  if (location.pathname.startsWith('/admin')) {
+  // Only show on /meus-agendamentos page
+  if (location.pathname !== '/meus-agendamentos') {
     return null;
   }
 
