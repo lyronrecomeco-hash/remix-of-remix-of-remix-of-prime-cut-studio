@@ -96,7 +96,19 @@ serve(async (req) => {
     }
 
     // Build ChatPro API URL
-    const apiUrl = `${chatproConfig.base_endpoint}/${chatproConfig.instance_id}/api/v1/send_message`;
+    // Handle cases where user might include instance_id in base_endpoint
+    let baseUrl = chatproConfig.base_endpoint.replace(/\/$/, ''); // Remove trailing slash
+    
+    // Check if instance_id is already in the base_endpoint
+    if (baseUrl.includes(chatproConfig.instance_id)) {
+      // Instance ID already in URL, just append the endpoint
+      baseUrl = `${baseUrl}/api/v1/send_message`;
+    } else {
+      // Need to add instance ID
+      baseUrl = `${baseUrl}/${chatproConfig.instance_id}/api/v1/send_message`;
+    }
+    
+    const apiUrl = baseUrl;
 
     console.log('Sending to ChatPro:', { url: apiUrl, phone, message: payload.message.substring(0, 50) + '...' });
 
