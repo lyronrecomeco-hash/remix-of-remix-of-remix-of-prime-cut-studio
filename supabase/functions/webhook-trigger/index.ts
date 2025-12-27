@@ -79,9 +79,16 @@ serve(async (req) => {
             phone = '55' + phone;
           }
 
-          const apiUrl = `${chatproConfig.base_endpoint}/${chatproConfig.instance_id}/api/v1/send_message`;
+          // Build URL - handle case where instance_id might be in base_endpoint
+          let baseUrl = chatproConfig.base_endpoint.replace(/\/$/, '');
+          let apiUrl: string;
+          if (baseUrl.includes(chatproConfig.instance_id)) {
+            apiUrl = `${baseUrl}/api/v1/send_message`;
+          } else {
+            apiUrl = `${baseUrl}/${chatproConfig.instance_id}/api/v1/send_message`;
+          }
           
-          console.log('Sending via ChatPro to:', phone);
+          console.log('Sending via ChatPro to:', phone, 'URL:', apiUrl);
           
           const chatproResponse = await fetch(apiUrl, {
             method: 'POST',
