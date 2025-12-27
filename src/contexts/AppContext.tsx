@@ -62,6 +62,8 @@ export interface ShopSettings {
     instagram: string;
     facebook: string;
   };
+  overloadAlertEnabled?: boolean;
+  dailyAppointmentLimit?: number;
 }
 
 export interface BlockedSlot {
@@ -160,6 +162,8 @@ const defaultShopSettings: ShopSettings = {
     instagram: '@barberstudio',
     facebook: 'barberstudio',
   },
+  overloadAlertEnabled: false,
+  dailyAppointmentLimit: 20,
 };
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -333,6 +337,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             instagram: settingsData.instagram || '',
             facebook: settingsData.facebook || '',
           },
+          overloadAlertEnabled: settingsData.overload_alert_enabled ?? false,
+          dailyAppointmentLimit: settingsData.daily_appointment_limit ?? 20,
         });
         setQueueEnabledState(settingsData.queue_enabled);
         setMaxQueueSizeState(settingsData.max_queue_size);
@@ -797,6 +803,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (settings.lunchBreak?.end !== undefined) updates.lunch_break_end = settings.lunchBreak.end;
     if (settings.social?.instagram !== undefined) updates.instagram = settings.social.instagram;
     if (settings.social?.facebook !== undefined) updates.facebook = settings.social.facebook;
+    if (settings.overloadAlertEnabled !== undefined) updates.overload_alert_enabled = settings.overloadAlertEnabled;
+    if (settings.dailyAppointmentLimit !== undefined) updates.daily_appointment_limit = settings.dailyAppointmentLimit;
     
     await supabase.from('shop_settings').update(updates).neq('id', '00000000-0000-0000-0000-000000000000');
     setShopSettings(prev => ({ ...prev, ...settings }));
