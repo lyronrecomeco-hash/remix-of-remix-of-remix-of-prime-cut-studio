@@ -230,6 +230,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setAppointments(appointmentsData.map(a => {
           const service = servicesData.find(s => s.id === a.service_id);
           const barber = barbersData.find(b => b.id === a.barber_id);
+          
+          // Fallback para serviço não encontrado
+          const defaultService: Service = {
+            id: a.service_id || '',
+            name: 'Serviço removido',
+            description: '',
+            duration: 30,
+            price: 0,
+            icon: 'Scissors',
+            visible: false,
+          };
+          
+          // Fallback para barbeiro não encontrado
+          const defaultBarber: Barber = {
+            id: a.barber_id || '',
+            name: 'Profissional removido',
+            photo: '',
+            specialties: [],
+            experience: '',
+            rating: 0,
+            available: false,
+          };
+          
           return {
             id: a.id,
             protocol: a.protocol,
@@ -242,17 +265,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
               duration: service.duration,
               price: Number(service.price),
               icon: service.icon || 'Scissors',
-              visible: service.visible,
-            } : {} as Service,
+              visible: service.visible ?? true,
+            } : defaultService,
             barber: barber ? {
               id: barber.id,
               name: barber.name,
               photo: barber.photo || '',
               specialties: barber.specialties || [],
               experience: barber.experience || '',
-              rating: Number(barber.rating),
-              available: barber.available,
-            } : {} as Barber,
+              rating: Number(barber.rating) || 0,
+              available: barber.available ?? true,
+            } : defaultBarber,
             date: a.date,
             time: a.time,
             status: a.status as Appointment['status'],

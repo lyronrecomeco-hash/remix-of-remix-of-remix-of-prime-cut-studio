@@ -952,13 +952,13 @@ const AdminPanel = () => {
                       <button
                         onClick={() => toggleServiceVisibility(service.id)}
                         className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                          (service as any).visible !== false
+                          service.visible !== false
                             ? 'bg-primary/20 text-primary'
                             : 'bg-secondary text-muted-foreground'
                         }`}
-                        title={(service as any).visible !== false ? 'Ocultar' : 'Exibir'}
+                        title={service.visible !== false ? 'Ocultar' : 'Exibir'}
                       >
-                        {(service as any).visible !== false ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                        {service.visible !== false ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                       </button>
                       <button
                         onClick={() => deleteService(service.id)}

@@ -21,14 +21,16 @@ export const triggerWebhook = async (data: WebhookData): Promise<boolean> => {
     });
 
     if (error) {
-      console.error('Webhook trigger error:', error);
+      console.error('Webhook trigger error:', error.message || error);
+      // Não bloqueia a operação principal
       return false;
     }
 
     console.log('Webhook trigger result:', result);
     return result?.success || false;
   } catch (error) {
-    console.error('Failed to trigger webhook:', error);
+    // Captura erro silenciosamente para não travar operações principais
+    console.error('Failed to trigger webhook:', error instanceof Error ? error.message : error);
     return false;
   }
 };
@@ -52,14 +54,16 @@ export const sendPushNotification = async (
     });
 
     if (error) {
-      console.error('Push notification error:', error);
+      console.error('Push notification error:', error.message || error);
+      // Não bloqueia a operação principal
       return false;
     }
 
     console.log('Push notification result:', result);
     return result?.success || false;
   } catch (error) {
-    console.error('Failed to send push notification:', error);
+    // Captura erro silenciosamente para não travar operações principais
+    console.error('Failed to send push notification:', error instanceof Error ? error.message : error);
     return false;
   }
 };
