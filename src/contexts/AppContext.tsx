@@ -1,7 +1,45 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { Service, Barber, Appointment, TimeSlot, services as defaultServices, barbers as defaultBarbers, shopInfo as defaultShopInfo } from '@/lib/data';
+import { supabase } from '@/integrations/supabase/client';
 
 // Types
+export interface Service {
+  id: string;
+  name: string;
+  description: string;
+  duration: number;
+  price: number;
+  icon: string;
+  visible?: boolean;
+}
+
+export interface Barber {
+  id: string;
+  name: string;
+  photo: string;
+  specialties: string[];
+  experience: string;
+  rating: number;
+  available: boolean;
+}
+
+export interface Appointment {
+  id: string;
+  protocol?: string;
+  clientName: string;
+  clientPhone: string;
+  service: Service;
+  barber: Barber;
+  date: string;
+  time: string;
+  status: 'pending' | 'confirmed' | 'inqueue' | 'called' | 'onway' | 'completed' | 'cancelled';
+  createdAt: string;
+}
+
+export interface TimeSlot {
+  time: string;
+  available: boolean;
+}
+
 export interface ShopSettings {
   name: string;
   tagline: string;
@@ -38,7 +76,7 @@ export interface BlockedSlot {
 export interface BarberAvailability {
   barberId: string;
   date: string;
-  availableSlots: string[]; // Array of time strings like "09:00", "09:30", etc.
+  availableSlots: string[];
 }
 
 export interface QueueEntry {
@@ -53,26 +91,17 @@ export interface QueueEntry {
 
 export type ThemeType = 'dark' | 'light' | 'gold' | 'gold-shine' | 'gold-metallic';
 
-export type AppointmentStatus = 'pending' | 'confirmed' | 'inqueue' | 'called' | 'onway' | 'completed' | 'cancelled';
-
 interface AppState {
-  // Theme
   theme: ThemeType;
   setTheme: (theme: ThemeType) => void;
-  
-  // Services
   services: Service[];
   addService: (service: Omit<Service, 'id'>) => void;
   updateService: (id: string, service: Partial<Service>) => void;
   deleteService: (id: string) => void;
   toggleServiceVisibility: (id: string) => void;
-  
-  // Barbers
   barbers: Barber[];
   updateBarber: (id: string, barber: Partial<Barber>) => void;
   toggleBarberAvailability: (id: string) => void;
-  
-  // Appointments
   appointments: Appointment[];
   addAppointment: (appointment: Omit<Appointment, 'id'>) => Appointment;
   updateAppointment: (id: string, updates: Partial<Appointment>) => void;
@@ -81,8 +110,6 @@ interface AppState {
   confirmAppointment: (id: string) => void;
   getAppointmentsByDate: (date: string) => Appointment[];
   getAppointmentsByBarber: (barberId: string, date: string) => Appointment[];
-  
-  // Queue
   queueEnabled: boolean;
   setQueueEnabled: (enabled: boolean) => void;
   maxQueueSize: number;
@@ -94,189 +121,411 @@ interface AppState {
   updateQueuePosition: (id: string, position: number) => void;
   getQueuePosition: (appointmentId: string) => number | null;
   getQueueEntry: (appointmentId: string) => QueueEntry | null;
-  
-  // Blocked Slots
   blockedSlots: BlockedSlot[];
   addBlockedSlot: (slot: Omit<BlockedSlot, 'id'>) => void;
   removeBlockedSlot: (id: string) => void;
-  
-  // Barber Availability
   barberAvailability: BarberAvailability[];
   setBarberDayAvailability: (barberId: string, date: string, slots: string[]) => void;
   getBarberDayAvailability: (barberId: string, date: string) => string[] | null;
-  
-  // Shop Settings
   shopSettings: ShopSettings;
   updateShopSettings: (settings: Partial<ShopSettings>) => void;
-  
-  // Time slots
   getAvailableTimeSlots: (date: Date, barberId: string, serviceDuration: number) => TimeSlot[];
   isSlotAvailable: (date: string, time: string, barberId: string, duration: number) => boolean;
+  isLoading: boolean;
+  refreshData: () => Promise<void>;
 }
 
 const AppContext = createContext<AppState | undefined>(undefined);
 
-// LocalStorage helpers
-const loadFromStorage = <T,>(key: string, defaultValue: T): T => {
-  try {
-    const stored = localStorage.getItem(key);
-    return stored ? JSON.parse(stored) : defaultValue;
-  } catch {
-    return defaultValue;
-  }
-};
-
-const saveToStorage = <T,>(key: string, value: T): void => {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch (e) {
-    console.error('Failed to save to localStorage:', e);
-  }
-};
-
-// Generate unique ID
-const generateId = (): string => {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+const defaultShopSettings: ShopSettings = {
+  name: 'Barber Studio',
+  tagline: 'Tradição e Estilo',
+  description: 'A melhor experiência em barbearia',
+  address: 'Rua das Flores, 123 - Centro',
+  phone: '(11) 99999-9999',
+  whatsapp: '5511999999999',
+  mapsLink: 'https://maps.google.com',
+  hours: {
+    weekdays: '09:00 - 20:00',
+    saturday: '09:00 - 18:00',
+    sunday: 'Fechado',
+  },
+  lunchBreak: {
+    start: '12:00',
+    end: '13:00',
+  },
+  social: {
+    instagram: '@barberstudio',
+    facebook: 'barberstudio',
+  },
 };
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Theme
-  const [theme, setThemeState] = useState<ThemeType>(() => 
-    loadFromStorage('barbershop-theme', 'dark')
-  );
+  const [isLoading, setIsLoading] = useState(true);
+  const [theme, setThemeState] = useState<ThemeType>('dark');
+  const [services, setServices] = useState<Service[]>([]);
+  const [barbers, setBarbers] = useState<Barber[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [queue, setQueue] = useState<QueueEntry[]>([]);
+  const [blockedSlots, setBlockedSlots] = useState<BlockedSlot[]>([]);
+  const [barberAvailability, setBarberAvailabilityState] = useState<BarberAvailability[]>([]);
+  const [shopSettings, setShopSettings] = useState<ShopSettings>(defaultShopSettings);
+  const [queueEnabled, setQueueEnabledState] = useState(true);
+  const [maxQueueSize, setMaxQueueSizeState] = useState(10);
 
-  // Services (with visibility flag)
-  const [services, setServices] = useState<(Service & { visible?: boolean })[]>(() => 
-    loadFromStorage('barbershop-services', defaultServices.map(s => ({ ...s, visible: true })))
-  );
+  // Fetch all data from database
+  const refreshData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      // Fetch services
+      const { data: servicesData } = await supabase
+        .from('services')
+        .select('*')
+        .order('created_at');
+      
+      if (servicesData) {
+        setServices(servicesData.map(s => ({
+          id: s.id,
+          name: s.name,
+          description: s.description || '',
+          duration: s.duration,
+          price: Number(s.price),
+          icon: s.icon || 'Scissors',
+          visible: s.visible,
+        })));
+      }
 
-  // Barbers
-  const [barbers, setBarbers] = useState<Barber[]>(() => 
-    loadFromStorage('barbershop-barbers', defaultBarbers)
-  );
+      // Fetch barbers
+      const { data: barbersData } = await supabase
+        .from('barbers')
+        .select('*')
+        .order('created_at');
+      
+      if (barbersData) {
+        setBarbers(barbersData.map(b => ({
+          id: b.id,
+          name: b.name,
+          photo: b.photo || '',
+          specialties: b.specialties || [],
+          experience: b.experience || '',
+          rating: Number(b.rating),
+          available: b.available,
+        })));
+      }
 
-  // Appointments
-  const [appointments, setAppointments] = useState<Appointment[]>(() => 
-    loadFromStorage('barbershop-appointments', [])
-  );
+      // Fetch appointments with service and barber data
+      const { data: appointmentsData } = await supabase
+        .from('appointments')
+        .select('*, services(*), barbers(*)')
+        .order('created_at', { ascending: false });
+      
+      if (appointmentsData && servicesData && barbersData) {
+        setAppointments(appointmentsData.map(a => {
+          const service = servicesData.find(s => s.id === a.service_id);
+          const barber = barbersData.find(b => b.id === a.barber_id);
+          return {
+            id: a.id,
+            protocol: a.protocol,
+            clientName: a.client_name,
+            clientPhone: a.client_phone,
+            service: service ? {
+              id: service.id,
+              name: service.name,
+              description: service.description || '',
+              duration: service.duration,
+              price: Number(service.price),
+              icon: service.icon || 'Scissors',
+              visible: service.visible,
+            } : {} as Service,
+            barber: barber ? {
+              id: barber.id,
+              name: barber.name,
+              photo: barber.photo || '',
+              specialties: barber.specialties || [],
+              experience: barber.experience || '',
+              rating: Number(barber.rating),
+              available: barber.available,
+            } : {} as Barber,
+            date: a.date,
+            time: a.time,
+            status: a.status as Appointment['status'],
+            createdAt: a.created_at,
+          };
+        }));
+      }
 
-  // Queue
-  const [queueEnabled, setQueueEnabledState] = useState<boolean>(() => 
-    loadFromStorage('barbershop-queue-enabled', true)
-  );
-  const [maxQueueSize, setMaxQueueSizeState] = useState<number>(() => 
-    loadFromStorage('barbershop-max-queue', 10)
-  );
-  const [queue, setQueue] = useState<QueueEntry[]>(() => 
-    loadFromStorage('barbershop-queue', [])
-  );
+      // Fetch queue
+      const { data: queueData } = await supabase
+        .from('queue')
+        .select('*')
+        .order('position');
+      
+      if (queueData) {
+        setQueue(queueData.map(q => ({
+          id: q.id,
+          appointmentId: q.appointment_id,
+          position: q.position,
+          estimatedWait: q.estimated_wait,
+          status: q.status as QueueEntry['status'],
+          calledAt: q.called_at || undefined,
+          onwayAt: q.onway_at || undefined,
+        })));
+      }
 
-  // Blocked Slots
-  const [blockedSlots, setBlockedSlots] = useState<BlockedSlot[]>(() => 
-    loadFromStorage('barbershop-blocked-slots', [])
-  );
+      // Fetch blocked slots
+      const { data: blockedData } = await supabase
+        .from('blocked_slots')
+        .select('*');
+      
+      if (blockedData) {
+        setBlockedSlots(blockedData.map(b => ({
+          id: b.id,
+          date: b.date,
+          startTime: b.start_time,
+          endTime: b.end_time,
+          barberId: b.barber_id,
+          reason: b.reason || undefined,
+        })));
+      }
 
-  // Barber Availability
-  const [barberAvailability, setBarberAvailability] = useState<BarberAvailability[]>(() => 
-    loadFromStorage('barbershop-barber-availability', [])
-  );
+      // Fetch barber availability
+      const { data: availabilityData } = await supabase
+        .from('barber_availability')
+        .select('*');
+      
+      if (availabilityData) {
+        setBarberAvailabilityState(availabilityData.map(a => ({
+          barberId: a.barber_id,
+          date: a.date,
+          availableSlots: a.available_slots || [],
+        })));
+      }
 
-  // Shop Settings
-  const [shopSettings, setShopSettings] = useState<ShopSettings>(() => 
-    loadFromStorage('barbershop-settings', {
-      ...defaultShopInfo,
-      lunchBreak: { start: '12:00', end: '13:00' },
-    })
-  );
+      // Fetch shop settings
+      const { data: settingsData } = await supabase
+        .from('shop_settings')
+        .select('*')
+        .limit(1)
+        .maybeSingle();
+      
+      if (settingsData) {
+        setShopSettings({
+          name: settingsData.name,
+          tagline: settingsData.tagline || '',
+          description: settingsData.description || '',
+          address: settingsData.address || '',
+          phone: settingsData.phone || '',
+          whatsapp: settingsData.whatsapp || '',
+          mapsLink: settingsData.maps_link || '',
+          logo: settingsData.logo || undefined,
+          hours: {
+            weekdays: settingsData.hours_weekdays || '09:00 - 20:00',
+            saturday: settingsData.hours_saturday || '09:00 - 18:00',
+            sunday: settingsData.hours_sunday || 'Fechado',
+          },
+          lunchBreak: {
+            start: settingsData.lunch_break_start || '12:00',
+            end: settingsData.lunch_break_end || '13:00',
+          },
+          social: {
+            instagram: settingsData.instagram || '',
+            facebook: settingsData.facebook || '',
+          },
+        });
+        setQueueEnabledState(settingsData.queue_enabled);
+        setMaxQueueSizeState(settingsData.max_queue_size);
+        setThemeState(settingsData.theme as ThemeType || 'dark');
+      }
 
-  // Persist to localStorage
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Initial data load
   useEffect(() => {
-    saveToStorage('barbershop-theme', theme);
-    // Apply theme class to document
+    refreshData();
+  }, [refreshData]);
+
+  // Realtime subscriptions
+  useEffect(() => {
+    const appointmentsChannel = supabase
+      .channel('appointments-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => {
+        refreshData();
+      })
+      .subscribe();
+
+    const queueChannel = supabase
+      .channel('queue-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'queue' }, () => {
+        refreshData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(appointmentsChannel);
+      supabase.removeChannel(queueChannel);
+    };
+  }, [refreshData]);
+
+  // Apply theme
+  useEffect(() => {
     document.documentElement.classList.remove('theme-dark', 'theme-light', 'theme-gold');
     document.documentElement.classList.add(`theme-${theme}`);
   }, [theme]);
 
-  useEffect(() => { saveToStorage('barbershop-services', services); }, [services]);
-  useEffect(() => { saveToStorage('barbershop-barbers', barbers); }, [barbers]);
-  useEffect(() => { saveToStorage('barbershop-appointments', appointments); }, [appointments]);
-  useEffect(() => { saveToStorage('barbershop-queue-enabled', queueEnabled); }, [queueEnabled]);
-  useEffect(() => { saveToStorage('barbershop-max-queue', maxQueueSize); }, [maxQueueSize]);
-  useEffect(() => { saveToStorage('barbershop-queue', queue); }, [queue]);
-  useEffect(() => { saveToStorage('barbershop-blocked-slots', blockedSlots); }, [blockedSlots]);
-  useEffect(() => { saveToStorage('barbershop-barber-availability', barberAvailability); }, [barberAvailability]);
-  useEffect(() => { saveToStorage('barbershop-settings', shopSettings); }, [shopSettings]);
-
-  // Theme setter
-  const setTheme = useCallback((newTheme: ThemeType) => {
+  const setTheme = useCallback(async (newTheme: ThemeType) => {
     setThemeState(newTheme);
+    await supabase.from('shop_settings').update({ theme: newTheme }).neq('id', '00000000-0000-0000-0000-000000000000');
   }, []);
 
   // Services CRUD
-  const addService = useCallback((service: Omit<Service, 'id'>) => {
-    const newService = { ...service, id: generateId(), visible: true };
-    setServices(prev => [...prev, newService as Service]);
+  const addService = useCallback(async (service: Omit<Service, 'id'>) => {
+    const { data } = await supabase.from('services').insert({
+      name: service.name,
+      description: service.description,
+      duration: service.duration,
+      price: service.price,
+      icon: service.icon,
+      visible: true,
+    }).select().single();
+    
+    if (data) {
+      setServices(prev => [...prev, {
+        id: data.id,
+        name: data.name,
+        description: data.description || '',
+        duration: data.duration,
+        price: Number(data.price),
+        icon: data.icon || 'Scissors',
+        visible: data.visible,
+      }]);
+    }
   }, []);
 
-  const updateService = useCallback((id: string, updates: Partial<Service>) => {
+  const updateService = useCallback(async (id: string, updates: Partial<Service>) => {
+    await supabase.from('services').update({
+      name: updates.name,
+      description: updates.description,
+      duration: updates.duration,
+      price: updates.price,
+      icon: updates.icon,
+      visible: updates.visible,
+    }).eq('id', id);
+    
     setServices(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
   }, []);
 
-  const deleteService = useCallback((id: string) => {
+  const deleteService = useCallback(async (id: string) => {
+    await supabase.from('services').delete().eq('id', id);
     setServices(prev => prev.filter(s => s.id !== id));
   }, []);
 
-  const toggleServiceVisibility = useCallback((id: string) => {
-    setServices(prev => prev.map(s => 
-      s.id === id ? { ...s, visible: !(s as any).visible } : s
-    ));
-  }, []);
+  const toggleServiceVisibility = useCallback(async (id: string) => {
+    const service = services.find(s => s.id === id);
+    if (service) {
+      const newVisible = !service.visible;
+      await supabase.from('services').update({ visible: newVisible }).eq('id', id);
+      setServices(prev => prev.map(s => s.id === id ? { ...s, visible: newVisible } : s));
+    }
+  }, [services]);
 
   // Barbers
-  const updateBarber = useCallback((id: string, updates: Partial<Barber>) => {
+  const updateBarber = useCallback(async (id: string, updates: Partial<Barber>) => {
+    await supabase.from('barbers').update({
+      name: updates.name,
+      photo: updates.photo,
+      specialties: updates.specialties,
+      experience: updates.experience,
+      rating: updates.rating,
+      available: updates.available,
+    }).eq('id', id);
+    
     setBarbers(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
   }, []);
 
-  const toggleBarberAvailability = useCallback((id: string) => {
-    setBarbers(prev => prev.map(b => 
-      b.id === id ? { ...b, available: !b.available } : b
-    ));
-  }, []);
+  const toggleBarberAvailability = useCallback(async (id: string) => {
+    const barber = barbers.find(b => b.id === id);
+    if (barber) {
+      const newAvailable = !barber.available;
+      await supabase.from('barbers').update({ available: newAvailable }).eq('id', id);
+      setBarbers(prev => prev.map(b => b.id === id ? { ...b, available: newAvailable } : b));
+    }
+  }, [barbers]);
 
   // Appointments
   const addAppointment = useCallback((appointment: Omit<Appointment, 'id'>): Appointment => {
     const protocol = `GEN${Date.now().toString(36).toUpperCase()}`;
-    const newAppointment = { ...appointment, id: generateId(), protocol };
-    setAppointments(prev => [...prev, newAppointment as Appointment]);
-    return newAppointment as Appointment;
+    const tempId = crypto.randomUUID();
+    
+    const newAppointment: Appointment = {
+      ...appointment,
+      id: tempId,
+      protocol,
+    };
+
+    // Insert into database
+    supabase.from('appointments').insert({
+      protocol,
+      client_name: appointment.clientName,
+      client_phone: appointment.clientPhone,
+      service_id: appointment.service.id,
+      barber_id: appointment.barber.id,
+      date: appointment.date,
+      time: appointment.time,
+      status: appointment.status,
+    }).select().single().then(({ data }) => {
+      if (data) {
+        setAppointments(prev => prev.map(a => 
+          a.id === tempId ? { ...a, id: data.id } : a
+        ));
+        
+        // Also update the temp ID in queue if exists
+        setQueue(prev => prev.map(q => 
+          q.appointmentId === tempId ? { ...q, appointmentId: data.id } : q
+        ));
+      }
+    });
+
+    setAppointments(prev => [...prev, newAppointment]);
+    return newAppointment;
   }, []);
 
-  const updateAppointment = useCallback((id: string, updates: Partial<Appointment>) => {
+  const updateAppointment = useCallback(async (id: string, updates: Partial<Appointment>) => {
+    await supabase.from('appointments').update({
+      client_name: updates.clientName,
+      client_phone: updates.clientPhone,
+      status: updates.status,
+    }).eq('id', id);
+    
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
   }, []);
 
-  const cancelAppointment = useCallback((id: string) => {
-    setAppointments(prev => prev.map(a => 
-      a.id === id ? { ...a, status: 'cancelled' as const } : a
-    ));
+  const cancelAppointment = useCallback(async (id: string) => {
+    await supabase.from('appointments').update({ status: 'cancelled' }).eq('id', id);
+    await supabase.from('queue').delete().eq('appointment_id', id);
+    
+    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'cancelled' } : a));
     setQueue(prev => prev.filter(q => q.appointmentId !== id));
   }, []);
 
-  const completeAppointment = useCallback((id: string) => {
-    setAppointments(prev => prev.map(a => 
-      a.id === id ? { ...a, status: 'completed' as const } : a
-    ));
+  const completeAppointment = useCallback(async (id: string) => {
+    await supabase.from('appointments').update({ status: 'completed' }).eq('id', id);
+    await supabase.from('queue').delete().eq('appointment_id', id);
+    
+    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'completed' } : a));
     setQueue(prev => {
       const filtered = prev.filter(q => q.appointmentId !== id);
-      // Recalculate positions
       return filtered.map((q, index) => ({ ...q, position: index + 1 }));
     });
   }, []);
 
-  const confirmAppointment = useCallback((id: string) => {
-    setAppointments(prev => prev.map(a => 
-      a.id === id ? { ...a, status: 'confirmed' as const } : a
-    ));
+  const confirmAppointment = useCallback(async (id: string) => {
+    await supabase.from('appointments').update({ status: 'confirmed' }).eq('id', id);
+    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'confirmed' } : a));
   }, []);
 
   const getAppointmentsByDate = useCallback((date: string): Appointment[] => {
@@ -292,24 +541,42 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, [appointments]);
 
   // Queue management
-  const setQueueEnabled = useCallback((enabled: boolean) => {
+  const setQueueEnabled = useCallback(async (enabled: boolean) => {
     setQueueEnabledState(enabled);
+    await supabase.from('shop_settings').update({ queue_enabled: enabled }).neq('id', '00000000-0000-0000-0000-000000000000');
   }, []);
 
-  const setMaxQueueSize = useCallback((size: number) => {
+  const setMaxQueueSize = useCallback(async (size: number) => {
     setMaxQueueSizeState(size);
+    await supabase.from('shop_settings').update({ max_queue_size: size }).neq('id', '00000000-0000-0000-0000-000000000000');
   }, []);
 
   const addToQueue = useCallback((appointmentId: string): QueueEntry => {
     const position = queue.filter(q => q.status === 'waiting').length + 1;
-    const avgServiceTime = 25; // minutes
+    const avgServiceTime = 25;
+    const tempId = crypto.randomUUID();
+    
     const newEntry: QueueEntry = {
-      id: generateId(),
+      id: tempId,
       appointmentId,
       position,
       estimatedWait: position * avgServiceTime,
       status: 'waiting',
     };
+
+    supabase.from('queue').insert({
+      appointment_id: appointmentId,
+      position,
+      estimated_wait: position * avgServiceTime,
+      status: 'waiting',
+    }).select().single().then(({ data }) => {
+      if (data) {
+        setQueue(prev => prev.map(q => 
+          q.id === tempId ? { ...q, id: data.id } : q
+        ));
+      }
+    });
+
     setQueue(prev => [...prev, newEntry]);
     return newEntry;
   }, [queue]);
@@ -317,12 +584,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const callNextInQueue = useCallback((): QueueEntry | null => {
     const next = queue.find(q => q.status === 'waiting');
     if (next) {
+      const now = new Date().toISOString();
+      
+      supabase.from('queue').update({ 
+        status: 'called', 
+        called_at: now 
+      }).eq('id', next.id);
+
       setQueue(prev => prev.map(q => 
         q.id === next.id 
-          ? { ...q, status: 'called' as const, calledAt: new Date().toISOString() } 
+          ? { ...q, status: 'called', calledAt: now } 
           : q
       ));
-      // Recalculate positions for remaining
+
       setTimeout(() => {
         setQueue(prev => {
           const waiting = prev.filter(q => q.status === 'waiting');
@@ -335,15 +609,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           return [...others, ...reordered];
         });
       }, 100);
+
       return next;
     }
     return null;
   }, [queue]);
 
-  const updateQueuePosition = useCallback((id: string, position: number) => {
-    setQueue(prev => prev.map(q => 
-      q.id === id ? { ...q, position } : q
-    ));
+  const updateQueuePosition = useCallback(async (id: string, position: number) => {
+    await supabase.from('queue').update({ position }).eq('id', id);
+    setQueue(prev => prev.map(q => q.id === id ? { ...q, position } : q));
   }, []);
 
   const getQueuePosition = useCallback((appointmentId: string): number | null => {
@@ -355,32 +629,60 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return queue.find(q => q.appointmentId === appointmentId) ?? null;
   }, [queue]);
 
-  const markClientOnWay = useCallback((appointmentId: string) => {
+  const markClientOnWay = useCallback(async (appointmentId: string) => {
+    const now = new Date().toISOString();
+    
+    await supabase.from('queue').update({ status: 'onway', onway_at: now }).eq('appointment_id', appointmentId);
+    await supabase.from('appointments').update({ status: 'onway' }).eq('id', appointmentId);
+
     setQueue(prev => prev.map(q =>
       q.appointmentId === appointmentId
-        ? { ...q, status: 'onway' as const, onwayAt: new Date().toISOString() }
+        ? { ...q, status: 'onway', onwayAt: now }
         : q
     ));
     setAppointments(prev => prev.map(a =>
       a.id === appointmentId
-        ? { ...a, status: 'onway' as const }
+        ? { ...a, status: 'onway' }
         : a
     ));
   }, []);
 
   // Blocked Slots
-  const addBlockedSlot = useCallback((slot: Omit<BlockedSlot, 'id'>) => {
-    const newSlot = { ...slot, id: generateId() };
-    setBlockedSlots(prev => [...prev, newSlot]);
+  const addBlockedSlot = useCallback(async (slot: Omit<BlockedSlot, 'id'>) => {
+    const { data } = await supabase.from('blocked_slots').insert({
+      barber_id: slot.barberId,
+      date: slot.date,
+      start_time: slot.startTime,
+      end_time: slot.endTime,
+      reason: slot.reason,
+    }).select().single();
+    
+    if (data) {
+      setBlockedSlots(prev => [...prev, {
+        id: data.id,
+        date: data.date,
+        startTime: data.start_time,
+        endTime: data.end_time,
+        barberId: data.barber_id,
+        reason: data.reason || undefined,
+      }]);
+    }
   }, []);
 
-  const removeBlockedSlot = useCallback((id: string) => {
+  const removeBlockedSlot = useCallback(async (id: string) => {
+    await supabase.from('blocked_slots').delete().eq('id', id);
     setBlockedSlots(prev => prev.filter(s => s.id !== id));
   }, []);
 
-  // Barber Availability management
-  const setBarberDayAvailability = useCallback((barberId: string, date: string, slots: string[]) => {
-    setBarberAvailability(prev => {
+  // Barber Availability
+  const setBarberDayAvailability = useCallback(async (barberId: string, date: string, slots: string[]) => {
+    await supabase.from('barber_availability').upsert({
+      barber_id: barberId,
+      date: date,
+      available_slots: slots,
+    }, { onConflict: 'barber_id,date' });
+
+    setBarberAvailabilityState(prev => {
       const existing = prev.findIndex(a => a.barberId === barberId && a.date === date);
       if (existing >= 0) {
         const updated = [...prev];
@@ -397,7 +699,32 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, [barberAvailability]);
 
   // Shop Settings
-  const updateShopSettings = useCallback((updates: Partial<ShopSettings>) => {
+  const updateShopSettings = useCallback(async (updates: Partial<ShopSettings>) => {
+    const dbUpdates: Record<string, unknown> = {};
+    
+    if (updates.name) dbUpdates.name = updates.name;
+    if (updates.tagline) dbUpdates.tagline = updates.tagline;
+    if (updates.description) dbUpdates.description = updates.description;
+    if (updates.address) dbUpdates.address = updates.address;
+    if (updates.phone) dbUpdates.phone = updates.phone;
+    if (updates.whatsapp) dbUpdates.whatsapp = updates.whatsapp;
+    if (updates.mapsLink) dbUpdates.maps_link = updates.mapsLink;
+    if (updates.logo) dbUpdates.logo = updates.logo;
+    if (updates.hours) {
+      dbUpdates.hours_weekdays = updates.hours.weekdays;
+      dbUpdates.hours_saturday = updates.hours.saturday;
+      dbUpdates.hours_sunday = updates.hours.sunday;
+    }
+    if (updates.lunchBreak) {
+      dbUpdates.lunch_break_start = updates.lunchBreak.start;
+      dbUpdates.lunch_break_end = updates.lunchBreak.end;
+    }
+    if (updates.social) {
+      dbUpdates.instagram = updates.social.instagram;
+      dbUpdates.facebook = updates.social.facebook;
+    }
+
+    await supabase.from('shop_settings').update(dbUpdates).neq('id', '00000000-0000-0000-0000-000000000000');
     setShopSettings(prev => ({ ...prev, ...updates }));
   }, []);
 
@@ -407,7 +734,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const slotStart = hours * 60 + minutes;
     const slotEnd = slotStart + duration;
 
-    // Check lunch break
     const [lunchStartH, lunchStartM] = shopSettings.lunchBreak.start.split(':').map(Number);
     const [lunchEndH, lunchEndM] = shopSettings.lunchBreak.end.split(':').map(Number);
     const lunchStart = lunchStartH * 60 + lunchStartM;
@@ -417,7 +743,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return false;
     }
 
-    // Check blocked slots
     const blocked = blockedSlots.filter(b => b.date === date && b.barberId === barberId);
     for (const block of blocked) {
       const [bStartH, bStartM] = block.startTime.split(':').map(Number);
@@ -429,7 +754,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
     }
 
-    // Check existing appointments
     const barberAppointments = getAppointmentsByBarber(barberId, date);
     for (const apt of barberAppointments) {
       const [aptH, aptM] = apt.time.split(':').map(Number);
@@ -448,10 +772,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const dateStr = date.toISOString().split('T')[0];
     const dayOfWeek = date.getDay();
     
-    // Check if barber has custom availability for this day
     const customAvailability = getBarberDayAvailability(barberId, dateStr);
     
-    // If barber has custom availability, use only those slots
     if (customAvailability !== null) {
       for (const time of customAvailability) {
         const available = isSlotAvailable(dateStr, time, barberId, serviceDuration);
@@ -460,12 +782,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return slots;
     }
     
-    // Otherwise, use default operating hours
     let startHour = 9;
     let endHour = 20;
-    if (dayOfWeek === 6) { // Saturday
+    if (dayOfWeek === 6) {
       endHour = 18;
-    } else if (dayOfWeek === 0) { // Sunday - closed
+    } else if (dayOfWeek === 0) {
       return [];
     }
 
@@ -483,7 +804,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const value: AppState = {
     theme,
     setTheme,
-    services: services.filter((s: any) => s.visible !== false),
+    services: services.filter(s => s.visible !== false),
     addService,
     updateService,
     deleteService,
@@ -520,14 +841,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     updateShopSettings,
     getAvailableTimeSlots,
     isSlotAvailable,
+    isLoading,
+    refreshData,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 
-export const useApp = (): AppState => {
+export const useApp = () => {
   const context = useContext(AppContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useApp must be used within an AppProvider');
   }
   return context;

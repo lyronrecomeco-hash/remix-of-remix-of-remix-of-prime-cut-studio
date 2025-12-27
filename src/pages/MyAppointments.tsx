@@ -21,7 +21,7 @@ import { useApp } from '@/contexts/AppContext';
 import { useNotification } from '@/contexts/NotificationContext';
 import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import Header from '@/components/landing/Header';
-import { Appointment } from '@/lib/data';
+import { Appointment } from '@/contexts/AppContext';
 import { CardSkeleton } from '@/components/ui/skeleton';
 
 const MyAppointments = () => {
