@@ -321,6 +321,7 @@ export type Database = {
         Row: {
           address: string | null
           created_at: string
+          daily_appointment_limit: number | null
           description: string | null
           facebook: string | null
           hours_saturday: string | null
@@ -334,6 +335,7 @@ export type Database = {
           maps_link: string | null
           max_queue_size: number | null
           name: string
+          overload_alert_enabled: boolean | null
           phone: string | null
           queue_enabled: boolean | null
           tagline: string | null
@@ -344,6 +346,7 @@ export type Database = {
         Insert: {
           address?: string | null
           created_at?: string
+          daily_appointment_limit?: number | null
           description?: string | null
           facebook?: string | null
           hours_saturday?: string | null
@@ -357,6 +360,7 @@ export type Database = {
           maps_link?: string | null
           max_queue_size?: number | null
           name?: string
+          overload_alert_enabled?: boolean | null
           phone?: string | null
           queue_enabled?: boolean | null
           tagline?: string | null
@@ -367,6 +371,7 @@ export type Database = {
         Update: {
           address?: string | null
           created_at?: string
+          daily_appointment_limit?: number | null
           description?: string | null
           facebook?: string | null
           hours_saturday?: string | null
@@ -380,6 +385,7 @@ export type Database = {
           maps_link?: string | null
           max_queue_size?: number | null
           name?: string
+          overload_alert_enabled?: boolean | null
           phone?: string | null
           queue_enabled?: boolean | null
           tagline?: string | null

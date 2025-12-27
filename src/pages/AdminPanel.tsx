@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Calendar,
@@ -29,20 +29,29 @@ import {
   Lock,
   Link as LinkIcon,
   Upload,
+  Filter,
+  ChevronLeft,
+  ChevronDown,
+  Phone,
+  Navigation,
+  AlertTriangle,
+  Instagram,
+  Facebook,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Link } from 'react-router-dom';
-import { useApp } from '@/contexts/AppContext';
+import { useApp, Appointment } from '@/contexts/AppContext';
 import { useFeedback, Feedback } from '@/contexts/FeedbackContext';
 import { useGallery } from '@/contexts/GalleryContext';
 import { useNotification } from '@/contexts/NotificationContext';
 
 import Dashboard from '@/components/admin/Dashboard';
 import UserManagement from '@/components/admin/UserManagement';
-import AgendaList from '@/components/admin/AppointmentCard';
 import FinancialDashboard from '@/components/admin/FinancialDashboard';
+import NotificationsPanel from '@/components/admin/NotificationsPanel';
+import OverloadAlertModal from '@/components/admin/OverloadAlertModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { DollarSign } from 'lucide-react';
 
@@ -62,6 +71,10 @@ const menuItems = [
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [showOverloadModal, setShowOverloadModal] = useState(false);
+  const [agendaDateFilter, setAgendaDateFilter] = useState(new Date().toISOString().split('T')[0]);
+  const [agendaStatusFilter, setAgendaStatusFilter] = useState<string>('all');
   const { notify } = useNotification();
   const { signOut, user, isSuperAdmin } = useAuth();
   
@@ -71,6 +84,8 @@ const AdminPanel = () => {
     confirmAppointment,
     cancelAppointment,
     completeAppointment,
+    callSpecificClient,
+    markClientOnWay,
     queueEnabled,
     setQueueEnabled,
     maxQueueSize,
@@ -267,85 +282,251 @@ const AdminPanel = () => {
         return <FinancialDashboard />;
         
       case 'agenda':
+        // Filter appointments
+        const filteredAppointments = appointments
+          .filter(a => {
+            if (a.date !== agendaDateFilter) return false;
+            if (agendaStatusFilter !== 'all' && a.status !== agendaStatusFilter) return false;
+            return true;
+          })
+          .sort((a, b) => a.time.localeCompare(b.time));
+        
+        // Get unique dates with appointments for navigation
+        const datesWithAppointments = [...new Set(appointments.map(a => a.date))].sort();
+        
+        // Count for daily limit check
+        const dateAppointmentCount = appointments.filter(a => 
+          a.date === agendaDateFilter && a.status !== 'cancelled'
+        ).length;
+
         return (
           <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold">Agenda de Hoje</h2>
-              <div className="text-sm text-muted-foreground">
-                {todayAppointments.length} agendamento(s)
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <h2 className="text-2xl font-bold">Agenda</h2>
+                <div className="text-sm text-muted-foreground">
+                  {filteredAppointments.length} agendamento(s) em {new Date(agendaDateFilter + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}
+                </div>
+              </div>
+              
+              {/* Daily limit indicator */}
+              {shopSettings.dailyAppointmentLimit && (
+                <div className={`px-4 py-2 rounded-xl ${dateAppointmentCount >= (shopSettings.dailyAppointmentLimit || 20) ? 'bg-yellow-500/20 text-yellow-400' : 'bg-secondary'}`}>
+                  <span className="text-sm font-medium">
+                    {dateAppointmentCount}/{shopSettings.dailyAppointmentLimit} limite diário
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Filters */}
+            <div className="glass-card rounded-xl p-4">
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Filtros:</span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => {
+                      const d = new Date(agendaDateFilter);
+                      d.setDate(d.getDate() - 1);
+                      setAgendaDateFilter(d.toISOString().split('T')[0]);
+                    }}
+                    className="p-2 hover:bg-secondary rounded-lg"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <Input
+                    type="date"
+                    value={agendaDateFilter}
+                    onChange={(e) => setAgendaDateFilter(e.target.value)}
+                    className="w-auto"
+                  />
+                  <button 
+                    onClick={() => {
+                      const d = new Date(agendaDateFilter);
+                      d.setDate(d.getDate() + 1);
+                      setAgendaDateFilter(d.toISOString().split('T')[0]);
+                    }}
+                    className="p-2 hover:bg-secondary rounded-lg"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setAgendaDateFilter(new Date().toISOString().split('T')[0])}
+                  >
+                    Hoje
+                  </Button>
+                </div>
+
+                <select
+                  value={agendaStatusFilter}
+                  onChange={(e) => setAgendaStatusFilter(e.target.value)}
+                  className="bg-secondary px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="all">Todos os status</option>
+                  <option value="pending">Pendentes</option>
+                  <option value="confirmed">Confirmados</option>
+                  <option value="inqueue">Na Fila</option>
+                  <option value="called">Chamados</option>
+                  <option value="onway">A Caminho</option>
+                  <option value="completed">Concluídos</option>
+                  <option value="cancelled">Cancelados</option>
+                </select>
               </div>
             </div>
 
-            {todayAppointments.length === 0 ? (
+            {filteredAppointments.length === 0 ? (
               <div className="glass-card rounded-xl p-8 text-center">
                 <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">Nenhum agendamento para hoje</p>
+                <p className="text-muted-foreground">Nenhum agendamento encontrado</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {todayAppointments
-                  .sort((a, b) => a.time.localeCompare(b.time))
-                  .map((apt) => (
-                  <motion.div
-                    key={apt.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="glass-card rounded-xl p-4"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-primary">{apt.time}</div>
-                          <div className="text-xs text-muted-foreground">{apt.service.duration} min</div>
-                        </div>
-                        <div>
-                          <h3 className="font-semibold">{apt.clientName}</h3>
-                          <p className="text-sm text-muted-foreground">{apt.service.name}</p>
-                          <p className="text-xs text-muted-foreground">{apt.clientPhone}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          apt.status === 'confirmed' ? 'bg-primary/20 text-primary' :
-                          apt.status === 'completed' ? 'bg-green-500/20 text-green-400' :
-                          apt.status === 'cancelled' ? 'bg-destructive/20 text-destructive' :
-                          'bg-yellow-500/20 text-yellow-400'
-                        }`}>
-                          {apt.status === 'confirmed' ? 'Confirmado' :
-                           apt.status === 'completed' ? 'Concluído' :
-                           apt.status === 'cancelled' ? 'Cancelado' : 'Pendente'}
-                        </span>
-                        
-                        {apt.status !== 'completed' && apt.status !== 'cancelled' && (
-                          <div className="flex gap-1">
-                            <button
-                              onClick={() => handleAppointmentAction(apt.id, 'confirm')}
-                              className="w-8 h-8 rounded-lg bg-primary/20 text-primary hover:bg-primary/30 flex items-center justify-center"
-                              title="Confirmar"
-                            >
-                              <Check className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleAppointmentAction(apt.id, 'complete')}
-                              className="w-8 h-8 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 flex items-center justify-center"
-                              title="Concluir"
-                            >
-                              <Play className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleAppointmentAction(apt.id, 'cancel')}
-                              className="w-8 h-8 rounded-lg bg-destructive/20 text-destructive hover:bg-destructive/30 flex items-center justify-center"
-                              title="Cancelar"
-                            >
-                              <XCircle className="w-4 h-4" />
-                            </button>
+                {filteredAppointments.map((apt) => {
+                  const queueEntry = queue.find(q => q.appointmentId === apt.id);
+                  const statusConfig: Record<string, { label: string; color: string }> = {
+                    pending: { label: 'Pendente', color: 'bg-yellow-500/20 text-yellow-400' },
+                    confirmed: { label: 'Confirmado', color: 'bg-primary/20 text-primary' },
+                    inqueue: { label: 'Na Fila', color: 'bg-blue-500/20 text-blue-400' },
+                    called: { label: 'Chamado', color: 'bg-purple-500/20 text-purple-400' },
+                    onway: { label: 'A Caminho', color: 'bg-cyan-500/20 text-cyan-400' },
+                    completed: { label: 'Concluído', color: 'bg-green-500/20 text-green-400' },
+                    cancelled: { label: 'Cancelado', color: 'bg-destructive/20 text-destructive' },
+                  };
+                  const status = statusConfig[apt.status] || statusConfig.pending;
+                  const isActive = apt.status !== 'completed' && apt.status !== 'cancelled';
+                  const canCall = apt.status === 'confirmed' || apt.status === 'inqueue';
+                  const canMarkOnWay = apt.status === 'called';
+
+                  return (
+                    <motion.div
+                      key={apt.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="glass-card rounded-xl p-4"
+                    >
+                      <div className="flex items-start justify-between gap-4 flex-wrap">
+                        <div className="flex items-center gap-4">
+                          <div className="text-center min-w-[60px]">
+                            <div className="text-2xl font-bold text-primary">{apt.time}</div>
+                            <div className="text-xs text-muted-foreground">{apt.service?.duration} min</div>
                           </div>
-                        )}
+                          <div>
+                            <h3 className="font-semibold">{apt.clientName}</h3>
+                            <p className="text-sm text-muted-foreground">{apt.service?.name} - {apt.barber?.name}</p>
+                            <p className="text-xs text-muted-foreground">{apt.clientPhone}</p>
+                            {queueEntry?.status === 'waiting' && (
+                              <p className="text-xs text-primary font-medium mt-1">Posição na fila: {queueEntry.position}°</p>
+                            )}
+                            {apt.protocol && (
+                              <p className="text-xs text-muted-foreground mt-1">Protocolo: {apt.protocol}</p>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-col items-end gap-2">
+                          <span className={`text-xs px-2 py-1 rounded-full ${status.color}`}>
+                            {status.label}
+                          </span>
+                          
+                          {isActive && (
+                            <div className="flex flex-wrap gap-1 justify-end">
+                              {apt.status === 'pending' && (
+                                <Button
+                                  size="sm"
+                                  variant="hero"
+                                  onClick={() => {
+                                    confirmAppointment(apt.id);
+                                    notify.success(`${apt.clientName} confirmado e adicionado à fila!`);
+                                  }}
+                                >
+                                  <Check className="w-4 h-4" />
+                                  Aceitar
+                                </Button>
+                              )}
+                              
+                              {canCall && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    callSpecificClient(apt.id);
+                                    // Trigger push notification
+                                    if ('Notification' in window && Notification.permission === 'granted') {
+                                      new Notification('🔔 Chamando Cliente', {
+                                        body: `${apt.clientName}, sua vez chegou!`,
+                                        icon: '/favicon.ico',
+                                        tag: `call-${apt.id}`,
+                                      });
+                                    }
+                                    notify.queue(`${apt.clientName} foi chamado!`);
+                                  }}
+                                  className="border-primary text-primary hover:bg-primary/10"
+                                >
+                                  <Bell className="w-4 h-4" />
+                                  Chamar
+                                </Button>
+                              )}
+
+                              {canMarkOnWay && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    markClientOnWay(apt.id);
+                                    notify.info(`${apt.clientName} está a caminho!`);
+                                  }}
+                                  className="border-cyan-500 text-cyan-500 hover:bg-cyan-500/10"
+                                >
+                                  <Navigation className="w-4 h-4" />
+                                  A Caminho
+                                </Button>
+                              )}
+
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => window.open(`tel:${apt.clientPhone}`, '_self')}
+                                className="border-green-500 text-green-500 hover:bg-green-500/10"
+                              >
+                                <Phone className="w-4 h-4" />
+                              </Button>
+                              
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  completeAppointment(apt.id);
+                                  notify.success('Atendimento concluído!');
+                                }}
+                                className="border-green-500 text-green-500 hover:bg-green-500/10"
+                              >
+                                <Play className="w-4 h-4" />
+                              </Button>
+                              
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  cancelAppointment(apt.id);
+                                  notify.info('Agendamento cancelado');
+                                }}
+                                className="text-destructive hover:bg-destructive/10"
+                              >
+                                <XCircle className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </motion.div>
-                ))}
+                    </motion.div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -881,6 +1062,89 @@ const AdminPanel = () => {
                 </div>
               </div>
 
+              {/* Overload Alert Settings */}
+              <div className="glass-card rounded-xl p-6">
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-yellow-500" />
+                  Alerta de Sobrecarga
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Notifica clientes quando há muitos agendamentos no mesmo dia
+                </p>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm">Ativar alertas de sobrecarga</span>
+                  <button
+                    onClick={() => {
+                      if (!shopSettings.overloadAlertEnabled) {
+                        setShowOverloadModal(true);
+                      } else {
+                        updateShopSettings({ overloadAlertEnabled: false });
+                        notify.info('Alertas de sobrecarga desativados');
+                      }
+                    }}
+                    className={`w-12 h-6 rounded-full transition-colors relative ${
+                      shopSettings.overloadAlertEnabled ? 'bg-primary' : 'bg-secondary'
+                    }`}
+                  >
+                    <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${
+                      shopSettings.overloadAlertEnabled ? 'left-7' : 'left-1'
+                    }`} />
+                  </button>
+                </div>
+                {shopSettings.overloadAlertEnabled && (
+                  <div className="space-y-3 pt-4 border-t border-border">
+                    <div>
+                      <label className="text-sm text-muted-foreground block mb-1">Limite diário de agendamentos</label>
+                      <Input
+                        type="number"
+                        value={shopSettings.dailyAppointmentLimit || 20}
+                        onChange={(e) => updateShopSettings({ dailyAppointmentLimit: Number(e.target.value) })}
+                        min={1}
+                        max={100}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Quando atingir este limite, clientes verão um aviso
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Social Media Settings */}
+              <div className="glass-card rounded-xl p-6">
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                  <Instagram className="w-5 h-5 text-primary" />
+                  Redes Sociais
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Atualize suas redes sociais que aparecem no rodapé do site
+                </p>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm text-muted-foreground block mb-1 flex items-center gap-2">
+                      <Instagram className="w-4 h-4" />
+                      Instagram
+                    </label>
+                    <Input
+                      placeholder="@seuperfil ou URL completa"
+                      value={shopSettings.social?.instagram || ''}
+                      onChange={(e) => updateShopSettings({ social: { ...shopSettings.social, instagram: e.target.value } })}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm text-muted-foreground block mb-1 flex items-center gap-2">
+                      <Facebook className="w-4 h-4" />
+                      Facebook
+                    </label>
+                    <Input
+                      placeholder="nome.da.pagina ou URL completa"
+                      value={shopSettings.social?.facebook || ''}
+                      onChange={(e) => updateShopSettings({ social: { ...shopSettings.social, facebook: e.target.value } })}
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div className="glass-card rounded-xl p-6">
                 <h3 className="font-semibold mb-4">Informações da Barbearia</h3>
                 <div className="space-y-4">
@@ -892,10 +1156,25 @@ const AdminPanel = () => {
                     />
                   </div>
                   <div>
+                    <label className="text-sm text-muted-foreground block mb-1">Tagline</label>
+                    <Input
+                      value={shopSettings.tagline}
+                      onChange={(e) => updateShopSettings({ tagline: e.target.value })}
+                    />
+                  </div>
+                  <div>
                     <label className="text-sm text-muted-foreground block mb-1">Telefone</label>
                     <Input
                       value={shopSettings.phone}
                       onChange={(e) => updateShopSettings({ phone: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm text-muted-foreground block mb-1">WhatsApp (somente números)</label>
+                    <Input
+                      value={shopSettings.whatsapp}
+                      onChange={(e) => updateShopSettings({ whatsapp: e.target.value })}
+                      placeholder="5511999999999"
                     />
                   </div>
                   <div>
@@ -905,9 +1184,28 @@ const AdminPanel = () => {
                       onChange={(e) => updateShopSettings({ address: e.target.value })}
                     />
                   </div>
+                  <div>
+                    <label className="text-sm text-muted-foreground block mb-1">Link do Google Maps</label>
+                    <Input
+                      value={shopSettings.mapsLink}
+                      onChange={(e) => updateShopSettings({ mapsLink: e.target.value })}
+                      placeholder="https://maps.google.com/..."
+                    />
+                  </div>
                 </div>
               </div>
             </div>
+
+            {/* Overload explanation modal */}
+            <OverloadAlertModal
+              isOpen={showOverloadModal}
+              onClose={() => setShowOverloadModal(false)}
+              type="explanation"
+              onConfirm={() => {
+                updateShopSettings({ overloadAlertEnabled: true });
+                notify.success('Alertas de sobrecarga ativados!');
+              }}
+            />
           </div>
         );
 
@@ -1041,14 +1339,21 @@ const AdminPanel = () => {
 
           <div className="flex items-center gap-3">
             <div className="relative">
-              <button className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center relative">
+              <button 
+                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center relative hover:bg-secondary/80 transition-colors"
+              >
                 <Bell className="w-5 h-5" />
-                {newFeedbacksCount > 0 && (
+                {(newFeedbacksCount > 0 || appointments.filter(a => a.status === 'pending' && a.date === new Date().toISOString().split('T')[0]).length > 0) && (
                   <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full text-xs flex items-center justify-center">
-                    {newFeedbacksCount}
+                    {newFeedbacksCount + appointments.filter(a => a.status === 'pending' && a.date === new Date().toISOString().split('T')[0]).length}
                   </span>
                 )}
               </button>
+              <NotificationsPanel 
+                isOpen={isNotificationsOpen} 
+                onClose={() => setIsNotificationsOpen(false)} 
+              />
             </div>
           </div>
         </header>

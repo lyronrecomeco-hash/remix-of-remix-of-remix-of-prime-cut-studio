@@ -7,6 +7,7 @@ import Testimonials from '@/components/landing/Testimonials';
 import Location from '@/components/landing/Location';
 import CTA from '@/components/landing/CTA';
 import Footer from '@/components/landing/Footer';
+import PWAInstallPrompt from '@/components/admin/PWAInstallPrompt';
 
 const Index = () => {
   return (
@@ -20,6 +21,7 @@ const Index = () => {
       <Location />
       <CTA />
       <Footer />
+      <PWAInstallPrompt />
     </div>
   );
 };
