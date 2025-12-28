@@ -49,6 +49,9 @@ serve(async (req) => {
       .single();
 
     // Replace variables in template
+    const baseUrl = Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovableproject.com') || 'https://seusite.com';
+    const feedbackLink = `${baseUrl}/avaliar`;
+    
     let message = template?.template || '';
     message = message.replace(/\{\{nome_cliente\}\}/g, payload.client_name || '');
     message = message.replace(/\{\{nome_barbearia\}\}/g, shopName);
@@ -57,6 +60,7 @@ serve(async (req) => {
     message = message.replace(/\{\{hora\}\}/g, payload.time || '');
     message = message.replace(/\{\{posição_fila\}\}/g, String(payload.queue_position || ''));
     message = message.replace(/\{\{protocolo\}\}/g, payload.appointment_id?.split('-')[0] || '');
+    message = message.replace(/\{\{link_avaliacao\}\}/g, feedbackLink);
 
     // Get button and image from template
     const buttonText = template?.button_text || null;
