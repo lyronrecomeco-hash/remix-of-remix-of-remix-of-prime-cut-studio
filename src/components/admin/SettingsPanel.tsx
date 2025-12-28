@@ -272,6 +272,7 @@ export default function SettingsPanel() {
   // Template modal state
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<string | null>(null);
+  const [aiTemplateIdea, setAiTemplateIdea] = useState('');
 
   useEffect(() => {
     fetchTemplates();
@@ -525,6 +526,37 @@ Retorne APENAS a mensagem, sem explicações.`;
     }
     
     notify.success('Todos os templates foram gerados e salvos!');
+  };
+
+  // Generate template with AI based on user idea
+  const generateTemplateWithAIFromIdea = async (eventType: string, userIdea: string) => {
+    setAiGenerating(eventType);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-marketing-prompt', {
+        body: {
+          type: 'generate',
+          context: `Evento: ${eventLabels[eventType]}\n\nIdeia do usuário: ${userIdea}\n\nVariáveis disponíveis: {{nome_cliente}}, {{nome_barbearia}}, {{serviço}}, {{data}}, {{hora}}, {{posição_fila}}, {{protocolo}}\n\nGere uma mensagem para WhatsApp de uma barbearia para este evento específico. A mensagem deve ser extremamente persuasiva, formatada com emojis estratégicos, e seguir a estrutura: gancho emocional → informação principal → call-to-action. Use as variáveis adequadas ao contexto.`,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.success && data?.message) {
+        const updated = templates.map(t => 
+          t.event_type === eventType ? { ...t, template: data.message } : t
+        );
+        setTemplates(updated);
+        notify.success('Mensagem gerada com IA!');
+      } else {
+        throw new Error(data?.error || 'Erro ao gerar');
+      }
+    } catch (error: any) {
+      console.error('AI generation error:', error);
+      notify.error(error.message || 'Erro ao gerar com IA');
+    }
+    
+    setAiGenerating(null);
   };
 
   const getTemplateForEvent = (eventType: string) => {
@@ -1908,9 +1940,9 @@ Retorne APENAS a mensagem, sem explicações.`;
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Edição de Template */}
+      {/* Modal de Edição de Template - COM IA para gerar mensagens */}
       <Dialog open={templateModalOpen} onOpenChange={setTemplateModalOpen}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileText className="w-5 h-5 text-primary" />
@@ -1934,6 +1966,35 @@ Retorne APENAS a mensagem, sem explicações.`;
                   </button>
                 </div>
 
+                {/* Input para ideia do usuário para IA */}
+                <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-medium text-primary">Gerar com IA</span>
+                  </div>
+                  <Textarea
+                    value={aiTemplateIdea}
+                    onChange={(e) => setAiTemplateIdea(e.target.value)}
+                    placeholder="Descreva como você quer a mensagem... Ex: Quero uma mensagem amigável e profissional que lembre o cliente do horário e peça para chegar 5 minutos antes"
+                    rows={3}
+                    className="text-sm"
+                  />
+                  <Button 
+                    size="sm" 
+                    variant="hero"
+                    onClick={() => generateTemplateWithAIFromIdea(editingTemplate, aiTemplateIdea)}
+                    disabled={aiGenerating === editingTemplate || !aiTemplateIdea.trim()}
+                    className="w-full"
+                  >
+                    {aiGenerating === editingTemplate ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <Sparkles className="w-4 h-4 mr-2" />
+                    )}
+                    Gerar Mensagem Persuasiva
+                  </Button>
+                </div>
+
                 {editingTemplate === 'feedback_request' && (
                   <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
                     <p className="text-sm text-blue-400">
@@ -1942,15 +2003,18 @@ Retorne APENAS a mensagem, sem explicações.`;
                   </div>
                 )}
 
-                <Textarea
-                  value={template.template}
-                  onChange={(e) => {
-                    const updated = templates.map(t => t.event_type === editingTemplate ? { ...t, template: e.target.value } : t);
-                    setTemplates(updated);
-                  }}
-                  rows={5}
-                  className="text-sm"
-                />
+                <div>
+                  <label className="text-sm font-medium block mb-2">Mensagem atual:</label>
+                  <Textarea
+                    value={template.template}
+                    onChange={(e) => {
+                      const updated = templates.map(t => t.event_type === editingTemplate ? { ...t, template: e.target.value } : t);
+                      setTemplates(updated);
+                    }}
+                    rows={5}
+                    className="text-sm"
+                  />
+                </div>
 
                 <div className="flex flex-wrap gap-1">
                   {variables.map((v) => (
@@ -1979,13 +2043,9 @@ Retorne APENAS a mensagem, sem explicações.`;
           })()}
 
           <div className="flex flex-wrap gap-2 pt-4 border-t border-border">
-            <Button size="sm" onClick={() => { if (editingTemplate) { updateTemplate(editingTemplate, getTemplateForEvent(editingTemplate)?.template || ''); setTemplateModalOpen(false); } }}>
+            <Button size="sm" onClick={() => { if (editingTemplate) { updateTemplate(editingTemplate, getTemplateForEvent(editingTemplate)?.template || ''); setTemplateModalOpen(false); setAiTemplateIdea(''); } }}>
               <Save className="w-4 h-4 mr-1" />
               Salvar
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => editingTemplate && generateTemplateWithAI(editingTemplate)} disabled={aiGenerating === editingTemplate}>
-              {aiGenerating === editingTemplate ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-              <span className="ml-1">IA</span>
             </Button>
             <Button size="sm" variant="outline" onClick={() => editingTemplate && restoreDefaultTemplate(editingTemplate)}>
               <RotateCcw className="w-4 h-4 mr-1" />

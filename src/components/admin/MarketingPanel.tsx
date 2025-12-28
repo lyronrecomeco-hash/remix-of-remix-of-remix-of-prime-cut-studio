@@ -26,6 +26,7 @@ import {
   RefreshCw,
   ChevronLeft,
   ChevronRight,
+  Calendar,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -97,6 +98,7 @@ export default function MarketingPanel() {
     button_url: '',
     use_ai: false,
     ai_prompt: '',
+    scheduled_at: '',
   });
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [contactInput, setContactInput] = useState({ phone: '', name: '' });
@@ -366,6 +368,8 @@ export default function MarketingPanel() {
     }
 
     try {
+      const isScheduled = !!campaignForm.scheduled_at;
+      
       const { data: campaign, error: campaignError } = await supabase
         .from('marketing_campaigns')
         .insert({
@@ -377,7 +381,8 @@ export default function MarketingPanel() {
           use_ai: campaignForm.use_ai,
           ai_prompt: campaignForm.ai_prompt || null,
           target_count: contacts.length,
-          status: 'draft',
+          status: isScheduled ? 'scheduled' : 'draft',
+          scheduled_at: campaignForm.scheduled_at || null,
         })
         .select()
         .single();
@@ -415,6 +420,7 @@ export default function MarketingPanel() {
       button_url: '',
       use_ai: false,
       ai_prompt: '',
+      scheduled_at: '',
     });
     setContacts([]);
     setShowNewCampaignModal(false);
@@ -498,9 +504,14 @@ export default function MarketingPanel() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, scheduledAt?: string | null) => {
     const config: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
       draft: { label: 'Rascunho', color: 'bg-secondary text-muted-foreground', icon: <FileText className="w-3.5 h-3.5" /> },
+      scheduled: { 
+        label: scheduledAt ? `Agendado: ${new Date(scheduledAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}` : 'Agendado', 
+        color: 'bg-purple-500/20 text-purple-400', 
+        icon: <Calendar className="w-3.5 h-3.5" /> 
+      },
       sending: { label: 'Enviando', color: 'bg-blue-500/20 text-blue-400', icon: <Loader2 className="w-3.5 h-3.5 animate-spin" /> },
       completed: { label: 'Concluída', color: 'bg-green-500/20 text-green-400', icon: <CheckCircle className="w-3.5 h-3.5" /> },
       failed: { label: 'Falhou', color: 'bg-destructive/20 text-destructive', icon: <XCircle className="w-3.5 h-3.5" /> },
@@ -619,7 +630,7 @@ export default function MarketingPanel() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-2 flex-wrap">
                         <h4 className="font-semibold text-lg truncate">{campaign.name}</h4>
-                        {getStatusBadge(campaign.status)}
+                        {getStatusBadge(campaign.status, campaign.scheduled_at)}
                       </div>
                       <p className="text-base text-muted-foreground line-clamp-2 mb-3">
                         {campaign.message_template}
@@ -952,6 +963,27 @@ export default function MarketingPanel() {
                   className="h-11"
                 />
               </div>
+            </div>
+
+            {/* Agendamento */}
+            <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-xl">
+              <div className="flex items-center gap-2 mb-3">
+                <Calendar className="w-4 h-4 text-purple-400" />
+                <span className="text-base font-medium text-purple-400">Agendar Disparo (opcional)</span>
+              </div>
+              <Input
+                type="datetime-local"
+                value={campaignForm.scheduled_at}
+                onChange={(e) => setCampaignForm(prev => ({ ...prev, scheduled_at: e.target.value }))}
+                className="h-11"
+                min={new Date().toISOString().slice(0, 16)}
+              />
+              <p className="text-sm text-muted-foreground mt-2">
+                {campaignForm.scheduled_at 
+                  ? `Disparo agendado para: ${new Date(campaignForm.scheduled_at).toLocaleString('pt-BR')}`
+                  : 'Deixe em branco para enviar manualmente'
+                }
+              </p>
             </div>
 
             {/* Contacts */}
