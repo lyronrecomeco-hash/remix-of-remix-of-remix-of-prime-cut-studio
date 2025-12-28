@@ -75,13 +75,6 @@ const Header = () => {
                 </Link>
               </Button>
             )}
-            {showAdminLink && (
-              <Button asChild variant="ghost" size="sm" className="hidden md:flex">
-                <Link to="/admin">
-                  Painel Admin
-                </Link>
-              </Button>
-            )}
             <Button asChild variant="hero" size="sm" className="hidden sm:flex">
               <Link to="/agendar">
                 <Calendar className="w-4 h-4" />
@@ -129,15 +122,6 @@ const Header = () => {
                 >
                   <ClipboardList className="w-5 h-5" />
                   Meus Agendamentos
-                </Link>
-              )}
-              {showAdminLink && (
-                <Link 
-                  to="/admin" 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-lg font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
-                >
-                  Painel Administrativo
                 </Link>
               )}
               <Button asChild variant="hero" size="lg" className="mt-2">

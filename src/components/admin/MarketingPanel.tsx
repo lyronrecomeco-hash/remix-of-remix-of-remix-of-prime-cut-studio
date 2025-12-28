@@ -12,15 +12,12 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
-  ChevronDown,
-  ChevronUp,
   Settings,
   HelpCircle,
   Power,
   Link as LinkIcon,
   Sparkles,
   Play,
-  Pause,
   FileText,
   X,
   FileSpreadsheet,
@@ -91,6 +88,7 @@ export default function MarketingPanel() {
   const [contactInput, setContactInput] = useState({ phone: '', name: '' });
   const [bulkContacts, setBulkContacts] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [contactsTab, setContactsTab] = useState<'manual' | 'bulk' | 'csv'>('manual');
 
   useEffect(() => {
     fetchSettings();
@@ -208,7 +206,7 @@ export default function MarketingPanel() {
       const newContacts: Contact[] = [];
       lines.forEach((line, index) => {
         if (index === 0 && (line.toLowerCase().includes('telefone') || line.toLowerCase().includes('phone'))) {
-          return; // Skip header
+          return;
         }
         
         const parts = line.split(/[,;]/);
@@ -225,6 +223,7 @@ export default function MarketingPanel() {
       if (newContacts.length > 0) {
         setContacts(prev => [...prev, ...newContacts]);
         notify.success(`${newContacts.length} contato(s) importado(s)`);
+        setShowContactsModal(false);
       } else {
         notify.error('Nenhum contato válido encontrado');
       }
@@ -259,7 +258,7 @@ export default function MarketingPanel() {
     }
   };
 
-  const addContact = () => {
+  const addManualContact = () => {
     if (!contactInput.phone.trim()) {
       notify.error('Digite um número de telefone');
       return;
@@ -283,6 +282,7 @@ export default function MarketingPanel() {
 
     setContacts(prev => [...prev, { phone, name: contactInput.name.trim() || phone }]);
     setContactInput({ phone: '', name: '' });
+    notify.success('Contato adicionado');
   };
 
   const removeContact = (phone: string) => {
@@ -333,7 +333,7 @@ export default function MarketingPanel() {
       if (contactsError) throw contactsError;
 
       notify.success('Campanha criada!');
-      notify.info('Nova campanha', `A campanha "${campaignForm.name}" foi criada e está pronta para envio.`);
+      notify.info('Nova campanha', `A campanha "${campaignForm.name}" foi criada.`);
       fetchCampaigns();
       resetForm();
     } catch (error) {
@@ -366,7 +366,7 @@ export default function MarketingPanel() {
 
       if (error) throw error;
 
-      notify.success('Teste enviado! Verifique o primeiro contato.');
+      notify.success('Teste enviado!');
     } catch (error) {
       console.error('Test campaign error:', error);
       notify.error('Erro ao testar campanha');
@@ -385,8 +385,8 @@ export default function MarketingPanel() {
 
       if (error) throw error;
 
-      notify.success('Campanha iniciada! Acompanhe o progresso.');
-      notify.info('Campanha em andamento', 'As mensagens estão sendo enviadas. Você será notificado ao concluir.');
+      notify.success('Campanha iniciada!');
+      notify.info('Campanha em andamento', 'As mensagens estão sendo enviadas.');
       fetchCampaigns();
     } catch (error) {
       console.error('Campaign start error:', error);
@@ -414,7 +414,6 @@ export default function MarketingPanel() {
     const config: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
       draft: { label: 'Rascunho', color: 'bg-secondary text-muted-foreground', icon: <FileText className="w-3 h-3" /> },
       sending: { label: 'Enviando', color: 'bg-blue-500/20 text-blue-400', icon: <Loader2 className="w-3 h-3 animate-spin" /> },
-      paused: { label: 'Pausada', color: 'bg-yellow-500/20 text-yellow-400', icon: <Pause className="w-3 h-3" /> },
       completed: { label: 'Concluída', color: 'bg-green-500/20 text-green-400', icon: <CheckCircle className="w-3 h-3" /> },
       failed: { label: 'Falhou', color: 'bg-destructive/20 text-destructive', icon: <XCircle className="w-3 h-3" /> },
     };
@@ -443,10 +442,10 @@ export default function MarketingPanel() {
             <Megaphone className="w-6 h-6 text-primary" />
             Marketing
           </h2>
-          <p className="text-sm text-muted-foreground">Disparo de mensagens em massa via WhatsApp</p>
+          <p className="text-sm text-muted-foreground">Disparo de mensagens via WhatsApp</p>
         </div>
         
-        {/* Toggle Marketing */}
+        {/* Toggle - só funciona quando desativado */}
         <button
           onClick={toggleMarketing}
           className={`w-14 h-7 rounded-full transition-colors relative ${
@@ -460,31 +459,31 @@ export default function MarketingPanel() {
       </div>
 
       {!settings?.is_enabled ? (
-        <div className="glass-card rounded-xl p-8 text-center opacity-60 pointer-events-none select-none">
-          <Megaphone className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-xl font-bold mb-2">Modo Marketing Desativado</h3>
-          <p className="text-muted-foreground mb-4">
-            Ative o modo Marketing para enviar mensagens em massa via WhatsApp.
-          </p>
-          <div className="pointer-events-auto">
-            <Button variant="hero" onClick={toggleMarketing}>
-              <Power className="w-4 h-4" />
-              Ativar Marketing
-            </Button>
+        <div className="glass-card rounded-xl p-8 text-center">
+          <div className="opacity-60 pointer-events-none select-none">
+            <Megaphone className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-xl font-bold mb-2">Modo Marketing Desativado</h3>
+            <p className="text-muted-foreground mb-4">
+              Ative o modo Marketing para enviar mensagens em massa.
+            </p>
           </div>
+          <Button variant="hero" onClick={toggleMarketing} className="mt-2">
+            <Power className="w-4 h-4" />
+            Ativar Marketing
+          </Button>
         </div>
       ) : (
         <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-1">
           {/* Settings */}
           <div className="glass-card rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-3">
               <Settings className="w-5 h-5 text-primary" />
               <h3 className="font-semibold">Configurações</h3>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-sm text-muted-foreground block mb-1">
-                  Máximo de contatos por campanha
+                  Máx. contatos/campanha
                 </label>
                 <Input
                   type="number"
@@ -496,7 +495,7 @@ export default function MarketingPanel() {
               </div>
               <div>
                 <label className="text-sm text-muted-foreground block mb-1">
-                  Intervalo entre mensagens (segundos)
+                  Intervalo (segundos)
                 </label>
                 <Input
                   type="number"
@@ -510,16 +509,11 @@ export default function MarketingPanel() {
           </div>
 
           {/* Warning */}
-          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 flex items-start gap-3">
+          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3 flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
-            <div className="text-sm">
-              <p className="font-medium text-yellow-500">Aviso Importante</p>
-              <p className="text-muted-foreground">
-                O envio de mensagens em massa pode resultar em bloqueio pelo WhatsApp. 
-                O uso desta ferramenta é por sua conta e risco. Recomendamos não exceder 
-                100 mensagens por dia e manter intervalos adequados entre envios.
-              </p>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              <strong className="text-yellow-500">Aviso:</strong> Envio em massa pode resultar em bloqueio pelo WhatsApp. Use com responsabilidade.
+            </p>
           </div>
 
           {/* New Campaign Button */}
@@ -532,7 +526,7 @@ export default function MarketingPanel() {
 
           {/* New Campaign Form */}
           {showNewCampaign && (
-            <div className="glass-card rounded-xl p-4 space-y-4">
+            <div className="glass-card rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold flex items-center gap-2">
                   <Plus className="w-5 h-5 text-primary" />
@@ -558,10 +552,10 @@ export default function MarketingPanel() {
                   value={campaignForm.message_template}
                   onChange={(e) => setCampaignForm(prev => ({ ...prev, message_template: e.target.value }))}
                   placeholder="Digite sua mensagem..."
-                  rows={4}
+                  rows={3}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Use {'{{nome}}'} para personalizar com o nome do contato
+                  Use {'{{nome}}'} para personalizar
                 </p>
               </div>
 
@@ -587,7 +581,7 @@ export default function MarketingPanel() {
                     ) : (
                       <Upload className="w-4 h-4" />
                     )}
-                    {uploadingImage ? 'Enviando...' : 'Upload de Imagem'}
+                    {uploadingImage ? 'Enviando...' : 'Upload'}
                   </Button>
                   {campaignForm.image_url && (
                     <button
@@ -602,7 +596,7 @@ export default function MarketingPanel() {
                   <img 
                     src={campaignForm.image_url} 
                     alt="Preview" 
-                    className="mt-2 w-24 h-24 object-cover rounded-lg"
+                    className="mt-2 w-20 h-20 object-cover rounded-lg"
                   />
                 )}
               </div>
@@ -611,25 +605,19 @@ export default function MarketingPanel() {
               <div className="p-3 bg-secondary/20 rounded-lg">
                 <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
                   <LinkIcon className="w-3 h-3" />
-                  Botão clicável (opcional) - Adicione um link se desejar
+                  Botão clicável (opcional)
                 </p>
                 <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-xs text-muted-foreground block mb-1">Texto do Botão</label>
-                    <Input
-                      value={campaignForm.button_text}
-                      onChange={(e) => setCampaignForm(prev => ({ ...prev, button_text: e.target.value }))}
-                      placeholder="Ex: Ver Promoção"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground block mb-1">URL do Botão</label>
-                    <Input
-                      value={campaignForm.button_url}
-                      onChange={(e) => setCampaignForm(prev => ({ ...prev, button_url: e.target.value }))}
-                      placeholder="https://..."
-                    />
-                  </div>
+                  <Input
+                    value={campaignForm.button_text}
+                    onChange={(e) => setCampaignForm(prev => ({ ...prev, button_text: e.target.value }))}
+                    placeholder="Texto do Botão"
+                  />
+                  <Input
+                    value={campaignForm.button_url}
+                    onChange={(e) => setCampaignForm(prev => ({ ...prev, button_url: e.target.value }))}
+                    placeholder="https://..."
+                  />
                 </div>
               </div>
 
@@ -651,7 +639,7 @@ export default function MarketingPanel() {
                     Personalizar com IA
                   </span>
                   <p className="text-xs text-muted-foreground">
-                    Use IA para criar variações personalizadas focadas em avisos, anúncios ou vendas
+                    IA focada em avisos, anúncios e vendas
                   </p>
                 </div>
               </div>
@@ -662,82 +650,47 @@ export default function MarketingPanel() {
                   <Textarea
                     value={campaignForm.ai_prompt}
                     onChange={(e) => setCampaignForm(prev => ({ ...prev, ai_prompt: e.target.value }))}
-                    placeholder="Ex: Crie uma variação criativa da mensagem para cada cliente, focando em promoções..."
+                    placeholder="Ex: Crie variações criativas focando em promoções..."
                     rows={2}
                   />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    A IA é treinada para marketing: avisos, anúncios e vendas. Não funciona para agendamentos.
-                  </p>
                 </div>
               )}
 
-              {/* Contacts */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm text-muted-foreground">
-                    Contatos ({contacts.length}/{settings?.max_contacts || 100})
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      ref={csvInputRef}
-                      type="file"
-                      accept=".csv,.txt"
-                      onChange={handleCSVUpload}
-                      className="hidden"
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => csvInputRef.current?.click()}
-                    >
-                      <FileSpreadsheet className="w-4 h-4" />
-                      CSV
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowContactsModal(true)}
-                    >
-                      <Plus className="w-4 h-4" />
-                      Em Massa
-                    </Button>
-                  </div>
+              {/* Contacts - Button to open modal */}
+              <div className="flex items-center justify-between p-3 bg-secondary/20 rounded-lg">
+                <div>
+                  <span className="text-sm font-medium">Contatos</span>
+                  <p className="text-xs text-muted-foreground">
+                    {contacts.length}/{settings?.max_contacts || 100} adicionados
+                  </p>
                 </div>
-                
-                <div className="flex gap-2 mb-2">
-                  <Input
-                    value={contactInput.phone}
-                    onChange={(e) => setContactInput(prev => ({ ...prev, phone: e.target.value }))}
-                    placeholder="Telefone"
-                    className="flex-1"
-                  />
-                  <Input
-                    value={contactInput.name}
-                    onChange={(e) => setContactInput(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Nome (opcional)"
-                    className="flex-1"
-                  />
-                  <Button variant="outline" onClick={addContact}>
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                </div>
-                
-                {contacts.length > 0 && (
-                  <div className="max-h-32 overflow-y-auto space-y-1">
-                    {contacts.map((contact, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-2 bg-secondary/30 rounded-lg text-sm">
-                        <span className="truncate">{contact.name} - {contact.phone}</span>
-                        <button
-                          onClick={() => removeContact(contact.phone)}
-                          className="p-1 hover:bg-destructive/20 rounded text-destructive flex-shrink-0"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <Button variant="outline" size="sm" onClick={() => setShowContactsModal(true)}>
+                  <Users className="w-4 h-4" />
+                  Gerenciar
+                </Button>
               </div>
+
+              {/* Show contacts preview */}
+              {contacts.length > 0 && (
+                <div className="max-h-24 overflow-y-auto space-y-1">
+                  {contacts.slice(0, 5).map((contact, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2 bg-secondary/30 rounded text-sm">
+                      <span className="truncate text-xs">{contact.name} - {contact.phone}</span>
+                      <button
+                        onClick={() => removeContact(contact.phone)}
+                        className="p-1 hover:bg-destructive/20 rounded text-destructive flex-shrink-0"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {contacts.length > 5 && (
+                    <p className="text-xs text-muted-foreground text-center">
+                      +{contacts.length - 5} contato(s)
+                    </p>
+                  )}
+                </div>
+              )}
 
               <Button variant="hero" onClick={createCampaign} className="w-full">
                 <Send className="w-4 h-4" />
@@ -752,16 +705,16 @@ export default function MarketingPanel() {
               <h3 className="font-semibold">Campanhas</h3>
               {campaigns.map((campaign) => (
                 <div key={campaign.id} className="glass-card rounded-xl p-4">
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <h4 className="font-medium truncate">{campaign.name}</h4>
                         {getStatusBadge(campaign.status)}
                       </div>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
+                      <p className="text-sm text-muted-foreground line-clamp-1">
                         {campaign.message_template}
                       </p>
-                      <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground flex-wrap">
+                      <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground flex-wrap">
                         <span className="flex items-center gap-1">
                           <Users className="w-3 h-3" />
                           {campaign.sent_count}/{campaign.target_count}
@@ -770,12 +723,6 @@ export default function MarketingPanel() {
                           <span className="flex items-center gap-1">
                             <ImageIcon className="w-3 h-3" />
                             Imagem
-                          </span>
-                        )}
-                        {campaign.button_text && (
-                          <span className="flex items-center gap-1">
-                            <LinkIcon className="w-3 h-3" />
-                            Botão
                           </span>
                         )}
                         {campaign.use_ai && (
@@ -794,7 +741,7 @@ export default function MarketingPanel() {
                             size="sm"
                             onClick={() => testCampaign(campaign.id)}
                             disabled={testingCampaign === campaign.id}
-                            title="Testar com primeiro contato"
+                            title="Testar"
                           >
                             {testingCampaign === campaign.id ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
@@ -813,7 +760,6 @@ export default function MarketingPanel() {
                             ) : (
                               <Play className="w-4 h-4" />
                             )}
-                            Enviar
                           </Button>
                           <button
                             onClick={() => deleteCampaign(campaign.id)}
@@ -834,85 +780,70 @@ export default function MarketingPanel() {
 
       {/* Intro Modal */}
       <Dialog open={showIntroModal} onOpenChange={setShowIntroModal}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Megaphone className="w-6 h-6 text-primary" />
               Modo Marketing
             </DialogTitle>
             <DialogDescription>
-              Conheça as funcionalidades do módulo de Marketing
+              Funcionalidades do módulo de Marketing
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
-            <div className="space-y-3">
-              <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                  <Send className="w-4 h-4 text-primary" />
-                </div>
-                <div>
-                  <h4 className="font-medium">Disparo em Massa</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Envie mensagens para múltiplos contatos via WhatsApp usando a integração ChatPro.
-                  </p>
-                </div>
+          <div className="space-y-3 py-2">
+            <div className="flex gap-3">
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                <Send className="w-4 h-4 text-primary" />
               </div>
-              
-              <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                  <FileSpreadsheet className="w-4 h-4 text-primary" />
-                </div>
-                <div>
-                  <h4 className="font-medium">Importar Contatos</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Importe contatos via arquivo CSV ou adicione em massa colando números.
-                  </p>
-                </div>
+              <div>
+                <h4 className="font-medium text-sm">Disparo em Massa</h4>
+                <p className="text-xs text-muted-foreground">
+                  Envie mensagens para múltiplos contatos via WhatsApp.
+                </p>
               </div>
-              
-              <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                  <ImageIcon className="w-4 h-4 text-primary" />
-                </div>
-                <div>
-                  <h4 className="font-medium">Imagens e Botões</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Adicione imagens e botões clicáveis às suas mensagens para maior engajamento.
-                  </p>
-                </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                <FileSpreadsheet className="w-4 h-4 text-primary" />
               </div>
-              
-              <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="w-4 h-4 text-primary" />
-                </div>
-                <div>
-                  <h4 className="font-medium">Personalização com IA</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Use IA para criar variações personalizadas focadas em avisos, anúncios e vendas.
-                  </p>
-                </div>
+              <div>
+                <h4 className="font-medium text-sm">Importar Contatos</h4>
+                <p className="text-xs text-muted-foreground">
+                  Importe via CSV ou adicione em massa.
+                </p>
               </div>
-              
-              <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                  <Clock className="w-4 h-4 text-primary" />
-                </div>
-                <div>
-                  <h4 className="font-medium">Controle de Envio</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Configure intervalos entre mensagens para evitar bloqueios.
-                  </p>
-                </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                <ImageIcon className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <h4 className="font-medium text-sm">Imagens e Botões</h4>
+                <p className="text-xs text-muted-foreground">
+                  Adicione mídia e links às mensagens.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <h4 className="font-medium text-sm">Personalização com IA</h4>
+                <p className="text-xs text-muted-foreground">
+                  IA focada em avisos, anúncios e vendas.
+                </p>
               </div>
             </div>
 
             <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
               <p className="text-xs text-muted-foreground">
-                <strong className="text-yellow-500">Atenção:</strong> O envio de mensagens em massa 
-                pode resultar em bloqueio pelo WhatsApp. Use com responsabilidade.
+                <strong className="text-yellow-500">Atenção:</strong> O envio em massa pode resultar em bloqueio pelo WhatsApp.
               </p>
             </div>
           </div>
@@ -923,47 +854,146 @@ export default function MarketingPanel() {
             </Button>
             <Button variant="hero" onClick={confirmEnableMarketing} className="flex-1">
               <Power className="w-4 h-4" />
-              Ativar Marketing
+              Ativar
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Bulk Contacts Modal */}
+      {/* Contacts Modal - All contact management in one place */}
       <Dialog open={showContactsModal} onOpenChange={setShowContactsModal}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Users className="w-5 h-5 text-primary" />
-              Adicionar Contatos em Massa
+              Gerenciar Contatos
             </DialogTitle>
             <DialogDescription>
-              Cole os números de telefone, um por linha. Opcionalmente adicione nome separado por vírgula.
+              {contacts.length}/{settings?.max_contacts || 100} contatos
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 py-2">
-            <Textarea
-              value={bulkContacts}
-              onChange={(e) => setBulkContacts(e.target.value)}
-              placeholder={`5511999999999, João Silva\n5511888888888, Maria\n5511777777777`}
-              rows={8}
-              className="font-mono text-sm"
-            />
-            <p className="text-xs text-muted-foreground">
-              Formato: telefone, nome (opcional) - um por linha
-            </p>
+          {/* Tabs */}
+          <div className="flex gap-1 p-1 bg-secondary/50 rounded-lg">
+            {[
+              { id: 'manual', label: 'Manual' },
+              { id: 'bulk', label: 'Em Massa' },
+              { id: 'csv', label: 'CSV' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setContactsTab(tab.id as any)}
+                className={`flex-1 px-3 py-2 text-sm rounded-md transition-colors ${
+                  contactsTab === tab.id
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
 
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setShowContactsModal(false)} className="flex-1">
-              Cancelar
-            </Button>
-            <Button variant="hero" onClick={handleBulkAdd} className="flex-1">
-              <Plus className="w-4 h-4" />
-              Adicionar
-            </Button>
+          <div className="space-y-3 py-2">
+            {contactsTab === 'manual' && (
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <Input
+                    value={contactInput.phone}
+                    onChange={(e) => setContactInput(prev => ({ ...prev, phone: e.target.value }))}
+                    placeholder="Telefone"
+                    className="flex-1"
+                  />
+                  <Input
+                    value={contactInput.name}
+                    onChange={(e) => setContactInput(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Nome"
+                    className="flex-1"
+                  />
+                </div>
+                <Button variant="hero" onClick={addManualContact} className="w-full">
+                  <Plus className="w-4 h-4" />
+                  Adicionar Contato
+                </Button>
+              </div>
+            )}
+
+            {contactsTab === 'bulk' && (
+              <div className="space-y-3">
+                <Textarea
+                  value={bulkContacts}
+                  onChange={(e) => setBulkContacts(e.target.value)}
+                  placeholder={`5511999999999, João Silva\n5511888888888, Maria\n5511777777777`}
+                  rows={6}
+                  className="font-mono text-sm"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Formato: telefone, nome (opcional) - um por linha
+                </p>
+                <Button variant="hero" onClick={handleBulkAdd} className="w-full">
+                  <Plus className="w-4 h-4" />
+                  Adicionar Todos
+                </Button>
+              </div>
+            )}
+
+            {contactsTab === 'csv' && (
+              <div className="space-y-3">
+                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                  <input
+                    ref={csvInputRef}
+                    type="file"
+                    accept=".csv,.txt"
+                    onChange={handleCSVUpload}
+                    className="hidden"
+                  />
+                  <FileSpreadsheet className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Selecione um arquivo CSV ou TXT
+                  </p>
+                  <Button variant="outline" onClick={() => csvInputRef.current?.click()}>
+                    <Upload className="w-4 h-4" />
+                    Escolher Arquivo
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Formato: telefone, nome (opcional) - um por linha
+                </p>
+              </div>
+            )}
+
+            {/* Current contacts list */}
+            {contacts.length > 0 && (
+              <div className="border-t border-border pt-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">Contatos adicionados</span>
+                  <button
+                    onClick={() => setContacts([])}
+                    className="text-xs text-destructive hover:underline"
+                  >
+                    Limpar todos
+                  </button>
+                </div>
+                <div className="max-h-40 overflow-y-auto space-y-1">
+                  {contacts.map((contact, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2 bg-secondary/30 rounded text-sm">
+                      <span className="truncate text-xs">{contact.name} - {contact.phone}</span>
+                      <button
+                        onClick={() => removeContact(contact.phone)}
+                        className="p-1 hover:bg-destructive/20 rounded text-destructive flex-shrink-0"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
+
+          <Button variant="outline" onClick={() => setShowContactsModal(false)} className="w-full">
+            Concluído
+          </Button>
         </DialogContent>
       </Dialog>
     </div>
