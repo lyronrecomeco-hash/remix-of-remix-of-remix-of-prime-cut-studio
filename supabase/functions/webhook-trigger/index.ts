@@ -96,15 +96,8 @@ serve(async (req) => {
           
           console.log('Sending via ChatPro to:', phone, 'URL:', apiUrl);
 
-          // Build full message with button if configured
-          let fullMessage = message;
-          if (buttonText && buttonUrl) {
-            fullMessage += `\n\n🔗 ${buttonText}: ${buttonUrl}`;
-          }
-          
-          // If there's an image, send image first, then message
+          // If there's an image, send image first
           if (imageUrl) {
-            // Send image first via ChatPro
             const imageApiUrl = apiUrl.replace('send_message', 'send_image');
             console.log('Sending image via ChatPro:', imageApiUrl);
             
@@ -127,18 +120,48 @@ serve(async (req) => {
             }
           }
 
-          // Send text message
-          const chatproResponse = await fetch(apiUrl, {
-            method: 'POST',
-            headers: {
-              'Authorization': chatproConfig.api_token,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              number: phone,
-              message: fullMessage,
-            }),
-          });
+          let chatproResponse;
+
+          // If button is configured, send as button message with CTA
+          if (buttonText && buttonUrl) {
+            const buttonApiUrl = apiUrl.replace('send_message', 'send_button_list');
+            console.log('Sending button message via ChatPro:', buttonApiUrl);
+            
+            chatproResponse = await fetch(buttonApiUrl, {
+              method: 'POST',
+              headers: {
+                'Authorization': chatproConfig.api_token,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                number: phone,
+                buttonText: buttonText,
+                text: message,
+                title: '',
+                footer: '',
+                buttons: [
+                  {
+                    id: 'btn_1',
+                    text: buttonText,
+                  }
+                ],
+                url: buttonUrl,
+              }),
+            });
+          } else {
+            // Send regular text message
+            chatproResponse = await fetch(apiUrl, {
+              method: 'POST',
+              headers: {
+                'Authorization': chatproConfig.api_token,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                number: phone,
+                message: message,
+              }),
+            });
+          }
 
           const responseText = await chatproResponse.text();
           console.log('ChatPro response:', chatproResponse.status, responseText);
