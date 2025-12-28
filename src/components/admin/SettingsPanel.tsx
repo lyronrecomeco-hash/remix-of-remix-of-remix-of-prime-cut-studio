@@ -131,6 +131,7 @@ const defaultTemplates: Record<string, string> = {
   queue_update: 'Atualização da sua fila na {{nome_barbearia}}:\nSua posição atual é: {{posição_fila}}.',
   appointment_reminder: 'Lembrete: você possui um horário hoje na {{nome_barbearia}} às {{hora}}.',
   appointment_completed: 'Obrigado por visitar a {{nome_barbearia}}!\nEsperamos que tenha gostado do serviço. Volte sempre!',
+  feedback_request: 'Olá {{nome_cliente}}! 🌟\n\nObrigado por visitar a {{nome_barbearia}}!\n\nGostaríamos muito de saber sua opinião sobre nosso atendimento.\n\nClique no link abaixo para nos avaliar:\n{{link_avaliacao}}\n\nAgradecemos sua preferência! 💈',
 };
 
 const eventLabels: Record<string, string> = {
@@ -140,6 +141,7 @@ const eventLabels: Record<string, string> = {
   queue_update: 'Atualização da Fila',
   appointment_reminder: 'Lembrete de Horário',
   appointment_completed: 'Atendimento Concluído',
+  feedback_request: 'Solicitação de Avaliação',
 };
 
 const variables = [
@@ -150,6 +152,7 @@ const variables = [
   { key: '{{hora}}', label: 'Hora' },
   { key: '{{posição_fila}}', label: 'Posição na Fila' },
   { key: '{{protocolo}}', label: 'Protocolo' },
+  { key: '{{link_avaliacao}}', label: 'Link de Avaliação' },
 ];
 
 const defaultSiteTexts: SiteSectionTexts = {
@@ -253,6 +256,12 @@ export default function SettingsPanel() {
   // Barber schedules state
   const [barberSchedules, setBarberSchedules] = useState<BarberSchedule[]>([]);
   const [selectedBarberId, setSelectedBarberId] = useState<string>('');
+
+  // AI Template generation state
+  const [aiGenerating, setAiGenerating] = useState<string | null>(null);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [aiTargetEvent, setAiTargetEvent] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTemplates();
@@ -445,7 +454,67 @@ export default function SettingsPanel() {
     preview = preview.replace(/\{\{data\}\}/g, '28/12/2025');
     preview = preview.replace(/\{\{hora\}\}/g, '14:30');
     preview = preview.replace(/\{\{posição_fila\}\}/g, '2');
+    preview = preview.replace(/\{\{link_avaliacao\}\}/g, `${window.location.origin}/avaliar`);
     return preview;
+  };
+
+  // Generate template with AI
+  const generateTemplateWithAI = async (eventType: string, customPrompt?: string) => {
+    setAiGenerating(eventType);
+    
+    try {
+      const eventLabel = eventLabels[eventType] || eventType;
+      const prompt = customPrompt || `Gere uma mensagem persuasiva e profissional para WhatsApp de uma barbearia para o evento: "${eventLabel}". 
+A mensagem deve:
+- Ser amigável e profissional
+- Usar emojis de forma moderada
+- Ser curta (máximo 3 parágrafos)
+- Incluir as variáveis disponíveis: {{nome_cliente}}, {{nome_barbearia}}, {{serviço}}, {{data}}, {{hora}}, {{posição_fila}}, {{protocolo}}${eventType === 'feedback_request' ? ', {{link_avaliacao}}' : ''}
+- Criar urgência ou motivar ação quando apropriado
+
+Retorne APENAS a mensagem, sem explicações.`;
+
+      const { data, error } = await supabase.functions.invoke('generate-marketing-prompt', {
+        body: { prompt },
+      });
+
+      if (error) throw error;
+
+      const generatedTemplate = data?.generatedText || data?.text;
+      if (generatedTemplate) {
+        const updated = templates.map(t =>
+          t.event_type === eventType ? { ...t, template: generatedTemplate } : t
+        );
+        setTemplates(updated);
+        notify.success('Template gerado com IA!');
+      }
+    } catch (error) {
+      console.error('AI generation error:', error);
+      notify.error('Erro ao gerar com IA');
+    }
+    
+    setAiGenerating(null);
+  };
+
+  // Generate all templates with AI
+  const generateAllTemplatesWithAI = async () => {
+    const confirmGenerate = window.confirm(
+      'Deseja gerar TODOS os templates com IA? Isso substituirá os templates atuais.'
+    );
+    if (!confirmGenerate) return;
+
+    for (const eventType of Object.keys(eventLabels)) {
+      await generateTemplateWithAI(eventType);
+      // Small delay between generations
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    // Save all templates
+    for (const template of templates) {
+      await updateTemplate(template.event_type, template.template);
+    }
+    
+    notify.success('Todos os templates foram gerados e salvos!');
   };
 
   const getTemplateForEvent = (eventType: string) => {
@@ -1234,8 +1303,20 @@ export default function SettingsPanel() {
       case 'templates':
         return (
           <div className="space-y-4">
-            <h3 className="text-xl font-bold">Templates de Mensagem</h3>
-            <p className="text-base text-muted-foreground">Configure as mensagens automáticas para cada evento.</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold">Templates de Mensagem</h3>
+                <p className="text-base text-muted-foreground">Configure as mensagens automáticas para cada evento.</p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={generateAllTemplatesWithAI}
+                className="gap-2"
+              >
+                <Sparkles className="w-4 h-4" />
+                Gerar Todos com IA
+              </Button>
+            </div>
             <div className="space-y-3">
               {Object.entries(eventLabels).map(([eventType, label]) => {
                 const template = getTemplateForEvent(eventType);
@@ -1250,6 +1331,9 @@ export default function SettingsPanel() {
                       <div className="flex items-center gap-3">
                         <div className={`w-3 h-3 rounded-full ${template?.is_active ? 'bg-green-500' : 'bg-muted'}`} />
                         <span className="text-base font-medium">{label}</span>
+                        {eventType === 'feedback_request' && (
+                          <span className="px-2 py-0.5 bg-primary/20 text-primary text-xs rounded-full">NOVO</span>
+                        )}
                       </div>
                       {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                     </button>
@@ -1270,6 +1354,15 @@ export default function SettingsPanel() {
                           </button>
                         </div>
 
+                        {eventType === 'feedback_request' && (
+                          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+                            <p className="text-sm text-blue-400">
+                              <strong>Dica:</strong> Este template é enviado automaticamente quando o barbeiro conclui um atendimento. 
+                              O link de avaliação ({window.location.origin}/avaliar) é inserido automaticamente na variável <code className="bg-blue-500/20 px-1 rounded">{'{{link_avaliacao}}'}</code>.
+                            </p>
+                          </div>
+                        )}
+
                         <Textarea
                           value={template.template}
                           onChange={(e) => {
@@ -1278,7 +1371,7 @@ export default function SettingsPanel() {
                             );
                             setTemplates(updated);
                           }}
-                          rows={3}
+                          rows={4}
                           className="text-sm"
                         />
 
@@ -1287,10 +1380,7 @@ export default function SettingsPanel() {
                             <button
                               key={v.key}
                               onClick={() => {
-                                const textarea = document.querySelector(`textarea`) as HTMLTextAreaElement;
-                                const start = textarea.selectionStart;
-                                const end = textarea.selectionEnd;
-                                const newTemplate = template.template.substring(0, start) + v.key + template.template.substring(end);
+                                const newTemplate = template.template + v.key;
                                 const updated = templates.map(t =>
                                   t.event_type === eventType ? { ...t, template: newTemplate } : t
                                 );
@@ -1303,10 +1393,24 @@ export default function SettingsPanel() {
                           ))}
                         </div>
 
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                           <Button size="sm" onClick={() => updateTemplate(eventType, template.template)} className="h-8 text-xs">
                             <Save className="w-3 h-3 mr-1" />
                             Salvar
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => generateTemplateWithAI(eventType)}
+                            disabled={aiGenerating === eventType}
+                            className="h-8 text-xs gap-1"
+                          >
+                            {aiGenerating === eventType ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Sparkles className="w-3 h-3" />
+                            )}
+                            Gerar com IA
                           </Button>
                           <Button size="sm" variant="outline" onClick={() => restoreDefaultTemplate(eventType)} className="h-8 text-xs">
                             <RotateCcw className="w-3 h-3 mr-1" />

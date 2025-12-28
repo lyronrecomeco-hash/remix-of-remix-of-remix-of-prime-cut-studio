@@ -616,6 +616,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         time: apt.time,
       });
 
+      // Trigger feedback request (separate message with evaluation link)
+      triggerWebhook({
+        event_type: 'feedback_request',
+        appointment_id: id,
+        client_name: apt.clientName,
+        client_phone: apt.clientPhone,
+        service_name: apt.service.name,
+        barber_name: apt.barber.name,
+        date: apt.date,
+        time: apt.time,
+      });
+
       sendPushNotification(
         'Atendimento Concluído',
         `Obrigado pela visita! Esperamos vê-lo novamente.`,
