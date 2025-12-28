@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import {
   ArrowLeft,
   ArrowRight,
@@ -16,6 +17,8 @@ import {
   Volume2,
   VolumeX,
   RefreshCw,
+  Info,
+  ClipboardList,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -449,6 +452,12 @@ const BookingDirect = () => {
                     <CalendarPlus className="w-5 h-5" />
                     Adicionar ao Calendário
                   </Button>
+                  <Button asChild variant="outline" size="lg" className="w-full">
+                    <Link to="/meus-agendamentos">
+                      <ClipboardList className="w-5 h-5" />
+                      Ver Meus Agendamentos
+                    </Link>
+                  </Button>
                 </div>
 
                 <div className="mt-6 pt-6 border-t border-border">
@@ -503,6 +512,38 @@ const BookingDirect = () => {
                   </div>
                 </motion.div>
 
+                {/* Status do agendamento */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.45 }}
+                  className="bg-secondary/50 rounded-xl p-4 mb-6"
+                >
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Status</span>
+                    <span className="font-medium">{getStatusLabel(liveAppointmentStatus || createdAppointment?.status)}</span>
+                  </div>
+                </motion.div>
+
+                {/* Instructions */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-6 text-left"
+                >
+                  <div className="flex items-start gap-3">
+                    <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-medium mb-1">Instruções importantes:</p>
+                      <ul className="text-muted-foreground space-y-1">
+                        <li>• Chegue 5 minutos antes do horário</li>
+                        <li>• Cancelamentos com 2h de antecedência</li>
+                      </ul>
+                    </div>
+                  </div>
+                </motion.div>
+
                 <div className="flex flex-col gap-3">
                   {queueEnabled && (
                     <Button variant="hero" size="lg" className="w-full" onClick={() => setPostBookingView('chamada')}>
@@ -513,6 +554,12 @@ const BookingDirect = () => {
                   <Button variant="outline" size="lg" className="w-full" onClick={handleAddToCalendar}>
                     <CalendarPlus className="w-5 h-5" />
                     Adicionar ao Calendário
+                  </Button>
+                  <Button asChild variant="outline" size="lg" className="w-full">
+                    <Link to="/meus-agendamentos">
+                      <ClipboardList className="w-5 h-5" />
+                      Ver Meus Agendamentos
+                    </Link>
                   </Button>
                 </div>
 
