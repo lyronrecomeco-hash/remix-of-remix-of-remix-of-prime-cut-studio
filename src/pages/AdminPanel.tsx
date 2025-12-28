@@ -71,9 +71,9 @@ const menuItems = [
   { id: 'servicos', label: 'Serviços', icon: Scissors },
   { id: 'galeria', label: 'Galeria', icon: Image },
   { id: 'feedbacks', label: 'Feedbacks', icon: MessageSquare },
-  { id: 'config', label: 'Configurações', icon: Settings },
   { id: 'marketing', label: 'Marketing', icon: Megaphone },
   { id: 'usuarios', label: 'Usuários', icon: Lock },
+  { id: 'config', label: 'Configurações', icon: Settings },
 ];
 
 const AdminPanel = () => {
@@ -1089,31 +1089,70 @@ const AdminPanel = () => {
               </div>
             </div>
 
-            {/* Gallery grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {galleryImages.map((image) => (
-                <div key={image.id} className="relative group rounded-xl overflow-hidden aspect-square">
-                  <img
-                    src={image.url}
-                    alt={image.title || 'Galeria'}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                    <button
-                      onClick={() => removeImage(image.id)}
-                      className="w-10 h-10 rounded-lg bg-destructive text-destructive-foreground flex items-center justify-center"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
+            {/* Gallery grid with pagination */}
+            {(() => {
+              const GALLERY_PER_PAGE = 6;
+              const [galleryPage, setGalleryPage] = useState(0);
+              const totalGalleryPages = Math.ceil(galleryImages.length / GALLERY_PER_PAGE);
+              const paginatedImages = galleryImages.slice(
+                galleryPage * GALLERY_PER_PAGE,
+                (galleryPage + 1) * GALLERY_PER_PAGE
+              );
+
+              return (
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    {paginatedImages.map((image) => (
+                      <div key={image.id} className="relative group rounded-xl overflow-hidden aspect-square">
+                        <img
+                          src={image.url}
+                          alt={image.title || 'Galeria'}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => removeImage(image.id)}
+                            className="w-8 h-8 rounded-lg bg-destructive text-destructive-foreground flex items-center justify-center"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                        {image.title && (
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/80 to-transparent p-2">
+                            <p className="text-xs font-medium truncate">{image.title}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                  {image.title && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/80 to-transparent p-3">
-                      <p className="text-sm font-medium">{image.title}</p>
+
+                  {/* Pagination */}
+                  {totalGalleryPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 mt-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setGalleryPage(p => Math.max(0, p - 1))}
+                        disabled={galleryPage === 0}
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      <span className="text-sm text-muted-foreground">
+                        {galleryPage + 1} de {totalGalleryPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setGalleryPage(p => Math.min(totalGalleryPages - 1, p + 1))}
+                        disabled={galleryPage >= totalGalleryPages - 1}
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
                     </div>
                   )}
-                </div>
-              ))}
-            </div>
+                </>
+              );
+            })()}
           </div>
         );
 

@@ -8,6 +8,7 @@ const corsHeaders = {
 
 interface MarketingRequest {
   campaign_id: string;
+  test_mode?: boolean;
 }
 
 serve(async (req) => {
@@ -20,8 +21,8 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { campaign_id }: MarketingRequest = await req.json();
-    console.log('Starting marketing campaign:', campaign_id);
+    const { campaign_id, test_mode }: MarketingRequest = await req.json();
+    console.log('Starting marketing campaign:', campaign_id, test_mode ? '(TEST MODE)' : '');
 
     // Get campaign details
     const { data: campaign, error: campaignError } = await supabase
@@ -66,12 +67,18 @@ serve(async (req) => {
       );
     }
 
-    // Get pending contacts
-    const { data: contacts, error: contactsError } = await supabase
+    // Get pending contacts (limit to 1 in test mode)
+    const query = supabase
       .from('marketing_contacts')
       .select('*')
       .eq('campaign_id', campaign_id)
       .eq('status', 'pending');
+    
+    if (test_mode) {
+      query.limit(1);
+    }
+
+    const { data: contacts, error: contactsError } = await query;
 
     if (contactsError || !contacts || contacts.length === 0) {
       console.log('No pending contacts');

@@ -23,6 +23,8 @@ import {
   Pause,
   FileText,
   X,
+  FileSpreadsheet,
+  TestTube,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -63,6 +65,7 @@ interface Contact {
 export default function MarketingPanel() {
   const { notify } = useNotification();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const csvInputRef = useRef<HTMLInputElement>(null);
   
   // State
   const [settings, setSettings] = useState<MarketingSettings | null>(null);
@@ -70,7 +73,9 @@ export default function MarketingPanel() {
   const [loading, setLoading] = useState(true);
   const [showIntroModal, setShowIntroModal] = useState(false);
   const [showNewCampaign, setShowNewCampaign] = useState(false);
+  const [showContactsModal, setShowContactsModal] = useState(false);
   const [sendingCampaign, setSendingCampaign] = useState<string | null>(null);
+  const [testingCampaign, setTestingCampaign] = useState<string | null>(null);
   
   // New campaign form
   const [campaignForm, setCampaignForm] = useState({
@@ -84,6 +89,7 @@ export default function MarketingPanel() {
   });
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [contactInput, setContactInput] = useState({ phone: '', name: '' });
+  const [bulkContacts, setBulkContacts] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
@@ -109,12 +115,10 @@ export default function MarketingPanel() {
     if (!settings) return;
     
     if (!settings.is_enabled) {
-      // Show intro modal when enabling
       setShowIntroModal(true);
       return;
     }
     
-    // Disable marketing
     const { error } = await supabase
       .from('marketing_settings')
       .update({ is_enabled: false })
@@ -192,6 +196,69 @@ export default function MarketingPanel() {
     setUploadingImage(false);
   };
 
+  const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split('\n').filter(line => line.trim());
+      
+      const newContacts: Contact[] = [];
+      lines.forEach((line, index) => {
+        if (index === 0 && (line.toLowerCase().includes('telefone') || line.toLowerCase().includes('phone'))) {
+          return; // Skip header
+        }
+        
+        const parts = line.split(/[,;]/);
+        const phone = parts[0]?.replace(/\D/g, '').trim();
+        const name = parts[1]?.trim() || phone;
+        
+        if (phone && phone.length >= 10 && !contacts.some(c => c.phone === phone) && !newContacts.some(c => c.phone === phone)) {
+          if (contacts.length + newContacts.length < (settings?.max_contacts || 100)) {
+            newContacts.push({ phone, name });
+          }
+        }
+      });
+
+      if (newContacts.length > 0) {
+        setContacts(prev => [...prev, ...newContacts]);
+        notify.success(`${newContacts.length} contato(s) importado(s)`);
+      } else {
+        notify.error('Nenhum contato válido encontrado');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  const handleBulkAdd = () => {
+    const lines = bulkContacts.split('\n').filter(line => line.trim());
+    const newContacts: Contact[] = [];
+    
+    lines.forEach(line => {
+      const parts = line.split(/[,;]/);
+      const phone = parts[0]?.replace(/\D/g, '').trim();
+      const name = parts[1]?.trim() || phone;
+      
+      if (phone && phone.length >= 10 && !contacts.some(c => c.phone === phone) && !newContacts.some(c => c.phone === phone)) {
+        if (contacts.length + newContacts.length < (settings?.max_contacts || 100)) {
+          newContacts.push({ phone, name });
+        }
+      }
+    });
+
+    if (newContacts.length > 0) {
+      setContacts(prev => [...prev, ...newContacts]);
+      setBulkContacts('');
+      setShowContactsModal(false);
+      notify.success(`${newContacts.length} contato(s) adicionado(s)`);
+    } else {
+      notify.error('Nenhum contato válido encontrado');
+    }
+  };
+
   const addContact = () => {
     if (!contactInput.phone.trim()) {
       notify.error('Digite um número de telefone');
@@ -234,7 +301,6 @@ export default function MarketingPanel() {
     }
 
     try {
-      // Create campaign
       const { data: campaign, error: campaignError } = await supabase
         .from('marketing_campaigns')
         .insert({
@@ -253,7 +319,6 @@ export default function MarketingPanel() {
 
       if (campaignError) throw campaignError;
 
-      // Insert contacts
       const contactsToInsert = contacts.map(c => ({
         campaign_id: campaign.id,
         phone: c.phone,
@@ -268,6 +333,7 @@ export default function MarketingPanel() {
       if (contactsError) throw contactsError;
 
       notify.success('Campanha criada!');
+      notify.info('Nova campanha', `A campanha "${campaignForm.name}" foi criada e está pronta para envio.`);
       fetchCampaigns();
       resetForm();
     } catch (error) {
@@ -290,6 +356,25 @@ export default function MarketingPanel() {
     setShowNewCampaign(false);
   };
 
+  const testCampaign = async (campaignId: string) => {
+    setTestingCampaign(campaignId);
+    
+    try {
+      const { error } = await supabase.functions.invoke('send-marketing', {
+        body: { campaign_id: campaignId, test_mode: true },
+      });
+
+      if (error) throw error;
+
+      notify.success('Teste enviado! Verifique o primeiro contato.');
+    } catch (error) {
+      console.error('Test campaign error:', error);
+      notify.error('Erro ao testar campanha');
+    }
+    
+    setTestingCampaign(null);
+  };
+
   const startCampaign = async (campaignId: string) => {
     setSendingCampaign(campaignId);
     
@@ -301,6 +386,7 @@ export default function MarketingPanel() {
       if (error) throw error;
 
       notify.success('Campanha iniciada! Acompanhe o progresso.');
+      notify.info('Campanha em andamento', 'As mensagens estão sendo enviadas. Você será notificado ao concluir.');
       fetchCampaigns();
     } catch (error) {
       console.error('Campaign start error:', error);
@@ -374,19 +460,21 @@ export default function MarketingPanel() {
       </div>
 
       {!settings?.is_enabled ? (
-        <div className="glass-card rounded-xl p-8 text-center">
+        <div className="glass-card rounded-xl p-8 text-center opacity-60 pointer-events-none select-none">
           <Megaphone className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-xl font-bold mb-2">Modo Marketing Desativado</h3>
           <p className="text-muted-foreground mb-4">
             Ative o modo Marketing para enviar mensagens em massa via WhatsApp.
           </p>
-          <Button variant="hero" onClick={toggleMarketing}>
-            <Power className="w-4 h-4" />
-            Ativar Marketing
-          </Button>
+          <div className="pointer-events-auto">
+            <Button variant="hero" onClick={toggleMarketing}>
+              <Power className="w-4 h-4" />
+              Ativar Marketing
+            </Button>
+          </div>
         </div>
       ) : (
-        <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
+        <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-1">
           {/* Settings */}
           <div className="glass-card rounded-xl p-4">
             <div className="flex items-center gap-2 mb-4">
@@ -514,28 +602,34 @@ export default function MarketingPanel() {
                   <img 
                     src={campaignForm.image_url} 
                     alt="Preview" 
-                    className="mt-2 w-32 h-32 object-cover rounded-lg"
+                    className="mt-2 w-24 h-24 object-cover rounded-lg"
                   />
                 )}
               </div>
 
-              {/* Button */}
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-sm text-muted-foreground block mb-1">Texto do Botão</label>
-                  <Input
-                    value={campaignForm.button_text}
-                    onChange={(e) => setCampaignForm(prev => ({ ...prev, button_text: e.target.value }))}
-                    placeholder="Ex: Ver Promoção"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm text-muted-foreground block mb-1">URL do Botão</label>
-                  <Input
-                    value={campaignForm.button_url}
-                    onChange={(e) => setCampaignForm(prev => ({ ...prev, button_url: e.target.value }))}
-                    placeholder="https://..."
-                  />
+              {/* Button - Optional */}
+              <div className="p-3 bg-secondary/20 rounded-lg">
+                <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                  <LinkIcon className="w-3 h-3" />
+                  Botão clicável (opcional) - Adicione um link se desejar
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs text-muted-foreground block mb-1">Texto do Botão</label>
+                    <Input
+                      value={campaignForm.button_text}
+                      onChange={(e) => setCampaignForm(prev => ({ ...prev, button_text: e.target.value }))}
+                      placeholder="Ex: Ver Promoção"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground block mb-1">URL do Botão</label>
+                    <Input
+                      value={campaignForm.button_url}
+                      onChange={(e) => setCampaignForm(prev => ({ ...prev, button_url: e.target.value }))}
+                      placeholder="https://..."
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -557,7 +651,7 @@ export default function MarketingPanel() {
                     Personalizar com IA
                   </span>
                   <p className="text-xs text-muted-foreground">
-                    Use IA para personalizar cada mensagem
+                    Use IA para criar variações personalizadas focadas em avisos, anúncios ou vendas
                   </p>
                 </div>
               </div>
@@ -568,17 +662,48 @@ export default function MarketingPanel() {
                   <Textarea
                     value={campaignForm.ai_prompt}
                     onChange={(e) => setCampaignForm(prev => ({ ...prev, ai_prompt: e.target.value }))}
-                    placeholder="Ex: Crie uma variação criativa da mensagem para cada cliente..."
+                    placeholder="Ex: Crie uma variação criativa da mensagem para cada cliente, focando em promoções..."
                     rows={2}
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    A IA é treinada para marketing: avisos, anúncios e vendas. Não funciona para agendamentos.
+                  </p>
                 </div>
               )}
 
               {/* Contacts */}
               <div>
-                <label className="text-sm text-muted-foreground block mb-1">
-                  Contatos ({contacts.length}/{settings?.max_contacts || 100})
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm text-muted-foreground">
+                    Contatos ({contacts.length}/{settings?.max_contacts || 100})
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      ref={csvInputRef}
+                      type="file"
+                      accept=".csv,.txt"
+                      onChange={handleCSVUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => csvInputRef.current?.click()}
+                    >
+                      <FileSpreadsheet className="w-4 h-4" />
+                      CSV
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowContactsModal(true)}
+                    >
+                      <Plus className="w-4 h-4" />
+                      Em Massa
+                    </Button>
+                  </div>
+                </div>
+                
                 <div className="flex gap-2 mb-2">
                   <Input
                     value={contactInput.phone}
@@ -598,13 +723,13 @@ export default function MarketingPanel() {
                 </div>
                 
                 {contacts.length > 0 && (
-                  <div className="max-h-40 overflow-y-auto space-y-1">
+                  <div className="max-h-32 overflow-y-auto space-y-1">
                     {contacts.map((contact, idx) => (
                       <div key={idx} className="flex items-center justify-between p-2 bg-secondary/30 rounded-lg text-sm">
-                        <span>{contact.name} - {contact.phone}</span>
+                        <span className="truncate">{contact.name} - {contact.phone}</span>
                         <button
                           onClick={() => removeContact(contact.phone)}
-                          className="p-1 hover:bg-destructive/20 rounded text-destructive"
+                          className="p-1 hover:bg-destructive/20 rounded text-destructive flex-shrink-0"
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
@@ -628,15 +753,15 @@ export default function MarketingPanel() {
               {campaigns.map((campaign) => (
                 <div key={campaign.id} className="glass-card rounded-xl p-4">
                   <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-medium">{campaign.name}</h4>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <h4 className="font-medium truncate">{campaign.name}</h4>
                         {getStatusBadge(campaign.status)}
                       </div>
                       <p className="text-sm text-muted-foreground line-clamp-2">
                         {campaign.message_template}
                       </p>
-                      <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground flex-wrap">
                         <span className="flex items-center gap-1">
                           <Users className="w-3 h-3" />
                           {campaign.sent_count}/{campaign.target_count}
@@ -661,9 +786,22 @@ export default function MarketingPanel() {
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       {campaign.status === 'draft' && (
                         <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => testCampaign(campaign.id)}
+                            disabled={testingCampaign === campaign.id}
+                            title="Testar com primeiro contato"
+                          >
+                            {testingCampaign === campaign.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <TestTube className="w-4 h-4" />
+                            )}
+                          </Button>
                           <Button
                             variant="hero"
                             size="sm"
@@ -723,6 +861,18 @@ export default function MarketingPanel() {
               
               <div className="flex gap-3">
                 <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                  <FileSpreadsheet className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <h4 className="font-medium">Importar Contatos</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Importe contatos via arquivo CSV ou adicione em massa colando números.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
                   <ImageIcon className="w-4 h-4 text-primary" />
                 </div>
                 <div>
@@ -740,7 +890,7 @@ export default function MarketingPanel() {
                 <div>
                   <h4 className="font-medium">Personalização com IA</h4>
                   <p className="text-sm text-muted-foreground">
-                    Use IA para criar variações personalizadas de cada mensagem automaticamente.
+                    Use IA para criar variações personalizadas focadas em avisos, anúncios e vendas.
                   </p>
                 </div>
               </div>
@@ -774,6 +924,44 @@ export default function MarketingPanel() {
             <Button variant="hero" onClick={confirmEnableMarketing} className="flex-1">
               <Power className="w-4 h-4" />
               Ativar Marketing
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Contacts Modal */}
+      <Dialog open={showContactsModal} onOpenChange={setShowContactsModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-primary" />
+              Adicionar Contatos em Massa
+            </DialogTitle>
+            <DialogDescription>
+              Cole os números de telefone, um por linha. Opcionalmente adicione nome separado por vírgula.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            <Textarea
+              value={bulkContacts}
+              onChange={(e) => setBulkContacts(e.target.value)}
+              placeholder={`5511999999999, João Silva\n5511888888888, Maria\n5511777777777`}
+              rows={8}
+              className="font-mono text-sm"
+            />
+            <p className="text-xs text-muted-foreground">
+              Formato: telefone, nome (opcional) - um por linha
+            </p>
+          </div>
+
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowContactsModal(false)} className="flex-1">
+              Cancelar
+            </Button>
+            <Button variant="hero" onClick={handleBulkAdd} className="flex-1">
+              <Plus className="w-4 h-4" />
+              Adicionar
             </Button>
           </div>
         </DialogContent>
