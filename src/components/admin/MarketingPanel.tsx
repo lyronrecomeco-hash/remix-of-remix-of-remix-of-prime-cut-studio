@@ -431,10 +431,24 @@ export default function MarketingPanel() {
     setTestingCampaign(null);
   };
 
-  const startCampaign = async (campaignId: string) => {
+  const startCampaign = async (campaignId: string, resetContacts = false) => {
     setSendingCampaign(campaignId);
     
     try {
+      // Se solicitado, resetar contatos para pendente
+      if (resetContacts) {
+        await supabase
+          .from('marketing_contacts')
+          .update({ status: 'pending', sent_at: null, error_message: null })
+          .eq('campaign_id', campaignId);
+        
+        // Resetar contagem e status da campanha
+        await supabase
+          .from('marketing_campaigns')
+          .update({ status: 'draft', sent_count: 0, completed_at: null })
+          .eq('id', campaignId);
+      }
+
       const { data, error } = await supabase.functions.invoke('send-marketing', {
         body: { campaign_id: campaignId },
       });
@@ -444,7 +458,12 @@ export default function MarketingPanel() {
       if (data?.success) {
         notify.success(`Campanha concluída! Enviados: ${data.sent}, Falhas: ${data.failed}`);
       } else {
-        notify.error(data?.error || 'Erro ao enviar');
+        // Mensagem mais clara para contatos pendentes
+        if (data?.error === 'Nenhum contato pendente') {
+          notify.warning('Todos os contatos já foram enviados. Use "Reenviar" para enviar novamente.');
+        } else {
+          notify.error(data?.error || 'Erro ao enviar');
+        }
       }
       
       fetchCampaigns();
@@ -756,6 +775,7 @@ export default function MarketingPanel() {
                             onClick={() => testCampaign(campaign.id)}
                             disabled={testingCampaign === campaign.id}
                             className="h-7 w-7 p-0"
+                            title="Testar com 1 contato"
                           >
                             {testingCampaign === campaign.id ? (
                               <Loader2 className="w-3 h-3 animate-spin" />
@@ -769,6 +789,7 @@ export default function MarketingPanel() {
                             onClick={() => startCampaign(campaign.id)}
                             disabled={sendingCampaign === campaign.id}
                             className="h-7 w-7 p-0"
+                            title="Iniciar campanha"
                           >
                             {sendingCampaign === campaign.id ? (
                               <Loader2 className="w-3 h-3 animate-spin" />
@@ -779,6 +800,35 @@ export default function MarketingPanel() {
                           <button
                             onClick={() => deleteCampaign(campaign.id)}
                             className="p-1.5 hover:bg-destructive/20 rounded-lg text-destructive"
+                            title="Excluir campanha"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </>
+                      )}
+                      {campaign.status === 'completed' && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => startCampaign(campaign.id, true)}
+                            disabled={sendingCampaign === campaign.id}
+                            className="h-7 px-2"
+                            title="Reenviar para todos"
+                          >
+                            {sendingCampaign === campaign.id ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <>
+                                <RefreshCw className="w-3 h-3 mr-1" />
+                                <span className="text-[10px]">Reenviar</span>
+                              </>
+                            )}
+                          </Button>
+                          <button
+                            onClick={() => deleteCampaign(campaign.id)}
+                            className="p-1.5 hover:bg-destructive/20 rounded-lg text-destructive"
+                            title="Excluir campanha"
                           >
                             <Trash2 className="w-3 h-3" />
                           </button>

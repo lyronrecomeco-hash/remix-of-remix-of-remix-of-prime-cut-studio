@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.send-marketing]
 verify_jwt = false
+
+[functions.generate-marketing-prompt]
+verify_jwt = false
