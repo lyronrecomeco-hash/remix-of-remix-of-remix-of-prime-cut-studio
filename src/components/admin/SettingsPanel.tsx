@@ -1,35 +1,28 @@
-import React, { useState, useEffect, forwardRef, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Palette, 
-  AlertTriangle, 
   Instagram, 
   Facebook, 
   Store,
   Shield,
   Webhook,
-  Bell,
   Copy,
-  ChevronDown,
-  ChevronUp,
   Eye,
   Save,
   RotateCcw,
-  Check,
+  ChevronDown,
+  ChevronUp,
   Clock,
   MessageCircle,
-  Settings,
   TestTube,
-  HelpCircle,
-  ExternalLink,
-  Power,
   Loader2,
   Download,
   Upload,
   FileText,
   Database,
-  FileCheck,
   AlertCircle,
   Type,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,6 +31,7 @@ import { useApp } from '@/contexts/AppContext';
 import { useNotification } from '@/contexts/NotificationContext';
 import { supabase } from '@/integrations/supabase/client';
 import OverloadAlertModal from './OverloadAlertModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface MessageTemplate {
   id: string;
@@ -128,41 +122,19 @@ const defaultSiteTexts: SiteSectionTexts = {
   footer_text: 'Todos os direitos reservados',
 };
 
-interface SectionProps {
-  title: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-  defaultOpen?: boolean;
-}
+type SettingsSection = 'theme' | 'shop' | 'security' | 'social' | 'backup' | 'texts' | 'chatpro' | 'templates' | 'api';
 
-const SettingsCard = forwardRef<HTMLDivElement, SectionProps>(
-  ({ title, icon, children, defaultOpen = true }, ref) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-  
-  return (
-    <div ref={ref} className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-6 hover:bg-muted/50 transition-colors"
-      >
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            {icon}
-          </div>
-          <h3 className="font-semibold text-lg">{title}</h3>
-        </div>
-        {isOpen ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
-      </button>
-      {isOpen && (
-        <div className="px-6 pb-6 border-t border-border pt-5">
-          {children}
-        </div>
-      )}
-    </div>
-  );
-});
-
-SettingsCard.displayName = 'SettingsCard';
+const settingsSections = [
+  { id: 'theme' as SettingsSection, label: 'Tema', icon: Palette },
+  { id: 'shop' as SettingsSection, label: 'Barbearia', icon: Store },
+  { id: 'security' as SettingsSection, label: 'Segurança', icon: Shield },
+  { id: 'social' as SettingsSection, label: 'Redes Sociais', icon: Instagram },
+  { id: 'backup' as SettingsSection, label: 'Backup', icon: Database },
+  { id: 'texts' as SettingsSection, label: 'Textos do Site', icon: Type },
+  { id: 'chatpro' as SettingsSection, label: 'ChatPro', icon: MessageCircle },
+  { id: 'templates' as SettingsSection, label: 'Templates', icon: FileText },
+  { id: 'api' as SettingsSection, label: 'API', icon: Webhook },
+];
 
 export default function SettingsPanel() {
   const { notify } = useNotification();
@@ -171,8 +143,8 @@ export default function SettingsPanel() {
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
   const [expandedTemplate, setExpandedTemplate] = useState<string | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<string | null>(null);
-  const [reminderEnabled, setReminderEnabled] = useState(false);
-  const [reminderMinutes, setReminderMinutes] = useState(30);
+  const [activeSection, setActiveSection] = useState<SettingsSection>('theme');
+  const [textsModalOpen, setTextsModalOpen] = useState(false);
   
   // ChatPro state
   const [chatproConfig, setChatproConfig] = useState<ChatProConfig | null>(null);
@@ -471,6 +443,7 @@ export default function SettingsPanel() {
     try {
       localStorage.setItem('site_texts', JSON.stringify(siteTexts));
       notify.success('Textos do site salvos!');
+      setTextsModalOpen(false);
     } catch (error) {
       notify.error('Erro ao salvar textos');
     }
@@ -490,422 +463,269 @@ export default function SettingsPanel() {
 
   const apiBaseUrl = `https://wvnszzrvrrueuycrpgyc.supabase.co/functions/v1/appointments-api`;
 
-  return (
-    <div className="flex flex-col h-full min-h-0">
-      <h2 className="text-3xl font-bold mb-8">Configurações</h2>
-      
-      <div className="flex-1 min-h-0 overflow-y-auto pr-2 space-y-8">
-        {/* Grid principal - 2 colunas */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          
-          {/* Coluna 1 */}
-          <div className="space-y-6">
-            {/* Tema Visual */}
-            <SettingsCard 
-              title="Tema Visual" 
-              icon={<Palette className="w-5 h-5 text-primary" />}
-            >
-              <div className="grid grid-cols-3 gap-4">
-                {[
-                  { id: 'gold', label: 'Black & Gold', colors: ['bg-black', 'bg-amber-500'], isNative: true },
-                  { id: 'gold-shine', label: 'Gold Brilhante', colors: ['bg-black', 'bg-yellow-400'] },
-                  { id: 'gold-metallic', label: 'Gold Metálico', colors: ['bg-black', 'bg-amber-300'] },
-                ].map((t) => (
-                  <button
-                    key={t.id}
-                    onClick={() => setTheme(t.id as any)}
-                    className={`p-4 rounded-xl border-2 transition-all ${
-                      theme === t.id ? 'border-primary gold-glow' : 'border-border hover:border-primary/50'
-                    }`}
-                  >
-                    <div className="flex gap-2 mb-3">
-                      {t.colors.map((c, i) => (
-                        <div key={i} className={`w-6 h-6 rounded-full ${c}`} />
-                      ))}
-                    </div>
-                    <p className="text-sm font-medium">{t.label}</p>
-                  </button>
-                ))}
-              </div>
-            </SettingsCard>
-
-            {/* Barbearia */}
-            <SettingsCard 
-              title="Barbearia" 
-              icon={<Store className="w-5 h-5 text-primary" />}
-            >
-              <div className="space-y-5">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground block mb-2">Nome da Barbearia</label>
-                  <Input value={shopSettings.name} onChange={(e) => updateShopSettings({ name: e.target.value })} className="h-11 text-base" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground block mb-2">Tagline / Slogan</label>
-                  <Input value={shopSettings.tagline} onChange={(e) => updateShopSettings({ tagline: e.target.value })} className="h-11 text-base" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground block mb-2">Telefone</label>
-                    <Input value={shopSettings.phone} onChange={(e) => updateShopSettings({ phone: e.target.value })} className="h-11 text-base" />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground block mb-2">WhatsApp</label>
-                    <Input value={shopSettings.whatsapp} onChange={(e) => updateShopSettings({ whatsapp: e.target.value })} placeholder="55..." className="h-11 text-base" />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground block mb-2">Endereço Completo</label>
-                  <Input value={shopSettings.address} onChange={(e) => updateShopSettings({ address: e.target.value })} className="h-11 text-base" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground block mb-2">Link do Google Maps</label>
-                  <Input value={shopSettings.mapsLink} onChange={(e) => updateShopSettings({ mapsLink: e.target.value })} placeholder="https://maps.google.com/..." className="h-11 text-base" />
-                </div>
-              </div>
-            </SettingsCard>
-
-            {/* Backup */}
-            <SettingsCard
-              title="Backup e Restauração" 
-              icon={<Database className="w-5 h-5 text-primary" />}
-            >
-              <div className="space-y-5">
-                <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 flex items-start gap-4">
-                  <Shield className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium text-base mb-1">Backup Seguro SHA-256</p>
-                    <p className="text-sm text-muted-foreground">
-                      Inclui: configurações, templates, ChatPro e textos.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <Button 
-                    onClick={handleExportBackup}
-                    disabled={isExporting}
-                    className="h-12 text-base"
-                  >
-                    {isExporting ? (
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    ) : (
-                      <Download className="w-5 h-5 mr-2" />
-                    )}
-                    Exportar
-                  </Button>
-                  
-                  <input
-                    ref={backupFileInputRef}
-                    type="file"
-                    accept=".json"
-                    onChange={handleImportBackup}
-                    className="hidden"
-                  />
-                  
-                  <Button 
-                    variant="outline"
-                    onClick={() => backupFileInputRef.current?.click()}
-                    disabled={isImporting}
-                    className="h-12 text-base"
-                  >
-                    {isImporting ? (
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    ) : (
-                      <Upload className="w-5 h-5 mr-2" />
-                    )}
-                    Importar
-                  </Button>
-                </div>
-
-                {importError && (
-                  <div className="flex items-center gap-3 p-4 bg-destructive/10 border border-destructive/20 rounded-xl">
-                    <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0" />
-                    <p className="text-sm text-destructive">{importError}</p>
-                  </div>
-                )}
-              </div>
-            </SettingsCard>
-          </div>
-
-          {/* Coluna 2 */}
-          <div className="space-y-6">
-            {/* Segurança */}
-            <SettingsCard 
-              title="Segurança" 
-              icon={<Shield className="w-5 h-5 text-primary" />}
-            >
-              <div className="space-y-5">
-                <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl">
-                  <div>
-                    <span className="text-base font-medium">Alerta de Sobrecarga</span>
-                    <p className="text-sm text-muted-foreground">Notifica quando atingir limite diário</p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      if (!shopSettings.overloadAlertEnabled) {
-                        setShowOverloadModal(true);
-                      } else {
-                        updateShopSettings({ overloadAlertEnabled: false });
-                        notify.info('Alertas desativados');
-                      }
-                    }}
-                    className={`w-14 h-7 rounded-full transition-colors relative ${
-                      shopSettings.overloadAlertEnabled ? 'bg-primary' : 'bg-secondary'
-                    }`}
-                  >
-                    <div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all ${
-                      shopSettings.overloadAlertEnabled ? 'left-8' : 'left-1'
-                    }`} />
-                  </button>
-                </div>
-                {shopSettings.overloadAlertEnabled && (
-                  <div className="pt-4 border-t border-border">
-                    <label className="text-sm font-medium text-muted-foreground block mb-2">Limite diário de agendamentos</label>
-                    <Input
-                      type="number"
-                      value={shopSettings.dailyAppointmentLimit || 20}
-                      onChange={(e) => updateShopSettings({ dailyAppointmentLimit: Number(e.target.value) })}
-                      min={1}
-                      max={100}
-                      className="h-11 text-base"
-                    />
-                  </div>
-                )}
-              </div>
-            </SettingsCard>
-
-            {/* Redes Sociais */}
-            <SettingsCard 
-              title="Redes Sociais" 
-              icon={<Instagram className="w-5 h-5 text-primary" />}
-            >
-              <div className="space-y-5">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground block mb-2 flex items-center gap-2">
-                    <Instagram className="w-4 h-4" /> Instagram
-                  </label>
-                  <Input
-                    placeholder="@seuperfil"
-                    value={shopSettings.social?.instagram || ''}
-                    onChange={(e) => updateShopSettings({ social: { ...shopSettings.social, instagram: e.target.value } })}
-                    className="h-11 text-base"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground block mb-2 flex items-center gap-2">
-                    <Facebook className="w-4 h-4" /> Facebook
-                  </label>
-                  <Input
-                    placeholder="nome.da.pagina"
-                    value={shopSettings.social?.facebook || ''}
-                    onChange={(e) => updateShopSettings({ social: { ...shopSettings.social, facebook: e.target.value } })}
-                    className="h-11 text-base"
-                  />
-                </div>
-              </div>
-            </SettingsCard>
-
-            {/* Textos do Site */}
-            <SettingsCard 
-              title="Textos do Site" 
-              icon={<Type className="w-5 h-5 text-primary" />}
-              defaultOpen={false}
-            >
-              <div className="space-y-5">
-                <p className="text-sm text-muted-foreground">
-                  Personalize os textos e títulos das seções do site público.
-                </p>
-                
-                <div className="space-y-4">
-                  <div className="p-4 bg-muted/30 rounded-xl space-y-3">
-                    <h5 className="text-base font-semibold">Hero (Topo)</h5>
-                    <Input 
-                      value={siteTexts.hero_title} 
-                      onChange={(e) => setSiteTexts(prev => ({ ...prev, hero_title: e.target.value }))}
-                      placeholder="Título principal"
-                      className="h-11 text-base"
-                    />
-                    <Input 
-                      value={siteTexts.hero_subtitle} 
-                      onChange={(e) => setSiteTexts(prev => ({ ...prev, hero_subtitle: e.target.value }))}
-                      placeholder="Subtítulo"
-                      className="h-11 text-base"
-                    />
-                  </div>
-
-                  <div className="p-4 bg-muted/30 rounded-xl space-y-3">
-                    <h5 className="text-base font-semibold">Sobre Nós</h5>
-                    <Input 
-                      value={siteTexts.about_title} 
-                      onChange={(e) => setSiteTexts(prev => ({ ...prev, about_title: e.target.value }))}
-                      placeholder="Título da seção"
-                      className="h-11 text-base"
-                    />
-                    <Textarea 
-                      value={siteTexts.about_description} 
-                      onChange={(e) => setSiteTexts(prev => ({ ...prev, about_description: e.target.value }))}
-                      placeholder="Descrição da barbearia"
-                      rows={3}
-                      className="text-base"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-muted/30 rounded-xl space-y-2">
-                      <h5 className="text-base font-semibold">Serviços</h5>
-                      <Input 
-                        value={siteTexts.services_title} 
-                        onChange={(e) => setSiteTexts(prev => ({ ...prev, services_title: e.target.value }))}
-                        placeholder="Título"
-                        className="h-11 text-base"
-                      />
-                    </div>
-                    <div className="p-4 bg-muted/30 rounded-xl space-y-2">
-                      <h5 className="text-base font-semibold">Galeria</h5>
-                      <Input 
-                        value={siteTexts.gallery_title} 
-                        onChange={(e) => setSiteTexts(prev => ({ ...prev, gallery_title: e.target.value }))}
-                        placeholder="Título"
-                        className="h-11 text-base"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-muted/30 rounded-xl space-y-2">
-                      <h5 className="text-base font-semibold">CTA (Chamada)</h5>
-                      <Input 
-                        value={siteTexts.cta_title} 
-                        onChange={(e) => setSiteTexts(prev => ({ ...prev, cta_title: e.target.value }))}
-                        placeholder="Título"
-                        className="h-11 text-base"
-                      />
-                    </div>
-                    <div className="p-4 bg-muted/30 rounded-xl space-y-2">
-                      <h5 className="text-base font-semibold">Rodapé</h5>
-                      <Input 
-                        value={siteTexts.footer_text} 
-                        onChange={(e) => setSiteTexts(prev => ({ ...prev, footer_text: e.target.value }))}
-                        placeholder="Texto do rodapé"
-                        className="h-11 text-base"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <Button 
-                  onClick={saveSiteTexts}
-                  disabled={savingSiteTexts}
-                  className="w-full h-12 text-base"
-                >
-                  {savingSiteTexts ? (
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  ) : (
-                    <Save className="w-5 h-5 mr-2" />
-                  )}
-                  Salvar Textos do Site
-                </Button>
-              </div>
-            </SettingsCard>
-          </div>
-        </div>
-
-        {/* Seção de Integrações - Full Width */}
-        <div className="space-y-6">
-          {/* ChatPro Integration */}
-          <div className="glass-card rounded-xl overflow-hidden">
-            <div className="p-5 border-b border-border">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <MessageCircle className="w-5 h-5 text-primary" />
-                  <div>
-                    <h3 className="font-semibold text-base">Integração ChatPro</h3>
-                    <p className="text-sm text-muted-foreground">WhatsApp Business API</p>
-                  </div>
-                </div>
+  // Render section content
+  const renderSectionContent = () => {
+    switch (activeSection) {
+      case 'theme':
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Tema Visual</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[
+                { id: 'gold', label: 'Black & Gold', colors: ['bg-black', 'bg-amber-500'] },
+                { id: 'gold-shine', label: 'Gold Brilhante', colors: ['bg-black', 'bg-yellow-400'] },
+                { id: 'gold-metallic', label: 'Gold Metálico', colors: ['bg-black', 'bg-amber-300'] },
+              ].map((t) => (
                 <button
-                  onClick={() => chatproConfig && updateChatProConfig({ is_enabled: !chatproConfig.is_enabled })}
-                  disabled={chatproLoading}
-                  className={`w-12 h-6 rounded-full transition-colors relative ${
-                    chatproConfig?.is_enabled ? 'bg-primary' : 'bg-secondary'
+                  key={t.id}
+                  onClick={() => setTheme(t.id as any)}
+                  className={`p-4 rounded-xl border-2 transition-all ${
+                    theme === t.id ? 'border-primary gold-glow' : 'border-border hover:border-primary/50'
                   }`}
                 >
-                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${
-                    chatproConfig?.is_enabled ? 'left-7' : 'left-1'
-                  }`} />
+                  <div className="flex gap-2 mb-3">
+                    {t.colors.map((c, i) => (
+                      <div key={i} className={`w-6 h-6 rounded-full ${c}`} />
+                    ))}
+                  </div>
+                  <p className="text-sm font-medium">{t.label}</p>
                 </button>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'shop':
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Dados da Barbearia</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-muted-foreground block mb-2">Nome</label>
+                <Input value={shopSettings.name} onChange={(e) => updateShopSettings({ name: e.target.value })} className="h-11" />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground block mb-2">Tagline</label>
+                <Input value={shopSettings.tagline} onChange={(e) => updateShopSettings({ tagline: e.target.value })} className="h-11" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground block mb-2">Telefone</label>
+                  <Input value={shopSettings.phone} onChange={(e) => updateShopSettings({ phone: e.target.value })} className="h-11" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground block mb-2">WhatsApp</label>
+                  <Input value={shopSettings.whatsapp} onChange={(e) => updateShopSettings({ whatsapp: e.target.value })} placeholder="55..." className="h-11" />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground block mb-2">Endereço</label>
+                <Input value={shopSettings.address} onChange={(e) => updateShopSettings({ address: e.target.value })} className="h-11" />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground block mb-2">Link Google Maps</label>
+                <Input value={shopSettings.mapsLink} onChange={(e) => updateShopSettings({ mapsLink: e.target.value })} placeholder="https://maps.google.com/..." className="h-11" />
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'security':
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Segurança</h3>
+            <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl">
+              <div>
+                <span className="font-medium">Alerta de Sobrecarga</span>
+                <p className="text-sm text-muted-foreground">Notifica ao atingir limite diário</p>
+              </div>
+              <button
+                onClick={() => {
+                  if (!shopSettings.overloadAlertEnabled) {
+                    setShowOverloadModal(true);
+                  } else {
+                    updateShopSettings({ overloadAlertEnabled: false });
+                    notify.info('Alertas desativados');
+                  }
+                }}
+                className={`w-14 h-7 rounded-full transition-colors relative ${
+                  shopSettings.overloadAlertEnabled ? 'bg-primary' : 'bg-secondary'
+                }`}
+              >
+                <div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all ${
+                  shopSettings.overloadAlertEnabled ? 'left-8' : 'left-1'
+                }`} />
+              </button>
+            </div>
+            {shopSettings.overloadAlertEnabled && (
+              <div className="pt-4 border-t border-border">
+                <label className="text-sm font-medium text-muted-foreground block mb-2">Limite diário</label>
+                <Input
+                  type="number"
+                  value={shopSettings.dailyAppointmentLimit || 20}
+                  onChange={(e) => updateShopSettings({ dailyAppointmentLimit: Number(e.target.value) })}
+                  min={1}
+                  max={100}
+                  className="h-11 max-w-[200px]"
+                />
+              </div>
+            )}
+          </div>
+        );
+
+      case 'social':
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Redes Sociais</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-muted-foreground block mb-2 flex items-center gap-2">
+                  <Instagram className="w-4 h-4" /> Instagram
+                </label>
+                <Input
+                  placeholder="@seuperfil"
+                  value={shopSettings.social?.instagram || ''}
+                  onChange={(e) => updateShopSettings({ social: { ...shopSettings.social, instagram: e.target.value } })}
+                  className="h-11"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground block mb-2 flex items-center gap-2">
+                  <Facebook className="w-4 h-4" /> Facebook
+                </label>
+                <Input
+                  placeholder="nome.da.pagina"
+                  value={shopSettings.social?.facebook || ''}
+                  onChange={(e) => updateShopSettings({ social: { ...shopSettings.social, facebook: e.target.value } })}
+                  className="h-11"
+                />
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'backup':
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Backup e Restauração</h3>
+            <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 flex items-start gap-4">
+              <Shield className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="font-medium mb-1">Backup Seguro SHA-256</p>
+                <p className="text-sm text-muted-foreground">
+                  Inclui: configurações, templates, ChatPro e textos.
+                </p>
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <Button onClick={handleExportBackup} disabled={isExporting} className="h-12">
+                {isExporting ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Download className="w-5 h-5 mr-2" />}
+                Exportar
+              </Button>
+              
+              <input ref={backupFileInputRef} type="file" accept=".json" onChange={handleImportBackup} className="hidden" />
+              
+              <Button variant="outline" onClick={() => backupFileInputRef.current?.click()} disabled={isImporting} className="h-12">
+                {isImporting ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Upload className="w-5 h-5 mr-2" />}
+                Importar
+              </Button>
+            </div>
+
+            {importError && (
+              <div className="flex items-center gap-3 p-4 bg-destructive/10 border border-destructive/20 rounded-xl">
+                <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0" />
+                <p className="text-sm text-destructive">{importError}</p>
+              </div>
+            )}
+          </div>
+        );
+
+      case 'texts':
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Textos do Site</h3>
+            <p className="text-sm text-muted-foreground">
+              Personalize os textos das seções do site público.
+            </p>
+            <Button onClick={() => setTextsModalOpen(true)} className="h-11">
+              <Type className="w-4 h-4 mr-2" />
+              Editar Textos
+            </Button>
+          </div>
+        );
+
+      case 'chatpro':
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Integração ChatPro</h3>
+              <button
+                onClick={() => chatproConfig && updateChatProConfig({ is_enabled: !chatproConfig.is_enabled })}
+                disabled={chatproLoading}
+                className={`w-12 h-6 rounded-full transition-colors relative ${
+                  chatproConfig?.is_enabled ? 'bg-primary' : 'bg-secondary'
+                }`}
+              >
+                <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${
+                  chatproConfig?.is_enabled ? 'left-7' : 'left-1'
+                }`} />
+              </button>
+            </div>
+
             {chatproConfig?.is_enabled && (
-              <div className="p-5 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-sm text-muted-foreground block mb-2">API Token</label>
-                    <Input
-                      type="password"
-                      value={chatproConfig?.api_token || ''}
-                      onChange={(e) => updateChatProConfig({ api_token: e.target.value })}
-                      placeholder="Seu token..."
-                      className="h-10"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm text-muted-foreground block mb-2">Instance ID</label>
-                    <Input
-                      value={chatproConfig?.instance_id || ''}
-                      onChange={(e) => updateChatProConfig({ instance_id: e.target.value })}
-                      placeholder="ID da instância..."
-                      className="h-10"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm text-muted-foreground block mb-2">Endpoint</label>
-                    <Input
-                      value={chatproConfig?.base_endpoint || ''}
-                      onChange={(e) => updateChatProConfig({ base_endpoint: e.target.value })}
-                      placeholder="https://..."
-                      className="h-10"
-                    />
-                  </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm text-muted-foreground block mb-2">API Token</label>
+                  <Input
+                    type="password"
+                    value={chatproConfig?.api_token || ''}
+                    onChange={(e) => updateChatProConfig({ api_token: e.target.value })}
+                    placeholder="Seu token..."
+                    className="h-11"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-muted-foreground block mb-2">Instance ID</label>
+                  <Input
+                    value={chatproConfig?.instance_id || ''}
+                    onChange={(e) => updateChatProConfig({ instance_id: e.target.value })}
+                    placeholder="ID da instância..."
+                    className="h-11"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-muted-foreground block mb-2">Endpoint</label>
+                  <Input
+                    value={chatproConfig?.base_endpoint || ''}
+                    onChange={(e) => updateChatProConfig({ base_endpoint: e.target.value })}
+                    placeholder="https://..."
+                    className="h-11"
+                  />
                 </div>
 
-                <div className="flex items-center gap-3 pt-2 border-t border-border">
+                <div className="flex items-center gap-3 pt-3 border-t border-border">
                   <Input
                     value={testPhone}
                     onChange={(e) => setTestPhone(e.target.value)}
                     placeholder="5511999999999"
-                    className="max-w-xs h-10"
+                    className="max-w-[200px] h-11"
                   />
-                  <Button
-                    variant="outline"
-                    onClick={testChatProConnection}
-                    disabled={testingChatPro}
-                    className="h-10"
-                  >
-                    {testingChatPro ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <TestTube className="w-4 h-4 mr-2" />
-                    )}
-                    Testar Conexão
+                  <Button variant="outline" onClick={testChatProConnection} disabled={testingChatPro} className="h-11">
+                    {testingChatPro ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <TestTube className="w-4 h-4 mr-2" />}
+                    Testar
                   </Button>
                 </div>
               </div>
             )}
           </div>
+        );
 
-          {/* Templates de Mensagem */}
-          <div className="glass-card rounded-xl overflow-hidden">
-            <div className="p-5 border-b border-border">
-              <h3 className="font-semibold text-base flex items-center gap-3">
-                <FileText className="w-5 h-5 text-primary" />
-                Templates de Mensagem
-              </h3>
-              <p className="text-sm text-muted-foreground mt-1">Configure as mensagens automáticas</p>
-            </div>
-
-            <div className="p-5 space-y-3">
+      case 'templates':
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Templates de Mensagem</h3>
+            <div className="space-y-3">
               {Object.entries(eventLabels).map(([eventType, label]) => {
                 const template = getTemplateForEvent(eventType);
                 const isExpanded = expandedTemplate === eventType;
@@ -918,7 +738,7 @@ export default function SettingsPanel() {
                     >
                       <div className="flex items-center gap-3">
                         <div className={`w-3 h-3 rounded-full ${template?.is_active ? 'bg-green-500' : 'bg-muted'}`} />
-                        <span className="font-medium text-sm">{label}</span>
+                        <span className="font-medium">{label}</span>
                       </div>
                       {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </button>
@@ -972,29 +792,15 @@ export default function SettingsPanel() {
                         </div>
 
                         <div className="flex gap-3">
-                          <Button
-                            size="sm"
-                            onClick={() => updateTemplate(eventType, template.template)}
-                            className="h-9"
-                          >
+                          <Button size="sm" onClick={() => updateTemplate(eventType, template.template)} className="h-10">
                             <Save className="w-4 h-4 mr-2" />
                             Salvar
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => restoreDefaultTemplate(eventType)}
-                            className="h-9"
-                          >
+                          <Button size="sm" variant="outline" onClick={() => restoreDefaultTemplate(eventType)} className="h-10">
                             <RotateCcw className="w-4 h-4 mr-2" />
                             Restaurar
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setPreviewTemplate(previewTemplate === eventType ? null : eventType)}
-                            className="h-9"
-                          >
+                          <Button size="sm" variant="ghost" onClick={() => setPreviewTemplate(previewTemplate === eventType ? null : eventType)} className="h-10">
                             <Eye className="w-4 h-4 mr-2" />
                             Preview
                           </Button>
@@ -1013,13 +819,12 @@ export default function SettingsPanel() {
               })}
             </div>
           </div>
+        );
 
-          {/* API Info */}
-          <div className="glass-card rounded-xl p-5">
-            <h3 className="font-semibold text-base flex items-center gap-3 mb-4">
-              <Webhook className="w-5 h-5 text-primary" />
-              API de Integração
-            </h3>
+      case 'api':
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">API de Integração</h3>
             <div className="bg-secondary/50 rounded-xl p-4 font-mono text-sm break-all">
               {apiBaseUrl}
               <button
@@ -1029,12 +834,147 @@ export default function SettingsPanel() {
                 <Copy className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-sm text-muted-foreground mt-3">
+            <p className="text-sm text-muted-foreground">
               Use esta URL para integrar com sistemas externos.
             </p>
           </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full min-h-0">
+      <h2 className="text-2xl font-bold mb-6">Configurações</h2>
+      
+      <div className="flex-1 min-h-0 flex gap-6">
+        {/* Menu lateral de categorias */}
+        <div className="w-48 flex-shrink-0 space-y-2 overflow-y-auto">
+          {settingsSections.map((section) => {
+            const Icon = section.icon;
+            const isActive = activeSection === section.id;
+            return (
+              <button
+                key={section.id}
+                onClick={() => setActiveSection(section.id)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-left ${
+                  isActive 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'bg-card hover:bg-muted/50 border border-border'
+                }`}
+              >
+                <Icon className="w-5 h-5 flex-shrink-0" />
+                <span className="font-medium text-sm">{section.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Área de conteúdo */}
+        <div className="flex-1 min-h-0 overflow-y-auto bg-card border border-border rounded-xl p-6">
+          {renderSectionContent()}
         </div>
       </div>
+
+      {/* Modal de Textos do Site */}
+      <Dialog open={textsModalOpen} onOpenChange={setTextsModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Type className="w-5 h-5 text-primary" />
+              Editar Textos do Site
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="p-4 bg-muted/30 rounded-xl space-y-3">
+              <h5 className="font-semibold">Hero (Topo)</h5>
+              <Input 
+                value={siteTexts.hero_title} 
+                onChange={(e) => setSiteTexts(prev => ({ ...prev, hero_title: e.target.value }))}
+                placeholder="Título principal"
+                className="h-11"
+              />
+              <Input 
+                value={siteTexts.hero_subtitle} 
+                onChange={(e) => setSiteTexts(prev => ({ ...prev, hero_subtitle: e.target.value }))}
+                placeholder="Subtítulo"
+                className="h-11"
+              />
+            </div>
+
+            <div className="p-4 bg-muted/30 rounded-xl space-y-3">
+              <h5 className="font-semibold">Sobre Nós</h5>
+              <Input 
+                value={siteTexts.about_title} 
+                onChange={(e) => setSiteTexts(prev => ({ ...prev, about_title: e.target.value }))}
+                placeholder="Título"
+                className="h-11"
+              />
+              <Textarea 
+                value={siteTexts.about_description} 
+                onChange={(e) => setSiteTexts(prev => ({ ...prev, about_description: e.target.value }))}
+                placeholder="Descrição"
+                rows={3}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 bg-muted/30 rounded-xl space-y-2">
+                <h5 className="font-semibold">Serviços</h5>
+                <Input 
+                  value={siteTexts.services_title} 
+                  onChange={(e) => setSiteTexts(prev => ({ ...prev, services_title: e.target.value }))}
+                  placeholder="Título"
+                  className="h-11"
+                />
+              </div>
+              <div className="p-4 bg-muted/30 rounded-xl space-y-2">
+                <h5 className="font-semibold">Galeria</h5>
+                <Input 
+                  value={siteTexts.gallery_title} 
+                  onChange={(e) => setSiteTexts(prev => ({ ...prev, gallery_title: e.target.value }))}
+                  placeholder="Título"
+                  className="h-11"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 bg-muted/30 rounded-xl space-y-2">
+                <h5 className="font-semibold">CTA</h5>
+                <Input 
+                  value={siteTexts.cta_title} 
+                  onChange={(e) => setSiteTexts(prev => ({ ...prev, cta_title: e.target.value }))}
+                  placeholder="Título"
+                  className="h-11"
+                />
+              </div>
+              <div className="p-4 bg-muted/30 rounded-xl space-y-2">
+                <h5 className="font-semibold">Rodapé</h5>
+                <Input 
+                  value={siteTexts.footer_text} 
+                  onChange={(e) => setSiteTexts(prev => ({ ...prev, footer_text: e.target.value }))}
+                  placeholder="Texto"
+                  className="h-11"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-border">
+            <Button variant="outline" onClick={() => setTextsModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={saveSiteTexts} disabled={savingSiteTexts}>
+              {savingSiteTexts ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+              Salvar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <OverloadAlertModal
         isOpen={showOverloadModal}
