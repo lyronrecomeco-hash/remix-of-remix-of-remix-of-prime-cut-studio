@@ -55,13 +55,13 @@ export function Modal({
           />
           
           {/* Modal */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-              className={`w-full ${sizeClasses[size]} pointer-events-auto`}
+              className={`w-full ${sizeClasses[size]}`}
             >
               <div className="glass-card rounded-2xl shadow-card overflow-hidden">
                 {/* Header */}

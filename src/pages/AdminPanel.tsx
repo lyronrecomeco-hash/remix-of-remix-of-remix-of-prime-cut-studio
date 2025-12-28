@@ -1449,15 +1449,30 @@ const AdminPanel = () => {
                   </div>
                 )}
               </div>
-              <button
-                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                className="p-2 rounded-lg hover:bg-sidebar-accent/50 text-muted-foreground hover:text-foreground transition-colors"
-                title={isSidebarCollapsed ? 'Expandir menu' : 'Colapsar menu'}
-              >
-                {isSidebarCollapsed ? <PanelLeft className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
-              </button>
+              {!isSidebarCollapsed && (
+                <button
+                  onClick={() => setIsSidebarCollapsed(true)}
+                  className="p-2 rounded-lg hover:bg-sidebar-accent/50 text-muted-foreground hover:text-foreground transition-colors"
+                  title="Colapsar menu"
+                >
+                  <PanelLeftClose className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
+
+          {/* Botão para expandir quando colapsado - sempre visível na parte inferior do header */}
+          {isSidebarCollapsed && (
+            <div className="px-2 pb-2">
+              <button
+                onClick={() => setIsSidebarCollapsed(false)}
+                className="w-full p-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-colors flex items-center justify-center"
+                title="Expandir menu"
+              >
+                <PanelLeft className="w-5 h-5" />
+              </button>
+            </div>
+          )}
 
           <nav className={`flex-1 ${isSidebarCollapsed ? 'px-2' : 'px-4'}`}>
             {menuItems.map((item) => (
