@@ -41,6 +41,11 @@ import {
   Monitor,
   PanelLeft,
   LayoutGrid,
+  Calendar,
+  Link2,
+  ExternalLink,
+  Edit,
+  Info,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -203,11 +208,12 @@ const defaultBackupConfig: BackupConfig = {
 
 const daysOfWeek = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
-type SettingsSection = 'theme' | 'shop' | 'security' | 'social' | 'backup' | 'texts' | 'chatpro' | 'templates' | 'api' | 'menu';
+type SettingsSection = 'theme' | 'shop' | 'security' | 'social' | 'backup' | 'texts' | 'chatpro' | 'templates' | 'api' | 'menu' | 'booking_link';
 
 const settingsSections = [
   { id: 'theme' as SettingsSection, label: 'Tema', icon: Palette },
   { id: 'shop' as SettingsSection, label: 'Barbearia', icon: Store },
+  { id: 'booking_link' as SettingsSection, label: 'Link Agendamento', icon: Calendar },
   { id: 'security' as SettingsSection, label: 'Segurança', icon: Shield },
   { id: 'social' as SettingsSection, label: 'Redes Sociais', icon: Instagram },
   { id: 'backup' as SettingsSection, label: 'Backup', icon: Database },
@@ -262,6 +268,10 @@ export default function SettingsPanel() {
   const [aiPrompt, setAiPrompt] = useState('');
   const [showAiModal, setShowAiModal] = useState(false);
   const [aiTargetEvent, setAiTargetEvent] = useState<string | null>(null);
+
+  // Template modal state
+  const [templateModalOpen, setTemplateModalOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTemplates();
@@ -1320,12 +1330,14 @@ Retorne APENAS a mensagem, sem explicações.`;
             <div className="space-y-3">
               {Object.entries(eventLabels).map(([eventType, label]) => {
                 const template = getTemplateForEvent(eventType);
-                const isExpanded = expandedTemplate === eventType;
 
                 return (
                   <div key={eventType} className="bg-secondary/30 rounded-xl overflow-hidden">
                     <button
-                      onClick={() => setExpandedTemplate(isExpanded ? null : eventType)}
+                      onClick={() => {
+                        setEditingTemplate(eventType);
+                        setTemplateModalOpen(true);
+                      }}
                       className="w-full flex items-center justify-between p-4 hover:bg-secondary/50 transition-colors"
                     >
                       <div className="flex items-center gap-3">
@@ -1335,104 +1347,70 @@ Retorne APENAS a mensagem, sem explicações.`;
                           <span className="px-2 py-0.5 bg-primary/20 text-primary text-xs rounded-full">NOVO</span>
                         )}
                       </div>
-                      {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                      <Edit className="w-4 h-4 text-muted-foreground" />
                     </button>
-
-                    {isExpanded && template && (
-                      <div className="p-4 pt-0 space-y-4">
-                        <div className="flex items-center gap-3 pb-3 border-b border-border">
-                          <span className="text-sm text-muted-foreground">ChatPro:</span>
-                          <button
-                            onClick={() => toggleChatProForEvent(eventType, !template.chatpro_enabled)}
-                            className={`w-8 h-4 rounded-full transition-colors relative ${
-                              template.chatpro_enabled ? 'bg-primary' : 'bg-secondary'
-                            }`}
-                          >
-                            <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${
-                              template.chatpro_enabled ? 'left-4' : 'left-0.5'
-                            }`} />
-                          </button>
-                        </div>
-
-                        {eventType === 'feedback_request' && (
-                          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
-                            <p className="text-sm text-blue-400">
-                              <strong>Dica:</strong> Este template é enviado automaticamente quando o barbeiro conclui um atendimento. 
-                              O link de avaliação ({window.location.origin}/avaliar) é inserido automaticamente na variável <code className="bg-blue-500/20 px-1 rounded">{'{{link_avaliacao}}'}</code>.
-                            </p>
-                          </div>
-                        )}
-
-                        <Textarea
-                          value={template.template}
-                          onChange={(e) => {
-                            const updated = templates.map(t =>
-                              t.event_type === eventType ? { ...t, template: e.target.value } : t
-                            );
-                            setTemplates(updated);
-                          }}
-                          rows={4}
-                          className="text-sm"
-                        />
-
-                        <div className="flex flex-wrap gap-1">
-                          {variables.map((v) => (
-                            <button
-                              key={v.key}
-                              onClick={() => {
-                                const newTemplate = template.template + v.key;
-                                const updated = templates.map(t =>
-                                  t.event_type === eventType ? { ...t, template: newTemplate } : t
-                                );
-                                setTemplates(updated);
-                              }}
-                              className="px-2 py-1 bg-primary/20 text-primary rounded text-[10px] font-mono hover:bg-primary/30 transition-colors"
-                            >
-                              {v.key}
-                            </button>
-                          ))}
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
-                          <Button size="sm" onClick={() => updateTemplate(eventType, template.template)} className="h-8 text-xs">
-                            <Save className="w-3 h-3 mr-1" />
-                            Salvar
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            onClick={() => generateTemplateWithAI(eventType)}
-                            disabled={aiGenerating === eventType}
-                            className="h-8 text-xs gap-1"
-                          >
-                            {aiGenerating === eventType ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <Sparkles className="w-3 h-3" />
-                            )}
-                            Gerar com IA
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => restoreDefaultTemplate(eventType)} className="h-8 text-xs">
-                            <RotateCcw className="w-3 h-3 mr-1" />
-                            Restaurar
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => setPreviewTemplate(previewTemplate === eventType ? null : eventType)} className="h-8 text-xs">
-                            <Eye className="w-3 h-3 mr-1" />
-                            Preview
-                          </Button>
-                        </div>
-
-                        {previewTemplate === eventType && (
-                          <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
-                            <p className="text-[10px] text-green-400 mb-1 font-medium">Pré-visualização:</p>
-                            <p className="text-xs whitespace-pre-wrap">{getPreviewMessage(template.template)}</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
                   </div>
                 );
               })}
+            </div>
+          </div>
+        );
+
+      case 'booking_link':
+        const bookingDirectUrl = `${window.location.origin}/agendamento-direto`;
+        return (
+          <div className="space-y-5">
+            <h3 className="text-xl font-bold">Link de Agendamento Direto</h3>
+            <p className="text-base text-muted-foreground">
+              Use este link exclusivo para enviar aos clientes. É um fluxo de agendamento sem acesso ao site comercial.
+            </p>
+            
+            <div className="bg-primary/10 border border-primary/20 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <Link2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-base font-medium mb-2">Link para Agendamento</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <code className="font-mono text-sm break-all flex-1 p-3 bg-background rounded-lg border border-border">
+                      {bookingDirectUrl}
+                    </code>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => copyToClipboard(bookingDirectUrl, 'Link copiado!')}
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => window.open(bookingDirectUrl, '_blank')}
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-muted/30 rounded-xl p-4 space-y-3">
+              <h4 className="font-medium flex items-center gap-2">
+                <Info className="w-4 h-4 text-primary" />
+                Como Funciona
+              </h4>
+              <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
+                <li>Este link leva diretamente para o fluxo de agendamento</li>
+                <li>O cliente não tem acesso ao site comercial por este link</li>
+                <li>Após agendar, o cliente pode acompanhar sua posição na fila</li>
+                <li>O cliente recebe alertas sonoros quando for chamado</li>
+                <li>Ideal para enviar via WhatsApp ou redes sociais</li>
+              </ul>
+            </div>
+
+            <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4">
+              <p className="text-sm">
+                <strong>Dica:</strong> Envie este link para clientes que já conhecem a barbearia e querem agendar rapidamente sem passar pelo site.
+              </p>
             </div>
           </div>
         );
@@ -1913,6 +1891,97 @@ Retorne APENAS a mensagem, sem explicações.`;
             }}>
               <Save className="w-4 h-4 mr-2" />
               Aplicar Este Tema
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Edição de Template */}
+      <Dialog open={templateModalOpen} onOpenChange={setTemplateModalOpen}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-primary" />
+              {editingTemplate ? eventLabels[editingTemplate] : 'Template'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {editingTemplate && (() => {
+            const template = getTemplateForEvent(editingTemplate);
+            if (!template) return null;
+            
+            return (
+              <div className="space-y-4 py-4">
+                <div className="flex items-center gap-3 pb-3 border-b border-border">
+                  <span className="text-sm text-muted-foreground">ChatPro:</span>
+                  <button
+                    onClick={() => toggleChatProForEvent(editingTemplate, !template.chatpro_enabled)}
+                    className={`w-10 h-5 rounded-full transition-colors relative ${template.chatpro_enabled ? 'bg-primary' : 'bg-secondary'}`}
+                  >
+                    <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${template.chatpro_enabled ? 'left-5' : 'left-0.5'}`} />
+                  </button>
+                </div>
+
+                {editingTemplate === 'feedback_request' && (
+                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+                    <p className="text-sm text-blue-400">
+                      <strong>Dica:</strong> Use <code className="bg-blue-500/20 px-1 rounded">{'{{link_avaliacao}}'}</code> para inserir o link de avaliação.
+                    </p>
+                  </div>
+                )}
+
+                <Textarea
+                  value={template.template}
+                  onChange={(e) => {
+                    const updated = templates.map(t => t.event_type === editingTemplate ? { ...t, template: e.target.value } : t);
+                    setTemplates(updated);
+                  }}
+                  rows={5}
+                  className="text-sm"
+                />
+
+                <div className="flex flex-wrap gap-1">
+                  {variables.map((v) => (
+                    <button
+                      key={v.key}
+                      onClick={() => {
+                        const newTemplate = template.template + v.key;
+                        const updated = templates.map(t => t.event_type === editingTemplate ? { ...t, template: newTemplate } : t);
+                        setTemplates(updated);
+                      }}
+                      className="px-2 py-1 bg-primary/20 text-primary rounded text-xs font-mono hover:bg-primary/30 transition-colors"
+                    >
+                      {v.key}
+                    </button>
+                  ))}
+                </div>
+
+                {previewTemplate === editingTemplate && (
+                  <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                    <p className="text-xs text-green-400 mb-1 font-medium">Pré-visualização:</p>
+                    <p className="text-sm whitespace-pre-wrap">{getPreviewMessage(template.template)}</p>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          <div className="flex flex-wrap gap-2 pt-4 border-t border-border">
+            <Button size="sm" onClick={() => { if (editingTemplate) { updateTemplate(editingTemplate, getTemplateForEvent(editingTemplate)?.template || ''); setTemplateModalOpen(false); } }}>
+              <Save className="w-4 h-4 mr-1" />
+              Salvar
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => editingTemplate && generateTemplateWithAI(editingTemplate)} disabled={aiGenerating === editingTemplate}>
+              {aiGenerating === editingTemplate ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+              <span className="ml-1">IA</span>
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => editingTemplate && restoreDefaultTemplate(editingTemplate)}>
+              <RotateCcw className="w-4 h-4 mr-1" />
+              Restaurar
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setPreviewTemplate(previewTemplate === editingTemplate ? null : editingTemplate)}>
+              <Eye className="w-4 h-4 mr-1" />
+              Preview
             </Button>
           </div>
         </DialogContent>
