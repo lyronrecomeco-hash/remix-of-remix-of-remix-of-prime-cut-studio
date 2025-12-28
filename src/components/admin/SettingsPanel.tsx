@@ -135,24 +135,26 @@ interface SectionProps {
   defaultOpen?: boolean;
 }
 
-const CollapsibleSection = forwardRef<HTMLDivElement, SectionProps>(
-  ({ title, icon, children, defaultOpen = false }, ref) => {
+const SettingsCard = forwardRef<HTMLDivElement, SectionProps>(
+  ({ title, icon, children, defaultOpen = true }, ref) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   
   return (
-    <div ref={ref} className="glass-card rounded-xl overflow-hidden h-fit">
+    <div ref={ref} className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-5 hover:bg-secondary/30 transition-colors"
+        className="w-full flex items-center justify-between p-6 hover:bg-muted/50 transition-colors"
       >
-        <h3 className="font-semibold flex items-center gap-3 text-base">
-          {icon}
-          {title}
-        </h3>
-        {isOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            {icon}
+          </div>
+          <h3 className="font-semibold text-lg">{title}</h3>
+        </div>
+        {isOpen ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
       </button>
       {isOpen && (
-        <div className="p-5 pt-0 border-t border-border">
+        <div className="px-6 pb-6 border-t border-border pt-5">
           {children}
         </div>
       )}
@@ -160,7 +162,7 @@ const CollapsibleSection = forwardRef<HTMLDivElement, SectionProps>(
   );
 });
 
-CollapsibleSection.displayName = 'CollapsibleSection';
+SettingsCard.displayName = 'SettingsCard';
 
 export default function SettingsPanel() {
   const { notify } = useNotification();
@@ -490,314 +492,322 @@ export default function SettingsPanel() {
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <h2 className="text-2xl font-bold mb-6">Configurações</h2>
+      <h2 className="text-3xl font-bold mb-8">Configurações</h2>
       
-      <div className="flex-1 min-h-0 overflow-y-auto pr-2 space-y-6">
-        {/* Grid layout - seções lado a lado */}
+      <div className="flex-1 min-h-0 overflow-y-auto pr-2 space-y-8">
+        {/* Grid principal - 2 colunas */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Tema Visual */}
-          <CollapsibleSection 
-            title="Tema Visual" 
-            icon={<Palette className="w-5 h-5 text-primary" />}
-            defaultOpen
-          >
-            <div className="grid grid-cols-3 gap-3 mt-4">
-              {[
-                { id: 'gold', label: 'Black & Gold', colors: ['bg-black', 'bg-amber-500'], isNative: true },
-                { id: 'gold-shine', label: 'Gold Brilhante', colors: ['bg-black', 'bg-yellow-400'] },
-                { id: 'gold-metallic', label: 'Gold Metálico', colors: ['bg-black', 'bg-amber-300'] },
-              ].map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => setTheme(t.id as any)}
-                  className={`p-4 rounded-xl border-2 transition-all ${
-                    theme === t.id ? 'border-primary gold-glow' : 'border-border hover:border-primary/50'
-                  }`}
-                >
-                  <div className="flex gap-2 mb-2">
-                    {t.colors.map((c, i) => (
-                      <div key={i} className={`w-5 h-5 rounded-full ${c}`} />
-                    ))}
-                  </div>
-                  <p className="text-sm font-medium">{t.label}</p>
-                </button>
-              ))}
-            </div>
-          </CollapsibleSection>
+          
+          {/* Coluna 1 */}
+          <div className="space-y-6">
+            {/* Tema Visual */}
+            <SettingsCard 
+              title="Tema Visual" 
+              icon={<Palette className="w-5 h-5 text-primary" />}
+            >
+              <div className="grid grid-cols-3 gap-4">
+                {[
+                  { id: 'gold', label: 'Black & Gold', colors: ['bg-black', 'bg-amber-500'], isNative: true },
+                  { id: 'gold-shine', label: 'Gold Brilhante', colors: ['bg-black', 'bg-yellow-400'] },
+                  { id: 'gold-metallic', label: 'Gold Metálico', colors: ['bg-black', 'bg-amber-300'] },
+                ].map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => setTheme(t.id as any)}
+                    className={`p-4 rounded-xl border-2 transition-all ${
+                      theme === t.id ? 'border-primary gold-glow' : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="flex gap-2 mb-3">
+                      {t.colors.map((c, i) => (
+                        <div key={i} className={`w-6 h-6 rounded-full ${c}`} />
+                      ))}
+                    </div>
+                    <p className="text-sm font-medium">{t.label}</p>
+                  </button>
+                ))}
+              </div>
+            </SettingsCard>
 
-          {/* Segurança */}
-          <CollapsibleSection 
-            title="Segurança" 
-            icon={<Shield className="w-5 h-5 text-primary" />}
-          >
-            <div className="mt-4 space-y-4">
-              <div className="flex items-center justify-between">
+            {/* Barbearia */}
+            <SettingsCard 
+              title="Barbearia" 
+              icon={<Store className="w-5 h-5 text-primary" />}
+            >
+              <div className="space-y-5">
                 <div>
-                  <span className="text-sm font-medium">Alerta de Sobrecarga</span>
-                  <p className="text-xs text-muted-foreground">Notifica quando atingir limite diário</p>
-                </div>
-                <button
-                  onClick={() => {
-                    if (!shopSettings.overloadAlertEnabled) {
-                      setShowOverloadModal(true);
-                    } else {
-                      updateShopSettings({ overloadAlertEnabled: false });
-                      notify.info('Alertas desativados');
-                    }
-                  }}
-                  className={`w-12 h-6 rounded-full transition-colors relative ${
-                    shopSettings.overloadAlertEnabled ? 'bg-primary' : 'bg-secondary'
-                  }`}
-                >
-                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${
-                    shopSettings.overloadAlertEnabled ? 'left-7' : 'left-1'
-                  }`} />
-                </button>
-              </div>
-              {shopSettings.overloadAlertEnabled && (
-                <div className="pt-3 border-t border-border">
-                  <label className="text-sm text-muted-foreground block mb-2">Limite diário de agendamentos</label>
-                  <Input
-                    type="number"
-                    value={shopSettings.dailyAppointmentLimit || 20}
-                    onChange={(e) => updateShopSettings({ dailyAppointmentLimit: Number(e.target.value) })}
-                    min={1}
-                    max={100}
-                    className="h-10"
-                  />
-                </div>
-              )}
-            </div>
-          </CollapsibleSection>
-
-          {/* Personalização da Barbearia */}
-          <CollapsibleSection 
-            title="Barbearia" 
-            icon={<Store className="w-5 h-5 text-primary" />}
-          >
-            <div className="mt-4 space-y-4">
-              <div>
-                <label className="text-sm text-muted-foreground block mb-2">Nome da Barbearia</label>
-                <Input value={shopSettings.name} onChange={(e) => updateShopSettings({ name: e.target.value })} className="h-10" />
-              </div>
-              <div>
-                <label className="text-sm text-muted-foreground block mb-2">Tagline / Slogan</label>
-                <Input value={shopSettings.tagline} onChange={(e) => updateShopSettings({ tagline: e.target.value })} className="h-10" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm text-muted-foreground block mb-2">Telefone</label>
-                  <Input value={shopSettings.phone} onChange={(e) => updateShopSettings({ phone: e.target.value })} className="h-10" />
+                  <label className="text-sm font-medium text-muted-foreground block mb-2">Nome da Barbearia</label>
+                  <Input value={shopSettings.name} onChange={(e) => updateShopSettings({ name: e.target.value })} className="h-11 text-base" />
                 </div>
                 <div>
-                  <label className="text-sm text-muted-foreground block mb-2">WhatsApp</label>
-                  <Input value={shopSettings.whatsapp} onChange={(e) => updateShopSettings({ whatsapp: e.target.value })} placeholder="55..." className="h-10" />
+                  <label className="text-sm font-medium text-muted-foreground block mb-2">Tagline / Slogan</label>
+                  <Input value={shopSettings.tagline} onChange={(e) => updateShopSettings({ tagline: e.target.value })} className="h-11 text-base" />
                 </div>
-              </div>
-              <div>
-                <label className="text-sm text-muted-foreground block mb-2">Endereço Completo</label>
-                <Input value={shopSettings.address} onChange={(e) => updateShopSettings({ address: e.target.value })} className="h-10" />
-              </div>
-              <div>
-                <label className="text-sm text-muted-foreground block mb-2">Link do Google Maps</label>
-                <Input value={shopSettings.mapsLink} onChange={(e) => updateShopSettings({ mapsLink: e.target.value })} placeholder="https://maps.google.com/..." className="h-10" />
-              </div>
-            </div>
-          </CollapsibleSection>
-
-          {/* Redes Sociais */}
-          <CollapsibleSection 
-            title="Redes Sociais" 
-            icon={<Instagram className="w-5 h-5 text-primary" />}
-          >
-            <div className="mt-4 space-y-4">
-              <div>
-                <label className="text-sm text-muted-foreground block mb-2 flex items-center gap-2">
-                  <Instagram className="w-4 h-4" /> Instagram
-                </label>
-                <Input
-                  placeholder="@seuperfil"
-                  value={shopSettings.social?.instagram || ''}
-                  onChange={(e) => updateShopSettings({ social: { ...shopSettings.social, instagram: e.target.value } })}
-                  className="h-10"
-                />
-              </div>
-              <div>
-                <label className="text-sm text-muted-foreground block mb-2 flex items-center gap-2">
-                  <Facebook className="w-4 h-4" /> Facebook
-                </label>
-                <Input
-                  placeholder="nome.da.pagina"
-                  value={shopSettings.social?.facebook || ''}
-                  onChange={(e) => updateShopSettings({ social: { ...shopSettings.social, facebook: e.target.value } })}
-                  className="h-10"
-                />
-              </div>
-            </div>
-          </CollapsibleSection>
-
-          {/* Backup e Restauração */}
-          <CollapsibleSection
-            title="Backup e Restauração" 
-            icon={<Database className="w-5 h-5 text-primary" />}
-          >
-            <div className="mt-4 space-y-5">
-              <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 flex items-start gap-3">
-                <Shield className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="font-medium text-sm mb-1">Backup Seguro com SHA-256</p>
-                  <p className="text-sm text-muted-foreground">
-                    Inclui: configurações da barbearia, templates de mensagem, configuração ChatPro e textos do site.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <Button 
-                  onClick={handleExportBackup}
-                  disabled={isExporting}
-                  className="h-12"
-                >
-                  {isExporting ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Download className="w-4 h-4 mr-2" />
-                  )}
-                  Exportar Backup
-                </Button>
-                
-                <input
-                  ref={backupFileInputRef}
-                  type="file"
-                  accept=".json"
-                  onChange={handleImportBackup}
-                  className="hidden"
-                />
-                
-                <Button 
-                  variant="outline"
-                  onClick={() => backupFileInputRef.current?.click()}
-                  disabled={isImporting}
-                  className="h-12"
-                >
-                  {isImporting ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Upload className="w-4 h-4 mr-2" />
-                  )}
-                  Importar Backup
-                </Button>
-              </div>
-
-              {importError && (
-                <div className="flex items-center gap-3 p-4 bg-destructive/10 border border-destructive/20 rounded-xl">
-                  <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0" />
-                  <p className="text-sm text-destructive">{importError}</p>
-                </div>
-              )}
-            </div>
-          </CollapsibleSection>
-
-          {/* Textos do Site */}
-          <CollapsibleSection 
-            title="Textos do Site" 
-            icon={<Type className="w-5 h-5 text-primary" />}
-          >
-            <div className="mt-4 space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Personalize os textos e títulos das seções do site público.
-              </p>
-              
-              <div className="space-y-4">
-                <div className="p-4 bg-secondary/30 rounded-xl space-y-3">
-                  <h5 className="text-sm font-semibold">Hero (Topo)</h5>
-                  <Input 
-                    value={siteTexts.hero_title} 
-                    onChange={(e) => setSiteTexts(prev => ({ ...prev, hero_title: e.target.value }))}
-                    placeholder="Título principal"
-                    className="h-10"
-                  />
-                  <Input 
-                    value={siteTexts.hero_subtitle} 
-                    onChange={(e) => setSiteTexts(prev => ({ ...prev, hero_subtitle: e.target.value }))}
-                    placeholder="Subtítulo"
-                    className="h-10"
-                  />
-                </div>
-
-                <div className="p-4 bg-secondary/30 rounded-xl space-y-3">
-                  <h5 className="text-sm font-semibold">Sobre Nós</h5>
-                  <Input 
-                    value={siteTexts.about_title} 
-                    onChange={(e) => setSiteTexts(prev => ({ ...prev, about_title: e.target.value }))}
-                    placeholder="Título da seção"
-                    className="h-10"
-                  />
-                  <Textarea 
-                    value={siteTexts.about_description} 
-                    onChange={(e) => setSiteTexts(prev => ({ ...prev, about_description: e.target.value }))}
-                    placeholder="Descrição da barbearia"
-                    rows={3}
-                  />
-                </div>
-
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-secondary/30 rounded-xl space-y-2">
-                    <h5 className="text-sm font-semibold">Serviços</h5>
-                    <Input 
-                      value={siteTexts.services_title} 
-                      onChange={(e) => setSiteTexts(prev => ({ ...prev, services_title: e.target.value }))}
-                      placeholder="Título"
-                      className="h-10"
-                    />
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground block mb-2">Telefone</label>
+                    <Input value={shopSettings.phone} onChange={(e) => updateShopSettings({ phone: e.target.value })} className="h-11 text-base" />
                   </div>
-                  <div className="p-4 bg-secondary/30 rounded-xl space-y-2">
-                    <h5 className="text-sm font-semibold">Galeria</h5>
-                    <Input 
-                      value={siteTexts.gallery_title} 
-                      onChange={(e) => setSiteTexts(prev => ({ ...prev, gallery_title: e.target.value }))}
-                      placeholder="Título"
-                      className="h-10"
-                    />
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground block mb-2">WhatsApp</label>
+                    <Input value={shopSettings.whatsapp} onChange={(e) => updateShopSettings({ whatsapp: e.target.value })} placeholder="55..." className="h-11 text-base" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground block mb-2">Endereço Completo</label>
+                  <Input value={shopSettings.address} onChange={(e) => updateShopSettings({ address: e.target.value })} className="h-11 text-base" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground block mb-2">Link do Google Maps</label>
+                  <Input value={shopSettings.mapsLink} onChange={(e) => updateShopSettings({ mapsLink: e.target.value })} placeholder="https://maps.google.com/..." className="h-11 text-base" />
+                </div>
+              </div>
+            </SettingsCard>
+
+            {/* Backup */}
+            <SettingsCard
+              title="Backup e Restauração" 
+              icon={<Database className="w-5 h-5 text-primary" />}
+            >
+              <div className="space-y-5">
+                <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 flex items-start gap-4">
+                  <Shield className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-base mb-1">Backup Seguro SHA-256</p>
+                    <p className="text-sm text-muted-foreground">
+                      Inclui: configurações, templates, ChatPro e textos.
+                    </p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-secondary/30 rounded-xl space-y-2">
-                    <h5 className="text-sm font-semibold">CTA (Chamada)</h5>
-                    <Input 
-                      value={siteTexts.cta_title} 
-                      onChange={(e) => setSiteTexts(prev => ({ ...prev, cta_title: e.target.value }))}
-                      placeholder="Título"
-                      className="h-10"
-                    />
-                  </div>
-                  <div className="p-4 bg-secondary/30 rounded-xl space-y-2">
-                    <h5 className="text-sm font-semibold">Rodapé</h5>
-                    <Input 
-                      value={siteTexts.footer_text} 
-                      onChange={(e) => setSiteTexts(prev => ({ ...prev, footer_text: e.target.value }))}
-                      placeholder="Texto do rodapé"
-                      className="h-10"
-                    />
-                  </div>
+                  <Button 
+                    onClick={handleExportBackup}
+                    disabled={isExporting}
+                    className="h-12 text-base"
+                  >
+                    {isExporting ? (
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    ) : (
+                      <Download className="w-5 h-5 mr-2" />
+                    )}
+                    Exportar
+                  </Button>
+                  
+                  <input
+                    ref={backupFileInputRef}
+                    type="file"
+                    accept=".json"
+                    onChange={handleImportBackup}
+                    className="hidden"
+                  />
+                  
+                  <Button 
+                    variant="outline"
+                    onClick={() => backupFileInputRef.current?.click()}
+                    disabled={isImporting}
+                    className="h-12 text-base"
+                  >
+                    {isImporting ? (
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    ) : (
+                      <Upload className="w-5 h-5 mr-2" />
+                    )}
+                    Importar
+                  </Button>
                 </div>
-              </div>
 
-              <Button 
-                onClick={saveSiteTexts}
-                disabled={savingSiteTexts}
-                className="w-full h-12"
-              >
-                {savingSiteTexts ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Save className="w-4 h-4 mr-2" />
+                {importError && (
+                  <div className="flex items-center gap-3 p-4 bg-destructive/10 border border-destructive/20 rounded-xl">
+                    <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0" />
+                    <p className="text-sm text-destructive">{importError}</p>
+                  </div>
                 )}
-                Salvar Textos do Site
-              </Button>
-            </div>
-          </CollapsibleSection>
+              </div>
+            </SettingsCard>
+          </div>
+
+          {/* Coluna 2 */}
+          <div className="space-y-6">
+            {/* Segurança */}
+            <SettingsCard 
+              title="Segurança" 
+              icon={<Shield className="w-5 h-5 text-primary" />}
+            >
+              <div className="space-y-5">
+                <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl">
+                  <div>
+                    <span className="text-base font-medium">Alerta de Sobrecarga</span>
+                    <p className="text-sm text-muted-foreground">Notifica quando atingir limite diário</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (!shopSettings.overloadAlertEnabled) {
+                        setShowOverloadModal(true);
+                      } else {
+                        updateShopSettings({ overloadAlertEnabled: false });
+                        notify.info('Alertas desativados');
+                      }
+                    }}
+                    className={`w-14 h-7 rounded-full transition-colors relative ${
+                      shopSettings.overloadAlertEnabled ? 'bg-primary' : 'bg-secondary'
+                    }`}
+                  >
+                    <div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all ${
+                      shopSettings.overloadAlertEnabled ? 'left-8' : 'left-1'
+                    }`} />
+                  </button>
+                </div>
+                {shopSettings.overloadAlertEnabled && (
+                  <div className="pt-4 border-t border-border">
+                    <label className="text-sm font-medium text-muted-foreground block mb-2">Limite diário de agendamentos</label>
+                    <Input
+                      type="number"
+                      value={shopSettings.dailyAppointmentLimit || 20}
+                      onChange={(e) => updateShopSettings({ dailyAppointmentLimit: Number(e.target.value) })}
+                      min={1}
+                      max={100}
+                      className="h-11 text-base"
+                    />
+                  </div>
+                )}
+              </div>
+            </SettingsCard>
+
+            {/* Redes Sociais */}
+            <SettingsCard 
+              title="Redes Sociais" 
+              icon={<Instagram className="w-5 h-5 text-primary" />}
+            >
+              <div className="space-y-5">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground block mb-2 flex items-center gap-2">
+                    <Instagram className="w-4 h-4" /> Instagram
+                  </label>
+                  <Input
+                    placeholder="@seuperfil"
+                    value={shopSettings.social?.instagram || ''}
+                    onChange={(e) => updateShopSettings({ social: { ...shopSettings.social, instagram: e.target.value } })}
+                    className="h-11 text-base"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground block mb-2 flex items-center gap-2">
+                    <Facebook className="w-4 h-4" /> Facebook
+                  </label>
+                  <Input
+                    placeholder="nome.da.pagina"
+                    value={shopSettings.social?.facebook || ''}
+                    onChange={(e) => updateShopSettings({ social: { ...shopSettings.social, facebook: e.target.value } })}
+                    className="h-11 text-base"
+                  />
+                </div>
+              </div>
+            </SettingsCard>
+
+            {/* Textos do Site */}
+            <SettingsCard 
+              title="Textos do Site" 
+              icon={<Type className="w-5 h-5 text-primary" />}
+              defaultOpen={false}
+            >
+              <div className="space-y-5">
+                <p className="text-sm text-muted-foreground">
+                  Personalize os textos e títulos das seções do site público.
+                </p>
+                
+                <div className="space-y-4">
+                  <div className="p-4 bg-muted/30 rounded-xl space-y-3">
+                    <h5 className="text-base font-semibold">Hero (Topo)</h5>
+                    <Input 
+                      value={siteTexts.hero_title} 
+                      onChange={(e) => setSiteTexts(prev => ({ ...prev, hero_title: e.target.value }))}
+                      placeholder="Título principal"
+                      className="h-11 text-base"
+                    />
+                    <Input 
+                      value={siteTexts.hero_subtitle} 
+                      onChange={(e) => setSiteTexts(prev => ({ ...prev, hero_subtitle: e.target.value }))}
+                      placeholder="Subtítulo"
+                      className="h-11 text-base"
+                    />
+                  </div>
+
+                  <div className="p-4 bg-muted/30 rounded-xl space-y-3">
+                    <h5 className="text-base font-semibold">Sobre Nós</h5>
+                    <Input 
+                      value={siteTexts.about_title} 
+                      onChange={(e) => setSiteTexts(prev => ({ ...prev, about_title: e.target.value }))}
+                      placeholder="Título da seção"
+                      className="h-11 text-base"
+                    />
+                    <Textarea 
+                      value={siteTexts.about_description} 
+                      onChange={(e) => setSiteTexts(prev => ({ ...prev, about_description: e.target.value }))}
+                      placeholder="Descrição da barbearia"
+                      rows={3}
+                      className="text-base"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-muted/30 rounded-xl space-y-2">
+                      <h5 className="text-base font-semibold">Serviços</h5>
+                      <Input 
+                        value={siteTexts.services_title} 
+                        onChange={(e) => setSiteTexts(prev => ({ ...prev, services_title: e.target.value }))}
+                        placeholder="Título"
+                        className="h-11 text-base"
+                      />
+                    </div>
+                    <div className="p-4 bg-muted/30 rounded-xl space-y-2">
+                      <h5 className="text-base font-semibold">Galeria</h5>
+                      <Input 
+                        value={siteTexts.gallery_title} 
+                        onChange={(e) => setSiteTexts(prev => ({ ...prev, gallery_title: e.target.value }))}
+                        placeholder="Título"
+                        className="h-11 text-base"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-muted/30 rounded-xl space-y-2">
+                      <h5 className="text-base font-semibold">CTA (Chamada)</h5>
+                      <Input 
+                        value={siteTexts.cta_title} 
+                        onChange={(e) => setSiteTexts(prev => ({ ...prev, cta_title: e.target.value }))}
+                        placeholder="Título"
+                        className="h-11 text-base"
+                      />
+                    </div>
+                    <div className="p-4 bg-muted/30 rounded-xl space-y-2">
+                      <h5 className="text-base font-semibold">Rodapé</h5>
+                      <Input 
+                        value={siteTexts.footer_text} 
+                        onChange={(e) => setSiteTexts(prev => ({ ...prev, footer_text: e.target.value }))}
+                        placeholder="Texto do rodapé"
+                        className="h-11 text-base"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <Button 
+                  onClick={saveSiteTexts}
+                  disabled={savingSiteTexts}
+                  className="w-full h-12 text-base"
+                >
+                  {savingSiteTexts ? (
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="w-5 h-5 mr-2" />
+                  )}
+                  Salvar Textos do Site
+                </Button>
+              </div>
+            </SettingsCard>
+          </div>
         </div>
 
         {/* Seção de Integrações - Full Width */}
