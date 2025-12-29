@@ -1717,10 +1717,10 @@ const AdminPanel = () => {
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 1, y: 0 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="gpu-accelerated"
+              className="gpu-accelerated h-full min-h-0 flex flex-col"
             >
               {renderContent()}
             </motion.div>
