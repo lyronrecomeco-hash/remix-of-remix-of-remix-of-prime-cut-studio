@@ -395,10 +395,78 @@ const documentationSections: DocSection[] = [
     ]
   },
   {
+    id: 'politicas',
+    title: 'Políticas e Valores',
+    icon: Shield,
+    content: [
+      {
+        subtitle: 'Política de Reembolso',
+        text: 'Condições para solicitação de reembolso:',
+        list: [
+          'Solicitações devem ser feitas em até 7 dias após a compra',
+          'O sistema deve apresentar falhas comprovadas não solucionadas',
+          'Reembolsos parciais podem ser aplicados em caso de uso',
+          'Cancelamentos antecipados seguem proporção do período restante'
+        ],
+        warning: 'Reembolsos não se aplicam a serviços já utilizados ou personalizações entregues.'
+      },
+      {
+        subtitle: 'Implementações Adicionais',
+        text: 'Novos recursos e personalizações:',
+        list: [
+          'Funcionalidades fora do escopo original são cobradas à parte',
+          'Orçamento prévio será enviado antes de qualquer desenvolvimento',
+          'Integrações com sistemas terceiros possuem valores específicos',
+          'Personalizações visuais complexas têm custo adicional',
+          'Treinamentos extras são cobrados por hora'
+        ],
+        tip: 'Solicite um orçamento antes de qualquer customização para evitar surpresas.'
+      },
+      {
+        subtitle: 'Manutenção e Atualizações',
+        text: 'O que está incluso no plano:',
+        list: [
+          'Correções de bugs e falhas do sistema',
+          'Atualizações de segurança',
+          'Melhorias de performance',
+          'Suporte técnico durante horário comercial'
+        ]
+      },
+      {
+        subtitle: 'Não Incluso no Plano',
+        text: 'Serviços que geram cobrança adicional:',
+        list: [
+          'Desenvolvimento de novas funcionalidades',
+          'Integrações com APIs externas não previstas',
+          'Migração de dados de outros sistemas',
+          'Treinamentos presenciais ou extensos',
+          'Consultoria de negócios e marketing'
+        ]
+      }
+    ]
+  },
+  {
     id: 'suporte',
     title: 'Suporte Técnico',
     icon: AlertTriangle,
     content: [
+      {
+        subtitle: 'Canais de Atendimento',
+        text: 'Entre em contato através de:',
+        list: [
+          'WhatsApp: Resposta em até 2 horas úteis',
+          'Email: Resposta em até 24 horas',
+          'Chamados no sistema: Acompanhe o status em tempo real'
+        ]
+      },
+      {
+        subtitle: 'Horário de Suporte',
+        list: [
+          'Segunda a Sexta: 9h às 18h',
+          'Sábados: 9h às 13h',
+          'Domingos e feriados: Apenas emergências críticas'
+        ]
+      },
       {
         subtitle: 'Antes de Pedir Ajuda',
         text: 'Verifique:',
@@ -456,67 +524,61 @@ export default function GenesisDocumentation() {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* Header fixo */}
-      <div className="flex items-center justify-between mb-6 flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <Book className="w-7 h-7 text-primary" />
-          <div>
-            <h2 className="text-2xl font-bold">Documentação Genesis</h2>
-            <p className="text-sm text-muted-foreground">Guia essencial do sistema</p>
+    <div className="flex h-full overflow-hidden">
+      {/* Sidebar fixa da documentação */}
+      <div className="w-64 flex-shrink-0 flex flex-col border-r border-border bg-card overflow-hidden">
+        <div className="p-4 border-b border-border flex-shrink-0">
+          <div className="flex items-center gap-3 mb-4">
+            <Book className="w-6 h-6 text-primary" />
+            <div>
+              <h2 className="text-lg font-bold">Documentação Genesis</h2>
+              <p className="text-xs text-muted-foreground">Guia essencial do sistema</p>
+            </div>
+          </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar..."
+              className="pl-9 h-9"
+            />
           </div>
         </div>
+
+        <ScrollArea className="flex-1">
+          <div className="p-2 space-y-1">
+            {filteredSections.map((section) => {
+              const Icon = section.icon;
+              return (
+                <button
+                  key={section.id}
+                  onClick={() => {
+                    setActiveSection(section.id);
+                    setSearchQuery('');
+                  }}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
+                    activeSection === section.id
+                      ? 'bg-primary text-primary-foreground'
+                      : 'hover:bg-secondary text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Icon className="w-4 h-4 flex-shrink-0" />
+                  <span className="text-sm font-medium truncate">{section.title}</span>
+                  {activeSection === section.id && (
+                    <ChevronRight className="w-4 h-4 ml-auto flex-shrink-0" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </ScrollArea>
       </div>
 
-      {/* Container principal com scroll contido */}
-      <div className="flex gap-6 flex-1 min-h-0 overflow-hidden">
-        {/* Sidebar fixa */}
-        <div className="w-64 flex-shrink-0 flex flex-col overflow-hidden">
-          <div className="mb-4 flex-shrink-0">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar..."
-                className="pl-9 h-10"
-              />
-            </div>
-          </div>
-
-          <ScrollArea className="flex-1">
-            <div className="space-y-1 pr-4">
-              {filteredSections.map((section) => {
-                const Icon = section.icon;
-                return (
-                  <button
-                    key={section.id}
-                    onClick={() => {
-                      setActiveSection(section.id);
-                      setSearchQuery('');
-                    }}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
-                      activeSection === section.id
-                        ? 'bg-primary text-primary-foreground'
-                        : 'hover:bg-secondary text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 flex-shrink-0" />
-                    <span className="text-sm font-medium truncate">{section.title}</span>
-                    {activeSection === section.id && (
-                      <ChevronRight className="w-4 h-4 ml-auto flex-shrink-0" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </ScrollArea>
-        </div>
-
-        {/* Content com scroll próprio */}
-        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-          <ScrollArea className="flex-1">
-            <div className="pr-4">
+      {/* Content com scroll próprio */}
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <ScrollArea className="flex-1">
+          <div className="p-6">
               {currentSection && (
                 <div className="space-y-6 pb-6">
                   <div className="flex items-center gap-3 pb-4 border-b border-border">
@@ -572,38 +634,37 @@ export default function GenesisDocumentation() {
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
-          </ScrollArea>
-
-          {/* Navigation fixo no rodapé */}
-          <div className="flex items-center justify-between pt-4 border-t border-border mt-auto flex-shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={goToPrev}
-              disabled={currentIndex === 0}
-              className="gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Anterior
-            </Button>
-
-            <span className="text-sm text-muted-foreground">
-              {currentIndex + 1} de {documentationSections.length}
-            </span>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={goToNext}
-              disabled={currentIndex === documentationSections.length - 1}
-              className="gap-2"
-            >
-              Próximo
-              <ArrowRight className="w-4 h-4" />
-            </Button>
+            )}
           </div>
+        </ScrollArea>
+
+        {/* Navigation fixo no rodapé */}
+        <div className="flex items-center justify-between p-4 border-t border-border flex-shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={goToPrev}
+            disabled={currentIndex === 0}
+            className="gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Anterior
+          </Button>
+
+          <span className="text-sm text-muted-foreground">
+            {currentIndex + 1} de {documentationSections.length}
+          </span>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={goToNext}
+            disabled={currentIndex === documentationSections.length - 1}
+            className="gap-2"
+          >
+            Próximo
+            <ArrowRight className="w-4 h-4" />
+          </Button>
         </div>
       </div>
     </div>
