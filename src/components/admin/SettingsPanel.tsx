@@ -58,7 +58,6 @@ import { useNotification } from '@/contexts/NotificationContext';
 import { supabase } from '@/integrations/supabase/client';
 import OverloadAlertModal from './OverloadAlertModal';
 import GenesisDocumentation from './GenesisDocumentation';
-import ThemePreview from './ThemePreview';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { sendPushNotification } from '@/lib/webhooks';
 
@@ -2095,7 +2094,13 @@ Retorne APENAS a mensagem, sem explicações.`;
               className="rounded-lg overflow-hidden border border-border shadow-lg"
               style={{ width: '360px', height: '540px' }}
             >
-              <ThemePreview themeId={previewTheme} />
+              <iframe
+                key={previewTheme}
+                src={`/?theme=${previewTheme}`}
+                className="w-full h-full"
+                title="Preview do Tema"
+                style={{ transform: 'scale(0.5)', transformOrigin: 'top left', width: '200%', height: '200%' }}
+              />
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
