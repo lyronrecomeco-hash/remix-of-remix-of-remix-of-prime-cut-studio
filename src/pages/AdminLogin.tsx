@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Lock, Mail, Eye, EyeOff, AlertCircle, Loader2, Scissors } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Lock, Mail, Eye, EyeOff, AlertCircle, Loader2, Scissors, UserPlus, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { z } from 'zod';
+import RegisterForm from '@/components/auth/RegisterForm';
+import EmailConfirmation from '@/components/auth/EmailConfirmation';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -22,6 +24,8 @@ interface Particle {
   opacity: number;
 }
 
+type ViewMode = 'login' | 'register' | 'confirmation';
+
 const AdminLogin = () => {
   const navigate = useNavigate();
   const { signIn, user, isAdmin, isLoading: authLoading } = useAuth();
@@ -34,6 +38,8 @@ const AdminLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [viewMode, setViewMode] = useState<ViewMode>('login');
+  const [registeredEmail, setRegisteredEmail] = useState('');
 
   // Redirect if already logged in
   useEffect(() => {
@@ -186,6 +192,11 @@ const AdminLogin = () => {
     }
   };
 
+  const handleRegistrationSuccess = (email: string) => {
+    setRegisteredEmail(email);
+    setViewMode('confirmation');
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -231,91 +242,157 @@ const AdminLogin = () => {
                 transition={{ duration: 3, repeat: Infinity }}
               />
             </div>
-            <h1 className="text-3xl font-bold text-gradient">Painel Administrativo</h1>
-            <p className="text-muted-foreground mt-2">Entre com suas credenciais</p>
+            <h1 className="text-3xl font-bold text-gradient">
+              {viewMode === 'login' ? 'Painel Administrativo' : 
+               viewMode === 'register' ? 'Criar Conta' : 'Confirmação'}
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              {viewMode === 'login' ? 'Entre com suas credenciais' : 
+               viewMode === 'register' ? 'Cadastre sua barbearia gratuitamente' : 'Verifique seu email'}
+            </p>
           </motion.div>
 
-          {/* Login Form */}
+          {/* Form Card */}
           <motion.div 
             className="glass-card rounded-2xl p-8 border border-primary/20"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Error Message */}
-              {error && (
+            <AnimatePresence mode="wait">
+              {viewMode === 'login' && (
                 <motion.div
-                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  className="flex items-center gap-3 p-4 rounded-xl bg-destructive/10 border border-destructive/30"
+                  key="login"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
                 >
-                  <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0" />
-                  <p className="text-sm text-destructive">{error}</p>
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Error Message */}
+                    {error && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        className="flex items-center gap-3 p-4 rounded-xl bg-destructive/10 border border-destructive/30"
+                      >
+                        <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0" />
+                        <p className="text-sm text-destructive">{error}</p>
+                      </motion.div>
+                    )}
+
+                    {/* Email Field */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Email</label>
+                      <div className="relative group">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                        <Input
+                          type="email"
+                          placeholder="admin@exemplo.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="pl-12 h-12 bg-secondary/50 border-border focus:border-primary focus:ring-primary/20 transition-all"
+                          disabled={isLoading}
+                          autoComplete="email"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Password Field */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Senha</label>
+                      <div className="relative group">
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                        <Input
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="••••••••"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="pl-12 pr-12 h-12 bg-secondary/50 border-border focus:border-primary focus:ring-primary/20 transition-all"
+                          disabled={isLoading}
+                          autoComplete="current-password"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Submit Button */}
+                    <Button
+                      type="submit"
+                      variant="hero"
+                      className="w-full h-12 text-base font-semibold"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                          Entrando...
+                        </>
+                      ) : (
+                        <>
+                          <LogIn className="w-5 h-5 mr-2" />
+                          Entrar
+                        </>
+                      )}
+                    </Button>
+
+                    {/* Divider */}
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-border"></div>
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-card px-2 text-muted-foreground">ou</span>
+                      </div>
+                    </div>
+
+                    {/* Register Button */}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full h-12 text-base"
+                      onClick={() => setViewMode('register')}
+                    >
+                      <UserPlus className="w-5 h-5 mr-2" />
+                      Criar Conta Grátis
+                    </Button>
+                  </form>
                 </motion.div>
               )}
 
-              {/* Email Field */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Email</label>
-                <div className="relative group">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                  <Input
-                    type="email"
-                    placeholder="admin@exemplo.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-12 h-12 bg-secondary/50 border-border focus:border-primary focus:ring-primary/20 transition-all"
-                    disabled={isLoading}
-                    autoComplete="email"
+              {viewMode === 'register' && (
+                <motion.div
+                  key="register"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                >
+                  <RegisterForm
+                    onSuccess={handleRegistrationSuccess}
+                    onBackToLogin={() => setViewMode('login')}
                   />
-                </div>
-              </div>
+                </motion.div>
+              )}
 
-              {/* Password Field */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Senha</label>
-                <div className="relative group">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                  <Input
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-12 pr-12 h-12 bg-secondary/50 border-border focus:border-primary focus:ring-primary/20 transition-all"
-                    disabled={isLoading}
-                    autoComplete="current-password"
+              {viewMode === 'confirmation' && (
+                <motion.div
+                  key="confirmation"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                >
+                  <EmailConfirmation
+                    email={registeredEmail}
+                    onBackToLogin={() => setViewMode('login')}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                variant="hero"
-                className="w-full h-12 text-base font-semibold"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                    Entrando...
-                  </>
-                ) : (
-                  <>
-                    <Lock className="w-5 h-5 mr-2" />
-                    Entrar
-                  </>
-                )}
-              </Button>
-            </form>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
 
           {/* Security Notice */}
@@ -325,7 +402,7 @@ const AdminLogin = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
           >
-            🔒 Conexão segura • Acesso restrito a administradores
+            🔒 Conexão segura • {viewMode === 'login' ? 'Acesso restrito' : 'Seus dados estão protegidos'}
           </motion.p>
         </motion.div>
       </div>

@@ -28,7 +28,7 @@ const registerSchema = z.object({
 });
 
 interface RegisterFormProps {
-  onSuccess: () => void;
+  onSuccess: (email: string) => void;
   onBackToLogin: () => void;
 }
 
@@ -191,7 +191,7 @@ const RegisterForm = ({ onSuccess, onBackToLogin }: RegisterFormProps) => {
         clients_count: 0,
       });
 
-      onSuccess();
+      onSuccess(formData.email);
     } catch (err) {
       console.error('Registration error:', err);
       setError('Erro ao criar conta. Tente novamente.');

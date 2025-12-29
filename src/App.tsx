@@ -8,9 +8,11 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { FeedbackProvider } from "@/contexts/FeedbackContext";
 import { GalleryProvider } from "@/contexts/GalleryContext";
+import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { useSecurityProtection } from "@/hooks/useSecurityProtection";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import UpgradeModal from "@/components/subscription/UpgradeModal";
 import Index from "./pages/Index";
 import Booking from "./pages/Booking";
 import BookingDirect from "./pages/BookingDirect";
@@ -86,6 +88,7 @@ const AppContent = () => {
     <>
       <Toaster />
       <Sonner />
+      <UpgradeModal />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
@@ -111,17 +114,19 @@ const AppContent = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <AppProvider>
-        <GalleryProvider>
-          <FeedbackProvider>
-            <NotificationProvider>
-              <TooltipProvider>
-                <AppContent />
-              </TooltipProvider>
-            </NotificationProvider>
-          </FeedbackProvider>
-        </GalleryProvider>
-      </AppProvider>
+      <SubscriptionProvider>
+        <AppProvider>
+          <GalleryProvider>
+            <FeedbackProvider>
+              <NotificationProvider>
+                <TooltipProvider>
+                  <AppContent />
+                </TooltipProvider>
+              </NotificationProvider>
+            </FeedbackProvider>
+          </GalleryProvider>
+        </AppProvider>
+      </SubscriptionProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
