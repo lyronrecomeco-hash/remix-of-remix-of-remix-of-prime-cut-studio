@@ -199,6 +199,7 @@ const allThemes = [
   { id: 'rose-feminine', label: 'Rosé Feminino', colors: ['#FDF2F8', '#EC4899'], icon: Heart },
   { id: 'lavender-soft', label: 'Lavanda Suave', colors: ['#F5F3FF', '#8B5CF6'], icon: Flower2 },
   { id: 'coral-beauty', label: 'Coral Beauty', colors: ['#FFF1F2', '#FB7185'], icon: Sparkles },
+  { id: 'blush-salon', label: 'Blush Salon', colors: ['#FFF5F7', '#F472B6'], icon: Flower2 },
 ];
 
 const defaultSecuritySettings: SecuritySettings = {
@@ -2074,19 +2075,25 @@ Retorne APENAS a mensagem, sem explicações.`;
 
       {/* Modal de Preview do Tema */}
       <Dialog open={themePreviewOpen} onOpenChange={setThemePreviewOpen}>
-        <DialogContent className="max-w-[95vw] w-full max-h-[95vh] h-[95vh] p-4">
+        <DialogContent className="max-w-2xl w-full p-4">
           <DialogHeader className="pb-2">
             <DialogTitle className="flex items-center gap-2">
               <Monitor className="w-5 h-5 text-primary" />
               Preview do Tema: {allThemes.find(t => t.id === previewTheme)?.label}
             </DialogTitle>
           </DialogHeader>
-          <div className="flex-1 rounded-lg overflow-hidden border border-border h-[calc(95vh-120px)]">
-            <iframe
-              src={`/?theme=${previewTheme}`}
-              className="w-full h-full"
-              title="Preview do Tema"
-            />
+          <div className="flex justify-center">
+            <div 
+              className="rounded-lg overflow-hidden border border-border shadow-lg"
+              style={{ width: '360px', height: '540px' }}
+            >
+              <iframe
+                src={`/?theme=${previewTheme}`}
+                className="w-full h-full"
+                title="Preview do Tema"
+                style={{ transform: 'scale(0.5)', transformOrigin: 'top left', width: '200%', height: '200%' }}
+              />
+            </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="outline" onClick={() => setThemePreviewOpen(false)}>

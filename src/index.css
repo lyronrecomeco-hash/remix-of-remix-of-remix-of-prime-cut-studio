@@ -88,6 +88,181 @@
     --gradient-primary: linear-gradient(135deg, hsl(45 95% 65%) 0%, hsl(43 90% 50%) 40%, hsl(40 85% 38%) 100%);
     --shadow-glow: 0 0 60px hsl(43 90% 50% / 0.4);
   }
+
+  /* Dark Elegant Theme - Purple accent */
+  .theme-dark-elegant {
+    --background: 240 10% 4%;
+    --foreground: 250 20% 95%;
+    --card: 240 10% 7%;
+    --card-foreground: 250 20% 95%;
+    --popover: 240 10% 7%;
+    --popover-foreground: 250 20% 95%;
+    --primary: 239 84% 67%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 10% 12%;
+    --secondary-foreground: 250 20% 95%;
+    --muted: 240 10% 15%;
+    --muted-foreground: 250 10% 55%;
+    --accent: 239 84% 67%;
+    --accent-foreground: 0 0% 100%;
+    --border: 239 30% 20%;
+    --input: 240 10% 18%;
+    --ring: 239 84% 67%;
+    --gold: 239 84% 67%;
+    --gold-light: 239 90% 75%;
+    --gradient-primary: linear-gradient(135deg, hsl(239 90% 75%) 0%, hsl(239 84% 67%) 50%, hsl(239 70% 50%) 100%);
+    --shadow-glow: 0 0 40px hsl(239 84% 67% / 0.25);
+  }
+
+  /* Classic Wood Theme - Brown tones */
+  .theme-classic-wood {
+    --background: 20 30% 6%;
+    --foreground: 30 20% 90%;
+    --card: 20 25% 10%;
+    --card-foreground: 30 20% 90%;
+    --popover: 20 25% 10%;
+    --popover-foreground: 30 20% 90%;
+    --primary: 25 59% 35%;
+    --primary-foreground: 30 20% 95%;
+    --secondary: 20 20% 15%;
+    --secondary-foreground: 30 20% 90%;
+    --muted: 20 15% 18%;
+    --muted-foreground: 30 10% 55%;
+    --accent: 25 59% 35%;
+    --accent-foreground: 30 20% 95%;
+    --border: 25 30% 22%;
+    --input: 20 20% 18%;
+    --ring: 25 59% 35%;
+    --gold: 25 59% 35%;
+    --gold-light: 30 55% 50%;
+    --gradient-primary: linear-gradient(135deg, hsl(30 55% 50%) 0%, hsl(25 59% 35%) 50%, hsl(20 50% 25%) 100%);
+    --shadow-glow: 0 0 40px hsl(25 59% 35% / 0.25);
+  }
+
+  /* Modern Steel Theme - Gray metallic */
+  .theme-modern-steel {
+    --background: 220 15% 10%;
+    --foreground: 220 10% 90%;
+    --card: 220 15% 14%;
+    --card-foreground: 220 10% 90%;
+    --popover: 220 15% 14%;
+    --popover-foreground: 220 10% 90%;
+    --primary: 220 10% 64%;
+    --primary-foreground: 220 15% 10%;
+    --secondary: 220 10% 20%;
+    --secondary-foreground: 220 10% 90%;
+    --muted: 220 10% 22%;
+    --muted-foreground: 220 8% 55%;
+    --accent: 220 10% 64%;
+    --accent-foreground: 220 15% 10%;
+    --border: 220 15% 25%;
+    --input: 220 10% 20%;
+    --ring: 220 10% 64%;
+    --gold: 220 10% 64%;
+    --gold-light: 220 12% 75%;
+    --gradient-primary: linear-gradient(135deg, hsl(220 12% 75%) 0%, hsl(220 10% 64%) 50%, hsl(220 10% 50%) 100%);
+    --shadow-glow: 0 0 40px hsl(220 10% 64% / 0.25);
+  }
+
+  /* Rosé Feminine Theme - Pink light */
+  .theme-rose-feminine {
+    --background: 330 30% 97%;
+    --foreground: 330 50% 15%;
+    --card: 330 25% 94%;
+    --card-foreground: 330 50% 15%;
+    --popover: 330 25% 94%;
+    --popover-foreground: 330 50% 15%;
+    --primary: 330 81% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 330 20% 88%;
+    --secondary-foreground: 330 50% 20%;
+    --muted: 330 15% 90%;
+    --muted-foreground: 330 20% 45%;
+    --accent: 330 81% 60%;
+    --accent-foreground: 0 0% 100%;
+    --border: 330 30% 85%;
+    --input: 330 20% 92%;
+    --ring: 330 81% 60%;
+    --gold: 330 81% 60%;
+    --gold-light: 330 85% 72%;
+    --gradient-primary: linear-gradient(135deg, hsl(330 85% 72%) 0%, hsl(330 81% 60%) 50%, hsl(330 70% 50%) 100%);
+    --shadow-glow: 0 0 40px hsl(330 81% 60% / 0.25);
+  }
+
+  /* Lavender Soft Theme - Purple light */
+  .theme-lavender-soft {
+    --background: 270 30% 97%;
+    --foreground: 270 50% 15%;
+    --card: 270 25% 94%;
+    --card-foreground: 270 50% 15%;
+    --popover: 270 25% 94%;
+    --popover-foreground: 270 50% 15%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 270 20% 88%;
+    --secondary-foreground: 270 50% 20%;
+    --muted: 270 15% 90%;
+    --muted-foreground: 270 20% 45%;
+    --accent: 262 83% 58%;
+    --accent-foreground: 0 0% 100%;
+    --border: 270 30% 85%;
+    --input: 270 20% 92%;
+    --ring: 262 83% 58%;
+    --gold: 262 83% 58%;
+    --gold-light: 262 85% 70%;
+    --gradient-primary: linear-gradient(135deg, hsl(262 85% 70%) 0%, hsl(262 83% 58%) 50%, hsl(262 70% 48%) 100%);
+    --shadow-glow: 0 0 40px hsl(262 83% 58% / 0.25);
+  }
+
+  /* Coral Beauty Theme - Coral light */
+  .theme-coral-beauty {
+    --background: 350 30% 97%;
+    --foreground: 350 50% 15%;
+    --card: 350 25% 94%;
+    --card-foreground: 350 50% 15%;
+    --popover: 350 25% 94%;
+    --popover-foreground: 350 50% 15%;
+    --primary: 351 83% 74%;
+    --primary-foreground: 350 50% 15%;
+    --secondary: 350 20% 88%;
+    --secondary-foreground: 350 50% 20%;
+    --muted: 350 15% 90%;
+    --muted-foreground: 350 20% 45%;
+    --accent: 351 83% 74%;
+    --accent-foreground: 350 50% 15%;
+    --border: 350 30% 85%;
+    --input: 350 20% 92%;
+    --ring: 351 83% 74%;
+    --gold: 351 83% 74%;
+    --gold-light: 351 90% 82%;
+    --gradient-primary: linear-gradient(135deg, hsl(351 90% 82%) 0%, hsl(351 83% 74%) 50%, hsl(351 70% 60%) 100%);
+    --shadow-glow: 0 0 40px hsl(351 83% 74% / 0.25);
+  }
+
+  /* Blush Salon Theme - Pink elegant for hairdressers */
+  .theme-blush-salon {
+    --background: 340 35% 97%;
+    --foreground: 340 50% 12%;
+    --card: 340 30% 93%;
+    --card-foreground: 340 50% 12%;
+    --popover: 340 30% 93%;
+    --popover-foreground: 340 50% 12%;
+    --primary: 330 86% 62%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 340 25% 86%;
+    --secondary-foreground: 340 50% 18%;
+    --muted: 340 18% 88%;
+    --muted-foreground: 340 20% 42%;
+    --accent: 330 86% 62%;
+    --accent-foreground: 0 0% 100%;
+    --border: 340 35% 82%;
+    --input: 340 25% 90%;
+    --ring: 330 86% 62%;
+    --gold: 330 86% 62%;
+    --gold-light: 330 90% 75%;
+    --gradient-primary: linear-gradient(135deg, hsl(330 90% 75%) 0%, hsl(330 86% 62%) 50%, hsl(330 75% 52%) 100%);
+    --shadow-glow: 0 0 40px hsl(330 86% 62% / 0.3);
+  }
 }
 
 @layer base {
