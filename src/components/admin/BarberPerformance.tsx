@@ -1,20 +1,19 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   BarChart3,
   TrendingUp,
-  TrendingDown,
   Users,
   Calendar,
   DollarSign,
   Star,
-  Clock,
   ChevronLeft,
   ChevronRight,
   Award,
   Target,
   RefreshCw,
   Download,
+  Eye,
 } from 'lucide-react';
 import {
   BarChart,
@@ -26,9 +25,6 @@ import {
   ResponsiveContainer,
   LineChart,
   Line,
-  PieChart,
-  Pie,
-  Cell,
   RadarChart,
   PolarGrid,
   PolarAngleAxis,
@@ -37,7 +33,7 @@ import {
 } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { useApp } from '@/contexts/AppContext';
-import { supabase } from '@/integrations/supabase/client';
+import { Modal, ModalBody } from '@/components/ui/modal';
 
 interface BarberStats {
   barberId: string;
@@ -61,6 +57,7 @@ const BarberPerformance = () => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedBarber, setSelectedBarber] = useState<string | 'all'>('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   const COLORS = ['hsl(43, 74%, 49%)', 'hsl(142, 71%, 45%)', 'hsl(217, 91%, 60%)', 'hsl(0, 72%, 51%)', 'hsl(280, 65%, 60%)'];
 
@@ -80,30 +77,17 @@ const BarberPerformance = () => {
 
       const completed = barberAppointments.filter(a => a.status === 'completed');
       const cancelled = barberAppointments.filter(a => a.status === 'cancelled');
-      const noShow: typeof barberAppointments = []; // no_show status not implemented yet
+      const noShow: typeof barberAppointments = [];
 
-      // Calculate revenue from completed appointments
       const revenue = completed.reduce((sum, a) => sum + (a.service?.price || 0), 0);
 
-      // Track unique clients
       const clientPhones = new Set<string>();
-      const allTimeClientPhones = new Set<string>();
-      
-      // Get all-time clients for this barber
-      appointments.forEach(a => {
-        if (a.barber.id === barber.id) {
-          allTimeClientPhones.add(a.clientPhone);
-        }
-      });
-
-      // Count new vs returning for this month
       let newClients = 0;
       let returningClients = 0;
       
       barberAppointments.forEach(a => {
         if (!clientPhones.has(a.clientPhone)) {
           clientPhones.add(a.clientPhone);
-          // Check if this client has appointments before this month
           const hasEarlierAppointments = appointments.some(
             prev => prev.barber.id === barber.id && 
                     prev.clientPhone === a.clientPhone && 
@@ -117,7 +101,6 @@ const BarberPerformance = () => {
         }
       });
 
-      // Count top services
       const serviceCount: Record<string, number> = {};
       barberAppointments.forEach(a => {
         const serviceName = a.service?.name || 'Desconhecido';
@@ -137,7 +120,7 @@ const BarberPerformance = () => {
         noShowAppointments: noShow.length,
         totalRevenue: revenue,
         avgRating: barber.rating || 5.0,
-        avgServiceTime: 30, // Default, could be calculated from service durations
+        avgServiceTime: 30,
         newClients,
         returningClients,
         completionRate: barberAppointments.length > 0 
@@ -169,7 +152,7 @@ const BarberPerformance = () => {
     );
   }, [barberStats, selectedBarber]);
 
-  // Chart data for comparison
+  // Chart data
   const comparisonData = useMemo(() => {
     return barberStats.map(stat => ({
       name: stat.barberName.split(' ')[0],
@@ -179,7 +162,6 @@ const BarberPerformance = () => {
     }));
   }, [barberStats]);
 
-  // Daily performance for selected barber (last 30 days)
   const dailyData = useMemo(() => {
     const data: { date: string; count: number; revenue: number }[] = [];
     const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
@@ -202,7 +184,6 @@ const BarberPerformance = () => {
     return data;
   }, [appointments, selectedBarber, selectedMonth, selectedYear]);
 
-  // Radar chart data for selected barber
   const radarData = useMemo(() => {
     const stat = selectedBarber === 'all' 
       ? null 
@@ -252,7 +233,6 @@ const BarberPerformance = () => {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    // Simulated refresh delay
     await new Promise(resolve => setTimeout(resolve, 1000));
     setIsRefreshing(false);
   };
@@ -285,37 +265,41 @@ const BarberPerformance = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-full overflow-hidden">
+    <div className="space-y-4 max-w-full overflow-hidden">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <BarChart3 className="w-6 h-6 text-primary" />
+          <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
             Relatório de Desempenho
           </h2>
-          <p className="text-muted-foreground text-sm">
-            Análise detalhada do desempenho por barbeiro
+          <p className="text-muted-foreground text-xs sm:text-sm">
+            Análise do desempenho por barbeiro
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-            Atualizar
+            <RefreshCw className={`w-4 h-4 mr-1 sm:mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Atualizar</span>
           </Button>
           <Button variant="outline" size="sm" onClick={exportReport}>
-            <Download className="w-4 h-4 mr-2" />
-            Exportar CSV
+            <Download className="w-4 h-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Exportar</span>
+          </Button>
+          <Button variant="hero" size="sm" onClick={() => setShowDetailsModal(true)}>
+            <Eye className="w-4 h-4 mr-1 sm:mr-2" />
+            Ver Detalhes
           </Button>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="glass-card rounded-xl p-4 flex flex-wrap items-center gap-4">
+      <div className="glass-card rounded-xl p-3 sm:p-4 flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
           <button onClick={handlePreviousMonth} className="p-2 hover:bg-secondary rounded-lg">
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <span className="font-medium min-w-[150px] text-center">
+          <span className="font-medium min-w-[120px] sm:min-w-[150px] text-center text-sm sm:text-base">
             {monthNames[selectedMonth]} {selectedYear}
           </span>
           <button onClick={handleNextMonth} className="p-2 hover:bg-secondary rounded-lg">
@@ -326,7 +310,7 @@ const BarberPerformance = () => {
         <select
           value={selectedBarber}
           onChange={(e) => setSelectedBarber(e.target.value)}
-          className="bg-secondary px-4 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          className="bg-secondary px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
         >
           <option value="all">Todos os Barbeiros</option>
           {barbers.map(barber => (
@@ -336,247 +320,277 @@ const BarberPerformance = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass-card rounded-xl p-4"
+          className="glass-card rounded-xl p-3 sm:p-4"
         >
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-              <Calendar className="w-5 h-5 text-primary" />
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
             </div>
           </div>
-          <p className="text-2xl font-bold">{totals.appointments}</p>
-          <p className="text-sm text-muted-foreground">Total Atendimentos</p>
+          <p className="text-xl sm:text-2xl font-bold">{totals.appointments}</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Total Atendimentos</p>
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="glass-card rounded-xl p-4"
+          className="glass-card rounded-xl p-3 sm:p-4"
         >
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-green-500" />
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
+              <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
             </div>
           </div>
-          <p className="text-2xl font-bold text-green-500">R$ {totals.revenue.toFixed(2)}</p>
-          <p className="text-sm text-muted-foreground">Receita Total</p>
+          <p className="text-xl sm:text-2xl font-bold text-green-500">R$ {totals.revenue.toFixed(0)}</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Receita Total</p>
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="glass-card rounded-xl p-4"
+          className="glass-card rounded-xl p-3 sm:p-4"
         >
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-              <Users className="w-5 h-5 text-blue-500" />
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+              <Users className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
             </div>
           </div>
-          <p className="text-2xl font-bold">{totals.newClients}</p>
-          <p className="text-sm text-muted-foreground">Novos Clientes</p>
+          <p className="text-xl sm:text-2xl font-bold">{totals.newClients}</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Novos Clientes</p>
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="glass-card rounded-xl p-4"
+          className="glass-card rounded-xl p-3 sm:p-4"
         >
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-              <Target className="w-5 h-5 text-purple-500" />
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+              <Target className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500" />
             </div>
           </div>
-          <p className="text-2xl font-bold">
+          <p className="text-xl sm:text-2xl font-bold">
             {totals.appointments > 0 ? Math.round((totals.completed / totals.appointments) * 100) : 0}%
           </p>
-          <p className="text-sm text-muted-foreground">Taxa de Conclusão</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Taxa de Conclusão</p>
         </motion.div>
       </div>
 
-      {/* Charts Row */}
-      <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
-        {/* Barber Comparison */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="glass-card rounded-xl p-4 sm:p-6 min-w-0"
-        >
-          <h3 className="font-semibold mb-4 flex items-center gap-2 text-sm sm:text-base">
-            <Award className="w-4 sm:w-5 h-4 sm:h-5 text-primary" />
-            Comparativo de Barbeiros
-          </h3>
-          <div className="w-full overflow-x-auto">
-            <ResponsiveContainer width="100%" height={200} minWidth={280}>
-              <BarChart data={comparisonData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(0, 0%, 20%)" />
-                <XAxis dataKey="name" stroke="hsl(0, 0%, 50%)" fontSize={10} />
-                <YAxis stroke="hsl(0, 0%, 50%)" fontSize={10} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(0, 0%, 7%)',
-                    border: '1px solid hsl(43, 30%, 18%)',
-                    borderRadius: '8px',
-                  }}
-                />
-                <Bar dataKey="atendimentos" fill="hsl(43, 74%, 49%)" name="Atendimentos" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="glass-card rounded-xl p-4 sm:p-6 min-w-0"
-        >
-          <h3 className="font-semibold mb-4 flex items-center gap-2 text-sm sm:text-base">
-            <DollarSign className="w-4 sm:w-5 h-4 sm:h-5 text-green-500" />
-            Receita por Barbeiro
-          </h3>
-          <div className="w-full overflow-x-auto">
-            <ResponsiveContainer width="100%" height={200} minWidth={280}>
-              <BarChart data={comparisonData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(0, 0%, 20%)" />
-                <XAxis dataKey="name" stroke="hsl(0, 0%, 50%)" fontSize={10} />
-                <YAxis stroke="hsl(0, 0%, 50%)" fontSize={10} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(0, 0%, 7%)',
-                    border: '1px solid hsl(43, 30%, 18%)',
-                    borderRadius: '8px',
-                  }}
-                  formatter={(value: number) => [`R$ ${value.toFixed(2)}`, 'Receita']}
-                />
-                <Bar dataKey="receita" fill="hsl(142, 71%, 45%)" name="Receita (R$)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Daily Performance */}
+      {/* Quick Stats Table - Compact */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="glass-card rounded-xl p-4 sm:p-6 min-w-0"
+        transition={{ delay: 0.4 }}
+        className="glass-card rounded-xl p-3 sm:p-4 overflow-x-auto"
       >
-        <h3 className="font-semibold mb-4 flex items-center gap-2 text-sm sm:text-base">
-          <TrendingUp className="w-4 sm:w-5 h-4 sm:h-5 text-primary" />
-          Atendimentos Diários - {monthNames[selectedMonth]}
+        <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm">
+          <Users className="w-4 h-4 text-primary" />
+          Resumo por Barbeiro
         </h3>
-        <div className="w-full overflow-x-auto">
-          <ResponsiveContainer width="100%" height={180} minWidth={400}>
-            <LineChart data={dailyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(0, 0%, 20%)" />
-              <XAxis dataKey="date" stroke="hsl(0, 0%, 50%)" fontSize={9} interval={2} />
-              <YAxis stroke="hsl(0, 0%, 50%)" fontSize={10} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(0, 0%, 7%)',
-                  border: '1px solid hsl(43, 30%, 18%)',
-                  borderRadius: '8px',
-                }}
-              />
-              <Line type="monotone" dataKey="count" stroke="hsl(43, 74%, 49%)" strokeWidth={2} dot={false} name="Atendimentos" />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </motion.div>
-
-      {/* Radar Chart for Selected Barber */}
-      {selectedBarber !== 'all' && radarData.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-          className="glass-card rounded-xl p-6"
-        >
-          <h3 className="font-semibold mb-4 flex items-center gap-2">
-            <Star className="w-5 h-5 text-yellow-500" />
-            Perfil de Desempenho - {barbers.find(b => b.id === selectedBarber)?.name}
-          </h3>
-          <div className="flex justify-center">
-            <ResponsiveContainer width="100%" height={300}>
-              <RadarChart data={radarData}>
-                <PolarGrid stroke="hsl(0, 0%, 30%)" />
-                <PolarAngleAxis dataKey="metric" stroke="hsl(0, 0%, 60%)" fontSize={12} />
-                <PolarRadiusAxis stroke="hsl(0, 0%, 40%)" fontSize={10} />
-                <Radar
-                  name="Performance"
-                  dataKey="value"
-                  stroke="hsl(43, 74%, 49%)"
-                  fill="hsl(43, 74%, 49%)"
-                  fillOpacity={0.3}
-                />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Detailed Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8 }}
-        className="glass-card rounded-xl p-6 overflow-x-auto"
-      >
-        <h3 className="font-semibold mb-4 flex items-center gap-2">
-          <Users className="w-5 h-5 text-primary" />
-          Detalhamento por Barbeiro
-        </h3>
-        <table className="w-full text-sm">
+        <table className="w-full text-xs sm:text-sm">
           <thead>
             <tr className="border-b border-border">
-              <th className="text-left py-3 px-2">Barbeiro</th>
-              <th className="text-center py-3 px-2">Atend.</th>
-              <th className="text-center py-3 px-2">Concluídos</th>
-              <th className="text-center py-3 px-2">Cancel.</th>
-              <th className="text-center py-3 px-2">Taxa</th>
-              <th className="text-right py-3 px-2">Receita</th>
-              <th className="text-center py-3 px-2">Avaliação</th>
-              <th className="text-center py-3 px-2">Novos</th>
+              <th className="text-left py-2 px-2">Barbeiro</th>
+              <th className="text-center py-2 px-2">Atend.</th>
+              <th className="text-center py-2 px-2">Taxa</th>
+              <th className="text-right py-2 px-2">Receita</th>
             </tr>
           </thead>
           <tbody>
-            {barberStats.map((stat, index) => (
+            {barberStats.slice(0, 5).map((stat, index) => (
               <tr key={stat.barberId} className="border-b border-border/50 hover:bg-secondary/50">
-                <td className="py-3 px-2 font-medium flex items-center gap-2">
-                  {index === 0 && <Award className="w-4 h-4 text-yellow-500" />}
-                  {stat.barberName}
+                <td className="py-2 px-2 font-medium flex items-center gap-1">
+                  {index === 0 && <Award className="w-3 h-3 text-yellow-500" />}
+                  <span className="truncate max-w-[100px]">{stat.barberName}</span>
                 </td>
-                <td className="text-center py-3 px-2">{stat.totalAppointments}</td>
-                <td className="text-center py-3 px-2 text-green-500">{stat.completedAppointments}</td>
-                <td className="text-center py-3 px-2 text-red-500">{stat.cancelledAppointments}</td>
-                <td className="text-center py-3 px-2">
+                <td className="text-center py-2 px-2">{stat.totalAppointments}</td>
+                <td className="text-center py-2 px-2">
                   <span className={stat.completionRate >= 80 ? 'text-green-500' : stat.completionRate >= 50 ? 'text-yellow-500' : 'text-red-500'}>
                     {stat.completionRate}%
                   </span>
                 </td>
-                <td className="text-right py-3 px-2 font-medium text-green-500">
-                  R$ {stat.totalRevenue.toFixed(2)}
+                <td className="text-right py-2 px-2 font-medium text-green-500">
+                  R$ {stat.totalRevenue.toFixed(0)}
                 </td>
-                <td className="text-center py-3 px-2">
-                  <span className="flex items-center justify-center gap-1">
-                    <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                    {stat.avgRating.toFixed(1)}
-                  </span>
-                </td>
-                <td className="text-center py-3 px-2">{stat.newClients}</td>
               </tr>
             ))}
           </tbody>
         </table>
+        {barberStats.length > 5 && (
+          <p className="text-xs text-muted-foreground mt-2 text-center">
+            +{barberStats.length - 5} barbeiros • 
+            <button onClick={() => setShowDetailsModal(true)} className="text-primary ml-1 hover:underline">
+              Ver todos
+            </button>
+          </p>
+        )}
       </motion.div>
+
+      {/* Details Modal */}
+      <Modal
+        isOpen={showDetailsModal}
+        onClose={() => setShowDetailsModal(false)}
+        title={`Detalhes - ${monthNames[selectedMonth]} ${selectedYear}`}
+        size="xl"
+      >
+        <ModalBody className="space-y-6 max-h-[70vh] overflow-y-auto">
+          {/* Charts Row */}
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* Barber Comparison */}
+            <div className="glass-card rounded-xl p-4">
+              <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm">
+                <Award className="w-4 h-4 text-primary" />
+                Comparativo de Barbeiros
+              </h3>
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={comparisonData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(0, 0%, 20%)" />
+                  <XAxis dataKey="name" stroke="hsl(0, 0%, 50%)" fontSize={10} />
+                  <YAxis stroke="hsl(0, 0%, 50%)" fontSize={10} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(0, 0%, 7%)',
+                      border: '1px solid hsl(43, 30%, 18%)',
+                      borderRadius: '8px',
+                    }}
+                  />
+                  <Bar dataKey="atendimentos" fill="hsl(43, 74%, 49%)" name="Atendimentos" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Revenue Chart */}
+            <div className="glass-card rounded-xl p-4">
+              <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm">
+                <DollarSign className="w-4 h-4 text-green-500" />
+                Receita por Barbeiro
+              </h3>
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={comparisonData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(0, 0%, 20%)" />
+                  <XAxis dataKey="name" stroke="hsl(0, 0%, 50%)" fontSize={10} />
+                  <YAxis stroke="hsl(0, 0%, 50%)" fontSize={10} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(0, 0%, 7%)',
+                      border: '1px solid hsl(43, 30%, 18%)',
+                      borderRadius: '8px',
+                    }}
+                    formatter={(value: number) => [`R$ ${value.toFixed(2)}`, 'Receita']}
+                  />
+                  <Bar dataKey="receita" fill="hsl(142, 71%, 45%)" name="Receita (R$)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Daily Performance */}
+          <div className="glass-card rounded-xl p-4">
+            <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm">
+              <TrendingUp className="w-4 h-4 text-primary" />
+              Atendimentos Diários - {monthNames[selectedMonth]}
+            </h3>
+            <ResponsiveContainer width="100%" height={160}>
+              <LineChart data={dailyData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(0, 0%, 20%)" />
+                <XAxis dataKey="date" stroke="hsl(0, 0%, 50%)" fontSize={9} interval={2} />
+                <YAxis stroke="hsl(0, 0%, 50%)" fontSize={10} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(0, 0%, 7%)',
+                    border: '1px solid hsl(43, 30%, 18%)',
+                    borderRadius: '8px',
+                  }}
+                />
+                <Line type="monotone" dataKey="count" stroke="hsl(43, 74%, 49%)" strokeWidth={2} dot={false} name="Atendimentos" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Radar Chart for Selected Barber */}
+          {selectedBarber !== 'all' && radarData.length > 0 && (
+            <div className="glass-card rounded-xl p-4">
+              <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm">
+                <Star className="w-4 h-4 text-yellow-500" />
+                Perfil de Desempenho - {barbers.find(b => b.id === selectedBarber)?.name}
+              </h3>
+              <div className="flex justify-center">
+                <ResponsiveContainer width="100%" height={250}>
+                  <RadarChart data={radarData}>
+                    <PolarGrid stroke="hsl(0, 0%, 30%)" />
+                    <PolarAngleAxis dataKey="metric" stroke="hsl(0, 0%, 60%)" fontSize={11} />
+                    <PolarRadiusAxis stroke="hsl(0, 0%, 40%)" fontSize={10} />
+                    <Radar
+                      name="Performance"
+                      dataKey="value"
+                      stroke="hsl(43, 74%, 49%)"
+                      fill="hsl(43, 74%, 49%)"
+                      fillOpacity={0.3}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {/* Detailed Table */}
+          <div className="glass-card rounded-xl p-4 overflow-x-auto">
+            <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm">
+              <Users className="w-4 h-4 text-primary" />
+              Detalhamento Completo
+            </h3>
+            <table className="w-full text-xs sm:text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-2 px-2">Barbeiro</th>
+                  <th className="text-center py-2 px-2">Atend.</th>
+                  <th className="text-center py-2 px-2">Concl.</th>
+                  <th className="text-center py-2 px-2">Cancel.</th>
+                  <th className="text-center py-2 px-2">Taxa</th>
+                  <th className="text-right py-2 px-2">Receita</th>
+                  <th className="text-center py-2 px-2">Aval.</th>
+                  <th className="text-center py-2 px-2">Novos</th>
+                </tr>
+              </thead>
+              <tbody>
+                {barberStats.map((stat, index) => (
+                  <tr key={stat.barberId} className="border-b border-border/50 hover:bg-secondary/50">
+                    <td className="py-2 px-2 font-medium flex items-center gap-1">
+                      {index === 0 && <Award className="w-3 h-3 text-yellow-500" />}
+                      {stat.barberName}
+                    </td>
+                    <td className="text-center py-2 px-2">{stat.totalAppointments}</td>
+                    <td className="text-center py-2 px-2 text-green-500">{stat.completedAppointments}</td>
+                    <td className="text-center py-2 px-2 text-red-500">{stat.cancelledAppointments}</td>
+                    <td className="text-center py-2 px-2">
+                      <span className={stat.completionRate >= 80 ? 'text-green-500' : stat.completionRate >= 50 ? 'text-yellow-500' : 'text-red-500'}>
+                        {stat.completionRate}%
+                      </span>
+                    </td>
+                    <td className="text-right py-2 px-2 font-medium text-green-500">
+                      R$ {stat.totalRevenue.toFixed(2)}
+                    </td>
+                    <td className="text-center py-2 px-2">
+                      <span className="flex items-center justify-center gap-1">
+                        <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                        {stat.avgRating.toFixed(1)}
+                      </span>
+                    </td>
+                    <td className="text-center py-2 px-2">{stat.newClients}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </ModalBody>
+      </Modal>
     </div>
   );
 };
