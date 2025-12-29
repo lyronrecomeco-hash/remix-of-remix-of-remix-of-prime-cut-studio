@@ -103,6 +103,7 @@ const AdminPanel = () => {
   const [showOverloadModal, setShowOverloadModal] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+  const [currentAvatarUrl, setCurrentAvatarUrl] = useState<string | null>(null);
   const [agendaDateFilter, setAgendaDateFilter] = useState(new Date().toISOString().split('T')[0]);
   const [agendaStatusFilter, setAgendaStatusFilter] = useState<string>('all');
   const [agendaPage, setAgendaPage] = useState(0);
@@ -1718,11 +1719,16 @@ const AdminPanel = () => {
             <ProfileMenu
               onOpenProfile={() => setIsProfileModalOpen(true)}
               onOpenAccount={() => setIsAccountModalOpen(true)}
+              avatarUrl={currentAvatarUrl}
             />
           </div>
         </header>
 
-        <ProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
+        <ProfileModal 
+          isOpen={isProfileModalOpen} 
+          onClose={() => setIsProfileModalOpen(false)} 
+          onAvatarUpdate={(url) => setCurrentAvatarUrl(url)}
+        />
         <AccountModal isOpen={isAccountModalOpen} onClose={() => setIsAccountModalOpen(false)} />
 
         {/* Content with Pull-to-Refresh */}

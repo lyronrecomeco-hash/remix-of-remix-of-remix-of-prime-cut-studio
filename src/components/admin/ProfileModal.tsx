@@ -11,24 +11,29 @@ import { toast } from 'sonner';
 interface ProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onAvatarUpdate?: (avatarUrl: string | null) => void;
 }
 
-// Predefined avatars
+// Professional avatars - more realistic style
 const maleAvatars = [
-  'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=b6e3f4',
-  'https://api.dicebear.com/7.x/avataaars/svg?seed=George&backgroundColor=c0aede',
-  'https://api.dicebear.com/7.x/avataaars/svg?seed=Jack&backgroundColor=d1d4f9',
-  'https://api.dicebear.com/7.x/avataaars/svg?seed=Max&backgroundColor=ffd5dc',
+  'https://api.dicebear.com/9.x/notionists/svg?seed=Liam&backgroundColor=c0aede',
+  'https://api.dicebear.com/9.x/notionists/svg?seed=Oliver&backgroundColor=b6e3f4',
+  'https://api.dicebear.com/9.x/notionists/svg?seed=James&backgroundColor=ffd5dc',
+  'https://api.dicebear.com/9.x/notionists/svg?seed=William&backgroundColor=d1d4f9',
+  'https://api.dicebear.com/9.x/notionists/svg?seed=Noah&backgroundColor=ffdfbf',
+  'https://api.dicebear.com/9.x/notionists/svg?seed=Benjamin&backgroundColor=c0aede',
 ];
 
 const femaleAvatars = [
-  'https://api.dicebear.com/7.x/avataaars/svg?seed=Lily&backgroundColor=ffdfbf',
-  'https://api.dicebear.com/7.x/avataaars/svg?seed=Sophie&backgroundColor=b6e3f4',
-  'https://api.dicebear.com/7.x/avataaars/svg?seed=Emma&backgroundColor=c0aede',
-  'https://api.dicebear.com/7.x/avataaars/svg?seed=Olivia&backgroundColor=d1d4f9',
+  'https://api.dicebear.com/9.x/notionists/svg?seed=Emma&backgroundColor=ffd5dc',
+  'https://api.dicebear.com/9.x/notionists/svg?seed=Sophia&backgroundColor=c0aede',
+  'https://api.dicebear.com/9.x/notionists/svg?seed=Isabella&backgroundColor=b6e3f4',
+  'https://api.dicebear.com/9.x/notionists/svg?seed=Mia&backgroundColor=ffdfbf',
+  'https://api.dicebear.com/9.x/notionists/svg?seed=Charlotte&backgroundColor=d1d4f9',
+  'https://api.dicebear.com/9.x/notionists/svg?seed=Amelia&backgroundColor=ffd5dc',
 ];
 
-const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
+const ProfileModal = ({ isOpen, onClose, onAvatarUpdate }: ProfileModalProps) => {
   const { user } = useAuth();
   const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
   const [avatarType, setAvatarType] = useState<'male' | 'female'>('male');
@@ -77,7 +82,7 @@ const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
     setIsUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/avatar.${fileExt}`;
+      const fileName = `${user.id}/avatar-${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
@@ -128,6 +133,11 @@ const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
           .insert(profileData);
       }
 
+      // Notify parent component to update avatar immediately
+      if (onAvatarUpdate) {
+        onAvatarUpdate(selectedAvatar);
+      }
+
       toast.success('Perfil atualizado!');
       onClose();
     } catch (error) {
@@ -138,22 +148,26 @@ const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
     }
   };
 
+  const currentAvatars = avatarType === 'male' ? maleAvatars : femaleAvatars;
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Meu Perfil" size="md">
-      <ModalBody className="space-y-6">
-        {/* Current Avatar */}
+      <ModalBody className="space-y-5">
+        {/* Current Avatar Preview */}
         <div className="text-center">
-          <Avatar className="w-24 h-24 mx-auto border-4 border-primary/20">
-            {selectedAvatar ? (
-              <AvatarImage src={selectedAvatar} />
-            ) : (
-              <AvatarFallback className="bg-primary/20 text-primary text-2xl">
-                {user?.email?.charAt(0).toUpperCase() || 'U'}
-              </AvatarFallback>
-            )}
-          </Avatar>
-          <p className="text-sm text-muted-foreground mt-2">
-            Escolha um avatar ou faça upload
+          <div className="relative inline-block">
+            <Avatar className="w-20 h-20 mx-auto ring-4 ring-primary/20 ring-offset-2 ring-offset-background">
+              {selectedAvatar ? (
+                <AvatarImage src={selectedAvatar} className="object-cover" />
+              ) : (
+                <AvatarFallback className="bg-primary/20 text-primary text-xl">
+                  {user?.email?.charAt(0).toUpperCase() || 'U'}
+                </AvatarFallback>
+              )}
+            </Avatar>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            Escolha um avatar ou faça upload de uma foto
           </p>
         </div>
 
@@ -177,33 +191,33 @@ const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
           </Button>
         </div>
 
-        {/* Avatar Grid */}
+        {/* Avatar Grid - 6 avatars in 2 rows */}
         <div>
-          <p className="text-sm font-medium mb-3">Avatares disponíveis</p>
-          <div className="grid grid-cols-4 gap-3">
-            {(avatarType === 'male' ? maleAvatars : femaleAvatars).map((avatar, idx) => (
+          <p className="text-xs font-medium text-muted-foreground mb-2">Avatares disponíveis</p>
+          <div className="grid grid-cols-6 gap-2">
+            {currentAvatars.map((avatar, idx) => (
               <motion.button
                 key={idx}
-                whileHover={{ scale: 1.05 }}
+                whileHover={{ scale: 1.08 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => {
                   setSelectedAvatar(avatar);
                   setCustomAvatarUrl(null);
                 }}
-                className={`relative p-1 rounded-xl border-2 transition-all ${
+                className={`relative p-1 rounded-lg border-2 transition-all aspect-square ${
                   selectedAvatar === avatar
-                    ? 'border-primary bg-primary/10'
+                    ? 'border-primary bg-primary/10 shadow-md'
                     : 'border-border hover:border-primary/50'
                 }`}
               >
                 <img
                   src={avatar}
                   alt={`Avatar ${idx + 1}`}
-                  className="w-full aspect-square rounded-lg"
+                  className="w-full h-full rounded-md"
                 />
                 {selectedAvatar === avatar && (
-                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                    <Check className="w-3 h-3 text-primary-foreground" />
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
+                    <Check className="w-2.5 h-2.5 text-primary-foreground" />
                   </div>
                 )}
               </motion.button>
@@ -211,53 +225,54 @@ const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
           </div>
         </div>
 
-        {/* Custom Upload */}
+        {/* Custom Upload - Compact */}
         <div>
-          <p className="text-sm font-medium mb-3">Ou faça upload</p>
-          <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-secondary/30">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileUpload}
-              className="hidden"
-              disabled={isUploading}
-            />
-            {isUploading ? (
-              <Loader2 className="w-6 h-6 animate-spin text-primary" />
-            ) : (
-              <>
-                <Upload className="w-6 h-6 text-muted-foreground mb-2" />
-                <span className="text-sm text-muted-foreground">
-                  Clique para enviar (máx 2MB)
+          <p className="text-xs font-medium text-muted-foreground mb-2">Ou faça upload de uma foto</p>
+          <div className="flex items-center gap-3">
+            <label className="flex-1 flex items-center justify-center h-12 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors bg-secondary/30">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="hidden"
+                disabled={isUploading}
+              />
+              {isUploading ? (
+                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+              ) : (
+                <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Upload className="w-4 h-4" />
+                  Escolher arquivo (máx 2MB)
                 </span>
-              </>
+              )}
+            </label>
+            
+            {customAvatarUrl && (
+              <div className="flex items-center gap-2">
+                <Avatar className="w-10 h-10 ring-2 ring-primary/30">
+                  <AvatarImage src={customAvatarUrl} />
+                </Avatar>
+                <Button
+                  size="sm"
+                  variant={selectedAvatar === customAvatarUrl ? 'default' : 'outline'}
+                  onClick={() => setSelectedAvatar(customAvatarUrl)}
+                  className="text-xs"
+                >
+                  {selectedAvatar === customAvatarUrl ? <Check className="w-3 h-3" /> : 'Usar'}
+                </Button>
+              </div>
             )}
-          </label>
-          {customAvatarUrl && (
-            <div className="mt-3 flex items-center gap-2">
-              <Avatar className="w-10 h-10">
-                <AvatarImage src={customAvatarUrl} />
-              </Avatar>
-              <span className="text-sm text-muted-foreground">Imagem personalizada</span>
-              <Button
-                size="sm"
-                variant={selectedAvatar === customAvatarUrl ? 'default' : 'outline'}
-                onClick={() => setSelectedAvatar(customAvatarUrl)}
-              >
-                {selectedAvatar === customAvatarUrl ? 'Selecionado' : 'Usar esta'}
-              </Button>
-            </div>
-          )}
+          </div>
         </div>
       </ModalBody>
 
       <ModalFooter>
-        <Button variant="outline" onClick={onClose}>
+        <Button variant="outline" onClick={onClose} size="sm">
           Cancelar
         </Button>
-        <Button onClick={handleSave} disabled={isSaving}>
+        <Button onClick={handleSave} disabled={isSaving} size="sm">
           {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          Salvar
+          Salvar Perfil
         </Button>
       </ModalFooter>
     </Modal>
