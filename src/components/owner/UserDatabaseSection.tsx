@@ -35,6 +35,18 @@ const UserDatabaseSection = () => {
     try {
       const { data: subscriptions } = await supabase.from('shop_subscriptions').select('user_id, created_at');
       const { data: adminUsers } = await supabase.from('admin_users').select('*');
+      
+      // Fetch email confirmation tokens to get emails
+      const { data: emailTokens } = await supabase
+        .from('email_confirmation_tokens')
+        .select('user_id, email')
+        .order('created_at', { ascending: false });
+        
+      // Fetch user profiles
+      const { data: profiles } = await supabase
+        .from('user_profiles')
+        .select('user_id, first_name, last_name');
+      
       const now = new Date();
       const { data: metrics } = await supabase.from('usage_metrics').select('*').eq('month', now.getMonth() + 1).eq('year', now.getFullYear());
 
@@ -43,14 +55,30 @@ const UserDatabaseSection = () => {
 
       for (const userId of userIds) {
         const admin = adminUsers?.find(u => u.user_id === userId);
+        const emailToken = emailTokens?.find(e => e.user_id === userId);
+        const profile = profiles?.find(p => p.user_id === userId);
         const usage = metrics?.find(m => m.user_id === userId);
         const { count: servicesCount } = await supabase.from('services').select('*', { count: 'exact', head: true }).eq('user_id', userId);
         const { count: barbersCount } = await supabase.from('barbers').select('*', { count: 'exact', head: true }).eq('user_id', userId);
 
+        // Get name from multiple sources
+        let displayName = 'Usuário Pendente';
+        if (admin?.name && admin.name !== 'Usuário') {
+          displayName = admin.name;
+        } else if (profile?.first_name) {
+          displayName = `${profile.first_name} ${profile.last_name || ''}`.trim();
+        } else if (emailToken?.email) {
+          const emailName = emailToken.email.split('@')[0];
+          displayName = emailName.charAt(0).toUpperCase() + emailName.slice(1).replace(/[._-]/g, ' ');
+        }
+
+        // Get email from multiple sources
+        const email = admin?.email || emailToken?.email || 'Email não cadastrado';
+
         enrichedUsers.push({
           user_id: userId,
-          name: admin?.name || 'Usuário',
-          email: admin?.email || 'N/A',
+          name: displayName,
+          email: email,
           appointments_count: usage?.appointments_count || 0,
           clients_count: usage?.clients_count || 0,
           services_count: servicesCount || 0,

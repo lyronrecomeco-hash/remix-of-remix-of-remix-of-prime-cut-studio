@@ -153,18 +153,38 @@ const RegisterForm = ({ onSuccess, onBackToLogin }: RegisterFormProps) => {
       });
 
       // Create admin_users entry
-      await supabase.from('admin_users').insert({
+      const { error: adminError } = await supabase.from('admin_users').insert({
         user_id: authData.user.id,
         name: `${formData.firstName} ${formData.lastName}`,
         email: formData.email,
         is_active: true,
       });
 
+      if (adminError) {
+        console.error('Error creating admin user:', adminError);
+      }
+
+      // Create user_profile entry
+      const { error: profileError } = await supabase.from('user_profiles').insert({
+        user_id: authData.user.id,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        whatsapp: formData.whatsapp,
+      });
+
+      if (profileError) {
+        console.error('Error creating user profile:', profileError);
+      }
+
       // Create user_roles entry (admin role for shop owners)
-      await supabase.from('user_roles').insert({
+      const { error: roleError } = await supabase.from('user_roles').insert({
         user_id: authData.user.id,
         role: 'admin',
       });
+
+      if (roleError) {
+        console.error('Error creating user role:', roleError);
+      }
 
       // Get free plan and create subscription
       const { data: freePlan } = await supabase
