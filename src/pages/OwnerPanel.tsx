@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Shield, LayoutDashboard, Mail, FileText, Settings, Users, CreditCard, MessageCircle } from 'lucide-react';
+import { Loader2, Shield, LayoutDashboard, Mail, FileText, Settings, Users, CreditCard, MessageCircle, Database } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import OwnerDashboard from '@/components/owner/OwnerDashboard';
 import EmailTemplatesManager from '@/components/owner/EmailTemplatesManager';
@@ -11,6 +11,7 @@ import SystemSettings from '@/components/owner/SystemSettings';
 import UsersOverview from '@/components/owner/UsersOverview';
 import SubscriptionManager from '@/components/owner/SubscriptionManager';
 import WhatsAppTemplatesManager from '@/components/owner/WhatsAppTemplatesManager';
+import UserDatabaseSection from '@/components/owner/UserDatabaseSection';
 
 const OWNER_EMAIL = 'lyronrp@gmail.com';
 

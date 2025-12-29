@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { 
   Users, Search, RefreshCw, Crown, Star, User, Calendar, 
-  TrendingUp, Edit2, Trash2, Check, X, Phone, Mail,
+  TrendingUp, Edit2, Trash2, Check, X, Mail,
   DollarSign, AlertTriangle, Shield
 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -82,53 +82,51 @@ const SubscriptionManager = () => {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      // Fetch admin users with their subscriptions
-      const { data: adminUsers, error: usersError } = await supabase
-        .from('admin_users')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (usersError) throw usersError;
-
-      // Fetch subscriptions
+      // Fetch ALL subscriptions with their users and plans
       const { data: subscriptions, error: subError } = await supabase
         .from('shop_subscriptions')
         .select(`
           *,
           subscription_plans (id, name, display_name, price)
-        `);
+        `)
+        .order('created_at', { ascending: false });
 
       if (subError) throw subError;
 
+      // Fetch admin users to get names
+      const { data: adminUsers, error: usersError } = await supabase
+        .from('admin_users')
+        .select('*');
+
+      if (usersError) throw usersError;
+
       // Fetch usage metrics for current month
       const now = new Date();
-      const { data: metrics, error: metricsError } = await supabase
+      const { data: metrics } = await supabase
         .from('usage_metrics')
         .select('*')
         .eq('month', now.getMonth() + 1)
         .eq('year', now.getFullYear());
 
-      if (metricsError) console.error('Metrics error:', metricsError);
-
-      // Merge data
-      const enrichedUsers = (adminUsers || []).map(user => {
-        const sub = subscriptions?.find(s => s.user_id === user.user_id);
-        const usage = metrics?.find(m => m.user_id === user.user_id);
-        const planData = sub?.subscription_plans as any;
+      // Build user list from subscriptions
+      const enrichedUsers = (subscriptions || []).map(sub => {
+        const adminUser = adminUsers?.find(u => u.user_id === sub.user_id);
+        const usage = metrics?.find(m => m.user_id === sub.user_id);
+        const planData = sub.subscription_plans as any;
 
         return {
-          id: user.id,
-          user_id: user.user_id,
-          name: user.name,
-          email: user.email,
-          is_active: user.is_active,
-          created_at: user.created_at,
+          id: adminUser?.id || sub.id,
+          user_id: sub.user_id,
+          name: adminUser?.name || 'Usuário',
+          email: adminUser?.email || 'N/A',
+          is_active: adminUser?.is_active ?? true,
+          created_at: sub.created_at,
           plan_name: planData?.name || 'free',
           plan_display_name: planData?.display_name || 'Gratuito',
-          subscription_status: sub?.status || 'none',
-          subscription_id: sub?.id || '',
+          subscription_status: sub.status || 'none',
+          subscription_id: sub.id,
           appointments_count: usage?.appointments_count || 0,
-          expires_at: sub?.expires_at || null,
+          expires_at: sub.expires_at || null,
         };
       });
 
@@ -149,29 +147,16 @@ const SubscriptionManager = () => {
       const selectedPlan = plans.find(p => p.id === editPlan);
       if (!selectedPlan) throw new Error('Plano não encontrado');
 
-      // Update or create subscription
-      if (editingUser.subscription_id) {
-        const { error } = await supabase
-          .from('shop_subscriptions')
-          .update({
-            plan_id: editPlan,
-            status: 'active',
-            expires_at: selectedPlan.name === 'lifetime' ? null : undefined,
-          })
-          .eq('id', editingUser.subscription_id);
+      const { error } = await supabase
+        .from('shop_subscriptions')
+        .update({
+          plan_id: editPlan,
+          status: 'active',
+          expires_at: selectedPlan.name === 'lifetime' ? null : undefined,
+        })
+        .eq('id', editingUser.subscription_id);
 
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('shop_subscriptions')
-          .insert({
-            user_id: editingUser.user_id,
-            plan_id: editPlan,
-            status: 'active',
-          });
-
-        if (error) throw error;
-      }
+      if (error) throw error;
 
       toast.success(`Plano alterado para ${selectedPlan.display_name}!`);
       setEditingUser(null);
@@ -189,7 +174,7 @@ const SubscriptionManager = () => {
       const { error } = await supabase
         .from('admin_users')
         .update({ is_active: !user.is_active })
-        .eq('id', user.id);
+        .eq('user_id', user.user_id);
 
       if (error) throw error;
 
@@ -206,11 +191,10 @@ const SubscriptionManager = () => {
 
     setIsDeleting(true);
     try {
-      // Delete from admin_users (cascade will handle the rest)
       const { error } = await supabase
         .from('admin_users')
         .delete()
-        .eq('id', deletingUser.id);
+        .eq('user_id', deletingUser.user_id);
 
       if (error) throw error;
 
@@ -396,7 +380,7 @@ const SubscriptionManager = () => {
               ) : (
                 filteredUsers.map((user) => (
                   <div
-                    key={user.id}
+                    key={user.subscription_id}
                     className="p-4 rounded-lg bg-card border border-border/50 hover:border-border transition-colors"
                   >
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -431,7 +415,6 @@ const SubscriptionManager = () => {
                       </div>
 
                       <div className="flex items-center gap-3">
-                        {/* Active toggle */}
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-muted-foreground">
                             {user.is_active ? 'Ativo' : 'Inativo'}
@@ -442,7 +425,6 @@ const SubscriptionManager = () => {
                           />
                         </div>
 
-                        {/* Edit plan button */}
                         <Button
                           variant="outline"
                           size="sm"
@@ -455,7 +437,6 @@ const SubscriptionManager = () => {
                           Plano
                         </Button>
 
-                        {/* Delete button */}
                         <Button
                           variant="ghost"
                           size="sm"
@@ -480,75 +461,49 @@ const SubscriptionManager = () => {
           <DialogHeader>
             <DialogTitle>Alterar Plano</DialogTitle>
             <DialogDescription>
-              Alterando plano de {editingUser?.name}
+              Alterar plano de {editingUser?.name}
             </DialogDescription>
           </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Plano atual</label>
-              <div className="flex items-center gap-2">
-                {editingUser && getPlanBadge(editingUser.plan_name, editingUser.plan_display_name)}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Novo plano</label>
-              <Select value={editPlan} onValueChange={setEditPlan}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um plano" />
-                </SelectTrigger>
-                <SelectContent>
-                  {plans.map(plan => (
-                    <SelectItem key={plan.id} value={plan.id}>
-                      <div className="flex items-center gap-2">
-                        {plan.name === 'lifetime' && <Crown className="w-4 h-4 text-amber-500" />}
-                        {plan.name === 'premium' && <Star className="w-4 h-4 text-primary" />}
-                        {plan.name === 'free' && <User className="w-4 h-4" />}
-                        {plan.display_name} - R$ {plan.price}{plan.name === 'premium' ? '/mês' : plan.name === 'lifetime' ? ' único' : ''}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="py-4">
+            <Select value={editPlan} onValueChange={setEditPlan}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um plano" />
+              </SelectTrigger>
+              <SelectContent>
+                {plans.map((plan) => (
+                  <SelectItem key={plan.id} value={plan.id}>
+                    {plan.display_name} - R$ {plan.price}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingUser(null)}>
               Cancelar
             </Button>
-            <Button onClick={handleChangePlan} disabled={isSaving || !editPlan}>
-              {isSaving ? 'Salvando...' : 'Confirmar Alteração'}
+            <Button onClick={handleChangePlan} disabled={isSaving}>
+              {isSaving ? 'Salvando...' : 'Salvar'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Confirmation */}
       <Dialog open={!!deletingUser} onOpenChange={() => setDeletingUser(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="w-5 h-5" />
-              Confirmar Exclusão
-            </DialogTitle>
+            <DialogTitle>Confirmar Exclusão</DialogTitle>
             <DialogDescription>
-              Tem certeza que deseja excluir o usuário <strong>{deletingUser?.name}</strong>?
-              Esta ação não pode ser desfeita.
+              Tem certeza que deseja remover {deletingUser?.name}? Esta ação não pode ser desfeita.
             </DialogDescription>
           </DialogHeader>
-
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeletingUser(null)}>
               Cancelar
             </Button>
-            <Button 
-              variant="destructive" 
-              onClick={handleDeleteUser}
-              disabled={isDeleting}
-            >
-              {isDeleting ? 'Excluindo...' : 'Excluir Usuário'}
+            <Button variant="destructive" onClick={handleDeleteUser} disabled={isDeleting}>
+              {isDeleting ? 'Removendo...' : 'Remover'}
             </Button>
           </DialogFooter>
         </DialogContent>

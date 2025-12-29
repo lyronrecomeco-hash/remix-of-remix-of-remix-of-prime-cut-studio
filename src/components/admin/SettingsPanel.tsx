@@ -1490,7 +1490,6 @@ Retorne APENAS a mensagem, sem explicações.`;
 
       case 'chatpro':
         return (
-          <FeatureLock feature="chatpro">
           <div className="space-y-5">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-bold">Integração ChatPro</h3>
@@ -1554,7 +1553,6 @@ Retorne APENAS a mensagem, sem explicações.`;
               </div>
             )}
           </div>
-          </FeatureLock>
         );
 
       case 'templates':

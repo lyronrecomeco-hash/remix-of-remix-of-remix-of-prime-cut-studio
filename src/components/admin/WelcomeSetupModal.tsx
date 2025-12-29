@@ -46,6 +46,12 @@ const slides = [
             <div className="text-xs text-muted-foreground">Funcional</div>
           </div>
         </div>
+        <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/20 mt-4">
+          <p className="text-sm text-center text-green-400">
+            ✅ <strong>Modo gratuito disponível!</strong> Use profissionalmente sem pagar nada. 
+            ChatPro e recursos essenciais inclusos.
+          </p>
+        </div>
       </div>
     ),
   },
