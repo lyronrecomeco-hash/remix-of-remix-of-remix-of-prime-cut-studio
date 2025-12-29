@@ -967,32 +967,34 @@ export default function GenesisDocumentation() {
           </div>
         </div>
 
-        {/* Lista de categorias - FIXA, sem scroll */}
-        <div className="flex-1 p-2 space-y-1 overflow-hidden">
-          {filteredSections.map((section) => {
-            const Icon = section.icon;
-            return (
-              <button
-                key={section.id}
-                onClick={() => {
-                  setActiveSection(section.id);
-                  setSearchQuery('');
-                }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
-                  activeSection === section.id
-                    ? 'bg-primary text-primary-foreground'
-                    : 'hover:bg-secondary text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <Icon className="w-4 h-4 flex-shrink-0" />
-                <span className="text-sm font-medium truncate">{section.title}</span>
-                {activeSection === section.id && (
-                  <ChevronRight className="w-4 h-4 ml-auto flex-shrink-0" />
-                )}
-              </button>
-            );
-          })}
-        </div>
+        {/* Lista de categorias - FIXA (menu) com scroll próprio */}
+        <ScrollArea className="flex-1">
+          <div className="p-2 space-y-1">
+            {filteredSections.map((section) => {
+              const Icon = section.icon;
+              return (
+                <button
+                  key={section.id}
+                  onClick={() => {
+                    setActiveSection(section.id);
+                    setSearchQuery('');
+                  }}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
+                    activeSection === section.id
+                      ? 'bg-primary text-primary-foreground'
+                      : 'hover:bg-secondary text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Icon className="w-4 h-4 flex-shrink-0" />
+                  <span className="text-sm font-medium truncate">{section.title}</span>
+                  {activeSection === section.id && (
+                    <ChevronRight className="w-4 h-4 ml-auto flex-shrink-0" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </ScrollArea>
       </div>
 
       {/* Área de conteúdo */}
