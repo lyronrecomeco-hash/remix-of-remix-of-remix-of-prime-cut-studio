@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Shield, LayoutDashboard, Mail, FileText, Settings, Users, CreditCard } from 'lucide-react';
+import { Loader2, Shield, LayoutDashboard, Mail, FileText, Settings, Users, CreditCard, MessageCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import OwnerDashboard from '@/components/owner/OwnerDashboard';
 import EmailTemplatesManager from '@/components/owner/EmailTemplatesManager';
@@ -10,6 +10,7 @@ import GlobalLogsViewer from '@/components/owner/GlobalLogsViewer';
 import SystemSettings from '@/components/owner/SystemSettings';
 import UsersOverview from '@/components/owner/UsersOverview';
 import SubscriptionManager from '@/components/owner/SubscriptionManager';
+import WhatsAppTemplatesManager from '@/components/owner/WhatsAppTemplatesManager';
 
 const OWNER_EMAIL = 'lyronrp@gmail.com';
 
@@ -98,7 +99,7 @@ const OwnerPanel = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-6 w-full max-w-3xl bg-card border border-border">
+          <TabsList className="grid grid-cols-7 w-full max-w-4xl bg-card border border-border">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <LayoutDashboard className="w-4 h-4" />
               <span className="hidden sm:inline">Dashboard</span>
@@ -114,6 +115,10 @@ const OwnerPanel = () => {
             <TabsTrigger value="emails" className="flex items-center gap-2">
               <Mail className="w-4 h-4" />
               <span className="hidden sm:inline">Emails</span>
+            </TabsTrigger>
+            <TabsTrigger value="whatsapp" className="flex items-center gap-2">
+              <MessageCircle className="w-4 h-4" />
+              <span className="hidden sm:inline">WhatsApp</span>
             </TabsTrigger>
             <TabsTrigger value="logs" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
@@ -139,6 +144,10 @@ const OwnerPanel = () => {
 
           <TabsContent value="emails" className="space-y-6">
             <EmailTemplatesManager />
+          </TabsContent>
+
+          <TabsContent value="whatsapp" className="space-y-6">
+            <WhatsAppTemplatesManager />
           </TabsContent>
 
           <TabsContent value="logs" className="space-y-6">

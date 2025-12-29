@@ -97,6 +97,51 @@ serve(async (req) => {
 
     console.log("Email confirmed successfully for:", tokenData.email);
 
+    // Get user data from auth (name and phone are in user_metadata)
+    let userName = "Cliente";
+    let userPhone = tokenData.phone; // First check if phone was stored in token
+    
+    try {
+      const { data: userData } = await supabaseAdmin.auth.admin.getUserById(tokenData.user_id);
+      userName = userData?.user?.user_metadata?.first_name || 
+                 userData?.user?.user_metadata?.name || 
+                 "Cliente";
+      
+      // If no phone in token, try to get from user_metadata (whatsapp field)
+      if (!userPhone) {
+        userPhone = userData?.user?.user_metadata?.whatsapp || null;
+      }
+    } catch (e) {
+      console.log("Could not get user data:", e);
+    }
+
+    // Send welcome WhatsApp message if phone is available
+    if (userPhone) {
+      console.log("Sending welcome WhatsApp to:", userPhone);
+      try {
+        const whatsappResponse = await fetch(`${supabaseUrl}/functions/v1/send-welcome-whatsapp`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({
+            phone: userPhone,
+            name: userName,
+            email: tokenData.email,
+          }),
+        });
+
+        const whatsappResult = await whatsappResponse.json();
+        console.log("WhatsApp result:", whatsappResult);
+      } catch (whatsappError) {
+        console.error("Error sending welcome WhatsApp:", whatsappError);
+        // Don't fail the confirmation - WhatsApp is optional
+      }
+    } else {
+      console.log("No phone in token, skipping WhatsApp");
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 

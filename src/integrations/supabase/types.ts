@@ -473,6 +473,7 @@ export type Database = {
           email: string
           expires_at: string
           id: string
+          phone: string | null
           token: string
           user_id: string
         }
@@ -482,6 +483,7 @@ export type Database = {
           email: string
           expires_at?: string
           id?: string
+          phone?: string | null
           token: string
           user_id: string
         }
@@ -491,6 +493,7 @@ export type Database = {
           email?: string
           expires_at?: string
           id?: string
+          phone?: string | null
           token?: string
           user_id?: string
         }
@@ -1389,6 +1392,51 @@ export type Database = {
           last_triggered_at?: string | null
           updated_at?: string
           webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_templates: {
+        Row: {
+          ai_prompt: string | null
+          button_text: string | null
+          button_url: string | null
+          created_at: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          message_template: string
+          name: string
+          template_type: string
+          updated_at: string | null
+          use_ai: boolean | null
+        }
+        Insert: {
+          ai_prompt?: string | null
+          button_text?: string | null
+          button_url?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          message_template: string
+          name: string
+          template_type: string
+          updated_at?: string | null
+          use_ai?: boolean | null
+        }
+        Update: {
+          ai_prompt?: string | null
+          button_text?: string | null
+          button_url?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          message_template?: string
+          name?: string
+          template_type?: string
+          updated_at?: string | null
+          use_ai?: boolean | null
         }
         Relationships: []
       }
