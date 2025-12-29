@@ -69,6 +69,7 @@ import FeatureLock from '@/components/subscription/FeatureLock';
 import ProfileMenu from '@/components/admin/ProfileMenu';
 import ProfileModal from '@/components/admin/ProfileModal';
 import AccountModal from '@/components/admin/AccountModal';
+import WelcomeSetupModal from '@/components/admin/WelcomeSetupModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { DollarSign, BarChart3, Palmtree, Target } from 'lucide-react';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
@@ -115,6 +116,7 @@ const AdminPanel = () => {
     const stored = localStorage.getItem('menu_style');
     return (stored as 'sidebar' | 'dock') || 'sidebar';
   });
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const { notify } = useNotification();
   const { signOut, user, isSuperAdmin } = useAuth();
 
@@ -167,6 +169,25 @@ const AdminPanel = () => {
       }
     };
     loadAvatar();
+  }, [user]);
+
+  // Check if welcome modal should be shown (first login after confirmation)
+  useEffect(() => {
+    const checkWelcomeStatus = async () => {
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from('admin_settings')
+        .select('settings')
+        .eq('setting_type', `welcome_completed_${user.id}`)
+        .maybeSingle();
+      
+      // Show modal if not completed yet
+      if (!data?.settings || !(data.settings as any).completed) {
+        setShowWelcomeModal(true);
+      }
+    };
+    checkWelcomeStatus();
   }, [user]);
   
   // App context (now safe to destructure)
@@ -1647,42 +1668,41 @@ const AdminPanel = () => {
                 </button>
               </div>
 
-              <nav className="flex-1 min-h-0 px-3 sm:px-4 overflow-y-auto scrollbar-hide">
-                {menuItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      setActiveTab(item.id);
-                      setIsSidebarOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl mb-1 transition-all relative touch-manipulation min-h-[48px] ${
-                      activeTab === item.id
-                        ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                        : 'text-sidebar-foreground hover:bg-sidebar-accent/50 active:bg-sidebar-accent/70'
-                    }`}
-                  >
-                    <item.icon className="w-5 h-5 shrink-0" />
-                    <span className="truncate">{item.label}</span>
-                    {item.id === 'feedbacks' && newFeedbacksCount > 0 && (
-                      <span className="absolute right-4 px-2 py-0.5 bg-primary text-primary-foreground text-xs rounded-full">
-                        {newFeedbacksCount}
-                      </span>
-                    )}
-                  </button>
-                ))}
+              <nav className="flex-1 px-3 pb-3 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+                <div className="space-y-1">
+                  {menuItems.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        setIsSidebarOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all relative touch-manipulation ${
+                        activeTab === item.id
+                          ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                          : 'text-sidebar-foreground hover:bg-sidebar-accent/50 active:bg-sidebar-accent/70'
+                      }`}
+                    >
+                      <item.icon className="w-5 h-5 shrink-0" />
+                      <span className="truncate text-sm">{item.label}</span>
+                      {item.id === 'feedbacks' && newFeedbacksCount > 0 && (
+                        <span className="ml-auto px-2 py-0.5 bg-primary text-primary-foreground text-xs rounded-full">
+                          {newFeedbacksCount}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
               </nav>
-
-              {/* Spacer */}
-              <div className="flex-1" />
               
-              {/* Logout Button - Separated */}
-              <div className="p-3 sm:p-4 border-t border-sidebar-border shrink-0 safe-area-inset-bottom mt-auto">
+              {/* Logout Button - Fixed at bottom */}
+              <div className="shrink-0 p-3 border-t border-sidebar-border" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
                 <button
                   onClick={() => signOut()}
-                  className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-destructive transition-colors w-full touch-manipulation min-h-[48px] rounded-xl hover:bg-destructive/10"
+                  className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-destructive transition-colors w-full touch-manipulation rounded-xl hover:bg-destructive/10"
                 >
                   <LogOut className="w-5 h-5" />
-                  Sair
+                  <span className="text-sm">Sair</span>
                 </button>
               </div>
             </motion.aside>
@@ -1741,9 +1761,13 @@ const AdminPanel = () => {
           </div>
         </header>
 
+        <WelcomeSetupModal
+          isOpen={showWelcomeModal}
+          onComplete={() => setShowWelcomeModal(false)}
+        />
         <ProfileModal 
           isOpen={isProfileModalOpen} 
-          onClose={() => setIsProfileModalOpen(false)} 
+          onClose={() => setIsProfileModalOpen(false)}
           onAvatarUpdate={(url) => setCurrentAvatarUrl(url)}
         />
         <AccountModal isOpen={isAccountModalOpen} onClose={() => setIsAccountModalOpen(false)} />
