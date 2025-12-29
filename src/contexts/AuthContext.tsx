@@ -146,13 +146,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = useCallback(async (email: string, password: string): Promise<{ error: Error | null }> => {
     try {
+      // First check if user's email is confirmed in our custom system
+      const { data: tokenData } = await supabase
+        .from('email_confirmation_tokens')
+        .select('confirmed_at')
+        .eq('email', email)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (tokenData && !tokenData.confirmed_at) {
+        return { error: new Error('Por favor, confirme seu email antes de fazer login.') };
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {
         return { error };
       }
 
-      // Check if user has a role
+      // Check if user has a role (for admin access)
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
@@ -163,9 +176,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error('Error checking role on login:', roleError.message);
       }
 
+      // If no role found, user is a regular client - allow login but no admin access
+      // The ProtectedRoute will handle admin-only routes
       if (!roleData) {
-        await supabase.auth.signOut();
-        return { error: new Error('Acesso não autorizado. Contate o administrador.') };
+        console.log('User has no admin role, regular user access');
       }
 
       return { error: null };

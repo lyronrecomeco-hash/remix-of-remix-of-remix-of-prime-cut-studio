@@ -151,16 +151,27 @@ Crie uma mensagem personalizada de boas-vindas.`,
       formattedPhone = "55" + formattedPhone;
     }
 
-    // Build ChatPro API URL
+    // Build ChatPro API URL - baseEndpoint may already include instance_id
     let baseEndpoint = chatproConfig.base_endpoint || "https://v2.chatpro.com.br";
     if (baseEndpoint.endsWith("/")) {
       baseEndpoint = baseEndpoint.slice(0, -1);
     }
-    if (!baseEndpoint.includes("/api/v1")) {
-      baseEndpoint = `${baseEndpoint}/${chatproConfig.instance_id}/api/v1`;
+    
+    // Check if baseEndpoint already includes the instance_id
+    const instanceId = chatproConfig.instance_id;
+    const alreadyHasInstanceId = instanceId && baseEndpoint.includes(instanceId);
+    
+    let chatProUrl: string;
+    if (alreadyHasInstanceId) {
+      // baseEndpoint already has instance_id, just add /api/v1/send_message
+      chatProUrl = `${baseEndpoint}/api/v1/send_message`;
+    } else if (instanceId) {
+      // Add instance_id to the path
+      chatProUrl = `${baseEndpoint}/${instanceId}/api/v1/send_message`;
+    } else {
+      // No instance_id, use baseEndpoint directly
+      chatProUrl = `${baseEndpoint}/api/v1/send_message`;
     }
-
-    const chatProUrl = `${baseEndpoint}/send_message`;
     console.log("ChatPro URL:", chatProUrl);
 
     // Prepare request body
