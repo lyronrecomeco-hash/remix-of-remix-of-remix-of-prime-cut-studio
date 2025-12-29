@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Header from '@/components/landing/Header';
 import Hero from '@/components/landing/Hero';
 import About from '@/components/landing/About';
@@ -10,6 +12,24 @@ import Footer from '@/components/landing/Footer';
 import PWAInstallPrompt from '@/components/admin/PWAInstallPrompt';
 
 const Index = () => {
+  const [searchParams] = useSearchParams();
+  const previewTheme = searchParams.get('theme');
+
+  useEffect(() => {
+    if (previewTheme) {
+      // Remove existing theme classes
+      document.documentElement.className = document.documentElement.className
+        .split(' ')
+        .filter(c => !c.startsWith('theme-'))
+        .join(' ');
+      
+      // Apply preview theme
+      if (previewTheme !== 'gold') {
+        document.documentElement.classList.add(`theme-${previewTheme}`);
+      }
+    }
+  }, [previewTheme]);
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
