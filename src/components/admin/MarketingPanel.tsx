@@ -127,6 +127,7 @@ export default function MarketingPanel() {
   const [bulkContacts, setBulkContacts] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
   const [contactsTab, setContactsTab] = useState<'manual' | 'bulk' | 'csv'>('manual');
+  const [marketingTab, setMarketingTab] = useState<'active' | 'drafts' | 'history'>('active');
 
   // Pagination calculations
   const totalCampaignPages = Math.ceil(campaigns.length / CAMPAIGNS_PER_PAGE);
@@ -568,8 +569,6 @@ export default function MarketingPanel() {
   const activeCampaigns = campaigns.filter(c => ['sending', 'scheduled'].includes(c.status));
   const draftCampaigns = campaigns.filter(c => c.status === 'draft');
   const completedCampaigns = campaigns.filter(c => ['completed', 'failed', 'paused'].includes(c.status));
-
-  const [marketingTab, setMarketingTab] = useState<'active' | 'drafts' | 'history'>('active');
 
   const renderCampaignCard = (campaign: Campaign, compact = false) => (
     <div key={campaign.id} className={`glass-card rounded-xl ${compact ? 'p-4' : 'p-5'}`}>
