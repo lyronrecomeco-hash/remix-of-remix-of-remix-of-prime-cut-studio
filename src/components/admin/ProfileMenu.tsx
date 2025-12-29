@@ -1,19 +1,44 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Settings, LogOut, Crown, ChevronRight } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/contexts/SubscriptionContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProfileMenuProps {
   onOpenProfile: () => void;
   onOpenAccount: () => void;
+  avatarUrl?: string | null;
 }
 
-const ProfileMenu = ({ onOpenProfile, onOpenAccount }: ProfileMenuProps) => {
+const ProfileMenu = ({ onOpenProfile, onOpenAccount, avatarUrl }: ProfileMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [currentAvatarUrl, setCurrentAvatarUrl] = useState<string | null>(null);
   const { user, signOut } = useAuth();
   const { currentPlan } = useSubscription();
+
+  // Load avatar on mount and when avatarUrl prop changes
+  useEffect(() => {
+    if (avatarUrl !== undefined) {
+      setCurrentAvatarUrl(avatarUrl);
+    } else if (user) {
+      loadAvatar();
+    }
+  }, [user, avatarUrl]);
+
+  const loadAvatar = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('user_profiles')
+      .select('avatar_url')
+      .eq('user_id', user.id)
+      .single();
+    
+    if (data?.avatar_url) {
+      setCurrentAvatarUrl(data.avatar_url);
+    }
+  };
 
   const getPlanBadge = () => {
     if (!currentPlan) return { label: 'FREE', color: 'bg-muted text-muted-foreground' };
@@ -36,7 +61,7 @@ const ProfileMenu = ({ onOpenProfile, onOpenAccount }: ProfileMenuProps) => {
         className="w-10 h-10 min-w-[44px] min-h-[44px] rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors touch-manipulation overflow-hidden"
       >
         <Avatar className="w-8 h-8">
-          <AvatarImage src="" />
+          <AvatarImage src={currentAvatarUrl || ''} className="object-cover" />
           <AvatarFallback className="bg-primary/20 text-primary text-sm">
             {user?.email?.charAt(0).toUpperCase() || 'U'}
           </AvatarFallback>
@@ -63,7 +88,7 @@ const ProfileMenu = ({ onOpenProfile, onOpenAccount }: ProfileMenuProps) => {
               <div className="p-4 border-b border-border bg-secondary/30">
                 <div className="flex items-center gap-3">
                   <Avatar className="w-12 h-12">
-                    <AvatarImage src="" />
+                    <AvatarImage src={currentAvatarUrl || ''} className="object-cover" />
                     <AvatarFallback className="bg-primary/20 text-primary">
                       {user?.email?.charAt(0).toUpperCase() || 'U'}
                     </AvatarFallback>
