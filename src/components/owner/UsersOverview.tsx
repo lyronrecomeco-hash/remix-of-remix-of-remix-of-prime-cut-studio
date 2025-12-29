@@ -88,12 +88,16 @@ const UsersOverview = () => {
       if (rolesError) throw rolesError;
 
       // Fetch admin users for names/emails
-      const { data: adminUsers, error: usersError } = await supabase
+      const { data: adminUsers } = await supabase
         .from('admin_users')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (usersError) throw usersError;
+      // Fetch email confirmation tokens to get emails
+      const { data: emailTokens } = await supabase
+        .from('email_confirmation_tokens')
+        .select('user_id, email')
+        .order('created_at', { ascending: false });
 
       // Fetch user profiles
       const { data: profiles } = await supabase
@@ -135,27 +139,37 @@ const UsersOverview = () => {
       
       userIds.forEach(userId => {
         const adminUser = adminUsers?.find(u => u.user_id === userId);
+        const emailToken = emailTokens?.find(e => e.user_id === userId);
         const userRole = roles?.find(r => r.user_id === userId);
         const profile = profiles?.find(p => p.user_id === userId);
-        const userLogins = loginAttempts?.filter(l => l.email === adminUser?.email) || [];
-        const successLogins = userLogins.filter(l => l.success);
-        const lastLogin = successLogins[0];
         const usage = metrics?.find(m => m.user_id === userId);
         const subscription = subscriptions?.find(s => s.user_id === userId);
         
-        // Build display name
-        let displayName = 'Usuário';
-        if (adminUser?.name) {
+        // Get email from multiple sources
+        const email = adminUser?.email || emailToken?.email || 'Email não cadastrado';
+        
+        // Get login attempts by email
+        const userLogins = loginAttempts?.filter(l => l.email === email) || [];
+        const successLogins = userLogins.filter(l => l.success);
+        const lastLogin = successLogins[0];
+        
+        // Build display name from multiple sources
+        let displayName = 'Usuário Pendente';
+        if (adminUser?.name && adminUser.name !== 'Usuário') {
           displayName = adminUser.name;
         } else if (profile?.first_name) {
           displayName = `${profile.first_name} ${profile.last_name || ''}`.trim();
+        } else if (email && email !== 'Email não cadastrado') {
+          // Extract name from email
+          const emailName = email.split('@')[0];
+          displayName = emailName.charAt(0).toUpperCase() + emailName.slice(1).replace(/[._-]/g, ' ');
         }
         
         enrichedUsers.push({
           id: adminUser?.id || userId,
           user_id: userId,
           name: displayName,
-          email: adminUser?.email || 'N/A',
+          email: email,
           is_active: adminUser?.is_active ?? true,
           expires_at: adminUser?.expires_at || null,
           created_at: userRole?.created_at || subscription?.created_at || new Date().toISOString(),

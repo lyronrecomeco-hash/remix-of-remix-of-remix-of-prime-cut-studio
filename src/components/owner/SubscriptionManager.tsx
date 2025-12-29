@@ -94,11 +94,20 @@ const SubscriptionManager = () => {
       if (subError) throw subError;
 
       // Fetch admin users to get names
-      const { data: adminUsers, error: usersError } = await supabase
+      const { data: adminUsers } = await supabase
         .from('admin_users')
         .select('*');
 
-      if (usersError) throw usersError;
+      // Fetch email confirmation tokens to get emails
+      const { data: emailTokens } = await supabase
+        .from('email_confirmation_tokens')
+        .select('user_id, email')
+        .order('created_at', { ascending: false });
+
+      // Fetch user profiles
+      const { data: profiles } = await supabase
+        .from('user_profiles')
+        .select('user_id, first_name, last_name');
 
       // Fetch usage metrics for current month
       const now = new Date();
@@ -111,14 +120,31 @@ const SubscriptionManager = () => {
       // Build user list from subscriptions
       const enrichedUsers = (subscriptions || []).map(sub => {
         const adminUser = adminUsers?.find(u => u.user_id === sub.user_id);
+        const emailToken = emailTokens?.find(e => e.user_id === sub.user_id);
+        const profile = profiles?.find(p => p.user_id === sub.user_id);
         const usage = metrics?.find(m => m.user_id === sub.user_id);
         const planData = sub.subscription_plans as any;
+
+        // Get name from multiple sources
+        let displayName = 'Usuário Pendente';
+        if (adminUser?.name && adminUser.name !== 'Usuário') {
+          displayName = adminUser.name;
+        } else if (profile?.first_name) {
+          displayName = `${profile.first_name} ${profile.last_name || ''}`.trim();
+        } else if (emailToken?.email) {
+          // Extract name from email
+          const emailName = emailToken.email.split('@')[0];
+          displayName = emailName.charAt(0).toUpperCase() + emailName.slice(1).replace(/[._-]/g, ' ');
+        }
+
+        // Get email from multiple sources
+        const email = adminUser?.email || emailToken?.email || 'Email não cadastrado';
 
         return {
           id: adminUser?.id || sub.id,
           user_id: sub.user_id,
-          name: adminUser?.name || 'Usuário',
-          email: adminUser?.email || 'N/A',
+          name: displayName,
+          email: email,
           is_active: adminUser?.is_active ?? true,
           created_at: sub.created_at,
           plan_name: planData?.name || 'free',
