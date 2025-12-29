@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Shield, LayoutDashboard, Mail, FileText, Settings, Activity, Users, AlertTriangle } from 'lucide-react';
+import { Loader2, Shield, LayoutDashboard, Mail, FileText, Settings, Users, CreditCard } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import OwnerDashboard from '@/components/owner/OwnerDashboard';
 import EmailTemplatesManager from '@/components/owner/EmailTemplatesManager';
 import GlobalLogsViewer from '@/components/owner/GlobalLogsViewer';
 import SystemSettings from '@/components/owner/SystemSettings';
 import UsersOverview from '@/components/owner/UsersOverview';
+import SubscriptionManager from '@/components/owner/SubscriptionManager';
 
 const OWNER_EMAIL = 'lyronrp@gmail.com';
 
@@ -97,10 +98,14 @@ const OwnerPanel = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-5 w-full max-w-2xl bg-card border border-border">
+          <TabsList className="grid grid-cols-6 w-full max-w-3xl bg-card border border-border">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <LayoutDashboard className="w-4 h-4" />
               <span className="hidden sm:inline">Dashboard</span>
+            </TabsTrigger>
+            <TabsTrigger value="subscriptions" className="flex items-center gap-2">
+              <CreditCard className="w-4 h-4" />
+              <span className="hidden sm:inline">Assinaturas</span>
             </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
@@ -122,6 +127,10 @@ const OwnerPanel = () => {
 
           <TabsContent value="dashboard" className="space-y-6">
             <OwnerDashboard />
+          </TabsContent>
+
+          <TabsContent value="subscriptions" className="space-y-6">
+            <SubscriptionManager />
           </TabsContent>
 
           <TabsContent value="users" className="space-y-6">
