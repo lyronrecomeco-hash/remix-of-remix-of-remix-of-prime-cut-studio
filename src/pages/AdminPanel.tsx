@@ -1549,11 +1549,15 @@ const AdminPanel = () => {
             ))}
           </nav>
 
-          <div className={`border-t border-sidebar-border ${isSidebarCollapsed ? 'p-2' : 'p-4'}`}>
+          {/* Spacer */}
+          <div className="flex-1" />
+          
+          {/* Logout Button - Separated */}
+          <div className={`mt-auto border-t border-sidebar-border ${isSidebarCollapsed ? 'p-2' : 'p-4'}`}>
             <button
               onClick={() => signOut()}
-              className={`flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors w-full touch-manipulation ${
-                isSidebarCollapsed ? 'px-3 py-3 justify-center rounded-xl hover:bg-sidebar-accent/50' : 'px-4 py-3'
+              className={`flex items-center gap-3 text-muted-foreground hover:text-destructive transition-colors w-full touch-manipulation rounded-xl ${
+                isSidebarCollapsed ? 'px-3 py-3 justify-center hover:bg-destructive/10' : 'px-4 py-3 hover:bg-destructive/10'
               }`}
             >
               <LogOut className="w-5 h-5" />
@@ -1621,10 +1625,14 @@ const AdminPanel = () => {
                 ))}
               </nav>
 
-              <div className="p-3 sm:p-4 border-t border-sidebar-border shrink-0 safe-area-inset-bottom">
+              {/* Spacer */}
+              <div className="flex-1" />
+              
+              {/* Logout Button - Separated */}
+              <div className="p-3 sm:p-4 border-t border-sidebar-border shrink-0 safe-area-inset-bottom mt-auto">
                 <button
                   onClick={() => signOut()}
-                  className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground transition-colors w-full touch-manipulation min-h-[48px]"
+                  className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-destructive transition-colors w-full touch-manipulation min-h-[48px] rounded-xl hover:bg-destructive/10"
                 >
                   <LogOut className="w-5 h-5" />
                   Sair
