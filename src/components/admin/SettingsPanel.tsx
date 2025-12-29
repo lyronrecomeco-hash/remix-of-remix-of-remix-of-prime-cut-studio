@@ -234,6 +234,7 @@ export default function SettingsPanel() {
   const [activeSection, setActiveSection] = useState<SettingsSection>('theme');
   const [textsModalOpen, setTextsModalOpen] = useState(false);
   const [hoursModalOpen, setHoursModalOpen] = useState(false);
+  const [auditLogModalOpen, setAuditLogModalOpen] = useState(false);
   
   // ChatPro state
   const [chatproConfig, setChatproConfig] = useState<ChatProConfig | null>(null);
@@ -1210,16 +1211,29 @@ Retorne APENAS a mensagem, sem explicações.`;
                   <p className="text-sm text-muted-foreground">Registra todas as ações do admin</p>
                 </div>
               </div>
-              <button
-                onClick={() => saveSecuritySettings({ ...securitySettings, auditLog: !securitySettings.auditLog })}
-                className={`w-14 h-7 rounded-full transition-colors relative ${
-                  securitySettings.auditLog ? 'bg-primary' : 'bg-secondary'
-                }`}
-              >
-                <div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all ${
-                  securitySettings.auditLog ? 'left-8' : 'left-1'
-                }`} />
-              </button>
+              <div className="flex items-center gap-2">
+                {securitySettings.auditLog && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setAuditLogModalOpen(true)}
+                    className="h-7 px-3 text-xs"
+                  >
+                    <Settings className="w-3 h-3 mr-1" />
+                    Config
+                  </Button>
+                )}
+                <button
+                  onClick={() => saveSecuritySettings({ ...securitySettings, auditLog: !securitySettings.auditLog })}
+                  className={`w-14 h-7 rounded-full transition-colors relative ${
+                    securitySettings.auditLog ? 'bg-primary' : 'bg-secondary'
+                  }`}
+                >
+                  <div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all ${
+                    securitySettings.auditLog ? 'left-8' : 'left-1'
+                  }`} />
+                </button>
+              </div>
             </div>
 
             {/* Timeout de Sessão */}
@@ -2199,6 +2213,59 @@ Retorne APENAS a mensagem, sem explicações.`;
             <Button size="sm" variant="ghost" onClick={() => setPreviewTemplate(previewTemplate === editingTemplate ? null : editingTemplate)}>
               <Eye className="w-4 h-4 mr-1" />
               Preview
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Configuração do Audit Log */}
+      <Dialog open={auditLogModalOpen} onOpenChange={setAuditLogModalOpen}>
+        <DialogContent className="max-w-md fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-purple-500" />
+              Configuração de Auditoria
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-4">
+              <p className="text-sm text-muted-foreground">
+                O log de auditoria registra todas as ações administrativas para segurança e rastreabilidade.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                <span className="text-sm">Registrar logins</span>
+                <div className={`w-10 h-5 rounded-full bg-primary relative`}>
+                  <div className="absolute top-0.5 left-5 w-4 h-4 rounded-full bg-white" />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                <span className="text-sm">Registrar alterações</span>
+                <div className={`w-10 h-5 rounded-full bg-primary relative`}>
+                  <div className="absolute top-0.5 left-5 w-4 h-4 rounded-full bg-white" />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                <span className="text-sm">Registrar exclusões</span>
+                <div className={`w-10 h-5 rounded-full bg-primary relative`}>
+                  <div className="absolute top-0.5 left-5 w-4 h-4 rounded-full bg-white" />
+                </div>
+              </div>
+            </div>
+
+            <div className="text-xs text-muted-foreground">
+              Os logs podem ser visualizados na seção "Logs de Auditoria" do menu lateral.
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-border">
+            <Button variant="outline" onClick={() => setAuditLogModalOpen(false)}>
+              Fechar
             </Button>
           </div>
         </DialogContent>
