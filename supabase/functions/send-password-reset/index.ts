@@ -164,7 +164,7 @@ serve(async (req) => {
     // Send email via Resend
     console.log("Sending password reset email via Resend...");
     const emailResponse = await resend.emails.send({
-      from: "Barber Studio <onboarding@resend.dev>",
+      from: "Genesis Hub <noreply@genesishub.cloud>",
       to: [email],
       subject: subject,
       html: htmlContent,
