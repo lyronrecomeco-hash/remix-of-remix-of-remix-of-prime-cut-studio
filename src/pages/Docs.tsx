@@ -29,9 +29,6 @@ import {
   CheckCircle,
   Sparkles,
   Globe,
-  ImageIcon,
-  MapPin,
-  Phone,
   ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -1098,29 +1095,36 @@ const DocsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-screen flex flex-col overflow-hidden bg-background">
       {/* Header fixo */}
-      <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="flex-shrink-0 h-16 border-b border-border bg-card z-50">
+        <div className="h-full px-4 lg:px-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            {/* Botão menu mobile */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-secondary"
+              className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-secondary transition-colors"
+              aria-label="Menu"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
-            <Book className="w-8 h-8 text-primary" />
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Genesis Docs</h1>
-              <p className="text-xs text-muted-foreground hidden sm:block">Central de Documentação</p>
+            
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Book className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-foreground">Genesis Docs</h1>
+                <p className="text-xs text-muted-foreground hidden sm:block">Central de Documentação</p>
+              </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link to="/">
-              <Button variant="outline" size="sm" className="gap-2">
+              <Button variant="ghost" size="sm" className="gap-2">
                 <Home className="w-4 h-4" />
-                <span className="hidden sm:inline">Voltar ao Site</span>
+                <span className="hidden sm:inline">Site</span>
               </Button>
             </Link>
             <Link to="/admin/login">
@@ -1133,165 +1137,210 @@ const DocsPage = () => {
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden relative">
+      {/* Container principal - ocupa resto da altura */}
+      <div className="flex-1 flex overflow-hidden relative">
         {/* Overlay mobile */}
         {mobileMenuOpen && (
           <div 
-            className="md:hidden fixed inset-0 bg-background/80 backdrop-blur-sm z-30"
+            className="lg:hidden fixed inset-0 bg-background/80 backdrop-blur-sm z-30"
             onClick={() => setMobileMenuOpen(false)}
           />
         )}
 
-        {/* Sidebar */}
+        {/* Sidebar FIXA - não rola */}
         <aside className={`
           ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} 
-          md:translate-x-0
-          fixed md:relative
-          z-40 md:z-auto
-          w-72 flex-shrink-0 flex flex-col border-r border-border bg-card overflow-hidden
-          h-[calc(100vh-73px)]
+          lg:translate-x-0
+          fixed lg:static
+          inset-y-0 left-0 top-16 lg:top-0
+          z-40 lg:z-auto
+          w-72 lg:w-64 xl:w-72
+          flex-shrink-0
+          flex flex-col
+          border-r border-border 
+          bg-card
           transition-transform duration-200 ease-in-out
+          h-[calc(100vh-64px)] lg:h-full
         `}>
-          <div className="p-4 border-b border-border flex-shrink-0">
+          {/* Busca - fixa no topo da sidebar */}
+          <div className="flex-shrink-0 p-4 border-b border-border">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar na documentação..."
-                className="pl-9 h-10"
+                placeholder="Buscar..."
+                className="pl-9 h-10 bg-secondary/50"
               />
             </div>
           </div>
 
+          {/* Lista de seções - COM SCROLL PRÓPRIO */}
           <ScrollArea className="flex-1">
-            <div className="p-2 space-y-1">
-              {filteredSections.map((section) => {
-                const Icon = section.icon;
-                return (
-                  <button
-                    key={section.id}
-                    onClick={() => {
-                      setActiveSection(section.id);
-                      setSearchQuery('');
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
-                      activeSection === section.id
-                        ? 'bg-primary text-primary-foreground'
-                        : 'hover:bg-secondary text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 flex-shrink-0" />
-                    <span className="text-sm font-medium truncate">{section.title}</span>
-                    {activeSection === section.id && (
-                      <ChevronRight className="w-4 h-4 ml-auto flex-shrink-0" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+            <nav className="p-2">
+              <ul className="space-y-1">
+                {filteredSections.map((section) => {
+                  const Icon = section.icon;
+                  const isActive = activeSection === section.id;
+                  
+                  return (
+                    <li key={section.id}>
+                      <button
+                        onClick={() => {
+                          setActiveSection(section.id);
+                          setSearchQuery('');
+                          setMobileMenuOpen(false);
+                        }}
+                        className={`
+                          w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all
+                          ${isActive
+                            ? 'bg-primary text-primary-foreground shadow-sm'
+                            : 'hover:bg-secondary text-muted-foreground hover:text-foreground'
+                          }
+                        `}
+                      >
+                        <Icon className="w-4 h-4 flex-shrink-0" />
+                        <span className="text-sm font-medium truncate flex-1">{section.title}</span>
+                        {isActive && <ChevronRight className="w-4 h-4 flex-shrink-0" />}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
           </ScrollArea>
 
-          {/* Versão no rodapé da sidebar */}
-          <div className="p-4 border-t border-border text-center">
-            <p className="text-xs text-muted-foreground">Genesis Documentation v2.0</p>
+          {/* Rodapé sidebar - fixo */}
+          <div className="flex-shrink-0 p-4 border-t border-border">
+            <p className="text-xs text-muted-foreground text-center">
+              Genesis Documentation v2.0
+            </p>
           </div>
         </aside>
 
-        {/* Conteúdo principal */}
-        <main className="flex-1 flex flex-col min-h-0 overflow-hidden w-full">
-          {/* Header da seção */}
-          <div className="flex items-center gap-3 p-4 md:p-6 pb-3 md:pb-4 border-b border-border flex-shrink-0 bg-card/30">
-            <div className="w-10 md:hidden" />
-            {currentSection && (() => {
-              const Icon = currentSection.icon;
-              return <Icon className="w-5 h-5 md:w-6 md:h-6 text-primary" />;
-            })()}
-            <h2 className="text-lg md:text-xl font-bold truncate">{currentSection?.title}</h2>
+        {/* Conteúdo principal - ESTA ÁREA TEM SCROLL */}
+        <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          {/* Header da seção atual - fixo */}
+          <div className="flex-shrink-0 px-4 lg:px-8 py-4 border-b border-border bg-card/50 backdrop-blur-sm">
+            <div className="flex items-center gap-3 max-w-4xl">
+              {currentSection && (() => {
+                const Icon = currentSection.icon;
+                return (
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Icon className="w-5 h-5 text-primary" />
+                  </div>
+                );
+              })()}
+              <div className="min-w-0">
+                <h2 className="text-xl lg:text-2xl font-bold text-foreground truncate">
+                  {currentSection?.title}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {currentIndex + 1} de {documentationSections.length} seções
+                </p>
+              </div>
+            </div>
           </div>
 
-          {/* Conteúdo com scroll */}
-          <ScrollArea className="flex-1">
-            <div className="p-4 md:p-6 max-w-4xl">
-              {currentSection && (
-                <div className="space-y-8">
-                  {currentSection.content.map((content, idx) => (
-                    <div key={idx} className="space-y-4">
-                      {content.subtitle && (
-                        <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-4">
-                          {content.subtitle}
-                        </h3>
-                      )}
+          {/* Área de conteúdo com scroll */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="px-4 lg:px-8 py-6 lg:py-8">
+              <div className="max-w-4xl mx-auto">
+                {currentSection && (
+                  <div className="space-y-8">
+                    {currentSection.content.map((content, idx) => (
+                      <article key={idx} className="space-y-4">
+                        {content.subtitle && (
+                          <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-4 py-1">
+                            {content.subtitle}
+                          </h3>
+                        )}
 
-                      {content.text && (
-                        <p className="text-muted-foreground leading-relaxed">
-                          {content.text}
-                        </p>
-                      )}
-
-                      {content.list && (
-                        <ul className="space-y-2 ml-4">
-                          {content.list.map((item, i) => (
-                            <li key={i} className="flex items-start gap-3 text-sm text-muted-foreground">
-                              <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                              <span>{item}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-
-                      {content.warning && (
-                        <div className="flex items-start gap-3 p-4 bg-destructive/10 border border-destructive/20 rounded-xl">
-                          <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
-                          <p className="text-sm text-destructive">
-                            <strong>Atenção:</strong> {content.warning}
+                        {content.text && (
+                          <p className="text-muted-foreground leading-relaxed pl-5">
+                            {content.text}
                           </p>
-                        </div>
-                      )}
+                        )}
 
-                      {content.tip && (
-                        <div className="flex items-start gap-3 p-4 bg-primary/10 border border-primary/20 rounded-xl">
-                          <Info className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                          <p className="text-sm text-primary">
-                            <strong>Dica:</strong> {content.tip}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+                        {content.list && (
+                          <ul className="space-y-2 pl-5">
+                            {content.list.map((item, i) => (
+                              <li key={i} className="flex items-start gap-3 text-sm text-muted-foreground">
+                                <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                                <span className="leading-relaxed">{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+
+                        {content.warning && (
+                          <div className="flex items-start gap-3 p-4 bg-destructive/10 border border-destructive/20 rounded-xl ml-5">
+                            <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                            <p className="text-sm text-destructive leading-relaxed">
+                              <strong>Atenção:</strong> {content.warning}
+                            </p>
+                          </div>
+                        )}
+
+                        {content.tip && (
+                          <div className="flex items-start gap-3 p-4 bg-primary/10 border border-primary/20 rounded-xl ml-5">
+                            <Info className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                            <p className="text-sm text-primary leading-relaxed">
+                              <strong>Dica:</strong> {content.tip}
+                            </p>
+                          </div>
+                        )}
+                      </article>
+                    ))}
+                  </div>
+                )}
+
+                {/* Espaçador para evitar que conteúdo fique atrás da navegação */}
+                <div className="h-8" />
+              </div>
             </div>
-          </ScrollArea>
+          </div>
 
-          {/* Navigation */}
-          <div className="flex items-center justify-between p-4 border-t border-border flex-shrink-0 bg-card/30">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={goToPrev}
-              disabled={currentIndex === 0}
-              className="gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Anterior</span>
-            </Button>
+          {/* Navegação entre seções - fixa no rodapé */}
+          <div className="flex-shrink-0 px-4 lg:px-8 py-4 border-t border-border bg-card/50 backdrop-blur-sm">
+            <div className="max-w-4xl mx-auto flex items-center justify-between">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToPrev}
+                disabled={currentIndex === 0}
+                className="gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="hidden sm:inline">Anterior</span>
+              </Button>
 
-            <span className="text-sm text-muted-foreground">
-              {currentIndex + 1} de {documentationSections.length}
-            </span>
+              <div className="flex items-center gap-1.5">
+                {documentationSections.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveSection(documentationSections[idx].id)}
+                    className={`w-2 h-2 rounded-full transition-all ${
+                      idx === currentIndex 
+                        ? 'bg-primary w-6' 
+                        : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+                    }`}
+                    aria-label={`Ir para seção ${idx + 1}`}
+                  />
+                ))}
+              </div>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={goToNext}
-              disabled={currentIndex === documentationSections.length - 1}
-              className="gap-2"
-            >
-              <span className="hidden sm:inline">Próximo</span>
-              <ArrowRight className="w-4 h-4" />
-            </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToNext}
+                disabled={currentIndex === documentationSections.length - 1}
+                className="gap-2"
+              >
+                <span className="hidden sm:inline">Próximo</span>
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </main>
       </div>
