@@ -372,12 +372,11 @@ const WelcomeSetupModal = ({ isOpen, onComplete }: WelcomeSetupModalProps) => {
   const handleComplete = async () => {
     if (user) {
       try {
-        // First check if record exists
+        // Check if any record exists with this setting_type (regardless of user_id)
         const { data: existing } = await supabase
           .from('admin_settings')
           .select('id')
           .eq('setting_type', `welcome_completed_${user.id}`)
-          .eq('user_id', user.id)
           .maybeSingle();
 
         if (existing) {
@@ -385,7 +384,8 @@ const WelcomeSetupModal = ({ isOpen, onComplete }: WelcomeSetupModalProps) => {
           await supabase
             .from('admin_settings')
             .update({
-              settings: { completed: true, completedAt: new Date().toISOString() }
+              settings: { completed: true, completedAt: new Date().toISOString() },
+              user_id: user.id
             })
             .eq('id', existing.id);
         } else {

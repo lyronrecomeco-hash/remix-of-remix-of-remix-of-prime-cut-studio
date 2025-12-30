@@ -176,11 +176,11 @@ const AdminPanel = () => {
     const checkWelcomeStatus = async () => {
       if (!user) return;
       
+      // Query by setting_type only to find any existing record
       const { data } = await supabase
         .from('admin_settings')
         .select('settings')
         .eq('setting_type', `welcome_completed_${user.id}`)
-        .eq('user_id', user.id)
         .maybeSingle();
       
       // Show modal if not completed yet
