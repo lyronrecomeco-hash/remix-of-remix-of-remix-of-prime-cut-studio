@@ -311,9 +311,9 @@ const GenesisLanding = () => {
             
             <div className="hidden md:flex items-center gap-6">
               <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Recursos</a>
+              <a href="#how" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Como Funciona</a>
               <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Preços</a>
               <a href="#demo" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Demo</a>
-              <Link to="/docs" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Documentação</Link>
             </div>
             
             <div className="flex items-center gap-3">
@@ -460,7 +460,7 @@ const GenesisLanding = () => {
       </section>
 
       {/* How it Works */}
-      <section className="py-20 md:py-32 bg-card/30">
+      <section id="how" className="py-20 md:py-32 bg-card/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">
@@ -625,25 +625,93 @@ const GenesisLanding = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 border-t border-border/50">
+      <footer className="bg-card/50 border-t border-border/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <Zap className="w-5 h-5 text-primary-foreground" />
+          {/* Main Footer Content */}
+          <div className="py-16 grid grid-cols-2 md:grid-cols-4 gap-8">
+            {/* Brand */}
+            <div className="col-span-2 md:col-span-1">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+                  <Zap className="w-6 h-6 text-primary-foreground" />
+                </div>
+                <span className="text-xl font-bold">Genesis<span className="text-primary">Hub</span></span>
               </div>
-              <span className="text-xl font-bold">Genesis<span className="text-primary">Hub</span></span>
+              <p className="text-sm text-muted-foreground mb-4">
+                A plataforma completa para gestão inteligente de barbearias. Automatize, organize e cresça.
+              </p>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-xs">
+                  <Lock className="w-3 h-3 mr-1" />
+                  SSL Seguro
+                </Badge>
+                <Badge variant="outline" className="text-xs">
+                  <Shield className="w-3 h-3 mr-1" />
+                  LGPD
+                </Badge>
+              </div>
             </div>
             
-            <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <Link to="/docs" className="hover:text-foreground transition-colors">Documentação</Link>
-              <Link to="/termos-de-uso" className="hover:text-foreground transition-colors">Termos de Uso</Link>
-              <Link to="/politica-de-privacidade" className="hover:text-foreground transition-colors">Privacidade</Link>
+            {/* Product */}
+            <div>
+              <h4 className="font-semibold mb-4">Produto</h4>
+              <ul className="space-y-3 text-sm text-muted-foreground">
+                <li>
+                  <a href="#features" className="hover:text-foreground transition-colors">Recursos</a>
+                </li>
+                <li>
+                  <a href="#pricing" className="hover:text-foreground transition-colors">Preços</a>
+                </li>
+                <li>
+                  <a href="#demo" className="hover:text-foreground transition-colors">Demonstração</a>
+                </li>
+                <li>
+                  <a href="#how" className="hover:text-foreground transition-colors">Como Funciona</a>
+                </li>
+              </ul>
             </div>
             
+            {/* Resources */}
+            <div>
+              <h4 className="font-semibold mb-4">Recursos</h4>
+              <ul className="space-y-3 text-sm text-muted-foreground">
+                <li>
+                  <Link to="/docs" className="hover:text-foreground transition-colors">Documentação</Link>
+                </li>
+                <li>
+                  <a href="https://wa.me/5521999999999?text=Preciso de suporte" className="hover:text-foreground transition-colors">Suporte</a>
+                </li>
+                <li>
+                  <Link to="/admin/login" className="hover:text-foreground transition-colors">Login</Link>
+                </li>
+              </ul>
+            </div>
+            
+            {/* Legal */}
+            <div>
+              <h4 className="font-semibold mb-4">Legal</h4>
+              <ul className="space-y-3 text-sm text-muted-foreground">
+                <li>
+                  <Link to="/termos-de-uso" className="hover:text-foreground transition-colors">Termos de Uso</Link>
+                </li>
+                <li>
+                  <Link to="/politica-de-privacidade" className="hover:text-foreground transition-colors">Privacidade</Link>
+                </li>
+              </ul>
+            </div>
+          </div>
+          
+          {/* Bottom Bar */}
+          <div className="py-6 border-t border-border/50 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
               © {new Date().getFullYear()} Genesis Hub. Todos os direitos reservados.
             </p>
+            <div className="flex items-center gap-4">
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                Todos os sistemas operacionais
+              </span>
+            </div>
           </div>
         </div>
       </footer>
