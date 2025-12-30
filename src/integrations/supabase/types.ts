@@ -520,6 +520,54 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_leads: {
+        Row: {
+          contacted_at: string | null
+          converted_at: string | null
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          message: string | null
+          notes: string | null
+          plan_interest: string
+          status: string
+          updated_at: string
+          whatsapp: string
+        }
+        Insert: {
+          contacted_at?: string | null
+          converted_at?: string | null
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          message?: string | null
+          notes?: string | null
+          plan_interest?: string
+          status?: string
+          updated_at?: string
+          whatsapp: string
+        }
+        Update: {
+          contacted_at?: string | null
+          converted_at?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          message?: string | null
+          notes?: string | null
+          plan_interest?: string
+          status?: string
+          updated_at?: string
+          whatsapp?: string
+        }
+        Relationships: []
+      }
       email_confirmation_tokens: {
         Row: {
           confirmed_at: string | null
