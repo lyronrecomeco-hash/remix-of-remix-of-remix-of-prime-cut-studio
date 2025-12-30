@@ -1662,6 +1662,7 @@ export type Database = {
     Functions: {
       check_ip_fraud: { Args: { check_ip: string }; Returns: boolean }
       current_tenant_id: { Args: never; Returns: string }
+      current_tenant_ids: { Args: never; Returns: string[] }
       get_user_plan: { Args: { check_user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -1676,6 +1677,15 @@ export type Database = {
         Returns: boolean
       }
       is_owner: { Args: { _user_id: string }; Returns: boolean }
+      log_security_event: {
+        Args: {
+          p_action: string
+          p_details?: Json
+          p_entity_id?: string
+          p_entity_type: string
+        }
+        Returns: undefined
+      }
       tenant_matches: { Args: { p_tenant: string }; Returns: boolean }
     }
     Enums: {
