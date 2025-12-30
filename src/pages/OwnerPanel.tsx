@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Shield, LayoutDashboard, Mail, FileText, Settings, Users, CreditCard, MessageCircle, Database, HardDrive } from 'lucide-react';
+import { Loader2, Shield, LayoutDashboard, Mail, FileText, Settings, Users, CreditCard, MessageCircle, HardDrive, UserPlus } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import OwnerDashboard from '@/components/owner/OwnerDashboard';
 import EmailTemplatesManager from '@/components/owner/EmailTemplatesManager';
@@ -12,6 +12,7 @@ import UsersOverview from '@/components/owner/UsersOverview';
 import SubscriptionManager from '@/components/owner/SubscriptionManager';
 import WhatsAppTemplatesManager from '@/components/owner/WhatsAppTemplatesManager';
 import UserDatabaseSection from '@/components/owner/UserDatabaseSection';
+import LeadsManager from '@/components/owner/LeadsManager';
 
 const OWNER_EMAIL = 'lyronrp@gmail.com';
 
@@ -26,13 +27,11 @@ const OwnerPanel = () => {
     const verifyOwner = async () => {
       if (authLoading) return;
 
-      // Must be logged in
       if (!user) {
         navigate('/', { replace: true });
         return;
       }
 
-      // Confirm email
       const { data: userData } = await supabase.auth.getUser();
       const userEmail = userData?.user?.email;
       if (userEmail !== OWNER_EMAIL) {
@@ -40,7 +39,6 @@ const OwnerPanel = () => {
         return;
       }
 
-      // Confirm role directly (avoid timing issues with context role loading)
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
@@ -76,7 +74,6 @@ const OwnerPanel = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -97,13 +94,16 @@ const OwnerPanel = () => {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-8 w-full max-w-5xl bg-card border border-border">
+          <TabsList className="grid grid-cols-9 w-full max-w-6xl bg-card border border-border">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <LayoutDashboard className="w-4 h-4" />
               <span className="hidden sm:inline">Dashboard</span>
+            </TabsTrigger>
+            <TabsTrigger value="leads" className="flex items-center gap-2">
+              <UserPlus className="w-4 h-4" />
+              <span className="hidden sm:inline">Leads</span>
             </TabsTrigger>
             <TabsTrigger value="subscriptions" className="flex items-center gap-2">
               <CreditCard className="w-4 h-4" />
@@ -115,7 +115,7 @@ const OwnerPanel = () => {
             </TabsTrigger>
             <TabsTrigger value="database" className="flex items-center gap-2">
               <HardDrive className="w-4 h-4" />
-              <span className="hidden sm:inline">Banco de Dados</span>
+              <span className="hidden sm:inline">Banco</span>
             </TabsTrigger>
             <TabsTrigger value="emails" className="flex items-center gap-2">
               <Mail className="w-4 h-4" />
@@ -137,6 +137,10 @@ const OwnerPanel = () => {
 
           <TabsContent value="dashboard" className="space-y-6">
             <OwnerDashboard />
+          </TabsContent>
+
+          <TabsContent value="leads" className="space-y-6">
+            <LeadsManager />
           </TabsContent>
 
           <TabsContent value="subscriptions" className="space-y-6">
