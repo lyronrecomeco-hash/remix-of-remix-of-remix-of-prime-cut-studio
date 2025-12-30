@@ -1198,8 +1198,110 @@ Ou: Template minimalista e elegante, cores preto e dourado, texto formal e sofis
                     <Textarea
                       value={templateConfig.contentText}
                       onChange={(e) => setTemplateConfig({ ...templateConfig, contentText: e.target.value })}
-                      className="min-h-[100px]"
+                      onPaste={(e) => {
+                        e.preventDefault();
+                        const clipboardData = e.clipboardData;
+                        
+                        // Try to get HTML formatted content first
+                        const htmlData = clipboardData.getData('text/html');
+                        const plainText = clipboardData.getData('text/plain');
+                        
+                        let formattedText = plainText;
+                        
+                        if (htmlData) {
+                          // Parse HTML and convert to simplified HTML for email
+                          const parser = new DOMParser();
+                          const doc = parser.parseFromString(htmlData, 'text/html');
+                          const body = doc.body;
+                          
+                          // Extract text with basic formatting preserved
+                          const extractFormattedText = (node: Node): string => {
+                            let result = '';
+                            
+                            node.childNodes.forEach((child) => {
+                              if (child.nodeType === Node.TEXT_NODE) {
+                                result += child.textContent;
+                              } else if (child.nodeType === Node.ELEMENT_NODE) {
+                                const element = child as HTMLElement;
+                                const tagName = element.tagName.toLowerCase();
+                                
+                                switch (tagName) {
+                                  case 'br':
+                                    result += '<br/>';
+                                    break;
+                                  case 'p':
+                                  case 'div':
+                                    result += extractFormattedText(element) + '<br/><br/>';
+                                    break;
+                                  case 'strong':
+                                  case 'b':
+                                    result += '<strong>' + extractFormattedText(element) + '</strong>';
+                                    break;
+                                  case 'em':
+                                  case 'i':
+                                    result += '<em>' + extractFormattedText(element) + '</em>';
+                                    break;
+                                  case 'u':
+                                    result += '<u>' + extractFormattedText(element) + '</u>';
+                                    break;
+                                  case 'ul':
+                                  case 'ol':
+                                    result += extractFormattedText(element);
+                                    break;
+                                  case 'li':
+                                    result += '• ' + extractFormattedText(element) + '<br/>';
+                                    break;
+                                  case 'h1':
+                                  case 'h2':
+                                  case 'h3':
+                                  case 'h4':
+                                    result += '<strong>' + extractFormattedText(element) + '</strong><br/><br/>';
+                                    break;
+                                  case 'a':
+                                    const href = element.getAttribute('href');
+                                    result += href ? `<a href="${href}">${extractFormattedText(element)}</a>` : extractFormattedText(element);
+                                    break;
+                                  default:
+                                    result += extractFormattedText(element);
+                                }
+                              }
+                            });
+                            
+                            return result;
+                          };
+                          
+                          formattedText = extractFormattedText(body)
+                            .replace(/<br\/><br\/><br\/>/g, '<br/><br/>')
+                            .replace(/^\s*<br\/>/g, '')
+                            .replace(/<br\/>\s*$/g, '')
+                            .trim();
+                        } else if (plainText) {
+                          // Convert plain text line breaks to HTML
+                          formattedText = plainText
+                            .split(/\n\n+/)
+                            .map(paragraph => paragraph.trim())
+                            .filter(p => p.length > 0)
+                            .join('<br/><br/>');
+                          
+                          // Convert single line breaks within paragraphs
+                          formattedText = formattedText.replace(/\n/g, '<br/>');
+                        }
+                        
+                        // Combine with existing text at cursor position
+                        const textarea = e.target as HTMLTextAreaElement;
+                        const start = textarea.selectionStart;
+                        const end = textarea.selectionEnd;
+                        const currentValue = templateConfig.contentText;
+                        
+                        const newValue = currentValue.substring(0, start) + formattedText + currentValue.substring(end);
+                        setTemplateConfig({ ...templateConfig, contentText: newValue });
+                      }}
+                      className="min-h-[100px] font-mono text-sm"
+                      placeholder="Cole texto formatado aqui - negrito, itálico, listas e parágrafos serão preservados"
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Suporta formatação HTML: &lt;strong&gt;, &lt;em&gt;, &lt;br/&gt;, &lt;a&gt;
+                    </p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
