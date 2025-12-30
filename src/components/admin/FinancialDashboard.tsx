@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { 
   DollarSign, 
@@ -29,7 +29,7 @@ import {
   Cell
 } from 'recharts';
 
-const FinancialDashboard = () => {
+const FinancialDashboard = React.memo(() => {
   const { appointments, services } = useApp();
 
   // Calculate financial metrics
@@ -410,6 +410,8 @@ const FinancialDashboard = () => {
       </div>
     </div>
   );
-};
+});
+
+FinancialDashboard.displayName = 'FinancialDashboard';
 
 export default FinancialDashboard;

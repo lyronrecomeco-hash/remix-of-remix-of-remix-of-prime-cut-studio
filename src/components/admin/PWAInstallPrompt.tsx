@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, X, Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-const PWAInstallPrompt = () => {
+const PWAInstallPrompt = React.forwardRef<HTMLDivElement>((props, ref) => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
@@ -77,6 +77,7 @@ const PWAInstallPrompt = () => {
   return (
     <AnimatePresence>
       <motion.div
+        ref={ref}
         initial={{ opacity: 0, y: 100 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 100 }}
@@ -115,6 +116,8 @@ const PWAInstallPrompt = () => {
       </motion.div>
     </AnimatePresence>
   );
-};
+});
+
+PWAInstallPrompt.displayName = 'PWAInstallPrompt';
 
 export default PWAInstallPrompt;

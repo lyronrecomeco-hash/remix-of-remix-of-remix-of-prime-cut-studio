@@ -1,7 +1,8 @@
+import React from 'react';
 import { Scissors, Instagram, Facebook, MessageCircle } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 
-const Footer = () => {
+const Footer = React.forwardRef<HTMLElement>((props, ref) => {
   const currentYear = new Date().getFullYear();
   const { shopSettings } = useApp();
 
@@ -19,7 +20,7 @@ const Footer = () => {
       : '#';
 
   return (
-    <footer className="bg-card border-t border-border">
+    <footer ref={ref} className="bg-card border-t border-border">
       <div className="container-narrow section-padding py-12">
         <div className="grid md:grid-cols-4 gap-8">
           {/* Logo & Description */}
@@ -90,6 +91,8 @@ const Footer = () => {
       </div>
     </footer>
   );
-};
+});
+
+Footer.displayName = 'Footer';
 
 export default Footer;
