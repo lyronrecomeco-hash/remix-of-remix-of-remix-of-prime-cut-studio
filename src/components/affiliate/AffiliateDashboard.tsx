@@ -1,0 +1,248 @@
+import { useState, useEffect } from 'react';
+import { 
+  DollarSign, 
+  Clock, 
+  TrendingUp, 
+  Users, 
+  Copy, 
+  Check,
+  ExternalLink
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+interface Affiliate {
+  id: string;
+  name: string;
+  email: string;
+  affiliate_code: string;
+  commission_rate_monthly: number;
+  commission_rate_lifetime: number;
+  total_earnings: number;
+  available_balance: number;
+  pending_balance: number;
+}
+
+interface AffiliateDashboardProps {
+  affiliate: Affiliate;
+}
+
+const AffiliateDashboard = ({ affiliate }: AffiliateDashboardProps) => {
+  const [copied, setCopied] = useState(false);
+  const [salesCount, setSalesCount] = useState(0);
+  const [referralsCount, setReferralsCount] = useState(0);
+  const [recentSales, setRecentSales] = useState<any[]>([]);
+
+  const affiliateLink = `${window.location.origin}/?ref=${affiliate.affiliate_code}`;
+
+  useEffect(() => {
+    fetchStats();
+  }, [affiliate.id]);
+
+  const fetchStats = async () => {
+    try {
+      // Buscar contagem de vendas confirmadas
+      const { count: salesC } = await supabase
+        .from('affiliate_referrals')
+        .select('*', { count: 'exact', head: true })
+        .eq('affiliate_id', affiliate.id)
+        .in('status', ['confirmed', 'paid']);
+
+      setSalesCount(salesC || 0);
+
+      // Buscar total de referências
+      const { count: refsC } = await supabase
+        .from('affiliate_referrals')
+        .select('*', { count: 'exact', head: true })
+        .eq('affiliate_id', affiliate.id);
+
+      setReferralsCount(refsC || 0);
+
+      // Buscar vendas recentes
+      const { data: recent } = await supabase
+        .from('affiliate_referrals')
+        .select('*')
+        .eq('affiliate_id', affiliate.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      setRecentSales(recent || []);
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas:', error);
+    }
+  };
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(affiliateLink);
+      setCopied(true);
+      toast.success('Link copiado!');
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      toast.error('Erro ao copiar link');
+    }
+  };
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
+  };
+
+  const stats = [
+    {
+      title: 'Saldo Disponível',
+      value: formatCurrency(affiliate.available_balance),
+      icon: DollarSign,
+      color: 'text-green-500',
+      bgColor: 'bg-green-500/10',
+    },
+    {
+      title: 'Saldo Pendente',
+      value: formatCurrency(affiliate.pending_balance),
+      icon: Clock,
+      color: 'text-yellow-500',
+      bgColor: 'bg-yellow-500/10',
+    },
+    {
+      title: 'Total Ganho',
+      value: formatCurrency(affiliate.total_earnings),
+      icon: TrendingUp,
+      color: 'text-primary',
+      bgColor: 'bg-primary/10',
+    },
+    {
+      title: 'Vendas Realizadas',
+      value: salesCount.toString(),
+      icon: Users,
+      color: 'text-blue-500',
+      bgColor: 'bg-blue-500/10',
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Welcome Message */}
+      <div className="bg-gradient-to-r from-primary/20 via-primary/10 to-transparent p-6 rounded-xl border border-primary/20">
+        <h1 className="text-2xl font-bold text-foreground">
+          Bem-vindo, {affiliate.name.split(' ')[0]}! 👋
+        </h1>
+        <p className="text-muted-foreground mt-2">
+          Acompanhe suas vendas e comissões no painel abaixo.
+        </p>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((stat, index) => {
+          const Icon = stat.icon;
+          return (
+            <Card key={index} className="bg-card border-border">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">{stat.title}</p>
+                    <p className="text-2xl font-bold mt-1 text-foreground">
+                      {stat.value}
+                    </p>
+                  </div>
+                  <div className={`w-12 h-12 rounded-xl ${stat.bgColor} flex items-center justify-center`}>
+                    <Icon className={`w-6 h-6 ${stat.color}`} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Affiliate Link */}
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="text-lg text-foreground">Seu Link de Afiliado</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1 bg-secondary/50 rounded-lg px-4 py-3 font-mono text-sm text-foreground break-all">
+              {affiliateLink}
+            </div>
+            <Button
+              onClick={copyLink}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground shrink-0"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-4 h-4 mr-2" />
+                  Copiado!
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copiar Link
+                </>
+              )}
+            </Button>
+          </div>
+          <p className="text-sm text-muted-foreground mt-3">
+            Comissões: <span className="text-primary font-medium">{affiliate.commission_rate_monthly}%</span> (Mensal) | <span className="text-primary font-medium">{affiliate.commission_rate_lifetime}%</span> (Vitalício)
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Recent Sales */}
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="text-lg text-foreground">Vendas Recentes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {recentSales.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p>Nenhuma venda registrada ainda.</p>
+              <p className="text-sm mt-1">Compartilhe seu link para começar a ganhar!</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {recentSales.map((sale) => (
+                <div
+                  key={sale.id}
+                  className="flex items-center justify-between p-4 bg-secondary/30 rounded-lg"
+                >
+                  <div>
+                    <p className="font-medium text-foreground">
+                      {sale.plan_name || 'Cadastro'}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(sale.created_at).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-primary">
+                      {formatCurrency(sale.commission_amount || 0)}
+                    </p>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      sale.status === 'confirmed' || sale.status === 'paid'
+                        ? 'bg-green-500/20 text-green-500'
+                        : sale.status === 'pending'
+                        ? 'bg-yellow-500/20 text-yellow-500'
+                        : 'bg-red-500/20 text-red-500'
+                    }`}>
+                      {sale.status === 'pending' ? 'Pendente' :
+                       sale.status === 'confirmed' ? 'Confirmado' :
+                       sale.status === 'paid' ? 'Pago' : 'Cancelado'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default AffiliateDashboard;

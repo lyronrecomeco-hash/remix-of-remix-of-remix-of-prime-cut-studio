@@ -320,6 +320,46 @@
     --gradient-primary: linear-gradient(135deg, hsl(330 90% 75%) 0%, hsl(330 86% 62%) 50%, hsl(330 75% 52%) 100%);
     --shadow-glow: 0 0 40px hsl(330 86% 62% / 0.3);
   }
+
+  /* Affiliate Blue Theme - Exclusive for partners portal */
+  .theme-affiliate-blue {
+    --background: 222 47% 8%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 8%;
+    --secondary: 222 30% 16%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 222 25% 18%;
+    --muted-foreground: 210 20% 55%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 222 47% 8%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 217 40% 20%;
+    --input: 222 30% 18%;
+    --ring: 217 91% 60%;
+    --gold: 217 91% 60%;
+    --gold-light: 217 95% 70%;
+    --gold-dark: 217 85% 45%;
+    --gold-foreground: 222 47% 8%;
+    --gradient-primary: linear-gradient(135deg, hsl(217 95% 70%) 0%, hsl(217 91% 60%) 50%, hsl(217 85% 45%) 100%);
+    --gradient-gold-shine: linear-gradient(135deg, hsl(217 95% 70%) 0%, hsl(217 91% 60%) 30%, hsl(217 88% 55%) 70%, hsl(217 85% 45%) 100%);
+    --shadow-glow: 0 0 40px hsl(217 91% 60% / 0.3);
+    --shadow-gold: 0 4px 30px hsl(217 91% 60% / 0.25);
+    --sidebar-background: 222 47% 10%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 222 47% 8%;
+    --sidebar-accent: 222 30% 16%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 40% 18%;
+    --sidebar-ring: 217 91% 60%;
+  }
+}
 }
 
 @layer base {

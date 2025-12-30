@@ -77,6 +77,249 @@ export type Database = {
         }
         Relationships: []
       }
+      affiliate_clicks: {
+        Row: {
+          affiliate_id: string
+          clicked_at: string
+          id: string
+          ip_address: string | null
+          landing_page: string | null
+          referrer: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          affiliate_id: string
+          clicked_at?: string
+          id?: string
+          ip_address?: string | null
+          landing_page?: string | null
+          referrer?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          affiliate_id?: string
+          clicked_at?: string
+          id?: string
+          ip_address?: string | null
+          landing_page?: string | null
+          referrer?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_clicks_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_materials: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      affiliate_referrals: {
+        Row: {
+          affiliate_id: string
+          commission_amount: number | null
+          commission_rate: number | null
+          confirmed_at: string | null
+          converted_at: string | null
+          created_at: string
+          id: string
+          paid_at: string | null
+          plan_name: string | null
+          plan_price: number | null
+          referred_user_id: string
+          status: Database["public"]["Enums"]["referral_status"]
+          trial_expires_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          affiliate_id: string
+          commission_amount?: number | null
+          commission_rate?: number | null
+          confirmed_at?: string | null
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          plan_name?: string | null
+          plan_price?: number | null
+          referred_user_id: string
+          status?: Database["public"]["Enums"]["referral_status"]
+          trial_expires_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          affiliate_id?: string
+          commission_amount?: number | null
+          commission_rate?: number | null
+          confirmed_at?: string | null
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          plan_name?: string | null
+          plan_price?: number | null
+          referred_user_id?: string
+          status?: Database["public"]["Enums"]["referral_status"]
+          trial_expires_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_referrals_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_withdrawals: {
+        Row: {
+          affiliate_id: string
+          amount: number
+          created_at: string
+          id: string
+          pix_key: string
+          pix_type: Database["public"]["Enums"]["pix_type"]
+          processed_at: string | null
+          processed_by: string | null
+          rejection_reason: string | null
+          requested_at: string
+          status: Database["public"]["Enums"]["withdrawal_status"]
+        }
+        Insert: {
+          affiliate_id: string
+          amount: number
+          created_at?: string
+          id?: string
+          pix_key: string
+          pix_type: Database["public"]["Enums"]["pix_type"]
+          processed_at?: string | null
+          processed_by?: string | null
+          rejection_reason?: string | null
+          requested_at?: string
+          status?: Database["public"]["Enums"]["withdrawal_status"]
+        }
+        Update: {
+          affiliate_id?: string
+          amount?: number
+          created_at?: string
+          id?: string
+          pix_key?: string
+          pix_type?: Database["public"]["Enums"]["pix_type"]
+          processed_at?: string | null
+          processed_by?: string | null
+          rejection_reason?: string | null
+          requested_at?: string
+          status?: Database["public"]["Enums"]["withdrawal_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_withdrawals_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliates: {
+        Row: {
+          affiliate_code: string
+          available_balance: number
+          commission_rate_lifetime: number
+          commission_rate_monthly: number
+          created_at: string
+          created_by: string | null
+          email: string
+          id: string
+          name: string
+          password_hash: string
+          pending_balance: number
+          pix_key: string | null
+          pix_type: Database["public"]["Enums"]["pix_type"] | null
+          status: Database["public"]["Enums"]["affiliate_status"]
+          total_earnings: number
+          updated_at: string
+          user_id: string
+          whatsapp: string
+        }
+        Insert: {
+          affiliate_code: string
+          available_balance?: number
+          commission_rate_lifetime?: number
+          commission_rate_monthly?: number
+          created_at?: string
+          created_by?: string | null
+          email: string
+          id?: string
+          name: string
+          password_hash: string
+          pending_balance?: number
+          pix_key?: string | null
+          pix_type?: Database["public"]["Enums"]["pix_type"] | null
+          status?: Database["public"]["Enums"]["affiliate_status"]
+          total_earnings?: number
+          updated_at?: string
+          user_id: string
+          whatsapp: string
+        }
+        Update: {
+          affiliate_code?: string
+          available_balance?: number
+          commission_rate_lifetime?: number
+          commission_rate_monthly?: number
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          id?: string
+          name?: string
+          password_hash?: string
+          pending_balance?: number
+          pix_key?: string | null
+          pix_type?: Database["public"]["Enums"]["pix_type"] | null
+          status?: Database["public"]["Enums"]["affiliate_status"]
+          total_earnings?: number
+          updated_at?: string
+          user_id?: string
+          whatsapp?: string
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           barber_id: string
@@ -1738,6 +1981,7 @@ export type Database = {
       check_ip_fraud: { Args: { check_ip: string }; Returns: boolean }
       current_tenant_id: { Args: never; Returns: string }
       current_tenant_ids: { Args: never; Returns: string[] }
+      get_affiliate_id: { Args: { _user_id: string }; Returns: string }
       get_user_plan: { Args: { check_user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -1747,6 +1991,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_affiliate: { Args: { _user_id: string }; Returns: boolean }
       is_feature_allowed: {
         Args: { check_user_id: string; feature_name: string }
         Returns: boolean
@@ -1768,7 +2013,11 @@ export type Database = {
       }
     }
     Enums: {
+      affiliate_status: "pending" | "active" | "blocked"
       app_role: "super_admin" | "admin" | "barber"
+      pix_type: "cpf" | "cnpj" | "email" | "phone" | "random"
+      referral_status: "pending" | "confirmed" | "cancelled" | "paid"
+      withdrawal_status: "pending" | "processing" | "completed" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1896,7 +2145,11 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      affiliate_status: ["pending", "active", "blocked"],
       app_role: ["super_admin", "admin", "barber"],
+      pix_type: ["cpf", "cnpj", "email", "phone", "random"],
+      referral_status: ["pending", "confirmed", "cancelled", "paid"],
+      withdrawal_status: ["pending", "processing", "completed", "rejected"],
     },
   },
 } as const
