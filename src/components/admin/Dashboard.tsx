@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Calendar, 
@@ -29,7 +29,7 @@ interface DashboardProps {
   onNavigate?: (tab: string) => void;
 }
 
-const Dashboard = ({ onNavigate }: DashboardProps) => {
+const Dashboard = React.memo(({ onNavigate }: DashboardProps) => {
   const { appointments, queue, services, barbers } = useApp();
 
   // Calculate metrics
@@ -287,6 +287,8 @@ const Dashboard = ({ onNavigate }: DashboardProps) => {
       </div>
     </div>
   );
-};
+});
+
+Dashboard.displayName = 'Dashboard';
 
 export default Dashboard;

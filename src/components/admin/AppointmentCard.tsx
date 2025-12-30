@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Phone, Clock, User, Scissors, Bell, Check, XCircle, Play, PhoneCall } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,13 +13,13 @@ interface AppointmentCardProps {
   onCallClient: () => void;
 }
 
-const AppointmentCard = ({ 
+const AppointmentCard = React.memo(({ 
   appointment, 
   onConfirm, 
   onCancel, 
   onComplete,
   onCallClient 
-}: AppointmentCardProps) => {
+}: AppointmentCardProps, ) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const { queue } = useApp();
 
@@ -184,7 +184,14 @@ const AppointmentCard = ({
       </AnimatePresence>
     </motion.div>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison to prevent unnecessary re-renders
+  return prevProps.appointment.id === nextProps.appointment.id &&
+         prevProps.appointment.status === nextProps.appointment.status &&
+         prevProps.appointment.time === nextProps.appointment.time;
+});
+
+AppointmentCard.displayName = 'AppointmentCard';
 
 // Exported component for the agenda with all cards
 const AgendaList = () => {
