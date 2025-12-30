@@ -530,32 +530,53 @@ export default function SettingsPanel() {
   };
 
   const fetchTemplates = async () => {
-    const { data, error } = await supabase.from('message_templates').select('*');
-    if (error) {
-      console.error('Error fetching templates:', error);
-      return;
-    }
-    
-    if (data && data.length > 0) {
-      setTemplates(data as MessageTemplate[]);
-    } else {
-      // Create default templates if none exist
-      const templatesToCreate = Object.entries(defaultTemplates).map(([eventType, template]) => ({
-        event_type: eventType,
-        title: eventLabels[eventType] || eventType,
-        template,
-        is_active: true,
-        chatpro_enabled: true,
-      }));
+    try {
+      const { data, error } = await supabase.from('message_templates').select('*');
       
-      const { data: newTemplates, error: insertError } = await supabase
-        .from('message_templates')
-        .insert(templatesToCreate)
-        .select();
-      
-      if (!insertError && newTemplates) {
-        setTemplates(newTemplates as MessageTemplate[]);
+      if (error) {
+        console.error('Error fetching templates:', error);
       }
+      
+      if (data && data.length > 0) {
+        setTemplates(data as MessageTemplate[]);
+      } else {
+        // Create default templates one by one to handle duplicates gracefully
+        const createdTemplates: MessageTemplate[] = [];
+        
+        for (const [eventType, template] of Object.entries(defaultTemplates)) {
+          const { data: existingData } = await supabase
+            .from('message_templates')
+            .select('*')
+            .eq('event_type', eventType)
+            .maybeSingle();
+          
+          if (existingData) {
+            createdTemplates.push(existingData as MessageTemplate);
+          } else {
+            const { data: newData, error: insertErr } = await supabase
+              .from('message_templates')
+              .insert({
+                event_type: eventType,
+                title: eventLabels[eventType] || eventType,
+                template,
+                is_active: true,
+                chatpro_enabled: true,
+              })
+              .select()
+              .maybeSingle();
+            
+            if (!insertErr && newData) {
+              createdTemplates.push(newData as MessageTemplate);
+            }
+          }
+        }
+        
+        if (createdTemplates.length > 0) {
+          setTemplates(createdTemplates);
+        }
+      }
+    } catch (err) {
+      console.error('Error in fetchTemplates:', err);
     }
   };
 
