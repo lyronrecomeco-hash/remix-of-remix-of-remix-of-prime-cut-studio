@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Plus,
   Search,
@@ -378,15 +379,14 @@ export default function CRMTasks() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold">Tarefas</h1>
-        <div className="space-y-3">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-8 w-28" />
+        </div>
+        <div className="space-y-2">
           {[...Array(5)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-4">
-                <div className="h-16 bg-muted rounded" />
-              </CardContent>
-            </Card>
+            <Skeleton key={i} className="h-16" />
           ))}
         </div>
       </div>
@@ -394,12 +394,12 @@ export default function CRMTasks() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-3">
+      {/* Header - Compact */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold">Tarefas</h1>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <h1 className="text-xl font-bold">Tarefas</h1>
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
             <span>{pendingCount} pendente{pendingCount !== 1 && 's'}</span>
             {overdueCount > 0 && (
               <span className="text-red-500 flex items-center gap-1">
@@ -409,51 +409,47 @@ export default function CRMTasks() {
             )}
           </div>
         </div>
-        <Button onClick={() => handleOpenModal()}>
-          <Plus className="w-4 h-4 mr-2" />
+        <Button size="sm" onClick={() => handleOpenModal()}>
+          <Plus className="w-4 h-4 mr-1" />
           Nova Tarefa
         </Button>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar tarefas..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="pending">Pendentes</SelectItem>
-                <SelectItem value="in_progress">Em andamento</SelectItem>
-                <SelectItem value="completed">Concluídas</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="Tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="call">Ligação</SelectItem>
-                <SelectItem value="meeting">Reunião</SelectItem>
-                <SelectItem value="followup">Follow-up</SelectItem>
-                <SelectItem value="internal">Interna</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Filters - Compact */}
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar tarefas..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 h-9"
+          />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-full sm:w-36 h-9">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="pending">Pendentes</SelectItem>
+            <SelectItem value="in_progress">Em andamento</SelectItem>
+            <SelectItem value="completed">Concluídas</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <SelectTrigger className="w-full sm:w-36 h-9">
+            <SelectValue placeholder="Tipo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="call">Ligação</SelectItem>
+            <SelectItem value="meeting">Reunião</SelectItem>
+            <SelectItem value="followup">Follow-up</SelectItem>
+            <SelectItem value="internal">Interna</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* Tasks List */}
       <div className="space-y-3">

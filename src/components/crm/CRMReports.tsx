@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   BarChart3,
   TrendingUp,
@@ -194,15 +195,11 @@ export default function CRMReports() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold">Relatórios</h1>
-        <div className="grid gap-6 lg:grid-cols-2">
+      <div className="space-y-3">
+        <Skeleton className="h-6 w-32" />
+        <div className="grid gap-4 lg:grid-cols-2">
           {[...Array(4)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-6">
-                <div className="h-64 bg-muted rounded" />
-              </CardContent>
-            </Card>
+            <Skeleton key={i} className="h-64" />
           ))}
         </div>
       </div>
@@ -210,28 +207,26 @@ export default function CRMReports() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-3">
+      {/* Header - Compact */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold">Relatórios</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl font-bold">Relatórios</h1>
+          <p className="text-sm text-muted-foreground">
             Análise detalhada do seu funil de vendas
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="30">Últimos 30 dias</SelectItem>
-              <SelectItem value="90">Últimos 90 dias</SelectItem>
-              <SelectItem value="180">Últimos 6 meses</SelectItem>
-              <SelectItem value="365">Último ano</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <Select value={period} onValueChange={setPeriod}>
+          <SelectTrigger className="w-40 h-8 text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="30">Últimos 30 dias</SelectItem>
+            <SelectItem value="90">Últimos 90 dias</SelectItem>
+            <SelectItem value="180">Últimos 6 meses</SelectItem>
+            <SelectItem value="365">Último ano</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Quick Stats */}

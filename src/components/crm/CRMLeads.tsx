@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Plus,
   Search,
@@ -421,17 +422,14 @@ export default function CRMLeads() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Leads</h1>
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-8 w-28" />
         </div>
-        <div className="grid gap-4">
+        <div className="space-y-2">
           {[...Array(5)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-4">
-                <div className="h-16 bg-muted rounded" />
-              </CardContent>
-            </Card>
+            <Skeleton key={i} className="h-16" />
           ))}
         </div>
       </div>
@@ -439,50 +437,45 @@ export default function CRMLeads() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-3">
+      {/* Header - Compact */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold">Leads</h1>
-          <p className="text-muted-foreground">
-            {filteredLeads.length} lead{filteredLeads.length !== 1 ? 's' : ''} encontrado
-            {filteredLeads.length !== 1 ? 's' : ''}
+          <h1 className="text-xl font-bold">Leads</h1>
+          <p className="text-sm text-muted-foreground">
+            {filteredLeads.length} lead{filteredLeads.length !== 1 ? 's' : ''} encontrado{filteredLeads.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <Button onClick={() => handleOpenModal()}>
-          <Plus className="w-4 h-4 mr-2" />
+        <Button size="sm" onClick={() => handleOpenModal()}>
+          <Plus className="w-4 h-4 mr-1" />
           Novo Lead
         </Button>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nome, e-mail, telefone..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="new">Novos</SelectItem>
-                <SelectItem value="active">Ativos</SelectItem>
-                <SelectItem value="won">Ganhos</SelectItem>
-                <SelectItem value="lost">Perdidos</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Filters - Compact */}
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nome, e-mail, telefone..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 h-9"
+          />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-full sm:w-36 h-9">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="new">Novos</SelectItem>
+            <SelectItem value="active">Ativos</SelectItem>
+            <SelectItem value="won">Ganhos</SelectItem>
+            <SelectItem value="lost">Perdidos</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* Leads List */}
       <div className="space-y-3">
