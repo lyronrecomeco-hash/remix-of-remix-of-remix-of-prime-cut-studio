@@ -145,15 +145,25 @@ export default function CRMCollaborators() {
 
       // Try to send WhatsApp message via automation
       try {
-        await supabase.functions.invoke('send-collaborator-token', {
-          body: {
-            whatsapp: formData.whatsapp,
-            name: formData.name,
-            token,
-            companyName: crmTenant.name,
-          },
-        });
-        toast.success('Colaborador adicionado e token enviado via WhatsApp!');
+        const { data: sendData, error: sendError } = await supabase.functions.invoke(
+          'send-collaborator-token',
+          {
+            body: {
+              whatsapp: formData.whatsapp,
+              name: formData.name,
+              token,
+              companyName: crmTenant.name,
+            },
+          }
+        );
+
+        if (sendError) throw sendError;
+
+        if ((sendData as any)?.success) {
+          toast.success('Colaborador adicionado e token enviado via WhatsApp!');
+        } else {
+          toast.success('Colaborador adicionado! Token não pôde ser enviado automaticamente.');
+        }
       } catch (whatsappError) {
         console.error('WhatsApp send error:', whatsappError);
         toast.success('Colaborador adicionado! Token não pôde ser enviado automaticamente.');
@@ -168,15 +178,25 @@ export default function CRMCollaborators() {
 
   const handleResendToken = async (collaborator: Collaborator) => {
     try {
-      await supabase.functions.invoke('send-collaborator-token', {
-        body: {
-          whatsapp: collaborator.whatsapp,
-          name: collaborator.name,
-          token: collaborator.token,
-          companyName: crmTenant?.name,
-        },
-      });
-      toast.success('Token reenviado com sucesso!');
+      const { data: sendData, error: sendError } = await supabase.functions.invoke(
+        'send-collaborator-token',
+        {
+          body: {
+            whatsapp: collaborator.whatsapp,
+            name: collaborator.name,
+            token: collaborator.token,
+            companyName: crmTenant?.name,
+          },
+        }
+      );
+
+      if (sendError) throw sendError;
+
+      if ((sendData as any)?.success) {
+        toast.success('Token reenviado com sucesso!');
+      } else {
+        toast.error((sendData as any)?.message || 'Não foi possível reenviar o token');
+      }
     } catch (error: any) {
       console.error('Error resending token:', error);
       toast.error('Erro ao reenviar token');

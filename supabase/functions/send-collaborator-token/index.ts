@@ -42,20 +42,20 @@ serve(async (req) => {
       );
     }
 
-    // Get template from database
+    // Get template from database (optional)
     const { data: templateData } = await supabaseAdmin
       .from("whatsapp_automation_templates")
       .select("*")
       .eq("template_type", "collaborator_token")
       .eq("is_active", true)
-      .single();
+      .maybeSingle();
 
-    // Get WhatsApp Automation settings
+    // Get WhatsApp Automation settings (required)
     const { data: waSettings } = await supabaseAdmin
       .from("owner_settings")
       .select("*")
       .eq("setting_key", "whatsapp_automation")
-      .single();
+      .maybeSingle();
 
     // Format phone number
     let formattedPhone = whatsapp.replace(/\D/g, "");
@@ -100,74 +100,127 @@ ${token}
 Em caso de dúvidas, entre em contato com a empresa.`;
     }
 
-    // Send ONLY via WhatsApp Automation (NO ChatPro fallback)
-    if (waSettings?.setting_value) {
-      const waConfig = waSettings.setting_value as { 
-        mode: string; 
-        endpoint?: string; 
-        token?: string;
-        is_connected?: boolean;
-      };
-
-      if (waConfig.is_connected && waConfig.endpoint) {
-        try {
-          console.log("Sending via WhatsApp Automation:", waConfig.endpoint);
-          
-          const waResponse = await fetch(`${waConfig.endpoint}/send`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${waConfig.token || ''}`,
-            },
-            body: JSON.stringify({
-              number: formattedPhone,
-              message: message,
-            }),
-          });
-
-          if (waResponse.ok) {
-            console.log("Token sent successfully via WhatsApp Automation!");
-            return new Response(
-              JSON.stringify({ success: true, message: "Token enviado via WhatsApp Automação" }),
-              { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-            );
-          } else {
-            const errorText = await waResponse.text();
-            console.error("WhatsApp Automation failed:", errorText);
-            return new Response(
-              JSON.stringify({ 
-                success: false, 
-                message: "Falha ao enviar via WhatsApp Automação",
-                error: errorText,
-                token: token // Return token so it can be copied manually
-              }),
-              { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-            );
-          }
-        } catch (waError) {
-          console.error("WhatsApp Automation error:", waError);
-          return new Response(
-            JSON.stringify({ 
-              success: false, 
-              message: "Erro de conexão com WhatsApp Automação",
-              token: token
-            }),
-            { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-          );
+    // Send ONLY via WhatsApp Automation
+    const waConfig = (waSettings?.setting_value || null) as
+      | {
+          mode?: string;
+          endpoint?: string;
+          token?: string;
+          is_connected?: boolean;
         }
-      }
+      | null;
+
+    if (!waConfig?.is_connected || !waConfig.endpoint || !waConfig.token) {
+      console.log("WhatsApp Automation not configured or not connected");
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message:
+            "WhatsApp Automação não configurado/conectado. Verifique no Painel Owner > WhatsApp Automação.",
+          token,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } },
+      );
     }
 
-    // No WhatsApp Automation configured
-    console.log("WhatsApp Automation not configured");
-    return new Response(
-      JSON.stringify({ 
-        success: false, 
-        message: "WhatsApp Automação não configurado. Configure em Painel Owner > WhatsApp Automação",
-        token: token // Return token so it can be shown/copied
-      }),
-      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-    );
+    // Pick a connected instance
+    const { data: instance } = await supabaseAdmin
+      .from("whatsapp_instances")
+      .select("id")
+      .eq("status", "connected")
+      .order("last_seen", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!instance?.id) {
+      console.log("No connected WhatsApp instance available");
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Nenhuma instância WhatsApp conectada para enviar o token.",
+          token,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } },
+      );
+    }
+
+    const sendUrl = `${waConfig.endpoint}/api/instance/${instance.id}/send`;
+
+    try {
+      console.log("Sending collaborator token via WhatsApp Automation:", sendUrl);
+
+      const waResponse = await fetch(sendUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${waConfig.token}`,
+        },
+        body: JSON.stringify({
+          phone: formattedPhone,
+          message,
+        }),
+      });
+
+      const responseText = await waResponse.text();
+
+      if (waResponse.ok) {
+        await supabaseAdmin.from("whatsapp_message_logs").insert({
+          instance_id: instance.id,
+          direction: "outgoing",
+          phone_to: formattedPhone,
+          message,
+          status: "sent",
+        });
+
+        console.log("Token sent successfully via WhatsApp Automation!");
+        return new Response(
+          JSON.stringify({ success: true, message: "Token enviado via WhatsApp Automação" }),
+          { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } },
+        );
+      }
+
+      await supabaseAdmin.from("whatsapp_message_logs").insert({
+        instance_id: instance.id,
+        direction: "outgoing",
+        phone_to: formattedPhone,
+        message,
+        status: "failed",
+        error_message: responseText || "Falha ao enviar",
+      });
+
+      console.error("WhatsApp Automation failed:", responseText);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Falha ao enviar via WhatsApp Automação",
+          error: responseText,
+          token,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } },
+      );
+    } catch (waError) {
+      const errMsg = waError instanceof Error ? waError.message : "Erro desconhecido";
+
+      await supabaseAdmin.from("whatsapp_message_logs").insert({
+        instance_id: instance.id,
+        direction: "outgoing",
+        phone_to: formattedPhone,
+        message,
+        status: "failed",
+        error_message: errMsg,
+      });
+
+      console.error("WhatsApp Automation error:", waError);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Erro de conexão com WhatsApp Automação",
+          error: errMsg,
+          token,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } },
+      );
+    }
 
   } catch (error: unknown) {
     console.error("Error sending collaborator token:", error);

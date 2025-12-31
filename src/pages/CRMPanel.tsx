@@ -147,7 +147,7 @@ export default function CRMPanel() {
         {/* Desktop Sidebar */}
         <motion.aside
           initial={false}
-          animate={{ width: isSidebarOpen ? 256 : 72 }}
+          animate={{ width: isSidebarOpen ? 288 : 84 }}
           className={cn(
             'hidden lg:flex flex-col border-r border-border bg-card/50 backdrop-blur-sm transition-all duration-300',
             'fixed left-0 top-0 h-screen z-40'
@@ -234,7 +234,7 @@ export default function CRMPanel() {
 
         {/* Desktop Top Header with Profile Menu */}
         <div className="hidden lg:flex fixed top-0 right-0 h-16 bg-card/95 backdrop-blur-sm border-b border-border z-30 items-center justify-end px-6 gap-3"
-             style={{ left: isSidebarOpen ? '256px' : '72px', transition: 'left 0.3s' }}>
+             style={{ left: isSidebarOpen ? '288px' : '84px', transition: 'left 0.3s' }}>
           <Button variant="outline" size="sm" onClick={() => setIsSearchOpen(true)} className="gap-2">
             <Search className="w-4 h-4" />
             <span className="text-muted-foreground">Buscar...</span>
@@ -347,10 +347,10 @@ export default function CRMPanel() {
           className={cn(
             'flex-1 min-h-screen transition-all duration-300',
             'pt-16',
-            isSidebarOpen ? 'lg:ml-64' : 'lg:ml-[72px]'
+            isSidebarOpen ? 'lg:ml-72' : 'lg:ml-[84px]'
           )}
         >
-          <div className="p-3 md:p-4 lg:p-6 lg:pt-[72px]">
+          <div className="p-3 md:p-4 lg:p-5">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}
