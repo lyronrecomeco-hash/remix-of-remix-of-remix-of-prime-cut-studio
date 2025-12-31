@@ -148,6 +148,51 @@ const WhatsAppAutomation = () => {
     fetchData();
   }, []);
 
+  // Polling for local backend logs
+  const lastLogTimestamp = useRef<string | null>(null);
+  
+  useEffect(() => {
+    if (!isLocalConnected || backendMode !== 'local') return;
+
+    const fetchLogs = async () => {
+      try {
+        const fullUrl = `${localEndpoint}:${localPort}`;
+        const url = lastLogTimestamp.current 
+          ? `${fullUrl}/logs?since=${encodeURIComponent(lastLogTimestamp.current)}`
+          : `${fullUrl}/logs`;
+          
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${localToken}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.logs && data.logs.length > 0) {
+            data.logs.forEach((log: { timestamp: string; type: string; message: string }) => {
+              addConsoleLog(log.type as ConsoleLog['type'], log.message);
+            });
+            lastLogTimestamp.current = data.logs[data.logs.length - 1].timestamp;
+          }
+        }
+      } catch (error) {
+        // Silent fail - backend might be temporarily unavailable
+      }
+    };
+
+    // Initial fetch
+    fetchLogs();
+    
+    // Poll every 2 seconds
+    const interval = setInterval(fetchLogs, 2000);
+    
+    return () => {
+      clearInterval(interval);
+      lastLogTimestamp.current = null;
+    };
+  }, [isLocalConnected, backendMode, localEndpoint, localPort, localToken, addConsoleLog]);
+
   const fetchData = async () => {
     setIsLoading(true);
     try {
@@ -705,6 +750,24 @@ app.post('/api/instance/:id/send', async (req, res) => {
   }
 });
 
+// Store logs in memory for polling
+const serverLogs = [];
+const addLog = (type, message) => {
+  const log = { timestamp: new Date().toISOString(), type, message };
+  serverLogs.push(log);
+  if (serverLogs.length > 100) serverLogs.shift();
+  console.log(\`[\${type.toUpperCase()}] \${message}\`);
+};
+
+// Get logs endpoint
+app.get('/logs', (req, res) => {
+  const since = req.query.since ? new Date(req.query.since) : null;
+  const filtered = since 
+    ? serverLogs.filter(l => new Date(l.timestamp) > since)
+    : serverLogs.slice(-50);
+  res.json({ logs: filtered });
+});
+
 // Disconnect instance
 app.post('/api/instance/:id/disconnect', async (req, res) => {
   const { id } = req.params;
@@ -713,6 +776,7 @@ app.post('/api/instance/:id/disconnect', async (req, res) => {
   if (conn?.sock) {
     await conn.sock.logout();
     connections.delete(id);
+    addLog('info', \`Instância \${id} desconectada\`);
   }
   
   await supabase
@@ -732,6 +796,9 @@ app.listen(PORT, () => {
   console.log('='.repeat(50));
   console.log('  Status: ONLINE');
   console.log('='.repeat(50));
+  addLog('success', 'Backend iniciado com sucesso');
+  addLog('info', \`Servidor rodando na porta \${PORT}\`);
+  addLog('info', 'Aguardando conexões...');
 });`;
   };
 
