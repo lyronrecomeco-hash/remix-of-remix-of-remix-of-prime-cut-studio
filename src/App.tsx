@@ -34,6 +34,8 @@ const TermosDeUso = lazy(() => import("./pages/TermosDeUso"));
 const PoliticaDePrivacidade = lazy(() => import("./pages/PoliticaDePrivacidade"));
 const Docs = lazy(() => import("./pages/Docs"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const AffiliateLogin = lazy(() => import("./pages/AffiliateLogin"));
+const AffiliatePanel = lazy(() => import("./pages/AffiliatePanel"));
 
 // QueryClient com retry logic e cache otimizado
 const queryClient = new QueryClient({
@@ -120,6 +122,7 @@ const AppContent = () => {
 
   // Check if accessing via docs subdomain
   const isDocsSubdomain = window.location.hostname === 'docs.genesishub.cloud';
+  const isAffiliateSubdomain = window.location.hostname === 'parceiros.genesishub.cloud';
 
   // If on docs subdomain, show only the Docs page
   if (isDocsSubdomain) {
@@ -131,6 +134,26 @@ const AppContent = () => {
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="*" element={<Docs />} />
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </>
+    );
+  }
+
+  // If on affiliate subdomain, show only affiliate pages
+  if (isAffiliateSubdomain) {
+    return (
+      <>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<AffiliateLogin />} />
+              <Route path="/login" element={<AffiliateLogin />} />
+              <Route path="/painel" element={<AffiliatePanel />} />
+              <Route path="*" element={<AffiliateLogin />} />
             </Routes>
           </Suspense>
         </BrowserRouter>
@@ -165,6 +188,8 @@ const AppContent = () => {
             <Route path="/termos" element={<TermosDeUso />} />
             <Route path="/privacidade" element={<PoliticaDePrivacidade />} />
             <Route path="/docs" element={<Docs />} />
+            <Route path="/afiliado/login" element={<AffiliateLogin />} />
+            <Route path="/afiliado" element={<AffiliatePanel />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
