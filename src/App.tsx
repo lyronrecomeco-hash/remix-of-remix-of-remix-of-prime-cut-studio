@@ -9,6 +9,7 @@ import { NotificationProvider } from "@/contexts/NotificationContext";
 import { FeedbackProvider } from "@/contexts/FeedbackContext";
 import { GalleryProvider } from "@/contexts/GalleryContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
+import { CRMProvider } from "@/contexts/CRMContext";
 import { useSecurityProtection } from "@/hooks/useSecurityProtection";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -192,8 +193,8 @@ const AppContent = () => {
             <Route path="/docs" element={<Docs />} />
             <Route path="/afiliado/login" element={<AffiliateLogin />} />
             <Route path="/afiliado" element={<AffiliatePanel />} />
-            <Route path="/crm/login" element={<CRMLogin />} />
-            <Route path="/crmpainel" element={<CRMPanel />} />
+            <Route path="/crm/login" element={<CRMProvider><CRMLogin /></CRMProvider>} />
+            <Route path="/crmpainel" element={<CRMProvider><CRMPanel /></CRMProvider>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

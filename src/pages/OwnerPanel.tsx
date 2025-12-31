@@ -17,7 +17,8 @@ import {
   ChevronRight,
   Sparkles,
   Activity,
-  Bot
+  Bot,
+  Briefcase
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -35,6 +36,7 @@ import AffiliateChatProConfig from '@/components/owner/AffiliateChatProConfig';
 import LeadsManager from '@/components/owner/LeadsManager';
 import AffiliateManager from '@/components/owner/AffiliateManager';
 import WhatsAppAutomation from '@/components/owner/WhatsAppAutomation';
+import CRMUsersManager from '@/components/owner/CRMUsersManager';
 
 const OWNER_EMAIL = 'lyronrp@gmail.com';
 
@@ -65,6 +67,7 @@ const navSections: NavSection[] = [
       { id: 'subscriptions', label: 'Assinaturas', icon: CreditCard },
       { id: 'users', label: 'Usuários', icon: Users },
       { id: 'affiliates', label: 'Afiliados', icon: Users, badge: 'Novo', badgeVariant: 'default' },
+      { id: 'crm', label: 'CRM', icon: Briefcase, badge: 'Novo', badgeVariant: 'default' },
       { id: 'affiliate-chatpro', label: 'ChatPro Afiliados', icon: MessageCircle },
       { id: 'database', label: 'Banco de Dados', icon: HardDrive },
     ]
@@ -144,6 +147,8 @@ const OwnerPanel = () => {
         return <UsersOverview />;
       case 'affiliates':
         return <AffiliateManager />;
+      case 'crm':
+        return <CRMUsersManager />;
       case 'affiliate-chatpro':
         return <AffiliateChatProConfig />;
       case 'database':
