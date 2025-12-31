@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   DollarSign,
   TrendingUp,
@@ -210,15 +211,11 @@ export default function CRMFinancial() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold">Financeiro</h1>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="space-y-3">
+        <Skeleton className="h-6 w-32" />
+        <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-5">
           {[...Array(5)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-6">
-                <div className="h-20 bg-muted rounded" />
-              </CardContent>
-            </Card>
+            <Skeleton key={i} className="h-20" />
           ))}
         </div>
       </div>
@@ -226,17 +223,17 @@ export default function CRMFinancial() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-3">
+      {/* Header - Compact */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold">Financeiro</h1>
-          <p className="text-muted-foreground">
-            Acompanhe a performance financeira do seu CRM
+          <h1 className="text-xl font-bold">Financeiro</h1>
+          <p className="text-sm text-muted-foreground">
+            Performance financeira do seu CRM
           </p>
         </div>
         <Select value={period} onValueChange={setPeriod}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-40 h-8 text-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

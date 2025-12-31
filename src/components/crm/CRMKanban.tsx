@@ -12,12 +12,21 @@ import {
   TrendingUp,
   History,
   RefreshCw,
+  Search,
+  Filter,
+  SlidersHorizontal,
+  ChevronDown,
+  Users,
+  Phone,
+  Mail,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Select,
   SelectContent,
@@ -39,6 +48,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useCRM } from '@/contexts/CRMContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -112,6 +122,8 @@ export default function CRMKanban() {
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [viewLead, setViewLead] = useState<Lead | null>(null);
   const [editLead, setEditLead] = useState<Lead | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState<'board' | 'list'>('board');
 
   // Real-time subscription
   useEffect(() => {
@@ -201,7 +213,7 @@ export default function CRMKanban() {
       const { data: leadsData } = await supabase
         .from('crm_leads')
         .select(`
-          id, name, email, phone, value, stage_id, funnel_id, responsible_id, stage_entered_at, created_at,
+          id, name, email, phone, company, value, stage_id, funnel_id, responsible_id, stage_entered_at, created_at,
           responsible:crm_users!crm_leads_responsible_id_fkey(name)
         `)
         .eq('crm_tenant_id', crmTenant.id)
@@ -236,7 +248,7 @@ export default function CRMKanban() {
     setIsRefreshing(true);
     await fetchStagesAndLeads();
     setIsRefreshing(false);
-    toast({ title: 'Kanban atualizado' });
+    toast({ title: 'Atualizado' });
   };
 
   const fetchLeadHistory = async (lead: Lead) => {
@@ -345,7 +357,15 @@ export default function CRMKanban() {
   };
 
   const getLeadsForStage = (stageId: string) => {
-    return leads.filter((l) => l.stage_id === stageId);
+    return leads.filter((l) => {
+      const matchesStage = l.stage_id === stageId;
+      const matchesSearch = searchTerm
+        ? l.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          l.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          l.phone?.includes(searchTerm)
+        : true;
+      return matchesStage && matchesSearch;
+    });
   };
 
   const getTotalValue = (stageId: string) => {
@@ -372,8 +392,8 @@ export default function CRMKanban() {
   const getTimeInStage = (enteredAt: string) => {
     const diffDays = getDaysInStage(enteredAt);
     if (diffDays === 0) return 'Hoje';
-    if (diffDays === 1) return '1 dia';
-    return `${diffDays} dias`;
+    if (diffDays === 1) return '1d';
+    return `${diffDays}d`;
   };
 
   const getSLAStatus = (enteredAt: string) => {
@@ -383,33 +403,33 @@ export default function CRMKanban() {
     return 'ok';
   };
 
-  const getSLAColor = (status: string) => {
-    switch (status) {
-      case 'critical': return 'text-red-500 bg-red-500/10';
-      case 'warning': return 'text-amber-500 bg-amber-500/10';
-      default: return 'text-muted-foreground';
-    }
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const getStageProgress = (stageIndex: number) => {
-    return ((stageIndex + 1) / stages.length) * 100;
+  const getRandomColor = (str: string) => {
+    const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-amber-500', 'bg-pink-500', 'bg-cyan-500'];
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
   };
 
   const totalKanbanValue = leads.reduce((sum, l) => sum + (Number(l.value) || 0), 0);
+  const currentFunnel = funnels.find(f => f.id === selectedFunnel);
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <div>
-            <Skeleton className="h-8 w-48 mb-2" />
-            <Skeleton className="h-4 w-64" />
-          </div>
-          <Skeleton className="h-10 w-60" />
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-8 w-60" />
         </div>
-        <div className="grid grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-[400px]" />
+        <Skeleton className="h-10 w-full" />
+        <div className="flex gap-4 overflow-hidden">
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} className="w-72 h-[500px] shrink-0" />
           ))}
         </div>
       </div>
@@ -417,208 +437,236 @@ export default function CRMKanban() {
   }
 
   return (
-    <div className="space-y-3">
-      {/* Header - Compact */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div>
-          <h1 className="text-xl font-bold">Pipeline de Vendas</h1>
-          <p className="text-sm text-muted-foreground">
-            {leads.length} leads • {formatCurrency(totalKanbanValue)}
-          </p>
+    <div className="space-y-3 h-full flex flex-col">
+      {/* Header Row - Compact Professional */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2">
+        <div className="flex items-center gap-3">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" className="h-9 px-3 gap-2 font-semibold text-lg">
+                {currentFunnel?.name || 'Pipeline'}
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-56 p-2" align="start">
+              {funnels.map((funnel) => (
+                <Button
+                  key={funnel.id}
+                  variant={funnel.id === selectedFunnel ? 'secondary' : 'ghost'}
+                  className="w-full justify-start gap-2 h-9"
+                  onClick={() => setSelectedFunnel(funnel.id)}
+                >
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: funnel.color }} />
+                  {funnel.name}
+                </Button>
+              ))}
+            </PopoverContent>
+          </Popover>
+          <Badge variant="secondary" className="font-normal">
+            {leads.length} leads
+          </Badge>
+          <Badge variant="outline" className="font-normal text-primary">
+            {formatCurrency(totalKanbanValue)}
+          </Badge>
         </div>
+
         <div className="flex items-center gap-2">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-8 h-8 w-48"
+            />
+          </div>
+
           <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing} className="h-8 w-8 p-0">
             <RefreshCw className={cn("w-4 h-4", isRefreshing && "animate-spin")} />
           </Button>
-          <Select value={selectedFunnel} onValueChange={setSelectedFunnel}>
-            <SelectTrigger className="w-48 h-8 text-sm">
-              <SelectValue placeholder="Selecione" />
-            </SelectTrigger>
-            <SelectContent>
-              {funnels.map((funnel) => (
-                <SelectItem key={funnel.id} value={funnel.id}>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: funnel.color }} />
-                    {funnel.name}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
-      {/* Stats Summary - More compact */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        {stages.slice(0, 4).map((stage) => {
-          const stageLeads = getLeadsForStage(stage.id);
-          const stageValue = getTotalValue(stage.id);
-          return (
-            <Card key={stage.id} className="border-l-2" style={{ borderLeftColor: stage.color }}>
-              <CardContent className="p-3">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-muted-foreground truncate">{stage.name}</span>
-                  <Badge variant="secondary" className="h-5 text-xs">{stageLeads.length}</Badge>
-                </div>
-                <p className="text-sm font-semibold">{formatCurrency(stageValue)}</p>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* Kanban Board */}
+      {/* Kanban Board - Full Width Professional Layout */}
       {stages.length > 0 ? (
-        <div className="flex gap-3 overflow-x-auto pb-3 min-h-[450px]">
-          {stages.map((stage, stageIndex) => {
+        <div className="flex gap-3 overflow-x-auto pb-2 flex-1 min-h-0">
+          {stages.map((stage) => {
             const stageLeads = getLeadsForStage(stage.id);
             const totalValue = getTotalValue(stage.id);
-            const criticalLeads = stageLeads.filter(l => getSLAStatus(l.stage_entered_at) === 'critical').length;
 
             return (
               <div
                 key={stage.id}
-                className="w-80 shrink-0"
+                className="w-72 shrink-0 flex flex-col"
                 onDragOver={(e) => handleDragOver(e, stage.id)}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, stage.id)}
               >
-                <Card
-                  className={cn(
-                    'h-full transition-all duration-200',
-                    dragOverStage === stage.id && 'ring-2 ring-primary shadow-lg scale-[1.02]'
-                  )}
-                >
-                  <CardHeader className="pb-3 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: stage.color }}
-                        />
-                        <CardTitle className="text-base">{stage.name}</CardTitle>
-                        <Badge variant="secondary">{stageLeads.length}</Badge>
-                        {criticalLeads > 0 && (
-                          <Badge variant="destructive" className="text-[10px] px-1.5">
-                            {criticalLeads} atrasados
-                          </Badge>
-                        )}
-                      </div>
-                      {stage.is_final && (
-                        <Badge variant={stage.is_won ? "default" : "destructive"} className="text-[10px]">
-                          {stage.is_won ? 'Ganho' : 'Perdido'}
-                        </Badge>
-                      )}
+                {/* Column Header - Clean */}
+                <div className={cn(
+                  "p-3 rounded-t-lg border border-b-0 bg-card transition-all",
+                  dragOverStage === stage.id && "ring-2 ring-primary bg-primary/5"
+                )}>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">{stage.name}</span>
+                      <Badge variant="secondary" className="h-5 px-1.5 text-xs">
+                        {stageLeads.length}
+                      </Badge>
                     </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Valor total</span>
-                        <span className="font-semibold text-primary">{formatCurrency(totalValue)}</span>
-                      </div>
-                      <Progress value={getStageProgress(stageIndex)} className="h-1" />
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3 max-h-[calc(100vh-400px)] overflow-y-auto">
+                    {stage.is_final && (
+                      <Badge variant={stage.is_won ? "default" : "destructive"} className="text-[10px] h-5">
+                        {stage.is_won ? 'Ganho' : 'Perdido'}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm font-semibold text-primary">{formatCurrency(totalValue)}</p>
+                </div>
+
+                {/* Cards Container */}
+                <ScrollArea className="flex-1 border border-t-0 rounded-b-lg bg-muted/30">
+                  <div className="p-2 space-y-2 min-h-[400px]">
                     <AnimatePresence>
                       {stageLeads.map((lead) => {
-                        const slaStatus = getSLAStatus(lead.stage_entered_at);
+                        const slaStatus = getSLAStatus(lead.stage_entered_at || lead.created_at);
                         return (
                           <motion.div
                             key={lead.id}
                             layout
-                            initial={{ opacity: 0, scale: 0.9 }}
+                            initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
                             draggable
                             onDragStart={(e) => handleDragStart(e as unknown as React.DragEvent, lead)}
                             className={cn(
                               'p-3 rounded-lg border bg-card cursor-grab active:cursor-grabbing',
-                              'hover:shadow-md transition-all',
+                              'hover:shadow-md transition-all group',
                               draggedLead?.id === lead.id && 'opacity-50 scale-95',
-                              slaStatus === 'critical' && 'border-red-500/50',
-                              slaStatus === 'warning' && 'border-amber-500/50'
+                              slaStatus === 'critical' && 'border-l-2 border-l-red-500',
+                              slaStatus === 'warning' && 'border-l-2 border-l-amber-500'
                             )}
                           >
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate">{lead.name}</p>
-                                {lead.email && (
-                                  <p className="text-xs text-muted-foreground truncate">
-                                    {lead.email}
-                                  </p>
-                                )}
+                            {/* Lead Card Header */}
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <Avatar className="w-8 h-8 shrink-0">
+                                  <AvatarFallback className={cn("text-xs text-white", getRandomColor(lead.name))}>
+                                    {getInitials(lead.name)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="min-w-0">
+                                  <p className="font-medium text-sm truncate">{lead.name}</p>
+                                  {lead.company && (
+                                    <p className="text-xs text-muted-foreground truncate">{lead.company}</p>
+                                  )}
+                                </div>
                               </div>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 shrink-0"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <MoreHorizontal className="w-3 h-3" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => setViewLead(lead)}>
-                                    <Eye className="w-4 h-4 mr-2" />
-                                    Ver detalhes
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => setEditLead(lead)}>
-                                    <Edit className="w-4 h-4 mr-2" />
-                                    Editar
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem onClick={() => fetchLeadHistory(lead)}>
-                                    <History className="w-4 h-4 mr-2" />
-                                    Ver histórico
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
+
+                              {/* Actions - Show on hover */}
+                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={(e) => { e.stopPropagation(); setViewLead(lead); }}
+                                >
+                                  <Eye className="w-3 h-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={(e) => { e.stopPropagation(); setEditLead(lead); }}
+                                >
+                                  <Edit className="w-3 h-3" />
+                                </Button>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-6 w-6"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <MoreHorizontal className="w-3 h-3" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => setViewLead(lead)}>
+                                      <Eye className="w-4 h-4 mr-2" />
+                                      Ver detalhes
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setEditLead(lead)}>
+                                      <Edit className="w-4 h-4 mr-2" />
+                                      Editar
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => fetchLeadHistory(lead)}>
+                                      <History className="w-4 h-4 mr-2" />
+                                      Histórico
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
                             </div>
 
-                            <div className="flex items-center justify-between mt-3 text-xs">
-                              <div className="flex items-center gap-1 text-primary font-medium">
+                            {/* Contact Info */}
+                            {(lead.email || lead.phone) && (
+                              <div className="flex items-center gap-3 text-xs text-muted-foreground mb-2">
+                                {lead.phone && (
+                                  <span className="flex items-center gap-1">
+                                    <Phone className="w-3 h-3" />
+                                    {lead.phone}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Footer: Value + Time */}
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-semibold text-primary flex items-center gap-1">
                                 <DollarSign className="w-3 h-3" />
                                 {formatCurrency(Number(lead.value) || 0)}
-                              </div>
-                              <div className={cn(
-                                'flex items-center gap-1 px-1.5 py-0.5 rounded',
-                                getSLAColor(slaStatus)
+                              </span>
+                              <span className={cn(
+                                "flex items-center gap-1 px-1.5 py-0.5 rounded",
+                                slaStatus === 'critical' && 'text-red-500 bg-red-500/10',
+                                slaStatus === 'warning' && 'text-amber-500 bg-amber-500/10',
+                                slaStatus === 'ok' && 'text-muted-foreground'
                               )}>
                                 {slaStatus === 'critical' && <AlertTriangle className="w-3 h-3" />}
                                 <Clock className="w-3 h-3" />
-                                {getTimeInStage(lead.stage_entered_at)}
-                              </div>
+                                {getTimeInStage(lead.stage_entered_at || lead.created_at)}
+                              </span>
                             </div>
 
-                            {lead.responsible && (
-                              <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                                <User className="w-3 h-3" />
-                                {lead.responsible.name}
-                              </div>
-                            )}
-
+                            {/* Tags */}
                             {lead.tags && lead.tags.length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-2">
                                 {lead.tags.slice(0, 2).map((tag) => (
                                   <Badge
                                     key={tag.id}
                                     variant="outline"
-                                    className="text-[10px] px-1.5 py-0"
-                                    style={{
-                                      borderColor: tag.color,
-                                      color: tag.color,
-                                    }}
+                                    className="text-[10px] px-1.5 py-0 h-4"
+                                    style={{ borderColor: tag.color, color: tag.color }}
                                   >
                                     {tag.name}
                                   </Badge>
                                 ))}
                                 {lead.tags.length > 2 && (
-                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
                                     +{lead.tags.length - 2}
                                   </Badge>
                                 )}
+                              </div>
+                            )}
+
+                            {/* Responsible */}
+                            {lead.responsible && (
+                              <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
+                                <User className="w-3 h-3" />
+                                {lead.responsible.name}
                               </div>
                             )}
                           </motion.div>
@@ -627,13 +675,13 @@ export default function CRMKanban() {
                     </AnimatePresence>
 
                     {stageLeads.length === 0 && (
-                      <div className="py-8 text-center text-sm text-muted-foreground border-2 border-dashed rounded-lg">
-                        <TrendingUp className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <div className="py-8 text-center text-xs text-muted-foreground border-2 border-dashed rounded-lg">
+                        <TrendingUp className="w-6 h-6 mx-auto mb-1 opacity-50" />
                         Arraste leads para cá
                       </div>
                     )}
-                  </CardContent>
-                </Card>
+                  </div>
+                </ScrollArea>
               </div>
             );
           })}
