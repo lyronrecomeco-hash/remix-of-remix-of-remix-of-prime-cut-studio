@@ -55,7 +55,8 @@ import {
   ExternalLink,
   Copy,
   CheckCircle2,
-  XCircle
+  XCircle,
+  UserPlus
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -81,20 +82,6 @@ interface CRMUser {
   created_at: string;
 }
 
-const segments = [
-  'Tecnologia',
-  'Saúde',
-  'Educação',
-  'Varejo',
-  'Serviços',
-  'Indústria',
-  'Imobiliário',
-  'Financeiro',
-  'Marketing',
-  'Consultoria',
-  'Outro',
-];
-
 export default function CRMUsersManager() {
   const [tenants, setTenants] = useState<CRMTenant[]>([]);
   const [users, setUsers] = useState<CRMUser[]>([]);
@@ -103,19 +90,18 @@ export default function CRMUsersManager() {
   const [selectedTenant, setSelectedTenant] = useState<CRMTenant | null>(null);
   
   // Modal states
-  const [isCreateTenantOpen, setIsCreateTenantOpen] = useState(false);
   const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
   const [isEditUserOpen, setIsEditUserOpen] = useState(false);
+  const [isAddUserToTenantOpen, setIsAddUserToTenantOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<CRMUser | null>(null);
+  const [addingToTenant, setAddingToTenant] = useState<CRMTenant | null>(null);
   
   // Form states
-  const [tenantForm, setTenantForm] = useState({ name: '', segment: '' });
   const [userForm, setUserForm] = useState({
     name: '',
     email: '',
     password: '',
-    role: 'collaborator' as 'admin' | 'manager' | 'collaborator',
-    tenantId: '',
+    role: 'admin' as 'admin' | 'manager' | 'collaborator',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -145,62 +131,8 @@ export default function CRMUsersManager() {
     }
   };
 
-  const handleCreateTenant = async () => {
-    if (!tenantForm.name) {
-      toast.error('Nome da empresa é obrigatório');
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      // Create a temporary owner_user_id (will be replaced when first admin is created)
-      const tempOwnerId = crypto.randomUUID();
-      
-      const { data, error } = await supabase
-        .from('crm_tenants')
-        .insert({
-          name: tenantForm.name,
-          segment: tenantForm.segment || null,
-          owner_user_id: tempOwnerId,
-          onboarding_completed: true,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setTenants([data, ...tenants]);
-      setTenantForm({ name: '', segment: '' });
-      setIsCreateTenantOpen(false);
-      toast.success('Empresa CRM criada com sucesso!');
-    } catch (error: any) {
-      console.error('Error creating tenant:', error);
-      toast.error('Erro ao criar empresa');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleDeleteTenant = async (tenantId: string) => {
-    try {
-      // First delete all users of this tenant
-      await supabase.from('crm_users').delete().eq('crm_tenant_id', tenantId);
-      
-      // Then delete the tenant
-      const { error } = await supabase.from('crm_tenants').delete().eq('id', tenantId);
-      if (error) throw error;
-
-      setTenants(tenants.filter(t => t.id !== tenantId));
-      setUsers(users.filter(u => u.crm_tenant_id !== tenantId));
-      toast.success('Empresa CRM excluída com sucesso!');
-    } catch (error: any) {
-      console.error('Error deleting tenant:', error);
-      toast.error('Erro ao excluir empresa');
-    }
-  };
-
-  const handleCreateUser = async () => {
-    if (!userForm.name || !userForm.email || !userForm.password || !userForm.tenantId) {
+  const handleCreateNewLogin = async () => {
+    if (!userForm.name || !userForm.email || !userForm.password) {
       toast.error('Preencha todos os campos obrigatórios');
       return;
     }
@@ -212,7 +144,7 @@ export default function CRMUsersManager() {
 
     setIsSubmitting(true);
     try {
-      // Create auth user
+      // 1. Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userForm.email,
         password: userForm.password,
@@ -227,11 +159,85 @@ export default function CRMUsersManager() {
       if (authError) throw authError;
       if (!authData.user) throw new Error('Usuário não criado');
 
-      // Create CRM user
+      // 2. Create a new CRM tenant for this user (with placeholder name)
+      const { data: tenantData, error: tenantError } = await supabase
+        .from('crm_tenants')
+        .insert({
+          name: `Empresa de ${userForm.name}`,
+          owner_user_id: authData.user.id,
+          onboarding_completed: false, // Will be completed when user fills company info
+        })
+        .select()
+        .single();
+
+      if (tenantError) throw tenantError;
+
+      // 3. Create CRM user linked to the tenant
       const { data: crmUserData, error: crmError } = await supabase
         .from('crm_users')
         .insert({
-          crm_tenant_id: userForm.tenantId,
+          crm_tenant_id: tenantData.id,
+          auth_user_id: authData.user.id,
+          name: userForm.name,
+          email: userForm.email,
+          role: 'admin', // First user is always admin
+          is_active: true,
+        })
+        .select()
+        .single();
+
+      if (crmError) throw crmError;
+
+      setTenants([tenantData, ...tenants]);
+      setUsers([crmUserData, ...users]);
+      setUserForm({ name: '', email: '', password: '', role: 'admin' });
+      setIsCreateUserOpen(false);
+      toast.success('Login CRM criado com sucesso! O usuário completará o cadastro no primeiro acesso.');
+    } catch (error: any) {
+      console.error('Error creating user:', error);
+      if (error.message?.includes('already registered')) {
+        toast.error('Este email já está cadastrado');
+      } else {
+        toast.error(error.message || 'Erro ao criar login');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleAddUserToTenant = async () => {
+    if (!addingToTenant || !userForm.name || !userForm.email || !userForm.password) {
+      toast.error('Preencha todos os campos obrigatórios');
+      return;
+    }
+
+    if (userForm.password.length < 6) {
+      toast.error('A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // 1. Create auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: userForm.email,
+        password: userForm.password,
+        options: {
+          data: {
+            name: userForm.name,
+            user_type: 'crm',
+          },
+        },
+      });
+
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('Usuário não criado');
+
+      // 2. Create CRM user linked to existing tenant
+      const { data: crmUserData, error: crmError } = await supabase
+        .from('crm_users')
+        .insert({
+          crm_tenant_id: addingToTenant.id,
           auth_user_id: authData.user.id,
           name: userForm.name,
           email: userForm.email,
@@ -243,24 +249,18 @@ export default function CRMUsersManager() {
 
       if (crmError) throw crmError;
 
-      // Update tenant owner if this is the first admin
-      const tenant = tenants.find(t => t.id === userForm.tenantId);
-      const tenantUsers = users.filter(u => u.crm_tenant_id === userForm.tenantId);
-      
-      if (userForm.role === 'admin' && tenantUsers.length === 0) {
-        await supabase
-          .from('crm_tenants')
-          .update({ owner_user_id: authData.user.id })
-          .eq('id', userForm.tenantId);
-      }
-
       setUsers([crmUserData, ...users]);
-      setUserForm({ name: '', email: '', password: '', role: 'collaborator', tenantId: '' });
-      setIsCreateUserOpen(false);
-      toast.success('Usuário CRM criado com sucesso!');
+      setUserForm({ name: '', email: '', password: '', role: 'admin' });
+      setIsAddUserToTenantOpen(false);
+      setAddingToTenant(null);
+      toast.success('Usuário adicionado à empresa com sucesso!');
     } catch (error: any) {
-      console.error('Error creating user:', error);
-      toast.error(error.message || 'Erro ao criar usuário');
+      console.error('Error adding user:', error);
+      if (error.message?.includes('already registered')) {
+        toast.error('Este email já está cadastrado');
+      } else {
+        toast.error(error.message || 'Erro ao adicionar usuário');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -308,9 +308,21 @@ export default function CRMUsersManager() {
   };
 
   const handleDeleteUser = async (userId: string) => {
+    const user = users.find(u => u.id === userId);
+    if (!user) return;
+
     try {
+      // Check if this is the last user of the tenant
+      const tenantUsers = users.filter(u => u.crm_tenant_id === user.crm_tenant_id);
+      
       const { error } = await supabase.from('crm_users').delete().eq('id', userId);
       if (error) throw error;
+
+      // If it was the last user, delete the tenant too
+      if (tenantUsers.length === 1) {
+        await supabase.from('crm_tenants').delete().eq('id', user.crm_tenant_id);
+        setTenants(tenants.filter(t => t.id !== user.crm_tenant_id));
+      }
 
       setUsers(users.filter(u => u.id !== userId));
       toast.success('Usuário excluído com sucesso!');
@@ -320,9 +332,27 @@ export default function CRMUsersManager() {
     }
   };
 
+  const handleDeleteTenant = async (tenantId: string) => {
+    try {
+      // First delete all users of this tenant
+      await supabase.from('crm_users').delete().eq('crm_tenant_id', tenantId);
+      
+      // Then delete the tenant
+      const { error } = await supabase.from('crm_tenants').delete().eq('id', tenantId);
+      if (error) throw error;
+
+      setTenants(tenants.filter(t => t.id !== tenantId));
+      setUsers(users.filter(u => u.crm_tenant_id !== tenantId));
+      toast.success('Empresa e todos os usuários excluídos com sucesso!');
+    } catch (error: any) {
+      console.error('Error deleting tenant:', error);
+      toast.error('Erro ao excluir empresa');
+    }
+  };
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast.success('Copiado para a área de transferência!');
+    toast.success('Copiado!');
   };
 
   const filteredTenants = tenants.filter(t =>
@@ -363,7 +393,7 @@ export default function CRMUsersManager() {
         <div>
           <h2 className="text-2xl font-bold text-foreground">Gestão CRM</h2>
           <p className="text-muted-foreground">
-            Gerencie empresas e usuários do CRM
+            Crie logins e gerencie usuários do CRM
           </p>
         </div>
         <div className="flex gap-2">
@@ -371,56 +401,75 @@ export default function CRMUsersManager() {
             <RefreshCw className="w-4 h-4 mr-2" />
             Atualizar
           </Button>
-          <Dialog open={isCreateTenantOpen} onOpenChange={setIsCreateTenantOpen}>
+          <Dialog open={isCreateUserOpen} onOpenChange={setIsCreateUserOpen}>
             <DialogTrigger asChild>
               <Button>
-                <Building2 className="w-4 h-4 mr-2" />
-                Nova Empresa
+                <UserPlus className="w-4 h-4 mr-2" />
+                Novo Login CRM
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Criar Nova Empresa CRM</DialogTitle>
+                <DialogTitle>Criar Novo Login CRM</DialogTitle>
                 <DialogDescription>
-                  Crie uma nova empresa para o CRM. Depois, adicione usuários a ela.
+                  Crie um acesso para o CRM. O usuário completará o cadastro da empresa no primeiro acesso.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="tenant-name">Nome da Empresa *</Label>
+                  <Label htmlFor="user-name">Nome do Usuário *</Label>
                   <Input
-                    id="tenant-name"
-                    value={tenantForm.name}
-                    onChange={(e) => setTenantForm({ ...tenantForm, name: e.target.value })}
-                    placeholder="Ex: Empresa ABC"
+                    id="user-name"
+                    value={userForm.name}
+                    onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
+                    placeholder="Nome completo"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="tenant-segment">Segmento</Label>
-                  <Select
-                    value={tenantForm.segment}
-                    onValueChange={(value) => setTenantForm({ ...tenantForm, segment: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o segmento" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {segments.map((seg) => (
-                        <SelectItem key={seg} value={seg}>
-                          {seg}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="user-email">Email de Acesso *</Label>
+                  <Input
+                    id="user-email"
+                    type="email"
+                    value={userForm.email}
+                    onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                    placeholder="email@exemplo.com"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="user-password">Senha *</Label>
+                  <div className="relative">
+                    <Input
+                      id="user-password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={userForm.password}
+                      onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                      placeholder="Mínimo 6 caracteres"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </div>
+                <div className="p-3 bg-muted/50 rounded-lg border border-border">
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Nota:</strong> Ao criar o login, uma empresa será criada automaticamente. 
+                    O usuário poderá personalizar o nome da empresa e segmento no primeiro acesso ao CRM.
+                  </p>
                 </div>
               </div>
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setIsCreateTenantOpen(false)}>
+                <Button variant="outline" onClick={() => setIsCreateUserOpen(false)}>
                   Cancelar
                 </Button>
-                <Button onClick={handleCreateTenant} disabled={isSubmitting}>
+                <Button onClick={handleCreateNewLogin} disabled={isSubmitting}>
                   {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Criar Empresa
+                  Criar Login
                 </Button>
               </div>
             </DialogContent>
@@ -451,7 +500,7 @@ export default function CRMUsersManager() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{users.length}</p>
-                <p className="text-sm text-muted-foreground">Usuários</p>
+                <p className="text-sm text-muted-foreground">Logins</p>
               </div>
             </div>
           </CardContent>
@@ -476,8 +525,8 @@ export default function CRMUsersManager() {
                 <XCircle className="w-6 h-6 text-orange-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{users.filter(u => !u.is_active).length}</p>
-                <p className="text-sm text-muted-foreground">Inativos</p>
+                <p className="text-2xl font-bold">{tenants.filter(t => !t.onboarding_completed).length}</p>
+                <p className="text-sm text-muted-foreground">Onboarding Pendente</p>
               </div>
             </div>
           </CardContent>
@@ -511,30 +560,34 @@ export default function CRMUsersManager() {
             ))}
           </SelectContent>
         </Select>
+        <Button variant="outline" asChild>
+          <a href="/crm/login" target="_blank" rel="noopener noreferrer">
+            <ExternalLink className="w-4 h-4 mr-2" />
+            Acessar CRM
+          </a>
+        </Button>
       </div>
 
       {/* Tenants Table */}
       <Card className="bg-card/50 border-border">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="w-5 h-5" />
-              Empresas CRM
-            </CardTitle>
-            <CardDescription>
-              {filteredTenants.length} empresa(s) cadastrada(s)
-            </CardDescription>
-          </div>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="w-5 h-5" />
+            Empresas CRM
+          </CardTitle>
+          <CardDescription>
+            {filteredTenants.length} empresa(s) cadastrada(s)
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
+                  <TableHead>Empresa</TableHead>
                   <TableHead>Segmento</TableHead>
                   <TableHead>Usuários</TableHead>
-                  <TableHead>Onboarding</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Criado em</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
@@ -543,164 +596,173 @@ export default function CRMUsersManager() {
                 {filteredTenants.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                      Nenhuma empresa encontrada
+                      Nenhuma empresa encontrada. Crie um novo login para começar.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredTenants.map((tenant) => (
-                    <TableRow key={tenant.id}>
-                      <TableCell className="font-medium">{tenant.name}</TableCell>
-                      <TableCell>
-                        {tenant.segment ? (
-                          <Badge variant="outline">{tenant.segment}</Badge>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          {users.filter(u => u.crm_tenant_id === tenant.id).length}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {tenant.onboarding_completed ? (
-                          <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-                            Completo
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
-                            Pendente
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(tenant.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => copyToClipboard(tenant.id)}
-                            title="Copiar ID"
-                          >
-                            <Copy className="w-4 h-4" />
-                          </Button>
-                          <Dialog open={isCreateUserOpen && userForm.tenantId === tenant.id} onOpenChange={(open) => {
-                            setIsCreateUserOpen(open);
-                            if (open) setUserForm({ ...userForm, tenantId: tenant.id });
-                          }}>
-                            <DialogTrigger asChild>
-                              <Button variant="ghost" size="icon" title="Adicionar usuário">
-                                <Plus className="w-4 h-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Novo Usuário CRM</DialogTitle>
-                                <DialogDescription>
-                                  Criar usuário para {tenant.name}
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="space-y-4 py-4">
-                                <div className="space-y-2">
-                                  <Label htmlFor="user-name">Nome *</Label>
-                                  <Input
-                                    id="user-name"
-                                    value={userForm.name}
-                                    onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
-                                    placeholder="Nome completo"
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label htmlFor="user-email">Email *</Label>
-                                  <Input
-                                    id="user-email"
-                                    type="email"
-                                    value={userForm.email}
-                                    onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
-                                    placeholder="email@exemplo.com"
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label htmlFor="user-password">Senha *</Label>
-                                  <div className="relative">
+                  filteredTenants.map((tenant) => {
+                    const tenantUserCount = users.filter(u => u.crm_tenant_id === tenant.id).length;
+                    return (
+                      <TableRow key={tenant.id}>
+                        <TableCell className="font-medium">{tenant.name}</TableCell>
+                        <TableCell>
+                          {tenant.segment ? (
+                            <Badge variant="outline">{tenant.segment}</Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">Pendente</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">{tenantUserCount}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          {tenant.onboarding_completed ? (
+                            <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                              Ativo
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                              Onboarding Pendente
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {format(new Date(tenant.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => copyToClipboard(tenant.id)}
+                              title="Copiar ID"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </Button>
+                            <Dialog 
+                              open={isAddUserToTenantOpen && addingToTenant?.id === tenant.id} 
+                              onOpenChange={(open) => {
+                                setIsAddUserToTenantOpen(open);
+                                if (open) {
+                                  setAddingToTenant(tenant);
+                                  setUserForm({ name: '', email: '', password: '', role: 'collaborator' });
+                                } else {
+                                  setAddingToTenant(null);
+                                }
+                              }}
+                            >
+                              <DialogTrigger asChild>
+                                <Button variant="ghost" size="icon" title="Adicionar usuário">
+                                  <Plus className="w-4 h-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Adicionar Usuário</DialogTitle>
+                                  <DialogDescription>
+                                    Adicionar novo usuário à empresa "{tenant.name}"
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4 py-4">
+                                  <div className="space-y-2">
+                                    <Label htmlFor="add-user-name">Nome *</Label>
                                     <Input
-                                      id="user-password"
-                                      type={showPassword ? 'text' : 'password'}
-                                      value={userForm.password}
-                                      onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
-                                      placeholder="Mínimo 6 caracteres"
+                                      id="add-user-name"
+                                      value={userForm.name}
+                                      onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
+                                      placeholder="Nome completo"
                                     />
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="icon"
-                                      className="absolute right-0 top-0 h-full"
-                                      onClick={() => setShowPassword(!showPassword)}
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label htmlFor="add-user-email">Email *</Label>
+                                    <Input
+                                      id="add-user-email"
+                                      type="email"
+                                      value={userForm.email}
+                                      onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                                      placeholder="email@exemplo.com"
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label htmlFor="add-user-password">Senha *</Label>
+                                    <div className="relative">
+                                      <Input
+                                        id="add-user-password"
+                                        type={showPassword ? 'text' : 'password'}
+                                        value={userForm.password}
+                                        onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                                        placeholder="Mínimo 6 caracteres"
+                                      />
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute right-0 top-0 h-full"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                      >
+                                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                      </Button>
+                                    </div>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label htmlFor="add-user-role">Função *</Label>
+                                    <Select
+                                      value={userForm.role}
+                                      onValueChange={(value: 'admin' | 'manager' | 'collaborator') => 
+                                        setUserForm({ ...userForm, role: value })
+                                      }
                                     >
-                                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                    </Button>
+                                      <SelectTrigger>
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="admin">Administrador</SelectItem>
+                                        <SelectItem value="manager">Gestor</SelectItem>
+                                        <SelectItem value="collaborator">Colaborador</SelectItem>
+                                      </SelectContent>
+                                    </Select>
                                   </div>
                                 </div>
-                                <div className="space-y-2">
-                                  <Label htmlFor="user-role">Função *</Label>
-                                  <Select
-                                    value={userForm.role}
-                                    onValueChange={(value: 'admin' | 'manager' | 'collaborator') => 
-                                      setUserForm({ ...userForm, role: value })
-                                    }
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="admin">Administrador</SelectItem>
-                                      <SelectItem value="manager">Gestor</SelectItem>
-                                      <SelectItem value="collaborator">Colaborador</SelectItem>
-                                    </SelectContent>
-                                  </Select>
+                                <div className="flex justify-end gap-2">
+                                  <Button variant="outline" onClick={() => setIsAddUserToTenantOpen(false)}>
+                                    Cancelar
+                                  </Button>
+                                  <Button onClick={handleAddUserToTenant} disabled={isSubmitting}>
+                                    {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                    Adicionar
+                                  </Button>
                                 </div>
-                              </div>
-                              <div className="flex justify-end gap-2">
-                                <Button variant="outline" onClick={() => setIsCreateUserOpen(false)}>
-                                  Cancelar
+                              </DialogContent>
+                            </Dialog>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="text-destructive" title="Excluir empresa">
+                                  <Trash2 className="w-4 h-4" />
                                 </Button>
-                                <Button onClick={handleCreateUser} disabled={isSubmitting}>
-                                  {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                                  Criar Usuário
-                                </Button>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="text-destructive" title="Excluir">
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Excluir Empresa?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Esta ação excluirá permanentemente a empresa "{tenant.name}" e todos os seus usuários. Esta ação não pode ser desfeita.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDeleteTenant(tenant.id)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                  Excluir
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Excluir Empresa?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Isso excluirá permanentemente "{tenant.name}" e {tenantUserCount} usuário(s). Esta ação não pode ser desfeita.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteTenant(tenant.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Excluir
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
@@ -710,22 +772,14 @@ export default function CRMUsersManager() {
 
       {/* Users Table */}
       <Card className="bg-card/50 border-border">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <UserCog className="w-5 h-5" />
-              Usuários CRM
-            </CardTitle>
-            <CardDescription>
-              {filteredUsers.length} usuário(s) {selectedTenant ? `de ${selectedTenant.name}` : ''}
-            </CardDescription>
-          </div>
-          <Button variant="outline" asChild>
-            <a href="/crm/login" target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Acessar CRM
-            </a>
-          </Button>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <UserCog className="w-5 h-5" />
+            Logins CRM
+          </CardTitle>
+          <CardDescription>
+            {filteredUsers.length} login(s) {selectedTenant ? `de "${selectedTenant.name}"` : ''}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -745,7 +799,7 @@ export default function CRMUsersManager() {
                 {filteredUsers.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                      Nenhum usuário encontrado
+                      Nenhum login encontrado
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -754,7 +808,19 @@ export default function CRMUsersManager() {
                     return (
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">{user.name}</TableCell>
-                        <TableCell>{user.email}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm">{user.email}</span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => copyToClipboard(user.email)}
+                            >
+                              <Copy className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <Badge variant="outline">{tenant?.name || 'N/A'}</Badge>
                         </TableCell>
@@ -774,7 +840,7 @@ export default function CRMUsersManager() {
                           {format(new Date(user.created_at), "dd/MM/yyyy", { locale: ptBR })}
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
+                          <div className="flex justify-end gap-1">
                             <Dialog open={isEditUserOpen && editingUser?.id === user.id} onOpenChange={(open) => {
                               setIsEditUserOpen(open);
                               if (open) {
@@ -841,9 +907,9 @@ export default function CRMUsersManager() {
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>Excluir Usuário?</AlertDialogTitle>
+                                  <AlertDialogTitle>Excluir Login?</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Esta ação excluirá permanentemente o usuário "{user.name}". Esta ação não pode ser desfeita.
+                                    Isso excluirá permanentemente o login de "{user.name}". Esta ação não pode ser desfeita.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
