@@ -74,6 +74,31 @@ interface ConsoleLog {
 
 type BackendMode = 'vps' | 'local';
 
+const PC_LOCAL_STORAGE = {
+  backendMode: 'wa_whatsapp_backend_mode',
+  endpoint: 'wa_pc_local_endpoint',
+  port: 'wa_pc_local_port',
+  token: 'wa_pc_local_token',
+} as const;
+
+const readStorage = (key: string) => {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+const writeStorage = (key: string, value: string) => {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // ignore
+  }
+};
+
 const statusConfig = {
   inactive: { label: 'Inativo', color: 'bg-gray-500', icon: PowerOff },
   awaiting_backend: { label: 'Aguardando Backend', color: 'bg-yellow-500', icon: Clock },
@@ -91,16 +116,19 @@ const WhatsAppAutomation = () => {
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   
   // Backend mode
-  const [backendMode, setBackendMode] = useState<BackendMode>('vps');
+  const [backendMode, setBackendMode] = useState<BackendMode>(() => {
+    const saved = readStorage(PC_LOCAL_STORAGE.backendMode);
+    return saved === 'local' || saved === 'vps' ? saved : 'vps';
+  });
   
   // VPS Form states
   const [backendUrl, setBackendUrl] = useState('');
   const [masterToken, setMasterToken] = useState('');
   
   // PC Local Form states
-  const [localEndpoint, setLocalEndpoint] = useState('http://localhost');
-  const [localPort, setLocalPort] = useState('3001');
-  const [localToken, setLocalToken] = useState('');
+  const [localEndpoint, setLocalEndpoint] = useState(() => readStorage(PC_LOCAL_STORAGE.endpoint) ?? 'http://localhost');
+  const [localPort, setLocalPort] = useState(() => readStorage(PC_LOCAL_STORAGE.port) ?? '3001');
+  const [localToken, setLocalToken] = useState(() => readStorage(PC_LOCAL_STORAGE.token) ?? '');
   const [isLocalConnected, setIsLocalConnected] = useState(false);
   const [isTestingLocal, setIsTestingLocal] = useState(false);
   
@@ -127,12 +155,29 @@ const WhatsAppAutomation = () => {
 
   const currentDomain = typeof window !== 'undefined' ? window.location.origin : '';
 
+  // Persist settings locally (prevents token mismatch after refresh)
+  useEffect(() => {
+    writeStorage(PC_LOCAL_STORAGE.backendMode, backendMode);
+  }, [backendMode]);
+
+  useEffect(() => {
+    writeStorage(PC_LOCAL_STORAGE.endpoint, localEndpoint);
+  }, [localEndpoint]);
+
+  useEffect(() => {
+    writeStorage(PC_LOCAL_STORAGE.port, localPort);
+  }, [localPort]);
+
+  useEffect(() => {
+    if (localToken) writeStorage(PC_LOCAL_STORAGE.token, localToken);
+  }, [localToken]);
+
   // Generate a token if not exists
   useEffect(() => {
     if (!localToken) {
       setLocalToken(crypto.randomUUID());
     }
-  }, []);
+  }, [localToken]);
 
   // Console log helper
   const addConsoleLog = useCallback((type: ConsoleLog['type'], message: string) => {
@@ -336,8 +381,16 @@ const WhatsAppAutomation = () => {
         
         // Reset instances state when connecting to local
         await resetInstancesState();
+      } else if (response.status === 401) {
+        setIsLocalConnected(false);
+        addConsoleLog(
+          'error',
+          `Token inválido (401). O token do painel NÃO é o mesmo do whatsapp-local.js. Baixe o script novamente para sincronizar o token.`
+        );
+        toast.error('Token do PC Local inválido. Baixe o script novamente.');
+        return;
       } else {
-        throw new Error('Backend local não respondeu corretamente');
+        throw new Error(`Backend local respondeu com status ${response.status}`);
       }
     } catch (error: unknown) {
       setIsLocalConnected(false);
