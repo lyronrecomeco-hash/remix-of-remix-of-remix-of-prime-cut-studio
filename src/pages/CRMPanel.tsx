@@ -54,13 +54,13 @@ export default function CRMPanel() {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      navigate('/crmlogin');
+      navigate('/crm/login');
     }
   }, [isAuthenticated, isLoading, navigate]);
 
   const handleLogout = async () => {
     await logout();
-    navigate('/crmlogin');
+    navigate('/crm/login');
   };
 
   if (isLoading) {
