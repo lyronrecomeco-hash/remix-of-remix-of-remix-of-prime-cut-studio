@@ -850,6 +850,709 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_audit_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          crm_tenant_id: string
+          details: Json | null
+          entity_id: string | null
+          entity_type: string
+          id: string
+          ip_address: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          crm_tenant_id: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          crm_tenant_id?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_audit_logs_crm_tenant_id_fkey"
+            columns: ["crm_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "crm_tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_audit_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "crm_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_custom_fields: {
+        Row: {
+          created_at: string | null
+          crm_tenant_id: string
+          field_type: string
+          id: string
+          is_active: boolean | null
+          is_required: boolean | null
+          name: string
+          options: Json | null
+          position: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          crm_tenant_id: string
+          field_type?: string
+          id?: string
+          is_active?: boolean | null
+          is_required?: boolean | null
+          name: string
+          options?: Json | null
+          position?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          crm_tenant_id?: string
+          field_type?: string
+          id?: string
+          is_active?: boolean | null
+          is_required?: boolean | null
+          name?: string
+          options?: Json | null
+          position?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_custom_fields_crm_tenant_id_fkey"
+            columns: ["crm_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "crm_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_funnel_stages: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          crm_tenant_id: string
+          funnel_id: string
+          id: string
+          is_final: boolean | null
+          is_won: boolean | null
+          name: string
+          position: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          crm_tenant_id: string
+          funnel_id: string
+          id?: string
+          is_final?: boolean | null
+          is_won?: boolean | null
+          name: string
+          position?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          crm_tenant_id?: string
+          funnel_id?: string
+          id?: string
+          is_final?: boolean | null
+          is_won?: boolean | null
+          name?: string
+          position?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_funnel_stages_crm_tenant_id_fkey"
+            columns: ["crm_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "crm_tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_funnel_stages_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "crm_funnels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_funnels: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          crm_tenant_id: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          pipeline_id: string | null
+          position: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          crm_tenant_id: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          pipeline_id?: string | null
+          position?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          crm_tenant_id?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          pipeline_id?: string | null
+          position?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_funnels_crm_tenant_id_fkey"
+            columns: ["crm_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "crm_tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_funnels_pipeline_id_fkey"
+            columns: ["pipeline_id"]
+            isOneToOne: false
+            referencedRelation: "crm_pipelines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_lead_history: {
+        Row: {
+          action: string
+          created_at: string | null
+          crm_tenant_id: string
+          id: string
+          lead_id: string
+          new_value: Json | null
+          notes: string | null
+          old_value: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          crm_tenant_id: string
+          id?: string
+          lead_id: string
+          new_value?: Json | null
+          notes?: string | null
+          old_value?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          crm_tenant_id?: string
+          id?: string
+          lead_id?: string
+          new_value?: Json | null
+          notes?: string | null
+          old_value?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_lead_history_crm_tenant_id_fkey"
+            columns: ["crm_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "crm_tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_lead_history_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "crm_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_lead_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "crm_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_lead_tags: {
+        Row: {
+          created_at: string | null
+          id: string
+          lead_id: string
+          tag_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          lead_id: string
+          tag_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          lead_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_lead_tags_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "crm_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_lead_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "crm_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_leads: {
+        Row: {
+          company: string | null
+          created_at: string | null
+          created_by: string | null
+          crm_tenant_id: string
+          custom_fields: Json | null
+          email: string | null
+          funnel_id: string | null
+          id: string
+          loss_reason_id: string | null
+          lost_at: string | null
+          name: string
+          notes: string | null
+          origin: string | null
+          phone: string | null
+          pipeline_id: string | null
+          responsible_id: string | null
+          stage_entered_at: string | null
+          stage_id: string | null
+          status: Database["public"]["Enums"]["crm_lead_status"] | null
+          updated_at: string | null
+          value: number | null
+          won_at: string | null
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          crm_tenant_id: string
+          custom_fields?: Json | null
+          email?: string | null
+          funnel_id?: string | null
+          id?: string
+          loss_reason_id?: string | null
+          lost_at?: string | null
+          name: string
+          notes?: string | null
+          origin?: string | null
+          phone?: string | null
+          pipeline_id?: string | null
+          responsible_id?: string | null
+          stage_entered_at?: string | null
+          stage_id?: string | null
+          status?: Database["public"]["Enums"]["crm_lead_status"] | null
+          updated_at?: string | null
+          value?: number | null
+          won_at?: string | null
+        }
+        Update: {
+          company?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          crm_tenant_id?: string
+          custom_fields?: Json | null
+          email?: string | null
+          funnel_id?: string | null
+          id?: string
+          loss_reason_id?: string | null
+          lost_at?: string | null
+          name?: string
+          notes?: string | null
+          origin?: string | null
+          phone?: string | null
+          pipeline_id?: string | null
+          responsible_id?: string | null
+          stage_entered_at?: string | null
+          stage_id?: string | null
+          status?: Database["public"]["Enums"]["crm_lead_status"] | null
+          updated_at?: string | null
+          value?: number | null
+          won_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_leads_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "crm_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_leads_crm_tenant_id_fkey"
+            columns: ["crm_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "crm_tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_leads_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "crm_funnels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_leads_loss_reason_id_fkey"
+            columns: ["loss_reason_id"]
+            isOneToOne: false
+            referencedRelation: "crm_loss_reasons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_leads_pipeline_id_fkey"
+            columns: ["pipeline_id"]
+            isOneToOne: false
+            referencedRelation: "crm_pipelines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_leads_responsible_id_fkey"
+            columns: ["responsible_id"]
+            isOneToOne: false
+            referencedRelation: "crm_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_leads_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "crm_funnel_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_loss_reasons: {
+        Row: {
+          created_at: string | null
+          crm_tenant_id: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          crm_tenant_id: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          crm_tenant_id?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_loss_reasons_crm_tenant_id_fkey"
+            columns: ["crm_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "crm_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_pipelines: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          crm_tenant_id: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          crm_tenant_id: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          crm_tenant_id?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_pipelines_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "crm_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_pipelines_crm_tenant_id_fkey"
+            columns: ["crm_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "crm_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_tags: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          crm_tenant_id: string
+          id: string
+          name: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          crm_tenant_id: string
+          id?: string
+          name: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          crm_tenant_id?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_tags_crm_tenant_id_fkey"
+            columns: ["crm_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "crm_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_tasks: {
+        Row: {
+          assigned_to: string | null
+          completed_at: string | null
+          created_at: string | null
+          created_by: string | null
+          crm_tenant_id: string
+          description: string | null
+          due_date: string | null
+          id: string
+          lead_id: string | null
+          priority: number | null
+          reminder_at: string | null
+          status: Database["public"]["Enums"]["crm_task_status"] | null
+          task_type: Database["public"]["Enums"]["crm_task_type"] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          crm_tenant_id: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          lead_id?: string | null
+          priority?: number | null
+          reminder_at?: string | null
+          status?: Database["public"]["Enums"]["crm_task_status"] | null
+          task_type?: Database["public"]["Enums"]["crm_task_type"] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          crm_tenant_id?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          lead_id?: string | null
+          priority?: number | null
+          reminder_at?: string | null
+          status?: Database["public"]["Enums"]["crm_task_status"] | null
+          task_type?: Database["public"]["Enums"]["crm_task_type"] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "crm_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_tasks_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "crm_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_tasks_crm_tenant_id_fkey"
+            columns: ["crm_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "crm_tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_tasks_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "crm_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_tenants: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          onboarding_completed: boolean | null
+          owner_user_id: string
+          segment: string | null
+          settings: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          onboarding_completed?: boolean | null
+          owner_user_id: string
+          segment?: string | null
+          settings?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          onboarding_completed?: boolean | null
+          owner_user_id?: string
+          segment?: string | null
+          settings?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      crm_users: {
+        Row: {
+          auth_user_id: string
+          created_at: string | null
+          crm_tenant_id: string
+          email: string
+          id: string
+          is_active: boolean | null
+          name: string
+          permissions: Json | null
+          role: Database["public"]["Enums"]["crm_role"]
+          updated_at: string | null
+        }
+        Insert: {
+          auth_user_id: string
+          created_at?: string | null
+          crm_tenant_id: string
+          email: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          permissions?: Json | null
+          role?: Database["public"]["Enums"]["crm_role"]
+          updated_at?: string | null
+        }
+        Update: {
+          auth_user_id?: string
+          created_at?: string | null
+          crm_tenant_id?: string
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          permissions?: Json | null
+          role?: Database["public"]["Enums"]["crm_role"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_users_crm_tenant_id_fkey"
+            columns: ["crm_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "crm_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_confirmation_tokens: {
         Row: {
           confirmed_at: string | null
@@ -2135,6 +2838,8 @@ export type Database = {
       current_tenant_id: { Args: never; Returns: string }
       current_tenant_ids: { Args: never; Returns: string[] }
       get_affiliate_id: { Args: { _user_id: string }; Returns: string }
+      get_crm_tenant_id: { Args: { _auth_user_id: string }; Returns: string }
+      get_crm_user_id: { Args: { _auth_user_id: string }; Returns: string }
       get_user_plan: { Args: { check_user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -2145,6 +2850,11 @@ export type Database = {
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_affiliate: { Args: { _user_id: string }; Returns: boolean }
+      is_crm_admin: { Args: { _auth_user_id: string }; Returns: boolean }
+      is_crm_member: {
+        Args: { _auth_user_id: string; _tenant_id: string }
+        Returns: boolean
+      }
       is_feature_allowed: {
         Args: { check_user_id: string; feature_name: string }
         Returns: boolean
@@ -2168,6 +2878,10 @@ export type Database = {
     Enums: {
       affiliate_status: "pending" | "active" | "blocked"
       app_role: "super_admin" | "admin" | "barber"
+      crm_lead_status: "new" | "active" | "won" | "lost"
+      crm_role: "admin" | "manager" | "collaborator"
+      crm_task_status: "pending" | "in_progress" | "completed" | "cancelled"
+      crm_task_type: "call" | "meeting" | "followup" | "internal"
       pix_type: "cpf" | "cnpj" | "email" | "phone" | "random"
       referral_status: "pending" | "confirmed" | "cancelled" | "paid"
       withdrawal_status: "pending" | "processing" | "completed" | "rejected"
@@ -2300,6 +3014,10 @@ export const Constants = {
     Enums: {
       affiliate_status: ["pending", "active", "blocked"],
       app_role: ["super_admin", "admin", "barber"],
+      crm_lead_status: ["new", "active", "won", "lost"],
+      crm_role: ["admin", "manager", "collaborator"],
+      crm_task_status: ["pending", "in_progress", "completed", "cancelled"],
+      crm_task_type: ["call", "meeting", "followup", "internal"],
       pix_type: ["cpf", "cnpj", "email", "phone", "random"],
       referral_status: ["pending", "confirmed", "cancelled", "paid"],
       withdrawal_status: ["pending", "processing", "completed", "rejected"],
