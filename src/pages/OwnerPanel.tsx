@@ -31,6 +31,7 @@ import SubscriptionManager from '@/components/owner/SubscriptionManager';
 import WhatsAppTemplatesManager from '@/components/owner/WhatsAppTemplatesManager';
 import UserDatabaseSection from '@/components/owner/UserDatabaseSection';
 import LeadsManager from '@/components/owner/LeadsManager';
+import AffiliateManager from '@/components/owner/AffiliateManager';
 
 const OWNER_EMAIL = 'lyronrp@gmail.com';
 
@@ -60,6 +61,7 @@ const navSections: NavSection[] = [
     items: [
       { id: 'subscriptions', label: 'Assinaturas', icon: CreditCard },
       { id: 'users', label: 'Usuários', icon: Users },
+      { id: 'affiliates', label: 'Afiliados', icon: Users, badge: 'Novo', badgeVariant: 'default' },
       { id: 'database', label: 'Banco de Dados', icon: HardDrive },
     ]
   },
@@ -130,6 +132,8 @@ const OwnerPanel = () => {
         return <SubscriptionManager />;
       case 'users':
         return <UsersOverview />;
+      case 'affiliates':
+        return <AffiliateManager />;
       case 'database':
         return <UserDatabaseSection />;
       case 'emails':
