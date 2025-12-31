@@ -13,7 +13,8 @@ import {
   TrendingUp,
   UserCheck,
   XCircle,
-  RefreshCw
+  RefreshCw,
+  Phone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -246,6 +247,7 @@ const AffiliateManager = () => {
   const pendingWithdrawals = withdrawals.filter(w => w.status === 'pending');
   const totalPendingAmount = pendingWithdrawals.reduce((sum, w) => sum + Number(w.amount), 0);
   const activeAffiliates = affiliates.filter(a => a.status === 'active').length;
+  const pendingAffiliates = affiliates.filter(a => a.status === 'pending');
   const totalReferrals = referrals.length;
   const convertedReferrals = referrals.filter(r => r.status === 'converted').length;
 
@@ -322,9 +324,15 @@ const AffiliateManager = () => {
         </Card>
       </div>
 
-      <Tabs defaultValue="affiliates" className="space-y-4">
+      <Tabs defaultValue={pendingAffiliates.length > 0 ? "pending" : "affiliates"} className="space-y-4">
         <div className="flex items-center justify-between">
           <TabsList>
+            <TabsTrigger value="pending">
+              Solicitações
+              {pendingAffiliates.length > 0 && (
+                <Badge variant="destructive" className="ml-2">{pendingAffiliates.length}</Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="affiliates">Afiliados</TabsTrigger>
             <TabsTrigger value="withdrawals">
               Saques
@@ -339,6 +347,99 @@ const AffiliateManager = () => {
             Novo Afiliado
           </Button>
         </div>
+
+        {/* Tab: Solicitações Pendentes */}
+        <TabsContent value="pending">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserCheck className="w-5 h-5 text-orange-500" />
+                Solicitações de Afiliação Pendentes
+              </CardTitle>
+              <CardDescription>Aprove ou rejeite novos parceiros que se cadastraram</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {pendingAffiliates.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <CheckCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>Nenhuma solicitação pendente</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>WhatsApp</TableHead>
+                      <TableHead>Código</TableHead>
+                      <TableHead>Data Cadastro</TableHead>
+                      <TableHead>Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pendingAffiliates.map((affiliate) => (
+                      <TableRow key={affiliate.id} className="bg-orange-500/5">
+                        <TableCell className="font-medium">{affiliate.name}</TableCell>
+                        <TableCell>{affiliate.email}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm">{affiliate.whatsapp}</span>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-6 w-6"
+                              onClick={() => window.open(`https://wa.me/55${affiliate.whatsapp}`, '_blank')}
+                            >
+                              <Phone className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <code className="bg-muted px-2 py-1 rounded text-xs">{affiliate.affiliate_code}</code>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {new Date(affiliate.created_at).toLocaleDateString('pt-BR')}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              className="gap-1"
+                              onClick={() => handleToggleStatus(affiliate)}
+                            >
+                              <CheckCircle className="w-3 h-3" />
+                              Aprovar
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={async () => {
+                                try {
+                                  const { error } = await supabase
+                                    .from('affiliates')
+                                    .update({ status: 'blocked' })
+                                    .eq('id', affiliate.id);
+                                  if (error) throw error;
+                                  toast.success('Solicitação rejeitada');
+                                  fetchData();
+                                } catch (error) {
+                                  toast.error('Erro ao rejeitar');
+                                }
+                              }}
+                            >
+                              <XCircle className="w-3 h-3 mr-1" />
+                              Rejeitar
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="affiliates">
           <Card>

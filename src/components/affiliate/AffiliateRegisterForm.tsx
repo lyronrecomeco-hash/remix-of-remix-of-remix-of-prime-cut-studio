@@ -183,7 +183,8 @@ const AffiliateRegisterForm = ({ onBackToLogin, onSuccess }: AffiliateRegisterFo
         return;
       }
 
-      if (responseData?.error) {
+      // If code was saved, proceed even if ChatPro had issues
+      if (responseData?.error && !responseData?.code_saved) {
         toast.error(responseData.error);
         return;
       }
@@ -192,7 +193,12 @@ const AffiliateRegisterForm = ({ onBackToLogin, onSuccess }: AffiliateRegisterFo
       setStep(3);
       setResendCooldown(60);
       setOtpCode(['', '', '', '', '', '']);
-      toast.success('Código enviado para seu WhatsApp!');
+      
+      if (responseData?.success) {
+        toast.success('Código enviado para seu WhatsApp!');
+      } else if (responseData?.code_saved) {
+        toast.warning('Código gerado! Verifique seu WhatsApp ou digite o código que você recebeu.');
+      }
       
       setTimeout(() => inputRefs.current[0]?.focus(), 100);
     } catch (error: any) {
@@ -292,14 +298,26 @@ const AffiliateRegisterForm = ({ onBackToLogin, onSuccess }: AffiliateRegisterFo
         }
       });
 
-      if (error || data?.error) {
-        toast.error(data?.error || error?.message || 'Erro ao reenviar código');
+      if (error) {
+        toast.error(error?.message || 'Erro ao reenviar código');
+        return;
+      }
+
+      // If code was saved, proceed even if ChatPro had issues
+      if (data?.error && !data?.code_saved) {
+        toast.error(data.error);
         return;
       }
 
       setResendCooldown(60);
       setOtpCode(['', '', '', '', '', '']);
-      toast.success('Novo código enviado!');
+      
+      if (data?.success) {
+        toast.success('Novo código enviado!');
+      } else if (data?.code_saved) {
+        toast.warning('Código gerado! Verifique seu WhatsApp.');
+      }
+      
       inputRefs.current[0]?.focus();
     } catch (error) {
       toast.error('Erro ao reenviar código');
