@@ -62,3 +62,6 @@ verify_jwt = false
 
 [functions.send-lead-notification]
 verify_jwt = false
+
+[functions.create-affiliate]
+verify_jwt = false
