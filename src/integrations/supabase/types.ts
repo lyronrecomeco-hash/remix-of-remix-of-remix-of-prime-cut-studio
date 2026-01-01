@@ -148,6 +148,65 @@ export type Database = {
         }
         Relationships: []
       }
+      affiliate_proposals: {
+        Row: {
+          accepted_at: string | null
+          affiliate_id: string
+          cancelled_at: string | null
+          company_cnpj: string | null
+          company_email: string | null
+          company_name: string
+          company_phone: string | null
+          contact_name: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          sent_at: string | null
+          status: Database["public"]["Enums"]["proposal_status"]
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          affiliate_id: string
+          cancelled_at?: string | null
+          company_cnpj?: string | null
+          company_email?: string | null
+          company_name: string
+          company_phone?: string | null
+          contact_name?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["proposal_status"]
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          affiliate_id?: string
+          cancelled_at?: string | null
+          company_cnpj?: string | null
+          company_email?: string | null
+          company_name?: string
+          company_phone?: string | null
+          contact_name?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["proposal_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_proposals_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       affiliate_referrals: {
         Row: {
           affiliate_id: string
@@ -4156,6 +4215,7 @@ export type Database = {
       crm_task_status: "pending" | "in_progress" | "completed" | "cancelled"
       crm_task_type: "call" | "meeting" | "followup" | "internal"
       pix_type: "cpf" | "cnpj" | "email" | "phone" | "random"
+      proposal_status: "draft" | "sent" | "accepted" | "cancelled"
       referral_status: "pending" | "confirmed" | "cancelled" | "paid"
       withdrawal_status: "pending" | "processing" | "completed" | "rejected"
     }
@@ -4292,6 +4352,7 @@ export const Constants = {
       crm_task_status: ["pending", "in_progress", "completed", "cancelled"],
       crm_task_type: ["call", "meeting", "followup", "internal"],
       pix_type: ["cpf", "cnpj", "email", "phone", "random"],
+      proposal_status: ["draft", "sent", "accepted", "cancelled"],
       referral_status: ["pending", "confirmed", "cancelled", "paid"],
       withdrawal_status: ["pending", "processing", "completed", "rejected"],
     },
