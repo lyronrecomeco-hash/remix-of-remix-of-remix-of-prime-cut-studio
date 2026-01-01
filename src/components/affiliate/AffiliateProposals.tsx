@@ -17,6 +17,7 @@ interface AffiliateProposalsProps {
 
 const AffiliateProposals = ({ affiliateId }: AffiliateProposalsProps) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingProposal, setEditingProposal] = useState<AffiliateProposal | null>(null);
   const [questionnaireProposal, setQuestionnaireProposal] = useState<AffiliateProposal | null>(null);
   const [viewerProposal, setViewerProposal] = useState<AffiliateProposal | null>(null);
   
@@ -40,6 +41,31 @@ const AffiliateProposals = ({ affiliateId }: AffiliateProposalsProps) => {
 
   const handleProposalUpdated = () => {
     fetchProposals();
+  };
+
+  const handleEdit = (proposal: AffiliateProposal) => {
+    setEditingProposal(proposal);
+    setShowCreateModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowCreateModal(false);
+    setEditingProposal(null);
+  };
+
+  const handleSubmit = async (data: Parameters<typeof createProposal>[0]) => {
+    if (editingProposal) {
+      // Update existing proposal
+      const result = await updateProposal(editingProposal.id, data);
+      if (result) {
+        setEditingProposal(null);
+        return true;
+      }
+      return false;
+    } else {
+      // Create new proposal
+      return await createProposal(data);
+    }
   };
 
   return (
@@ -75,17 +101,19 @@ const AffiliateProposals = ({ affiliateId }: AffiliateProposalsProps) => {
           loading={loading}
           onUpdate={updateProposal}
           onDelete={deleteProposal}
+          onView={handleEdit}
           onStartQuestionnaire={setQuestionnaireProposal}
           onViewProposal={setViewerProposal}
         />
       </div>
 
-      {/* Modal de Criação */}
+      {/* Modal de Criação/Edição */}
       <CreateProposalModal
         open={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSubmit={createProposal}
+        onClose={handleCloseModal}
+        onSubmit={handleSubmit}
         loading={creating}
+        editingProposal={editingProposal}
       />
 
       {/* Modal do Questionário */}

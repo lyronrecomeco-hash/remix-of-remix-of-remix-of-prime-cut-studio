@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Building2, Mail, Phone, FileText, User, DollarSign } from 'lucide-react';
 import {
   Dialog,
@@ -11,16 +11,19 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import type { CreateProposalData } from './types';
+import { formatPhone } from '@/hooks/usePhoneMask';
+import { formatCNPJ, formatCurrency } from '@/hooks/useInputMasks';
+import type { CreateProposalData, AffiliateProposal } from './types';
 
 interface CreateProposalModalProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (data: CreateProposalData) => Promise<unknown>;
   loading?: boolean;
+  editingProposal?: AffiliateProposal | null;
 }
 
-export function CreateProposalModal({ open, onClose, onSubmit, loading }: CreateProposalModalProps) {
+export function CreateProposalModal({ open, onClose, onSubmit, loading, editingProposal }: CreateProposalModalProps) {
   const [formData, setFormData] = useState<CreateProposalData>({
     company_name: '',
     company_email: '',
@@ -31,24 +34,76 @@ export function CreateProposalModal({ open, onClose, onSubmit, loading }: Create
     proposal_value: 0,
   });
 
+  const [phoneDisplay, setPhoneDisplay] = useState('');
+  const [cnpjDisplay, setCnpjDisplay] = useState('');
+  const [valueDisplay, setValueDisplay] = useState('');
+
+  // Reset or populate form when modal opens
+  useEffect(() => {
+    if (open) {
+      if (editingProposal) {
+        setFormData({
+          company_name: editingProposal.company_name || '',
+          company_email: editingProposal.company_email || '',
+          company_phone: editingProposal.company_phone || '',
+          company_cnpj: editingProposal.company_cnpj || '',
+          contact_name: editingProposal.contact_name || '',
+          notes: editingProposal.notes || '',
+          proposal_value: editingProposal.proposal_value || 0,
+        });
+        setPhoneDisplay(formatPhone(editingProposal.company_phone || ''));
+        setCnpjDisplay(formatCNPJ(editingProposal.company_cnpj || ''));
+        setValueDisplay(editingProposal.proposal_value ? formatCurrency(editingProposal.proposal_value) : '');
+      } else {
+        setFormData({
+          company_name: '',
+          company_email: '',
+          company_phone: '',
+          company_cnpj: '',
+          contact_name: '',
+          notes: '',
+          proposal_value: 0,
+        });
+        setPhoneDisplay('');
+        setCnpjDisplay('');
+        setValueDisplay('');
+      }
+    }
+  }, [open, editingProposal]);
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target.value;
+    const digits = input.replace(/\D/g, '').slice(0, 11);
+    setPhoneDisplay(formatPhone(digits));
+    setFormData(prev => ({ ...prev, company_phone: digits }));
+  };
+
+  const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target.value;
+    const digits = input.replace(/\D/g, '').slice(0, 14);
+    setCnpjDisplay(formatCNPJ(digits));
+    setFormData(prev => ({ ...prev, company_cnpj: digits }));
+  };
+
+  const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target.value;
+    const digits = input.replace(/\D/g, '');
+    const numValue = parseInt(digits, 10) / 100 || 0;
+    setValueDisplay(formatCurrency(numValue));
+    setFormData(prev => ({ ...prev, proposal_value: numValue }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.company_name.trim()) return;
     
     const result = await onSubmit(formData);
     if (result) {
-      setFormData({
-        company_name: '',
-        company_email: '',
-        company_phone: '',
-        company_cnpj: '',
-        contact_name: '',
-        notes: '',
-        proposal_value: 0,
-      });
       onClose();
     }
   };
+
+  const isEditing = !!editingProposal;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -56,7 +111,7 @@ export function CreateProposalModal({ open, onClose, onSubmit, loading }: Create
         <DialogHeader>
           <DialogTitle className="text-foreground flex items-center gap-2">
             <Building2 className="w-5 h-5 text-primary" />
-            Nova Proposta Empresarial
+            {isEditing ? 'Editar Proposta' : 'Nova Proposta Empresarial'}
           </DialogTitle>
         </DialogHeader>
 
@@ -104,8 +159,8 @@ export function CreateProposalModal({ open, onClose, onSubmit, loading }: Create
                 <Input
                   id="company_cnpj"
                   placeholder="00.000.000/0000-00"
-                  value={formData.company_cnpj}
-                  onChange={(e) => setFormData(prev => ({ ...prev, company_cnpj: e.target.value }))}
+                  value={cnpjDisplay}
+                  onChange={handleCnpjChange}
                   className="pl-10 bg-background border-border"
                 />
               </div>
@@ -139,8 +194,8 @@ export function CreateProposalModal({ open, onClose, onSubmit, loading }: Create
                 <Input
                   id="company_phone"
                   placeholder="(00) 00000-0000"
-                  value={formData.company_phone}
-                  onChange={(e) => setFormData(prev => ({ ...prev, company_phone: e.target.value }))}
+                  value={phoneDisplay}
+                  onChange={handlePhoneChange}
                   className="pl-10 bg-background border-border"
                 />
               </div>
@@ -156,15 +211,15 @@ export function CreateProposalModal({ open, onClose, onSubmit, loading }: Create
                 <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   id="proposal_value"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0,00"
-                  value={formData.proposal_value || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, proposal_value: parseFloat(e.target.value) || 0 }))}
+                  placeholder="R$ 0,00"
+                  value={valueDisplay}
+                  onChange={handleValueChange}
                   className="pl-10 bg-background border-border"
                 />
               </div>
+              <p className="text-xs text-muted-foreground">
+                Opcional. Pode ser definido depois.
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -186,7 +241,7 @@ export function CreateProposalModal({ open, onClose, onSubmit, loading }: Create
               Cancelar
             </Button>
             <Button type="submit" disabled={loading || !formData.company_name.trim()}>
-              {loading ? 'Criando...' : 'Criar Proposta'}
+              {loading ? (isEditing ? 'Salvando...' : 'Criando...') : (isEditing ? 'Salvar' : 'Criar Proposta')}
             </Button>
           </DialogFooter>
         </form>

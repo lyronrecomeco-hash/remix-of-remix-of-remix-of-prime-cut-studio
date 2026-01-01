@@ -179,6 +179,8 @@ const ProposalsManager = () => {
     setIsAccepting(true);
     try {
       const value = parseFloat(proposalValue);
+      const commissionRate = 30; // Default commission rate
+      const commissionAmount = (value * commissionRate) / 100;
       
       // First update the value
       const { error: valueError } = await supabase
@@ -196,7 +198,21 @@ const ProposalsManager = () => {
       
       if (statusError) throw statusError;
       
-      toast.success('Proposta aceita! Comissão calculada automaticamente.');
+      // Send notification to affiliate
+      try {
+        await supabase.functions.invoke('notify-affiliate-proposal', {
+          body: {
+            proposalId: acceptingProposal.id,
+            type: 'accepted',
+            proposalValue: value,
+            commissionAmount: commissionAmount
+          }
+        });
+      } catch (notifyError) {
+        console.warn('Failed to send notification:', notifyError);
+      }
+      
+      toast.success('Proposta aceita! Comissão calculada e afiliado notificado.');
       setAcceptModalOpen(false);
       setAcceptingProposal(null);
       setProposalValue('');
@@ -218,7 +234,20 @@ const ProposalsManager = () => {
       if (error) throw error;
       
       if (data) {
-        toast.success('Comissão paga! Saldo transferido para disponível.');
+        // Send notification to affiliate
+        try {
+          await supabase.functions.invoke('notify-affiliate-proposal', {
+            body: {
+              proposalId: proposal.id,
+              type: 'commission_paid',
+              commissionAmount: proposal.commission_amount
+            }
+          });
+        } catch (notifyError) {
+          console.warn('Failed to send notification:', notifyError);
+        }
+        
+        toast.success('Comissão paga! Afiliado notificado por email.');
         fetchProposals();
       } else {
         toast.error('Não foi possível pagar a comissão');
