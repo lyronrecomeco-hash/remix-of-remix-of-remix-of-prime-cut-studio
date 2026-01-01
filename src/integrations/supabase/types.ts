@@ -3681,10 +3681,14 @@ export type Database = {
           auto_reconnect: boolean | null
           auto_reply_enabled: boolean
           auto_reply_message: string | null
+          backend_token: string | null
+          backend_url: string | null
           created_at: string
           heartbeat_interval_ms: number | null
           id: string
           instance_token: string
+          is_active: boolean | null
+          last_heartbeat: string | null
           last_heartbeat_at: string | null
           last_seen: string | null
           max_reconnect_attempts: number | null
@@ -3703,10 +3707,14 @@ export type Database = {
           auto_reconnect?: boolean | null
           auto_reply_enabled?: boolean
           auto_reply_message?: string | null
+          backend_token?: string | null
+          backend_url?: string | null
           created_at?: string
           heartbeat_interval_ms?: number | null
           id?: string
           instance_token?: string
+          is_active?: boolean | null
+          last_heartbeat?: string | null
           last_heartbeat_at?: string | null
           last_seen?: string | null
           max_reconnect_attempts?: number | null
@@ -3725,10 +3733,14 @@ export type Database = {
           auto_reconnect?: boolean | null
           auto_reply_enabled?: boolean
           auto_reply_message?: string | null
+          backend_token?: string | null
+          backend_url?: string | null
           created_at?: string
           heartbeat_interval_ms?: number | null
           id?: string
           instance_token?: string
+          is_active?: boolean | null
+          last_heartbeat?: string | null
           last_heartbeat_at?: string | null
           last_seen?: string | null
           max_reconnect_attempts?: number | null
