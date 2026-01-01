@@ -118,30 +118,35 @@ Aguardo seu retorno! 💼`;
 
     // Enviar via backend local/VPS
     const backendEndpoint = instance.backend_url || "http://localhost:3001";
-    const backendToken = instance.backend_token;
+    const backendToken = instance.instance_token || instance.backend_token;
 
     console.log(`[WhatsApp Proposal] Sending to ${phone} via ${backendEndpoint}`);
 
-    const sendResponse = await fetch(`${backendEndpoint}/api/instance/${instance.id}/send`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(backendToken ? { "Authorization": `Bearer ${backendToken}` } : {}),
-      },
-      body: JSON.stringify({
-        phone,
-        message,
-      }),
-    });
+    try {
+      const sendResponse = await fetch(`${backendEndpoint}/api/instance/${instance.id}/send`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(backendToken ? { "Authorization": `Bearer ${backendToken}` } : {}),
+        },
+        body: JSON.stringify({
+          phone,
+          message,
+        }),
+      });
 
-    if (!sendResponse.ok) {
-      const errorText = await sendResponse.text();
-      console.error("[WhatsApp Proposal] Send failed:", errorText);
-      throw new Error(`Falha ao enviar WhatsApp: ${sendResponse.status}`);
+      if (!sendResponse.ok) {
+        const errorText = await sendResponse.text();
+        console.error("[WhatsApp Proposal] Send failed:", errorText);
+        throw new Error(`Falha ao enviar WhatsApp: ${sendResponse.status}`);
+      }
+
+      var sendResult = await sendResponse.json();
+      console.log("[WhatsApp Proposal] Message sent successfully:", sendResult);
+    } catch (fetchError) {
+      console.error("[WhatsApp Proposal] Fetch error:", fetchError);
+      throw new Error("Backend do WhatsApp não está acessível. Verifique se o script está rodando.");
     }
-
-    const sendResult = await sendResponse.json();
-    console.log("[WhatsApp Proposal] Message sent successfully:", sendResult);
 
     // Atualizar proposta com status de envio
     await supabase
