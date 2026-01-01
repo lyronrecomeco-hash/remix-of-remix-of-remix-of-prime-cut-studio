@@ -68,7 +68,6 @@ export function useWhatsAppConnection() {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
         },
         signal: controller.signal,
       });
@@ -108,14 +107,16 @@ export function useWhatsAppConnection() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-    try {
-      const response = await fetch(`${backendUrl}/api/instance/${instanceId}/qrcode`, {
-        method: 'POST',
+    const doRequest = async (method: 'GET' | 'POST') => {
+      const url = `${backendUrl}/api/instance/${instanceId}/qrcode`;
+
+      const response = await fetch(url, {
+        method,
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          ...(method === 'POST' ? { 'Content-Type': 'application/json' } : {}),
         },
-        body: JSON.stringify({ phone: phoneHint }),
+        ...(method === 'POST' ? { body: JSON.stringify({ phone: phoneHint }) } : {}),
         signal: controller.signal,
       });
 
@@ -137,9 +138,7 @@ export function useWhatsAppConnection() {
         const msg =
           result?.error ||
           result?.message ||
-          (rawText && rawText.includes('Cannot POST')
-            ? 'Endpoint de QR Code não encontrado no backend.'
-            : '') ||
+          (rawText && rawText.includes('Cannot') ? 'Endpoint de QR Code não encontrado no backend.' : '') ||
           `Erro ao gerar QR Code (HTTP ${response.status})`;
 
         throw new Error(msg);
@@ -162,6 +161,16 @@ export function useWhatsAppConnection() {
       }
 
       throw new Error(result.error || result.message || 'QR Code não disponível');
+    };
+
+    try {
+      // Prefer GET (evita alguns NetworkError de CORS/preflight em certos browsers)
+      try {
+        return await doRequest('GET');
+      } catch (e) {
+        // fallback para compatibilidade com scripts antigos
+        return await doRequest('POST');
+      }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Erro desconhecido';
       throw new Error(message);

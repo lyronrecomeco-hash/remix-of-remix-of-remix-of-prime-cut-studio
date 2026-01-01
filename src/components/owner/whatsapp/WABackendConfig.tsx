@@ -252,7 +252,8 @@ export const WABackendConfig = ({
 
   const getLocalScript = () => {
     return `// ===============================================
-// WhatsApp Backend Local (PC Local) v2.2
+// WhatsApp Backend Local (PC Local) v2.3
+// - CORS/preflight robusto (resolve NetworkError no browser)
 // - Reconnect automático para erro 515 (stream error)
 // Rotas: /api/instance/:id/{qrcode,status,disconnect,send}
 // ===============================================
@@ -282,11 +283,21 @@ const pushLog = (type, message) => {
   console.log('[' + String(type).toUpperCase() + '] ' + message);
 };
 
-app.use(cors({ origin: true, credentials: true }));
+const corsOptions = {
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Authorization', 'Content-Type'],
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json({ limit: '5mb' }));
 
 const authMiddleware = (req, res, next) => {
-  if (req.method === 'OPTIONS') return next();
+  // Responde preflight antes de qualquer outra coisa (evita NetworkError no browser)
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+
   const auth = req.headers.authorization;
   if (!auth || auth !== 'Bearer ' + TOKEN) {
     return res.status(401).json({ error: 'Unauthorized' });
@@ -321,6 +332,26 @@ const backoffMs = (attempt) => {
   return ms;
 };
 
+const getMeId = (sock) => {
+  try {
+    const idFromUser = sock && sock.user && sock.user.id ? String(sock.user.id) : null;
+    if (idFromUser) return idFromUser;
+
+    // Em algumas versões, o "me" vive no authState
+    const me = sock && sock.authState && sock.authState.creds && sock.authState.creds.me
+      ? sock.authState.creds.me
+      : null;
+
+    if (!me) return null;
+    if (typeof me === 'string') return me;
+    if (me.id) return String(me.id);
+    if (me.jid) return String(me.jid);
+    return null;
+  } catch {
+    return null;
+  }
+};
+
 const createOrGetSocket = async (instanceId) => {
   if (connections.has(instanceId)) return connections.get(instanceId);
 
@@ -334,7 +365,7 @@ const createOrGetSocket = async (instanceId) => {
     auth: state,
     version,
     printQRInTerminal: false,
-    browser: ['Genesis Hub', 'Chrome', '2.2'],
+    browser: ['Genesis Hub', 'Chrome', '2.3'],
   });
 
   const conn = {
@@ -395,7 +426,7 @@ const createOrGetSocket = async (instanceId) => {
       conn.lastDisconnectCode = null;
       conn.lastDisconnectAt = null;
 
-      const raw = sock.user && sock.user.id ? String(sock.user.id) : '';
+      const raw = getMeId(sock) || '';
       conn.phone = raw ? raw.split('@')[0].split(':')[0] : null;
       pushLog('success', 'Instância ' + instanceId + ' conectada (' + (conn.phone || 'sem número') + ')');
     }
@@ -434,7 +465,7 @@ const createOrGetSocket = async (instanceId) => {
 };
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', name: 'WhatsApp Local Backend', version: '2.2.0', routes: { apiInstance: true } });
+  res.json({ status: 'ok', name: 'WhatsApp Local Backend', version: '2.3.0', routes: { apiInstance: true } });
 });
 
 app.get('/logs', (req, res) => {
@@ -450,10 +481,11 @@ app.get('/api/instance/:id/status', async (req, res) => {
   const conn = connections.get(instanceId);
   if (!conn) return res.json({ status: 'disconnected', connected: false });
 
-  const hasUser = !!(conn.sock && conn.sock.user && conn.sock.user.id);
-  const connected = conn.status === 'connected' || hasUser;
+  const meId = getMeId(conn.sock);
+  const hasMe = !!meId;
+  const connected = conn.status === 'connected' || hasMe;
 
-  const phoneFromSock = hasUser ? String(conn.sock.user.id).split('@')[0].split(':')[0] : null;
+  const phoneFromSock = hasMe ? String(meId).split('@')[0].split(':')[0] : null;
   const phone = conn.phone || phoneFromSock || null;
 
   if (connected && conn.status !== 'connected') {
@@ -472,14 +504,24 @@ app.get('/api/instance/:id/status', async (req, res) => {
   });
 });
 
-app.post('/api/instance/:id/qrcode', async (req, res) => {
+const handleQRCode = async (req, res) => {
   const instanceId = String(req.params.id);
 
   try {
+    pushLog('info', 'Solicitação de QR para instância ' + instanceId);
+
     const conn = await createOrGetSocket(instanceId);
 
-    if (conn.status === 'connected') {
-      return res.json({ status: 'connected', connected: true, phone: conn.phone || undefined });
+    const meId = getMeId(conn.sock);
+    const connected = conn.status === 'connected' || !!meId;
+
+    if (connected) {
+      const phone = conn.phone || (meId ? String(meId).split('@')[0].split(':')[0] : null);
+      conn.status = 'connected';
+      conn.qr = null;
+      conn.qrCreatedAt = null;
+      conn.phone = phone;
+      return res.json({ status: 'connected', connected: true, phone: phone || undefined });
     }
 
     const startedAt = Date.now();
@@ -498,7 +540,12 @@ app.post('/api/instance/:id/qrcode', async (req, res) => {
     pushLog('error', 'Falha ao gerar QR (' + instanceId + '): ' + msg);
     return res.status(500).json({ error: msg });
   }
-});
+};
+
+// GET e POST (para compatibilidade com frontends diferentes)
+app.get('/api/instance/:id/qrcode', handleQRCode);
+app.post('/api/instance/:id/qrcode', handleQRCode);
+
 
 app.post('/api/instance/:id/disconnect', async (req, res) => {
   const instanceId = String(req.params.id);
