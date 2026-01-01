@@ -27,6 +27,7 @@ import AIContentGenerator from '@/components/affiliate/AIContentGenerator';
 import AffiliateProposals from '@/components/affiliate/AffiliateProposals';
 import HowItWorksModal from '@/components/affiliate/HowItWorksModal';
 import AffiliateWelcomeModal from '@/components/affiliate/AffiliateWelcomeModal';
+import { AffiliateProfileMenu } from '@/components/affiliate/AffiliateProfileMenu';
 
 interface Affiliate {
   id: string;
@@ -50,8 +51,6 @@ const navItems = [
   { id: 'ai', label: 'Criar com IA', icon: Sparkles },
   { id: 'materials', label: 'Materiais', icon: FileText },
   { id: 'withdrawals', label: 'Saques', icon: Wallet },
-  { id: 'profile', label: 'Meu Perfil', icon: User },
-  { id: 'settings', label: 'Configurações', icon: Settings },
 ];
 
 const AffiliatePanel = () => {
@@ -66,7 +65,6 @@ const AffiliatePanel = () => {
     checkAffiliateAuth();
   }, []);
 
-  // Check if this is the first login for welcome modal
   const checkFirstLogin = (affiliateId: string) => {
     const welcomeKey = `affiliate_welcome_shown_${affiliateId}`;
     const hasSeenWelcome = localStorage.getItem(welcomeKey);
@@ -110,8 +108,6 @@ const AffiliatePanel = () => {
       }
 
       setAffiliate(affiliateData as Affiliate);
-      
-      // Check for first login welcome modal
       checkFirstLogin(affiliateData.id);
     } catch (error) {
       console.error('Erro ao verificar autenticação:', error);
@@ -165,7 +161,6 @@ const AffiliatePanel = () => {
 
   return (
     <div className="theme-affiliate-blue min-h-screen bg-background flex">
-      {/* Welcome Modal for first login */}
       {affiliate && (
         <AffiliateWelcomeModal
           isOpen={showWelcomeModal}
@@ -184,7 +179,16 @@ const AffiliatePanel = () => {
           {sidebarOpen ? <X className="w-5 h-5 text-foreground" /> : <Menu className="w-5 h-5 text-foreground" />}
         </button>
         <h1 className="font-bold text-foreground">Genesis Hub</h1>
-        <div className="w-9" /> {/* Spacer for centering */}
+        {affiliate && (
+          <AffiliateProfileMenu
+            affiliateName={affiliate.name}
+            affiliateCode={affiliate.affiliate_code}
+            onNavigate={(tab) => {
+              setActiveTab(tab);
+              setSidebarOpen(false);
+            }}
+          />
+        )}
       </div>
 
       {/* Sidebar Overlay */}
@@ -202,23 +206,13 @@ const AffiliatePanel = () => {
         } pt-14 lg:pt-0`}
       >
         <div className="flex flex-col h-full">
-          {/* Logo - Hidden on mobile since we have the header */}
+          {/* Logo */}
           <div className="hidden lg:block p-6 border-b border-border">
             <h1 className="text-xl font-bold text-foreground">
               Genesis Hub
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               Portal de Parceiros
-            </p>
-          </div>
-
-          {/* Affiliate Info */}
-          <div className="p-4 mx-4 mt-4 lg:mt-4 bg-secondary/50 rounded-lg">
-            <p className="text-sm font-medium text-foreground truncate">
-              {affiliate?.name}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Código: {affiliate?.affiliate_code}
             </p>
           </div>
 
@@ -258,8 +252,8 @@ const AffiliatePanel = () => {
             })}
           </nav>
 
-          {/* Logout */}
-          <div className="p-4 border-t border-border">
+          {/* Logout - Only on sidebar */}
+          <div className="p-4 border-t border-border lg:hidden">
             <Button
               variant="ghost"
               onClick={handleLogout}
@@ -274,6 +268,24 @@ const AffiliatePanel = () => {
 
       {/* Main Content */}
       <main className="flex-1 min-h-screen overflow-y-auto pt-14 lg:pt-0">
+        {/* Desktop Header */}
+        <div className="hidden lg:flex items-center justify-between px-8 py-4 border-b border-border bg-card/50">
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">
+              {navItems.find(n => n.id === activeTab)?.label || 
+               (activeTab === 'profile' ? 'Meu Perfil' : 
+                activeTab === 'settings' ? 'Configurações' : 'Dashboard')}
+            </h2>
+          </div>
+          {affiliate && (
+            <AffiliateProfileMenu
+              affiliateName={affiliate.name}
+              affiliateCode={affiliate.affiliate_code}
+              onNavigate={setActiveTab}
+            />
+          )}
+        </div>
+        
         <div className="p-4 lg:p-8">
           <motion.div
             key={activeTab}
