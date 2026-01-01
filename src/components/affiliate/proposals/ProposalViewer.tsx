@@ -15,7 +15,8 @@ import {
   FileText,
   Sparkles,
   Loader2,
-  Download
+  Download,
+  MessageCircle
 } from 'lucide-react';
 import { AffiliateProposal } from './types';
 import { supabase } from '@/integrations/supabase/client';
@@ -53,6 +54,7 @@ export const ProposalViewer: React.FC<ProposalViewerProps> = ({
 }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
   const generatedProposal = proposal.generated_proposal as GeneratedProposal | null;
@@ -91,8 +93,10 @@ export const ProposalViewer: React.FC<ProposalViewerProps> = ({
       toast.success('Proposta gerada com sucesso!');
       onProposalUpdated();
 
-      // If auto-send is enabled, send immediately
-      if (autoSendEnabled && proposal.company_email) {
+      // Auto-send via WhatsApp if phone is available (priority)
+      if (autoSendEnabled && proposal.company_phone) {
+        await handleSendWhatsApp();
+      } else if (autoSendEnabled && proposal.company_email) {
         await handleSendProposal();
       }
     } catch (error) {
@@ -130,6 +134,43 @@ export const ProposalViewer: React.FC<ProposalViewerProps> = ({
       toast.error('Erro ao enviar proposta por email');
     } finally {
       setIsSending(false);
+    }
+  };
+
+  // Enviar via WhatsApp - instantâneo
+  const handleSendWhatsApp = async () => {
+    if (!generatedProposal) {
+      toast.error('Gere a proposta antes de enviar');
+      return;
+    }
+
+    if (!proposal.company_phone) {
+      toast.error('Telefone da empresa não informado. Edite a proposta e adicione o telefone.');
+      return;
+    }
+
+    setIsSendingWhatsApp(true);
+    const startTime = Date.now();
+    
+    try {
+      console.log('[ProposalViewer] Sending proposal via WhatsApp...');
+      
+      const { data, error } = await supabase.functions.invoke('send-proposal-whatsapp', {
+        body: { proposalId: proposal.id }
+      });
+
+      const elapsed = Date.now() - startTime;
+      console.log(`[ProposalViewer] WhatsApp send completed in ${elapsed}ms`);
+
+      if (error) throw error;
+
+      toast.success(`Proposta enviada via WhatsApp em ${elapsed}ms! 🚀`);
+      onProposalUpdated();
+    } catch (error) {
+      console.error('Error sending WhatsApp:', error);
+      toast.error('Erro ao enviar via WhatsApp. Verifique se a automação está conectada.');
+    } finally {
+      setIsSendingWhatsApp(false);
     }
   };
 
@@ -603,14 +644,38 @@ export const ProposalViewer: React.FC<ProposalViewerProps> = ({
                     )}
                     Regenerar
                   </Button>
-                  <Button onClick={handleSendProposal} disabled={isSending}>
-                    {isSending ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Send className="h-4 w-4 mr-2" />
-                    )}
-                    Enviar Proposta
-                  </Button>
+                  
+                  {/* WhatsApp - Prioridade */}
+                  {proposal.company_phone && (
+                    <Button 
+                      onClick={handleSendWhatsApp} 
+                      disabled={isSendingWhatsApp}
+                      className="bg-emerald-600 hover:bg-emerald-700 gap-2"
+                    >
+                      {isSendingWhatsApp ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <MessageCircle className="h-4 w-4" />
+                      )}
+                      WhatsApp
+                    </Button>
+                  )}
+                  
+                  {/* Email - Fallback */}
+                  {proposal.company_email && (
+                    <Button 
+                      variant={proposal.company_phone ? "outline" : "default"}
+                      onClick={handleSendProposal} 
+                      disabled={isSending}
+                    >
+                      {isSending ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4 mr-2" />
+                      )}
+                      Email
+                    </Button>
+                  )}
                 </>
               )}
             </div>
