@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   LayoutDashboard,
   Users,
@@ -13,15 +13,13 @@ import {
   Settings,
   Menu,
   X,
-  ChevronLeft,
   Building2,
   LogOut,
   Search,
-  Bell,
+  ChevronRight,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { useCRM } from '@/contexts/CRMContext';
 import { cn } from '@/lib/utils';
 
@@ -54,14 +52,15 @@ const menuItems = [
   { id: 'users', label: 'Usuários', icon: UserCog, adminOnly: true },
   { id: 'reports', label: 'Relatórios', icon: BarChart3 },
   { id: 'settings', label: 'Configurações', icon: Settings, adminOnly: true },
-];
+] as const;
+
+type MenuItemId = (typeof menuItems)[number]['id'] | 'company' | 'collaborators' | 'profile';
 
 export default function CRMPanel() {
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState<MenuItemId>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [searchValue, setSearchValue] = useState('');
+
   const { crmUser, crmTenant, isAuthenticated, isLoading, logout, isAdmin } = useCRM();
   const navigate = useNavigate();
 
@@ -74,7 +73,7 @@ export default function CRMPanel() {
   // Keyboard shortcut for search
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setIsSearchOpen(true);
       }
@@ -83,35 +82,34 @@ export default function CRMPanel() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  const filteredMenuItems = useMemo(
+    () => menuItems.filter((item) => !item.adminOnly || isAdmin),
+    [isAdmin]
+  );
+
+  const getActiveLabel = () => {
+    const fromMenu = filteredMenuItems.find((i) => i.id === activeTab)?.label;
+    if (fromMenu) return fromMenu;
+    switch (activeTab) {
+      case 'company':
+        return 'Minha Empresa';
+      case 'collaborators':
+        return 'Colaboradores';
+      case 'profile':
+        return 'Meu Perfil';
+      default:
+        return 'CRM';
+    }
+  };
+
   const handleLogout = async () => {
     await logout();
     navigate('/crm/login');
   };
 
   const handleProfileNavigate = (tab: string) => {
-    setActiveTab(tab);
+    setActiveTab(tab as MenuItemId);
   };
-
-  if (isLoading) {
-    return (
-      <CRMSecurityProvider>
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary mx-auto mb-3"></div>
-            <p className="text-sm text-muted-foreground">Carregando...</p>
-          </div>
-        </div>
-      </CRMSecurityProvider>
-    );
-  }
-
-  if (!isAuthenticated || !crmUser || !crmTenant) {
-    return null;
-  }
-
-  const filteredMenuItems = menuItems.filter(
-    (item) => !item.adminOnly || isAdmin
-  );
 
   const renderContent = () => {
     switch (activeTab) {
@@ -144,141 +142,95 @@ export default function CRMPanel() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <CRMSecurityProvider>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">Carregando...</p>
+          </div>
+        </div>
+      </CRMSecurityProvider>
+    );
+  }
+
+  if (!isAuthenticated || !crmUser || !crmTenant) {
+    return null;
+  }
+
   return (
     <CRMSecurityProvider>
       {/* Interactive Background - Medium intensity */}
       <CRMInteractiveBackground />
-      
+
       {/* Global Search */}
-      <CRMGlobalSearch 
-        isOpen={isSearchOpen} 
+      <CRMGlobalSearch
+        isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
-        onNavigate={(tab) => setActiveTab(tab)}
+        onNavigate={(tab) => setActiveTab(tab as MenuItemId)}
       />
 
       {/* Onboarding Modal */}
       {!crmTenant.onboarding_completed && <CRMOnboardingModal />}
 
-      <div className="min-h-screen bg-background/80 relative">
-        {/* Desktop Sidebar */}
-        <motion.aside
-          initial={false}
-          animate={{ width: isSidebarOpen ? 260 : 72 }}
-          className={cn(
-            'hidden lg:flex flex-col border-r border-border bg-card/60 backdrop-blur-md transition-all duration-300',
-            'fixed left-0 top-0 h-screen z-40'
-          )}
-        >
-          {/* Sidebar Header */}
-          <div className="h-14 border-b border-border flex items-center justify-between px-3">
-            <AnimatePresence mode="wait">
-              {isSidebarOpen && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex items-center gap-2"
-                >
-                  <Building2 className="w-5 h-5 text-primary" />
-                  <span className="font-semibold text-sm truncate">
-                    {crmTenant.name || 'CRM'}
-                  </span>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="shrink-0 h-8 w-8"
-            >
-              <ChevronLeft
-                className={cn(
-                  'w-4 h-4 transition-transform',
-                  !isSidebarOpen && 'rotate-180'
-                )}
-              />
-            </Button>
+      <div className="min-h-screen bg-background/80 relative flex w-full">
+        {/* Desktop Sidebar (Owner-style) */}
+        <aside className="hidden lg:flex w-72 border-r border-border bg-card/60 backdrop-blur-md fixed left-0 top-0 bottom-0 z-40 flex-col">
+          <div className="h-16 px-5 border-b border-border flex items-center shrink-0">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                <Building2 className="w-5 h-5 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground truncate">CRM</p>
+                <p className="font-semibold text-sm text-foreground truncate">
+                  {crmTenant.name || 'Minha Empresa'}
+                </p>
+              </div>
+            </div>
           </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 py-2 px-2 space-y-0.5 overflow-y-auto">
+          <nav className="flex-1 overflow-y-auto p-4 space-y-1">
             {filteredMenuItems.map((item) => (
               <Button
                 key={item.id}
                 variant={activeTab === item.id ? 'secondary' : 'ghost'}
                 className={cn(
-                  'w-full justify-start gap-2 h-9 text-sm',
-                  !isSidebarOpen && 'justify-center px-0',
+                  'w-full justify-start gap-3 h-10 text-sm',
                   activeTab === item.id && 'bg-primary/10 text-primary'
                 )}
                 onClick={() => setActiveTab(item.id)}
               >
                 <item.icon className="w-4 h-4 shrink-0" />
-                {isSidebarOpen && (
-                  <span className="truncate">{item.label}</span>
-                )}
+                <span className="truncate">{item.label}</span>
               </Button>
             ))}
           </nav>
 
-          {/* User Info & Logout */}
-          <div className="border-t border-border p-3">
-            {isSidebarOpen && (
-              <div className="mb-2">
-                <p className="font-medium text-xs truncate">{crmUser.name}</p>
-                <p className="text-[10px] text-muted-foreground truncate">
-                  {crmUser.role === 'admin'
-                    ? 'Administrador'
-                    : crmUser.role === 'manager'
-                    ? 'Gestor'
-                    : 'Colaborador'}
-                </p>
-              </div>
-            )}
-            <Button
-              variant="outline"
-              size={isSidebarOpen ? 'sm' : 'icon'}
-              className={cn("w-full h-8", !isSidebarOpen && "w-8")}
-              onClick={handleLogout}
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              {isSidebarOpen && <span className="ml-2 text-xs">Sair</span>}
+          <div className="border-t border-border p-4 shrink-0 space-y-2">
+            <div className="px-1">
+              <p className="font-medium text-xs truncate">{crmUser.name}</p>
+              <p className="text-[10px] text-muted-foreground truncate">
+                {crmUser.role === 'admin'
+                  ? 'Administrador'
+                  : crmUser.role === 'manager'
+                  ? 'Gestor'
+                  : 'Colaborador'}
+              </p>
+            </div>
+            <Button variant="outline" size="sm" className="w-full h-9" onClick={handleLogout}>
+              <LogOut className="w-4 h-4" />
+              <span className="ml-2 text-sm">Sair</span>
             </Button>
           </div>
-        </motion.aside>
-
-        {/* Desktop Top Header - Premium Style */}
-        <div 
-          className="hidden lg:flex fixed top-0 right-0 h-14 bg-card/80 backdrop-blur-md border-b border-border z-30 items-center justify-between px-4 gap-4"
-          style={{ left: isSidebarOpen ? '260px' : '72px', transition: 'left 0.3s' }}
-        >
-          {/* Search Input - Always Visible */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar leads, tarefas..."
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              onFocus={() => setIsSearchOpen(true)}
-              className="pl-9 h-9 bg-muted/50 border-transparent focus:border-primary/50 text-sm"
-            />
-            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded bg-muted text-[10px] text-muted-foreground hidden sm:inline-block">
-              ⌘K
-            </kbd>
-          </div>
-
-          {/* Right Side Icons */}
-          <div className="flex items-center gap-2">
-            <CRMProfileMenu onNavigate={handleProfileNavigate} onLogout={handleLogout} />
-          </div>
-        </div>
+        </aside>
 
         {/* Mobile Header */}
-        <div className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-card/90 backdrop-blur-md border-b border-border z-40 flex items-center justify-between px-3">
-          <div className="flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-primary" />
-            <span className="font-semibold text-sm">{crmTenant.name || 'CRM'}</span>
+        <div className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-card/90 backdrop-blur-md border-b border-border z-50 flex items-center justify-between px-3">
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground truncate">CRM</p>
+            <p className="font-semibold text-sm truncate">{getActiveLabel()}</p>
           </div>
           <div className="flex items-center gap-1">
             <Button
@@ -296,11 +248,7 @@ export default function CRMPanel() {
               className="h-8 w-8"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
-              {isMobileMenuOpen ? (
-                <X className="w-4 h-4" />
-              ) : (
-                <Menu className="w-4 h-4" />
-              )}
+              {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </Button>
           </div>
         </div>
@@ -321,12 +269,17 @@ export default function CRMPanel() {
                 animate={{ x: 0 }}
                 exit={{ x: '-100%' }}
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="lg:hidden fixed left-0 top-0 h-full w-64 bg-card border-r border-border z-50 flex flex-col"
+                className="lg:hidden fixed left-0 top-0 h-full w-72 bg-card border-r border-border z-50 flex flex-col"
               >
-                <div className="h-14 border-b border-border flex items-center justify-between px-3">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="w-5 h-5 text-primary" />
-                    <span className="font-semibold text-sm">{crmTenant.name || 'CRM'}</span>
+                <div className="h-16 px-5 border-b border-border flex items-center justify-between">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                      <Building2 className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] text-muted-foreground truncate">CRM</p>
+                      <p className="font-semibold text-sm truncate">{crmTenant.name || 'Minha Empresa'}</p>
+                    </div>
                   </div>
                   <Button
                     variant="ghost"
@@ -338,13 +291,13 @@ export default function CRMPanel() {
                   </Button>
                 </div>
 
-                <nav className="flex-1 py-2 px-2 space-y-0.5 overflow-y-auto">
+                <nav className="flex-1 overflow-y-auto p-4 space-y-1">
                   {filteredMenuItems.map((item) => (
                     <Button
                       key={item.id}
                       variant={activeTab === item.id ? 'secondary' : 'ghost'}
                       className={cn(
-                        'w-full justify-start gap-2 h-9 text-sm',
+                        'w-full justify-start gap-3 h-10 text-sm',
                         activeTab === item.id && 'bg-primary/10 text-primary'
                       )}
                       onClick={() => {
@@ -352,31 +305,16 @@ export default function CRMPanel() {
                         setIsMobileMenuOpen(false);
                       }}
                     >
-                      <item.icon className="w-4 h-4" />
-                      <span>{item.label}</span>
+                      <item.icon className="w-4 h-4 shrink-0" />
+                      <span className="truncate">{item.label}</span>
                     </Button>
                   ))}
                 </nav>
 
-                <div className="border-t border-border p-3">
-                  <div className="mb-2">
-                    <p className="font-medium text-xs">{crmUser.name}</p>
-                    <p className="text-[10px] text-muted-foreground">
-                      {crmUser.role === 'admin'
-                        ? 'Administrador'
-                        : crmUser.role === 'manager'
-                        ? 'Gestor'
-                        : 'Colaborador'}
-                    </p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full h-8"
-                    onClick={handleLogout}
-                  >
-                    <LogOut className="w-3.5 h-3.5 mr-2" />
-                    Sair
+                <div className="border-t border-border p-4 shrink-0">
+                  <Button variant="outline" size="sm" className="w-full h-9" onClick={handleLogout}>
+                    <LogOut className="w-4 h-4" />
+                    <span className="ml-2 text-sm">Sair</span>
                   </Button>
                 </div>
               </motion.div>
@@ -384,28 +322,47 @@ export default function CRMPanel() {
           )}
         </AnimatePresence>
 
-        {/* Main Content - Compact */}
-        <main
-          className={cn(
-            'flex-1 min-h-screen transition-all duration-300',
-            'pt-14',
-            isSidebarOpen ? 'lg:ml-[260px]' : 'lg:ml-[72px]'
-          )}
-        >
-          <div className="p-3 lg:p-4">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.12 }}
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col min-h-screen lg:ml-72">
+          {/* Top Header - Title replaces search input */}
+          <header className="hidden lg:flex h-14 border-b border-border bg-card/80 backdrop-blur-md items-center justify-between px-4 sticky top-0 z-30">
+            <div className="flex items-center gap-2 min-w-0">
+              <Sparkles className="w-4 h-4 text-primary shrink-0" />
+              <span className="text-xs text-muted-foreground shrink-0">CRM</span>
+              <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+              <h1 className="text-sm font-semibold text-foreground truncate">{getActiveLabel()}</h1>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9"
+                onClick={() => setIsSearchOpen(true)}
+                aria-label="Buscar no CRM"
               >
-                {renderContent()}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </main>
+                <Search className="w-4 h-4" />
+              </Button>
+              <CRMProfileMenu onNavigate={handleProfileNavigate} onLogout={handleLogout} />
+            </div>
+          </header>
+
+          <main className="flex-1 overflow-y-auto bg-muted/20 pt-14 lg:pt-0">
+            <div className="p-4 lg:p-6">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.12 }}
+                >
+                  {renderContent()}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </main>
+        </div>
       </div>
     </CRMSecurityProvider>
   );
