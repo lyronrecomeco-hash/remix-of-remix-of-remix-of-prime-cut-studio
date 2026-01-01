@@ -18,8 +18,11 @@ import {
   Search,
   ChevronRight,
   Sparkles,
+  Bell,
+  LucideIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useCRM } from '@/contexts/CRMContext';
 import { cn } from '@/lib/utils';
 
@@ -42,19 +45,36 @@ import CRMSecurityProvider from '@/components/crm/CRMSecurityProvider';
 import CRMInteractiveBackground from '@/components/crm/CRMInteractiveBackground';
 import CRMGlobalSearch from '@/components/crm/CRMGlobalSearch';
 
-const menuItems = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'leads', label: 'Leads', icon: Users },
-  { id: 'kanban', label: 'Pipeline de Vendas', icon: Kanban },
-  { id: 'pipelines', label: 'Funis', icon: GitBranch },
-  { id: 'tasks', label: 'Tarefas', icon: CheckSquare },
-  { id: 'financial', label: 'Financeiro', icon: DollarSign },
-  { id: 'users', label: 'Usuários', icon: UserCog, adminOnly: true },
-  { id: 'reports', label: 'Relatórios', icon: BarChart3 },
-  { id: 'settings', label: 'Configurações', icon: Settings, adminOnly: true },
-] as const;
+interface NavItem {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  adminOnly?: boolean;
+  category: string;
+}
 
-type MenuItemId = (typeof menuItems)[number]['id'] | 'company' | 'collaborators' | 'profile';
+const navItems: NavItem[] = [
+  // Visão Geral
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, category: 'Visão Geral' },
+  
+  // Vendas
+  { id: 'kanban', label: 'Pipeline', icon: Kanban, category: 'Vendas' },
+  { id: 'leads', label: 'Leads', icon: Users, category: 'Vendas' },
+  { id: 'pipelines', label: 'Funis', icon: GitBranch, category: 'Vendas' },
+  
+  // Operações
+  { id: 'tasks', label: 'Tarefas', icon: CheckSquare, category: 'Operações' },
+  { id: 'financial', label: 'Financeiro', icon: DollarSign, category: 'Operações' },
+  { id: 'reports', label: 'Relatórios', icon: BarChart3, category: 'Operações' },
+  
+  // Gestão
+  { id: 'collaborators', label: 'Colaboradores', icon: Users, category: 'Gestão', adminOnly: true },
+  { id: 'users', label: 'Usuários', icon: UserCog, category: 'Gestão', adminOnly: true },
+  { id: 'company', label: 'Empresa', icon: Building2, category: 'Gestão' },
+  { id: 'settings', label: 'Config.', icon: Settings, category: 'Gestão', adminOnly: true },
+];
+
+type MenuItemId = string;
 
 export default function CRMPanel() {
   const [activeTab, setActiveTab] = useState<MenuItemId>('dashboard');
@@ -82,23 +102,34 @@ export default function CRMPanel() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const filteredMenuItems = useMemo(
-    () => menuItems.filter((item) => !item.adminOnly || isAdmin),
+  const filteredItems = useMemo(
+    () => navItems.filter((item) => !item.adminOnly || isAdmin),
     [isAdmin]
   );
 
+  // Group items by category
+  const groupedItems = useMemo(() => {
+    return filteredItems.reduce((acc, item) => {
+      if (!acc[item.category]) acc[item.category] = [];
+      acc[item.category].push(item);
+      return acc;
+    }, {} as Record<string, NavItem[]>);
+  }, [filteredItems]);
+
   const getActiveLabel = () => {
-    const fromMenu = filteredMenuItems.find((i) => i.id === activeTab)?.label;
-    if (fromMenu) return fromMenu;
+    const fromNav = filteredItems.find((i) => i.id === activeTab)?.label;
+    if (fromNav) return fromNav;
     switch (activeTab) {
-      case 'company':
-        return 'Minha Empresa';
-      case 'collaborators':
-        return 'Colaboradores';
-      case 'profile':
-        return 'Meu Perfil';
-      default:
-        return 'CRM';
+      case 'profile': return 'Meu Perfil';
+      default: return 'CRM';
+    }
+  };
+
+  const getRoleName = (role: string) => {
+    switch (role) {
+      case 'admin': return 'Administrador';
+      case 'manager': return 'Gestor';
+      default: return 'Colaborador';
     }
   };
 
@@ -113,32 +144,19 @@ export default function CRMPanel() {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'dashboard':
-        return <CRMDashboard />;
-      case 'leads':
-        return <CRMLeads />;
-      case 'kanban':
-        return <CRMKanban />;
-      case 'pipelines':
-        return <CRMPipelines />;
-      case 'tasks':
-        return <CRMTasks />;
-      case 'financial':
-        return <CRMFinancial />;
-      case 'users':
-        return <CRMUsers />;
-      case 'reports':
-        return <CRMReports />;
-      case 'settings':
-        return <CRMSettings />;
-      case 'company':
-        return <CRMCompanyAccount />;
-      case 'collaborators':
-        return <CRMCollaborators />;
-      case 'profile':
-        return <CRMUserProfile />;
-      default:
-        return <CRMDashboard />;
+      case 'dashboard': return <CRMDashboard />;
+      case 'leads': return <CRMLeads />;
+      case 'kanban': return <CRMKanban />;
+      case 'pipelines': return <CRMPipelines />;
+      case 'tasks': return <CRMTasks />;
+      case 'financial': return <CRMFinancial />;
+      case 'users': return <CRMUsers />;
+      case 'reports': return <CRMReports />;
+      case 'settings': return <CRMSettings />;
+      case 'company': return <CRMCompanyAccount />;
+      case 'collaborators': return <CRMCollaborators />;
+      case 'profile': return <CRMUserProfile />;
+      default: return <CRMDashboard />;
     }
   };
 
@@ -147,8 +165,8 @@ export default function CRMPanel() {
       <CRMSecurityProvider>
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">Carregando...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto mb-2" />
+            <p className="text-xs text-muted-foreground">Carregando...</p>
           </div>
         </div>
       </CRMSecurityProvider>
@@ -175,73 +193,69 @@ export default function CRMPanel() {
       {!crmTenant.onboarding_completed && <CRMOnboardingModal />}
 
       <div className="min-h-screen bg-background/80 relative flex w-full">
-        {/* Desktop Sidebar (Owner-style) */}
-        <aside className="hidden lg:flex w-72 border-r border-border bg-card/60 backdrop-blur-md fixed left-0 top-0 bottom-0 z-40 flex-col">
-          <div className="h-16 px-5 border-b border-border flex items-center shrink-0">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                <Building2 className="w-5 h-5 text-primary" />
+        {/* Desktop Sidebar - Professional Layout */}
+        <aside className="hidden lg:flex w-56 border-r border-border bg-card/70 backdrop-blur-md fixed left-0 top-0 bottom-0 z-40 flex-col">
+          {/* Logo/Brand */}
+          <div className="h-12 px-3 border-b border-border flex items-center shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                <Building2 className="w-4 h-4 text-primary" />
               </div>
               <div className="min-w-0">
-                <p className="text-xs text-muted-foreground truncate">CRM</p>
-                <p className="font-semibold text-sm text-foreground truncate">
-                  {crmTenant.name || 'Minha Empresa'}
+                <p className="text-[9px] text-muted-foreground truncate uppercase tracking-wider">CRM</p>
+                <p className="font-semibold text-xs text-foreground truncate">
+                  {crmTenant.name || 'Empresa'}
                 </p>
               </div>
             </div>
           </div>
 
-          <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-            {filteredMenuItems.map((item) => (
-              <Button
-                key={item.id}
-                variant={activeTab === item.id ? 'secondary' : 'ghost'}
-                className={cn(
-                  'w-full justify-start gap-3 h-10 text-sm',
-                  activeTab === item.id && 'bg-primary/10 text-primary'
-                )}
-                onClick={() => setActiveTab(item.id)}
-              >
-                <item.icon className="w-4 h-4 shrink-0" />
-                <span className="truncate">{item.label}</span>
-              </Button>
+          {/* Navigation - Categorized */}
+          <nav className="flex-1 overflow-y-auto py-2 px-2">
+            {Object.entries(groupedItems).map(([category, items]) => (
+              <div key={category} className="mb-3">
+                <p className="px-2 mb-1 text-[9px] font-medium text-muted-foreground uppercase tracking-wider">
+                  {category}
+                </p>
+                <div className="space-y-0.5">
+                  {items.map((item) => (
+                    <Button
+                      key={item.id}
+                      variant={activeTab === item.id ? 'secondary' : 'ghost'}
+                      size="sm"
+                      className={cn(
+                        'w-full justify-start gap-2 h-8 text-xs font-normal',
+                        activeTab === item.id && 'bg-primary/10 text-primary font-medium border border-primary/20'
+                      )}
+                      onClick={() => setActiveTab(item.id)}
+                    >
+                      <item.icon className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate">{item.label}</span>
+                    </Button>
+                  ))}
+                </div>
+              </div>
             ))}
           </nav>
 
-          <div className="border-t border-border p-4 shrink-0 space-y-2">
-            <div className="px-1">
+          {/* User Footer */}
+          <div className="border-t border-border p-2 shrink-0">
+            <div className="px-1 mb-2">
               <p className="font-medium text-xs truncate">{crmUser.name}</p>
-              <p className="text-[10px] text-muted-foreground truncate">
-                {crmUser.role === 'admin'
-                  ? 'Administrador'
-                  : crmUser.role === 'manager'
-                  ? 'Gestor'
-                  : 'Colaborador'}
+              <p className="text-[9px] text-muted-foreground truncate">
+                {getRoleName(crmUser.role)}
               </p>
             </div>
-            <Button variant="outline" size="sm" className="w-full h-9" onClick={handleLogout}>
-              <LogOut className="w-4 h-4" />
-              <span className="ml-2 text-sm">Sair</span>
+            <Button variant="outline" size="sm" className="w-full h-7 text-xs" onClick={handleLogout}>
+              <LogOut className="w-3 h-3 mr-1.5" />
+              Sair
             </Button>
           </div>
         </aside>
 
         {/* Mobile Header */}
-        <div className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-card/90 backdrop-blur-md border-b border-border z-50 flex items-center justify-between px-3">
-          <div className="min-w-0">
-            <p className="text-[10px] text-muted-foreground truncate">CRM</p>
-            <p className="font-semibold text-sm truncate">{getActiveLabel()}</p>
-          </div>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setIsSearchOpen(true)}
-            >
-              <Search className="w-4 h-4" />
-            </Button>
-            <CRMProfileMenu onNavigate={handleProfileNavigate} onLogout={handleLogout} />
+        <div className="lg:hidden fixed top-0 left-0 right-0 h-12 bg-card/95 backdrop-blur-md border-b border-border z-50 flex items-center justify-between px-3">
+          <div className="flex items-center gap-2 min-w-0">
             <Button
               variant="ghost"
               size="icon"
@@ -250,6 +264,22 @@ export default function CRMPanel() {
             >
               {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </Button>
+            <div className="min-w-0">
+              <p className="text-[9px] text-muted-foreground truncate uppercase tracking-wider">
+                {crmTenant.name}
+              </p>
+              <p className="font-semibold text-sm truncate">{getActiveLabel()}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-0.5">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsSearchOpen(true)}>
+              <Search className="w-4 h-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8 relative">
+              <Bell className="w-4 h-4" />
+              <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 bg-primary rounded-full text-[8px] text-primary-foreground flex items-center justify-center">3</span>
+            </Button>
+            <CRMProfileMenu onNavigate={handleProfileNavigate} onLogout={handleLogout} />
           </div>
         </div>
 
@@ -269,52 +299,57 @@ export default function CRMPanel() {
                 animate={{ x: 0 }}
                 exit={{ x: '-100%' }}
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="lg:hidden fixed left-0 top-0 h-full w-72 bg-card border-r border-border z-50 flex flex-col"
+                className="lg:hidden fixed left-0 top-0 h-full w-64 bg-card border-r border-border z-50 flex flex-col"
               >
-                <div className="h-16 px-5 border-b border-border flex items-center justify-between">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                      <Building2 className="w-5 h-5 text-primary" />
+                <div className="h-12 px-3 border-b border-border flex items-center justify-between">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                      <Building2 className="w-4 h-4 text-primary" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[10px] text-muted-foreground truncate">CRM</p>
-                      <p className="font-semibold text-sm truncate">{crmTenant.name || 'Minha Empresa'}</p>
+                      <p className="text-[9px] text-muted-foreground truncate uppercase tracking-wider">CRM</p>
+                      <p className="font-semibold text-xs truncate">{crmTenant.name}</p>
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsMobileMenuOpen(false)}>
                     <X className="w-4 h-4" />
                   </Button>
                 </div>
 
-                <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-                  {filteredMenuItems.map((item) => (
-                    <Button
-                      key={item.id}
-                      variant={activeTab === item.id ? 'secondary' : 'ghost'}
-                      className={cn(
-                        'w-full justify-start gap-3 h-10 text-sm',
-                        activeTab === item.id && 'bg-primary/10 text-primary'
-                      )}
-                      onClick={() => {
-                        setActiveTab(item.id);
-                        setIsMobileMenuOpen(false);
-                      }}
-                    >
-                      <item.icon className="w-4 h-4 shrink-0" />
-                      <span className="truncate">{item.label}</span>
-                    </Button>
+                <nav className="flex-1 overflow-y-auto py-2 px-2">
+                  {Object.entries(groupedItems).map(([category, items]) => (
+                    <div key={category} className="mb-3">
+                      <p className="px-2 mb-1 text-[9px] font-medium text-muted-foreground uppercase tracking-wider">
+                        {category}
+                      </p>
+                      <div className="space-y-0.5">
+                        {items.map((item) => (
+                          <Button
+                            key={item.id}
+                            variant={activeTab === item.id ? 'secondary' : 'ghost'}
+                            size="sm"
+                            className={cn(
+                              'w-full justify-start gap-2 h-8 text-xs font-normal',
+                              activeTab === item.id && 'bg-primary/10 text-primary font-medium border border-primary/20'
+                            )}
+                            onClick={() => {
+                              setActiveTab(item.id);
+                              setIsMobileMenuOpen(false);
+                            }}
+                          >
+                            <item.icon className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate">{item.label}</span>
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </nav>
 
-                <div className="border-t border-border p-4 shrink-0">
-                  <Button variant="outline" size="sm" className="w-full h-9" onClick={handleLogout}>
-                    <LogOut className="w-4 h-4" />
-                    <span className="ml-2 text-sm">Sair</span>
+                <div className="border-t border-border p-2 shrink-0">
+                  <Button variant="outline" size="sm" className="w-full h-7 text-xs" onClick={handleLogout}>
+                    <LogOut className="w-3 h-3 mr-1.5" />
+                    Sair
                   </Button>
                 </div>
               </motion.div>
@@ -323,39 +358,49 @@ export default function CRMPanel() {
         </AnimatePresence>
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col min-h-screen lg:ml-72">
-          {/* Top Header - Title replaces search input */}
-          <header className="hidden lg:flex h-14 border-b border-border bg-card/80 backdrop-blur-md items-center justify-between px-4 sticky top-0 z-30">
-            <div className="flex items-center gap-2 min-w-0">
-              <Sparkles className="w-4 h-4 text-primary shrink-0" />
-              <span className="text-xs text-muted-foreground shrink-0">CRM</span>
-              <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-              <h1 className="text-sm font-semibold text-foreground truncate">{getActiveLabel()}</h1>
+        <div className="flex-1 flex flex-col min-h-screen lg:ml-56">
+          {/* Desktop Top Header */}
+          <header className="hidden lg:flex h-10 border-b border-border bg-card/80 backdrop-blur-md items-center justify-between px-4 sticky top-0 z-30">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Sparkles className="w-3 h-3 text-primary shrink-0" />
+              <span className="text-[10px] text-muted-foreground shrink-0 uppercase tracking-wider">CRM</span>
+              <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0" />
+              <h1 className="text-xs font-semibold text-foreground truncate">{getActiveLabel()}</h1>
             </div>
 
             <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
-                size="icon"
-                className="h-9 w-9"
+                size="sm"
+                className="h-7 px-2 gap-1.5 text-muted-foreground hover:text-foreground"
                 onClick={() => setIsSearchOpen(true)}
-                aria-label="Buscar no CRM"
               >
-                <Search className="w-4 h-4" />
+                <Search className="w-3 h-3" />
+                <span className="text-[10px]">Buscar</span>
+                <kbd className="h-4 items-center gap-0.5 rounded border bg-muted px-1 font-mono text-[9px] font-medium text-muted-foreground hidden sm:flex">
+                  ⌘K
+                </kbd>
               </Button>
+              
+              <Button variant="ghost" size="icon" className="h-7 w-7 relative">
+                <Bell className="w-3 h-3" />
+                <span className="absolute -top-0.5 -right-0.5 h-3 w-3 bg-primary rounded-full text-[8px] text-primary-foreground flex items-center justify-center">3</span>
+              </Button>
+              
               <CRMProfileMenu onNavigate={handleProfileNavigate} onLogout={handleLogout} />
             </div>
           </header>
 
-          <main className="flex-1 overflow-y-auto bg-muted/20 pt-14 lg:pt-0">
-            <div className="p-4 lg:p-6">
+          {/* Page Content */}
+          <main className="flex-1 overflow-y-auto bg-muted/20 pt-12 lg:pt-0">
+            <div className="p-3 lg:p-4">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeTab}
-                  initial={{ opacity: 0, y: 6 }}
+                  initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.12 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.1 }}
                 >
                   {renderContent()}
                 </motion.div>
