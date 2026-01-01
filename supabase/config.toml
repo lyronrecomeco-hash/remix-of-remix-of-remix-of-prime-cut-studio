@@ -100,3 +100,6 @@ verify_jwt = false
 
 [functions.questionnaire-ai]
 verify_jwt = false
+
+[functions.proposal-chat]
+verify_jwt = false

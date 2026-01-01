@@ -5,7 +5,6 @@ import {
   Building2, 
   Mail, 
   Phone, 
-  Calendar, 
   MoreVertical,
   Trash2,
   Send,
@@ -16,10 +15,14 @@ import {
   CheckCircle,
   FileText,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ExternalLink,
+  Copy,
+  Link2
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,8 +40,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { ProposalStatusBadge } from './ProposalStatusBadge';
 import type { AffiliateProposal, ProposalStatus } from './types';
+import { toast } from 'sonner';
 
 interface ProposalsListProps {
   proposals: AffiliateProposal[];
@@ -50,7 +60,7 @@ interface ProposalsListProps {
   onViewProposal?: (proposal: AffiliateProposal) => void;
 }
 
-const ITEMS_PER_PAGE = 6;
+const ITEMS_PER_PAGE = 8;
 
 export function ProposalsList({ 
   proposals, 
@@ -83,13 +93,29 @@ export function ProposalsList({
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
 
+  const getProposalLink = (proposal: AffiliateProposal) => {
+    const slug = proposal.company_name.toLowerCase().replace(/\s+/g, '-');
+    return `${window.location.origin}/proposta/${slug}`;
+  };
+
+  const copyLink = (proposal: AffiliateProposal) => {
+    const link = getProposalLink(proposal);
+    navigator.clipboard.writeText(link);
+    toast.success('Link copiado!');
+  };
+
+  const openProposalPage = (proposal: AffiliateProposal) => {
+    const slug = proposal.company_name.toLowerCase().replace(/\s+/g, '-');
+    window.open(`/proposta/${slug}`, '_blank');
+  };
+
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
         {[1, 2, 3, 4].map((i) => (
           <Card key={i} className="bg-card border-border animate-pulse">
-            <CardContent className="p-4">
-              <div className="h-24 bg-secondary/50 rounded" />
+            <CardContent className="p-3">
+              <div className="h-20 bg-secondary/50 rounded" />
             </CardContent>
           </Card>
         ))}
@@ -100,13 +126,13 @@ export function ProposalsList({
   if (proposals.length === 0) {
     return (
       <Card className="bg-card border-border">
-        <CardContent className="p-8 text-center">
-          <Building2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">
+        <CardContent className="p-6 text-center">
+          <Building2 className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+          <h3 className="text-base font-medium text-foreground mb-1">
             Nenhuma proposta ainda
           </h3>
-          <p className="text-muted-foreground">
-            Crie sua primeira proposta empresarial clicando no botão acima.
+          <p className="text-sm text-muted-foreground">
+            Crie sua primeira proposta empresarial.
           </p>
         </CardContent>
       </Card>
@@ -114,34 +140,35 @@ export function ProposalsList({
   }
 
   return (
-    <>
-      {/* Grid responsivo */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <TooltipProvider>
+      {/* Grid compacto */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
         {paginatedProposals.map((proposal) => (
-          <Card key={proposal.id} className="bg-card border-border hover:border-primary/50 transition-colors">
-            <CardContent className="p-4">
-              <div className="flex flex-col gap-3">
-                {/* Header */}
+          <Card 
+            key={proposal.id} 
+            className="bg-card border-border hover:border-primary/50 transition-all hover:shadow-md group"
+          >
+            <CardContent className="p-3">
+              <div className="flex flex-col gap-2">
+                {/* Header compacto */}
                 <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-start gap-3 flex-1 min-w-0">
-                    <div className="p-2 bg-primary/10 rounded-lg shrink-0">
-                      <Building2 className="w-5 h-5 text-primary" />
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div className="p-1.5 bg-primary/10 rounded-md shrink-0">
+                      <Building2 className="w-4 h-4 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-foreground truncate">
+                      <h3 className="font-medium text-sm text-foreground truncate">
                         {proposal.company_name}
                       </h3>
-                      {proposal.contact_name && (
-                        <p className="text-sm text-muted-foreground truncate">
-                          {proposal.contact_name}
-                        </p>
-                      )}
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(proposal.created_at), "dd/MM/yy", { locale: ptBR })}
+                      </p>
                     </div>
                   </div>
                   
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="shrink-0">
+                      <Button variant="ghost" size="icon" className="shrink-0 h-7 w-7">
                         <MoreVertical className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -151,7 +178,7 @@ export function ProposalsList({
                           {!proposal.questionnaire_completed && onStartQuestionnaire && (
                             <DropdownMenuItem onClick={() => onStartQuestionnaire(proposal)}>
                               <ClipboardList className="w-4 h-4 mr-2" />
-                              Iniciar Questionário
+                              Questionário
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuItem onClick={() => onView?.(proposal)}>
@@ -161,7 +188,7 @@ export function ProposalsList({
                           {proposal.questionnaire_completed && (
                             <DropdownMenuItem onClick={() => handleStatusChange(proposal.id, 'sent')}>
                               <Send className="w-4 h-4 mr-2" />
-                              Marcar como Enviada
+                              Marcar Enviada
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuSeparator />
@@ -178,103 +205,131 @@ export function ProposalsList({
                       {proposal.status === 'sent' && (
                         <>
                           <DropdownMenuItem onClick={() => handleStatusChange(proposal.id, 'accepted')}>
-                            <Eye className="w-4 h-4 mr-2" />
-                            Marcar como Aceita
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            Marcar Aceita
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             onClick={() => handleStatusChange(proposal.id, 'cancelled')}
                             className="text-destructive focus:text-destructive"
                           >
                             <XCircle className="w-4 h-4 mr-2" />
-                            Cancelar Proposta
+                            Cancelar
                           </DropdownMenuItem>
                         </>
-                      )}
-
-                      {proposal.status === 'accepted' && (
-                        <DropdownMenuItem disabled>
-                          <Eye className="w-4 h-4 mr-2" />
-                          Proposta Aceita
-                        </DropdownMenuItem>
                       )}
 
                       {proposal.status === 'cancelled' && (
                         <DropdownMenuItem onClick={() => handleStatusChange(proposal.id, 'draft')}>
                           <Edit className="w-4 h-4 mr-2" />
-                          Reabrir como Rascunho
+                          Reabrir
                         </DropdownMenuItem>
                       )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
 
-                {/* Status badges */}
-                <div className="flex flex-wrap gap-2">
+                {/* Status e badges */}
+                <div className="flex flex-wrap gap-1.5">
                   <ProposalStatusBadge status={proposal.status} />
                   {proposal.questionnaire_completed && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600">
-                      <CheckCircle className="w-3 h-3" />
-                      Questionário
-                    </span>
+                    <Badge variant="outline" className="text-xs px-1.5 py-0 h-5 bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      IA
+                    </Badge>
                   )}
                 </div>
 
-                {/* Info */}
-                <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+                {/* Info compacta */}
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   {proposal.company_email && (
-                    <span className="flex items-center gap-1.5 truncate">
-                      <Mail className="w-3.5 h-3.5 shrink-0" />
-                      <span className="truncate">{proposal.company_email}</span>
-                    </span>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Mail className="w-3.5 h-3.5" />
+                      </TooltipTrigger>
+                      <TooltipContent>{proposal.company_email}</TooltipContent>
+                    </Tooltip>
                   )}
                   {proposal.company_phone && (
-                    <span className="flex items-center gap-1.5">
-                      <Phone className="w-3.5 h-3.5 shrink-0" />
-                      {proposal.company_phone}
-                    </span>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Phone className="w-3.5 h-3.5" />
+                      </TooltipTrigger>
+                      <TooltipContent>{proposal.company_phone}</TooltipContent>
+                    </Tooltip>
                   )}
-                  <span className="flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 shrink-0" />
-                    {format(new Date(proposal.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                  </span>
+                  {proposal.contact_name && (
+                    <span className="truncate">{proposal.contact_name}</span>
+                  )}
                 </div>
 
-                {/* Actions */}
-                <div className="flex gap-2 pt-2 border-t border-border">
+                {/* Ações */}
+                <div className="flex gap-1.5 pt-1.5 border-t border-border">
                   {proposal.status === 'draft' && !proposal.questionnaire_completed && onStartQuestionnaire && (
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => onStartQuestionnaire(proposal)}
-                      className="flex-1 gap-1 text-primary border-primary/50 hover:bg-primary/10"
+                      className="flex-1 h-7 text-xs gap-1 text-primary border-primary/30 hover:bg-primary/10"
                     >
-                      <ClipboardList className="w-4 h-4" />
-                      <span className="hidden sm:inline">Questionário</span>
-                      <span className="sm:hidden">Iniciar</span>
+                      <ClipboardList className="w-3.5 h-3.5" />
+                      Iniciar
                     </Button>
                   )}
 
-                  {proposal.questionnaire_completed && onViewProposal && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onViewProposal(proposal)}
-                      className="flex-1 gap-1 text-emerald-600 border-emerald-500/50 hover:bg-emerald-500/10"
-                    >
-                      <FileText className="w-4 h-4" />
-                      <span className="hidden sm:inline">Ver Proposta</span>
-                      <span className="sm:hidden">Proposta</span>
-                    </Button>
+                  {proposal.questionnaire_completed && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onViewProposal?.(proposal)}
+                        className="flex-1 h-7 text-xs gap-1"
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                        Ver
+                      </Button>
+                      
+                      {proposal.generated_proposal && (
+                        <>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => copyLink(proposal)}
+                                className="h-7 w-7 p-0"
+                              >
+                                <Copy className="w-3.5 h-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Copiar link</TooltipContent>
+                          </Tooltip>
+                          
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openProposalPage(proposal)}
+                                className="h-7 w-7 p-0"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Abrir página</TooltipContent>
+                          </Tooltip>
+                        </>
+                      )}
+                    </>
                   )}
 
-                  {onView && (
+                  {!proposal.questionnaire_completed && onView && (
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => onView(proposal)}
-                      className="text-muted-foreground hover:text-foreground"
+                      className="h-7 w-7 p-0"
                     >
-                      <Eye className="w-4 h-4" />
+                      <Eye className="w-3.5 h-3.5" />
                     </Button>
                   )}
                 </div>
@@ -284,41 +339,50 @@ export function ProposalsList({
         ))}
       </div>
 
-      {/* Paginação */}
+      {/* Paginação compacta */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-6 px-2">
-          <p className="text-sm text-muted-foreground">
+        <div className="flex items-center justify-between mt-4 text-sm">
+          <span className="text-muted-foreground">
             {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, proposals.length)} de {proposals.length}
-          </p>
-          <div className="flex items-center gap-2">
+          </span>
+          <div className="flex items-center gap-1">
             <Button
               variant="outline"
               size="sm"
               onClick={() => goToPage(currentPage - 1)}
               disabled={currentPage === 1}
+              className="h-7 w-7 p-0"
             >
               <ChevronLeft className="w-4 h-4" />
             </Button>
             
-            <div className="flex items-center gap-1">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+              let page = i + 1;
+              if (totalPages > 5) {
+                if (currentPage > 3) {
+                  page = currentPage - 2 + i;
+                }
+                if (page > totalPages) page = totalPages - 4 + i;
+              }
+              return (
                 <Button
                   key={page}
                   variant={currentPage === page ? "default" : "outline"}
                   size="sm"
                   onClick={() => goToPage(page)}
-                  className="w-8 h-8 p-0"
+                  className="h-7 w-7 p-0 text-xs"
                 >
                   {page}
                 </Button>
-              ))}
-            </div>
+              );
+            })}
 
             <Button
               variant="outline"
               size="sm"
               onClick={() => goToPage(currentPage + 1)}
               disabled={currentPage === totalPages}
+              className="h-7 w-7 p-0"
             >
               <ChevronRight className="w-4 h-4" />
             </Button>
@@ -331,7 +395,7 @@ export function ProposalsList({
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground">Excluir proposta?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita. A proposta será permanentemente removida.
+              Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -342,6 +406,6 @@ export function ProposalsList({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </TooltipProvider>
   );
 }
