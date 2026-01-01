@@ -10,7 +10,8 @@ import {
   LogOut,
   Menu,
   X,
-  Sparkles
+  Sparkles,
+  Building2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +22,7 @@ import AffiliateMaterials from '@/components/affiliate/AffiliateMaterials';
 import AffiliateWithdrawals from '@/components/affiliate/AffiliateWithdrawals';
 import AffiliateProfile from '@/components/affiliate/AffiliateProfile';
 import AIContentGenerator from '@/components/affiliate/AIContentGenerator';
+import AffiliateProposals from '@/components/affiliate/AffiliateProposals';
 import HowItWorksModal from '@/components/affiliate/HowItWorksModal';
 import AffiliateWelcomeModal from '@/components/affiliate/AffiliateWelcomeModal';
 
@@ -41,6 +43,7 @@ interface Affiliate {
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'proposals', label: 'Modo Empresa', icon: Building2 },
   { id: 'sales', label: 'Minhas Vendas', icon: TrendingUp },
   { id: 'ai', label: 'Criar com IA', icon: Sparkles },
   { id: 'materials', label: 'Materiais', icon: FileText },
@@ -130,6 +133,8 @@ const AffiliatePanel = () => {
     switch (activeTab) {
       case 'dashboard':
         return <AffiliateDashboard affiliate={affiliate} />;
+      case 'proposals':
+        return <AffiliateProposals affiliateId={affiliate.id} />;
       case 'sales':
         return <AffiliateSales affiliateId={affiliate.id} />;
       case 'ai':
