@@ -1358,16 +1358,31 @@ app.listen(PORT, () => {
     );
   }
 
-  const isBackendActive = backendMode === 'vps' ? backendConfig?.is_connected : isLocalConnected;
+  const isBackendActive = backendMode === 'vps' ? !!backendConfig?.is_connected : isLocalConnected;
+  
+  // Computed real-time connection status for instances
+  const getInstanceRealStatus = (instance: WhatsAppInstance) => {
+    // If backend is not active, all instances should show as disconnected regardless of DB status
+    if (!isBackendActive) {
+      if (instance.status === 'connected') {
+        return 'disconnected';
+      }
+    }
+    return instance.status;
+  };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header with Real-time Status */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-foreground">WhatsApp Automação</h2>
-          <p className="text-muted-foreground">
-            Gerencie instâncias e configure o backend de automação
+          <p className="text-muted-foreground flex items-center gap-2">
+            <span className={`w-2 h-2 rounded-full ${isBackendActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+            {isBackendActive 
+              ? `Backend ${backendMode === 'vps' ? 'VPS' : 'PC Local'} conectado` 
+              : 'Backend desconectado'
+            }
           </p>
         </div>
         <Button onClick={fetchData} variant="outline" size="sm">
@@ -1377,22 +1392,26 @@ app.listen(PORT, () => {
       </div>
 
       <Tabs defaultValue="instances" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="instances" className="gap-2">
             <Smartphone className="w-4 h-4" />
-            Instâncias
+            <span className="hidden sm:inline">Instâncias</span>
           </TabsTrigger>
           <TabsTrigger value="test" className="gap-2">
             <MessageSquare className="w-4 h-4" />
-            Testar
+            <span className="hidden sm:inline">Testar</span>
           </TabsTrigger>
           <TabsTrigger value="templates" className="gap-2">
             <FileText className="w-4 h-4" />
-            Templates
+            <span className="hidden sm:inline">Templates</span>
           </TabsTrigger>
           <TabsTrigger value="backend" className="gap-2">
             <Server className="w-4 h-4" />
-            Backend
+            <span className="hidden sm:inline">Backend</span>
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="gap-2">
+            <Settings2 className="w-4 h-4" />
+            <span className="hidden sm:inline">Avançado</span>
           </TabsTrigger>
         </TabsList>
 
@@ -1597,7 +1616,8 @@ app.listen(PORT, () => {
           ) : (
             <div className="grid gap-4">
               {instances.map((instance) => {
-                const statusInfo = statusConfig[instance.status];
+                const realStatus = getInstanceRealStatus(instance);
+                const statusInfo = statusConfig[realStatus];
                 const StatusIcon = statusInfo.icon;
                 
                 return (

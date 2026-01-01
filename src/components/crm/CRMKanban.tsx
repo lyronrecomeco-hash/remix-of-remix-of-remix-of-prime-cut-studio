@@ -522,11 +522,12 @@ export default function CRMKanban() {
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
                             draggable
+                            data-allow-drag="true"
                             onDragStart={(e) => handleDragStart(e as unknown as React.DragEvent, lead)}
                             className={cn(
-                              'p-2.5 rounded-lg border bg-card cursor-grab active:cursor-grabbing',
-                              'hover:shadow-md transition-all group',
-                              draggedLead?.id === lead.id && 'opacity-50 scale-95',
+                              'p-2.5 rounded-lg border bg-card cursor-grab active:cursor-grabbing select-none',
+                              'hover:shadow-md hover:border-primary/30 transition-all group',
+                              draggedLead?.id === lead.id && 'opacity-50 scale-95 ring-2 ring-primary',
                               slaStatus === 'critical' && 'border-l-2 border-l-red-500',
                               slaStatus === 'warning' && 'border-l-2 border-l-amber-500'
                             )}
