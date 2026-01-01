@@ -203,20 +203,32 @@ export const WABackendConfig = ({
     addLog('info', `Testando conexão com ${localEndpoint}:${localPort}...`);
     
     try {
-      const response = await fetch(`${localEndpoint}:${localPort}/health`, {
-        headers: { 'Authorization': `Bearer ${localToken}` },
-      });
+      const baseUrl = `${localEndpoint}:${localPort}`;
+      const headers = { 'Authorization': `Bearer ${localToken}` };
 
-      if (response.ok) {
-        const data = await response.json();
-        setIsLocalConnected(true);
-        addLog('success', `✓ Backend local conectado! (${data.name || 'WhatsApp Local'})`);
-        toast.success('Backend local conectado!');
-      } else {
+      const response = await fetch(`${baseUrl}/health`, { headers });
+
+      if (!response.ok) {
         setIsLocalConnected(false);
         addLog('error', `✗ Falha na conexão (status ${response.status})`);
         toast.error('Falha na conexão com o backend local');
+        return;
       }
+
+      const data = await response.json().catch(() => ({}));
+
+      // Verifica se as rotas necessárias existem (evita falso positivo só com /health)
+      const routesCheck = await fetch(`${baseUrl}/api/instance/__probe/status`, { headers });
+      if (routesCheck.status === 404) {
+        setIsLocalConnected(false);
+        addLog('error', '✗ Backend respondeu /health, mas não possui /api/instance/*');
+        toast.error('Script local sem rotas /api/instance. Baixe o script novamente.');
+        return;
+      }
+
+      setIsLocalConnected(true);
+      addLog('success', `✓ Backend local conectado! (${data.name || 'WhatsApp Local'})`);
+      toast.success('Backend local conectado!');
     } catch (error: unknown) {
       setIsLocalConnected(false);
       const errorMessage = error instanceof Error ? error.message : 'Backend não acessível';
