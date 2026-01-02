@@ -15,16 +15,16 @@ import {
   Zap,
   Shield,
   TrendingUp,
-  AlertTriangle,
   CheckCircle2,
   Volume2,
-  VolumeX
+  VolumeX,
+  Play
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 
-// Cinematic Components
+// Components
 import { LunaAvatar } from '@/components/proposal/LunaAvatar';
 import { CinematicBackground } from '@/components/proposal/CinematicBackground';
 import { SeductiveText, DramaticReveal, ImpactNumber, GlitchText } from '@/components/proposal/CinematicText';
@@ -33,6 +33,9 @@ import { WhatsAppSimulation, WhatsAppMultipleChats } from '@/components/proposal
 import { GenesisRealPanel } from '@/components/proposal/GenesisRealPanel';
 import { LunaWhyChoose } from '@/components/proposal/LunaWhyChoose';
 import { ChaosMetrics } from '@/components/proposal/ChaosMetrics';
+import { IPhoneFrame, MacBookFrame } from '@/components/proposal/IPhoneFrame';
+import { InteractiveFlowDemo } from '@/components/proposal/InteractiveFlowDemo';
+import { LiveTestSection } from '@/components/proposal/LiveTestSection';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
 
 // Types
@@ -76,8 +79,8 @@ interface ChatMessage {
   content: string;
 }
 
-// 7 Phases based on the new script
-type Phase = 'entry' | 'reality' | 'pain' | 'rupture' | 'solution' | 'why' | 'action';
+// 8 Phases for immersive experience
+type Phase = 'entry' | 'reality' | 'pain' | 'rupture' | 'solution' | 'flow' | 'test' | 'action';
 
 // Helper to get niche slug
 const getNicheSlug = (niche?: { slug: string; name: string } | null): string => {
@@ -101,7 +104,6 @@ const LunaChat = ({ proposalContext, whatsappLink, currentPhase }: {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Dynamic opening message based on phase
   useEffect(() => {
     const phaseMessages: Record<Phase, string> = {
       entry: `Olá! Vou te mostrar algo importante sobre ${proposalContext.companyName}...`,
@@ -109,7 +111,8 @@ const LunaChat = ({ proposalContext, whatsappLink, currentPhase }: {
       pain: 'Esses números podem parecer assustadores, mas a solução existe.',
       rupture: 'Agora você entende o custo de não agir. Quer ver a alternativa?',
       solution: 'Isso é só o começo. O Genesis faz muito mais.',
-      why: 'Tem alguma dúvida sobre como isso se aplica ao seu negócio?',
+      flow: 'Esse é o fluxo completo automatizado. Alguma dúvida?',
+      test: 'Testou no seu WhatsApp? O que achou?',
       action: 'Pronto para dar o próximo passo? Estou aqui para ajudar.'
     };
     setMessages([{ role: 'assistant', content: phaseMessages[currentPhase] }]);
@@ -194,16 +197,16 @@ const LunaChat = ({ proposalContext, whatsappLink, currentPhase }: {
             animate={{ scale: 1, rotate: 0 }}
             exit={{ scale: 0, rotate: 180 }}
             onClick={() => setIsOpen(true)}
-            className="fixed bottom-8 right-8 z-50 group"
+            className="fixed bottom-6 right-6 z-50 group"
           >
             <div className="relative">
               <motion.div
-                className="absolute inset-0 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-full blur-lg opacity-60"
+                className="absolute inset-0 bg-gradient-to-br from-primary to-primary/50 rounded-full blur-lg opacity-60"
                 animate={{ scale: [1, 1.3, 1], opacity: [0.6, 0.8, 0.6] }}
                 transition={{ duration: 2, repeat: Infinity }}
               />
-              <div className="relative w-16 h-16 bg-gradient-to-br from-violet-500 to-fuchsia-600 rounded-full shadow-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Bot className="w-7 h-7 text-white" />
+              <div className="relative w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-primary to-primary/80 rounded-full shadow-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Bot className="w-6 h-6 md:w-7 md:h-7 text-white" />
               </div>
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full animate-pulse border-2 border-slate-900" />
             </div>
@@ -218,14 +221,14 @@ const LunaChat = ({ proposalContext, whatsappLink, currentPhase }: {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 100, scale: 0.8 }}
             transition={{ type: 'spring', damping: 25 }}
-            className="fixed bottom-8 right-8 z-50 w-[380px] max-w-[calc(100vw-64px)] h-[500px] max-h-[calc(100vh-120px)] bg-slate-950/95 backdrop-blur-2xl rounded-3xl shadow-2xl shadow-violet-500/20 border border-white/10 flex flex-col overflow-hidden"
+            className="fixed bottom-4 right-4 left-4 md:left-auto md:bottom-8 md:right-8 z-50 md:w-[380px] h-[70vh] md:h-[500px] max-h-[600px] bg-slate-950/95 backdrop-blur-2xl rounded-3xl shadow-2xl shadow-primary/20 border border-white/10 flex flex-col overflow-hidden"
           >
-            <div className="relative bg-gradient-to-r from-violet-600 via-fuchsia-600 to-violet-600 p-5">
-              <div className="relative flex items-center gap-4">
+            <div className="relative bg-gradient-to-r from-primary via-primary/80 to-primary p-4 md:p-5">
+              <div className="relative flex items-center gap-3 md:gap-4">
                 <LunaAvatar state="idle" size="sm" />
                 <div className="flex-1">
-                  <h3 className="font-bold text-white text-lg tracking-wide">Luna</h3>
-                  <p className="text-xs text-white/70">Sua guia nessa jornada</p>
+                  <h3 className="font-bold text-white text-base md:text-lg tracking-wide">Luna</h3>
+                  <p className="text-xs text-white/70">Sua consultora digital</p>
                 </div>
                 <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-white/20 rounded-full transition-colors">
                   <X className="w-5 h-5 text-white" />
@@ -233,7 +236,7 @@ const LunaChat = ({ proposalContext, whatsappLink, currentPhase }: {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+            <div className="flex-1 overflow-y-auto p-4 md:p-5 space-y-3 md:space-y-4">
               {messages.map((msg, i) => (
                 <motion.div
                   key={i}
@@ -243,7 +246,7 @@ const LunaChat = ({ proposalContext, whatsappLink, currentPhase }: {
                 >
                   <div className={`max-w-[85%] rounded-2xl px-4 py-3 ${
                     msg.role === 'user' 
-                      ? 'bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white' 
+                      ? 'bg-gradient-to-br from-primary to-primary/80 text-white' 
                       : 'bg-white/5 text-white/90 border border-white/10'
                   }`}>
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
@@ -257,7 +260,7 @@ const LunaChat = ({ proposalContext, whatsappLink, currentPhase }: {
                       {[0, 1, 2].map(i => (
                         <motion.span 
                           key={i} 
-                          className="w-2 h-2 bg-violet-400 rounded-full"
+                          className="w-2 h-2 bg-primary rounded-full"
                           animate={{ y: [-3, 3, -3] }}
                           transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
                         />
@@ -269,16 +272,16 @@ const LunaChat = ({ proposalContext, whatsappLink, currentPhase }: {
               <div ref={messagesEndRef} />
             </div>
 
-            <div className="p-5 border-t border-white/10 bg-slate-900/50">
-              <form onSubmit={(e) => { e.preventDefault(); sendMessage(); }} className="flex gap-3">
+            <div className="p-4 md:p-5 border-t border-white/10 bg-slate-900/50">
+              <form onSubmit={(e) => { e.preventDefault(); sendMessage(); }} className="flex gap-2 md:gap-3">
                 <Input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Escreva aqui..."
-                  className="flex-1 bg-white/5 border-white/10 text-white placeholder:text-white/30 rounded-xl"
+                  className="flex-1 bg-white/5 border-white/10 text-white placeholder:text-white/30 rounded-xl text-sm"
                   disabled={isLoading}
                 />
-                <Button type="submit" size="icon" disabled={isLoading || !input.trim()} className="bg-gradient-to-br from-violet-600 to-fuchsia-600 hover:opacity-90 rounded-xl">
+                <Button type="submit" size="icon" disabled={isLoading || !input.trim()} className="bg-gradient-to-br from-primary to-primary/80 hover:opacity-90 rounded-xl shrink-0">
                   <Send className="w-4 h-4" />
                 </Button>
               </form>
@@ -294,6 +297,35 @@ const LunaChat = ({ proposalContext, whatsappLink, currentPhase }: {
   );
 };
 
+// Phase Progress Indicator
+const PhaseProgress = ({ currentPhase, phases }: { currentPhase: Phase; phases: Phase[] }) => {
+  const currentIndex = phases.indexOf(currentPhase);
+  
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 1 }}
+      className="fixed top-6 left-1/2 -translate-x-1/2 z-40 hidden md:flex items-center gap-2 bg-black/50 backdrop-blur-xl px-6 py-3 rounded-full border border-white/10"
+    >
+      {phases.map((phase, index) => (
+        <div key={phase} className="flex items-center">
+          <motion.div
+            animate={{
+              scale: index === currentIndex ? 1.2 : 1,
+              backgroundColor: index <= currentIndex ? 'hsl(var(--primary))' : 'rgba(255,255,255,0.2)'
+            }}
+            className="w-2 h-2 rounded-full"
+          />
+          {index < phases.length - 1 && (
+            <div className={`w-6 h-0.5 mx-1 ${index < currentIndex ? 'bg-primary' : 'bg-white/20'}`} />
+          )}
+        </div>
+      ))}
+    </motion.div>
+  );
+};
+
 // Main Component
 const ProposalPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -302,17 +334,17 @@ const ProposalPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPhase, setCurrentPhase] = useState<Phase>('entry');
-  const [showContinue, setShowContinue] = useState(false);
   const [phaseComplete, setPhaseComplete] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [simulationKey, setSimulationKey] = useState(0);
   
   const sounds = useSoundEffects();
+  const phases: Phase[] = ['entry', 'reality', 'pain', 'rupture', 'solution', 'flow', 'test', 'action'];
 
   useEffect(() => {
     fetchProposal();
   }, [slug]);
 
-  // Sound effects on phase change
   useEffect(() => {
     if (!soundEnabled) return;
     
@@ -328,8 +360,11 @@ const ProposalPage = () => {
         sounds.play('reveal', { volume: 0.2 });
         break;
       case 'solution':
-      case 'why':
+      case 'flow':
         sounds.play('success', { volume: 0.2 });
+        break;
+      case 'test':
+        sounds.play('notification', { volume: 0.2 });
         break;
       case 'action':
         sounds.play('reveal', { volume: 0.25 });
@@ -394,12 +429,11 @@ const ProposalPage = () => {
   };
 
   const advancePhase = () => {
-    const phases: Phase[] = ['entry', 'reality', 'pain', 'rupture', 'solution', 'why', 'action'];
     const currentIndex = phases.indexOf(currentPhase);
     if (currentIndex < phases.length - 1) {
       setCurrentPhase(phases[currentIndex + 1]);
-      setShowContinue(false);
       setPhaseComplete(false);
+      setSimulationKey(prev => prev + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -407,14 +441,14 @@ const ProposalPage = () => {
   // Loading State
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <CinematicBackground />
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center space-y-8 relative z-10">
           <FloatingElement amplitude={15}>
             <LunaAvatar state="thinking" size="xl" />
           </FloatingElement>
           <motion.p 
-            className="text-white/60 text-xl font-light tracking-widest"
+            className="text-muted-foreground text-xl font-light tracking-widest"
             animate={{ opacity: [0.4, 1, 0.4] }}
             transition={{ duration: 2, repeat: Infinity }}
           >
@@ -428,15 +462,15 @@ const ProposalPage = () => {
   // Error State
   if (error || !proposal) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <CinematicBackground />
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative z-10">
-          <Card className="max-w-md w-full bg-slate-900/80 backdrop-blur-xl border-white/10">
+          <Card className="max-w-md w-full bg-card/80 backdrop-blur-xl border-border">
             <CardContent className="pt-8 text-center space-y-4">
-              <AlertCircle className="w-16 h-16 text-red-400 mx-auto" />
-              <h1 className="text-2xl font-bold text-white">Proposta não encontrada</h1>
-              <p className="text-white/50">O link pode ter expirado ou estar incorreto.</p>
-              <Button onClick={() => navigate('/')} variant="outline" className="border-white/20 text-white hover:bg-white/10">
+              <AlertCircle className="w-16 h-16 text-destructive mx-auto" />
+              <h1 className="text-2xl font-bold text-foreground">Proposta não encontrada</h1>
+              <p className="text-muted-foreground">O link pode ter expirado ou estar incorreto.</p>
+              <Button onClick={() => navigate('/')} variant="outline" className="border-border text-foreground hover:bg-muted">
                 Voltar ao início
               </Button>
             </CardContent>
@@ -452,8 +486,11 @@ const ProposalPage = () => {
   const nicheSlug = getNicheSlug(proposal.business_niche);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white overflow-x-hidden">
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       <CinematicBackground />
+      
+      {/* Phase Progress */}
+      <PhaseProgress currentPhase={currentPhase} phases={phases} />
       
       {/* Sound Toggle */}
       <motion.button
@@ -467,14 +504,14 @@ const ProposalPage = () => {
         className="fixed top-6 right-6 z-50 p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 transition-colors"
       >
         {soundEnabled ? (
-          <Volume2 className="w-5 h-5 text-white/60" />
+          <Volume2 className="w-5 h-5 text-muted-foreground" />
         ) : (
-          <VolumeX className="w-5 h-5 text-white/40" />
+          <VolumeX className="w-5 h-5 text-muted-foreground/50" />
         )}
       </motion.button>
       
       <AnimatePresence mode="wait">
-        {/* PHASE 1: ENTRY - A VERDADE QUE NINGUÉM FALA */}
+        {/* PHASE 1: ENTRY */}
         {currentPhase === 'entry' && (
           <motion.section
             key="entry"
@@ -482,7 +519,7 @@ const ProposalPage = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, filter: 'blur(20px)', scale: 1.1 }}
             transition={{ duration: 0.8 }}
-            className="min-h-screen flex flex-col items-center justify-center px-6 relative z-10"
+            className="min-h-screen flex flex-col items-center justify-center px-4 md:px-6 py-16 relative z-10"
           >
             <CinematicEnter delay={0.5}>
               <FloatingElement amplitude={8} duration={6}>
@@ -490,22 +527,23 @@ const ProposalPage = () => {
               </FloatingElement>
             </CinematicEnter>
 
-            <div className="text-center max-w-3xl mt-12">
+            <div className="text-center max-w-3xl mt-8 md:mt-12">
               <CinematicEnter delay={1.5}>
                 <motion.p 
-                  className="text-white/40 text-sm tracking-[0.3em] uppercase mb-6"
+                  className="text-muted-foreground text-sm tracking-[0.3em] uppercase mb-6"
                   animate={{ opacity: [0.4, 0.7, 0.4] }}
                   transition={{ duration: 3, repeat: Infinity }}
                 >
                   Diagnóstico exclusivo para
                 </motion.p>
-              </CinematicEnter>
-
-              <CinematicEnter delay={2}>
-                <GlitchText 
-                  text={companyName}
-                  className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-violet-400 via-fuchsia-400 to-violet-400 bg-clip-text text-transparent mb-12"
-                />
+                <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4">
+                  <span className="text-gradient">{companyName}</span>
+                </h1>
+                {firstName && (
+                  <p className="text-foreground/60 text-lg md:text-xl">
+                    Preparado especialmente para você, {firstName}
+                  </p>
+                )}
               </CinematicEnter>
 
               <CinematicEnter delay={3}>
@@ -513,47 +551,42 @@ const ProposalPage = () => {
                   lines={[
                     "Eu analisei sua operação.",
                     "E antes de falar sobre crescimento...",
-                    "Eu preciso falar sobre o que você está perdendo."
+                    "Preciso falar sobre o que você está perdendo.",
+                    "Todos os dias."
                   ]}
-                  className="text-xl md:text-2xl font-light text-white/80"
+                  className="text-xl md:text-2xl font-light text-foreground/80 mt-12"
                   lineDelay={2500}
-                  onComplete={() => {}}
+                  onComplete={() => setPhaseComplete(true)}
                 />
-              </CinematicEnter>
-
-              <CinematicEnter delay={9}>
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 1 }}
-                  className="text-2xl text-white/90 mt-8 font-medium"
-                >
-                  Todos os dias.
-                </motion.p>
               </CinematicEnter>
             </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 11 }}
-              className="mt-16"
-            >
-              <PulseGlow color="violet" intensity="strong">
-                <Button
-                  size="lg"
-                  onClick={advancePhase}
-                  className="bg-gradient-to-r from-violet-600 via-fuchsia-600 to-violet-600 hover:opacity-90 text-lg px-10 py-6 rounded-2xl gap-3 shadow-2xl shadow-violet-500/30"
+            <AnimatePresence>
+              {phaseComplete && (
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="mt-12"
                 >
-                  Me mostre
-                  <ArrowRight className="w-5 h-5" />
-                </Button>
-              </PulseGlow>
-            </motion.div>
+                  <PulseGlow color="blue" intensity="strong">
+                    <Button
+                      size="lg"
+                      onClick={advancePhase}
+                      className="bg-gradient-to-r from-primary via-primary/80 to-primary hover:opacity-90 text-lg px-8 md:px-10 py-6 rounded-2xl gap-3 shadow-2xl shadow-primary/30"
+                    >
+                      <Play className="w-5 h-5" />
+                      Mostrar a verdade
+                      <ArrowRight className="w-5 h-5" />
+                    </Button>
+                  </PulseGlow>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.section>
         )}
 
-        {/* PHASE 2: REALITY - DESABAFO SILENCIOSO */}
+        {/* PHASE 2: REALITY - O Caos do WhatsApp */}
         {currentPhase === 'reality' && (
           <motion.section
             key="reality"
@@ -561,92 +594,140 @@ const ProposalPage = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, filter: 'blur(20px)' }}
             transition={{ duration: 0.8 }}
-            className="min-h-screen flex flex-col items-center justify-center px-6 py-16 relative z-10"
+            className="min-h-screen flex flex-col items-center justify-center px-4 md:px-6 py-16 relative z-10"
           >
-            {/* Luna Message */}
             <CinematicEnter delay={0.3}>
-              <div className="text-center mb-8">
-                <LunaAvatar state="talking" size="md" className="mx-auto mb-6" />
+              <div className="text-center mb-8 md:mb-12">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', delay: 0.5 }}
+                  className="inline-flex items-center gap-2 bg-red-500/20 border border-red-500/30 rounded-full px-4 py-2 mb-6"
+                >
+                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                  <span className="text-red-400 text-sm font-medium">Realidade atual</span>
+                </motion.div>
+                
                 <DramaticReveal
-                  lines={
-                    nicheSlug === 'barbearia' ? [
-                      "Você corta cabelo.",
-                      "Atende bem. Se esforça.",
-                      "Mas enquanto você está com a máquina na mão...",
-                      "O dinheiro está esperando no celular."
-                    ] : nicheSlug === 'clinica' ? [
-                      "Você estudou anos.",
-                      "Investiu em estrutura.",
-                      "Mas ainda depende de alguém lembrar de responder.",
-                      "E paciente que espera... desmarca."
-                    ] : nicheSlug === 'restaurante' ? [
-                      "Você faz comida boa.",
-                      "Entrega rápido. Se dedica.",
-                      "Mas enquanto você está na cozinha...",
-                      "Os pedidos estão esperando no WhatsApp."
-                    ] : [
-                      "Você é especialista no que faz.",
-                      "Entrega qualidade. Se dedica.",
-                      "Mas enquanto você trabalha...",
-                      "Os clientes estão esperando resposta."
-                    ]
-                  }
-                  className="text-xl md:text-2xl font-light text-white/80"
+                  lines={[
+                    `Você ${nicheSlug === 'barbearia' ? 'corta cabelo' : nicheSlug === 'clinica' ? 'atende pacientes' : 'trabalha'}.`,
+                    "Atende bem. Se esforça.",
+                    `Mas enquanto você está ocupado...`,
+                    "O dinheiro está esperando no celular."
+                  ]}
+                  className="text-xl md:text-2xl font-light text-foreground/80"
                   lineDelay={2000}
-                  onComplete={() => setShowContinue(true)}
+                  onComplete={() => {}}
                 />
               </div>
             </CinematicEnter>
 
-            {/* WhatsApp Simulations */}
+            {/* iPhone with WhatsApp Chaos */}
             <CinematicEnter delay={1}>
-              <div className="grid md:grid-cols-2 gap-8 items-start max-w-5xl mx-auto mt-8">
-                <div className="space-y-4">
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 1 }}
-                    className="text-center text-white/50 text-sm mb-4"
-                  >
-                    Sua caixa de entrada agora
-                  </motion.p>
-                  <WhatsAppMultipleChats niche={nicheSlug} />
-                </div>
-
-                <div className="space-y-4">
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 1.5 }}
-                    className="text-center text-white/50 text-sm mb-4"
-                  >
-                    O que acontece com cada cliente
-                  </motion.p>
-                  <WhatsAppSimulation 
-                    mode="chaos" 
-                    niche={nicheSlug}
-                    onComplete={() => setPhaseComplete(true)} 
-                  />
-                </div>
+              <div className="w-full max-w-md mx-auto">
+                <IPhoneFrame variant="titanium">
+                  <WhatsAppMultipleChats key={`inbox-${simulationKey}`} niche={nicheSlug} />
+                </IPhoneFrame>
               </div>
             </CinematicEnter>
 
-            {/* Continue Button */}
+            {/* Stats */}
+            <CinematicEnter delay={3}>
+              <div className="mt-8 md:mt-12 grid grid-cols-3 gap-3 md:gap-6 max-w-lg mx-auto">
+                {[
+                  { value: '23', label: 'Mensagens ignoradas' },
+                  { value: '4h', label: 'Tempo de resposta' },
+                  { value: '67%', label: 'Perda de clientes' }
+                ].map((stat, i) => (
+                  <motion.div
+                    key={stat.label}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 3.5 + i * 0.2, type: 'spring' }}
+                    className="text-center p-3 md:p-4 bg-red-500/10 rounded-xl border border-red-500/20"
+                  >
+                    <p className="text-2xl md:text-3xl font-bold text-red-400">{stat.value}</p>
+                    <p className="text-foreground/50 text-xs mt-1">{stat.label}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </CinematicEnter>
+
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 5 }}
+              className="mt-8 md:mt-12"
+            >
+              <Button
+                size="lg"
+                onClick={advancePhase}
+                className="bg-gradient-to-r from-red-500 to-orange-500 hover:opacity-90 text-lg px-8 md:px-10 py-6 rounded-2xl gap-3"
+              >
+                Ver o prejuízo real
+                <ArrowRight className="w-5 h-5" />
+              </Button>
+            </motion.div>
+          </motion.section>
+        )}
+
+        {/* PHASE 3: PAIN - Métricas de Prejuízo */}
+        {currentPhase === 'pain' && (
+          <motion.section
+            key="pain"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, filter: 'blur(20px)' }}
+            transition={{ duration: 0.8 }}
+            className="min-h-screen flex flex-col items-center justify-center px-4 md:px-6 py-16 relative z-10"
+          >
+            <CinematicEnter delay={0.3}>
+              <div className="text-center mb-8 md:mb-12 max-w-2xl">
+                <LunaAvatar state="revealing" size="md" className="mx-auto mb-6" />
+                
+                <DramaticReveal
+                  lines={[
+                    "Não são clientes perdidos.",
+                    "São decisões não tomadas a tempo.",
+                    "Não é falta de demanda.",
+                    "É falta de estrutura para absorver."
+                  ]}
+                  className="text-xl md:text-2xl font-light text-foreground/80"
+                  lineDelay={2000}
+                  onComplete={() => {}}
+                />
+              </div>
+            </CinematicEnter>
+
+            <CinematicEnter delay={2}>
+              <ChaosMetrics onComplete={() => setPhaseComplete(true)} />
+            </CinematicEnter>
+
+            <CinematicEnter delay={4}>
+              <div className="mt-8 md:mt-12 p-6 bg-destructive/10 rounded-2xl border border-destructive/20 max-w-md text-center">
+                <p className="text-foreground/70 text-lg">
+                  E isso custa mais...
+                </p>
+                <p className="text-foreground text-xl font-bold mt-2">
+                  Do que qualquer sistema.
+                </p>
+              </div>
+            </CinematicEnter>
+
             <AnimatePresence>
-              {(showContinue || phaseComplete) && (
+              {phaseComplete && (
                 <motion.div
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
-                  className="mt-12"
+                  className="mt-8 md:mt-12"
                 >
                   <Button
                     size="lg"
                     onClick={advancePhase}
-                    variant="outline"
-                    className="border-red-500/40 text-red-400 hover:bg-red-500/10 text-lg px-10 py-6 rounded-2xl gap-3"
+                    className="bg-gradient-to-r from-amber-500 to-red-500 hover:opacity-90 text-lg px-8 md:px-10 py-6 rounded-2xl gap-3"
                   >
-                    E isso custa caro...
+                    O ponto de ruptura
                     <ArrowRight className="w-5 h-5" />
                   </Button>
                 </motion.div>
@@ -655,72 +736,7 @@ const ProposalPage = () => {
           </motion.section>
         )}
 
-        {/* PHASE 3: PAIN - A PERDA QUE NÃO APARECE NO CAIXA */}
-        {currentPhase === 'pain' && (
-          <motion.section
-            key="pain"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, filter: 'blur(20px)' }}
-            transition={{ duration: 0.8 }}
-            className="min-h-screen flex flex-col items-center justify-center px-6 py-16 relative z-10"
-          >
-            <CinematicEnter delay={0.3}>
-              <div className="text-center mb-12">
-                <LunaAvatar state="analyzing" size="md" className="mx-auto mb-6" />
-                <DramaticReveal
-                  lines={[
-                    "Não são clientes perdidos.",
-                    "São decisões não tomadas a tempo.",
-                    "Não é falta de demanda.",
-                    "É falta de estrutura para absorver."
-                  ]}
-                  className="text-xl md:text-2xl font-light text-white/80"
-                  lineDelay={2000}
-                  onComplete={() => {}}
-                />
-              </div>
-            </CinematicEnter>
-
-            <CinematicEnter delay={1}>
-              <ChaosMetrics onComplete={() => setShowContinue(true)} />
-            </CinematicEnter>
-
-            <CinematicEnter delay={2}>
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 3 }}
-                className="text-center text-white/60 text-lg mt-8 max-w-xl"
-              >
-                E isso custa mais... do que qualquer sistema.
-              </motion.p>
-            </CinematicEnter>
-
-            <AnimatePresence>
-              {showContinue && (
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
-                  className="mt-12"
-                >
-                  <Button
-                    size="lg"
-                    onClick={advancePhase}
-                    variant="outline"
-                    className="border-amber-500/40 text-amber-400 hover:bg-amber-500/10 text-lg px-10 py-6 rounded-2xl gap-3"
-                  >
-                    <AlertTriangle className="w-5 h-5" />
-                    E se eu não mudar?
-                  </Button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.section>
-        )}
-
-        {/* PHASE 4: RUPTURE - O PONTO DE RUPTURA */}
+        {/* PHASE 4: RUPTURE - Urgência Real */}
         {currentPhase === 'rupture' && (
           <motion.section
             key="rupture"
@@ -728,76 +744,63 @@ const ProposalPage = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, filter: 'blur(20px)' }}
             transition={{ duration: 0.8 }}
-            className="min-h-screen flex flex-col items-center justify-center px-6 py-16 relative z-10"
+            className="min-h-screen flex flex-col items-center justify-center px-4 md:px-6 py-16 relative z-10"
           >
             <CinematicEnter delay={0.3}>
-              <div className="text-center max-w-2xl">
-                <LunaAvatar state="revealing" size="lg" className="mx-auto mb-8" />
-                
+              <FloatingElement amplitude={5} duration={4}>
+                <LunaAvatar state="confident" size="xl" />
+              </FloatingElement>
+            </CinematicEnter>
+
+            <div className="text-center max-w-2xl mt-8 md:mt-12">
+              <CinematicEnter delay={1}>
                 <DramaticReveal
                   lines={[
                     "Se você não mudar o fluxo...",
                     "Você não vai ganhar menos."
                   ]}
-                  className="text-2xl md:text-3xl font-medium text-white/90"
-                  lineDelay={2500}
+                  className="text-2xl md:text-4xl font-light text-foreground/80"
+                  lineDelay={3000}
                   onComplete={() => {}}
                 />
+              </CinematicEnter>
 
+              <CinematicEnter delay={7}>
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 6 }}
-                  className="mt-8"
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="mt-12 p-8 bg-gradient-to-br from-red-500/20 to-orange-500/20 rounded-3xl border border-red-500/30"
                 >
-                  <motion.p
-                    className="text-3xl md:text-4xl font-bold text-red-400"
-                    animate={{ opacity: [0.7, 1, 0.7] }}
-                    transition={{ duration: 2, repeat: Infinity }}
+                  <GlitchText
+                    text="Você vai continuar perdendo."
+                    className="text-2xl md:text-4xl font-bold text-red-400"
+                  />
+                </motion.div>
+              </CinematicEnter>
+
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 10 }}
+                className="mt-12"
+              >
+                <PulseGlow color="emerald" intensity="strong">
+                  <Button
+                    size="lg"
+                    onClick={advancePhase}
+                    className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-90 text-lg px-8 md:px-10 py-6 rounded-2xl gap-3 shadow-2xl shadow-emerald-500/30"
                   >
-                    Você vai continuar perdendo.
-                  </motion.p>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 8 }}
-                  className="mt-12 p-6 bg-gradient-to-br from-red-500/10 to-orange-500/10 rounded-2xl border border-red-500/20"
-                >
-                  <div className="flex items-center justify-center gap-3 mb-4">
-                    <AlertTriangle className="w-6 h-6 text-red-400" />
-                    <span className="text-red-300 font-semibold">Ponto de decisão</span>
-                  </div>
-                  <p className="text-white/70 text-lg">
-                    Cada dia sem estrutura é um dia de perda silenciosa.
-                  </p>
-                </motion.div>
-              </div>
-            </CinematicEnter>
-
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 10 }}
-              className="mt-12"
-            >
-              <PulseGlow color="emerald" intensity="strong">
-                <Button
-                  size="lg"
-                  onClick={advancePhase}
-                  className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-90 text-lg px-10 py-6 rounded-2xl gap-3 shadow-2xl shadow-emerald-500/30"
-                >
-                  <Sparkles className="w-5 h-5" />
-                  Me mostre outra possibilidade
-                  <ArrowRight className="w-5 h-5" />
-                </Button>
-              </PulseGlow>
-            </motion.div>
+                    <Sparkles className="w-5 h-5" />
+                    Ver a solução
+                    <ArrowRight className="w-5 h-5" />
+                  </Button>
+                </PulseGlow>
+              </motion.div>
+            </div>
           </motion.section>
         )}
 
-        {/* PHASE 5: SOLUTION - A VIRADA */}
+        {/* PHASE 5: SOLUTION - A Virada */}
         {currentPhase === 'solution' && (
           <motion.section
             key="solution"
@@ -805,11 +808,21 @@ const ProposalPage = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, filter: 'blur(20px)' }}
             transition={{ duration: 0.8 }}
-            className="min-h-screen flex flex-col items-center justify-center px-6 py-16 relative z-10"
+            className="min-h-screen flex flex-col items-center justify-center px-4 md:px-6 py-16 relative z-10"
           >
             <CinematicEnter delay={0.3}>
-              <div className="text-center mb-12">
+              <div className="text-center mb-8 md:mb-12">
                 <LunaAvatar state="confident" size="md" className="mx-auto mb-6" />
+                
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', delay: 0.5 }}
+                  className="inline-flex items-center gap-3 bg-emerald-500/20 border border-emerald-500/40 rounded-2xl px-6 py-3 mb-8"
+                >
+                  <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+                  <span className="text-emerald-300 font-bold">Mesmo WhatsApp, nova realidade</span>
+                </motion.div>
                 
                 <DramaticReveal
                   lines={[
@@ -818,30 +831,25 @@ const ProposalPage = () => {
                     "Quando o sistema responde...",
                     "Você trabalha em paz."
                   ]}
-                  className="text-xl md:text-2xl font-light text-white/80"
+                  className="text-xl md:text-2xl font-light text-foreground/80"
                   lineDelay={2000}
-                  onComplete={() => {}}
+                  onComplete={() => setPhaseComplete(true)}
                 />
               </div>
             </CinematicEnter>
 
-            {/* WhatsApp Automated */}
-            <CinematicEnter delay={1}>
-              <div className="text-center mb-6">
-                <motion.div
-                  animate={{ scale: [1, 1.05, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="inline-flex items-center gap-3 bg-emerald-500/20 border border-emerald-500/40 rounded-2xl px-6 py-3 mb-6"
-                >
-                  <CheckCircle2 className="w-6 h-6 text-emerald-400" />
-                  <span className="text-emerald-300 font-bold">Mesmo WhatsApp, nova realidade</span>
-                </motion.div>
+            {/* iPhone with Automated WhatsApp */}
+            <CinematicEnter delay={1.5}>
+              <div className="w-full max-w-md mx-auto">
+                <IPhoneFrame variant="titanium">
+                  <WhatsAppSimulation 
+                    key={`auto-${simulationKey}`}
+                    mode="automated" 
+                    niche={nicheSlug}
+                    onComplete={() => setPhaseComplete(true)} 
+                  />
+                </IPhoneFrame>
               </div>
-              <WhatsAppSimulation 
-                mode="automated" 
-                niche={nicheSlug}
-                onComplete={() => setPhaseComplete(true)} 
-              />
             </CinematicEnter>
 
             {/* Comparison Stats */}
@@ -851,7 +859,7 @@ const ProposalPage = () => {
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="mt-12 grid grid-cols-3 gap-6 max-w-2xl mx-auto"
+                  className="mt-8 md:mt-12 grid grid-cols-3 gap-3 md:gap-6 max-w-lg mx-auto"
                 >
                   {[
                     { value: '3s', label: 'Tempo de resposta' },
@@ -863,142 +871,104 @@ const ProposalPage = () => {
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{ delay: 0.5 + i * 0.2, type: 'spring' }}
-                      className="text-center p-4 bg-white/5 rounded-2xl border border-emerald-500/20"
+                      className="text-center p-3 md:p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20"
                     >
-                      <p className="text-3xl font-bold text-emerald-400">{stat.value}</p>
-                      <p className="text-white/50 text-sm mt-1">{stat.label}</p>
+                      <p className="text-2xl md:text-3xl font-bold text-emerald-400">{stat.value}</p>
+                      <p className="text-foreground/50 text-xs mt-1">{stat.label}</p>
                     </motion.div>
                   ))}
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Continue Button */}
             <AnimatePresence>
               {phaseComplete && (
                 <motion.div
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.2 }}
-                  className="mt-12"
+                  transition={{ delay: 1.5 }}
+                  className="mt-8 md:mt-12"
                 >
-                  <PulseGlow color="violet" intensity="strong">
-                    <Button
-                      size="lg"
-                      onClick={advancePhase}
-                      className="bg-gradient-to-r from-violet-600 via-fuchsia-600 to-violet-600 hover:opacity-90 text-lg px-10 py-6 rounded-2xl gap-3 shadow-2xl shadow-violet-500/30"
-                    >
-                      <Zap className="w-5 h-5" />
-                      Por que a Genesis?
-                      <ArrowRight className="w-5 h-5" />
-                    </Button>
-                  </PulseGlow>
+                  <Button
+                    size="lg"
+                    onClick={advancePhase}
+                    className="bg-gradient-to-r from-primary to-primary/80 hover:opacity-90 text-lg px-8 md:px-10 py-6 rounded-2xl gap-3"
+                  >
+                    Ver fluxo completo
+                    <ArrowRight className="w-5 h-5" />
+                  </Button>
                 </motion.div>
               )}
             </AnimatePresence>
           </motion.section>
         )}
 
-        {/* PHASE 6: WHY - ESTRUTURA > ESFORÇO + PAINEL REAL */}
-        {currentPhase === 'why' && (
+        {/* PHASE 6: FLOW - Fluxo Interativo + Painel Real */}
+        {currentPhase === 'flow' && (
           <motion.section
-            key="why"
+            key="flow"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, filter: 'blur(20px)' }}
             transition={{ duration: 0.8 }}
-            className="min-h-screen flex flex-col items-center justify-center px-6 py-16 relative z-10"
+            className="min-h-screen flex flex-col items-center px-4 md:px-6 py-16 relative z-10"
           >
-            {/* Luna explains why */}
+            {/* Interactive Flow Demo */}
             <CinematicEnter delay={0.3}>
-              <LunaWhyChoose 
-                niche={nicheSlug} 
-                companyName={companyName}
-                onComplete={() => setShowContinue(true)} 
-              />
+              <InteractiveFlowDemo niche={nicheSlug} onComplete={() => setPhaseComplete(true)} />
             </CinematicEnter>
 
-            {/* Real Panel Simulation */}
+            {/* MacBook with Real Panel */}
             <AnimatePresence>
-              {showContinue && (
+              {phaseComplete && (
                 <CinematicEnter delay={0.5}>
-                  <div className="mt-16 w-full">
+                  <div className="w-full max-w-5xl mx-auto mt-12">
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       className="text-center mb-8"
                     >
-                      <DramaticReveal
-                        lines={[
-                          "Negócios que crescem...",
-                          "Não dependem de memória.",
-                          "Dependem de estrutura."
-                        ]}
-                        className="text-xl md:text-2xl font-light text-white/80"
-                        lineDelay={1500}
-                        onComplete={() => {}}
-                      />
+                      <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
+                        Tudo isso controlado de um único lugar
+                      </h3>
+                      <p className="text-muted-foreground">
+                        O painel Genesis que você vai usar
+                      </p>
                     </motion.div>
-                    <GenesisRealPanel niche={nicheSlug} companyName={companyName} />
+                    
+                    <MacBookFrame>
+                      <GenesisRealPanel niche={nicheSlug} companyName={companyName} />
+                    </MacBookFrame>
                   </div>
                 </CinematicEnter>
               )}
             </AnimatePresence>
 
-            {/* ROI Summary */}
-            {gen && showContinue && (
+            {/* Luna Why Choose */}
+            {phaseComplete && (
               <CinematicEnter delay={2}>
-                <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
-                  <div className="text-center p-6 bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 rounded-2xl border border-emerald-500/20">
-                    <ImpactNumber 
-                      value={gen.roiAnalysis.estimatedSavings} 
-                      prefix="R$ " 
-                      className="text-3xl font-bold text-emerald-400" 
-                    />
-                    <p className="text-white/50 text-sm mt-2">Economia mensal</p>
-                  </div>
-                  <div className="text-center p-6 bg-gradient-to-br from-blue-500/20 to-blue-500/5 rounded-2xl border border-blue-500/20">
-                    <ImpactNumber 
-                      value={gen.roiAnalysis.timeRecovery} 
-                      suffix="h" 
-                      className="text-3xl font-bold text-blue-400" 
-                    />
-                    <p className="text-white/50 text-sm mt-2">Horas recuperadas</p>
-                  </div>
-                  <div className="text-center p-6 bg-gradient-to-br from-purple-500/20 to-purple-500/5 rounded-2xl border border-purple-500/20">
-                    <ImpactNumber 
-                      value={gen.roiAnalysis.revenueIncrease} 
-                      suffix="%" 
-                      className="text-3xl font-bold text-purple-400" 
-                    />
-                    <p className="text-white/50 text-sm mt-2">Aumento de receita</p>
-                  </div>
-                  <div className="text-center p-6 bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-2xl border border-amber-500/20">
-                    <ImpactNumber 
-                      value={gen.roiAnalysis.paybackPeriod} 
-                      suffix=" dias" 
-                      className="text-3xl font-bold text-amber-400" 
-                    />
-                    <p className="text-white/50 text-sm mt-2">Retorno do investimento</p>
-                  </div>
-                </div>
+                <LunaWhyChoose 
+                  niche={nicheSlug} 
+                  companyName={companyName}
+                  onComplete={() => {}} 
+                />
               </CinematicEnter>
             )}
 
-            {/* Continue Button */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: showContinue ? 1 : 0, y: showContinue ? 0 : 30 }}
-              transition={{ delay: 3 }}
+              animate={{ opacity: phaseComplete ? 1 : 0, y: phaseComplete ? 0 : 30 }}
+              transition={{ delay: 4 }}
               className="mt-12"
             >
-              <PulseGlow color="violet" intensity="strong">
+              <PulseGlow color="emerald" intensity="strong">
                 <Button
                   size="lg"
                   onClick={advancePhase}
-                  className="bg-gradient-to-r from-violet-600 via-fuchsia-600 to-violet-600 hover:opacity-90 text-lg px-10 py-6 rounded-2xl gap-3 shadow-2xl shadow-violet-500/30"
+                  className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-90 text-lg px-8 md:px-10 py-6 rounded-2xl gap-3 shadow-2xl shadow-emerald-500/30"
                 >
-                  Quero essa estrutura
+                  <Zap className="w-5 h-5" />
+                  Testar na prática
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </PulseGlow>
@@ -1006,7 +976,42 @@ const ProposalPage = () => {
           </motion.section>
         )}
 
-        {/* PHASE 7: ACTION - DECISÃO SEM TEATRO */}
+        {/* PHASE 7: TEST - Teste Ao Vivo */}
+        {currentPhase === 'test' && (
+          <motion.section
+            key="test"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, filter: 'blur(20px)' }}
+            transition={{ duration: 0.8 }}
+            className="min-h-screen flex flex-col items-center justify-center px-4 md:px-6 relative z-10"
+          >
+            <LiveTestSection 
+              proposalId={proposal.id}
+              companyName={companyName}
+              niche={nicheSlug}
+              affiliateName={proposal.affiliate?.name}
+            />
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 5 }}
+              className="mt-8"
+            >
+              <Button
+                size="lg"
+                onClick={advancePhase}
+                className="bg-gradient-to-r from-primary to-primary/80 hover:opacity-90 text-lg px-8 md:px-10 py-6 rounded-2xl gap-3"
+              >
+                Quero ativar isso
+                <ArrowRight className="w-5 h-5" />
+              </Button>
+            </motion.div>
+          </motion.section>
+        )}
+
+        {/* PHASE 8: ACTION - Decisão Final */}
         {currentPhase === 'action' && (
           <motion.section
             key="action"
@@ -1014,7 +1019,7 @@ const ProposalPage = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.8 }}
-            className="min-h-screen flex flex-col items-center justify-center px-6 py-16 relative z-10"
+            className="min-h-screen flex flex-col items-center justify-center px-4 md:px-6 py-16 relative z-10"
           >
             <CinematicEnter delay={0.3}>
               <FloatingElement amplitude={5} duration={8}>
@@ -1022,37 +1027,61 @@ const ProposalPage = () => {
               </FloatingElement>
             </CinematicEnter>
 
-            <div className="text-center max-w-3xl mt-12">
+            <div className="text-center max-w-3xl mt-8 md:mt-12">
               <CinematicEnter delay={0.8}>
                 <DramaticReveal
                   lines={[
                     "Você pode continuar compensando falhas com esforço.",
                     "Ou pode corrigir o fluxo."
                   ]}
-                  className="text-xl md:text-2xl font-light text-white/80"
+                  className="text-xl md:text-2xl font-light text-foreground/80"
                   lineDelay={2500}
                   onComplete={() => {}}
                 />
               </CinematicEnter>
 
               <CinematicEnter delay={6}>
-                <div className="mt-12 p-6 bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 rounded-2xl border border-violet-500/20">
-                  <p className="text-lg text-white/70 mb-2">
+                <div className="mt-12 p-6 md:p-8 bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl border border-primary/20">
+                  <p className="text-lg text-foreground/70 mb-2">
                     A Genesis não promete mais clientes.
                   </p>
-                  <p className="text-2xl font-bold text-white">
+                  <p className="text-xl md:text-2xl font-bold text-foreground">
                     Ela garante que você não perca os que já tem.
                   </p>
                 </div>
               </CinematicEnter>
 
-              <CinematicEnter delay={8}>
+              {/* ROI Summary */}
+              {gen && (
+                <CinematicEnter delay={8}>
+                  <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                    <div className="text-center p-4 md:p-6 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
+                      <ImpactNumber value={gen.roiAnalysis.estimatedSavings} prefix="R$ " className="text-xl md:text-3xl font-bold text-emerald-400" />
+                      <p className="text-foreground/50 text-xs mt-2">Economia/mês</p>
+                    </div>
+                    <div className="text-center p-4 md:p-6 bg-blue-500/10 rounded-xl border border-blue-500/20">
+                      <ImpactNumber value={gen.roiAnalysis.timeRecovery} suffix="h" className="text-xl md:text-3xl font-bold text-blue-400" />
+                      <p className="text-foreground/50 text-xs mt-2">Horas livres</p>
+                    </div>
+                    <div className="text-center p-4 md:p-6 bg-purple-500/10 rounded-xl border border-purple-500/20">
+                      <ImpactNumber value={gen.roiAnalysis.revenueIncrease} suffix="%" className="text-xl md:text-3xl font-bold text-purple-400" />
+                      <p className="text-foreground/50 text-xs mt-2">+ Receita</p>
+                    </div>
+                    <div className="text-center p-4 md:p-6 bg-amber-500/10 rounded-xl border border-amber-500/20">
+                      <ImpactNumber value={gen.roiAnalysis.paybackPeriod} suffix="d" className="text-xl md:text-3xl font-bold text-amber-400" />
+                      <p className="text-foreground/50 text-xs mt-2">Retorno</p>
+                    </div>
+                  </div>
+                </CinematicEnter>
+              )}
+
+              <CinematicEnter delay={10}>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center mt-12">
                   <PulseGlow color="emerald" intensity="strong">
                     <a href={getWhatsAppLink()} target="_blank" rel="noopener noreferrer">
                       <Button
                         size="lg"
-                        className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-90 text-lg px-10 py-6 rounded-2xl gap-3 shadow-2xl shadow-emerald-500/30 w-full sm:w-auto"
+                        className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-90 text-lg px-8 md:px-10 py-6 rounded-2xl gap-3 shadow-2xl shadow-emerald-500/30 w-full sm:w-auto"
                       >
                         <Zap className="w-5 h-5" />
                         Ativar estrutura
@@ -1065,7 +1094,7 @@ const ProposalPage = () => {
                       <Button
                         size="lg"
                         variant="outline"
-                        className="border-white/20 text-white hover:bg-white/10 text-lg px-10 py-6 rounded-2xl gap-3 w-full sm:w-auto"
+                        className="border-border text-foreground hover:bg-muted text-lg px-8 md:px-10 py-6 rounded-2xl gap-3 w-full sm:w-auto"
                       >
                         <Phone className="w-5 h-5" />
                         Falar com especialista
@@ -1077,20 +1106,20 @@ const ProposalPage = () => {
 
               {/* Consultor info */}
               {proposal.affiliate && (
-                <CinematicEnter delay={10}>
-                  <div className="mt-16 p-6 bg-white/5 rounded-2xl border border-white/10 max-w-md mx-auto">
-                    <p className="text-white/50 text-sm mb-4">Seu consultor</p>
+                <CinematicEnter delay={12}>
+                  <div className="mt-12 md:mt-16 p-6 bg-muted/50 rounded-2xl border border-border max-w-md mx-auto">
+                    <p className="text-muted-foreground text-sm mb-4">Seu consultor</p>
                     <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-white text-xl font-bold">
+                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white text-xl font-bold">
                         {proposal.affiliate.name[0]}
                       </div>
                       <div className="text-left">
-                        <p className="text-white font-semibold text-lg">{proposal.affiliate.name}</p>
-                        <p className="text-white/50 text-sm">Especialista Genesis Hub</p>
+                        <p className="text-foreground font-semibold text-lg">{proposal.affiliate.name}</p>
+                        <p className="text-muted-foreground text-sm">Especialista Genesis Hub</p>
                       </div>
                     </div>
                     
-                    <div className="mt-6 pt-6 border-t border-white/10 flex flex-wrap gap-3">
+                    <div className="mt-6 pt-6 border-t border-border flex flex-wrap gap-3">
                       <a href={getWhatsAppLink()} target="_blank" rel="noopener noreferrer" className="flex-1">
                         <Button variant="outline" className="w-full border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 gap-2">
                           <MessageCircle className="w-4 h-4" />
@@ -1099,7 +1128,7 @@ const ProposalPage = () => {
                       </a>
                       {proposal.affiliate.email && (
                         <a href={`mailto:${proposal.affiliate.email}?subject=Interesse%20Genesis%20-%20${companyName}`} className="flex-1">
-                          <Button variant="outline" className="w-full border-white/20 text-white/70 hover:bg-white/10 gap-2">
+                          <Button variant="outline" className="w-full border-border text-muted-foreground hover:bg-muted gap-2">
                             <Mail className="w-4 h-4" />
                             E-mail
                           </Button>
@@ -1111,14 +1140,14 @@ const ProposalPage = () => {
               )}
 
               {/* Badges */}
-              <CinematicEnter delay={11}>
-                <div className="mt-12 flex flex-wrap justify-center gap-6">
+              <CinematicEnter delay={13}>
+                <div className="mt-12 flex flex-wrap justify-center gap-4 md:gap-6">
                   {[
                     { icon: Shield, text: 'Dados protegidos' },
                     { icon: Zap, text: 'Ativação em 24h' },
                     { icon: TrendingUp, text: 'ROI garantido' }
                   ].map((badge) => (
-                    <div key={badge.text} className="flex items-center gap-2 text-white/40">
+                    <div key={badge.text} className="flex items-center gap-2 text-muted-foreground">
                       <badge.icon className="w-4 h-4" />
                       <span className="text-sm">{badge.text}</span>
                     </div>
@@ -1130,7 +1159,7 @@ const ProposalPage = () => {
         )}
       </AnimatePresence>
 
-      {/* Luna Chat - Always present */}
+      {/* Luna Chat */}
       {gen && (
         <LunaChat 
           proposalContext={{

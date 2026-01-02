@@ -106,9 +106,17 @@ export const useSoundEffects = () => {
     return play('typing', { volume: 0.1, loop: true });
   }, [play]);
 
+  const stopAll = useCallback(() => {
+    audioCache.current.forEach(audio => {
+      audio.pause();
+      audio.currentTime = 0;
+    });
+  }, []);
+
   return {
     play,
     stop,
+    stopAll,
     setEnabled,
     playPhaseTransition,
     playReveal,
