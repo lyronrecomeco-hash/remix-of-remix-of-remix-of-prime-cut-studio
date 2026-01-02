@@ -109,3 +109,12 @@ verify_jwt = false
 
 [functions.whatsapp-heartbeat]
 verify_jwt = false
+
+[functions.whatsapp-core]
+verify_jwt = false
+
+[functions.whatsapp-automation-worker]
+verify_jwt = false
+
+[functions.whatsapp-webhook-dispatcher]
+verify_jwt = false

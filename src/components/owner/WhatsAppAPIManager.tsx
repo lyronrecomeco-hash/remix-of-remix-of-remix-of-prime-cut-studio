@@ -496,7 +496,7 @@ const WhatsAppAPIManager = () => {
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="projects" className="flex items-center gap-2">
             <Key className="w-4 h-4" />
             Projetos
@@ -504,6 +504,10 @@ const WhatsAppAPIManager = () => {
           <TabsTrigger value="instances" className="flex items-center gap-2">
             <Link2 className="w-4 h-4" />
             Instâncias
+          </TabsTrigger>
+          <TabsTrigger value="api-test" className="flex items-center gap-2">
+            <Zap className="w-4 h-4" />
+            Teste API
           </TabsTrigger>
           <TabsTrigger value="logs" className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
@@ -758,6 +762,255 @@ const WhatsAppAPIManager = () => {
               </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* API Test Tab */}
+        <TabsContent value="api-test" className="mt-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Quick Examples */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-amber-500" />
+                  Exemplos de Uso
+                </CardTitle>
+                <CardDescription>
+                  Copie e cole estes exemplos para testar a API
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Send Message Example */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-sm font-medium">
+                    <Activity className="w-4 h-4" />
+                    Enviar Mensagem
+                  </Label>
+                  <div className="relative">
+                    <pre className="p-4 bg-muted rounded-lg text-xs overflow-x-auto font-mono">
+{`curl -X POST \\
+  'https://wvnszzrvrrueuycrpgyc.supabase.co/functions/v1/whatsapp-core/send' \\
+  -H 'Content-Type: application/json' \\
+  -H 'X-API-Key: YOUR_API_KEY' \\
+  -H 'X-API-Secret: YOUR_API_SECRET' \\
+  -d '{
+    "instanceId": "INSTANCE_UUID",
+    "to": "5511999999999",
+    "message": "Olá! Teste de API."
+  }'`}
+                    </pre>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-2 right-2"
+                      onClick={() => copyToClipboard(`curl -X POST 'https://wvnszzrvrrueuycrpgyc.supabase.co/functions/v1/whatsapp-core/send' -H 'Content-Type: application/json' -H 'X-API-Key: YOUR_API_KEY' -H 'X-API-Secret: YOUR_API_SECRET' -d '{"instanceId": "INSTANCE_UUID", "to": "5511999999999", "message": "Olá! Teste de API."}'`, 'Exemplo')}
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Bulk Send Example */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-sm font-medium">
+                    <Zap className="w-4 h-4" />
+                    Envio em Lote
+                  </Label>
+                  <div className="relative">
+                    <pre className="p-4 bg-muted rounded-lg text-xs overflow-x-auto font-mono">
+{`curl -X POST \\
+  '.../whatsapp-core/send-bulk' \\
+  -H 'X-API-Key: ...' \\
+  -d '{
+    "instanceId": "...",
+    "messages": [
+      {"to": "5511...", "message": "Msg 1"},
+      {"to": "5511...", "message": "Msg 2"}
+    ]
+  }'`}
+                    </pre>
+                  </div>
+                </div>
+
+                {/* Status Check Example */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-sm font-medium">
+                    <Shield className="w-4 h-4" />
+                    Consultar Status
+                  </Label>
+                  <div className="relative">
+                    <pre className="p-4 bg-muted rounded-lg text-xs overflow-x-auto font-mono">
+{`curl -X GET \\
+  '.../whatsapp-core/status/MESSAGE_ID' \\
+  -H 'X-API-Key: YOUR_API_KEY' \\
+  -H 'X-API-Secret: YOUR_API_SECRET'`}
+                    </pre>
+                  </div>
+                </div>
+
+                {/* Health Check */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-sm font-medium">
+                    <Activity className="w-4 h-4" />
+                    Health Check
+                  </Label>
+                  <div className="relative">
+                    <pre className="p-4 bg-muted rounded-lg text-xs overflow-x-auto font-mono">
+{`curl -X GET \\
+  'https://wvnszzrvrrueuycrpgyc.supabase.co/functions/v1/whatsapp-core/health'`}
+                    </pre>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-2 right-2"
+                      onClick={() => copyToClipboard(`curl -X GET 'https://wvnszzrvrrueuycrpgyc.supabase.co/functions/v1/whatsapp-core/health'`, 'Health check')}
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* API Info & Endpoints */}
+            <div className="space-y-4">
+              {/* Base URL */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Server className="w-4 h-4" />
+                    Base URL
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 px-3 py-2 bg-muted rounded-md text-sm font-mono truncate">
+                      https://wvnszzrvrrueuycrpgyc.supabase.co/functions/v1/whatsapp-core
+                    </code>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => copyToClipboard('https://wvnszzrvrrueuycrpgyc.supabase.co/functions/v1/whatsapp-core', 'Base URL')}
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Available Endpoints */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Webhook className="w-4 h-4" />
+                    Endpoints Disponíveis
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between py-2 border-b">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="default" className="font-mono text-xs w-16 justify-center">POST</Badge>
+                        <span className="font-mono">/send</span>
+                      </div>
+                      <span className="text-muted-foreground text-xs">Enviar mensagem</span>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="default" className="font-mono text-xs w-16 justify-center">POST</Badge>
+                        <span className="font-mono">/send-bulk</span>
+                      </div>
+                      <span className="text-muted-foreground text-xs">Envio em lote</span>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="font-mono text-xs w-16 justify-center">GET</Badge>
+                        <span className="font-mono">/status/:id</span>
+                      </div>
+                      <span className="text-muted-foreground text-xs">Status da mensagem</span>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="default" className="font-mono text-xs w-16 justify-center">POST</Badge>
+                        <span className="font-mono">/events</span>
+                      </div>
+                      <span className="text-muted-foreground text-xs">Disparar evento</span>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="font-mono text-xs w-16 justify-center">GET</Badge>
+                        <span className="font-mono">/instances</span>
+                      </div>
+                      <span className="text-muted-foreground text-xs">Listar instâncias</span>
+                    </div>
+                    <div className="flex items-center justify-between py-2">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="font-mono text-xs w-16 justify-center">GET</Badge>
+                        <span className="font-mono">/health</span>
+                      </div>
+                      <span className="text-muted-foreground text-xs">Health check</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Authentication Info */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Shield className="w-4 h-4" />
+                    Autenticação
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Todas as requisições (exceto /health) requerem autenticação via headers:
+                  </p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <code className="px-2 py-1 bg-muted rounded text-xs font-mono">X-API-Key</code>
+                      <span className="text-muted-foreground">Chave do projeto</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <code className="px-2 py-1 bg-muted rounded text-xs font-mono">X-API-Secret</code>
+                      <span className="text-muted-foreground">Segredo do projeto</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Rate Limits Info */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Rate Limits
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    Os limites são definidos por projeto:
+                  </p>
+                  <div className="grid grid-cols-3 gap-2 text-center text-sm">
+                    <div className="p-2 bg-muted rounded-lg">
+                      <div className="font-bold">60</div>
+                      <div className="text-xs text-muted-foreground">/minuto</div>
+                    </div>
+                    <div className="p-2 bg-muted rounded-lg">
+                      <div className="font-bold">1000</div>
+                      <div className="text-xs text-muted-foreground">/hora</div>
+                    </div>
+                    <div className="p-2 bg-muted rounded-lg">
+                      <div className="font-bold">10000</div>
+                      <div className="text-xs text-muted-foreground">/dia</div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Quando excedido, retorna HTTP 429 com header <code className="px-1 bg-muted rounded">X-RateLimit-Reset</code>
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </TabsContent>
 
         {/* Logs Tab */}
