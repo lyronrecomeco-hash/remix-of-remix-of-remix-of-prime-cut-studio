@@ -41,7 +41,9 @@ import {
   WAInstances,
   WABackendConfig,
   WATemplates,
-  WAInteractiveTemplates
+  WAInteractiveTemplates,
+  WAButtonActions,
+  WAConversationStates
 } from './whatsapp';
 
 interface BackendConfig {
@@ -121,6 +123,8 @@ const NAV_SECTIONS = [
     items: [
       { id: 'automations', label: 'Chatbots', icon: Bot },
       { id: 'interactive-templates', label: 'Templates Interativos', icon: FileText },
+      { id: 'button-actions', label: 'Motor de Botões', icon: Zap },
+      { id: 'conversation-states', label: 'Estados de Conversa', icon: Users },
       { id: 'templates', label: 'Templates Simples', icon: FileText },
       { id: 'quick-replies', label: 'Respostas Rápidas', icon: Zap },
     ]
@@ -314,6 +318,10 @@ const WhatsAppAutomation = () => {
         return <WAAutomations instances={instancesProps} />;
       case 'interactive-templates':
         return <WAInteractiveTemplates />;
+      case 'button-actions':
+        return <WAButtonActions />;
+      case 'conversation-states':
+        return <WAConversationStates />;
       case 'templates':
         return <WATemplates />;
       case 'quick-replies':
