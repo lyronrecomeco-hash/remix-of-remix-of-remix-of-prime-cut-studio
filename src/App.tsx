@@ -9,7 +9,7 @@ import { NotificationProvider } from "@/contexts/NotificationContext";
 import { FeedbackProvider } from "@/contexts/FeedbackContext";
 import { GalleryProvider } from "@/contexts/GalleryContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
-// CRM removed
+import { GenesisAuthProvider } from "@/contexts/GenesisAuthContext";
 import { useSecurityProtection } from "@/hooks/useSecurityProtection";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -40,6 +40,8 @@ const AffiliateLogin = lazy(() => import("./pages/AffiliateLogin"));
 const AffiliatePanel = lazy(() => import("./pages/AffiliatePanel"));
 const ProposalPage = lazy(() => import("./pages/ProposalPage"));
 const WADocsPage = lazy(() => import("./pages/WADocsPage"));
+const GenesisLogin = lazy(() => import("./pages/GenesisLogin"));
+const GenesisPanel = lazy(() => import("./pages/GenesisPanel"));
 
 // QueryClient com retry logic e cache otimizado
 const queryClient = new QueryClient({
@@ -216,6 +218,9 @@ const AppContent = () => {
             <Route path="/docs/whatsapp-api" element={<WADocsPage />} />
             <Route path="/afiliado/login" element={<AffiliateLogin />} />
             <Route path="/afiliado" element={<AffiliatePanel />} />
+            {/* Genesis Hub Routes */}
+            <Route path="/genesis/login" element={<GenesisLogin />} />
+            <Route path="/genesis" element={<GenesisPanel />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
@@ -229,19 +234,21 @@ const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <SubscriptionProvider>
-          <AppProvider>
-            <GalleryProvider>
-              <FeedbackProvider>
-                <NotificationProvider>
-                  <TooltipProvider>
-                    <AppContent />
-                  </TooltipProvider>
-                </NotificationProvider>
-              </FeedbackProvider>
-            </GalleryProvider>
-          </AppProvider>
-        </SubscriptionProvider>
+        <GenesisAuthProvider>
+          <SubscriptionProvider>
+            <AppProvider>
+              <GalleryProvider>
+                <FeedbackProvider>
+                  <NotificationProvider>
+                    <TooltipProvider>
+                      <AppContent />
+                    </TooltipProvider>
+                  </NotificationProvider>
+                </FeedbackProvider>
+              </GalleryProvider>
+            </AppProvider>
+          </SubscriptionProvider>
+        </GenesisAuthProvider>
       </AuthProvider>
     </QueryClientProvider>
   </ErrorBoundary>
