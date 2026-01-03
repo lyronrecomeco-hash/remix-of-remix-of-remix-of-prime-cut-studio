@@ -49,6 +49,7 @@ import { FlowToolbar } from './FlowToolbar';
 import { FlowStats } from './FlowStats';
 import { FlowValidationPanel } from './FlowValidationPanel';
 import { HelpModal } from './HelpModal';
+import { LunaAIPanel } from './LunaAIPanel';
 import { 
   FlowNode as FlowNodeType, 
   FlowEdge, 
@@ -100,6 +101,7 @@ const FlowBuilderContent = ({ onBack }: WAFlowBuilderProps) => {
   const [newRuleName, setNewRuleName] = useState('');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isLunaOpen, setIsLunaOpen] = useState(false);
   
   // History
   const [history, setHistory] = useState<{ nodes: any[]; edges: any[] }[]>([]);
@@ -656,6 +658,32 @@ const FlowBuilderContent = ({ onBack }: WAFlowBuilderProps) => {
     }
   }, [selectedNodes, setNodes, setEdges, addToHistory]);
 
+  // Apply flow from Luna AI
+  const handleApplyLunaFlow = useCallback((newNodes: FlowNodeType[], newEdges: FlowEdge[]) => {
+    const rfNodes = newNodes.map(n => ({
+      id: n.id,
+      type: 'flowNode',
+      position: n.position,
+      data: n.data
+    }));
+    
+    const rfEdges = newEdges.map(e => ({
+      id: e.id,
+      source: e.source,
+      target: e.target,
+      sourceHandle: e.sourceHandle,
+      targetHandle: e.targetHandle,
+      label: e.label,
+      ...defaultEdgeOptions,
+      style: getEdgeStyle(e.sourceHandle)
+    }));
+    
+    setNodes(rfNodes);
+    setEdges(rfEdges);
+    addToHistory();
+    setTimeout(() => fitView({ padding: 0.2 }), 100);
+  }, [setNodes, setEdges, addToHistory, fitView]);
+
   // Loading
   if (isLoading) {
     return (
@@ -985,6 +1013,15 @@ const FlowBuilderContent = ({ onBack }: WAFlowBuilderProps) => {
             />
           )}
         </AnimatePresence>
+
+        {/* Luna AI Panel */}
+        <LunaAIPanel
+          onApplyFlow={handleApplyLunaFlow}
+          currentNodes={nodes as unknown as FlowNodeType[]}
+          currentEdges={edges as unknown as FlowEdge[]}
+          isCollapsed={!isLunaOpen}
+          onToggleCollapse={() => setIsLunaOpen(!isLunaOpen)}
+        />
 
         {/* Help Modal */}
         <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />

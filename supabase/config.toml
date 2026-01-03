@@ -121,3 +121,6 @@ verify_jwt = false
 
 [functions.whatsapp-button-webhook]
 verify_jwt = false
+
+[functions.flow-ai-builder]
+verify_jwt = false
