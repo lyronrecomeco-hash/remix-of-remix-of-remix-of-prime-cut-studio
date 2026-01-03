@@ -126,12 +126,18 @@ serve(async (req) => {
       throw new Error('Prompt é obrigatório');
     }
 
+    // Tentar GEMINI_API_KEY primeiro, depois LOVABLE_API_KEY como fallback
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY não configurada");
+    
+    const useGeminiDirect = !!GEMINI_API_KEY;
+    
+    if (!GEMINI_API_KEY && !LOVABLE_API_KEY) {
+      throw new Error("Nenhuma chave de API configurada (GEMINI_API_KEY ou LOVABLE_API_KEY)");
     }
 
     console.log('[Luna] Processando prompt:', prompt.substring(0, 100));
+    console.log('[Luna] Usando API:', useGeminiDirect ? 'Gemini Direct' : 'Lovable Gateway');
 
     const userPrompt = context 
       ? `Contexto atual do fluxo:
@@ -146,47 +152,92 @@ ${prompt}
 
 Gere um fluxo COMPLETO com todos os nós e conexões necessárias.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: LUNA_SYSTEM_PROMPT },
-          { role: "user", content: userPrompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 8000,
-      }),
-    });
+    let content: string;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[Luna] Erro na API:', response.status, errorText);
+    if (useGeminiDirect) {
+      // Usar API Gemini diretamente
+      const geminiResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              role: 'user',
+              parts: [{ text: LUNA_SYSTEM_PROMPT + '\n\n---\n\n' + userPrompt }]
+            }],
+            generationConfig: {
+              temperature: 0.7,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 8192,
+            },
+            safetySettings: [
+              { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+              { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+              { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+              { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
+            ]
+          }),
+        }
+      );
+
+      if (!geminiResponse.ok) {
+        const errorText = await geminiResponse.text();
+        console.error('[Luna] Erro na API Gemini:', geminiResponse.status, errorText);
+        throw new Error(`Erro na API Gemini: ${geminiResponse.status}`);
+      }
+
+      const geminiData = await geminiResponse.json();
+      content = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
       
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns segundos." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      if (!content) {
+        throw new Error('Resposta vazia do Gemini');
       }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Créditos insuficientes. Adicione fundos na sua conta Lovable." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+    } else {
+      // Usar Lovable Gateway como fallback
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            { role: "system", content: LUNA_SYSTEM_PROMPT },
+            { role: "user", content: userPrompt }
+          ],
+          temperature: 0.7,
+          max_tokens: 8000,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[Luna] Erro na API:', response.status, errorText);
+        
+        if (response.status === 429) {
+          return new Response(
+            JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns segundos." }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        if (response.status === 402) {
+          return new Response(
+            JSON.stringify({ error: "Créditos insuficientes. Configure GEMINI_API_KEY nas secrets." }),
+            { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        throw new Error(`Erro na API: ${response.status}`);
       }
-      throw new Error(`Erro na API: ${response.status}`);
-    }
 
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
+      const data = await response.json();
+      content = data.choices?.[0]?.message?.content;
 
-    if (!content) {
-      throw new Error('Resposta vazia da IA');
+      if (!content) {
+        throw new Error('Resposta vazia da IA');
+      }
     }
 
     console.log('[Luna] Resposta recebida, processando...');
