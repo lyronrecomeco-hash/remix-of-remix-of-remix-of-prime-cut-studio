@@ -71,7 +71,11 @@ const getIconForType = (type: NodeType, iconName?: string) => {
     list: List,
     webhook: Globe,
     ai: Brain,
-    end: CircleStop
+    end: CircleStop,
+    goto: Play,
+    variable: CheckCircle2,
+    integration: Globe,
+    note: MessageSquare
   };
   
   return typeIcons[type] || Zap;
@@ -81,7 +85,8 @@ const getNodeCategory = (type: NodeType): string => {
   if (type === 'trigger') return 'GATILHO';
   if (type === 'condition' || type === 'split') return 'CONDIÇÃO';
   if (type === 'end') return 'FIM';
-  if (type === 'delay') return 'CONTROLE';
+  if (type === 'delay' || type === 'goto') return 'CONTROLE';
+  if (type === 'variable' || type === 'integration' || type === 'note') return 'AVANÇADO';
   return 'AÇÃO';
 };
 

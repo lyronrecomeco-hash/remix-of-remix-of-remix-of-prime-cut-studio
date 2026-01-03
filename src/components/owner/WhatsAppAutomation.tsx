@@ -33,7 +33,8 @@ import {
   WADashboard, 
   WAInbox, 
   WAAdvancedSend, 
-  WAAutomations, 
+  WAAutomations,
+  WAChatbots, 
   WAWebhooks, 
   WAGroups, 
   WAContacts, 
@@ -334,7 +335,7 @@ const WhatsAppAutomation = () => {
       case 'flow-builder':
         return <WAFlowBuilder />;
       case 'automations':
-        return <WAAutomations instances={instancesProps} />;
+        return <WAChatbots instances={instancesProps} />;
       case 'interactive-templates':
         return <WAInteractiveTemplates />;
       case 'button-actions':

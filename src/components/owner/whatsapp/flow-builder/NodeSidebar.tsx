@@ -42,7 +42,13 @@ const ICONS: Record<string, any> = {
   Brain,
   Clock,
   CircleStop,
-  Zap
+  Zap,
+  Timer: Clock,
+  Webhook: Globe,
+  CornerDownRight: ChevronRight,
+  Tag: Sparkles,
+  Plug: ChevronRight,
+  StickyNote: MessageSquare
 };
 
 interface NodeSidebarProps {

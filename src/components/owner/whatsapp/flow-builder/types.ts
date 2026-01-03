@@ -13,7 +13,11 @@ export type NodeType =
   | 'list'
   | 'webhook'
   | 'ai'
-  | 'end';
+  | 'end'
+  | 'goto'
+  | 'variable'
+  | 'integration'
+  | 'note';
 
 export interface FlowNodeData {
   label: string;
@@ -79,7 +83,7 @@ export interface NodeTemplate {
   label: string;
   icon: string;
   description: string;
-  category: 'triggers' | 'conditions' | 'actions' | 'flow';
+  category: 'triggers' | 'conditions' | 'actions' | 'flow' | 'advanced';
   defaultConfig: Record<string, any>;
 }
 
@@ -109,6 +113,14 @@ export const NODE_TEMPLATES: NodeTemplate[] = [
     category: 'triggers',
     defaultConfig: { buttonId: '' }
   },
+  {
+    type: 'trigger',
+    label: 'Webhook Recebido',
+    icon: 'Webhook',
+    description: 'Inicia por chamada externa',
+    category: 'triggers',
+    defaultConfig: { webhookId: '' }
+  },
   // Conditions
   {
     type: 'condition',
@@ -125,6 +137,14 @@ export const NODE_TEMPLATES: NodeTemplate[] = [
     description: 'Divide o tráfego em porcentagens',
     category: 'conditions',
     defaultConfig: { percentageA: 50 }
+  },
+  {
+    type: 'condition',
+    label: 'Horário Comercial',
+    icon: 'Clock',
+    description: 'Verifica se está no horário',
+    category: 'conditions',
+    defaultConfig: { checkType: 'business_hours' }
   },
   // Actions
   {
@@ -152,29 +172,37 @@ export const NODE_TEMPLATES: NodeTemplate[] = [
     defaultConfig: { title: '', sections: [] }
   },
   {
-    type: 'webhook',
-    label: 'Webhook',
-    icon: 'Globe',
-    description: 'Chama uma API externa',
-    category: 'actions',
-    defaultConfig: { url: '', method: 'POST', headers: {} }
-  },
-  {
     type: 'ai',
     label: 'Resposta IA',
     icon: 'Brain',
     description: 'Gera resposta com inteligência artificial',
     category: 'actions',
-    defaultConfig: { prompt: '', model: 'gemini-2.5-flash' }
+    defaultConfig: { prompt: '', model: 'gemini-2.5-flash', temperature: 0.7 }
+  },
+  {
+    type: 'webhook',
+    label: 'Chamar API',
+    icon: 'Globe',
+    description: 'Chama uma API externa',
+    category: 'actions',
+    defaultConfig: { url: '', method: 'POST', headers: {}, body: '' }
   },
   // Flow Control
   {
     type: 'delay',
     label: 'Aguardar',
-    icon: 'Clock',
+    icon: 'Timer',
     description: 'Pausa o fluxo por um tempo',
     category: 'flow',
-    defaultConfig: { seconds: 5 }
+    defaultConfig: { seconds: 5, showTyping: true }
+  },
+  {
+    type: 'goto',
+    label: 'Ir Para',
+    icon: 'CornerDownRight',
+    description: 'Redireciona para outro nó',
+    category: 'flow',
+    defaultConfig: { targetNodeId: '' }
   },
   {
     type: 'end',
@@ -182,7 +210,32 @@ export const NODE_TEMPLATES: NodeTemplate[] = [
     icon: 'CircleStop',
     description: 'Finaliza o fluxo',
     category: 'flow',
-    defaultConfig: {}
+    defaultConfig: { endType: 'complete' }
+  },
+  // Advanced
+  {
+    type: 'variable',
+    label: 'Definir Variável',
+    icon: 'Tag',
+    description: 'Define uma variável no contexto',
+    category: 'advanced',
+    defaultConfig: { name: '', value: '', source: 'static' }
+  },
+  {
+    type: 'integration',
+    label: 'Integração',
+    icon: 'Plug',
+    description: 'Conecta com sistema externo',
+    category: 'advanced',
+    defaultConfig: { integrationType: '', config: {} }
+  },
+  {
+    type: 'note',
+    label: 'Nota',
+    icon: 'StickyNote',
+    description: 'Adiciona comentário visual',
+    category: 'advanced',
+    defaultConfig: { text: '', color: 'yellow' }
   }
 ];
 
@@ -190,7 +243,8 @@ export const NODE_CATEGORIES = {
   triggers: { label: 'Gatilhos', color: '#22c55e' },
   conditions: { label: 'Condições', color: '#eab308' },
   actions: { label: 'Ações', color: '#3b82f6' },
-  flow: { label: 'Controle', color: '#a855f7' }
+  flow: { label: 'Controle', color: '#a855f7' },
+  advanced: { label: 'Avançado', color: '#6366f1' }
 };
 
 export const NODE_COLORS: Record<NodeType, string> = {
@@ -204,5 +258,21 @@ export const NODE_COLORS: Record<NodeType, string> = {
   list: '#8b5cf6',
   webhook: '#64748b',
   ai: '#14b8a6',
-  end: '#ef4444'
+  end: '#ef4444',
+  goto: '#f59e0b',
+  variable: '#10b981',
+  integration: '#6366f1',
+  note: '#fbbf24'
+};
+
+// Connection validation rules
+export const CONNECTION_RULES = {
+  // Nodes that can only have one outgoing connection
+  singleOutput: ['trigger', 'message', 'button', 'list', 'ai', 'webhook', 'delay', 'variable', 'integration'],
+  // Nodes that can have multiple outgoing connections (yes/no)
+  conditionalOutput: ['condition', 'split'],
+  // Nodes that cannot have outgoing connections
+  noOutput: ['end'],
+  // Nodes that can be connected from any node
+  universalInput: ['message', 'button', 'list', 'ai', 'webhook', 'delay', 'condition', 'split', 'variable', 'integration', 'end', 'goto', 'note'],
 };
