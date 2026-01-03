@@ -130,13 +130,14 @@ export const NodeSidebar = ({ onDragStart, isCollapsed = false, onToggleCollapse
     );
   }
 
-  // Compact mode for floating panel
+  // Compact mode for floating panel - show all templates
   if (compact) {
     return (
-      <div className="space-y-2">
-        {NODE_TEMPLATES.slice(0, 8).map((template) => {
+      <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+        {NODE_TEMPLATES.map((template) => {
           const Icon = ICONS[template.icon] || Zap;
           const categoryColor = NODE_CATEGORIES[template.category as keyof typeof NODE_CATEGORIES]?.color || '#6b7280';
+          const isDragging = draggingTemplate?.type === template.type && draggingTemplate?.label === template.label;
           
           return (
             <div
@@ -144,15 +145,23 @@ export const NodeSidebar = ({ onDragStart, isCollapsed = false, onToggleCollapse
               draggable
               onDragStart={(e) => handleDragStart(e, template)}
               onDragEnd={handleDragEnd}
-              className="flex items-center gap-2 p-2 rounded-lg border bg-background/50 cursor-grab active:cursor-grabbing hover:bg-muted/50 transition-all text-xs"
+              className={cn(
+                "flex items-center gap-2.5 p-2.5 rounded-lg border bg-background/80 cursor-grab active:cursor-grabbing transition-all",
+                "hover:bg-muted/80 hover:border-primary/30 hover:shadow-md hover:scale-[1.02]",
+                isDragging && "opacity-50 scale-95 border-primary"
+              )}
             >
               <div
-                className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: `${categoryColor}15` }}
+                className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm"
+                style={{ backgroundColor: `${categoryColor}15`, boxShadow: `inset 0 1px 2px ${categoryColor}20` }}
               >
-                <Icon className="w-3.5 h-3.5" style={{ color: categoryColor }} />
+                <Icon className="w-4 h-4" style={{ color: categoryColor }} />
               </div>
-              <span className="truncate font-medium">{template.label}</span>
+              <div className="flex-1 min-w-0">
+                <span className="text-xs font-medium block truncate">{template.label}</span>
+                <span className="text-[10px] text-muted-foreground truncate block">{template.description}</span>
+              </div>
+              <GripVertical className="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
             </div>
           );
         })}
