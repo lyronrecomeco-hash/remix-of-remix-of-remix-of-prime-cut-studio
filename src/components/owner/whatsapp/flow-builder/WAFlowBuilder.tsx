@@ -1023,6 +1023,7 @@ const FlowBuilderContent = ({ onBack, onEditingChange, onNavigateToInstances }: 
         isOpen={showWhatsAppPreview}
         onClose={() => setShowWhatsAppPreview(false)}
         nodes={nodes as unknown as FlowNodeType[]}
+        edges={edges as unknown as FlowEdge[]}
         selectedNode={selectedNode as unknown as FlowNodeType}
       />
     </TooltipProvider>
