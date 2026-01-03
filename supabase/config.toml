@@ -118,3 +118,6 @@ verify_jwt = false
 
 [functions.whatsapp-webhook-dispatcher]
 verify_jwt = false
+
+[functions.whatsapp-button-webhook]
+verify_jwt = false

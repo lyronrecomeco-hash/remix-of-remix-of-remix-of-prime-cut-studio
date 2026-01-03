@@ -14,5 +14,7 @@ export { WABackendConfig } from './WABackendConfig';
 export { WATemplates } from './WATemplates';
 export { WAInteractiveTemplates } from './WAInteractiveTemplates';
 export { WhatsAppPreview } from './preview/WhatsAppPreview';
+export { WAButtonActions } from './WAButtonActions';
+export { WAConversationStates } from './WAConversationStates';
 export * from './types';
 export * from './hooks';
