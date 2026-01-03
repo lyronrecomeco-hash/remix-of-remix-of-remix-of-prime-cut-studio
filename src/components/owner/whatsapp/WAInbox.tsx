@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   MessageSquare,
   Search,
@@ -25,16 +27,28 @@ import {
   ArchiveX,
   RefreshCw,
   MoreVertical,
-  Loader2
+  Loader2,
+  Wifi,
+  WifiOff,
+  Clock,
+  Paperclip,
+  Smile,
+  User,
+  MessageCircle,
+  Filter,
+  Bell,
+  BellOff
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import type { WhatsAppInstance, Conversation, InboxMessage } from './types';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+import type { Conversation, InboxMessage } from './types';
 
 interface WAInboxProps {
   instances: Array<{ id: string; name: string; status: string }>;
@@ -48,19 +62,28 @@ export const WAInbox = ({ instances }: WAInboxProps) => {
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
-  const [filter, setFilter] = useState<'all' | 'unread' | 'archived'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'archived'>('all');
+  const [isConnected, setIsConnected] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Check connection status
+  useEffect(() => {
+    const connected = instances.some(i => i.status === 'connected');
+    setIsConnected(connected);
+  }, [instances]);
+
+  // Fetch conversations
   const fetchConversations = useCallback(async () => {
-    setIsLoading(true);
     try {
       let query = supabase
         .from('whatsapp_conversations')
         .select('*')
         .order('last_message_at', { ascending: false });
 
-      if (filter === 'unread') {
+      if (activeTab === 'unread') {
         query = query.gt('unread_count', 0);
-      } else if (filter === 'archived') {
+      } else if (activeTab === 'archived') {
         query = query.eq('is_archived', true);
       } else {
         query = query.eq('is_archived', false);
@@ -72,12 +95,12 @@ export const WAInbox = ({ instances }: WAInboxProps) => {
       setConversations((data || []) as Conversation[]);
     } catch (error) {
       console.error('Error fetching conversations:', error);
-      toast.error('Erro ao carregar conversas');
     } finally {
       setIsLoading(false);
     }
-  }, [filter]);
+  }, [activeTab]);
 
+  // Fetch messages for selected conversation
   const fetchMessages = useCallback(async (phone: string, instanceId: string) => {
     try {
       const { data, error } = await supabase
@@ -106,25 +129,58 @@ export const WAInbox = ({ instances }: WAInboxProps) => {
         .eq('phone', phone)
         .eq('instance_id', instanceId);
 
+      // Scroll to bottom
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
     } catch (error) {
       console.error('Error fetching messages:', error);
     }
   }, []);
 
+  // Initial fetch and polling
   useEffect(() => {
     fetchConversations();
-  }, [fetchConversations]);
 
+    // Setup polling for real-time updates
+    pollingRef.current = setInterval(() => {
+      fetchConversations();
+      if (selectedConversation) {
+        fetchMessages(selectedConversation.phone, selectedConversation.instance_id);
+      }
+    }, 5000); // Poll every 5 seconds
+
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, [fetchConversations, fetchMessages, selectedConversation]);
+
+  // Realtime subscription
   useEffect(() => {
-    if (selectedConversation) {
-      fetchMessages(selectedConversation.phone, selectedConversation.instance_id);
-    }
-  }, [selectedConversation, fetchMessages]);
+    const channel = supabase
+      .channel('inbox-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'whatsapp_inbox' },
+        () => {
+          fetchConversations();
+          if (selectedConversation) {
+            fetchMessages(selectedConversation.phone, selectedConversation.instance_id);
+          }
+        }
+      )
+      .subscribe();
 
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchConversations, fetchMessages, selectedConversation]);
+
+  // Select conversation
   const handleSelectConversation = (conv: Conversation) => {
     setSelectedConversation(conv);
+    fetchMessages(conv.phone, conv.instance_id);
   };
 
+  // Send message
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return;
 
@@ -176,6 +232,7 @@ export const WAInbox = ({ instances }: WAInboxProps) => {
     }
   };
 
+  // Toggle archive
   const toggleArchive = async (conv: Conversation) => {
     try {
       const { error } = await supabase
@@ -187,11 +244,11 @@ export const WAInbox = ({ instances }: WAInboxProps) => {
       toast.success(conv.is_archived ? 'Conversa desarquivada' : 'Conversa arquivada');
       fetchConversations();
     } catch (error) {
-      console.error('Error toggling archive:', error);
       toast.error('Erro ao arquivar');
     }
   };
 
+  // Toggle pin
   const togglePin = async (conv: Conversation) => {
     try {
       const { error } = await supabase
@@ -203,11 +260,11 @@ export const WAInbox = ({ instances }: WAInboxProps) => {
       toast.success(conv.is_pinned ? 'Conversa desafixada' : 'Conversa fixada');
       fetchConversations();
     } catch (error) {
-      console.error('Error toggling pin:', error);
       toast.error('Erro ao fixar');
     }
   };
 
+  // Filter and sort conversations
   const filteredConversations = conversations.filter(conv => {
     if (!searchQuery) return true;
     const searchLower = searchQuery.toLowerCase();
@@ -234,250 +291,429 @@ export const WAInbox = ({ instances }: WAInboxProps) => {
     }
   };
 
+  const formatTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (days === 0) {
+      return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    } else if (days === 1) {
+      return 'Ontem';
+    } else if (days < 7) {
+      return date.toLocaleDateString('pt-BR', { weekday: 'short' });
+    } else {
+      return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    }
+  };
+
+  // Stats
+  const totalUnread = conversations.reduce((acc, c) => acc + (c.unread_count || 0), 0);
+  const archivedCount = conversations.filter(c => c.is_archived).length;
+
   return (
-    <div className="flex h-[calc(100vh-200px)] min-h-[600px] gap-4">
-      {/* Conversations List */}
-      <Card className="w-96 flex flex-col">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Inbox</CardTitle>
-            <Button variant="ghost" size="sm" onClick={fetchConversations} disabled={isLoading}>
-              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-            </Button>
-          </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar conversa..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <div className="flex gap-2 pt-2">
-            <Button
-              variant={filter === 'all' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setFilter('all')}
-            >
-              Todas
-            </Button>
-            <Button
-              variant={filter === 'unread' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setFilter('unread')}
-            >
-              Não lidas
-            </Button>
-            <Button
-              variant={filter === 'archived' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setFilter('archived')}
-            >
-              Arquivadas
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="flex-1 p-0">
-          <ScrollArea className="h-full">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+    <TooltipProvider>
+      <div className="flex h-[calc(100vh-200px)] min-h-[600px] gap-4 rounded-2xl overflow-hidden">
+        {/* Sidebar - Conversations List */}
+        <Card className="w-[380px] flex flex-col border-r-0 rounded-r-none">
+          <CardHeader className="pb-3 space-y-3">
+            {/* Header with stats */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-lg">Inbox</CardTitle>
+                {totalUnread > 0 && (
+                  <Badge variant="default" className="h-5 px-1.5">{totalUnread}</Badge>
+                )}
               </div>
-            ) : sortedConversations.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground">
-                <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Nenhuma conversa encontrada</p>
-              </div>
-            ) : (
-              <div className="divide-y">
-                {sortedConversations.map((conv) => (
-                  <div
-                    key={conv.id}
-                    className={`p-3 cursor-pointer transition-colors hover:bg-muted/50 ${
-                      selectedConversation?.id === conv.id ? 'bg-muted' : ''
-                    } ${conv.is_pinned ? 'border-l-2 border-l-primary' : ''}`}
-                    onClick={() => handleSelectConversation(conv)}
-                  >
-                    <div className="flex items-start gap-3">
-                      <Avatar className="w-10 h-10">
-                        <AvatarImage src={conv.profile_picture_url || undefined} />
-                        <AvatarFallback>
-                          {conv.contact_name?.[0] || conv.phone.slice(-2)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="font-medium text-sm truncate">
-                            {conv.contact_name || conv.phone}
-                          </p>
-                          <span className="text-xs text-muted-foreground">
-                            {conv.last_message_at && new Date(conv.last_message_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {conv.last_message || 'Sem mensagens'}
-                        </p>
-                      </div>
-                      {conv.unread_count > 0 && (
-                        <Badge variant="default" className="ml-2">
-                          {conv.unread_count}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </ScrollArea>
-        </CardContent>
-      </Card>
-
-      {/* Chat Area */}
-      <Card className="flex-1 flex flex-col">
-        {selectedConversation ? (
-          <>
-            <CardHeader className="pb-3 border-b">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Avatar>
-                    <AvatarImage src={selectedConversation.profile_picture_url || undefined} />
-                    <AvatarFallback>
-                      {selectedConversation.contact_name?.[0] || selectedConversation.phone.slice(-2)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <CardTitle className="text-base">
-                      {selectedConversation.contact_name || selectedConversation.phone}
-                    </CardTitle>
-                    <CardDescription className="flex items-center gap-1">
-                      <Phone className="w-3 h-3" />
-                      {selectedConversation.phone}
-                    </CardDescription>
-                  </div>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <MoreVertical className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => togglePin(selectedConversation)}>
-                      {selectedConversation.is_pinned ? (
-                        <>
-                          <StarOff className="w-4 h-4 mr-2" />
-                          Desafixar
-                        </>
-                      ) : (
-                        <>
-                          <Star className="w-4 h-4 mr-2" />
-                          Fixar
-                        </>
-                      )}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => toggleArchive(selectedConversation)}>
-                      {selectedConversation.is_archived ? (
-                        <>
-                          <ArchiveX className="w-4 h-4 mr-2" />
-                          Desarquivar
-                        </>
-                      ) : (
-                        <>
-                          <Archive className="w-4 h-4 mr-2" />
-                          Arquivar
-                        </>
-                      )}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </CardHeader>
-
-            <CardContent className="flex-1 p-0 overflow-hidden">
-              <ScrollArea className="h-full p-4">
-                <div className="space-y-4">
-                  {messages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`flex ${msg.is_from_me ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div
-                        className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                          msg.is_from_me
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted'
-                        }`}
-                      >
-                        {msg.message_type !== 'text' && (
-                          <div className="flex items-center gap-2 mb-1 opacity-70">
-                            {getMessageIcon(msg.message_type)}
-                            <span className="text-xs capitalize">{msg.message_type}</span>
-                          </div>
-                        )}
-                        {msg.media_url && (
-                          <div className="mb-2">
-                            {msg.message_type === 'image' ? (
-                              <img src={msg.media_url} alt="Media" className="rounded max-w-full" />
-                            ) : (
-                              <a href={msg.media_url} target="_blank" rel="noopener noreferrer" className="text-xs underline">
-                                Ver arquivo
-                              </a>
-                            )}
-                          </div>
-                        )}
-                        <p className="text-sm whitespace-pre-wrap">{msg.message_content}</p>
-                        <div className={`flex items-center justify-end gap-1 mt-1 ${msg.is_from_me ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
-                          <span className="text-xs">
-                            {new Date(msg.received_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                          {msg.is_from_me && (
-                            msg.is_read ? <CheckCheck className="w-3 h-3" /> : <Check className="w-3 h-3" />
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {messages.length === 0 && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      Nenhuma mensagem nesta conversa
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-            </CardContent>
-
-            <div className="p-4 border-t">
-              <div className="flex gap-2">
-                <Textarea
-                  placeholder="Digite sua mensagem..."
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage();
-                    }
-                  }}
-                  className="min-h-[44px] max-h-[120px] resize-none"
-                  rows={1}
-                />
-                <Button onClick={handleSendMessage} disabled={isSending || !newMessage.trim()}>
-                  {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              <div className="flex items-center gap-1">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+                  </TooltipTrigger>
+                  <TooltipContent>{isConnected ? 'Conectado' : 'Desconectado'}</TooltipContent>
+                </Tooltip>
+                <Button variant="ghost" size="icon" onClick={fetchConversations} disabled={isLoading}>
+                  <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
                 </Button>
               </div>
             </div>
-          </>
-        ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center text-muted-foreground">
-              <MessageSquare className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <h3 className="font-medium text-lg mb-2">Selecione uma conversa</h3>
-              <p className="text-sm">Escolha uma conversa para ver as mensagens</p>
+
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar conversa..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-muted/50"
+              />
             </div>
-          </div>
-        )}
-      </Card>
-    </div>
+
+            {/* Tabs */}
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
+              <TabsList className="grid grid-cols-3 w-full">
+                <TabsTrigger value="all" className="text-xs">
+                  Todas
+                </TabsTrigger>
+                <TabsTrigger value="unread" className="text-xs">
+                  Não lidas
+                  {totalUnread > 0 && <span className="ml-1">({totalUnread})</span>}
+                </TabsTrigger>
+                <TabsTrigger value="archived" className="text-xs">
+                  Arquivadas
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </CardHeader>
+
+          <CardContent className="flex-1 p-0 overflow-hidden">
+            <ScrollArea className="h-full">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : sortedConversations.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p className="font-medium">Nenhuma conversa</p>
+                  <p className="text-sm mt-1">
+                    {activeTab === 'unread' 
+                      ? 'Todas as mensagens foram lidas' 
+                      : activeTab === 'archived'
+                      ? 'Nenhuma conversa arquivada'
+                      : 'Aguardando mensagens do WhatsApp'}
+                  </p>
+                </div>
+              ) : (
+                <div className="divide-y">
+                  <AnimatePresence>
+                    {sortedConversations.map((conv) => (
+                      <motion.div
+                        key={conv.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        className={`p-3 cursor-pointer transition-all hover:bg-muted/50 ${
+                          selectedConversation?.id === conv.id ? 'bg-muted' : ''
+                        } ${conv.is_pinned ? 'border-l-2 border-l-primary' : ''}`}
+                        onClick={() => handleSelectConversation(conv)}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="relative">
+                            <Avatar className="w-12 h-12">
+                              <AvatarImage src={conv.profile_picture_url || undefined} />
+                              <AvatarFallback className="bg-primary/10 text-primary">
+                                {conv.contact_name?.[0]?.toUpperCase() || <User className="w-5 h-5" />}
+                              </AvatarFallback>
+                            </Avatar>
+                            {conv.is_pinned && (
+                              <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
+                                <Star className="w-2.5 h-2.5 text-primary-foreground fill-current" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <p className="font-medium text-sm truncate">
+                                {conv.contact_name || conv.phone}
+                              </p>
+                              <span className="text-[11px] text-muted-foreground shrink-0 ml-2">
+                                {conv.last_message_at && formatTime(conv.last_message_at)}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between mt-0.5">
+                              <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                                {conv.last_message || 'Sem mensagens'}
+                              </p>
+                              {conv.unread_count > 0 && (
+                                <Badge className="h-5 px-1.5 ml-2 shrink-0">
+                                  {conv.unread_count}
+                                </Badge>
+                              )}
+                            </div>
+                            {/* Tags */}
+                            {conv.tags && conv.tags.length > 0 && (
+                              <div className="flex gap-1 mt-1.5 flex-wrap">
+                                {conv.tags.slice(0, 2).map((tag, i) => (
+                                  <Badge key={i} variant="outline" className="text-[10px] px-1.5 py-0 h-4">
+                                    {tag}
+                                  </Badge>
+                                ))}
+                                {conv.tags.length > 2 && (
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
+                                    +{conv.tags.length - 2}
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              )}
+            </ScrollArea>
+          </CardContent>
+        </Card>
+
+        {/* Chat Area */}
+        <Card className="flex-1 flex flex-col rounded-l-none border-l">
+          {selectedConversation ? (
+            <>
+              {/* Chat Header */}
+              <CardHeader className="pb-3 border-b">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-10 h-10">
+                      <AvatarImage src={selectedConversation.profile_picture_url || undefined} />
+                      <AvatarFallback className="bg-primary/10 text-primary">
+                        {selectedConversation.contact_name?.[0]?.toUpperCase() || <User className="w-4 h-4" />}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <CardTitle className="text-base">
+                        {selectedConversation.contact_name || selectedConversation.phone}
+                      </CardTitle>
+                      <CardDescription className="flex items-center gap-1.5 text-xs">
+                        <Phone className="w-3 h-3" />
+                        {selectedConversation.phone}
+                        <span className="text-muted-foreground">•</span>
+                        <span className="text-green-500 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                          Online
+                        </span>
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" onClick={() => togglePin(selectedConversation)}>
+                          {selectedConversation.is_pinned 
+                            ? <StarOff className="w-4 h-4" /> 
+                            : <Star className="w-4 h-4" />}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {selectedConversation.is_pinned ? 'Desafixar' : 'Fixar'}
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" onClick={() => toggleArchive(selectedConversation)}>
+                          {selectedConversation.is_archived 
+                            ? <ArchiveX className="w-4 h-4" /> 
+                            : <Archive className="w-4 h-4" />}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {selectedConversation.is_archived ? 'Desarquivar' : 'Arquivar'}
+                      </TooltipContent>
+                    </Tooltip>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem className="gap-2">
+                          <User className="w-4 h-4" />
+                          Ver perfil
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="gap-2">
+                          <BellOff className="w-4 h-4" />
+                          Silenciar
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="gap-2 text-destructive">
+                          Bloquear contato
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              </CardHeader>
+
+              {/* Messages Area */}
+              <CardContent className="flex-1 p-0 overflow-hidden bg-muted/20">
+                <ScrollArea className="h-full p-4">
+                  <div className="space-y-4">
+                    {messages.length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                        <p>Nenhuma mensagem nesta conversa</p>
+                      </div>
+                    ) : (
+                      <>
+                        {messages.map((msg, index) => {
+                          const showDate = index === 0 || 
+                            new Date(msg.received_at).toDateString() !== 
+                            new Date(messages[index - 1].received_at).toDateString();
+
+                          return (
+                            <div key={msg.id}>
+                              {showDate && (
+                                <div className="flex justify-center my-4">
+                                  <Badge variant="secondary" className="text-xs font-normal">
+                                    {new Date(msg.received_at).toLocaleDateString('pt-BR', { 
+                                      weekday: 'long', 
+                                      day: 'numeric', 
+                                      month: 'long' 
+                                    })}
+                                  </Badge>
+                                </div>
+                              )}
+                              <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className={`flex ${msg.is_from_me ? 'justify-end' : 'justify-start'}`}
+                              >
+                                <div
+                                  className={`max-w-[70%] rounded-2xl px-4 py-2.5 shadow-sm ${
+                                    msg.is_from_me
+                                      ? 'bg-primary text-primary-foreground rounded-br-md'
+                                      : 'bg-card border rounded-bl-md'
+                                  }`}
+                                >
+                                  {msg.message_type !== 'text' && (
+                                    <div className={`flex items-center gap-2 mb-1.5 text-xs ${
+                                      msg.is_from_me ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                                    }`}>
+                                      {getMessageIcon(msg.message_type)}
+                                      <span className="capitalize">{msg.message_type}</span>
+                                    </div>
+                                  )}
+                                  {msg.media_url && (
+                                    <div className="mb-2 rounded-lg overflow-hidden">
+                                      {msg.message_type === 'image' ? (
+                                        <img src={msg.media_url} alt="Media" className="max-w-full rounded-lg" />
+                                      ) : msg.message_type === 'video' ? (
+                                        <video src={msg.media_url} controls className="max-w-full rounded-lg" />
+                                      ) : (
+                                        <a 
+                                          href={msg.media_url} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer" 
+                                          className={`text-xs underline flex items-center gap-1 ${
+                                            msg.is_from_me ? 'text-primary-foreground' : 'text-primary'
+                                          }`}
+                                        >
+                                          <File className="w-4 h-4" />
+                                          Ver arquivo
+                                        </a>
+                                      )}
+                                    </div>
+                                  )}
+                                  <p className="text-sm whitespace-pre-wrap break-words">{msg.message_content}</p>
+                                  <div className={`flex items-center justify-end gap-1.5 mt-1.5 ${
+                                    msg.is_from_me ? 'text-primary-foreground/60' : 'text-muted-foreground'
+                                  }`}>
+                                    <span className="text-[10px]">
+                                      {new Date(msg.received_at).toLocaleTimeString('pt-BR', { 
+                                        hour: '2-digit', 
+                                        minute: '2-digit' 
+                                      })}
+                                    </span>
+                                    {msg.is_from_me && (
+                                      msg.is_read 
+                                        ? <CheckCheck className="w-3.5 h-3.5 text-blue-400" /> 
+                                        : <Check className="w-3.5 h-3.5" />
+                                    )}
+                                  </div>
+                                </div>
+                              </motion.div>
+                            </div>
+                          );
+                        })}
+                        <div ref={messagesEndRef} />
+                      </>
+                    )}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+
+              {/* Message Input */}
+              <div className="p-4 border-t bg-card">
+                <div className="flex gap-2 items-end">
+                  <div className="flex gap-1">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="shrink-0">
+                          <Paperclip className="w-4 h-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Anexar arquivo</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="shrink-0">
+                          <Smile className="w-4 h-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Emojis</TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <Textarea
+                    placeholder="Digite sua mensagem..."
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }
+                    }}
+                    className="min-h-[44px] max-h-[120px] resize-none flex-1"
+                    rows={1}
+                  />
+                  <Button 
+                    onClick={handleSendMessage} 
+                    disabled={isSending || !newMessage.trim()}
+                    size="icon"
+                    className="shrink-0 h-11 w-11 rounded-full"
+                  >
+                    {isSending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Send className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-8">
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="text-center"
+              >
+                <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                  <MessageSquare className="w-10 h-10" />
+                </div>
+                <h3 className="font-semibold text-lg mb-2">Selecione uma conversa</h3>
+                <p className="text-sm max-w-md">
+                  Escolha uma conversa na lista ao lado para visualizar as mensagens e responder
+                </p>
+                {!isConnected && (
+                  <div className="mt-6 p-4 bg-destructive/10 rounded-lg border border-destructive/20 max-w-sm">
+                    <div className="flex items-center gap-2 text-destructive">
+                      <WifiOff className="w-4 h-4" />
+                      <span className="text-sm font-medium">WhatsApp desconectado</span>
+                    </div>
+                    <p className="text-xs mt-1 text-destructive/80">
+                      Conecte uma instância para receber mensagens
+                    </p>
+                  </div>
+                )}
+              </motion.div>
+            </div>
+          )}
+        </Card>
+      </div>
+    </TooltipProvider>
   );
 };

@@ -2,6 +2,7 @@ export { WADashboard } from './WADashboard';
 export { WAInbox } from './WAInbox';
 export { WAAdvancedSend } from './WAAdvancedSend';
 export { WAAutomations } from './WAAutomations';
+export { WAChatbots } from './WAChatbots';
 export { WAWebhooks } from './WAWebhooks';
 export { WAGroups } from './WAGroups';
 export { WAContacts } from './WAContacts';
