@@ -2963,36 +2963,48 @@ export type Database = {
       whatsapp_alerts: {
         Row: {
           acknowledged_at: string | null
+          acknowledged_by: string | null
           alert_type: string
+          auto_resolved: boolean | null
           created_at: string | null
           id: string
           instance_id: string | null
           is_resolved: boolean | null
           message: string | null
+          metadata: Json | null
+          notification_sent: boolean | null
           resolved_at: string | null
           severity: string | null
           title: string
         }
         Insert: {
           acknowledged_at?: string | null
+          acknowledged_by?: string | null
           alert_type: string
+          auto_resolved?: boolean | null
           created_at?: string | null
           id?: string
           instance_id?: string | null
           is_resolved?: boolean | null
           message?: string | null
+          metadata?: Json | null
+          notification_sent?: boolean | null
           resolved_at?: string | null
           severity?: string | null
           title: string
         }
         Update: {
           acknowledged_at?: string | null
+          acknowledged_by?: string | null
           alert_type?: string
+          auto_resolved?: boolean | null
           created_at?: string | null
           id?: string
           instance_id?: string | null
           is_resolved?: boolean | null
           message?: string | null
+          metadata?: Json | null
+          notification_sent?: boolean | null
           resolved_at?: string | null
           severity?: string | null
           title?: string
@@ -3220,10 +3232,13 @@ export type Database = {
       whatsapp_automation_rules: {
         Row: {
           actions: Json
+          canvas_position: Json | null
           conditions: Json | null
           created_at: string
           description: string | null
           execution_count: number
+          flow_data: Json | null
+          flow_version: number | null
           id: string
           is_active: boolean
           last_executed_at: string | null
@@ -3236,10 +3251,13 @@ export type Database = {
         }
         Insert: {
           actions?: Json
+          canvas_position?: Json | null
           conditions?: Json | null
           created_at?: string
           description?: string | null
           execution_count?: number
+          flow_data?: Json | null
+          flow_version?: number | null
           id?: string
           is_active?: boolean
           last_executed_at?: string | null
@@ -3252,10 +3270,13 @@ export type Database = {
         }
         Update: {
           actions?: Json
+          canvas_position?: Json | null
           conditions?: Json | null
           created_at?: string
           description?: string | null
           execution_count?: number
+          flow_data?: Json | null
+          flow_version?: number | null
           id?: string
           is_active?: boolean
           last_executed_at?: string | null
@@ -3592,6 +3613,65 @@ export type Database = {
           },
         ]
       }
+      whatsapp_circuit_breaker: {
+        Row: {
+          circuit_name: string
+          created_at: string | null
+          failure_count: number | null
+          half_open_at: string | null
+          id: string
+          instance_id: string | null
+          last_failure_at: string | null
+          last_success_at: string | null
+          opened_at: string | null
+          reset_timeout_seconds: number | null
+          state: string | null
+          success_count: number | null
+          threshold_failures: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          circuit_name: string
+          created_at?: string | null
+          failure_count?: number | null
+          half_open_at?: string | null
+          id?: string
+          instance_id?: string | null
+          last_failure_at?: string | null
+          last_success_at?: string | null
+          opened_at?: string | null
+          reset_timeout_seconds?: number | null
+          state?: string | null
+          success_count?: number | null
+          threshold_failures?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          circuit_name?: string
+          created_at?: string | null
+          failure_count?: number | null
+          half_open_at?: string | null
+          id?: string
+          instance_id?: string | null
+          last_failure_at?: string | null
+          last_success_at?: string | null
+          opened_at?: string | null
+          reset_timeout_seconds?: number | null
+          state?: string | null
+          success_count?: number | null
+          threshold_failures?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_circuit_breaker_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_contacts: {
         Row: {
           about: string | null
@@ -3896,6 +3976,97 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "whatsapp_api_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_flow_edges: {
+        Row: {
+          created_at: string | null
+          edge_condition: Json | null
+          edge_id: string
+          edge_label: string | null
+          id: string
+          rule_id: string | null
+          source_handle: string | null
+          source_node_id: string
+          target_handle: string | null
+          target_node_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          edge_condition?: Json | null
+          edge_id: string
+          edge_label?: string | null
+          id?: string
+          rule_id?: string | null
+          source_handle?: string | null
+          source_node_id: string
+          target_handle?: string | null
+          target_node_id: string
+        }
+        Update: {
+          created_at?: string | null
+          edge_condition?: Json | null
+          edge_id?: string
+          edge_label?: string | null
+          id?: string
+          rule_id?: string | null
+          source_handle?: string | null
+          source_node_id?: string
+          target_handle?: string | null
+          target_node_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_flow_edges_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_automation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_flow_nodes: {
+        Row: {
+          created_at: string | null
+          id: string
+          node_config: Json | null
+          node_id: string
+          node_label: string | null
+          node_type: string
+          position_x: number | null
+          position_y: number | null
+          rule_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          node_config?: Json | null
+          node_id: string
+          node_label?: string | null
+          node_type: string
+          position_x?: number | null
+          position_y?: number | null
+          rule_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          node_config?: Json | null
+          node_id?: string
+          node_label?: string | null
+          node_type?: string
+          position_x?: number | null
+          position_y?: number | null
+          rule_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_flow_nodes_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_automation_rules"
             referencedColumns: ["id"]
           },
         ]
@@ -4387,6 +4558,45 @@ export type Database = {
           },
         ]
       }
+      whatsapp_phone_validation: {
+        Row: {
+          check_count: number | null
+          country_code: string | null
+          created_at: string | null
+          id: string
+          is_valid: boolean | null
+          is_whatsapp: boolean | null
+          last_checked_at: string | null
+          phone_number: string
+          updated_at: string | null
+          validation_source: string | null
+        }
+        Insert: {
+          check_count?: number | null
+          country_code?: string | null
+          created_at?: string | null
+          id?: string
+          is_valid?: boolean | null
+          is_whatsapp?: boolean | null
+          last_checked_at?: string | null
+          phone_number: string
+          updated_at?: string | null
+          validation_source?: string | null
+        }
+        Update: {
+          check_count?: number | null
+          country_code?: string | null
+          created_at?: string | null
+          id?: string
+          is_valid?: boolean | null
+          is_whatsapp?: boolean | null
+          last_checked_at?: string | null
+          phone_number?: string
+          updated_at?: string | null
+          validation_source?: string | null
+        }
+        Relationships: []
+      }
       whatsapp_project_instances: {
         Row: {
           can_manage: boolean
@@ -4656,64 +4866,123 @@ export type Database = {
       whatsapp_send_queue: {
         Row: {
           attempts: number | null
+          backoff_multiplier: number | null
           buttons: Json | null
           created_at: string | null
           error_message: string | null
           id: string
           instance_id: string | null
+          last_error_code: string | null
           list_options: Json | null
           max_attempts: number | null
           media_caption: string | null
           media_url: string | null
           message_content: string | null
           message_type: string | null
+          metadata: Json | null
           next_attempt_at: string | null
           phone_to: string
+          phone_validated: boolean | null
           priority: number | null
+          retry_delay_seconds: number | null
+          scheduled_for: string | null
           sent_at: string | null
           status: string | null
+          validation_status: string | null
         }
         Insert: {
           attempts?: number | null
+          backoff_multiplier?: number | null
           buttons?: Json | null
           created_at?: string | null
           error_message?: string | null
           id?: string
           instance_id?: string | null
+          last_error_code?: string | null
           list_options?: Json | null
           max_attempts?: number | null
           media_caption?: string | null
           media_url?: string | null
           message_content?: string | null
           message_type?: string | null
+          metadata?: Json | null
           next_attempt_at?: string | null
           phone_to: string
+          phone_validated?: boolean | null
           priority?: number | null
+          retry_delay_seconds?: number | null
+          scheduled_for?: string | null
           sent_at?: string | null
           status?: string | null
+          validation_status?: string | null
         }
         Update: {
           attempts?: number | null
+          backoff_multiplier?: number | null
           buttons?: Json | null
           created_at?: string | null
           error_message?: string | null
           id?: string
           instance_id?: string | null
+          last_error_code?: string | null
           list_options?: Json | null
           max_attempts?: number | null
           media_caption?: string | null
           media_url?: string | null
           message_content?: string | null
           message_type?: string | null
+          metadata?: Json | null
           next_attempt_at?: string | null
           phone_to?: string
+          phone_validated?: boolean | null
           priority?: number | null
+          retry_delay_seconds?: number | null
+          scheduled_for?: string | null
           sent_at?: string | null
           status?: string | null
+          validation_status?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "whatsapp_send_queue_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_stability_logs: {
+        Row: {
+          created_at: string | null
+          details: Json | null
+          event_type: string
+          id: string
+          instance_id: string | null
+          message: string | null
+          severity: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          details?: Json | null
+          event_type: string
+          id?: string
+          instance_id?: string | null
+          message?: string | null
+          severity?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          details?: Json | null
+          event_type?: string
+          id?: string
+          instance_id?: string | null
+          message?: string | null
+          severity?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_stability_logs_instance_id_fkey"
             columns: ["instance_id"]
             isOneToOne: false
             referencedRelation: "whatsapp_instances"
@@ -4966,6 +5235,10 @@ export type Database = {
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_affiliate: { Args: { _user_id: string }; Returns: boolean }
+      is_circuit_open: {
+        Args: { p_circuit_name: string; p_instance_id: string }
+        Returns: boolean
+      }
       is_crm_admin: { Args: { _auth_user_id: string }; Returns: boolean }
       is_crm_member: {
         Args: { _auth_user_id: string; _tenant_id: string }
@@ -4984,6 +5257,14 @@ export type Database = {
           p_entity_type: string
         }
         Returns: undefined
+      }
+      manage_circuit_breaker: {
+        Args: {
+          p_circuit_name: string
+          p_instance_id: string
+          p_success: boolean
+        }
+        Returns: string
       }
       pay_proposal_commission: {
         Args: { proposal_id: string }
