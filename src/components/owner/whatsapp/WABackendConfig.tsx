@@ -437,7 +437,7 @@ const createSocket = async (instanceId) => {
 //                          ROTAS
 // ═══════════════════════════════════════════════════════════
 app.get('/health', (_, res) => {
-  res.json({ status: 'ok', version: '4.0.0', name: 'Genesis WhatsApp Backend', uptime: Math.floor((Date.now() - startTime) / 1000) });
+  res.json({ status: 'ok', version: '4.0.1', name: 'Genesis WhatsApp Backend', uptime: Math.floor((Date.now() - startTime) / 1000) });
 });
 
 app.get('/api/instance/:id/status', (req, res) => {
@@ -547,23 +547,32 @@ app.post('/api/instance/:id/send-buttons', async (req, res) => {
   }
 
   try {
-    // Formato de botões para Baileys
-    const buttonMessage = {
-      text: message,
+    // Normaliza "\\n" digitado como texto para quebra real de linha
+    const normalizedText = String(message)
+      .replace(/\\\\n/g, '\\n')
+      .replace(/\\\\t/g, '\\t');
+
+    // ✅ Botões reais (Template Buttons / Quick Reply) — mais compatível que "buttons" antigo.
+    const templateButtons = buttons.slice(0, 3).map((btn, idx) => ({
+      index: idx + 1,
+      quickReplyButton: {
+        displayText: String(btn.text || ('Opção ' + (idx + 1))),
+        id: String(btn.id || ('btn_' + idx)),
+      },
+    }));
+
+    const templateMessage = {
+      text: normalizedText,
       footer: footer || '',
-      buttons: buttons.slice(0, 3).map((btn, idx) => ({
-        buttonId: btn.id || \`btn_\${idx}\`,
-        buttonText: { displayText: btn.text },
-        type: 1
-      })),
-      headerType: 1
+      ...(title ? { title: String(title) } : {}),
+      templateButtons,
     };
 
-    await conn.sock.sendMessage(jid, buttonMessage);
-    log('📤', \`Botões enviados para \${phone}: \${buttons.length} botões\`);
-    res.json({ success: true, type: 'buttons', buttonsCount: buttons.length });
+    await conn.sock.sendMessage(jid, templateMessage);
+    log('📤', 'Template Buttons enviados para ' + phone + ': ' + templateButtons.length + ' botões');
+    res.json({ success: true, type: 'template_buttons', buttonsCount: templateButtons.length });
   } catch (err) {
-    log('❌', \`Erro ao enviar botões: \${err.message}\`);
+    log('❌', 'Erro ao enviar botões: ' + (err.message || err));
     res.status(500).json({ error: err.message || 'Falha ao enviar botões' });
   }
 });
