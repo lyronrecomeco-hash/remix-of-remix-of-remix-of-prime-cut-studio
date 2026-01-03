@@ -111,12 +111,16 @@ export function CreditsManager() {
     const fetchTransactions = async () => {
       if (!genesisUser) return;
       
-      // For now, use mock data until we have a transactions table
-      setTransactions([
-        { id: '1', type: 'purchase', amount: 500, description: 'Compra de créditos', created_at: new Date().toISOString() },
-        { id: '2', type: 'usage', amount: -50, description: 'Envio de mensagens', created_at: new Date(Date.now() - 3600000).toISOString() },
-        { id: '3', type: 'bonus', amount: 100, description: 'Bônus de boas-vindas', created_at: new Date(Date.now() - 86400000).toISOString() },
-      ]);
+      const { data, error } = await supabase
+        .from('genesis_credit_transactions')
+        .select('*')
+        .eq('user_id', genesisUser.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      
+      if (!error && data) {
+        setTransactions(data as Transaction[]);
+      }
       setLoadingTransactions(false);
     };
     
