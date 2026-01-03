@@ -6,5 +6,6 @@ export { FlowToolbar } from './FlowToolbar';
 export { FlowStats } from './FlowStats';
 export { FlowValidationPanel } from './FlowValidationPanel';
 export { HelpModal } from './HelpModal';
+export { LunaAIModal } from './LunaAIModal';
 export * from './types';
 export * from './hooks';

@@ -49,7 +49,7 @@ import { FlowToolbar } from './FlowToolbar';
 import { FlowStats } from './FlowStats';
 import { FlowValidationPanel } from './FlowValidationPanel';
 import { HelpModal } from './HelpModal';
-import { LunaAIPanel } from './LunaAIPanel';
+import { LunaAIModal } from './LunaAIModal';
 import { 
   FlowNode as FlowNodeType, 
   FlowEdge, 
@@ -1014,14 +1014,37 @@ const FlowBuilderContent = ({ onBack }: WAFlowBuilderProps) => {
           )}
         </AnimatePresence>
 
-        {/* Luna AI Panel */}
-        <LunaAIPanel
+        {/* Luna AI Modal */}
+        <LunaAIModal
+          open={isLunaOpen}
+          onOpenChange={setIsLunaOpen}
           onApplyFlow={handleApplyLunaFlow}
           currentNodes={nodes as unknown as FlowNodeType[]}
           currentEdges={edges as unknown as FlowEdge[]}
-          isCollapsed={!isLunaOpen}
-          onToggleCollapse={() => setIsLunaOpen(!isLunaOpen)}
         />
+
+        {/* Luna AI Floating Button */}
+        <motion.div
+          className="absolute bottom-4 right-4 z-10"
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.5, type: 'spring' }}
+        >
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={() => setIsLunaOpen(true)}
+                className="h-14 w-14 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 shadow-lg shadow-purple-500/30"
+                size="icon"
+              >
+                <Sparkles className="h-6 w-6" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="left">
+              <p>Luna IA - Criar Fluxo com IA</p>
+            </TooltipContent>
+          </Tooltip>
+        </motion.div>
 
         {/* Help Modal */}
         <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
