@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -18,11 +18,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-import { cn } from '@/lib/utils';
+
+// Import integration logos
+import shopifyLogo from '@/assets/integrations/shopify.png';
+import woocommerceLogo from '@/assets/integrations/woocommerce.png';
+import nuvemshopLogo from '@/assets/integrations/nuvemshop.png';
+import mercadoshopsLogo from '@/assets/integrations/mercadoshops.png';
+import rdstationLogo from '@/assets/integrations/rdstation.png';
 
 interface Instance {
   id: string;
@@ -38,14 +42,13 @@ interface InstancePanelProps {
   onBack: () => void;
 }
 
-// Locked integration cards
+// Integration cards - ChatPro removed, using real logos
 const integrations = [
-  { id: 'chatpro', name: 'chatPro', description: 'Ferramenta de disparos de mensagens.', logo: '💬', enabled: false },
-  { id: 'shopify', name: 'Shopify', description: 'Integre sua loja Shopify para enviar notificações.', logo: '🛒', enabled: false },
-  { id: 'woocommerce', name: 'WooCommerce', description: 'Integre sua loja WooCommerce para enviar notificações.', logo: '🛍️', enabled: false },
-  { id: 'nuvemshop', name: 'NuvemShop', description: 'Integre sua conta NuvemShop para realizar disparos.', logo: '☁️', enabled: false },
-  { id: 'rdstation', name: 'RD Station', description: 'Integre sua conta RD Station para realizar gráficos.', logo: '📊', enabled: false },
-  { id: 'mercadoshops', name: 'Mercado Shops', description: 'Integre sua conta do Mercado Shops para receber notificações.', logo: '🏪', enabled: false },
+  { id: 'shopify', name: 'Shopify', description: 'Integre sua loja Shopify para enviar notificações.', logo: shopifyLogo, enabled: false },
+  { id: 'woocommerce', name: 'WooCommerce', description: 'Integre sua loja WooCommerce para enviar notificações.', logo: woocommerceLogo, enabled: false },
+  { id: 'nuvemshop', name: 'Nuvemshop', description: 'Integre sua conta Nuvemshop para realizar disparos.', logo: nuvemshopLogo, enabled: false },
+  { id: 'mercadoshops', name: 'Mercado Shops', description: 'Integre sua conta do Mercado Shops para receber notificações.', logo: mercadoshopsLogo, enabled: false },
+  { id: 'rdstation', name: 'RD Station', description: 'Integre sua conta RD Station para realizar gráficos.', logo: rdstationLogo, enabled: false },
 ];
 
 export function InstancePanel({ instance, onBack }: InstancePanelProps) {
@@ -304,7 +307,13 @@ export function InstancePanel({ instance, onBack }: InstancePanelProps) {
                     <Lock className="w-4 h-4 text-muted-foreground" />
                   </div>
                   <CardContent className="pt-6">
-                    <div className="text-3xl mb-3">{integration.logo}</div>
+                    <div className="h-10 mb-3 flex items-center">
+                      <img 
+                        src={integration.logo} 
+                        alt={integration.name} 
+                        className="h-8 w-auto object-contain max-w-[120px]"
+                      />
+                    </div>
                     <h4 className="font-semibold">{integration.name}</h4>
                     <p className="text-xs text-muted-foreground mt-1">{integration.description}</p>
                     <Button 
