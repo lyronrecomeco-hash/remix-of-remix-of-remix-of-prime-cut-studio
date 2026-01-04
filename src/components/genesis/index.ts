@@ -8,4 +8,3 @@ export { AnalyticsDashboard } from './AnalyticsDashboard';
 export { NotificationsPanel } from './NotificationsPanel';
 export { GenesisChatbots } from './GenesisChatbots';
 export { WelcomeModal } from './WelcomeModal';
-export { GenesisMyAccount } from './GenesisMyAccount';
