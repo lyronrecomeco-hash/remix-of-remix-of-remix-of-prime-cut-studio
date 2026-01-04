@@ -83,6 +83,26 @@ export function InstancesManager({ onNavigateToAccount }: InstancesManagerProps 
 
   useEffect(() => {
     fetchInstances();
+    
+    // Auto-refresh a cada 10 segundos para manter status sincronizado
+    const interval = setInterval(fetchInstances, 10000);
+    
+    // Subscrever a mudanças realtime na tabela
+    const channel = supabase
+      .channel('genesis-instances-status')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'genesis_instances' },
+        () => {
+          fetchInstances();
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, [genesisUser]);
 
   const createInstance = async () => {
@@ -160,16 +180,20 @@ export function InstancesManager({ onNavigateToAccount }: InstancesManagerProps 
   };
 
   // Determinar status real baseado em effective_status e heartbeat
+  // Usa threshold de 5 minutos (300s) consistente com o heartbeat worker
   const getEffectiveStatus = (instance: Instance): string => {
-    // Se tiver heartbeat recente (< 3 min), usa effective_status
-    if (instance.last_heartbeat) {
-      const lastHb = new Date(instance.last_heartbeat).getTime();
-      const isStale = Date.now() - lastHb > 180000; // 3 minutos
-      
-      if (isStale && instance.effective_status === 'connected') {
-        return 'disconnected'; // Heartbeat expirado = desconectado
+    // Prioriza sempre o effective_status que é atualizado pelo heartbeat worker
+    // O threshold aqui é apenas para proteção visual em caso de backend offline
+    if (instance.effective_status) {
+      // Se effective_status indica conectado mas heartbeat está muito antigo (5+ min), mostra com cautela
+      if (instance.last_heartbeat && instance.effective_status === 'connected') {
+        const lastHb = new Date(instance.last_heartbeat).getTime();
+        const isStale = Date.now() - lastHb > 300000; // 5 minutos (mesmo do heartbeat worker)
+        if (isStale) {
+          return 'connecting'; // Mostra "conectando" em vez de "desconectado" para evitar falso negativo
+        }
       }
-      return instance.effective_status || instance.status;
+      return instance.effective_status;
     }
     return instance.status;
   };
