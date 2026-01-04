@@ -139,3 +139,6 @@ verify_jwt = false
 
 [functions.genesis-webhook-dispatcher]
 verify_jwt = false
+
+[functions.genesis-connection-orchestrator]
+verify_jwt = false

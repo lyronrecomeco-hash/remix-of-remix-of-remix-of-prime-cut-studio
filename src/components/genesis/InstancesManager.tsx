@@ -79,27 +79,19 @@ export function InstancesManager({ onNavigateToAccount }: InstancesManagerProps 
       const now = Date.now();
       const STALE_THRESHOLD_MS = 300000; // 5 minutos
 
-      // Sync bidirecional: se detectar instância stale no frontend, forçar correção no banco
+      // FASE 7: Não mais forçar sync direto no banco
+      // O orquestrador central é a única fonte de verdade para status
+      // Apenas detectar stale para exibição visual, mas não alterar status diretamente
       for (const instance of data) {
         if (instance.effective_status === 'connected' && instance.last_heartbeat) {
           const lastHb = new Date(instance.last_heartbeat).getTime();
           const isStale = now - lastHb > STALE_THRESHOLD_MS;
           
           if (isStale) {
-            // Forçar sync no banco - marcar como desconectado
-            console.log(`[InstancesManager] Detected stale instance ${instance.id}, forcing sync`);
-            await supabase
-              .from('genesis_instances')
-              .update({ 
-                effective_status: 'disconnected', 
-                status: 'disconnected',
-                updated_at: new Date().toISOString() 
-              })
-              .eq('id', instance.id);
-            
-            // Atualizar localmente para refletir imediatamente
-            instance.effective_status = 'disconnected';
-            instance.status = 'disconnected';
+            // FASE 7: Apenas atualizar localmente para UI, NÃO escrever no banco
+            // O cleanup worker ou heartbeat vai resolver o status real
+            console.log(`[InstancesManager] Instance ${instance.id} appears stale, showing as connecting`);
+            instance.effective_status = 'connecting'; // UI only - mostra como "conectando" não "desconectado"
           }
         }
       }
