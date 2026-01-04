@@ -226,37 +226,50 @@ export function useGenesisWhatsAppConnection() {
 
 Agora você pode automatizar seu atendimento!`;
 
-    // O backend pode reportar "connected" antes do socket estar 100% pronto.
-    // Então tentamos algumas vezes em background (sem travar a UI).
-    const maxAttempts = 6;
+    // Aguardar socket estabilizar antes de tentar enviar
+    await new Promise((r) => setTimeout(r, 2500));
+
+    // Retry loop - o backend pode reportar "connected" antes do socket estar 100% pronto
+    const maxAttempts = 8;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
+        console.log(`sendWelcomeMessage attempt ${attempt}/${maxAttempts} to ${phoneNumber}`);
+        
         const res = await proxyRequest(instanceId, `/api/instance/${instanceId}/send`, 'POST', {
           phone: phoneNumber,
           message,
         });
 
-        if (res.ok) {
-          console.log('Welcome message sent to:', phoneNumber);
+        console.log(`sendWelcomeMessage response attempt ${attempt}:`, { ok: res.ok, status: res.status, error: res.error, data: res.data });
+
+        if (res.ok && res.status >= 200 && res.status < 300) {
+          console.log('✅ Welcome message sent successfully to:', phoneNumber);
           return;
         }
 
+        // Check if error is retryable
         const errText = String(res?.data?.error || res?.error || '').toLowerCase();
-        const shouldRetry = res.status === 503 || errText.includes('não conectado') || errText.includes('not connected');
+        const shouldRetry = 
+          res.status === 503 || 
+          res.status === 0 ||
+          errText.includes('não conectado') || 
+          errText.includes('not connected') ||
+          errText.includes('socket') ||
+          errText.includes('aguard');
 
         if (!shouldRetry) {
-          console.warn('Welcome message not sent (non-retryable):', { status: res.status, error: res.error, data: res.data });
+          console.warn('❌ Welcome message not sent (non-retryable):', { status: res.status, error: res.error, data: res.data });
           return;
         }
       } catch (error) {
-        // segue para retry
+        console.warn(`sendWelcomeMessage attempt ${attempt} exception:`, error);
       }
 
-      // Backoff simples: 1.5s, 2.0s, 2.5s...
-      await new Promise((r) => setTimeout(r, 1000 + attempt * 500));
+      // Backoff: 2s, 2.5s, 3s, 3.5s...
+      await new Promise((r) => setTimeout(r, 1500 + attempt * 500));
     }
 
-    console.warn('Welcome message not sent after retries:', phoneNumber);
+    console.warn('❌ Welcome message not sent after all retries:', phoneNumber);
   };
 
   const startConnection = useCallback(async (
