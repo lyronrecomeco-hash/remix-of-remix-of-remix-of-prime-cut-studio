@@ -33,7 +33,9 @@ export function useWhatsAppStatus(pollingIntervalMs = 3000) {
       if (error || !data || !mountedRef.current) return;
 
       const now = Date.now();
-      const processed: InstanceStatus[] = data.map((instance: any) => {
+      const processed: InstanceStatus[] = [];
+      
+      for (const instance of data) {
         const lastHeartbeat = instance.last_heartbeat 
           ? new Date(instance.last_heartbeat).getTime() 
           : 0;
@@ -49,9 +51,18 @@ export function useWhatsAppStatus(pollingIntervalMs = 3000) {
         // 3. The status was connected
         if (effectiveStatus === 'connected' && isStale && lastHeartbeat > 0) {
           effectiveStatus = 'disconnected';
+          
+          // Sync bidirecional: forçar correção no banco
+          await supabase
+            .from('whatsapp_instances')
+            .update({ 
+              status: 'disconnected',
+              updated_at: new Date().toISOString() 
+            })
+            .eq('id', instance.id);
         }
 
-        return {
+        processed.push({
           id: instance.id,
           status: instance.status,
           effective_status: effectiveStatus,
@@ -59,8 +70,8 @@ export function useWhatsAppStatus(pollingIntervalMs = 3000) {
           phone_number: instance.phone_number,
           heartbeat_age_seconds: Math.floor(heartbeatAge / 1000),
           is_stale: isStale,
-        };
-      });
+        });
+      }
 
       setInstances(processed);
       setLastUpdate(new Date());

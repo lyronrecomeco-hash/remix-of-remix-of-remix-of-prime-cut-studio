@@ -255,7 +255,35 @@ export function useGenesisWhatsAppConnection() {
     return { healthy: res.ok };
   };
 
-  const checkStatus = async (instanceId: string): Promise<{ connected: boolean; phoneNumber?: string }> => {
+  const checkStatus = async (instanceId: string): Promise<{ connected: boolean; phoneNumber?: string; isStale?: boolean }> => {
+    // Primeiro verificar no banco se está stale
+    const { data: instanceRow } = await supabase
+      .from('genesis_instances')
+      .select('last_heartbeat, effective_status')
+      .eq('id', instanceId)
+      .single();
+
+    if (instanceRow?.last_heartbeat) {
+      const lastHb = new Date(instanceRow.last_heartbeat).getTime();
+      const isStale = Date.now() - lastHb > STALE_THRESHOLD_MS;
+      
+      if (isStale && instanceRow.effective_status === 'connected') {
+        // Forçar sync no banco
+        console.log(`[checkStatus] Instance ${instanceId} is stale, forcing disconnect`);
+        await supabase
+          .from('genesis_instances')
+          .update({ 
+            effective_status: 'disconnected', 
+            status: 'disconnected',
+            updated_at: new Date().toISOString() 
+          })
+          .eq('id', instanceId);
+        
+        return { connected: false, isStale: true };
+      }
+    }
+
+    // Se não está stale, verificar status real via proxy
     const res = await proxyRequest(instanceId, `/api/instance/${instanceId}/status`, 'GET');
     
     if (!res.ok) return { connected: false };

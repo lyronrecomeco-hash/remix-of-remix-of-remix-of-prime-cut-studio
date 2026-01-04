@@ -76,16 +76,59 @@ export function InstancesManager({ onNavigateToAccount }: InstancesManagerProps 
       .order('created_at', { ascending: false });
 
     if (!error && data) {
+      const now = Date.now();
+      const STALE_THRESHOLD_MS = 300000; // 5 minutos
+
+      // Sync bidirecional: se detectar instância stale no frontend, forçar correção no banco
+      for (const instance of data) {
+        if (instance.effective_status === 'connected' && instance.last_heartbeat) {
+          const lastHb = new Date(instance.last_heartbeat).getTime();
+          const isStale = now - lastHb > STALE_THRESHOLD_MS;
+          
+          if (isStale) {
+            // Forçar sync no banco - marcar como desconectado
+            console.log(`[InstancesManager] Detected stale instance ${instance.id}, forcing sync`);
+            await supabase
+              .from('genesis_instances')
+              .update({ 
+                effective_status: 'disconnected', 
+                status: 'disconnected',
+                updated_at: new Date().toISOString() 
+              })
+              .eq('id', instance.id);
+            
+            // Atualizar localmente para refletir imediatamente
+            instance.effective_status = 'disconnected';
+            instance.status = 'disconnected';
+          }
+        }
+      }
+
       setInstances(data as Instance[]);
     }
     setLoading(false);
   };
 
+  // Chamar cleanup worker periodicamente (a cada 2 minutos)
+  const triggerCleanupWorker = async () => {
+    try {
+      await supabase.functions.invoke('genesis-stale-cleanup');
+    } catch (err) {
+      console.error('[InstancesManager] Cleanup worker error:', err);
+    }
+  };
+
   useEffect(() => {
     fetchInstances();
     
+    // Trigger cleanup worker on mount
+    triggerCleanupWorker();
+    
     // Auto-refresh a cada 10 segundos para manter status sincronizado
     const interval = setInterval(fetchInstances, 10000);
+    
+    // Trigger cleanup worker a cada 2 minutos
+    const cleanupInterval = setInterval(triggerCleanupWorker, 120000);
     
     // Subscrever a mudanças realtime na tabela
     const channel = supabase
@@ -101,6 +144,7 @@ export function InstancesManager({ onNavigateToAccount }: InstancesManagerProps 
     
     return () => {
       clearInterval(interval);
+      clearInterval(cleanupInterval);
       supabase.removeChannel(channel);
     };
   }, [genesisUser]);
