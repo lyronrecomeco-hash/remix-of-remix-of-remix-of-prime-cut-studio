@@ -84,6 +84,7 @@ import {
 import { useFlowClipboard, useAutoLayout, useFlowValidation } from './hooks';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useGenesisAuth } from '@/contexts/GenesisAuthContext';
 
 import { CustomEdge } from './CustomEdge';
 import { InstanceRequiredModal } from './InstanceRequiredModal';
@@ -112,6 +113,7 @@ const FlowBuilderContent = ({ onBack, onEditingChange, onNavigateToInstances }: 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { fitView, zoomIn, zoomOut, setCenter, getNodes, getViewport, setViewport } = useReactFlow();
   const isMobile = useIsMobile();
+  const { genesisUser } = useGenesisAuth();
   
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -325,6 +327,7 @@ const FlowBuilderContent = ({ onBack, onEditingChange, onNavigateToInstances }: 
   const createRule = async () => {
     if (!newRuleName.trim()) { toast.error('Digite um nome para o fluxo'); return; }
     if (!newRuleInstanceId) { toast.error('Selecione uma instância do WhatsApp'); return; }
+    if (!genesisUser?.id) { toast.error('Usuário não autenticado'); return; }
     setIsSaving(true);
     try {
       // Empty flow - no initial node, user will add via EmptyCanvasState
@@ -333,6 +336,7 @@ const FlowBuilderContent = ({ onBack, onEditingChange, onNavigateToInstances }: 
         name: newRuleName, 
         description: '', 
         instance_id: newRuleInstanceId,
+        user_id: genesisUser.id,
         trigger_type: 'keyword', 
         trigger_config: {}, 
         conditions: [], 

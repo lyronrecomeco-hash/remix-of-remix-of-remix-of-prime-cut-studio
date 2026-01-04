@@ -3663,6 +3663,7 @@ export type Database = {
           trigger_config: Json
           trigger_type: string
           updated_at: string
+          user_id: string
         }
         Insert: {
           actions?: Json
@@ -3683,6 +3684,7 @@ export type Database = {
           trigger_config?: Json
           trigger_type: string
           updated_at?: string
+          user_id: string
         }
         Update: {
           actions?: Json
@@ -3703,6 +3705,7 @@ export type Database = {
           trigger_config?: Json
           trigger_type?: string
           updated_at?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -3717,6 +3720,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "whatsapp_api_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_automation_rules_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_users"
             referencedColumns: ["id"]
           },
         ]

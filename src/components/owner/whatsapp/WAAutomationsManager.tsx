@@ -44,10 +44,11 @@ import {
 } from '@/components/ui/select';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useGenesisAuth } from '@/contexts/GenesisAuthContext';
 
 interface AutomationRule {
   id: string;
-  project_id: string;
+  user_id: string;
   instance_id: string;
   name: string;
   description: string | null;
@@ -62,12 +63,7 @@ interface AutomationRule {
   updated_at: string;
 }
 
-interface APIProject {
-  id: string;
-  name: string;
-}
-
-interface WhatsAppInstance {
+interface GenesisInstance {
   id: string;
   name: string;
 }
@@ -98,9 +94,9 @@ const CONDITION_OPERATORS = [
 ];
 
 const WAAutomationsManager = () => {
+  const { genesisUser } = useGenesisAuth();
   const [automations, setAutomations] = useState<AutomationRule[]>([]);
-  const [projects, setProjects] = useState<APIProject[]>([]);
-  const [instances, setInstances] = useState<WhatsAppInstance[]>([]);
+  const [instances, setInstances] = useState<GenesisInstance[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -109,7 +105,6 @@ const WAAutomationsManager = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    project_id: '',
     instance_id: '',
     trigger_type: 'external_event',
     trigger_config: {} as any,
@@ -119,21 +114,23 @@ const WAAutomationsManager = () => {
   });
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (genesisUser?.id) {
+      fetchData();
+    }
+  }, [genesisUser?.id]);
 
   const fetchData = async () => {
+    if (!genesisUser?.id) return;
+    
     setIsLoading(true);
     try {
-      const [automationsRes, projectsRes, instancesRes] = await Promise.all([
+      const [automationsRes, instancesRes] = await Promise.all([
         supabase.from('whatsapp_automation_rules').select('*').order('created_at', { ascending: false }),
-        supabase.from('whatsapp_api_projects').select('id, name').eq('is_active', true),
-        supabase.from('whatsapp_instances').select('id, name')
+        supabase.from('genesis_instances').select('id, name').eq('user_id', genesisUser.id)
       ]);
 
       setAutomations((automationsRes.data || []) as AutomationRule[]);
-      setProjects((projectsRes.data || []) as APIProject[]);
-      setInstances((instancesRes.data || []) as WhatsAppInstance[]);
+      setInstances((instancesRes.data || []) as GenesisInstance[]);
     } catch (error) {
       console.error('Erro ao carregar automações:', error);
       toast.error('Erro ao carregar automações');
@@ -146,7 +143,6 @@ const WAAutomationsManager = () => {
     setFormData({
       name: '',
       description: '',
-      project_id: '',
       instance_id: '',
       trigger_type: 'external_event',
       trigger_config: {},
@@ -157,8 +153,13 @@ const WAAutomationsManager = () => {
   };
 
   const createAutomation = async () => {
-    if (!formData.name || !formData.project_id || !formData.instance_id || formData.actions.length === 0) {
+    if (!formData.name || !formData.instance_id || formData.actions.length === 0) {
       toast.error('Preencha todos os campos obrigatórios e adicione pelo menos uma ação');
+      return;
+    }
+
+    if (!genesisUser?.id) {
+      toast.error('Usuário não autenticado');
       return;
     }
 
@@ -166,8 +167,8 @@ const WAAutomationsManager = () => {
       const { error } = await supabase.from('whatsapp_automation_rules').insert({
         name: formData.name,
         description: formData.description || null,
-        project_id: formData.project_id,
         instance_id: formData.instance_id,
+        user_id: genesisUser.id,
         trigger_type: formData.trigger_type,
         trigger_config: formData.trigger_config,
         conditions: formData.conditions,
@@ -253,7 +254,6 @@ const WAAutomationsManager = () => {
     setFormData({
       name: automation.name,
       description: automation.description || '',
-      project_id: automation.project_id,
       instance_id: automation.instance_id || '',
       trigger_type: automation.trigger_type,
       trigger_config: automation.trigger_config || {},
@@ -319,8 +319,8 @@ const WAAutomationsManager = () => {
     }));
   };
 
-  const getProjectName = (projectId: string) => {
-    return projects.find(p => p.id === projectId)?.name || 'Projeto desconhecido';
+  const getInstanceName = (instanceId: string) => {
+    return instances.find(i => i.id === instanceId)?.name || 'Instância desconhecida';
   };
 
   const getTriggerLabel = (triggerType: string) => {
@@ -449,7 +449,7 @@ const WAAutomationsManager = () => {
                   {/* Stats */}
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <div className="flex items-center gap-4">
-                      <span>Projeto: {getProjectName(automation.project_id)}</span>
+                      <span>Instância: {getInstanceName(automation.instance_id)}</span>
                       <span>Execuções: {automation.execution_count}</span>
                       {automation.last_executed_at && (
                         <span>
@@ -496,18 +496,18 @@ const WAAutomationsManager = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Projeto *</Label>
+                <Label>Instância WhatsApp *</Label>
                 <Select
-                  value={formData.project_id}
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, project_id: v }))}
+                  value={formData.instance_id}
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, instance_id: v }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione um projeto" />
+                    <SelectValue placeholder="Selecione uma instância" />
                   </SelectTrigger>
                   <SelectContent>
-                    {projects.map((project) => (
-                      <SelectItem key={project.id} value={project.id}>
-                        {project.name}
+                    {instances.map((instance) => (
+                      <SelectItem key={instance.id} value={instance.id}>
+                        {instance.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
