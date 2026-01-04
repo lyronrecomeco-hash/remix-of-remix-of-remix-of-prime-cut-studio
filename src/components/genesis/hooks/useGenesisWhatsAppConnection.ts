@@ -495,6 +495,7 @@ Agora você pode automatizar seu atendimento!`;
   ) => {
     stopPolling();
     
+    // Iniciar silenciosamente - sem mostrar estados intermediários até saber o que fazer
     safeSetState(() => ({
       isConnecting: true,
       isPolling: false,
@@ -505,111 +506,71 @@ Agora você pode automatizar seu atendimento!`;
     }));
 
     try {
-      // PASSO 1: Verificar primeiro se já está conectado no banco de dados
+      // PASSO 1: Buscar dados da instância
       const { data: instanceRow } = await supabase
         .from('genesis_instances')
         .select('session_data, effective_status, phone_number, last_heartbeat')
         .eq('id', instanceId)
         .single();
 
-      // Se já está conectado E com heartbeat recente, não precisa fazer nada
-      if (instanceRow?.effective_status === 'connected') {
-        const lastHb = instanceRow.last_heartbeat ? new Date(instanceRow.last_heartbeat).getTime() : 0;
-        const isRecent = Date.now() - lastHb < STALE_THRESHOLD_MS;
-        
-        if (isRecent) {
-          console.log(`[startConnection] Instance ${instanceId} already connected with recent heartbeat`);
-          toast.success('WhatsApp já está conectado!');
-          safeSetState(() => ({
-            isConnecting: false,
-            isPolling: false,
-            qrCode: null,
-            error: null,
-            attempts: 0,
-            phase: 'connected',
-          }));
-          onConnected?.();
-          return;
-        }
-      }
-
-      // PASSO 2: Validar saúde do backend
+      // PASSO 2: Validar saúde do backend primeiro
       const healthCheck = await validateBackendHealth(instanceId);
       
       if (!healthCheck.healthy) {
         throw new Error(healthCheck.error || 'Backend não está respondendo');
       }
 
-      // PASSO 3: Verificar status real no backend
-      safeSetState(prev => ({ ...prev, phase: 'generating' }));
-
-      const initialStatus = await checkStatus(instanceId);
-      if (initialStatus.connected) {
+      // PASSO 3: Verificar status real no backend (fonte da verdade)
+      const realStatus = await checkStatus(instanceId);
+      
+      // JÁ CONECTADO: Reconhecer imediatamente e enviar mensagem de teste
+      if (realStatus.connected) {
+        console.log(`[startConnection] Instance ${instanceId} is ALREADY CONNECTED`);
+        
+        const phoneNumber = realStatus.phoneNumber ?? instanceRow?.phone_number;
         const nowIso = new Date().toISOString();
         
-        const session =
-          instanceRow?.session_data && typeof instanceRow.session_data === 'object'
-            ? (instanceRow.session_data as Record<string, unknown>)
-            : {};
-
-        const readyToSend = session.ready_to_send === true;
-
-        // Atualizar banco com status conectado
+        // Atualizar banco imediatamente
         await updateInstanceInDB(instanceId, {
           status: 'connected',
           effective_status: 'connected',
-          phone_number: initialStatus.phoneNumber ?? instanceRow?.phone_number,
+          phone_number: phoneNumber,
           last_heartbeat: nowIso,
         });
 
-        if (readyToSend) {
-          toast.success('WhatsApp já está conectado!');
+        // Verificar se precisa enviar mensagem de teste
+        const session = instanceRow?.session_data && typeof instanceRow.session_data === 'object'
+          ? (instanceRow.session_data as Record<string, unknown>)
+          : {};
+
+        // Já enviou mensagem recentemente (últimas 24h)? Não enviar novamente
+        const lastWelcome = session.welcome_sent_at 
+          ? new Date(session.welcome_sent_at as string).getTime() 
+          : 0;
+        const welcomeRecent = Date.now() - lastWelcome < 24 * 60 * 60 * 1000; // 24h
+
+        if (phoneNumber && !welcomeRecent) {
+          // Mostrar estado de estabilização enquanto envia teste
           safeSetState(() => ({
-            isConnecting: false,
+            isConnecting: true,
             isPolling: false,
             qrCode: null,
             error: null,
             attempts: 0,
-            phase: 'connected',
+            phase: 'stabilizing',
           }));
-          onConnected?.();
-          return;
-        }
 
-        // Socket ainda não confirmado para envio
-        const merged = await mergeSessionData(instanceId, {
-          ready_to_send: false,
-          ready_phase: 'socket_connected',
-          ready_updated_at: nowIso,
-        });
+          toast.info('WhatsApp conectado! Enviando teste...');
 
-        await updateInstanceInDB(instanceId, {
-          status: 'connected',
-          phone_number: initialStatus.phoneNumber ?? instanceRow?.phone_number,
-          last_heartbeat: nowIso,
-          effective_status: 'connecting',
-          session_data: merged,
-        });
-
-        safeSetState(() => ({
-          isConnecting: true,
-          isPolling: false,
-          qrCode: null,
-          error: null,
-          attempts: 0,
-          phase: 'stabilizing',
-        }));
-
-        const phone = initialStatus.phoneNumber ?? instanceRow?.phone_number;
-        if (phone && !session.welcome_sent_at) {
-          const result = await sendWelcomeMessage(instanceId, phone);
+          const result = await sendWelcomeMessage(instanceId, phoneNumber);
+          
           if (result.success) {
             const mergedReady = await mergeSessionData(instanceId, {
               ready_to_send: true,
-              welcome_sent_at: new Date().toISOString(),
-              last_send_success_at: new Date().toISOString(),
+              welcome_sent_at: nowIso,
+              last_send_success_at: nowIso,
               ready_phase: 'ready_to_send',
-              ready_updated_at: new Date().toISOString(),
+              ready_updated_at: nowIso,
             });
 
             await updateInstanceInDB(instanceId, {
@@ -617,46 +578,26 @@ Agora você pode automatizar seu atendimento!`;
               session_data: mergedReady,
             });
 
-            toast.success('WhatsApp pronto para enviar!');
-            safeSetState(() => ({
-              isConnecting: false,
-              isPolling: false,
-              qrCode: null,
-              error: null,
-              attempts: 0,
-              phase: 'connected',
-            }));
-            onConnected?.();
+            toast.success('✅ WhatsApp conectado e funcionando!');
           } else {
-            const mergedErr = await mergeSessionData(instanceId, {
-              ready_to_send: false,
-              last_send_error_at: new Date().toISOString(),
-              last_send_error: { status: result.status, error: result.error },
-              ready_phase: 'send_failed',
-              ready_updated_at: new Date().toISOString(),
-            });
-
-            await updateInstanceInDB(instanceId, {
-              effective_status: 'connecting',
-              session_data: mergedErr,
-            });
-
-            safeSetState((prev) => ({
-              ...prev,
-              isConnecting: false,
-              phase: 'error',
-              error: 'Conectou, mas o envio ainda não está pronto. Aguarde alguns segundos e tente novamente.',
-            }));
+            toast.warning('Conectado, mas teste de envio falhou. Verifique as configurações.');
           }
         } else {
-          safeSetState((prev) => ({
-            ...prev,
-            isConnecting: false,
-            phase: 'error',
-            error: 'Instância conectada, mas não foi possível validar o envio automaticamente.',
-          }));
+          // Já conectado e teste já foi enviado
+          toast.success('✅ WhatsApp já está conectado!');
         }
 
+        // Finalizar com sucesso
+        safeSetState(() => ({
+          isConnecting: false,
+          isPolling: false,
+          qrCode: null,
+          error: null,
+          attempts: 0,
+          phase: 'connected',
+        }));
+        
+        onConnected?.();
         return;
       }
 

@@ -75,12 +75,8 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
   }, [instance.id, startStatusPolling, stopStatusPolling]);
 
   const handleConnect = async () => {
-    // Se já está conectado, apenas notificar
-    if (liveStatus.status === 'connected' && !liveStatus.isStale) {
-      onRefresh();
-      return;
-    }
-    
+    // Sempre chamar startConnection - ele vai verificar e agir apropriadamente
+    // Se já estiver conectado, vai reconhecer e enviar teste
     await startConnection(instance.id, undefined, undefined, () => {
       onRefresh();
     });
