@@ -37,8 +37,9 @@ interface GenesisWhatsAppConnectProps {
 }
 
 export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppConnectProps) {
+  // Usar effective_status como prioridade para determinar conexão real
   const [liveStatus, setLiveStatus] = useState({
-    status: instance.status,
+    status: instance.effective_status || instance.status,
     phoneNumber: instance.phone_number,
     isStale: false,
   });
