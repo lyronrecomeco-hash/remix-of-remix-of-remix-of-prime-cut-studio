@@ -136,39 +136,37 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
     : null;
 
   return (
-    <div className="space-y-4">
-      {/* Header Compacto */}
+    <div className="space-y-6">
+      {/* Header */}
       <motion.div 
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex items-center justify-between"
       >
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={onBack} className="gap-1.5 text-primary">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={onBack} className="gap-2 text-primary">
             <ArrowLeft className="w-4 h-4" />
             Voltar
           </Button>
-          <div>
-            <h1 className="text-lg font-bold">{instance.name}</h1>
-          </div>
+          <h1 className="text-xl font-bold">{instance.name}</h1>
         </div>
         <Badge 
           variant="secondary" 
           className={cn(
-            "gap-1.5",
+            "gap-2 px-3 py-1",
             isConnected 
               ? "bg-green-500/10 text-green-600 border-green-500/20" 
               : "bg-red-500/10 text-red-600 border-red-500/20"
           )}
         >
-          {isConnected ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+          {isConnected ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
           {isConnected ? 'Conectado' : 'Desconectado'}
         </Badge>
       </motion.div>
 
-      {/* Grid Principal */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Coluna Esquerda - Conexão */}
+      {/* Grid Principal - 2 Colunas */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Coluna Esquerda - Conexão WhatsApp */}
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -184,22 +182,22 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
           {/* Número Conectado */}
           {isConnected && instance.phone_number && (
             <Card className="border-green-500/20 bg-gradient-to-r from-green-500/5 to-transparent">
-              <CardContent className="py-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-green-500/10 flex items-center justify-center">
-                    <Phone className="w-4 h-4 text-green-500" />
+              <CardContent className="p-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center">
+                    <Phone className="w-6 h-6 text-green-500" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] text-muted-foreground uppercase">Número Conectado</p>
-                    <p className="font-semibold text-green-600 text-sm truncate">{formattedPhone}</p>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Número Conectado</p>
+                    <p className="font-bold text-green-600 text-lg truncate">{formattedPhone}</p>
                   </div>
                   <Button 
                     variant="ghost" 
                     size="icon"
-                    className="h-7 w-7"
+                    className="h-10 w-10"
                     onClick={() => copyToClipboard(instance.phone_number || '', 'Número')}
                   >
-                    <Copy className="w-3 h-3" />
+                    <Copy className="w-4 h-4" />
                   </Button>
                 </div>
               </CardContent>
@@ -207,70 +205,77 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
           )}
         </motion.div>
 
-        {/* Coluna Direita - Botões de Ação */}
+        {/* Coluna Direita - Ações e Informações */}
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           className="space-y-4"
         >
-          {/* Botões de Ação Compactos */}
-          <div className="grid grid-cols-2 gap-2">
+          {/* Botões de Ação */}
+          <div className="grid grid-cols-2 gap-3">
             <Button 
               variant="outline" 
-              size="sm" 
-              className="gap-2 h-10"
+              className="gap-2 h-12 text-sm"
               onClick={() => setShowActionsModal(true)}
             >
-              <Settings2 className="w-4 h-4" />
+              <Settings2 className="w-5 h-5" />
               Ações Rápidas
             </Button>
             <Button 
               variant="outline" 
-              size="sm" 
-              className="gap-2 h-10"
+              className="gap-2 h-12 text-sm"
               onClick={() => setShowWebhookModal(true)}
             >
-              <Zap className="w-4 h-4" />
+              <Zap className="w-5 h-5" />
               Webhook
             </Button>
           </div>
 
-          {/* Aviso de Créditos - Clicável */}
+          {/* Aviso de Créditos */}
           <Card 
             className="border-amber-500/20 bg-gradient-to-r from-amber-500/5 to-transparent cursor-pointer hover:border-amber-500/40 transition-colors"
             onClick={() => setShowCreditsModal(true)}
           >
-            <CardContent className="py-3">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
-                  <Coins className="w-4 h-4 text-amber-500" />
+            <CardContent className="p-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                  <Coins className="w-6 h-6 text-amber-500" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-amber-600">15 créditos/dia</p>
-                  <p className="text-[10px] text-muted-foreground">Toque para mais informações</p>
+                  <p className="text-base font-semibold text-amber-600">15 créditos/dia</p>
+                  <p className="text-sm text-muted-foreground">Toque para mais informações</p>
                 </div>
-                <Info className="w-4 h-4 text-amber-500/50" />
+                <Info className="w-5 h-5 text-amber-500/50" />
               </div>
             </CardContent>
           </Card>
 
-          {/* API Info - Compacto */}
+          {/* API Info */}
           <Card>
-            <CardHeader className="pb-2 pt-3">
-              <CardTitle className="text-xs flex items-center gap-2 text-muted-foreground">
-                <Link2 className="w-3.5 h-3.5" />
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Link2 className="w-4 h-4 text-primary" />
                 API
               </CardTitle>
             </CardHeader>
-            <CardContent className="pb-3 space-y-1.5">
-              <div className="p-2 rounded-md bg-muted/50 flex items-center justify-between">
+            <CardContent className="pt-0 space-y-3">
+              <div className="p-3 rounded-lg bg-muted/50 flex items-center justify-between">
                 <div className="min-w-0 flex-1">
-                  <Label className="text-[9px] text-muted-foreground uppercase">ID</Label>
-                  <code className="text-[11px] font-mono block truncate">{instanceCode}</code>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">ID da Instância</Label>
+                  <code className="text-sm font-mono block truncate mt-1">{instanceCode}</code>
                 </div>
-                <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0" onClick={() => copyToClipboard(instanceCode, 'Código')}>
-                  <Copy className="w-2.5 h-2.5" />
+                <Button variant="ghost" size="icon" className="h-9 w-9 flex-shrink-0" onClick={() => copyToClipboard(instanceCode, 'Código')}>
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/50 flex items-center justify-between">
+                <div className="min-w-0 flex-1">
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Endpoint</Label>
+                  <code className="text-sm font-mono block truncate mt-1">{endpoint}</code>
+                </div>
+                <Button variant="ghost" size="icon" className="h-9 w-9 flex-shrink-0" onClick={() => copyToClipboard(endpoint, 'Endpoint')}>
+                  <Copy className="w-4 h-4" />
                 </Button>
               </div>
             </CardContent>
@@ -285,27 +290,31 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
         transition={{ delay: 0.15 }}
       >
         <Card>
-          <CardHeader className="pb-2 pt-3">
+          <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
               <Lock className="w-4 h-4 text-primary" />
               Integrações
             </CardTitle>
           </CardHeader>
-          <CardContent className="pb-4">
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+          <CardContent>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
               {integrations.map((integration) => (
                 <div 
                   key={integration.id} 
-                  className="p-2 rounded-lg border bg-muted/20 opacity-50 text-center"
+                  className="p-4 rounded-xl border bg-muted/20 opacity-50 text-center hover:opacity-70 transition-opacity"
                 >
-                  <div className="h-6 mb-1 flex items-center justify-center">
+                  <div className="h-10 mb-2 flex items-center justify-center">
                     <img 
                       src={integration.logo} 
                       alt={integration.name} 
-                      className="h-5 w-auto object-contain"
+                      className="h-8 w-auto object-contain"
                     />
                   </div>
-                  <p className="text-[10px] font-medium">{integration.name}</p>
+                  <p className="text-sm font-medium">{integration.name}</p>
+                  <Badge variant="secondary" className="mt-2 text-xs">
+                    <Lock className="w-3 h-3 mr-1" />
+                    Em breve
+                  </Badge>
                 </div>
               ))}
             </div>
