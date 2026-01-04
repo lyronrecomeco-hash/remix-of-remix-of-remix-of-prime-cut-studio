@@ -8,7 +8,6 @@ import {
   Loader2,
   Wifi,
   WifiOff,
-  Send,
   AlertCircle,
   Zap,
   Shield,
@@ -17,11 +16,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 import { useGenesisWhatsAppConnection } from './hooks/useGenesisWhatsAppConnection';
 import { cn } from '@/lib/utils';
 
@@ -47,8 +42,6 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
     phoneNumber: instance.phone_number,
     isStale: false,
   });
-  const [testNumber, setTestNumber] = useState('');
-  const [isSendingTest, setIsSendingTest] = useState(false);
 
   const {
     connectionState,
@@ -83,62 +76,6 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
     onRefresh();
   };
 
-  const handleSendTest = async () => {
-    if (!testNumber.trim()) {
-      toast.error('Digite o número de destino');
-      return;
-    }
-
-    if (liveStatus.status !== 'connected') {
-      toast.error('Instância não está conectada');
-      return;
-    }
-
-    setIsSendingTest(true);
-
-    try {
-      let phone = testNumber.replace(/\D/g, '');
-      if (!phone.startsWith('55') && phone.length <= 11) {
-        phone = `55${phone}`;
-      }
-
-      const message = `🚀 *Teste Genesis Auto*
-
-Sua instância está conectada e funcionando perfeitamente!
-
-✅ Status: Ativo
-📱 Sistema: Genesis Auto`;
-
-      // Use Genesis proxy for sending test messages
-      const { data, error } = await supabase.functions.invoke('genesis-backend-proxy', {
-        body: {
-          instanceId: instance.id,
-          path: `/api/instance/${instance.id}/send`,
-          method: 'POST',
-          body: {
-            phone: phone,
-            message: message,
-          },
-        },
-      });
-
-      if (error) {
-        throw new Error(error.message || 'Erro ao enviar mensagem');
-      }
-
-      if (data && !data.ok) {
-        throw new Error(data.error || 'Erro ao enviar mensagem');
-      }
-
-      toast.success('Mensagem enviada com sucesso!');
-      setTestNumber('');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Erro ao enviar teste';
-      toast.error(message);
-    } finally {
-      setIsSendingTest(false);
-    }
-  };
 
   const isConnected = liveStatus.status === 'connected' && !liveStatus.isStale;
   const isConnecting = connectionState.isConnecting || connectionState.isPolling;
@@ -431,39 +368,11 @@ Sua instância está conectada e funcionando perfeitamente!
                   </div>
                 </motion.div>
 
-                {/* Quick Test */}
-                <motion.div 
-                  className="p-4 rounded-xl bg-muted/30 border"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <Label className="text-sm font-medium flex items-center gap-2">
-                    <Send className="w-4 h-4" />
-                    Enviar mensagem de teste
-                  </Label>
-                  <div className="flex gap-2 mt-3">
-                    <Input
-                      value={testNumber}
-                      onChange={(e) => setTestNumber(e.target.value)}
-                      placeholder="11999999999"
-                      className="flex-1 bg-background"
-                    />
-                    <Button
-                      onClick={handleSendTest}
-                      disabled={isSendingTest || !testNumber.trim()}
-                      size="sm"
-                      className="gap-2 px-4"
-                    >
-                      {isSendingTest ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Send className="w-4 h-4" />
-                      )}
-                      Enviar
-                    </Button>
-                  </div>
-                </motion.div>
+                <div className="p-4 rounded-xl bg-muted/30 border">
+                  <p className="text-xs text-muted-foreground">
+                    Uma mensagem de teste automática é enviada ao conectar para validar a estabilidade.
+                  </p>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
