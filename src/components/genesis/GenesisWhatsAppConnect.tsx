@@ -77,8 +77,8 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
     onRefresh();
   };
 
-
-  const isConnected = liveStatus.status === 'connected' && !liveStatus.isStale;
+  // Considera conectado baseado no status real; "stale" é apenas um alerta (não deve forçar botão de conectar)
+  const isConnected = liveStatus.status === 'connected';
   const isConnecting = connectionState.isConnecting || connectionState.isPolling || connectionState.phase === 'stabilizing';
   const phase = connectionState.phase;
 
