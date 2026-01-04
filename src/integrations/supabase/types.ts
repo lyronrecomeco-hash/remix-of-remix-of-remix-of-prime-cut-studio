@@ -2276,6 +2276,7 @@ export type Database = {
         Row: {
           backend_token: string | null
           backend_url: string | null
+          backup_enabled: boolean | null
           created_at: string
           effective_status: string | null
           health_status: string
@@ -2283,6 +2284,8 @@ export type Database = {
           id: string
           is_paused: boolean
           last_activity_at: string | null
+          last_backup_at: string | null
+          last_backup_id: string | null
           last_health_ping: string | null
           last_heartbeat: string | null
           name: string
@@ -2298,6 +2301,7 @@ export type Database = {
         Insert: {
           backend_token?: string | null
           backend_url?: string | null
+          backup_enabled?: boolean | null
           created_at?: string
           effective_status?: string | null
           health_status?: string
@@ -2305,6 +2309,8 @@ export type Database = {
           id?: string
           is_paused?: boolean
           last_activity_at?: string | null
+          last_backup_at?: string | null
+          last_backup_id?: string | null
           last_health_ping?: string | null
           last_heartbeat?: string | null
           name: string
@@ -2320,6 +2326,7 @@ export type Database = {
         Update: {
           backend_token?: string | null
           backend_url?: string | null
+          backup_enabled?: boolean | null
           created_at?: string
           effective_status?: string | null
           health_status?: string
@@ -2327,6 +2334,8 @@ export type Database = {
           id?: string
           is_paused?: boolean
           last_activity_at?: string | null
+          last_backup_at?: string | null
+          last_backup_id?: string | null
           last_health_ping?: string | null
           last_heartbeat?: string | null
           name?: string
@@ -2341,10 +2350,73 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "genesis_instances_last_backup_id_fkey"
+            columns: ["last_backup_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_session_backups"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "genesis_instances_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "genesis_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_session_backups: {
+        Row: {
+          backup_type: string | null
+          checksum: string | null
+          created_at: string
+          expires_at: string | null
+          file_size_bytes: number | null
+          id: string
+          instance_id: string
+          is_valid: boolean | null
+          restored_at: string | null
+          restored_by: string | null
+          session_metadata: Json | null
+          storage_path: string
+          version: number
+        }
+        Insert: {
+          backup_type?: string | null
+          checksum?: string | null
+          created_at?: string
+          expires_at?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          instance_id: string
+          is_valid?: boolean | null
+          restored_at?: string | null
+          restored_by?: string | null
+          session_metadata?: Json | null
+          storage_path: string
+          version?: number
+        }
+        Update: {
+          backup_type?: string | null
+          checksum?: string | null
+          created_at?: string
+          expires_at?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          instance_id?: string
+          is_valid?: boolean | null
+          restored_at?: string | null
+          restored_by?: string | null
+          session_metadata?: Json | null
+          storage_path?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_session_backups_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instances"
             referencedColumns: ["id"]
           },
         ]
@@ -5805,9 +5877,37 @@ export type Database = {
         Args: { p_amount: number; p_user_id: string }
         Returns: boolean
       }
+      genesis_cleanup_old_backups: {
+        Args: { p_instance_id: string; p_keep_count?: number }
+        Returns: number
+      }
+      genesis_create_backup_record: {
+        Args: {
+          p_backup_type?: string
+          p_checksum?: string
+          p_file_size?: number
+          p_instance_id: string
+          p_metadata?: Json
+        }
+        Returns: string
+      }
+      genesis_get_latest_backup: {
+        Args: { p_instance_id: string }
+        Returns: {
+          backup_id: string
+          checksum: string
+          created_at: string
+          storage_path: string
+          version: number
+        }[]
+      }
       genesis_log_event: {
         Args: { p_event_type: string; p_instance_id: string; p_payload?: Json }
         Returns: string
+      }
+      genesis_mark_backup_restored: {
+        Args: { p_backup_id: string }
+        Returns: boolean
       }
       genesis_orchestrate_status_change: {
         Args: {
