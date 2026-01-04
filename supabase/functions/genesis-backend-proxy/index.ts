@@ -182,6 +182,16 @@ serve(async (req) => {
       hasBody: Boolean(requestBody?.body),
     });
 
+    // === FASE 0: DIAGNÓSTICO DETALHADO ===
+    const diagLog = (context: string, data: Record<string, unknown>) => {
+      console.log(`[DIAG][${context}]`, JSON.stringify({
+        instanceId,
+        path,
+        timestamp: new Date().toISOString(),
+        ...data,
+      }));
+    };
+
     // Helper to log events
     const logEvent = async (eventType: string, severity: string, message: string, details?: Record<string, unknown>) => {
       try {
@@ -208,8 +218,16 @@ serve(async (req) => {
       fetchBody = JSON.stringify(requestBody?.body ?? {});
     }
 
+    diagLog('FETCH_START', {
+      targetUrl,
+      method,
+      hasAuth: Boolean(headers.Authorization),
+      bodyLength: fetchBody?.length || 0,
+    });
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
+    const fetchStart = Date.now();
 
     try {
       const upstream = await fetch(targetUrl, {
@@ -220,6 +238,7 @@ serve(async (req) => {
       });
 
       clearTimeout(timeoutId);
+      const fetchDuration = Date.now() - fetchStart;
 
       const text = await upstream.text();
       let parsed: unknown = text;
@@ -230,18 +249,43 @@ serve(async (req) => {
         // keep as text
       }
 
-      // Log successful requests
+      diagLog('FETCH_RESPONSE', {
+        duration: fetchDuration,
+        httpStatus: upstream.status,
+        httpOk: upstream.ok,
+        responseLength: text.length,
+        responsePreview: text.slice(0, 500),
+        parsedType: typeof parsed,
+      });
+
+      // Log específico para envio de mensagem (diagnóstico crítico)
       if (path.includes('/send')) {
+        diagLog('SEND_MESSAGE_RESULT', {
+          duration: fetchDuration,
+          httpStatus: upstream.status,
+          httpOk: upstream.ok,
+          parsedError: (parsed as any)?.error,
+          parsedSuccess: (parsed as any)?.success,
+          parsedMessage: (parsed as any)?.message,
+          fullResponse: JSON.stringify(parsed).slice(0, 1000),
+        });
+
         await logEvent(
           upstream.ok ? 'message_sent' : 'message_error',
           upstream.ok ? 'info' : 'error',
-          upstream.ok ? 'Mensagem enviada com sucesso' : 'Erro ao enviar mensagem',
-          { path, status: upstream.status, response: parsed }
+          upstream.ok ? 'Mensagem enviada com sucesso' : `Erro ao enviar mensagem: ${(parsed as any)?.error || upstream.status}`,
+          { path, status: upstream.status, duration: fetchDuration, response: parsed }
         );
       } else if (path.includes('/qrcode')) {
         await logEvent('qr_generated', 'info', 'QR Code gerado', { path });
       } else if (path.includes('/status')) {
         const statusData = parsed as Record<string, unknown>;
+        diagLog('STATUS_CHECK_RESULT', {
+          connected: statusData?.connected,
+          status: statusData?.status,
+          state: statusData?.state,
+          phone: statusData?.phone || statusData?.phoneNumber,
+        });
         if (statusData?.connected || statusData?.status === 'connected') {
           await logEvent('connected', 'info', 'Instância conectada', { path, response: parsed });
         }
@@ -256,11 +300,19 @@ serve(async (req) => {
       );
     } catch (fetchError) {
       clearTimeout(timeoutId);
+      const fetchDuration = Date.now() - fetchStart;
       const isAbort = fetchError instanceof Error && fetchError.name === 'AbortError';
       const errorMsg = isAbort ? "Timeout ao conectar com o backend" : "Backend não está respondendo";
       
+      diagLog('FETCH_ERROR', {
+        duration: fetchDuration,
+        isTimeout: isAbort,
+        errorType: fetchError instanceof Error ? fetchError.name : 'unknown',
+        errorMessage: fetchError instanceof Error ? fetchError.message : String(fetchError),
+      });
+
       // Log error
-      await logEvent('error', 'error', errorMsg, { path, isTimeout: isAbort });
+      await logEvent('error', 'error', errorMsg, { path, isTimeout: isAbort, duration: fetchDuration });
       
       return new Response(
         JSON.stringify({ 
