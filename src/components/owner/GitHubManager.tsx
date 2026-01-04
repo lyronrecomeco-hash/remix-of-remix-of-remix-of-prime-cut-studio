@@ -564,34 +564,86 @@ const GitHubManager = () => {
                 Atualização Automática via Cron
               </CardTitle>
               <CardDescription>
-                Configure na VPS para atualizações automáticas
+                Configure na VPS para atualizações automáticas a cada 5 minutos
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="relative">
-                <div className="bg-gray-900 rounded-lg p-4 font-mono text-sm text-green-400 overflow-x-auto">
-                  <code>
-                    # Adicionar ao crontab (crontab -e){'\n'}
-                    # Atualiza a cada 5 minutos{'\n'}
-                    */5 * * * * {getUpdateScript()} {'>'} /var/log/wa-update.log 2{'>'}&1
-                  </code>
+            <CardContent className="space-y-4">
+              {/* Comando único para configurar cron */}
+              <div>
+                <Label className="text-xs text-muted-foreground mb-2 block">
+                  Cole este comando na VPS para configurar o cron automaticamente:
+                </Label>
+                <div className="relative">
+                  <div className="bg-gray-900 rounded-lg p-4 font-mono text-sm text-green-400 overflow-x-auto">
+                    <code>
+                      (crontab -l 2&gt;/dev/null | grep -v "github-vps-scripts"; echo "*/5 * * * * curl -fsSL '{baseUrl}?type=update' | bash &gt; /var/log/wa-update.log 2&gt;&1") | crontab -
+                    </code>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="absolute top-2 right-2 gap-1"
+                    onClick={() => copyToClipboard(
+                      `(crontab -l 2>/dev/null | grep -v "github-vps-scripts"; echo "*/5 * * * * curl -fsSL '${baseUrl}?type=update' | bash > /var/log/wa-update.log 2>&1") | crontab -`,
+                      'cron'
+                    )}
+                  >
+                    {copiedScript === 'cron' ? (
+                      <Check className="w-3 h-3" />
+                    ) : (
+                      <Copy className="w-3 h-3" />
+                    )}
+                    {copiedScript === 'cron' ? 'Copiado!' : 'Copiar'}
+                  </Button>
                 </div>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="absolute top-2 right-2 gap-1"
-                  onClick={() => copyToClipboard(
-                    `*/5 * * * * ${getUpdateScript()} > /var/log/wa-update.log 2>&1`,
-                    'cron'
-                  )}
-                >
-                  {copiedScript === 'cron' ? (
-                    <Check className="w-3 h-3" />
-                  ) : (
-                    <Copy className="w-3 h-3" />
-                  )}
-                  {copiedScript === 'cron' ? 'Copiado!' : 'Copiar'}
-                </Button>
+              </div>
+
+              {/* Verificar cron */}
+              <div>
+                <Label className="text-xs text-muted-foreground mb-2 block">
+                  Para verificar se o cron foi configurado:
+                </Label>
+                <div className="relative">
+                  <div className="bg-gray-900 rounded-lg p-3 font-mono text-xs text-green-400">
+                    <code>crontab -l</code>
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="absolute top-1 right-1 h-7 w-7"
+                    onClick={() => copyToClipboard('crontab -l', 'verify')}
+                  >
+                    {copiedScript === 'verify' ? (
+                      <Check className="w-3 h-3" />
+                    ) : (
+                      <Copy className="w-3 h-3" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Ver logs */}
+              <div>
+                <Label className="text-xs text-muted-foreground mb-2 block">
+                  Para ver os logs de atualização:
+                </Label>
+                <div className="relative">
+                  <div className="bg-gray-900 rounded-lg p-3 font-mono text-xs text-green-400">
+                    <code>tail -f /var/log/wa-update.log</code>
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="absolute top-1 right-1 h-7 w-7"
+                    onClick={() => copyToClipboard('tail -f /var/log/wa-update.log', 'logs')}
+                  >
+                    {copiedScript === 'logs' ? (
+                      <Check className="w-3 h-3" />
+                    ) : (
+                      <Copy className="w-3 h-3" />
+                    )}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
