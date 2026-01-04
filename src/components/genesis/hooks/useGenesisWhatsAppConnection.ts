@@ -108,6 +108,12 @@ export function useGenesisWhatsAppConnection() {
     }
   };
 
+  // === FASE 0: DIAGNÓSTICO - Logs detalhados para cada chamada ===
+  const logDiagnostic = (context: string, data: Record<string, unknown>) => {
+    const timestamp = new Date().toISOString();
+    console.log(`🔍 [DIAG][${timestamp}] ${context}:`, JSON.stringify(data, null, 2));
+  };
+
   // Make proxy request through genesis-backend-proxy
   const proxyRequest = async (
     instanceId: string,
@@ -115,16 +121,48 @@ export function useGenesisWhatsAppConnection() {
     method: 'GET' | 'POST',
     body?: unknown
   ): Promise<{ ok: boolean; status: number; data: any; error?: string; needsConfig?: boolean }> => {
+    const requestStart = Date.now();
+    
+    logDiagnostic('PROXY_REQUEST_START', {
+      instanceId,
+      path,
+      method,
+      hasBody: Boolean(body),
+      bodyPreview: body ? JSON.stringify(body).slice(0, 200) : null,
+    });
+
     try {
       const { data, error } = await supabase.functions.invoke('genesis-backend-proxy', {
         body: { instanceId, path, method, body },
       });
 
+      const duration = Date.now() - requestStart;
+
       if (error) {
-        console.error('Proxy request error:', error);
+        logDiagnostic('PROXY_REQUEST_ERROR', {
+          instanceId,
+          path,
+          method,
+          duration,
+          errorType: 'supabase_invoke',
+          errorMessage: error.message,
+          errorCode: (error as any).code,
+        });
         return { ok: false, status: 0, data: null, error: error.message };
       }
       
+      logDiagnostic('PROXY_REQUEST_RESPONSE', {
+        instanceId,
+        path,
+        method,
+        duration,
+        responseOk: data?.ok,
+        responseStatus: data?.status,
+        responseError: data?.error,
+        needsConfig: data?.needsConfig,
+        dataPreview: data?.data ? JSON.stringify(data.data).slice(0, 300) : null,
+      });
+
       // Handle needsConfig response specifically
       if (data?.needsConfig) {
         return { 
@@ -149,7 +187,16 @@ export function useGenesisWhatsAppConnection() {
       
       return (data || { ok: false, status: 0, data: null }) as any;
     } catch (err) {
-      console.error('Proxy request exception:', err);
+      const duration = Date.now() - requestStart;
+      logDiagnostic('PROXY_REQUEST_EXCEPTION', {
+        instanceId,
+        path,
+        method,
+        duration,
+        errorType: 'exception',
+        errorMessage: err instanceof Error ? err.message : String(err),
+        errorStack: err instanceof Error ? err.stack?.slice(0, 500) : null,
+      });
       return { ok: false, status: 0, data: null, error: 'Erro de conexão' };
     }
   };
@@ -215,8 +262,16 @@ export function useGenesisWhatsAppConnection() {
     throw new Error('QR Code não disponível');
   };
 
-  // Enviar mensagem de teste automática ao conectar (não bloqueia o fluxo)
+  // === FASE 0: DIAGNÓSTICO - Envio automático com logs detalhados ===
   const sendWelcomeMessage = async (instanceId: string, phoneNumber: string) => {
+    const sendStart = Date.now();
+    
+    logDiagnostic('WELCOME_MESSAGE_START', {
+      instanceId,
+      phoneNumber,
+      timestamp: new Date().toISOString(),
+    });
+
     const message = `✅ *WhatsApp conectado com sucesso!*
 
 🚀 Sua instância Genesis Hub está ativa e pronta para uso.
@@ -226,50 +281,145 @@ export function useGenesisWhatsAppConnection() {
 
 Agora você pode automatizar seu atendimento!`;
 
-    // Aguardar socket estabilizar antes de tentar enviar
-    await new Promise((r) => setTimeout(r, 2500));
+    // FASE 0: Delay inicial de 3s para estabilização do socket
+    const initialDelay = 3000;
+    logDiagnostic('WELCOME_MESSAGE_DELAY', { instanceId, delayMs: initialDelay, reason: 'socket_stabilization' });
+    await new Promise((r) => setTimeout(r, initialDelay));
 
-    // Retry loop - o backend pode reportar "connected" antes do socket estar 100% pronto
-    const maxAttempts = 8;
+    // Retry loop com logs detalhados
+    const maxAttempts = 10;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const attemptStart = Date.now();
+      
+      logDiagnostic('WELCOME_MESSAGE_ATTEMPT', {
+        instanceId,
+        phoneNumber,
+        attempt,
+        maxAttempts,
+        elapsedTotal: Date.now() - sendStart,
+      });
+
       try {
-        console.log(`sendWelcomeMessage attempt ${attempt}/${maxAttempts} to ${phoneNumber}`);
-        
         const res = await proxyRequest(instanceId, `/api/instance/${instanceId}/send`, 'POST', {
           phone: phoneNumber,
           message,
         });
 
-        console.log(`sendWelcomeMessage response attempt ${attempt}:`, { ok: res.ok, status: res.status, error: res.error, data: res.data });
+        const attemptDuration = Date.now() - attemptStart;
 
+        logDiagnostic('WELCOME_MESSAGE_RESPONSE', {
+          instanceId,
+          attempt,
+          attemptDuration,
+          ok: res.ok,
+          status: res.status,
+          error: res.error,
+          dataError: res.data?.error,
+          dataMessage: res.data?.message,
+          dataSuccess: res.data?.success,
+          rawData: JSON.stringify(res.data).slice(0, 500),
+        });
+
+        // Sucesso: status 2xx E ok=true
         if (res.ok && res.status >= 200 && res.status < 300) {
-          console.log('✅ Welcome message sent successfully to:', phoneNumber);
+          logDiagnostic('WELCOME_MESSAGE_SUCCESS', {
+            instanceId,
+            phoneNumber,
+            attempt,
+            totalTime: Date.now() - sendStart,
+          });
+          
+          // Registrar sucesso no banco
+          try {
+            await supabase.from('genesis_event_logs').insert({
+              instance_id: instanceId,
+              event_type: 'welcome_sent',
+              severity: 'info',
+              message: `Mensagem de boas-vindas enviada para ${phoneNumber}`,
+              details: { attempt, totalTime: Date.now() - sendStart },
+            });
+          } catch {}
+          
           return;
         }
 
-        // Check if error is retryable
+        // Analisar erro para decidir se retry
         const errText = String(res?.data?.error || res?.error || '').toLowerCase();
+        const retryablePatterns = [
+          'não conectado', 'not connected', 'socket', 'aguard',
+          'timeout', 'unavailable', 'not ready', 'nao pronto',
+          'connection', 'retry', 'busy', 'initializing'
+        ];
         const shouldRetry = 
           res.status === 503 || 
           res.status === 0 ||
-          errText.includes('não conectado') || 
-          errText.includes('not connected') ||
-          errText.includes('socket') ||
-          errText.includes('aguard');
+          res.status === 500 ||
+          retryablePatterns.some(p => errText.includes(p));
+
+        logDiagnostic('WELCOME_MESSAGE_RETRY_DECISION', {
+          instanceId,
+          attempt,
+          shouldRetry,
+          status: res.status,
+          errText: errText.slice(0, 200),
+          matchedPattern: retryablePatterns.find(p => errText.includes(p)) || null,
+        });
 
         if (!shouldRetry) {
-          console.warn('❌ Welcome message not sent (non-retryable):', { status: res.status, error: res.error, data: res.data });
+          logDiagnostic('WELCOME_MESSAGE_FAILED_NON_RETRYABLE', {
+            instanceId,
+            phoneNumber,
+            attempt,
+            totalTime: Date.now() - sendStart,
+            finalError: res.error || res.data?.error,
+            finalStatus: res.status,
+          });
+          
+          // Registrar falha no banco
+          try {
+            await supabase.from('genesis_event_logs').insert({
+              instance_id: instanceId,
+              event_type: 'welcome_failed',
+              severity: 'error',
+              message: `Falha ao enviar mensagem de boas-vindas: ${res.error || res.data?.error}`,
+              details: { attempt, totalTime: Date.now() - sendStart, status: res.status, error: res.error },
+            });
+          } catch {}
+          
           return;
         }
       } catch (error) {
-        console.warn(`sendWelcomeMessage attempt ${attempt} exception:`, error);
+        logDiagnostic('WELCOME_MESSAGE_EXCEPTION', {
+          instanceId,
+          attempt,
+          errorType: 'exception',
+          errorMessage: error instanceof Error ? error.message : String(error),
+        });
       }
 
-      // Backoff: 2s, 2.5s, 3s, 3.5s...
-      await new Promise((r) => setTimeout(r, 1500 + attempt * 500));
+      // Backoff exponencial: 2s, 3s, 4s, 5s...
+      const backoffMs = 2000 + (attempt * 1000);
+      logDiagnostic('WELCOME_MESSAGE_BACKOFF', { instanceId, attempt, backoffMs });
+      await new Promise((r) => setTimeout(r, backoffMs));
     }
 
-    console.warn('❌ Welcome message not sent after all retries:', phoneNumber);
+    logDiagnostic('WELCOME_MESSAGE_EXHAUSTED', {
+      instanceId,
+      phoneNumber,
+      totalAttempts: maxAttempts,
+      totalTime: Date.now() - sendStart,
+    });
+    
+    // Registrar exaustão no banco
+    try {
+      await supabase.from('genesis_event_logs').insert({
+        instance_id: instanceId,
+        event_type: 'welcome_exhausted',
+        severity: 'error',
+        message: `Esgotadas todas as tentativas de envio para ${phoneNumber}`,
+        details: { totalAttempts: maxAttempts, totalTime: Date.now() - sendStart },
+      });
+    } catch {}
   };
 
   const startConnection = useCallback(async (
