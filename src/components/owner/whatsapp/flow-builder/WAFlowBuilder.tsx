@@ -53,7 +53,8 @@ import {
   AlertCircle,
   Menu,
   X,
-  Bot
+  Bot,
+  Smartphone
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { FlowNode } from './FlowNode';
@@ -121,6 +122,8 @@ const FlowBuilderContent = ({ onBack, onEditingChange, onNavigateToInstances }: 
   const [isSaving, setIsSaving] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newRuleName, setNewRuleName] = useState('');
+  const [newRuleInstanceId, setNewRuleInstanceId] = useState('');
+  const [availableInstances, setAvailableInstances] = useState<{ id: string; name: string; phone_number: string | null }[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isLunaOpen, setIsLunaOpen] = useState(false);
@@ -238,12 +241,17 @@ const FlowBuilderContent = ({ onBack, onEditingChange, onNavigateToInstances }: 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [undo, redo, selectedRule, selectedNode, selectedNodes, copyNodes, pasteNodes, setNodes, addToHistory, toggleFullscreen, fitView]);
 
-  // Fetch rules
+  // Fetch rules and instances
   const fetchRules = useCallback(async () => {
     try {
-      const { data, error } = await supabase.from('whatsapp_automation_rules').select('*').order('priority', { ascending: true });
-      if (error) throw error;
-      const typedRules = (data || []).map(rule => ({
+      const [rulesRes, instancesRes] = await Promise.all([
+        supabase.from('whatsapp_automation_rules').select('*').order('priority', { ascending: true }),
+        supabase.from('genesis_instances').select('id, name, phone_number')
+      ]);
+      
+      if (rulesRes.error) throw rulesRes.error;
+      
+      const typedRules = (rulesRes.data || []).map(rule => ({
         ...rule,
         trigger_config: rule.trigger_config || {},
         conditions: rule.conditions || [],
@@ -252,6 +260,9 @@ const FlowBuilderContent = ({ onBack, onEditingChange, onNavigateToInstances }: 
         canvas_position: rule.canvas_position as unknown as { x: number; y: number; zoom: number } || { x: 0, y: 0, zoom: 1 }
       })) as AutomationRule[];
       setRules(typedRules);
+      
+      // Set available instances
+      setAvailableInstances((instancesRes.data || []) as { id: string; name: string; phone_number: string | null }[]);
     } catch (error) {
       console.error('Error fetching rules:', error);
       toast.error('Erro ao carregar fluxos');
@@ -313,6 +324,7 @@ const FlowBuilderContent = ({ onBack, onEditingChange, onNavigateToInstances }: 
   // Create new rule - flow starts empty, user clicks to enter
   const createRule = async () => {
     if (!newRuleName.trim()) { toast.error('Digite um nome para o fluxo'); return; }
+    if (!newRuleInstanceId) { toast.error('Selecione uma instância do WhatsApp'); return; }
     setIsSaving(true);
     try {
       // Empty flow - no initial node, user will add via EmptyCanvasState
@@ -320,6 +332,7 @@ const FlowBuilderContent = ({ onBack, onEditingChange, onNavigateToInstances }: 
       const { error } = await supabase.from('whatsapp_automation_rules').insert({ 
         name: newRuleName, 
         description: '', 
+        instance_id: newRuleInstanceId,
         trigger_type: 'keyword', 
         trigger_config: {}, 
         conditions: [], 
@@ -331,6 +344,7 @@ const FlowBuilderContent = ({ onBack, onEditingChange, onNavigateToInstances }: 
       toast.success('Fluxo criado! Clique para editar.');
       setIsCreateDialogOpen(false);
       setNewRuleName('');
+      setNewRuleInstanceId('');
       fetchRules();
       // Don't auto-enter, let user click to enter
     } catch (error) { console.error('Error creating rule:', error); toast.error('Erro ao criar fluxo'); } finally { setIsSaving(false); }
@@ -770,12 +784,39 @@ const FlowBuilderContent = ({ onBack, onEditingChange, onNavigateToInstances }: 
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label>Nome do Fluxo</Label>
-                <Input value={newRuleName} onChange={(e) => setNewRuleName(e.target.value)} placeholder="Ex: Atendimento Inicial, FAQ, Vendas..." className="bg-muted/50" autoFocus onKeyDown={(e) => e.key === 'Enter' && createRule()} />
+                <Input value={newRuleName} onChange={(e) => setNewRuleName(e.target.value)} placeholder="Ex: Atendimento Inicial, FAQ, Vendas..." className="bg-muted/50" autoFocus />
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Smartphone className="w-4 h-4" />
+                  Instância do WhatsApp
+                </Label>
+                {availableInstances.length === 0 ? (
+                  <div className="text-sm text-muted-foreground bg-muted/30 p-3 rounded-lg">
+                    <p>Nenhuma instância disponível.</p>
+                    <Button variant="link" className="p-0 h-auto text-primary" onClick={() => { setIsCreateDialogOpen(false); onNavigateToInstances?.(); }}>
+                      Conectar instância primeiro →
+                    </Button>
+                  </div>
+                ) : (
+                  <select 
+                    value={newRuleInstanceId} 
+                    onChange={(e) => setNewRuleInstanceId(e.target.value)}
+                    className="w-full h-10 px-3 py-2 bg-muted/50 border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="">Selecione uma instância...</option>
+                    {availableInstances.map(inst => (
+                      <option key={inst.id} value={inst.id}>
+                        {inst.name} {inst.phone_number ? `(${inst.phone_number})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>Cancelar</Button>
-              <Button onClick={createRule} disabled={isSaving} className="gap-2">
+              <Button variant="outline" onClick={() => { setIsCreateDialogOpen(false); setNewRuleName(''); setNewRuleInstanceId(''); }}>Cancelar</Button>
+              <Button onClick={createRule} disabled={isSaving || !newRuleName.trim() || !newRuleInstanceId} className="gap-2">
                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 Criar Fluxo
               </Button>

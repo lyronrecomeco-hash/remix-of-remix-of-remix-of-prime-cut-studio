@@ -3654,6 +3654,7 @@ export type Database = {
           flow_data: Json | null
           flow_version: number | null
           id: string
+          instance_id: string
           is_active: boolean
           last_executed_at: string | null
           name: string
@@ -3673,6 +3674,7 @@ export type Database = {
           flow_data?: Json | null
           flow_version?: number | null
           id?: string
+          instance_id: string
           is_active?: boolean
           last_executed_at?: string | null
           name: string
@@ -3692,6 +3694,7 @@ export type Database = {
           flow_data?: Json | null
           flow_version?: number | null
           id?: string
+          instance_id?: string
           is_active?: boolean
           last_executed_at?: string | null
           name?: string
@@ -3702,6 +3705,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "whatsapp_automation_rules_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instances"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "whatsapp_automation_rules_project_id_fkey"
             columns: ["project_id"]
