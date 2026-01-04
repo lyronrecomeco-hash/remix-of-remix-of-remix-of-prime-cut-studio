@@ -662,7 +662,8 @@ app.listen(PORT, '0.0.0.0', async () => {
   };
 
   const downloadScript = () => {
-    const script = getVPSScriptV7(masterToken, defaultInstanceName || defaultInstanceId);
+    // IMPORTANTE: Passar o UUID como instanceId e o nome como terceiro parâmetro
+    const script = getVPSScriptV7(masterToken, defaultInstanceId, defaultInstanceName);
     const blob = new Blob([script], { type: 'application/javascript' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
