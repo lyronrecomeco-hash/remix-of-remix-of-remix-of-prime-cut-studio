@@ -124,6 +124,28 @@ export function useGenesisWhatsAppConnection() {
         return { ok: false, status: 0, data: null, error: error.message };
       }
       
+      // Handle needsConfig response specifically
+      if (data?.needsConfig) {
+        return { 
+          ok: false, 
+          status: 400, 
+          data: null, 
+          error: data.error || 'Configure o backend da instância primeiro',
+          needsConfig: true 
+        };
+      }
+
+      // Handle error response from proxy
+      if (data?.error && !data?.ok) {
+        return { 
+          ok: false, 
+          status: data.status || 0, 
+          data: data.data || null, 
+          error: data.error,
+          needsConfig: data.needsConfig 
+        };
+      }
+      
       return (data || { ok: false, status: 0, data: null }) as any;
     } catch (err) {
       console.error('Proxy request exception:', err);
@@ -143,11 +165,15 @@ export function useGenesisWhatsAppConnection() {
     }
   }, []);
 
-  const validateBackendHealth = async (instanceId: string): Promise<{ healthy: boolean; error?: string }> => {
+  const validateBackendHealth = async (instanceId: string): Promise<{ healthy: boolean; error?: string; needsConfig?: boolean }> => {
     const res = await proxyRequest(instanceId, '/health', 'GET');
     
     if (res.needsConfig) {
-      return { healthy: false, error: res.error || 'Backend não configurado' };
+      return { 
+        healthy: false, 
+        error: 'Configure a URL e Token do backend nas configurações da instância antes de conectar.',
+        needsConfig: true 
+      };
     }
     
     if (res.error) {

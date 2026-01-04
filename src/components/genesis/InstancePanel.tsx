@@ -15,7 +15,12 @@ import {
   Coins,
   AlertCircle,
   CheckCircle2,
-  Phone
+  Phone,
+  Server,
+  Key,
+  Eye,
+  EyeOff,
+  Save
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -75,6 +80,13 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
   });
   const [autoReadMessages, setAutoReadMessages] = useState(false);
   const [saving, setSaving] = useState(false);
+  
+  // Backend config state
+  const [backendUrl, setBackendUrl] = useState('');
+  const [backendToken, setBackendToken] = useState('');
+  const [showToken, setShowToken] = useState(false);
+  const [savingBackend, setSavingBackend] = useState(false);
+  const hasBackendConfig = Boolean(instance.backend_url && instance.backend_token);
 
   const instanceCode = `genesis-${instance.id.slice(0, 8)}`;
   const endpoint = `https://api.genesis.com.br/instances/${instanceCode}`;
@@ -96,9 +108,56 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
     fetchInstance();
   }, [instance.id]);
 
+  // Sync backend config from instance
+  useEffect(() => {
+    setBackendUrl(instance.backend_url || '');
+    setBackendToken(instance.backend_token || '');
+  }, [instance.backend_url, instance.backend_token]);
+
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     toast.success(`${label} copiado!`);
+  };
+
+  const handleSaveBackendConfig = async () => {
+    if (!backendUrl.trim()) {
+      toast.error('Informe a URL do backend');
+      return;
+    }
+    if (!backendToken.trim()) {
+      toast.error('Informe o Token do backend');
+      return;
+    }
+
+    // Validate URL format
+    try {
+      new URL(backendUrl.trim());
+    } catch {
+      toast.error('URL do backend inválida');
+      return;
+    }
+
+    setSavingBackend(true);
+    try {
+      const { error } = await supabase
+        .from('genesis_instances')
+        .update({
+          backend_url: backendUrl.trim().replace(/\/$/, ''),
+          backend_token: backendToken.trim(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', instance.id);
+
+      if (error) throw error;
+
+      toast.success('Backend configurado com sucesso!');
+      await fetchInstance();
+    } catch (error) {
+      console.error('Error saving backend config:', error);
+      toast.error('Erro ao salvar configuração do backend');
+    } finally {
+      setSavingBackend(false);
+    }
   };
 
   const handleSaveSettings = async () => {
@@ -163,6 +222,103 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
           {isConnected ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
           {isConnected ? 'Conectado' : 'Desconectado'}
         </Badge>
+      </motion.div>
+
+      {/* Backend Configuration - Required before connecting */}
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+      >
+        <Card className={cn(
+          "border",
+          hasBackendConfig 
+            ? "border-green-500/20 bg-gradient-to-r from-green-500/5 to-transparent" 
+            : "border-amber-500/30 bg-gradient-to-r from-amber-500/5 to-transparent"
+        )}>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Server className="w-4 h-4 text-primary" />
+              Configuração do Backend VPS
+              {hasBackendConfig ? (
+                <Badge variant="secondary" className="ml-2 gap-1 bg-green-500/10 text-green-600 border-green-500/20">
+                  <CheckCircle2 className="w-3 h-3" />
+                  Configurado
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="ml-2 gap-1 bg-amber-500/10 text-amber-600 border-amber-500/20">
+                  <AlertCircle className="w-3 h-3" />
+                  Pendente
+                </Badge>
+              )}
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Configure a URL e Token do seu backend VPS para conectar o WhatsApp
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm flex items-center gap-2">
+                  <Link2 className="w-3.5 h-3.5 text-muted-foreground" />
+                  URL do Backend
+                </Label>
+                <Input
+                  value={backendUrl}
+                  onChange={(e) => setBackendUrl(e.target.value)}
+                  placeholder="https://sua-vps.com:3000"
+                  className="bg-background"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm flex items-center gap-2">
+                  <Key className="w-3.5 h-3.5 text-muted-foreground" />
+                  Token de Acesso
+                </Label>
+                <div className="relative">
+                  <Input
+                    type={showToken ? 'text' : 'password'}
+                    value={backendToken}
+                    onChange={(e) => setBackendToken(e.target.value)}
+                    placeholder="seu-token-secreto"
+                    className="bg-background pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowToken(!showToken)}
+                  >
+                    {showToken ? (
+                      <EyeOff className="w-4 h-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="w-4 h-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-between pt-2">
+              <p className="text-xs text-muted-foreground">
+                Use o script de VPS para obter esses dados
+              </p>
+              <Button
+                onClick={handleSaveBackendConfig}
+                disabled={savingBackend || !backendUrl.trim() || !backendToken.trim()}
+                size="sm"
+                className="gap-2"
+              >
+                {savingBackend ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                Salvar Backend
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </motion.div>
 
       {/* WhatsApp Connection - MAIN FOCUS */}
