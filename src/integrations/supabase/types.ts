@@ -2222,6 +2222,77 @@ export type Database = {
           },
         ]
       }
+      genesis_instance_failovers: {
+        Row: {
+          backup_id: string | null
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          instance_id: string
+          reason: string
+          source_node_id: string | null
+          started_at: string | null
+          status: string
+          target_node_id: string
+        }
+        Insert: {
+          backup_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          instance_id: string
+          reason: string
+          source_node_id?: string | null
+          started_at?: string | null
+          status?: string
+          target_node_id: string
+        }
+        Update: {
+          backup_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          instance_id?: string
+          reason?: string
+          source_node_id?: string | null
+          started_at?: string | null
+          status?: string
+          target_node_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_instance_failovers_backup_id_fkey"
+            columns: ["backup_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_session_backups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_instance_failovers_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_instance_failovers_source_node_id_fkey"
+            columns: ["source_node_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_vps_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_instance_failovers_target_node_id_fkey"
+            columns: ["target_node_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_vps_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       genesis_instance_state_transitions: {
         Row: {
           from_state: string
@@ -2279,6 +2350,7 @@ export type Database = {
           backup_enabled: boolean | null
           created_at: string
           effective_status: string | null
+          failover_enabled: boolean | null
           health_status: string
           heartbeat_age_seconds: number | null
           id: string
@@ -2286,17 +2358,20 @@ export type Database = {
           last_activity_at: string | null
           last_backup_at: string | null
           last_backup_id: string | null
+          last_failover_at: string | null
           last_health_ping: string | null
           last_heartbeat: string | null
           name: string
           orchestrated_status: string
           phone_number: string | null
+          preferred_region: string | null
           qr_code: string | null
           session_data: Json | null
           status: string
           status_source: string
           updated_at: string
           user_id: string
+          vps_node_id: string | null
         }
         Insert: {
           backend_token?: string | null
@@ -2304,6 +2379,7 @@ export type Database = {
           backup_enabled?: boolean | null
           created_at?: string
           effective_status?: string | null
+          failover_enabled?: boolean | null
           health_status?: string
           heartbeat_age_seconds?: number | null
           id?: string
@@ -2311,17 +2387,20 @@ export type Database = {
           last_activity_at?: string | null
           last_backup_at?: string | null
           last_backup_id?: string | null
+          last_failover_at?: string | null
           last_health_ping?: string | null
           last_heartbeat?: string | null
           name: string
           orchestrated_status?: string
           phone_number?: string | null
+          preferred_region?: string | null
           qr_code?: string | null
           session_data?: Json | null
           status?: string
           status_source?: string
           updated_at?: string
           user_id: string
+          vps_node_id?: string | null
         }
         Update: {
           backend_token?: string | null
@@ -2329,6 +2408,7 @@ export type Database = {
           backup_enabled?: boolean | null
           created_at?: string
           effective_status?: string | null
+          failover_enabled?: boolean | null
           health_status?: string
           heartbeat_age_seconds?: number | null
           id?: string
@@ -2336,17 +2416,20 @@ export type Database = {
           last_activity_at?: string | null
           last_backup_at?: string | null
           last_backup_id?: string | null
+          last_failover_at?: string | null
           last_health_ping?: string | null
           last_heartbeat?: string | null
           name?: string
           orchestrated_status?: string
           phone_number?: string | null
+          preferred_region?: string | null
           qr_code?: string | null
           session_data?: Json | null
           status?: string
           status_source?: string
           updated_at?: string
           user_id?: string
+          vps_node_id?: string | null
         }
         Relationships: [
           {
@@ -2361,6 +2444,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "genesis_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_instances_vps_node_id_fkey"
+            columns: ["vps_node_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_vps_nodes"
             referencedColumns: ["id"]
           },
         ]
@@ -2542,6 +2632,69 @@ export type Database = {
           updated_at?: string
           whatsapp_commercial?: string | null
           whatsapp_test?: string | null
+        }
+        Relationships: []
+      }
+      genesis_vps_nodes: {
+        Row: {
+          api_token: string
+          avg_latency_ms: number | null
+          base_url: string
+          cpu_load: number | null
+          created_at: string
+          current_instances: number
+          health_score: number | null
+          id: string
+          is_active: boolean | null
+          last_health_check_at: string | null
+          last_heartbeat_at: string | null
+          max_instances: number
+          memory_load: number | null
+          name: string
+          priority: number | null
+          region: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          api_token: string
+          avg_latency_ms?: number | null
+          base_url: string
+          cpu_load?: number | null
+          created_at?: string
+          current_instances?: number
+          health_score?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_health_check_at?: string | null
+          last_heartbeat_at?: string | null
+          max_instances?: number
+          memory_load?: number | null
+          name: string
+          priority?: number | null
+          region?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          api_token?: string
+          avg_latency_ms?: number | null
+          base_url?: string
+          cpu_load?: number | null
+          created_at?: string
+          current_instances?: number
+          health_score?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_health_check_at?: string | null
+          last_heartbeat_at?: string | null
+          max_instances?: number
+          memory_load?: number | null
+          name?: string
+          priority?: number | null
+          region?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -5881,6 +6034,14 @@ export type Database = {
         Args: { p_instance_id: string; p_keep_count?: number }
         Returns: number
       }
+      genesis_complete_failover: {
+        Args: {
+          p_error_message?: string
+          p_failover_id: string
+          p_success: boolean
+        }
+        Returns: boolean
+      }
       genesis_create_backup_record: {
         Args: {
           p_backup_type?: string
@@ -5891,6 +6052,7 @@ export type Database = {
         }
         Returns: string
       }
+      genesis_detect_offline_nodes: { Args: never; Returns: number }
       genesis_get_latest_backup: {
         Args: { p_instance_id: string }
         Returns: {
@@ -5901,6 +6063,14 @@ export type Database = {
           version: number
         }[]
       }
+      genesis_initiate_failover: {
+        Args: {
+          p_instance_id: string
+          p_reason?: string
+          p_target_node_id?: string
+        }
+        Returns: Json
+      }
       genesis_log_event: {
         Args: { p_event_type: string; p_instance_id: string; p_payload?: Json }
         Returns: string
@@ -5908,6 +6078,16 @@ export type Database = {
       genesis_mark_backup_restored: {
         Args: { p_backup_id: string }
         Returns: boolean
+      }
+      genesis_node_heartbeat: {
+        Args: {
+          p_avg_latency?: number
+          p_cpu_load?: number
+          p_instance_count?: number
+          p_memory_load?: number
+          p_node_id: string
+        }
+        Returns: Json
       }
       genesis_orchestrate_status_change: {
         Args: {
@@ -5921,6 +6101,16 @@ export type Database = {
       genesis_revoke_instance_tokens: {
         Args: { p_instance_id: string }
         Returns: number
+      }
+      genesis_select_best_node: {
+        Args: { p_exclude_node_id?: string; p_region?: string }
+        Returns: {
+          available_slots: number
+          health_score: number
+          node_id: string
+          node_name: string
+          node_url: string
+        }[]
       }
       genesis_validate_state_transition: {
         Args: { p_from_state: string; p_to_state: string }

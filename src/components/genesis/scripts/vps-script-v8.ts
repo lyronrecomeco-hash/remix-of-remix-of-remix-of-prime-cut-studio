@@ -35,6 +35,12 @@ const CONFIG = {
   RATE_LIMIT_WINDOW: 60000,
   RATE_LIMIT_MAX: 100,
   DATA_DIR: process.env.DATA_DIR || path.join(__dirname, 'genesis_data'),
+  // FASE 9: Pool de VPS
+  NODE_ID: process.env.NODE_ID || null,
+  NODE_TOKEN: process.env.NODE_TOKEN || null,
+  NODE_REGION: process.env.NODE_REGION || 'br-south',
+  NODE_MAX_INSTANCES: parseInt(process.env.NODE_MAX_INSTANCES || '50'),
+  NODE_HEARTBEAT_INTERVAL: 30000,
 };
 
 // Criar diretório de dados
@@ -951,6 +957,64 @@ function startMenuListener() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════
+// FASE 9: POOL DE VPS - NODE HEARTBEAT
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+let nodeHeartbeatInterval = null;
+
+async function sendNodeHeartbeat() {
+  if (!CONFIG.NODE_ID || !CONFIG.NODE_TOKEN) return;
+  
+  try {
+    // Coletar métricas do sistema
+    const cpuUsage = os.loadavg()[0] / os.cpus().length * 100;
+    const totalMem = os.totalmem();
+    const freeMem = os.freemem();
+    const memUsage = ((totalMem - freeMem) / totalMem) * 100;
+    const instanceCount = manager.getAllInstances().length;
+    
+    const response = await fetch(\`\${CONFIG.SUPABASE_URL}/functions/v1/genesis-vps-pool\`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': \`Bearer \${CONFIG.SUPABASE_KEY}\`,
+        'x-node-token': CONFIG.NODE_TOKEN,
+      },
+      body: JSON.stringify({
+        action: 'node_heartbeat',
+        node_id: CONFIG.NODE_ID,
+        cpu_load: Math.min(100, cpuUsage.toFixed(2)),
+        memory_load: memUsage.toFixed(2),
+        instance_count: instanceCount,
+        avg_latency: 0,
+      }),
+    });
+    
+    const result = await response.json();
+    if (result.success) {
+      log('info', \`[Pool] Node heartbeat OK - Score: \${result.health_score} | Status: \${result.status}\`);
+    }
+  } catch (err) {
+    // Silencioso
+  }
+}
+
+function startNodeHeartbeat() {
+  if (!CONFIG.NODE_ID || !CONFIG.NODE_TOKEN) {
+    log('info', '[Pool] Node não registrado no pool (NODE_ID/NODE_TOKEN não configurados)');
+    return;
+  }
+  
+  log('success', \`[Pool] Node registrado: \${CONFIG.NODE_ID}\`);
+  log('info', \`[Pool] Região: \${CONFIG.NODE_REGION} | Max Instâncias: \${CONFIG.NODE_MAX_INSTANCES}\`);
+  
+  // Heartbeat imediato
+  sendNodeHeartbeat();
+  
+  // Heartbeat periódico
+  nodeHeartbeatInterval = setInterval(sendNodeHeartbeat, CONFIG.NODE_HEARTBEAT_INTERVAL);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════════════════
 // INICIALIZAÇÃO
 // ═══════════════════════════════════════════════════════════════════════════════════════════
 app.listen(CONFIG.PORT, '0.0.0.0', async () => {
@@ -959,6 +1023,9 @@ app.listen(CONFIG.PORT, '0.0.0.0', async () => {
   log('success', \`Servidor iniciado na porta \${CONFIG.PORT}\`);
   log('info', 'PM2: pm2 start genesis-v8.js --name genesis');
   log('info', 'Menu: node genesis-v8.js --menu');
+
+  // Iniciar heartbeat do pool (se configurado)
+  startNodeHeartbeat();
 
   // Auto-conectar instâncias existentes
   setTimeout(() => {
