@@ -137,7 +137,7 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
         <span className="text-lg font-bold">{instance.name}</span>
       </motion.div>
 
-      {/* WhatsApp Connection - NEW */}
+      {/* WhatsApp Connection - MAIN FOCUS */}
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -149,7 +149,7 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
         />
       </motion.div>
 
-      {/* Status and Actions */}
+      {/* Quick Actions Card */}
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -157,29 +157,21 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
       >
         <Card>
           <CardContent className="pt-6">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
-                    <Smartphone className="w-6 h-6 text-muted-foreground" />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-muted-foreground font-semibold text-sm">
-                    {instance.status === 'connected' ? 'Conectado' : 'Aguardando conexão'}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Pushname: <span className="text-foreground">{instance.name}</span>
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Número: <span className="text-foreground">{instance.phone_number || 'Não conectado'}</span>
-                  </p>
-                </div>
+            {/* Instance Summary */}
+            <div className="flex items-center gap-4 mb-4 pb-4 border-b">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Smartphone className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium">{instance.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {instance.phone_number || 'Aguardando conexão'}
+                </p>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 mt-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
               {instance.is_paused ? (
                 <Button variant="outline" size="sm" className="gap-2 justify-start" onClick={() => handleAction('Retomar')}>
                   <Play className="w-4 h-4" />
@@ -220,51 +212,50 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
         </Card>
       </motion.div>
 
-      {/* Instance Info */}
+      {/* API Info - For External Integrations */}
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
       >
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Settings2 className="w-5 h-5 text-primary" />
-              Informações da Instância
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Settings2 className="w-4 h-4 text-primary" />
+              Dados para Integração Externa
             </CardTitle>
+            <CardDescription className="text-xs">
+              Use estes dados para integrar com sistemas externos via API
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <Label className="text-xs text-muted-foreground">Código</Label>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="p-3 rounded-lg bg-muted/50">
+                <Label className="text-xs text-muted-foreground">Código da Instância</Label>
                 <div className="flex items-center gap-2 mt-1">
-                  <Input value={instanceCode} readOnly className="bg-muted/50" />
-                  <Button variant="ghost" size="icon" onClick={() => copyToClipboard(instanceCode, 'Código')}>
-                    <Copy className="w-4 h-4" />
+                  <code className="text-xs font-mono flex-1 truncate">{instanceCode}</code>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => copyToClipboard(instanceCode, 'Código')}>
+                    <Copy className="w-3 h-3" />
                   </Button>
                 </div>
               </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Endpoint</Label>
+              <div className="p-3 rounded-lg bg-muted/50">
+                <Label className="text-xs text-muted-foreground">Endpoint API</Label>
                 <div className="flex items-center gap-2 mt-1">
-                  <Input value={endpoint} readOnly className="bg-muted/50 text-xs" />
-                  <Button variant="ghost" size="icon" onClick={() => copyToClipboard(endpoint, 'Endpoint')}>
-                    <Copy className="w-4 h-4" />
+                  <code className="text-xs font-mono flex-1 truncate">{endpoint}</code>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => copyToClipboard(endpoint, 'Endpoint')}>
+                    <Copy className="w-3 h-3" />
                   </Button>
                 </div>
               </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Token</Label>
+              <div className="p-3 rounded-lg bg-muted/50">
+                <Label className="text-xs text-muted-foreground">Token API</Label>
                 <div className="flex items-center gap-2 mt-1">
-                  <Input value={token} readOnly type="password" className="bg-muted/50" />
-                  <Button variant="ghost" size="icon" onClick={() => copyToClipboard(token, 'Token')}>
-                    <Copy className="w-4 h-4" />
+                  <code className="text-xs font-mono flex-1 truncate">••••••••</code>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => copyToClipboard(token, 'Token')}>
+                    <Copy className="w-3 h-3" />
                   </Button>
                 </div>
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Nome da Instância</Label>
-                <Input value={instance.name} className="mt-1" readOnly />
               </div>
             </div>
           </CardContent>
