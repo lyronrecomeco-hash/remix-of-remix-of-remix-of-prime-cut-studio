@@ -23,6 +23,7 @@ import {
   ExternalLink,
   Activity,
   Smartphone,
+  Terminal,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,6 +37,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { GenesisWhatsAppConnect } from './GenesisWhatsAppConnect';
 import { cn } from '@/lib/utils';
+import { getVPSScriptV7 } from './scripts';
 
 // Import integration logos
 import shopifyLogo from '@/assets/integrations/shopify.png';
@@ -515,6 +517,48 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
                     </div>
                     <Button variant="ghost" size="icon" className="h-10 w-10 flex-shrink-0" onClick={() => copyToClipboard(instance.id, 'ID')}>
                       <Copy className="w-5 h-5" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Download Script VPS v7 */}
+                <div className="p-4 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0 flex-1">
+                      <Label className="text-xs text-primary uppercase tracking-wider font-medium flex items-center gap-2">
+                        <Terminal className="w-3.5 h-3.5" />
+                        Script VPS v7.0 Enterprise
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Multi-instância • Rate Limiting • Auto-restart • 24/7
+                      </p>
+                    </div>
+                    <Button 
+                      variant="default" 
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => {
+                        try {
+                          const script = getVPSScriptV7(
+                            instance.backend_token || 'GNS_' + Math.random().toString(36).substring(2, 34),
+                            instance.id,
+                            instance.name
+                          );
+                          const blob = new Blob([script], { type: 'application/javascript' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = 'whatsapp-vps-v7.js';
+                          a.click();
+                          URL.revokeObjectURL(url);
+                          toast.success('Script v7.0 Enterprise baixado!');
+                        } catch (err) {
+                          toast.error('Erro ao gerar script');
+                        }
+                      }}
+                    >
+                      <Download className="w-4 h-4" />
+                      Baixar Script
                     </Button>
                   </div>
                 </div>
