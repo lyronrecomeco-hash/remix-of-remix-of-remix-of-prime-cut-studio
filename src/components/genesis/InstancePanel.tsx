@@ -313,41 +313,38 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
         </motion.div>
       </div>
 
-      {/* Integrações - Full Width */}
+      {/* Integrações */}
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
       >
-        <Card className="border-2">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Lock className="w-5 h-5 text-primary" />
-              </div>
-              Integrações Disponíveis
-              <Badge variant="secondary" className="ml-auto text-xs">Em breve</Badge>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Lock className="w-4 h-4 text-primary" />
+              Integrações
             </CardTitle>
           </CardHeader>
-          <CardContent className="pb-6">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+          <CardContent>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
               {integrations.map((integration) => (
                 <div 
                   key={integration.id} 
-                  className="group relative p-6 rounded-2xl border-2 bg-gradient-to-br from-muted/30 to-transparent hover:border-primary/30 hover:shadow-md transition-all duration-300"
+                  className="p-4 rounded-xl border bg-muted/20 opacity-50 text-center hover:opacity-70 transition-opacity"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity" />
-                  <div className="relative flex flex-col items-center text-center">
-                    <div className="h-14 w-14 mb-4 flex items-center justify-center rounded-xl bg-background shadow-sm border">
-                      <img 
-                        src={integration.logo} 
-                        alt={integration.name} 
-                        className="h-10 w-10 object-contain"
-                      />
-                    </div>
-                    <p className="font-semibold text-sm">{integration.name}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{integration.description}</p>
+                  <div className="h-10 mb-2 flex items-center justify-center">
+                    <img 
+                      src={integration.logo} 
+                      alt={integration.name} 
+                      className="h-8 w-auto object-contain"
+                    />
                   </div>
+                  <p className="text-sm font-medium">{integration.name}</p>
+                  <Badge variant="secondary" className="mt-2 text-xs">
+                    <Lock className="w-3 h-3 mr-1" />
+                    Em breve
+                  </Badge>
                 </div>
               ))}
             </div>
