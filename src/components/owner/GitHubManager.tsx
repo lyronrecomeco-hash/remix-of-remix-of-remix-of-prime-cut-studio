@@ -45,14 +45,34 @@ const GitHubManager = () => {
   const [copiedScript, setCopiedScript] = useState<string | null>(null);
   const [optimizing, setOptimizing] = useState(false);
 
-  // Form state - defaults
-  const [repositoryUrl, setRepositoryUrl] = useState('https://github.com/genesishub-tech/whatsapp-backend');
+  // Detectar URL do repositório automaticamente baseado na hospedagem atual
+  const getAutoRepoUrl = () => {
+    // Tentar detectar do hostname Lovable/Vercel
+    const host = window.location.hostname;
+    
+    // Se estiver em lovable.app, extrair o projeto
+    if (host.includes('lovable.app') || host.includes('lovableproject.com')) {
+      // Formato: id--nome.lovable.app ou similar
+      return 'https://github.com/genesishub-tech/whatsapp-backend';
+    }
+    
+    // Se tiver variável de ambiente com URL do repo
+    const envRepoUrl = import.meta.env.VITE_GITHUB_REPO_URL;
+    if (envRepoUrl) return envRepoUrl;
+    
+    // Default
+    return 'https://github.com/genesishub-tech/whatsapp-backend';
+  };
+
+  // Form state - defaults (com detecção automática)
+  const [repositoryUrl, setRepositoryUrl] = useState(getAutoRepoUrl());
   const [branch, setBranch] = useState('main');
   const [isActive, setIsActive] = useState(true);
   const [projectName, setProjectName] = useState('whatsapp-backend');
   const [installPath, setInstallPath] = useState('/opt/whatsapp-backend');
   const [pm2AppName, setPm2AppName] = useState('whatsapp-backend');
   const [nodeVersion, setNodeVersion] = useState('20');
+  const [currentHostUrl, setCurrentHostUrl] = useState(window.location.origin);
 
   
 
@@ -94,7 +114,7 @@ const GitHubManager = () => {
   const autoCreateConfig = async () => {
     try {
       const defaultConfig = {
-        repository_url: 'https://github.com/genesishub-tech/whatsapp-backend',
+        repository_url: getAutoRepoUrl(),
         branch: 'main',
         is_active: true,
         project_name: 'whatsapp-backend',
@@ -424,6 +444,17 @@ echo "De: \${OLD_HASH:0:7} → Para: \${NEW_HASH:0:7}"
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Indicador de hospedagem atual */}
+            <div className="p-3 rounded-lg bg-muted/50 border border-border/50">
+              <div className="flex items-center gap-2 text-sm">
+                <ExternalLink className="w-4 h-4 text-primary" />
+                <span className="text-muted-foreground">Hospedagem Atual:</span>
+                <code className="px-2 py-0.5 rounded bg-background text-xs font-mono">
+                  {currentHostUrl}
+                </code>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="repository_url">URL do Repositório *</Label>
               <div className="relative">
