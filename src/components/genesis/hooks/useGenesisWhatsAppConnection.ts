@@ -3,6 +3,30 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import * as QRCode from 'qrcode';
 
+/**
+ * FASE 7: Orquestrador central para transições de status
+ * Substitui escritas diretas por chamadas RPC validadas
+ */
+const requestOrchestratedTransition = async (
+  instanceId: string,
+  newStatus: string,
+  source: string = 'frontend',
+  payload: Record<string, unknown> = {}
+): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const { data, error } = await supabase.functions.invoke('genesis-connection-orchestrator', {
+      body: { instanceId, action: 'transition', newStatus, source, payload },
+    });
+    if (error) {
+      console.warn('[Orchestrator] Transition error:', error);
+      return { success: false, error: error.message };
+    }
+    return data as { success: boolean; error?: string };
+  } catch (err) {
+    console.warn('[Orchestrator] Exception:', err);
+    return { success: false, error: String(err) };
+  }
+};
 interface ConnectionState {
   isConnecting: boolean;
   isPolling: boolean;
@@ -77,18 +101,63 @@ export function useGenesisWhatsAppConnection() {
     };
   }, [stopPolling, stopStatusPolling]);
 
+  /**
+   * FASE 7: Atualiza instância no DB
+   * - Para mudanças de STATUS: usa orquestrador central (valida transições)
+   * - Para outros campos: atualização direta permitida
+   */
   const updateInstanceInDB = async (instanceId: string, updates: Record<string, unknown>) => {
     try {
-      const { error } = await supabase
-        .from('genesis_instances')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', instanceId);
+      const statusFields = ['status', 'effective_status'];
+      const hasStatusChange = statusFields.some(f => updates[f] !== undefined);
       
-      if (error) {
-        console.error('Error updating genesis instance:', error);
+      // Se há mudança de status, tentar via orquestrador primeiro
+      if (hasStatusChange) {
+        const newStatus = (updates.effective_status || updates.status) as string;
+        
+        // Mapear status legado para novo schema
+        const statusMap: Record<string, string> = {
+          'qr_pending': 'qr_pending',
+          'connecting': 'connecting', 
+          'connected': 'connected',
+          'disconnected': 'disconnected',
+          'error': 'error',
+        };
+        const mappedStatus = statusMap[newStatus] || newStatus;
+        
+        // Tentar transição via orquestrador (validação de state machine)
+        const orchestratorResult = await requestOrchestratedTransition(
+          instanceId,
+          mappedStatus,
+          'frontend',
+          { originalUpdates: updates }
+        );
+        
+        if (orchestratorResult.success) {
+          console.log(`[updateInstanceInDB] Orchestrated transition to ${mappedStatus} succeeded`);
+        } else {
+          // Transição inválida na state machine - log mas continua com outros campos
+          console.warn(`[updateInstanceInDB] Orchestrated transition failed: ${orchestratorResult.error}`);
+        }
       }
       
-      // Log status changes to event logs
+      // Atualizar campos não-status diretamente (session_data, phone_number, etc)
+      const nonStatusUpdates = { ...updates };
+      delete nonStatusUpdates.status;
+      delete nonStatusUpdates.effective_status;
+      
+      if (Object.keys(nonStatusUpdates).length > 0) {
+        const { error } = await supabase
+          .from('genesis_instances')
+          .update({ ...nonStatusUpdates, updated_at: new Date().toISOString() })
+          .eq('id', instanceId);
+        
+        if (error) {
+          console.error('Error updating genesis instance non-status fields:', error);
+        }
+      }
+      
+      // Log para genesis_event_logs (legado, mantido para compatibilidade)
       if (updates.status) {
         try {
           const eventType = updates.status === 'connected' ? 'connected' : updates.status === 'disconnected' ? 'disconnected' : 'status_change';

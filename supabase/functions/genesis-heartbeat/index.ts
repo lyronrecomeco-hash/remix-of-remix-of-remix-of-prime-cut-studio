@@ -32,10 +32,10 @@ serve(async (req) => {
       );
     }
 
-    // Get instance and user info
+    // Get instance and user info - incluir orchestrated_status
     const { data: instance, error: instanceError } = await supabase
       .from("genesis_instances")
-      .select("id, user_id, status, effective_status, backend_token, session_data")
+      .select("id, user_id, status, effective_status, orchestrated_status, backend_token, session_data, health_status")
       .eq("id", instanceId)
       .single();
 
@@ -81,11 +81,12 @@ serve(async (req) => {
       effectiveStatus = (instance.effective_status as string) || rawStatus;
     }
 
-    // Update instance heartbeat - sempre atualizar para manter conexão viva
+    // FASE 7: Usar orquestrador para mudanças de status
+    // Update heartbeat e health diretamente (não são status)
     const updatePayload: Record<string, unknown> = {
       last_heartbeat: now,
-      effective_status: effectiveStatus,
-      status: rawStatus,
+      health_status: 'healthy', // Heartbeat recebido = healthy
+      last_health_ping: now,
       updated_at: now,
     };
 
@@ -100,7 +101,29 @@ serve(async (req) => {
       .eq("id", instanceId);
 
     if (updateError) {
-      console.error("Error updating instance:", updateError);
+      console.error("Error updating instance heartbeat:", updateError);
+    }
+
+    // FASE 7: Se status mudou, usar orquestrador via RPC
+    if (instance.orchestrated_status !== effectiveStatus) {
+      const { data: transitionResult, error: rpcError } = await supabase.rpc(
+        'genesis_orchestrate_status_change',
+        {
+          p_instance_id: instanceId,
+          p_new_status: effectiveStatus,
+          p_source: 'heartbeat',
+          p_payload: { phoneNumber, metrics, rawStatus },
+        }
+      );
+
+      if (rpcError) {
+        console.warn("Heartbeat orchestrated transition failed:", rpcError.message);
+      } else {
+        const result = transitionResult as Record<string, unknown>;
+        if (result.success && result.changed) {
+          console.log(`Heartbeat transitioned ${instanceId}: ${result.from} -> ${result.to}`);
+        }
+      }
     }
 
     // Log heartbeat event (apenas a cada ~2 minutos para não sobrecarregar - 1 em 4 chances)
