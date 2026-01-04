@@ -71,6 +71,7 @@ export interface CanvasPosition {
 export interface AutomationRule {
   id: string;
   project_id: string | null;
+  instance_id: string; // Required - cada fluxo pertence a uma instância
   name: string;
   description: string | null;
   trigger_type: string;

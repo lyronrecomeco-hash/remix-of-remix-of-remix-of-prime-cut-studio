@@ -48,6 +48,7 @@ import { ptBR } from 'date-fns/locale';
 interface AutomationRule {
   id: string;
   project_id: string;
+  instance_id: string;
   name: string;
   description: string | null;
   trigger_type: string;
@@ -109,6 +110,7 @@ const WAAutomationsManager = () => {
     name: '',
     description: '',
     project_id: '',
+    instance_id: '',
     trigger_type: 'external_event',
     trigger_config: {} as any,
     conditions: [] as any[],
@@ -145,6 +147,7 @@ const WAAutomationsManager = () => {
       name: '',
       description: '',
       project_id: '',
+      instance_id: '',
       trigger_type: 'external_event',
       trigger_config: {},
       conditions: [],
@@ -154,7 +157,7 @@ const WAAutomationsManager = () => {
   };
 
   const createAutomation = async () => {
-    if (!formData.name || !formData.project_id || formData.actions.length === 0) {
+    if (!formData.name || !formData.project_id || !formData.instance_id || formData.actions.length === 0) {
       toast.error('Preencha todos os campos obrigatórios e adicione pelo menos uma ação');
       return;
     }
@@ -164,6 +167,7 @@ const WAAutomationsManager = () => {
         name: formData.name,
         description: formData.description || null,
         project_id: formData.project_id,
+        instance_id: formData.instance_id,
         trigger_type: formData.trigger_type,
         trigger_config: formData.trigger_config,
         conditions: formData.conditions,
@@ -250,6 +254,7 @@ const WAAutomationsManager = () => {
       name: automation.name,
       description: automation.description || '',
       project_id: automation.project_id,
+      instance_id: automation.instance_id || '',
       trigger_type: automation.trigger_type,
       trigger_config: automation.trigger_config || {},
       conditions: automation.conditions || [],
