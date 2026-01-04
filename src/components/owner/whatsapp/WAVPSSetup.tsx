@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { getVPSScriptV7 } from '@/components/genesis/scripts/vps-script-v7';
+import { getVPSScriptV7, getVPSScriptV8 } from '@/components/genesis/scripts';
 import { 
   Server, 
   Wifi, 
@@ -661,8 +661,8 @@ app.listen(PORT, '0.0.0.0', async () => {
 `;
   };
 
-  const downloadScript = () => {
-    // IMPORTANTE: Passar o UUID como instanceId e o nome como terceiro parâmetro
+  const downloadScriptV7 = () => {
+    // Script v7 - Para instância específica
     const script = getVPSScriptV7(masterToken, defaultInstanceId, defaultInstanceName);
     const blob = new Blob([script], { type: 'application/javascript' });
     const url = URL.createObjectURL(blob);
@@ -671,7 +671,20 @@ app.listen(PORT, '0.0.0.0', async () => {
     a.download = 'whatsapp-vps-v7.js';
     a.click();
     URL.revokeObjectURL(url);
-    toast.success('Script v7.0 Enterprise baixado!');
+    toast.success('Script v7.0 (Single Instance) baixado!');
+  };
+
+  const downloadScriptV8 = () => {
+    // Script v8 - Multi-instância dinâmico
+    const script = getVPSScriptV8(masterToken);
+    const blob = new Blob([script], { type: 'application/javascript' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'genesis-v8.js';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Script v8.0 (Multi-Instance Manager) baixado!');
   };
 
   const setupSteps = [
@@ -1081,41 +1094,62 @@ curl http://localhost:3001/health -H "Authorization: Bearer ${masterToken || 'SE
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                📄 Script whatsapp-vps.js
+                📄 Scripts VPS
               </CardTitle>
               <CardDescription>
-                Código completo do backend para rodar na VPS
+                Escolha o script ideal para sua necessidade
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-2">
-                <Button onClick={downloadScript} className="flex-1">
-                  <Download className="w-4 h-4 mr-2" />
-                  Baixar Script
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => copyToClipboard(getVPSScript(), 'Script')}
-                >
-                  <Copy className="w-4 h-4 mr-2" />
-                  Copiar
-                </Button>
+              <div className="grid gap-3">
+                <div className="p-4 border rounded-lg space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium">v8.0 Multi-Instance Manager</h4>
+                      <p className="text-xs text-muted-foreground">
+                        Gerencia múltiplas instâncias dinamicamente. Menu interativo. Recomendado!
+                      </p>
+                    </div>
+                    <Badge className="bg-green-500">Recomendado</Badge>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={downloadScriptV8} className="flex-1">
+                      <Download className="w-4 h-4 mr-2" />
+                      Baixar v8.0
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Comandos: <code className="bg-muted px-1 rounded">node genesis-v8.js</code> ou <code className="bg-muted px-1 rounded">node genesis-v8.js --menu</code>
+                  </p>
+                </div>
+
+                <div className="p-4 border rounded-lg space-y-2">
+                  <div>
+                    <h4 className="font-medium">v7.0 Single Instance</h4>
+                    <p className="text-xs text-muted-foreground">
+                      Para uma única instância específica. Configuração fixa no script.
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={downloadScriptV7} variant="outline" className="flex-1">
+                      <Download className="w-4 h-4 mr-2" />
+                      Baixar v7.0
+                    </Button>
+                  </div>
+                </div>
               </div>
 
-              <ScrollArea className="h-[400px] border rounded-lg">
-                <pre className="p-4 text-xs font-mono">
-                  <code>{getVPSScript()}</code>
-                </pre>
-              </ScrollArea>
-
               <div className="p-4 bg-muted rounded-lg">
-                <h4 className="font-medium mb-2">Endpoints disponíveis:</h4>
+                <h4 className="font-medium mb-2">Endpoints API (v8.0):</h4>
                 <div className="grid gap-1 text-sm font-mono">
                   <div><span className="text-green-500">GET</span> /health - Status do servidor</div>
-                  <div><span className="text-green-500">GET</span> /status - Status da conexão WhatsApp</div>
-                  <div><span className="text-green-500">GET</span> /qrcode - Obter QR Code</div>
-                  <div><span className="text-blue-500">POST</span> /connect - Iniciar conexão</div>
-                  <div><span className="text-blue-500">POST</span> /disconnect - Desconectar</div>
+                  <div><span className="text-green-500">GET</span> /api/instances - Listar instâncias</div>
+                  <div><span className="text-blue-500">POST</span> /api/instances - Criar instância</div>
+                  <div><span className="text-green-500">GET</span> /api/instance/:id/status - Status</div>
+                  <div><span className="text-blue-500">POST</span> /api/instance/:id/connect - Conectar</div>
+                  <div><span className="text-green-500">GET</span> /api/instance/:id/qrcode - QR Code</div>
+                  <div><span className="text-blue-500">POST</span> /api/instance/:id/send - Enviar mensagem</div>
+                  <div><span className="text-red-500">DELETE</span> /api/instance/:id - Deletar</div>
                   <div><span className="text-blue-500">POST</span> /send - Enviar texto</div>
                   <div><span className="text-blue-500">POST</span> /send-buttons - Enviar botões</div>
                   <div><span className="text-blue-500">POST</span> /send-list - Enviar lista</div>
