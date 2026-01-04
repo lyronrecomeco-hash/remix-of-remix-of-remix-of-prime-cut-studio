@@ -109,7 +109,7 @@ serve(async (req) => {
     // Load current backend config (single-tenant config)
     const { data: config, error: configError } = await supabaseAdmin
       .from("whatsapp_backend_config")
-      .select("backend_url, master_token")
+      .select("id, backend_url, master_token")
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -117,24 +117,19 @@ serve(async (req) => {
     if (configError || !config?.backend_url || !config?.master_token) {
       return new Response(
         JSON.stringify({
+          ok: false,
+          status: 400,
           error: "Backend VPS não configurado. Salve a URL e o Token primeiro.",
+          data: null,
         }),
         {
-          status: 400,
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
     }
 
-    const backendUrl = String(config.backend_url).replace(/\/$/, "");
-    const targetUrl = backendUrl + path;
-
-    console.log("whatsapp-backend-proxy forwarding", {
-      path,
-      method,
-      targetUrl,
-      hasBody: Boolean(body?.body),
-    });
+    const baseUrlPrimary = String(config.backend_url).replace(/\/$/, "");
 
     const headers: Record<string, string> = {
       Authorization: `Bearer ${config.master_token}`,
@@ -146,33 +141,123 @@ serve(async (req) => {
       fetchBody = JSON.stringify(body?.body ?? {});
     }
 
-    const upstream = await fetch(targetUrl, {
-      method,
-      headers,
-      body: fetchBody,
-    });
+    const tryFetch = async (baseUrl: string) => {
+      const targetUrl = baseUrl + path;
+      console.log("whatsapp-backend-proxy forwarding", {
+        path,
+        method,
+        targetUrl,
+        hasBody: Boolean(body?.body),
+      });
 
-    const text = await upstream.text();
-    let parsed: unknown = text;
+      try {
+        const upstream = await fetch(targetUrl, {
+          method,
+          headers,
+          body: fetchBody,
+        });
 
-    try {
-      parsed = text ? JSON.parse(text) : {};
-    } catch {
-      // keep as text
+        const text = await upstream.text();
+        let parsed: unknown = text;
+
+        try {
+          parsed = text ? JSON.parse(text) : {};
+        } catch {
+          // keep as text
+        }
+
+        return {
+          ok: upstream.ok,
+          status: upstream.status,
+          data: parsed,
+          targetUrl,
+        };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return {
+          ok: false,
+          status: 0,
+          data: null,
+          error: message,
+          targetUrl,
+          _connectError: true,
+        } as const;
+      }
+    };
+
+    // 1) Try configured URL
+    const primary = await tryFetch(baseUrlPrimary);
+    if (!primary.ok && (primary as any)._connectError) {
+      // 2) Fallback: if configured with :3001, try :3000 and auto-correct config
+      const baseUrlFallback = baseUrlPrimary.replace(/:3001$/, ":3000");
+      if (baseUrlFallback !== baseUrlPrimary) {
+        const fallback = await tryFetch(baseUrlFallback);
+        if (fallback.ok) {
+          // Persist corrected URL to stop future 3001 calls
+          await supabaseAdmin
+            .from("whatsapp_backend_config")
+            .update({ backend_url: baseUrlFallback })
+            .eq("id", config.id);
+
+          return new Response(JSON.stringify(fallback), {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        return new Response(
+          JSON.stringify({
+            ok: false,
+            status: 0,
+            error:
+              "Não foi possível conectar ao VPS. Verifique se a porta 3000 está liberada (firewall) e se o backend está ouvindo em 0.0.0.0.",
+            data: null,
+            details: {
+              primaryTarget: (primary as any).targetUrl,
+              fallbackTarget: (fallback as any).targetUrl,
+              primaryError: (primary as any).error,
+              fallbackError: (fallback as any).error,
+            },
+          }),
+          {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({
+          ok: false,
+          status: 0,
+          error:
+            "Não foi possível conectar ao VPS. Verifique se a porta está liberada (firewall) e se o backend está ouvindo em 0.0.0.0.",
+          data: null,
+          details: {
+            target: (primary as any).targetUrl,
+            error: (primary as any).error,
+          },
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
+    return new Response(JSON.stringify(primary), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro interno";
+    // Always return 200 so the web client can handle the error gracefully (no blank screen)
     return new Response(
-      JSON.stringify({ ok: upstream.ok, status: upstream.status, data: parsed }),
+      JSON.stringify({ ok: false, status: 0, error: message, data: null }),
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Erro interno";
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
   }
 });
