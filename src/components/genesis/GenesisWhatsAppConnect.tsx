@@ -116,8 +116,8 @@ Sua instância está conectada e funcionando perfeitamente!
           path: `/api/instance/${instance.id}/send`,
           method: 'POST',
           body: {
-            to: phone,
-            message,
+            phone: phone,
+            message: message,
           },
         },
       });

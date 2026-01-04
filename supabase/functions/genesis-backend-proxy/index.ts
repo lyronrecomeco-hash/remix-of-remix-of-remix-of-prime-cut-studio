@@ -182,6 +182,22 @@ serve(async (req) => {
       hasBody: Boolean(requestBody?.body),
     });
 
+    // Helper to log events
+    const logEvent = async (eventType: string, severity: string, message: string, details?: Record<string, unknown>) => {
+      try {
+        await supabaseAdmin.from('genesis_event_logs').insert({
+          instance_id: instanceId,
+          user_id: genesisUser.id,
+          event_type: eventType,
+          severity,
+          message,
+          details: details || {},
+        });
+      } catch (e) {
+        console.error('Failed to log event:', e);
+      }
+    };
+
     const headers: Record<string, string> = {
       Authorization: `Bearer ${backendToken}`,
     };
@@ -214,6 +230,23 @@ serve(async (req) => {
         // keep as text
       }
 
+      // Log successful requests
+      if (path.includes('/send')) {
+        await logEvent(
+          upstream.ok ? 'message_sent' : 'message_error',
+          upstream.ok ? 'info' : 'error',
+          upstream.ok ? 'Mensagem enviada com sucesso' : 'Erro ao enviar mensagem',
+          { path, status: upstream.status, response: parsed }
+        );
+      } else if (path.includes('/qrcode')) {
+        await logEvent('qr_generated', 'info', 'QR Code gerado', { path });
+      } else if (path.includes('/status')) {
+        const statusData = parsed as Record<string, unknown>;
+        if (statusData?.connected || statusData?.status === 'connected') {
+          await logEvent('connected', 'info', 'Instância conectada', { path, response: parsed });
+        }
+      }
+
       return new Response(
         JSON.stringify({ ok: upstream.ok, status: upstream.status, data: parsed }),
         {
@@ -224,9 +257,14 @@ serve(async (req) => {
     } catch (fetchError) {
       clearTimeout(timeoutId);
       const isAbort = fetchError instanceof Error && fetchError.name === 'AbortError';
+      const errorMsg = isAbort ? "Timeout ao conectar com o backend" : "Backend não está respondendo";
+      
+      // Log error
+      await logEvent('error', 'error', errorMsg, { path, isTimeout: isAbort });
+      
       return new Response(
         JSON.stringify({ 
-          error: isAbort ? "Timeout ao conectar com o backend" : "Backend não está respondendo",
+          error: errorMsg,
           ok: false,
           status: 0,
         }),

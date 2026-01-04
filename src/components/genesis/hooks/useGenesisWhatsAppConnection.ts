@@ -86,6 +86,22 @@ export function useGenesisWhatsAppConnection() {
       if (error) {
         console.error('Error updating genesis instance:', error);
       }
+      
+      // Log status changes to event logs
+      if (updates.status) {
+        try {
+          const eventType = updates.status === 'connected' ? 'connected' : updates.status === 'disconnected' ? 'disconnected' : 'status_change';
+          await supabase.from('genesis_event_logs').insert([{
+            instance_id: instanceId,
+            event_type: eventType,
+            severity: 'info',
+            message: `Status alterado para: ${updates.status}`,
+            details: JSON.parse(JSON.stringify(updates)),
+          }]);
+        } catch (logError) {
+          console.error('Error logging event:', logError);
+        }
+      }
     } catch (error) {
       console.error('Error updating genesis instance:', error);
     }
