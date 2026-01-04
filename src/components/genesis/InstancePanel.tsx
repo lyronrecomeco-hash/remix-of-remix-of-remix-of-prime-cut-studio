@@ -147,7 +147,7 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
     : null;
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6 w-full">
       
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* BLOCO 1 — IDENTIDADE DA INSTÂNCIA (TOPO) */}
@@ -293,29 +293,28 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
             exit={{ opacity: 0, height: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <Card className="border-2 border-green-500/30 bg-gradient-to-r from-green-500/10 via-green-500/5 to-transparent">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500/30 to-green-500/10 flex items-center justify-center shadow-xl shadow-green-500/20">
-                    <Phone className="w-8 h-8 text-green-500" />
+            <Card className="border border-green-500/30 bg-green-500/5">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-green-500/15 flex items-center justify-center">
+                    <Phone className="w-5 h-5 text-green-500" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">
-                      Número Conectado
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
+                      Número WhatsApp
                     </p>
-                    <p className="font-bold text-green-600 text-3xl">{formattedPhone}</p>
-                    <p className="text-sm text-muted-foreground mt-1 font-mono opacity-70">
-                      {instance.phone_number}@s.whatsapp.net
-                    </p>
+                    <p className="font-semibold text-foreground text-base mt-0.5">{formattedPhone}</p>
                   </div>
+                  <code className="text-xs text-muted-foreground font-mono hidden sm:block">
+                    {instance.phone_number}@s.whatsapp.net
+                  </code>
                   <Button 
-                    variant="outline" 
-                    size="lg"
-                    className="h-14 px-6 border-green-500/30 hover:bg-green-500/10 gap-2"
+                    variant="ghost" 
+                    size="icon"
+                    className="h-9 w-9 text-muted-foreground hover:text-foreground"
                     onClick={() => copyToClipboard(instance.phone_number || '', 'Número')}
                   >
-                    <Copy className="w-5 h-5" />
-                    Copiar
+                    <Copy className="w-4 h-4" />
                   </Button>
                 </div>
               </CardContent>
@@ -702,7 +701,7 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
 
       {/* Modal: Integrações */}
       <Dialog open={showIntegrationsModal} onOpenChange={setShowIntegrationsModal}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader className="pb-4">
             <DialogTitle className="flex items-center gap-3 text-xl">
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -714,28 +713,32 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
               Conecte sua instância com as principais plataformas do mercado
             </DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-4">
+          <div className="space-y-2 pt-4 max-h-[60vh] overflow-y-auto">
             {integrations.map((integration) => (
               <div 
                 key={integration.id} 
-                className="group relative p-6 rounded-2xl border-2 bg-gradient-to-br from-muted/30 to-transparent hover:border-primary/30 hover:shadow-lg transition-all duration-300"
+                className="flex items-center gap-4 p-4 rounded-xl border bg-muted/20 hover:bg-muted/40 transition-colors"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity" />
-                <div className="relative flex flex-col items-center text-center">
-                  <div className="h-16 w-16 mb-4 flex items-center justify-center rounded-xl bg-background shadow-md border">
-                    <img 
-                      src={integration.logo} 
-                      alt={integration.name} 
-                      className="h-10 w-10 object-contain"
-                    />
-                  </div>
-                  <p className="font-semibold text-base">{integration.name}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{integration.description}</p>
-                  <Badge variant="secondary" className="mt-3 text-xs">
-                    <Lock className="w-3 h-3 mr-1" />
-                    Em breve
-                  </Badge>
+                <div className="w-12 h-12 rounded-xl bg-background border flex items-center justify-center flex-shrink-0">
+                  <img 
+                    src={integration.logo} 
+                    alt={integration.name} 
+                    className="w-8 h-8 object-contain dark:brightness-0 dark:invert dark:opacity-80"
+                  />
                 </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm">{integration.name}</p>
+                  <p className="text-xs text-muted-foreground">{integration.description}</p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  disabled 
+                  className="gap-2 text-xs opacity-60"
+                >
+                  <Lock className="w-3 h-3" />
+                  Em breve
+                </Button>
               </div>
             ))}
           </div>
