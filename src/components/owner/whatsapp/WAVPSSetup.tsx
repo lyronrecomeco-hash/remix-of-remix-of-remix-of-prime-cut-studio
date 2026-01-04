@@ -180,7 +180,7 @@ export const WAVPSSetup = ({
     } catch (error) {
       console.error('Connection test failed:', error);
       setIsConnected(false);
-      toast.error('Falha na conexão. Verifique URL, Token e se a porta 3001 está liberada.');
+      toast.error('Falha na conexão. Verifique URL, Token e se a porta 3000 está liberada.');
 
       await supabase
         .from('whatsapp_backend_config')

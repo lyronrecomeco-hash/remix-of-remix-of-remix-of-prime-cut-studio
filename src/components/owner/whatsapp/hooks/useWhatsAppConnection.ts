@@ -162,6 +162,112 @@ export function useWhatsAppConnection() {
     }
   };
 
+  const ensureInstanceExists = async (
+    instanceId: string,
+    backendUrl: string,
+    token: string,
+    instanceName?: string
+  ): Promise<{ exists: boolean; created: boolean }> => {
+    const name = instanceName || `instance-${instanceId.slice(0, 8)}`;
+
+    // HTTPS page calling HTTP VPS must go through proxy
+    if (shouldUseProxy(backendUrl)) {
+      const statusRes = await proxyRequest(`/api/instance/${instanceId}/status`, 'GET');
+
+      if (statusRes.ok) return { exists: true, created: false };
+
+      const statusMsg = String(statusRes.data?.error || statusRes.data?.message || '').toLowerCase();
+      const notFound =
+        statusRes.status === 404 ||
+        statusMsg.includes('não encontrada') ||
+        statusMsg.includes('nao encontrada') ||
+        statusMsg.includes('not found');
+
+      // If it's some other error, the endpoint exists; treat as "exists".
+      if (!notFound) return { exists: true, created: false };
+
+      const createRes = await proxyRequest('/api/instances', 'POST', { instanceId, name });
+
+      if (createRes.ok || createRes.data?.success) return { exists: true, created: true };
+
+      if (createRes.status === 404) {
+        throw new Error('Backend desatualizado: baixe o script novamente e reinicie o serviço.');
+      }
+
+      const createMsg = String(createRes.data?.error || createRes.data?.message || '');
+      if (createMsg.toLowerCase().includes('já existe') || createMsg.toLowerCase().includes('ja existe')) {
+        return { exists: true, created: false };
+      }
+
+      throw new Error(createMsg || `Falha ao criar instância (HTTP ${createRes.status || 'erro'})`);
+    }
+
+    // Direct mode (localhost or HTTPS backend)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    try {
+      let statusResponse: Response;
+      try {
+        statusResponse = await fetch(`${backendUrl}/api/instance/${instanceId}/status`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          signal: controller.signal,
+        });
+      } catch (err: unknown) {
+        // Timeouts happen under load; don't block the whole connect flow.
+        if (err instanceof Error && err.name === 'AbortError') {
+          return { exists: true, created: false };
+        }
+        throw err;
+      }
+
+      if (statusResponse.ok) return { exists: true, created: false };
+
+      if (statusResponse.status !== 404) {
+        // Endpoint exists; instance may still be initializing
+        return { exists: true, created: false };
+      }
+
+      const createResponse = await fetch(`${backendUrl}/api/instances`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ instanceId, name }),
+        signal: controller.signal,
+      });
+
+      if (createResponse.ok) return { exists: true, created: true };
+
+      if (createResponse.status === 404) {
+        throw new Error(
+          'Backend local desatualizado: baixe o script novamente na aba Backend e reinicie o serviço.'
+        );
+      }
+
+      const rawText = await createResponse.text();
+      let data: any = {};
+      try {
+        data = rawText ? JSON.parse(rawText) : {};
+      } catch {
+        data = {};
+      }
+
+      const createMsg = String(data?.error || data?.message || rawText || '');
+      if (createMsg.toLowerCase().includes('já existe') || createMsg.toLowerCase().includes('ja existe')) {
+        return { exists: true, created: false };
+      }
+
+      throw new Error(createMsg || `Falha ao criar instância (HTTP ${createResponse.status})`);
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  };
+
   const normalizeQrToDataUrl = useCallback(async (rawQr: string): Promise<string> => {
     if (rawQr.startsWith('data:')) return rawQr;
 
@@ -187,106 +293,121 @@ export function useWhatsAppConnection() {
   ): Promise<string | null> => {
     const useProxy = shouldUseProxy(backendUrl);
 
-    const doProxy = async (method: 'GET' | 'POST') => {
-      const path = `/api/instance/${instanceId}/qrcode`;
-      const res = await proxyRequest(path, method, method === 'POST' ? { phone: phoneHint } : undefined);
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-      const result = res.data || {};
-
-      if (!res.ok) {
-        if (res.status === 404) {
-          throw new Error(
-            'Backend desatualizado: baixe o script novamente e reinicie o serviço.'
-          );
-        }
-
-        const msg =
-          result?.error ||
-          result?.message ||
-          `Erro ao gerar QR Code (HTTP ${res.status || 'erro'})`;
-
-        throw new Error(msg);
+    const startConnect = async () => {
+      const path = `/api/instance/${instanceId}/connect`;
+      if (useProxy) {
+        // best-effort (connect just needs to be started)
+        await proxyRequest(path, 'POST', {});
+        return;
       }
 
-      if (result.connected || result.status === 'connected') {
-        return 'CONNECTED';
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      try {
+        await fetch(`${backendUrl}${path}`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({}),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeoutId);
       }
-
-      const rawQr = result.qrcode || result.qr || result.base64;
-      if (typeof rawQr === 'string' && rawQr.length > 0) {
-        return await normalizeQrToDataUrl(rawQr);
-      }
-
-      throw new Error(result.error || result.message || 'QR Code não disponível');
     };
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    const getQr = async (): Promise<{ ok: boolean; status: number; data: any }> => {
+      const path = `/api/instance/${instanceId}/qrcode`;
 
-    const doRequest = async (method: 'GET' | 'POST') => {
-      const url = `${backendUrl}/api/instance/${instanceId}/qrcode`;
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          ...(method === 'POST' ? { 'Content-Type': 'application/json' } : {}),
-        },
-        ...(method === 'POST' ? { body: JSON.stringify({ phone: phoneHint }) } : {}),
-        signal: controller.signal,
-      });
-
-      const rawText = await response.text();
-      let result: any = {};
-      try {
-        result = rawText ? JSON.parse(rawText) : {};
-      } catch {
-        result = {};
+      if (useProxy) {
+        return await proxyRequest(path, 'GET');
       }
 
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error(
-            'Backend local desatualizado: baixe o script novamente na aba Backend e reinicie o serviço.'
-          );
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      try {
+        const response = await fetch(`${backendUrl}${path}`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          signal: controller.signal,
+        });
+
+        const rawText = await response.text();
+        let result: any = {};
+        try {
+          result = rawText ? JSON.parse(rawText) : {};
+        } catch {
+          result = {};
         }
 
-        const msg =
-          result?.error ||
-          result?.message ||
-          (rawText && rawText.includes('Cannot') ? 'Endpoint de QR Code não encontrado no backend.' : '') ||
-          `Erro ao gerar QR Code (HTTP ${response.status})`;
-
-        throw new Error(msg);
+        return { ok: response.ok, status: response.status, data: result };
+      } finally {
+        clearTimeout(timeoutId);
       }
-
-      // If already connected
-      if (result.connected || result.status === 'connected') {
-        return 'CONNECTED';
-      }
-
-      // Return QR code data
-      const rawQr = result.qrcode || result.qr || result.base64;
-      if (typeof rawQr === 'string' && rawQr.length > 0) {
-        return await normalizeQrToDataUrl(rawQr);
-      }
-
-      throw new Error(result.error || result.message || 'QR Code não disponível');
     };
 
     try {
-      // Prefer GET (evita alguns NetworkError de CORS/preflight em certos browsers)
+      // V8 requires instance existence + a started connection before QR appears
+      await ensureInstanceExists(instanceId, backendUrl, token);
+
       try {
-        return useProxy ? await doProxy('GET') : await doRequest('GET');
-      } catch (e) {
-        // fallback para compatibilidade com scripts antigos
-        return useProxy ? await doProxy('POST') : await doRequest('POST');
+        await startConnect();
+      } catch {
+        // ignore; we'll still try to read QR (some backends auto-connect)
       }
+
+      await sleep(1200);
+
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const res = await getQr();
+        const result = res.data || {};
+
+        if (res.ok) {
+          if (result.connected || result.status === 'connected') {
+            return 'CONNECTED';
+          }
+
+          const rawQr = result.qrcode || result.qr || result.base64;
+          if (typeof rawQr === 'string' && rawQr.length > 0) {
+            return await normalizeQrToDataUrl(rawQr);
+          }
+        } else {
+          // 404 here is almost always "instance not created yet" in V8; create + reconnect once.
+          if (res.status === 404 && attempt === 0) {
+            await ensureInstanceExists(instanceId, backendUrl, token);
+            try {
+              await startConnect();
+            } catch {
+              // ignore
+            }
+            await sleep(1200);
+            continue;
+          }
+
+          if (res.status === 404) {
+            throw new Error('Backend desatualizado: baixe o script novamente e reinicie o serviço.');
+          }
+
+          const msg =
+            result?.error ||
+            result?.message ||
+            `Erro ao gerar QR Code (HTTP ${res.status || 'erro'})`;
+          throw new Error(msg);
+        }
+
+        if (attempt < 2) await sleep(1500);
+      }
+
+      throw new Error('QR Code não disponível - aguarde ou tente novamente');
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Erro desconhecido';
       throw new Error(message);
-    } finally {
-      clearTimeout(timeoutId);
     }
   };
 
@@ -379,6 +500,9 @@ export function useWhatsAppConnection() {
         onConnected?.();
         return;
       }
+
+      // Ensure V8 instance exists in the backend before requesting QR
+      await ensureInstanceExists(instanceId, backendUrl, token);
 
       // Update status to pending
       await updateInstanceStatus(instanceId, 'qr_pending');
