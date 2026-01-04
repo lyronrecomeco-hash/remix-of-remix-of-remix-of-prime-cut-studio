@@ -601,9 +601,86 @@ Agora você pode automatizar seu atendimento!`;
         return;
       }
 
+      // Antes de gerar um novo QR, tenta "ligar" a instância sem destruir sessão.
+      // Isso permite reconectar após quedas/reloads sem exigir novo escaneamento.
+      try {
+        await proxyRequest(instanceId, `/api/instance/${instanceId}/connect`, 'POST', {});
+
+        // Aguarda alguns segundos para o backend reaproveitar credenciais existentes
+        for (let i = 0; i < 10; i++) {
+          await new Promise((r) => setTimeout(r, 1000));
+          const resumed = await checkStatus(instanceId);
+          if (resumed.connected) {
+            const nowIso = new Date().toISOString();
+            const merged = await mergeSessionData(instanceId, {
+              ready_to_send: false,
+              ready_phase: 'socket_connected',
+              ready_updated_at: nowIso,
+            });
+
+            await updateInstanceInDB(instanceId, {
+              status: 'connected',
+              phone_number: resumed.phoneNumber,
+              last_heartbeat: nowIso,
+              effective_status: 'connecting',
+              session_data: merged,
+            });
+
+            safeSetState(() => ({
+              isConnecting: true,
+              isPolling: false,
+              qrCode: null,
+              error: null,
+              attempts: 0,
+              phase: 'stabilizing',
+            }));
+
+            if (resumed.phoneNumber) {
+              const result = await sendWelcomeMessage(instanceId, resumed.phoneNumber);
+              if (result.success) {
+                const mergedReady = await mergeSessionData(instanceId, {
+                  ready_to_send: true,
+                  welcome_sent_at: new Date().toISOString(),
+                  last_send_success_at: new Date().toISOString(),
+                  ready_phase: 'ready_to_send',
+                  ready_updated_at: new Date().toISOString(),
+                });
+
+                await updateInstanceInDB(instanceId, {
+                  effective_status: 'connected',
+                  session_data: mergedReady,
+                });
+
+                toast.success('WhatsApp pronto para enviar!');
+                safeSetState(() => ({
+                  isConnecting: false,
+                  isPolling: false,
+                  qrCode: null,
+                  error: null,
+                  attempts: 0,
+                  phase: 'connected',
+                }));
+                onConnected?.();
+                return;
+              }
+            }
+
+            // Se conectou mas ainda não confirmou envio, segue o mesmo comportamento já existente
+            safeSetState((prev) => ({
+              ...prev,
+              isConnecting: false,
+              phase: 'error',
+              error: 'Conectou, mas o envio ainda não está pronto. Aguarde alguns segundos e tente novamente.',
+            }));
+            return;
+          }
+        }
+      } catch {
+        // ignore e segue para QR
+      }
+
       // Update to pending
       await updateInstanceInDB(instanceId, { status: 'qr_pending' });
-
       // Generate QR Code
       const qrResult = await generateQRCode(instanceId);
       
