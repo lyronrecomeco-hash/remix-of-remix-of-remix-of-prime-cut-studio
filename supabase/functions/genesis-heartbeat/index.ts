@@ -35,7 +35,7 @@ serve(async (req) => {
     // Get instance and user info
     const { data: instance, error: instanceError } = await supabase
       .from("genesis_instances")
-      .select("id, user_id, status, effective_status, backend_token")
+      .select("id, user_id, status, effective_status, backend_token, session_data")
       .eq("id", instanceId)
       .single();
 
@@ -68,22 +68,25 @@ serve(async (req) => {
     const now = new Date().toISOString();
     
     // Determinar status efetivo baseado no heartbeat recebido
-    // Se forceReconnect = true, mantém connected mesmo após queda temporária
-    let effectiveStatus = status;
-    if (status === "connected" || forceReconnect) {
-      effectiveStatus = "connected";
+    // Regra: CONNECTED na UI só quando ready_to_send = true (anti "conectado fantasma")
+    const rawStatus = (status || instance.status) as string;
+
+    const session = (instance as Record<string, unknown>).session_data as Record<string, unknown> | null;
+    const readyToSend = session?.ready_to_send === true;
+
+    let effectiveStatus = rawStatus;
+    if (rawStatus === "connected" || forceReconnect) {
+      effectiveStatus = readyToSend ? "connected" : "connecting";
     } else if (!status) {
-      effectiveStatus = instance.effective_status;
+      effectiveStatus = (instance.effective_status as string) || rawStatus;
     }
 
     // Update instance heartbeat - sempre atualizar para manter conexão viva
     const updatePayload: Record<string, unknown> = {
       last_heartbeat: now,
       effective_status: effectiveStatus,
-      status: effectiveStatus,
+      status: rawStatus,
       updated_at: now,
-      // Resetar contador de falhas se está conectado
-      connection_failures: effectiveStatus === "connected" ? 0 : undefined,
     };
 
     // Atualizar número apenas se fornecido

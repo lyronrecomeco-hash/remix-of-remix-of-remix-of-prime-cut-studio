@@ -273,7 +273,9 @@ serve(async (req) => {
         await logEvent(
           upstream.ok ? 'message_sent' : 'message_error',
           upstream.ok ? 'info' : 'error',
-          upstream.ok ? 'Mensagem enviada com sucesso' : `Erro ao enviar mensagem: ${(parsed as any)?.error || upstream.status}`,
+          upstream.ok
+            ? 'Mensagem enviada com sucesso'
+            : `Erro ao enviar mensagem: ${(parsed as any)?.error || `HTTP ${upstream.status}`}`,
           { path, status: upstream.status, duration: fetchDuration, response: parsed }
         );
       } else if (path.includes('/qrcode')) {

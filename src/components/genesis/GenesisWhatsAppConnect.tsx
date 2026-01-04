@@ -78,7 +78,7 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
 
 
   const isConnected = liveStatus.status === 'connected' && !liveStatus.isStale;
-  const isConnecting = connectionState.isConnecting || connectionState.isPolling;
+  const isConnecting = connectionState.isConnecting || connectionState.isPolling || connectionState.phase === 'stabilizing';
   const phase = connectionState.phase;
 
   // Phase indicator text
@@ -87,6 +87,7 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
       case 'validating': return 'Verificando servidor...';
       case 'generating': return 'Gerando QR Code...';
       case 'waiting': return 'Aguardando leitura...';
+      case 'stabilizing': return 'Finalizando conexão (validando envio)...';
       case 'connected': return 'Conectado!';
       case 'error': return 'Erro na conexão';
       default: return 'Clique para conectar';
@@ -132,6 +133,9 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
                 {phase === 'waiting' && (
                   <Loader2 className="w-7 h-7 text-blue-500 animate-spin" />
                 )}
+                {phase === 'stabilizing' && (
+                  <Loader2 className="w-7 h-7 text-blue-500 animate-spin" />
+                )}
                 {(phase === 'connected' || isConnected) && (
                   <Wifi className="w-7 h-7 text-green-500" />
                 )}
@@ -169,7 +173,13 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
                 {isConnecting && (
                   <Badge variant="secondary" className="gap-1.5 bg-blue-500/10 text-blue-600 border-blue-500/20 px-3 py-1.5">
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    {phase === 'validating' ? 'Verificando' : phase === 'generating' ? 'Gerando' : 'Conectando'}
+                    {phase === 'validating'
+                      ? 'Verificando'
+                      : phase === 'generating'
+                        ? 'Gerando'
+                        : phase === 'stabilizing'
+                          ? 'Finalizando'
+                          : 'Conectando'}
                   </Badge>
                 )}
                 {isConnected && (
