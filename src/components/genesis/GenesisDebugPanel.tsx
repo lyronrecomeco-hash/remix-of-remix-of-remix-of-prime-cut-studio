@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bug,
@@ -16,7 +16,9 @@ import {
   Clock,
   ChevronDown,
   ChevronUp,
+  Copy,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -56,6 +58,41 @@ export function GenesisDebugPanel({ instanceId, userId }: GenesisDebugPanelProps
   const [expandedLog, setExpandedLog] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
 
+  const [instances, setInstances] = useState<Array<{ id: string; name: string }>>([]);
+  const [selectedInstanceId, setSelectedInstanceId] = useState<string>('all');
+
+  const effectiveInstanceId = useMemo(() => {
+    if (instanceId) return instanceId;
+    if (selectedInstanceId === 'all') return undefined;
+    return selectedInstanceId;
+  }, [instanceId, selectedInstanceId]);
+
+  useEffect(() => {
+    if (instanceId) return; // quando o painel já está escopado por instância, não precisamos da lista
+    setSelectedInstanceId('all');
+  }, [userId, instanceId]);
+
+  useEffect(() => {
+    if (!userId || instanceId) return;
+
+    let cancelled = false;
+    const fetchInstances = async () => {
+      const { data, error } = await supabase
+        .from('genesis_instances')
+        .select('id, name')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (cancelled) return;
+      if (!error && data) setInstances(data as Array<{ id: string; name: string }>);
+    };
+
+    fetchInstances();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, instanceId]);
+
   const fetchLogs = async () => {
     try {
       let query = supabase
@@ -64,8 +101,8 @@ export function GenesisDebugPanel({ instanceId, userId }: GenesisDebugPanelProps
         .order('created_at', { ascending: false })
         .limit(100);
 
-      if (instanceId) {
-        query = query.eq('instance_id', instanceId);
+      if (effectiveInstanceId) {
+        query = query.eq('instance_id', effectiveInstanceId);
       }
       if (userId) {
         query = query.eq('user_id', userId);
@@ -85,19 +122,34 @@ export function GenesisDebugPanel({ instanceId, userId }: GenesisDebugPanelProps
     }
   };
 
+  const handleCopyLogs = async () => {
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(logs, null, 2));
+      toast.success('Logs copiados!');
+    } catch {
+      toast.error('Não foi possível copiar os logs');
+    }
+  };
+
   useEffect(() => {
     fetchLogs();
 
+    const realtimeFilter = effectiveInstanceId
+      ? `instance_id=eq.${effectiveInstanceId}`
+      : userId
+        ? `user_id=eq.${userId}`
+        : undefined;
+
     // Subscribe to realtime updates
     const channel = supabase
-      .channel('genesis-logs')
+      .channel(`genesis-logs-${effectiveInstanceId ?? userId ?? 'all'}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'genesis_event_logs',
-          filter: instanceId ? `instance_id=eq.${instanceId}` : undefined,
+          filter: realtimeFilter,
         },
         (payload) => {
           if (autoRefresh) {
@@ -110,14 +162,14 @@ export function GenesisDebugPanel({ instanceId, userId }: GenesisDebugPanelProps
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [instanceId, userId, filter, autoRefresh]);
+  }, [effectiveInstanceId, userId, filter, autoRefresh]);
 
   // Auto-refresh every 10 seconds
   useEffect(() => {
     if (!autoRefresh) return;
     const interval = setInterval(fetchLogs, 10000);
     return () => clearInterval(interval);
-  }, [autoRefresh, instanceId, userId, filter]);
+  }, [autoRefresh, effectiveInstanceId, userId, filter]);
 
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
@@ -181,7 +233,23 @@ export function GenesisDebugPanel({ instanceId, userId }: GenesisDebugPanelProps
             <Bug className="w-5 h-5 text-primary" />
             Logs de Conexão
           </CardTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            {userId && !instanceId && (
+              <Select value={selectedInstanceId} onValueChange={setSelectedInstanceId}>
+                <SelectTrigger className="w-[180px] h-8">
+                  <SelectValue placeholder="Todas as instâncias" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as instâncias</SelectItem>
+                  {instances.map((inst) => (
+                    <SelectItem key={inst.id} value={inst.id}>
+                      {inst.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
             <Select value={filter} onValueChange={setFilter}>
               <SelectTrigger className="w-[140px] h-8">
                 <Filter className="w-3 h-3 mr-1" />
@@ -195,6 +263,7 @@ export function GenesisDebugPanel({ instanceId, userId }: GenesisDebugPanelProps
                 ))}
               </SelectContent>
             </Select>
+
             <Button
               variant={autoRefresh ? 'default' : 'outline'}
               size="sm"
@@ -204,6 +273,7 @@ export function GenesisDebugPanel({ instanceId, userId }: GenesisDebugPanelProps
               <RefreshCw className={cn('w-3 h-3 mr-1', autoRefresh && 'animate-spin')} />
               Auto
             </Button>
+
             <Button
               variant="outline"
               size="sm"
@@ -212,6 +282,11 @@ export function GenesisDebugPanel({ instanceId, userId }: GenesisDebugPanelProps
               className="h-8"
             >
               <RefreshCw className={cn('w-3 h-3', isLoading && 'animate-spin')} />
+            </Button>
+
+            <Button variant="outline" size="sm" onClick={handleCopyLogs} className="h-8">
+              <Copy className="w-3 h-3 mr-1" />
+              Copiar
             </Button>
           </div>
         </div>
