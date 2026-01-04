@@ -9,6 +9,7 @@ A infraestrutura de WhatsApp utiliza o script VPS Enterprise (v8.0) que suporta 
 - **PM2 Ready**: Rodar 24h via `pm2 start genesis-v8.js --name genesis && pm2 save`
 - **Auto-connect**: Restaura conexões automaticamente ao iniciar
 - **Ready-to-send**: Valida estabilidade do socket por 3s antes de marcar como pronto
+- **Auth flexível**: Aceita MASTER_TOKEN do script OU backend_token da instância (validado pelo proxy)
 
 ## Endpoints da API v8:
 - `GET /health` - Health check sem auth
@@ -19,7 +20,7 @@ A infraestrutura de WhatsApp utiliza o script VPS Enterprise (v8.0) que suporta 
 - `POST /api/instance/:id/disconnect` - Desconecta
 - `DELETE /api/instance/:id` - Remove instância
 - `GET /api/instance/:id/qrcode` - Obtém QR code atual
-- `POST /api/instance/:id/send` - Envia mensagem `{ phone, message }`
+- `POST /api/instance/:id/send` - Envia mensagem `{ to/phone, message }`
 
 ## Fluxo de conexão (frontend):
 1. Verificar health do backend
@@ -27,6 +28,11 @@ A infraestrutura de WhatsApp utiliza o script VPS Enterprise (v8.0) que suporta 
 3. Chamar `POST /api/instance/:id/connect` para iniciar conexão
 4. Polling em `GET /api/instance/:id/qrcode` para obter QR
 5. Aguardar `readyToSend: true` no status antes de enviar mensagens
+
+## Autenticação:
+- O proxy (`genesis-backend-proxy`) envia o `backend_token` da instância no banco
+- O VPS aceita tanto o `MASTER_TOKEN` quanto qualquer token com 16+ caracteres
+- Isso permite que múltiplos clientes usem o mesmo VPS com tokens diferentes
 
 ## Integração com Supabase:
 - Heartbeats enviados para `genesis-heartbeat` edge function
