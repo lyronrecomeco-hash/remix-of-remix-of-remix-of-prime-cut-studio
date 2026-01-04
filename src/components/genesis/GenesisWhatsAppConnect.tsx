@@ -37,7 +37,7 @@ interface GenesisWhatsAppConnectProps {
 }
 
 export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppConnectProps) {
-  // Usar effective_status como prioridade para determinar conexão real
+  // Estado unificado - prioridade: liveStatus > connectionState > instance props
   const [liveStatus, setLiveStatus] = useState({
     status: instance.effective_status || instance.status,
     phoneNumber: instance.phone_number,
@@ -52,6 +52,16 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
     stopStatusPolling,
   } = useGenesisWhatsAppConnection();
 
+  // Sincronizar com props da instância quando mudar
+  useEffect(() => {
+    const newStatus = instance.effective_status || instance.status;
+    setLiveStatus(prev => ({
+      ...prev,
+      status: newStatus,
+      phoneNumber: instance.phone_number || prev.phoneNumber,
+    }));
+  }, [instance.effective_status, instance.status, instance.phone_number]);
+
   useEffect(() => {
     startStatusPolling(instance.id, (status) => {
       setLiveStatus({
@@ -65,33 +75,52 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
   }, [instance.id, startStatusPolling, stopStatusPolling]);
 
   const handleConnect = async () => {
-    // No need to pass backend URL/token - hook fetches from Owner config
+    // Se já está conectado, apenas notificar
+    if (liveStatus.status === 'connected' && !liveStatus.isStale) {
+      onRefresh();
+      return;
+    }
+    
     await startConnection(instance.id, undefined, undefined, () => {
       onRefresh();
     });
   };
 
   const handleDisconnect = async () => {
-    // Disconnect using stored instance config
     await disconnect(instance.id, instance.backend_url, instance.backend_token);
     onRefresh();
   };
 
-  // Considera conectado baseado no status real do DB/polling (liveStatus tem prioridade)
-  const isConnected = liveStatus.status === 'connected';
-  const isConnecting = connectionState.isConnecting || connectionState.isPolling || connectionState.phase === 'stabilizing';
+  // LÓGICA UNIFICADA DE STATUS:
+  // 1. Se liveStatus.status === 'connected' E não está stale → está conectado
+  // 2. Se connectionState.phase indica ação em progresso → está conectando
+  // 3. Caso contrário → desconectado
+  const isConnected = liveStatus.status === 'connected' && !liveStatus.isStale;
   
-  // Phase: prioriza liveStatus.status sobre connectionState.phase
-  // Se já está conectado via polling, ignora a phase do connectionState (pode estar desatualizada)
-  const phase = isConnected ? 'connected' : connectionState.phase;
+  // Só mostra "conectando" se realmente há uma ação em progresso
+  const isConnecting = connectionState.isConnecting && 
+    !isConnected && // Se já está conectado, não mostrar como conectando
+    (connectionState.phase === 'validating' || 
+     connectionState.phase === 'generating' || 
+     connectionState.phase === 'waiting' || 
+     connectionState.phase === 'stabilizing');
+  
+  // Phase: prioridade máxima para isConnected
+  const phase = isConnected 
+    ? 'connected' 
+    : isConnecting 
+      ? connectionState.phase 
+      : liveStatus.isStale 
+        ? 'idle' // Stale = mostrar como desconectado
+        : connectionState.phase;
 
   // Phase indicator text
   const getPhaseText = () => {
     switch (phase) {
       case 'validating': return 'Verificando servidor...';
-      case 'generating': return 'Gerando QR Code...';
+      case 'generating': return 'Verificando conexão...';
       case 'waiting': return 'Aguardando leitura...';
-      case 'stabilizing': return 'Finalizando conexão (validando envio)...';
+      case 'stabilizing': return 'Finalizando conexão...';
       case 'connected': return 'Conectado!';
       case 'error': return 'Erro na conexão';
       default: return 'Clique para conectar';
