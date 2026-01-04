@@ -21,7 +21,9 @@ import {
   HelpCircle,
   Sparkles,
   Activity,
-  Gift
+  Gift,
+  Bug,
+  Webhook
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +31,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useGenesisAuth } from '@/contexts/GenesisAuthContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -40,6 +43,9 @@ import { AnalyticsDashboard } from '@/components/genesis/AnalyticsDashboard';
 import { NotificationsPanel } from '@/components/genesis/NotificationsPanel';
 import { GenesisChatbots } from '@/components/genesis/GenesisChatbots';
 import { WelcomeModal } from '@/components/genesis/WelcomeModal';
+import { GenesisDebugPanel } from '@/components/genesis/GenesisDebugPanel';
+import { GenesisCreditUsage } from '@/components/genesis/GenesisCreditUsage';
+import { GenesisWebhooks } from '@/components/genesis/GenesisWebhooks';
 
 // Dashboard component with real data
 const GenesisDashboard = ({ onNavigate }: { onNavigate: (tab: string) => void }) => {
@@ -324,7 +330,44 @@ export default function GenesisPanel() {
       case 'credits':
         return <CreditsManager />;
       case 'settings':
-        return <div className="text-center py-20 text-muted-foreground">Em desenvolvimento...</div>;
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 mb-6">
+              <Settings className="w-6 h-6 text-primary" />
+              <h2 className="text-2xl font-bold">Configurações</h2>
+            </div>
+            <Tabs defaultValue="webhooks" className="w-full">
+              <TabsList className="grid w-full grid-cols-3 max-w-md">
+                <TabsTrigger value="webhooks" className="gap-1">
+                  <Webhook className="w-4 h-4" />
+                  Webhooks
+                </TabsTrigger>
+                <TabsTrigger value="usage" className="gap-1">
+                  <CreditCard className="w-4 h-4" />
+                  Consumo
+                </TabsTrigger>
+                <TabsTrigger value="debug" className="gap-1">
+                  <Bug className="w-4 h-4" />
+                  Debug
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="webhooks" className="mt-6">
+                {genesisUser && <GenesisWebhooks userId={genesisUser.id} />}
+              </TabsContent>
+              <TabsContent value="usage" className="mt-6">
+                {genesisUser && (
+                  <GenesisCreditUsage 
+                    userId={genesisUser.id} 
+                    totalCredits={credits?.available_credits || 300} 
+                  />
+                )}
+              </TabsContent>
+              <TabsContent value="debug" className="mt-6">
+                {genesisUser && <GenesisDebugPanel userId={genesisUser.id} />}
+              </TabsContent>
+            </Tabs>
+          </div>
+        );
       case 'users':
         return <div className="text-center py-20 text-muted-foreground">Em desenvolvimento...</div>;
       default:
