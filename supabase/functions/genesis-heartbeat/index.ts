@@ -6,8 +6,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-instance-token",
 };
 
-// Limite de inatividade: 180 segundos (3 minutos) - igual ao whatsapp-heartbeat
-const STALE_THRESHOLD_SECONDS = 180;
+// Limite de inatividade: 300 segundos (5 minutos) - aumentado para maior estabilidade 24/7
+const STALE_THRESHOLD_SECONDS = 300;
+
+// Intervalo de heartbeat esperado: 30 segundos
+const HEARTBEAT_INTERVAL_SECONDS = 30;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -19,7 +22,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { instanceId, status, phoneNumber, metrics } = await req.json();
+    const { instanceId, status, phoneNumber, metrics, forceReconnect } = await req.json();
     const instanceToken = req.headers.get("x-instance-token") || "";
 
     if (!instanceId) {
@@ -63,33 +66,49 @@ serve(async (req) => {
     }
 
     const now = new Date().toISOString();
-    const effectiveStatus = status === "connected" ? "connected" : (status || instance.effective_status);
+    
+    // Determinar status efetivo baseado no heartbeat recebido
+    // Se forceReconnect = true, mantém connected mesmo após queda temporária
+    let effectiveStatus = status;
+    if (status === "connected" || forceReconnect) {
+      effectiveStatus = "connected";
+    } else if (!status) {
+      effectiveStatus = instance.effective_status;
+    }
 
-    // Update instance heartbeat
+    // Update instance heartbeat - sempre atualizar para manter conexão viva
+    const updatePayload: Record<string, unknown> = {
+      last_heartbeat: now,
+      effective_status: effectiveStatus,
+      status: effectiveStatus,
+      updated_at: now,
+      // Resetar contador de falhas se está conectado
+      connection_failures: effectiveStatus === "connected" ? 0 : undefined,
+    };
+
+    // Atualizar número apenas se fornecido
+    if (phoneNumber) {
+      updatePayload.phone_number = phoneNumber;
+    }
+
     const { error: updateError } = await supabase
       .from("genesis_instances")
-      .update({
-        last_heartbeat: now,
-        effective_status: effectiveStatus,
-        status: effectiveStatus,
-        phone_number: phoneNumber || undefined,
-        updated_at: now,
-      })
+      .update(updatePayload)
       .eq("id", instanceId);
 
     if (updateError) {
       console.error("Error updating instance:", updateError);
     }
 
-    // Log heartbeat event (apenas a cada 60s para não sobrecarregar)
-    const shouldLogHeartbeat = Math.random() < 0.017; // ~1 log a cada 60 heartbeats
+    // Log heartbeat event (apenas a cada ~2 minutos para não sobrecarregar - 1 em 4 chances)
+    const shouldLogHeartbeat = Math.random() < 0.008; // ~1 log a cada 120 heartbeats
     if (shouldLogHeartbeat) {
       await supabase.from("genesis_event_logs").insert({
         instance_id: instanceId,
         user_id: instance.user_id,
         event_type: "heartbeat",
         severity: "info",
-        message: `Heartbeat received - Status: ${effectiveStatus}`,
+        message: `Heartbeat - Status: ${effectiveStatus}`,
         details: { status: effectiveStatus, phoneNumber, metrics, timestamp: now },
       });
     }
@@ -201,6 +220,8 @@ serve(async (req) => {
         status: effectiveStatus,
         heartbeat: now,
         staleThreshold: STALE_THRESHOLD_SECONDS,
+        heartbeatInterval: HEARTBEAT_INTERVAL_SECONDS,
+        nextHeartbeat: new Date(Date.now() + HEARTBEAT_INTERVAL_SECONDS * 1000).toISOString(),
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
