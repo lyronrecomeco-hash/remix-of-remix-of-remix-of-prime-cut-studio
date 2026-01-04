@@ -105,8 +105,35 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
     }
   };
 
+  // Polling automático para manter status sincronizado
   useEffect(() => {
     fetchInstance();
+    
+    const interval = setInterval(fetchInstance, 5000);
+    
+    // Realtime subscription para updates instantâneos
+    const channel = supabase
+      .channel(`instance-${instance.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'genesis_instances',
+          filter: `id=eq.${instance.id}`,
+        },
+        (payload) => {
+          if (payload.new) {
+            setInstance(payload.new as Instance);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, [instance.id]);
 
   const copyToClipboard = (text: string, label: string) => {
@@ -141,7 +168,12 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
     }
   };
 
-  const isConnected = instance.effective_status === 'connected';
+  // Status unificado - considera heartbeat recente para determinar conexão real
+  const isHeartbeatRecent = instance.last_heartbeat 
+    ? (Date.now() - new Date(instance.last_heartbeat).getTime()) < 300000 // 5 minutos
+    : false;
+  const isConnected = instance.effective_status === 'connected' && isHeartbeatRecent;
+  
   const formattedPhone = instance.phone_number 
     ? instance.phone_number.replace(/(\d{2})(\d{2})(\d{5})(\d{4})/, '+$1 ($2) $3-$4')
     : null;

@@ -505,25 +505,48 @@ Agora você pode automatizar seu atendimento!`;
     }));
 
     try {
-      // Validate backend health through proxy
+      // PASSO 1: Verificar primeiro se já está conectado no banco de dados
+      const { data: instanceRow } = await supabase
+        .from('genesis_instances')
+        .select('session_data, effective_status, phone_number, last_heartbeat')
+        .eq('id', instanceId)
+        .single();
+
+      // Se já está conectado E com heartbeat recente, não precisa fazer nada
+      if (instanceRow?.effective_status === 'connected') {
+        const lastHb = instanceRow.last_heartbeat ? new Date(instanceRow.last_heartbeat).getTime() : 0;
+        const isRecent = Date.now() - lastHb < STALE_THRESHOLD_MS;
+        
+        if (isRecent) {
+          console.log(`[startConnection] Instance ${instanceId} already connected with recent heartbeat`);
+          toast.success('WhatsApp já está conectado!');
+          safeSetState(() => ({
+            isConnecting: false,
+            isPolling: false,
+            qrCode: null,
+            error: null,
+            attempts: 0,
+            phase: 'connected',
+          }));
+          onConnected?.();
+          return;
+        }
+      }
+
+      // PASSO 2: Validar saúde do backend
       const healthCheck = await validateBackendHealth(instanceId);
       
       if (!healthCheck.healthy) {
         throw new Error(healthCheck.error || 'Backend não está respondendo');
       }
 
+      // PASSO 3: Verificar status real no backend
       safeSetState(prev => ({ ...prev, phase: 'generating' }));
 
-      // Check if already connected
       const initialStatus = await checkStatus(instanceId);
       if (initialStatus.connected) {
         const nowIso = new Date().toISOString();
-        const { data: instanceRow } = await supabase
-          .from('genesis_instances')
-          .select('session_data, effective_status, phone_number')
-          .eq('id', instanceId)
-          .single();
-
+        
         const session =
           instanceRow?.session_data && typeof instanceRow.session_data === 'object'
             ? (instanceRow.session_data as Record<string, unknown>)
@@ -531,7 +554,15 @@ Agora você pode automatizar seu atendimento!`;
 
         const readyToSend = session.ready_to_send === true;
 
-        if (readyToSend || instanceRow?.effective_status === 'connected') {
+        // Atualizar banco com status conectado
+        await updateInstanceInDB(instanceId, {
+          status: 'connected',
+          effective_status: 'connected',
+          phone_number: initialStatus.phoneNumber ?? instanceRow?.phone_number,
+          last_heartbeat: nowIso,
+        });
+
+        if (readyToSend) {
           toast.success('WhatsApp já está conectado!');
           safeSetState(() => ({
             isConnecting: false,
