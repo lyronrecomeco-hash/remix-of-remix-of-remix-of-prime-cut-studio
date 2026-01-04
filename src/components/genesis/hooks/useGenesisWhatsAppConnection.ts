@@ -255,7 +255,38 @@ export function useGenesisWhatsAppConnection() {
     return { healthy: res.ok };
   };
 
-  const checkStatus = async (instanceId: string): Promise<{ connected: boolean; phoneNumber?: string; isStale?: boolean; readyToSend?: boolean }> => {
+  // V8: Criar instância no backend se não existir
+  const ensureInstanceExists = async (instanceId: string, instanceName?: string): Promise<{ exists: boolean; created: boolean; error?: string }> => {
+    // Primeiro tenta obter status
+    const statusRes = await proxyRequest(instanceId, `/api/instance/${instanceId}/status`, 'GET');
+    
+    // Se retornou dados, instância existe
+    if (statusRes.ok || (statusRes.data && !statusRes.data?.error?.includes('não encontrada'))) {
+      return { exists: true, created: false };
+    }
+    
+    // Instância não existe, criar
+    logDiagnostic('CREATING_INSTANCE_IN_BACKEND', { instanceId, instanceName });
+    
+    const createRes = await proxyRequest(instanceId, '/api/instances', 'POST', {
+      instanceId,
+      name: instanceName || `instance-${instanceId.slice(0, 8)}`,
+    });
+    
+    if (createRes.ok || createRes.data?.success) {
+      logDiagnostic('INSTANCE_CREATED_SUCCESSFULLY', { instanceId });
+      return { exists: true, created: true };
+    }
+    
+    // Se erro é "já existe", tudo bem
+    if (createRes.data?.error?.includes('já existe')) {
+      return { exists: true, created: false };
+    }
+    
+    return { exists: false, created: false, error: createRes.error || createRes.data?.error };
+  };
+
+  const checkStatus = async (instanceId: string): Promise<{ connected: boolean; phoneNumber?: string; isStale?: boolean; readyToSend?: boolean; notFound?: boolean }> => {
     // Primeiro verificar no banco se está stale
     const { data: instanceRow } = await supabase
       .from('genesis_instances')
@@ -286,12 +317,17 @@ export function useGenesisWhatsAppConnection() {
     // Se não está stale, verificar status real via proxy
     const res = await proxyRequest(instanceId, `/api/instance/${instanceId}/status`, 'GET');
     
+    // V8: Detectar se instância não existe no backend
+    if (!res.ok && res.data?.error?.includes('não encontrada')) {
+      return { connected: false, notFound: true };
+    }
+    
     if (!res.ok) return { connected: false };
     
     const result = res.data || {};
     
-    // V7: Backend agora retorna ready_to_send que indica se o socket está estável
-    const isReady = result.ready_to_send === true;
+    // V8: Backend retorna readyToSend que indica se o socket está estável
+    const isReady = result.readyToSend === true || result.ready_to_send === true;
     
     return {
       connected: result.connected === true || result.status === 'connected' || result.state === 'open',
@@ -300,23 +336,36 @@ export function useGenesisWhatsAppConnection() {
     };
   };
 
-  const generateQRCode = async (instanceId: string): Promise<string | null> => {
-    const res = await proxyRequest(instanceId, `/api/instance/${instanceId}/qrcode`, 'GET');
-    
-    if (!res.ok) {
-      throw new Error(res.error || 'Erro ao gerar QR Code');
+  const generateQRCode = async (instanceId: string, skipConnect = false): Promise<string | null> => {
+    // V8: Primeiro iniciar conexão se ainda não foi feito (a menos que skipConnect = true)
+    if (!skipConnect) {
+      const connectRes = await proxyRequest(instanceId, `/api/instance/${instanceId}/connect`, 'POST', {});
+      logDiagnostic('GENERATE_QR_CONNECT_RESULT', { instanceId, ok: connectRes.ok, data: connectRes.data });
+      
+      // Aguardar um momento para o QR ser gerado
+      await new Promise(r => setTimeout(r, 2000));
     }
     
-    if (res.data?.connected || res.data?.status === 'connected') {
-      return 'CONNECTED';
+    // Tentar obter QR até 3 vezes com intervalos
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const res = await proxyRequest(instanceId, `/api/instance/${instanceId}/qrcode`, 'GET');
+      
+      if (res.data?.connected || res.data?.status === 'connected') {
+        return 'CONNECTED';
+      }
+      
+      const rawQr = res.data?.qrcode || res.data?.qr || res.data?.base64;
+      if (typeof rawQr === 'string' && rawQr.length > 10) {
+        return await normalizeQrToDataUrl(rawQr);
+      }
+      
+      // Aguardar antes da próxima tentativa
+      if (attempt < 2) {
+        await new Promise(r => setTimeout(r, 2000));
+      }
     }
     
-    const rawQr = res.data?.qrcode || res.data?.qr || res.data?.base64;
-    if (typeof rawQr === 'string') {
-      return await normalizeQrToDataUrl(rawQr);
-    }
-    
-    throw new Error('QR Code não disponível');
+    throw new Error('QR Code não disponível - aguarde ou tente novamente');
   };
 
   // === ENVIO AUTOMÁTICO ROBUSTO COM RETENTATIVAS ===
@@ -518,7 +567,7 @@ Agora você pode automatizar seu atendimento!`;
       // PASSO 1: Buscar dados atuais da instância
       const { data: instanceRow } = await supabase
         .from('genesis_instances')
-        .select('session_data, effective_status, phone_number, last_heartbeat')
+        .select('session_data, effective_status, phone_number, last_heartbeat, name')
         .eq('id', instanceId)
         .single();
 
@@ -527,6 +576,15 @@ Agora você pode automatizar seu atendimento!`;
       
       if (!healthCheck.healthy) {
         throw new Error(healthCheck.error || 'Backend não está respondendo');
+      }
+
+      // PASSO 2.5: V8 - Garantir que instância existe no backend antes de qualquer operação
+      const ensureResult = await ensureInstanceExists(instanceId, instanceRow?.name);
+      if (!ensureResult.exists) {
+        throw new Error(ensureResult.error || 'Não foi possível criar instância no backend');
+      }
+      if (ensureResult.created) {
+        logDiagnostic('INSTANCE_CREATED_IN_BACKEND', { instanceId, name: instanceRow?.name });
       }
 
       // PASSO 3: Verificar status real no backend (fonte da verdade)
@@ -737,11 +795,11 @@ Agora você pode automatizar seu atendimento!`;
         // Sessão não existe, continua para QR
       }
 
-      // Gerar QR Code
+      // Gerar QR Code - skipConnect=true pois já chamamos connect acima
       safeSetState(prev => ({ ...prev, phase: 'generating' }));
       await updateInstanceInDB(instanceId, { status: 'qr_pending' });
       
-      const qrResult = await generateQRCode(instanceId);
+      const qrResult = await generateQRCode(instanceId, true);
       
       // Se retornou CONNECTED, já está conectado (sessão existia)
       if (qrResult === 'CONNECTED') {
