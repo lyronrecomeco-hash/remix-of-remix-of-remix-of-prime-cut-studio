@@ -5,6 +5,7 @@ export { GenesisWhatsAppConnect } from './GenesisWhatsAppConnect';
 export { InstancesManager } from './InstancesManager';
 export { CreditsManager } from './CreditsManager';
 export { AnalyticsDashboard } from './AnalyticsDashboard';
+export { GenesisMetricsDashboard } from './GenesisMetricsDashboard';
 export { NotificationsPanel } from './NotificationsPanel';
 export { GenesisChatbots } from './GenesisChatbots';
 export { WelcomeModal } from './WelcomeModal';

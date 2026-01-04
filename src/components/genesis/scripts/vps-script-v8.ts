@@ -567,6 +567,163 @@ class InstanceManager {
     }
   }
 
+  // ════════════════════════════════════════════════════════════════════════════
+  // FASE 10: SISTEMA DE MÉTRICAS E ALERTAS
+  // ════════════════════════════════════════════════════════════════════════════
+  
+  initMetricsCollector() {
+    // Coletar métricas a cada 5 minutos
+    setInterval(() => this.collectAndSendMetrics(), 5 * 60 * 1000);
+    log('info', 'Sistema de métricas inicializado');
+  }
+
+  async collectAndSendMetrics() {
+    for (const [instanceId, instance] of this.instances) {
+      if (!instance.metrics) {
+        instance.metrics = this.createEmptyMetrics();
+      }
+
+      try {
+        const cpuLoad = os.loadavg()[0] * 100 / os.cpus().length;
+        const memTotal = os.totalmem();
+        const memFree = os.freemem();
+        const memoryUsage = ((memTotal - memFree) / memTotal) * 100;
+
+        const metrics = {
+          messages_sent: instance.metrics.messagesSent || 0,
+          messages_received: instance.metrics.messagesReceived || 0,
+          messages_failed: instance.metrics.messagesFailed || 0,
+          uptime_seconds: Math.floor((Date.now() - startTime) / 1000),
+          disconnections: instance.metrics.disconnections || 0,
+          reconnections: instance.metrics.reconnections || 0,
+          avg_response_time: instance.metrics.avgResponseTime || 0,
+          api_calls: instance.metrics.apiCalls || 0,
+          webhook_deliveries: instance.metrics.webhookDeliveries || 0,
+          webhook_failures: instance.metrics.webhookFailures || 0,
+          cpu_usage: cpuLoad,
+          memory_usage: memoryUsage,
+          status: instance.status,
+          messages_today: instance.metrics.messagesToday || 0,
+          last_message_at: instance.metrics.lastMessageAt || null,
+          health_score: this.calculateLocalHealthScore(instance),
+        };
+
+        await fetch(\`\${CONFIG.SUPABASE_URL}/functions/v1/genesis-metrics\`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': \`Bearer \${CONFIG.SUPABASE_KEY}\`,
+          },
+          body: JSON.stringify({
+            action: 'record_metrics',
+            instance_id: instanceId,
+            metrics,
+          }),
+        });
+
+        // Reset contadores parciais após envio
+        instance.metrics.messagesSent = 0;
+        instance.metrics.messagesReceived = 0;
+        instance.metrics.messagesFailed = 0;
+        instance.metrics.disconnections = 0;
+        instance.metrics.reconnections = 0;
+        instance.metrics.apiCalls = 0;
+
+        log('info', \`[\\x1b[34m\${instance.name}\\x1b[0m] Métricas enviadas\`);
+      } catch (err) {
+        // Silencioso
+      }
+    }
+  }
+
+  createEmptyMetrics() {
+    return {
+      messagesSent: 0,
+      messagesReceived: 0,
+      messagesFailed: 0,
+      disconnections: 0,
+      reconnections: 0,
+      apiCalls: 0,
+      webhookDeliveries: 0,
+      webhookFailures: 0,
+      avgResponseTime: 0,
+      messagesToday: 0,
+      lastMessageAt: null,
+    };
+  }
+
+  calculateLocalHealthScore(instance) {
+    let score = 100;
+    
+    // Status de conexão
+    if (instance.status !== 'connected') score -= 30;
+    if (!instance.readyToSend) score -= 10;
+    
+    // Taxa de falhas
+    if (instance.metrics) {
+      const total = instance.metrics.messagesSent + instance.metrics.messagesFailed;
+      if (total > 0) {
+        const failureRate = instance.metrics.messagesFailed / total;
+        if (failureRate > 0.1) score -= 25;
+        else if (failureRate > 0.05) score -= 10;
+      }
+      
+      // Desconexões
+      if (instance.metrics.disconnections > 3) score -= 20;
+      else if (instance.metrics.disconnections > 0) score -= instance.metrics.disconnections * 5;
+    }
+    
+    return Math.max(0, Math.min(100, score));
+  }
+
+  // Track metrics on message events
+  trackMessageSent(instanceId, success = true) {
+    const instance = this.instances.get(instanceId);
+    if (!instance) return;
+    
+    if (!instance.metrics) instance.metrics = this.createEmptyMetrics();
+    
+    if (success) {
+      instance.metrics.messagesSent++;
+      instance.metrics.messagesToday++;
+      instance.metrics.lastMessageAt = new Date().toISOString();
+    } else {
+      instance.metrics.messagesFailed++;
+    }
+  }
+
+  trackMessageReceived(instanceId) {
+    const instance = this.instances.get(instanceId);
+    if (!instance) return;
+    
+    if (!instance.metrics) instance.metrics = this.createEmptyMetrics();
+    instance.metrics.messagesReceived++;
+  }
+
+  trackDisconnection(instanceId) {
+    const instance = this.instances.get(instanceId);
+    if (!instance) return;
+    
+    if (!instance.metrics) instance.metrics = this.createEmptyMetrics();
+    instance.metrics.disconnections++;
+  }
+
+  trackReconnection(instanceId) {
+    const instance = this.instances.get(instanceId);
+    if (!instance) return;
+    
+    if (!instance.metrics) instance.metrics = this.createEmptyMetrics();
+    instance.metrics.reconnections++;
+  }
+
+  trackApiCall(instanceId) {
+    const instance = this.instances.get(instanceId);
+    if (!instance) return;
+    
+    if (!instance.metrics) instance.metrics = this.createEmptyMetrics();
+    instance.metrics.apiCalls++;
+  }
+
   async autoConnectAll() {
     for (const [id, inst] of this.instances) {
       if (inst.status === 'disconnected') {
