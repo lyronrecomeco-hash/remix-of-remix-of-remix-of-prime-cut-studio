@@ -701,7 +701,7 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
 
       {/* Modal: Integrações */}
       <Dialog open={showIntegrationsModal} onOpenChange={setShowIntegrationsModal}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-xl">
           <DialogHeader className="pb-4">
             <DialogTitle className="flex items-center gap-3 text-xl">
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -713,30 +713,30 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
               Conecte sua instância com as principais plataformas do mercado
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2 pt-4 max-h-[60vh] overflow-y-auto">
+          <div className="space-y-3 pt-4">
             {integrations.map((integration) => (
               <div 
                 key={integration.id} 
                 className="flex items-center gap-4 p-4 rounded-xl border bg-muted/20 hover:bg-muted/40 transition-colors"
               >
-                <div className="w-12 h-12 rounded-xl bg-white border flex items-center justify-center flex-shrink-0">
+                <div className="w-14 h-14 rounded-xl bg-white border-2 flex items-center justify-center flex-shrink-0 shadow-sm">
                   <img 
                     src={integration.logo} 
                     alt={integration.name} 
-                    className="w-8 h-8 object-contain"
+                    className="w-10 h-10 object-contain"
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm">{integration.name}</p>
-                  <p className="text-xs text-muted-foreground">{integration.description}</p>
+                  <p className="font-semibold text-base">{integration.name}</p>
+                  <p className="text-sm text-muted-foreground">{integration.description}</p>
                 </div>
                 <Button 
                   variant="outline" 
                   size="sm" 
                   disabled 
-                  className="gap-2 text-xs opacity-60"
+                  className="gap-2 px-4 opacity-60"
                 >
-                  <Lock className="w-3 h-3" />
+                  <Lock className="w-3.5 h-3.5" />
                   Em breve
                 </Button>
               </div>
