@@ -24,7 +24,9 @@ import {
   Activity,
   Gift,
   Bug,
-  Webhook
+  Webhook,
+  Bell,
+  AlertTriangle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -48,6 +50,8 @@ import { GenesisDebugPanel } from '@/components/genesis/GenesisDebugPanel';
 import { GenesisCreditUsage } from '@/components/genesis/GenesisCreditUsage';
 import { GenesisWebhooks } from '@/components/genesis/GenesisWebhooks';
 import { GenesisMyAccount } from '@/components/genesis/GenesisMyAccount';
+import { GenesisMetricsDashboard } from '@/components/genesis/GenesisMetricsDashboard';
+import { GenesisAlertRules } from '@/components/genesis/GenesisAlertRules';
 
 // Dashboard component with real data
 const GenesisDashboard = ({ onNavigate }: { onNavigate: (tab: string) => void }) => {
@@ -304,6 +308,7 @@ export default function GenesisPanel() {
     { id: 'instances', label: 'Instâncias', icon: Smartphone },
     { id: 'flows', label: 'Flow Builder', icon: GitBranch },
     { id: 'chatbots', label: 'Chatbots', icon: Bot },
+    { id: 'metrics', label: 'Métricas', icon: Activity },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'credits', label: 'Créditos', icon: CreditCard },
     { id: 'account', label: 'Minha Conta', icon: User },
@@ -328,6 +333,29 @@ export default function GenesisPanel() {
         />;
       case 'chatbots':
         return <GenesisChatbots instances={instances} />;
+      case 'metrics':
+        return (
+          <div className="space-y-6">
+            <Tabs defaultValue="overview" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 max-w-xs">
+                <TabsTrigger value="overview" className="gap-1">
+                  <Activity className="w-4 h-4" />
+                  Visão Geral
+                </TabsTrigger>
+                <TabsTrigger value="rules" className="gap-1">
+                  <Bell className="w-4 h-4" />
+                  Regras
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="overview" className="mt-6">
+                <GenesisMetricsDashboard />
+              </TabsContent>
+              <TabsContent value="rules" className="mt-6">
+                <GenesisAlertRules />
+              </TabsContent>
+            </Tabs>
+          </div>
+        );
       case 'analytics':
         return <AnalyticsDashboard />;
       case 'credits':
