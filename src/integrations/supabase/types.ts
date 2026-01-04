@@ -2190,22 +2190,108 @@ export type Database = {
           },
         ]
       }
+      genesis_instance_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          instance_id: string
+          payload: Json
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          instance_id: string
+          payload?: Json
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          instance_id?: string
+          payload?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_instance_events_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_instance_state_transitions: {
+        Row: {
+          from_state: string
+          to_state: string
+        }
+        Insert: {
+          from_state: string
+          to_state: string
+        }
+        Update: {
+          from_state?: string
+          to_state?: string
+        }
+        Relationships: []
+      }
+      genesis_instance_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          instance_id: string
+          jwt_id: string
+          revoked: boolean
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          instance_id: string
+          jwt_id: string
+          revoked?: boolean
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          instance_id?: string
+          jwt_id?: string
+          revoked?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_instance_tokens_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       genesis_instances: {
         Row: {
           backend_token: string | null
           backend_url: string | null
           created_at: string
           effective_status: string | null
+          health_status: string
           heartbeat_age_seconds: number | null
           id: string
           is_paused: boolean
           last_activity_at: string | null
+          last_health_ping: string | null
           last_heartbeat: string | null
           name: string
+          orchestrated_status: string
           phone_number: string | null
           qr_code: string | null
           session_data: Json | null
           status: string
+          status_source: string
           updated_at: string
           user_id: string
         }
@@ -2214,16 +2300,20 @@ export type Database = {
           backend_url?: string | null
           created_at?: string
           effective_status?: string | null
+          health_status?: string
           heartbeat_age_seconds?: number | null
           id?: string
           is_paused?: boolean
           last_activity_at?: string | null
+          last_health_ping?: string | null
           last_heartbeat?: string | null
           name: string
+          orchestrated_status?: string
           phone_number?: string | null
           qr_code?: string | null
           session_data?: Json | null
           status?: string
+          status_source?: string
           updated_at?: string
           user_id: string
         }
@@ -2232,16 +2322,20 @@ export type Database = {
           backend_url?: string | null
           created_at?: string
           effective_status?: string | null
+          health_status?: string
           heartbeat_age_seconds?: number | null
           id?: string
           is_paused?: boolean
           last_activity_at?: string | null
+          last_health_ping?: string | null
           last_heartbeat?: string | null
           name?: string
+          orchestrated_status?: string
           phone_number?: string | null
           qr_code?: string | null
           session_data?: Json | null
           status?: string
+          status_source?: string
           updated_at?: string
           user_id?: string
         }
@@ -2376,6 +2470,33 @@ export type Database = {
           updated_at?: string
           whatsapp_commercial?: string | null
           whatsapp_test?: string | null
+        }
+        Relationships: []
+      }
+      genesis_webhook_sources: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          secret_hash: string
+          source_identifier: string
+          source_type: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          secret_hash: string
+          source_identifier: string
+          source_type: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          secret_hash?: string
+          source_identifier?: string
+          source_type?: string
         }
         Relationships: []
       }
@@ -5682,6 +5803,27 @@ export type Database = {
       current_tenant_ids: { Args: never; Returns: string[] }
       deduct_genesis_credits: {
         Args: { p_amount: number; p_user_id: string }
+        Returns: boolean
+      }
+      genesis_log_event: {
+        Args: { p_event_type: string; p_instance_id: string; p_payload?: Json }
+        Returns: string
+      }
+      genesis_orchestrate_status_change: {
+        Args: {
+          p_instance_id: string
+          p_new_status: string
+          p_payload?: Json
+          p_source?: string
+        }
+        Returns: Json
+      }
+      genesis_revoke_instance_tokens: {
+        Args: { p_instance_id: string }
+        Returns: number
+      }
+      genesis_validate_state_transition: {
+        Args: { p_from_state: string; p_to_state: string }
         Returns: boolean
       }
       get_affiliate_id: { Args: { _user_id: string }; Returns: string }
