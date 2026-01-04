@@ -215,10 +215,9 @@ export function useGenesisWhatsAppConnection() {
     throw new Error('QR Code não disponível');
   };
 
-  // Enviar mensagem de boas-vindas automática ao conectar
+  // Enviar mensagem de teste automática ao conectar (não bloqueia o fluxo)
   const sendWelcomeMessage = async (instanceId: string, phoneNumber: string) => {
-    try {
-      const message = `✅ *WhatsApp conectado com sucesso!*
+    const message = `✅ *WhatsApp conectado com sucesso!*
 
 🚀 Sua instância Genesis Hub está ativa e pronta para uso.
 
@@ -227,16 +226,37 @@ export function useGenesisWhatsAppConnection() {
 
 Agora você pode automatizar seu atendimento!`;
 
-      await proxyRequest(instanceId, `/api/instance/${instanceId}/send`, 'POST', {
-        phone: phoneNumber,
-        message: message,
-      });
-      
-      console.log('Welcome message sent to:', phoneNumber);
-    } catch (error) {
-      console.error('Error sending welcome message:', error);
-      // Não bloqueia o fluxo se falhar
+    // O backend pode reportar "connected" antes do socket estar 100% pronto.
+    // Então tentamos algumas vezes em background (sem travar a UI).
+    const maxAttempts = 6;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const res = await proxyRequest(instanceId, `/api/instance/${instanceId}/send`, 'POST', {
+          phone: phoneNumber,
+          message,
+        });
+
+        if (res.ok) {
+          console.log('Welcome message sent to:', phoneNumber);
+          return;
+        }
+
+        const errText = String(res?.data?.error || res?.error || '').toLowerCase();
+        const shouldRetry = res.status === 503 || errText.includes('não conectado') || errText.includes('not connected');
+
+        if (!shouldRetry) {
+          console.warn('Welcome message not sent (non-retryable):', { status: res.status, error: res.error, data: res.data });
+          return;
+        }
+      } catch (error) {
+        // segue para retry
+      }
+
+      // Backoff simples: 1.5s, 2.0s, 2.5s...
+      await new Promise((r) => setTimeout(r, 1000 + attempt * 500));
     }
+
+    console.warn('Welcome message not sent after retries:', phoneNumber);
   };
 
   const startConnection = useCallback(async (
