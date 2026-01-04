@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { getVPSScriptV6 } from './vps-script-v6';
+import { getVPSScriptV7 } from '@/components/genesis/scripts/vps-script-v7';
 import { 
   Server, 
   Wifi, 
@@ -662,15 +662,15 @@ app.listen(PORT, '0.0.0.0', async () => {
   };
 
   const downloadScript = () => {
-    const script = getVPSScriptV6(masterToken, defaultInstanceId);
+    const script = getVPSScriptV7(masterToken, defaultInstanceName || defaultInstanceId);
     const blob = new Blob([script], { type: 'application/javascript' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'whatsapp-vps.js';
+    a.download = 'whatsapp-vps-v7.js';
     a.click();
     URL.revokeObjectURL(url);
-    toast.success('Script v6.0 Ultra Stable baixado!');
+    toast.success('Script v7.0 Enterprise baixado!');
   };
 
   const setupSteps = [
