@@ -45,8 +45,8 @@ const GitHubManager = () => {
   const [copiedScript, setCopiedScript] = useState<string | null>(null);
   const [optimizing, setOptimizing] = useState(false);
 
-  // Form state
-  const [repositoryUrl, setRepositoryUrl] = useState('');
+  // Form state - defaults
+  const [repositoryUrl, setRepositoryUrl] = useState('https://github.com/genesishub-tech/whatsapp-backend');
   const [branch, setBranch] = useState('main');
   const [isActive, setIsActive] = useState(true);
   const [projectName, setProjectName] = useState('whatsapp-backend');
@@ -79,12 +79,45 @@ const GitHubManager = () => {
         setInstallPath(data.install_path);
         setPm2AppName(data.pm2_app_name);
         setNodeVersion(data.node_version);
+      } else {
+        // Auto-criar configuração padrão
+        await autoCreateConfig();
       }
     } catch (error) {
       console.error('Error loading config:', error);
       toast.error('Erro ao carregar configuração');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const autoCreateConfig = async () => {
+    try {
+      const defaultConfig = {
+        repository_url: 'https://github.com/genesishub-tech/whatsapp-backend',
+        branch: 'main',
+        is_active: true,
+        project_name: 'whatsapp-backend',
+        install_path: '/opt/whatsapp-backend',
+        pm2_app_name: 'whatsapp-backend',
+        node_version: '20'
+      };
+
+      const { data, error } = await supabase
+        .from('owner_github_config')
+        .insert(defaultConfig)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setConfig(data);
+        toast.success('Configuração GitHub criada automaticamente!');
+      }
+    } catch (error: any) {
+      console.error('Error auto-creating config:', error);
+      // Se falhar por URL inválida, deixar o usuário configurar manualmente
     }
   };
 
