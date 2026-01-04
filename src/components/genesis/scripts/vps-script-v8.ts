@@ -512,12 +512,12 @@ app.get('/api/instance/:id/qrcode', authMiddleware, async (req, res) => {
 
 // Enviar mensagem
 app.post('/api/instance/:id/send', authMiddleware, async (req, res) => {
-  const { to, message, text, number } = req.body;
-  const recipient = to || number;
+  const { to, phone, message, text, number } = req.body;
+  const recipient = to || phone || number;
   const content = message || text;
   
   if (!recipient || !content) {
-    return res.status(400).json({ error: 'to/number e message/text são obrigatórios' });
+    return res.status(400).json({ error: 'to/phone/number e message/text são obrigatórios' });
   }
 
   const result = await manager.sendMessage(req.params.id, recipient, content);
