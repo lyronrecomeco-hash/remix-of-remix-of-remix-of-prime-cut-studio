@@ -255,7 +255,7 @@ export function useGenesisWhatsAppConnection() {
     return { healthy: res.ok };
   };
 
-  const checkStatus = async (instanceId: string): Promise<{ connected: boolean; phoneNumber?: string; isStale?: boolean }> => {
+  const checkStatus = async (instanceId: string): Promise<{ connected: boolean; phoneNumber?: string; isStale?: boolean; readyToSend?: boolean }> => {
     // Primeiro verificar no banco se está stale
     const { data: instanceRow } = await supabase
       .from('genesis_instances')
@@ -289,9 +289,14 @@ export function useGenesisWhatsAppConnection() {
     if (!res.ok) return { connected: false };
     
     const result = res.data || {};
+    
+    // V7: Backend agora retorna ready_to_send que indica se o socket está estável
+    const isReady = result.ready_to_send === true;
+    
     return {
       connected: result.connected === true || result.status === 'connected' || result.state === 'open',
       phoneNumber: result.phone || result.phoneNumber || result.jid?.split('@')[0],
+      readyToSend: isReady,
     };
   };
 
@@ -530,7 +535,7 @@ Agora você pode automatizar seu atendimento!`;
       
       // === JÁ CONECTADO: Reconhecer e enviar teste ===
       if (realStatus.connected) {
-        console.log(`[startConnection] Instance ${instanceId} is ALREADY CONNECTED`);
+        console.log(`[startConnection] Instance ${instanceId} is ALREADY CONNECTED, readyToSend=${realStatus.readyToSend}`);
         
         const phoneNumber = realStatus.phoneNumber ?? instanceRow?.phone_number;
         
@@ -563,29 +568,68 @@ Agora você pode automatizar seu atendimento!`;
             phase: 'stabilizing',
           }));
 
-          toast.info('WhatsApp conectado! Enviando teste...');
+          toast.info('WhatsApp conectado! Aguardando socket estabilizar...');
 
-          const result = await sendWelcomeMessage(instanceId, phoneNumber);
-          
-          const mergedReady = await mergeSessionData(instanceId, {
-            ready_to_send: result.success,
-            welcome_sent_at: nowIso,
-            last_send_success_at: result.success ? nowIso : undefined,
-            last_send_error_at: !result.success ? nowIso : undefined,
-            ready_phase: result.success ? 'ready_to_send' : 'send_attempted',
-            ready_updated_at: nowIso,
-          });
+          // V7: Aguardar ready_to_send do backend (socket estável)
+          let isReady = realStatus.readyToSend === true;
+          if (!isReady) {
+            logDiagnostic('WAITING_READY_TO_SEND', { instanceId, phoneNumber });
+            
+            for (let waitAttempt = 0; waitAttempt < 10; waitAttempt++) {
+              await new Promise(r => setTimeout(r, 1000));
+              const statusCheck = await checkStatus(instanceId);
+              
+              logDiagnostic('READY_CHECK', { 
+                instanceId, 
+                attempt: waitAttempt + 1, 
+                connected: statusCheck.connected,
+                readyToSend: statusCheck.readyToSend 
+              });
+              
+              if (statusCheck.readyToSend) {
+                isReady = true;
+                break;
+              }
+            }
+          }
 
-          await updateInstanceInDB(instanceId, {
-            effective_status: 'connected', // Mantém conectado mesmo se teste falhar
-            session_data: mergedReady,
-          });
+          if (isReady) {
+            toast.info('Socket estável! Enviando teste...');
+            const result = await sendWelcomeMessage(instanceId, phoneNumber);
+            
+            const mergedReady = await mergeSessionData(instanceId, {
+              ready_to_send: result.success,
+              welcome_sent_at: nowIso,
+              last_send_success_at: result.success ? nowIso : undefined,
+              last_send_error_at: !result.success ? nowIso : undefined,
+              ready_phase: result.success ? 'ready_to_send' : 'send_attempted',
+              ready_updated_at: nowIso,
+            });
 
-          if (result.success) {
-            toast.success('✅ WhatsApp conectado e funcionando!');
+            await updateInstanceInDB(instanceId, {
+              effective_status: 'connected',
+              session_data: mergedReady,
+            });
+
+            if (result.success) {
+              toast.success('✅ WhatsApp conectado e funcionando!');
+            } else {
+              toast.success('✅ WhatsApp conectado! Pronto para uso.');
+            }
           } else {
-            // Instância está conectada, teste pode ter falhado por timing
+            // Socket não ficou ready, mas está conectado
             toast.success('✅ WhatsApp conectado! Pronto para uso.');
+            
+            const mergedReady = await mergeSessionData(instanceId, {
+              ready_to_send: false,
+              ready_phase: 'connected_not_tested',
+              ready_updated_at: nowIso,
+            });
+
+            await updateInstanceInDB(instanceId, {
+              effective_status: 'connected',
+              session_data: mergedReady,
+            });
           }
         } else {
           toast.success('✅ WhatsApp já está conectado e operacional!');
@@ -634,27 +678,45 @@ Agora você pode automatizar seu atendimento!`;
               phase: 'stabilizing',
             }));
 
-            // Tentar enviar teste se tiver número
+            // V7: Aguardar ready_to_send do backend
             if (resumed.phoneNumber) {
-              toast.info('Sessão restaurada! Enviando teste...');
-              const result = await sendWelcomeMessage(instanceId, resumed.phoneNumber);
+              toast.info('Sessão restaurada! Aguardando estabilização...');
               
-              const mergedReady = await mergeSessionData(instanceId, {
-                ready_to_send: result.success,
-                welcome_sent_at: nowIso,
-                last_send_success_at: result.success ? nowIso : undefined,
-                ready_phase: result.success ? 'ready_to_send' : 'send_attempted',
-                ready_updated_at: nowIso,
-              });
+              let isReady = resumed.readyToSend === true;
+              if (!isReady) {
+                for (let waitAttempt = 0; waitAttempt < 8; waitAttempt++) {
+                  await new Promise(r => setTimeout(r, 1000));
+                  const statusCheck = await checkStatus(instanceId);
+                  if (statusCheck.readyToSend) {
+                    isReady = true;
+                    break;
+                  }
+                }
+              }
 
-              await updateInstanceInDB(instanceId, {
-                effective_status: 'connected',
-                session_data: mergedReady,
-              });
+              if (isReady) {
+                toast.info('Enviando teste...');
+                const result = await sendWelcomeMessage(instanceId, resumed.phoneNumber);
+                
+                const mergedReady = await mergeSessionData(instanceId, {
+                  ready_to_send: result.success,
+                  welcome_sent_at: nowIso,
+                  last_send_success_at: result.success ? nowIso : undefined,
+                  ready_phase: result.success ? 'ready_to_send' : 'send_attempted',
+                  ready_updated_at: nowIso,
+                });
 
-              toast.success(result.success 
-                ? '✅ WhatsApp reconectado e funcionando!' 
-                : '✅ WhatsApp reconectado! Pronto para uso.');
+                await updateInstanceInDB(instanceId, {
+                  effective_status: 'connected',
+                  session_data: mergedReady,
+                });
+
+                toast.success(result.success 
+                  ? '✅ WhatsApp reconectado e funcionando!' 
+                  : '✅ WhatsApp reconectado! Pronto para uso.');
+              } else {
+                toast.success('✅ WhatsApp reconectado! Pronto para uso.');
+              }
             } else {
               toast.success('✅ WhatsApp reconectado com sucesso!');
             }
@@ -704,25 +766,44 @@ Agora você pode automatizar seu atendimento!`;
         }));
 
         if (phone) {
-          toast.info('Conexão detectada! Enviando teste...');
-          const result = await sendWelcomeMessage(instanceId, phone);
+          toast.info('Conexão detectada! Aguardando estabilização...');
           
-          const mergedReady = await mergeSessionData(instanceId, {
-            ready_to_send: result.success,
-            welcome_sent_at: nowIso,
-            last_send_success_at: result.success ? nowIso : undefined,
-            ready_phase: result.success ? 'ready_to_send' : 'send_attempted',
-            ready_updated_at: nowIso,
-          });
+          // V7: Aguardar ready_to_send
+          let isReady = statusAfter.readyToSend === true;
+          if (!isReady) {
+            for (let waitAttempt = 0; waitAttempt < 8; waitAttempt++) {
+              await new Promise(r => setTimeout(r, 1000));
+              const statusCheck = await checkStatus(instanceId);
+              if (statusCheck.readyToSend) {
+                isReady = true;
+                break;
+              }
+            }
+          }
 
-          await updateInstanceInDB(instanceId, {
-            effective_status: 'connected',
-            session_data: mergedReady,
-          });
+          if (isReady) {
+            toast.info('Enviando teste...');
+            const result = await sendWelcomeMessage(instanceId, phone);
+            
+            const mergedReady = await mergeSessionData(instanceId, {
+              ready_to_send: result.success,
+              welcome_sent_at: nowIso,
+              last_send_success_at: result.success ? nowIso : undefined,
+              ready_phase: result.success ? 'ready_to_send' : 'send_attempted',
+              ready_updated_at: nowIso,
+            });
 
-          toast.success(result.success 
-            ? '✅ WhatsApp conectado e funcionando!' 
-            : '✅ WhatsApp conectado! Pronto para uso.');
+            await updateInstanceInDB(instanceId, {
+              effective_status: 'connected',
+              session_data: mergedReady,
+            });
+
+            toast.success(result.success 
+              ? '✅ WhatsApp conectado e funcionando!' 
+              : '✅ WhatsApp conectado! Pronto para uso.');
+          } else {
+            toast.success('✅ WhatsApp conectado! Pronto para uso.');
+          }
         } else {
           toast.success('✅ WhatsApp conectado!');
         }
@@ -809,27 +890,45 @@ Agora você pode automatizar seu atendimento!`;
             phase: 'stabilizing',
           }));
 
-          // Tentar enviar teste se tiver número
+          // V7: Aguardar ready_to_send antes de enviar teste
           if (statusResult.phoneNumber) {
-            toast.info('Conectado! Enviando teste de validação...');
-            const result = await sendWelcomeMessage(instanceId, statusResult.phoneNumber);
+            toast.info('Conectado! Aguardando estabilização...');
             
-            const mergedReady = await mergeSessionData(instanceId, {
-              ready_to_send: result.success,
-              welcome_sent_at: nowIso,
-              last_send_success_at: result.success ? nowIso : undefined,
-              ready_phase: result.success ? 'ready_to_send' : 'send_attempted',
-              ready_updated_at: nowIso,
-            });
+            let isReady = statusResult.readyToSend === true;
+            if (!isReady) {
+              for (let waitAttempt = 0; waitAttempt < 8; waitAttempt++) {
+                await new Promise(r => setTimeout(r, 1000));
+                const statusCheck = await checkStatus(instanceId);
+                if (statusCheck.readyToSend) {
+                  isReady = true;
+                  break;
+                }
+              }
+            }
 
-            await updateInstanceInDB(instanceId, {
-              effective_status: 'connected', // Mantém conectado sempre
-              session_data: mergedReady,
-            });
+            if (isReady) {
+              toast.info('Enviando teste de validação...');
+              const result = await sendWelcomeMessage(instanceId, statusResult.phoneNumber);
+              
+              const mergedReady = await mergeSessionData(instanceId, {
+                ready_to_send: result.success,
+                welcome_sent_at: nowIso,
+                last_send_success_at: result.success ? nowIso : undefined,
+                ready_phase: result.success ? 'ready_to_send' : 'send_attempted',
+                ready_updated_at: nowIso,
+              });
 
-            toast.success(result.success 
-              ? '✅ WhatsApp conectado e funcionando!' 
-              : '✅ WhatsApp conectado! Pronto para uso.');
+              await updateInstanceInDB(instanceId, {
+                effective_status: 'connected',
+                session_data: mergedReady,
+              });
+
+              toast.success(result.success 
+                ? '✅ WhatsApp conectado e funcionando!' 
+                : '✅ WhatsApp conectado! Pronto para uso.');
+            } else {
+              toast.success('✅ WhatsApp conectado! Pronto para uso.');
+            }
           } else {
             toast.success('✅ WhatsApp conectado com sucesso!');
           }
