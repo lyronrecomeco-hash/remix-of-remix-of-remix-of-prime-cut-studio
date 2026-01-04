@@ -54,7 +54,7 @@ const GitHubManager = () => {
   const [pm2AppName, setPm2AppName] = useState('whatsapp-backend');
   const [nodeVersion, setNodeVersion] = useState('20');
 
-  const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/github-vps-scripts`;
+  
 
   useEffect(() => {
     loadConfig();
@@ -185,16 +185,183 @@ const GitHubManager = () => {
     }
   };
 
-  const getInstallScript = () => {
-    return `curl -fsSL "${baseUrl}?type=install" | bash`;
+  // Gerar scripts diretamente no frontend (não depende de Edge Function)
+  const generateFullScript = () => {
+    return `#!/bin/bash
+set -e
+
+echo "=============================================="
+echo "  ${projectName} - DEPLOY AUTOMÁTICO"
+echo "=============================================="
+
+RED='\\033[0;31m'
+GREEN='\\033[0;32m'
+YELLOW='\\033[1;33m'
+BLUE='\\033[0;34m'
+NC='\\033[0m'
+
+log_info() { echo -e "\${GREEN}[INFO]\${NC} \$1"; }
+log_warn() { echo -e "\${YELLOW}[WARN]\${NC} \$1"; }
+log_error() { echo -e "\${RED}[ERROR]\${NC} \$1"; }
+log_step() { echo -e "\${BLUE}[STEP]\${NC} \$1"; }
+
+REPO_URL="${repositoryUrl}"
+BRANCH="${branch}"
+INSTALL_PATH="${installPath}"
+PM2_APP="${pm2AppName}"
+NODE_VERSION="${nodeVersion}"
+
+if [ -d "\$INSTALL_PATH/.git" ]; then
+  MODE="update"
+  log_info "Modo: ATUALIZAÇÃO"
+else
+  MODE="install"
+  log_info "Modo: INSTALAÇÃO"
+fi
+
+if [ "\$MODE" = "install" ]; then
+  
+  if [ "\$EUID" -ne 0 ]; then
+    log_error "Execute como root: sudo bash script.sh"
+    exit 1
+  fi
+
+  log_step "1/7 - Atualizando sistema..."
+  apt-get update -y
+  apt-get install -y curl wget git build-essential
+
+  log_step "2/7 - Instalando Node.js..."
+  if ! command -v node &> /dev/null; then
+    curl -fsSL https://deb.nodesource.com/setup_\${NODE_VERSION}.x | bash -
+    apt-get install -y nodejs
+  fi
+  log_info "Node.js: \$(node -v)"
+
+  log_step "3/7 - Instalando PM2..."
+  if ! command -v pm2 &> /dev/null; then
+    npm install -g pm2
+    pm2 startup
+  fi
+
+  log_step "4/7 - Clonando repositório..."
+  mkdir -p \$(dirname \$INSTALL_PATH)
+  git clone --branch \$BRANCH \$REPO_URL \$INSTALL_PATH
+  cd \$INSTALL_PATH
+
+  log_step "5/7 - Instalando dependências..."
+  npm install --production
+
+  log_step "6/7 - Configurando ambiente..."
+  if [ ! -f ".env" ] && [ -f ".env.example" ]; then
+    cp .env.example .env
+    log_warn "Configure o .env em \$INSTALL_PATH/.env"
+  fi
+
+  log_step "7/7 - Iniciando com PM2..."
+  pm2 delete \$PM2_APP 2>/dev/null || true
+  
+  if [ -f "src/index.js" ]; then
+    pm2 start src/index.js --name \$PM2_APP
+  elif [ -f "index.js" ]; then
+    pm2 start index.js --name \$PM2_APP
+  fi
+  
+  pm2 save
+
+  echo ""
+  echo -e "\${GREEN}INSTALAÇÃO CONCLUÍDA!\${NC}"
+  echo "Diretório: \$INSTALL_PATH"
+  echo "PM2: pm2 logs \$PM2_APP"
+
+else
+  cd \$INSTALL_PATH
+
+  OLD_HASH=\$(git rev-parse HEAD)
+  
+  log_step "1/3 - Buscando atualizações..."
+  git fetch origin \$BRANCH
+  
+  NEW_HASH=\$(git rev-parse origin/\$BRANCH)
+  
+  if [ "\$OLD_HASH" = "\$NEW_HASH" ]; then
+    log_info "Sistema já está atualizado!"
+    exit 0
+  fi
+
+  log_step "2/3 - Aplicando atualização..."
+  git reset --hard origin/\$BRANCH
+  git pull origin \$BRANCH
+
+  if git diff --name-only \$OLD_HASH \$NEW_HASH | grep -q "package.json"; then
+    log_info "Reinstalando dependências..."
+    npm install --production
+  fi
+
+  log_step "3/3 - Reiniciando serviço..."
+  pm2 reload \$PM2_APP 2>/dev/null || pm2 restart \$PM2_APP
+
+  echo ""
+  echo -e "\${GREEN}ATUALIZAÇÃO CONCLUÍDA!\${NC}"
+  echo "De: \${OLD_HASH:0:7} → Para: \${NEW_HASH:0:7}"
+fi
+`;
   };
 
-  const getUpdateScript = () => {
-    return `curl -fsSL "${baseUrl}?type=update" | bash`;
-  };
+  const generateUpdateScript = () => {
+    return `#!/bin/bash
+set -e
 
-  const getFullScript = () => {
-    return `curl -fsSL "${baseUrl}?type=full" | bash`;
+echo "=============================================="
+echo "  ATUALIZAÇÃO AUTOMÁTICA"
+echo "=============================================="
+
+GREEN='\\033[0;32m'
+RED='\\033[0;31m'
+NC='\\033[0m'
+
+log_info() { echo -e "\${GREEN}[INFO]\${NC} \$1"; }
+log_error() { echo -e "\${RED}[ERROR]\${NC} \$1"; }
+
+INSTALL_PATH="${installPath}"
+PM2_APP="${pm2AppName}"
+BRANCH="${branch}"
+
+if [ ! -d "\$INSTALL_PATH" ]; then
+  log_error "Diretório \$INSTALL_PATH não encontrado!"
+  exit 1
+fi
+
+cd \$INSTALL_PATH
+
+OLD_HASH=\$(git rev-parse HEAD 2>/dev/null || echo "none")
+
+log_info "Buscando atualizações..."
+git fetch origin \$BRANCH
+
+NEW_HASH=\$(git rev-parse origin/\$BRANCH)
+
+if [ "\$OLD_HASH" = "\$NEW_HASH" ]; then
+  log_info "Sistema já está atualizado!"
+  exit 0
+fi
+
+log_info "Atualização encontrada! Aplicando..."
+
+git reset --hard origin/\$BRANCH
+git pull origin \$BRANCH
+
+if git diff --name-only \$OLD_HASH \$NEW_HASH | grep -q "package.json"; then
+  log_info "Reinstalando dependências..."
+  npm install --production
+fi
+
+log_info "Reiniciando aplicação..."
+pm2 reload \$PM2_APP || pm2 restart \$PM2_APP
+
+echo ""
+echo -e "\${GREEN}ATUALIZAÇÃO CONCLUÍDA!\${NC}"
+echo "De: \${OLD_HASH:0:7} → Para: \${NEW_HASH:0:7}"
+`;
   };
 
   const optimizeWithAI = async () => {
@@ -412,7 +579,7 @@ const GitHubManager = () => {
                       Script Completo (Recomendado)
                     </CardTitle>
                     <CardDescription>
-                      Instala ou atualiza automaticamente - use este único comando
+                      Instala ou atualiza automaticamente - copie e cole na VPS
                     </CardDescription>
                   </div>
                   <Badge variant="default">Principal</Badge>
@@ -420,21 +587,21 @@ const GitHubManager = () => {
               </CardHeader>
               <CardContent>
                 <div className="relative">
-                  <div className="bg-gray-900 rounded-lg p-4 font-mono text-sm text-green-400 overflow-x-auto">
-                    <code>{getFullScript()}</code>
+                  <div className="bg-gray-900 rounded-lg p-4 font-mono text-xs text-green-400 overflow-x-auto max-h-48 overflow-y-auto">
+                    <pre className="whitespace-pre-wrap">{generateFullScript()}</pre>
                   </div>
                   <Button
                     size="sm"
                     variant="secondary"
                     className="absolute top-2 right-2 gap-1"
-                    onClick={() => copyToClipboard(getFullScript(), 'full')}
+                    onClick={() => copyToClipboard(generateFullScript(), 'full')}
                   >
                     {copiedScript === 'full' ? (
                       <Check className="w-3 h-3" />
                     ) : (
                       <Copy className="w-3 h-3" />
                     )}
-                    {copiedScript === 'full' ? 'Copiado!' : 'Copiar'}
+                    {copiedScript === 'full' ? 'Copiado!' : 'Copiar Script'}
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
@@ -443,72 +610,38 @@ const GitHubManager = () => {
               </CardContent>
             </Card>
 
-            {/* Scripts Individuais */}
-            <div className="grid gap-4 md:grid-cols-2">
-              {/* Instalação */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Server className="w-4 h-4" />
-                    Instalação Inicial
-                  </CardTitle>
-                  <CardDescription className="text-xs">
-                    Para VPS recém-formatada
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="relative">
-                    <div className="bg-gray-900 rounded-lg p-3 font-mono text-xs text-green-400 overflow-x-auto">
-                      <code>{getInstallScript()}</code>
-                    </div>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="absolute top-1 right-1 h-7 w-7"
-                      onClick={() => copyToClipboard(getInstallScript(), 'install')}
-                    >
-                      {copiedScript === 'install' ? (
-                        <Check className="w-3 h-3" />
-                      ) : (
-                        <Copy className="w-3 h-3" />
-                      )}
-                    </Button>
+            {/* Script de Atualização (para cron) */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <RefreshCw className="w-4 h-4" />
+                  Script de Atualização (para Cron)
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Use este script no cron para atualizações automáticas
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="relative">
+                  <div className="bg-gray-900 rounded-lg p-4 font-mono text-xs text-green-400 overflow-x-auto max-h-40 overflow-y-auto">
+                    <pre className="whitespace-pre-wrap">{generateUpdateScript()}</pre>
                   </div>
-                </CardContent>
-              </Card>
-
-              {/* Atualização */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <RefreshCw className="w-4 h-4" />
-                    Atualização
-                  </CardTitle>
-                  <CardDescription className="text-xs">
-                    Para atualizar instalação existente
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="relative">
-                    <div className="bg-gray-900 rounded-lg p-3 font-mono text-xs text-green-400 overflow-x-auto">
-                      <code>{getUpdateScript()}</code>
-                    </div>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="absolute top-1 right-1 h-7 w-7"
-                      onClick={() => copyToClipboard(getUpdateScript(), 'update')}
-                    >
-                      {copiedScript === 'update' ? (
-                        <Check className="w-3 h-3" />
-                      ) : (
-                        <Copy className="w-3 h-3" />
-                      )}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="absolute top-2 right-2 gap-1"
+                    onClick={() => copyToClipboard(generateUpdateScript(), 'update')}
+                  >
+                    {copiedScript === 'update' ? (
+                      <Check className="w-3 h-3" />
+                    ) : (
+                      <Copy className="w-3 h-3" />
+                    )}
+                    {copiedScript === 'update' ? 'Copiado!' : 'Copiar'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Info Card */}
@@ -568,15 +701,66 @@ const GitHubManager = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Comando único para configurar cron */}
+              {/* Passo 1: Salvar script */}
               <div>
                 <Label className="text-xs text-muted-foreground mb-2 block">
-                  Cole este comando na VPS para configurar o cron automaticamente:
+                  1. Primeiro, salve o script de atualização na VPS:
+                </Label>
+                <div className="relative">
+                  <div className="bg-gray-900 rounded-lg p-3 font-mono text-xs text-green-400">
+                    <code>nano {installPath}/update.sh</code>
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="absolute top-1 right-1 h-7 w-7"
+                    onClick={() => copyToClipboard(`nano ${installPath}/update.sh`, 'nano')}
+                  >
+                    {copiedScript === 'nano' ? (
+                      <Check className="w-3 h-3" />
+                    ) : (
+                      <Copy className="w-3 h-3" />
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Cole o "Script de Atualização" acima, salve (Ctrl+X, Y, Enter)
+                </p>
+              </div>
+
+              {/* Passo 2: Tornar executável */}
+              <div>
+                <Label className="text-xs text-muted-foreground mb-2 block">
+                  2. Torne o script executável:
+                </Label>
+                <div className="relative">
+                  <div className="bg-gray-900 rounded-lg p-3 font-mono text-xs text-green-400">
+                    <code>chmod +x {installPath}/update.sh</code>
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="absolute top-1 right-1 h-7 w-7"
+                    onClick={() => copyToClipboard(`chmod +x ${installPath}/update.sh`, 'chmod')}
+                  >
+                    {copiedScript === 'chmod' ? (
+                      <Check className="w-3 h-3" />
+                    ) : (
+                      <Copy className="w-3 h-3" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Passo 3: Configurar cron */}
+              <div>
+                <Label className="text-xs text-muted-foreground mb-2 block">
+                  3. Configure o cron para executar a cada 5 minutos:
                 </Label>
                 <div className="relative">
                   <div className="bg-gray-900 rounded-lg p-4 font-mono text-sm text-green-400 overflow-x-auto">
                     <code>
-                      (crontab -l 2&gt;/dev/null | grep -v "github-vps-scripts"; echo "*/5 * * * * curl -fsSL '{baseUrl}?type=update' | bash &gt; /var/log/wa-update.log 2&gt;&1") | crontab -
+                      (crontab -l 2&gt;/dev/null; echo "*/5 * * * * {installPath}/update.sh &gt; /var/log/wa-update.log 2&gt;&1") | crontab -
                     </code>
                   </div>
                   <Button
@@ -584,7 +768,7 @@ const GitHubManager = () => {
                     variant="secondary"
                     className="absolute top-2 right-2 gap-1"
                     onClick={() => copyToClipboard(
-                      `(crontab -l 2>/dev/null | grep -v "github-vps-scripts"; echo "*/5 * * * * curl -fsSL '${baseUrl}?type=update' | bash > /var/log/wa-update.log 2>&1") | crontab -`,
+                      `(crontab -l 2>/dev/null; echo "*/5 * * * * ${installPath}/update.sh > /var/log/wa-update.log 2>&1") | crontab -`,
                       'cron'
                     )}
                   >
@@ -599,50 +783,51 @@ const GitHubManager = () => {
               </div>
 
               {/* Verificar cron */}
-              <div>
-                <Label className="text-xs text-muted-foreground mb-2 block">
-                  Para verificar se o cron foi configurado:
-                </Label>
-                <div className="relative">
-                  <div className="bg-gray-900 rounded-lg p-3 font-mono text-xs text-green-400">
-                    <code>crontab -l</code>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-2 block">
+                    Verificar cron:
+                  </Label>
+                  <div className="relative">
+                    <div className="bg-gray-900 rounded-lg p-3 font-mono text-xs text-green-400">
+                      <code>crontab -l</code>
+                    </div>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="absolute top-1 right-1 h-7 w-7"
+                      onClick={() => copyToClipboard('crontab -l', 'verify')}
+                    >
+                      {copiedScript === 'verify' ? (
+                        <Check className="w-3 h-3" />
+                      ) : (
+                        <Copy className="w-3 h-3" />
+                      )}
+                    </Button>
                   </div>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="absolute top-1 right-1 h-7 w-7"
-                    onClick={() => copyToClipboard('crontab -l', 'verify')}
-                  >
-                    {copiedScript === 'verify' ? (
-                      <Check className="w-3 h-3" />
-                    ) : (
-                      <Copy className="w-3 h-3" />
-                    )}
-                  </Button>
                 </div>
-              </div>
 
-              {/* Ver logs */}
-              <div>
-                <Label className="text-xs text-muted-foreground mb-2 block">
-                  Para ver os logs de atualização:
-                </Label>
-                <div className="relative">
-                  <div className="bg-gray-900 rounded-lg p-3 font-mono text-xs text-green-400">
-                    <code>tail -f /var/log/wa-update.log</code>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-2 block">
+                    Ver logs:
+                  </Label>
+                  <div className="relative">
+                    <div className="bg-gray-900 rounded-lg p-3 font-mono text-xs text-green-400">
+                      <code>tail -f /var/log/wa-update.log</code>
+                    </div>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="absolute top-1 right-1 h-7 w-7"
+                      onClick={() => copyToClipboard('tail -f /var/log/wa-update.log', 'logs')}
+                    >
+                      {copiedScript === 'logs' ? (
+                        <Check className="w-3 h-3" />
+                      ) : (
+                        <Copy className="w-3 h-3" />
+                      )}
+                    </Button>
                   </div>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="absolute top-1 right-1 h-7 w-7"
-                    onClick={() => copyToClipboard('tail -f /var/log/wa-update.log', 'logs')}
-                  >
-                    {copiedScript === 'logs' ? (
-                      <Check className="w-3 h-3" />
-                    ) : (
-                      <Copy className="w-3 h-3" />
-                    )}
-                  </Button>
                 </div>
               </div>
             </CardContent>
