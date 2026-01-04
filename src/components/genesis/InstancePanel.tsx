@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
   Copy,
@@ -14,9 +14,15 @@ import {
   AlertCircle,
   CheckCircle2,
   Phone,
-  X,
-  Info,
   Zap,
+  Shield,
+  Wifi,
+  Clock,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  Activity,
+  Smartphone,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,6 +31,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { GenesisWhatsAppConnect } from './GenesisWhatsAppConnect';
@@ -57,11 +64,11 @@ interface InstancePanelProps {
 
 // Integration cards
 const integrations = [
-  { id: 'shopify', name: 'Shopify', description: 'Loja Shopify', logo: shopifyLogo },
-  { id: 'woocommerce', name: 'WooCommerce', description: 'Loja WooCommerce', logo: woocommerceLogo },
-  { id: 'nuvemshop', name: 'Nuvemshop', description: 'Nuvemshop', logo: nuvemshopLogo },
-  { id: 'mercadoshops', name: 'Mercado Shops', description: 'Mercado Shops', logo: mercadoshopsLogo },
-  { id: 'rdstation', name: 'RD Station', description: 'RD Station', logo: rdstationLogo },
+  { id: 'shopify', name: 'Shopify', description: 'E-commerce global', logo: shopifyLogo },
+  { id: 'woocommerce', name: 'WooCommerce', description: 'Plugin WordPress', logo: woocommerceLogo },
+  { id: 'nuvemshop', name: 'Nuvemshop', description: 'E-commerce LATAM', logo: nuvemshopLogo },
+  { id: 'mercadoshops', name: 'Mercado Shops', description: 'Mercado Livre', logo: mercadoshopsLogo },
+  { id: 'rdstation', name: 'RD Station', description: 'Marketing CRM', logo: rdstationLogo },
 ];
 
 export function InstancePanel({ instance: initialInstance, onBack }: InstancePanelProps) {
@@ -78,6 +85,10 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
   const [showActionsModal, setShowActionsModal] = useState(false);
   const [showWebhookModal, setShowWebhookModal] = useState(false);
   const [showCreditsModal, setShowCreditsModal] = useState(false);
+  const [showIntegrationsModal, setShowIntegrationsModal] = useState(false);
+  
+  // Colapsável
+  const [showTechnicalInfo, setShowTechnicalInfo] = useState(false);
 
   const instanceCode = `genesis-${instance.id.slice(0, 8)}`;
   const endpoint = `https://api.genesis.com.br/instances/${instanceCode}`;
@@ -136,221 +147,355 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
     : null;
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
+    <div className="space-y-6 max-w-6xl mx-auto">
+      
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* BLOCO 1 — IDENTIDADE DA INSTÂNCIA (TOPO) */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
       <motion.div 
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
+        className="relative"
       >
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={onBack} className="gap-2 text-primary">
-            <ArrowLeft className="w-4 h-4" />
-            Voltar
-          </Button>
-          <h1 className="text-2xl font-bold">{instance.name}</h1>
-        </div>
-        <Badge 
-          variant="secondary" 
-          className={cn(
-            "gap-2 px-4 py-1.5 text-sm",
+        <Card className="border-2 overflow-hidden">
+          <div className={cn(
+            "absolute inset-0 opacity-10",
             isConnected 
-              ? "bg-green-500/10 text-green-600 border-green-500/20" 
-              : "bg-red-500/10 text-red-600 border-red-500/20"
-          )}
-        >
-          {isConnected ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-          {isConnected ? 'Conectado' : 'Desconectado'}
-        </Badge>
+              ? "bg-gradient-to-r from-green-500 via-green-500/50 to-transparent" 
+              : "bg-gradient-to-r from-red-500 via-red-500/50 to-transparent"
+          )} />
+          <CardContent className="p-6 relative">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              {/* Lado Esquerdo - Nome e Voltar */}
+              <div className="flex items-center gap-4">
+                <Button variant="ghost" size="sm" onClick={onBack} className="gap-2 text-primary">
+                  <ArrowLeft className="w-4 h-4" />
+                  Voltar
+                </Button>
+                <div className="h-8 w-px bg-border" />
+                <div>
+                  <h1 className="text-2xl font-bold">{instance.name}</h1>
+                  <p className="text-sm text-muted-foreground">Gerenciamento da instância</p>
+                </div>
+              </div>
+
+              {/* Lado Direito - Status e Métricas */}
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Status Principal */}
+                <Badge 
+                  variant="secondary" 
+                  className={cn(
+                    "gap-2 px-4 py-2 text-sm font-semibold",
+                    isConnected 
+                      ? "bg-green-500/15 text-green-600 border-2 border-green-500/30" 
+                      : "bg-red-500/15 text-red-600 border-2 border-red-500/30"
+                  )}
+                >
+                  <span className={cn(
+                    "w-2.5 h-2.5 rounded-full animate-pulse",
+                    isConnected ? "bg-green-500" : "bg-red-500"
+                  )} />
+                  {isConnected ? 'Conectado' : 'Desconectado'}
+                </Badge>
+
+                {/* Badge Estabilidade */}
+                {isConnected && (
+                  <Badge variant="outline" className="gap-2 px-3 py-2 text-sm border-blue-500/30 text-blue-600 bg-blue-500/5">
+                    <Shield className="w-3.5 h-3.5" />
+                    Conexão Estável 24/7
+                  </Badge>
+                )}
+
+                {/* Consumo Diário */}
+                <Badge variant="outline" className="gap-2 px-3 py-2 text-sm border-amber-500/30 text-amber-600 bg-amber-500/5">
+                  <Coins className="w-3.5 h-3.5" />
+                  15 créditos/dia
+                </Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </motion.div>
 
-      {/* Grid Principal - 2 Colunas */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        {/* Coluna Esquerda - Conexão WhatsApp */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="space-y-6"
-        >
-          {/* Conexão WhatsApp */}
-          <GenesisWhatsAppConnect 
-            instance={instance} 
-            onRefresh={fetchInstance} 
-          />
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* BLOCO 2 — CONEXÃO WHATSAPP (PRINCIPAL) */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+      >
+        <Card className="border-2 border-primary/20 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
+          <CardHeader className="pb-4 relative">
+            <CardTitle className="flex items-center gap-3 text-xl">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center shadow-lg">
+                <Smartphone className="w-6 h-6 text-primary" />
+              </div>
+              Conexão WhatsApp
+              {isConnected && (
+                <Badge className="ml-auto bg-green-500/20 text-green-600 border-green-500/30">
+                  <Activity className="w-3 h-3 mr-1" />
+                  Ativo
+                </Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="relative space-y-6">
+            {/* Componente de Conexão */}
+            <GenesisWhatsAppConnect 
+              instance={instance} 
+              onRefresh={fetchInstance} 
+            />
 
-          {/* Número Conectado */}
-          {isConnected && instance.phone_number && (
-            <Card className="border-green-500/30 bg-gradient-to-br from-green-500/10 via-green-500/5 to-transparent">
+            {/* Indicadores de Recursos */}
+            <div className="grid grid-cols-3 gap-4 pt-4 border-t">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
+                <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+                  <Wifi className="w-5 h-5 text-green-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Conexão Rápida</p>
+                  <p className="text-xs text-muted-foreground">Via QR Code</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
+                <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                  <Shield className="w-5 h-5 text-blue-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Login Seguro</p>
+                  <p className="text-xs text-muted-foreground">Criptografado</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
+                <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                  <RefreshCw className="w-5 h-5 text-purple-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Auto-Reconexão</p>
+                  <p className="text-xs text-muted-foreground">Sempre ativa</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* BLOCO 3 — NÚMERO CONECTADO */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <AnimatePresence>
+        {isConnected && instance.phone_number && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Card className="border-2 border-green-500/30 bg-gradient-to-r from-green-500/10 via-green-500/5 to-transparent">
               <CardContent className="p-6">
-                <div className="flex items-center gap-5">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500/20 to-green-500/10 flex items-center justify-center shadow-lg shadow-green-500/10">
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500/30 to-green-500/10 flex items-center justify-center shadow-xl shadow-green-500/20">
                     <Phone className="w-8 h-8 text-green-500" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-muted-foreground uppercase tracking-wider font-medium">Número Conectado</p>
-                    <p className="font-bold text-green-600 text-2xl mt-1">{formattedPhone}</p>
-                    <p className="text-xs text-muted-foreground mt-1 font-mono">{instance.phone_number}@s.whatsapp.net</p>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">
+                      Número Conectado
+                    </p>
+                    <p className="font-bold text-green-600 text-3xl">{formattedPhone}</p>
+                    <p className="text-sm text-muted-foreground mt-1 font-mono opacity-70">
+                      {instance.phone_number}@s.whatsapp.net
+                    </p>
                   </div>
                   <Button 
                     variant="outline" 
-                    size="icon"
-                    className="h-12 w-12 border-green-500/30 hover:bg-green-500/10"
+                    size="lg"
+                    className="h-14 px-6 border-green-500/30 hover:bg-green-500/10 gap-2"
                     onClick={() => copyToClipboard(instance.phone_number || '', 'Número')}
                   >
                     <Copy className="w-5 h-5" />
+                    Copiar
                   </Button>
                 </div>
               </CardContent>
             </Card>
-          )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-          {/* API Info */}
-          <Card className="border-primary/20">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Link2 className="w-4 h-4 text-primary" />
-                </div>
-                Informações da API
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-4 rounded-xl bg-muted/50 border">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <Label className="text-xs text-muted-foreground uppercase tracking-wider font-medium">ID da Instância</Label>
-                    <code className="text-base font-mono block mt-2 text-foreground">{instanceCode}</code>
-                  </div>
-                  <Button variant="ghost" size="icon" className="h-10 w-10 flex-shrink-0" onClick={() => copyToClipboard(instanceCode, 'Código')}>
-                    <Copy className="w-5 h-5" />
-                  </Button>
-                </div>
-              </div>
-              <div className="p-4 rounded-xl bg-muted/50 border">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <Label className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Endpoint</Label>
-                    <code className="text-sm font-mono block mt-2 text-foreground truncate">{endpoint}</code>
-                  </div>
-                  <Button variant="ghost" size="icon" className="h-10 w-10 flex-shrink-0" onClick={() => copyToClipboard(endpoint, 'Endpoint')}>
-                    <Copy className="w-5 h-5" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Coluna Direita - Ações e Informações */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="space-y-6"
-        >
-          {/* Botões de Ação */}
-          <div className="grid grid-cols-2 gap-4">
-            <Button 
-              variant="outline" 
-              className="gap-3 h-16 text-base font-medium border-2 hover:border-primary/50 hover:bg-primary/5 transition-all"
-              onClick={() => setShowActionsModal(true)}
-            >
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Settings2 className="w-5 h-5 text-primary" />
-              </div>
-              Ações Rápidas
-            </Button>
-            <Button 
-              variant="outline" 
-              className="gap-3 h-16 text-base font-medium border-2 hover:border-primary/50 hover:bg-primary/5 transition-all"
-              onClick={() => setShowWebhookModal(true)}
-            >
-              <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
-                <Zap className="w-5 h-5 text-purple-500" />
-              </div>
-              Webhook
-            </Button>
-          </div>
-
-          {/* Aviso de Créditos */}
-          <Card 
-            className="border-2 border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent cursor-pointer hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/10 transition-all"
-            onClick={() => setShowCreditsModal(true)}
-          >
-            <CardContent className="p-6">
-              <div className="flex items-center gap-5">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-500/10 flex items-center justify-center shadow-lg shadow-amber-500/10">
-                  <Coins className="w-8 h-8 text-amber-500" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xl font-bold text-amber-600">15 créditos/dia</p>
-                  <p className="text-sm text-muted-foreground mt-1">Consumo por instância ativa</p>
-                </div>
-                <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                  <Info className="w-6 h-6 text-amber-500" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Card Info Extra */}
-          <Card className="border-muted">
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                  <CheckCircle2 className="w-6 h-6 text-blue-500" />
-                </div>
-                <div>
-                  <p className="font-semibold text-base">Conexão Estável 24/7</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Sua instância permanece conectada de forma estável e segura, com monitoramento automático e reconexão inteligente.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-
-      {/* Integrações */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* BLOCO 4 — AÇÕES RÁPIDAS */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
       >
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Lock className="w-4 h-4 text-primary" />
-              Integrações
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-              {integrations.map((integration) => (
-                <div 
-                  key={integration.id} 
-                  className="p-4 rounded-xl border bg-muted/20 opacity-50 text-center hover:opacity-70 transition-opacity"
-                >
-                  <div className="h-10 mb-2 flex items-center justify-center">
-                    <img 
-                      src={integration.logo} 
-                      alt={integration.name} 
-                      className="h-8 w-auto object-contain"
-                    />
-                  </div>
-                  <p className="text-sm font-medium">{integration.name}</p>
-                  <Badge variant="secondary" className="mt-2 text-xs">
-                    <Lock className="w-3 h-3 mr-1" />
-                    Em breve
-                  </Badge>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Button 
+            variant="outline" 
+            className="gap-3 h-20 text-base font-medium border-2 hover:border-primary/50 hover:bg-primary/5 transition-all flex-col"
+            onClick={() => setShowActionsModal(true)}
+          >
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Settings2 className="w-5 h-5 text-primary" />
+            </div>
+            <span>Ações Rápidas</span>
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            className="gap-3 h-20 text-base font-medium border-2 hover:border-purple-500/50 hover:bg-purple-500/5 transition-all flex-col"
+            onClick={() => setShowWebhookModal(true)}
+          >
+            <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
+              <Zap className="w-5 h-5 text-purple-500" />
+            </div>
+            <span>Webhook</span>
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            className="gap-3 h-20 text-base font-medium border-2 hover:border-amber-500/50 hover:bg-amber-500/5 transition-all flex-col"
+            onClick={() => setShowCreditsModal(true)}
+          >
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+              <Coins className="w-5 h-5 text-amber-500" />
+            </div>
+            <span>Créditos</span>
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            className="gap-3 h-20 text-base font-medium border-2 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all flex-col"
+            onClick={() => toast.info('Testes - Em implementação')}
+          >
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
+              <Activity className="w-5 h-5 text-blue-500" />
+            </div>
+            <span>Testes</span>
+          </Button>
+        </div>
+      </motion.div>
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* BLOCO 5 — INTEGRAÇÕES (RESUMO + MODAL) */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <Card className="border-2 hover:border-primary/30 transition-colors cursor-pointer group" onClick={() => setShowIntegrationsModal(true)}>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-5">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <Link2 className="w-7 h-7 text-primary" />
                 </div>
-              ))}
+                <div>
+                  <h3 className="text-xl font-bold">Integrações</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Conecte com e-commerces, CRMs e ferramentas de marketing
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <Badge variant="secondary" className="px-3 py-1.5 text-sm">
+                  {integrations.length} disponíveis
+                </Badge>
+                <Button variant="ghost" size="icon" className="w-10 h-10">
+                  <ExternalLink className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* BLOCO 6 — INFORMAÇÕES TÉCNICAS (COLAPSÁVEL) */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25 }}
+      >
+        <Collapsible open={showTechnicalInfo} onOpenChange={setShowTechnicalInfo}>
+          <Card className="border">
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-muted/30 transition-colors py-4">
+                <CardTitle className="flex items-center justify-between text-base">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                      <Settings2 className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    Informações Técnicas
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <span className="text-sm font-normal">
+                      {showTechnicalInfo ? 'Ocultar' : 'Mostrar'}
+                    </span>
+                    {showTechnicalInfo ? (
+                      <ChevronUp className="w-5 h-5" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5" />
+                    )}
+                  </div>
+                </CardTitle>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="pt-0 space-y-4">
+                <div className="p-4 rounded-xl bg-muted/30 border">
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0 flex-1">
+                      <Label className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
+                        ID da Instância
+                      </Label>
+                      <code className="text-base font-mono block mt-2 text-foreground">{instanceCode}</code>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-10 w-10 flex-shrink-0" onClick={() => copyToClipboard(instanceCode, 'Código')}>
+                      <Copy className="w-5 h-5" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="p-4 rounded-xl bg-muted/30 border">
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0 flex-1">
+                      <Label className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
+                        Endpoint da API
+                      </Label>
+                      <code className="text-sm font-mono block mt-2 text-foreground truncate">{endpoint}</code>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-10 w-10 flex-shrink-0" onClick={() => copyToClipboard(endpoint, 'Endpoint')}>
+                      <Copy className="w-5 h-5" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="p-4 rounded-xl bg-muted/30 border">
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0 flex-1">
+                      <Label className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
+                        ID Completo
+                      </Label>
+                      <code className="text-xs font-mono block mt-2 text-foreground truncate opacity-70">{instance.id}</code>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-10 w-10 flex-shrink-0" onClick={() => copyToClipboard(instance.id, 'ID')}>
+                      <Copy className="w-5 h-5" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
+      </motion.div>
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* MODAIS */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
 
       {/* Modal: Ações Rápidas */}
       <Dialog open={showActionsModal} onOpenChange={setShowActionsModal}>
@@ -541,7 +686,7 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
 
               <div className="flex items-start gap-4 p-4 rounded-xl bg-muted/30 border">
                 <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                  <RefreshCw className="w-5 h-5 text-blue-500" />
+                  <Clock className="w-5 h-5 text-blue-500" />
                 </div>
                 <div>
                   <p className="font-semibold">Renovação Diária</p>
@@ -551,6 +696,48 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
                 </div>
               </div>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: Integrações */}
+      <Dialog open={showIntegrationsModal} onOpenChange={setShowIntegrationsModal}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader className="pb-4">
+            <DialogTitle className="flex items-center gap-3 text-xl">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Link2 className="w-6 h-6 text-primary" />
+              </div>
+              Integrações Disponíveis
+            </DialogTitle>
+            <DialogDescription className="text-base">
+              Conecte sua instância com as principais plataformas do mercado
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-4">
+            {integrations.map((integration) => (
+              <div 
+                key={integration.id} 
+                className="group relative p-6 rounded-2xl border-2 bg-gradient-to-br from-muted/30 to-transparent hover:border-primary/30 hover:shadow-lg transition-all duration-300"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity" />
+                <div className="relative flex flex-col items-center text-center">
+                  <div className="h-16 w-16 mb-4 flex items-center justify-center rounded-xl bg-background shadow-md border">
+                    <img 
+                      src={integration.logo} 
+                      alt={integration.name} 
+                      className="h-10 w-10 object-contain"
+                    />
+                  </div>
+                  <p className="font-semibold text-base">{integration.name}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{integration.description}</p>
+                  <Badge variant="secondary" className="mt-3 text-xs">
+                    <Lock className="w-3 h-3 mr-1" />
+                    Em breve
+                  </Badge>
+                </div>
+              </div>
+            ))}
           </div>
         </DialogContent>
       </Dialog>
