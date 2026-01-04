@@ -2015,6 +2015,161 @@ export type Database = {
         }
         Relationships: []
       }
+      genesis_alert_rules: {
+        Row: {
+          alert_severity: string
+          condition_operator: string
+          cooldown_minutes: number | null
+          created_at: string | null
+          description: string | null
+          evaluation_window_minutes: number | null
+          id: string
+          instance_id: string | null
+          is_enabled: boolean | null
+          last_triggered_at: string | null
+          metric_type: string
+          name: string
+          notify_email: boolean | null
+          notify_webhook: boolean | null
+          threshold_value: number
+          trigger_count: number | null
+          updated_at: string | null
+          user_id: string
+          webhook_url: string | null
+        }
+        Insert: {
+          alert_severity?: string
+          condition_operator: string
+          cooldown_minutes?: number | null
+          created_at?: string | null
+          description?: string | null
+          evaluation_window_minutes?: number | null
+          id?: string
+          instance_id?: string | null
+          is_enabled?: boolean | null
+          last_triggered_at?: string | null
+          metric_type: string
+          name: string
+          notify_email?: boolean | null
+          notify_webhook?: boolean | null
+          threshold_value: number
+          trigger_count?: number | null
+          updated_at?: string | null
+          user_id: string
+          webhook_url?: string | null
+        }
+        Update: {
+          alert_severity?: string
+          condition_operator?: string
+          cooldown_minutes?: number | null
+          created_at?: string | null
+          description?: string | null
+          evaluation_window_minutes?: number | null
+          id?: string
+          instance_id?: string | null
+          is_enabled?: boolean | null
+          last_triggered_at?: string | null
+          metric_type?: string
+          name?: string
+          notify_email?: boolean | null
+          notify_webhook?: boolean | null
+          threshold_value?: number
+          trigger_count?: number | null
+          updated_at?: string | null
+          user_id?: string
+          webhook_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_alert_rules_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          auto_resolve_after: unknown
+          auto_resolved: boolean | null
+          created_at: string | null
+          id: string
+          instance_id: string | null
+          message: string
+          metadata: Json | null
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          status: string
+          title: string
+          updated_at: string | null
+          user_id: string
+          vps_node_id: string | null
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: string
+          auto_resolve_after?: unknown
+          auto_resolved?: boolean | null
+          created_at?: string | null
+          id?: string
+          instance_id?: string | null
+          message: string
+          metadata?: Json | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+          vps_node_id?: string | null
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          auto_resolve_after?: unknown
+          auto_resolved?: boolean | null
+          created_at?: string | null
+          id?: string
+          instance_id?: string | null
+          message?: string
+          metadata?: Json | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+          vps_node_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_alerts_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_alerts_vps_node_id_fkey"
+            columns: ["vps_node_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_vps_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       genesis_credit_transactions: {
         Row: {
           amount: number
@@ -2293,6 +2448,95 @@ export type Database = {
           },
         ]
       }
+      genesis_instance_metrics: {
+        Row: {
+          api_calls: number | null
+          avg_cpu_usage: number | null
+          avg_memory_usage: number | null
+          avg_reconnection_time_ms: number | null
+          avg_response_time_ms: number | null
+          connection_uptime_seconds: number | null
+          created_at: string | null
+          disconnection_count: number | null
+          id: string
+          instance_id: string
+          max_response_time_ms: number | null
+          messages_failed: number | null
+          messages_received: number | null
+          messages_sent: number | null
+          min_response_time_ms: number | null
+          peak_cpu_usage: number | null
+          peak_memory_usage: number | null
+          period_end: string
+          period_start: string
+          period_type: string
+          reconnection_count: number | null
+          user_id: string
+          webhook_deliveries: number | null
+          webhook_failures: number | null
+        }
+        Insert: {
+          api_calls?: number | null
+          avg_cpu_usage?: number | null
+          avg_memory_usage?: number | null
+          avg_reconnection_time_ms?: number | null
+          avg_response_time_ms?: number | null
+          connection_uptime_seconds?: number | null
+          created_at?: string | null
+          disconnection_count?: number | null
+          id?: string
+          instance_id: string
+          max_response_time_ms?: number | null
+          messages_failed?: number | null
+          messages_received?: number | null
+          messages_sent?: number | null
+          min_response_time_ms?: number | null
+          peak_cpu_usage?: number | null
+          peak_memory_usage?: number | null
+          period_end: string
+          period_start: string
+          period_type?: string
+          reconnection_count?: number | null
+          user_id: string
+          webhook_deliveries?: number | null
+          webhook_failures?: number | null
+        }
+        Update: {
+          api_calls?: number | null
+          avg_cpu_usage?: number | null
+          avg_memory_usage?: number | null
+          avg_reconnection_time_ms?: number | null
+          avg_response_time_ms?: number | null
+          connection_uptime_seconds?: number | null
+          created_at?: string | null
+          disconnection_count?: number | null
+          id?: string
+          instance_id?: string
+          max_response_time_ms?: number | null
+          messages_failed?: number | null
+          messages_received?: number | null
+          messages_sent?: number | null
+          min_response_time_ms?: number | null
+          peak_cpu_usage?: number | null
+          peak_memory_usage?: number | null
+          period_end?: string
+          period_start?: string
+          period_type?: string
+          reconnection_count?: number | null
+          user_id?: string
+          webhook_deliveries?: number | null
+          webhook_failures?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_instance_metrics_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       genesis_instance_state_transitions: {
         Row: {
           from_state: string
@@ -2451,6 +2695,59 @@ export type Database = {
             columns: ["vps_node_id"]
             isOneToOne: false
             referencedRelation: "genesis_vps_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_realtime_metrics: {
+        Row: {
+          current_status: string
+          health_factors: Json | null
+          health_score: number | null
+          id: string
+          instance_id: string
+          last_message_at: string | null
+          messages_today: number | null
+          session_messages_received: number | null
+          session_messages_sent: number | null
+          session_start: string | null
+          updated_at: string | null
+          uptime_today_seconds: number | null
+        }
+        Insert: {
+          current_status: string
+          health_factors?: Json | null
+          health_score?: number | null
+          id?: string
+          instance_id: string
+          last_message_at?: string | null
+          messages_today?: number | null
+          session_messages_received?: number | null
+          session_messages_sent?: number | null
+          session_start?: string | null
+          updated_at?: string | null
+          uptime_today_seconds?: number | null
+        }
+        Update: {
+          current_status?: string
+          health_factors?: Json | null
+          health_score?: number | null
+          id?: string
+          instance_id?: string
+          last_message_at?: string | null
+          messages_today?: number | null
+          session_messages_received?: number | null
+          session_messages_sent?: number | null
+          session_start?: string | null
+          updated_at?: string | null
+          uptime_today_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_realtime_metrics_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: true
+            referencedRelation: "genesis_instances"
             referencedColumns: ["id"]
           },
         ]
@@ -6030,6 +6327,10 @@ export type Database = {
         Args: { p_amount: number; p_user_id: string }
         Returns: boolean
       }
+      genesis_calculate_health_score: {
+        Args: { p_instance_id: string }
+        Returns: number
+      }
       genesis_cleanup_old_backups: {
         Args: { p_instance_id: string; p_keep_count?: number }
         Returns: number
@@ -6042,6 +6343,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      genesis_create_alert: {
+        Args: {
+          p_alert_type: string
+          p_instance_id: string
+          p_message: string
+          p_metadata?: Json
+          p_severity: string
+          p_title: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       genesis_create_backup_record: {
         Args: {
           p_backup_type?: string
@@ -6053,6 +6366,10 @@ export type Database = {
         Returns: string
       }
       genesis_detect_offline_nodes: { Args: never; Returns: number }
+      genesis_evaluate_alert_rules: {
+        Args: { p_instance_id: string }
+        Returns: number
+      }
       genesis_get_latest_backup: {
         Args: { p_instance_id: string }
         Returns: {
@@ -6097,6 +6414,10 @@ export type Database = {
           p_source?: string
         }
         Returns: Json
+      }
+      genesis_record_metrics: {
+        Args: { p_instance_id: string; p_metrics: Json }
+        Returns: string
       }
       genesis_revoke_instance_tokens: {
         Args: { p_instance_id: string }

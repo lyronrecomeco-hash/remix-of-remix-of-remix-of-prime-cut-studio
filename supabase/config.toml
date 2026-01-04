@@ -148,3 +148,6 @@ verify_jwt = false
 
 [functions.genesis-vps-pool]
 verify_jwt = false
+
+[functions.genesis-metrics]
+verify_jwt = false
