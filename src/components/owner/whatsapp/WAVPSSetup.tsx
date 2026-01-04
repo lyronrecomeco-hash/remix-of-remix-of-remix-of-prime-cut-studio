@@ -509,20 +509,27 @@ app.post('/disconnect', authMiddleware, async (req, res) => {
 // QR Code - rota que o painel usa
 app.get('/api/instance/:id/qrcode', authMiddleware, (req, res) => {
   if (connectionStatus === 'connected') return res.json({ connected: true, status: 'connected', phone: phoneNumber });
+  
+  // Se não há QR e não está conectando, inicia conexão automaticamente
+  if (!qrCode && connectionStatus === 'disconnected') {
+    connectWhatsApp();
+    return res.json({ connected: false, qr: null, message: 'Iniciando conexão...' });
+  }
+  
   if (!qrCode) return res.json({ connected: false, qr: null, message: 'Aguardando QR...' });
   res.json({ connected: false, qr: qrCode, qrcode: qrCode });
 });
 
 app.post('/api/instance/:id/qrcode', authMiddleware, (req, res) => {
   if (connectionStatus === 'connected') return res.json({ connected: true, status: 'connected', phone: phoneNumber });
-  if (!qrCode) {
-    // Força reconexão pra gerar QR se necessário
-    if (connectionStatus === 'disconnected' && !sock) {
-      connectWhatsApp();
-      return res.json({ connected: false, qr: null, message: 'Iniciando conexão...' });
-    }
-    return res.json({ connected: false, qr: null, message: 'Aguardando QR...' });
+  
+  // Se não há QR e não está conectando, inicia conexão automaticamente
+  if (!qrCode && connectionStatus === 'disconnected') {
+    connectWhatsApp();
+    return res.json({ connected: false, qr: null, message: 'Iniciando conexão...' });
   }
+  
+  if (!qrCode) return res.json({ connected: false, qr: null, message: 'Aguardando QR...' });
   res.json({ connected: false, qr: qrCode, qrcode: qrCode });
 });
 
