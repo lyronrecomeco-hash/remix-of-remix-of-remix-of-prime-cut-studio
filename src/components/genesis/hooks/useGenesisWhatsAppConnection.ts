@@ -410,7 +410,7 @@ Agora você pode automatizar seu atendimento!`;
 
       try {
         const res = await proxyRequest(instanceId, `/api/instance/${instanceId}/send`, 'POST', {
-          phone: phoneNumber,
+          to: phoneNumber,
           message,
         });
 
