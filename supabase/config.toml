@@ -142,3 +142,6 @@ verify_jwt = false
 
 [functions.genesis-connection-orchestrator]
 verify_jwt = false
+
+[functions.genesis-session-backup]
+verify_jwt = false
