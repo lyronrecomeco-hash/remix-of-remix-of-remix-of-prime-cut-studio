@@ -145,3 +145,6 @@ verify_jwt = false
 
 [functions.genesis-session-backup]
 verify_jwt = false
+
+[functions.genesis-vps-pool]
+verify_jwt = false
