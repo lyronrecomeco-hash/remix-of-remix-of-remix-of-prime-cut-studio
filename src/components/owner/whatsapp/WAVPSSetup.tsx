@@ -158,11 +158,12 @@ export const WAVPSSetup = ({
     const token = masterToken || 'SEU_TOKEN_AQUI';
     
     return `// ============================================
-// WhatsApp Backend VPS - v4.0
+// WhatsApp Backend VPS - v4.1
 // Para Ubuntu 24.04 LTS (8GB RAM)
+// Compatível com Baileys mais recente
 // ============================================
 
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, makeInMemoryStore } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
@@ -183,7 +184,6 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
 const logger = pino({ level: 'silent' });
-const store = makeInMemoryStore({ logger });
 
 let sock = null;
 let qrCode = null;
@@ -246,8 +246,6 @@ const connectWhatsApp = async () => {
     syncFullHistory: false,
     generateHighQualityLinkPreview: true,
   });
-
-  store.bind(sock.ev);
 
   sock.ev.on('connection.update', async (update) => {
     const { connection, lastDisconnect, qr } = update;
@@ -491,7 +489,7 @@ app.post('/send-media', authMiddleware, async (req, res) => {
 // ============ INICIAR SERVIDOR ============
 app.listen(PORT, '0.0.0.0', () => {
   console.log('============================================');
-  console.log('  WhatsApp Backend VPS v4.0');
+  console.log('  WhatsApp Backend VPS v4.1');
   console.log('  Porta:', PORT);
   console.log('  Instância:', INSTANCE_ID);
   console.log('============================================');
