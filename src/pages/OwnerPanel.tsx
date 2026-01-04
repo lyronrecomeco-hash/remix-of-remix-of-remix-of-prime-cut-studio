@@ -23,7 +23,8 @@ import {
   Menu,
   X,
   Server,
-  Zap
+  Zap,
+  Github
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -46,6 +47,7 @@ import WhatsAppAPIManager from '@/components/owner/WhatsAppAPIManager';
 import CRMUsersManager from '@/components/owner/CRMUsersManager';
 import ProposalsManager from '@/components/owner/ProposalsManager';
 import GenesisInstancesMonitor from '@/components/owner/GenesisInstancesMonitor';
+import GitHubManager from '@/components/owner/GitHubManager';
 import { OwnerProfileMenu } from '@/components/owner/OwnerProfileMenu';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -102,6 +104,7 @@ const navSections: NavSection[] = [
     title: 'API & Integração',
     items: [
       { id: 'api-projects', label: 'API & Projetos', icon: Server, badge: 'Core', badgeVariant: 'default' },
+      { id: 'github', label: 'GitHub', icon: Github, badge: 'Deploy', badgeVariant: 'default' },
     ]
   },
   {
@@ -186,6 +189,8 @@ const OwnerPanel = () => {
         return <GenesisInstancesMonitor />;
       case 'api-projects':
         return <WhatsAppAPIManager />;
+      case 'github':
+        return <GitHubManager />;
       case 'logs':
         return <GlobalLogsViewer />;
       case 'settings':

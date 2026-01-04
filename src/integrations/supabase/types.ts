@@ -3382,6 +3382,48 @@ export type Database = {
           },
         ]
       }
+      owner_github_config: {
+        Row: {
+          branch: string
+          created_at: string
+          github_token_secret_id: string | null
+          id: string
+          install_path: string
+          is_active: boolean
+          node_version: string
+          pm2_app_name: string
+          project_name: string
+          repository_url: string
+          updated_at: string
+        }
+        Insert: {
+          branch?: string
+          created_at?: string
+          github_token_secret_id?: string | null
+          id?: string
+          install_path?: string
+          is_active?: boolean
+          node_version?: string
+          pm2_app_name?: string
+          project_name?: string
+          repository_url: string
+          updated_at?: string
+        }
+        Update: {
+          branch?: string
+          created_at?: string
+          github_token_secret_id?: string | null
+          id?: string
+          install_path?: string
+          is_active?: boolean
+          node_version?: string
+          pm2_app_name?: string
+          project_name?: string
+          repository_url?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       owner_settings: {
         Row: {
           created_at: string
