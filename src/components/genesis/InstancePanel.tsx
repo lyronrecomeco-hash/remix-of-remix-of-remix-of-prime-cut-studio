@@ -7,7 +7,6 @@ import {
   Play,
   RefreshCw,
   Download,
-  FileText,
   Settings2,
   Link2,
   Lock,
@@ -15,14 +14,17 @@ import {
   AlertCircle,
   CheckCircle2,
   Phone,
+  X,
+  Info,
+  Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { GenesisWhatsAppConnect } from './GenesisWhatsAppConnect';
@@ -71,6 +73,11 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
     connection_status: true,
   });
   const [saving, setSaving] = useState(false);
+  
+  // Modais
+  const [showActionsModal, setShowActionsModal] = useState(false);
+  const [showWebhookModal, setShowWebhookModal] = useState(false);
+  const [showCreditsModal, setShowCreditsModal] = useState(false);
 
   const instanceCode = `genesis-${instance.id.slice(0, 8)}`;
   const endpoint = `https://api.genesis.com.br/instances/${instanceCode}`;
@@ -159,7 +166,7 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
         </Badge>
       </motion.div>
 
-      {/* Grid Principal - 2 Colunas */}
+      {/* Grid Principal */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Coluna Esquerda - Conexão */}
         <motion.div 
@@ -177,111 +184,93 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
           {/* Número Conectado */}
           {isConnected && instance.phone_number && (
             <Card className="border-green-500/20 bg-gradient-to-r from-green-500/5 to-transparent">
-              <CardContent className="py-4">
+              <CardContent className="py-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                    <Phone className="w-5 h-5 text-green-500" />
+                  <div className="w-9 h-9 rounded-lg bg-green-500/10 flex items-center justify-center">
+                    <Phone className="w-4 h-4 text-green-500" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground">Número Conectado</p>
-                    <p className="font-semibold text-green-600 truncate">{formattedPhone}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase">Número Conectado</p>
+                    <p className="font-semibold text-green-600 text-sm truncate">{formattedPhone}</p>
                   </div>
                   <Button 
                     variant="ghost" 
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-7 w-7"
                     onClick={() => copyToClipboard(instance.phone_number || '', 'Número')}
                   >
-                    <Copy className="w-3.5 h-3.5" />
+                    <Copy className="w-3 h-3" />
                   </Button>
                 </div>
               </CardContent>
             </Card>
           )}
-
-          {/* Aviso de Créditos - Compacto */}
-          <Card className="border-amber-500/20 bg-gradient-to-r from-amber-500/5 to-transparent">
-            <CardContent className="py-4">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
-                  <Coins className="w-4 h-4 text-amber-500" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-amber-600">15 créditos/dia</p>
-                  <p className="text-xs text-muted-foreground">
-                    Consumo mínimo por instância ativa. Pause quando não usar.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </motion.div>
 
-        {/* Coluna Direita - Ações e Info */}
+        {/* Coluna Direita - Botões de Ação */}
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           className="space-y-4"
         >
-          {/* Ações Rápidas */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Settings2 className="w-4 h-4 text-primary" />
-                Ações Rápidas
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-3 gap-2">
-                {instance.is_paused ? (
-                  <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => handleAction('Retomar')}>
-                    <Play className="w-3.5 h-3.5" />
-                    Retomar
-                  </Button>
-                ) : (
-                  <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => handleAction('Pausar')}>
-                    <Pause className="w-3.5 h-3.5" />
-                    Pausar
-                  </Button>
-                )}
-                <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => handleAction('Reiniciar')}>
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  Reiniciar
-                </Button>
-                <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => handleAction('Contatos')}>
-                  <Download className="w-3.5 h-3.5" />
-                  Contatos
-                </Button>
+          {/* Botões de Ação Compactos */}
+          <div className="grid grid-cols-2 gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-2 h-10"
+              onClick={() => setShowActionsModal(true)}
+            >
+              <Settings2 className="w-4 h-4" />
+              Ações Rápidas
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-2 h-10"
+              onClick={() => setShowWebhookModal(true)}
+            >
+              <Zap className="w-4 h-4" />
+              Webhook
+            </Button>
+          </div>
+
+          {/* Aviso de Créditos - Clicável */}
+          <Card 
+            className="border-amber-500/20 bg-gradient-to-r from-amber-500/5 to-transparent cursor-pointer hover:border-amber-500/40 transition-colors"
+            onClick={() => setShowCreditsModal(true)}
+          >
+            <CardContent className="py-3">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                  <Coins className="w-4 h-4 text-amber-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-amber-600">15 créditos/dia</p>
+                  <p className="text-[10px] text-muted-foreground">Toque para mais informações</p>
+                </div>
+                <Info className="w-4 h-4 text-amber-500/50" />
               </div>
             </CardContent>
           </Card>
 
           {/* API Info - Compacto */}
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Link2 className="w-4 h-4 text-primary" />
+            <CardHeader className="pb-2 pt-3">
+              <CardTitle className="text-xs flex items-center gap-2 text-muted-foreground">
+                <Link2 className="w-3.5 h-3.5" />
                 API
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="pb-3 space-y-1.5">
               <div className="p-2 rounded-md bg-muted/50 flex items-center justify-between">
                 <div className="min-w-0 flex-1">
-                  <Label className="text-[10px] text-muted-foreground uppercase">Instância</Label>
-                  <code className="text-xs font-mono block truncate">{instanceCode}</code>
+                  <Label className="text-[9px] text-muted-foreground uppercase">ID</Label>
+                  <code className="text-[11px] font-mono block truncate">{instanceCode}</code>
                 </div>
-                <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={() => copyToClipboard(instanceCode, 'Código')}>
-                  <Copy className="w-3 h-3" />
-                </Button>
-              </div>
-              <div className="p-2 rounded-md bg-muted/50 flex items-center justify-between">
-                <div className="min-w-0 flex-1">
-                  <Label className="text-[10px] text-muted-foreground uppercase">Endpoint</Label>
-                  <code className="text-xs font-mono block truncate">{endpoint}</code>
-                </div>
-                <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={() => copyToClipboard(endpoint, 'Endpoint')}>
-                  <Copy className="w-3 h-3" />
+                <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0" onClick={() => copyToClipboard(instanceCode, 'Código')}>
+                  <Copy className="w-2.5 h-2.5" />
                 </Button>
               </div>
             </CardContent>
@@ -289,90 +278,185 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
         </motion.div>
       </div>
 
-      {/* Tabs para Webhook e Integrações */}
+      {/* Integrações */}
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
       >
-        <Tabs defaultValue="webhook" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 max-w-md">
-            <TabsTrigger value="webhook" className="gap-2">
-              <Link2 className="w-3.5 h-3.5" />
-              Webhook
-            </TabsTrigger>
-            <TabsTrigger value="integrations" className="gap-2">
-              <Lock className="w-3.5 h-3.5" />
+        <Card>
+          <CardHeader className="pb-2 pt-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Lock className="w-4 h-4 text-primary" />
               Integrações
-            </TabsTrigger>
-          </TabsList>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pb-4">
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+              {integrations.map((integration) => (
+                <div 
+                  key={integration.id} 
+                  className="p-2 rounded-lg border bg-muted/20 opacity-50 text-center"
+                >
+                  <div className="h-6 mb-1 flex items-center justify-center">
+                    <img 
+                      src={integration.logo} 
+                      alt={integration.name} 
+                      className="h-5 w-auto object-contain"
+                    />
+                  </div>
+                  <p className="text-[10px] font-medium">{integration.name}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
-          <TabsContent value="webhook" className="mt-4">
-            <Card>
-              <CardContent className="pt-4 space-y-4">
-                <div>
-                  <Label className="text-sm">Endereço webhook (opcional)</Label>
-                  <Input 
-                    value={webhookUrl}
-                    onChange={(e) => setWebhookUrl(e.target.value)}
-                    placeholder="https://seu-servidor.com/webhook"
-                    className="mt-1.5"
+      {/* Modal: Ações Rápidas */}
+      <Dialog open={showActionsModal} onOpenChange={setShowActionsModal}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings2 className="w-5 h-5 text-primary" />
+              Ações Rápidas
+            </DialogTitle>
+            <DialogDescription>
+              Gerencie sua instância WhatsApp
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-2 pt-2">
+            {instance.is_paused ? (
+              <Button variant="outline" className="gap-2 justify-start" onClick={() => { handleAction('Retomar'); setShowActionsModal(false); }}>
+                <Play className="w-4 h-4 text-green-500" />
+                Retomar Instância
+              </Button>
+            ) : (
+              <Button variant="outline" className="gap-2 justify-start" onClick={() => { handleAction('Pausar'); setShowActionsModal(false); }}>
+                <Pause className="w-4 h-4 text-amber-500" />
+                Pausar Instância
+              </Button>
+            )}
+            <Button variant="outline" className="gap-2 justify-start" onClick={() => { handleAction('Reiniciar'); setShowActionsModal(false); }}>
+              <RefreshCw className="w-4 h-4 text-blue-500" />
+              Reiniciar Conexão
+            </Button>
+            <Button variant="outline" className="gap-2 justify-start" onClick={() => { handleAction('Contatos'); setShowActionsModal(false); }}>
+              <Download className="w-4 h-4 text-purple-500" />
+              Exportar Contatos
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: Webhook */}
+      <Dialog open={showWebhookModal} onOpenChange={setShowWebhookModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-primary" />
+              Configurar Webhook
+            </DialogTitle>
+            <DialogDescription>
+              Receba eventos em tempo real na sua aplicação
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div>
+              <Label className="text-sm">URL do Webhook</Label>
+              <Input 
+                value={webhookUrl}
+                onChange={(e) => setWebhookUrl(e.target.value)}
+                placeholder="https://seu-servidor.com/webhook"
+                className="mt-1.5"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm">Eventos</Label>
+              {Object.entries(events).map(([key, value]) => (
+                <div key={key} className="flex items-center justify-between p-2 rounded-md bg-muted/30">
+                  <span className="text-sm">
+                    {key === 'message_received' && 'Mensagens recebidas'}
+                    {key === 'message_sent' && 'Mensagens enviadas'}
+                    {key === 'connection_status' && 'Status da conexão'}
+                  </span>
+                  <Switch 
+                    checked={value}
+                    onCheckedChange={(checked) => setEvents(e => ({ ...e, [key]: checked }))}
                   />
                 </div>
+              ))}
+            </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {Object.entries(events).map(([key, value]) => (
-                    <div key={key} className="flex items-center gap-2 p-2 rounded-md bg-muted/30">
-                      <Switch 
-                        checked={value}
-                        onCheckedChange={(checked) => setEvents(e => ({ ...e, [key]: checked }))}
-                      />
-                      <span className="text-xs">
-                        {key === 'message_received' && 'Mensagens recebidas'}
-                        {key === 'message_sent' && 'Mensagens enviadas'}
-                        {key === 'connection_status' && 'Status conexão'}
-                      </span>
-                    </div>
-                  ))}
+            <Button onClick={() => { handleSaveSettings(); setShowWebhookModal(false); }} disabled={saving} className="w-full gap-2">
+              {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+              Salvar Configurações
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: Consumo de Créditos */}
+      <Dialog open={showCreditsModal} onOpenChange={setShowCreditsModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Coins className="w-5 h-5 text-amber-500" />
+              Consumo de Créditos
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center">
+                  <Coins className="w-6 h-6 text-amber-500" />
                 </div>
-
-                <Button onClick={handleSaveSettings} disabled={saving} size="sm" className="gap-2">
-                  {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : null}
-                  Salvar
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="integrations" className="mt-4">
-            <Card>
-              <CardContent className="pt-4">
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                  {integrations.map((integration) => (
-                    <div 
-                      key={integration.id} 
-                      className="p-3 rounded-lg border bg-muted/20 opacity-50 text-center"
-                    >
-                      <div className="h-8 mb-2 flex items-center justify-center">
-                        <img 
-                          src={integration.logo} 
-                          alt={integration.name} 
-                          className="h-6 w-auto object-contain"
-                        />
-                      </div>
-                      <p className="text-xs font-medium">{integration.name}</p>
-                      <Badge variant="secondary" className="mt-1.5 text-[10px]">
-                        <Lock className="w-2.5 h-2.5 mr-1" />
-                        Em breve
-                      </Badge>
-                    </div>
-                  ))}
+                <div>
+                  <p className="text-2xl font-bold text-amber-600">15 créditos</p>
+                  <p className="text-sm text-muted-foreground">por dia / por instância</p>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </motion.div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-sm">Cobrança Automática</p>
+                  <p className="text-xs text-muted-foreground">
+                    Os créditos são debitados automaticamente uma vez por dia enquanto a instância estiver conectada.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <Pause className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-sm">Pause para Economizar</p>
+                  <p className="text-xs text-muted-foreground">
+                    Instâncias pausadas não consomem créditos. Pause quando não estiver usando para economizar.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <Zap className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-sm">Conexão 24/7</p>
+                  <p className="text-xs text-muted-foreground">
+                    Sua instância permanece conectada 24 horas por dia, 7 dias por semana, independente de você estar online.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <Button variant="outline" className="w-full" onClick={() => setShowCreditsModal(false)}>
+              Entendi
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

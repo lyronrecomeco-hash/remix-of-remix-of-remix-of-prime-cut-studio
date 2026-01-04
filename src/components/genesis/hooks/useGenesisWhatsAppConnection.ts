@@ -19,7 +19,8 @@ interface InstanceStatus {
   isStale: boolean;
 }
 
-const STALE_THRESHOLD_MS = 180000; // 3 minutes
+// Aumentado para 5 minutos (300s) para maior estabilidade 24/7
+const STALE_THRESHOLD_MS = 300000;
 
 export function useGenesisWhatsAppConnection() {
   const [connectionState, setConnectionState] = useState<ConnectionState>({
