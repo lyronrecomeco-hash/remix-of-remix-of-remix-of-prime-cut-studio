@@ -479,10 +479,16 @@ Sua instância está conectada e funcionando perfeitamente!
               >
                 <p className="text-sm text-destructive flex items-center gap-2">
                   <XCircle className="w-4 h-4 shrink-0" />
-                  {connectionState.error}
+                  {connectionState.error.includes('backend') || connectionState.error.includes('Configure') 
+                    ? 'Backend não configurado' 
+                    : 'QR Code não disponível'
+                  }
                 </p>
                 <p className="text-xs text-muted-foreground mt-2 ml-6">
-                  Verifique a configuração do WhatsApp Automação ou contate o suporte.
+                  {connectionState.error.includes('backend') || connectionState.error.includes('Configure')
+                    ? 'Acesse as configurações da instância e configure a URL e Token do seu backend VPS antes de conectar.'
+                    : 'Verifique a configuração do WhatsApp Automação ou contate o suporte.'
+                  }
                 </p>
               </motion.div>
             )}
