@@ -5654,6 +5654,10 @@ export type Database = {
       cleanup_expired_verification_codes: { Args: never; Returns: undefined }
       current_tenant_id: { Args: never; Returns: string }
       current_tenant_ids: { Args: never; Returns: string[] }
+      deduct_genesis_credits: {
+        Args: { p_amount: number; p_user_id: string }
+        Returns: boolean
+      }
       get_affiliate_id: { Args: { _user_id: string }; Returns: string }
       get_crm_tenant_id: { Args: { _auth_user_id: string }; Returns: string }
       get_crm_user_id: { Args: { _auth_user_id: string }; Returns: string }
