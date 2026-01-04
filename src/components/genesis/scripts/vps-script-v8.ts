@@ -338,15 +338,247 @@ class InstanceManager {
     }
   }
 
+  // ════════════════════════════════════════════════════════════════════════════
+  // FASE 8: SISTEMA DE BACKUP DE SESSÃO
+  // ════════════════════════════════════════════════════════════════════════════
+  
+  async backupSession(instanceId) {
+    const instance = this.instances.get(instanceId);
+    if (!instance) return { success: false, error: 'Instância não encontrada' };
+
+    const authDir = path.join(CONFIG.DATA_DIR, 'auth_' + instanceId);
+    if (!fs.existsSync(authDir)) {
+      return { success: false, error: 'Nenhuma sessão para backup' };
+    }
+
+    try {
+      log('info', \`[\\x1b[34m\${instance.name}\\x1b[0m] Iniciando backup de sessão...\`);
+
+      // 1. Criar arquivo ZIP da pasta de auth
+      const archiver = require('archiver');
+      const zipPath = path.join(CONFIG.DATA_DIR, \`backup_\${instanceId}.zip\`);
+      const output = fs.createWriteStream(zipPath);
+      const archive = archiver('zip', { zlib: { level: 9 } });
+
+      await new Promise((resolve, reject) => {
+        output.on('close', resolve);
+        archive.on('error', reject);
+        archive.pipe(output);
+        archive.directory(authDir, false);
+        archive.finalize();
+      });
+
+      // 2. Calcular checksum
+      const fileBuffer = fs.readFileSync(zipPath);
+      const checksum = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+      const fileSize = fs.statSync(zipPath).size;
+
+      // 3. Solicitar URL de upload do backend
+      const createResponse = await fetch(\`\${CONFIG.SUPABASE_URL}/functions/v1/genesis-session-backup\`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': \`Bearer \${CONFIG.SUPABASE_KEY}\`,
+        },
+        body: JSON.stringify({
+          action: 'create_backup',
+          instance_id: instanceId,
+          checksum,
+          file_size: fileSize,
+          backup_type: 'automatic',
+          metadata: {
+            phone_number: instance.phoneNumber,
+            vps_version: '8.0',
+            timestamp: new Date().toISOString(),
+          },
+        }),
+      });
+
+      const createResult = await createResponse.json();
+      if (!createResult.success) {
+        fs.unlinkSync(zipPath);
+        return { success: false, error: createResult.error };
+      }
+
+      // 4. Upload do arquivo para o Storage
+      const uploadResponse = await fetch(createResult.upload_url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/zip' },
+        body: fileBuffer,
+      });
+
+      if (!uploadResponse.ok) {
+        fs.unlinkSync(zipPath);
+        return { success: false, error: 'Falha no upload do backup' };
+      }
+
+      // 5. Confirmar upload
+      await fetch(\`\${CONFIG.SUPABASE_URL}/functions/v1/genesis-session-backup\`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': \`Bearer \${CONFIG.SUPABASE_KEY}\`,
+        },
+        body: JSON.stringify({
+          action: 'upload_complete',
+          instance_id: instanceId,
+          backup_id: createResult.backup_id,
+        }),
+      });
+
+      // Limpar arquivo temporário
+      fs.unlinkSync(zipPath);
+
+      log('success', \`[\\x1b[32m\${instance.name}\\x1b[0m] Backup concluído! v\${createResult.version} (\${(fileSize / 1024).toFixed(1)}KB)\`);
+      return { 
+        success: true, 
+        backup_id: createResult.backup_id,
+        version: createResult.version,
+        checksum,
+        size: fileSize,
+      };
+    } catch (err) {
+      log('error', \`[\\x1b[31m\${instance.name}\\x1b[0m] Erro no backup: \${err.message}\`);
+      return { success: false, error: err.message };
+    }
+  }
+
+  async restoreSession(instanceId, backupId = null) {
+    const instance = this.instances.get(instanceId);
+    if (!instance) return { success: false, error: 'Instância não encontrada' };
+
+    try {
+      log('info', \`[\\x1b[34m\${instance.name}\\x1b[0m] Iniciando restore de sessão...\`);
+
+      // 1. Buscar backup (último válido se não especificado)
+      const action = backupId ? 'restore' : 'get_latest';
+      const response = await fetch(\`\${CONFIG.SUPABASE_URL}/functions/v1/genesis-session-backup\`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': \`Bearer \${CONFIG.SUPABASE_KEY}\`,
+        },
+        body: JSON.stringify({
+          action,
+          instance_id: instanceId,
+          backup_id: backupId,
+        }),
+      });
+
+      const result = await response.json();
+      if (!result.success || !result.backup) {
+        return { success: false, error: result.error || 'Nenhum backup encontrado' };
+      }
+
+      const backup = result.backup;
+
+      // 2. Baixar arquivo do Storage
+      const downloadResponse = await fetch(backup.download_url);
+      if (!downloadResponse.ok) {
+        return { success: false, error: 'Falha no download do backup' };
+      }
+
+      const zipBuffer = Buffer.from(await downloadResponse.arrayBuffer());
+      
+      // 3. Verificar checksum
+      if (backup.checksum) {
+        const downloadChecksum = crypto.createHash('sha256').update(zipBuffer).digest('hex');
+        if (downloadChecksum !== backup.checksum) {
+          return { success: false, error: 'Checksum inválido - backup corrompido' };
+        }
+      }
+
+      // 4. Descompactar para pasta de auth
+      const unzipper = require('unzipper');
+      const authDir = path.join(CONFIG.DATA_DIR, 'auth_' + instanceId);
+      
+      // Backup da sessão atual (se existir)
+      if (fs.existsSync(authDir)) {
+        const oldBackupDir = authDir + '_old_' + Date.now();
+        fs.renameSync(authDir, oldBackupDir);
+        log('info', \`[\\x1b[33m\${instance.name}\\x1b[0m] Sessão anterior movida para backup\`);
+      }
+
+      fs.mkdirSync(authDir, { recursive: true });
+      
+      const zipPath = path.join(CONFIG.DATA_DIR, \`restore_\${instanceId}.zip\`);
+      fs.writeFileSync(zipPath, zipBuffer);
+
+      await new Promise((resolve, reject) => {
+        fs.createReadStream(zipPath)
+          .pipe(unzipper.Extract({ path: authDir }))
+          .on('close', resolve)
+          .on('error', reject);
+      });
+
+      fs.unlinkSync(zipPath);
+
+      // 5. Marcar como restaurado no backend
+      if (backupId) {
+        await fetch(\`\${CONFIG.SUPABASE_URL}/functions/v1/genesis-session-backup\`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': \`Bearer \${CONFIG.SUPABASE_KEY}\`,
+          },
+          body: JSON.stringify({
+            action: 'restore',
+            instance_id: instanceId,
+            backup_id: backup.backup_id || backupId,
+          }),
+        });
+      }
+
+      log('success', \`[\\x1b[32m\${instance.name}\\x1b[0m] Sessão restaurada! v\${backup.version}\`);
+      return { 
+        success: true, 
+        version: backup.version,
+        message: 'Sessão restaurada com sucesso. Use connect para iniciar.',
+      };
+    } catch (err) {
+      log('error', \`[\\x1b[31m\${instance.name}\\x1b[0m] Erro no restore: \${err.message}\`);
+      return { success: false, error: err.message };
+    }
+  }
+
+  async listBackups(instanceId) {
+    try {
+      const response = await fetch(\`\${CONFIG.SUPABASE_URL}/functions/v1/genesis-session-backup\`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': \`Bearer \${CONFIG.SUPABASE_KEY}\`,
+        },
+        body: JSON.stringify({
+          action: 'list_backups',
+          instance_id: instanceId,
+        }),
+      });
+
+      return await response.json();
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  }
+
   async autoConnectAll() {
     for (const [id, inst] of this.instances) {
       if (inst.status === 'disconnected') {
         const authDir = path.join(CONFIG.DATA_DIR, 'auth_' + id);
-        if (fs.existsSync(authDir)) {
-          log('info', \`Auto-conectando: \${inst.name}\`);
-          await this.connectInstance(id);
-          await new Promise(r => setTimeout(r, 2000)); // Delay entre conexões
+        
+        // Se não tem sessão local, tentar restaurar do backup
+        if (!fs.existsSync(authDir)) {
+          log('info', \`[\\x1b[34m\${inst.name}\\x1b[0m] Tentando restaurar sessão do backup...\`);
+          const restoreResult = await this.restoreSession(id);
+          if (!restoreResult.success) {
+            log('warn', \`[\\x1b[33m\${inst.name}\\x1b[0m] Sem backup disponível\`);
+            continue;
+          }
         }
+        
+        log('info', \`Auto-conectando: \${inst.name}\`);
+        await this.connectInstance(id);
+        await new Promise(r => setTimeout(r, 2000)); // Delay entre conexões
       }
     }
   }
@@ -530,6 +762,29 @@ app.post('/api/instance/:id/send', authMiddleware, async (req, res) => {
   }
 
   const result = await manager.sendMessage(req.params.id, recipient, content);
+  res.json(result);
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// ENDPOINTS DE BACKUP DE SESSÃO (FASE 8)
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+
+// Criar backup de sessão
+app.post('/api/instance/:id/backup', authMiddleware, async (req, res) => {
+  const result = await manager.backupSession(req.params.id);
+  res.json(result);
+});
+
+// Restaurar sessão de backup
+app.post('/api/instance/:id/restore', authMiddleware, async (req, res) => {
+  const { backup_id } = req.body;
+  const result = await manager.restoreSession(req.params.id, backup_id);
+  res.json(result);
+});
+
+// Listar backups disponíveis
+app.get('/api/instance/:id/backups', authMiddleware, async (req, res) => {
+  const result = await manager.listBackups(req.params.id);
   res.json(result);
 });
 
