@@ -77,10 +77,13 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
     onRefresh();
   };
 
-  // Considera conectado baseado no status real; "stale" é apenas um alerta (não deve forçar botão de conectar)
+  // Considera conectado baseado no status real do DB/polling (liveStatus tem prioridade)
   const isConnected = liveStatus.status === 'connected';
   const isConnecting = connectionState.isConnecting || connectionState.isPolling || connectionState.phase === 'stabilizing';
-  const phase = connectionState.phase;
+  
+  // Phase: prioriza liveStatus.status sobre connectionState.phase
+  // Se já está conectado via polling, ignora a phase do connectionState (pode estar desatualizada)
+  const phase = isConnected ? 'connected' : connectionState.phase;
 
   // Phase indicator text
   const getPhaseText = () => {
