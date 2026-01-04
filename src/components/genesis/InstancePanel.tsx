@@ -141,7 +141,7 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
     }
   };
 
-  const isConnected = instance.effective_status === 'connected' || instance.status === 'connected';
+  const isConnected = instance.effective_status === 'connected';
   const formattedPhone = instance.phone_number 
     ? instance.phone_number.replace(/(\d{2})(\d{2})(\d{5})(\d{4})/, '+$1 ($2) $3-$4')
     : null;

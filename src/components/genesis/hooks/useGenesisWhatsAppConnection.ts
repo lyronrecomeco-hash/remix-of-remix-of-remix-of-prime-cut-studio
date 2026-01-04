@@ -9,7 +9,7 @@ interface ConnectionState {
   qrCode: string | null;
   error: string | null;
   attempts: number;
-  phase: 'idle' | 'validating' | 'generating' | 'waiting' | 'connected' | 'error';
+  phase: 'idle' | 'validating' | 'generating' | 'waiting' | 'stabilizing' | 'connected' | 'error';
 }
 
 interface InstanceStatus {
@@ -263,9 +263,12 @@ export function useGenesisWhatsAppConnection() {
   };
 
   // === FASE 0: DIAGNÓSTICO - Envio automático com logs detalhados ===
-  const sendWelcomeMessage = async (instanceId: string, phoneNumber: string) => {
+  const sendWelcomeMessage = async (
+    instanceId: string,
+    phoneNumber: string
+  ): Promise<{ success: boolean; status?: number; error?: string }> => {
     const sendStart = Date.now();
-    
+
     logDiagnostic('WELCOME_MESSAGE_START', {
       instanceId,
       phoneNumber,
@@ -286,11 +289,10 @@ Agora você pode automatizar seu atendimento!`;
     logDiagnostic('WELCOME_MESSAGE_DELAY', { instanceId, delayMs: initialDelay, reason: 'socket_stabilization' });
     await new Promise((r) => setTimeout(r, initialDelay));
 
-    // Retry loop com logs detalhados
     const maxAttempts = 10;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       const attemptStart = Date.now();
-      
+
       logDiagnostic('WELCOME_MESSAGE_ATTEMPT', {
         instanceId,
         phoneNumber,
@@ -320,7 +322,6 @@ Agora você pode automatizar seu atendimento!`;
           rawData: JSON.stringify(res.data).slice(0, 500),
         });
 
-        // Sucesso: status 2xx E ok=true
         if (res.ok && res.status >= 200 && res.status < 300) {
           logDiagnostic('WELCOME_MESSAGE_SUCCESS', {
             instanceId,
@@ -328,8 +329,7 @@ Agora você pode automatizar seu atendimento!`;
             attempt,
             totalTime: Date.now() - sendStart,
           });
-          
-          // Registrar sucesso no banco
+
           try {
             await supabase.from('genesis_event_logs').insert({
               instance_id: instanceId,
@@ -339,22 +339,31 @@ Agora você pode automatizar seu atendimento!`;
               details: { attempt, totalTime: Date.now() - sendStart },
             });
           } catch {}
-          
-          return;
+
+          return { success: true, status: res.status };
         }
 
-        // Analisar erro para decidir se retry
         const errText = String(res?.data?.error || res?.error || '').toLowerCase();
         const retryablePatterns = [
-          'não conectado', 'not connected', 'socket', 'aguard',
-          'timeout', 'unavailable', 'not ready', 'nao pronto',
-          'connection', 'retry', 'busy', 'initializing'
+          'não conectado',
+          'not connected',
+          'socket',
+          'aguard',
+          'timeout',
+          'unavailable',
+          'not ready',
+          'nao pronto',
+          'connection',
+          'retry',
+          'busy',
+          'initializing',
         ];
-        const shouldRetry = 
-          res.status === 503 || 
+
+        const shouldRetry =
+          res.status === 503 ||
           res.status === 0 ||
           res.status === 500 ||
-          retryablePatterns.some(p => errText.includes(p));
+          retryablePatterns.some((p) => errText.includes(p));
 
         logDiagnostic('WELCOME_MESSAGE_RETRY_DECISION', {
           instanceId,
@@ -362,7 +371,7 @@ Agora você pode automatizar seu atendimento!`;
           shouldRetry,
           status: res.status,
           errText: errText.slice(0, 200),
-          matchedPattern: retryablePatterns.find(p => errText.includes(p)) || null,
+          matchedPattern: retryablePatterns.find((p) => errText.includes(p)) || null,
         });
 
         if (!shouldRetry) {
@@ -374,19 +383,23 @@ Agora você pode automatizar seu atendimento!`;
             finalError: res.error || res.data?.error,
             finalStatus: res.status,
           });
-          
-          // Registrar falha no banco
+
           try {
             await supabase.from('genesis_event_logs').insert({
               instance_id: instanceId,
               event_type: 'welcome_failed',
               severity: 'error',
               message: `Falha ao enviar mensagem de boas-vindas: ${res.error || res.data?.error}`,
-              details: { attempt, totalTime: Date.now() - sendStart, status: res.status, error: res.error },
+              details: {
+                attempt,
+                totalTime: Date.now() - sendStart,
+                status: res.status,
+                error: res.error || res.data?.error,
+              },
             });
           } catch {}
-          
-          return;
+
+          return { success: false, status: res.status, error: res.error || res.data?.error };
         }
       } catch (error) {
         logDiagnostic('WELCOME_MESSAGE_EXCEPTION', {
@@ -397,8 +410,7 @@ Agora você pode automatizar seu atendimento!`;
         });
       }
 
-      // Backoff exponencial: 2s, 3s, 4s, 5s...
-      const backoffMs = 2000 + (attempt * 1000);
+      const backoffMs = 2000 + attempt * 1000;
       logDiagnostic('WELCOME_MESSAGE_BACKOFF', { instanceId, attempt, backoffMs });
       await new Promise((r) => setTimeout(r, backoffMs));
     }
@@ -409,8 +421,7 @@ Agora você pode automatizar seu atendimento!`;
       totalAttempts: maxAttempts,
       totalTime: Date.now() - sendStart,
     });
-    
-    // Registrar exaustão no banco
+
     try {
       await supabase.from('genesis_event_logs').insert({
         instance_id: instanceId,
@@ -420,6 +431,8 @@ Agora você pode automatizar seu atendimento!`;
         details: { totalAttempts: maxAttempts, totalTime: Date.now() - sendStart },
       });
     } catch {}
+
+    return { success: false, error: 'exhausted' };
   };
 
   const startConnection = useCallback(async (
@@ -452,22 +465,115 @@ Agora você pode automatizar seu atendimento!`;
       // Check if already connected
       const initialStatus = await checkStatus(instanceId);
       if (initialStatus.connected) {
+        const nowIso = new Date().toISOString();
+        const { data: instanceRow } = await supabase
+          .from('genesis_instances')
+          .select('session_data, effective_status, phone_number')
+          .eq('id', instanceId)
+          .single();
+
+        const session =
+          instanceRow?.session_data && typeof instanceRow.session_data === 'object'
+            ? (instanceRow.session_data as Record<string, unknown>)
+            : {};
+
+        const readyToSend = session.ready_to_send === true;
+
+        if (readyToSend || instanceRow?.effective_status === 'connected') {
+          toast.success('WhatsApp já está conectado!');
+          safeSetState(() => ({
+            isConnecting: false,
+            isPolling: false,
+            qrCode: null,
+            error: null,
+            attempts: 0,
+            phase: 'connected',
+          }));
+          onConnected?.();
+          return;
+        }
+
+        // Socket ainda não confirmado para envio
+        const merged = await mergeSessionData(instanceId, {
+          ready_to_send: false,
+          ready_phase: 'socket_connected',
+          ready_updated_at: nowIso,
+        });
+
         await updateInstanceInDB(instanceId, {
           status: 'connected',
-          phone_number: initialStatus.phoneNumber,
-          last_heartbeat: new Date().toISOString(),
-          effective_status: 'connected',
+          phone_number: initialStatus.phoneNumber ?? instanceRow?.phone_number,
+          last_heartbeat: nowIso,
+          effective_status: 'connecting',
+          session_data: merged,
         });
-        toast.success('WhatsApp já está conectado!');
+
         safeSetState(() => ({
-          isConnecting: false,
+          isConnecting: true,
           isPolling: false,
           qrCode: null,
           error: null,
           attempts: 0,
-          phase: 'connected',
+          phase: 'stabilizing',
         }));
-        onConnected?.();
+
+        const phone = initialStatus.phoneNumber ?? instanceRow?.phone_number;
+        if (phone && !session.welcome_sent_at) {
+          const result = await sendWelcomeMessage(instanceId, phone);
+          if (result.success) {
+            const mergedReady = await mergeSessionData(instanceId, {
+              ready_to_send: true,
+              welcome_sent_at: new Date().toISOString(),
+              last_send_success_at: new Date().toISOString(),
+              ready_phase: 'ready_to_send',
+              ready_updated_at: new Date().toISOString(),
+            });
+
+            await updateInstanceInDB(instanceId, {
+              effective_status: 'connected',
+              session_data: mergedReady,
+            });
+
+            toast.success('WhatsApp pronto para enviar!');
+            safeSetState(() => ({
+              isConnecting: false,
+              isPolling: false,
+              qrCode: null,
+              error: null,
+              attempts: 0,
+              phase: 'connected',
+            }));
+            onConnected?.();
+          } else {
+            const mergedErr = await mergeSessionData(instanceId, {
+              ready_to_send: false,
+              last_send_error_at: new Date().toISOString(),
+              last_send_error: { status: result.status, error: result.error },
+              ready_phase: 'send_failed',
+              ready_updated_at: new Date().toISOString(),
+            });
+
+            await updateInstanceInDB(instanceId, {
+              effective_status: 'connecting',
+              session_data: mergedErr,
+            });
+
+            safeSetState((prev) => ({
+              ...prev,
+              isConnecting: false,
+              phase: 'error',
+              error: 'Conectou, mas o envio ainda não está pronto. Aguarde alguns segundos e tente novamente.',
+            }));
+          }
+        } else {
+          safeSetState((prev) => ({
+            ...prev,
+            isConnecting: false,
+            phase: 'error',
+            error: 'Instância conectada, mas não foi possível validar o envio automaticamente.',
+          }));
+        }
+
         return;
       }
 
@@ -478,21 +584,88 @@ Agora você pode automatizar seu atendimento!`;
       const qrResult = await generateQRCode(instanceId);
       
       if (qrResult === 'CONNECTED') {
+        const nowIso = new Date().toISOString();
+        const merged = await mergeSessionData(instanceId, {
+          ready_to_send: false,
+          ready_phase: 'socket_connected',
+          ready_updated_at: nowIso,
+        });
+
         await updateInstanceInDB(instanceId, {
           status: 'connected',
-          last_heartbeat: new Date().toISOString(),
-          effective_status: 'connected',
+          last_heartbeat: nowIso,
+          effective_status: 'connecting',
+          session_data: merged,
         });
-        toast.success('WhatsApp conectado!');
+
         safeSetState(() => ({
-          isConnecting: false,
+          isConnecting: true,
           isPolling: false,
           qrCode: null,
           error: null,
           attempts: 0,
-          phase: 'connected',
+          phase: 'stabilizing',
         }));
-        onConnected?.();
+
+        const statusAfter = await checkStatus(instanceId);
+        const phone = statusAfter.phoneNumber;
+        if (phone) {
+          const result = await sendWelcomeMessage(instanceId, phone);
+          if (result.success) {
+            const mergedReady = await mergeSessionData(instanceId, {
+              ready_to_send: true,
+              welcome_sent_at: new Date().toISOString(),
+              last_send_success_at: new Date().toISOString(),
+              ready_phase: 'ready_to_send',
+              ready_updated_at: new Date().toISOString(),
+            });
+
+            await updateInstanceInDB(instanceId, {
+              phone_number: phone,
+              effective_status: 'connected',
+              session_data: mergedReady,
+            });
+
+            toast.success('WhatsApp pronto para enviar!');
+            safeSetState(() => ({
+              isConnecting: false,
+              isPolling: false,
+              qrCode: null,
+              error: null,
+              attempts: 0,
+              phase: 'connected',
+            }));
+            onConnected?.();
+          } else {
+            const mergedErr = await mergeSessionData(instanceId, {
+              ready_to_send: false,
+              last_send_error_at: new Date().toISOString(),
+              last_send_error: { status: result.status, error: result.error },
+              ready_phase: 'send_failed',
+              ready_updated_at: new Date().toISOString(),
+            });
+
+            await updateInstanceInDB(instanceId, {
+              effective_status: 'connecting',
+              session_data: mergedErr,
+            });
+
+            safeSetState((prev) => ({
+              ...prev,
+              isConnecting: false,
+              phase: 'error',
+              error: 'Conectou, mas o envio ainda não está pronto. Aguarde alguns segundos e tente novamente.',
+            }));
+          }
+        } else {
+          safeSetState((prev) => ({
+            ...prev,
+            isConnecting: false,
+            phase: 'error',
+            error: 'Instância conectada, mas não foi possível identificar o número para validar o envio.',
+          }));
+        }
+
         return;
       }
 
@@ -547,28 +720,86 @@ Agora você pode automatizar seu atendimento!`;
         const statusResult = await checkStatus(instanceId);
         if (statusResult.connected) {
           stopPolling();
+
+          const nowIso = new Date().toISOString();
+          const merged = await mergeSessionData(instanceId, {
+            ready_to_send: false,
+            ready_phase: 'socket_connected',
+            ready_updated_at: nowIso,
+          });
+
           await updateInstanceInDB(instanceId, {
             status: 'connected',
             phone_number: statusResult.phoneNumber,
-            last_heartbeat: new Date().toISOString(),
-            effective_status: 'connected',
+            last_heartbeat: nowIso,
+            effective_status: 'connecting',
+            session_data: merged,
           });
+
           safeSetState(() => ({
-            isConnecting: false,
+            isConnecting: true,
             isPolling: false,
             qrCode: null,
             error: null,
             attempts: 0,
-            phase: 'connected',
+            phase: 'stabilizing',
           }));
-          toast.success('WhatsApp conectado com sucesso!');
-          
-          // Enviar mensagem de teste automática para o próprio número
+
           if (statusResult.phoneNumber) {
-            sendWelcomeMessage(instanceId, statusResult.phoneNumber);
+            const result = await sendWelcomeMessage(instanceId, statusResult.phoneNumber);
+            if (result.success) {
+              const mergedReady = await mergeSessionData(instanceId, {
+                ready_to_send: true,
+                welcome_sent_at: new Date().toISOString(),
+                last_send_success_at: new Date().toISOString(),
+                ready_phase: 'ready_to_send',
+                ready_updated_at: new Date().toISOString(),
+              });
+
+              await updateInstanceInDB(instanceId, {
+                effective_status: 'connected',
+                session_data: mergedReady,
+              });
+
+              toast.success('WhatsApp pronto para enviar!');
+              safeSetState(() => ({
+                isConnecting: false,
+                isPolling: false,
+                qrCode: null,
+                error: null,
+                attempts: 0,
+                phase: 'connected',
+              }));
+              onConnected?.();
+            } else {
+              const mergedErr = await mergeSessionData(instanceId, {
+                ready_to_send: false,
+                last_send_error_at: new Date().toISOString(),
+                last_send_error: { status: result.status, error: result.error },
+                ready_phase: 'send_failed',
+                ready_updated_at: new Date().toISOString(),
+              });
+
+              await updateInstanceInDB(instanceId, {
+                effective_status: 'connecting',
+                session_data: mergedErr,
+              });
+
+              safeSetState((prev) => ({
+                ...prev,
+                isConnecting: false,
+                phase: 'error',
+                error: 'Conectou, mas o envio ainda não está pronto. Aguarde alguns segundos e tente novamente.',
+              }));
+            }
+          } else {
+            safeSetState((prev) => ({
+              ...prev,
+              isConnecting: false,
+              phase: 'error',
+              error: 'Instância conectada, mas não foi possível identificar o número para validar o envio.',
+            }));
           }
-          
-          onConnected?.();
         }
       }, pollingInterval);
 
@@ -628,10 +859,13 @@ Agora você pode automatizar seu atendimento!`;
     }
 
     const lastHeartbeatMs = data.last_heartbeat ? new Date(data.last_heartbeat).getTime() : 0;
-    const isStale = lastHeartbeatMs > 0 && (Date.now() - lastHeartbeatMs > STALE_THRESHOLD_MS);
+    const isStale = lastHeartbeatMs > 0 && Date.now() - lastHeartbeatMs > STALE_THRESHOLD_MS;
+
+    const normalizedStatus =
+      data.effective_status || (data.status === 'connected' ? 'connecting' : (data.status as string));
 
     return {
-      status: (data.effective_status || data.status) as string,
+      status: normalizedStatus,
       phoneNumber: data.phone_number || undefined,
       lastHeartbeat: data.last_heartbeat || undefined,
       isStale,
