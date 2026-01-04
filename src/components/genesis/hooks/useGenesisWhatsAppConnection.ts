@@ -108,6 +108,30 @@ export function useGenesisWhatsAppConnection() {
     }
   };
 
+  // Merge session_data preservando valores existentes
+  const mergeSessionData = async (
+    instanceId: string,
+    newFields: Record<string, unknown>
+  ): Promise<Record<string, unknown>> => {
+    try {
+      const { data: instanceRow } = await supabase
+        .from('genesis_instances')
+        .select('session_data')
+        .eq('id', instanceId)
+        .single();
+
+      const existing =
+        instanceRow?.session_data && typeof instanceRow.session_data === 'object'
+          ? (instanceRow.session_data as Record<string, unknown>)
+          : {};
+
+      return { ...existing, ...newFields };
+    } catch (err) {
+      console.error('mergeSessionData error:', err);
+      return newFields;
+    }
+  };
+
   // === FASE 0: DIAGNÓSTICO - Logs detalhados para cada chamada ===
   const logDiagnostic = (context: string, data: Record<string, unknown>) => {
     const timestamp = new Date().toISOString();
