@@ -22,7 +22,15 @@ import {
   Play,
   CheckCircle2,
   AlertCircle,
-  Timer
+  Timer,
+  Server,
+  LogOut,
+  RefreshCw,
+  UserCog,
+  ShieldAlert,
+  Gauge,
+  HeartPulse,
+  Lock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FlowNodeData, NODE_COLORS, NodeType } from './types';
@@ -107,6 +115,18 @@ const getIconForType = (type: NodeType, iconName?: string) => {
     subflow_call: Play,
     event_emitter: Zap,
     data_transform: Shuffle,
+    // Infrastructure nodes
+    proxy_assign: Globe,
+    proxy_rotate: RefreshCw,
+    worker_assign: Server,
+    worker_release: LogOut,
+    dispatch_execution: Play,
+    identity_rotate: UserCog,
+    // Security nodes
+    execution_quota_guard: ShieldAlert,
+    infra_rate_limit: Gauge,
+    if_infra_health: HeartPulse,
+    secure_context_guard: Lock,
   };
   
   return typeIcons[type] || Zap;
@@ -122,6 +142,10 @@ const getNodeCategory = (type: NodeType): string => {
   if (type.startsWith('wa_')) return 'NATIVO';
   // Automation Engine nodes
   if (['http_request_advanced', 'set_variable', 'subflow_call', 'event_emitter', 'data_transform'].includes(type)) return 'AUTOMAÇÃO';
+  // Infrastructure nodes
+  if (['proxy_assign', 'proxy_rotate', 'worker_assign', 'worker_release', 'dispatch_execution', 'identity_rotate'].includes(type)) return 'INFRA';
+  // Security nodes
+  if (['execution_quota_guard', 'infra_rate_limit', 'if_infra_health', 'secure_context_guard'].includes(type)) return 'SEGURANÇA';
   return 'AÇÃO';
 };
 

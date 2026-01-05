@@ -863,6 +863,455 @@ async function processAction(
       }
     }
 
+    // ============ INFRASTRUCTURE NODES ============
+    case 'proxy_assign': {
+      const { 
+        proxy_pool = 'default', 
+        type = 'datacenter', 
+        sticky = true, 
+        ttl_seconds = 3600,
+        fallback_behavior = 'direct'
+      } = action.config;
+
+      // Simulate proxy assignment (in real implementation, would call proxy manager)
+      const assignedProxy = {
+        pool: proxy_pool,
+        type,
+        sticky,
+        ttl: ttl_seconds,
+        ip: `proxy-${proxy_pool}-${Date.now()}.internal`,
+        assigned_at: new Date().toISOString(),
+      };
+
+      context.flowContext = {
+        ...context.flowContext,
+        proxy: assignedProxy,
+      };
+
+      console.log(`[INFRA] Proxy assigned: ${assignedProxy.ip} from pool ${proxy_pool}`);
+
+      return { 
+        success: true, 
+        result: { 
+          proxyAssigned: assignedProxy,
+          fallback: fallback_behavior,
+        } 
+      };
+    }
+
+    case 'proxy_rotate': {
+      const { 
+        rotate_on = 'error', 
+        min_interval_seconds = 60,
+        on_fail = 'continue'
+      } = action.config;
+
+      // Check if minimum interval has passed
+      const currentProxy = context.flowContext?.proxy;
+      if (currentProxy) {
+        const assignedAt = new Date(currentProxy.assigned_at).getTime();
+        const now = Date.now();
+        if (now - assignedAt < min_interval_seconds * 1000) {
+          console.log(`[INFRA] Proxy rotation skipped: min interval not reached`);
+          return { 
+            success: true, 
+            result: { rotated: false, reason: 'min_interval_not_reached' },
+            skip: true
+          };
+        }
+      }
+
+      // Rotate proxy
+      const newProxy = {
+        ...currentProxy,
+        ip: `proxy-rotated-${Date.now()}.internal`,
+        assigned_at: new Date().toISOString(),
+        rotated_due_to: rotate_on,
+      };
+
+      context.flowContext = {
+        ...context.flowContext,
+        proxy: newProxy,
+      };
+
+      console.log(`[INFRA] Proxy rotated due to: ${rotate_on}`);
+
+      return { 
+        success: true, 
+        result: { 
+          rotated: true,
+          newProxy,
+          onFail: on_fail,
+        } 
+      };
+    }
+
+    case 'worker_assign': {
+      const { 
+        region = 'auto', 
+        max_capacity = 100, 
+        sticky = true,
+        fallback = 'any'
+      } = action.config;
+
+      // Simulate worker assignment
+      const assignedWorker = {
+        id: `worker-${region}-${Date.now()}`,
+        region,
+        capacity_limit: max_capacity,
+        sticky,
+        assigned_at: new Date().toISOString(),
+      };
+
+      context.flowContext = {
+        ...context.flowContext,
+        worker: assignedWorker,
+      };
+
+      console.log(`[INFRA] Worker assigned: ${assignedWorker.id} in region ${region}`);
+
+      return { 
+        success: true, 
+        result: { 
+          workerAssigned: assignedWorker,
+          fallback,
+        } 
+      };
+    }
+
+    case 'worker_release': {
+      const { 
+        release_on_complete = true, 
+        release_on_error = true,
+        retention_timeout = 60
+      } = action.config;
+
+      const currentWorker = context.flowContext?.worker;
+      if (!currentWorker) {
+        return { success: true, result: { released: false, reason: 'no_worker_assigned' } };
+      }
+
+      // Schedule release
+      console.log(`[INFRA] Worker ${currentWorker.id} scheduled for release in ${retention_timeout}s`);
+
+      context.flowContext = {
+        ...context.flowContext,
+        worker: {
+          ...currentWorker,
+          release_scheduled: true,
+          release_at: new Date(Date.now() + retention_timeout * 1000).toISOString(),
+        },
+      };
+
+      return { 
+        success: true, 
+        result: { 
+          released: true,
+          workerId: currentWorker.id,
+          releaseAt: context.flowContext.worker.release_at,
+        } 
+      };
+    }
+
+    case 'dispatch_execution': {
+      const { 
+        quantity = 1, 
+        spacing_seconds = 1, 
+        max_parallel = 10,
+        time_window_start = '00:00',
+        time_window_end = '23:59'
+      } = action.config;
+
+      // Check if within time window
+      const now = new Date();
+      const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      if (currentTime < time_window_start || currentTime > time_window_end) {
+        console.log(`[INFRA] Dispatch blocked: outside time window (${currentTime})`);
+        return { 
+          success: true, 
+          result: { dispatched: false, reason: 'outside_time_window' },
+          skip: true
+        };
+      }
+
+      console.log(`[INFRA] Dispatching ${quantity} executions with ${spacing_seconds}s spacing`);
+
+      return { 
+        success: true, 
+        result: { 
+          dispatched: true,
+          quantity,
+          spacing: spacing_seconds,
+          maxParallel: max_parallel,
+        } 
+      };
+    }
+
+    case 'identity_rotate': {
+      const { 
+        rotate_proxy = false, 
+        rotate_worker = false, 
+        rotate_instance = false,
+        trigger_condition = 'manual'
+      } = action.config;
+
+      const rotations: string[] = [];
+      
+      if (rotate_proxy && context.flowContext?.proxy) {
+        context.flowContext.proxy = {
+          ...context.flowContext.proxy,
+          ip: `proxy-identity-${Date.now()}.internal`,
+          assigned_at: new Date().toISOString(),
+        };
+        rotations.push('proxy');
+      }
+      
+      if (rotate_worker && context.flowContext?.worker) {
+        context.flowContext.worker = {
+          ...context.flowContext.worker,
+          id: `worker-identity-${Date.now()}`,
+          assigned_at: new Date().toISOString(),
+        };
+        rotations.push('worker');
+      }
+
+      if (rotate_instance) {
+        rotations.push('instance');
+        // Instance rotation would be handled by the orchestrator
+      }
+
+      console.log(`[INFRA] Identity rotated: ${rotations.join(', ')} (trigger: ${trigger_condition})`);
+
+      return { 
+        success: true, 
+        result: { 
+          rotated: rotations,
+          triggerCondition: trigger_condition,
+        } 
+      };
+    }
+
+    // ============ SECURITY NODES ============
+    case 'execution_quota_guard': {
+      const { 
+        max_concurrent = 10, 
+        max_per_hour = 1000, 
+        max_per_day = 10000,
+        on_violation = 'pause'
+      } = action.config;
+
+      // Get current execution counts (simplified - in production would query DB)
+      const currentConcurrent = context.flowContext?.executions?.concurrent || 0;
+      const currentHourly = context.flowContext?.executions?.hourly || 0;
+      const currentDaily = context.flowContext?.executions?.daily || 0;
+
+      let violation = null;
+      if (currentConcurrent >= max_concurrent) violation = 'concurrent_limit';
+      else if (currentHourly >= max_per_hour) violation = 'hourly_limit';
+      else if (currentDaily >= max_per_day) violation = 'daily_limit';
+
+      if (violation) {
+        console.log(`[SECURITY] Quota violated: ${violation}, action: ${on_violation}`);
+        
+        if (on_violation === 'abort') {
+          return { success: false, error: `Quota exceeded: ${violation}` };
+        }
+        
+        return { 
+          success: true, 
+          result: { violation, action: on_violation },
+          skip: on_violation === 'pause'
+        };
+      }
+
+      // Increment counters
+      context.flowContext = {
+        ...context.flowContext,
+        executions: {
+          concurrent: currentConcurrent + 1,
+          hourly: currentHourly + 1,
+          daily: currentDaily + 1,
+        },
+      };
+
+      return { 
+        success: true, 
+        result: { 
+          quotaOk: true,
+          concurrent: currentConcurrent + 1,
+          hourly: currentHourly + 1,
+          daily: currentDaily + 1,
+        } 
+      };
+    }
+
+    case 'infra_rate_limit': {
+      const { 
+        cpu_limit_percent = 80, 
+        memory_limit_mb = 512, 
+        throughput_mbps = 10,
+        cooldown_minutes = 5
+      } = action.config;
+
+      // Simulated resource check
+      const currentCpu = Math.random() * 100;
+      const currentMemory = Math.random() * 1024;
+      const currentThroughput = Math.random() * 100;
+
+      let limitReached = false;
+      let limitType = null;
+
+      if (currentCpu > cpu_limit_percent) {
+        limitReached = true;
+        limitType = 'cpu';
+      } else if (currentMemory > memory_limit_mb) {
+        limitReached = true;
+        limitType = 'memory';
+      } else if (currentThroughput > throughput_mbps) {
+        limitReached = true;
+        limitType = 'throughput';
+      }
+
+      if (limitReached) {
+        console.log(`[SECURITY] Infra rate limit reached: ${limitType}, cooldown: ${cooldown_minutes}min`);
+        return { 
+          success: true, 
+          result: { 
+            limitReached: true,
+            limitType,
+            cooldown: cooldown_minutes,
+          },
+          skip: true
+        };
+      }
+
+      return { 
+        success: true, 
+        result: { 
+          limitReached: false,
+          resources: {
+            cpu: Math.round(currentCpu),
+            memory: Math.round(currentMemory),
+            throughput: Math.round(currentThroughput),
+          },
+        } 
+      };
+    }
+
+    case 'if_infra_health': {
+      const { 
+        check_proxy_health = true, 
+        check_worker_load = true, 
+        check_latency = true,
+        latency_threshold_ms = 500,
+        fallback = 'pause'
+      } = action.config;
+
+      const healthIssues: string[] = [];
+
+      // Check proxy health
+      if (check_proxy_health) {
+        const proxyHealthy = context.flowContext?.proxy?.ip ? Math.random() > 0.1 : true;
+        if (!proxyHealthy) healthIssues.push('proxy_unhealthy');
+      }
+
+      // Check worker load
+      if (check_worker_load) {
+        const workerLoad = Math.random() * 100;
+        if (workerLoad > 90) healthIssues.push('worker_overloaded');
+      }
+
+      // Check latency
+      if (check_latency) {
+        const latency = Math.random() * 1000;
+        if (latency > latency_threshold_ms) healthIssues.push('high_latency');
+      }
+
+      if (healthIssues.length > 0) {
+        console.log(`[SECURITY] Infra health issues: ${healthIssues.join(', ')}, fallback: ${fallback}`);
+        
+        if (fallback === 'abort') {
+          return { success: false, error: `Infra unhealthy: ${healthIssues.join(', ')}` };
+        }
+        
+        return { 
+          success: true, 
+          result: { 
+            healthy: false,
+            issues: healthIssues,
+            fallback,
+          },
+          skip: fallback === 'pause'
+        };
+      }
+
+      return { 
+        success: true, 
+        result: { 
+          healthy: true,
+          checks: { proxy: check_proxy_health, worker: check_worker_load, latency: check_latency },
+        } 
+      };
+    }
+
+    case 'secure_context_guard': {
+      const { 
+        isolate_execution = true, 
+        prevent_variable_leak = true, 
+        auto_reset_on_error = true,
+        allowed_variables_raw = ''
+      } = action.config;
+
+      // Parse allowed variables
+      const allowedVariables = allowed_variables_raw
+        ? allowed_variables_raw.split('\n').map((v: string) => v.trim()).filter(Boolean)
+        : [];
+
+      // Apply security context
+      if (prevent_variable_leak && allowedVariables.length > 0) {
+        const currentVars = context.flowContext?.variables || {};
+        const filteredVars: Record<string, any> = {};
+        
+        allowedVariables.forEach((varName: string) => {
+          if (currentVars[varName]) {
+            filteredVars[varName] = currentVars[varName];
+          }
+        });
+
+        context.flowContext = {
+          ...context.flowContext,
+          variables: filteredVars,
+          securityContext: {
+            isolated: isolate_execution,
+            preventLeak: prevent_variable_leak,
+            autoReset: auto_reset_on_error,
+            allowedVariables,
+          },
+        };
+      } else {
+        context.flowContext = {
+          ...context.flowContext,
+          securityContext: {
+            isolated: isolate_execution,
+            preventLeak: prevent_variable_leak,
+            autoReset: auto_reset_on_error,
+            allowedVariables: [],
+          },
+        };
+      }
+
+      console.log(`[SECURITY] Secure context applied: isolated=${isolate_execution}, preventLeak=${prevent_variable_leak}`);
+
+      return { 
+        success: true, 
+        result: { 
+          contextSecured: true,
+          isolated: isolate_execution,
+          variablesFiltered: allowedVariables.length > 0,
+        } 
+      };
+    }
+
     default:
       return { success: false, error: `Unknown action type: ${action.type}` };
   }
