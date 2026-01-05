@@ -47,7 +47,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { NODE_TEMPLATES, NODE_CATEGORIES, NodeTemplate, NATIVE_WA_TEMPLATES, STABILITY_TEMPLATES, AUTOMATION_TEMPLATES, INFRASTRUCTURE_TEMPLATES, SECURITY_TEMPLATES } from './types';
+import { NODE_TEMPLATES, NODE_CATEGORIES, NodeTemplate, NATIVE_WA_TEMPLATES, STABILITY_TEMPLATES, AUTOMATION_TEMPLATES, INFRASTRUCTURE_TEMPLATES, SECURITY_TEMPLATES, AI_TEMPLATES } from './types';
 import { InstanceRequiredModal } from './InstanceRequiredModal';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -59,7 +59,8 @@ const ICONS: Record<string, any> = {
   ShoppingCart: LayoutGrid, Table: LayoutGrid, Smartphone, Inbox, Wifi,
   Shield, RefreshCw, Gauge, ListPlus, AlertTriangle,
   Calendar, Repeat, GitMerge, ExternalLink, Radio, Workflow,
-  Server, LogOut, UserCog, ShieldAlert, HeartPulse, Lock, Play
+  Server, LogOut, UserCog, ShieldAlert, HeartPulse, Lock, Play,
+  Settings: Zap
 };
 
 interface ComponentsModalProps {
@@ -84,8 +85,8 @@ export const ComponentsModal = ({
   const [showInstanceModal, setShowInstanceModal] = useState(false);
   const [pendingComponent, setPendingComponent] = useState<NodeTemplate | null>(null);
 
-  // Combine all templates - Native first, then regular, then stability, then automation, then infrastructure, then security
-  const allTemplates = [...NATIVE_WA_TEMPLATES, ...NODE_TEMPLATES, ...STABILITY_TEMPLATES, ...AUTOMATION_TEMPLATES, ...INFRASTRUCTURE_TEMPLATES, ...SECURITY_TEMPLATES];
+  // Combine all templates - AI first, then Native, then others
+  const allTemplates = [...AI_TEMPLATES, ...NATIVE_WA_TEMPLATES, ...NODE_TEMPLATES, ...STABILITY_TEMPLATES, ...AUTOMATION_TEMPLATES, ...INFRASTRUCTURE_TEMPLATES, ...SECURITY_TEMPLATES];
 
   // Check for connected instances
   useEffect(() => {
@@ -201,7 +202,7 @@ export const ComponentsModal = ({
               />
             </div>
 
-            {/* Category Filters - Nativos first */}
+            {/* Category Filters - Better organized with icons */}
             <div className="flex gap-2 mt-4 flex-wrap">
               <Button
                 variant={selectedCategory === null ? 'default' : 'outline'}
@@ -211,27 +212,34 @@ export const ComponentsModal = ({
               >
                 Todos
               </Button>
-              {Object.entries(NODE_CATEGORIES).map(([key, { label, color }]) => (
-                <Button
-                  key={key}
-                  variant={selectedCategory === key ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setSelectedCategory(key)}
-                  className={cn(
-                    "h-8 gap-1.5",
-                    key === 'nativos' && "border-[#25D366]/50"
-                  )}
-                  style={selectedCategory === key ? { backgroundColor: color } : undefined}
-                >
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-                  {label}
-                  {key === 'nativos' && (
-                    <Badge variant="outline" className="ml-1 text-[10px] py-0 px-1 h-4 border-[#25D366]/50 text-[#25D366]">
-                      WhatsApp
-                    </Badge>
-                  )}
-                </Button>
-              ))}
+              {Object.entries(NODE_CATEGORIES).map(([key, { label, color, icon }]) => {
+                const CategoryIcon = ICONS[icon as string] || Zap;
+                const isAI = key === 'ai';
+                const isWhatsApp = key === 'nativos';
+                
+                return (
+                  <Button
+                    key={key}
+                    variant={selectedCategory === key ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedCategory(key)}
+                    className={cn(
+                      "h-8 gap-1.5 transition-all",
+                      isAI && "border-amber-500/50 hover:border-amber-500",
+                      isWhatsApp && "border-[#25D366]/50 hover:border-[#25D366]"
+                    )}
+                    style={selectedCategory === key ? { backgroundColor: color, borderColor: color } : undefined}
+                  >
+                    <CategoryIcon className="w-3.5 h-3.5" style={selectedCategory !== key ? { color } : undefined} />
+                    {label}
+                    {isAI && (
+                      <Badge variant="outline" className="ml-1 text-[10px] py-0 px-1 h-4 border-amber-500/50 text-amber-500 bg-amber-500/10">
+                        ✨ Novo
+                      </Badge>
+                    )}
+                  </Button>
+                );
+              })}
             </div>
           </DialogHeader>
 

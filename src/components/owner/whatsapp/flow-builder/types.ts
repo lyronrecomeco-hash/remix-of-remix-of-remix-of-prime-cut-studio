@@ -507,17 +507,17 @@ export const NATIVE_WA_TEMPLATES: NodeTemplate[] = [
 ];
 
 export const NODE_CATEGORIES = {
-  nativos: { label: 'Nativos', color: '#25D366' }, // WhatsApp green
-  triggers: { label: 'Gatilhos', color: '#22c55e' },
-  conditions: { label: 'Condições', color: '#eab308' },
-  actions: { label: 'Ações', color: '#3b82f6' },
-  flow: { label: 'Controle', color: '#a855f7' },
-  advanced: { label: 'Avançado', color: '#6366f1' },
-  stability: { label: 'Estabilidade', color: '#f97316' }, // Orange for stability
-  automation: { label: 'Automação', color: '#8b5cf6' }, // Purple for generic automation
-  infrastructure: { label: 'Infraestrutura', color: '#06b6d4' }, // Cyan for infrastructure
-  security: { label: 'Segurança', color: '#dc2626' }, // Red for security
-  ai: { label: 'Inteligência Artificial', color: '#eab308' } // Yellow/Gold for AI
+  ai: { label: 'Agente IA', color: '#f59e0b', icon: 'Brain' }, // Gold for AI - First!
+  nativos: { label: 'WhatsApp', color: '#25D366', icon: 'Smartphone' },
+  triggers: { label: 'Gatilhos', color: '#22c55e', icon: 'Zap' },
+  actions: { label: 'Ações', color: '#3b82f6', icon: 'Send' },
+  conditions: { label: 'Condições', color: '#eab308', icon: 'GitBranch' },
+  flow: { label: 'Controle', color: '#a855f7', icon: 'Workflow' },
+  automation: { label: 'Automação', color: '#8b5cf6', icon: 'Repeat' },
+  stability: { label: 'Estabilidade', color: '#f97316', icon: 'Shield' },
+  advanced: { label: 'Avançado', color: '#6366f1', icon: 'Settings' },
+  infrastructure: { label: 'Infra', color: '#06b6d4', icon: 'Server' },
+  security: { label: 'Segurança', color: '#dc2626', icon: 'Lock' },
 };
 
 export const NODE_COLORS: Record<NodeType, string> = {
