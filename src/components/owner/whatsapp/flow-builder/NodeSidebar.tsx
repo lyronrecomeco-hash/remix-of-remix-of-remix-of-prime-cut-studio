@@ -32,14 +32,21 @@ import {
   GitMerge,
   ExternalLink,
   Radio,
-  Workflow
+  Workflow,
+  Server,
+  LogOut,
+  UserCog,
+  ShieldAlert,
+  HeartPulse,
+  Lock,
+  Play
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { NODE_TEMPLATES, NODE_CATEGORIES, NodeTemplate, STABILITY_TEMPLATES, AUTOMATION_TEMPLATES } from './types';
+import { NODE_TEMPLATES, NODE_CATEGORIES, NodeTemplate, STABILITY_TEMPLATES, AUTOMATION_TEMPLATES, INFRASTRUCTURE_TEMPLATES, SECURITY_TEMPLATES } from './types';
 import { cn } from '@/lib/utils';
 
 const ICONS: Record<string, any> = {
@@ -73,6 +80,13 @@ const ICONS: Record<string, any> = {
   ExternalLink,
   Radio,
   Workflow,
+  Server,
+  LogOut,
+  UserCog,
+  ShieldAlert,
+  HeartPulse,
+  Lock,
+  Play,
 };
 
 interface NodeSidebarProps {

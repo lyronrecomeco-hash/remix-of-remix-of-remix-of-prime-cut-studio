@@ -48,7 +48,18 @@ export type NodeType =
   | 'switch_case'
   | 'subflow_call'
   | 'event_emitter'
-  | 'data_transform';
+  | 'data_transform'
+  // Infrastructure & Security Nodes
+  | 'proxy_assign'
+  | 'proxy_rotate'
+  | 'worker_assign'
+  | 'worker_release'
+  | 'dispatch_execution'
+  | 'identity_rotate'
+  | 'execution_quota_guard'
+  | 'infra_rate_limit'
+  | 'if_infra_health'
+  | 'secure_context_guard';
 
 export interface FlowNodeData {
   label: string;
@@ -115,7 +126,7 @@ export interface NodeTemplate {
   label: string;
   icon: string;
   description: string;
-  category: 'triggers' | 'conditions' | 'actions' | 'flow' | 'advanced' | 'nativos' | 'stability' | 'automation';
+  category: 'triggers' | 'conditions' | 'actions' | 'flow' | 'advanced' | 'nativos' | 'stability' | 'automation' | 'infrastructure' | 'security';
   defaultConfig: Record<string, any>;
   requiresInstance?: boolean; // If true, requires connected WhatsApp instance
 }
@@ -479,7 +490,9 @@ export const NODE_CATEGORIES = {
   flow: { label: 'Controle', color: '#a855f7' },
   advanced: { label: 'Avançado', color: '#6366f1' },
   stability: { label: 'Estabilidade', color: '#f97316' }, // Orange for stability
-  automation: { label: 'Automação', color: '#8b5cf6' } // Purple for generic automation
+  automation: { label: 'Automação', color: '#8b5cf6' }, // Purple for generic automation
+  infrastructure: { label: 'Infraestrutura', color: '#06b6d4' }, // Cyan for infrastructure
+  security: { label: 'Segurança', color: '#dc2626' } // Red for security
 };
 
 export const NODE_COLORS: Record<NodeType, string> = {
@@ -529,18 +542,30 @@ export const NODE_COLORS: Record<NodeType, string> = {
   subflow_call: '#4c1d95',
   event_emitter: '#9333ea',
   data_transform: '#a855f7',
+  // Infrastructure nodes (Cyan gradient)
+  proxy_assign: '#06b6d4',
+  proxy_rotate: '#0891b2',
+  worker_assign: '#0e7490',
+  worker_release: '#155e75',
+  dispatch_execution: '#164e63',
+  identity_rotate: '#22d3ee',
+  // Security nodes (Red gradient)
+  execution_quota_guard: '#dc2626',
+  infra_rate_limit: '#b91c1c',
+  if_infra_health: '#991b1b',
+  secure_context_guard: '#7f1d1d',
 };
 
 // Connection validation rules
 export const CONNECTION_RULES = {
   // Nodes that can only have one outgoing connection
-  singleOutput: ['trigger', 'message', 'button', 'list', 'ai', 'webhook', 'delay', 'variable', 'integration', 'http_request', 'webhook_in', 'ecommerce', 'crm_sheets', 'wa_start', 'wa_send_text', 'wa_send_buttons', 'wa_send_list', 'wa_wait_response', 'wa_receive', 'queue_message', 'session_guard', 'retry_policy', 'smart_delay', 'rate_limit', 'enqueue_flow_step', 'http_request_advanced', 'webhook_trigger', 'cron_trigger', 'set_variable', 'subflow_call', 'event_emitter', 'data_transform'],
+  singleOutput: ['trigger', 'message', 'button', 'list', 'ai', 'webhook', 'delay', 'variable', 'integration', 'http_request', 'webhook_in', 'ecommerce', 'crm_sheets', 'wa_start', 'wa_send_text', 'wa_send_buttons', 'wa_send_list', 'wa_wait_response', 'wa_receive', 'queue_message', 'session_guard', 'retry_policy', 'smart_delay', 'rate_limit', 'enqueue_flow_step', 'http_request_advanced', 'webhook_trigger', 'cron_trigger', 'set_variable', 'subflow_call', 'event_emitter', 'data_transform', 'proxy_assign', 'proxy_rotate', 'worker_assign', 'worker_release', 'dispatch_execution', 'identity_rotate', 'execution_quota_guard', 'infra_rate_limit', 'secure_context_guard'],
   // Nodes that can have multiple outgoing connections (yes/no)
-  conditionalOutput: ['condition', 'split', 'if_instance_state', 'timeout_handler', 'if_expression', 'switch_case'],
+  conditionalOutput: ['condition', 'split', 'if_instance_state', 'timeout_handler', 'if_expression', 'switch_case', 'if_infra_health'],
   // Nodes that cannot have outgoing connections
   noOutput: ['end'],
   // Nodes that can be connected from any node
-  universalInput: ['message', 'button', 'list', 'ai', 'webhook', 'delay', 'condition', 'split', 'variable', 'integration', 'end', 'goto', 'note', 'http_request', 'ecommerce', 'crm_sheets', 'wa_send_text', 'wa_send_buttons', 'wa_send_list', 'wa_wait_response', 'wa_receive', 'queue_message', 'session_guard', 'timeout_handler', 'if_instance_state', 'retry_policy', 'smart_delay', 'rate_limit', 'enqueue_flow_step', 'http_request_advanced', 'webhook_trigger', 'cron_trigger', 'set_variable', 'if_expression', 'loop_for_each', 'switch_case', 'subflow_call', 'event_emitter', 'data_transform'],
+  universalInput: ['message', 'button', 'list', 'ai', 'webhook', 'delay', 'condition', 'split', 'variable', 'integration', 'end', 'goto', 'note', 'http_request', 'ecommerce', 'crm_sheets', 'wa_send_text', 'wa_send_buttons', 'wa_send_list', 'wa_wait_response', 'wa_receive', 'queue_message', 'session_guard', 'timeout_handler', 'if_instance_state', 'retry_policy', 'smart_delay', 'rate_limit', 'enqueue_flow_step', 'http_request_advanced', 'webhook_trigger', 'cron_trigger', 'set_variable', 'if_expression', 'loop_for_each', 'switch_case', 'subflow_call', 'event_emitter', 'data_transform', 'proxy_assign', 'proxy_rotate', 'worker_assign', 'worker_release', 'dispatch_execution', 'identity_rotate', 'execution_quota_guard', 'infra_rate_limit', 'if_infra_health', 'secure_context_guard'],
 };
 
 // Generic Automation Engine Templates (Channel-Agnostic)
@@ -684,5 +709,144 @@ export const AUTOMATION_TEMPLATES: NodeTemplate[] = [
   }
 ];
 
-// Get all templates including native, stability and automation
-export const getAllTemplates = () => [...NATIVE_WA_TEMPLATES, ...NODE_TEMPLATES, ...STABILITY_TEMPLATES, ...AUTOMATION_TEMPLATES];
+// Infrastructure Templates
+export const INFRASTRUCTURE_TEMPLATES: NodeTemplate[] = [
+  {
+    type: 'proxy_assign',
+    label: 'Atribuir Proxy',
+    icon: 'Globe',
+    description: 'Associa proxy à execução atual',
+    category: 'infrastructure',
+    defaultConfig: { 
+      proxy_pool: 'default',
+      type: 'datacenter',
+      sticky: true,
+      ttl_seconds: 3600,
+      fallback_behavior: 'direct'
+    }
+  },
+  {
+    type: 'proxy_rotate',
+    label: 'Rotacionar Proxy',
+    icon: 'RefreshCw',
+    description: 'Rotação controlada de proxy',
+    category: 'infrastructure',
+    defaultConfig: { 
+      rotate_on: 'error',
+      min_interval_seconds: 60,
+      reason: 'error',
+      on_fail: 'continue'
+    }
+  },
+  {
+    type: 'worker_assign',
+    label: 'Atribuir Worker',
+    icon: 'Server',
+    description: 'Seleciona VPS/worker para execução',
+    category: 'infrastructure',
+    defaultConfig: { 
+      region: 'auto',
+      max_capacity: 100,
+      sticky: true,
+      fallback: 'any'
+    }
+  },
+  {
+    type: 'worker_release',
+    label: 'Liberar Worker',
+    icon: 'LogOut',
+    description: 'Libera recursos após execução',
+    category: 'infrastructure',
+    defaultConfig: { 
+      release_on_complete: true,
+      release_on_error: true,
+      retention_timeout: 60
+    }
+  },
+  {
+    type: 'dispatch_execution',
+    label: 'Disparo Controlado',
+    icon: 'Play',
+    description: 'Disparo controlado de execuções',
+    category: 'infrastructure',
+    defaultConfig: { 
+      quantity: 1,
+      spacing_seconds: 1,
+      max_parallel: 10,
+      time_window: { start: '00:00', end: '23:59' }
+    }
+  },
+  {
+    type: 'identity_rotate',
+    label: 'Rotacionar Identidade',
+    icon: 'UserCog',
+    description: 'Rotação de identidade operacional',
+    category: 'infrastructure',
+    defaultConfig: { 
+      rotate_proxy: false,
+      rotate_worker: false,
+      rotate_instance: false,
+      trigger_condition: 'manual'
+    }
+  }
+];
+
+// Security Templates
+export const SECURITY_TEMPLATES: NodeTemplate[] = [
+  {
+    type: 'execution_quota_guard',
+    label: 'Limite de Execução',
+    icon: 'ShieldAlert',
+    description: 'Protege contra abuso por fluxo/tenant',
+    category: 'security',
+    defaultConfig: { 
+      max_concurrent: 10,
+      max_per_hour: 1000,
+      max_per_day: 10000,
+      on_violation: 'pause'
+    }
+  },
+  {
+    type: 'infra_rate_limit',
+    label: 'Limite de Infraestrutura',
+    icon: 'Gauge',
+    description: 'Limite de consumo de recursos',
+    category: 'security',
+    defaultConfig: { 
+      cpu_limit_percent: 80,
+      memory_limit_mb: 512,
+      throughput_mbps: 10,
+      cooldown_minutes: 5
+    }
+  },
+  {
+    type: 'if_infra_health',
+    label: 'Condição de Saúde',
+    icon: 'HeartPulse',
+    description: 'Decisão baseada em saúde da infra',
+    category: 'security',
+    defaultConfig: { 
+      check_proxy_health: true,
+      check_worker_load: true,
+      check_latency: true,
+      latency_threshold_ms: 500,
+      fallback: 'pause'
+    }
+  },
+  {
+    type: 'secure_context_guard',
+    label: 'Contexto Seguro',
+    icon: 'Lock',
+    description: 'Proteção do contexto de execução',
+    category: 'security',
+    defaultConfig: { 
+      isolate_execution: true,
+      prevent_variable_leak: true,
+      auto_reset_on_error: true,
+      allowed_variables: []
+    }
+  }
+];
+
+// Get all templates including native, stability, automation, infrastructure and security
+export const getAllTemplates = () => [...NATIVE_WA_TEMPLATES, ...NODE_TEMPLATES, ...STABILITY_TEMPLATES, ...AUTOMATION_TEMPLATES, ...INFRASTRUCTURE_TEMPLATES, ...SECURITY_TEMPLATES];

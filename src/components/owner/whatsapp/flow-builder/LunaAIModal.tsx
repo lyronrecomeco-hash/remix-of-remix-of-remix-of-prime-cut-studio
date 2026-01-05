@@ -59,10 +59,14 @@ interface LunaAIModalProps {
 }
 
 const QUICK_PROMPTS = [
-  { icon: MessageSquare, label: 'Atendimento', prompt: 'Crie um fluxo de atendimento ao cliente com menu de opções, FAQ e transferência para humano' },
-  { icon: Sparkles, label: 'Vendas', prompt: 'Crie um fluxo de vendas com apresentação de produtos, perguntas de qualificação e fechamento' },
-  { icon: Lightbulb, label: 'Suporte', prompt: 'Crie um fluxo de suporte técnico com triagem de problemas, soluções automáticas e escalação' },
-  { icon: Wand2, label: 'Agendamento', prompt: 'Crie um fluxo de agendamento com seleção de data, horário e confirmação' },
+  { icon: MessageSquare, label: 'Atendimento Completo', prompt: 'Crie um fluxo de atendimento ao cliente com menu de opções, FAQ, transferência para humano, proteção anti-spam e fila de mensagens' },
+  { icon: Sparkles, label: 'Funil de Vendas', prompt: 'Crie um fluxo de vendas com apresentação de produtos, perguntas de qualificação, fechamento, integração com CRM e proteção de sessão' },
+  { icon: Lightbulb, label: 'Suporte Técnico', prompt: 'Crie um fluxo de suporte técnico com triagem de problemas, soluções automáticas, escalação, timeout handler e retry automático' },
+  { icon: Wand2, label: 'Agendamento', prompt: 'Crie um fluxo de agendamento com seleção de data, horário, confirmação, integração com API externa e rate limiting' },
+  { icon: Zap, label: 'E-commerce', prompt: 'Crie um fluxo completo de e-commerce: catálogo, carrinho, checkout, pagamento, integração com Shopify e proteção de infraestrutura' },
+  { icon: GitBranch, label: 'Automação Complexa', prompt: 'Crie uma automação sem WhatsApp: webhook trigger, chamada de API externa, loop de processamento, transformação de dados e emissão de eventos' },
+  { icon: Clock, label: 'Cron + Notificações', prompt: 'Crie um fluxo agendado (cron) que busca dados de API, processa com loop, e envia notificações via WhatsApp com fila e retry' },
+  { icon: Target, label: 'Sistema Resiliente', prompt: 'Crie um fluxo enterprise com: proxy assign, worker assign, session guard, rate limit, quota guard, secure context e timeout handler' },
 ];
 
 const NODE_ICONS: Record<string, string> = {
@@ -81,7 +85,39 @@ const NODE_ICONS: Record<string, string> = {
   ai: '🤖',
   webhook: '🌐',
   variable: '📝',
-  end: '🏁'
+  end: '🏁',
+  // Automation
+  http_request_advanced: '🔗',
+  webhook_trigger: '📡',
+  cron_trigger: '📅',
+  set_variable: '📌',
+  if_expression: '🧮',
+  loop_for_each: '🔄',
+  switch_case: '🔀',
+  subflow_call: '📤',
+  event_emitter: '📡',
+  data_transform: '⚙️',
+  // Stability
+  queue_message: '📨',
+  session_guard: '🛡️',
+  timeout_handler: '⏰',
+  if_instance_state: '📶',
+  retry_policy: '🔁',
+  smart_delay: '⏳',
+  rate_limit: '⚡',
+  enqueue_flow_step: '📋',
+  // Infrastructure
+  proxy_assign: '🌐',
+  proxy_rotate: '🔄',
+  worker_assign: '🖥️',
+  worker_release: '🚪',
+  dispatch_execution: '🚀',
+  identity_rotate: '🔄',
+  // Security
+  execution_quota_guard: '🛡️',
+  infra_rate_limit: '⚡',
+  if_infra_health: '💓',
+  secure_context_guard: '🔒',
 };
 
 export const LunaAIModal = ({ 
@@ -108,7 +144,7 @@ export const LunaAIModal = ({
       setMessages([{
         id: 'welcome',
         role: 'assistant',
-        content: 'Olá! 👋 Sou a **Luna**, sua assistente de automação WhatsApp.\n\nMe descreva o fluxo que você precisa e eu vou:\n1. 📋 **Analisar** sua necessidade\n2. 📐 **Propor** uma estrutura\n3. ⏳ **Aguardar** sua aprovação\n4. 🔧 **Construir** o fluxo no canvas!\n\n*Após aprovação, fecharei esta janela e você verá os nós sendo criados em tempo real!*',
+        content: 'Olá! 👋 Sou a **Luna**, sua assistente de automação avançada.\n\nConsigo criar fluxos de **QUALQUER complexidade**:\n- 🚀 Automações simples de atendimento\n- ⚡ Integrações com APIs externas\n- 🔄 Loops, condições e transformações\n- 🛡️ Proteção anti-spam e rate limiting\n- 🖥️ Controle de infraestrutura e proxy\n- 🔒 Segurança e isolamento de contexto\n\nMe descreva o que precisa e eu vou:\n1. 📋 **Analisar** sua necessidade\n2. 📐 **Propor** uma estrutura completa\n3. ⏳ **Aguardar** sua aprovação\n4. 🔧 **Construir** o fluxo no canvas!\n\n*Escolha uma sugestão abaixo ou descreva livremente!*',
         timestamp: new Date()
       }]);
     }
@@ -411,8 +447,8 @@ export const LunaAIModal = ({
               animate={isLoading ? { scale: [1, 1.1, 1] } : {}}
               transition={{ duration: 1, repeat: Infinity }}
             >
-              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-primary to-primary/60 flex items-center justify-center overflow-hidden ring-2 ring-primary/30">
-                <img src={lunaAvatar} alt="Luna" className="w-full h-full object-cover" />
+              <div className="w-12 h-12 rounded-full bg-transparent flex items-center justify-center overflow-hidden ring-2 ring-primary/30">
+                <img src={lunaAvatar} alt="Luna" className="w-full h-full object-cover rounded-full" style={{ mixBlendMode: 'normal' }} />
               </div>
               <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-background" />
             </motion.div>
@@ -586,9 +622,9 @@ export const LunaAIModal = ({
                 animate={{ opacity: 1 }}
                 className="flex gap-3"
               >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-primary/60 flex items-center justify-center overflow-hidden">
-                  <img src={lunaAvatar} alt="Luna" className="w-full h-full object-cover" />
-                </div>
+                      <div className="w-8 h-8 rounded-full bg-transparent flex items-center justify-center overflow-hidden ring-1 ring-primary/20">
+                        <img src={lunaAvatar} alt="Luna" className="w-full h-full object-cover rounded-full" />
+                      </div>
                 <div className="bg-muted rounded-2xl rounded-tl-sm p-3">
                   <div className="flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin text-primary" />
@@ -600,27 +636,27 @@ export const LunaAIModal = ({
           </div>
         </ScrollArea>
 
-        {/* Quick Prompts */}
+        {/* Quick Prompts - Expanded Grid */}
         <AnimatePresence>
           {showQuickPrompts && !isLoading && messages.length <= 1 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
-              className="p-4 border-t border-border"
+              className="p-4 border-t border-border max-h-[200px] overflow-auto"
             >
-              <p className="text-xs text-muted-foreground mb-2">Sugestões rápidas:</p>
-              <div className="grid grid-cols-2 gap-2">
+              <p className="text-xs text-muted-foreground mb-3">💡 Escolha um tipo de fluxo ou descreva livremente:</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {QUICK_PROMPTS.map((qp, i) => (
                   <Button
                     key={i}
                     variant="outline"
                     size="sm"
                     onClick={() => sendMessage(qp.prompt)}
-                    className="justify-start gap-2 h-auto py-2 text-xs"
+                    className="justify-start gap-2 h-auto py-2.5 px-3 text-xs hover:bg-primary/10 hover:border-primary/50 transition-all flex-col items-start"
                   >
                     <qp.icon className="h-4 w-4 text-primary" />
-                    {qp.label}
+                    <span className="font-medium">{qp.label}</span>
                   </Button>
                 ))}
               </div>

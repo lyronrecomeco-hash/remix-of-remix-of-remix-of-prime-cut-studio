@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, Trash2, Copy, Sparkles, Code, Eye, Wand2, Plus, Minus, AlertTriangle, Info, Zap, Tag, Globe, CornerDownRight, StickyNote, Link2, Shield, RefreshCw, Gauge, ListPlus, GitBranch, Calendar, Repeat, GitMerge, ExternalLink, Radio, Workflow } from 'lucide-react';
+import { X, Save, Trash2, Copy, Sparkles, Code, Eye, Wand2, Plus, Minus, AlertTriangle, Info, Zap, Tag, Globe, CornerDownRight, StickyNote, Link2, Shield, RefreshCw, Gauge, ListPlus, GitBranch, Calendar, Repeat, GitMerge, ExternalLink, Radio, Workflow, Server, LogOut, UserCog, ShieldAlert, HeartPulse, Lock, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -2065,6 +2065,480 @@ export const NodeConfigPanel = ({ node, onClose, onSave, onDelete, onDuplicate }
             <div className="space-y-2">
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">Variável de Saída</Label>
               <Input value={formData.output_variable || 'transformed'} onChange={(e) => updateField('output_variable', e.target.value)} placeholder="transformed" className="bg-muted/50 font-mono" />
+            </div>
+          </div>
+        );
+
+      // ============ INFRASTRUCTURE NODES ============
+      case 'proxy_assign':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">🌐</div>
+                <div>
+                  <p className="text-sm font-medium">Atribuir Proxy</p>
+                  <p className="text-[11px] text-muted-foreground">Associa proxy à execução</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Pool de Proxy</Label>
+              <Input value={formData.proxy_pool || 'default'} onChange={(e) => updateField('proxy_pool', e.target.value)} placeholder="default" className="bg-muted/50" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Tipo</Label>
+              <Select value={formData.type || 'datacenter'} onValueChange={(v) => updateField('type', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="datacenter">🏢 Datacenter</SelectItem>
+                  <SelectItem value="residential">🏠 Residencial</SelectItem>
+                  <SelectItem value="mobile">📱 Mobile</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Sticky (manter mesmo proxy)</Label>
+                <p className="text-[11px] text-muted-foreground">Usa mesmo IP durante sessão</p>
+              </div>
+              <Switch checked={formData.sticky ?? true} onCheckedChange={(v) => updateField('sticky', v)} />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">TTL (seg)</Label>
+                <Input type="number" min="60" max="86400" value={formData.ttl_seconds || 3600} onChange={(e) => updateField('ttl_seconds', parseInt(e.target.value))} className="bg-muted/50" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Fallback</Label>
+                <Select value={formData.fallback_behavior || 'direct'} onValueChange={(v) => updateField('fallback_behavior', v)}>
+                  <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="direct">⚡ Conexão direta</SelectItem>
+                    <SelectItem value="error">❌ Erro</SelectItem>
+                    <SelectItem value="wait">⏳ Aguardar disponível</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'proxy_rotate':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-cyan-500/10 to-teal-500/10 border border-cyan-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">🔄</div>
+                <div>
+                  <p className="text-sm font-medium">Rotacionar Proxy</p>
+                  <p className="text-[11px] text-muted-foreground">Rotação controlada de proxy</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Rotacionar Quando</Label>
+              <Select value={formData.rotate_on || 'error'} onValueChange={(v) => updateField('rotate_on', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="error">❌ Erro de conexão</SelectItem>
+                  <SelectItem value="time">⏰ Por tempo</SelectItem>
+                  <SelectItem value="load">📊 Alta carga</SelectItem>
+                  <SelectItem value="manual">🖐️ Manual</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Intervalo Mínimo (seg)</Label>
+              <Input type="number" min="10" max="3600" value={formData.min_interval_seconds || 60} onChange={(e) => updateField('min_interval_seconds', parseInt(e.target.value))} className="bg-muted/50" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Ação em Falha</Label>
+              <Select value={formData.on_fail || 'continue'} onValueChange={(v) => updateField('on_fail', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="continue">➡️ Continuar sem proxy</SelectItem>
+                  <SelectItem value="retry">🔄 Tentar novamente</SelectItem>
+                  <SelectItem value="error">❌ Parar com erro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+
+      case 'worker_assign':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-cyan-500/10 to-indigo-500/10 border border-cyan-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">🖥️</div>
+                <div>
+                  <p className="text-sm font-medium">Atribuir Worker</p>
+                  <p className="text-[11px] text-muted-foreground">Seleciona VPS/worker para execução</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Região</Label>
+              <Select value={formData.region || 'auto'} onValueChange={(v) => updateField('region', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">🌍 Automático</SelectItem>
+                  <SelectItem value="br-south">🇧🇷 Brasil Sul</SelectItem>
+                  <SelectItem value="br-east">🇧🇷 Brasil Leste</SelectItem>
+                  <SelectItem value="us-east">🇺🇸 EUA Leste</SelectItem>
+                  <SelectItem value="eu-west">🇪🇺 Europa Oeste</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Capacidade Máxima (%)</Label>
+              <Slider value={[formData.max_capacity || 100]} onValueChange={([v]) => updateField('max_capacity', v)} min={10} max={100} step={5} />
+              <p className="text-[11px] text-muted-foreground text-center">{formData.max_capacity || 100}%</p>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Sticky (mesmo worker)</Label>
+                <p className="text-[11px] text-muted-foreground">Mantém execuções no mesmo worker</p>
+              </div>
+              <Switch checked={formData.sticky ?? true} onCheckedChange={(v) => updateField('sticky', v)} />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Fallback</Label>
+              <Select value={formData.fallback || 'any'} onValueChange={(v) => updateField('fallback', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">🔀 Qualquer disponível</SelectItem>
+                  <SelectItem value="wait">⏳ Aguardar preferido</SelectItem>
+                  <SelectItem value="error">❌ Erro se indisponível</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+
+      case 'worker_release':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-cyan-500/10 to-gray-500/10 border border-cyan-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">🚪</div>
+                <div>
+                  <p className="text-sm font-medium">Liberar Worker</p>
+                  <p className="text-[11px] text-muted-foreground">Libera recursos após execução</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Liberar ao Concluir</Label>
+                <p className="text-[11px] text-muted-foreground">Libera quando fluxo termina</p>
+              </div>
+              <Switch checked={formData.release_on_complete ?? true} onCheckedChange={(v) => updateField('release_on_complete', v)} />
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Liberar em Erro</Label>
+                <p className="text-[11px] text-muted-foreground">Libera mesmo com falha</p>
+              </div>
+              <Switch checked={formData.release_on_error ?? true} onCheckedChange={(v) => updateField('release_on_error', v)} />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Timeout de Retenção (seg)</Label>
+              <Input type="number" min="0" max="3600" value={formData.retention_timeout || 60} onChange={(e) => updateField('retention_timeout', parseInt(e.target.value))} className="bg-muted/50" />
+              <p className="text-[11px] text-muted-foreground">Tempo para manter reservado após uso</p>
+            </div>
+          </div>
+        );
+
+      case 'dispatch_execution':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-cyan-500/10 to-green-500/10 border border-cyan-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">🚀</div>
+                <div>
+                  <p className="text-sm font-medium">Disparo Controlado</p>
+                  <p className="text-[11px] text-muted-foreground">Disparo controlado de execuções</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Quantidade</Label>
+                <Input type="number" min="1" max="1000" value={formData.quantity || 1} onChange={(e) => updateField('quantity', parseInt(e.target.value))} className="bg-muted/50" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Espaçamento (seg)</Label>
+                <Input type="number" min="0" max="60" value={formData.spacing_seconds || 1} onChange={(e) => updateField('spacing_seconds', parseInt(e.target.value))} className="bg-muted/50" />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Paralelismo Máximo</Label>
+              <Slider value={[formData.max_parallel || 10]} onValueChange={([v]) => updateField('max_parallel', v)} min={1} max={50} step={1} />
+              <p className="text-[11px] text-muted-foreground text-center">{formData.max_parallel || 10} execuções simultâneas</p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Início Janela</Label>
+                <Input type="time" value={formData.time_window_start || '00:00'} onChange={(e) => updateField('time_window_start', e.target.value)} className="bg-muted/50" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Fim Janela</Label>
+                <Input type="time" value={formData.time_window_end || '23:59'} onChange={(e) => updateField('time_window_end', e.target.value)} className="bg-muted/50" />
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'identity_rotate':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-cyan-500/10 to-purple-500/10 border border-cyan-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">🔄</div>
+                <div>
+                  <p className="text-sm font-medium">Rotacionar Identidade</p>
+                  <p className="text-[11px] text-muted-foreground">Rotação de identidade operacional</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Rotacionar Proxy</Label>
+                <p className="text-[11px] text-muted-foreground">Troca IP de saída</p>
+              </div>
+              <Switch checked={formData.rotate_proxy ?? false} onCheckedChange={(v) => updateField('rotate_proxy', v)} />
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Rotacionar Worker</Label>
+                <p className="text-[11px] text-muted-foreground">Muda servidor de execução</p>
+              </div>
+              <Switch checked={formData.rotate_worker ?? false} onCheckedChange={(v) => updateField('rotate_worker', v)} />
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Rotacionar Instância</Label>
+                <p className="text-[11px] text-muted-foreground">Troca instância WhatsApp</p>
+              </div>
+              <Switch checked={formData.rotate_instance ?? false} onCheckedChange={(v) => updateField('rotate_instance', v)} />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Condição de Disparo</Label>
+              <Select value={formData.trigger_condition || 'manual'} onValueChange={(v) => updateField('trigger_condition', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="manual">🖐️ Manual</SelectItem>
+                  <SelectItem value="error">❌ Após erro</SelectItem>
+                  <SelectItem value="rate_limit">⚠️ Rate limit atingido</SelectItem>
+                  <SelectItem value="time">⏰ Por tempo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+
+      // ============ SECURITY NODES ============
+      case 'execution_quota_guard':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-red-500/10 to-orange-500/10 border border-red-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">🛡️</div>
+                <div>
+                  <p className="text-sm font-medium">Limite de Execução</p>
+                  <p className="text-[11px] text-muted-foreground">Protege contra abuso</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Simultâneas</Label>
+                <Input type="number" min="1" max="100" value={formData.max_concurrent || 10} onChange={(e) => updateField('max_concurrent', parseInt(e.target.value))} className="bg-muted/50" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Por Hora</Label>
+                <Input type="number" min="1" max="10000" value={formData.max_per_hour || 1000} onChange={(e) => updateField('max_per_hour', parseInt(e.target.value))} className="bg-muted/50" />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Máximo por Dia</Label>
+              <Input type="number" min="1" max="100000" value={formData.max_per_day || 10000} onChange={(e) => updateField('max_per_day', parseInt(e.target.value))} className="bg-muted/50" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Ação ao Violar</Label>
+              <Select value={formData.on_violation || 'pause'} onValueChange={(v) => updateField('on_violation', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pause">⏸️ Pausar execução</SelectItem>
+                  <SelectItem value="abort">⏹️ Abortar</SelectItem>
+                  <SelectItem value="queue">📋 Enfileirar</SelectItem>
+                  <SelectItem value="notify">🔔 Apenas notificar</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+
+      case 'infra_rate_limit':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-red-500/10 to-yellow-500/10 border border-red-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">⚡</div>
+                <div>
+                  <p className="text-sm font-medium">Limite de Infraestrutura</p>
+                  <p className="text-[11px] text-muted-foreground">Limite de consumo de recursos</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Limite CPU (%)</Label>
+              <Slider value={[formData.cpu_limit_percent || 80]} onValueChange={([v]) => updateField('cpu_limit_percent', v)} min={10} max={100} step={5} />
+              <p className="text-[11px] text-muted-foreground text-center">{formData.cpu_limit_percent || 80}%</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Limite Memória (MB)</Label>
+              <Input type="number" min="64" max="4096" value={formData.memory_limit_mb || 512} onChange={(e) => updateField('memory_limit_mb', parseInt(e.target.value))} className="bg-muted/50" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Throughput (Mbps)</Label>
+              <Input type="number" min="1" max="1000" value={formData.throughput_mbps || 10} onChange={(e) => updateField('throughput_mbps', parseInt(e.target.value))} className="bg-muted/50" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Cooldown (min)</Label>
+              <Input type="number" min="1" max="60" value={formData.cooldown_minutes || 5} onChange={(e) => updateField('cooldown_minutes', parseInt(e.target.value))} className="bg-muted/50" />
+            </div>
+          </div>
+        );
+
+      case 'if_infra_health':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-red-500/10 to-green-500/10 border border-red-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">💓</div>
+                <div>
+                  <p className="text-sm font-medium">Condição de Saúde</p>
+                  <p className="text-[11px] text-muted-foreground">Decisão baseada em saúde da infra</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Verificar Saúde do Proxy</Label>
+                <p className="text-[11px] text-muted-foreground">Checa se proxy está respondendo</p>
+              </div>
+              <Switch checked={formData.check_proxy_health ?? true} onCheckedChange={(v) => updateField('check_proxy_health', v)} />
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Verificar Carga do Worker</Label>
+                <p className="text-[11px] text-muted-foreground">Checa se worker não está sobrecarregado</p>
+              </div>
+              <Switch checked={formData.check_worker_load ?? true} onCheckedChange={(v) => updateField('check_worker_load', v)} />
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Verificar Latência</Label>
+                <p className="text-[11px] text-muted-foreground">Checa se latência está aceitável</p>
+              </div>
+              <Switch checked={formData.check_latency ?? true} onCheckedChange={(v) => updateField('check_latency', v)} />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Limite de Latência (ms)</Label>
+              <Input type="number" min="50" max="5000" value={formData.latency_threshold_ms || 500} onChange={(e) => updateField('latency_threshold_ms', parseInt(e.target.value))} className="bg-muted/50" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Fallback</Label>
+              <Select value={formData.fallback || 'pause'} onValueChange={(v) => updateField('fallback', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pause">⏸️ Pausar</SelectItem>
+                  <SelectItem value="continue">➡️ Continuar</SelectItem>
+                  <SelectItem value="rotate">🔄 Rotacionar recursos</SelectItem>
+                  <SelectItem value="abort">⏹️ Abortar</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+
+      case 'secure_context_guard':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-red-500/10 to-purple-500/10 border border-red-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">🔒</div>
+                <div>
+                  <p className="text-sm font-medium">Contexto Seguro</p>
+                  <p className="text-[11px] text-muted-foreground">Proteção do contexto de execução</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Isolar Execução</Label>
+                <p className="text-[11px] text-muted-foreground">Cada execução em ambiente isolado</p>
+              </div>
+              <Switch checked={formData.isolate_execution ?? true} onCheckedChange={(v) => updateField('isolate_execution', v)} />
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Prevenir Vazamento</Label>
+                <p className="text-[11px] text-muted-foreground">Bloqueia acesso entre contextos</p>
+              </div>
+              <Switch checked={formData.prevent_variable_leak ?? true} onCheckedChange={(v) => updateField('prevent_variable_leak', v)} />
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Reset Automático em Erro</Label>
+                <p className="text-[11px] text-muted-foreground">Limpa contexto após falha</p>
+              </div>
+              <Switch checked={formData.auto_reset_on_error ?? true} onCheckedChange={(v) => updateField('auto_reset_on_error', v)} />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Variáveis Permitidas</Label>
+              <Textarea value={formData.allowed_variables_raw || ''} onChange={(e) => updateField('allowed_variables_raw', e.target.value)} placeholder="nome&#10;telefone&#10;user_id" className="bg-muted/50 resize-none font-mono text-xs" rows={3} />
+              <p className="text-[11px] text-muted-foreground">Uma por linha. Vazio = todas permitidas</p>
             </div>
           </div>
         );
