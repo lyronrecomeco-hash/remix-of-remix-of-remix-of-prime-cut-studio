@@ -31,8 +31,9 @@ async function processAction(
   supabase: any,
   action: any,
   eventData: any,
-  projectId: string
-): Promise<{ success: boolean; result?: any; error?: string }> {
+  projectId: string,
+  context: { instanceId?: string; flowContext?: any }
+): Promise<{ success: boolean; result?: any; error?: string; skip?: boolean }> {
   console.log(`Processing action: ${action.type}`, action);
 
   switch (action.type) {
@@ -156,6 +157,185 @@ async function processAction(
       return { success: true };
     }
 
+    // =====================================================
+    // STABILITY & RESILIENCE NODES
+    // =====================================================
+
+    case 'queue_message': {
+      const { message, priority = 'normal', retry_limit = 3, retry_interval_seconds = 30, expiration_seconds = 3600 } = action.config;
+      
+      // Insert into message queue table
+      const { error } = await supabase.from('whatsapp_message_queue').insert({
+        instance_id: context.instanceId,
+        recipient: eventData?.from,
+        message_content: message,
+        priority,
+        max_retries: retry_limit,
+        retry_interval: retry_interval_seconds,
+        expires_at: new Date(Date.now() + expiration_seconds * 1000).toISOString(),
+        status: 'pending',
+        metadata: { projectId, flowContext: context.flowContext }
+      });
+
+      if (error) {
+        console.error('Queue message error:', error);
+        return { success: false, error: error.message };
+      }
+      
+      return { success: true, result: { queued: true } };
+    }
+
+    case 'session_guard': {
+      const { max_messages_per_minute = 20, burst_limit = 5, cooldown_minutes = 2 } = action.config;
+      
+      // Check recent message count for this instance
+      const oneMinuteAgo = new Date(Date.now() - 60000).toISOString();
+      const { count: recentCount } = await supabase
+        .from('whatsapp_message_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('instance_id', context.instanceId)
+        .gte('created_at', oneMinuteAgo);
+      
+      if ((recentCount || 0) >= max_messages_per_minute) {
+        console.log(`Session guard: Rate limit exceeded (${recentCount}/${max_messages_per_minute})`);
+        // Apply cooldown
+        await new Promise(resolve => setTimeout(resolve, cooldown_minutes * 60 * 1000));
+        return { success: true, result: { throttled: true, waited: cooldown_minutes * 60 } };
+      }
+      
+      // Check burst
+      const fiveSecondsAgo = new Date(Date.now() - 5000).toISOString();
+      const { count: burstCount } = await supabase
+        .from('whatsapp_message_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('instance_id', context.instanceId)
+        .gte('created_at', fiveSecondsAgo);
+      
+      if ((burstCount || 0) >= burst_limit) {
+        console.log(`Session guard: Burst limit exceeded (${burstCount}/${burst_limit})`);
+        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+        return { success: true, result: { burstThrottled: true } };
+      }
+      
+      return { success: true, result: { passed: true } };
+    }
+
+    case 'timeout_handler': {
+      const { timeout_seconds = 30 } = action.config;
+      // This node wraps subsequent actions with a timeout
+      // The actual timeout logic would be applied by the flow executor
+      return { success: true, result: { timeout: timeout_seconds } };
+    }
+
+    case 'if_instance_state': {
+      const { check_state = 'connected' } = action.config;
+      
+      // Get current instance state
+      const { data: instance } = await supabase
+        .from('genesis_instances')
+        .select('status')
+        .eq('id', context.instanceId)
+        .single();
+      
+      const currentState = instance?.status || 'disconnected';
+      const matches = currentState === check_state;
+      
+      return { 
+        success: true, 
+        result: { 
+          matches, 
+          currentState, 
+          expectedState: check_state 
+        },
+        skip: !matches // Skip next nodes if condition doesn't match
+      };
+    }
+
+    case 'retry_policy': {
+      const { max_attempts = 3, delay_seconds = 5, jitter_enabled = true } = action.config;
+      
+      // Store retry context for subsequent actions
+      const jitter = jitter_enabled ? Math.random() * delay_seconds * 0.3 : 0;
+      
+      return { 
+        success: true, 
+        result: { 
+          policy: { 
+            maxAttempts: max_attempts, 
+            delaySeconds: delay_seconds + jitter,
+            jitterEnabled: jitter_enabled
+          } 
+        } 
+      };
+    }
+
+    case 'smart_delay': {
+      const { min_seconds = 2, max_seconds = 8, randomize = true, respect_business_hours = false } = action.config;
+      
+      let delaySeconds = min_seconds;
+      
+      if (randomize) {
+        delaySeconds = min_seconds + Math.random() * (max_seconds - min_seconds);
+      }
+      
+      // Check business hours (9-18, Mon-Fri)
+      if (respect_business_hours) {
+        const now = new Date();
+        const hour = now.getHours();
+        const day = now.getDay();
+        const isBusinessHours = day >= 1 && day <= 5 && hour >= 9 && hour < 18;
+        
+        if (!isBusinessHours) {
+          delaySeconds *= 2; // Double delay outside business hours
+        }
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, delaySeconds * 1000));
+      
+      return { success: true, result: { delayed: delaySeconds } };
+    }
+
+    case 'rate_limit': {
+      const { messages_per_minute = 10, burst_limit = 3, cooldown_minutes = 1 } = action.config;
+      
+      // Similar to session_guard but for flow-level rate limiting
+      const oneMinuteAgo = new Date(Date.now() - 60000).toISOString();
+      const { count: flowCount } = await supabase
+        .from('whatsapp_automation_executions')
+        .select('*', { count: 'exact', head: true })
+        .eq('project_id', projectId)
+        .gte('created_at', oneMinuteAgo);
+      
+      if ((flowCount || 0) >= messages_per_minute) {
+        console.log(`Rate limit: Flow limit exceeded (${flowCount}/${messages_per_minute})`);
+        await new Promise(resolve => setTimeout(resolve, cooldown_minutes * 60 * 1000));
+        return { success: true, result: { rateLimited: true, waited: cooldown_minutes * 60 } };
+      }
+      
+      return { success: true, result: { passed: true, currentRate: flowCount } };
+    }
+
+    case 'enqueue_flow_step': {
+      const { queue_name = 'default', priority = 'normal', delay_seconds = 0 } = action.config;
+      
+      // Insert into flow step queue for async execution
+      const { error } = await supabase.from('whatsapp_flow_queue').insert({
+        queue_name,
+        priority,
+        scheduled_at: new Date(Date.now() + delay_seconds * 1000).toISOString(),
+        flow_context: context.flowContext,
+        event_data: eventData,
+        status: 'pending'
+      });
+
+      if (error) {
+        console.error('Enqueue flow step error:', error);
+        return { success: false, error: error.message };
+      }
+      
+      return { success: true, result: { enqueued: true, queue: queue_name } };
+    }
+
     default:
       return { success: false, error: `Unknown action type: ${action.type}` };
   }
@@ -248,12 +428,23 @@ async function processEvent(supabase: any, event: EventQueueItem): Promise<void>
 
     // Execute actions in sequence
     const actionResults: any[] = [];
+    const context = { 
+      instanceId: (rule as any).instance_id, 
+      flowContext: { ruleId: rule.id, eventId: event.id } 
+    };
+    
     for (const action of rule.actions || []) {
-      const result = await processAction(supabase, action, event.event_data, event.project_id);
+      const result = await processAction(supabase, action, event.event_data, event.project_id, context);
       actionResults.push({ action: action.type, ...result });
 
       // Stop if action failed and stopOnError is set
       if (!result.success && action.stopOnError) {
+        break;
+      }
+      
+      // Skip subsequent actions if node returned skip flag
+      if (result.skip) {
+        console.log(`Skipping remaining actions due to condition`);
         break;
       }
     }

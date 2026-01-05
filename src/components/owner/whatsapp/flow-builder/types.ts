@@ -28,7 +28,16 @@ export type NodeType =
   | 'wa_send_buttons'
   | 'wa_send_list'
   | 'wa_wait_response'
-  | 'wa_receive';
+  | 'wa_receive'
+  // Stability & Resilience Nodes
+  | 'queue_message'
+  | 'session_guard'
+  | 'timeout_handler'
+  | 'if_instance_state'
+  | 'retry_policy'
+  | 'smart_delay'
+  | 'rate_limit'
+  | 'enqueue_flow_step';
 
 export interface FlowNodeData {
   label: string;
@@ -95,7 +104,7 @@ export interface NodeTemplate {
   label: string;
   icon: string;
   description: string;
-  category: 'triggers' | 'conditions' | 'actions' | 'flow' | 'advanced' | 'nativos';
+  category: 'triggers' | 'conditions' | 'actions' | 'flow' | 'advanced' | 'nativos' | 'stability';
   defaultConfig: Record<string, any>;
   requiresInstance?: boolean; // If true, requires connected WhatsApp instance
 }
@@ -285,6 +294,114 @@ export const NODE_TEMPLATES: NodeTemplate[] = [
   }
 ];
 
+// Stability & Resilience Templates
+export const STABILITY_TEMPLATES: NodeTemplate[] = [
+  {
+    type: 'queue_message',
+    label: 'Fila de Envio',
+    icon: 'Send',
+    description: 'Envia mensagem via fila com garantia de entrega',
+    category: 'stability',
+    defaultConfig: { 
+      priority: 'normal', 
+      retry_limit: 3, 
+      retry_interval_seconds: 30,
+      expiration_seconds: 3600,
+      on_fail: 'end'
+    },
+    requiresInstance: true
+  },
+  {
+    type: 'session_guard',
+    label: 'Proteção de Sessão',
+    icon: 'Shield',
+    description: 'Limita mensagens para evitar spam e ban',
+    category: 'stability',
+    defaultConfig: { 
+      max_messages_per_minute: 20, 
+      burst_limit: 5, 
+      cooldown_minutes: 2,
+      on_violation: 'pause'
+    },
+    requiresInstance: true
+  },
+  {
+    type: 'timeout_handler',
+    label: 'Tratamento de Timeout',
+    icon: 'Timer',
+    description: 'Captura timeout e define ação de fallback',
+    category: 'stability',
+    defaultConfig: { 
+      timeout_seconds: 30, 
+      on_timeout: 'goto',
+      fallback_message: ''
+    }
+  },
+  {
+    type: 'if_instance_state',
+    label: 'Condição de Estado',
+    icon: 'GitBranch',
+    description: 'Verifica estado da instância WhatsApp',
+    category: 'stability',
+    defaultConfig: { 
+      check_state: 'connected',
+      fallback_state: 'disconnected'
+    },
+    requiresInstance: true
+  },
+  {
+    type: 'retry_policy',
+    label: 'Política de Retry',
+    icon: 'RefreshCw',
+    description: 'Define retentativas com backoff controlado',
+    category: 'stability',
+    defaultConfig: { 
+      max_attempts: 3, 
+      delay_seconds: 5,
+      jitter_enabled: true,
+      on_exhausted: 'end'
+    }
+  },
+  {
+    type: 'smart_delay',
+    label: 'Pausa Inteligente',
+    icon: 'Clock',
+    description: 'Delay com aleatoriedade e contexto',
+    category: 'stability',
+    defaultConfig: { 
+      min_seconds: 2, 
+      max_seconds: 8,
+      randomize: true,
+      respect_business_hours: false
+    }
+  },
+  {
+    type: 'rate_limit',
+    label: 'Limite de Taxa',
+    icon: 'Gauge',
+    description: 'Controla ritmo de execução do fluxo',
+    category: 'stability',
+    defaultConfig: { 
+      messages_per_minute: 10, 
+      burst_limit: 3,
+      cooldown_minutes: 1,
+      on_limit: 'pause'
+    }
+  },
+  {
+    type: 'enqueue_flow_step',
+    label: 'Enfileirar Passo',
+    icon: 'ListPlus',
+    description: 'Executa próximo passo de forma assíncrona',
+    category: 'stability',
+    defaultConfig: { 
+      queue_name: 'default', 
+      priority: 'normal',
+      delay_seconds: 0
+    }
+  }
+];
+
 // Native WhatsApp Templates (Genesis)
 export const NATIVE_WA_TEMPLATES: NodeTemplate[] = [
   {
@@ -349,7 +466,8 @@ export const NODE_CATEGORIES = {
   conditions: { label: 'Condições', color: '#eab308' },
   actions: { label: 'Ações', color: '#3b82f6' },
   flow: { label: 'Controle', color: '#a855f7' },
-  advanced: { label: 'Avançado', color: '#6366f1' }
+  advanced: { label: 'Avançado', color: '#6366f1' },
+  stability: { label: 'Estabilidade', color: '#f97316' } // Orange for stability
 };
 
 export const NODE_COLORS: Record<NodeType, string> = {
@@ -379,19 +497,28 @@ export const NODE_COLORS: Record<NodeType, string> = {
   wa_send_list: '#075E54',
   wa_wait_response: '#34B7F1',
   wa_receive: '#25D366',
+  // Stability & Resilience nodes (Orange gradient)
+  queue_message: '#f97316',
+  session_guard: '#ea580c',
+  timeout_handler: '#c2410c',
+  if_instance_state: '#fb923c',
+  retry_policy: '#fdba74',
+  smart_delay: '#fed7aa',
+  rate_limit: '#ffedd5',
+  enqueue_flow_step: '#f59e0b',
 };
 
 // Connection validation rules
 export const CONNECTION_RULES = {
   // Nodes that can only have one outgoing connection
-  singleOutput: ['trigger', 'message', 'button', 'list', 'ai', 'webhook', 'delay', 'variable', 'integration', 'http_request', 'webhook_in', 'ecommerce', 'crm_sheets', 'wa_start', 'wa_send_text', 'wa_send_buttons', 'wa_send_list', 'wa_wait_response', 'wa_receive'],
+  singleOutput: ['trigger', 'message', 'button', 'list', 'ai', 'webhook', 'delay', 'variable', 'integration', 'http_request', 'webhook_in', 'ecommerce', 'crm_sheets', 'wa_start', 'wa_send_text', 'wa_send_buttons', 'wa_send_list', 'wa_wait_response', 'wa_receive', 'queue_message', 'session_guard', 'retry_policy', 'smart_delay', 'rate_limit', 'enqueue_flow_step'],
   // Nodes that can have multiple outgoing connections (yes/no)
-  conditionalOutput: ['condition', 'split'],
+  conditionalOutput: ['condition', 'split', 'if_instance_state', 'timeout_handler'],
   // Nodes that cannot have outgoing connections
   noOutput: ['end'],
   // Nodes that can be connected from any node
-  universalInput: ['message', 'button', 'list', 'ai', 'webhook', 'delay', 'condition', 'split', 'variable', 'integration', 'end', 'goto', 'note', 'http_request', 'ecommerce', 'crm_sheets', 'wa_send_text', 'wa_send_buttons', 'wa_send_list', 'wa_wait_response', 'wa_receive'],
+  universalInput: ['message', 'button', 'list', 'ai', 'webhook', 'delay', 'condition', 'split', 'variable', 'integration', 'end', 'goto', 'note', 'http_request', 'ecommerce', 'crm_sheets', 'wa_send_text', 'wa_send_buttons', 'wa_send_list', 'wa_wait_response', 'wa_receive', 'queue_message', 'session_guard', 'timeout_handler', 'if_instance_state', 'retry_policy', 'smart_delay', 'rate_limit', 'enqueue_flow_step'],
 };
 
-// Get all templates including native
-export const getAllTemplates = () => [...NATIVE_WA_TEMPLATES, ...NODE_TEMPLATES];
+// Get all templates including native and stability
+export const getAllTemplates = () => [...NATIVE_WA_TEMPLATES, ...NODE_TEMPLATES, ...STABILITY_TEMPLATES];

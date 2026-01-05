@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, Trash2, Copy, Sparkles, Code, Eye, Wand2, Plus, Minus, AlertTriangle, Info, Zap, Tag, Globe, CornerDownRight, StickyNote, Link2 } from 'lucide-react';
+import { X, Save, Trash2, Copy, Sparkles, Code, Eye, Wand2, Plus, Minus, AlertTriangle, Info, Zap, Tag, Globe, CornerDownRight, StickyNote, Link2, Shield, RefreshCw, Gauge, ListPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -1120,6 +1120,447 @@ export const NodeConfigPanel = ({ node, onClose, onSave, onDelete, onDuplicate }
               <div className="flex items-start gap-2">
                 <Info className="w-4 h-4 text-primary mt-0.5" />
                 <p className="text-xs text-muted-foreground">Os dados capturados ficam disponíveis como <code className="bg-muted px-1 rounded">{'{{' + (formData.variableName || 'variavel') + '}}'}</code> nos próximos nós.</p>
+              </div>
+            </div>
+          </div>
+        );
+
+      // =====================================================
+      // STABILITY & RESILIENCE NODES
+      // =====================================================
+
+      case 'queue_message':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500/10 to-amber-500/10 border border-orange-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">📤</div>
+                <div>
+                  <p className="text-sm font-medium">Fila de Envio Garantido</p>
+                  <p className="text-[11px] text-muted-foreground">Mensagem persistida com retry automático</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Mensagem</Label>
+              <Textarea
+                value={formData.message || ''}
+                onChange={(e) => updateField('message', e.target.value)}
+                placeholder="Mensagem a ser enviada via fila..."
+                className="bg-muted/50 resize-none min-h-[80px]"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Prioridade</Label>
+              <Select value={formData.priority || 'normal'} onValueChange={(v) => updateField('priority', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">🔽 Baixa</SelectItem>
+                  <SelectItem value="normal">➡️ Normal</SelectItem>
+                  <SelectItem value="high">🔼 Alta</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Tentativas</Label>
+                <Input type="number" min="1" max="10" value={formData.retry_limit || 3} onChange={(e) => updateField('retry_limit', parseInt(e.target.value))} className="bg-muted/50" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Intervalo (seg)</Label>
+                <Input type="number" min="5" max="300" value={formData.retry_interval_seconds || 30} onChange={(e) => updateField('retry_interval_seconds', parseInt(e.target.value))} className="bg-muted/50" />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Expiração (segundos)</Label>
+              <Input type="number" min="60" max="86400" value={formData.expiration_seconds || 3600} onChange={(e) => updateField('expiration_seconds', parseInt(e.target.value))} className="bg-muted/50" />
+              <p className="text-[11px] text-muted-foreground">Tempo máximo na fila (1h = 3600s)</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Ao Falhar</Label>
+              <Select value={formData.on_fail || 'end'} onValueChange={(v) => updateField('on_fail', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="end">⏹️ Encerrar fluxo</SelectItem>
+                  <SelectItem value="goto">↪️ Ir para outro nó</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {formData.on_fail === 'goto' && (
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">ID do Nó Destino</Label>
+                <Input value={formData.fail_target_node || ''} onChange={(e) => updateField('fail_target_node', e.target.value)} placeholder="node-id" className="bg-muted/50 font-mono text-sm" />
+              </div>
+            )}
+          </div>
+        );
+
+      case 'session_guard':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500/10 to-red-500/10 border border-orange-500/20">
+              <div className="flex items-center gap-2">
+                <Shield className="w-5 h-5 text-orange-500" />
+                <div>
+                  <p className="text-sm font-medium">Proteção de Sessão</p>
+                  <p className="text-[11px] text-muted-foreground">Previne spam e protege contra ban</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Msgs/minuto</Label>
+                <Input type="number" min="1" max="60" value={formData.max_messages_per_minute || 20} onChange={(e) => updateField('max_messages_per_minute', parseInt(e.target.value))} className="bg-muted/50" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Burst Limit</Label>
+                <Input type="number" min="1" max="20" value={formData.burst_limit || 5} onChange={(e) => updateField('burst_limit', parseInt(e.target.value))} className="bg-muted/50" />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Cooldown (minutos)</Label>
+              <Input type="number" min="1" max="60" value={formData.cooldown_minutes || 2} onChange={(e) => updateField('cooldown_minutes', parseInt(e.target.value))} className="bg-muted/50" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Ao Violar Limite</Label>
+              <Select value={formData.on_violation || 'pause'} onValueChange={(v) => updateField('on_violation', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pause">⏸️ Pausar temporariamente</SelectItem>
+                  <SelectItem value="goto">↪️ Ir para outro nó</SelectItem>
+                  <SelectItem value="end">⏹️ Encerrar fluxo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {formData.on_violation === 'goto' && (
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">ID do Nó Destino</Label>
+                <Input value={formData.violation_target_node || ''} onChange={(e) => updateField('violation_target_node', e.target.value)} placeholder="node-id" className="bg-muted/50 font-mono text-sm" />
+              </div>
+            )}
+            
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5" />
+                <p className="text-xs text-muted-foreground">Limites muito altos podem resultar em ban. Recomendado: máx 20 msgs/min.</p>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'timeout_handler':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500/10 to-yellow-500/10 border border-orange-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">⏱️</div>
+                <div>
+                  <p className="text-sm font-medium">Tratamento de Timeout</p>
+                  <p className="text-[11px] text-muted-foreground">Define ação quando tempo excede</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Timeout (segundos)</Label>
+              <Input type="number" min="5" max="3600" value={formData.timeout_seconds || 30} onChange={(e) => updateField('timeout_seconds', parseInt(e.target.value))} className="bg-muted/50" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Ao Atingir Timeout</Label>
+              <Select value={formData.on_timeout || 'goto'} onValueChange={(v) => updateField('on_timeout', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="goto">↪️ Ir para outro nó (SIM)</SelectItem>
+                  <SelectItem value="end">⏹️ Encerrar fluxo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {formData.on_timeout === 'goto' && (
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">ID do Nó Destino (Timeout)</Label>
+                <Input value={formData.timeout_target_node || ''} onChange={(e) => updateField('timeout_target_node', e.target.value)} placeholder="node-id" className="bg-muted/50 font-mono text-sm" />
+              </div>
+            )}
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Mensagem de Fallback</Label>
+                <p className="text-[11px] text-muted-foreground">Enviar se timeout ocorrer</p>
+              </div>
+              <Switch checked={formData.send_fallback ?? false} onCheckedChange={(v) => updateField('send_fallback', v)} />
+            </div>
+            
+            {formData.send_fallback && (
+              <div className="space-y-2">
+                <Textarea value={formData.fallback_message || ''} onChange={(e) => updateField('fallback_message', e.target.value)} placeholder="Desculpe, o tempo de resposta expirou..." className="bg-muted/50 resize-none" rows={2} />
+              </div>
+            )}
+            
+            <div className="p-3 rounded-xl bg-muted/30">
+              <p className="text-xs text-muted-foreground">
+                <span className="text-green-400 font-medium">✓ Sucesso</span> = continua normalmente
+                <br />
+                <span className="text-red-400 font-medium">✗ Timeout</span> = executa ação definida
+              </p>
+            </div>
+          </div>
+        );
+
+      case 'if_instance_state':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500/10 to-green-500/10 border border-orange-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">🔌</div>
+                <div>
+                  <p className="text-sm font-medium">Condição por Estado</p>
+                  <p className="text-[11px] text-muted-foreground">Verifica estado da instância WhatsApp</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Verificar Estado</Label>
+              <Select value={formData.check_state || 'connected'} onValueChange={(v) => updateField('check_state', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="connected">🟢 Conectado</SelectItem>
+                  <SelectItem value="degraded">🟡 Degradado</SelectItem>
+                  <SelectItem value="cooldown">🟠 Em Cooldown</SelectItem>
+                  <SelectItem value="disconnected">🔴 Desconectado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Estado de Fallback</Label>
+              <Select value={formData.fallback_state || 'disconnected'} onValueChange={(v) => updateField('fallback_state', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="connected">🟢 Conectado</SelectItem>
+                  <SelectItem value="degraded">🟡 Degradado</SelectItem>
+                  <SelectItem value="cooldown">🟠 Em Cooldown</SelectItem>
+                  <SelectItem value="disconnected">🔴 Desconectado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="p-3 rounded-xl bg-muted/30">
+              <p className="text-xs text-muted-foreground">
+                <span className="text-green-400 font-medium">✓ Estado = {formData.check_state || 'connected'}</span> = caminho SIM
+                <br />
+                <span className="text-red-400 font-medium">✗ Outro estado</span> = caminho NÃO
+              </p>
+            </div>
+            
+            <div className="p-3 rounded-xl bg-primary/5 border border-primary/20">
+              <div className="flex items-start gap-2">
+                <Info className="w-4 h-4 text-primary mt-0.5" />
+                <p className="text-xs text-muted-foreground">Use para evitar envio quando instância não estiver pronta.</p>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'retry_policy':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500/10 to-blue-500/10 border border-orange-500/20">
+              <div className="flex items-center gap-2">
+                <RefreshCw className="w-5 h-5 text-orange-500" />
+                <div>
+                  <p className="text-sm font-medium">Política de Retry</p>
+                  <p className="text-[11px] text-muted-foreground">Retentativas com backoff controlado</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Máx. Tentativas</Label>
+                <Input type="number" min="1" max="10" value={formData.max_attempts || 3} onChange={(e) => updateField('max_attempts', parseInt(e.target.value))} className="bg-muted/50" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Delay (seg)</Label>
+                <Input type="number" min="1" max="300" value={formData.delay_seconds || 5} onChange={(e) => updateField('delay_seconds', parseInt(e.target.value))} className="bg-muted/50" />
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Jitter (aleatoriedade)</Label>
+                <p className="text-[11px] text-muted-foreground">Adiciona variação ao delay</p>
+              </div>
+              <Switch checked={formData.jitter_enabled ?? true} onCheckedChange={(v) => updateField('jitter_enabled', v)} />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Ao Esgotar Tentativas</Label>
+              <Select value={formData.on_exhausted || 'end'} onValueChange={(v) => updateField('on_exhausted', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="end">⏹️ Encerrar fluxo</SelectItem>
+                  <SelectItem value="goto">↪️ Ir para outro nó</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {formData.on_exhausted === 'goto' && (
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">ID do Nó Destino</Label>
+                <Input value={formData.exhausted_target_node || ''} onChange={(e) => updateField('exhausted_target_node', e.target.value)} placeholder="node-id" className="bg-muted/50 font-mono text-sm" />
+              </div>
+            )}
+          </div>
+        );
+
+      case 'smart_delay':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500/10 to-purple-500/10 border border-orange-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">⏳</div>
+                <div>
+                  <p className="text-sm font-medium">Pausa Inteligente</p>
+                  <p className="text-[11px] text-muted-foreground">Delay humanizado com aleatoriedade</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Mínimo (seg)</Label>
+                <Input type="number" min="1" max="300" value={formData.min_seconds || 2} onChange={(e) => updateField('min_seconds', parseInt(e.target.value))} className="bg-muted/50" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Máximo (seg)</Label>
+                <Input type="number" min="1" max="600" value={formData.max_seconds || 8} onChange={(e) => updateField('max_seconds', parseInt(e.target.value))} className="bg-muted/50" />
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Aleatorizar</Label>
+                <p className="text-[11px] text-muted-foreground">Valor aleatório entre min e max</p>
+              </div>
+              <Switch checked={formData.randomize ?? true} onCheckedChange={(v) => updateField('randomize', v)} />
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Respeitar horário comercial</Label>
+                <p className="text-[11px] text-muted-foreground">Delay maior fora do expediente</p>
+              </div>
+              <Switch checked={formData.respect_business_hours ?? false} onCheckedChange={(v) => updateField('respect_business_hours', v)} />
+            </div>
+            
+            <div className="p-3 rounded-xl bg-primary/5 border border-primary/20">
+              <p className="text-xs text-primary">⏱️ Delay estimado: {formData.min_seconds || 2}-{formData.max_seconds || 8} segundos</p>
+            </div>
+          </div>
+        );
+
+      case 'rate_limit':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500/10 to-red-500/10 border border-orange-500/20">
+              <div className="flex items-center gap-2">
+                <Gauge className="w-5 h-5 text-orange-500" />
+                <div>
+                  <p className="text-sm font-medium">Limite de Taxa</p>
+                  <p className="text-[11px] text-muted-foreground">Controla ritmo de execução</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Msgs/minuto</Label>
+                <Input type="number" min="1" max="60" value={formData.messages_per_minute || 10} onChange={(e) => updateField('messages_per_minute', parseInt(e.target.value))} className="bg-muted/50" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Burst Limit</Label>
+                <Input type="number" min="1" max="20" value={formData.burst_limit || 3} onChange={(e) => updateField('burst_limit', parseInt(e.target.value))} className="bg-muted/50" />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Cooldown (minutos)</Label>
+              <Input type="number" min="1" max="60" value={formData.cooldown_minutes || 1} onChange={(e) => updateField('cooldown_minutes', parseInt(e.target.value))} className="bg-muted/50" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Ao Atingir Limite</Label>
+              <Select value={formData.on_limit || 'pause'} onValueChange={(v) => updateField('on_limit', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pause">⏸️ Pausar até cooldown</SelectItem>
+                  <SelectItem value="goto">↪️ Ir para outro nó</SelectItem>
+                  <SelectItem value="end">⏹️ Encerrar fluxo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {formData.on_limit === 'goto' && (
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">ID do Nó Destino</Label>
+                <Input value={formData.limit_target_node || ''} onChange={(e) => updateField('limit_target_node', e.target.value)} placeholder="node-id" className="bg-muted/50 font-mono text-sm" />
+              </div>
+            )}
+          </div>
+        );
+
+      case 'enqueue_flow_step':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500/10 to-cyan-500/10 border border-orange-500/20">
+              <div className="flex items-center gap-2">
+                <ListPlus className="w-5 h-5 text-orange-500" />
+                <div>
+                  <p className="text-sm font-medium">Enfileirar Passo</p>
+                  <p className="text-[11px] text-muted-foreground">Execução assíncrona via fila</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Nome da Fila</Label>
+              <Input value={formData.queue_name || 'default'} onChange={(e) => updateField('queue_name', e.target.value)} placeholder="default" className="bg-muted/50" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Prioridade</Label>
+              <Select value={formData.priority || 'normal'} onValueChange={(v) => updateField('priority', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">🔽 Baixa</SelectItem>
+                  <SelectItem value="normal">➡️ Normal</SelectItem>
+                  <SelectItem value="high">🔼 Alta</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Delay antes de executar (seg)</Label>
+              <Input type="number" min="0" max="3600" value={formData.delay_seconds || 0} onChange={(e) => updateField('delay_seconds', parseInt(e.target.value))} className="bg-muted/50" />
+            </div>
+            
+            <div className="p-3 rounded-xl bg-primary/5 border border-primary/20">
+              <div className="flex items-start gap-2">
+                <Info className="w-4 h-4 text-primary mt-0.5" />
+                <p className="text-xs text-muted-foreground">O próximo nó será executado de forma assíncrona, liberando o fluxo atual imediatamente.</p>
               </div>
             </div>
           </div>
