@@ -37,7 +37,18 @@ export type NodeType =
   | 'retry_policy'
   | 'smart_delay'
   | 'rate_limit'
-  | 'enqueue_flow_step';
+  | 'enqueue_flow_step'
+  // Generic Automation Engine Nodes (Channel-Agnostic)
+  | 'http_request_advanced'
+  | 'webhook_trigger'
+  | 'cron_trigger'
+  | 'set_variable'
+  | 'if_expression'
+  | 'loop_for_each'
+  | 'switch_case'
+  | 'subflow_call'
+  | 'event_emitter'
+  | 'data_transform';
 
 export interface FlowNodeData {
   label: string;
@@ -104,7 +115,7 @@ export interface NodeTemplate {
   label: string;
   icon: string;
   description: string;
-  category: 'triggers' | 'conditions' | 'actions' | 'flow' | 'advanced' | 'nativos' | 'stability';
+  category: 'triggers' | 'conditions' | 'actions' | 'flow' | 'advanced' | 'nativos' | 'stability' | 'automation';
   defaultConfig: Record<string, any>;
   requiresInstance?: boolean; // If true, requires connected WhatsApp instance
 }
@@ -467,7 +478,8 @@ export const NODE_CATEGORIES = {
   actions: { label: 'Ações', color: '#3b82f6' },
   flow: { label: 'Controle', color: '#a855f7' },
   advanced: { label: 'Avançado', color: '#6366f1' },
-  stability: { label: 'Estabilidade', color: '#f97316' } // Orange for stability
+  stability: { label: 'Estabilidade', color: '#f97316' }, // Orange for stability
+  automation: { label: 'Automação', color: '#8b5cf6' } // Purple for generic automation
 };
 
 export const NODE_COLORS: Record<NodeType, string> = {
@@ -506,19 +518,171 @@ export const NODE_COLORS: Record<NodeType, string> = {
   smart_delay: '#fed7aa',
   rate_limit: '#ffedd5',
   enqueue_flow_step: '#f59e0b',
+  // Generic Automation Engine nodes (Purple gradient)
+  http_request_advanced: '#7c3aed',
+  webhook_trigger: '#8b5cf6',
+  cron_trigger: '#a78bfa',
+  set_variable: '#c4b5fd',
+  if_expression: '#ddd6fe',
+  loop_for_each: '#6d28d9',
+  switch_case: '#5b21b6',
+  subflow_call: '#4c1d95',
+  event_emitter: '#9333ea',
+  data_transform: '#a855f7',
 };
 
 // Connection validation rules
 export const CONNECTION_RULES = {
   // Nodes that can only have one outgoing connection
-  singleOutput: ['trigger', 'message', 'button', 'list', 'ai', 'webhook', 'delay', 'variable', 'integration', 'http_request', 'webhook_in', 'ecommerce', 'crm_sheets', 'wa_start', 'wa_send_text', 'wa_send_buttons', 'wa_send_list', 'wa_wait_response', 'wa_receive', 'queue_message', 'session_guard', 'retry_policy', 'smart_delay', 'rate_limit', 'enqueue_flow_step'],
+  singleOutput: ['trigger', 'message', 'button', 'list', 'ai', 'webhook', 'delay', 'variable', 'integration', 'http_request', 'webhook_in', 'ecommerce', 'crm_sheets', 'wa_start', 'wa_send_text', 'wa_send_buttons', 'wa_send_list', 'wa_wait_response', 'wa_receive', 'queue_message', 'session_guard', 'retry_policy', 'smart_delay', 'rate_limit', 'enqueue_flow_step', 'http_request_advanced', 'webhook_trigger', 'cron_trigger', 'set_variable', 'subflow_call', 'event_emitter', 'data_transform'],
   // Nodes that can have multiple outgoing connections (yes/no)
-  conditionalOutput: ['condition', 'split', 'if_instance_state', 'timeout_handler'],
+  conditionalOutput: ['condition', 'split', 'if_instance_state', 'timeout_handler', 'if_expression', 'switch_case'],
   // Nodes that cannot have outgoing connections
   noOutput: ['end'],
   // Nodes that can be connected from any node
-  universalInput: ['message', 'button', 'list', 'ai', 'webhook', 'delay', 'condition', 'split', 'variable', 'integration', 'end', 'goto', 'note', 'http_request', 'ecommerce', 'crm_sheets', 'wa_send_text', 'wa_send_buttons', 'wa_send_list', 'wa_wait_response', 'wa_receive', 'queue_message', 'session_guard', 'timeout_handler', 'if_instance_state', 'retry_policy', 'smart_delay', 'rate_limit', 'enqueue_flow_step'],
+  universalInput: ['message', 'button', 'list', 'ai', 'webhook', 'delay', 'condition', 'split', 'variable', 'integration', 'end', 'goto', 'note', 'http_request', 'ecommerce', 'crm_sheets', 'wa_send_text', 'wa_send_buttons', 'wa_send_list', 'wa_wait_response', 'wa_receive', 'queue_message', 'session_guard', 'timeout_handler', 'if_instance_state', 'retry_policy', 'smart_delay', 'rate_limit', 'enqueue_flow_step', 'http_request_advanced', 'webhook_trigger', 'cron_trigger', 'set_variable', 'if_expression', 'loop_for_each', 'switch_case', 'subflow_call', 'event_emitter', 'data_transform'],
 };
 
-// Get all templates including native and stability
-export const getAllTemplates = () => [...NATIVE_WA_TEMPLATES, ...NODE_TEMPLATES, ...STABILITY_TEMPLATES];
+// Generic Automation Engine Templates (Channel-Agnostic)
+export const AUTOMATION_TEMPLATES: NodeTemplate[] = [
+  {
+    type: 'http_request_advanced',
+    label: 'HTTP Request',
+    icon: 'Globe',
+    description: 'Requisição HTTP avançada com autenticação e retries',
+    category: 'automation',
+    defaultConfig: { 
+      method: 'GET', 
+      url: '', 
+      headers: {}, 
+      query_params: {},
+      body: '',
+      timeout_seconds: 30,
+      retries: 3,
+      auth_type: 'none',
+      save_response_to: 'response'
+    }
+  },
+  {
+    type: 'webhook_trigger',
+    label: 'Webhook Trigger',
+    icon: 'Webhook',
+    description: 'Gatilho por chamada HTTP externa',
+    category: 'automation',
+    defaultConfig: { 
+      method: 'POST',
+      path: '',
+      secret: '',
+      validate_payload: true,
+      schema: {},
+      custom_response: { status: 200, body: { success: true } }
+    }
+  },
+  {
+    type: 'cron_trigger',
+    label: 'Agendamento Cron',
+    icon: 'Calendar',
+    description: 'Execução agendada com expressão cron',
+    category: 'automation',
+    defaultConfig: { 
+      cron_expression: '0 9 * * *',
+      timezone: 'America/Sao_Paulo',
+      active_window: { start: '08:00', end: '18:00' },
+      on_fail: 'retry'
+    }
+  },
+  {
+    type: 'set_variable',
+    label: 'Definir Variável',
+    icon: 'Tag',
+    description: 'Define ou atualiza variável no contexto',
+    category: 'automation',
+    defaultConfig: { 
+      name: '',
+      value: '',
+      scope: 'flow',
+      type: 'string'
+    }
+  },
+  {
+    type: 'if_expression',
+    label: 'Condição Avançada',
+    icon: 'GitBranch',
+    description: 'Condição com expressões lógicas complexas',
+    category: 'automation',
+    defaultConfig: { 
+      conditions: [],
+      logic: 'and',
+      fallback: 'no'
+    }
+  },
+  {
+    type: 'loop_for_each',
+    label: 'Loop For Each',
+    icon: 'Repeat',
+    description: 'Itera sobre um array de itens',
+    category: 'automation',
+    defaultConfig: { 
+      array_source: '',
+      item_variable: 'item',
+      index_variable: 'index',
+      limit: 100,
+      delay_between: 0,
+      on_error: 'continue'
+    }
+  },
+  {
+    type: 'switch_case',
+    label: 'Switch/Case',
+    icon: 'GitMerge',
+    description: 'Roteamento múltiplo baseado em valor',
+    category: 'automation',
+    defaultConfig: { 
+      expression: '',
+      cases: [],
+      default_case: 'end'
+    }
+  },
+  {
+    type: 'subflow_call',
+    label: 'Chamar Subfluxo',
+    icon: 'ExternalLink',
+    description: 'Executa outro fluxo como subrotina',
+    category: 'automation',
+    defaultConfig: { 
+      flow_id: '',
+      parameters: {},
+      wait_for_completion: true,
+      timeout_seconds: 60,
+      return_variable: 'subflow_result'
+    }
+  },
+  {
+    type: 'event_emitter',
+    label: 'Emitir Evento',
+    icon: 'Radio',
+    description: 'Emite evento interno para outros fluxos',
+    category: 'automation',
+    defaultConfig: { 
+      event_name: '',
+      payload: {},
+      scope: 'project'
+    }
+  },
+  {
+    type: 'data_transform',
+    label: 'Transformar Dados',
+    icon: 'Workflow',
+    description: 'Operações de transformação de dados',
+    category: 'automation',
+    defaultConfig: { 
+      operation: 'map',
+      source: '',
+      expression: '',
+      output_variable: 'transformed'
+    }
+  }
+];
+
+// Get all templates including native, stability and automation
+export const getAllTemplates = () => [...NATIVE_WA_TEMPLATES, ...NODE_TEMPLATES, ...STABILITY_TEMPLATES, ...AUTOMATION_TEMPLATES];

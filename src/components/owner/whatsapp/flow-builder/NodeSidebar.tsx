@@ -25,14 +25,21 @@ import {
   Gauge,
   ListPlus,
   Timer,
-  AlertTriangle
+  AlertTriangle,
+  Calendar,
+  Tag,
+  Repeat,
+  GitMerge,
+  ExternalLink,
+  Radio,
+  Workflow
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { NODE_TEMPLATES, NODE_CATEGORIES, NodeTemplate, STABILITY_TEMPLATES } from './types';
+import { NODE_TEMPLATES, NODE_CATEGORIES, NodeTemplate, STABILITY_TEMPLATES, AUTOMATION_TEMPLATES } from './types';
 import { cn } from '@/lib/utils';
 
 const ICONS: Record<string, any> = {
@@ -52,7 +59,7 @@ const ICONS: Record<string, any> = {
   Timer,
   Webhook: Globe,
   CornerDownRight: ChevronRight,
-  Tag: Sparkles,
+  Tag,
   Plug: ChevronRight,
   StickyNote: MessageSquare,
   Shield,
@@ -60,6 +67,12 @@ const ICONS: Record<string, any> = {
   Gauge,
   ListPlus,
   AlertTriangle,
+  Calendar,
+  Repeat,
+  GitMerge,
+  ExternalLink,
+  Radio,
+  Workflow,
 };
 
 interface NodeSidebarProps {
@@ -76,12 +89,13 @@ export const NodeSidebar = ({ onDragStart, isCollapsed = false, onToggleCollapse
     conditions: true,
     actions: true,
     flow: true,
-    stability: true
+    stability: true,
+    automation: true
   });
   const [draggingTemplate, setDraggingTemplate] = useState<NodeTemplate | null>(null);
 
-  // Include stability templates
-  const allTemplates = [...NODE_TEMPLATES, ...STABILITY_TEMPLATES];
+  // Include stability and automation templates
+  const allTemplates = [...NODE_TEMPLATES, ...STABILITY_TEMPLATES, ...AUTOMATION_TEMPLATES];
 
   const filteredTemplates = allTemplates.filter(t =>
     t.label.toLowerCase().includes(search.toLowerCase()) ||

@@ -26,14 +26,21 @@ import {
   Gauge,
   ListPlus,
   Timer,
-  AlertTriangle
+  AlertTriangle,
+  Calendar,
+  Tag,
+  Repeat,
+  GitMerge,
+  ExternalLink,
+  Radio,
+  Workflow
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { NODE_TEMPLATES, NODE_CATEGORIES, NodeTemplate, NATIVE_WA_TEMPLATES, STABILITY_TEMPLATES } from './types';
+import { NODE_TEMPLATES, NODE_CATEGORIES, NodeTemplate, NATIVE_WA_TEMPLATES, STABILITY_TEMPLATES, AUTOMATION_TEMPLATES } from './types';
 import { InstanceRequiredModal } from './InstanceRequiredModal';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -41,9 +48,10 @@ import { cn } from '@/lib/utils';
 const ICONS: Record<string, any> = {
   MessageSquare, UserPlus, MousePointer, GitBranch, Shuffle, Send, LayoutGrid,
   List, Globe, Brain, Clock, CircleStop, Zap, Timer, Webhook: Globe,
-  CornerDownRight: ChevronRight, Tag: Sparkles, Plug: ChevronRight, StickyNote: MessageSquare,
+  CornerDownRight: ChevronRight, Tag, Plug: ChevronRight, StickyNote: MessageSquare,
   ShoppingCart: LayoutGrid, Table: LayoutGrid, Smartphone, Inbox, Wifi,
   Shield, RefreshCw, Gauge, ListPlus, AlertTriangle,
+  Calendar, Repeat, GitMerge, ExternalLink, Radio, Workflow
 };
 
 interface ComponentsModalProps {
@@ -68,8 +76,8 @@ export const ComponentsModal = ({
   const [showInstanceModal, setShowInstanceModal] = useState(false);
   const [pendingComponent, setPendingComponent] = useState<NodeTemplate | null>(null);
 
-  // Combine all templates - Native first, then regular, then stability
-  const allTemplates = [...NATIVE_WA_TEMPLATES, ...NODE_TEMPLATES, ...STABILITY_TEMPLATES];
+  // Combine all templates - Native first, then regular, then stability, then automation
+  const allTemplates = [...NATIVE_WA_TEMPLATES, ...NODE_TEMPLATES, ...STABILITY_TEMPLATES, ...AUTOMATION_TEMPLATES];
 
   // Check for connected instances
   useEffect(() => {

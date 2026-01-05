@@ -96,19 +96,32 @@ const getIconForType = (type: NodeType, iconName?: string) => {
     smart_delay: Timer,
     rate_limit: AlertCircle,
     enqueue_flow_step: Play,
+    // Generic Automation Engine nodes
+    http_request_advanced: Globe,
+    webhook_trigger: Zap,
+    cron_trigger: Clock,
+    set_variable: CheckCircle2,
+    if_expression: GitBranch,
+    loop_for_each: Play,
+    switch_case: Shuffle,
+    subflow_call: Play,
+    event_emitter: Zap,
+    data_transform: Shuffle,
   };
   
   return typeIcons[type] || Zap;
 };
 
 const getNodeCategory = (type: NodeType): string => {
-  if (type === 'trigger' || type === 'webhook_in') return 'GATILHO';
-  if (type === 'condition' || type === 'split') return 'CONDIÇÃO';
+  if (type === 'trigger' || type === 'webhook_in' || type === 'webhook_trigger' || type === 'cron_trigger') return 'GATILHO';
+  if (type === 'condition' || type === 'split' || type === 'if_expression' || type === 'switch_case') return 'CONDIÇÃO';
   if (type === 'end') return 'FIM';
-  if (type === 'delay' || type === 'goto') return 'CONTROLE';
+  if (type === 'delay' || type === 'goto' || type === 'loop_for_each') return 'CONTROLE';
   if (type === 'variable' || type === 'integration' || type === 'note' || type === 'http_request' || type === 'ecommerce' || type === 'crm_sheets') return 'AVANÇADO';
   // Native WhatsApp nodes
   if (type.startsWith('wa_')) return 'NATIVO';
+  // Automation Engine nodes
+  if (['http_request_advanced', 'set_variable', 'subflow_call', 'event_emitter', 'data_transform'].includes(type)) return 'AUTOMAÇÃO';
   return 'AÇÃO';
 };
 
