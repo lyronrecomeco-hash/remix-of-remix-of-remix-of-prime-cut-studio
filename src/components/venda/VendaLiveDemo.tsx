@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Send, Bot, User, Sparkles, ArrowRight } from 'lucide-react';
+import { MessageSquare, Send, Bot, User, Sparkles, ArrowRight, Wifi } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -14,10 +14,10 @@ interface Message {
 }
 
 const suggestedQuestions = [
-  'Quais são os planos disponíveis?',
+  'Quais são os planos?',
   'Como funciona a Luna?',
-  'Quanto tempo leva para configurar?',
   'Posso testar grátis?',
+  'É difícil configurar?',
 ];
 
 const VendaLiveDemo = () => {
@@ -29,7 +29,7 @@ const VendaLiveDemo = () => {
     {
       id: '1',
       role: 'assistant',
-      content: 'Olá! 👋 Eu sou a Luna, sua assistente de IA. Posso te ajudar a entender como automatizar seu WhatsApp. O que gostaria de saber?',
+      content: 'Olá! 👋 Eu sou a Luna, assistente de IA do Genesis Hub. Estou aqui para mostrar como posso automatizar seu atendimento. Pergunte-me qualquer coisa!',
       timestamp: new Date(),
     },
   ]);
@@ -59,7 +59,6 @@ const VendaLiveDemo = () => {
     setIsLoading(true);
 
     try {
-      // Prepare conversation history for context
       const conversationHistory = messages.map(m => ({
         role: m.role,
         content: m.content
@@ -72,23 +71,33 @@ const VendaLiveDemo = () => {
             isVendaDemo: true,
             conversationHistory,
           },
-          systemPrompt: `Você é a Luna, assistente de IA do Genesis Hub - uma plataforma de automação de WhatsApp.
-          
-Seu papel nesta demonstração é:
-1. Responder perguntas sobre a plataforma Genesis Hub
-2. Explicar funcionalidades como Flow Builder, Multi-instâncias, Analytics
-3. Falar sobre os planos (Free, Premium R$197/mês, Lifetime R$997)
-4. Destacar benefícios: economia de tempo, aumento de vendas, atendimento 24/7
-5. Ser simpática, profissional e persuasiva
+          systemPrompt: `Você é a Luna, assistente de IA do Genesis Hub - a plataforma líder em automação de WhatsApp para empresas.
 
-Informações importantes:
-- Flow Builder visual para criar automações sem código
-- IA conversacional que aprende com cada interação
-- Suporte a múltiplos números de WhatsApp
-- Integração com CRMs, ERPs e e-commerce
-- Trial grátis de 7 dias sem cartão
+SOBRE O GENESIS HUB:
+- Flow Builder visual: crie automações arrastando blocos, zero código
+- Luna IA: responde clientes 24/7 com inteligência artificial avançada
+- Multi-instâncias: gerencie vários números de WhatsApp em um painel
+- Analytics: métricas de conversão, tempo de resposta, satisfação
+- Integrações: CRMs, ERPs, e-commerce, webhooks
 
-Responda de forma concisa (máximo 3 frases) e sempre termine com uma pergunta ou CTA sutil.`,
+PLANOS:
+- Free: 1 instância, 500 msgs/mês, Flow Builder básico - R$0
+- Premium: 5 instâncias, msgs ilimitadas, Luna IA, analytics - R$197/mês
+- Lifetime: tudo ilimitado, atualizações vitalícias - R$997 único
+
+BENEFÍCIOS:
+- Economia de 4h/dia em atendimento manual
+- Aumento de 3x nas conversões
+- Atendimento 24/7 sem contratar equipe
+- ROI médio de 340%
+
+REGRAS:
+- Respostas CURTAS (2-3 frases no máximo)
+- Seja persuasiva mas natural
+- Use 1-2 emojis por resposta
+- Sempre termine com pergunta ou CTA sutil
+- Destaque benefícios, não features
+- Crie urgência suavemente`,
         },
       });
 
@@ -107,7 +116,7 @@ Responda de forma concisa (máximo 3 frases) e sempre termine com uma pergunta o
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: 'Ops! Parece que estou com dificuldades técnicas. Mas posso te dizer: o Genesis Hub é incrível! 🚀 Que tal experimentar grátis?',
+        content: 'Ops! Estou com uma pequena dificuldade técnica. 😅 Mas posso garantir: o Genesis Hub vai transformar seu atendimento! Quer experimentar grátis?',
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -117,8 +126,8 @@ Responda de forma concisa (máximo 3 frases) e sempre termine com uma pergunta o
   };
 
   return (
-    <section ref={ref} className="py-24 bg-gradient-to-b from-muted/20 to-background relative overflow-hidden">
-      {/* Background Effects */}
+    <section id="demo" ref={ref} className="py-24 bg-gradient-to-b from-muted/20 to-background relative overflow-hidden">
+      {/* Background */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent" />
       
       <div className="container px-4 relative z-10">
@@ -128,17 +137,17 @@ Responda de forma concisa (máximo 3 frases) e sempre termine com uma pergunta o
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-sm font-medium rounded-full bg-primary/10 border border-primary/20 text-primary">
-            <Sparkles className="w-4 h-4" />
-            Demonstração ao Vivo
+          <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-sm font-medium rounded-full bg-green-500/10 border border-green-500/20 text-green-500">
+            <Wifi className="w-4 h-4" />
+            IA Online — Teste Agora
           </div>
           <h2 className="text-3xl md:text-5xl font-bold mb-6">
             Converse com a Luna
             <br />
-            <span className="text-muted-foreground">agora mesmo</span>
+            <span className="text-muted-foreground">em tempo real</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Esta é a mesma IA que vai atender seus clientes. Experimente!
+            Esta é a mesma inteligência artificial que vai atender seus clientes 24 horas por dia.
           </p>
         </motion.div>
 
@@ -149,24 +158,27 @@ Responda de forma concisa (máximo 3 frases) e sempre termine com uma pergunta o
           className="max-w-2xl mx-auto"
         >
           {/* Chat Container */}
-          <Card className="overflow-hidden border-primary/20 shadow-2xl shadow-primary/10">
+          <Card className="overflow-hidden border-2 border-primary/20 shadow-2xl shadow-primary/10 bg-card/95 backdrop-blur">
             {/* Chat Header */}
-            <div className="bg-gradient-to-r from-primary to-blue-600 p-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                <Bot className="w-6 h-6 text-white" />
+            <div className="bg-gradient-to-r from-primary via-blue-600 to-primary p-4 flex items-center gap-3">
+              <div className="relative">
+                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                  <Bot className="w-7 h-7 text-white" />
+                </div>
+                <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-primary" />
               </div>
-              <div>
-                <h3 className="font-semibold text-white">Luna IA</h3>
-                <p className="text-xs text-white/70">Online • Responde instantaneamente</p>
+              <div className="flex-1">
+                <h3 className="font-semibold text-white text-lg">Luna IA</h3>
+                <p className="text-sm text-white/80">Assistente Genesis Hub</p>
               </div>
-              <div className="ml-auto flex items-center gap-1">
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 text-white text-xs">
                 <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                <span className="text-xs text-white/70">Ao vivo</span>
+                Online
               </div>
             </div>
 
             {/* Messages */}
-            <div className="h-80 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-muted/30 to-background">
+            <div className="h-80 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-muted/20 to-background">
               <AnimatePresence>
                 {messages.map((message) => (
                   <motion.div
@@ -175,7 +187,7 @@ Responda de forma concisa (máximo 3 frases) e sempre termine com uma pergunta o
                     animate={{ opacity: 1, y: 0 }}
                     className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className={`flex items-end gap-2 max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                    <div className={`flex items-end gap-2 max-w-[85%] ${message.role === 'user' ? 'flex-row-reverse' : ''}`}>
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
                         message.role === 'user' 
                           ? 'bg-primary/20' 
@@ -186,12 +198,12 @@ Responda de forma concisa (máximo 3 frases) e sempre termine com uma pergunta o
                           : <Bot className="w-4 h-4 text-white" />
                         }
                       </div>
-                      <div className={`rounded-2xl px-4 py-2 ${
+                      <div className={`rounded-2xl px-4 py-3 ${
                         message.role === 'user'
-                          ? 'bg-primary text-primary-foreground rounded-br-md'
-                          : 'bg-card border border-border rounded-bl-md'
+                          ? 'bg-primary text-primary-foreground rounded-br-sm'
+                          : 'bg-card border border-border shadow-sm rounded-bl-sm'
                       }`}>
-                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                        <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
                       </div>
                     </div>
                   </motion.div>
@@ -207,11 +219,11 @@ Responda de forma concisa (máximo 3 frases) e sempre termine com uma pergunta o
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center">
                     <Bot className="w-4 h-4 text-white" />
                   </div>
-                  <div className="bg-card border border-border rounded-2xl rounded-bl-md px-4 py-3">
-                    <div className="flex gap-1">
-                      <span className="w-2 h-2 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <span className="w-2 h-2 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <span className="w-2 h-2 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <div className="bg-card border border-border rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
+                    <div className="flex gap-1.5">
+                      <span className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <span className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <span className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                     </div>
                   </div>
                 </motion.div>
@@ -220,15 +232,15 @@ Responda de forma concisa (máximo 3 frases) e sempre termine com uma pergunta o
             </div>
 
             {/* Suggested Questions */}
-            <div className="px-4 py-2 border-t border-border/50 bg-muted/30">
-              <p className="text-xs text-muted-foreground mb-2">Sugestões:</p>
+            <div className="px-4 py-3 border-t border-border/50 bg-muted/30">
+              <p className="text-xs text-muted-foreground mb-2">Pergunte algo:</p>
               <div className="flex flex-wrap gap-2">
                 {suggestedQuestions.map((q, i) => (
                   <button
                     key={i}
                     onClick={() => sendMessage(q)}
                     disabled={isLoading}
-                    className="text-xs px-3 py-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
+                    className="text-xs px-3 py-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50 border border-primary/20"
                   >
                     {q}
                   </button>
@@ -247,9 +259,9 @@ Responda de forma concisa (máximo 3 frases) e sempre termine com uma pergunta o
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Digite sua mensagem..."
                   disabled={isLoading}
-                  className="flex-1"
+                  className="flex-1 bg-muted/50"
                 />
-                <Button type="submit" disabled={isLoading || !input.trim()}>
+                <Button type="submit" disabled={isLoading || !input.trim()} size="icon" className="shrink-0">
                   <Send className="w-4 h-4" />
                 </Button>
               </form>
@@ -261,14 +273,14 @@ Responda de forma concisa (máximo 3 frases) e sempre termine com uma pergunta o
             initial={{ opacity: 0 }}
             animate={isInView ? { opacity: 1 } : {}}
             transition={{ delay: 0.8 }}
-            className="mt-8 text-center"
+            className="mt-10 text-center"
           >
-            <p className="text-muted-foreground mb-4">
-              Gostou? Tenha a Luna trabalhando para você 24/7
+            <p className="text-lg text-muted-foreground mb-4">
+              Impressionado? Tenha a Luna trabalhando para você <strong className="text-foreground">24 horas por dia</strong>.
             </p>
-            <Button asChild size="lg" className="group">
+            <Button asChild size="lg" className="group shadow-lg shadow-primary/20">
               <a href="/genesis" className="flex items-center gap-2">
-                Começar Grátis
+                Ativar Luna no Meu WhatsApp
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </a>
             </Button>
