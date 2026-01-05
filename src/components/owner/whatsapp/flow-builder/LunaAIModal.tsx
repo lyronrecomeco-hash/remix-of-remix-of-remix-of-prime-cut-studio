@@ -34,16 +34,28 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   flow?: { nodes: FlowNode[]; edges: FlowEdge[] };
-  plan?: FlowPlan;
+  analysis?: LunaAnalysis;
+  proposal?: FlowProposal;
   timestamp: Date;
   isError?: boolean;
   isPlanApproved?: boolean;
+  phase?: 1 | 2 | 3 | 4;
 }
 
-interface FlowPlan {
+interface LunaAnalysis {
+  understood: string;
+  assumptions: string[];
+  questions: string[];
+  complexity: 'baixa' | 'média' | 'alta' | 'enterprise';
+}
+
+interface FlowProposal {
   objective: string;
   approach: string;
   steps: { icon: string; title: string; description: string }[];
+  criticalDecisions?: string[];
+  infraConsiderations?: string[];
+  securityConsiderations?: string[];
   estimatedNodes: number;
   estimatedTime: string;
 }
@@ -133,8 +145,9 @@ export const LunaAIModal = ({
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showQuickPrompts, setShowQuickPrompts] = useState(true);
-  const [currentPlan, setCurrentPlan] = useState<FlowPlan | null>(null);
+  const [currentProposal, setCurrentProposal] = useState<FlowProposal | null>(null);
   const [pendingPrompt, setPendingPrompt] = useState<string>('');
+  const [conversationPhase, setConversationPhase] = useState<1 | 2 | 3 | 4>(1);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -144,9 +157,11 @@ export const LunaAIModal = ({
       setMessages([{
         id: 'welcome',
         role: 'assistant',
-        content: 'Olá! 👋 Sou a **Luna**, sua assistente de automação avançada.\n\nConsigo criar fluxos de **QUALQUER complexidade**:\n- 🚀 Automações simples de atendimento\n- ⚡ Integrações com APIs externas\n- 🔄 Loops, condições e transformações\n- 🛡️ Proteção anti-spam e rate limiting\n- 🖥️ Controle de infraestrutura e proxy\n- 🔒 Segurança e isolamento de contexto\n\nMe descreva o que precisa e eu vou:\n1. 📋 **Analisar** sua necessidade\n2. 📐 **Propor** uma estrutura completa\n3. ⏳ **Aguardar** sua aprovação\n4. 🔧 **Construir** o fluxo no canvas!\n\n*Escolha uma sugestão abaixo ou descreva livremente!*',
-        timestamp: new Date()
+        content: 'Olá! 👋 Sou a **Luna**, sua arquiteta de fluxos de automação.\n\n🧠 Eu NÃO sou um chatbot genérico. Eu **penso antes de executar**.\n\nMeu processo:\n\n📋 **FASE 1** — Entendo e analiso sua necessidade\n📐 **FASE 2** — Proponho uma arquitetura detalhada\n✅ **FASE 3** — Aguardo sua aprovação explícita\n🔧 **FASE 4** — Construo o fluxo no canvas\n\n*"Antes de executar, eu preciso entender e alinhar."*\n\n💡 Escolha uma sugestão ou descreva livremente o que precisa!',
+        timestamp: new Date(),
+        phase: 1
       }]);
+      setConversationPhase(1);
     }
   }, [open, messages.length]);
 
@@ -157,103 +172,16 @@ export const LunaAIModal = ({
     }
   }, [messages]);
 
-  // Generate a plan from the AI
-  const generatePlan = useCallback(async (prompt: string): Promise<FlowPlan> => {
-    const isVendas = prompt.toLowerCase().includes('venda') || prompt.toLowerCase().includes('produto');
-    const isAtendimento = prompt.toLowerCase().includes('atendimento') || prompt.toLowerCase().includes('cliente');
-    const isSuporte = prompt.toLowerCase().includes('suporte') || prompt.toLowerCase().includes('problema');
-    const isAgendamento = prompt.toLowerCase().includes('agenda') || prompt.toLowerCase().includes('horário');
-    const isRestaurante = prompt.toLowerCase().includes('restaurante') || prompt.toLowerCase().includes('cardápio') || prompt.toLowerCase().includes('pedido');
-
-    const steps = [];
-    let objective = '';
-    let approach = '';
-    let estimatedNodes = 6;
-
-    if (isRestaurante) {
-      objective = 'Sistema completo de atendimento para restaurante com cardápio interativo';
-      approach = 'Fluxo conversacional com apresentação do cardápio, coleta de pedido, endereço e pagamento';
-      steps.push(
-        { icon: '⚡', title: 'Gatilho Inicial', description: 'Detecta início de conversa' },
-        { icon: '👋', title: 'Boas-vindas', description: 'Saudação e horário de funcionamento' },
-        { icon: '📋', title: 'Cardápio', description: 'Lista de categorias de produtos' },
-        { icon: '🍕', title: 'Itens', description: 'Produtos de cada categoria' },
-        { icon: '🛒', title: 'Pedido', description: 'Coleta de itens e quantidades' },
-        { icon: '📍', title: 'Endereço', description: 'Captura do endereço de entrega' },
-        { icon: '💳', title: 'Pagamento', description: 'Forma de pagamento' },
-        { icon: '✅', title: 'Confirmação', description: 'Resumo e confirmação do pedido' }
-      );
-      estimatedNodes = 12;
-    } else if (isVendas) {
-      objective = 'Criar um funil de vendas automatizado via WhatsApp';
-      approach = 'Fluxo conversacional com qualificação de leads, apresentação de produtos e direcionamento para fechamento';
-      steps.push(
-        { icon: '⚡', title: 'Gatilho Inicial', description: 'Detecta interesse do cliente ao iniciar conversa' },
-        { icon: '👋', title: 'Boas-vindas', description: 'Saudação personalizada e apresentação' },
-        { icon: '📋', title: 'Menu de Produtos', description: 'Lista interativa com categorias ou produtos' },
-        { icon: '💬', title: 'Detalhes do Produto', description: 'Informações, preços e benefícios' },
-        { icon: '🔀', title: 'Qualificação', description: 'Perguntas para entender necessidade' },
-        { icon: '🎯', title: 'Fechamento', description: 'CTA para compra ou falar com vendedor' }
-      );
-      estimatedNodes = 8;
-    } else if (isSuporte) {
-      objective = 'Criar um sistema de suporte técnico inteligente';
-      approach = 'Triagem automática de problemas com soluções pré-definidas e escalação quando necessário';
-      steps.push(
-        { icon: '⚡', title: 'Gatilho', description: 'Identifica solicitação de suporte' },
-        { icon: '📋', title: 'Triagem', description: 'Lista de categorias de problemas' },
-        { icon: '🔀', title: 'Diagnóstico', description: 'Perguntas específicas por categoria' },
-        { icon: '💡', title: 'Solução Automática', description: 'Instruções passo a passo' },
-        { icon: '❓', title: 'Verificação', description: 'Confirma se resolveu o problema' },
-        { icon: '👤', title: 'Escalação', description: 'Transfere para atendente humano' }
-      );
-      estimatedNodes = 10;
-    } else if (isAgendamento) {
-      objective = 'Criar um sistema de agendamento automatizado';
-      approach = 'Fluxo guiado para seleção de serviço, data, horário e confirmação';
-      steps.push(
-        { icon: '⚡', title: 'Gatilho', description: 'Detecta intenção de agendar' },
-        { icon: '📋', title: 'Seleção de Serviço', description: 'Lista de serviços disponíveis' },
-        { icon: '📅', title: 'Escolha de Data', description: 'Datas disponíveis na semana' },
-        { icon: '⏰', title: 'Escolha de Horário', description: 'Horários livres no dia' },
-        { icon: '✅', title: 'Confirmação', description: 'Resumo e confirmação do agendamento' },
-        { icon: '📲', title: 'Lembrete', description: 'Mensagem de confirmação via WhatsApp' }
-      );
-      estimatedNodes = 8;
-    } else {
-      objective = 'Criar um fluxo de atendimento automatizado';
-      approach = 'Menu interativo com opções principais e respostas personalizadas';
-      steps.push(
-        { icon: '⚡', title: 'Gatilho Inicial', description: 'Ativa ao receber mensagem' },
-        { icon: '👋', title: 'Boas-vindas', description: 'Saudação cordial e apresentação' },
-        { icon: '📋', title: 'Menu Principal', description: 'Opções de atendimento' },
-        { icon: '💬', title: 'Respostas', description: 'Informações para cada opção' },
-        { icon: '🔀', title: 'Decisão', description: 'Verifica se precisa de mais ajuda' },
-        { icon: '🏁', title: 'Finalização', description: 'Agradecimento e encerramento' }
-      );
-      estimatedNodes = 7;
-    }
-
-    return {
-      objective,
-      approach,
-      steps,
-      estimatedNodes,
-      estimatedTime: '~45 segundos'
-    };
-  }, []);
-
   // Build flow on canvas node by node (MAX 1 MINUTE)
   const buildFlowOnCanvas = useCallback(async (nodes: FlowNode[], edges: FlowEdge[]) => {
     // Close modal immediately when building starts
     onOpenChange(false);
     
     // Calculate timing: max 60 seconds total
-    // Analysis: 3s, Per node: ~4-5s each, Connections: 3s, Finish: 2s
     const analysisTime = 3000;
     const connectionTime = 3000;
     const finishTime = 2000;
-    const availableForNodes = 60000 - analysisTime - connectionTime - finishTime; // 52 seconds for nodes
+    const availableForNodes = 60000 - analysisTime - connectionTime - finishTime;
     const perNodeTime = Math.min(5000, Math.floor(availableForNodes / nodes.length));
     
     // Show toast with progress
@@ -275,11 +203,9 @@ export const LunaAIModal = ({
         description: `Criando: ${nodeLabel} (${i + 1}/${nodes.length})`
       });
       
-      // Add node to canvas
       addedNodes.push(node);
       onApplyFlow([...addedNodes], []);
       
-      // Wait per node time (with slight randomness)
       await new Promise(r => setTimeout(r, perNodeTime * (0.8 + Math.random() * 0.4)));
     }
     
@@ -307,31 +233,46 @@ export const LunaAIModal = ({
     
     await new Promise(r => setTimeout(r, finishTime));
     
-    // Complete!
     toast.success('🎉 Fluxo construído pela Luna!', {
       id: toastId,
       description: `${nodes.length} nós criados e salvos automaticamente`
     });
   }, [onApplyFlow, onOpenChange, onSaveFlow]);
 
-  // Handle plan approval
-  const approvePlan = useCallback(async () => {
-    if (!currentPlan || !pendingPrompt) return;
+  // Handle proposal approval - PHASE 3 to PHASE 4
+  const approveProposal = useCallback(async () => {
+    if (!currentProposal || !pendingPrompt) return;
     
     // Update message to show approved
     setMessages(prev => prev.map(msg => 
-      msg.plan && !msg.isPlanApproved 
+      msg.proposal && !msg.isPlanApproved 
         ? { ...msg, isPlanApproved: true }
         : msg
     ));
     
+    setConversationPhase(4);
     setIsLoading(true);
     setShowQuickPrompts(false);
     
     try {
+      // Add approval confirmation message
+      const approvalMsg: Message = {
+        id: `approve-${Date.now()}`,
+        role: 'user',
+        content: 'Aprovado! Pode gerar o fluxo.',
+        timestamp: new Date(),
+        phase: 3
+      };
+      setMessages(prev => [...prev, approvalMsg]);
+      
       // Actually generate the flow via edge function
       const { data, error } = await supabase.functions.invoke('flow-ai-builder', {
-        body: { prompt: pendingPrompt, context: null }
+        body: { 
+          prompt: pendingPrompt, 
+          context: null,
+          phase: 4,
+          approved: true
+        }
       });
 
       if (error) throw new Error(error.message || 'Erro ao gerar fluxo');
@@ -358,25 +299,29 @@ export const LunaAIModal = ({
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
-      setCurrentPlan(null);
+      setCurrentProposal(null);
       setPendingPrompt('');
+      setConversationPhase(1);
     }
-  }, [currentPlan, pendingPrompt, buildFlowOnCanvas]);
+  }, [currentProposal, pendingPrompt, buildFlowOnCanvas]);
 
-  // Reject plan and ask for modifications
-  const rejectPlan = useCallback(() => {
-    setCurrentPlan(null);
+  // Reject proposal and ask for modifications
+  const rejectProposal = useCallback(() => {
+    setCurrentProposal(null);
+    setConversationPhase(1);
     
     const rejectMessage: Message = {
       id: `reject-${Date.now()}`,
       role: 'assistant',
-      content: 'Entendi! 💡 Me diga o que gostaria de modificar no plano, ou descreva novamente sua necessidade com mais detalhes.',
-      timestamp: new Date()
+      content: 'Entendi! 💡 Vamos ajustar.\n\nMe diga:\n- O que você gostaria de **modificar** na proposta?\n- Existe algo que **não ficou claro**?\n- Quer **adicionar** ou **remover** alguma etapa?\n\n*Estou aqui para alinhar antes de executar.*',
+      timestamp: new Date(),
+      phase: 1
     };
     setMessages(prev => [...prev, rejectMessage]);
     setShowQuickPrompts(false);
   }, []);
 
+  // Main send message function with deliberative behavior
   const sendMessage = async (prompt?: string) => {
     const messageContent = prompt || input.trim();
     if (!messageContent || isLoading) return;
@@ -394,25 +339,68 @@ export const LunaAIModal = ({
     setShowQuickPrompts(false);
 
     try {
-      // Simulate thinking (2-3 seconds)
-      await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 1000));
+      // Call AI with deliberative prompt
+      const { data, error } = await supabase.functions.invoke('flow-ai-builder', {
+        body: { 
+          prompt: messageContent, 
+          context: { currentNodes, currentEdges },
+          conversationHistory: messages.map(m => ({ role: m.role, content: m.content }))
+        }
+      });
+
+      if (error) throw new Error(error.message || 'Erro ao processar');
+      if (data.error) throw new Error(data.error);
+
+      // Handle response based on phase
+      const responsePhase = data.phase || 2;
       
-      const plan = await generatePlan(messageContent);
-      setCurrentPlan(plan);
-      setPendingPrompt(messageContent);
+      if (responsePhase === 4 && data.flow?.nodes) {
+        // Direct flow generation (only if user explicitly approved)
+        await buildFlowOnCanvas(data.flow.nodes, data.flow.edges || []);
+      } else {
+        // Analysis or Proposal phase
+        const proposal: FlowProposal | undefined = data.proposal ? {
+          objective: data.proposal.objective || '',
+          approach: data.proposal.approach || '',
+          steps: data.proposal.steps || [],
+          criticalDecisions: data.proposal.criticalDecisions,
+          infraConsiderations: data.proposal.infraConsiderations,
+          securityConsiderations: data.proposal.securityConsiderations,
+          estimatedNodes: data.proposal.estimatedNodes || 5,
+          estimatedTime: data.proposal.estimatedTime || '~30 segundos'
+        } : undefined;
 
-      const planMessage: Message = {
-        id: `plan-${Date.now()}`,
-        role: 'assistant',
-        content: `📋 Analisei sua solicitação! Aqui está meu plano:\n\n**🎯 Objetivo:**\n${plan.objective}\n\n**📐 Abordagem:**\n${plan.approach}`,
-        plan,
-        timestamp: new Date()
-      };
+        if (proposal) {
+          setCurrentProposal(proposal);
+          setPendingPrompt(messageContent);
+          setConversationPhase(2);
+        }
 
-      setMessages(prev => [...prev, planMessage]);
+        const analysisContent = data.analysis 
+          ? `📋 **Fase 1 — Análise**\n\n**Entendi que:** ${data.analysis.understood}\n\n${data.analysis.assumptions?.length ? `**Suposições:**\n${data.analysis.assumptions.map((a: string) => `• ${a}`).join('\n')}\n\n` : ''}${data.analysis.questions?.length ? `**Perguntas para alinhar:**\n${data.analysis.questions.map((q: string) => `❓ ${q}`).join('\n')}\n\n` : ''}**Complexidade:** ${data.analysis.complexity}`
+          : '';
+
+        const proposalContent = proposal 
+          ? `\n\n📐 **Fase 2 — Proposta de Arquitetura**\n\n**🎯 Objetivo:**\n${proposal.objective}\n\n**📐 Abordagem:**\n${proposal.approach}${proposal.criticalDecisions?.length ? `\n\n⚠️ **Decisões Críticas:**\n${proposal.criticalDecisions.map(d => `• ${d}`).join('\n')}` : ''}${proposal.infraConsiderations?.length ? `\n\n🖥️ **Infra:**\n${proposal.infraConsiderations.map(i => `• ${i}`).join('\n')}` : ''}${proposal.securityConsiderations?.length ? `\n\n🔒 **Segurança:**\n${proposal.securityConsiderations.map(s => `• ${s}`).join('\n')}` : ''}`
+          : '';
+
+        const finalMessage = data.message || (analysisContent + proposalContent) || 'Analisando sua solicitação...';
+
+        const aiMessage: Message = {
+          id: `ai-${Date.now()}`,
+          role: 'assistant',
+          content: finalMessage,
+          analysis: data.analysis,
+          proposal,
+          timestamp: new Date(),
+          phase: responsePhase as 1 | 2 | 3 | 4
+        };
+
+        setMessages(prev => [...prev, aiMessage]);
+      }
 
     } catch (error) {
-      console.error('Erro ao gerar plano:', error);
+      console.error('Erro ao processar:', error);
       
       const errorMessage: Message = {
         id: `error-${Date.now()}`,
@@ -423,7 +411,7 @@ export const LunaAIModal = ({
       };
 
       setMessages(prev => [...prev, errorMessage]);
-      toast.error('Erro ao gerar plano');
+      toast.error('Erro ao processar');
     } finally {
       setIsLoading(false);
     }
@@ -462,9 +450,9 @@ export const LunaAIModal = ({
               <p className="text-xs text-muted-foreground">
                 {isLoading 
                   ? '🔍 Processando...' 
-                  : currentPlan 
-                    ? '📋 Aguardando aprovação' 
-                    : '✨ Arquiteta de Fluxos'
+                  : currentProposal 
+                    ? `📋 Fase ${conversationPhase} — Aguardando aprovação` 
+                    : `✨ Fase ${conversationPhase} — Arquiteta de Fluxos`
                 }
               </p>
             </div>
@@ -526,8 +514,8 @@ export const LunaAIModal = ({
                       </div>
                     </div>
 
-                    {/* Plan Preview & Approval */}
-                    {message.plan && !message.isPlanApproved && (
+                    {/* Proposal Preview & Approval */}
+                    {message.proposal && !message.isPlanApproved && (
                       <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -536,19 +524,19 @@ export const LunaAIModal = ({
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
                             <GitBranch className="h-4 w-4 text-primary" />
-                            <span className="text-sm font-medium">Estrutura do Fluxo</span>
+                            <span className="text-sm font-medium">Proposta de Arquitetura</span>
                           </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <Target className="h-3 w-3" />
-                            <span>~{message.plan.estimatedNodes} nós</span>
+                            <span>~{message.proposal.estimatedNodes} nós</span>
                             <Clock className="h-3 w-3 ml-2" />
-                            <span>{message.plan.estimatedTime}</span>
+                            <span>{message.proposal.estimatedTime}</span>
                           </div>
                         </div>
                         
                         {/* Steps preview */}
                         <div className="space-y-2 mb-4">
-                          {message.plan.steps.map((step, i) => (
+                          {message.proposal.steps.map((step, i) => (
                             <motion.div
                               key={i}
                               initial={{ opacity: 0, x: -10 }}
@@ -568,27 +556,27 @@ export const LunaAIModal = ({
 
                         <div className="border-t border-border/50 pt-3">
                           <p className="text-xs text-muted-foreground mb-3 text-center">
-                            Posso implementar esse fluxo?
+                            Deseja que eu gere esse fluxo agora ou prefere ajustar algo antes?
                           </p>
                           <div className="flex gap-2">
                             <Button
-                              onClick={approvePlan}
+                              onClick={approveProposal}
                               className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:opacity-90 gap-2"
                               size="sm"
                               disabled={isLoading}
                             >
                               <ThumbsUp className="h-4 w-4" />
-                              Sim, implementar!
+                              Sim, gerar!
                             </Button>
                             <Button
-                              onClick={rejectPlan}
+                              onClick={rejectProposal}
                               variant="outline"
                               className="flex-1 gap-2"
                               size="sm"
                               disabled={isLoading}
                             >
                               <ThumbsDown className="h-4 w-4" />
-                              Modificar
+                              Ajustar
                             </Button>
                           </div>
                         </div>
@@ -596,14 +584,14 @@ export const LunaAIModal = ({
                     )}
 
                     {/* Approved badge */}
-                    {message.plan && message.isPlanApproved && (
+                    {message.proposal && message.isPlanApproved && (
                       <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         className="mt-3 p-3 bg-green-500/10 rounded-xl border border-green-500/30 flex items-center gap-2"
                       >
                         <CheckCircle2 className="h-4 w-4 text-green-500" />
-                        <span className="text-sm text-green-500 font-medium">Plano aprovado! Construindo...</span>
+                        <span className="text-sm text-green-500 font-medium">Proposta aprovada! Construindo...</span>
                       </motion.div>
                     )}
 
@@ -672,13 +660,13 @@ export const LunaAIModal = ({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={currentPlan ? 'Aguardando aprovação do plano...' : 'Descreva o fluxo que você precisa...'}
+              placeholder={currentProposal ? 'Aguardando aprovação da proposta...' : 'Descreva o fluxo que você precisa...'}
               className="min-h-[44px] max-h-32 resize-none text-sm"
-              disabled={isLoading || !!currentPlan}
+              disabled={isLoading || !!currentProposal}
             />
             <Button
               onClick={() => sendMessage()}
-              disabled={!input.trim() || isLoading || !!currentPlan}
+              disabled={!input.trim() || isLoading || !!currentProposal}
               className="px-3 bg-gradient-to-r from-primary to-primary/80 hover:opacity-90"
             >
               {isLoading ? (
