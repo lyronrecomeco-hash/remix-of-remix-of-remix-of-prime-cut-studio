@@ -52,7 +52,7 @@ import { GenesisWebhooks } from '@/components/genesis/GenesisWebhooks';
 import { GenesisMyAccount } from '@/components/genesis/GenesisMyAccount';
 import { GenesisMetricsDashboard } from '@/components/genesis/GenesisMetricsDashboard';
 import { GenesisAlertRules } from '@/components/genesis/GenesisAlertRules';
-import { LunaAssistant } from '@/components/genesis/LunaAssistant';
+
 
 // Dashboard component with real data
 const GenesisDashboard = ({ onNavigate }: { onNavigate: (tab: string) => void }) => {
@@ -306,7 +306,6 @@ export default function GenesisPanel() {
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'luna', label: 'Luna IA', icon: Sparkles },
     { id: 'instances', label: 'Instâncias', icon: Smartphone },
     { id: 'flows', label: 'Flow Builder', icon: GitBranch },
     { id: 'chatbots', label: 'Chatbots', icon: Bot },
@@ -325,8 +324,6 @@ export default function GenesisPanel() {
     switch (activeTab) {
       case 'dashboard':
         return <GenesisDashboard onNavigate={setActiveTab} />;
-      case 'luna':
-        return <LunaAssistant />;
       case 'instances':
         return <InstancesManager onNavigateToAccount={() => setActiveTab('account')} />;
       case 'flows':
@@ -577,39 +574,19 @@ export default function GenesisPanel() {
         )}
       </AnimatePresence>
 
-      {/* MacOS Style Dock - Desktop - Dynamic Position */}
-      <AnimatePresence mode="wait">
+      {/* MacOS Style Dock - Desktop - Centered */}
+      <AnimatePresence>
         {!shouldHideSidebar && (
           <motion.div 
-            key={activeTab === 'luna' ? 'dock-right' : 'dock-center'}
-            initial={{ 
-              opacity: 0, 
-              ...(activeTab === 'luna' ? { x: 100 } : { y: 100 })
-            }}
-            animate={{ 
-              opacity: 1, 
-              x: 0, 
-              y: 0 
-            }}
-            exit={{ 
-              opacity: 0, 
-              ...(activeTab === 'luna' ? { x: 100 } : { y: 100 })
-            }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className={cn(
-              "hidden lg:flex fixed z-50 pointer-events-none",
-              activeTab === 'luna' 
-                ? "right-4 top-1/2 -translate-y-1/2 flex-col" 
-                : "bottom-4 w-full justify-center"
-            )}
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
+            className="hidden lg:flex fixed bottom-4 z-50 w-full justify-center pointer-events-none"
           >
-            <div className={cn(
-              "flex gap-1.5 px-3 py-2 bg-card/80 backdrop-blur-xl border rounded-2xl shadow-2xl pointer-events-auto",
-              activeTab === 'luna' ? "flex-col items-center" : "flex-row items-end"
-            )}>
+            <div className="flex items-end gap-1.5 px-3 py-2 bg-card/80 backdrop-blur-xl border rounded-2xl shadow-2xl pointer-events-auto">
               {navItems.map((item, index) => {
                 const isActive = activeTab === item.id;
-                const isLunaMode = activeTab === 'luna';
                 return (
                   <motion.button
                     key={item.id}
@@ -618,14 +595,11 @@ export default function GenesisPanel() {
                       "relative flex flex-col items-center justify-center rounded-xl transition-all duration-200 group",
                       isActive ? "bg-primary/10" : "hover:bg-muted"
                     )}
-                    whileHover={{ 
-                      scale: 1.15, 
-                      ...(isLunaMode ? { x: -8 } : { y: -8 })
-                    }}
+                    whileHover={{ scale: 1.15, y: -8 }}
                     whileTap={{ scale: 0.95 }}
-                    initial={{ opacity: 0, ...(isLunaMode ? { x: 20 } : { y: 20 }) }}
-                    animate={{ opacity: 1, x: 0, y: 0 }}
-                    transition={{ delay: 0.1 + index * 0.03 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 + index * 0.05 }}
                   >
                     <div className={cn(
                       "w-12 h-12 flex items-center justify-center rounded-xl transition-colors",
@@ -636,22 +610,16 @@ export default function GenesisPanel() {
                       <item.icon className="w-5 h-5" />
                     </div>
                     
-                    {/* Active indicator */}
+                    {/* Active indicator dot */}
                     {isActive && (
                       <motion.div 
                         layoutId="dock-indicator"
-                        className={cn(
-                          "absolute w-1 h-1 rounded-full bg-primary",
-                          isLunaMode ? "-left-0.5 top-1/2 -translate-y-1/2" : "-bottom-0.5"
-                        )}
+                        className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-primary"
                       />
                     )}
                     
                     {/* Tooltip on hover */}
-                    <div className={cn(
-                      "absolute opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none",
-                      isLunaMode ? "-left-24 top-1/2 -translate-y-1/2" : "-top-9"
-                    )}>
+                    <div className="absolute -top-9 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                       <div className="px-2 py-1 bg-popover border rounded-lg shadow-lg text-xs font-medium whitespace-nowrap">
                         {item.label}
                       </div>
