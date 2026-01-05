@@ -157,7 +157,7 @@ export const LunaAIModal = ({
       setMessages([{
         id: 'welcome',
         role: 'assistant',
-        content: 'Olá! 👋 Sou a **Luna**, sua arquiteta de fluxos de automação.\n\n🧠 Eu NÃO sou um chatbot genérico. Eu **penso antes de executar**.\n\nMeu processo:\n\n📋 **FASE 1** — Entendo e analiso sua necessidade\n📐 **FASE 2** — Proponho uma arquitetura detalhada\n✅ **FASE 3** — Aguardo sua aprovação explícita\n🔧 **FASE 4** — Construo o fluxo no canvas\n\n*"Antes de executar, eu preciso entender e alinhar."*\n\n💡 Escolha uma sugestão ou descreva livremente o que precisa!',
+        content: 'Oi! 👋 Sou a **Luna**, sua parceira de automação na Genesis!\n\n✨ Pode conversar comigo sobre **qualquer coisa**: dúvidas sobre automação, estratégias pro seu negócio, ou simplesmente bater um papo!\n\n🚀 Quando quiser criar um **fluxo de automação**, é só me pedir e eu vou:\n1. Entender sua necessidade\n2. Propor uma arquitetura\n3. Aguardar sua aprovação\n4. Construir tudo no canvas!\n\n💬 Como posso te ajudar hoje?',
         timestamp: new Date(),
         phase: 1
       }]);
@@ -352,13 +352,13 @@ export const LunaAIModal = ({
       if (data.error) throw new Error(data.error);
 
       // Handle response based on phase
-      const responsePhase = data.phase || 2;
+      const responsePhase = data.phase || 1;
       
       if (responsePhase === 4 && data.flow?.nodes) {
         // Direct flow generation (only if user explicitly approved)
         await buildFlowOnCanvas(data.flow.nodes, data.flow.edges || []);
       } else {
-        // Analysis or Proposal phase
+        // Conversational or Proposal phase
         const proposal: FlowProposal | undefined = data.proposal ? {
           objective: data.proposal.objective || '',
           approach: data.proposal.approach || '',
@@ -370,21 +370,14 @@ export const LunaAIModal = ({
           estimatedTime: data.proposal.estimatedTime || '~30 segundos'
         } : undefined;
 
-        if (proposal) {
+        if (proposal && proposal.objective) {
           setCurrentProposal(proposal);
           setPendingPrompt(messageContent);
           setConversationPhase(2);
         }
 
-        const analysisContent = data.analysis 
-          ? `📋 **Fase 1 — Análise**\n\n**Entendi que:** ${data.analysis.understood}\n\n${data.analysis.assumptions?.length ? `**Suposições:**\n${data.analysis.assumptions.map((a: string) => `• ${a}`).join('\n')}\n\n` : ''}${data.analysis.questions?.length ? `**Perguntas para alinhar:**\n${data.analysis.questions.map((q: string) => `❓ ${q}`).join('\n')}\n\n` : ''}**Complexidade:** ${data.analysis.complexity}`
-          : '';
-
-        const proposalContent = proposal 
-          ? `\n\n📐 **Fase 2 — Proposta de Arquitetura**\n\n**🎯 Objetivo:**\n${proposal.objective}\n\n**📐 Abordagem:**\n${proposal.approach}${proposal.criticalDecisions?.length ? `\n\n⚠️ **Decisões Críticas:**\n${proposal.criticalDecisions.map(d => `• ${d}`).join('\n')}` : ''}${proposal.infraConsiderations?.length ? `\n\n🖥️ **Infra:**\n${proposal.infraConsiderations.map(i => `• ${i}`).join('\n')}` : ''}${proposal.securityConsiderations?.length ? `\n\n🔒 **Segurança:**\n${proposal.securityConsiderations.map(s => `• ${s}`).join('\n')}` : ''}`
-          : '';
-
-        const finalMessage = data.message || (analysisContent + proposalContent) || 'Analisando sua solicitação...';
+        // Use message directly from Luna - she's conversational!
+        const finalMessage = data.message || 'Oi! Como posso te ajudar? 😊';
 
         const aiMessage: Message = {
           id: `ai-${Date.now()}`,
@@ -449,10 +442,10 @@ export const LunaAIModal = ({
               </DialogTitle>
               <p className="text-xs text-muted-foreground">
                 {isLoading 
-                  ? '🔍 Processando...' 
+                  ? '💭 Pensando...' 
                   : currentProposal 
-                    ? `📋 Fase ${conversationPhase} — Aguardando aprovação` 
-                    : `✨ Fase ${conversationPhase} — Arquiteta de Fluxos`
+                    ? '📋 Proposta pronta — Aguardando aprovação' 
+                    : '✨ Sua parceira de automação'
                 }
               </p>
             </div>
