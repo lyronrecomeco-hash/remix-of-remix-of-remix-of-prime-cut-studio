@@ -41,10 +41,45 @@ interface InstanceStatus {
   phoneNumber?: string;
   lastHeartbeat?: string;
   isStale: boolean;
+  // HARDENING: Campos de proteção do backend
+  degraded?: boolean;
+  inCooldown?: boolean;
+  cooldownRemaining?: number;
+  sessionHealthy?: boolean;
 }
 
-// Aumentado para 5 minutos (300s) para maior estabilidade 24/7
-const STALE_THRESHOLD_MS = 300000;
+// ═══════════════════════════════════════════════════════════════════════════════
+// HARDENING: CONFIGURAÇÕES DE ESTABILIDADE FRONTEND
+// ═══════════════════════════════════════════════════════════════════════════════
+const HARDENING = {
+  // Threshold de stale aumentado para 5 minutos (maior tolerância)
+  STALE_THRESHOLD_MS: 300000,
+  
+  // Anti-loop: máximo de tentativas antes de cooldown forçado
+  MAX_CONNECT_ATTEMPTS: 5,
+  CONNECT_COOLDOWN_MS: 120000, // 2 minutos de cooldown
+  
+  // Backoff exponencial para reconexão no frontend
+  RECONNECT_BASE_DELAY: 3000,
+  RECONNECT_MAX_DELAY: 60000,
+  RECONNECT_BACKOFF_FACTOR: 1.5,
+  RECONNECT_JITTER_FACTOR: 0.2,
+  
+  // Polling otimizado (menos agressivo)
+  POLLING_INTERVAL: 1500, // Aumentado de 1000 para 1500ms
+  MAX_POLLING_ATTEMPTS: 120, // Reduzido de 180 para 120 (3min com intervalo maior)
+  QR_AUTO_REFRESH_MS: 50000, // Aumentado de 45s para 50s
+  
+  // Status polling menos frequente
+  STATUS_POLL_INTERVAL: 5000, // 5s em vez de mais frequente
+  
+  // Delay de estabilização (aguardar backend ficar ready)
+  STABILIZATION_WAIT_ATTEMPTS: 15, // Aumentado de 10 para 15
+  STABILIZATION_WAIT_INTERVAL: 1200, // 1.2s entre checks
+  
+  // Rate limit de operações
+  MIN_OPERATION_INTERVAL: 2000, // Mínimo 2s entre operações de conexão
+};
 
 export function useGenesisWhatsAppConnection() {
   const [connectionState, setConnectionState] = useState<ConnectionState>({
@@ -60,10 +95,11 @@ export function useGenesisWhatsAppConnection() {
   const statusPollingRef = useRef<NodeJS.Timeout | null>(null);
   const lastQrRefreshAtRef = useRef<number>(0);
   const mountedRef = useRef(true);
-
-  const maxPollingAttempts = 180; // 3 minutes
-  const pollingInterval = 1000;
-  const qrAutoRefreshMs = 45000;
+  
+  // HARDENING: Refs para controle anti-loop
+  const connectAttemptsRef = useRef(0);
+  const lastConnectAtRef = useRef(0);
+  const cooldownUntilRef = useRef(0);
 
   // Track mounted state
   useEffect(() => {
@@ -365,7 +401,7 @@ export function useGenesisWhatsAppConnection() {
 
     if (instanceRow?.last_heartbeat) {
       const lastHb = new Date(instanceRow.last_heartbeat).getTime();
-      const isStale = Date.now() - lastHb > STALE_THRESHOLD_MS;
+      const isStale = Date.now() - lastHb > HARDENING.STALE_THRESHOLD_MS;
       
       if (isStale && instanceRow.effective_status === 'connected') {
         // Forçar sync no banco
@@ -622,6 +658,56 @@ Agora você pode automatizar seu atendimento!`;
   ) => {
     stopPolling();
     
+    // ═══════════════════════════════════════════════════════════════════════════
+    // HARDENING: Verificação anti-loop de reconexão
+    // ═══════════════════════════════════════════════════════════════════════════
+    const now = Date.now();
+    
+    // Verificar cooldown forçado
+    if (cooldownUntilRef.current > now) {
+      const remaining = Math.ceil((cooldownUntilRef.current - now) / 1000);
+      console.warn(`[HARDENING] Connection blocked - cooldown active for ${remaining}s`);
+      toast.error(`Aguarde ${remaining}s antes de tentar novamente`);
+      safeSetState(() => ({
+        isConnecting: false,
+        isPolling: false,
+        qrCode: null,
+        error: `Cooldown ativo. Aguarde ${remaining}s`,
+        attempts: 0,
+        phase: 'error',
+      }));
+      return;
+    }
+    
+    // Verificar intervalo mínimo entre operações
+    if (lastConnectAtRef.current > 0 && (now - lastConnectAtRef.current) < HARDENING.MIN_OPERATION_INTERVAL) {
+      console.warn('[HARDENING] Connection throttled - too fast');
+      await new Promise(r => setTimeout(r, HARDENING.MIN_OPERATION_INTERVAL));
+    }
+    
+    // Incrementar contador de tentativas
+    connectAttemptsRef.current++;
+    lastConnectAtRef.current = now;
+    
+    // Se excedeu máximo de tentativas, entrar em cooldown
+    if (connectAttemptsRef.current > HARDENING.MAX_CONNECT_ATTEMPTS) {
+      cooldownUntilRef.current = now + HARDENING.CONNECT_COOLDOWN_MS;
+      connectAttemptsRef.current = 0;
+      const cooldownSeconds = HARDENING.CONNECT_COOLDOWN_MS / 1000;
+      
+      console.warn(`[HARDENING] Too many attempts (${HARDENING.MAX_CONNECT_ATTEMPTS}) - cooldown for ${cooldownSeconds}s`);
+      toast.error(`Muitas tentativas. Aguarde ${cooldownSeconds}s`);
+      safeSetState(() => ({
+        isConnecting: false,
+        isPolling: false,
+        qrCode: null,
+        error: `Cooldown de ${cooldownSeconds}s após múltiplas tentativas`,
+        attempts: 0,
+        phase: 'error',
+      }));
+      return;
+    }
+    
     // Iniciar validação
     safeSetState(() => ({
       isConnecting: true,
@@ -763,6 +849,9 @@ Agora você pode automatizar seu atendimento!`;
         }
 
         // Finalizar com sucesso
+        // HARDENING: Reset contador de tentativas em sucesso
+        connectAttemptsRef.current = 0;
+        
         safeSetState(() => ({
           isConnecting: false,
           isPolling: false,
@@ -970,7 +1059,7 @@ Agora você pode automatizar seu atendimento!`;
         attempts++;
         safeSetState(prev => ({ ...prev, attempts }));
 
-        if (attempts >= maxPollingAttempts) {
+        if (attempts >= HARDENING.MAX_POLLING_ATTEMPTS) {
           stopPolling();
           safeSetState(prev => ({
             ...prev,
@@ -984,7 +1073,7 @@ Agora você pode automatizar seu atendimento!`;
         }
 
         // Auto-refresh QR every 45 seconds
-        if (Date.now() - lastQrRefreshAtRef.current > qrAutoRefreshMs) {
+        if (Date.now() - lastQrRefreshAtRef.current > HARDENING.QR_AUTO_REFRESH_MS) {
           try {
             const nextQr = await generateQRCode(instanceId);
             if (nextQr && nextQr !== 'CONNECTED') {
@@ -1060,6 +1149,9 @@ Agora você pode automatizar seu atendimento!`;
             toast.success('✅ WhatsApp conectado com sucesso!');
           }
 
+          // HARDENING: Reset contador de tentativas em sucesso
+          connectAttemptsRef.current = 0;
+          
           safeSetState(() => ({
             isConnecting: false,
             isPolling: false,
@@ -1070,7 +1162,7 @@ Agora você pode automatizar seu atendimento!`;
           }));
           onConnected?.();
         }
-      }, pollingInterval);
+      }, HARDENING.POLLING_INTERVAL);
 
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Erro ao conectar';
@@ -1128,7 +1220,7 @@ Agora você pode automatizar seu atendimento!`;
     }
 
     const lastHeartbeatMs = data.last_heartbeat ? new Date(data.last_heartbeat).getTime() : 0;
-    const isStale = lastHeartbeatMs > 0 && Date.now() - lastHeartbeatMs > STALE_THRESHOLD_MS;
+    const isStale = lastHeartbeatMs > 0 && Date.now() - lastHeartbeatMs > HARDENING.STALE_THRESHOLD_MS;
 
     // Se está marcado como connected mas heartbeat é stale, mostrar como disconnected
     let normalizedStatus = data.effective_status || data.status || 'disconnected';
