@@ -7,7 +7,7 @@ import {
   Timer, AlertTriangle, Calendar, Tag, Repeat, GitMerge, ExternalLink, Radio,
   Workflow, Server, LogOut, UserCog, ShieldAlert, HeartPulse, Lock, Play,
   Layers, X, Bot, Settings, Filter, ChevronDown, Webhook, FileJson, Reply,
-  FilterX, ListOrdered
+  FilterX, ListOrdered, Star, ArrowRight
 } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -32,7 +32,7 @@ const ICONS: Record<string, any> = {
   ShieldAlert, HeartPulse, Lock, Play, Settings, Layers, Bot, Filter, FileJson,
   Reply, FilterX, ListOrdered, CornerDownRight: ChevronRight, Plug: ChevronRight,
   StickyNote: MessageSquare, ShoppingCart: LayoutGrid, Table: LayoutGrid,
-  ShieldCheck: Shield
+  ShieldCheck: Shield, Star
 };
 
 interface ComponentsModalProps {
@@ -138,7 +138,7 @@ export const ComponentsModal = ({
     event.dataTransfer.effectAllowed = 'move';
     
     const dragEl = document.createElement('div');
-    dragEl.className = 'bg-card border rounded-lg p-2 shadow-xl';
+    dragEl.className = 'bg-card border rounded-lg p-3 shadow-xl';
     dragEl.innerHTML = `<span class="text-sm font-medium">${template.label}</span>`;
     dragEl.style.position = 'absolute';
     dragEl.style.top = '-1000px';
@@ -161,119 +161,84 @@ export const ComponentsModal = ({
   
   const getCategoryCount = (cat: string) => allTemplates.filter(t => t.category === cat).length;
 
-  const renderComponentCard = (template: NodeTemplate, categoryColor: string) => {
-    const templateId = `${template.type}-${template.label}`;
-    const Icon = ICONS[template.icon] || Zap;
-    const isDisabled = template.requiresInstance && !hasConnectedInstance;
-    
-    return (
-      <div
-        key={templateId}
-        draggable={!isDisabled}
-        onDragStart={(e) => handleDragStart(e, template)}
-        onDragEnd={handleDragEnd}
-        onClick={() => handleSelect(template)}
-        onMouseEnter={() => setHoveredId(templateId)}
-        onMouseLeave={() => setHoveredId(null)}
-        className={cn(
-          "group relative p-2.5 rounded-lg border border-border/50 cursor-pointer transition-all duration-150",
-          "hover:border-primary/40 hover:bg-primary/5 hover:shadow-sm",
-          isDisabled && "opacity-40 cursor-not-allowed",
-          draggingId === templateId && "opacity-50 scale-95",
-          hoveredId === templateId && "border-primary/40 bg-primary/5"
-        )}
-      >
-        <div className="flex items-center gap-2">
-          <div 
-            className="w-7 h-7 rounded-md flex items-center justify-center shrink-0"
-            style={{ backgroundColor: `${categoryColor}20` }}
-          >
-            <Icon className="w-3.5 h-3.5" style={{ color: categoryColor }} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium truncate">{template.label}</p>
-          </div>
-          <GripVertical className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
-        </div>
-      </div>
-    );
-  };
-
   return (
     <>
       <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-        <DialogContent className="sm:max-w-5xl max-h-[90vh] p-0 gap-0 overflow-hidden border border-border/50 bg-background shadow-2xl">
-          {/* Header */}
-          <div className="px-5 pt-4 pb-3 border-b border-border/50 bg-gradient-to-b from-muted/30 to-transparent">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/20">
-                  <Layers className="w-4 h-4 text-primary" />
+        <DialogContent className="sm:max-w-6xl max-h-[92vh] p-0 gap-0 overflow-hidden border border-border/50 bg-background shadow-2xl">
+          {/* Premium Header */}
+          <div className="px-6 pt-5 pb-4 border-b border-border/50 bg-gradient-to-b from-primary/5 via-primary/3 to-transparent">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center border border-primary/20 shadow-lg shadow-primary/10">
+                  <Layers className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-base font-semibold">Componentes</h2>
-                    <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-xl font-bold">Biblioteca de Componentes</h2>
+                    <Badge className="text-sm px-3 py-1 bg-primary/10 text-primary border-primary/20">
                       {allTemplates.length} disponíveis
                     </Badge>
                   </div>
-                  <p className="text-[11px] text-muted-foreground">Arraste ou clique para adicionar</p>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    Arraste ou clique para adicionar ao seu fluxo
+                  </p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <Badge 
                   variant="outline"
                   className={cn(
-                    'gap-1 px-2 py-0.5 rounded-full text-[10px]',
+                    'gap-2 px-3 py-1.5 rounded-full text-sm font-medium',
                     hasConnectedInstance 
                       ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30' 
                       : 'bg-amber-500/10 text-amber-600 border-amber-500/30'
                   )}
                 >
                   <div className={cn(
-                    "w-1.5 h-1.5 rounded-full",
+                    "w-2 h-2 rounded-full animate-pulse",
                     hasConnectedInstance ? "bg-emerald-500" : "bg-amber-500"
                   )} />
-                  {hasConnectedInstance ? 'Online' : 'Offline'}
+                  {hasConnectedInstance ? 'Instância Online' : 'Sem Instância'}
                 </Badge>
                 
-                <Button variant="ghost" size="icon" onClick={onClose} className="h-7 w-7">
-                  <X className="w-4 h-4" />
+                <Button variant="ghost" size="icon" onClick={onClose} className="h-10 w-10 rounded-xl hover:bg-destructive/10">
+                  <X className="w-5 h-5" />
                 </Button>
               </div>
             </div>
 
-            {/* Search */}
-            <div className="relative mb-3">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            {/* Search Bar */}
+            <div className="relative mb-4">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <Input
                 ref={searchRef}
-                placeholder="Buscar..."
+                placeholder="Buscar componentes... (ex: webhook, botão, IA)"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 pr-8 h-9 bg-background border-border/50 rounded-lg text-sm"
+                className="pl-12 pr-10 h-12 bg-background border-border/50 rounded-xl text-base shadow-sm"
               />
               {search && (
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
                   onClick={() => setSearch('')}
                 >
-                  <X className="w-3 h-3" />
+                  <X className="w-4 h-4" />
                 </Button>
               )}
             </div>
 
-            {/* Category Filter */}
-            <div className="flex gap-1 flex-wrap">
+            {/* Category Filter Pills */}
+            <div className="flex gap-2 flex-wrap">
               <Button
-                variant={selectedCategory === null ? 'default' : 'ghost'}
+                variant={selectedCategory === null ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setSelectedCategory(null)}
-                className="h-6 px-2 rounded-full text-[10px]"
+                className="h-9 px-4 rounded-full text-sm font-medium"
               >
+                <Star className="w-4 h-4 mr-2" />
                 Todos ({allTemplates.length})
               </Button>
               
@@ -285,20 +250,18 @@ export const ComponentsModal = ({
                 if (!category) return null;
                 const count = getCategoryCount(key);
                 const isSelected = selectedCategory === key;
+                const CategoryIcon = ICONS[category.icon] || Zap;
                 
                 return (
                   <Button
                     key={key}
-                    variant={isSelected ? 'default' : 'ghost'}
+                    variant={isSelected ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setSelectedCategory(isSelected ? null : key)}
-                    className="h-6 px-2 rounded-full text-[10px] gap-1"
-                    style={isSelected ? { backgroundColor: category.color } : undefined}
+                    className="h-9 px-4 rounded-full text-sm font-medium gap-2"
+                    style={isSelected ? { backgroundColor: category.color, borderColor: category.color } : undefined}
                   >
-                    <span 
-                      className="w-1.5 h-1.5 rounded-full" 
-                      style={{ backgroundColor: isSelected ? '#fff' : category.color }}
-                    />
+                    <CategoryIcon className="w-4 h-4" />
                     {category.label}
                     <span className="opacity-70">({count})</span>
                   </Button>
@@ -308,19 +271,71 @@ export const ComponentsModal = ({
           </div>
 
           {/* Content Grid */}
-          <ScrollArea className="flex-1 max-h-[55vh]">
-            <div className="p-4">
+          <ScrollArea className="flex-1 max-h-[58vh]">
+            <div className="p-6">
               {search || selectedCategory ? (
                 // Flat grid when filtering
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-                  {filteredTemplates.map((template) => {
-                    const categoryColor = NODE_CATEGORIES[template.category as keyof typeof NODE_CATEGORIES]?.color || '#6b7280';
-                    return renderComponentCard(template, categoryColor);
-                  })}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                  <AnimatePresence>
+                    {filteredTemplates.map((template, index) => {
+                      const categoryColor = NODE_CATEGORIES[template.category as keyof typeof NODE_CATEGORIES]?.color || '#6b7280';
+                      const templateId = `${template.type}-${template.label}`;
+                      const Icon = ICONS[template.icon] || Zap;
+                      const isDisabled = template.requiresInstance && !hasConnectedInstance;
+                      
+                      return (
+                        <motion.div
+                          key={templateId}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          transition={{ delay: index * 0.02 }}
+                          draggable={!isDisabled}
+                          onDragStart={(e: any) => handleDragStart(e, template)}
+                          onDragEnd={handleDragEnd}
+                          onClick={() => handleSelect(template)}
+                          onMouseEnter={() => setHoveredId(templateId)}
+                          onMouseLeave={() => setHoveredId(null)}
+                          className={cn(
+                            "group relative p-4 rounded-xl border cursor-pointer transition-all duration-200",
+                            "hover:shadow-lg hover:-translate-y-0.5",
+                            isDisabled ? "opacity-50 cursor-not-allowed" : "hover:border-primary/50",
+                            draggingId === templateId && "opacity-50 scale-95",
+                            hoveredId === templateId ? "border-primary/50 bg-primary/5 shadow-md" : "border-border/50 bg-card"
+                          )}
+                        >
+                          <div className="flex flex-col gap-3">
+                            <div className="flex items-center justify-between">
+                              <div 
+                                className="w-10 h-10 rounded-lg flex items-center justify-center"
+                                style={{ backgroundColor: `${categoryColor}20` }}
+                              >
+                                <Icon className="w-5 h-5" style={{ color: categoryColor }} />
+                              </div>
+                              <GripVertical className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-60 transition-opacity" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold truncate">{template.label}</p>
+                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{template.description}</p>
+                            </div>
+                          </div>
+                          
+                          {template.requiresInstance && (
+                            <div className="absolute top-2 right-2">
+                              <Badge variant="outline" className="text-[10px] h-5 bg-background">
+                                <Smartphone className="w-3 h-3 mr-1" />
+                                WA
+                              </Badge>
+                            </div>
+                          )}
+                        </motion.div>
+                      );
+                    })}
+                  </AnimatePresence>
                 </div>
               ) : (
                 // Grouped view - show ALL categories
-                <div className="space-y-4">
+                <div className="space-y-8">
                   {categoryOrder.filter(cat => groupedTemplates[cat]?.length > 0).map((cat) => {
                     const category = NODE_CATEGORIES[cat as keyof typeof NODE_CATEGORIES];
                     if (!category) return null;
@@ -329,22 +344,74 @@ export const ComponentsModal = ({
                     
                     return (
                       <div key={cat}>
-                        <div className="flex items-center gap-2 mb-2">
+                        {/* Category Header */}
+                        <div className="flex items-center gap-3 mb-4">
                           <div 
-                            className="w-5 h-5 rounded flex items-center justify-center"
+                            className="w-8 h-8 rounded-lg flex items-center justify-center"
                             style={{ backgroundColor: `${category.color}20` }}
                           >
-                            <CategoryIcon className="w-3 h-3" style={{ color: category.color }} />
+                            <CategoryIcon className="w-4 h-4" style={{ color: category.color }} />
                           </div>
-                          <span className="text-xs font-semibold" style={{ color: category.color }}>
-                            {category.label}
-                          </span>
-                          <div className="flex-1 h-px bg-border/30" />
-                          <span className="text-[10px] text-muted-foreground">{templates.length}</span>
+                          <div>
+                            <h3 className="text-base font-bold" style={{ color: category.color }}>
+                              {category.label}
+                            </h3>
+                            <p className="text-xs text-muted-foreground">{templates.length} componentes</p>
+                          </div>
+                          <div className="flex-1 h-px bg-border/50" />
                         </div>
                         
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1.5">
-                          {templates.map((template) => renderComponentCard(template, category.color))}
+                        {/* Component Cards */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                          {templates.map((template) => {
+                            const templateId = `${template.type}-${template.label}`;
+                            const Icon = ICONS[template.icon] || Zap;
+                            const isDisabled = template.requiresInstance && !hasConnectedInstance;
+                            
+                            return (
+                              <div
+                                key={templateId}
+                                draggable={!isDisabled}
+                                onDragStart={(e) => handleDragStart(e, template)}
+                                onDragEnd={handleDragEnd}
+                                onClick={() => handleSelect(template)}
+                                onMouseEnter={() => setHoveredId(templateId)}
+                                onMouseLeave={() => setHoveredId(null)}
+                                className={cn(
+                                  "group relative p-4 rounded-xl border cursor-pointer transition-all duration-200",
+                                  "hover:shadow-lg hover:-translate-y-0.5",
+                                  isDisabled ? "opacity-50 cursor-not-allowed" : "hover:border-primary/50",
+                                  draggingId === templateId && "opacity-50 scale-95",
+                                  hoveredId === templateId ? "border-primary/50 bg-primary/5 shadow-md" : "border-border/50 bg-card"
+                                )}
+                              >
+                                <div className="flex flex-col gap-3">
+                                  <div className="flex items-center justify-between">
+                                    <div 
+                                      className="w-10 h-10 rounded-lg flex items-center justify-center"
+                                      style={{ backgroundColor: `${category.color}20` }}
+                                    >
+                                      <Icon className="w-5 h-5" style={{ color: category.color }} />
+                                    </div>
+                                    <GripVertical className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-60 transition-opacity" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-semibold truncate">{template.label}</p>
+                                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{template.description}</p>
+                                  </div>
+                                </div>
+                                
+                                {template.requiresInstance && (
+                                  <div className="absolute top-2 right-2">
+                                    <Badge variant="outline" className="text-[10px] h-5 bg-background">
+                                      <Smartphone className="w-3 h-3 mr-1" />
+                                      WA
+                                    </Badge>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     );
@@ -353,10 +420,13 @@ export const ComponentsModal = ({
               )}
 
               {filteredTemplates.length === 0 && (
-                <div className="py-12 text-center">
-                  <Search className="w-8 h-8 mx-auto text-muted-foreground/50 mb-2" />
-                  <p className="text-sm text-muted-foreground">Nenhum componente encontrado</p>
-                  <Button variant="link" size="sm" onClick={() => { setSearch(''); setSelectedCategory(null); }}>
+                <div className="py-16 text-center">
+                  <div className="w-16 h-16 mx-auto rounded-full bg-muted/50 flex items-center justify-center mb-4">
+                    <Search className="w-8 h-8 text-muted-foreground/50" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-1">Nenhum componente encontrado</h3>
+                  <p className="text-sm text-muted-foreground mb-4">Tente buscar por outro termo</p>
+                  <Button variant="outline" onClick={() => { setSearch(''); setSelectedCategory(null); }}>
                     Limpar filtros
                   </Button>
                 </div>
@@ -364,19 +434,22 @@ export const ComponentsModal = ({
             </div>
           </ScrollArea>
 
-          {/* Footer */}
-          <div className="p-3 border-t border-border/50 bg-muted/20">
+          {/* Luna Footer */}
+          <div className="p-4 border-t border-border/50 bg-gradient-to-r from-primary/5 via-transparent to-primary/5">
             <Button
               onClick={() => { onClose(); onOpenLuna(); }}
-              className="w-full h-10 bg-gradient-to-r from-primary via-primary to-primary/80 hover:opacity-90 text-primary-foreground rounded-lg group"
+              className="w-full h-14 bg-gradient-to-r from-primary via-primary to-primary/90 hover:opacity-95 text-primary-foreground rounded-xl group shadow-lg shadow-primary/20"
             >
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full overflow-hidden ring-1 ring-white/20">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-white/20 shadow-lg">
                   <img src={lunaAvatar} alt="Luna" className="w-full h-full object-cover" />
                 </div>
-                <span className="text-sm font-medium">Criar com Luna IA</span>
+                <div className="text-left">
+                  <span className="text-base font-semibold block">Criar com Luna IA</span>
+                  <span className="text-xs opacity-80">Descreva e ela constrói automaticamente</span>
+                </div>
               </div>
-              <Sparkles className="w-4 h-4 ml-auto group-hover:rotate-12 transition-transform" />
+              <ArrowRight className="w-5 h-5 ml-auto group-hover:translate-x-1 transition-transform" />
             </Button>
           </div>
         </DialogContent>
