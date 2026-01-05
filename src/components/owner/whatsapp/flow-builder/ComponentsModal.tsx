@@ -253,14 +253,10 @@ export const ComponentsModal = ({
                   const isDisabled = isNative && !hasConnectedInstance;
                   
                   return (
-                    <motion.div
+                    <div
                       key={`${template.type}-${template.label}`}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ delay: index * 0.02 }}
                       draggable={!isDisabled}
-                      onDragStart={(e) => handleDragStart(e as unknown as React.DragEvent, template)}
+                      onDragStart={(e) => handleDragStart(e, template)}
                       onDragEnd={handleDragEnd}
                       onClick={() => handleSelect(template)}
                       data-allow-drag="true"
@@ -306,7 +302,7 @@ export const ComponentsModal = ({
                         </div>
                         <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{template.description}</p>
                       </div>
-                    </motion.div>
+                    </div>
                   );
                 })}
               </AnimatePresence>

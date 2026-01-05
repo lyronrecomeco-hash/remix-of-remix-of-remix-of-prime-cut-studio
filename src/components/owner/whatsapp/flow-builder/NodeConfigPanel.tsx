@@ -2543,6 +2543,824 @@ export const NodeConfigPanel = ({ node, onClose, onSave, onDelete, onDuplicate }
           </div>
         );
 
+      // ==========================================
+      // WEBHOOK NODES - Universal Webhook Gateway
+      // ==========================================
+      
+      case 'webhook_universal_trigger':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">🌐</div>
+                <div>
+                  <p className="text-sm font-medium">Webhook Universal</p>
+                  <p className="text-[11px] text-muted-foreground">Recebe webhooks de qualquer sistema</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Nome do Webhook</Label>
+              <Input value={formData.webhook_name || ''} onChange={(e) => updateField('webhook_name', e.target.value)} placeholder="meu-webhook-pagamentos" className="bg-muted/50" />
+              <p className="text-[11px] text-muted-foreground">Identificador único (sem espaços)</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Métodos Aceitos</Label>
+              <div className="flex flex-wrap gap-2">
+                {['POST', 'PUT', 'PATCH', 'GET', 'DELETE'].map((method) => (
+                  <Badge 
+                    key={method}
+                    variant={formData.allowed_methods?.includes(method) ? 'default' : 'outline'}
+                    className="cursor-pointer"
+                    onClick={() => {
+                      const current = formData.allowed_methods || ['POST'];
+                      const updated = current.includes(method) 
+                        ? current.filter((m: string) => m !== method)
+                        : [...current, method];
+                      updateField('allowed_methods', updated.length ? updated : ['POST']);
+                    }}
+                  >
+                    {method}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Content-Types Aceitos</Label>
+              <Select value={formData.content_type || 'any'} onValueChange={(v) => updateField('content_type', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Qualquer</SelectItem>
+                  <SelectItem value="application/json">JSON</SelectItem>
+                  <SelectItem value="application/x-www-form-urlencoded">Form URL Encoded</SelectItem>
+                  <SelectItem value="multipart/form-data">Multipart Form</SelectItem>
+                  <SelectItem value="text/plain">Texto Plano</SelectItem>
+                  <SelectItem value="application/xml">XML</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Ativo</Label>
+                <p className="text-[11px] text-muted-foreground">Webhook está recebendo eventos</p>
+              </div>
+              <Switch checked={formData.is_active ?? true} onCheckedChange={(v) => updateField('is_active', v)} />
+            </div>
+            
+            <div className="p-3 rounded-xl bg-primary/5 border border-primary/20">
+              <div className="flex items-start gap-2">
+                <Info className="w-4 h-4 text-primary mt-0.5" />
+                <div className="text-xs text-muted-foreground">
+                  <p className="font-medium text-foreground mb-1">Variáveis Disponíveis</p>
+                  <code className="text-[10px] bg-muted px-1 rounded">{'{{webhook.body}}'}</code>{' '}
+                  <code className="text-[10px] bg-muted px-1 rounded">{'{{webhook.headers}}'}</code>{' '}
+                  <code className="text-[10px] bg-muted px-1 rounded">{'{{webhook.query}}'}</code>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'webhook_auth_guard':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-cyan-500/10 to-green-500/10 border border-cyan-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">🔐</div>
+                <div>
+                  <p className="text-sm font-medium">Autenticação de Webhook</p>
+                  <p className="text-[11px] text-muted-foreground">Valida credenciais do emissor</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Tipo de Autenticação</Label>
+              <Select value={formData.auth_type || 'token'} onValueChange={(v) => updateField('auth_type', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="token">🔑 Bearer Token</SelectItem>
+                  <SelectItem value="header">📋 Header Customizado</SelectItem>
+                  <SelectItem value="basic">👤 Basic Auth</SelectItem>
+                  <SelectItem value="hmac">🔏 HMAC Signature</SelectItem>
+                  <SelectItem value="ip_whitelist">🌐 IP Whitelist</SelectItem>
+                  <SelectItem value="api_key">🗝️ API Key</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <AnimatePresence mode="wait">
+              {formData.auth_type === 'token' && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Token Esperado</Label>
+                    <Input type="password" value={formData.expected_token || ''} onChange={(e) => updateField('expected_token', e.target.value)} placeholder="sk_live_xxxxxx" className="bg-muted/50 font-mono" />
+                  </div>
+                </motion.div>
+              )}
+              
+              {formData.auth_type === 'header' && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Nome do Header</Label>
+                    <Input value={formData.header_name || ''} onChange={(e) => updateField('header_name', e.target.value)} placeholder="X-Webhook-Secret" className="bg-muted/50" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Valor Esperado</Label>
+                    <Input type="password" value={formData.header_value || ''} onChange={(e) => updateField('header_value', e.target.value)} placeholder="meu-segredo-123" className="bg-muted/50 font-mono" />
+                  </div>
+                </motion.div>
+              )}
+              
+              {formData.auth_type === 'basic' && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Usuário</Label>
+                    <Input value={formData.basic_user || ''} onChange={(e) => updateField('basic_user', e.target.value)} placeholder="usuario" className="bg-muted/50" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Senha</Label>
+                    <Input type="password" value={formData.basic_password || ''} onChange={(e) => updateField('basic_password', e.target.value)} placeholder="••••••••" className="bg-muted/50" />
+                  </div>
+                </motion.div>
+              )}
+              
+              {formData.auth_type === 'hmac' && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Segredo HMAC</Label>
+                    <Input type="password" value={formData.hmac_secret || ''} onChange={(e) => updateField('hmac_secret', e.target.value)} placeholder="whsec_xxxxxx" className="bg-muted/50 font-mono" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Header da Assinatura</Label>
+                    <Input value={formData.signature_header || 'X-Signature'} onChange={(e) => updateField('signature_header', e.target.value)} placeholder="X-Signature" className="bg-muted/50" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Algoritmo</Label>
+                    <Select value={formData.hmac_algorithm || 'sha256'} onValueChange={(v) => updateField('hmac_algorithm', v)}>
+                      <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="sha256">SHA-256</SelectItem>
+                        <SelectItem value="sha512">SHA-512</SelectItem>
+                        <SelectItem value="sha1">SHA-1 (legado)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </motion.div>
+              )}
+              
+              {formData.auth_type === 'ip_whitelist' && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">IPs Permitidos</Label>
+                    <Textarea value={formData.allowed_ips || ''} onChange={(e) => updateField('allowed_ips', e.target.value)} placeholder="192.168.1.1&#10;10.0.0.0/8&#10;::1" className="bg-muted/50 resize-none font-mono text-xs" rows={4} />
+                    <p className="text-[11px] text-muted-foreground">Um IP ou CIDR por linha</p>
+                  </div>
+                </motion.div>
+              )}
+              
+              {formData.auth_type === 'api_key' && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Nome do Parâmetro</Label>
+                    <Input value={formData.api_key_param || 'api_key'} onChange={(e) => updateField('api_key_param', e.target.value)} placeholder="api_key" className="bg-muted/50" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Localização</Label>
+                    <Select value={formData.api_key_location || 'header'} onValueChange={(v) => updateField('api_key_location', v)}>
+                      <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="header">Header</SelectItem>
+                        <SelectItem value="query">Query String</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">API Key</Label>
+                    <Input type="password" value={formData.api_key_value || ''} onChange={(e) => updateField('api_key_value', e.target.value)} placeholder="pk_live_xxxxxx" className="bg-muted/50 font-mono" />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Rejeitar Inválidos</Label>
+                <p className="text-[11px] text-muted-foreground">Retorna 401 se falhar</p>
+              </div>
+              <Switch checked={formData.reject_unauthorized ?? true} onCheckedChange={(v) => updateField('reject_unauthorized', v)} />
+            </div>
+          </div>
+        );
+
+      case 'webhook_signature_verify':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-cyan-500/10 to-purple-500/10 border border-cyan-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">✅</div>
+                <div>
+                  <p className="text-sm font-medium">Verificar Assinatura</p>
+                  <p className="text-[11px] text-muted-foreground">Valida integridade do payload</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Provider/Estilo</Label>
+              <Select value={formData.signature_provider || 'custom'} onValueChange={(v) => updateField('signature_provider', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="stripe">💳 Stripe</SelectItem>
+                  <SelectItem value="github">🐙 GitHub</SelectItem>
+                  <SelectItem value="shopify">🛒 Shopify</SelectItem>
+                  <SelectItem value="mercadopago">💰 Mercado Pago</SelectItem>
+                  <SelectItem value="pagarme">💳 Pagar.me</SelectItem>
+                  <SelectItem value="asaas">📊 Asaas</SelectItem>
+                  <SelectItem value="hotmart">🔥 Hotmart</SelectItem>
+                  <SelectItem value="custom">⚙️ Customizado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <AnimatePresence mode="wait">
+              {formData.signature_provider === 'stripe' && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Webhook Signing Secret</Label>
+                    <Input type="password" value={formData.stripe_secret || ''} onChange={(e) => updateField('stripe_secret', e.target.value)} placeholder="whsec_xxxxxx" className="bg-muted/50 font-mono" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Tolerância de Tempo (segundos)</Label>
+                    <Input type="number" min="60" max="600" value={formData.tolerance_seconds || 300} onChange={(e) => updateField('tolerance_seconds', parseInt(e.target.value))} className="bg-muted/50" />
+                  </div>
+                </motion.div>
+              )}
+              
+              {formData.signature_provider === 'github' && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Webhook Secret</Label>
+                    <Input type="password" value={formData.github_secret || ''} onChange={(e) => updateField('github_secret', e.target.value)} placeholder="seu-segredo-github" className="bg-muted/50 font-mono" />
+                  </div>
+                </motion.div>
+              )}
+              
+              {['mercadopago', 'pagarme', 'asaas', 'hotmart', 'shopify'].includes(formData.signature_provider || '') && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Secret Key</Label>
+                    <Input type="password" value={formData.provider_secret || ''} onChange={(e) => updateField('provider_secret', e.target.value)} placeholder="seu-secret-key" className="bg-muted/50 font-mono" />
+                  </div>
+                </motion.div>
+              )}
+              
+              {formData.signature_provider === 'custom' && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Header da Assinatura</Label>
+                    <Input value={formData.custom_signature_header || 'X-Signature'} onChange={(e) => updateField('custom_signature_header', e.target.value)} placeholder="X-Signature" className="bg-muted/50" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Segredo</Label>
+                    <Input type="password" value={formData.custom_secret || ''} onChange={(e) => updateField('custom_secret', e.target.value)} placeholder="meu-segredo" className="bg-muted/50 font-mono" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Algoritmo</Label>
+                    <Select value={formData.custom_algorithm || 'sha256'} onValueChange={(v) => updateField('custom_algorithm', v)}>
+                      <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="sha256">HMAC-SHA256</SelectItem>
+                        <SelectItem value="sha512">HMAC-SHA512</SelectItem>
+                        <SelectItem value="sha1">HMAC-SHA1</SelectItem>
+                        <SelectItem value="md5">HMAC-MD5 (inseguro)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Prefixo da Assinatura</Label>
+                    <Input value={formData.signature_prefix || ''} onChange={(e) => updateField('signature_prefix', e.target.value)} placeholder="sha256=" className="bg-muted/50" />
+                    <p className="text-[11px] text-muted-foreground">Ex: sha256= (GitHub), v1= (Stripe)</p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Bloquear Assinatura Inválida</Label>
+                <p className="text-[11px] text-muted-foreground">Interrompe fluxo se falhar</p>
+              </div>
+              <Switch checked={formData.block_invalid ?? true} onCheckedChange={(v) => updateField('block_invalid', v)} />
+            </div>
+          </div>
+        );
+
+      case 'webhook_rate_limit':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-cyan-500/10 to-orange-500/10 border border-cyan-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">⏱️</div>
+                <div>
+                  <p className="text-sm font-medium">Rate Limit</p>
+                  <p className="text-[11px] text-muted-foreground">Controle de frequência de requests</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Limite por Período</Label>
+              <div className="flex gap-2">
+                <Input type="number" min="1" max="10000" value={formData.max_requests || 100} onChange={(e) => updateField('max_requests', parseInt(e.target.value))} className="bg-muted/50 flex-1" placeholder="100" />
+                <Select value={formData.period || 'minute'} onValueChange={(v) => updateField('period', v)}>
+                  <SelectTrigger className="bg-muted/50 w-32"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="second">/ segundo</SelectItem>
+                    <SelectItem value="minute">/ minuto</SelectItem>
+                    <SelectItem value="hour">/ hora</SelectItem>
+                    <SelectItem value="day">/ dia</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Escopo do Limite</Label>
+              <Select value={formData.limit_scope || 'webhook'} onValueChange={(v) => updateField('limit_scope', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="webhook">🌐 Por Webhook</SelectItem>
+                  <SelectItem value="ip">📍 Por IP</SelectItem>
+                  <SelectItem value="user">👤 Por Usuário</SelectItem>
+                  <SelectItem value="global">🌍 Global</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Burst Limit</Label>
+              <Input type="number" min="1" max="100" value={formData.burst_limit || 10} onChange={(e) => updateField('burst_limit', parseInt(e.target.value))} className="bg-muted/50" />
+              <p className="text-[11px] text-muted-foreground">Máximo de requests simultâneos</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Ação ao Exceder</Label>
+              <Select value={formData.exceed_action || 'reject'} onValueChange={(v) => updateField('exceed_action', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="reject">❌ Rejeitar (429)</SelectItem>
+                  <SelectItem value="queue">📋 Enfileirar</SelectItem>
+                  <SelectItem value="delay">⏳ Atrasar</SelectItem>
+                  <SelectItem value="drop">🗑️ Descartar Silenciosamente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Enviar Headers</Label>
+                <p className="text-[11px] text-muted-foreground">X-RateLimit-* na resposta</p>
+              </div>
+              <Switch checked={formData.send_headers ?? true} onCheckedChange={(v) => updateField('send_headers', v)} />
+            </div>
+          </div>
+        );
+
+      case 'webhook_queue':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-cyan-500/10 to-indigo-500/10 border border-cyan-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">📋</div>
+                <div>
+                  <p className="text-sm font-medium">Fila de Webhooks</p>
+                  <p className="text-[11px] text-muted-foreground">Enfileira para processamento assíncrono</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Nome da Fila</Label>
+              <Input value={formData.queue_name || 'default'} onChange={(e) => updateField('queue_name', e.target.value)} placeholder="fila-pagamentos" className="bg-muted/50" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Prioridade</Label>
+              <Select value={formData.priority || 'normal'} onValueChange={(v) => updateField('priority', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="critical">🔴 Crítica</SelectItem>
+                  <SelectItem value="high">🟠 Alta</SelectItem>
+                  <SelectItem value="normal">🟡 Normal</SelectItem>
+                  <SelectItem value="low">🟢 Baixa</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Delay Inicial (segundos)</Label>
+              <Input type="number" min="0" max="3600" value={formData.delay_seconds || 0} onChange={(e) => updateField('delay_seconds', parseInt(e.target.value))} className="bg-muted/50" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Máx. Tentativas</Label>
+              <Input type="number" min="1" max="10" value={formData.max_retries || 3} onChange={(e) => updateField('max_retries', parseInt(e.target.value))} className="bg-muted/50" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Backoff Exponencial</Label>
+              <div className="flex items-center gap-2">
+                <Input type="number" min="1" max="60" value={formData.backoff_base || 2} onChange={(e) => updateField('backoff_base', parseInt(e.target.value))} className="bg-muted/50 w-20" />
+                <span className="text-xs text-muted-foreground">^ tentativa (segundos)</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Preservar Ordem</Label>
+                <p className="text-[11px] text-muted-foreground">FIFO rigoroso</p>
+              </div>
+              <Switch checked={formData.preserve_order ?? false} onCheckedChange={(v) => updateField('preserve_order', v)} />
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Resposta Imediata</Label>
+                <p className="text-[11px] text-muted-foreground">Retorna 202 antes de processar</p>
+              </div>
+              <Switch checked={formData.immediate_response ?? true} onCheckedChange={(v) => updateField('immediate_response', v)} />
+            </div>
+          </div>
+        );
+
+      case 'webhook_deduplication':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-cyan-500/10 to-yellow-500/10 border border-cyan-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">🔄</div>
+                <div>
+                  <p className="text-sm font-medium">Deduplicação</p>
+                  <p className="text-[11px] text-muted-foreground">Previne processamento duplicado</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Chave de Deduplicação</Label>
+              <Select value={formData.dedup_key || 'event_id'} onValueChange={(v) => updateField('dedup_key', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="event_id">📌 Event ID (header)</SelectItem>
+                  <SelectItem value="body_field">📋 Campo do Body</SelectItem>
+                  <SelectItem value="body_hash">🔐 Hash do Body</SelectItem>
+                  <SelectItem value="custom_expression">⚙️ Expressão Customizada</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <AnimatePresence mode="wait">
+              {formData.dedup_key === 'event_id' && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Nome do Header</Label>
+                    <Input value={formData.event_id_header || 'X-Event-ID'} onChange={(e) => updateField('event_id_header', e.target.value)} placeholder="X-Event-ID" className="bg-muted/50" />
+                  </div>
+                </motion.div>
+              )}
+              
+              {formData.dedup_key === 'body_field' && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Caminho do Campo (JSONPath)</Label>
+                    <Input value={formData.body_field_path || '$.id'} onChange={(e) => updateField('body_field_path', e.target.value)} placeholder="$.data.id" className="bg-muted/50 font-mono" />
+                  </div>
+                </motion.div>
+              )}
+              
+              {formData.dedup_key === 'custom_expression' && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Expressão</Label>
+                    <Textarea value={formData.custom_dedup_expr || ''} onChange={(e) => updateField('custom_dedup_expr', e.target.value)} placeholder="${{body.type}}_${{body.id}}" className="bg-muted/50 resize-none font-mono text-xs" rows={2} />
+                    <p className="text-[11px] text-muted-foreground">Use variáveis do webhook</p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Janela de Deduplicação</Label>
+              <div className="flex gap-2">
+                <Input type="number" min="1" max="86400" value={formData.dedup_window || 3600} onChange={(e) => updateField('dedup_window', parseInt(e.target.value))} className="bg-muted/50 flex-1" />
+                <Select value={formData.dedup_window_unit || 'seconds'} onValueChange={(v) => updateField('dedup_window_unit', v)}>
+                  <SelectTrigger className="bg-muted/50 w-28"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="seconds">segundos</SelectItem>
+                    <SelectItem value="minutes">minutos</SelectItem>
+                    <SelectItem value="hours">horas</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Ação em Duplicata</Label>
+              <Select value={formData.duplicate_action || 'skip'} onValueChange={(v) => updateField('duplicate_action', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="skip">⏭️ Ignorar Silenciosamente</SelectItem>
+                  <SelectItem value="reject">❌ Rejeitar (409)</SelectItem>
+                  <SelectItem value="log_only">📝 Apenas Logar</SelectItem>
+                  <SelectItem value="update">🔄 Atualizar Existente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+
+      case 'webhook_payload_parser':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-cyan-500/10 to-green-500/10 border border-cyan-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">📦</div>
+                <div>
+                  <p className="text-sm font-medium">Parser de Payload</p>
+                  <p className="text-[11px] text-muted-foreground">Extrai e transforma dados</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Método de Extração</Label>
+              <Select value={formData.extraction_method || 'jsonpath'} onValueChange={(v) => updateField('extraction_method', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="jsonpath">📋 JSONPath</SelectItem>
+                  <SelectItem value="jmespath">🔍 JMESPath</SelectItem>
+                  <SelectItem value="xpath">📄 XPath (XML)</SelectItem>
+                  <SelectItem value="regex">🔤 Regex</SelectItem>
+                  <SelectItem value="template">📝 Template</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Mapeamentos</Label>
+              <Textarea 
+                value={formData.mappings_raw || ''} 
+                onChange={(e) => updateField('mappings_raw', e.target.value)} 
+                placeholder="nome:$.customer.name&#10;email:$.customer.email&#10;valor:$.amount&#10;status:$.payment.status" 
+                className="bg-muted/50 resize-none font-mono text-xs" 
+                rows={6} 
+              />
+              <p className="text-[11px] text-muted-foreground">Formato: variavel:expressão (um por linha)</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Valor Padrão</Label>
+              <Input value={formData.default_value || ''} onChange={(e) => updateField('default_value', e.target.value)} placeholder="(vazio se não encontrar)" className="bg-muted/50" />
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Preservar Payload Original</Label>
+                <p className="text-[11px] text-muted-foreground">Mantém em webhook.raw_body</p>
+              </div>
+              <Switch checked={formData.preserve_original ?? true} onCheckedChange={(v) => updateField('preserve_original', v)} />
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Falhar se Vazio</Label>
+                <p className="text-[11px] text-muted-foreground">Erro se nenhum campo extraído</p>
+              </div>
+              <Switch checked={formData.fail_on_empty ?? false} onCheckedChange={(v) => updateField('fail_on_empty', v)} />
+            </div>
+          </div>
+        );
+
+      case 'webhook_event_router':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-cyan-500/10 to-violet-500/10 border border-cyan-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">🔀</div>
+                <div>
+                  <p className="text-sm font-medium">Roteador de Eventos</p>
+                  <p className="text-[11px] text-muted-foreground">Direciona por tipo de evento</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Campo do Tipo de Evento</Label>
+              <Input value={formData.event_type_field || '$.type'} onChange={(e) => updateField('event_type_field', e.target.value)} placeholder="$.type ou $.event" className="bg-muted/50 font-mono" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Rotas</Label>
+              <Textarea 
+                value={formData.routes_raw || ''} 
+                onChange={(e) => updateField('routes_raw', e.target.value)} 
+                placeholder="payment.approved:processar_pagamento&#10;payment.rejected:notificar_falha&#10;subscription.created:criar_assinatura&#10;*:rota_padrao" 
+                className="bg-muted/50 resize-none font-mono text-xs" 
+                rows={6} 
+              />
+              <p className="text-[11px] text-muted-foreground">evento:ação (* = default)</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Ação para Evento Desconhecido</Label>
+              <Select value={formData.unknown_action || 'default'} onValueChange={(v) => updateField('unknown_action', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="default">➡️ Usar Rota Padrão (*)</SelectItem>
+                  <SelectItem value="skip">⏭️ Ignorar</SelectItem>
+                  <SelectItem value="error">❌ Gerar Erro</SelectItem>
+                  <SelectItem value="dead_letter">📬 Dead Letter</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Case Insensitive</Label>
+                <p className="text-[11px] text-muted-foreground">Ignora maiúsculas/minúsculas</p>
+              </div>
+              <Switch checked={formData.case_insensitive ?? true} onCheckedChange={(v) => updateField('case_insensitive', v)} />
+            </div>
+          </div>
+        );
+
+      case 'webhook_response':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-cyan-500/10 to-emerald-500/10 border border-cyan-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">📤</div>
+                <div>
+                  <p className="text-sm font-medium">Resposta HTTP</p>
+                  <p className="text-[11px] text-muted-foreground">Configura resposta ao emissor</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Status Code</Label>
+              <Select value={String(formData.status_code || 200)} onValueChange={(v) => updateField('status_code', parseInt(v))}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="200">✅ 200 - OK</SelectItem>
+                  <SelectItem value="201">✅ 201 - Created</SelectItem>
+                  <SelectItem value="202">⏳ 202 - Accepted</SelectItem>
+                  <SelectItem value="204">✅ 204 - No Content</SelectItem>
+                  <SelectItem value="400">❌ 400 - Bad Request</SelectItem>
+                  <SelectItem value="401">🔐 401 - Unauthorized</SelectItem>
+                  <SelectItem value="403">🚫 403 - Forbidden</SelectItem>
+                  <SelectItem value="404">🔍 404 - Not Found</SelectItem>
+                  <SelectItem value="409">⚠️ 409 - Conflict</SelectItem>
+                  <SelectItem value="422">❌ 422 - Unprocessable</SelectItem>
+                  <SelectItem value="429">⏱️ 429 - Too Many Requests</SelectItem>
+                  <SelectItem value="500">💥 500 - Internal Error</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Content-Type</Label>
+              <Select value={formData.response_content_type || 'application/json'} onValueChange={(v) => updateField('response_content_type', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="application/json">JSON</SelectItem>
+                  <SelectItem value="text/plain">Texto</SelectItem>
+                  <SelectItem value="text/html">HTML</SelectItem>
+                  <SelectItem value="application/xml">XML</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Body da Resposta</Label>
+              <Textarea 
+                value={formData.response_body || ''} 
+                onChange={(e) => updateField('response_body', e.target.value)} 
+                placeholder='{"success": true, "message": "Webhook recebido"}' 
+                className="bg-muted/50 resize-none font-mono text-xs" 
+                rows={4} 
+              />
+              <p className="text-[11px] text-muted-foreground">Suporta variáveis: {'{{execution_id}}'}, {'{{timestamp}}'}</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Headers Customizados</Label>
+              <Textarea 
+                value={formData.custom_headers_raw || ''} 
+                onChange={(e) => updateField('custom_headers_raw', e.target.value)} 
+                placeholder="X-Request-Id:{{execution_id}}&#10;X-Processed-At:{{timestamp}}" 
+                className="bg-muted/50 resize-none font-mono text-xs" 
+                rows={3} 
+              />
+              <p className="text-[11px] text-muted-foreground">header:valor (um por linha)</p>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">CORS Headers</Label>
+                <p className="text-[11px] text-muted-foreground">Inclui Access-Control-*</p>
+              </div>
+              <Switch checked={formData.include_cors ?? true} onCheckedChange={(v) => updateField('include_cors', v)} />
+            </div>
+          </div>
+        );
+
+      case 'webhook_dead_letter':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-cyan-500/10 to-red-500/10 border border-cyan-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">📬</div>
+                <div>
+                  <p className="text-sm font-medium">Dead Letter Queue</p>
+                  <p className="text-[11px] text-muted-foreground">Captura eventos com falha</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Condição de Captura</Label>
+              <Select value={formData.capture_condition || 'all_errors'} onValueChange={(v) => updateField('capture_condition', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all_errors">❌ Todos os Erros</SelectItem>
+                  <SelectItem value="max_retries">🔄 Após Máx. Tentativas</SelectItem>
+                  <SelectItem value="specific_errors">🎯 Erros Específicos</SelectItem>
+                  <SelectItem value="timeout">⏱️ Timeout</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {formData.capture_condition === 'specific_errors' && (
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Códigos de Erro</Label>
+                <Textarea value={formData.error_codes || ''} onChange={(e) => updateField('error_codes', e.target.value)} placeholder="VALIDATION_ERROR&#10;AUTH_FAILED&#10;RATE_LIMITED" className="bg-muted/50 resize-none font-mono text-xs" rows={3} />
+              </div>
+            )}
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Retenção</Label>
+              <div className="flex gap-2">
+                <Input type="number" min="1" max="365" value={formData.retention_days || 30} onChange={(e) => updateField('retention_days', parseInt(e.target.value))} className="bg-muted/50 flex-1" />
+                <span className="text-sm text-muted-foreground self-center">dias</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Permitir Replay Manual</Label>
+                <p className="text-[11px] text-muted-foreground">Reprocessar via painel</p>
+              </div>
+              <Switch checked={formData.allow_replay ?? true} onCheckedChange={(v) => updateField('allow_replay', v)} />
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Notificar por Email</Label>
+                <p className="text-[11px] text-muted-foreground">Alerta ao capturar erro</p>
+              </div>
+              <Switch checked={formData.notify_email ?? false} onCheckedChange={(v) => updateField('notify_email', v)} />
+            </div>
+            
+            {formData.notify_email && (
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Email para Notificação</Label>
+                <Input type="email" value={formData.notification_email || ''} onChange={(e) => updateField('notification_email', e.target.value)} placeholder="admin@empresa.com" className="bg-muted/50" />
+              </div>
+            )}
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Webhook de Notificação</Label>
+                <p className="text-[11px] text-muted-foreground">Dispara para outro endpoint</p>
+              </div>
+              <Switch checked={formData.notify_webhook ?? false} onCheckedChange={(v) => updateField('notify_webhook', v)} />
+            </div>
+            
+            {formData.notify_webhook && (
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">URL do Webhook</Label>
+                <Input value={formData.notification_webhook_url || ''} onChange={(e) => updateField('notification_webhook_url', e.target.value)} placeholder="https://..." className="bg-muted/50" />
+              </div>
+            )}
+          </div>
+        );
+
       default:
         return (
           <div className="text-center py-8 text-muted-foreground">
