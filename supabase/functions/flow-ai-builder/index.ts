@@ -249,11 +249,88 @@ Responda SEMPRE em JSON válido:
   "mode": "flow",
   "message": "Perfeito! Gerando seu fluxo agora... ✨",
   "flow": {
-    "nodes": [...],
-    "edges": [...]
+    "nodes": [
+      {
+        "id": "node-1",
+        "type": "flowNode",
+        "position": { "x": 400, "y": 80 },
+        "data": { "type": "wa_start", "label": "Início", "config": {} }
+      },
+      {
+        "id": "node-2",
+        "type": "flowNode",
+        "position": { "x": 400, "y": 230 },
+        "data": { "type": "wa_send_text", "label": "Boas-vindas", "config": { "text": "Olá! Como posso ajudar?" } }
+      }
+    ],
+    "edges": [
+      { "id": "edge-1-2", "source": "node-1", "target": "node-2", "type": "smoothstep", "animated": true }
+    ]
   },
-  "summary": "Resumo do que foi criado",
-  "tips": ["Dica de uso 1"]
+  "summary": "Fluxo criado com 2 nós",
+  "tips": ["Clique em cada nó para configurar"]
+}
+
+---
+
+## 🔧 ESPECIFICAÇÃO TÉCNICA DE GERAÇÃO DE FLUXOS
+
+### REGRAS CRÍTICAS DE GERAÇÃO (OBRIGATÓRIO)
+
+1. **IDs ÚNICOS**: Cada nó DEVE ter um ID único no formato "node-{numero}" (ex: node-1, node-2, node-3...)
+2. **EDGES CORRETA**: Cada edge DEVE conectar source → target com IDs existentes
+3. **POSIÇÕES**: 
+   - Primeiro nó: x=400, y=80
+   - Próximos: incrementar y em 150px
+   - Bifurcações: incrementar x em 350px
+4. **TIPO FIXO**: Todos os nós devem ter type="flowNode"
+
+### ESTRUTURA OBRIGATÓRIA DE NÓ:
+{
+  "id": "node-{numero_unico}",
+  "type": "flowNode",
+  "position": { "x": 400, "y": 80 },
+  "data": { 
+    "type": "tipo_do_no",
+    "label": "Nome descritivo",
+    "config": { ...configuracoes }
+  }
+}
+
+### ESTRUTURA OBRIGATÓRIA DE EDGE:
+{
+  "id": "edge-{source}-{target}",
+  "source": "node-{numero}",
+  "target": "node-{numero}",
+  "type": "smoothstep",
+  "animated": true
+}
+
+### EXEMPLO COMPLETO DE FLUXO DE ATENDIMENTO:
+{
+  "nodes": [
+    { "id": "node-1", "type": "flowNode", "position": { "x": 400, "y": 80 }, "data": { "type": "wa_start", "label": "Início do Fluxo", "config": {} } },
+    { "id": "node-2", "type": "flowNode", "position": { "x": 400, "y": 230 }, "data": { "type": "wa_send_text", "label": "Mensagem de Boas-vindas", "config": { "text": "Olá! 👋 Bem-vindo(a)! Como posso ajudar?" } } },
+    { "id": "node-3", "type": "flowNode", "position": { "x": 400, "y": 380 }, "data": { "type": "wa_send_buttons", "label": "Menu Principal", "config": { "text": "Selecione uma opção:", "buttons": ["📦 Ver produtos", "❓ Suporte", "👤 Falar com atendente"] } } },
+    { "id": "node-4", "type": "flowNode", "position": { "x": 400, "y": 530 }, "data": { "type": "wa_wait_response", "label": "Aguardar Resposta", "config": { "timeout": 300 } } },
+    { "id": "node-5", "type": "flowNode", "position": { "x": 400, "y": 680 }, "data": { "type": "condition", "label": "Verificar Escolha", "config": { "conditions": [{ "value": "1", "label": "Produtos" }, { "value": "2", "label": "Suporte" }, { "value": "3", "label": "Atendente" }] } } },
+    { "id": "node-6", "type": "flowNode", "position": { "x": 50, "y": 830 }, "data": { "type": "wa_send_list", "label": "Lista de Produtos", "config": { "title": "Nossos Produtos", "items": [] } } },
+    { "id": "node-7", "type": "flowNode", "position": { "x": 400, "y": 830 }, "data": { "type": "ai", "label": "Suporte IA", "config": { "prompt": "Ajude o cliente com sua dúvida" } } },
+    { "id": "node-8", "type": "flowNode", "position": { "x": 750, "y": 830 }, "data": { "type": "wa_send_text", "label": "Transferir Atendente", "config": { "text": "Aguarde, vou te transferir para um atendente humano..." } } },
+    { "id": "node-9", "type": "flowNode", "position": { "x": 400, "y": 980 }, "data": { "type": "end", "label": "Fim do Fluxo", "config": {} } }
+  ],
+  "edges": [
+    { "id": "edge-1-2", "source": "node-1", "target": "node-2", "type": "smoothstep", "animated": true },
+    { "id": "edge-2-3", "source": "node-2", "target": "node-3", "type": "smoothstep", "animated": true },
+    { "id": "edge-3-4", "source": "node-3", "target": "node-4", "type": "smoothstep", "animated": true },
+    { "id": "edge-4-5", "source": "node-4", "target": "node-5", "type": "smoothstep", "animated": true },
+    { "id": "edge-5-6", "source": "node-5", "target": "node-6", "type": "smoothstep", "animated": true, "sourceHandle": "option-1" },
+    { "id": "edge-5-7", "source": "node-5", "target": "node-7", "type": "smoothstep", "animated": true, "sourceHandle": "option-2" },
+    { "id": "edge-5-8", "source": "node-5", "target": "node-8", "type": "smoothstep", "animated": true, "sourceHandle": "option-3" },
+    { "id": "edge-6-9", "source": "node-6", "target": "node-9", "type": "smoothstep", "animated": true },
+    { "id": "edge-7-9", "source": "node-7", "target": "node-9", "type": "smoothstep", "animated": true },
+    { "id": "edge-8-9", "source": "node-8", "target": "node-9", "type": "smoothstep", "animated": true }
+  ]
 }
 
 ---
@@ -288,7 +365,23 @@ Responda SEMPRE em JSON válido:
   "phase": 4,
   "mode": "flow",
   "message": "Perfeito! Mãos à obra! ✨\\n\\nVou construir o fluxo agora — você vai ver cada nó aparecendo no canvas em tempo real.\\n\\nEm poucos segundos estará pronto!",
-  "flow": { "nodes": [...], "edges": [...] }
+  "flow": {
+    "nodes": [
+      { "id": "node-1", "type": "flowNode", "position": { "x": 400, "y": 80 }, "data": { "type": "wa_start", "label": "Início", "config": {} } },
+      { "id": "node-2", "type": "flowNode", "position": { "x": 400, "y": 230 }, "data": { "type": "wa_send_text", "label": "Saudação", "config": { "text": "Olá! Seja bem-vindo à nossa loja!" } } },
+      { "id": "node-3", "type": "flowNode", "position": { "x": 400, "y": 380 }, "data": { "type": "wa_send_buttons", "label": "Interesse", "config": { "text": "O que te interessa?", "buttons": ["Ver catálogo", "Promoções", "Falar com vendedor"] } } },
+      { "id": "node-4", "type": "flowNode", "position": { "x": 400, "y": 530 }, "data": { "type": "wa_wait_response", "label": "Aguardar", "config": {} } },
+      { "id": "node-5", "type": "flowNode", "position": { "x": 400, "y": 680 }, "data": { "type": "end", "label": "Fim", "config": {} } }
+    ],
+    "edges": [
+      { "id": "edge-1-2", "source": "node-1", "target": "node-2", "type": "smoothstep", "animated": true },
+      { "id": "edge-2-3", "source": "node-2", "target": "node-3", "type": "smoothstep", "animated": true },
+      { "id": "edge-3-4", "source": "node-3", "target": "node-4", "type": "smoothstep", "animated": true },
+      { "id": "edge-4-5", "source": "node-4", "target": "node-5", "type": "smoothstep", "animated": true }
+    ]
+  },
+  "summary": "Fluxo de vendas com 5 nós: início, saudação, menu de interesse, aguardar resposta e finalização",
+  "tips": ["Configure os botões para direcionar para diferentes seções", "Adicione condições após o aguardar para tratar cada opção"]
 }
 
 ---
@@ -342,9 +435,44 @@ serve(async (req) => {
     // Build user message based on context
     let userMessage = prompt;
     
-    // If approved for generation (phase 4)
+    // If approved for generation (phase 4) - VERY EXPLICIT instructions
     if (phase === 4 && approved) {
-      userMessage = `O usuário APROVOU a proposta. Agora GERE o fluxo completo em JSON. Original: ${prompt}`;
+      userMessage = `
+🚨 FASE 4 - GERAÇÃO APROVADA 🚨
+
+O usuário APROVOU a proposta. AGORA você DEVE gerar o fluxo COMPLETO.
+
+📋 REQUISITOS OBRIGATÓRIOS:
+1. Gerar TODOS os nós necessários (mínimo 5, ideal 7-12)
+2. Cada nó com ID ÚNICO: "node-1", "node-2", "node-3"...
+3. Cada nó com type="flowNode"
+4. Cada nó com posição correta (y incrementa 150px)
+5. Gerar TODAS as edges conectando os nós em sequência
+6. Cada edge com ID único: "edge-1-2", "edge-2-3"...
+7. Retornar phase: 4 e mode: "flow"
+
+📝 SOLICITAÇÃO ORIGINAL DO USUÁRIO:
+${prompt}
+
+⚠️ FORMATO OBRIGATÓRIO DO JSON:
+{
+  "phase": 4,
+  "mode": "flow",
+  "message": "Fluxo gerado!",
+  "flow": {
+    "nodes": [
+      { "id": "node-1", "type": "flowNode", "position": { "x": 400, "y": 80 }, "data": { "type": "wa_start", "label": "Início", "config": {} } },
+      { "id": "node-2", "type": "flowNode", "position": { "x": 400, "y": 230 }, "data": { "type": "...", "label": "...", "config": {...} } }
+    ],
+    "edges": [
+      { "id": "edge-1-2", "source": "node-1", "target": "node-2", "type": "smoothstep", "animated": true }
+    ]
+  },
+  "summary": "Descrição do fluxo",
+  "tips": ["Dicas de uso"]
+}
+
+EXECUTE AGORA!`;
     }
     
     // Add current flow context if exists
@@ -486,23 +614,80 @@ serve(async (req) => {
     }
 
     // Validate and fix the flow if present
-    if (result.flow?.nodes) {
-      const seenIds = new Set();
+    if (result.flow?.nodes && Array.isArray(result.flow.nodes)) {
+      console.log('[Luna AI] Processing flow with', result.flow.nodes.length, 'nodes');
+      
+      // Step 1: Ensure all nodes have unique IDs and proper structure
+      const timestamp = Date.now();
+      const idMapping: Record<string, string> = {};
+      
       result.flow.nodes = result.flow.nodes.map((node: any, index: number) => {
-        if (seenIds.has(node.id)) {
-          node.id = `${node.data?.type || 'node'}-${Date.now()}-${index}`;
-        }
-        seenIds.add(node.id);
-        return node;
+        const oldId = node.id || `temp-${index}`;
+        const newId = `node-${index + 1}`;
+        idMapping[oldId] = newId;
+        
+        // Calculate proper position
+        const baseY = 80;
+        const ySpacing = 150;
+        const defaultX = 400;
+        
+        return {
+          id: newId,
+          type: 'flowNode',
+          position: {
+            x: node.position?.x ?? defaultX,
+            y: node.position?.y ?? (baseY + (index * ySpacing))
+          },
+          data: {
+            type: node.data?.type || 'message',
+            label: node.data?.label || `Nó ${index + 1}`,
+            config: node.data?.config || {}
+          }
+        };
       });
-
-      const nodeIds = new Set(result.flow.nodes.map((n: any) => n.id));
-      result.flow.edges = (result.flow.edges || []).filter((edge: any) => 
-        nodeIds.has(edge.source) && nodeIds.has(edge.target)
-      ).map((edge: any, index: number) => ({
-        ...edge,
-        id: edge.id || `edge-${Date.now()}-${index}`
-      }));
+      
+      // Step 2: Create edges based on mapping and ensure sequential connection
+      const nodeIds = result.flow.nodes.map((n: any) => n.id);
+      
+      if (result.flow.edges && Array.isArray(result.flow.edges)) {
+        // Map existing edges to new IDs
+        result.flow.edges = result.flow.edges
+          .map((edge: any, index: number) => {
+            const sourceId = idMapping[edge.source] || edge.source;
+            const targetId = idMapping[edge.target] || edge.target;
+            
+            if (nodeIds.includes(sourceId) && nodeIds.includes(targetId)) {
+              return {
+                id: `edge-${sourceId.replace('node-', '')}-${targetId.replace('node-', '')}`,
+                source: sourceId,
+                target: targetId,
+                type: 'smoothstep',
+                animated: true,
+                sourceHandle: edge.sourceHandle,
+                targetHandle: edge.targetHandle
+              };
+            }
+            return null;
+          })
+          .filter(Boolean);
+      }
+      
+      // Step 3: If no valid edges, create sequential connections
+      if (!result.flow.edges || result.flow.edges.length === 0) {
+        console.log('[Luna AI] Creating sequential edges...');
+        result.flow.edges = [];
+        for (let i = 0; i < nodeIds.length - 1; i++) {
+          result.flow.edges.push({
+            id: `edge-${i + 1}-${i + 2}`,
+            source: nodeIds[i],
+            target: nodeIds[i + 1],
+            type: 'smoothstep',
+            animated: true
+          });
+        }
+      }
+      
+      console.log('[Luna AI] Flow processed:', result.flow.nodes.length, 'nodes,', result.flow.edges.length, 'edges');
       
       console.log('[Luna AI] Flow generated:', result.flow.nodes.length, 'nodes');
     } else {
