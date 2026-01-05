@@ -47,7 +47,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { NODE_TEMPLATES, NODE_CATEGORIES, NodeTemplate, NATIVE_WA_TEMPLATES, STABILITY_TEMPLATES, AUTOMATION_TEMPLATES, INFRASTRUCTURE_TEMPLATES, SECURITY_TEMPLATES, AI_TEMPLATES } from './types';
+import { NODE_TEMPLATES, NODE_CATEGORIES, NodeTemplate, NATIVE_WA_TEMPLATES, STABILITY_TEMPLATES, AUTOMATION_TEMPLATES, INFRASTRUCTURE_TEMPLATES, SECURITY_TEMPLATES, AI_TEMPLATES, WEBHOOK_TEMPLATES } from './types';
 import { InstanceRequiredModal } from './InstanceRequiredModal';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -85,8 +85,8 @@ export const ComponentsModal = ({
   const [showInstanceModal, setShowInstanceModal] = useState(false);
   const [pendingComponent, setPendingComponent] = useState<NodeTemplate | null>(null);
 
-  // Combine all templates - AI first, then Native, then others
-  const allTemplates = [...AI_TEMPLATES, ...NATIVE_WA_TEMPLATES, ...NODE_TEMPLATES, ...STABILITY_TEMPLATES, ...AUTOMATION_TEMPLATES, ...INFRASTRUCTURE_TEMPLATES, ...SECURITY_TEMPLATES];
+  // Combine all templates - AI first, Webhooks, Native, then others
+  const allTemplates = [...AI_TEMPLATES, ...WEBHOOK_TEMPLATES, ...NATIVE_WA_TEMPLATES, ...NODE_TEMPLATES, ...STABILITY_TEMPLATES, ...AUTOMATION_TEMPLATES, ...INFRASTRUCTURE_TEMPLATES, ...SECURITY_TEMPLATES];
 
   // Check for connected instances
   useEffect(() => {

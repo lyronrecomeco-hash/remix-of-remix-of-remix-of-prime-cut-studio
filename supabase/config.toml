@@ -157,3 +157,6 @@ verify_jwt = false
 
 [functions.flow-validator]
 verify_jwt = false
+
+[functions.genesis-webhook-gateway]
+verify_jwt = false

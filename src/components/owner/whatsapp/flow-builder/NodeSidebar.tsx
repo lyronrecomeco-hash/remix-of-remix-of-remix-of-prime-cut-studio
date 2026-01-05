@@ -46,7 +46,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { NODE_TEMPLATES, NODE_CATEGORIES, NodeTemplate, STABILITY_TEMPLATES, AUTOMATION_TEMPLATES, INFRASTRUCTURE_TEMPLATES, SECURITY_TEMPLATES, AI_TEMPLATES } from './types';
+import { NODE_TEMPLATES, NODE_CATEGORIES, NodeTemplate, STABILITY_TEMPLATES, AUTOMATION_TEMPLATES, INFRASTRUCTURE_TEMPLATES, SECURITY_TEMPLATES, AI_TEMPLATES, WEBHOOK_TEMPLATES } from './types';
 import { cn } from '@/lib/utils';
 
 const ICONS: Record<string, any> = {
@@ -111,8 +111,8 @@ export const NodeSidebar = ({ onDragStart, isCollapsed = false, onToggleCollapse
   });
   const [draggingTemplate, setDraggingTemplate] = useState<NodeTemplate | null>(null);
 
-  // Include all templates: AI first, then others
-  const allTemplates = [...AI_TEMPLATES, ...NODE_TEMPLATES, ...STABILITY_TEMPLATES, ...AUTOMATION_TEMPLATES, ...INFRASTRUCTURE_TEMPLATES, ...SECURITY_TEMPLATES];
+  // Include all templates: AI first, Webhooks, then others
+  const allTemplates = [...AI_TEMPLATES, ...WEBHOOK_TEMPLATES, ...NODE_TEMPLATES, ...STABILITY_TEMPLATES, ...AUTOMATION_TEMPLATES, ...INFRASTRUCTURE_TEMPLATES, ...SECURITY_TEMPLATES];
 
   const filteredTemplates = allTemplates.filter(t =>
     t.label.toLowerCase().includes(search.toLowerCase()) ||

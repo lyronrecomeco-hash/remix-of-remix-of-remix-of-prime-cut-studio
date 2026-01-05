@@ -3214,6 +3214,289 @@ export type Database = {
         }
         Relationships: []
       }
+      genesis_webhook_configs: {
+        Row: {
+          auth_config: Json | null
+          auth_type: string | null
+          burst_limit: number | null
+          created_at: string | null
+          custom_response: Json | null
+          custom_response_enabled: boolean | null
+          dedup_enabled: boolean | null
+          dedup_field: string | null
+          dedup_window_seconds: number | null
+          description: string | null
+          flow_id: string | null
+          id: string
+          is_active: boolean | null
+          last_triggered_at: string | null
+          name: string
+          rate_limit_per_hour: number | null
+          rate_limit_per_minute: number | null
+          secret_key: string | null
+          updated_at: string | null
+          user_id: string
+          webhook_id: string
+        }
+        Insert: {
+          auth_config?: Json | null
+          auth_type?: string | null
+          burst_limit?: number | null
+          created_at?: string | null
+          custom_response?: Json | null
+          custom_response_enabled?: boolean | null
+          dedup_enabled?: boolean | null
+          dedup_field?: string | null
+          dedup_window_seconds?: number | null
+          description?: string | null
+          flow_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          name: string
+          rate_limit_per_hour?: number | null
+          rate_limit_per_minute?: number | null
+          secret_key?: string | null
+          updated_at?: string | null
+          user_id: string
+          webhook_id?: string
+        }
+        Update: {
+          auth_config?: Json | null
+          auth_type?: string | null
+          burst_limit?: number | null
+          created_at?: string | null
+          custom_response?: Json | null
+          custom_response_enabled?: boolean | null
+          dedup_enabled?: boolean | null
+          dedup_field?: string | null
+          dedup_window_seconds?: number | null
+          description?: string | null
+          flow_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          name?: string
+          rate_limit_per_hour?: number | null
+          rate_limit_per_minute?: number | null
+          secret_key?: string | null
+          updated_at?: string | null
+          user_id?: string
+          webhook_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_webhook_configs_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_automation_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_webhook_configs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_webhook_dead_letters: {
+        Row: {
+          failed_at: string | null
+          failure_details: Json | null
+          failure_reason: string
+          id: string
+          last_retry_at: string | null
+          max_retries: number | null
+          original_headers: Json | null
+          original_payload: Json
+          resolved_at: string | null
+          retry_count: number | null
+          status: string | null
+          webhook_config_id: string
+          webhook_event_id: string
+        }
+        Insert: {
+          failed_at?: string | null
+          failure_details?: Json | null
+          failure_reason: string
+          id?: string
+          last_retry_at?: string | null
+          max_retries?: number | null
+          original_headers?: Json | null
+          original_payload: Json
+          resolved_at?: string | null
+          retry_count?: number | null
+          status?: string | null
+          webhook_config_id: string
+          webhook_event_id: string
+        }
+        Update: {
+          failed_at?: string | null
+          failure_details?: Json | null
+          failure_reason?: string
+          id?: string
+          last_retry_at?: string | null
+          max_retries?: number | null
+          original_headers?: Json | null
+          original_payload?: Json
+          resolved_at?: string | null
+          retry_count?: number | null
+          status?: string | null
+          webhook_config_id?: string
+          webhook_event_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_webhook_dead_letters_webhook_config_id_fkey"
+            columns: ["webhook_config_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_webhook_configs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_webhook_dead_letters_webhook_event_id_fkey"
+            columns: ["webhook_event_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_webhook_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_webhook_events: {
+        Row: {
+          body_parsed: Json | null
+          body_raw: string | null
+          completed_at: string | null
+          content_type: string | null
+          error_details: Json | null
+          error_message: string | null
+          event_id: string | null
+          execution_id: string | null
+          headers: Json | null
+          id: string
+          method: string
+          path: string | null
+          processed_at: string | null
+          query_params: Json | null
+          received_at: string | null
+          source_ip: string | null
+          status: string | null
+          user_agent: string | null
+          validation_result: Json | null
+          webhook_config_id: string
+        }
+        Insert: {
+          body_parsed?: Json | null
+          body_raw?: string | null
+          completed_at?: string | null
+          content_type?: string | null
+          error_details?: Json | null
+          error_message?: string | null
+          event_id?: string | null
+          execution_id?: string | null
+          headers?: Json | null
+          id?: string
+          method: string
+          path?: string | null
+          processed_at?: string | null
+          query_params?: Json | null
+          received_at?: string | null
+          source_ip?: string | null
+          status?: string | null
+          user_agent?: string | null
+          validation_result?: Json | null
+          webhook_config_id: string
+        }
+        Update: {
+          body_parsed?: Json | null
+          body_raw?: string | null
+          completed_at?: string | null
+          content_type?: string | null
+          error_details?: Json | null
+          error_message?: string | null
+          event_id?: string | null
+          execution_id?: string | null
+          headers?: Json | null
+          id?: string
+          method?: string
+          path?: string | null
+          processed_at?: string | null
+          query_params?: Json | null
+          received_at?: string | null
+          source_ip?: string | null
+          status?: string | null
+          user_agent?: string | null
+          validation_result?: Json | null
+          webhook_config_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_webhook_events_webhook_config_id_fkey"
+            columns: ["webhook_config_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_webhook_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_webhook_rate_limits: {
+        Row: {
+          blocked_until: string | null
+          burst_count: number | null
+          burst_window_start: string | null
+          created_at: string | null
+          hour_window_start: string | null
+          id: string
+          is_blocked: boolean | null
+          minute_window_start: string | null
+          requests_hour: number | null
+          requests_minute: number | null
+          source_ip: string | null
+          updated_at: string | null
+          webhook_config_id: string
+        }
+        Insert: {
+          blocked_until?: string | null
+          burst_count?: number | null
+          burst_window_start?: string | null
+          created_at?: string | null
+          hour_window_start?: string | null
+          id?: string
+          is_blocked?: boolean | null
+          minute_window_start?: string | null
+          requests_hour?: number | null
+          requests_minute?: number | null
+          source_ip?: string | null
+          updated_at?: string | null
+          webhook_config_id: string
+        }
+        Update: {
+          blocked_until?: string | null
+          burst_count?: number | null
+          burst_window_start?: string | null
+          created_at?: string | null
+          hour_window_start?: string | null
+          id?: string
+          is_blocked?: boolean | null
+          minute_window_start?: string | null
+          requests_hour?: number | null
+          requests_minute?: number | null
+          source_ip?: string | null
+          updated_at?: string | null
+          webhook_config_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_webhook_rate_limits_webhook_config_id_fkey"
+            columns: ["webhook_config_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_webhook_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       genesis_webhook_sources: {
         Row: {
           active: boolean
@@ -6609,6 +6892,14 @@ export type Database = {
       genesis_calculate_health_score: {
         Args: { p_instance_id: string }
         Returns: number
+      }
+      genesis_check_webhook_dedup: {
+        Args: { p_event_id: string; p_webhook_config_id: string }
+        Returns: boolean
+      }
+      genesis_check_webhook_rate_limit: {
+        Args: { p_source_ip: string; p_webhook_config_id: string }
+        Returns: Json
       }
       genesis_cleanup_old_backups: {
         Args: { p_instance_id: string; p_keep_count?: number }
