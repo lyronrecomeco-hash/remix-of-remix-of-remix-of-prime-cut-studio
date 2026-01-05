@@ -19,14 +19,20 @@ import {
   ChevronRight,
   Sparkles,
   GripVertical,
-  X
+  X,
+  Shield,
+  RefreshCw,
+  Gauge,
+  ListPlus,
+  Timer,
+  AlertTriangle
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { NODE_TEMPLATES, NODE_CATEGORIES, NodeTemplate } from './types';
+import { NODE_TEMPLATES, NODE_CATEGORIES, NodeTemplate, STABILITY_TEMPLATES } from './types';
 import { cn } from '@/lib/utils';
 
 const ICONS: Record<string, any> = {
@@ -43,12 +49,17 @@ const ICONS: Record<string, any> = {
   Clock,
   CircleStop,
   Zap,
-  Timer: Clock,
+  Timer,
   Webhook: Globe,
   CornerDownRight: ChevronRight,
   Tag: Sparkles,
   Plug: ChevronRight,
-  StickyNote: MessageSquare
+  StickyNote: MessageSquare,
+  Shield,
+  RefreshCw,
+  Gauge,
+  ListPlus,
+  AlertTriangle,
 };
 
 interface NodeSidebarProps {
@@ -64,11 +75,15 @@ export const NodeSidebar = ({ onDragStart, isCollapsed = false, onToggleCollapse
     triggers: true,
     conditions: true,
     actions: true,
-    flow: true
+    flow: true,
+    stability: true
   });
   const [draggingTemplate, setDraggingTemplate] = useState<NodeTemplate | null>(null);
 
-  const filteredTemplates = NODE_TEMPLATES.filter(t =>
+  // Include stability templates
+  const allTemplates = [...NODE_TEMPLATES, ...STABILITY_TEMPLATES];
+
+  const filteredTemplates = allTemplates.filter(t =>
     t.label.toLowerCase().includes(search.toLowerCase()) ||
     t.description.toLowerCase().includes(search.toLowerCase())
   );

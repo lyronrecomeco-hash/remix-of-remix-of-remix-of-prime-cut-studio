@@ -87,6 +87,15 @@ const getIconForType = (type: NodeType, iconName?: string) => {
     wa_send_list: List,
     wa_wait_response: Timer,
     wa_receive: MessageSquare,
+    // Stability & Resilience nodes
+    queue_message: Send,
+    session_guard: AlertCircle,
+    timeout_handler: Timer,
+    if_instance_state: GitBranch,
+    retry_policy: Zap,
+    smart_delay: Timer,
+    rate_limit: AlertCircle,
+    enqueue_flow_step: Play,
   };
   
   return typeIcons[type] || Zap;
