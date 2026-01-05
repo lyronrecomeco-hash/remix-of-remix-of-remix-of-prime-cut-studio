@@ -46,7 +46,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { NODE_TEMPLATES, NODE_CATEGORIES, NodeTemplate, STABILITY_TEMPLATES, AUTOMATION_TEMPLATES, INFRASTRUCTURE_TEMPLATES, SECURITY_TEMPLATES } from './types';
+import { NODE_TEMPLATES, NODE_CATEGORIES, NodeTemplate, STABILITY_TEMPLATES, AUTOMATION_TEMPLATES, INFRASTRUCTURE_TEMPLATES, SECURITY_TEMPLATES, AI_TEMPLATES } from './types';
 import { cn } from '@/lib/utils';
 
 const ICONS: Record<string, any> = {
@@ -87,6 +87,8 @@ const ICONS: Record<string, any> = {
   HeartPulse,
   Lock,
   Play,
+  Smartphone: Zap,
+  Settings: Zap,
 };
 
 interface NodeSidebarProps {
@@ -99,17 +101,18 @@ interface NodeSidebarProps {
 export const NodeSidebar = ({ onDragStart, isCollapsed = false, onToggleCollapse, compact = false }: NodeSidebarProps) => {
   const [search, setSearch] = useState('');
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({
+    ai: true, // AI first and open by default
     triggers: true,
     conditions: true,
     actions: true,
     flow: true,
-    stability: true,
-    automation: true
+    stability: false,
+    automation: false
   });
   const [draggingTemplate, setDraggingTemplate] = useState<NodeTemplate | null>(null);
 
-  // Include stability and automation templates
-  const allTemplates = [...NODE_TEMPLATES, ...STABILITY_TEMPLATES, ...AUTOMATION_TEMPLATES];
+  // Include all templates: AI first, then others
+  const allTemplates = [...AI_TEMPLATES, ...NODE_TEMPLATES, ...STABILITY_TEMPLATES, ...AUTOMATION_TEMPLATES, ...INFRASTRUCTURE_TEMPLATES, ...SECURITY_TEMPLATES];
 
   const filteredTemplates = allTemplates.filter(t =>
     t.label.toLowerCase().includes(search.toLowerCase()) ||
@@ -238,9 +241,12 @@ export const NodeSidebar = ({ onDragStart, isCollapsed = false, onToggleCollapse
       {/* Categories */}
       <ScrollArea className="flex-1 p-3">
         <div className="space-y-3">
-          {Object.entries(NODE_CATEGORIES).map(([key, { label, color }]) => {
+          {Object.entries(NODE_CATEGORIES).map(([key, { label, color, icon }]) => {
             const templates = groupedTemplates[key] || [];
             if (templates.length === 0 && search) return null;
+            
+            const CategoryIcon = ICONS[icon as string] || Zap;
+            const isAI = key === 'ai';
 
             return (
               <Collapsible
@@ -248,22 +254,33 @@ export const NodeSidebar = ({ onDragStart, isCollapsed = false, onToggleCollapse
                 open={openCategories[key]}
                 onOpenChange={() => toggleCategory(key)}
               >
-                <CollapsibleTrigger className="flex items-center justify-between w-full p-2.5 rounded-xl hover:bg-muted/50 transition-all group">
+                <CollapsibleTrigger className={cn(
+                  "flex items-center justify-between w-full p-2.5 rounded-xl hover:bg-muted/50 transition-all group",
+                  isAI && "bg-amber-500/5 border border-amber-500/20"
+                )}>
                   <div className="flex items-center gap-2.5">
                     <motion.div
                       whileHover={{ scale: 1.1 }}
-                      className="w-6 h-6 rounded-lg flex items-center justify-center"
+                      className="w-7 h-7 rounded-lg flex items-center justify-center"
                       style={{ backgroundColor: `${color}20` }}
                     >
-                      <div
-                        className="w-2.5 h-2.5 rounded-full"
-                        style={{ backgroundColor: color }}
-                      />
+                      <CategoryIcon className="w-4 h-4" style={{ color }} />
                     </motion.div>
                     <span className="font-medium text-sm">{label}</span>
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5">
+                    <Badge 
+                      variant="secondary" 
+                      className={cn(
+                        "text-[10px] px-1.5 py-0 h-5",
+                        isAI && "bg-amber-500/20 text-amber-600"
+                      )}
+                    >
                       {templates.length}
                     </Badge>
+                    {isAI && (
+                      <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-amber-500/50 text-amber-500 bg-amber-500/10">
+                        ✨
+                      </Badge>
+                    )}
                   </div>
                   <motion.div
                     animate={{ rotate: openCategories[key] ? 180 : 0 }}
