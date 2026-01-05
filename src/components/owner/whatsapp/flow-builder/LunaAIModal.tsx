@@ -8,21 +8,31 @@ import {
   Lightbulb, 
   Wand2,
   MessageSquare,
-  AlertCircle,
   Zap,
   CheckCircle2,
   GitBranch,
-  ArrowRight,
   ThumbsUp,
   ThumbsDown,
   Clock,
-  Target
+  Target,
+  X,
+  Maximize2,
+  Minimize2,
+  RotateCcw,
+  Bot,
+  ArrowRight,
+  Mic,
+  Paperclip,
+  MoreHorizontal,
+  ChevronDown,
+  Star
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -70,67 +80,14 @@ interface LunaAIModalProps {
   onSaveFlow?: () => Promise<void>;
 }
 
-const QUICK_PROMPTS = [
-  { icon: MessageSquare, label: 'Atendimento Completo', prompt: 'Crie um fluxo de atendimento ao cliente com menu de opções, FAQ, transferência para humano, proteção anti-spam e fila de mensagens' },
-  { icon: Sparkles, label: 'Funil de Vendas', prompt: 'Crie um fluxo de vendas com apresentação de produtos, perguntas de qualificação, fechamento, integração com CRM e proteção de sessão' },
-  { icon: Lightbulb, label: 'Suporte Técnico', prompt: 'Crie um fluxo de suporte técnico com triagem de problemas, soluções automáticas, escalação, timeout handler e retry automático' },
-  { icon: Wand2, label: 'Agendamento', prompt: 'Crie um fluxo de agendamento com seleção de data, horário, confirmação, integração com API externa e rate limiting' },
-  { icon: Zap, label: 'E-commerce', prompt: 'Crie um fluxo completo de e-commerce: catálogo, carrinho, checkout, pagamento, integração com Shopify e proteção de infraestrutura' },
-  { icon: GitBranch, label: 'Automação Complexa', prompt: 'Crie uma automação sem WhatsApp: webhook trigger, chamada de API externa, loop de processamento, transformação de dados e emissão de eventos' },
-  { icon: Clock, label: 'Cron + Notificações', prompt: 'Crie um fluxo agendado (cron) que busca dados de API, processa com loop, e envia notificações via WhatsApp com fila e retry' },
-  { icon: Target, label: 'Sistema Resiliente', prompt: 'Crie um fluxo enterprise com: proxy assign, worker assign, session guard, rate limit, quota guard, secure context e timeout handler' },
+const SUGGESTIONS = [
+  { icon: '🎯', text: 'Atendimento ao cliente com menu' },
+  { icon: '🛒', text: 'Funil de vendas com CRM' },
+  { icon: '📅', text: 'Agendamento automático' },
+  { icon: '🔧', text: 'Suporte técnico com FAQ' },
+  { icon: '🚀', text: 'Onboarding de novos leads' },
+  { icon: '💳', text: 'Checkout e pagamentos' }
 ];
-
-const NODE_ICONS: Record<string, string> = {
-  trigger: '⚡',
-  wa_start: '▶️',
-  message: '💬',
-  wa_send_text: '💬',
-  wa_send_buttons: '🔘',
-  wa_send_list: '📋',
-  wa_wait_response: '⏳',
-  wa_receive: '📥',
-  button: '🔘',
-  list: '📋',
-  condition: '🔀',
-  delay: '⏱️',
-  ai: '🤖',
-  webhook: '🌐',
-  variable: '📝',
-  end: '🏁',
-  // Automation
-  http_request_advanced: '🔗',
-  webhook_trigger: '📡',
-  cron_trigger: '📅',
-  set_variable: '📌',
-  if_expression: '🧮',
-  loop_for_each: '🔄',
-  switch_case: '🔀',
-  subflow_call: '📤',
-  event_emitter: '📡',
-  data_transform: '⚙️',
-  // Stability
-  queue_message: '📨',
-  session_guard: '🛡️',
-  timeout_handler: '⏰',
-  if_instance_state: '📶',
-  retry_policy: '🔁',
-  smart_delay: '⏳',
-  rate_limit: '⚡',
-  enqueue_flow_step: '📋',
-  // Infrastructure
-  proxy_assign: '🌐',
-  proxy_rotate: '🔄',
-  worker_assign: '🖥️',
-  worker_release: '🚪',
-  dispatch_execution: '🚀',
-  identity_rotate: '🔄',
-  // Security
-  execution_quota_guard: '🛡️',
-  infra_rate_limit: '⚡',
-  if_infra_health: '💓',
-  secure_context_guard: '🔒',
-};
 
 export const LunaAIModal = ({ 
   open,
@@ -144,26 +101,27 @@ export const LunaAIModal = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showQuickPrompts, setShowQuickPrompts] = useState(true);
   const [currentProposal, setCurrentProposal] = useState<FlowProposal | null>(null);
   const [pendingPrompt, setPendingPrompt] = useState<string>('');
   const [conversationPhase, setConversationPhase] = useState<1 | 2 | 3 | 4>(1);
+  const [isExpanded, setIsExpanded] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Reset state when modal opens
+  // Reset state when modal opens - NO INITIAL MESSAGE
   useEffect(() => {
-    if (open && messages.length === 0) {
-      setMessages([{
-        id: 'welcome',
-        role: 'assistant',
-        content: 'Oi! 👋 Sou a **Luna**, sua parceira de automação na Genesis!\n\n✨ Pode conversar comigo sobre **qualquer coisa**: dúvidas sobre automação, estratégias pro seu negócio, ou simplesmente bater um papo!\n\n🚀 Quando quiser criar um **fluxo de automação**, é só me pedir e eu vou:\n1. Entender sua necessidade\n2. Propor uma arquitetura\n3. Aguardar sua aprovação\n4. Construir tudo no canvas!\n\n💬 Como posso te ajudar hoje?',
-        timestamp: new Date(),
-        phase: 1
-      }]);
+    if (open) {
+      // Luna starts fresh, waiting for user input
+      setMessages([]);
       setConversationPhase(1);
+      setCurrentProposal(null);
+      setPendingPrompt('');
+      setInput('');
+      
+      // Focus textarea
+      setTimeout(() => textareaRef.current?.focus(), 200);
     }
-  }, [open, messages.length]);
+  }, [open]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -172,78 +130,59 @@ export const LunaAIModal = ({
     }
   }, [messages]);
 
-  // Build flow on canvas node by node (MAX 1 MINUTE)
+  // Build flow on canvas node by node
   const buildFlowOnCanvas = useCallback(async (nodes: FlowNode[], edges: FlowEdge[]) => {
-    // Close modal immediately when building starts
     onOpenChange(false);
     
-    // Calculate timing: max 60 seconds total
-    const analysisTime = 3000;
-    const connectionTime = 3000;
-    const finishTime = 2000;
-    const availableForNodes = 60000 - analysisTime - connectionTime - finishTime;
-    const perNodeTime = Math.min(5000, Math.floor(availableForNodes / nodes.length));
+    const analysisTime = 2000;
+    const connectionTime = 2000;
+    const finishTime = 1500;
+    const availableForNodes = 45000 - analysisTime - connectionTime - finishTime;
+    const perNodeTime = Math.min(3000, Math.floor(availableForNodes / nodes.length));
     
-    // Show toast with progress
-    const toastId = toast.loading('🤖 Luna está construindo o fluxo...', {
+    const toastId = toast.loading('🤖 Luna construindo...', {
       description: 'Analisando estrutura...'
     });
     
-    // Step 1: Analysis
     await new Promise(r => setTimeout(r, analysisTime));
     
-    // Step 2: Add nodes one by one
     const addedNodes: FlowNode[] = [];
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i];
       const nodeLabel = node.data?.label || `Nó ${i + 1}`;
       
-      toast.loading(`🤖 Luna está construindo o fluxo...`, {
+      toast.loading(`🤖 Luna construindo...`, {
         id: toastId,
-        description: `Criando: ${nodeLabel} (${i + 1}/${nodes.length})`
+        description: `${nodeLabel} (${i + 1}/${nodes.length})`
       });
       
       addedNodes.push(node);
       onApplyFlow([...addedNodes], []);
       
-      await new Promise(r => setTimeout(r, perNodeTime * (0.8 + Math.random() * 0.4)));
+      await new Promise(r => setTimeout(r, perNodeTime * (0.7 + Math.random() * 0.5)));
     }
     
-    // Step 3: Connect edges
-    toast.loading(`🤖 Luna está construindo o fluxo...`, {
-      id: toastId,
-      description: 'Conectando nós...'
-    });
+    toast.loading(`🤖 Luna construindo...`, { id: toastId, description: 'Conectando...' });
     await new Promise(r => setTimeout(r, connectionTime));
     onApplyFlow(addedNodes, edges);
     
-    // Step 4: Save automatically
-    toast.loading(`🤖 Luna está construindo o fluxo...`, {
-      id: toastId,
-      description: 'Salvando...'
-    });
-    
     if (onSaveFlow) {
-      try {
-        await onSaveFlow();
-      } catch (error) {
-        console.error('Error auto-saving flow:', error);
-      }
+      toast.loading(`🤖 Luna construindo...`, { id: toastId, description: 'Salvando...' });
+      try { await onSaveFlow(); } catch (e) { console.error(e); }
     }
     
     await new Promise(r => setTimeout(r, finishTime));
     
-    toast.success('🎉 Fluxo construído pela Luna!', {
+    toast.success('✨ Fluxo criado!', {
       id: toastId,
-      description: `${nodes.length} nós criados e salvos automaticamente`
+      description: `${nodes.length} nós criados`
     });
   }, [onApplyFlow, onOpenChange, onSaveFlow]);
 
-  // Handle proposal approval - PHASE 3 to PHASE 4
+  // Handle proposal approval
   const approveProposal = useCallback(async () => {
     if (!currentProposal || !pendingPrompt) return;
     
-    // Update message to show approved
     setMessages(prev => prev.map(msg => 
       msg.proposal && !msg.isPlanApproved 
         ? { ...msg, isPlanApproved: true }
@@ -252,20 +191,17 @@ export const LunaAIModal = ({
     
     setConversationPhase(4);
     setIsLoading(true);
-    setShowQuickPrompts(false);
     
     try {
-      // Add approval confirmation message
       const approvalMsg: Message = {
         id: `approve-${Date.now()}`,
         role: 'user',
-        content: 'Aprovado! Pode gerar o fluxo.',
+        content: '✅ Aprovado!',
         timestamp: new Date(),
         phase: 3
       };
       setMessages(prev => [...prev, approvalMsg]);
       
-      // Actually generate the flow via edge function
       const { data, error } = await supabase.functions.invoke('flow-ai-builder', {
         body: { 
           prompt: pendingPrompt, 
@@ -275,28 +211,26 @@ export const LunaAIModal = ({
         }
       });
 
-      if (error) throw new Error(error.message || 'Erro ao gerar fluxo');
+      if (error) throw new Error(error.message);
       if (data.error) throw new Error(data.error);
 
       if (data.flow?.nodes) {
-        // Close modal and start building on canvas
         await buildFlowOnCanvas(data.flow.nodes, data.flow.edges || []);
       } else {
-        throw new Error('Resposta inválida da IA');
+        throw new Error('Resposta inválida');
       }
 
     } catch (error) {
-      console.error('Erro ao gerar fluxo:', error);
-      toast.error(error instanceof Error ? error.message : 'Erro ao gerar fluxo');
+      console.error('Erro:', error);
+      toast.error(error instanceof Error ? error.message : 'Erro ao gerar');
       
-      const errorMessage: Message = {
+      setMessages(prev => [...prev, {
         id: `error-${Date.now()}`,
         role: 'assistant',
-        content: '❌ Ocorreu um erro ao construir o fluxo. Por favor, tente novamente.',
+        content: '❌ Erro ao construir. Tente novamente.',
         timestamp: new Date(),
         isError: true
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      }]);
     } finally {
       setIsLoading(false);
       setCurrentProposal(null);
@@ -305,23 +239,21 @@ export const LunaAIModal = ({
     }
   }, [currentProposal, pendingPrompt, buildFlowOnCanvas]);
 
-  // Reject proposal and ask for modifications
+  // Reject proposal
   const rejectProposal = useCallback(() => {
     setCurrentProposal(null);
     setConversationPhase(1);
     
-    const rejectMessage: Message = {
+    setMessages(prev => [...prev, {
       id: `reject-${Date.now()}`,
       role: 'assistant',
-      content: 'Entendi! 💡 Vamos ajustar.\n\nMe diga:\n- O que você gostaria de **modificar** na proposta?\n- Existe algo que **não ficou claro**?\n- Quer **adicionar** ou **remover** alguma etapa?\n\n*Estou aqui para alinhar antes de executar.*',
+      content: '💡 Sem problemas! Me conta o que gostaria de ajustar?',
       timestamp: new Date(),
       phase: 1
-    };
-    setMessages(prev => [...prev, rejectMessage]);
-    setShowQuickPrompts(false);
+    }]);
   }, []);
 
-  // Main send message function with deliberative behavior
+  // Main send message function
   const sendMessage = async (prompt?: string) => {
     const messageContent = prompt || input.trim();
     if (!messageContent || isLoading) return;
@@ -336,10 +268,8 @@ export const LunaAIModal = ({
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
-    setShowQuickPrompts(false);
 
     try {
-      // Call AI with deliberative prompt
       const { data, error } = await supabase.functions.invoke('flow-ai-builder', {
         body: { 
           prompt: messageContent, 
@@ -348,17 +278,14 @@ export const LunaAIModal = ({
         }
       });
 
-      if (error) throw new Error(error.message || 'Erro ao processar');
+      if (error) throw new Error(error.message);
       if (data.error) throw new Error(data.error);
 
-      // Handle response based on phase
       const responsePhase = data.phase || 1;
       
       if (responsePhase === 4 && data.flow?.nodes) {
-        // Direct flow generation (only if user explicitly approved)
         await buildFlowOnCanvas(data.flow.nodes, data.flow.edges || []);
       } else {
-        // Conversational or Proposal phase
         const proposal: FlowProposal | undefined = data.proposal ? {
           objective: data.proposal.objective || '',
           approach: data.proposal.approach || '',
@@ -367,7 +294,7 @@ export const LunaAIModal = ({
           infraConsiderations: data.proposal.infraConsiderations,
           securityConsiderations: data.proposal.securityConsiderations,
           estimatedNodes: data.proposal.estimatedNodes || 5,
-          estimatedTime: data.proposal.estimatedTime || '~30 segundos'
+          estimatedTime: data.proposal.estimatedTime || '~30s'
         } : undefined;
 
         if (proposal && proposal.objective) {
@@ -376,13 +303,10 @@ export const LunaAIModal = ({
           setConversationPhase(2);
         }
 
-        // Use message directly from Luna - she's conversational!
-        const finalMessage = data.message || 'Oi! Como posso te ajudar? 😊';
-
         const aiMessage: Message = {
           id: `ai-${Date.now()}`,
           role: 'assistant',
-          content: finalMessage,
+          content: data.message || 'Como posso ajudar?',
           analysis: data.analysis,
           proposal,
           timestamp: new Date(),
@@ -393,17 +317,15 @@ export const LunaAIModal = ({
       }
 
     } catch (error) {
-      console.error('Erro ao processar:', error);
+      console.error('Erro:', error);
       
-      const errorMessage: Message = {
+      setMessages(prev => [...prev, {
         id: `error-${Date.now()}`,
         role: 'assistant',
-        content: error instanceof Error ? error.message : 'Ocorreu um erro ao processar sua solicitação.',
+        content: error instanceof Error ? error.message : 'Erro ao processar.',
         timestamp: new Date(),
         isError: true
-      };
-
-      setMessages(prev => [...prev, errorMessage]);
+      }]);
       toast.error('Erro ao processar');
     } finally {
       setIsLoading(false);
@@ -417,199 +339,255 @@ export const LunaAIModal = ({
     }
   };
 
+  const clearChat = () => {
+    setMessages([]);
+    setCurrentProposal(null);
+    setPendingPrompt('');
+    setConversationPhase(1);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl h-[80vh] flex flex-col p-0 gap-0 overflow-hidden bg-gradient-to-b from-background to-background/95">
-        {/* Header - Genesis Theme */}
-        <DialogHeader className="p-4 border-b border-border bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10">
-          <div className="flex items-center gap-3">
-            <motion.div 
-              className="relative"
-              animate={isLoading ? { scale: [1, 1.1, 1] } : {}}
-              transition={{ duration: 1, repeat: Infinity }}
-            >
-              <div className="w-12 h-12 rounded-full bg-transparent flex items-center justify-center overflow-hidden ring-2 ring-primary/30">
-                <img src={lunaAvatar} alt="Luna" className="w-full h-full object-cover rounded-full" style={{ mixBlendMode: 'normal' }} />
-              </div>
-              <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-background" />
-            </motion.div>
-            <div>
-              <DialogTitle className="flex items-center gap-2 text-lg">
-                Luna IA
-                <Badge className="bg-gradient-to-r from-primary to-primary/60 text-primary-foreground border-0 text-[10px]">
-                  GENESIS
-                </Badge>
-              </DialogTitle>
-              <p className="text-xs text-muted-foreground">
-                {isLoading 
-                  ? '💭 Pensando...' 
-                  : currentProposal 
-                    ? '📋 Proposta pronta — Aguardando aprovação' 
-                    : '✨ Sua parceira de automação'
-                }
-              </p>
+      <DialogContent className={cn(
+        "flex flex-col p-0 gap-0 overflow-hidden border-0 bg-background shadow-2xl",
+        isExpanded ? "max-w-4xl h-[90vh]" : "max-w-xl h-[70vh]"
+      )}>
+        {/* Header */}
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-primary/5 via-transparent to-primary/5">
+          <div className="relative">
+            <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-primary/20">
+              <img src={lunaAvatar} alt="Luna" className="w-full h-full object-cover" />
             </div>
+            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
           </div>
-        </DialogHeader>
+          
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold">Luna</h3>
+              <Badge variant="secondary" className="text-[10px] h-4 px-1.5 bg-primary/10 text-primary">
+                IA
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground truncate">
+              {isLoading ? 'Pensando...' : currentProposal ? 'Aguardando aprovação' : 'Pronta para criar'}
+            </p>
+          </div>
 
-        {/* Messages */}
-        <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-          <div className="space-y-4">
-            <AnimatePresence mode="popLayout">
-              {messages.map((message) => (
+          <div className="flex items-center gap-1">
+            {messages.length > 0 && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={clearChat}>
+                      <RotateCcw className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Nova conversa</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsExpanded(!isExpanded)}>
+              {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            </Button>
+            
+            <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive" onClick={() => onOpenChange(false)}>
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Messages Area */}
+        <ScrollArea className="flex-1" ref={scrollRef}>
+          <div className="p-4 space-y-4 min-h-full">
+            {messages.length === 0 ? (
+              // Empty state - Luna waiting
+              <div className="flex flex-col items-center justify-center h-full py-8">
                 <motion.div
-                  key={message.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className={cn(
-                    "flex gap-3",
-                    message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
-                  )}
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="text-center"
                 >
-                  {/* Avatar */}
-                  <div className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
-                    message.role === 'user' 
-                      ? 'bg-primary' 
-                      : 'bg-gradient-to-r from-primary to-primary/60 overflow-hidden'
-                  )}>
-                    {message.role === 'user' ? (
-                      <User className="h-4 w-4 text-primary-foreground" />
-                    ) : (
-                      <img src={lunaAvatar} alt="Luna" className="w-full h-full object-cover" />
-                    )}
+                  <div className="w-20 h-20 mx-auto rounded-full overflow-hidden ring-4 ring-primary/10 mb-4">
+                    <img src={lunaAvatar} alt="Luna" className="w-full h-full object-cover" />
                   </div>
+                  <h3 className="text-lg font-semibold mb-1">Oi! Sou a Luna 👋</h3>
+                  <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                    Me conta o que você quer automatizar e eu construo o fluxo pra você.
+                  </p>
+                </motion.div>
 
-                  {/* Content */}
-                  <div className={cn(
-                    "flex-1 max-w-[450px]",
-                    message.role === 'user' ? 'text-right' : 'text-left'
-                  )}>
+                {/* Quick suggestions */}
+                <div className="mt-6 w-full max-w-md">
+                  <p className="text-xs text-muted-foreground text-center mb-3">Sugestões rápidas</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {SUGGESTIONS.map((suggestion, i) => (
+                      <motion.button
+                        key={i}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        onClick={() => setInput(suggestion.text)}
+                        className="flex items-center gap-2 p-2.5 rounded-lg border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-all text-left group"
+                      >
+                        <span className="text-lg">{suggestion.icon}</span>
+                        <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
+                          {suggestion.text}
+                        </span>
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              // Messages list
+              <AnimatePresence mode="popLayout">
+                {messages.map((message) => (
+                  <motion.div
+                    key={message.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className={cn(
+                      "flex gap-3",
+                      message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+                    )}
+                  >
+                    {/* Avatar */}
                     <div className={cn(
-                      "inline-block p-3 rounded-2xl text-sm",
-                      message.role === 'user'
-                        ? 'bg-primary text-primary-foreground rounded-tr-sm'
-                        : message.isError 
-                          ? 'bg-destructive/10 text-destructive border border-destructive/20 rounded-tl-sm'
-                          : 'bg-muted rounded-tl-sm'
+                      "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
+                      message.role === 'user' ? 'bg-primary' : 'overflow-hidden'
                     )}>
-                      {message.isError && (
-                        <div className="flex items-center gap-2 mb-2">
-                          <AlertCircle className="h-4 w-4" />
-                          <span className="font-medium">Erro</span>
-                        </div>
+                      {message.role === 'user' ? (
+                        <User className="h-4 w-4 text-primary-foreground" />
+                      ) : (
+                        <img src={lunaAvatar} alt="Luna" className="w-full h-full object-cover" />
                       )}
-                      <div className="whitespace-pre-wrap break-words">
-                        {message.content.split('**').map((part, i) => 
-                          i % 2 === 1 ? <strong key={i}>{part}</strong> : part
-                        )}
-                      </div>
                     </div>
 
-                    {/* Proposal Preview & Approval */}
-                    {message.proposal && !message.isPlanApproved && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="mt-3 p-4 bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl border border-primary/20"
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <GitBranch className="h-4 w-4 text-primary" />
-                            <span className="text-sm font-medium">Proposta de Arquitetura</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <Target className="h-3 w-3" />
-                            <span>~{message.proposal.estimatedNodes} nós</span>
-                            <Clock className="h-3 w-3 ml-2" />
-                            <span>{message.proposal.estimatedTime}</span>
-                          </div>
-                        </div>
-                        
-                        {/* Steps preview */}
-                        <div className="space-y-2 mb-4">
-                          {message.proposal.steps.map((step, i) => (
-                            <motion.div
-                              key={i}
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: i * 0.1 }}
-                              className="flex items-start gap-2 p-2 bg-background/50 rounded-lg"
-                            >
-                              <span className="text-base">{step.icon}</span>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-medium">{step.title}</p>
-                                <p className="text-[10px] text-muted-foreground truncate">{step.description}</p>
-                              </div>
-                              <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0 mt-1" />
-                            </motion.div>
-                          ))}
-                        </div>
-
-                        <div className="border-t border-border/50 pt-3">
-                          <p className="text-xs text-muted-foreground mb-3 text-center">
-                            Deseja que eu gere esse fluxo agora ou prefere ajustar algo antes?
+                    {/* Content */}
+                    <div className={cn(
+                      "flex-1 max-w-[85%]",
+                      message.role === 'user' ? 'text-right' : 'text-left'
+                    )}>
+                      <div className={cn(
+                        "inline-block p-3 rounded-2xl text-sm",
+                        message.role === 'user' 
+                          ? 'bg-primary text-primary-foreground rounded-br-md' 
+                          : 'bg-muted rounded-bl-md',
+                        message.isError && 'bg-destructive/10 text-destructive'
+                      )}>
+                        {message.content.split('\n').map((line, i) => (
+                          <p key={i} className={i > 0 ? 'mt-1.5' : ''}>
+                            {line.replace(/\*\*(.*?)\*\*/g, '$1')}
                           </p>
-                          <div className="flex gap-2">
-                            <Button
-                              onClick={approveProposal}
-                              className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:opacity-90 gap-2"
-                              size="sm"
-                              disabled={isLoading}
-                            >
-                              <ThumbsUp className="h-4 w-4" />
-                              Sim, gerar!
-                            </Button>
-                            <Button
-                              onClick={rejectProposal}
-                              variant="outline"
-                              className="flex-1 gap-2"
-                              size="sm"
-                              disabled={isLoading}
-                            >
-                              <ThumbsDown className="h-4 w-4" />
-                              Ajustar
-                            </Button>
+                        ))}
+                      </div>
+
+                      {/* Proposal Card */}
+                      {message.proposal && (
+                        <motion.div 
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-3 p-4 rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20"
+                        >
+                          <div className="flex items-center gap-2 mb-3">
+                            <Sparkles className="w-4 h-4 text-primary" />
+                            <span className="text-sm font-medium">Proposta</span>
+                            <Badge variant="secondary" className="text-[10px] ml-auto">
+                              ~{message.proposal.estimatedNodes} nós
+                            </Badge>
                           </div>
-                        </div>
-                      </motion.div>
-                    )}
 
-                    {/* Approved badge */}
-                    {message.proposal && message.isPlanApproved && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="mt-3 p-3 bg-green-500/10 rounded-xl border border-green-500/30 flex items-center gap-2"
-                      >
-                        <CheckCircle2 className="h-4 w-4 text-green-500" />
-                        <span className="text-sm text-green-500 font-medium">Proposta aprovada! Construindo...</span>
-                      </motion.div>
-                    )}
+                          <p className="text-xs text-muted-foreground mb-3">
+                            {message.proposal.objective}
+                          </p>
 
-                    <span className="text-[10px] text-muted-foreground mt-1 block">
-                      {message.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+                          {message.proposal.steps.length > 0 && (
+                            <div className="space-y-1.5 mb-3">
+                              {message.proposal.steps.slice(0, 4).map((step, i) => (
+                                <div key={i} className="flex items-center gap-2 text-xs">
+                                  <span>{step.icon}</span>
+                                  <span className="text-muted-foreground">{step.title}</span>
+                                </div>
+                              ))}
+                              {message.proposal.steps.length > 4 && (
+                                <p className="text-[10px] text-muted-foreground">
+                                  +{message.proposal.steps.length - 4} mais etapas
+                                </p>
+                              )}
+                            </div>
+                          )}
 
-            {/* Loading */}
+                          {!message.isPlanApproved && (
+                            <div className="flex gap-2 pt-2 border-t border-primary/10">
+                              <Button 
+                                size="sm" 
+                                className="flex-1 h-8"
+                                onClick={approveProposal}
+                                disabled={isLoading}
+                              >
+                                <ThumbsUp className="w-3.5 h-3.5 mr-1.5" />
+                                Aprovar
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="flex-1 h-8"
+                                onClick={rejectProposal}
+                                disabled={isLoading}
+                              >
+                                <ThumbsDown className="w-3.5 h-3.5 mr-1.5" />
+                                Ajustar
+                              </Button>
+                            </div>
+                          )}
+
+                          {message.isPlanApproved && (
+                            <div className="flex items-center gap-2 pt-2 border-t border-primary/10">
+                              <CheckCircle2 className="w-4 h-4 text-green-500" />
+                              <span className="text-xs text-green-600">Aprovado</span>
+                            </div>
+                          )}
+                        </motion.div>
+                      )}
+
+                      <p className="text-[10px] text-muted-foreground mt-1 px-1">
+                        {message.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            )}
+
+            {/* Loading indicator */}
             {isLoading && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className="flex gap-3"
               >
-                      <div className="w-8 h-8 rounded-full bg-transparent flex items-center justify-center overflow-hidden ring-1 ring-primary/20">
-                        <img src={lunaAvatar} alt="Luna" className="w-full h-full object-cover rounded-full" />
-                      </div>
-                <div className="bg-muted rounded-2xl rounded-tl-sm p-3">
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                    <span className="text-sm text-muted-foreground">Analisando...</span>
+                <div className="w-8 h-8 rounded-full overflow-hidden shrink-0">
+                  <img src={lunaAvatar} alt="Luna" className="w-full h-full object-cover" />
+                </div>
+                <div className="bg-muted rounded-2xl rounded-bl-md p-3">
+                  <div className="flex gap-1">
+                    <motion.div 
+                      animate={{ opacity: [0.4, 1, 0.4] }} 
+                      transition={{ duration: 1, repeat: Infinity, delay: 0 }}
+                      className="w-2 h-2 rounded-full bg-primary"
+                    />
+                    <motion.div 
+                      animate={{ opacity: [0.4, 1, 0.4] }} 
+                      transition={{ duration: 1, repeat: Infinity, delay: 0.2 }}
+                      className="w-2 h-2 rounded-full bg-primary"
+                    />
+                    <motion.div 
+                      animate={{ opacity: [0.4, 1, 0.4] }} 
+                      transition={{ duration: 1, repeat: Infinity, delay: 0.4 }}
+                      className="w-2 h-2 rounded-full bg-primary"
+                    />
                   </div>
                 </div>
               </motion.div>
@@ -617,62 +595,40 @@ export const LunaAIModal = ({
           </div>
         </ScrollArea>
 
-        {/* Quick Prompts - Expanded Grid */}
-        <AnimatePresence>
-          {showQuickPrompts && !isLoading && messages.length <= 1 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="p-4 border-t border-border max-h-[200px] overflow-auto"
-            >
-              <p className="text-xs text-muted-foreground mb-3">💡 Escolha um tipo de fluxo ou descreva livremente:</p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {QUICK_PROMPTS.map((qp, i) => (
-                  <Button
-                    key={i}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => sendMessage(qp.prompt)}
-                    className="justify-start gap-2 h-auto py-2.5 px-3 text-xs hover:bg-primary/10 hover:border-primary/50 transition-all flex-col items-start"
-                  >
-                    <qp.icon className="h-4 w-4 text-primary" />
-                    <span className="font-medium">{qp.label}</span>
-                  </Button>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Input */}
-        <div className="p-4 border-t border-border bg-background/50">
-          <div className="flex gap-2">
+        {/* Input Area */}
+        <div className="p-4 border-t bg-muted/30">
+          <div className="relative">
             <Textarea
               ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={currentProposal ? 'Aguardando aprovação da proposta...' : 'Descreva o fluxo que você precisa...'}
-              className="min-h-[44px] max-h-32 resize-none text-sm"
-              disabled={isLoading || !!currentProposal}
+              placeholder="Descreva o que você quer automatizar..."
+              className="min-h-[56px] max-h-32 resize-none pr-12 rounded-xl bg-background border-border/50"
+              disabled={isLoading}
             />
             <Button
+              size="icon"
+              className={cn(
+                "absolute right-2 bottom-2 h-8 w-8 rounded-lg transition-all",
+                input.trim() ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+              )}
+              disabled={!input.trim() || isLoading}
               onClick={() => sendMessage()}
-              disabled={!input.trim() || isLoading || !!currentProposal}
-              className="px-3 bg-gradient-to-r from-primary to-primary/80 hover:opacity-90"
             >
               {isLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <Send className="h-5 w-5" />
+                <Send className="w-4 h-4" />
               )}
             </Button>
           </div>
+          
+          <p className="text-[10px] text-muted-foreground text-center mt-2">
+            Luna usa IA para criar fluxos. Revise antes de publicar.
+          </p>
         </div>
       </DialogContent>
     </Dialog>
   );
 };
-
-export default LunaAIModal;
