@@ -59,7 +59,31 @@ export type NodeType =
   | 'execution_quota_guard'
   | 'infra_rate_limit'
   | 'if_infra_health'
-  | 'secure_context_guard';
+  | 'secure_context_guard'
+  // AI Native Nodes (plug-and-play)
+  | 'ai_prompt_execute'
+  | 'ai_chat_context'
+  | 'ai_decision'
+  | 'ai_embedding';
+
+// Flow Lifecycle Status
+export type FlowLifecycleStatus = 'draft' | 'validated' | 'active' | 'paused' | 'error';
+
+// Global Flow Configuration
+export interface FlowGlobalConfig {
+  timeout_seconds: number;
+  default_retries: number;
+  max_concurrency: number;
+  error_mode: 'pause' | 'skip' | 'abort';
+  persist_context: boolean;
+  distributed_execution: boolean;
+  ai_config: {
+    provider: 'lovable' | 'openai' | 'custom';
+    fallback_provider: string | null;
+    max_tokens: number;
+    temperature: number;
+  };
+}
 
 export interface FlowNodeData {
   label: string;
@@ -126,7 +150,7 @@ export interface NodeTemplate {
   label: string;
   icon: string;
   description: string;
-  category: 'triggers' | 'conditions' | 'actions' | 'flow' | 'advanced' | 'nativos' | 'stability' | 'automation' | 'infrastructure' | 'security';
+  category: 'triggers' | 'conditions' | 'actions' | 'flow' | 'advanced' | 'nativos' | 'stability' | 'automation' | 'infrastructure' | 'security' | 'ai';
   defaultConfig: Record<string, any>;
   requiresInstance?: boolean; // If true, requires connected WhatsApp instance
 }
@@ -492,7 +516,8 @@ export const NODE_CATEGORIES = {
   stability: { label: 'Estabilidade', color: '#f97316' }, // Orange for stability
   automation: { label: 'Automação', color: '#8b5cf6' }, // Purple for generic automation
   infrastructure: { label: 'Infraestrutura', color: '#06b6d4' }, // Cyan for infrastructure
-  security: { label: 'Segurança', color: '#dc2626' } // Red for security
+  security: { label: 'Segurança', color: '#dc2626' }, // Red for security
+  ai: { label: 'Inteligência Artificial', color: '#eab308' } // Yellow/Gold for AI
 };
 
 export const NODE_COLORS: Record<NodeType, string> = {
@@ -554,18 +579,23 @@ export const NODE_COLORS: Record<NodeType, string> = {
   infra_rate_limit: '#b91c1c',
   if_infra_health: '#991b1b',
   secure_context_guard: '#7f1d1d',
+  // AI Native nodes (Yellow/Gold gradient)
+  ai_prompt_execute: '#eab308',
+  ai_chat_context: '#ca8a04',
+  ai_decision: '#a16207',
+  ai_embedding: '#854d0e',
 };
 
 // Connection validation rules
 export const CONNECTION_RULES = {
   // Nodes that can only have one outgoing connection
-  singleOutput: ['trigger', 'message', 'button', 'list', 'ai', 'webhook', 'delay', 'variable', 'integration', 'http_request', 'webhook_in', 'ecommerce', 'crm_sheets', 'wa_start', 'wa_send_text', 'wa_send_buttons', 'wa_send_list', 'wa_wait_response', 'wa_receive', 'queue_message', 'session_guard', 'retry_policy', 'smart_delay', 'rate_limit', 'enqueue_flow_step', 'http_request_advanced', 'webhook_trigger', 'cron_trigger', 'set_variable', 'subflow_call', 'event_emitter', 'data_transform', 'proxy_assign', 'proxy_rotate', 'worker_assign', 'worker_release', 'dispatch_execution', 'identity_rotate', 'execution_quota_guard', 'infra_rate_limit', 'secure_context_guard'],
+  singleOutput: ['trigger', 'message', 'button', 'list', 'ai', 'webhook', 'delay', 'variable', 'integration', 'http_request', 'webhook_in', 'ecommerce', 'crm_sheets', 'wa_start', 'wa_send_text', 'wa_send_buttons', 'wa_send_list', 'wa_wait_response', 'wa_receive', 'queue_message', 'session_guard', 'retry_policy', 'smart_delay', 'rate_limit', 'enqueue_flow_step', 'http_request_advanced', 'webhook_trigger', 'cron_trigger', 'set_variable', 'subflow_call', 'event_emitter', 'data_transform', 'proxy_assign', 'proxy_rotate', 'worker_assign', 'worker_release', 'dispatch_execution', 'identity_rotate', 'execution_quota_guard', 'infra_rate_limit', 'secure_context_guard', 'ai_prompt_execute', 'ai_chat_context', 'ai_embedding'],
   // Nodes that can have multiple outgoing connections (yes/no)
-  conditionalOutput: ['condition', 'split', 'if_instance_state', 'timeout_handler', 'if_expression', 'switch_case', 'if_infra_health'],
+  conditionalOutput: ['condition', 'split', 'if_instance_state', 'timeout_handler', 'if_expression', 'switch_case', 'if_infra_health', 'ai_decision'],
   // Nodes that cannot have outgoing connections
   noOutput: ['end'],
   // Nodes that can be connected from any node
-  universalInput: ['message', 'button', 'list', 'ai', 'webhook', 'delay', 'condition', 'split', 'variable', 'integration', 'end', 'goto', 'note', 'http_request', 'ecommerce', 'crm_sheets', 'wa_send_text', 'wa_send_buttons', 'wa_send_list', 'wa_wait_response', 'wa_receive', 'queue_message', 'session_guard', 'timeout_handler', 'if_instance_state', 'retry_policy', 'smart_delay', 'rate_limit', 'enqueue_flow_step', 'http_request_advanced', 'webhook_trigger', 'cron_trigger', 'set_variable', 'if_expression', 'loop_for_each', 'switch_case', 'subflow_call', 'event_emitter', 'data_transform', 'proxy_assign', 'proxy_rotate', 'worker_assign', 'worker_release', 'dispatch_execution', 'identity_rotate', 'execution_quota_guard', 'infra_rate_limit', 'if_infra_health', 'secure_context_guard'],
+  universalInput: ['message', 'button', 'list', 'ai', 'webhook', 'delay', 'condition', 'split', 'variable', 'integration', 'end', 'goto', 'note', 'http_request', 'ecommerce', 'crm_sheets', 'wa_send_text', 'wa_send_buttons', 'wa_send_list', 'wa_wait_response', 'wa_receive', 'queue_message', 'session_guard', 'timeout_handler', 'if_instance_state', 'retry_policy', 'smart_delay', 'rate_limit', 'enqueue_flow_step', 'http_request_advanced', 'webhook_trigger', 'cron_trigger', 'set_variable', 'if_expression', 'loop_for_each', 'switch_case', 'subflow_call', 'event_emitter', 'data_transform', 'proxy_assign', 'proxy_rotate', 'worker_assign', 'worker_release', 'dispatch_execution', 'identity_rotate', 'execution_quota_guard', 'infra_rate_limit', 'if_infra_health', 'secure_context_guard', 'ai_prompt_execute', 'ai_chat_context', 'ai_decision', 'ai_embedding'],
 };
 
 // Generic Automation Engine Templates (Channel-Agnostic)
@@ -848,5 +878,74 @@ export const SECURITY_TEMPLATES: NodeTemplate[] = [
   }
 ];
 
-// Get all templates including native, stability, automation, infrastructure and security
-export const getAllTemplates = () => [...NATIVE_WA_TEMPLATES, ...NODE_TEMPLATES, ...STABILITY_TEMPLATES, ...AUTOMATION_TEMPLATES, ...INFRASTRUCTURE_TEMPLATES, ...SECURITY_TEMPLATES];
+// AI Native Templates (Plug-and-Play)
+export const AI_TEMPLATES: NodeTemplate[] = [
+  {
+    type: 'ai_prompt_execute',
+    label: 'Executar Prompt IA',
+    icon: 'Brain',
+    description: 'Executa prompt em modelo configurável (Lovable AI / OpenAI)',
+    category: 'ai',
+    defaultConfig: {
+      prompt: '',
+      system_prompt: 'Você é um assistente útil.',
+      model: 'google/gemini-2.5-flash',
+      max_tokens: 1024,
+      temperature: 0.7,
+      save_response_to: 'ai_response',
+      use_context: true,
+      fallback_response: 'Desculpe, não consegui processar sua solicitação.'
+    }
+  },
+  {
+    type: 'ai_chat_context',
+    label: 'Contexto de Chat IA',
+    icon: 'MessageSquare',
+    description: 'Mantém contexto conversacional persistente',
+    category: 'ai',
+    defaultConfig: {
+      context_scope: 'execution',
+      max_history: 10,
+      context_key: 'chat_history',
+      include_system: true,
+      auto_summarize: false,
+      summarize_after: 20
+    }
+  },
+  {
+    type: 'ai_decision',
+    label: 'Decisão IA',
+    icon: 'GitBranch',
+    description: 'Retorna decisão estruturada baseada em prompt',
+    category: 'ai',
+    defaultConfig: {
+      decision_prompt: 'Analise a mensagem e decida a melhor ação.',
+      options: [
+        { value: 'option_a', description: 'Primeira opção' },
+        { value: 'option_b', description: 'Segunda opção' }
+      ],
+      default_option: 'option_a',
+      confidence_threshold: 0.7,
+      save_decision_to: 'ai_decision',
+      save_reasoning_to: 'ai_reasoning'
+    }
+  },
+  {
+    type: 'ai_embedding',
+    label: 'Embedding IA',
+    icon: 'Zap',
+    description: 'Gera embeddings para busca semântica',
+    category: 'ai',
+    defaultConfig: {
+      text_source: '{{message}}',
+      model: 'text-embedding-ada-002',
+      save_embedding_to: 'embedding',
+      search_collection: '',
+      top_k: 5,
+      similarity_threshold: 0.8
+    }
+  }
+];
+
+// Get all templates including native, stability, automation, infrastructure, security, and AI
+export const getAllTemplates = () => [...NATIVE_WA_TEMPLATES, ...NODE_TEMPLATES, ...STABILITY_TEMPLATES, ...AUTOMATION_TEMPLATES, ...INFRASTRUCTURE_TEMPLATES, ...SECURITY_TEMPLATES, ...AI_TEMPLATES];

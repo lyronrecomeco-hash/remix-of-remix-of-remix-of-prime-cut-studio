@@ -1979,6 +1979,225 @@ export type Database = {
         }
         Relationships: []
       }
+      flow_ai_settings: {
+        Row: {
+          api_key_encrypted: string | null
+          created_at: string
+          fallback_model: string | null
+          fallback_provider: string | null
+          id: string
+          is_active: boolean | null
+          max_tokens: number | null
+          model: string | null
+          provider: string
+          rate_limit_per_minute: number | null
+          scope_id: string
+          scope_type: string
+          temperature: number | null
+          updated_at: string
+        }
+        Insert: {
+          api_key_encrypted?: string | null
+          created_at?: string
+          fallback_model?: string | null
+          fallback_provider?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_tokens?: number | null
+          model?: string | null
+          provider?: string
+          rate_limit_per_minute?: number | null
+          scope_id: string
+          scope_type?: string
+          temperature?: number | null
+          updated_at?: string
+        }
+        Update: {
+          api_key_encrypted?: string | null
+          created_at?: string
+          fallback_model?: string | null
+          fallback_provider?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_tokens?: number | null
+          model?: string | null
+          provider?: string
+          rate_limit_per_minute?: number | null
+          scope_id?: string
+          scope_type?: string
+          temperature?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      flow_execution_context: {
+        Row: {
+          context_key: string
+          context_value: Json | null
+          created_at: string
+          execution_id: string
+          expires_at: string | null
+          flow_id: string
+          id: string
+          scope: string | null
+          updated_at: string
+        }
+        Insert: {
+          context_key: string
+          context_value?: Json | null
+          created_at?: string
+          execution_id: string
+          expires_at?: string | null
+          flow_id: string
+          id?: string
+          scope?: string | null
+          updated_at?: string
+        }
+        Update: {
+          context_key?: string
+          context_value?: Json | null
+          created_at?: string
+          execution_id?: string
+          expires_at?: string | null
+          flow_id?: string
+          id?: string
+          scope?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flow_execution_context_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_automation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flow_execution_history: {
+        Row: {
+          completed_at: string | null
+          context_snapshot: Json | null
+          created_at: string
+          duration_ms: number | null
+          error_details: Json | null
+          execution_id: string
+          flow_id: string
+          id: string
+          node_timeline: Json | null
+          parent_execution_id: string | null
+          retry_count: number | null
+          started_at: string
+          status: string
+          trigger_data: Json | null
+          trigger_type: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          context_snapshot?: Json | null
+          created_at?: string
+          duration_ms?: number | null
+          error_details?: Json | null
+          execution_id?: string
+          flow_id: string
+          id?: string
+          node_timeline?: Json | null
+          parent_execution_id?: string | null
+          retry_count?: number | null
+          started_at?: string
+          status?: string
+          trigger_data?: Json | null
+          trigger_type?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          context_snapshot?: Json | null
+          created_at?: string
+          duration_ms?: number | null
+          error_details?: Json | null
+          execution_id?: string
+          flow_id?: string
+          id?: string
+          node_timeline?: Json | null
+          parent_execution_id?: string | null
+          retry_count?: number | null
+          started_at?: string
+          status?: string
+          trigger_data?: Json | null
+          trigger_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flow_execution_history_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_automation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flow_node_executions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          duration_ms: number | null
+          error_message: string | null
+          execution_id: string
+          flow_id: string
+          id: string
+          input_data: Json | null
+          node_id: string
+          node_label: string | null
+          node_type: string
+          output_data: Json | null
+          retry_attempt: number | null
+          started_at: string
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          execution_id: string
+          flow_id: string
+          id?: string
+          input_data?: Json | null
+          node_id: string
+          node_label?: string | null
+          node_type: string
+          output_data?: Json | null
+          retry_attempt?: number | null
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          execution_id?: string
+          flow_id?: string
+          id?: string
+          input_data?: Json | null
+          node_id?: string
+          node_label?: string | null
+          node_type?: string
+          output_data?: Json | null
+          retry_attempt?: number | null
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flow_node_executions_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_automation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fraud_protection: {
         Row: {
           attempt_type: string
@@ -4331,6 +4550,7 @@ export type Database = {
       whatsapp_automation_rules: {
         Row: {
           actions: Json
+          activated_at: string | null
           canvas_position: Json | null
           conditions: Json | null
           created_at: string
@@ -4338,20 +4558,26 @@ export type Database = {
           execution_count: number
           flow_data: Json | null
           flow_version: number | null
+          global_config: Json | null
           id: string
           instance_id: string
           is_active: boolean
           last_executed_at: string | null
+          lifecycle_status: string | null
           name: string
+          paused_at: string | null
           priority: number
           project_id: string | null
           trigger_config: Json
           trigger_type: string
           updated_at: string
           user_id: string
+          validated_at: string | null
+          validation_result: Json | null
         }
         Insert: {
           actions?: Json
+          activated_at?: string | null
           canvas_position?: Json | null
           conditions?: Json | null
           created_at?: string
@@ -4359,20 +4585,26 @@ export type Database = {
           execution_count?: number
           flow_data?: Json | null
           flow_version?: number | null
+          global_config?: Json | null
           id?: string
           instance_id: string
           is_active?: boolean
           last_executed_at?: string | null
+          lifecycle_status?: string | null
           name: string
+          paused_at?: string | null
           priority?: number
           project_id?: string | null
           trigger_config?: Json
           trigger_type: string
           updated_at?: string
           user_id: string
+          validated_at?: string | null
+          validation_result?: Json | null
         }
         Update: {
           actions?: Json
+          activated_at?: string | null
           canvas_position?: Json | null
           conditions?: Json | null
           created_at?: string
@@ -4380,17 +4612,22 @@ export type Database = {
           execution_count?: number
           flow_data?: Json | null
           flow_version?: number | null
+          global_config?: Json | null
           id?: string
           instance_id?: string
           is_active?: boolean
           last_executed_at?: string | null
+          lifecycle_status?: string | null
           name?: string
+          paused_at?: string | null
           priority?: number
           project_id?: string | null
           trigger_config?: Json
           trigger_type?: string
           updated_at?: string
           user_id?: string
+          validated_at?: string | null
+          validation_result?: Json | null
         }
         Relationships: [
           {
@@ -6537,6 +6774,14 @@ export type Database = {
         Returns: boolean
       }
       tenant_matches: { Args: { p_tenant: string }; Returns: boolean }
+      update_flow_lifecycle_status: {
+        Args: {
+          p_flow_id: string
+          p_new_status: string
+          p_validation_result?: Json
+        }
+        Returns: Json
+      }
       validate_token_owner: {
         Args: { token_user_id: string }
         Returns: boolean
@@ -6549,6 +6794,12 @@ export type Database = {
       crm_role: "admin" | "manager" | "collaborator"
       crm_task_status: "pending" | "in_progress" | "completed" | "cancelled"
       crm_task_type: "call" | "meeting" | "followup" | "internal"
+      flow_lifecycle_status:
+        | "draft"
+        | "validated"
+        | "active"
+        | "paused"
+        | "error"
       genesis_plan: "free" | "starter" | "professional" | "enterprise"
       genesis_role: "super_admin" | "admin" | "user"
       pix_type: "cpf" | "cnpj" | "email" | "phone" | "random"
@@ -6688,6 +6939,13 @@ export const Constants = {
       crm_role: ["admin", "manager", "collaborator"],
       crm_task_status: ["pending", "in_progress", "completed", "cancelled"],
       crm_task_type: ["call", "meeting", "followup", "internal"],
+      flow_lifecycle_status: [
+        "draft",
+        "validated",
+        "active",
+        "paused",
+        "error",
+      ],
       genesis_plan: ["free", "starter", "professional", "enterprise"],
       genesis_role: ["super_admin", "admin", "user"],
       pix_type: ["cpf", "cnpj", "email", "phone", "random"],
