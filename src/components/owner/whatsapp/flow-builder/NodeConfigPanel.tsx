@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, Trash2, Copy, Sparkles, Code, Eye, Wand2, Plus, Minus, AlertTriangle, Info, Zap, Tag, Globe, CornerDownRight, StickyNote, Link2, Shield, RefreshCw, Gauge, ListPlus } from 'lucide-react';
+import { X, Save, Trash2, Copy, Sparkles, Code, Eye, Wand2, Plus, Minus, AlertTriangle, Info, Zap, Tag, Globe, CornerDownRight, StickyNote, Link2, Shield, RefreshCw, Gauge, ListPlus, GitBranch, Calendar, Repeat, GitMerge, ExternalLink, Radio, Workflow } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -1562,6 +1562,509 @@ export const NodeConfigPanel = ({ node, onClose, onSave, onDelete, onDuplicate }
                 <Info className="w-4 h-4 text-primary mt-0.5" />
                 <p className="text-xs text-muted-foreground">O próximo nó será executado de forma assíncrona, liberando o fluxo atual imediatamente.</p>
               </div>
+            </div>
+          </div>
+        );
+
+      // =====================================================
+      // GENERIC AUTOMATION ENGINE NODES
+      // =====================================================
+
+      case 'http_request_advanced':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/10 to-indigo-500/10 border border-purple-500/20">
+              <div className="flex items-center gap-2">
+                <Globe className="w-5 h-5 text-purple-500" />
+                <div>
+                  <p className="text-sm font-medium">HTTP Request Avançado</p>
+                  <p className="text-[11px] text-muted-foreground">Integração com APIs externas</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Método</Label>
+                <Select value={formData.method || 'GET'} onValueChange={(v) => updateField('method', v)}>
+                  <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="GET">GET</SelectItem>
+                    <SelectItem value="POST">POST</SelectItem>
+                    <SelectItem value="PUT">PUT</SelectItem>
+                    <SelectItem value="PATCH">PATCH</SelectItem>
+                    <SelectItem value="DELETE">DELETE</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Timeout (seg)</Label>
+                <Input type="number" min="5" max="120" value={formData.timeout_seconds || 30} onChange={(e) => updateField('timeout_seconds', parseInt(e.target.value))} className="bg-muted/50" />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">URL</Label>
+              <Input value={formData.url || ''} onChange={(e) => updateField('url', e.target.value)} placeholder="https://api.exemplo.com/endpoint" className="bg-muted/50" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Headers (JSON)</Label>
+              <Textarea value={typeof formData.headers === 'string' ? formData.headers : JSON.stringify(formData.headers || {}, null, 2)} onChange={(e) => updateField('headers', e.target.value)} placeholder='{"Authorization": "Bearer token"}' className="bg-muted/50 resize-none font-mono text-xs" rows={3} />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Query Params (JSON)</Label>
+              <Textarea value={typeof formData.query_params === 'string' ? formData.query_params : JSON.stringify(formData.query_params || {}, null, 2)} onChange={(e) => updateField('query_params', e.target.value)} placeholder='{"page": 1, "limit": 10}' className="bg-muted/50 resize-none font-mono text-xs" rows={2} />
+            </div>
+            
+            {formData.method !== 'GET' && (
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Body (JSON)</Label>
+                <Textarea value={formData.body || ''} onChange={(e) => updateField('body', e.target.value)} placeholder='{"key": "value"}' className="bg-muted/50 resize-none font-mono text-xs" rows={4} />
+              </div>
+            )}
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Retries</Label>
+                <Input type="number" min="0" max="5" value={formData.retries || 3} onChange={(e) => updateField('retries', parseInt(e.target.value))} className="bg-muted/50" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Auth Type</Label>
+                <Select value={formData.auth_type || 'none'} onValueChange={(v) => updateField('auth_type', v)}>
+                  <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhuma</SelectItem>
+                    <SelectItem value="bearer">Bearer Token</SelectItem>
+                    <SelectItem value="basic">Basic Auth</SelectItem>
+                    <SelectItem value="api_key">API Key</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Salvar resposta em</Label>
+              <Input value={formData.save_response_to || ''} onChange={(e) => updateField('save_response_to', e.target.value)} placeholder="response" className="bg-muted/50" />
+            </div>
+          </div>
+        );
+
+      case 'webhook_trigger':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/10 to-violet-500/10 border border-purple-500/20">
+              <div className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-purple-500" />
+                <div>
+                  <p className="text-sm font-medium">Webhook Trigger</p>
+                  <p className="text-[11px] text-muted-foreground">Gatilho por chamada HTTP externa</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Método HTTP</Label>
+              <Select value={formData.method || 'POST'} onValueChange={(v) => updateField('method', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="POST">POST</SelectItem>
+                  <SelectItem value="GET">GET</SelectItem>
+                  <SelectItem value="PUT">PUT</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Path do Webhook</Label>
+              <Input value={formData.path || ''} onChange={(e) => updateField('path', e.target.value)} placeholder="/meu-webhook" className="bg-muted/50 font-mono" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Secret (opcional)</Label>
+              <Input value={formData.secret || ''} onChange={(e) => updateField('secret', e.target.value)} placeholder="secret_key_123" className="bg-muted/50 font-mono" type="password" />
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Validar Payload</Label>
+                <p className="text-[11px] text-muted-foreground">Verificar estrutura do JSON</p>
+              </div>
+              <Switch checked={formData.validate_payload ?? true} onCheckedChange={(v) => updateField('validate_payload', v)} />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Resposta Customizada (JSON)</Label>
+              <Textarea value={typeof formData.custom_response === 'string' ? formData.custom_response : JSON.stringify(formData.custom_response || { status: 200, body: { success: true } }, null, 2)} onChange={(e) => updateField('custom_response', e.target.value)} placeholder='{"status": 200, "body": {"success": true}}' className="bg-muted/50 resize-none font-mono text-xs" rows={3} />
+            </div>
+          </div>
+        );
+
+      case 'cron_trigger':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">📅</div>
+                <div>
+                  <p className="text-sm font-medium">Agendamento Cron</p>
+                  <p className="text-[11px] text-muted-foreground">Execução programada</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Expressão Cron</Label>
+              <Input value={formData.cron_expression || ''} onChange={(e) => updateField('cron_expression', e.target.value)} placeholder="0 9 * * *" className="bg-muted/50 font-mono" />
+              <p className="text-[11px] text-muted-foreground">Formato: minuto hora dia mês diasemana</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Timezone</Label>
+              <Select value={formData.timezone || 'America/Sao_Paulo'} onValueChange={(v) => updateField('timezone', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="America/Sao_Paulo">São Paulo (BRT)</SelectItem>
+                  <SelectItem value="America/New_York">New York (EST)</SelectItem>
+                  <SelectItem value="Europe/London">London (GMT)</SelectItem>
+                  <SelectItem value="UTC">UTC</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Início Janela</Label>
+                <Input type="time" value={formData.active_window?.start || '08:00'} onChange={(e) => updateField('active_window', { ...formData.active_window, start: e.target.value })} className="bg-muted/50" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Fim Janela</Label>
+                <Input type="time" value={formData.active_window?.end || '18:00'} onChange={(e) => updateField('active_window', { ...formData.active_window, end: e.target.value })} className="bg-muted/50" />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Ao Falhar</Label>
+              <Select value={formData.on_fail || 'retry'} onValueChange={(v) => updateField('on_fail', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="retry">🔄 Tentar novamente</SelectItem>
+                  <SelectItem value="skip">⏭️ Pular execução</SelectItem>
+                  <SelectItem value="alert">🔔 Alertar e parar</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+
+      case 'set_variable':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/10 to-cyan-500/10 border border-purple-500/20">
+              <div className="flex items-center gap-2">
+                <Tag className="w-5 h-5 text-purple-500" />
+                <div>
+                  <p className="text-sm font-medium">Definir Variável</p>
+                  <p className="text-[11px] text-muted-foreground">Manipula contexto do fluxo</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Nome da Variável</Label>
+              <Input value={formData.name || ''} onChange={(e) => updateField('name', e.target.value)} placeholder="minha_variavel" className="bg-muted/50 font-mono" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Valor</Label>
+              <Textarea value={formData.value || ''} onChange={(e) => updateField('value', e.target.value)} placeholder="Valor ou expressão..." className="bg-muted/50 resize-none" rows={3} />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Escopo</Label>
+                <Select value={formData.scope || 'flow'} onValueChange={(v) => updateField('scope', v)}>
+                  <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="flow">🔄 Fluxo atual</SelectItem>
+                    <SelectItem value="session">👤 Sessão</SelectItem>
+                    <SelectItem value="global">🌍 Global</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Tipo</Label>
+                <Select value={formData.type || 'string'} onValueChange={(v) => updateField('type', v)}>
+                  <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="string">Texto</SelectItem>
+                    <SelectItem value="number">Número</SelectItem>
+                    <SelectItem value="boolean">Booleano</SelectItem>
+                    <SelectItem value="json">JSON</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'if_expression':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border border-yellow-500/20">
+              <div className="flex items-center gap-2">
+                <GitBranch className="w-5 h-5 text-yellow-500" />
+                <div>
+                  <p className="text-sm font-medium">Condição Avançada</p>
+                  <p className="text-[11px] text-muted-foreground">Expressões lógicas complexas</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Expressão</Label>
+              <Textarea value={formData.expression || ''} onChange={(e) => updateField('expression', e.target.value)} placeholder="{{variavel}} == 'valor' && {{outra}} > 10" className="bg-muted/50 resize-none font-mono text-xs" rows={3} />
+              <p className="text-[11px] text-muted-foreground">Suporta: ==, !=, &gt;, &lt;, &gt;=, &lt;=, &&, ||, !</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Lógica entre Condições</Label>
+              <Select value={formData.logic || 'and'} onValueChange={(v) => updateField('logic', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="and">E (AND) - Todas devem ser verdadeiras</SelectItem>
+                  <SelectItem value="or">OU (OR) - Pelo menos uma verdadeira</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Fallback</Label>
+              <Select value={formData.fallback || 'no'} onValueChange={(v) => updateField('fallback', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="no">Seguir para "NÃO"</SelectItem>
+                  <SelectItem value="end">Encerrar fluxo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+
+      case 'loop_for_each':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/10 to-blue-500/10 border border-purple-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">🔁</div>
+                <div>
+                  <p className="text-sm font-medium">Loop For Each</p>
+                  <p className="text-[11px] text-muted-foreground">Itera sobre uma lista de itens</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Array de Origem</Label>
+              <Input value={formData.array_source || ''} onChange={(e) => updateField('array_source', e.target.value)} placeholder="{{lista_de_itens}}" className="bg-muted/50 font-mono" />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Variável do Item</Label>
+                <Input value={formData.item_variable || 'item'} onChange={(e) => updateField('item_variable', e.target.value)} placeholder="item" className="bg-muted/50 font-mono" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Variável do Índice</Label>
+                <Input value={formData.index_variable || 'index'} onChange={(e) => updateField('index_variable', e.target.value)} placeholder="index" className="bg-muted/50 font-mono" />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Limite de Iterações</Label>
+                <Input type="number" min="1" max="1000" value={formData.limit || 100} onChange={(e) => updateField('limit', parseInt(e.target.value))} className="bg-muted/50" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Delay Entre (seg)</Label>
+                <Input type="number" min="0" max="60" value={formData.delay_between || 0} onChange={(e) => updateField('delay_between', parseInt(e.target.value))} className="bg-muted/50" />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Ao Erro</Label>
+              <Select value={formData.on_error || 'continue'} onValueChange={(v) => updateField('on_error', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="continue">⏭️ Continuar próximo item</SelectItem>
+                  <SelectItem value="break">⏹️ Parar loop</SelectItem>
+                  <SelectItem value="retry">🔄 Tentar item novamente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+
+      case 'switch_case':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">🔀</div>
+                <div>
+                  <p className="text-sm font-medium">Switch/Case</p>
+                  <p className="text-[11px] text-muted-foreground">Roteamento múltiplo por valor</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Expressão Base</Label>
+              <Input value={formData.expression || ''} onChange={(e) => updateField('expression', e.target.value)} placeholder="{{status}}" className="bg-muted/50 font-mono" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Cases (valor|node_id por linha)</Label>
+              <Textarea value={formData.cases_raw || ''} onChange={(e) => updateField('cases_raw', e.target.value)} placeholder="ativo|node_ativo&#10;inativo|node_inativo&#10;pendente|node_pendente" className="bg-muted/50 resize-none font-mono text-xs" rows={4} />
+              <p className="text-[11px] text-muted-foreground">Um case por linha: valor|id_do_no_destino</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Caso Default</Label>
+              <Select value={formData.default_case || 'end'} onValueChange={(v) => updateField('default_case', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="end">⏹️ Encerrar fluxo</SelectItem>
+                  <SelectItem value="continue">➡️ Continuar próximo nó</SelectItem>
+                  <SelectItem value="goto">↪️ Ir para nó específico</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+
+      case 'subflow_call':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/10 to-rose-500/10 border border-purple-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">📤</div>
+                <div>
+                  <p className="text-sm font-medium">Chamar Subfluxo</p>
+                  <p className="text-[11px] text-muted-foreground">Executa outro fluxo como subrotina</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">ID do Fluxo</Label>
+              <Input value={formData.flow_id || ''} onChange={(e) => updateField('flow_id', e.target.value)} placeholder="uuid-do-fluxo-alvo" className="bg-muted/50 font-mono text-xs" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Parâmetros (JSON)</Label>
+              <Textarea value={typeof formData.parameters === 'string' ? formData.parameters : JSON.stringify(formData.parameters || {}, null, 2)} onChange={(e) => updateField('parameters', e.target.value)} placeholder='{"param1": "{{valor1}}", "param2": 123}' className="bg-muted/50 resize-none font-mono text-xs" rows={3} />
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Aguardar Conclusão</Label>
+                <p className="text-[11px] text-muted-foreground">Espera o subfluxo terminar</p>
+              </div>
+              <Switch checked={formData.wait_for_completion ?? true} onCheckedChange={(v) => updateField('wait_for_completion', v)} />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Timeout (seg)</Label>
+                <Input type="number" min="5" max="3600" value={formData.timeout_seconds || 60} onChange={(e) => updateField('timeout_seconds', parseInt(e.target.value))} className="bg-muted/50" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Salvar Retorno</Label>
+                <Input value={formData.return_variable || 'subflow_result'} onChange={(e) => updateField('return_variable', e.target.value)} placeholder="subflow_result" className="bg-muted/50 font-mono text-xs" />
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'event_emitter':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/10 to-amber-500/10 border border-purple-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">📡</div>
+                <div>
+                  <p className="text-sm font-medium">Emitir Evento</p>
+                  <p className="text-[11px] text-muted-foreground">Dispara evento interno para outros fluxos</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Nome do Evento</Label>
+              <Input value={formData.event_name || ''} onChange={(e) => updateField('event_name', e.target.value)} placeholder="pedido_criado" className="bg-muted/50 font-mono" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Payload (JSON)</Label>
+              <Textarea value={typeof formData.payload === 'string' ? formData.payload : JSON.stringify(formData.payload || {}, null, 2)} onChange={(e) => updateField('payload', e.target.value)} placeholder='{"order_id": "{{order_id}}", "customer": "{{nome}}"}' className="bg-muted/50 resize-none font-mono text-xs" rows={4} />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Escopo</Label>
+              <Select value={formData.scope || 'project'} onValueChange={(v) => updateField('scope', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="project">📁 Projeto atual</SelectItem>
+                  <SelectItem value="instance">📱 Instância</SelectItem>
+                  <SelectItem value="global">🌍 Global</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+
+      case 'data_transform':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/10 to-teal-500/10 border border-purple-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">⚙️</div>
+                <div>
+                  <p className="text-sm font-medium">Transformar Dados</p>
+                  <p className="text-[11px] text-muted-foreground">Map, Filter, Reduce, Merge</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Operação</Label>
+              <Select value={formData.operation || 'map'} onValueChange={(v) => updateField('operation', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="map">🔄 Map - Transformar cada item</SelectItem>
+                  <SelectItem value="filter">🔍 Filter - Filtrar itens</SelectItem>
+                  <SelectItem value="reduce">📊 Reduce - Agregar valores</SelectItem>
+                  <SelectItem value="merge">🔗 Merge - Combinar objetos</SelectItem>
+                  <SelectItem value="template">📝 Template - Aplicar modelo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Fonte de Dados</Label>
+              <Input value={formData.source || ''} onChange={(e) => updateField('source', e.target.value)} placeholder="{{dados}}" className="bg-muted/50 font-mono" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Expressão</Label>
+              <Textarea value={formData.expression || ''} onChange={(e) => updateField('expression', e.target.value)} placeholder={formData.operation === 'map' ? 'item.nome.toUpperCase()' : formData.operation === 'filter' ? 'item.valor > 100' : formData.operation === 'reduce' ? 'acc + item.valor' : '{"merged": ...}'} className="bg-muted/50 resize-none font-mono text-xs" rows={3} />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Variável de Saída</Label>
+              <Input value={formData.output_variable || 'transformed'} onChange={(e) => updateField('output_variable', e.target.value)} placeholder="transformed" className="bg-muted/50 font-mono" />
             </div>
           </div>
         );

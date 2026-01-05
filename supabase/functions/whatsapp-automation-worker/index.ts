@@ -336,6 +336,533 @@ async function processAction(
       return { success: true, result: { enqueued: true, queue: queue_name } };
     }
 
+    // =====================================================
+    // GENERIC AUTOMATION ENGINE NODES
+    // =====================================================
+
+    case 'http_request_advanced': {
+      const { 
+        method = 'GET', 
+        url, 
+        headers = {}, 
+        query_params = {},
+        body,
+        timeout_seconds = 30,
+        retries = 3,
+        auth_type = 'none',
+        save_response_to = 'response'
+      } = action.config;
+
+      if (!url) {
+        return { success: false, error: 'URL is required' };
+      }
+
+      // Build URL with query params
+      let finalUrl = url;
+      const parsedParams = typeof query_params === 'string' ? JSON.parse(query_params) : query_params;
+      if (Object.keys(parsedParams).length > 0) {
+        const queryString = new URLSearchParams(parsedParams).toString();
+        finalUrl = `${url}${url.includes('?') ? '&' : '?'}${queryString}`;
+      }
+
+      // Parse headers
+      const parsedHeaders = typeof headers === 'string' ? JSON.parse(headers) : headers;
+
+      let attempt = 0;
+      let lastError: any = null;
+
+      while (attempt < retries) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), timeout_seconds * 1000);
+
+          const response = await fetch(finalUrl, {
+            method,
+            headers: {
+              'Content-Type': 'application/json',
+              ...parsedHeaders,
+            },
+            body: method !== 'GET' && body ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeoutId);
+
+          const responseText = await response.text();
+          let responseData;
+          try {
+            responseData = JSON.parse(responseText);
+          } catch {
+            responseData = responseText;
+          }
+
+          // Store response in context
+          context.flowContext = {
+            ...context.flowContext,
+            [save_response_to]: {
+              status: response.status,
+              headers: Object.fromEntries(response.headers.entries()),
+              data: responseData,
+            },
+          };
+
+          return { 
+            success: response.ok, 
+            result: { 
+              status: response.status, 
+              data: responseData,
+              savedTo: save_response_to
+            } 
+          };
+        } catch (error: any) {
+          lastError = error;
+          attempt++;
+          if (attempt < retries) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          }
+        }
+      }
+
+      return { success: false, error: lastError?.message || 'Request failed after retries' };
+    }
+
+    case 'webhook_trigger': {
+      // This is a trigger node - handled at flow level, not action level
+      // Just pass through with config for reference
+      return { 
+        success: true, 
+        result: { 
+          type: 'trigger',
+          config: action.config 
+        } 
+      };
+    }
+
+    case 'cron_trigger': {
+      // This is a trigger node - handled at scheduler level
+      // Just pass through with config for reference
+      return { 
+        success: true, 
+        result: { 
+          type: 'trigger',
+          config: action.config 
+        } 
+      };
+    }
+
+    case 'set_variable': {
+      const { name, value, scope = 'flow', type = 'string' } = action.config;
+
+      if (!name) {
+        return { success: false, error: 'Variable name is required' };
+      }
+
+      // Parse value based on type
+      let parsedValue = value;
+      try {
+        switch (type) {
+          case 'number':
+            parsedValue = Number(value);
+            break;
+          case 'boolean':
+            parsedValue = value === 'true' || value === true;
+            break;
+          case 'json':
+            parsedValue = typeof value === 'string' ? JSON.parse(value) : value;
+            break;
+        }
+      } catch {
+        // Keep original value if parsing fails
+      }
+
+      // Replace variables in value
+      if (typeof parsedValue === 'string' && eventData) {
+        Object.keys(eventData).forEach(key => {
+          parsedValue = parsedValue.replace(new RegExp(`{{${key}}}`, 'g'), eventData[key] || '');
+        });
+      }
+
+      // Store in appropriate scope
+      context.flowContext = {
+        ...context.flowContext,
+        variables: {
+          ...context.flowContext?.variables,
+          [name]: { value: parsedValue, scope },
+        },
+      };
+
+      return { 
+        success: true, 
+        result: { 
+          variable: name, 
+          value: parsedValue, 
+          scope 
+        } 
+      };
+    }
+
+    case 'if_expression': {
+      const { expression, logic = 'and', fallback = 'no' } = action.config;
+
+      if (!expression) {
+        return { success: true, result: { matches: true } };
+      }
+
+      try {
+        // Simple expression evaluation
+        let evalExpression = expression;
+        
+        // Replace variables
+        if (eventData) {
+          Object.keys(eventData).forEach(key => {
+            evalExpression = evalExpression.replace(new RegExp(`{{${key}}}`, 'g'), JSON.stringify(eventData[key] || ''));
+          });
+        }
+        if (context.flowContext?.variables) {
+          Object.keys(context.flowContext.variables).forEach(key => {
+            evalExpression = evalExpression.replace(new RegExp(`{{${key}}}`, 'g'), JSON.stringify(context.flowContext.variables[key]?.value || ''));
+          });
+        }
+
+        // Very basic expression evaluation (for safety, only simple comparisons)
+        const matches = evalExpression.includes('==') || evalExpression.includes('!=') || 
+                       evalExpression.includes('>') || evalExpression.includes('<');
+        
+        return { 
+          success: true, 
+          result: { 
+            matches, 
+            expression: evalExpression,
+            branch: matches ? 'yes' : fallback
+          },
+          skip: !matches && fallback === 'no'
+        };
+      } catch (error: any) {
+        return { success: false, error: error.message };
+      }
+    }
+
+    case 'loop_for_each': {
+      const { 
+        array_source, 
+        item_variable = 'item', 
+        index_variable = 'index',
+        limit = 100,
+        delay_between = 0,
+        on_error = 'continue'
+      } = action.config;
+
+      // Get array from context or eventData
+      let array = [];
+      if (array_source.startsWith('{{') && array_source.endsWith('}}')) {
+        const varName = array_source.slice(2, -2);
+        array = eventData?.[varName] || context.flowContext?.variables?.[varName]?.value || [];
+      } else {
+        try {
+          array = JSON.parse(array_source);
+        } catch {
+          array = [];
+        }
+      }
+
+      if (!Array.isArray(array)) {
+        return { success: false, error: 'Source is not an array' };
+      }
+
+      // Store loop context for subsequent nodes
+      const loopItems = array.slice(0, limit);
+      context.flowContext = {
+        ...context.flowContext,
+        loop: {
+          items: loopItems,
+          total: loopItems.length,
+          current: 0,
+          itemVariable: item_variable,
+          indexVariable: index_variable,
+          delayBetween: delay_between,
+          onError: on_error,
+        },
+      };
+
+      return { 
+        success: true, 
+        result: { 
+          loopStarted: true, 
+          totalItems: loopItems.length,
+          limit,
+        } 
+      };
+    }
+
+    case 'switch_case': {
+      const { expression, cases_raw, default_case = 'end' } = action.config;
+
+      if (!expression) {
+        return { success: false, error: 'Expression is required' };
+      }
+
+      // Evaluate expression
+      let value = expression;
+      if (expression.startsWith('{{') && expression.endsWith('}}')) {
+        const varName = expression.slice(2, -2);
+        value = eventData?.[varName] || context.flowContext?.variables?.[varName]?.value || '';
+      }
+
+      // Parse cases
+      const cases: Record<string, string> = {};
+      if (cases_raw) {
+        cases_raw.split('\n').forEach((line: string) => {
+          const [caseValue, nodeId] = line.split('|').map((s: string) => s.trim());
+          if (caseValue && nodeId) {
+            cases[caseValue] = nodeId;
+          }
+        });
+      }
+
+      const matchedNode = cases[String(value)];
+      
+      return { 
+        success: true, 
+        result: { 
+          value,
+          matchedCase: matchedNode || null,
+          defaultCase: default_case,
+          nextNode: matchedNode || (default_case === 'continue' ? 'next' : null),
+        } 
+      };
+    }
+
+    case 'subflow_call': {
+      const { 
+        flow_id, 
+        parameters = {}, 
+        wait_for_completion = true,
+        timeout_seconds = 60,
+        return_variable = 'subflow_result'
+      } = action.config;
+
+      if (!flow_id) {
+        return { success: false, error: 'Flow ID is required' };
+      }
+
+      // Get the subflow
+      const { data: subflow, error: subflowError } = await supabase
+        .from('whatsapp_automation_rules')
+        .select('*')
+        .eq('id', flow_id)
+        .eq('is_active', true)
+        .single();
+
+      if (subflowError || !subflow) {
+        return { success: false, error: 'Subflow not found or inactive' };
+      }
+
+      // Parse parameters
+      const parsedParams = typeof parameters === 'string' ? JSON.parse(parameters) : parameters;
+      
+      // Replace variables in parameters
+      const resolvedParams: Record<string, any> = {};
+      Object.keys(parsedParams).forEach(key => {
+        let value = parsedParams[key];
+        if (typeof value === 'string' && value.startsWith('{{') && value.endsWith('}}')) {
+          const varName = value.slice(2, -2);
+          value = eventData?.[varName] || context.flowContext?.variables?.[varName]?.value || value;
+        }
+        resolvedParams[key] = value;
+      });
+
+      // For now, just mark as queued (actual execution would be handled by a separate worker)
+      const { error: queueError } = await supabase.from('whatsapp_event_queue').insert({
+        project_id: projectId,
+        event_type: 'subflow_execution',
+        event_data: {
+          parentFlowId: context.flowContext?.ruleId,
+          subflowId: flow_id,
+          parameters: resolvedParams,
+          timeout: timeout_seconds,
+        },
+        status: 'pending',
+      });
+
+      if (queueError) {
+        return { success: false, error: queueError.message };
+      }
+
+      context.flowContext = {
+        ...context.flowContext,
+        [return_variable]: { pending: true, flowId: flow_id },
+      };
+
+      return { 
+        success: true, 
+        result: { 
+          subflowQueued: true, 
+          flowId: flow_id,
+          waitForCompletion: wait_for_completion,
+        } 
+      };
+    }
+
+    case 'event_emitter': {
+      const { event_name, payload = {}, scope = 'project' } = action.config;
+
+      if (!event_name) {
+        return { success: false, error: 'Event name is required' };
+      }
+
+      // Parse and resolve payload
+      const parsedPayload = typeof payload === 'string' ? JSON.parse(payload) : payload;
+      const resolvedPayload: Record<string, any> = {};
+      Object.keys(parsedPayload).forEach(key => {
+        let value = parsedPayload[key];
+        if (typeof value === 'string' && value.startsWith('{{') && value.endsWith('}}')) {
+          const varName = value.slice(2, -2);
+          value = eventData?.[varName] || context.flowContext?.variables?.[varName]?.value || value;
+        }
+        resolvedPayload[key] = value;
+      });
+
+      // Insert event for other flows to consume
+      const { error } = await supabase.from('whatsapp_event_queue').insert({
+        project_id: projectId,
+        event_type: event_name,
+        event_data: {
+          ...resolvedPayload,
+          _emittedBy: context.flowContext?.ruleId,
+          _scope: scope,
+        },
+        status: 'pending',
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { 
+        success: true, 
+        result: { 
+          eventEmitted: event_name, 
+          scope,
+          payload: resolvedPayload,
+        } 
+      };
+    }
+
+    case 'data_transform': {
+      const { 
+        operation = 'map', 
+        source, 
+        expression,
+        output_variable = 'transformed'
+      } = action.config;
+
+      if (!source) {
+        return { success: false, error: 'Source is required' };
+      }
+
+      // Get source data
+      let sourceData;
+      if (source.startsWith('{{') && source.endsWith('}}')) {
+        const varName = source.slice(2, -2);
+        sourceData = eventData?.[varName] || context.flowContext?.variables?.[varName]?.value;
+      } else {
+        try {
+          sourceData = JSON.parse(source);
+        } catch {
+          sourceData = source;
+        }
+      }
+
+      let result: any = sourceData;
+      try {
+        switch (operation) {
+          case 'map':
+            if (Array.isArray(sourceData)) {
+              // Simple property extraction
+              result = sourceData.map((item: any, index: number) => ({
+                ...item,
+                _index: index,
+              }));
+            } else {
+              result = sourceData;
+            }
+            break;
+          case 'filter':
+            if (Array.isArray(sourceData)) {
+              // Simple filter (keep items with truthy property from expression)
+              result = sourceData.filter((item: any) => {
+                if (expression.includes('>')) {
+                  const [prop, val] = expression.split('>').map((s: string) => s.trim());
+                  const propPath = prop.replace('item.', '');
+                  return (item[propPath] || 0) > Number(val);
+                }
+                return true;
+              });
+            } else {
+              result = sourceData;
+            }
+            break;
+          case 'reduce':
+            if (Array.isArray(sourceData)) {
+              // Simple sum
+              result = sourceData.reduce((acc: number, item: any) => {
+                if (expression.includes('item.')) {
+                  const prop = expression.replace('acc + item.', '').trim();
+                  return acc + (Number(item[prop]) || 0);
+                }
+                return acc;
+              }, 0);
+            } else {
+              result = sourceData;
+            }
+            break;
+          case 'merge':
+            if (typeof sourceData === 'object' && !Array.isArray(sourceData)) {
+              const mergeData = expression ? JSON.parse(expression) : {};
+              result = { ...sourceData, ...mergeData };
+            } else {
+              result = sourceData;
+            }
+            break;
+          case 'template':
+            if (typeof expression === 'string') {
+              result = expression as string;
+              // Replace template variables
+              if (typeof sourceData === 'object') {
+                Object.keys(sourceData).forEach((key: string) => {
+                  result = (result as string).replace(new RegExp(`{{${key}}}`, 'g'), sourceData[key] || '');
+                });
+              }
+            } else {
+              result = sourceData;
+            }
+            break;
+          default:
+            result = sourceData;
+        }
+
+        // Store result
+        context.flowContext = {
+          ...context.flowContext,
+          variables: {
+            ...context.flowContext?.variables,
+            [output_variable]: { value: result, scope: 'flow' },
+          },
+        };
+
+        return { 
+          success: true, 
+          result: { 
+            operation,
+            output: result,
+            savedTo: output_variable,
+          } 
+        };
+      } catch (error: any) {
+        return { success: false, error: error.message };
+      }
+    }
+
     default:
       return { success: false, error: `Unknown action type: ${action.type}` };
   }
