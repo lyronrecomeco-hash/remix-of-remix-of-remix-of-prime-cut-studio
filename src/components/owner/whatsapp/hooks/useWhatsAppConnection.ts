@@ -23,7 +23,7 @@ export function useWhatsAppConnection() {
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const statusInFlightRef = useRef(false);
   const lastQrRefreshAtRef = useRef<number>(0);
-
+  const backendFlavorRef = useRef<'unknown' | 'v8' | 'legacy'>('unknown');
   const maxPollingAttempts = 150; // ~2.5 minutes total (1s * 150)
   const pollingInterval = 1000;
   const qrAutoRefreshMs = 45000;
@@ -105,20 +105,47 @@ export function useWhatsAppConnection() {
     backendUrl: string,
     token: string
   ): Promise<{ connected: boolean; phoneNumber?: string }> => {
+    const parseConnected = (result: any): { connected: boolean; phoneNumber?: string } => {
+      const isConnected =
+        result?.connected === true ||
+        result?.status === 'connected' ||
+        result?.state === 'open' ||
+        result?.connectionStatus === 'connected' ||
+        result?.whatsapp === 'connected';
+
+      return {
+        connected: Boolean(isConnected),
+        phoneNumber: result?.phone || result?.phoneNumber || result?.jid?.split?.('@')?.[0],
+      };
+    };
+
     // VPS HTTP em página HTTPS -> usa proxy (evita Mixed Content/CORS)
     if (shouldUseProxy(backendUrl)) {
       try {
+        // If already detected legacy, use legacy endpoint
+        if (backendFlavorRef.current === 'legacy') {
+          const legacyRes = await proxyRequest('/status', 'GET');
+          if (!legacyRes.ok) return { connected: false };
+          return parseConnected(legacyRes.data || {});
+        }
+
         const res = await proxyRequest(`/api/instance/${instanceId}/status`, 'GET');
+
+        // Legacy backend: multi-instance endpoint doesn't exist
+        if (
+          res.status === 404 &&
+          typeof res.data === 'string' &&
+          res.data.includes('Cannot GET /api/instance/')
+        ) {
+          backendFlavorRef.current = 'legacy';
+          const legacyRes = await proxyRequest('/status', 'GET');
+          if (!legacyRes.ok) return { connected: false };
+          return parseConnected(legacyRes.data || {});
+        }
+
         if (!res.ok) return { connected: false };
-
-        const result = res.data || {};
-        const isConnected =
-          result.connected === true || result.status === 'connected' || result.state === 'open';
-
-        return {
-          connected: isConnected,
-          phoneNumber: result.phone || result.phoneNumber || result.jid?.split('@')[0],
-        };
+        backendFlavorRef.current = 'v8';
+        return parseConnected(res.data || {});
       } catch {
         return { connected: false };
       }
@@ -128,6 +155,21 @@ export function useWhatsAppConnection() {
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     try {
+      // Legacy mode
+      if (backendFlavorRef.current === 'legacy') {
+        const response = await fetch(`${backendUrl}/status`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          signal: controller.signal,
+        });
+
+        if (!response.ok) return { connected: false };
+        const result = await response.json().catch(() => ({} as any));
+        return parseConnected(result);
+      }
+
       const response = await fetch(`${backendUrl}/api/instance/${instanceId}/status`, {
         method: 'GET',
         headers: {
@@ -137,21 +179,27 @@ export function useWhatsAppConnection() {
       });
 
       if (!response.ok) {
+        // Detect legacy by probing /status
+        if (response.status === 404) {
+          const legacyProbe = await fetch(`${backendUrl}/status`, {
+            method: 'GET',
+            headers: { Authorization: `Bearer ${token}` },
+            signal: controller.signal,
+          });
+
+          if (legacyProbe.ok) {
+            backendFlavorRef.current = 'legacy';
+            const legacyJson = await legacyProbe.json().catch(() => ({} as any));
+            return parseConnected(legacyJson);
+          }
+        }
         return { connected: false };
       }
 
-      const result = await response.json();
-
-      // Handle different response formats
-      const isConnected =
-        result.connected === true || result.status === 'connected' || result.state === 'open';
-
-      return {
-        connected: isConnected,
-        phoneNumber: result.phone || result.phoneNumber || result.jid?.split('@')[0],
-      };
+      const result = await response.json().catch(() => ({} as any));
+      backendFlavorRef.current = 'v8';
+      return parseConnected(result);
     } catch (error: unknown) {
-      // Abort due to timeout is expected sometimes; don't spam logs.
       if (error instanceof Error && error.name === 'AbortError') {
         return { connected: false };
       }
@@ -168,13 +216,30 @@ export function useWhatsAppConnection() {
     token: string,
     instanceName?: string
   ): Promise<{ exists: boolean; created: boolean }> => {
+    if (backendFlavorRef.current === 'legacy') {
+      return { exists: true, created: false };
+    }
+
     const name = instanceName || `instance-${instanceId.slice(0, 8)}`;
 
     // HTTPS page calling HTTP VPS must go through proxy
     if (shouldUseProxy(backendUrl)) {
       const statusRes = await proxyRequest(`/api/instance/${instanceId}/status`, 'GET');
 
-      if (statusRes.ok) return { exists: true, created: false };
+      if (statusRes.ok) {
+        backendFlavorRef.current = 'v8';
+        return { exists: true, created: false };
+      }
+
+      // Legacy backend: multi-instance endpoint doesn't exist
+      if (
+        statusRes.status === 404 &&
+        typeof statusRes.data === 'string' &&
+        statusRes.data.includes('Cannot GET /api/instance/')
+      ) {
+        backendFlavorRef.current = 'legacy';
+        return { exists: true, created: false };
+      }
 
       const statusMsg = String(statusRes.data?.error || statusRes.data?.message || '').toLowerCase();
       const notFound =
@@ -184,18 +249,31 @@ export function useWhatsAppConnection() {
         statusMsg.includes('not found');
 
       // If it's some other error, the endpoint exists; treat as "exists".
-      if (!notFound) return { exists: true, created: false };
+      if (!notFound) {
+        backendFlavorRef.current = 'v8';
+        return { exists: true, created: false };
+      }
 
       const createRes = await proxyRequest('/api/instances', 'POST', { instanceId, name });
 
-      if (createRes.ok || createRes.data?.success) return { exists: true, created: true };
+      if (createRes.ok || createRes.data?.success) {
+        backendFlavorRef.current = 'v8';
+        return { exists: true, created: true };
+      }
 
-      if (createRes.status === 404) {
-        throw new Error('Backend desatualizado: baixe o script novamente e reinicie o serviço.');
+      // If /api/instances doesn't exist, it's a legacy backend (single-instance)
+      if (
+        createRes.status === 404 &&
+        typeof createRes.data === 'string' &&
+        createRes.data.includes('Cannot POST /api/instances')
+      ) {
+        backendFlavorRef.current = 'legacy';
+        return { exists: true, created: false };
       }
 
       const createMsg = String(createRes.data?.error || createRes.data?.message || '');
       if (createMsg.toLowerCase().includes('já existe') || createMsg.toLowerCase().includes('ja existe')) {
+        backendFlavorRef.current = 'v8';
         return { exists: true, created: false };
       }
 
@@ -217,17 +295,33 @@ export function useWhatsAppConnection() {
           signal: controller.signal,
         });
       } catch (err: unknown) {
-        // Timeouts happen under load; don't block the whole connect flow.
         if (err instanceof Error && err.name === 'AbortError') {
           return { exists: true, created: false };
         }
         throw err;
       }
 
-      if (statusResponse.ok) return { exists: true, created: false };
+      if (statusResponse.ok) {
+        backendFlavorRef.current = 'v8';
+        return { exists: true, created: false };
+      }
+
+      if (statusResponse.status === 404) {
+        // Probe legacy backend
+        const legacyProbe = await fetch(`${backendUrl}/status`, {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        });
+
+        if (legacyProbe.ok) {
+          backendFlavorRef.current = 'legacy';
+          return { exists: true, created: false };
+        }
+      }
 
       if (statusResponse.status !== 404) {
-        // Endpoint exists; instance may still be initializing
+        backendFlavorRef.current = 'v8';
         return { exists: true, created: false };
       }
 
@@ -241,12 +335,23 @@ export function useWhatsAppConnection() {
         signal: controller.signal,
       });
 
-      if (createResponse.ok) return { exists: true, created: true };
+      if (createResponse.ok) {
+        backendFlavorRef.current = 'v8';
+        return { exists: true, created: true };
+      }
 
       if (createResponse.status === 404) {
-        throw new Error(
-          'Backend local desatualizado: baixe o script novamente na aba Backend e reinicie o serviço.'
-        );
+        // Probably legacy
+        const legacyProbe = await fetch(`${backendUrl}/status`, {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        });
+
+        if (legacyProbe.ok) {
+          backendFlavorRef.current = 'legacy';
+          return { exists: true, created: false };
+        }
       }
 
       const rawText = await createResponse.text();
@@ -259,6 +364,7 @@ export function useWhatsAppConnection() {
 
       const createMsg = String(data?.error || data?.message || rawText || '');
       if (createMsg.toLowerCase().includes('já existe') || createMsg.toLowerCase().includes('ja existe')) {
+        backendFlavorRef.current = 'v8';
         return { exists: true, created: false };
       }
 
@@ -295,18 +401,26 @@ export function useWhatsAppConnection() {
 
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+    const getPaths = () => {
+      const isLegacy = backendFlavorRef.current === 'legacy';
+      return {
+        connectPath: isLegacy ? '/connect' : `/api/instance/${instanceId}/connect`,
+        qrPath: isLegacy ? '/qrcode' : `/api/instance/${instanceId}/qrcode`,
+      };
+    };
+
     const startConnect = async () => {
-      const path = `/api/instance/${instanceId}/connect`;
+      const { connectPath } = getPaths();
+
       if (useProxy) {
-        // best-effort (connect just needs to be started)
-        await proxyRequest(path, 'POST', {});
+        await proxyRequest(connectPath, 'POST', {});
         return;
       }
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
       try {
-        await fetch(`${backendUrl}${path}`, {
+        await fetch(`${backendUrl}${connectPath}`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -321,16 +435,16 @@ export function useWhatsAppConnection() {
     };
 
     const getQr = async (): Promise<{ ok: boolean; status: number; data: any }> => {
-      const path = `/api/instance/${instanceId}/qrcode`;
+      const { qrPath } = getPaths();
 
       if (useProxy) {
-        return await proxyRequest(path, 'GET');
+        return await proxyRequest(qrPath, 'GET');
       }
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
       try {
-        const response = await fetch(`${backendUrl}${path}`, {
+        const response = await fetch(`${backendUrl}${qrPath}`, {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -378,8 +492,13 @@ export function useWhatsAppConnection() {
             return await normalizeQrToDataUrl(rawQr);
           }
         } else {
+          // If legacy backend, a 404 here means it doesn't expose /qrcode
+          if (res.status === 404 && backendFlavorRef.current === 'legacy') {
+            throw new Error('Endpoint /qrcode não encontrado no backend.');
+          }
+
           // 404 here is almost always "instance not created yet" in V8; create + reconnect once.
-          if (res.status === 404 && attempt === 0) {
+          if (res.status === 404 && attempt === 0 && backendFlavorRef.current !== 'legacy') {
             await ensureInstanceExists(instanceId, backendUrl, token);
             try {
               await startConnect();
@@ -391,6 +510,22 @@ export function useWhatsAppConnection() {
           }
 
           if (res.status === 404) {
+            // Try to auto-detect legacy backend and retry once
+            backendFlavorRef.current = 'legacy';
+            try {
+              await startConnect();
+              await sleep(900);
+              const legacyTry = await getQr();
+              if (legacyTry.ok) {
+                const rawQr = legacyTry.data?.qrcode || legacyTry.data?.qr || legacyTry.data?.base64;
+                if (typeof rawQr === 'string' && rawQr.length > 0) {
+                  return await normalizeQrToDataUrl(rawQr);
+                }
+              }
+            } catch {
+              // ignore
+            }
+
             throw new Error('Backend desatualizado: baixe o script novamente e reinicie o serviço.');
           }
 
@@ -673,14 +808,17 @@ export function useWhatsAppConnection() {
     token: string
   ) => {
     try {
+      const isLegacy = backendFlavorRef.current === 'legacy';
+      const path = isLegacy ? '/disconnect' : `/api/instance/${instanceId}/disconnect`;
+
       if (shouldUseProxy(backendUrl)) {
-        const res = await proxyRequest(`/api/instance/${instanceId}/disconnect`, 'POST', {});
+        const res = await proxyRequest(path, 'POST', {});
         if (!res.ok) throw new Error(`HTTP ${res.status || 'erro'}`);
       } else {
-        await fetch(`${backendUrl}/api/instance/${instanceId}/disconnect`, {
+        await fetch(`${backendUrl}${path}`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         });
