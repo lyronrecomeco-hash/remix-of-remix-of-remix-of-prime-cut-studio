@@ -30,16 +30,62 @@ const CONFIG = {
   MASTER_TOKEN: process.env.MASTER_TOKEN || '${token}',
   SUPABASE_URL: process.env.SUPABASE_URL || 'https://wvnszzrvrrueuycrpgyc.supabase.co',
   SUPABASE_KEY: process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind2bnN6enJ2cnJ1ZXV5Y3JwZ3ljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4MTE4MjYsImV4cCI6MjA4MjM4NzgyNn0.mHs-vau3qsSRLqZ9AmWMsFB5ZLMmd1s003MxdLhBPw0',
-  HEARTBEAT_INTERVAL: 20000,
   LOG_LEVEL: process.env.LOG_LEVEL || 'operational',
-  RATE_LIMIT_WINDOW: 60000,
-  RATE_LIMIT_MAX: 100,
   DATA_DIR: process.env.DATA_DIR || path.join(__dirname, 'genesis_data'),
+  
   // FASE 9: Pool de VPS
   NODE_ID: process.env.NODE_ID || null,
   NODE_TOKEN: process.env.NODE_TOKEN || null,
   NODE_REGION: process.env.NODE_REGION || 'br-south',
   NODE_MAX_INSTANCES: parseInt(process.env.NODE_MAX_INSTANCES || '50'),
+  
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // HARDENING: CONFIGURAÇÕES DE ESTABILIDADE E ANTI-BAN
+  // ═══════════════════════════════════════════════════════════════════════════════
+  
+  // Heartbeat inteligente com variação humanizada (não robótico)
+  HEARTBEAT_BASE_INTERVAL: 25000,      // Base: 25s
+  HEARTBEAT_JITTER_MAX: 8000,          // Jitter: até +8s (total 25-33s)
+  HEARTBEAT_DEGRADED_MULTIPLIER: 1.5,  // Em degradação, heartbeat mais lento
+  
+  // Anti-loop de reconexão
+  RECONNECT_BASE_DELAY: 8000,          // Delay base: 8s
+  RECONNECT_MAX_DELAY: 300000,         // Max: 5 minutos
+  RECONNECT_MAX_ATTEMPTS: 5,           // Máximo tentativas antes de cooldown
+  RECONNECT_COOLDOWN_TIME: 600000,     // Cooldown: 10 minutos após falhas consecutivas
+  RECONNECT_BACKOFF_FACTOR: 2,         // Fator de backoff exponencial
+  RECONNECT_JITTER_FACTOR: 0.3,        // 30% de jitter no backoff
+  
+  // Rate limiting inteligente
+  RATE_LIMIT_WINDOW: 60000,            // Janela de 1 minuto
+  RATE_LIMIT_MAX: 60,                  // Máximo 60 req/min (reduzido de 100)
+  RATE_LIMIT_BURST: 10,                // Burst máximo simultâneo
+  RATE_LIMIT_RECOVERY: 5000,           // Tempo para recuperar 1 slot
+  
+  // Limites de mensagens por instância (anti-ban)
+  MSG_LIMIT_PER_MINUTE: 20,            // Max 20 msgs/min por instância
+  MSG_LIMIT_PER_HOUR: 200,             // Max 200 msgs/hora por instância
+  MSG_LIMIT_PER_DAY: 1000,             // Max 1000 msgs/dia por instância
+  MSG_COOLDOWN_AFTER_BURST: 30000,     // Cooldown 30s após burst
+  MSG_MIN_INTERVAL: 1500,              // Mínimo 1.5s entre mensagens
+  
+  // Detecção de degradação e proteção de sessão
+  DEGRADATION_THRESHOLD_FAILURES: 3,   // 3 falhas = degradação detectada
+  DEGRADATION_SLOW_MODE_FACTOR: 3,     // Modo lento: 3x mais devagar
+  DEGRADATION_RECOVERY_TIME: 120000,   // 2 minutos para tentar normalizar
+  SESSION_HEALTH_CHECK_INTERVAL: 60000, // Verificar saúde da sessão a cada 1min
+  
+  // Estabilização pós-conexão
+  STABILIZATION_DELAY: 5000,           // 5s para marcar como ready (aumentado de 3s)
+  SOCKET_WARMUP_DELAY: 2000,           // 2s warmup antes de operações
+  QR_CYCLE_NORMAL: true,               // Aceitar QR como ciclo normal
+  
+  // Desconexões controladas
+  IDLE_DISCONNECT_THRESHOLD: 3600000,  // 1 hora sem atividade = idle prolongado
+  SILENT_PAUSE_ENABLED: true,          // Pausas silenciosas habilitadas
+  SILENT_PAUSE_DURATION: 30000,        // 30s de pausa silenciosa
+  
+  // Node heartbeat
   NODE_HEARTBEAT_INTERVAL: 30000,
 };
 
@@ -108,11 +154,105 @@ class InstanceManager {
       qrCode: null,
       readyToSend: false,
       createdAt: new Date().toISOString(),
+      // === HARDENING: Estado de proteção por instância ===
+      reconnectAttempts: 0,
+      lastReconnectAt: 0,
+      inCooldown: false,
+      cooldownUntil: 0,
+      degraded: false,
+      degradationDetectedAt: 0,
+      consecutiveFailures: 0,
+      lastMessageAt: 0,
+      messagesThisMinute: 0,
+      messagesThisHour: 0,
+      messagesToday: 0,
+      messageRateLimitUntil: 0,
+      lastActivityAt: Date.now(),
+      silentPauseUntil: 0,
+      sessionHealthy: true,
+      lastHealthCheck: Date.now(),
     });
 
     this.saveInstances();
     log('success', \`Instância criada: \${name || instanceId}\`);
     return { success: true };
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // HARDENING: CÁLCULO DE BACKOFF COM JITTER
+  // ════════════════════════════════════════════════════════════════════════════
+  calculateBackoffDelay(attempts) {
+    const base = CONFIG.RECONNECT_BASE_DELAY;
+    const factor = CONFIG.RECONNECT_BACKOFF_FACTOR;
+    const max = CONFIG.RECONNECT_MAX_DELAY;
+    const jitter = CONFIG.RECONNECT_JITTER_FACTOR;
+    
+    // Exponential backoff: base * (factor ^ attempts)
+    let delay = base * Math.pow(factor, Math.min(attempts, 8));
+    delay = Math.min(delay, max);
+    
+    // Add jitter: ±30% randomization
+    const jitterRange = delay * jitter;
+    delay += (Math.random() * 2 - 1) * jitterRange;
+    
+    return Math.floor(Math.max(delay, base));
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // HARDENING: VERIFICAÇÃO DE COOLDOWN
+  // ════════════════════════════════════════════════════════════════════════════
+  isInCooldown(instanceId) {
+    const instance = this.instances.get(instanceId);
+    if (!instance) return false;
+    
+    if (instance.inCooldown && Date.now() < instance.cooldownUntil) {
+      const remaining = Math.ceil((instance.cooldownUntil - Date.now()) / 1000);
+      log('warn', \`[\${instance.name}] Em cooldown por mais \${remaining}s - evitando reconexão\`);
+      return true;
+    }
+    
+    // Cooldown expirou, resetar
+    if (instance.inCooldown) {
+      instance.inCooldown = false;
+      instance.cooldownUntil = 0;
+      instance.reconnectAttempts = 0;
+      log('info', \`[\${instance.name}] Cooldown expirado - pronto para reconectar\`);
+    }
+    
+    return false;
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // HARDENING: DETECTAR DEGRADAÇÃO DE SESSÃO
+  // ════════════════════════════════════════════════════════════════════════════
+  checkSessionDegradation(instanceId) {
+    const instance = this.instances.get(instanceId);
+    if (!instance) return false;
+    
+    const failures = instance.consecutiveFailures || 0;
+    const threshold = CONFIG.DEGRADATION_THRESHOLD_FAILURES;
+    
+    if (failures >= threshold && !instance.degraded) {
+      instance.degraded = true;
+      instance.degradationDetectedAt = Date.now();
+      log('warn', \`[\${instance.name}] ⚠️ Degradação detectada após \${failures} falhas - entrando em modo lento\`);
+      
+      // Notificar backend sobre degradação
+      this.sendHeartbeat(instanceId, 'degraded');
+      return true;
+    }
+    
+    // Tentar sair do modo degradado após tempo de recuperação
+    if (instance.degraded) {
+      const elapsed = Date.now() - instance.degradationDetectedAt;
+      if (elapsed > CONFIG.DEGRADATION_RECOVERY_TIME) {
+        instance.degraded = false;
+        instance.consecutiveFailures = 0;
+        log('info', \`[\${instance.name}] ✓ Saindo do modo degradado - tentando normalizar\`);
+      }
+    }
+    
+    return instance.degraded;
   }
 
   async connectInstance(instanceId) {
@@ -125,10 +265,21 @@ class InstanceManager {
       return { success: true, message: 'Já conectado' };
     }
 
+    // HARDENING: Verificar cooldown antes de tentar conectar
+    if (this.isInCooldown(instanceId)) {
+      const remaining = Math.ceil((instance.cooldownUntil - Date.now()) / 1000);
+      return { 
+        success: false, 
+        error: \`Instância em cooldown. Tente novamente em \${remaining}s\`,
+        cooldownRemaining: remaining
+      };
+    }
+
     try {
       const authDir = path.join(CONFIG.DATA_DIR, 'auth_' + instanceId);
       const { state, saveCreds } = await useMultiFileAuthState(authDir);
 
+      // HARDENING: Socket com configurações otimizadas para estabilidade
       const sock = makeWASocket({
         auth: state,
         printQRInTerminal: false,
@@ -136,13 +287,15 @@ class InstanceManager {
         browser: ['Genesis v8', 'Chrome', '120.0.0'],
         connectTimeoutMs: 60000,
         defaultQueryTimeoutMs: 60000,
-        keepAliveIntervalMs: 15000,
+        keepAliveIntervalMs: 25000 + Math.floor(Math.random() * 5000), // Jitter no keepAlive
         retryRequestDelayMs: 500,
-        markOnlineOnConnect: true,
+        markOnlineOnConnect: false, // Evitar marcação automática para parecer mais natural
+        syncFullHistory: false,     // Não sincronizar histórico completo (menos suspeito)
       });
 
       instance.sock = sock;
       instance.status = 'connecting';
+      instance.lastActivityAt = Date.now();
 
       sock.ev.on('creds.update', saveCreds);
 
@@ -152,6 +305,7 @@ class InstanceManager {
         if (qr) {
           instance.qrCode = qr;
           instance.status = 'waiting_qr';
+          instance.reconnectAttempts = 0; // Reset em novo QR (ciclo normal)
           log('info', \`[\\x1b[33m\${instance.name}\\x1b[0m] QR Code disponível\`);
           this.sendHeartbeat(instanceId, 'waiting_qr');
         }
@@ -163,19 +317,45 @@ class InstanceManager {
           instance.status = 'disconnected';
           instance.readyToSend = false;
           instance.qrCode = null;
+          instance.consecutiveFailures++;
           
-          log('warn', \`[\\x1b[33m\${instance.name}\\x1b[0m] Desconectado - Código: \${code}\`);
+          // HARDENING: Track de desconexões
+          this.trackDisconnection(instanceId);
+          
+          log('warn', \`[\\x1b[33m\${instance.name}\\x1b[0m] Desconectado - Código: \${code} | Falhas: \${instance.consecutiveFailures}\`);
           this.sendHeartbeat(instanceId, 'disconnected');
 
           if (shouldReconnect) {
-            log('info', \`[\\x1b[33m\${instance.name}\\x1b[0m] Reconectando em 5s...\`);
-            setTimeout(() => this.connectInstance(instanceId), 5000);
+            instance.reconnectAttempts++;
+            
+            // HARDENING: Verificar se deve entrar em cooldown
+            if (instance.reconnectAttempts >= CONFIG.RECONNECT_MAX_ATTEMPTS) {
+              instance.inCooldown = true;
+              instance.cooldownUntil = Date.now() + CONFIG.RECONNECT_COOLDOWN_TIME;
+              log('warn', \`[\\x1b[33m\${instance.name}\\x1b[0m] ⏸️ Entrando em cooldown de \${CONFIG.RECONNECT_COOLDOWN_TIME / 1000}s após \${instance.reconnectAttempts} tentativas\`);
+              this.sendHeartbeat(instanceId, 'cooldown');
+              return; // Não reconectar agora
+            }
+            
+            // HARDENING: Backoff exponencial com jitter
+            const delay = this.calculateBackoffDelay(instance.reconnectAttempts);
+            log('info', \`[\\x1b[33m\${instance.name}\\x1b[0m] Reconectando em \${(delay/1000).toFixed(1)}s... (tentativa \${instance.reconnectAttempts})\`);
+            
+            setTimeout(() => this.connectInstance(instanceId), delay);
+          } else {
+            // LoggedOut - sessão invalidada, aceitar QR como ciclo normal
+            log('warn', \`[\\x1b[33m\${instance.name}\\x1b[0m] Sessão invalidada - aguardando novo QR\`);
+            instance.reconnectAttempts = 0; // Reset para novo ciclo
           }
         }
 
         if (connection === 'open') {
           instance.status = 'connected';
           instance.qrCode = null;
+          instance.consecutiveFailures = 0; // Reset em sucesso
+          instance.reconnectAttempts = 0;
+          instance.degraded = false;
+          instance.inCooldown = false;
           
           const me = sock.user;
           if (me?.id) {
@@ -184,26 +364,46 @@ class InstanceManager {
 
           log('success', \`[\\x1b[32m\${instance.name}\\x1b[0m] Conectado! Número: \${instance.phoneNumber}\`);
           
-          // Espera 3 segundos para estabilizar antes de marcar como ready
-          setTimeout(() => {
-            instance.readyToSend = true;
-            log('success', \`[\\x1b[32m\${instance.name}\\x1b[0m] Pronto para enviar mensagens!\`);
-            this.sendHeartbeat(instanceId, 'connected');
-          }, 3000);
+          // HARDENING: Delay de estabilização aumentado e com warmup
+          setTimeout(async () => {
+            // Warmup: pequena operação para estabilizar socket
+            try {
+              await sock.fetchStatus(me.id);
+            } catch (e) {
+              // Ignorar erro de warmup
+            }
+            
+            // Agora marcar como ready
+            setTimeout(() => {
+              instance.readyToSend = true;
+              instance.sessionHealthy = true;
+              instance.lastHealthCheck = Date.now();
+              instance.lastActivityAt = Date.now();
+              log('success', \`[\\x1b[32m\${instance.name}\\x1b[0m] ✓ Pronto para enviar mensagens (estabilizado)\`);
+              this.sendHeartbeat(instanceId, 'connected');
+            }, CONFIG.SOCKET_WARMUP_DELAY);
+          }, CONFIG.STABILIZATION_DELAY);
 
           this.startHeartbeat(instanceId);
+          this.startSessionHealthCheck(instanceId);
           this.saveInstances();
+          
+          // Track reconexão bem-sucedida
+          this.trackReconnection(instanceId);
         }
       });
 
       sock.ev.on('messages.upsert', async ({ messages }) => {
         if (messages[0]?.key?.fromMe === false) {
+          instance.lastActivityAt = Date.now();
           log('msg', \`[\\x1b[35m\${instance.name}\\x1b[0m] Mensagem recebida de \${messages[0].key.remoteJid}\`);
+          this.trackMessageReceived(instanceId);
         }
       });
 
       return { success: true };
     } catch (err) {
+      instance.consecutiveFailures++;
       log('error', \`[\\x1b[31m\${instance.name}\\x1b[0m] Erro ao conectar: \${err.message}\`);
       return { success: false, error: err.message };
     }
@@ -245,19 +445,126 @@ class InstanceManager {
     return { success: true };
   }
 
+  // ════════════════════════════════════════════════════════════════════════════
+  // HARDENING: RATE LIMITING DE MENSAGENS POR INSTÂNCIA
+  // ════════════════════════════════════════════════════════════════════════════
+  checkMessageRateLimit(instanceId) {
+    const instance = this.instances.get(instanceId);
+    if (!instance) return { allowed: false, error: 'Instância não encontrada' };
+    
+    const now = Date.now();
+    
+    // Verificar se está em rate limit
+    if (instance.messageRateLimitUntil > now) {
+      const remaining = Math.ceil((instance.messageRateLimitUntil - now) / 1000);
+      return { 
+        allowed: false, 
+        error: \`Rate limit ativo. Aguarde \${remaining}s\`,
+        retryAfter: remaining
+      };
+    }
+    
+    // Resetar contadores de período
+    const oneMinuteAgo = now - 60000;
+    const oneHourAgo = now - 3600000;
+    const todayStart = new Date().setHours(0, 0, 0, 0);
+    
+    if (!instance.lastMessageMinuteReset || instance.lastMessageMinuteReset < oneMinuteAgo) {
+      instance.messagesThisMinute = 0;
+      instance.lastMessageMinuteReset = now;
+    }
+    
+    if (!instance.lastMessageHourReset || instance.lastMessageHourReset < oneHourAgo) {
+      instance.messagesThisHour = 0;
+      instance.lastMessageHourReset = now;
+    }
+    
+    if (!instance.lastMessageDayReset || instance.lastMessageDayReset < todayStart) {
+      instance.messagesToday = 0;
+      instance.lastMessageDayReset = todayStart;
+    }
+    
+    // Verificar limites
+    if (instance.messagesThisMinute >= CONFIG.MSG_LIMIT_PER_MINUTE) {
+      instance.messageRateLimitUntil = now + CONFIG.MSG_COOLDOWN_AFTER_BURST;
+      log('warn', \`[\${instance.name}] Rate limit atingido: \${instance.messagesThisMinute}/min\`);
+      return { allowed: false, error: 'Limite por minuto atingido', retryAfter: 30 };
+    }
+    
+    if (instance.messagesThisHour >= CONFIG.MSG_LIMIT_PER_HOUR) {
+      log('warn', \`[\${instance.name}] Rate limit por hora atingido: \${instance.messagesThisHour}/h\`);
+      return { allowed: false, error: 'Limite por hora atingido', retryAfter: 300 };
+    }
+    
+    if (instance.messagesToday >= CONFIG.MSG_LIMIT_PER_DAY) {
+      log('warn', \`[\${instance.name}] Rate limit diário atingido: \${instance.messagesToday}/dia\`);
+      return { allowed: false, error: 'Limite diário atingido', retryAfter: 3600 };
+    }
+    
+    // Verificar intervalo mínimo entre mensagens
+    if (instance.lastMessageAt && (now - instance.lastMessageAt) < CONFIG.MSG_MIN_INTERVAL) {
+      const wait = CONFIG.MSG_MIN_INTERVAL - (now - instance.lastMessageAt);
+      return { allowed: false, error: \`Aguarde \${wait}ms entre mensagens\`, retryAfter: Math.ceil(wait / 1000) };
+    }
+    
+    return { allowed: true };
+  }
+
   async sendMessage(instanceId, to, message) {
     const instance = this.instances.get(instanceId);
     if (!instance) return { success: false, error: 'Instância não encontrada' };
     if (!instance.sock || !instance.readyToSend) {
       return { success: false, error: 'Instância não está pronta para enviar' };
     }
+    
+    // HARDENING: Verificar pausa silenciosa
+    if (instance.silentPauseUntil > Date.now()) {
+      const remaining = Math.ceil((instance.silentPauseUntil - Date.now()) / 1000);
+      log('info', \`[\${instance.name}] Em pausa silenciosa por mais \${remaining}s\`);
+      return { success: false, error: 'Instância em pausa temporária', retryAfter: remaining };
+    }
+    
+    // HARDENING: Verificar rate limit de mensagens
+    const rateCheck = this.checkMessageRateLimit(instanceId);
+    if (!rateCheck.allowed) {
+      return { success: false, error: rateCheck.error, retryAfter: rateCheck.retryAfter };
+    }
+    
+    // HARDENING: Se em modo degradado, aplicar delay adicional
+    if (instance.degraded) {
+      const extraDelay = CONFIG.MSG_MIN_INTERVAL * CONFIG.DEGRADATION_SLOW_MODE_FACTOR;
+      log('info', \`[\${instance.name}] Modo degradado - delay extra de \${extraDelay}ms\`);
+      await new Promise(r => setTimeout(r, extraDelay));
+    }
 
     try {
       const jid = to.includes('@') ? to : to + '@s.whatsapp.net';
       await instance.sock.sendMessage(jid, { text: message });
-      log('success', \`[\\x1b[32m\${instance.name}\\x1b[0m] Mensagem enviada para \${to}\`);
+      
+      // Atualizar contadores
+      instance.lastMessageAt = Date.now();
+      instance.messagesThisMinute++;
+      instance.messagesThisHour++;
+      instance.messagesToday++;
+      instance.lastActivityAt = Date.now();
+      instance.consecutiveFailures = 0; // Reset em sucesso
+      
+      // Sair do modo degradado após sucesso
+      if (instance.degraded) {
+        instance.degraded = false;
+        log('info', \`[\${instance.name}] ✓ Saindo do modo degradado após envio bem-sucedido\`);
+      }
+      
+      log('success', \`[\\x1b[32m\${instance.name}\\x1b[0m] Mensagem enviada para \${to} (\${instance.messagesThisMinute}/min)\`);
+      this.trackMessageSent(instanceId, true);
       return { success: true };
     } catch (err) {
+      instance.consecutiveFailures++;
+      this.trackMessageSent(instanceId, false);
+      
+      // Detectar degradação
+      this.checkSessionDegradation(instanceId);
+      
       log('error', \`[\\x1b[31m\${instance.name}\\x1b[0m] Erro ao enviar: \${err.message}\`);
       return { success: false, error: err.message };
     }
@@ -274,6 +581,14 @@ class InstanceManager {
       phoneNumber: instance.phoneNumber,
       readyToSend: instance.readyToSend,
       qrCode: instance.qrCode,
+      // HARDENING: Expor estado de proteção
+      degraded: instance.degraded || false,
+      inCooldown: instance.inCooldown || false,
+      cooldownRemaining: instance.cooldownUntil > Date.now() ? Math.ceil((instance.cooldownUntil - Date.now()) / 1000) : 0,
+      messagesThisMinute: instance.messagesThisMinute || 0,
+      messagesThisHour: instance.messagesThisHour || 0,
+      messagesToday: instance.messagesToday || 0,
+      sessionHealthy: instance.sessionHealthy !== false,
     };
   }
 
@@ -286,30 +601,140 @@ class InstanceManager {
         status: inst.status,
         phoneNumber: inst.phoneNumber,
         readyToSend: inst.readyToSend,
+        degraded: inst.degraded || false,
+        inCooldown: inst.inCooldown || false,
       });
     });
     return result;
   }
 
+  // ════════════════════════════════════════════════════════════════════════════
+  // HARDENING: HEARTBEAT INTELIGENTE COM JITTER
+  // ════════════════════════════════════════════════════════════════════════════
+  getHeartbeatInterval(instanceId) {
+    const instance = this.instances.get(instanceId);
+    if (!instance) return CONFIG.HEARTBEAT_BASE_INTERVAL;
+    
+    let interval = CONFIG.HEARTBEAT_BASE_INTERVAL;
+    
+    // Em modo degradado, heartbeat mais lento
+    if (instance.degraded) {
+      interval *= CONFIG.HEARTBEAT_DEGRADED_MULTIPLIER;
+    }
+    
+    // Adicionar jitter humanizado (evita padrão robótico detectável)
+    const jitter = Math.floor(Math.random() * CONFIG.HEARTBEAT_JITTER_MAX);
+    
+    return interval + jitter;
+  }
+
   startHeartbeat(instanceId) {
     this.stopHeartbeat(instanceId);
     
-    const interval = setInterval(() => {
-      const instance = this.instances.get(instanceId);
-      if (instance && instance.status === 'connected') {
-        this.sendHeartbeat(instanceId, 'connected');
-      }
-    }, CONFIG.HEARTBEAT_INTERVAL);
-
-    this.heartbeatIntervals.set(instanceId, interval);
+    // HARDENING: Usar intervalo dinâmico com jitter que varia a cada heartbeat
+    const scheduleNextHeartbeat = () => {
+      const interval = this.getHeartbeatInterval(instanceId);
+      
+      const timeout = setTimeout(async () => {
+        const instance = this.instances.get(instanceId);
+        if (instance && instance.status === 'connected') {
+          await this.sendHeartbeat(instanceId, instance.degraded ? 'degraded' : 'connected');
+          
+          // Agendar próximo heartbeat com novo intervalo aleatório
+          scheduleNextHeartbeat();
+        }
+      }, interval);
+      
+      this.heartbeatIntervals.set(instanceId, timeout);
+    };
+    
+    scheduleNextHeartbeat();
   }
 
   stopHeartbeat(instanceId) {
     const interval = this.heartbeatIntervals.get(instanceId);
     if (interval) {
-      clearInterval(interval);
+      clearTimeout(interval);
       this.heartbeatIntervals.delete(instanceId);
     }
+  }
+  
+  // ════════════════════════════════════════════════════════════════════════════
+  // HARDENING: SESSION HEALTH CHECK
+  // ════════════════════════════════════════════════════════════════════════════
+  sessionHealthChecks = new Map();
+  
+  startSessionHealthCheck(instanceId) {
+    this.stopSessionHealthCheck(instanceId);
+    
+    const interval = setInterval(async () => {
+      const instance = this.instances.get(instanceId);
+      if (!instance || instance.status !== 'connected') {
+        this.stopSessionHealthCheck(instanceId);
+        return;
+      }
+      
+      // Verificar saúde da sessão tentando uma operação leve
+      try {
+        if (instance.sock) {
+          await instance.sock.fetchStatus(instance.phoneNumber + '@s.whatsapp.net');
+          instance.sessionHealthy = true;
+          instance.lastHealthCheck = Date.now();
+          instance.consecutiveFailures = 0;
+        }
+      } catch (err) {
+        instance.consecutiveFailures++;
+        
+        // Detectar degradação
+        if (instance.consecutiveFailures >= CONFIG.DEGRADATION_THRESHOLD_FAILURES) {
+          if (!instance.degraded) {
+            instance.degraded = true;
+            instance.degradationDetectedAt = Date.now();
+            log('warn', \`[\${instance.name}] ⚠️ Sessão degradada detectada no health check\`);
+            
+            // Entrar em pausa silenciosa
+            if (CONFIG.SILENT_PAUSE_ENABLED) {
+              instance.silentPauseUntil = Date.now() + CONFIG.SILENT_PAUSE_DURATION;
+              log('info', \`[\${instance.name}] 🔇 Pausa silenciosa de \${CONFIG.SILENT_PAUSE_DURATION/1000}s\`);
+            }
+          }
+        }
+        
+        instance.sessionHealthy = false;
+        log('warn', \`[\${instance.name}] Health check falhou: \${err.message} (falhas: \${instance.consecutiveFailures})\`);
+      }
+      
+      // Verificar idle prolongado
+      if (CONFIG.IDLE_DISCONNECT_THRESHOLD > 0) {
+        const idleTime = Date.now() - instance.lastActivityAt;
+        if (idleTime > CONFIG.IDLE_DISCONNECT_THRESHOLD && instance.status === 'connected') {
+          log('info', \`[\${instance.name}] 💤 Idle prolongado (\${Math.floor(idleTime/60000)}min) - mantendo conexão mas reduzindo atividade\`);
+          // Não desconectar, apenas reduzir heartbeat (já feito via degraded mode)
+        }
+      }
+    }, CONFIG.SESSION_HEALTH_CHECK_INTERVAL);
+    
+    this.sessionHealthChecks.set(instanceId, interval);
+  }
+  
+  stopSessionHealthCheck(instanceId) {
+    const interval = this.sessionHealthChecks.get(instanceId);
+    if (interval) {
+      clearInterval(interval);
+      this.sessionHealthChecks.delete(instanceId);
+    }
+  }
+  
+  // ════════════════════════════════════════════════════════════════════════════
+  // HARDENING: PAUSA SILENCIOSA (SILENT PAUSE)
+  // ════════════════════════════════════════════════════════════════════════════
+  triggerSilentPause(instanceId, durationMs = CONFIG.SILENT_PAUSE_DURATION) {
+    const instance = this.instances.get(instanceId);
+    if (!instance) return false;
+    
+    instance.silentPauseUntil = Date.now() + durationMs;
+    log('info', \`[\${instance.name}] 🔇 Pausa silenciosa ativada por \${durationMs/1000}s\`);
+    return true;
   }
 
   async sendHeartbeat(instanceId, status) {
@@ -331,7 +756,16 @@ class InstanceManager {
           metrics: {
             uptime: Math.floor((Date.now() - startTime) / 1000),
             readyToSend: instance.readyToSend,
-            version: '8.0',
+            version: '8.1-hardened',
+            // HARDENING: Métricas de proteção
+            degraded: instance.degraded || false,
+            inCooldown: instance.inCooldown || false,
+            consecutiveFailures: instance.consecutiveFailures || 0,
+            messagesThisMinute: instance.messagesThisMinute || 0,
+            messagesThisHour: instance.messagesThisHour || 0,
+            messagesToday: instance.messagesToday || 0,
+            sessionHealthy: instance.sessionHealthy !== false,
+            reconnectAttempts: instance.reconnectAttempts || 0,
           },
         }),
       });
