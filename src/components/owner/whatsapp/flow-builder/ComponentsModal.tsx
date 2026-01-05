@@ -1,62 +1,24 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Search,
-  Sparkles,
-  GripVertical,
-  Zap,
-  MessageSquare,
-  UserPlus,
-  MousePointer,
-  GitBranch,
-  Shuffle,
-  Send,
-  LayoutGrid,
-  List,
-  Globe,
-  Brain,
-  Clock,
-  CircleStop,
-  ChevronRight,
-  Smartphone,
-  Inbox,
-  Wifi,
-  Shield,
-  RefreshCw,
-  Gauge,
-  ListPlus,
-  Timer,
-  AlertTriangle,
-  Calendar,
-  Tag,
-  Repeat,
-  GitMerge,
-  ExternalLink,
-  Radio,
-  Workflow,
-  Server,
-  LogOut,
-  UserCog,
-  ShieldAlert,
-  HeartPulse,
-  Lock,
-  Play,
-  Layers,
-  X,
-  ArrowRight,
-  Bot,
-  Webhook,
-  Settings,
-  Filter,
-  ChevronDown
+  Search, Sparkles, GripVertical, Zap, MessageSquare, UserPlus, MousePointer,
+  GitBranch, Shuffle, Send, LayoutGrid, List, Globe, Brain, Clock, CircleStop,
+  ChevronRight, Smartphone, Inbox, Wifi, Shield, RefreshCw, Gauge, ListPlus,
+  Timer, AlertTriangle, Calendar, Tag, Repeat, GitMerge, ExternalLink, Radio,
+  Workflow, Server, LogOut, UserCog, ShieldAlert, HeartPulse, Lock, Play,
+  Layers, X, Bot, Settings, Filter, ChevronDown, Webhook, FileJson, Reply,
+  FilterX, ListOrdered
 } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { NODE_TEMPLATES, NODE_CATEGORIES, NodeTemplate, NATIVE_WA_TEMPLATES, STABILITY_TEMPLATES, AUTOMATION_TEMPLATES, INFRASTRUCTURE_TEMPLATES, SECURITY_TEMPLATES, AI_TEMPLATES, WEBHOOK_TEMPLATES } from './types';
+import { 
+  NODE_TEMPLATES, NODE_CATEGORIES, NodeTemplate, NATIVE_WA_TEMPLATES, 
+  STABILITY_TEMPLATES, AUTOMATION_TEMPLATES, INFRASTRUCTURE_TEMPLATES, 
+  SECURITY_TEMPLATES, AI_TEMPLATES, WEBHOOK_TEMPLATES 
+} from './types';
 import { InstanceRequiredModal } from './InstanceRequiredModal';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -64,13 +26,13 @@ import lunaAvatar from '@/assets/luna-avatar.png';
 
 const ICONS: Record<string, any> = {
   MessageSquare, UserPlus, MousePointer, GitBranch, Shuffle, Send, LayoutGrid,
-  List, Globe, Brain, Clock, CircleStop, Zap, Timer, Webhook: Globe,
-  CornerDownRight: ChevronRight, Tag, Plug: ChevronRight, StickyNote: MessageSquare,
-  ShoppingCart: LayoutGrid, Table: LayoutGrid, Smartphone, Inbox, Wifi,
-  Shield, RefreshCw, Gauge, ListPlus, AlertTriangle,
-  Calendar, Repeat, GitMerge, ExternalLink, Radio, Workflow,
-  Server, LogOut, UserCog, ShieldAlert, HeartPulse, Lock, Play,
-  Settings: Zap, Layers, Bot, Filter
+  List, Globe, Brain, Clock, CircleStop, Zap, Timer, Webhook, Tag, Smartphone,
+  Inbox, Wifi, Shield, RefreshCw, Gauge, ListPlus, AlertTriangle, Calendar,
+  Repeat, GitMerge, ExternalLink, Radio, Workflow, Server, LogOut, UserCog,
+  ShieldAlert, HeartPulse, Lock, Play, Settings, Layers, Bot, Filter, FileJson,
+  Reply, FilterX, ListOrdered, CornerDownRight: ChevronRight, Plug: ChevronRight,
+  StickyNote: MessageSquare, ShoppingCart: LayoutGrid, Table: LayoutGrid,
+  ShieldCheck: Shield
 };
 
 interface ComponentsModalProps {
@@ -95,10 +57,9 @@ export const ComponentsModal = ({
   const [showInstanceModal, setShowInstanceModal] = useState(false);
   const [pendingComponent, setPendingComponent] = useState<NodeTemplate | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
-  // Combine all templates
+  // Combine ALL templates
   const allTemplates = [
     ...AI_TEMPLATES, 
     ...WEBHOOK_TEMPLATES, 
@@ -110,7 +71,6 @@ export const ComponentsModal = ({
     ...SECURITY_TEMPLATES
   ];
 
-  // Focus search on open
   useEffect(() => {
     if (open && searchRef.current) {
       setTimeout(() => searchRef.current?.focus(), 100);
@@ -123,7 +83,6 @@ export const ComponentsModal = ({
     }
   }, [open]);
 
-  // Check for connected instances
   useEffect(() => {
     const checkInstances = async () => {
       const { data: user } = await supabase.auth.getUser();
@@ -138,9 +97,7 @@ export const ComponentsModal = ({
       setHasConnectedInstance(instances && instances.length > 0);
     };
 
-    if (open) {
-      checkInstances();
-    }
+    if (open) checkInstances();
   }, [open]);
 
   const filteredTemplates = allTemplates.filter(t =>
@@ -149,7 +106,6 @@ export const ComponentsModal = ({
     (!selectedCategory || t.category === selectedCategory)
   );
 
-  // Group templates by category
   const groupedTemplates = filteredTemplates.reduce((acc, template) => {
     const cat = template.category;
     if (!acc[cat]) acc[cat] = [];
@@ -163,7 +119,6 @@ export const ComponentsModal = ({
       setShowInstanceModal(true);
       return;
     }
-    
     onSelectComponent(template);
     onClose();
   };
@@ -182,7 +137,6 @@ export const ComponentsModal = ({
     event.dataTransfer.setData('application/reactflow', JSON.stringify(template));
     event.dataTransfer.effectAllowed = 'move';
     
-    // Create custom drag image
     const dragEl = document.createElement('div');
     dragEl.className = 'bg-card border rounded-lg p-2 shadow-xl';
     dragEl.innerHTML = `<span class="text-sm font-medium">${template.label}</span>`;
@@ -192,46 +146,78 @@ export const ComponentsModal = ({
     event.dataTransfer.setDragImage(dragEl, 0, 0);
     setTimeout(() => document.body.removeChild(dragEl), 0);
     
-    // Close modal after short delay
     setTimeout(() => {
       onClose();
       setDraggingId(null);
     }, 100);
   };
 
-  const handleDragEnd = () => {
-    setDraggingId(null);
-  };
+  const handleDragEnd = () => setDraggingId(null);
 
-  const handleInstanceModalClose = () => {
-    setShowInstanceModal(false);
-    setPendingComponent(null);
-  };
-
-  const handleNavigateToInstances = () => {
-    setShowInstanceModal(false);
-    onClose();
-    onNavigateToInstances?.();
-  };
-
-  const categoryOrder = ['ai', 'webhooks', 'nativos', 'gatilhos', 'condicoes', 'acoes', 'controle', 'automacao', 'estabilidade', 'infra', 'seguranca', 'avancado'];
+  const categoryOrder = [
+    'ai', 'webhooks', 'nativos', 'triggers', 'conditions', 'actions', 
+    'flow', 'automation', 'stability', 'infrastructure', 'security', 'advanced'
+  ];
   
   const getCategoryCount = (cat: string) => allTemplates.filter(t => t.category === cat).length;
+
+  const renderComponentCard = (template: NodeTemplate, categoryColor: string) => {
+    const templateId = `${template.type}-${template.label}`;
+    const Icon = ICONS[template.icon] || Zap;
+    const isDisabled = template.requiresInstance && !hasConnectedInstance;
+    
+    return (
+      <div
+        key={templateId}
+        draggable={!isDisabled}
+        onDragStart={(e) => handleDragStart(e, template)}
+        onDragEnd={handleDragEnd}
+        onClick={() => handleSelect(template)}
+        onMouseEnter={() => setHoveredId(templateId)}
+        onMouseLeave={() => setHoveredId(null)}
+        className={cn(
+          "group relative p-2.5 rounded-lg border border-border/50 cursor-pointer transition-all duration-150",
+          "hover:border-primary/40 hover:bg-primary/5 hover:shadow-sm",
+          isDisabled && "opacity-40 cursor-not-allowed",
+          draggingId === templateId && "opacity-50 scale-95",
+          hoveredId === templateId && "border-primary/40 bg-primary/5"
+        )}
+      >
+        <div className="flex items-center gap-2">
+          <div 
+            className="w-7 h-7 rounded-md flex items-center justify-center shrink-0"
+            style={{ backgroundColor: `${categoryColor}20` }}
+          >
+            <Icon className="w-3.5 h-3.5" style={{ color: categoryColor }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium truncate">{template.label}</p>
+          </div>
+          <GripVertical className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
+        </div>
+      </div>
+    );
+  };
 
   return (
     <>
       <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-        <DialogContent className="sm:max-w-4xl max-h-[85vh] p-0 gap-0 overflow-hidden border border-border/50 bg-background/95 backdrop-blur-xl shadow-2xl">
+        <DialogContent className="sm:max-w-5xl max-h-[90vh] p-0 gap-0 overflow-hidden border border-border/50 bg-background shadow-2xl">
           {/* Header */}
-          <div className="relative px-6 pt-5 pb-4 border-b border-border/50 bg-gradient-to-b from-muted/50 to-transparent">
-            <div className="flex items-center justify-between mb-4">
+          <div className="px-5 pt-4 pb-3 border-b border-border/50 bg-gradient-to-b from-muted/30 to-transparent">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/20">
-                  <Layers className="w-5 h-5 text-primary" />
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/20">
+                  <Layers className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold">Componentes</h2>
-                  <p className="text-xs text-muted-foreground">{allTemplates.length} disponíveis</p>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-base font-semibold">Componentes</h2>
+                    <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+                      {allTemplates.length} disponíveis
+                    </Badge>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">Arraste ou clique para adicionar</p>
                 </div>
               </div>
               
@@ -239,7 +225,7 @@ export const ComponentsModal = ({
                 <Badge 
                   variant="outline"
                   className={cn(
-                    'gap-1.5 px-2.5 py-1 rounded-full text-xs',
+                    'gap-1 px-2 py-0.5 rounded-full text-[10px]',
                     hasConnectedInstance 
                       ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30' 
                       : 'bg-amber-500/10 text-amber-600 border-amber-500/30'
@@ -247,62 +233,56 @@ export const ComponentsModal = ({
                 >
                   <div className={cn(
                     "w-1.5 h-1.5 rounded-full",
-                    hasConnectedInstance ? "bg-emerald-500 animate-pulse" : "bg-amber-500"
+                    hasConnectedInstance ? "bg-emerald-500" : "bg-amber-500"
                   )} />
                   {hasConnectedInstance ? 'Online' : 'Offline'}
                 </Badge>
                 
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={onClose}
-                  className="h-8 w-8 rounded-lg hover:bg-destructive/10 hover:text-destructive"
-                >
+                <Button variant="ghost" size="icon" onClick={onClose} className="h-7 w-7">
                   <X className="w-4 h-4" />
                 </Button>
               </div>
             </div>
 
             {/* Search */}
-            <div className="relative">
+            <div className="relative mb-3">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 ref={searchRef}
-                placeholder="Buscar componente..."
+                placeholder="Buscar..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 pr-9 h-10 bg-background border-border/50 rounded-lg"
+                className="pl-9 pr-8 h-9 bg-background border-border/50 rounded-lg text-sm"
               />
               {search && (
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
                   onClick={() => setSearch('')}
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-3 h-3" />
                 </Button>
               )}
             </div>
 
             {/* Category Filter */}
-            <div className="flex gap-1.5 mt-3 flex-wrap">
+            <div className="flex gap-1 flex-wrap">
               <Button
                 variant={selectedCategory === null ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setSelectedCategory(null)}
-                className={cn(
-                  "h-7 px-3 rounded-full text-xs font-medium",
-                  selectedCategory === null && "shadow-sm"
-                )}
+                className="h-6 px-2 rounded-full text-[10px]"
               >
-                Todos
+                Todos ({allTemplates.length})
               </Button>
               
-              {categoryOrder.filter(key => NODE_CATEGORIES[key as keyof typeof NODE_CATEGORIES] && getCategoryCount(key) > 0).map((key) => {
+              {categoryOrder.filter(key => {
+                const cat = NODE_CATEGORIES[key as keyof typeof NODE_CATEGORIES];
+                return cat && getCategoryCount(key) > 0;
+              }).map((key) => {
                 const category = NODE_CATEGORIES[key as keyof typeof NODE_CATEGORIES];
                 if (!category) return null;
-                
                 const count = getCategoryCount(key);
                 const isSelected = selectedCategory === key;
                 
@@ -312,165 +292,60 @@ export const ComponentsModal = ({
                     variant={isSelected ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => setSelectedCategory(isSelected ? null : key)}
-                    className={cn(
-                      "h-7 px-2.5 rounded-full text-xs font-medium gap-1",
-                      isSelected && "shadow-sm"
-                    )}
+                    className="h-6 px-2 rounded-full text-[10px] gap-1"
                     style={isSelected ? { backgroundColor: category.color } : undefined}
                   >
                     <span 
-                      className="w-2 h-2 rounded-full" 
+                      className="w-1.5 h-1.5 rounded-full" 
                       style={{ backgroundColor: isSelected ? '#fff' : category.color }}
                     />
                     {category.label}
-                    <span className={cn(
-                      "text-[10px] px-1 rounded",
-                      isSelected ? "bg-white/20" : "bg-muted"
-                    )}>
-                      {count}
-                    </span>
+                    <span className="opacity-70">({count})</span>
                   </Button>
                 );
               })}
             </div>
           </div>
 
-          {/* Content */}
-          <ScrollArea className="flex-1 max-h-[50vh]">
+          {/* Content Grid */}
+          <ScrollArea className="flex-1 max-h-[55vh]">
             <div className="p-4">
               {search || selectedCategory ? (
                 // Flat grid when filtering
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
                   {filteredTemplates.map((template) => {
                     const categoryColor = NODE_CATEGORIES[template.category as keyof typeof NODE_CATEGORIES]?.color || '#6b7280';
-                    const templateId = `${template.type}-${template.label}`;
-                    const Icon = ICONS[template.icon] || Zap;
-                    const isDisabled = template.requiresInstance && !hasConnectedInstance;
-                    
-                    return (
-                      <div
-                        key={templateId}
-                        draggable={!isDisabled}
-                        onDragStart={(e) => handleDragStart(e, template)}
-                        onDragEnd={handleDragEnd}
-                        onClick={() => handleSelect(template)}
-                        onMouseEnter={() => setHoveredId(templateId)}
-                        onMouseLeave={() => setHoveredId(null)}
-                        className={cn(
-                          "group relative p-3 rounded-lg border cursor-pointer transition-all duration-200",
-                          "hover:border-primary/50 hover:bg-primary/5",
-                          isDisabled && "opacity-50 cursor-not-allowed",
-                          draggingId === templateId && "opacity-50 scale-95",
-                          hoveredId === templateId && "border-primary/50 shadow-sm"
-                        )}
-                      >
-                        <div className="flex items-start gap-2.5">
-                          <div 
-                            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                            style={{ backgroundColor: `${categoryColor}15` }}
-                          >
-                            <Icon className="w-4 h-4" style={{ color: categoryColor }} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{template.label}</p>
-                            <p className="text-[10px] text-muted-foreground line-clamp-1">{template.description}</p>
-                          </div>
-                        </div>
-                        
-                        {/* Drag indicator */}
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <GripVertical className="w-3.5 h-3.5 text-muted-foreground" />
-                        </div>
-                      </div>
-                    );
+                    return renderComponentCard(template, categoryColor);
                   })}
                 </div>
               ) : (
-                // Categorized accordion view
-                <div className="space-y-2">
+                // Grouped view - show ALL categories
+                <div className="space-y-4">
                   {categoryOrder.filter(cat => groupedTemplates[cat]?.length > 0).map((cat) => {
                     const category = NODE_CATEGORIES[cat as keyof typeof NODE_CATEGORIES];
                     if (!category) return null;
                     const CategoryIcon = ICONS[category.icon] || Zap;
                     const templates = groupedTemplates[cat];
-                    const isExpanded = expandedCategory === cat || expandedCategory === null;
                     
                     return (
-                      <div key={cat} className="border border-border/50 rounded-lg overflow-hidden">
-                        {/* Category Header */}
-                        <button
-                          onClick={() => setExpandedCategory(expandedCategory === cat ? null : cat)}
-                          className="w-full flex items-center gap-2 p-3 hover:bg-muted/50 transition-colors"
-                        >
+                      <div key={cat}>
+                        <div className="flex items-center gap-2 mb-2">
                           <div 
-                            className="w-7 h-7 rounded-lg flex items-center justify-center"
-                            style={{ backgroundColor: `${category.color}15` }}
+                            className="w-5 h-5 rounded flex items-center justify-center"
+                            style={{ backgroundColor: `${category.color}20` }}
                           >
-                            <CategoryIcon className="w-3.5 h-3.5" style={{ color: category.color }} />
+                            <CategoryIcon className="w-3 h-3" style={{ color: category.color }} />
                           </div>
-                          <span className="text-sm font-medium flex-1 text-left" style={{ color: category.color }}>
+                          <span className="text-xs font-semibold" style={{ color: category.color }}>
                             {category.label}
                           </span>
-                          <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
-                            {templates.length}
-                          </Badge>
-                          <ChevronDown 
-                            className={cn(
-                              "w-4 h-4 text-muted-foreground transition-transform",
-                              isExpanded && "rotate-180"
-                            )} 
-                          />
-                        </button>
+                          <div className="flex-1 h-px bg-border/30" />
+                          <span className="text-[10px] text-muted-foreground">{templates.length}</span>
+                        </div>
                         
-                        {/* Category Content */}
-                        <AnimatePresence initial={false}>
-                          {isExpanded && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: 'auto', opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.2 }}
-                            >
-                              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1.5 p-2 pt-0 bg-muted/30">
-                                {templates.map((template) => {
-                                  const templateId = `${template.type}-${template.label}`;
-                                  const Icon = ICONS[template.icon] || Zap;
-                                  const isDisabled = template.requiresInstance && !hasConnectedInstance;
-                                  
-                                  return (
-                                    <div
-                                      key={templateId}
-                                      draggable={!isDisabled}
-                                      onDragStart={(e) => handleDragStart(e, template)}
-                                      onDragEnd={handleDragEnd}
-                                      onClick={() => handleSelect(template)}
-                                      onMouseEnter={() => setHoveredId(templateId)}
-                                      onMouseLeave={() => setHoveredId(null)}
-                                      className={cn(
-                                        "group relative p-2.5 rounded-md bg-background border border-transparent cursor-pointer transition-all",
-                                        "hover:border-primary/30 hover:shadow-sm",
-                                        isDisabled && "opacity-50 cursor-not-allowed",
-                                        draggingId === templateId && "opacity-50 scale-95",
-                                        hoveredId === templateId && "border-primary/30"
-                                      )}
-                                    >
-                                      <div className="flex items-center gap-2">
-                                        <div 
-                                          className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
-                                          style={{ backgroundColor: `${category.color}15` }}
-                                        >
-                                          <Icon className="w-3 h-3" style={{ color: category.color }} />
-                                        </div>
-                                        <span className="text-xs font-medium truncate flex-1">{template.label}</span>
-                                        <GripVertical className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1.5">
+                          {templates.map((template) => renderComponentCard(template, category.color))}
+                        </div>
                       </div>
                     );
                   })}
@@ -479,7 +354,7 @@ export const ComponentsModal = ({
 
               {filteredTemplates.length === 0 && (
                 <div className="py-12 text-center">
-                  <Search className="w-10 h-10 mx-auto text-muted-foreground/50 mb-3" />
+                  <Search className="w-8 h-8 mx-auto text-muted-foreground/50 mb-2" />
                   <p className="text-sm text-muted-foreground">Nenhum componente encontrado</p>
                   <Button variant="link" size="sm" onClick={() => { setSearch(''); setSelectedCategory(null); }}>
                     Limpar filtros
@@ -489,22 +364,19 @@ export const ComponentsModal = ({
             </div>
           </ScrollArea>
 
-          {/* Footer - Luna CTA */}
-          <div className="p-4 border-t border-border/50 bg-gradient-to-b from-transparent to-muted/30">
+          {/* Footer */}
+          <div className="p-3 border-t border-border/50 bg-muted/20">
             <Button
               onClick={() => { onClose(); onOpenLuna(); }}
-              className="w-full h-12 bg-gradient-to-r from-primary via-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground rounded-xl shadow-lg shadow-primary/20 group"
+              className="w-full h-10 bg-gradient-to-r from-primary via-primary to-primary/80 hover:opacity-90 text-primary-foreground rounded-lg group"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full overflow-hidden ring-2 ring-white/20">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full overflow-hidden ring-1 ring-white/20">
                   <img src={lunaAvatar} alt="Luna" className="w-full h-full object-cover" />
                 </div>
-                <div className="text-left">
-                  <p className="text-sm font-semibold">Criar com Luna IA</p>
-                  <p className="text-[10px] opacity-80">Descreva e ela constrói automaticamente</p>
-                </div>
+                <span className="text-sm font-medium">Criar com Luna IA</span>
               </div>
-              <Sparkles className="w-5 h-5 ml-auto group-hover:rotate-12 transition-transform" />
+              <Sparkles className="w-4 h-4 ml-auto group-hover:rotate-12 transition-transform" />
             </Button>
           </div>
         </DialogContent>
@@ -512,8 +384,8 @@ export const ComponentsModal = ({
 
       <InstanceRequiredModal 
         open={showInstanceModal}
-        onClose={handleInstanceModalClose}
-        onNavigateToInstances={handleNavigateToInstances}
+        onClose={() => { setShowInstanceModal(false); setPendingComponent(null); }}
+        onNavigateToInstances={() => { setShowInstanceModal(false); onClose(); onNavigateToInstances?.(); }}
         componentName={pendingComponent?.label || ''}
       />
     </>
