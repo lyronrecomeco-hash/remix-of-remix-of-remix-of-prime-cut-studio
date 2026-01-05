@@ -137,11 +137,13 @@ export const WATestMessage = ({
           formattedPhone,
           testMessage,
           {
-            maxRetries: 10,
+            maxRetries: 50,
             baseDelay: 1500,
             maxDelay: 30000,
             onRetry: (attempt, error, nextDelay) => {
-              setRetryInfo(`Tentativa ${attempt} falhou. Retentando em ${Math.round(nextDelay / 1000)}s...`);
+              setRetryInfo(
+                `Tentativa ${attempt} falhou (${error}). Retentando em ${Math.round(nextDelay / 1000)}s...`
+              );
             },
           }
         );
