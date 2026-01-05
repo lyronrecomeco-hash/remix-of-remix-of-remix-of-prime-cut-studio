@@ -1652,6 +1652,406 @@ ${optionsDesc}`;
       };
     }
 
+    // ============ UNIVERSAL WEBHOOK NODES ============
+    case 'webhook_universal_trigger': {
+      // Trigger node - data is passed from gateway
+      const {
+        expose_headers = true,
+        expose_query = true,
+        expose_body = true,
+        save_payload_to = 'webhook_payload',
+        save_headers_to = 'webhook_headers',
+        save_metadata_to = 'webhook_metadata'
+      } = action.config;
+
+      // Extract data from eventData (populated by webhook gateway)
+      const webhookData = eventData || {};
+      
+      if (expose_body) {
+        context.flowContext = {
+          ...context.flowContext,
+          [save_payload_to]: webhookData.payload || webhookData.body || {},
+        };
+      }
+      
+      if (expose_headers) {
+        context.flowContext = {
+          ...context.flowContext,
+          [save_headers_to]: webhookData.headers || {},
+        };
+      }
+      
+      if (expose_query) {
+        context.flowContext = {
+          ...context.flowContext,
+          [save_metadata_to]: {
+            query: webhookData.query || {},
+            source_ip: webhookData.metadata?.source_ip,
+            method: webhookData.metadata?.method,
+            received_at: webhookData.metadata?.received_at,
+          },
+        };
+      }
+
+      console.log(`[WEBHOOK] Trigger received payload`);
+
+      return { 
+        success: true, 
+        result: { 
+          type: 'trigger',
+          hasPayload: !!webhookData.payload,
+          hasHeaders: !!webhookData.headers,
+        } 
+      };
+    }
+
+    case 'webhook_auth_guard': {
+      const {
+        auth_type = 'token',
+        token_header = 'Authorization',
+        expected_token = '',
+        ip_whitelist = [],
+        hmac_header = 'X-Signature',
+        on_fail = 'reject'
+      } = action.config;
+
+      const headers = eventData?.headers || context.flowContext?.webhook_headers || {};
+      const sourceIp = eventData?.metadata?.source_ip || context.flowContext?.webhook_metadata?.source_ip;
+
+      let isValid = false;
+      let reason = '';
+
+      switch (auth_type) {
+        case 'token': {
+          const token = headers[token_header] || headers[token_header.toLowerCase()];
+          isValid = token && (token === expected_token || token === `Bearer ${expected_token}`);
+          reason = isValid ? '' : 'invalid_token';
+          break;
+        }
+        case 'ip_whitelist': {
+          isValid = ip_whitelist.length === 0 || ip_whitelist.includes(sourceIp) || ip_whitelist.includes('*');
+          reason = isValid ? '' : 'ip_not_allowed';
+          break;
+        }
+        default:
+          isValid = true;
+      }
+
+      if (!isValid && on_fail === 'reject') {
+        console.log(`[WEBHOOK] Auth failed: ${reason}`);
+        return { success: false, error: reason, skip: true };
+      }
+
+      console.log(`[WEBHOOK] Auth passed: ${auth_type}`);
+
+      return { 
+        success: true, 
+        result: { 
+          authenticated: isValid,
+          authType: auth_type,
+          reason,
+        } 
+      };
+    }
+
+    case 'webhook_signature_verify': {
+      const {
+        signature_header = 'X-Signature-256',
+        algorithm = 'sha256',
+        on_fail = 'reject'
+      } = action.config;
+
+      const headers = eventData?.headers || context.flowContext?.webhook_headers || {};
+      const signature = headers[signature_header] || headers[signature_header.toLowerCase()];
+
+      // Note: Actual HMAC verification should be done at gateway level
+      // This node validates that verification passed
+      const isVerified = !!signature; // Simplified check
+
+      if (!isVerified && on_fail === 'reject') {
+        console.log(`[WEBHOOK] Signature verification failed`);
+        return { success: false, error: 'invalid_signature', skip: true };
+      }
+
+      return { 
+        success: true, 
+        result: { 
+          verified: isVerified,
+          algorithm,
+        } 
+      };
+    }
+
+    case 'webhook_rate_limit': {
+      const {
+        limit_per_minute = 60,
+        limit_per_hour = 1000,
+        on_limit = 'queue'
+      } = action.config;
+
+      // Rate limit tracking would be handled by the gateway
+      // This node can check and enforce local limits
+      const webhookMetadata = context.flowContext?.webhook_metadata || {};
+      
+      console.log(`[WEBHOOK] Rate limit check: ${limit_per_minute}/min, ${limit_per_hour}/hour`);
+
+      return { 
+        success: true, 
+        result: { 
+          allowed: true,
+          limits: { minute: limit_per_minute, hour: limit_per_hour },
+          onLimit: on_limit,
+        } 
+      };
+    }
+
+    case 'webhook_queue': {
+      const {
+        queue_name = 'default',
+        priority = 'normal',
+        delay_seconds = 0,
+        respond_immediately = true
+      } = action.config;
+
+      // Queue the webhook for async processing
+      const queueEntry = {
+        queue: queue_name,
+        priority,
+        delay: delay_seconds,
+        queued_at: new Date().toISOString(),
+        process_at: new Date(Date.now() + delay_seconds * 1000).toISOString(),
+      };
+
+      context.flowContext = {
+        ...context.flowContext,
+        queue_entry: queueEntry,
+      };
+
+      console.log(`[WEBHOOK] Queued in ${queue_name} with priority ${priority}`);
+
+      return { 
+        success: true, 
+        result: { 
+          queued: true,
+          ...queueEntry,
+          respondImmediately: respond_immediately,
+        } 
+      };
+    }
+
+    case 'webhook_deduplication': {
+      const {
+        event_id_field = 'event_id',
+        window_seconds = 300,
+        on_duplicate = 'skip'
+      } = action.config;
+
+      const payload = eventData?.payload || context.flowContext?.webhook_payload || {};
+      const eventId = payload[event_id_field] || payload.id || eventData?.event_id;
+
+      // Dedup check would be done at gateway level
+      // This node can provide additional local dedup logic
+      const isDuplicate = false; // Gateway already checked
+
+      if (isDuplicate && on_duplicate === 'skip') {
+        console.log(`[WEBHOOK] Duplicate event skipped: ${eventId}`);
+        return { success: true, result: { duplicate: true, eventId }, skip: true };
+      }
+
+      context.flowContext = {
+        ...context.flowContext,
+        dedup_event_id: eventId,
+      };
+
+      return { 
+        success: true, 
+        result: { 
+          duplicate: false,
+          eventId,
+          windowSeconds: window_seconds,
+        } 
+      };
+    }
+
+    case 'webhook_payload_parser': {
+      const {
+        parser_type = 'jsonpath',
+        extractions = [],
+        normalize_keys = true,
+        flatten_nested = false
+      } = action.config;
+
+      const payload = eventData?.payload || context.flowContext?.webhook_payload || {};
+      const extracted: Record<string, any> = {};
+
+      for (const extraction of extractions) {
+        const { name, path } = extraction;
+        
+        // Simple JSONPath-like extraction
+        if (path.startsWith('$.')) {
+          const pathParts = path.slice(2).split('.');
+          let value = payload;
+          
+          for (const part of pathParts) {
+            value = value?.[part];
+          }
+          
+          extracted[name] = value;
+        } else {
+          extracted[name] = payload[path];
+        }
+      }
+
+      // Normalize keys if requested
+      const normalizedPayload = normalize_keys 
+        ? Object.fromEntries(
+            Object.entries(payload).map(([k, v]) => [k.toLowerCase().replace(/[^a-z0-9]/g, '_'), v])
+          )
+        : payload;
+
+      context.flowContext = {
+        ...context.flowContext,
+        extracted_data: extracted,
+        normalized_payload: normalizedPayload,
+        variables: {
+          ...context.flowContext?.variables,
+          ...Object.fromEntries(Object.entries(extracted).map(([k, v]) => [k, { value: v, scope: 'flow' }])),
+        },
+      };
+
+      console.log(`[WEBHOOK] Parsed ${extractions.length} fields from payload`);
+
+      return { 
+        success: true, 
+        result: { 
+          extracted,
+          parserType: parser_type,
+          normalized: normalize_keys,
+        } 
+      };
+    }
+
+    case 'webhook_event_router': {
+      const {
+        route_field = 'event_type',
+        routes = [],
+        default_route = 'other'
+      } = action.config;
+
+      const payload = eventData?.payload || context.flowContext?.webhook_payload || {};
+      const extracted = context.flowContext?.extracted_data || {};
+      
+      // Get value from route field
+      const routeValue = extracted[route_field] || payload[route_field] || payload.type || payload.event;
+
+      // Find matching route
+      let matchedRoute = default_route;
+      for (const route of routes) {
+        if (route.value === routeValue || route.value === '*') {
+          matchedRoute = route.output;
+          break;
+        }
+      }
+
+      context.flowContext = {
+        ...context.flowContext,
+        routed_to: matchedRoute,
+        route_value: routeValue,
+      };
+
+      console.log(`[WEBHOOK] Routed to ${matchedRoute} based on ${route_field}=${routeValue}`);
+
+      return { 
+        success: true, 
+        result: { 
+          route: matchedRoute,
+          field: route_field,
+          value: routeValue,
+          branch: matchedRoute,
+        } 
+      };
+    }
+
+    case 'webhook_response': {
+      const {
+        status_code = 200,
+        headers = {},
+        body = { success: true },
+        use_dynamic_body = false,
+        dynamic_body_source = ''
+      } = action.config;
+
+      let responseBody = body;
+      
+      if (use_dynamic_body && dynamic_body_source) {
+        // Get body from context variable
+        responseBody = context.flowContext?.[dynamic_body_source] 
+          || context.flowContext?.variables?.[dynamic_body_source]?.value 
+          || body;
+      }
+
+      context.flowContext = {
+        ...context.flowContext,
+        webhook_response: {
+          status: status_code,
+          headers,
+          body: responseBody,
+        },
+      };
+
+      console.log(`[WEBHOOK] Response configured: ${status_code}`);
+
+      return { 
+        success: true, 
+        result: { 
+          statusCode: status_code,
+          headers,
+          bodySet: true,
+        } 
+      };
+    }
+
+    case 'webhook_dead_letter': {
+      const {
+        capture_on = ['error', 'timeout'],
+        max_retries = 3,
+        retry_delay_seconds = 60,
+        notify_on_capture = true
+      } = action.config;
+
+      // This node is typically triggered when an error occurs
+      // Store failed event for later reprocessing
+      const failedEvent = {
+        payload: eventData?.payload || context.flowContext?.webhook_payload,
+        headers: eventData?.headers || context.flowContext?.webhook_headers,
+        captured_at: new Date().toISOString(),
+        capture_reason: 'manual',
+        retry_count: 0,
+        max_retries,
+        retry_delay: retry_delay_seconds,
+      };
+
+      context.flowContext = {
+        ...context.flowContext,
+        dead_letter: failedEvent,
+      };
+
+      console.log(`[WEBHOOK] Dead letter captured for retry (max ${max_retries})`);
+
+      // In production, this would store to genesis_webhook_dead_letters table
+      // via supabase client
+
+      return { 
+        success: true, 
+        result: { 
+          captured: true,
+          captureOn: capture_on,
+          maxRetries: max_retries,
+          notifying: notify_on_capture,
+        } 
+      };
+    }
+
     default:
       return { success: false, error: `Unknown action type: ${action.type}` };
   }

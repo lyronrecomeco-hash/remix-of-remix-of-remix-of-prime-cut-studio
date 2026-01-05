@@ -64,7 +64,18 @@ export type NodeType =
   | 'ai_prompt_execute'
   | 'ai_chat_context'
   | 'ai_decision'
-  | 'ai_embedding';
+  | 'ai_embedding'
+  // Universal Webhook Nodes (Gateway Integration)
+  | 'webhook_universal_trigger'
+  | 'webhook_auth_guard'
+  | 'webhook_signature_verify'
+  | 'webhook_rate_limit'
+  | 'webhook_queue'
+  | 'webhook_deduplication'
+  | 'webhook_payload_parser'
+  | 'webhook_event_router'
+  | 'webhook_response'
+  | 'webhook_dead_letter';
 
 // Flow Lifecycle Status
 export type FlowLifecycleStatus = 'draft' | 'validated' | 'active' | 'paused' | 'error';
@@ -150,7 +161,7 @@ export interface NodeTemplate {
   label: string;
   icon: string;
   description: string;
-  category: 'triggers' | 'conditions' | 'actions' | 'flow' | 'advanced' | 'nativos' | 'stability' | 'automation' | 'infrastructure' | 'security' | 'ai';
+  category: 'triggers' | 'conditions' | 'actions' | 'flow' | 'advanced' | 'nativos' | 'stability' | 'automation' | 'infrastructure' | 'security' | 'ai' | 'webhooks';
   defaultConfig: Record<string, any>;
   requiresInstance?: boolean; // If true, requires connected WhatsApp instance
 }
@@ -507,7 +518,8 @@ export const NATIVE_WA_TEMPLATES: NodeTemplate[] = [
 ];
 
 export const NODE_CATEGORIES = {
-  ai: { label: 'Agente IA', color: '#f59e0b', icon: 'Brain' }, // Gold for AI - First!
+  ai: { label: 'Agente IA', color: '#f59e0b', icon: 'Brain' },
+  webhooks: { label: 'Webhooks', color: '#06b6d4', icon: 'Webhook' }, // Cyan for Webhooks
   nativos: { label: 'WhatsApp', color: '#25D366', icon: 'Smartphone' },
   triggers: { label: 'Gatilhos', color: '#22c55e', icon: 'Zap' },
   actions: { label: 'Ações', color: '#3b82f6', icon: 'Send' },
@@ -584,18 +596,29 @@ export const NODE_COLORS: Record<NodeType, string> = {
   ai_chat_context: '#ca8a04',
   ai_decision: '#a16207',
   ai_embedding: '#854d0e',
+  // Universal Webhook nodes (Cyan gradient)
+  webhook_universal_trigger: '#06b6d4',
+  webhook_auth_guard: '#0891b2',
+  webhook_signature_verify: '#0e7490',
+  webhook_rate_limit: '#155e75',
+  webhook_queue: '#164e63',
+  webhook_deduplication: '#22d3ee',
+  webhook_payload_parser: '#67e8f9',
+  webhook_event_router: '#a5f3fc',
+  webhook_response: '#cffafe',
+  webhook_dead_letter: '#083344',
 };
 
 // Connection validation rules
 export const CONNECTION_RULES = {
   // Nodes that can only have one outgoing connection
-  singleOutput: ['trigger', 'message', 'button', 'list', 'ai', 'webhook', 'delay', 'variable', 'integration', 'http_request', 'webhook_in', 'ecommerce', 'crm_sheets', 'wa_start', 'wa_send_text', 'wa_send_buttons', 'wa_send_list', 'wa_wait_response', 'wa_receive', 'queue_message', 'session_guard', 'retry_policy', 'smart_delay', 'rate_limit', 'enqueue_flow_step', 'http_request_advanced', 'webhook_trigger', 'cron_trigger', 'set_variable', 'subflow_call', 'event_emitter', 'data_transform', 'proxy_assign', 'proxy_rotate', 'worker_assign', 'worker_release', 'dispatch_execution', 'identity_rotate', 'execution_quota_guard', 'infra_rate_limit', 'secure_context_guard', 'ai_prompt_execute', 'ai_chat_context', 'ai_embedding'],
+  singleOutput: ['trigger', 'message', 'button', 'list', 'ai', 'webhook', 'delay', 'variable', 'integration', 'http_request', 'webhook_in', 'ecommerce', 'crm_sheets', 'wa_start', 'wa_send_text', 'wa_send_buttons', 'wa_send_list', 'wa_wait_response', 'wa_receive', 'queue_message', 'session_guard', 'retry_policy', 'smart_delay', 'rate_limit', 'enqueue_flow_step', 'http_request_advanced', 'webhook_trigger', 'cron_trigger', 'set_variable', 'subflow_call', 'event_emitter', 'data_transform', 'proxy_assign', 'proxy_rotate', 'worker_assign', 'worker_release', 'dispatch_execution', 'identity_rotate', 'execution_quota_guard', 'infra_rate_limit', 'secure_context_guard', 'ai_prompt_execute', 'ai_chat_context', 'ai_embedding', 'webhook_universal_trigger', 'webhook_auth_guard', 'webhook_signature_verify', 'webhook_rate_limit', 'webhook_queue', 'webhook_deduplication', 'webhook_payload_parser', 'webhook_response', 'webhook_dead_letter'],
   // Nodes that can have multiple outgoing connections (yes/no)
-  conditionalOutput: ['condition', 'split', 'if_instance_state', 'timeout_handler', 'if_expression', 'switch_case', 'if_infra_health', 'ai_decision'],
+  conditionalOutput: ['condition', 'split', 'if_instance_state', 'timeout_handler', 'if_expression', 'switch_case', 'if_infra_health', 'ai_decision', 'webhook_event_router'],
   // Nodes that cannot have outgoing connections
   noOutput: ['end'],
   // Nodes that can be connected from any node
-  universalInput: ['message', 'button', 'list', 'ai', 'webhook', 'delay', 'condition', 'split', 'variable', 'integration', 'end', 'goto', 'note', 'http_request', 'ecommerce', 'crm_sheets', 'wa_send_text', 'wa_send_buttons', 'wa_send_list', 'wa_wait_response', 'wa_receive', 'queue_message', 'session_guard', 'timeout_handler', 'if_instance_state', 'retry_policy', 'smart_delay', 'rate_limit', 'enqueue_flow_step', 'http_request_advanced', 'webhook_trigger', 'cron_trigger', 'set_variable', 'if_expression', 'loop_for_each', 'switch_case', 'subflow_call', 'event_emitter', 'data_transform', 'proxy_assign', 'proxy_rotate', 'worker_assign', 'worker_release', 'dispatch_execution', 'identity_rotate', 'execution_quota_guard', 'infra_rate_limit', 'if_infra_health', 'secure_context_guard', 'ai_prompt_execute', 'ai_chat_context', 'ai_decision', 'ai_embedding'],
+  universalInput: ['message', 'button', 'list', 'ai', 'webhook', 'delay', 'condition', 'split', 'variable', 'integration', 'end', 'goto', 'note', 'http_request', 'ecommerce', 'crm_sheets', 'wa_send_text', 'wa_send_buttons', 'wa_send_list', 'wa_wait_response', 'wa_receive', 'queue_message', 'session_guard', 'timeout_handler', 'if_instance_state', 'retry_policy', 'smart_delay', 'rate_limit', 'enqueue_flow_step', 'http_request_advanced', 'webhook_trigger', 'cron_trigger', 'set_variable', 'if_expression', 'loop_for_each', 'switch_case', 'subflow_call', 'event_emitter', 'data_transform', 'proxy_assign', 'proxy_rotate', 'worker_assign', 'worker_release', 'dispatch_execution', 'identity_rotate', 'execution_quota_guard', 'infra_rate_limit', 'if_infra_health', 'secure_context_guard', 'ai_prompt_execute', 'ai_chat_context', 'ai_decision', 'ai_embedding', 'webhook_auth_guard', 'webhook_signature_verify', 'webhook_rate_limit', 'webhook_queue', 'webhook_deduplication', 'webhook_payload_parser', 'webhook_event_router', 'webhook_response', 'webhook_dead_letter'],
 };
 
 // Generic Automation Engine Templates (Channel-Agnostic)
@@ -947,5 +970,158 @@ export const AI_TEMPLATES: NodeTemplate[] = [
   }
 ];
 
-// Get all templates including native, stability, automation, infrastructure, security, and AI
-export const getAllTemplates = () => [...NATIVE_WA_TEMPLATES, ...NODE_TEMPLATES, ...STABILITY_TEMPLATES, ...AUTOMATION_TEMPLATES, ...INFRASTRUCTURE_TEMPLATES, ...SECURITY_TEMPLATES, ...AI_TEMPLATES];
+// Universal Webhook Templates (Gateway Integration)
+export const WEBHOOK_TEMPLATES: NodeTemplate[] = [
+  {
+    type: 'webhook_universal_trigger',
+    label: 'Webhook Trigger Universal',
+    icon: 'Webhook',
+    description: 'Entrada do fluxo via webhook externo (Gateway)',
+    category: 'webhooks',
+    defaultConfig: {
+      webhook_id: '',
+      expose_headers: true,
+      expose_query: true,
+      expose_body: true,
+      save_payload_to: 'webhook_payload',
+      save_headers_to: 'webhook_headers',
+      save_metadata_to: 'webhook_metadata'
+    }
+  },
+  {
+    type: 'webhook_auth_guard',
+    label: 'Autenticação Webhook',
+    icon: 'Lock',
+    description: 'Valida token, header, IP ou HMAC',
+    category: 'webhooks',
+    defaultConfig: {
+      auth_type: 'token',
+      token_header: 'Authorization',
+      expected_token: '',
+      ip_whitelist: [],
+      hmac_header: 'X-Signature',
+      hmac_secret: '',
+      hmac_algorithm: 'sha256',
+      on_fail: 'reject'
+    }
+  },
+  {
+    type: 'webhook_signature_verify',
+    label: 'Verificar Assinatura',
+    icon: 'ShieldCheck',
+    description: 'Validação de assinatura (Stripe/GitHub style)',
+    category: 'webhooks',
+    defaultConfig: {
+      signature_header: 'X-Signature-256',
+      secret: '',
+      algorithm: 'sha256',
+      payload_encoding: 'raw',
+      timestamp_header: '',
+      timestamp_tolerance_seconds: 300,
+      on_fail: 'reject'
+    }
+  },
+  {
+    type: 'webhook_rate_limit',
+    label: 'Rate Limit Webhook',
+    icon: 'Gauge',
+    description: 'Limite por webhook e por IP',
+    category: 'webhooks',
+    defaultConfig: {
+      limit_per_minute: 60,
+      limit_per_hour: 1000,
+      burst_limit: 10,
+      by_ip: true,
+      on_limit: 'queue'
+    }
+  },
+  {
+    type: 'webhook_queue',
+    label: 'Fila Webhook',
+    icon: 'ListOrdered',
+    description: 'Enfileiramento para execução assíncrona',
+    category: 'webhooks',
+    defaultConfig: {
+      queue_name: 'default',
+      priority: 'normal',
+      delay_seconds: 0,
+      max_wait_seconds: 30,
+      respond_immediately: true
+    }
+  },
+  {
+    type: 'webhook_deduplication',
+    label: 'Deduplicação',
+    icon: 'FilterX',
+    description: 'Previne eventos duplicados via event_id',
+    category: 'webhooks',
+    defaultConfig: {
+      event_id_field: 'event_id',
+      event_id_fallback: '{{webhook_payload.id}}',
+      window_seconds: 300,
+      on_duplicate: 'skip'
+    }
+  },
+  {
+    type: 'webhook_payload_parser',
+    label: 'Parser de Payload',
+    icon: 'FileJson',
+    description: 'Parsing com JSONPath/XPath/Regex',
+    category: 'webhooks',
+    defaultConfig: {
+      parser_type: 'jsonpath',
+      extractions: [
+        { name: 'event_type', path: '$.type' },
+        { name: 'data', path: '$.data' }
+      ],
+      normalize_keys: true,
+      flatten_nested: false
+    }
+  },
+  {
+    type: 'webhook_event_router',
+    label: 'Roteador de Eventos',
+    icon: 'GitBranch',
+    description: 'Roteamento por tipo de evento',
+    category: 'webhooks',
+    defaultConfig: {
+      route_field: 'event_type',
+      routes: [
+        { value: 'payment.created', output: 'payment' },
+        { value: 'order.completed', output: 'order' }
+      ],
+      default_route: 'other'
+    }
+  },
+  {
+    type: 'webhook_response',
+    label: 'Resposta Webhook',
+    icon: 'Reply',
+    description: 'Resposta HTTP configurável',
+    category: 'webhooks',
+    defaultConfig: {
+      status_code: 200,
+      headers: { 'Content-Type': 'application/json' },
+      body: { success: true, message: 'Webhook processed' },
+      use_dynamic_body: false,
+      dynamic_body_source: ''
+    }
+  },
+  {
+    type: 'webhook_dead_letter',
+    label: 'Dead Letter Queue',
+    icon: 'AlertTriangle',
+    description: 'Captura falhas para reprocessamento',
+    category: 'webhooks',
+    defaultConfig: {
+      capture_on: ['error', 'timeout', 'validation_failed'],
+      max_retries: 3,
+      retry_delay_seconds: 60,
+      notify_on_capture: true,
+      notification_channel: 'log'
+    }
+  }
+];
+
+// Get all templates including native, stability, automation, infrastructure, security, AI, and Webhooks
+export const getAllTemplates = () => [...NATIVE_WA_TEMPLATES, ...NODE_TEMPLATES, ...STABILITY_TEMPLATES, ...AUTOMATION_TEMPLATES, ...INFRASTRUCTURE_TEMPLATES, ...SECURITY_TEMPLATES, ...AI_TEMPLATES, ...WEBHOOK_TEMPLATES];

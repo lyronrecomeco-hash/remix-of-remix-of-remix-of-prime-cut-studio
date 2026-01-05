@@ -132,6 +132,17 @@ const getIconForType = (type: NodeType, iconName?: string) => {
     ai_chat_context: MessageSquare,
     ai_decision: GitBranch,
     ai_embedding: Zap,
+    // Universal Webhook nodes
+    webhook_universal_trigger: Zap,
+    webhook_auth_guard: Lock,
+    webhook_signature_verify: ShieldAlert,
+    webhook_rate_limit: Gauge,
+    webhook_queue: Play,
+    webhook_deduplication: CheckCircle2,
+    webhook_payload_parser: Shuffle,
+    webhook_event_router: GitBranch,
+    webhook_response: Send,
+    webhook_dead_letter: AlertCircle,
   };
   
   return typeIcons[type] || Zap;
