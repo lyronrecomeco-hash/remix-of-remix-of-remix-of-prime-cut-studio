@@ -1,20 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
-import { motion, useInView, useScroll, useTransform } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { 
-  MessageSquare, Zap, Brain, BarChart3, Shield, Clock, 
-  Users, TrendingUp, Check, ChevronDown, ArrowRight,
-  Bot, Workflow, Bell, Globe, Smartphone, Star,
-  Play, Sparkles, MousePointer
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import VendaHero from '@/components/venda/VendaHero';
 import VendaProblems from '@/components/venda/VendaProblems';
 import VendaSolution from '@/components/venda/VendaSolution';
 import VendaFeatures from '@/components/venda/VendaFeatures';
+import VendaFlowDemo from '@/components/venda/VendaFlowDemo';
 import VendaLiveDemo from '@/components/venda/VendaLiveDemo';
 import VendaSocialProof from '@/components/venda/VendaSocialProof';
 import VendaPricing from '@/components/venda/VendaPricing';
@@ -29,6 +17,7 @@ const GenesisVenda = () => {
       <VendaProblems />
       <VendaSolution />
       <VendaFeatures />
+      <VendaFlowDemo />
       <VendaLiveDemo />
       <VendaSocialProof />
       <VendaPricing />

@@ -11,14 +11,23 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, proposalContext } = await req.json();
+    const body = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `Você é a assistente virtual do Genesis Hub, um sistema de gestão empresarial inovador. Você está em uma página de proposta comercial personalizada para a empresa "${proposalContext?.companyName || 'Cliente'}".
+    // Support both formats: { messages } or { message, context, systemPrompt }
+    let messages: Array<{ role: string; content: string }> = [];
+    let systemPrompt = "";
+
+    if (body.messages && Array.isArray(body.messages)) {
+      // Original format with messages array
+      messages = body.messages;
+      const proposalContext = body.proposalContext;
+      
+      systemPrompt = `Você é a assistente virtual do Genesis Hub, um sistema de gestão empresarial inovador. Você está em uma página de proposta comercial personalizada para a empresa "${proposalContext?.companyName || 'Cliente'}".
 
 CONTEXTO DA PROPOSTA:
 - Empresa: ${proposalContext?.companyName || 'Não informado'}
@@ -49,7 +58,26 @@ PERSONALIDADE:
 - Tom: Consultivo, amigável, profissional
 - Objetivo: Converter o visitante em cliente`;
 
-    console.log("Starting streaming chat for proposal:", proposalContext?.companyName);
+    } else if (body.message) {
+      // VendaDemo format with message + context + systemPrompt
+      const conversationHistory = body.context?.conversationHistory || [];
+      
+      // Build messages from conversation history
+      messages = conversationHistory.map((m: { role: string; content: string }) => ({
+        role: m.role,
+        content: m.content
+      }));
+      
+      // Add the new user message
+      messages.push({ role: "user", content: body.message });
+      
+      // Use provided systemPrompt or default
+      systemPrompt = body.systemPrompt || `Você é a Luna, assistente de IA do Genesis Hub.`;
+    } else {
+      throw new Error("Invalid request format: missing messages or message");
+    }
+
+    console.log("Processing chat with", messages.length, "messages");
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -63,7 +91,7 @@ PERSONALIDADE:
           { role: "system", content: systemPrompt },
           ...messages,
         ],
-        stream: true,
+        stream: false, // Non-streaming for simpler response handling
       }),
     });
 
@@ -88,9 +116,11 @@ PERSONALIDADE:
       });
     }
 
-    // Stream the response
-    return new Response(response.body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+    const data = await response.json();
+    const aiResponse = data.choices?.[0]?.message?.content || "Desculpe, não consegui processar sua mensagem.";
+
+    return new Response(JSON.stringify({ response: aiResponse }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
   } catch (error) {
