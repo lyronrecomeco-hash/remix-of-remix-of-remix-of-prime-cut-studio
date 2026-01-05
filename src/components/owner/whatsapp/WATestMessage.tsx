@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,10 +14,12 @@ import {
   Clock,
   Smartphone,
   MessageSquare,
-  History
+  History,
+  RefreshCw
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { sendMessageWithRetry } from '@/lib/sendWithRetry';
 
 interface WATestMessageProps {
   instances: Array<{ id: string; name: string; status: string }>;
@@ -42,11 +44,9 @@ interface MessageLog {
 export const WATestMessage = ({
   instances,
   backendMode,
-  backendUrl,
   localEndpoint,
   localPort,
   localToken,
-  masterToken,
   isBackendActive,
 }: WATestMessageProps) => {
   const [testPhone, setTestPhone] = useState('');
@@ -57,10 +57,11 @@ export const WATestMessage = ({
     '📱 Enviado via: WhatsApp Automação'
   );
   const [isSending, setIsSending] = useState(false);
+  const [retryInfo, setRetryInfo] = useState<string | null>(null);
   const [recentLogs, setRecentLogs] = useState<MessageLog[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
 
-  const fetchRecentLogs = async () => {
+  const fetchRecentLogs = useCallback(async () => {
     setIsLoadingLogs(true);
     try {
       const { data, error } = await supabase
@@ -76,7 +77,7 @@ export const WATestMessage = ({
     } finally {
       setIsLoadingLogs(false);
     }
-  };
+  }, []);
 
   const sendTestMessage = async () => {
     if (!testPhone.trim()) {
@@ -89,7 +90,6 @@ export const WATestMessage = ({
       return;
     }
 
-    // Trust database status - the instance was already merged with heartbeat data in parent
     const connectedInstance = instances.find(i => i.status === 'connected');
     if (!connectedInstance) {
       toast.error('Nenhuma instância conectada. Conecte uma instância primeiro.');
@@ -97,14 +97,13 @@ export const WATestMessage = ({
     }
 
     setIsSending(true);
+    setRetryInfo(null);
 
     try {
       let formattedPhone = testPhone.replace(/\D/g, '');
       if (!formattedPhone.startsWith('55')) {
         formattedPhone = '55' + formattedPhone;
       }
-
-      let result: { success?: boolean; error?: string };
 
       if (backendMode === 'local') {
         // Chamada direta para backend local
@@ -120,29 +119,10 @@ export const WATestMessage = ({
             message: testMessage,
           }),
         });
-        result = await response.json();
+        const result = await response.json();
         if (!response.ok) throw new Error(result.error || 'Erro ao enviar');
-      } else {
-        // VPS - usar proxy para evitar Mixed Content
-        const { data, error } = await supabase.functions.invoke('whatsapp-backend-proxy', {
-          body: {
-            path: `/api/instance/${connectedInstance.id}/send`,
-            method: 'POST',
-            body: {
-              phone: formattedPhone,
-              message: testMessage,
-            },
-          },
-        });
-
-        if (error) throw new Error(error.message);
-        if (!data?.ok) throw new Error(data?.data?.error || 'Erro ao enviar via proxy');
-        result = data.data;
-      }
-
-      if (result.success !== false) {
+        
         toast.success('Mensagem de teste enviada com sucesso!');
-
         await supabase.from('whatsapp_message_logs').insert({
           instance_id: connectedInstance.id,
           direction: 'outgoing',
@@ -150,16 +130,57 @@ export const WATestMessage = ({
           message: testMessage,
           status: 'sent',
         });
-
-        fetchRecentLogs();
       } else {
-        throw new Error(result.error || 'Erro ao enviar mensagem');
+        // VPS - usar sistema de retry inteligente
+        const result = await sendMessageWithRetry(
+          connectedInstance.id,
+          formattedPhone,
+          testMessage,
+          {
+            maxRetries: 10,
+            baseDelay: 1500,
+            maxDelay: 30000,
+            onRetry: (attempt, error, nextDelay) => {
+              setRetryInfo(`Tentativa ${attempt} falhou. Retentando em ${Math.round(nextDelay / 1000)}s...`);
+            },
+          }
+        );
+
+        if (!result.success) {
+          throw new Error(result.error || 'Falha ao enviar após múltiplas tentativas');
+        }
+
+        toast.success(`Mensagem enviada! (${result.attempts} tentativa${result.attempts > 1 ? 's' : ''})`);
+        
+        await supabase.from('whatsapp_message_logs').insert({
+          instance_id: connectedInstance.id,
+          direction: 'outgoing',
+          phone_to: formattedPhone,
+          message: testMessage,
+          status: 'sent',
+        });
       }
+
+      fetchRecentLogs();
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       toast.error(errorMessage);
+      
+      // Log do erro
+      const connectedInstance = instances.find(i => i.status === 'connected');
+      if (connectedInstance) {
+        await supabase.from('whatsapp_message_logs').insert({
+          instance_id: connectedInstance.id,
+          direction: 'outgoing',
+          phone_to: testPhone.replace(/\D/g, ''),
+          message: testMessage,
+          status: 'failed',
+          error_message: errorMessage,
+        });
+      }
     } finally {
       setIsSending(false);
+      setRetryInfo(null);
     }
   };
 
@@ -236,6 +257,13 @@ export const WATestMessage = ({
             </p>
           </div>
 
+          {retryInfo && (
+            <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-sm flex items-center gap-2">
+              <RefreshCw className="w-4 h-4 animate-spin" />
+              {retryInfo}
+            </div>
+          )}
+
           <Button
             onClick={sendTestMessage}
             disabled={isSending || !isBackendActive}
@@ -245,7 +273,7 @@ export const WATestMessage = ({
             {isSending ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Enviando...
+                {retryInfo ? 'Retentando...' : 'Enviando...'}
               </>
             ) : (
               <>

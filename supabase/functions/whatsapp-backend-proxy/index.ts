@@ -144,7 +144,17 @@ serve(async (req) => {
       );
     }
 
-    const baseUrlPrimary = String(config.backend_url).replace(/\/$/, "");
+    const configuredUrl = String(config.backend_url).replace(/\/$/, "");
+    
+    // Extrair base URL sem porta para tentar múltiplas portas
+    const urlMatch = configuredUrl.match(/^(https?:\/\/[^:\/]+)(?::(\d+))?(.*)$/);
+    const baseHost = urlMatch ? urlMatch[1] : configuredUrl;
+    const configuredPort = urlMatch?.[2] || '3000';
+    
+    // Ordem de portas para tentar (prioriza a configurada)
+    const portsToTry = configuredPort === '3001' 
+      ? ['3001', '3000'] 
+      : ['3000', '3001'];
 
     const headers: Record<string, string> = {
       Authorization: `Bearer ${config.master_token}`,
@@ -165,12 +175,18 @@ serve(async (req) => {
         hasBody: Boolean(body?.body),
       });
 
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
       try {
         const upstream = await fetch(targetUrl, {
           method,
           headers,
           body: fetchBody,
+          signal: controller.signal,
         });
+
+        clearTimeout(timeout);
 
         const text = await upstream.text();
         let parsed: unknown = text;
@@ -186,8 +202,10 @@ serve(async (req) => {
           status: upstream.status,
           data: parsed,
           targetUrl,
+          port: baseUrl.match(/:(\d+)$/)?.[1] || '3000',
         };
       } catch (err) {
+        clearTimeout(timeout);
         const message = err instanceof Error ? err.message : String(err);
         return {
           ok: false,
@@ -200,73 +218,52 @@ serve(async (req) => {
       }
     };
 
-    // 1) Try configured URL
-    const primary = await tryFetch(baseUrlPrimary);
-    if (!primary.ok && (primary as any)._connectError) {
-      // 2) Fallback: if configured with :3001, try :3000 and auto-correct config
-      const baseUrlFallback = baseUrlPrimary.replace(/:3001$/, ":3000");
-      if (baseUrlFallback !== baseUrlPrimary) {
-        const fallback = await tryFetch(baseUrlFallback);
-        if (fallback.ok) {
-          // Persist corrected URL to stop future 3001 calls
+    // Tentar cada porta em sequência
+    const errors: string[] = [];
+    for (const port of portsToTry) {
+      const baseUrl = `${baseHost}:${port}`;
+      const result = await tryFetch(baseUrl);
+      
+      if (result.ok || (!result.ok && !(result as any)._connectError)) {
+        // Sucesso ou erro de aplicação (não de conexão)
+        
+        // Se usamos porta diferente da configurada e funcionou, atualizar config
+        if (result.ok && port !== configuredPort) {
+          console.log(`whatsapp-backend-proxy: Atualizando porta de ${configuredPort} para ${port}`);
           await supabaseAdmin
             .from("whatsapp_backend_config")
-            .update({ backend_url: baseUrlFallback })
+            .update({ backend_url: baseUrl })
             .eq("id", config.id);
-
-          return new Response(JSON.stringify(fallback), {
-            status: 200,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
         }
-
-        return new Response(
-          JSON.stringify({
-            ok: false,
-            status: 0,
-            error:
-              "Não foi possível conectar ao VPS. Verifique se a porta 3000 está liberada (firewall) e se o backend está ouvindo em 0.0.0.0.",
-            data: null,
-            details: {
-              primaryTarget: (primary as any).targetUrl,
-              fallbackTarget: (fallback as any).targetUrl,
-              primaryError: (primary as any).error,
-              fallbackError: (fallback as any).error,
-            },
-          }),
-          {
-            status: 200,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      }
-
-      return new Response(
-        JSON.stringify({
-          ok: false,
-          status: 0,
-          error:
-            "Não foi possível conectar ao VPS. Verifique se a porta está liberada (firewall) e se o backend está ouvindo em 0.0.0.0.",
-          data: null,
-          details: {
-            target: (primary as any).targetUrl,
-            error: (primary as any).error,
-          },
-        }),
-        {
+        
+        return new Response(JSON.stringify(result), {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+        });
+      }
+      
+      // Erro de conexão - guardar e tentar próxima porta
+      errors.push(`Porta ${port}: ${(result as any).error || 'Erro de conexão'}`);
+      console.warn(`whatsapp-backend-proxy: Falha na porta ${port}, tentando próxima...`);
     }
 
-    return new Response(JSON.stringify(primary), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    // Todas as portas falharam
+    return new Response(
+      JSON.stringify({
+        ok: false,
+        status: 0,
+        error: "Não foi possível conectar ao VPS após tentar todas as portas. Verifique se o backend está rodando e as portas 3000/3001 estão liberadas no firewall.",
+        data: null,
+        details: { errors },
+      }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro interno";
-    // Always return 200 so the web client can handle the error gracefully (no blank screen)
+    console.error("whatsapp-backend-proxy error:", message);
     return new Response(
       JSON.stringify({ ok: false, status: 0, error: message, data: null }),
       {
