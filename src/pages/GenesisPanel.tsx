@@ -52,6 +52,7 @@ import { GenesisWebhooks } from '@/components/genesis/GenesisWebhooks';
 import { GenesisMyAccount } from '@/components/genesis/GenesisMyAccount';
 import { GenesisMetricsDashboard } from '@/components/genesis/GenesisMetricsDashboard';
 import { GenesisAlertRules } from '@/components/genesis/GenesisAlertRules';
+import { LunaAssistant } from '@/components/genesis/LunaAssistant';
 
 // Dashboard component with real data
 const GenesisDashboard = ({ onNavigate }: { onNavigate: (tab: string) => void }) => {
@@ -305,6 +306,7 @@ export default function GenesisPanel() {
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'luna', label: 'Luna IA', icon: Sparkles },
     { id: 'instances', label: 'Instâncias', icon: Smartphone },
     { id: 'flows', label: 'Flow Builder', icon: GitBranch },
     { id: 'chatbots', label: 'Chatbots', icon: Bot },
@@ -323,6 +325,8 @@ export default function GenesisPanel() {
     switch (activeTab) {
       case 'dashboard':
         return <GenesisDashboard onNavigate={setActiveTab} />;
+      case 'luna':
+        return <LunaAssistant />;
       case 'instances':
         return <InstancesManager onNavigateToAccount={() => setActiveTab('account')} />;
       case 'flows':

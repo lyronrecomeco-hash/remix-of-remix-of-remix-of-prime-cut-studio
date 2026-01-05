@@ -12,3 +12,4 @@ export { GenesisChatbots } from './GenesisChatbots';
 export { WelcomeModal } from './WelcomeModal';
 export { GenesisMyAccount } from './GenesisMyAccount';
 export { ConfigureNumberModal } from './ConfigureNumberModal';
+export { LunaAssistant } from './LunaAssistant';
