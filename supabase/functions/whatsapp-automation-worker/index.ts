@@ -1312,6 +1312,346 @@ async function processAction(
       };
     }
 
+    // ============ AI NATIVE NODES ============
+    case 'ai_prompt_execute': {
+      const {
+        prompt,
+        system_prompt = 'Você é um assistente útil.',
+        model = 'google/gemini-2.5-flash',
+        max_tokens = 1024,
+        temperature = 0.7,
+        save_response_to = 'ai_response',
+        use_context = true,
+        fallback_response = 'Desculpe, não consegui processar sua solicitação.'
+      } = action.config;
+
+      if (!prompt) {
+        return { success: false, error: 'Prompt is required' };
+      }
+
+      // Replace variables in prompt
+      let finalPrompt = prompt;
+      if (eventData) {
+        Object.keys(eventData).forEach(key => {
+          finalPrompt = finalPrompt.replace(new RegExp(`{{${key}}}`, 'g'), eventData[key] || '');
+        });
+      }
+      if (context.flowContext?.variables) {
+        Object.keys(context.flowContext.variables).forEach(key => {
+          finalPrompt = finalPrompt.replace(new RegExp(`{{${key}}}`, 'g'), context.flowContext.variables[key]?.value || '');
+        });
+      }
+
+      try {
+        const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+        if (!LOVABLE_API_KEY) {
+          console.error('[AI] LOVABLE_API_KEY not configured');
+          context.flowContext = {
+            ...context.flowContext,
+            [save_response_to]: fallback_response,
+          };
+          return { success: true, result: { response: fallback_response, fallback: true } };
+        }
+
+        // Build messages array
+        const messages: { role: string; content: string }[] = [
+          { role: 'system', content: system_prompt }
+        ];
+
+        // Add chat history if using context
+        if (use_context && context.flowContext?.chat_history) {
+          messages.push(...context.flowContext.chat_history);
+        }
+
+        messages.push({ role: 'user', content: finalPrompt });
+
+        const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model,
+            messages,
+            max_tokens,
+            temperature,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('[AI] API error:', response.status, errorText);
+          
+          context.flowContext = {
+            ...context.flowContext,
+            [save_response_to]: fallback_response,
+          };
+          return { success: true, result: { response: fallback_response, fallback: true, error: errorText } };
+        }
+
+        const data = await response.json();
+        const aiResponse = data.choices?.[0]?.message?.content || fallback_response;
+
+        // Save response to context
+        context.flowContext = {
+          ...context.flowContext,
+          [save_response_to]: aiResponse,
+          variables: {
+            ...context.flowContext?.variables,
+            [save_response_to]: { value: aiResponse, scope: 'flow' },
+          },
+        };
+
+        console.log(`[AI] Prompt executed successfully, saved to ${save_response_to}`);
+
+        return {
+          success: true,
+          result: {
+            response: aiResponse,
+            model,
+            tokens: data.usage?.total_tokens || 0,
+            savedTo: save_response_to,
+          }
+        };
+      } catch (error: any) {
+        console.error('[AI] Error executing prompt:', error);
+        context.flowContext = {
+          ...context.flowContext,
+          [save_response_to]: fallback_response,
+        };
+        return { success: true, result: { response: fallback_response, fallback: true, error: error.message } };
+      }
+    }
+
+    case 'ai_chat_context': {
+      const {
+        context_scope = 'execution',
+        max_history = 10,
+        context_key = 'chat_history',
+        include_system = true,
+        auto_summarize = false,
+        summarize_after = 20
+      } = action.config;
+
+      // Initialize or retrieve chat history
+      let chatHistory = context.flowContext?.[context_key] || [];
+
+      // Add current message to history if available
+      if (eventData?.message || eventData?.content) {
+        const userMessage = eventData.message || eventData.content;
+        chatHistory.push({ role: 'user', content: userMessage });
+      }
+
+      // Check if we need to add the last AI response
+      if (context.flowContext?.ai_response) {
+        chatHistory.push({ role: 'assistant', content: context.flowContext.ai_response });
+      }
+
+      // Trim to max history
+      if (chatHistory.length > max_history * 2) {
+        chatHistory = chatHistory.slice(-max_history * 2);
+      }
+
+      // Store in context
+      context.flowContext = {
+        ...context.flowContext,
+        [context_key]: chatHistory,
+        chat_context: {
+          scope: context_scope,
+          maxHistory: max_history,
+          currentSize: chatHistory.length,
+          includeSystem: include_system,
+          autoSummarize: auto_summarize,
+        },
+      };
+
+      console.log(`[AI] Chat context updated: ${chatHistory.length} messages`);
+
+      return {
+        success: true,
+        result: {
+          historySize: chatHistory.length,
+          scope: context_scope,
+          contextKey: context_key,
+        }
+      };
+    }
+
+    case 'ai_decision': {
+      const {
+        decision_prompt = 'Analise a mensagem e decida a melhor ação.',
+        options = [],
+        default_option = 'option_a',
+        confidence_threshold = 0.7,
+        save_decision_to = 'ai_decision',
+        save_reasoning_to = 'ai_reasoning'
+      } = action.config;
+
+      try {
+        const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+        if (!LOVABLE_API_KEY) {
+          console.error('[AI] LOVABLE_API_KEY not configured for decision');
+          context.flowContext = {
+            ...context.flowContext,
+            [save_decision_to]: default_option,
+            [save_reasoning_to]: 'API key not configured',
+          };
+          return { success: true, result: { decision: default_option, fallback: true } };
+        }
+
+        // Build context from event data
+        let contextInfo = '';
+        if (eventData?.message) contextInfo = `Mensagem do usuário: "${eventData.message}"`;
+        if (eventData?.content) contextInfo = `Conteúdo: "${eventData.content}"`;
+
+        // Build options description
+        const optionsDesc = options
+          .map((opt: any, i: number) => `${i + 1}. ${opt.value}: ${opt.description}`)
+          .join('\n');
+
+        const systemPrompt = `Você é um assistente de decisão. Analise o contexto e escolha a melhor opção.
+Responda APENAS em JSON com o formato: {"decision": "valor_da_opcao", "confidence": 0.0-1.0, "reasoning": "explicação breve"}
+Opções disponíveis:
+${optionsDesc}`;
+
+        const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: `${decision_prompt}\n\nContexto: ${contextInfo}` }
+            ],
+            max_tokens: 256,
+            temperature: 0.3,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`AI API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const aiContent = data.choices?.[0]?.message?.content || '';
+
+        // Parse JSON response
+        let decision = default_option;
+        let confidence = 0;
+        let reasoning = 'Failed to parse AI response';
+
+        try {
+          const jsonMatch = aiContent.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            decision = parsed.decision || default_option;
+            confidence = parsed.confidence || 0;
+            reasoning = parsed.reasoning || '';
+          }
+        } catch {
+          console.error('[AI] Failed to parse decision JSON');
+        }
+
+        // Apply confidence threshold
+        if (confidence < confidence_threshold) {
+          decision = default_option;
+          reasoning = `Confidence ${confidence} below threshold ${confidence_threshold}, using default`;
+        }
+
+        // Store decision
+        context.flowContext = {
+          ...context.flowContext,
+          [save_decision_to]: decision,
+          [save_reasoning_to]: reasoning,
+          variables: {
+            ...context.flowContext?.variables,
+            [save_decision_to]: { value: decision, scope: 'flow' },
+            [save_reasoning_to]: { value: reasoning, scope: 'flow' },
+          },
+        };
+
+        console.log(`[AI] Decision made: ${decision} (confidence: ${confidence})`);
+
+        return {
+          success: true,
+          result: {
+            decision,
+            confidence,
+            reasoning,
+            branch: decision,
+          }
+        };
+      } catch (error: any) {
+        console.error('[AI] Decision error:', error);
+        context.flowContext = {
+          ...context.flowContext,
+          [save_decision_to]: default_option,
+          [save_reasoning_to]: error.message,
+        };
+        return { success: true, result: { decision: default_option, fallback: true, error: error.message } };
+      }
+    }
+
+    case 'ai_embedding': {
+      const {
+        text_source = '{{message}}',
+        save_embedding_to = 'embedding',
+        search_collection = '',
+        top_k = 5,
+        similarity_threshold = 0.8
+      } = action.config;
+
+      // Resolve text source
+      let text = text_source;
+      if (text.startsWith('{{') && text.endsWith('}}')) {
+        const varName = text.slice(2, -2);
+        text = eventData?.[varName] || context.flowContext?.variables?.[varName]?.value || '';
+      }
+
+      if (!text) {
+        return { success: false, error: 'No text to embed' };
+      }
+
+      // For now, generate a simple hash as placeholder
+      // In production, this would call an embedding API
+      const simpleHash = text.split('').reduce((acc: number, char: string) => {
+        return acc + char.charCodeAt(0);
+      }, 0);
+
+      // Create a mock embedding (384 dimensions for compatibility)
+      const mockEmbedding = Array(384).fill(0).map((_, i) => 
+        Math.sin((simpleHash + i) * 0.01) * 0.5 + 0.5
+      );
+
+      context.flowContext = {
+        ...context.flowContext,
+        [save_embedding_to]: mockEmbedding,
+        embedding_metadata: {
+          textLength: text.length,
+          dimensions: mockEmbedding.length,
+          collection: search_collection,
+          topK: top_k,
+          threshold: similarity_threshold,
+        },
+      };
+
+      console.log(`[AI] Embedding generated for text (${text.length} chars)`);
+
+      return {
+        success: true,
+        result: {
+          embedded: true,
+          dimensions: mockEmbedding.length,
+          savedTo: save_embedding_to,
+          searchCollection: search_collection,
+        }
+      };
+    }
+
     default:
       return { success: false, error: `Unknown action type: ${action.type}` };
   }

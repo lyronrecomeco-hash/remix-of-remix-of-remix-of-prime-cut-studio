@@ -127,6 +127,11 @@ const getIconForType = (type: NodeType, iconName?: string) => {
     infra_rate_limit: Gauge,
     if_infra_health: HeartPulse,
     secure_context_guard: Lock,
+    // AI Native nodes
+    ai_prompt_execute: Brain,
+    ai_chat_context: MessageSquare,
+    ai_decision: GitBranch,
+    ai_embedding: Zap,
   };
   
   return typeIcons[type] || Zap;
