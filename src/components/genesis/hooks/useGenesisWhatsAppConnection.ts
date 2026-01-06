@@ -52,8 +52,8 @@ interface InstanceStatus {
 // HARDENING: CONFIGURAÇÕES DE ESTABILIDADE FRONTEND
 // ═══════════════════════════════════════════════════════════════════════════════
 const HARDENING = {
-  // Threshold de stale aumentado para 5 minutos (maior tolerância)
-  STALE_THRESHOLD_MS: 300000,
+  // Threshold de stale reduzido para 3 minutos (fast-path mais preciso)
+  STALE_THRESHOLD_MS: 180000,
   
   // Anti-loop: máximo de tentativas antes de cooldown forçado
   MAX_CONNECT_ATTEMPTS: 5,
@@ -65,20 +65,23 @@ const HARDENING = {
   RECONNECT_BACKOFF_FACTOR: 1.5,
   RECONNECT_JITTER_FACTOR: 0.2,
   
-  // Polling otimizado (menos agressivo)
-  POLLING_INTERVAL: 1500, // Aumentado de 1000 para 1500ms
-  MAX_POLLING_ATTEMPTS: 120, // Reduzido de 180 para 120 (3min com intervalo maior)
-  QR_AUTO_REFRESH_MS: 50000, // Aumentado de 45s para 50s
+  // Polling otimizado (mais rápido para UX fluida)
+  POLLING_INTERVAL: 1200, // Reduzido para 1.2s
+  MAX_POLLING_ATTEMPTS: 100, // 2min total
+  QR_AUTO_REFRESH_MS: 45000, // 45s
   
   // Status polling menos frequente
-  STATUS_POLL_INTERVAL: 5000, // 5s em vez de mais frequente
+  STATUS_POLL_INTERVAL: 5000, // 5s
   
   // Delay de estabilização (aguardar backend ficar ready)
-  STABILIZATION_WAIT_ATTEMPTS: 15, // Aumentado de 10 para 15
-  STABILIZATION_WAIT_INTERVAL: 1200, // 1.2s entre checks
+  STABILIZATION_WAIT_ATTEMPTS: 10,
+  STABILIZATION_WAIT_INTERVAL: 800, // 800ms entre checks (mais rápido)
   
   // Rate limit de operações
-  MIN_OPERATION_INTERVAL: 2000, // Mínimo 2s entre operações de conexão
+  MIN_OPERATION_INTERVAL: 1500, // 1.5s entre operações
+  
+  // Fast-path: heartbeat recente = já conectado
+  FAST_PATH_HEARTBEAT_MS: 60000, // Se heartbeat < 1min, confiar no banco
 };
 
 export function useGenesisWhatsAppConnection() {
@@ -361,27 +364,51 @@ export function useGenesisWhatsAppConnection() {
   };
 
   // Detectar se backend é V8 (multi-instância) ou Legacy (single-instance)
+  // COM CACHE em session_data para evitar requests repetidas
   const detectBackendFlavor = async (instanceId: string): Promise<'v8' | 'legacy'> => {
+    // Verificar cache primeiro
+    try {
+      const { data: cached } = await supabase
+        .from('genesis_instances')
+        .select('session_data')
+        .eq('id', instanceId)
+        .single();
+      
+      const session = cached?.session_data as Record<string, unknown> | null;
+      if (session?.backend_flavor && typeof session.backend_flavor === 'string') {
+        return session.backend_flavor as 'v8' | 'legacy';
+      }
+    } catch {}
+    
     // Tentar endpoint V8 primeiro
     const v8Res = await proxyRequest(instanceId, `/api/instance/${instanceId}/status`, 'GET');
     
+    let flavor: 'v8' | 'legacy' = 'legacy';
+    
     // Se retornou dados válidos ou sucesso, é V8
     if (v8Res.ok && v8Res.status !== 404) {
-      return 'v8';
-    }
-    
-    // Se 404 com HTML "Cannot GET", tentar legacy
-    const dataStr = typeof v8Res.data === 'string' ? v8Res.data : JSON.stringify(v8Res.data || '');
-    if (dataStr.includes('Cannot GET') || v8Res.status === 404) {
-      // Tentar endpoint legacy
-      const legacyRes = await proxyRequest(instanceId, '/status', 'GET');
-      if (legacyRes.ok || (legacyRes.data && !dataStr.includes('Cannot GET'))) {
-        return 'legacy';
+      flavor = 'v8';
+    } else {
+      // Se 404 com HTML "Cannot GET", tentar legacy
+      const dataStr = typeof v8Res.data === 'string' ? v8Res.data : JSON.stringify(v8Res.data || '');
+      if (dataStr.includes('Cannot GET') || v8Res.status === 404) {
+        const legacyRes = await proxyRequest(instanceId, '/status', 'GET');
+        if (legacyRes.ok || (legacyRes.data && !dataStr.includes('Cannot GET'))) {
+          flavor = 'legacy';
+        }
       }
     }
     
-    // Default para legacy se não conseguiu determinar
-    return 'legacy';
+    // Salvar no cache
+    try {
+      const merged = await mergeSessionData(instanceId, { backend_flavor: flavor });
+      await supabase
+        .from('genesis_instances')
+        .update({ session_data: JSON.parse(JSON.stringify(merged)) })
+        .eq('id', instanceId);
+    } catch {}
+    
+    return flavor;
   };
 
   // V8: Criar instância no backend se não existir (só para backends V8)
@@ -808,7 +835,66 @@ Agora você pode automatizar seu atendimento!`;
         .eq('id', instanceId)
         .single();
 
-      // PASSO 2: Validar saúde do backend primeiro
+      // ═══════════════════════════════════════════════════════════════════════════
+      // FAST-PATH: Se heartbeat recente E status connected, confiar no banco
+      // ═══════════════════════════════════════════════════════════════════════════
+      const lastHb = instanceRow?.last_heartbeat ? new Date(instanceRow.last_heartbeat).getTime() : 0;
+      const isHeartbeatFresh = lastHb > 0 && (Date.now() - lastHb) < HARDENING.FAST_PATH_HEARTBEAT_MS;
+      const isStatusConnected = instanceRow?.effective_status === 'connected';
+      
+      if (isHeartbeatFresh && isStatusConnected && instanceRow?.phone_number) {
+        console.log(`[FAST-PATH] Instance ${instanceId} has fresh heartbeat, skipping backend check`);
+        
+        safeSetState(() => ({
+          isConnecting: true,
+          isPolling: false,
+          qrCode: null,
+          error: null,
+          attempts: 0,
+          phase: 'stabilizing',
+        }));
+        
+        toast.info('Reconhecendo conexão existente...');
+        
+        // Enviar mensagem de teste SEMPRE ao clicar conectar (reconexão)
+        const nowIso = new Date().toISOString();
+        toast.info('Enviando teste de validação...');
+        const result = await sendWelcomeMessage(instanceId, instanceRow.phone_number);
+        
+        const mergedReady = await mergeSessionData(instanceId, {
+          ready_to_send: result.success,
+          welcome_sent_at: nowIso,
+          last_send_success_at: result.success ? nowIso : undefined,
+          ready_phase: result.success ? 'ready_to_send' : 'send_attempted',
+          ready_updated_at: nowIso,
+        });
+
+        await updateInstanceInDB(instanceId, {
+          effective_status: 'connected',
+          session_data: mergedReady,
+          last_heartbeat: nowIso,
+        });
+
+        connectAttemptsRef.current = 0;
+        
+        safeSetState(() => ({
+          isConnecting: false,
+          isPolling: false,
+          qrCode: null,
+          error: null,
+          attempts: 0,
+          phase: 'connected',
+        }));
+        
+        toast.success(result.success 
+          ? '✅ WhatsApp verificado e funcionando!' 
+          : '✅ WhatsApp conectado! Pronto para uso.');
+        
+        onConnected?.();
+        return;
+      }
+
+      // PASSO 2: Validar saúde do backend
       const healthCheck = await validateBackendHealth(instanceId);
       
       if (!healthCheck.healthy) {
@@ -842,17 +928,8 @@ Agora você pode automatizar seu atendimento!`;
           last_heartbeat: nowIso,
         });
 
-        // Verificar se deve enviar mensagem de teste
-        const session = instanceRow?.session_data && typeof instanceRow.session_data === 'object'
-          ? (instanceRow.session_data as Record<string, unknown>)
-          : {};
-
-        const lastWelcome = session.welcome_sent_at 
-          ? new Date(session.welcome_sent_at as string).getTime() 
-          : 0;
-        const welcomeRecent = Date.now() - lastWelcome < 24 * 60 * 60 * 1000; // 24h
-
-        if (phoneNumber && !welcomeRecent) {
+        // SEMPRE enviar mensagem de teste ao clicar "Conectar" (mesmo reconexão)
+        if (phoneNumber) {
           // Enviar teste automático
           safeSetState(() => ({
             isConnecting: true,
