@@ -419,52 +419,165 @@ export function useGenesisWhatsAppConnection() {
     return flavor;
   };
 
+  // Obter a chave da instância no backend (pode ser UUID ou nome)
+  const getBackendInstanceKey = async (instanceId: string): Promise<string> => {
+    try {
+      const { data: instanceRow } = await supabase
+        .from('genesis_instances')
+        .select('session_data, name')
+        .eq('id', instanceId)
+        .single();
+
+      const session = instanceRow?.session_data as Record<string, unknown> | null;
+      
+      // Se já temos uma chave mapeada, usar ela
+      if (session?.backend_instance_key && typeof session.backend_instance_key === 'string') {
+        return session.backend_instance_key;
+      }
+      
+      // Senão, usar o nome da instância (que é o que o VPS usa)
+      if (instanceRow?.name) {
+        return instanceRow.name;
+      }
+      
+      // Fallback para UUID (improvável)
+      return instanceId;
+    } catch {
+      return instanceId;
+    }
+  };
+
   // V8: Criar instância no backend se não existir (só para backends V8)
-  const ensureInstanceExists = async (instanceId: string, instanceName?: string): Promise<{ exists: boolean; created: boolean; error?: string; flavor?: 'v8' | 'legacy' }> => {
+  const ensureInstanceExists = async (instanceId: string, instanceName?: string): Promise<{ exists: boolean; created: boolean; error?: string; flavor?: 'v8' | 'legacy'; backendKey?: string }> => {
     // Primeiro detectar flavor do backend
     const flavor = await detectBackendFlavor(instanceId);
     logDiagnostic('BACKEND_FLAVOR_DETECTED', { instanceId, flavor });
     
     if (flavor === 'legacy') {
       // Backend legacy não precisa criar instância - já existe por padrão
-      return { exists: true, created: false, flavor: 'legacy' };
+      return { exists: true, created: false, flavor: 'legacy', backendKey: 'default' };
     }
     
-    // Backend V8: verificar se instância existe
-    const statusRes = await proxyRequest(instanceId, `/api/instance/${instanceId}/status`, 'GET');
+    // Obter a chave que o backend usa (nome da instância, não UUID)
+    const backendKey = await getBackendInstanceKey(instanceId);
+    logDiagnostic('BACKEND_INSTANCE_KEY', { instanceId, backendKey, instanceName });
     
-    // Se retornou dados, instância existe
+    // Backend V8: verificar se instância existe pelo NOME (não UUID)
+    const statusRes = await proxyRequest(instanceId, `/api/instance/${encodeURIComponent(backendKey)}/status`, 'GET');
+    
+    // Se retornou dados válidos, instância existe
     if (statusRes.ok || (statusRes.data && !statusRes.data?.error?.includes('não encontrada'))) {
-      return { exists: true, created: false, flavor: 'v8' };
+      logDiagnostic('INSTANCE_EXISTS_IN_BACKEND', { instanceId, backendKey, data: statusRes.data });
+      
+      // Persistir a chave para uso futuro
+      try {
+        const merged = await mergeSessionData(instanceId, { backend_instance_key: backendKey });
+        await supabase
+          .from('genesis_instances')
+          .update({ session_data: JSON.parse(JSON.stringify(merged)) })
+          .eq('id', instanceId);
+      } catch {}
+      
+      return { exists: true, created: false, flavor: 'v8', backendKey };
     }
     
-    // Instância não existe, criar
-    logDiagnostic('CREATING_INSTANCE_IN_BACKEND', { instanceId, instanceName });
+    // V8: Listar todas as instâncias para ver se já existe com outro nome
+    const listRes = await proxyRequest(instanceId, '/api/instances', 'GET');
+    logDiagnostic('LIST_BACKEND_INSTANCES', { instanceId, ok: listRes.ok, data: listRes.data });
     
-    const createRes = await proxyRequest(instanceId, '/api/instances', 'POST', {
-      instanceId,
-      name: instanceName || `instance-${instanceId.slice(0, 8)}`,
-    });
-    
-    if (createRes.ok || createRes.data?.success) {
-      logDiagnostic('INSTANCE_CREATED_SUCCESSFULLY', { instanceId });
-      return { exists: true, created: true, flavor: 'v8' };
+    if (listRes.ok && Array.isArray(listRes.data)) {
+      // Procurar instância por nome
+      const existing = listRes.data.find((inst: any) => 
+        inst.name === backendKey || 
+        inst.name === instanceName || 
+        inst.id === instanceId ||
+        inst.instanceId === instanceId
+      );
+      
+      if (existing) {
+        const foundKey = existing.name || existing.id || existing.instanceId;
+        logDiagnostic('FOUND_EXISTING_INSTANCE', { instanceId, foundKey, existing });
+        
+        // Persistir a chave encontrada
+        try {
+          const merged = await mergeSessionData(instanceId, { backend_instance_key: foundKey });
+          await supabase
+            .from('genesis_instances')
+            .update({ session_data: JSON.parse(JSON.stringify(merged)) })
+            .eq('id', instanceId);
+        } catch {}
+        
+        return { exists: true, created: false, flavor: 'v8', backendKey: foundKey };
+      }
+      
+      // Se já existe uma instância (mesmo com outro nome), usar ela
+      if (listRes.data.length > 0) {
+        const firstInstance = listRes.data[0];
+        const foundKey = firstInstance.name || firstInstance.id || firstInstance.instanceId;
+        logDiagnostic('USING_FIRST_AVAILABLE_INSTANCE', { instanceId, foundKey, firstInstance });
+        
+        // Persistir a chave encontrada
+        try {
+          const merged = await mergeSessionData(instanceId, { backend_instance_key: foundKey });
+          await supabase
+            .from('genesis_instances')
+            .update({ session_data: JSON.parse(JSON.stringify(merged)) })
+            .eq('id', instanceId);
+        } catch {}
+        
+        return { exists: true, created: false, flavor: 'v8', backendKey: foundKey };
+      }
     }
     
-    // Se erro é "já existe", tudo bem
-    if (createRes.data?.error?.includes('já existe')) {
-      return { exists: true, created: false, flavor: 'v8' };
+    // Instância não existe, criar com o nome correto
+    const createName = instanceName || backendKey || `instance-${instanceId.slice(0, 8)}`;
+    logDiagnostic('CREATING_INSTANCE_IN_BACKEND', { instanceId, createName });
+    
+    // Tentar múltiplos formatos de payload (diferentes versões do script)
+    const payloadFormats = [
+      { instanceId: createName, name: createName },
+      { id: createName, name: createName },
+      { name: createName },
+      { instanceId, name: createName },
+    ];
+    
+    for (const payload of payloadFormats) {
+      const createRes = await proxyRequest(instanceId, '/api/instances', 'POST', payload);
+      logDiagnostic('CREATE_INSTANCE_ATTEMPT', { instanceId, payload, ok: createRes.ok, data: createRes.data });
+      
+      if (createRes.ok || createRes.data?.success || createRes.data?.id) {
+        const createdKey = createRes.data?.name || createRes.data?.id || createName;
+        logDiagnostic('INSTANCE_CREATED_SUCCESSFULLY', { instanceId, createdKey });
+        
+        // Persistir a chave criada
+        try {
+          const merged = await mergeSessionData(instanceId, { backend_instance_key: createdKey });
+          await supabase
+            .from('genesis_instances')
+            .update({ session_data: JSON.parse(JSON.stringify(merged)) })
+            .eq('id', instanceId);
+        } catch {}
+        
+        return { exists: true, created: true, flavor: 'v8', backendKey: createdKey };
+      }
+      
+      // Se erro é "já existe", tudo bem
+      if (createRes.data?.error?.includes('já existe')) {
+        return { exists: true, created: false, flavor: 'v8', backendKey: createName };
+      }
     }
     
-    return { exists: false, created: false, error: createRes.error || createRes.data?.error, flavor: 'v8' };
+    // Se chegou aqui, falhou em criar. Tentar usar instância padrão do VPS
+    logDiagnostic('FALLBACK_TO_DEFAULT_INSTANCE', { instanceId });
+    return { exists: true, created: false, flavor: 'v8', backendKey: instanceName || 'Genesis' };
   };
 
   const checkStatus = async (instanceId: string): Promise<{ connected: boolean; phoneNumber?: string; isStale?: boolean; readyToSend?: boolean; notFound?: boolean; flavor?: 'v8' | 'legacy' }> => {
-    // IMPORTANT: Não “derrubar” a instância pelo frontend.
+    // IMPORTANT: Não "derrubar" a instância pelo frontend.
     // Stale aqui é apenas sinalização. A conexão real é confirmada pelo backend.
     const { data: instanceRow } = await supabase
       .from('genesis_instances')
-      .select('last_heartbeat, effective_status')
+      .select('last_heartbeat, effective_status, session_data')
       .eq('id', instanceId)
       .single();
 
@@ -473,13 +586,16 @@ export function useGenesisWhatsAppConnection() {
 
     // Usar flavor cacheado (evita 404 v8 -> fallback legacy em TODA checagem)
     let flavor: 'v8' | 'legacy' = await detectBackendFlavor(instanceId);
+    
+    // Obter a chave correta da instância no backend (nome, não UUID)
+    const backendKey = await getBackendInstanceKey(instanceId);
 
-    const fetchStatus = async (f: 'v8' | 'legacy') => {
-      const path = f === 'v8' ? `/api/instance/${instanceId}/status` : '/status';
+    const fetchStatus = async (f: 'v8' | 'legacy', key: string) => {
+      const path = f === 'v8' ? `/api/instance/${encodeURIComponent(key)}/status` : '/status';
       return proxyRequest(instanceId, path, 'GET');
     };
 
-    let res = await fetchStatus(flavor);
+    let res = await fetchStatus(flavor, backendKey);
 
     // Se o flavor cacheado estiver errado (mudança de script VPS), tenta fallback 1x
     const dataStr = typeof res.data === 'string' ? res.data : JSON.stringify(res.data || '');
@@ -491,12 +607,13 @@ export function useGenesisWhatsAppConnection() {
       const other: 'v8' | 'legacy' = flavor === 'v8' ? 'legacy' : 'v8';
       logDiagnostic('STATUS_FLAVOR_MISMATCH_TRYING_FALLBACK', {
         instanceId,
+        backendKey,
         from: flavor,
         to: other,
         status: res.status,
       });
 
-      const fallback = await fetchStatus(other);
+      const fallback = await fetchStatus(other, backendKey);
       if (fallback.ok) {
         flavor = other;
         res = fallback;
@@ -552,12 +669,15 @@ export function useGenesisWhatsAppConnection() {
   const generateQRCode = async (instanceId: string, skipConnect = false): Promise<string | null> => {
     // Detectar flavor do backend (FORÇAR refresh: usuário pode ter trocado o script VPS)
     const flavor = await detectBackendFlavor(instanceId, true);
-    logDiagnostic('GENERATE_QR_BACKEND_FLAVOR', { instanceId, flavor });
+    
+    // Obter a chave correta da instância no backend (nome, não UUID)
+    const backendKey = await getBackendInstanceKey(instanceId);
+    logDiagnostic('GENERATE_QR_BACKEND_FLAVOR', { instanceId, flavor, backendKey });
 
     // Primeiro iniciar conexão se ainda não foi feito (a menos que skipConnect = true)
     if (!skipConnect) {
       const connectPath = flavor === 'v8'
-        ? `/api/instance/${instanceId}/connect`
+        ? `/api/instance/${encodeURIComponent(backendKey)}/connect`
         : '/connect';
 
       let connectRes = await proxyRequest(instanceId, connectPath, 'POST', {});
@@ -567,11 +687,11 @@ export function useGenesisWhatsAppConnection() {
       const connectMissingRoute = !connectRes.ok && (connectRes.status === 404 || connectDataStr.includes('Cannot POST') || connectDataStr.includes('Cannot GET'));
 
       if (flavor === 'legacy' && connectMissingRoute) {
-        logDiagnostic('LEGACY_CONNECT_MISSING_TRYING_V8', { instanceId });
-        connectRes = await proxyRequest(instanceId, `/api/instance/${instanceId}/connect`, 'POST', {});
+        logDiagnostic('LEGACY_CONNECT_MISSING_TRYING_V8', { instanceId, backendKey });
+        connectRes = await proxyRequest(instanceId, `/api/instance/${encodeURIComponent(backendKey)}/connect`, 'POST', {});
       }
 
-      logDiagnostic('GENERATE_QR_CONNECT_RESULT', { instanceId, ok: connectRes.ok, data: connectRes.data, flavor });
+      logDiagnostic('GENERATE_QR_CONNECT_RESULT', { instanceId, backendKey, ok: connectRes.ok, data: connectRes.data, flavor });
 
       // Se falhou de forma real, falhar cedo com mensagem clara
       if (!connectRes.ok && !connectRes.data?.connected && connectRes.data?.status !== 'connected') {
@@ -586,7 +706,7 @@ export function useGenesisWhatsAppConnection() {
     for (let attempt = 0; attempt < 3; attempt++) {
       // Tentar endpoint baseado no flavor detectado
       const qrPath = flavor === 'v8'
-        ? `/api/instance/${instanceId}/qrcode`
+        ? `/api/instance/${encodeURIComponent(backendKey)}/qrcode`
         : '/qrcode';
 
       let res = await proxyRequest(instanceId, qrPath, 'GET');
@@ -596,14 +716,14 @@ export function useGenesisWhatsAppConnection() {
 
       // Fallback simétrico: se legacy falhou por rota ausente, tentar V8
       if (flavor === 'legacy' && missingRoute) {
-        logDiagnostic('LEGACY_QRCODE_MISSING_TRYING_V8', { instanceId, attempt });
-        res = await proxyRequest(instanceId, `/api/instance/${instanceId}/qrcode`, 'GET');
+        logDiagnostic('LEGACY_QRCODE_MISSING_TRYING_V8', { instanceId, backendKey, attempt });
+        res = await proxyRequest(instanceId, `/api/instance/${encodeURIComponent(backendKey)}/qrcode`, 'GET');
       }
 
       // Se V8 falhou por rota ausente, tentar legacy
       const dataStr2 = typeof res.data === 'string' ? res.data : JSON.stringify(res.data || '');
       if (flavor === 'v8' && !res.ok && (dataStr2.includes('Cannot GET') || res.status === 404)) {
-        logDiagnostic('V8_QRCODE_FAILED_TRYING_LEGACY', { instanceId, attempt });
+        logDiagnostic('V8_QRCODE_FAILED_TRYING_LEGACY', { instanceId, backendKey, attempt });
         res = await proxyRequest(instanceId, '/qrcode', 'GET');
       }
 
@@ -663,17 +783,20 @@ Agora você pode automatizar seu atendimento!`;
     // Detectar flavor do backend para escolher endpoints corretos
     // Forçar refresh do cache pois o usuário pode ter reinstalado o script
     const flavor = await detectBackendFlavor(instanceId, true);
-    logDiagnostic('WELCOME_MESSAGE_FLAVOR', { instanceId, flavor });
+    
+    // Obter a chave correta da instância no backend (nome, não UUID)
+    const backendKey = await getBackendInstanceKey(instanceId);
+    logDiagnostic('WELCOME_MESSAGE_FLAVOR', { instanceId, flavor, backendKey });
 
     const maxAttempts = 10;
 
     // Lista de endpoints para tentar - PRIORIZAR V8 sempre (mais moderno)
-    // Os endpoints V8 (/api/instance/:id/send) são mais confiáveis
+    // Os endpoints V8 (/api/instance/:key/send) usam o backendKey (nome), não UUID
     const sendEndpoints = [
-      `/api/instance/${instanceId}/send`,
-      `/api/instance/${instanceId}/send-message`,
-      `/api/instance/${instanceId}/sendText`,
-      `/api/instance/${instanceId}/send-text`,
+      `/api/instance/${encodeURIComponent(backendKey)}/send`,
+      `/api/instance/${encodeURIComponent(backendKey)}/send-message`,
+      `/api/instance/${encodeURIComponent(backendKey)}/sendText`,
+      `/api/instance/${encodeURIComponent(backendKey)}/send-text`,
       // Fallback para legacy só se V8 não funcionar
       ...(flavor === 'legacy' ? ['/api/send', '/send'] : []),
     ];
@@ -965,8 +1088,11 @@ Agora você pode automatizar seu atendimento!`;
         throw new Error(ensureResult.error || 'Não foi possível criar instância no backend');
       }
       if (ensureResult.created) {
-        logDiagnostic('INSTANCE_CREATED_IN_BACKEND', { instanceId, name: instanceRow?.name });
+        logDiagnostic('INSTANCE_CREATED_IN_BACKEND', { instanceId, name: instanceRow?.name, backendKey: ensureResult.backendKey });
       }
+      
+      // Guardar a chave do backend para uso posterior
+      const backendKey = ensureResult.backendKey || instanceRow?.name || instanceId;
 
       // PASSO 3: Verificar status real no backend (fonte da verdade)
       const realStatus = await checkStatus(instanceId);
@@ -1088,7 +1214,7 @@ Agora você pode automatizar seu atendimento!`;
 
         const connectPath = ensureResult.flavor === 'legacy'
           ? '/connect'
-          : `/api/instance/${instanceId}/connect`;
+          : `/api/instance/${encodeURIComponent(backendKey)}/connect`;
 
         await proxyRequest(instanceId, connectPath, 'POST', {});
 
