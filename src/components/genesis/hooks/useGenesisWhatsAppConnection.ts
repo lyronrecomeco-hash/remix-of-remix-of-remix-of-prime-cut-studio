@@ -550,53 +550,78 @@ export function useGenesisWhatsAppConnection() {
   };
 
   const generateQRCode = async (instanceId: string, skipConnect = false): Promise<string | null> => {
-    // Detectar flavor do backend
-    const flavor = await detectBackendFlavor(instanceId);
+    // Detectar flavor do backend (FORÇAR refresh: usuário pode ter trocado o script VPS)
+    const flavor = await detectBackendFlavor(instanceId, true);
     logDiagnostic('GENERATE_QR_BACKEND_FLAVOR', { instanceId, flavor });
-    
+
     // Primeiro iniciar conexão se ainda não foi feito (a menos que skipConnect = true)
     if (!skipConnect) {
-      const connectPath = flavor === 'v8' 
-        ? `/api/instance/${instanceId}/connect` 
+      const connectPath = flavor === 'v8'
+        ? `/api/instance/${instanceId}/connect`
         : '/connect';
-      const connectRes = await proxyRequest(instanceId, connectPath, 'POST', {});
+
+      let connectRes = await proxyRequest(instanceId, connectPath, 'POST', {});
+
+      // Se detectamos legacy mas o endpoint não existe, tentar V8 (migração de backend)
+      const connectDataStr = typeof connectRes.data === 'string' ? connectRes.data : JSON.stringify(connectRes.data || '');
+      const connectMissingRoute = !connectRes.ok && (connectRes.status === 404 || connectDataStr.includes('Cannot POST') || connectDataStr.includes('Cannot GET'));
+
+      if (flavor === 'legacy' && connectMissingRoute) {
+        logDiagnostic('LEGACY_CONNECT_MISSING_TRYING_V8', { instanceId });
+        connectRes = await proxyRequest(instanceId, `/api/instance/${instanceId}/connect`, 'POST', {});
+      }
+
       logDiagnostic('GENERATE_QR_CONNECT_RESULT', { instanceId, ok: connectRes.ok, data: connectRes.data, flavor });
-      
+
+      // Se falhou de forma real, falhar cedo com mensagem clara
+      if (!connectRes.ok && !connectRes.data?.connected && connectRes.data?.status !== 'connected') {
+        // segue para tentar buscar QR mesmo assim (alguns backends geram QR async)
+      }
+
       // Aguardar um momento para o QR ser gerado
       await new Promise(r => setTimeout(r, 2000));
     }
-    
+
     // Tentar obter QR até 3 vezes com intervalos
     for (let attempt = 0; attempt < 3; attempt++) {
       // Tentar endpoint baseado no flavor detectado
-      const qrPath = flavor === 'v8' 
-        ? `/api/instance/${instanceId}/qrcode` 
+      const qrPath = flavor === 'v8'
+        ? `/api/instance/${instanceId}/qrcode`
         : '/qrcode';
-      
+
       let res = await proxyRequest(instanceId, qrPath, 'GET');
-      
-      // Se V8 falhou com 404, tentar legacy
+
       const dataStr = typeof res.data === 'string' ? res.data : JSON.stringify(res.data || '');
-      if (flavor === 'v8' && !res.ok && (dataStr.includes('Cannot GET') || res.status === 404)) {
+      const missingRoute = !res.ok && (res.status === 404 || dataStr.includes('Cannot GET') || dataStr.includes('Cannot POST'));
+
+      // Fallback simétrico: se legacy falhou por rota ausente, tentar V8
+      if (flavor === 'legacy' && missingRoute) {
+        logDiagnostic('LEGACY_QRCODE_MISSING_TRYING_V8', { instanceId, attempt });
+        res = await proxyRequest(instanceId, `/api/instance/${instanceId}/qrcode`, 'GET');
+      }
+
+      // Se V8 falhou por rota ausente, tentar legacy
+      const dataStr2 = typeof res.data === 'string' ? res.data : JSON.stringify(res.data || '');
+      if (flavor === 'v8' && !res.ok && (dataStr2.includes('Cannot GET') || res.status === 404)) {
         logDiagnostic('V8_QRCODE_FAILED_TRYING_LEGACY', { instanceId, attempt });
         res = await proxyRequest(instanceId, '/qrcode', 'GET');
       }
-      
+
       if (res.data?.connected || res.data?.status === 'connected') {
         return 'CONNECTED';
       }
-      
-      const rawQr = res.data?.qrcode || res.data?.qr || res.data?.base64;
+
+      const rawQr = res.data?.qrcode || res.data?.qr || res.data?.base64 || res.data?.qrCode;
       if (typeof rawQr === 'string' && rawQr.length > 10) {
         return await normalizeQrToDataUrl(rawQr);
       }
-      
+
       // Aguardar antes da próxima tentativa
       if (attempt < 2) {
         await new Promise(r => setTimeout(r, 2000));
       }
     }
-    
+
     throw new Error('QR Code não disponível - aguarde ou tente novamente');
   };
 
