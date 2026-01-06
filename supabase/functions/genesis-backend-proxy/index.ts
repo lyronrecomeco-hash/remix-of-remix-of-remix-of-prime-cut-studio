@@ -225,109 +225,186 @@ serve(async (req) => {
       bodyLength: fetchBody?.length || 0,
     });
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
-    const fetchStart = Date.now();
+    // === Resiliência: fallback automático de porta (3000/3001) ===
+    const getAlternateBaseUrl = (baseUrl: string): string | null => {
+      try {
+        const u = new URL(baseUrl);
+        if (u.port === "3000") u.port = "3001";
+        else if (u.port === "3001") u.port = "3000";
+        else return null;
+        return u.toString().replace(/\/$/, "");
+      } catch {
+        return null;
+      }
+    };
 
-    try {
-      const upstream = await fetch(targetUrl, {
-        method,
-        headers,
-        body: fetchBody,
-        signal: controller.signal,
-      });
+    const fetchWithTimeout = async (url: string) => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      const startedAt = Date.now();
+      try {
+        const resp = await fetch(url, {
+          method,
+          headers,
+          body: fetchBody,
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        return { resp, duration: Date.now() - startedAt };
+      } catch (e) {
+        clearTimeout(timeoutId);
+        throw { error: e, duration: Date.now() - startedAt };
+      }
+    };
 
-      clearTimeout(timeoutId);
-      const fetchDuration = Date.now() - fetchStart;
+    const altBaseUrl = getAlternateBaseUrl(cleanBackendUrl);
+    const attemptUrls: Array<{ baseUrl: string; url: string }> = [{ baseUrl: cleanBackendUrl, url: targetUrl }];
+    if (altBaseUrl) {
+      attemptUrls.push({ baseUrl: altBaseUrl, url: altBaseUrl + path });
+    }
 
-      const text = await upstream.text();
-      let parsed: unknown = text;
+    let lastFetchError: unknown = null;
+
+    for (let i = 0; i < attemptUrls.length; i++) {
+      const attempt = attemptUrls[i];
 
       try {
-        parsed = text ? JSON.parse(text) : {};
-      } catch {
-        // keep as text
-      }
+        diagLog("FETCH_START", {
+          targetUrl: attempt.url,
+          method,
+          hasAuth: Boolean(headers.Authorization),
+          bodyLength: fetchBody?.length || 0,
+          attempt: i + 1,
+          attemptsTotal: attemptUrls.length,
+        });
 
-      diagLog('FETCH_RESPONSE', {
-        duration: fetchDuration,
-        httpStatus: upstream.status,
-        httpOk: upstream.ok,
-        responseLength: text.length,
-        responsePreview: text.slice(0, 500),
-        parsedType: typeof parsed,
-      });
+        const { resp: upstream, duration: fetchDuration } = await fetchWithTimeout(attempt.url);
 
-      // Log específico para envio de mensagem (diagnóstico crítico)
-      if (path.includes('/send')) {
-        diagLog('SEND_MESSAGE_RESULT', {
+        const text = await upstream.text();
+        let parsed: unknown = text;
+
+        try {
+          parsed = text ? JSON.parse(text) : {};
+        } catch {
+          // keep as text
+        }
+
+        diagLog("FETCH_RESPONSE", {
           duration: fetchDuration,
           httpStatus: upstream.status,
           httpOk: upstream.ok,
-          parsedError: (parsed as any)?.error,
-          parsedSuccess: (parsed as any)?.success,
-          parsedMessage: (parsed as any)?.message,
-          fullResponse: JSON.stringify(parsed).slice(0, 1000),
+          responseLength: text.length,
+          responsePreview: text.slice(0, 500),
+          parsedType: typeof parsed,
+          attempt: i + 1,
         });
 
-        await logEvent(
-          upstream.ok ? 'message_sent' : 'message_error',
-          upstream.ok ? 'info' : 'error',
-          upstream.ok
-            ? 'Mensagem enviada com sucesso'
-            : `Erro ao enviar mensagem: ${(parsed as any)?.error || `HTTP ${upstream.status}`}`,
-          { path, status: upstream.status, duration: fetchDuration, response: parsed }
+        // Se funcionou na porta alternativa, persistir automaticamente no DB
+        if (attempt.baseUrl !== cleanBackendUrl) {
+          try {
+            await supabaseAdmin
+              .from("genesis_instances")
+              .update({ backend_url: attempt.baseUrl, updated_at: new Date().toISOString() })
+              .eq("id", instanceId);
+
+            diagLog("BACKEND_URL_UPDATED", {
+              from: cleanBackendUrl,
+              to: attempt.baseUrl,
+              reason: "port_fallback_success",
+            });
+          } catch (e) {
+            console.warn("Failed to persist backend_url fallback", e);
+          }
+        }
+
+        // Log específico para envio de mensagem (diagnóstico crítico)
+        if (path.includes('/send')) {
+          diagLog('SEND_MESSAGE_RESULT', {
+            duration: fetchDuration,
+            httpStatus: upstream.status,
+            httpOk: upstream.ok,
+            parsedError: (parsed as any)?.error,
+            parsedSuccess: (parsed as any)?.success,
+            parsedMessage: (parsed as any)?.message,
+            fullResponse: JSON.stringify(parsed).slice(0, 1000),
+          });
+
+          await logEvent(
+            upstream.ok ? 'message_sent' : 'message_error',
+            upstream.ok ? 'info' : 'error',
+            upstream.ok
+              ? 'Mensagem enviada com sucesso'
+              : `Erro ao enviar mensagem: ${(parsed as any)?.error || `HTTP ${upstream.status}`}`,
+            { path, status: upstream.status, duration: fetchDuration, response: parsed }
+          );
+        } else if (path.includes('/qrcode')) {
+          await logEvent('qr_generated', 'info', 'QR Code gerado', { path });
+        } else if (path.includes('/status')) {
+          const statusData = parsed as Record<string, unknown>;
+          diagLog('STATUS_CHECK_RESULT', {
+            connected: statusData?.connected,
+            status: statusData?.status,
+            state: statusData?.state,
+            phone: statusData?.phone || statusData?.phoneNumber,
+          });
+          if (statusData?.connected || statusData?.status === 'connected') {
+            await logEvent('connected', 'info', 'Instância conectada', { path, response: parsed });
+          }
+        }
+
+        return new Response(
+          JSON.stringify({ ok: upstream.ok, status: upstream.status, data: parsed }),
+          {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
         );
-      } else if (path.includes('/qrcode')) {
-        await logEvent('qr_generated', 'info', 'QR Code gerado', { path });
-      } else if (path.includes('/status')) {
-        const statusData = parsed as Record<string, unknown>;
-        diagLog('STATUS_CHECK_RESULT', {
-          connected: statusData?.connected,
-          status: statusData?.status,
-          state: statusData?.state,
-          phone: statusData?.phone || statusData?.phoneNumber,
+      } catch (fetchErr: any) {
+        lastFetchError = fetchErr;
+        const fetchDuration = fetchErr?.duration ?? 0;
+        const inner = fetchErr?.error ?? fetchErr;
+        const isAbort = inner instanceof Error && inner.name === "AbortError";
+
+        diagLog("FETCH_ERROR", {
+          duration: fetchDuration,
+          isTimeout: isAbort,
+          errorType: inner instanceof Error ? inner.name : "unknown",
+          errorMessage: inner instanceof Error ? inner.message : String(inner),
+          attempt: i + 1,
+          targetUrl: attempt.url,
         });
-        if (statusData?.connected || statusData?.status === 'connected') {
-          await logEvent('connected', 'info', 'Instância conectada', { path, response: parsed });
-        }
+
+        // Se ainda há tentativas (porta alternativa), continuar
+        if (i < attemptUrls.length - 1) continue;
+
+        const errorMsg = isAbort ? "Timeout ao conectar com o backend" : "Backend não está respondendo";
+
+        await logEvent('error', 'error', errorMsg, {
+          path,
+          isTimeout: isAbort,
+          duration: fetchDuration,
+        });
+
+        return new Response(
+          JSON.stringify({
+            error: errorMsg,
+            ok: false,
+            status: 0,
+          }),
+          {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
       }
-
-      return new Response(
-        JSON.stringify({ ok: upstream.ok, status: upstream.status, data: parsed }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    } catch (fetchError) {
-      clearTimeout(timeoutId);
-      const fetchDuration = Date.now() - fetchStart;
-      const isAbort = fetchError instanceof Error && fetchError.name === 'AbortError';
-      const errorMsg = isAbort ? "Timeout ao conectar com o backend" : "Backend não está respondendo";
-      
-      diagLog('FETCH_ERROR', {
-        duration: fetchDuration,
-        isTimeout: isAbort,
-        errorType: fetchError instanceof Error ? fetchError.name : 'unknown',
-        errorMessage: fetchError instanceof Error ? fetchError.message : String(fetchError),
-      });
-
-      // Log error
-      await logEvent('error', 'error', errorMsg, { path, isTimeout: isAbort, duration: fetchDuration });
-      
-      return new Response(
-        JSON.stringify({ 
-          error: errorMsg,
-          ok: false,
-          status: 0,
-        }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
     }
+
+    // Nunca deveria chegar aqui
+    console.error("Unexpected proxy fallthrough", lastFetchError);
+    return new Response(
+      JSON.stringify({ error: "Backend não está respondendo", ok: false, status: 0 }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro interno";
     console.error("genesis-backend-proxy error:", message);
