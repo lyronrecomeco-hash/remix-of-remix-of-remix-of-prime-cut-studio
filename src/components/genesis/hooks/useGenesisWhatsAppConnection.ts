@@ -1177,7 +1177,6 @@ Agora você pode automatizar seu atendimento!`;
 
       // Gerar QR Code - skipConnect=true pois já chamamos connect acima
       safeSetState(prev => ({ ...prev, phase: 'generating' }));
-      await updateInstanceInDB(instanceId, { status: 'qr_pending' });
       
       const qrResult = await generateQRCode(instanceId, true);
       
@@ -1259,6 +1258,9 @@ Agora você pode automatizar seu atendimento!`;
       }
 
       if (!qrResult) throw new Error('Não foi possível gerar o QR Code');
+
+      // Agora que temos QR, podemos sinalizar qr_pending no backend (best-effort)
+      await updateInstanceInDB(instanceId, { status: 'qr_pending' });
 
       // Show QR and start polling
       lastQrRefreshAtRef.current = Date.now();
@@ -1423,16 +1425,10 @@ Agora você pode automatizar seu atendimento!`;
       await proxyRequest(instanceId, path, 'POST', {});
     } catch {}
 
-    // Resetar status orquestrado (evita ficar preso em qr_pending)
-    const t = await requestOrchestratedTransition(instanceId, 'disconnected', 'frontend', {
+    // Resetar status orquestrado (evita ficar preso em qr_pending) - best-effort
+    await requestOrchestratedTransition(instanceId, 'disconnected', 'frontend', {
       reason: 'user_disconnect',
     });
-    if (!t.success) {
-      await requestOrchestratedTransition(instanceId, 'idle', 'frontend', {
-        reason: 'user_disconnect_fallback',
-        error: t.error,
-      });
-    }
 
     // Limpar QR armazenado (best-effort)
     try {
@@ -1500,16 +1496,10 @@ Agora você pode automatizar seu atendimento!`;
       phase: 'idle',
     }));
 
-    // Evita ficar preso em qr_pending quando houve erro/timeout.
-    const t = await requestOrchestratedTransition(instanceId, 'idle', 'frontend', {
+    // Tirar a instância de qr_pending sem depender de transição para "idle" (pode ser inválida)
+    await requestOrchestratedTransition(instanceId, 'disconnected', 'frontend', {
       reason: 'user_cancel',
     });
-
-    if (!t.success) {
-      safeSetState(prev => ({ ...prev, error: t.error || 'Falha ao cancelar', phase: 'error' }));
-      toast.error(t.error || 'Falha ao cancelar');
-      return;
-    }
 
     // Limpar QR armazenado (best-effort)
     try {
