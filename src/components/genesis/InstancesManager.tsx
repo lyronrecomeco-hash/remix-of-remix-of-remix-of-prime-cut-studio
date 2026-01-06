@@ -44,6 +44,7 @@ interface Instance {
   backend_token?: string;
   last_heartbeat?: string;
   effective_status?: string;
+  orchestrated_status?: string;
 }
 
 interface InstancesManagerProps {
@@ -220,20 +221,23 @@ export function InstancesManager({ onNavigateToAccount }: InstancesManagerProps 
     setSelectedInstance(instance);
   };
 
-  // Determinar status real baseado em effective_status e heartbeat
-  // Usa threshold de 5 minutos (300s) consistente com o heartbeat worker
+  // Determinar status real baseado em orchestrated_status (máquina de estados) como fonte principal
+  // Isso garante "verdade única" - o status que o orquestrador central definiu
   const getEffectiveStatus = (instance: Instance): string => {
-    // Prioriza sempre o effective_status que é atualizado pelo heartbeat worker
-    // O threshold aqui é apenas para proteção visual em caso de backend offline
-    if (instance.effective_status) {
-      // Se effective_status indica conectado mas heartbeat está muito antigo (5+ min), mostra com cautela
-      if (instance.last_heartbeat && instance.effective_status === 'connected') {
+    // FASE 1: orchestrated_status é a fonte de verdade (máquina de estados)
+    if (instance.orchestrated_status) {
+      // Se orchestrated indica conectado mas heartbeat está muito antigo (5+ min), mostra com cautela
+      if (instance.last_heartbeat && instance.orchestrated_status === 'connected') {
         const lastHb = new Date(instance.last_heartbeat).getTime();
-        const isStale = Date.now() - lastHb > 300000; // 5 minutos (mesmo do heartbeat worker)
+        const isStale = Date.now() - lastHb > 300000; // 5 minutos
         if (isStale) {
           return 'connecting'; // Mostra "conectando" em vez de "desconectado" para evitar falso negativo
         }
       }
+      return instance.orchestrated_status;
+    }
+    // Fallback para effective_status ou status legado
+    if (instance.effective_status) {
       return instance.effective_status;
     }
     return instance.status;

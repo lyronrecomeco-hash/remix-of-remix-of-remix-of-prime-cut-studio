@@ -29,6 +29,7 @@ interface Instance {
   backend_token?: string;
   last_heartbeat?: string;
   effective_status?: string;
+  orchestrated_status?: string;
 }
 
 interface GenesisWhatsAppConnectProps {
@@ -37,11 +38,17 @@ interface GenesisWhatsAppConnectProps {
 }
 
 export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppConnectProps) {
-  // Estado unificado - prioridade: liveStatus > connectionState > instance props
+  // FASE 1: Priorizar orchestrated_status (máquina de estados) como fonte de verdade
+  const getOrchestratedStatus = () => {
+    return instance.orchestrated_status || instance.effective_status || instance.status;
+  };
+
+  // Estado unificado - prioridade: orchestrated_status > liveStatus > connectionState
   const [liveStatus, setLiveStatus] = useState({
-    status: instance.effective_status || instance.status,
+    status: getOrchestratedStatus(),
     phoneNumber: instance.phone_number,
     isStale: false,
+    hasDesalignment: false,
   });
 
   const {
@@ -52,23 +59,29 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
     stopStatusPolling,
   } = useGenesisWhatsAppConnection();
 
-  // Sincronizar com props da instância quando mudar
+  // Sincronizar com props da instância quando mudar - PRIORIZA orchestrated_status
   useEffect(() => {
-    const newStatus = instance.effective_status || instance.status;
+    const orchestratedStatus = getOrchestratedStatus();
+    const hasDesalignment = instance.orchestrated_status && 
+      instance.effective_status && 
+      instance.orchestrated_status !== instance.effective_status;
+    
     setLiveStatus(prev => ({
       ...prev,
-      status: newStatus,
+      status: orchestratedStatus,
       phoneNumber: instance.phone_number || prev.phoneNumber,
+      hasDesalignment: !!hasDesalignment,
     }));
-  }, [instance.effective_status, instance.status, instance.phone_number]);
+  }, [instance.orchestrated_status, instance.effective_status, instance.status, instance.phone_number]);
 
   useEffect(() => {
     startStatusPolling(instance.id, (status) => {
-      setLiveStatus({
+      setLiveStatus(prev => ({
+        ...prev,
         status: status.status,
         phoneNumber: status.phoneNumber,
         isStale: status.isStale,
-      });
+      }));
     });
 
     return () => stopStatusPolling();
@@ -87,25 +100,34 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
     onRefresh();
   };
 
-  // LÓGICA UNIFICADA DE STATUS:
-  // 1. Conectado SOMENTE quando o backend confirma status "connected"
-  // 2. Stale é apenas sinal visual (não derruba / não volta botão de conectar)
+  // LÓGICA UNIFICADA DE STATUS (FASE 1):
+  // 1. orchestrated_status é a fonte de verdade (máquina de estados)
+  // 2. Conectado SOMENTE quando orchestrated_status === 'connected'
+  // 3. Esconder botão conectar quando connected OU stabilizing
+  // 4. Stale é apenas sinal visual (não derruba / não volta botão de conectar)
   const isConnected = liveStatus.status === 'connected';
+  const isStabilizing = liveStatus.status === 'stabilizing';
 
   // Só mostra "conectando" se realmente há uma ação em progresso
   const isConnecting = connectionState.isConnecting &&
     !isConnected && // Se já está conectado, não mostrar como conectando
+    !isStabilizing && // Se estabilizando, não mostrar como conectando
     (connectionState.phase === 'validating' ||
      connectionState.phase === 'generating' ||
      connectionState.phase === 'waiting' ||
      connectionState.phase === 'stabilizing');
 
+  // FASE 1: Esconder botão conectar quando connected OU stabilizing
+  const shouldHideConnectButton = isConnected || isStabilizing;
+
   // Phase: prioridade máxima para isConnected
   const phase = isConnected
     ? 'connected'
-    : isConnecting
-      ? connectionState.phase
-      : connectionState.phase;
+    : isStabilizing
+      ? 'stabilizing'
+      : isConnecting
+        ? connectionState.phase
+        : connectionState.phase;
 
   // Phase indicator text
   const getPhaseText = () => {
@@ -219,10 +241,23 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
                   Verificando
                 </Badge>
               )}
-              {!isConnected && !isConnecting && phase === 'idle' && !liveStatus.isStale && (
+              {isStabilizing && (
+                <Badge variant="secondary" className="gap-1.5 bg-blue-500/10 text-blue-600 border-blue-500/20 px-3 py-1.5">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  Estabilizando
+                </Badge>
+              )}
+              {!isConnected && !isConnecting && !isStabilizing && phase === 'idle' && !liveStatus.isStale && (
                 <Badge variant="secondary" className="gap-1.5 bg-muted text-muted-foreground border-border px-3 py-1.5">
                   <WifiOff className="w-3.5 h-3.5" />
                   Desconectado
+                </Badge>
+              )}
+              {/* Indicador de desalinhamento - transparência para debug */}
+              {liveStatus.hasDesalignment && (
+                <Badge variant="outline" className="gap-1 text-xs bg-orange-500/5 text-orange-500 border-orange-500/30">
+                  <AlertCircle className="w-3 h-3" />
+                  Sincronizando
                 </Badge>
               )}
             </div>
@@ -433,7 +468,7 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
 
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center gap-3 mt-6 pt-4 border-t">
-            {!isConnected && !isConnecting && (
+            {!shouldHideConnectButton && !isConnecting && (
               <Button onClick={handleConnect} className="gap-2 flex-1 sm:flex-none" size="lg">
                 <QrCode className="w-5 h-5" />
                 Conectar WhatsApp

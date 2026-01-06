@@ -24,7 +24,8 @@ import {
   X,
   Server,
   Zap,
-  Github
+  Github,
+  HardDriveDownload
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -48,6 +49,7 @@ import CRMUsersManager from '@/components/owner/CRMUsersManager';
 import ProposalsManager from '@/components/owner/ProposalsManager';
 import GenesisInstancesMonitor from '@/components/owner/GenesisInstancesMonitor';
 import GitHubManager from '@/components/owner/GitHubManager';
+import VPSConfigManager from '@/components/owner/VPSConfigManager';
 import { OwnerProfileMenu } from '@/components/owner/OwnerProfileMenu';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -98,6 +100,7 @@ const navSections: NavSection[] = [
     items: [
       { id: 'whatsapp-automation', label: 'WhatsApp Automação', icon: Bot },
       { id: 'genesis-monitor', label: 'Genesis Monitor', icon: Zap, badge: 'Live', badgeVariant: 'default' },
+      { id: 'vps', label: 'VPS', icon: HardDriveDownload, badge: 'Infra', badgeVariant: 'secondary' },
     ]
   },
   {
@@ -187,6 +190,8 @@ const OwnerPanel = () => {
         return <WhatsAppAutomation />;
       case 'genesis-monitor':
         return <GenesisInstancesMonitor />;
+      case 'vps':
+        return <VPSConfigManager />;
       case 'api-projects':
         return <WhatsAppAPIManager />;
       case 'github':
