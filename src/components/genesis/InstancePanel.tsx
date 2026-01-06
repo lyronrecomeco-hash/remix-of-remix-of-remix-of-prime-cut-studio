@@ -57,6 +57,7 @@ interface Instance {
   backend_token?: string;
   last_heartbeat?: string;
   effective_status?: string;
+  orchestrated_status?: string;
 }
 
 interface InstancePanelProps {
@@ -83,57 +84,36 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
   });
   const [saving, setSaving] = useState(false);
   
-  // Backend config state
-  const [backendUrl, setBackendUrl] = useState(initialInstance.backend_url || '');
-  const [backendToken, setBackendToken] = useState(initialInstance.backend_token || '');
-  const [savingBackend, setSavingBackend] = useState(false);
-  
   // Modais
   const [showActionsModal, setShowActionsModal] = useState(false);
   const [showWebhookModal, setShowWebhookModal] = useState(false);
   const [showCreditsModal, setShowCreditsModal] = useState(false);
   const [showIntegrationsModal, setShowIntegrationsModal] = useState(false);
-  const [showBackendConfigModal, setShowBackendConfigModal] = useState(false);
   
   // Colapsável
   const [showTechnicalInfo, setShowTechnicalInfo] = useState(false);
 
+  // Verificar se backend GLOBAL está configurado
+  const [hasGlobalBackend, setHasGlobalBackend] = useState(true);
+  
+  useEffect(() => {
+    const checkGlobalBackend = async () => {
+      const { data } = await supabase
+        .from('whatsapp_backend_config')
+        .select('backend_url, master_token')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      setHasGlobalBackend(Boolean(data?.backend_url && data?.master_token));
+    };
+    checkGlobalBackend();
+  }, []);
+
   const instanceCode = `genesis-${instance.id.slice(0, 8)}`;
   const endpoint = `https://api.genesis.com.br/instances/${instanceCode}`;
-  
-  // Verificar se backend está configurado
-  const hasBackendConfig = Boolean(instance.backend_url && instance.backend_token);
 
-  // Salvar configuração do backend
-  const saveBackendConfig = async () => {
-    if (!backendUrl.trim() || !backendToken.trim()) {
-      toast.error('Preencha URL e Token do backend');
-      return;
-    }
-    
-    setSavingBackend(true);
-    try {
-      const { error } = await supabase
-        .from('genesis_instances')
-        .update({
-          backend_url: backendUrl.trim().replace(/\/$/, ''),
-          backend_token: backendToken.trim(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', instance.id);
-      
-      if (error) throw error;
-      
-      toast.success('Configuração do backend salva!');
-      setShowBackendConfigModal(false);
-      fetchInstance();
-    } catch (err) {
-      toast.error('Erro ao salvar configuração');
-      console.error(err);
-    } finally {
-      setSavingBackend(false);
-    }
-  };
+  // Função removida - backend agora é configurado globalmente no /owner
 
   const fetchInstance = async () => {
     const { data, error } = await supabase
@@ -211,10 +191,25 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
   };
 
   // Status unificado - considera heartbeat recente para determinar conexão real
+  // FASE 3: Usar orchestrated_status como fonte primária (máquina de estados)
+  // Isso garante consistência entre lista e painel
+  const getEffectiveStatus = () => {
+    // orchestrated_status é a verdade da máquina de estados
+    if (instance.orchestrated_status) {
+      return instance.orchestrated_status;
+    }
+    // Fallback para effective_status ou status
+    return instance.effective_status || instance.status;
+  };
+  
+  const effectiveStatus = getEffectiveStatus();
   const isHeartbeatRecent = instance.last_heartbeat 
     ? (Date.now() - new Date(instance.last_heartbeat).getTime()) < 300000 // 5 minutos
     : false;
-  const isConnected = instance.effective_status === 'connected' && isHeartbeatRecent;
+  
+  // Se orchestrated_status diz "connected", confiar (máquina de estados é verdade)
+  // Só verificar heartbeat como fallback visual (não bloqueante)
+  const isConnected = effectiveStatus === 'connected';
   
   const formattedPhone = instance.phone_number 
     ? instance.phone_number.replace(/(\d{2})(\d{2})(\d{5})(\d{4})/, '+$1 ($2) $3-$4')
@@ -295,22 +290,15 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
             </CardTitle>
           </CardHeader>
           <CardContent className="relative space-y-6">
-            {/* Alerta se backend não configurado */}
-            {!hasBackendConfig && (
-              <div 
-                className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 cursor-pointer hover:bg-amber-500/15 transition-colors"
-                onClick={() => setShowBackendConfigModal(true)}
-              >
+            {/* Alerta se backend GLOBAL não configurado */}
+            {!hasGlobalBackend && (
+              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
                 <div className="flex items-center gap-3">
                   <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-amber-600">Backend não configurado</p>
-                    <p className="text-xs text-muted-foreground">Clique para configurar URL e Token do servidor VPS</p>
+                    <p className="text-sm font-medium text-amber-600">Servidor não configurado</p>
+                    <p className="text-xs text-muted-foreground">Entre em contato com o suporte para ativar a conexão WhatsApp</p>
                   </div>
-                  <Button variant="outline" size="sm" className="gap-2 border-amber-500/30 text-amber-600 hover:bg-amber-500/10">
-                    <Settings2 className="w-4 h-4" />
-                    Configurar
-                  </Button>
                 </div>
               </div>
             )}
@@ -821,87 +809,6 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
                 </Button>
               </div>
             ))}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal: Configuração do Backend VPS */}
-      <Dialog open={showBackendConfigModal} onOpenChange={setShowBackendConfigModal}>
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader className="pb-4">
-            <DialogTitle className="flex items-center gap-3 text-xl">
-              <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                <Settings2 className="w-6 h-6 text-blue-500" />
-              </div>
-              Configurar Backend VPS
-            </DialogTitle>
-            <DialogDescription className="text-base">
-              Configure a conexão com seu servidor WhatsApp
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-6 pt-4">
-            <div>
-              <Label className="text-sm font-medium">URL do Backend</Label>
-              <Input 
-                value={backendUrl}
-                onChange={(e) => setBackendUrl(e.target.value)}
-                placeholder="http://SEU_IP_VPS:3000"
-                className="mt-2 h-12 text-base font-mono"
-              />
-              <p className="text-xs text-muted-foreground mt-1.5">
-                Exemplo: http://123.45.67.89:3000
-              </p>
-            </div>
-            
-            <div>
-              <Label className="text-sm font-medium">Token de Autenticação</Label>
-              <Input 
-                type="password"
-                value={backendToken}
-                onChange={(e) => setBackendToken(e.target.value)}
-                placeholder="Seu MASTER_TOKEN do script VPS"
-                className="mt-2 h-12 text-base font-mono"
-              />
-              <p className="text-xs text-muted-foreground mt-1.5">
-                O mesmo token configurado no arquivo .env da VPS
-              </p>
-            </div>
-            
-            <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/20">
-              <p className="text-sm text-blue-600 font-medium mb-2">📋 Como obter:</p>
-              <ol className="text-xs text-muted-foreground space-y-1.5">
-                <li>1. Instale o script VPS no seu servidor</li>
-                <li>2. Copie o IP público + porta (ex: 3000)</li>
-                <li>3. Use o MASTER_TOKEN do arquivo .env</li>
-              </ol>
-            </div>
-            
-            <div className="flex gap-3 pt-2">
-              <Button 
-                variant="outline" 
-                className="flex-1"
-                onClick={() => setShowBackendConfigModal(false)}
-              >
-                Cancelar
-              </Button>
-              <Button 
-                className="flex-1 gap-2"
-                onClick={saveBackendConfig}
-                disabled={savingBackend || !backendUrl.trim() || !backendToken.trim()}
-              >
-                {savingBackend ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    Salvando...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="w-4 h-4" />
-                    Salvar Configuração
-                  </>
-                )}
-              </Button>
-            </div>
           </div>
         </DialogContent>
       </Dialog>
