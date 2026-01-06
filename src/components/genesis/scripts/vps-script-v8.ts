@@ -26,7 +26,7 @@ const readline = require('readline');
 // ║                              CONFIGURAÇÃO GLOBAL                                         ║
 // ╚═════════════════════════════════════════════════════════════════════════════════════════╝
 const CONFIG = {
-  PORT: parseInt(process.env.PORT || '3001'),
+  PORT: parseInt(process.env.PORT || '3000'),
   MASTER_TOKEN: process.env.MASTER_TOKEN || '${token}',
   SUPABASE_URL: process.env.SUPABASE_URL || 'https://wvnszzrvrrueuycrpgyc.supabase.co',
   SUPABASE_KEY: process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind2bnN6enJ2cnJ1ZXV5Y3JwZ3ljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4MTE4MjYsImV4cCI6MjA4MjM4NzgyNn0.mHs-vau3qsSRLqZ9AmWMsFB5ZLMmd1s003MxdLhBPw0',
