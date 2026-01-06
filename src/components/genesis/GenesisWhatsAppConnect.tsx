@@ -298,12 +298,12 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
                     </div>
                     
                     <div className="mt-6 text-center space-y-2">
-                      <p className="text-sm font-medium">
-                        Escaneie o código com o WhatsApp
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Abra o WhatsApp → Menu → Aparelhos conectados → Conectar
-                      </p>
+                      <p className="text-sm font-medium">Escaneie o código com o WhatsApp</p>
+                      <div className="text-xs text-muted-foreground space-y-1">
+                        <p><span className="font-medium">1)</span> Abra o WhatsApp no celular</p>
+                        <p><span className="font-medium">2)</span> Configurações → <span className="font-medium">Aparelhos conectados</span></p>
+                        <p><span className="font-medium">3)</span> Conectar um aparelho → Escaneie o QR</p>
+                      </div>
                       <div className="flex items-center justify-center gap-2 mt-4">
                         <motion.div 
                           className="w-2 h-2 rounded-full bg-blue-500"
@@ -314,8 +314,8 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
                           Aguardando... ({Math.floor(connectionState.attempts / 60)}:{String(connectionState.attempts % 60).padStart(2, '0')})
                         </span>
                       </div>
+                      </div>
                     </div>
-                  </motion.div>
                 )}
 
                 {/* Placeholder when idle */}

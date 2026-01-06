@@ -232,19 +232,7 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
                   {isConnected ? 'Conectado' : 'Desconectado'}
                 </Badge>
 
-                {/* Badge Estabilidade */}
-                {isConnected && (
-                  <Badge variant="outline" className="gap-2 px-3 py-2 text-sm border-blue-500/30 text-blue-600 bg-blue-500/5">
-                    <Shield className="w-3.5 h-3.5" />
-                    Conexão Estável 24/7
-                  </Badge>
-                )}
-
-                {/* Consumo Diário */}
-                <Badge variant="outline" className="gap-2 px-3 py-2 text-sm border-amber-500/30 text-amber-600 bg-amber-500/5">
-                  <Coins className="w-3.5 h-3.5" />
-                  15 créditos/dia
-                </Badge>
+                {/* Consumo Diário (removido do header conforme solicitado) */}
               </div>
             </div>
           </CardContent>
