@@ -12,7 +12,8 @@ import {
   Zap,
   Shield,
   Radio,
-  Sparkles
+  Sparkles,
+  RotateCcw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -61,6 +62,7 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
     disconnect,
     cancelConnection,
     stopPolling,
+    resetSession,
   } = useGenesisWhatsAppConnection();
 
   /**
@@ -136,6 +138,28 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
     await disconnect(instance.id, instance.backend_url, instance.backend_token);
     onRefresh();
   };
+
+  /**
+   * CORREÇÃO DEFINITIVA: Reset de sessão quando WhatsApp deslogou (401)
+   */
+  const [isResetting, setIsResetting] = useState(false);
+  
+  const handleResetSession = async () => {
+    setIsResetting(true);
+    try {
+      await resetSession(instance.id, instance.name, () => {
+        resetCooldown();
+        onRefresh();
+      });
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
+  // Detectar se precisa de reset (erro + não tem QR + tentativas esgotadas)
+  const needsReset = displayStatus === 'error' || 
+    (displayStatus === 'disconnected' && connectionState.error) ||
+    isInCooldown;
 
   /**
    * FASE 1: Texto de fase baseado no displayStatus
@@ -501,27 +525,64 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
               >
                 <p className="text-sm text-destructive flex items-center gap-2">
                   <XCircle className="w-4 h-4 shrink-0" />
-                  {connectionState.error.includes('backend') || connectionState.error.includes('Configure') 
-                    ? 'Backend não configurado' 
-                    : 'QR Code não disponível'
+                  {connectionState.error.includes('invalidada') || connectionState.error.includes('401')
+                    ? 'Sessão expirada ou deslogada'
+                    : connectionState.error.includes('backend') || connectionState.error.includes('Configure') 
+                      ? 'Backend não configurado' 
+                      : 'Erro na conexão'
                   }
                 </p>
                 <p className="text-xs text-muted-foreground mt-2 ml-6">
-                  {connectionState.error.includes('backend') || connectionState.error.includes('Configure')
-                    ? 'Acesse as configurações da instância e configure a URL e Token do seu backend VPS antes de conectar.'
-                    : 'Verifique a configuração do WhatsApp Automação ou contate o suporte.'
+                  {connectionState.error.includes('invalidada') || connectionState.error.includes('401')
+                    ? 'O WhatsApp foi desconectado. Clique em "Resetar Sessão" para gerar um novo QR Code.'
+                    : connectionState.error.includes('backend') || connectionState.error.includes('Configure')
+                      ? 'Acesse as configurações da instância e configure a URL e Token do seu backend VPS.'
+                      : connectionState.error
                   }
                 </p>
+
+                {/* Botão de Reset dentro do erro */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResetSession}
+                  disabled={isResetting}
+                  className="mt-3 ml-6 gap-2"
+                >
+                  {isResetting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <RotateCcw className="w-4 h-4" />
+                  )}
+                  {isResetting ? 'Resetando...' : 'Resetar Sessão'}
+                </Button>
               </motion.div>
             )}
           </AnimatePresence>
 
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center gap-3 mt-6 pt-4 border-t">
-            {!shouldHideConnectButton && !isConnecting && (
+            {!shouldHideConnectButton && !isConnecting && !needsReset && (
               <Button onClick={handleConnect} className="gap-2 flex-1 sm:flex-none" size="lg">
                 <QrCode className="w-5 h-5" />
                 Conectar WhatsApp
+              </Button>
+            )}
+
+            {/* Botão de Reset quando em estado de erro/cooldown */}
+            {needsReset && !isConnecting && !connectionState.isPolling && (
+              <Button 
+                onClick={handleResetSession} 
+                disabled={isResetting}
+                className="gap-2 flex-1 sm:flex-none bg-orange-600 hover:bg-orange-700" 
+                size="lg"
+              >
+                {isResetting ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <RotateCcw className="w-5 h-5" />
+                )}
+                {isResetting ? 'Resetando Sessão...' : 'Resetar Sessão'}
               </Button>
             )}
 
