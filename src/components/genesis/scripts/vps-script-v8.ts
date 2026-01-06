@@ -1,10 +1,11 @@
 // VPS Script v8.0 - MULTI-INSTANCE MANAGER
 // Gerenciador dinâmico de múltiplas instâncias com menu interativo
-export const getVPSScriptV8 = (
-  masterToken: string
-): string => {
-  const token = masterToken || 'GNS_' + Math.random().toString(36).substring(2, 34);
-  
+export const getVPSScriptV8 = (masterToken: string): string => {
+  // IMPORTANTE: default precisa bater com o token nativo usado pelo backend/proxy,
+  // senão o Heartbeat pode falhar com 401 quando o usuário deixa o campo em branco.
+  const DEFAULT_MASTER_TOKEN = "genesis-master-token-2024-secure";
+  const token = masterToken?.trim() ? masterToken.trim() : DEFAULT_MASTER_TOKEN;
+
   return `#!/usr/bin/env node
 // ╔════════════════════════════════════════════════════════════════════════════════════════╗
 // ║       GENESIS WHATSAPP MULTI-INSTANCE MANAGER - v8.0 ENTERPRISE                        ║
