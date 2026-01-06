@@ -131,13 +131,23 @@ export default function VPSConfigManager() {
       return;
     }
 
+    // Precisa salvar antes de testar
+    if (editForm.backend_url !== selectedInstance?.backend_url || 
+        editForm.backend_token !== selectedInstance?.backend_token) {
+      await handleSave();
+    }
+
     setTesting(true);
     setHealthResult(null);
     const startTime = Date.now();
 
     try {
-      // Tentar via proxy primeiro
-      const { data, error } = await supabase.functions.invoke('genesis-backend-proxy', {
+      console.log('[VPS] Testando conexão...', {
+        instanceId: selectedInstance?.id,
+        url: editForm.backend_url,
+      });
+
+      const { data: proxyResponse, error } = await supabase.functions.invoke('genesis-backend-proxy', {
         body: {
           instanceId: selectedInstance?.id,
           path: '/health',
@@ -147,39 +157,76 @@ export default function VPSConfigManager() {
 
       const pingMs = Date.now() - startTime;
 
+      console.log('[VPS] Resposta do proxy:', { proxyResponse, error, pingMs });
+
       if (error) {
         setHealthResult({
           success: false,
           pingMs,
-          error: error.message || 'Erro ao conectar',
+          error: error.message || 'Erro ao conectar com proxy',
         });
-        toast.error('Falha na conexão com o servidor');
-      } else if (data?.success !== false) {
+        toast.error('Falha na conexão');
+        return;
+      }
+
+      // O proxy retorna { ok, status, data } ou { error }
+      if (proxyResponse?.error) {
+        setHealthResult({
+          success: false,
+          pingMs,
+          error: proxyResponse.error,
+        });
+        toast.error(proxyResponse.needsConfig ? 'Configure URL e Token primeiro' : 'Falha na conexão');
+        return;
+      }
+
+      // Extrair dados reais do backend
+      const backendData = proxyResponse?.data || proxyResponse;
+      const isHealthy = proxyResponse?.ok !== false && 
+                        (backendData?.status === 'ok' || 
+                         backendData?.whatsapp !== undefined ||
+                         backendData?.uptime !== undefined);
+
+      if (isHealthy) {
         setHealthResult({
           success: true,
           pingMs,
-          data: data,
+          data: {
+            status: backendData.status || 'ok',
+            whatsapp: backendData.whatsapp || backendData.state || 'unknown',
+            phone: backendData.phone || backendData.phoneNumber,
+            version: backendData.version,
+            uptime: backendData.uptime,
+            ready_to_send: backendData.ready_to_send ?? backendData.readyToSend,
+            stable: backendData.stable,
+            metrics: backendData.metrics || {
+              sent: backendData.messagesSent,
+              received: backendData.messagesReceived,
+              memory_mb: backendData.memory_mb,
+            },
+          },
         });
         toast.success(`Servidor conectado! Ping: ${pingMs}ms`);
       } else {
         setHealthResult({
           success: false,
           pingMs,
-          error: data?.error || 'Resposta inválida',
+          error: backendData?.error || `HTTP ${proxyResponse?.status || 'unknown'}`,
         });
         toast.error('Servidor respondeu com erro');
       }
     } catch (err: any) {
       const pingMs = Date.now() - startTime;
+      console.error('[VPS] Erro no teste:', err);
       setHealthResult({
         success: false,
         pingMs,
         error: err.message || 'Erro de conexão',
       });
-      toast.error('Falha ao conectar com o servidor');
+      toast.error('Falha ao conectar');
+    } finally {
+      setTesting(false);
     }
-
-    setTesting(false);
   };
 
   const getStatusBadge = (instance: GenesisInstance) => {
