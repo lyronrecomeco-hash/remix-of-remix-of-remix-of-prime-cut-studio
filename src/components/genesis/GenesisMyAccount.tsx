@@ -66,10 +66,18 @@ export function GenesisMyAccount() {
     
     setSaving(true);
     try {
+      const normalizeWhatsApp = (value: string): string | null => {
+        const d = (value || '').replace(/\D/g, '');
+        if (!d) return null;
+        // Normalização BR: se usuário salvar apenas DDD+numero (10/11 dígitos), prefixa DDI 55
+        if (!d.startsWith('55') && (d.length === 10 || d.length === 11)) return `55${d}`;
+        return d;
+      };
+
       const updateData = {
         name: formData.name.trim(),
-        whatsapp_commercial: formData.whatsapp_commercial?.replace(/\D/g, '') || null,
-        whatsapp_test: formData.whatsapp_test?.replace(/\D/g, '') || null,
+        whatsapp_commercial: normalizeWhatsApp(formData.whatsapp_commercial),
+        whatsapp_test: normalizeWhatsApp(formData.whatsapp_test),
         company_name: formData.company_name?.trim() || null,
         updated_at: new Date().toISOString(),
       };
