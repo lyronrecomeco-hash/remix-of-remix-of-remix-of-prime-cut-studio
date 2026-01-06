@@ -64,7 +64,12 @@ export function InstancesManager({ onNavigateToAccount }: InstancesManagerProps 
   // Check if user has configured commercial number
   const hasCommercialNumber = !!(genesisUser as any)?.whatsapp_commercial;
 
+  // Liberação especial: permitir mais instâncias apenas para este e-mail
+  const UNLIMITED_INSTANCES_EMAIL = 'da@gmail.com';
+  const isUnlimitedInstancesUser = (genesisUser?.email || '').toLowerCase() === UNLIMITED_INSTANCES_EMAIL;
+
   const maxInstances = subscription?.max_instances || 1;
+  const effectiveMaxInstances = isUnlimitedInstancesUser ? 999 : maxInstances;
 
   const fetchInstances = async () => {
     if (!genesisUser) return;
@@ -144,7 +149,7 @@ export function InstancesManager({ onNavigateToAccount }: InstancesManagerProps 
   const createInstance = async () => {
     if (!genesisUser || !newInstanceName.trim()) return;
 
-    if (instances.length >= maxInstances) {
+    if (!isUnlimitedInstancesUser && instances.length >= maxInstances) {
       toast.error('Limite de instâncias atingido. Faça upgrade do plano.');
       return;
     }
@@ -312,7 +317,7 @@ export function InstancesManager({ onNavigateToAccount }: InstancesManagerProps 
     return effectiveStatus !== 'connected' || i.is_paused;
   });
 
-  const canAddMore = instances.length < maxInstances;
+  const canAddMore = instances.length < effectiveMaxInstances;
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -588,7 +593,7 @@ export function InstancesManager({ onNavigateToAccount }: InstancesManagerProps 
                 </h3>
                 <p className="text-sm text-muted-foreground/70 mt-2 max-w-[200px] mx-auto">
                   {canAddMore 
-                    ? `Você pode criar até ${maxInstances} instâncias`
+                    ? `Você pode criar até ${effectiveMaxInstances} instâncias`
                     : 'Compre créditos para liberar a criação de mais instâncias'
                   }
                 </p>

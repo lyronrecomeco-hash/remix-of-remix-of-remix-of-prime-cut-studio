@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useGenesisAuth } from '@/contexts/GenesisAuthContext';
 import * as QRCode from 'qrcode';
 
 /**
@@ -85,6 +86,8 @@ const HARDENING = {
 };
 
 export function useGenesisWhatsAppConnection() {
+  const { genesisUser } = useGenesisAuth();
+
   const [connectionState, setConnectionState] = useState<ConnectionState>({
     isConnecting: false,
     isPolling: false,
@@ -452,32 +455,16 @@ export function useGenesisWhatsAppConnection() {
   };
 
   const checkStatus = async (instanceId: string): Promise<{ connected: boolean; phoneNumber?: string; isStale?: boolean; readyToSend?: boolean; notFound?: boolean; flavor?: 'v8' | 'legacy' }> => {
-    // Primeiro verificar no banco se está stale
+    // IMPORTANT: Não “derrubar” a instância pelo frontend.
+    // Stale aqui é apenas sinalização. A conexão real é confirmada pelo backend.
     const { data: instanceRow } = await supabase
       .from('genesis_instances')
       .select('last_heartbeat, effective_status')
       .eq('id', instanceId)
       .single();
 
-    if (instanceRow?.last_heartbeat) {
-      const lastHb = new Date(instanceRow.last_heartbeat).getTime();
-      const isStale = Date.now() - lastHb > HARDENING.STALE_THRESHOLD_MS;
-
-      if (isStale && instanceRow.effective_status === 'connected') {
-        // Forçar sync no banco
-        console.log(`[checkStatus] Instance ${instanceId} is stale, forcing disconnect`);
-        await supabase
-          .from('genesis_instances')
-          .update({
-            effective_status: 'disconnected',
-            status: 'disconnected',
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', instanceId);
-
-        return { connected: false, isStale: true };
-      }
-    }
+    const lastHb = instanceRow?.last_heartbeat ? new Date(instanceRow.last_heartbeat).getTime() : 0;
+    const isStale = lastHb > 0 && (Date.now() - lastHb) > HARDENING.STALE_THRESHOLD_MS;
 
     // Usar flavor cacheado (evita 404 v8 -> fallback legacy em TODA checagem)
     let flavor: 'v8' | 'legacy' = await detectBackendFlavor(instanceId);
@@ -525,7 +512,7 @@ export function useGenesisWhatsAppConnection() {
       return { connected: false, notFound: true, flavor };
     }
 
-    if (!res.ok) return { connected: false, flavor };
+    if (!res.ok) return { connected: false, isStale, flavor };
 
     const result = res.data || {};
 
@@ -552,6 +539,7 @@ export function useGenesisWhatsAppConnection() {
       connected,
       phoneNumber,
       readyToSend,
+      isStale,
       flavor,
     };
   };
@@ -610,13 +598,21 @@ export function useGenesisWhatsAppConnection() {
   // === ENVIO AUTOMÁTICO ROBUSTO COM RETENTATIVAS ===
   const sendWelcomeMessage = async (
     instanceId: string,
-    phoneNumber: string
+    connectedPhoneNumber: string
   ): Promise<{ success: boolean; status?: number; error?: string }> => {
     const sendStart = Date.now();
 
+    const digits = (v?: string | null) => (v || '').replace(/\D/g, '');
+
+    // Destino do teste: prioriza whatsapp_test do usuário, depois whatsapp_commercial.
+    // (Enviar para o próprio número conectado pode falhar dependendo do script)
+    const testRecipient = digits((genesisUser as any)?.whatsapp_test) || digits((genesisUser as any)?.whatsapp_commercial);
+    const phoneNumber = testRecipient || digits(connectedPhoneNumber);
+
     logDiagnostic('WELCOME_MESSAGE_START', {
       instanceId,
-      phoneNumber,
+      connectedPhoneNumber,
+      targetPhoneNumber: phoneNumber,
       timestamp: new Date().toISOString(),
     });
 
@@ -1445,9 +1441,11 @@ Agora você pode automatizar seu atendimento!`;
     _token?: string
   ) => {
     stopPolling();
-    
+
     try {
-      await proxyRequest(instanceId, `/api/instance/${instanceId}/disconnect`, 'POST', {});
+      const flavor = await detectBackendFlavor(instanceId);
+      const path = flavor === 'legacy' ? '/disconnect' : `/api/instance/${instanceId}/disconnect`;
+      await proxyRequest(instanceId, path, 'POST', {});
     } catch {}
 
     await updateInstanceInDB(instanceId, {
