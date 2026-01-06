@@ -6,7 +6,7 @@ import {
   Pause,
   Play,
   RefreshCw,
-  Download,
+  
   Settings2,
   Link2,
   Lock,
@@ -23,7 +23,7 @@ import {
   ExternalLink,
   Activity,
   Smartphone,
-  Terminal,
+  
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,7 +37,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { GenesisWhatsAppConnect } from './GenesisWhatsAppConnect';
 import { cn } from '@/lib/utils';
-import { getVPSScriptV7 } from './scripts';
+// Script VPS removido - configuração via WhatsApp Automação no Painel Owner
 
 // Import integration logos
 import shopifyLogo from '@/assets/integrations/shopify.png';
@@ -83,17 +83,57 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
   });
   const [saving, setSaving] = useState(false);
   
+  // Backend config state
+  const [backendUrl, setBackendUrl] = useState(initialInstance.backend_url || '');
+  const [backendToken, setBackendToken] = useState(initialInstance.backend_token || '');
+  const [savingBackend, setSavingBackend] = useState(false);
+  
   // Modais
   const [showActionsModal, setShowActionsModal] = useState(false);
   const [showWebhookModal, setShowWebhookModal] = useState(false);
   const [showCreditsModal, setShowCreditsModal] = useState(false);
   const [showIntegrationsModal, setShowIntegrationsModal] = useState(false);
+  const [showBackendConfigModal, setShowBackendConfigModal] = useState(false);
   
   // Colapsável
   const [showTechnicalInfo, setShowTechnicalInfo] = useState(false);
 
   const instanceCode = `genesis-${instance.id.slice(0, 8)}`;
   const endpoint = `https://api.genesis.com.br/instances/${instanceCode}`;
+  
+  // Verificar se backend está configurado
+  const hasBackendConfig = Boolean(instance.backend_url && instance.backend_token);
+
+  // Salvar configuração do backend
+  const saveBackendConfig = async () => {
+    if (!backendUrl.trim() || !backendToken.trim()) {
+      toast.error('Preencha URL e Token do backend');
+      return;
+    }
+    
+    setSavingBackend(true);
+    try {
+      const { error } = await supabase
+        .from('genesis_instances')
+        .update({
+          backend_url: backendUrl.trim().replace(/\/$/, ''),
+          backend_token: backendToken.trim(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', instance.id);
+      
+      if (error) throw error;
+      
+      toast.success('Configuração do backend salva!');
+      setShowBackendConfigModal(false);
+      fetchInstance();
+    } catch (err) {
+      toast.error('Erro ao salvar configuração');
+      console.error(err);
+    } finally {
+      setSavingBackend(false);
+    }
+  };
 
   const fetchInstance = async () => {
     const { data, error } = await supabase
@@ -255,6 +295,26 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
             </CardTitle>
           </CardHeader>
           <CardContent className="relative space-y-6">
+            {/* Alerta se backend não configurado */}
+            {!hasBackendConfig && (
+              <div 
+                className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 cursor-pointer hover:bg-amber-500/15 transition-colors"
+                onClick={() => setShowBackendConfigModal(true)}
+              >
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-amber-600">Backend não configurado</p>
+                    <p className="text-xs text-muted-foreground">Clique para configurar URL e Token do servidor VPS</p>
+                  </div>
+                  <Button variant="outline" size="sm" className="gap-2 border-amber-500/30 text-amber-600 hover:bg-amber-500/10">
+                    <Settings2 className="w-4 h-4" />
+                    Configurar
+                  </Button>
+                </div>
+              </div>
+            )}
+            
             {/* Componente de Conexão */}
             <GenesisWhatsAppConnect 
               instance={instance} 
@@ -500,46 +560,11 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
                   </div>
                 </div>
 
-                {/* Download Script VPS v7 */}
-                <div className="p-4 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
-                  <div className="flex items-center justify-between">
-                    <div className="min-w-0 flex-1">
-                      <Label className="text-xs text-primary uppercase tracking-wider font-medium flex items-center gap-2">
-                        <Terminal className="w-3.5 h-3.5" />
-                        Script VPS v7.0 Enterprise
-                      </Label>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Multi-instância • Rate Limiting • Auto-restart • 24/7
-                      </p>
-                    </div>
-                    <Button 
-                      variant="default" 
-                      size="sm"
-                      className="gap-2"
-                      onClick={() => {
-                        try {
-                          const script = getVPSScriptV7(
-                            instance.backend_token || 'GNS_' + Math.random().toString(36).substring(2, 34),
-                            instance.id,
-                            instance.name
-                          );
-                          const blob = new Blob([script], { type: 'application/javascript' });
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = 'whatsapp-vps-v7.js';
-                          a.click();
-                          URL.revokeObjectURL(url);
-                          toast.success('Script v7.0 Enterprise baixado!');
-                        } catch (err) {
-                          toast.error('Erro ao gerar script');
-                        }
-                      }}
-                    >
-                      <Download className="w-4 h-4" />
-                      Baixar Script
-                    </Button>
-                  </div>
+                {/* Nota: Script VPS deve ser configurado via WhatsApp Automação no Painel Owner */}
+                <div className="p-3 rounded-lg bg-muted/50 border border-border/50">
+                  <p className="text-xs text-muted-foreground">
+                    💡 Para configurar o backend VPS, acesse <strong>WhatsApp Automação</strong> no painel administrativo.
+                  </p>
                 </div>
               </CardContent>
             </CollapsibleContent>
@@ -614,7 +639,7 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
               onClick={() => { handleAction('Contatos'); setShowActionsModal(false); }}
             >
               <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
-                <Download className="w-5 h-5 text-purple-500" />
+                <ExternalLink className="w-5 h-5 text-purple-500" />
               </div>
               <div className="text-left">
                 <p className="font-semibold">Exportar Contatos</p>
@@ -796,6 +821,87 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
                 </Button>
               </div>
             ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: Configuração do Backend VPS */}
+      <Dialog open={showBackendConfigModal} onOpenChange={setShowBackendConfigModal}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader className="pb-4">
+            <DialogTitle className="flex items-center gap-3 text-xl">
+              <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                <Settings2 className="w-6 h-6 text-blue-500" />
+              </div>
+              Configurar Backend VPS
+            </DialogTitle>
+            <DialogDescription className="text-base">
+              Configure a conexão com seu servidor WhatsApp
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 pt-4">
+            <div>
+              <Label className="text-sm font-medium">URL do Backend</Label>
+              <Input 
+                value={backendUrl}
+                onChange={(e) => setBackendUrl(e.target.value)}
+                placeholder="http://SEU_IP_VPS:3000"
+                className="mt-2 h-12 text-base font-mono"
+              />
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Exemplo: http://123.45.67.89:3000
+              </p>
+            </div>
+            
+            <div>
+              <Label className="text-sm font-medium">Token de Autenticação</Label>
+              <Input 
+                type="password"
+                value={backendToken}
+                onChange={(e) => setBackendToken(e.target.value)}
+                placeholder="Seu MASTER_TOKEN do script VPS"
+                className="mt-2 h-12 text-base font-mono"
+              />
+              <p className="text-xs text-muted-foreground mt-1.5">
+                O mesmo token configurado no arquivo .env da VPS
+              </p>
+            </div>
+            
+            <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/20">
+              <p className="text-sm text-blue-600 font-medium mb-2">📋 Como obter:</p>
+              <ol className="text-xs text-muted-foreground space-y-1.5">
+                <li>1. Instale o script VPS no seu servidor</li>
+                <li>2. Copie o IP público + porta (ex: 3000)</li>
+                <li>3. Use o MASTER_TOKEN do arquivo .env</li>
+              </ol>
+            </div>
+            
+            <div className="flex gap-3 pt-2">
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => setShowBackendConfigModal(false)}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                className="flex-1 gap-2"
+                onClick={saveBackendConfig}
+                disabled={savingBackend || !backendUrl.trim() || !backendToken.trim()}
+              >
+                {savingBackend ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    Salvar Configuração
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
