@@ -360,14 +360,47 @@ export function useGenesisWhatsAppConnection() {
     return { healthy: res.ok };
   };
 
-  // V8: Criar instância no backend se não existir
-  const ensureInstanceExists = async (instanceId: string, instanceName?: string): Promise<{ exists: boolean; created: boolean; error?: string }> => {
-    // Primeiro tenta obter status
+  // Detectar se backend é V8 (multi-instância) ou Legacy (single-instance)
+  const detectBackendFlavor = async (instanceId: string): Promise<'v8' | 'legacy'> => {
+    // Tentar endpoint V8 primeiro
+    const v8Res = await proxyRequest(instanceId, `/api/instance/${instanceId}/status`, 'GET');
+    
+    // Se retornou dados válidos ou sucesso, é V8
+    if (v8Res.ok && v8Res.status !== 404) {
+      return 'v8';
+    }
+    
+    // Se 404 com HTML "Cannot GET", tentar legacy
+    const dataStr = typeof v8Res.data === 'string' ? v8Res.data : JSON.stringify(v8Res.data || '');
+    if (dataStr.includes('Cannot GET') || v8Res.status === 404) {
+      // Tentar endpoint legacy
+      const legacyRes = await proxyRequest(instanceId, '/status', 'GET');
+      if (legacyRes.ok || (legacyRes.data && !dataStr.includes('Cannot GET'))) {
+        return 'legacy';
+      }
+    }
+    
+    // Default para legacy se não conseguiu determinar
+    return 'legacy';
+  };
+
+  // V8: Criar instância no backend se não existir (só para backends V8)
+  const ensureInstanceExists = async (instanceId: string, instanceName?: string): Promise<{ exists: boolean; created: boolean; error?: string; flavor?: 'v8' | 'legacy' }> => {
+    // Primeiro detectar flavor do backend
+    const flavor = await detectBackendFlavor(instanceId);
+    logDiagnostic('BACKEND_FLAVOR_DETECTED', { instanceId, flavor });
+    
+    if (flavor === 'legacy') {
+      // Backend legacy não precisa criar instância - já existe por padrão
+      return { exists: true, created: false, flavor: 'legacy' };
+    }
+    
+    // Backend V8: verificar se instância existe
     const statusRes = await proxyRequest(instanceId, `/api/instance/${instanceId}/status`, 'GET');
     
     // Se retornou dados, instância existe
     if (statusRes.ok || (statusRes.data && !statusRes.data?.error?.includes('não encontrada'))) {
-      return { exists: true, created: false };
+      return { exists: true, created: false, flavor: 'v8' };
     }
     
     // Instância não existe, criar
@@ -380,18 +413,18 @@ export function useGenesisWhatsAppConnection() {
     
     if (createRes.ok || createRes.data?.success) {
       logDiagnostic('INSTANCE_CREATED_SUCCESSFULLY', { instanceId });
-      return { exists: true, created: true };
+      return { exists: true, created: true, flavor: 'v8' };
     }
     
     // Se erro é "já existe", tudo bem
     if (createRes.data?.error?.includes('já existe')) {
-      return { exists: true, created: false };
+      return { exists: true, created: false, flavor: 'v8' };
     }
     
-    return { exists: false, created: false, error: createRes.error || createRes.data?.error };
+    return { exists: false, created: false, error: createRes.error || createRes.data?.error, flavor: 'v8' };
   };
 
-  const checkStatus = async (instanceId: string): Promise<{ connected: boolean; phoneNumber?: string; isStale?: boolean; readyToSend?: boolean; notFound?: boolean }> => {
+  const checkStatus = async (instanceId: string): Promise<{ connected: boolean; phoneNumber?: string; isStale?: boolean; readyToSend?: boolean; notFound?: boolean; flavor?: 'v8' | 'legacy' }> => {
     // Primeiro verificar no banco se está stale
     const { data: instanceRow } = await supabase
       .from('genesis_instances')
@@ -419,15 +452,24 @@ export function useGenesisWhatsAppConnection() {
       }
     }
 
-    // Se não está stale, verificar status real via proxy
-    const res = await proxyRequest(instanceId, `/api/instance/${instanceId}/status`, 'GET');
+    // Tentar endpoint V8 primeiro
+    let res = await proxyRequest(instanceId, `/api/instance/${instanceId}/status`, 'GET');
+    let flavor: 'v8' | 'legacy' = 'v8';
+    
+    // Se 404 com "Cannot GET", tentar endpoint legacy
+    const dataStr = typeof res.data === 'string' ? res.data : JSON.stringify(res.data || '');
+    if (!res.ok && (dataStr.includes('Cannot GET') || res.status === 404)) {
+      logDiagnostic('V8_STATUS_FAILED_TRYING_LEGACY', { instanceId, status: res.status });
+      res = await proxyRequest(instanceId, '/status', 'GET');
+      flavor = 'legacy';
+    }
     
     // V8: Detectar se instância não existe no backend
     if (!res.ok && res.data?.error?.includes('não encontrada')) {
-      return { connected: false, notFound: true };
+      return { connected: false, notFound: true, flavor };
     }
     
-    if (!res.ok) return { connected: false };
+    if (!res.ok) return { connected: false, flavor };
     
     const result = res.data || {};
     
@@ -438,14 +480,22 @@ export function useGenesisWhatsAppConnection() {
       connected: result.connected === true || result.status === 'connected' || result.state === 'open',
       phoneNumber: result.phone || result.phoneNumber || result.jid?.split('@')[0],
       readyToSend: isReady,
+      flavor,
     };
   };
 
   const generateQRCode = async (instanceId: string, skipConnect = false): Promise<string | null> => {
-    // V8: Primeiro iniciar conexão se ainda não foi feito (a menos que skipConnect = true)
+    // Detectar flavor do backend
+    const flavor = await detectBackendFlavor(instanceId);
+    logDiagnostic('GENERATE_QR_BACKEND_FLAVOR', { instanceId, flavor });
+    
+    // Primeiro iniciar conexão se ainda não foi feito (a menos que skipConnect = true)
     if (!skipConnect) {
-      const connectRes = await proxyRequest(instanceId, `/api/instance/${instanceId}/connect`, 'POST', {});
-      logDiagnostic('GENERATE_QR_CONNECT_RESULT', { instanceId, ok: connectRes.ok, data: connectRes.data });
+      const connectPath = flavor === 'v8' 
+        ? `/api/instance/${instanceId}/connect` 
+        : '/connect';
+      const connectRes = await proxyRequest(instanceId, connectPath, 'POST', {});
+      logDiagnostic('GENERATE_QR_CONNECT_RESULT', { instanceId, ok: connectRes.ok, data: connectRes.data, flavor });
       
       // Aguardar um momento para o QR ser gerado
       await new Promise(r => setTimeout(r, 2000));
@@ -453,7 +503,19 @@ export function useGenesisWhatsAppConnection() {
     
     // Tentar obter QR até 3 vezes com intervalos
     for (let attempt = 0; attempt < 3; attempt++) {
-      const res = await proxyRequest(instanceId, `/api/instance/${instanceId}/qrcode`, 'GET');
+      // Tentar endpoint baseado no flavor detectado
+      const qrPath = flavor === 'v8' 
+        ? `/api/instance/${instanceId}/qrcode` 
+        : '/qrcode';
+      
+      let res = await proxyRequest(instanceId, qrPath, 'GET');
+      
+      // Se V8 falhou com 404, tentar legacy
+      const dataStr = typeof res.data === 'string' ? res.data : JSON.stringify(res.data || '');
+      if (flavor === 'v8' && !res.ok && (dataStr.includes('Cannot GET') || res.status === 404)) {
+        logDiagnostic('V8_QRCODE_FAILED_TRYING_LEGACY', { instanceId, attempt });
+        res = await proxyRequest(instanceId, '/qrcode', 'GET');
+      }
       
       if (res.data?.connected || res.data?.status === 'connected') {
         return 'CONNECTED';
@@ -500,7 +562,16 @@ Agora você pode automatizar seu atendimento!`;
     logDiagnostic('WELCOME_MESSAGE_DELAY', { instanceId, delayMs: initialDelay, reason: 'socket_stabilization' });
     await new Promise((r) => setTimeout(r, initialDelay));
 
+    // Detectar flavor do backend para escolher endpoint correto
+    const flavor = await detectBackendFlavor(instanceId);
+    logDiagnostic('WELCOME_MESSAGE_FLAVOR', { instanceId, flavor });
+
     const maxAttempts = 12; // Aumentado para mais tentativas
+    
+    // Lista de endpoints para tentar (V8 e legacy)
+    const sendEndpoints = flavor === 'v8'
+      ? [`/api/instance/${instanceId}/send`, '/api/send', '/send']
+      : ['/api/send', '/send', `/api/instance/${instanceId}/send`];
     
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       const attemptStart = Date.now();
@@ -513,114 +584,125 @@ Agora você pode automatizar seu atendimento!`;
         elapsedTotal: Date.now() - sendStart,
       });
 
-      try {
-        const res = await proxyRequest(instanceId, `/api/instance/${instanceId}/send`, 'POST', {
-          to: phoneNumber,
-          message,
-        });
-
-        const attemptDuration = Date.now() - attemptStart;
-
-        logDiagnostic('WELCOME_MESSAGE_RESPONSE', {
-          instanceId,
-          attempt,
-          attemptDuration,
-          ok: res.ok,
-          status: res.status,
-          error: res.error,
-          dataSuccess: res.data?.success,
-        });
-
-        // Sucesso: status 200-299 ou data.success = true
-        if ((res.ok && res.status >= 200 && res.status < 300) || res.data?.success === true) {
-          logDiagnostic('WELCOME_MESSAGE_SUCCESS', {
-            instanceId,
-            phoneNumber,
-            attempt,
-            totalTime: Date.now() - sendStart,
+      // Tentar cada endpoint até um funcionar
+      let res: any = null;
+      let endpointSuccess = false;
+      
+      for (const endpoint of sendEndpoints) {
+        try {
+          res = await proxyRequest(instanceId, endpoint, 'POST', {
+            to: phoneNumber,
+            phone: phoneNumber,
+            message,
           });
 
-          try {
-            await supabase.from('genesis_event_logs').insert({
-              instance_id: instanceId,
-              event_type: 'welcome_sent',
-              severity: 'info',
-              message: `Mensagem de boas-vindas enviada para ${phoneNumber}`,
-              details: { attempt, totalTime: Date.now() - sendStart },
-            });
-          } catch {}
-
-          return { success: true, status: res.status };
+          const dataStr = typeof res.data === 'string' ? res.data : JSON.stringify(res.data || '');
+          // Se não for 404 com "Cannot", este endpoint funciona
+          if (!dataStr.includes('Cannot')) {
+            endpointSuccess = true;
+            break;
+          }
+        } catch (e) {
+          // Continuar tentando próximo endpoint
         }
+      }
 
-        const errText = String(res?.data?.error || res?.error || '').toLowerCase();
-        const retryablePatterns = [
-          'não conectado',
-          'not connected',
-          'socket',
-          'aguard',
-          'timeout',
-          'unavailable',
-          'not ready',
-          'nao pronto',
-          'connection',
-          'retry',
-          'busy',
-          'initializing',
-          'waiting',
-          'pending',
-        ];
+      if (!res) continue;
 
-        const shouldRetry =
-          res.status === 503 ||
-          res.status === 0 ||
-          res.status === 500 ||
-          res.status === 502 ||
-          res.status === 504 ||
-          retryablePatterns.some((p) => errText.includes(p));
+      const attemptDuration = Date.now() - attemptStart;
 
-        logDiagnostic('WELCOME_MESSAGE_RETRY_DECISION', {
+      logDiagnostic('WELCOME_MESSAGE_RESPONSE', {
+        instanceId,
+        attempt,
+        attemptDuration,
+        ok: res.ok,
+        status: res.status,
+        error: res.error,
+        dataSuccess: res.data?.success,
+      });
+
+      // Sucesso: status 200-299 ou data.success = true
+      if ((res.ok && res.status >= 200 && res.status < 300) || res.data?.success === true) {
+        logDiagnostic('WELCOME_MESSAGE_SUCCESS', {
           instanceId,
+          phoneNumber,
           attempt,
-          shouldRetry,
-          status: res.status,
-          errText: errText.slice(0, 200),
+          totalTime: Date.now() - sendStart,
         });
 
-        if (!shouldRetry) {
-          logDiagnostic('WELCOME_MESSAGE_FAILED_NON_RETRYABLE', {
-            instanceId,
-            phoneNumber,
-            attempt,
-            totalTime: Date.now() - sendStart,
-            finalError: res.error || res.data?.error,
-            finalStatus: res.status,
+        try {
+          await supabase.from('genesis_event_logs').insert({
+            instance_id: instanceId,
+            event_type: 'welcome_sent',
+            severity: 'info',
+            message: `Mensagem de boas-vindas enviada para ${phoneNumber}`,
+            details: { attempt, totalTime: Date.now() - sendStart },
           });
+        } catch {}
 
-          try {
-            await supabase.from('genesis_event_logs').insert({
-              instance_id: instanceId,
-              event_type: 'welcome_failed',
-              severity: 'error',
-              message: `Falha ao enviar mensagem de boas-vindas: ${res.error || res.data?.error}`,
-              details: {
-                attempt,
-                totalTime: Date.now() - sendStart,
-                status: res.status,
-                error: res.error || res.data?.error,
-              },
-            });
-          } catch {}
+        return { success: true, status: res.status };
+      }
 
-          return { success: false, status: res.status, error: res.error || res.data?.error };
-        }
-      } catch (error) {
-        logDiagnostic('WELCOME_MESSAGE_EXCEPTION', {
+      const errText = String(res?.data?.error || res?.error || '').toLowerCase();
+      const retryablePatterns = [
+        'não conectado',
+        'not connected',
+        'socket',
+        'aguard',
+        'timeout',
+        'unavailable',
+        'not ready',
+        'nao pronto',
+        'connection',
+        'retry',
+        'busy',
+        'initializing',
+        'waiting',
+        'pending',
+      ];
+
+      const shouldRetry =
+        res.status === 503 ||
+        res.status === 0 ||
+        res.status === 500 ||
+        res.status === 502 ||
+        res.status === 504 ||
+        retryablePatterns.some((p) => errText.includes(p));
+
+      logDiagnostic('WELCOME_MESSAGE_RETRY_DECISION', {
+        instanceId,
+        attempt,
+        shouldRetry,
+        status: res.status,
+        errText: errText.slice(0, 200),
+      });
+
+      if (!shouldRetry) {
+        logDiagnostic('WELCOME_MESSAGE_FAILED_NON_RETRYABLE', {
           instanceId,
+          phoneNumber,
           attempt,
-          errorType: 'exception',
-          errorMessage: error instanceof Error ? error.message : String(error),
+          totalTime: Date.now() - sendStart,
+          finalError: res.error || res.data?.error,
+          finalStatus: res.status,
         });
+
+        try {
+          await supabase.from('genesis_event_logs').insert({
+            instance_id: instanceId,
+            event_type: 'welcome_failed',
+            severity: 'error',
+            message: `Falha ao enviar mensagem de boas-vindas: ${res.error || res.data?.error}`,
+            details: {
+              attempt,
+              totalTime: Date.now() - sendStart,
+              status: res.status,
+              error: res.error || res.data?.error,
+            },
+          });
+        } catch {}
+
+        return { success: false, status: res.status, error: res.error || res.data?.error };
       }
 
       // Backoff exponencial mais suave
