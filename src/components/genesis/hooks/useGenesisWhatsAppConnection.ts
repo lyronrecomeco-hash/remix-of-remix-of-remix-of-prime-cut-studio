@@ -368,38 +368,43 @@ export function useGenesisWhatsAppConnection() {
 
   // Detectar se backend é V8 (multi-instância) ou Legacy (single-instance)
   // COM CACHE em session_data para evitar requests repetidas
-  const detectBackendFlavor = async (instanceId: string): Promise<'v8' | 'legacy'> => {
-    // Verificar cache primeiro
-    try {
-      const { data: cached } = await supabase
-        .from('genesis_instances')
-        .select('session_data')
-        .eq('id', instanceId)
-        .single();
-      
-      const session = cached?.session_data as Record<string, unknown> | null;
-      if (session?.backend_flavor && typeof session.backend_flavor === 'string') {
-        return session.backend_flavor as 'v8' | 'legacy';
-      }
-    } catch {}
-    
-    // Tentar endpoint V8 primeiro
-    const v8Res = await proxyRequest(instanceId, `/api/instance/${instanceId}/status`, 'GET');
-    
-    let flavor: 'v8' | 'legacy' = 'legacy';
-    
-    // Se retornou dados válidos ou sucesso, é V8
-    if (v8Res.ok && v8Res.status !== 404) {
-      flavor = 'v8';
-    } else {
-      // Se 404 com HTML "Cannot GET", tentar legacy
-      const dataStr = typeof v8Res.data === 'string' ? v8Res.data : JSON.stringify(v8Res.data || '');
-      if (dataStr.includes('Cannot GET') || v8Res.status === 404) {
-        const legacyRes = await proxyRequest(instanceId, '/status', 'GET');
-        if (legacyRes.ok || (legacyRes.data && !dataStr.includes('Cannot GET'))) {
-          flavor = 'legacy';
+  const detectBackendFlavor = async (instanceId: string, forceRefresh = false): Promise<'v8' | 'legacy'> => {
+    // Verificar cache primeiro (a menos que forceRefresh)
+    if (!forceRefresh) {
+      try {
+        const { data: cached } = await supabase
+          .from('genesis_instances')
+          .select('session_data')
+          .eq('id', instanceId)
+          .single();
+        
+        const session = cached?.session_data as Record<string, unknown> | null;
+        if (session?.backend_flavor && typeof session.backend_flavor === 'string') {
+          return session.backend_flavor as 'v8' | 'legacy';
         }
-      }
+      } catch {}
+    }
+    
+    // Tentar health primeiro para ver se servidor está up
+    const healthRes = await proxyRequest(instanceId, '/health', 'GET');
+    if (!healthRes.ok) {
+      // Servidor offline, assumir v8 (mais moderno)
+      return 'v8';
+    }
+    
+    // Tentar endpoint V8 específico
+    const v8Res = await proxyRequest(instanceId, `/api/instance/${instanceId}/status`, 'GET');
+    const dataStr = typeof v8Res.data === 'string' ? v8Res.data : JSON.stringify(v8Res.data || '');
+    
+    let flavor: 'v8' | 'legacy' = 'v8'; // Default para v8 (mais moderno)
+    
+    // Se V8 retornou 404 ou "Cannot GET", é legacy
+    if (!v8Res.ok && (v8Res.status === 404 || dataStr.includes('Cannot GET'))) {
+      flavor = 'legacy';
+      logDiagnostic('FLAVOR_DETECTED_LEGACY', { instanceId, status: v8Res.status });
+    } else if (v8Res.ok) {
+      flavor = 'v8';
+      logDiagnostic('FLAVOR_DETECTED_V8', { instanceId });
     }
     
     // Salvar no cache
@@ -631,29 +636,22 @@ Agora você pode automatizar seu atendimento!`;
     await new Promise((r) => setTimeout(r, initialDelay));
 
     // Detectar flavor do backend para escolher endpoints corretos
-    const flavor = await detectBackendFlavor(instanceId);
+    // Forçar refresh do cache pois o usuário pode ter reinstalado o script
+    const flavor = await detectBackendFlavor(instanceId, true);
     logDiagnostic('WELCOME_MESSAGE_FLAVOR', { instanceId, flavor });
 
     const maxAttempts = 10;
 
-    // Lista de endpoints para tentar (V8 e legacy) - cobre variações de script
-    const sendEndpoints = flavor === 'v8'
-      ? [
-          `/api/instance/${instanceId}/send`,
-          `/api/instance/${instanceId}/send-message`,
-          `/api/instance/${instanceId}/sendText`,
-          `/api/instance/${instanceId}/send-text`,
-          '/api/send',
-          '/send',
-        ]
-      : [
-          '/api/send',
-          '/send',
-          `/api/instance/${instanceId}/send`,
-          `/api/instance/${instanceId}/send-message`,
-          `/api/instance/${instanceId}/sendText`,
-          `/api/instance/${instanceId}/send-text`,
-        ];
+    // Lista de endpoints para tentar - PRIORIZAR V8 sempre (mais moderno)
+    // Os endpoints V8 (/api/instance/:id/send) são mais confiáveis
+    const sendEndpoints = [
+      `/api/instance/${instanceId}/send`,
+      `/api/instance/${instanceId}/send-message`,
+      `/api/instance/${instanceId}/sendText`,
+      `/api/instance/${instanceId}/send-text`,
+      // Fallback para legacy só se V8 não funcionar
+      ...(flavor === 'legacy' ? ['/api/send', '/send'] : []),
+    ];
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       const attemptStart = Date.now();
@@ -1423,11 +1421,10 @@ Agora você pode automatizar seu atendimento!`;
     const lastHeartbeatMs = data.last_heartbeat ? new Date(data.last_heartbeat).getTime() : 0;
     const isStale = lastHeartbeatMs > 0 && Date.now() - lastHeartbeatMs > HARDENING.STALE_THRESHOLD_MS;
 
-    // Se está marcado como connected mas heartbeat é stale, mostrar como disconnected
-    let normalizedStatus = data.effective_status || data.status || 'disconnected';
-    if (normalizedStatus === 'connected' && isStale) {
-      normalizedStatus = 'disconnected';
-    }
+    // IMPORTANTE: NÃO forçar disconnected apenas por stale
+    // O status do banco (effective_status) é a fonte de verdade
+    // Stale é APENAS um indicador visual, não deve alterar o status real
+    const normalizedStatus = data.effective_status || data.status || 'disconnected';
 
     return {
       status: normalizedStatus,
