@@ -419,157 +419,56 @@ export function useGenesisWhatsAppConnection() {
     return flavor;
   };
 
-  // Obter a chave da instância no backend (pode ser UUID ou nome)
-  const getBackendInstanceKey = async (instanceId: string): Promise<string> => {
-    try {
-      const { data: instanceRow } = await supabase
-        .from('genesis_instances')
-        .select('session_data, name')
-        .eq('id', instanceId)
-        .single();
-
-      const session = instanceRow?.session_data as Record<string, unknown> | null;
-      
-      // Se já temos uma chave mapeada, usar ela
-      if (session?.backend_instance_key && typeof session.backend_instance_key === 'string') {
-        return session.backend_instance_key;
-      }
-      
-      // Senão, usar o nome da instância (que é o que o VPS usa)
-      if (instanceRow?.name) {
-        return instanceRow.name;
-      }
-      
-      // Fallback para UUID (improvável)
-      return instanceId;
-    } catch {
-      return instanceId;
-    }
-  };
+  // No backend V8, usamos sempre o UUID do banco como `instanceId` no VPS.
+  // Isso é obrigatório porque o endpoint de heartbeat do backend espera UUID.
+  const getBackendInstanceKey = async (instanceId: string): Promise<string> => instanceId;
 
   // V8: Criar instância no backend se não existir (só para backends V8)
-  const ensureInstanceExists = async (instanceId: string, instanceName?: string): Promise<{ exists: boolean; created: boolean; error?: string; flavor?: 'v8' | 'legacy'; backendKey?: string }> => {
+  const ensureInstanceExists = async (
+    instanceId: string,
+    instanceName?: string
+  ): Promise<{ exists: boolean; created: boolean; error?: string; flavor?: 'v8' | 'legacy'; backendKey?: string }> => {
     // Primeiro detectar flavor do backend
     const flavor = await detectBackendFlavor(instanceId);
     logDiagnostic('BACKEND_FLAVOR_DETECTED', { instanceId, flavor });
-    
+
     if (flavor === 'legacy') {
       // Backend legacy não precisa criar instância - já existe por padrão
       return { exists: true, created: false, flavor: 'legacy', backendKey: 'default' };
     }
-    
-    // Obter a chave que o backend usa (nome da instância, não UUID)
-    const backendKey = await getBackendInstanceKey(instanceId);
-    logDiagnostic('BACKEND_INSTANCE_KEY', { instanceId, backendKey, instanceName });
-    
-    // Backend V8: verificar se instância existe pelo NOME (não UUID)
+
+    const backendKey = instanceId;
+
+    // Backend V8: verificar se instância existe pelo UUID
     const statusRes = await proxyRequest(instanceId, `/api/instance/${encodeURIComponent(backendKey)}/status`, 'GET');
-    
-    // Se retornou dados válidos, instância existe
-    if (statusRes.ok || (statusRes.data && !statusRes.data?.error?.includes('não encontrada'))) {
-      logDiagnostic('INSTANCE_EXISTS_IN_BACKEND', { instanceId, backendKey, data: statusRes.data });
-      
-      // Persistir a chave para uso futuro
-      try {
-        const merged = await mergeSessionData(instanceId, { backend_instance_key: backendKey });
-        await supabase
-          .from('genesis_instances')
-          .update({ session_data: JSON.parse(JSON.stringify(merged)) })
-          .eq('id', instanceId);
-      } catch {}
-      
+    if (statusRes.ok) {
       return { exists: true, created: false, flavor: 'v8', backendKey };
     }
-    
-    // V8: Listar todas as instâncias para ver se já existe com outro nome
-    const listRes = await proxyRequest(instanceId, '/api/instances', 'GET');
-    logDiagnostic('LIST_BACKEND_INSTANCES', { instanceId, ok: listRes.ok, data: listRes.data });
-    
-    if (listRes.ok && Array.isArray(listRes.data)) {
-      // Procurar instância por nome
-      const existing = listRes.data.find((inst: any) => 
-        inst.name === backendKey || 
-        inst.name === instanceName || 
-        inst.id === instanceId ||
-        inst.instanceId === instanceId
-      );
-      
-      if (existing) {
-        const foundKey = existing.name || existing.id || existing.instanceId;
-        logDiagnostic('FOUND_EXISTING_INSTANCE', { instanceId, foundKey, existing });
-        
-        // Persistir a chave encontrada
-        try {
-          const merged = await mergeSessionData(instanceId, { backend_instance_key: foundKey });
-          await supabase
-            .from('genesis_instances')
-            .update({ session_data: JSON.parse(JSON.stringify(merged)) })
-            .eq('id', instanceId);
-        } catch {}
-        
-        return { exists: true, created: false, flavor: 'v8', backendKey: foundKey };
-      }
-      
-      // Se já existe uma instância (mesmo com outro nome), usar ela
-      if (listRes.data.length > 0) {
-        const firstInstance = listRes.data[0];
-        const foundKey = firstInstance.name || firstInstance.id || firstInstance.instanceId;
-        logDiagnostic('USING_FIRST_AVAILABLE_INSTANCE', { instanceId, foundKey, firstInstance });
-        
-        // Persistir a chave encontrada
-        try {
-          const merged = await mergeSessionData(instanceId, { backend_instance_key: foundKey });
-          await supabase
-            .from('genesis_instances')
-            .update({ session_data: JSON.parse(JSON.stringify(merged)) })
-            .eq('id', instanceId);
-        } catch {}
-        
-        return { exists: true, created: false, flavor: 'v8', backendKey: foundKey };
-      }
+
+    // Instância não existe, criar com UUID e nome humano
+    const createName = instanceName || `instance-${instanceId.slice(0, 8)}`;
+    logDiagnostic('CREATING_INSTANCE_IN_BACKEND', { instanceId, backendKey, createName });
+
+    const createRes = await proxyRequest(instanceId, '/api/instances', 'POST', {
+      instanceId: backendKey,
+      name: createName,
+    });
+
+    if (createRes.ok || createRes.data?.success || createRes.data?.id) {
+      return { exists: true, created: true, flavor: 'v8', backendKey };
     }
-    
-    // Instância não existe, criar com o nome correto
-    const createName = instanceName || backendKey || `instance-${instanceId.slice(0, 8)}`;
-    logDiagnostic('CREATING_INSTANCE_IN_BACKEND', { instanceId, createName });
-    
-    // Tentar múltiplos formatos de payload (diferentes versões do script)
-    const payloadFormats = [
-      { instanceId: createName, name: createName },
-      { id: createName, name: createName },
-      { name: createName },
-      { instanceId, name: createName },
-    ];
-    
-    for (const payload of payloadFormats) {
-      const createRes = await proxyRequest(instanceId, '/api/instances', 'POST', payload);
-      logDiagnostic('CREATE_INSTANCE_ATTEMPT', { instanceId, payload, ok: createRes.ok, data: createRes.data });
-      
-      if (createRes.ok || createRes.data?.success || createRes.data?.id) {
-        const createdKey = createRes.data?.name || createRes.data?.id || createName;
-        logDiagnostic('INSTANCE_CREATED_SUCCESSFULLY', { instanceId, createdKey });
-        
-        // Persistir a chave criada
-        try {
-          const merged = await mergeSessionData(instanceId, { backend_instance_key: createdKey });
-          await supabase
-            .from('genesis_instances')
-            .update({ session_data: JSON.parse(JSON.stringify(merged)) })
-            .eq('id', instanceId);
-        } catch {}
-        
-        return { exists: true, created: true, flavor: 'v8', backendKey: createdKey };
-      }
-      
-      // Se erro é "já existe", tudo bem
-      if (createRes.data?.error?.includes('já existe')) {
-        return { exists: true, created: false, flavor: 'v8', backendKey: createName };
-      }
+
+    if (createRes.data?.error?.includes('já existe')) {
+      return { exists: true, created: false, flavor: 'v8', backendKey };
     }
-    
-    // Se chegou aqui, falhou em criar. Tentar usar instância padrão do VPS
-    logDiagnostic('FALLBACK_TO_DEFAULT_INSTANCE', { instanceId });
-    return { exists: true, created: false, flavor: 'v8', backendKey: instanceName || 'Genesis' };
+
+    return {
+      exists: false,
+      created: false,
+      flavor: 'v8',
+      backendKey,
+      error: createRes.error || createRes.data?.error || 'Falha ao criar instância no backend',
+    };
   };
 
   const checkStatus = async (instanceId: string): Promise<{ connected: boolean; phoneNumber?: string; isStale?: boolean; readyToSend?: boolean; notFound?: boolean; flavor?: 'v8' | 'legacy' }> => {
