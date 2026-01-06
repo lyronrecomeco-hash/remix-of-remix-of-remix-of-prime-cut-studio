@@ -462,51 +462,96 @@ export function useGenesisWhatsAppConnection() {
     if (instanceRow?.last_heartbeat) {
       const lastHb = new Date(instanceRow.last_heartbeat).getTime();
       const isStale = Date.now() - lastHb > HARDENING.STALE_THRESHOLD_MS;
-      
+
       if (isStale && instanceRow.effective_status === 'connected') {
         // Forçar sync no banco
         console.log(`[checkStatus] Instance ${instanceId} is stale, forcing disconnect`);
         await supabase
           .from('genesis_instances')
-          .update({ 
-            effective_status: 'disconnected', 
+          .update({
+            effective_status: 'disconnected',
             status: 'disconnected',
-            updated_at: new Date().toISOString() 
+            updated_at: new Date().toISOString(),
           })
           .eq('id', instanceId);
-        
+
         return { connected: false, isStale: true };
       }
     }
 
-    // Tentar endpoint V8 primeiro
-    let res = await proxyRequest(instanceId, `/api/instance/${instanceId}/status`, 'GET');
-    let flavor: 'v8' | 'legacy' = 'v8';
-    
-    // Se 404 com "Cannot GET", tentar endpoint legacy
+    // Usar flavor cacheado (evita 404 v8 -> fallback legacy em TODA checagem)
+    let flavor: 'v8' | 'legacy' = await detectBackendFlavor(instanceId);
+
+    const fetchStatus = async (f: 'v8' | 'legacy') => {
+      const path = f === 'v8' ? `/api/instance/${instanceId}/status` : '/status';
+      return proxyRequest(instanceId, path, 'GET');
+    };
+
+    let res = await fetchStatus(flavor);
+
+    // Se o flavor cacheado estiver errado (mudança de script VPS), tenta fallback 1x
     const dataStr = typeof res.data === 'string' ? res.data : JSON.stringify(res.data || '');
-    if (!res.ok && (dataStr.includes('Cannot GET') || res.status === 404)) {
-      logDiagnostic('V8_STATUS_FAILED_TRYING_LEGACY', { instanceId, status: res.status });
-      res = await proxyRequest(instanceId, '/status', 'GET');
-      flavor = 'legacy';
+    const looksLikeMissingRoute =
+      !res.ok &&
+      (res.status === 404 || dataStr.includes('Cannot GET') || dataStr.includes('Cannot POST'));
+
+    if (looksLikeMissingRoute) {
+      const other: 'v8' | 'legacy' = flavor === 'v8' ? 'legacy' : 'v8';
+      logDiagnostic('STATUS_FLAVOR_MISMATCH_TRYING_FALLBACK', {
+        instanceId,
+        from: flavor,
+        to: other,
+        status: res.status,
+      });
+
+      const fallback = await fetchStatus(other);
+      if (fallback.ok) {
+        flavor = other;
+        res = fallback;
+
+        // Atualizar cache best-effort
+        try {
+          const merged = await mergeSessionData(instanceId, { backend_flavor: flavor });
+          await supabase
+            .from('genesis_instances')
+            .update({ session_data: JSON.parse(JSON.stringify(merged)) })
+            .eq('id', instanceId);
+        } catch {}
+      }
     }
-    
+
     // V8: Detectar se instância não existe no backend
     if (!res.ok && res.data?.error?.includes('não encontrada')) {
       return { connected: false, notFound: true, flavor };
     }
-    
+
     if (!res.ok) return { connected: false, flavor };
-    
+
     const result = res.data || {};
-    
-    // V8: Backend retorna readyToSend que indica se o socket está estável
-    const isReady = result.readyToSend === true || result.ready_to_send === true;
-    
+
+    // Normalizações (V8 e Legacy retornam formatos diferentes)
+    const connected =
+      result.connected === true ||
+      result.status === 'connected' ||
+      result.state === 'open' ||
+      result.connectionStatus === 'connected';
+
+    const phoneNumber =
+      result.connectedPhone ||
+      result.phone ||
+      result.phoneNumber ||
+      (typeof result.jid === 'string' ? result.jid.split('@')[0] : undefined);
+
+    // V8: Backend retorna readyToSend; Legacy não expõe isso, então conectado => pronto
+    const readyToSend =
+      result.readyToSend === true ||
+      result.ready_to_send === true ||
+      (connected && flavor === 'legacy');
+
     return {
-      connected: result.connected === true || result.status === 'connected' || result.state === 'open',
-      phoneNumber: result.phone || result.phoneNumber || result.jid?.split('@')[0],
-      readyToSend: isReady,
+      connected,
+      phoneNumber,
+      readyToSend,
       flavor,
     };
   };
@@ -584,22 +629,36 @@ export function useGenesisWhatsAppConnection() {
 
 Agora você pode automatizar seu atendimento!`;
 
-    // Delay inicial mais longo para garantir estabilidade do socket
-    const initialDelay = 4000;
-    logDiagnostic('WELCOME_MESSAGE_DELAY', { instanceId, delayMs: initialDelay, reason: 'socket_stabilization' });
+    // Delay pequeno para dar tempo do backend finalizar a estabilização (sem travar a UX)
+    const initialDelay = 800;
+    logDiagnostic('WELCOME_MESSAGE_DELAY', { instanceId, delayMs: initialDelay, reason: 'brief_settle' });
     await new Promise((r) => setTimeout(r, initialDelay));
 
-    // Detectar flavor do backend para escolher endpoint correto
+    // Detectar flavor do backend para escolher endpoints corretos
     const flavor = await detectBackendFlavor(instanceId);
     logDiagnostic('WELCOME_MESSAGE_FLAVOR', { instanceId, flavor });
 
-    const maxAttempts = 12; // Aumentado para mais tentativas
-    
-    // Lista de endpoints para tentar (V8 e legacy)
+    const maxAttempts = 10;
+
+    // Lista de endpoints para tentar (V8 e legacy) - cobre variações de script
     const sendEndpoints = flavor === 'v8'
-      ? [`/api/instance/${instanceId}/send`, '/api/send', '/send']
-      : ['/api/send', '/send', `/api/instance/${instanceId}/send`];
-    
+      ? [
+          `/api/instance/${instanceId}/send`,
+          `/api/instance/${instanceId}/send-message`,
+          `/api/instance/${instanceId}/sendText`,
+          `/api/instance/${instanceId}/send-text`,
+          '/api/send',
+          '/send',
+        ]
+      : [
+          '/api/send',
+          '/send',
+          `/api/instance/${instanceId}/send`,
+          `/api/instance/${instanceId}/send-message`,
+          `/api/instance/${instanceId}/sendText`,
+          `/api/instance/${instanceId}/send-text`,
+        ];
+
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       const attemptStart = Date.now();
 
@@ -611,29 +670,66 @@ Agora você pode automatizar seu atendimento!`;
         elapsedTotal: Date.now() - sendStart,
       });
 
-      // Tentar cada endpoint até um funcionar
-      let res: any = null;
-      let endpointSuccess = false;
-      
+      // Tentar cada endpoint nesta tentativa; se um falhar por payload/ready, tenta o próximo
+      let lastRes: any = null;
+
       for (const endpoint of sendEndpoints) {
         try {
-          res = await proxyRequest(instanceId, endpoint, 'POST', {
+          const res = await proxyRequest(instanceId, endpoint, 'POST', {
+            instanceId,
             to: phoneNumber,
             phone: phoneNumber,
+            number: phoneNumber,
             message,
+            text: message,
           });
 
-          const dataStr = typeof res.data === 'string' ? res.data : JSON.stringify(res.data || '');
-          // Se não for 404 com "Cannot", este endpoint funciona
-          if (!dataStr.includes('Cannot')) {
-            endpointSuccess = true;
-            break;
+          const resStr = typeof res.data === 'string' ? res.data : JSON.stringify(res.data || '');
+          const missingRoute = !res.ok && (res.status === 404 || resStr.includes('Cannot POST') || resStr.includes('Cannot GET'));
+
+          // Endpoint não existe nessa versão: tenta o próximo
+          if (missingRoute) continue;
+
+          lastRes = res;
+
+          // Sucesso imediato
+          if ((res.ok && res.status >= 200 && res.status < 300) || res.data?.success === true) {
+            logDiagnostic('WELCOME_MESSAGE_SUCCESS', {
+              instanceId,
+              phoneNumber,
+              attempt,
+              totalTime: Date.now() - sendStart,
+              endpoint,
+            });
+
+            try {
+              await supabase.from('genesis_event_logs').insert({
+                instance_id: instanceId,
+                event_type: 'welcome_sent',
+                severity: 'info',
+                message: `Mensagem de boas-vindas enviada para ${phoneNumber}`,
+                details: { attempt, endpoint, totalTime: Date.now() - sendStart },
+              });
+            } catch {}
+
+            return { success: true, status: res.status };
           }
-        } catch (e) {
-          // Continuar tentando próximo endpoint
+
+          // Falhou mas endpoint existe: tenta próximos endpoints antes de esperar/backoff
+          const errText = String(res?.data?.error || res?.error || '').toLowerCase();
+          logDiagnostic('WELCOME_MESSAGE_ENDPOINT_FAILED', {
+            instanceId,
+            attempt,
+            endpoint,
+            status: res.status,
+            errText: errText.slice(0, 200),
+          });
+        } catch {
+          // Continua para o próximo endpoint
         }
       }
 
+      const res = lastRes;
       if (!res) continue;
 
       const attemptDuration = Date.now() - attemptStart;
@@ -1027,7 +1123,12 @@ Agora você pode automatizar seu atendimento!`;
       // Antes de gerar um novo QR, tenta reconectar sessão existente
       try {
         safeSetState(prev => ({ ...prev, phase: 'generating' }));
-        await proxyRequest(instanceId, `/api/instance/${instanceId}/connect`, 'POST', {});
+
+        const connectPath = ensureResult.flavor === 'legacy'
+          ? '/connect'
+          : `/api/instance/${instanceId}/connect`;
+
+        await proxyRequest(instanceId, connectPath, 'POST', {});
 
         // Aguarda até 8 segundos para o backend reaproveitar credenciais
         for (let i = 0; i < 8; i++) {
