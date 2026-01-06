@@ -100,6 +100,7 @@ export function useGenesisWhatsAppConnection() {
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const statusPollingRef = useRef<NodeJS.Timeout | null>(null);
   const lastQrRefreshAtRef = useRef<number>(0);
+  const lastBackendConnectCommandAtRef = useRef<number>(0);
   const mountedRef = useRef(true);
   
   // HARDENING: Refs para controle anti-loop
@@ -565,65 +566,45 @@ export function useGenesisWhatsAppConnection() {
     };
   };
 
-  const generateQRCode = async (instanceId: string, skipConnect = false): Promise<string | null> => {
+  const generateQRCode = async (instanceId: string, _skipConnect = false): Promise<string | null> => {
     // Detectar flavor do backend (FORÇAR refresh: usuário pode ter trocado o script VPS)
     const flavor = await detectBackendFlavor(instanceId, true);
-    
-    // Obter a chave correta da instância no backend (nome, não UUID)
+
+    // No V8, backendKey = UUID
     const backendKey = await getBackendInstanceKey(instanceId);
     logDiagnostic('GENERATE_QR_BACKEND_FLAVOR', { instanceId, flavor, backendKey });
 
-    // Primeiro iniciar conexão se ainda não foi feito (a menos que skipConnect = true)
-    if (!skipConnect) {
-      const connectPath = flavor === 'v8'
-        ? `/api/instance/${encodeURIComponent(backendKey)}/connect`
-        : '/connect';
+    const connectPath = flavor === 'v8'
+      ? `/api/instance/${encodeURIComponent(backendKey)}/connect`
+      : '/connect';
 
-      let connectRes = await proxyRequest(instanceId, connectPath, 'POST', {});
+    // "Connect" é idempotente; fazemos best-effort para garantir que o backend
+    // realmente iniciou a geração do QR (evita QR=null + status=disconnected em loop)
+    const connectMaybe = async () => {
+      const now = Date.now();
+      if (now - lastBackendConnectCommandAtRef.current < 8000) return;
+      lastBackendConnectCommandAtRef.current = now;
+      await proxyRequest(instanceId, connectPath, 'POST', {});
+    };
 
-      // Se detectamos legacy mas o endpoint não existe, tentar V8 (migração de backend)
-      const connectDataStr = typeof connectRes.data === 'string' ? connectRes.data : JSON.stringify(connectRes.data || '');
-      const connectMissingRoute = !connectRes.ok && (connectRes.status === 404 || connectDataStr.includes('Cannot POST') || connectDataStr.includes('Cannot GET'));
+    // Sempre tentar iniciar conexão (throttled) antes de buscar QR
+    await connectMaybe();
 
-      if (flavor === 'legacy' && connectMissingRoute) {
-        logDiagnostic('LEGACY_CONNECT_MISSING_TRYING_V8', { instanceId, backendKey });
-        connectRes = await proxyRequest(instanceId, `/api/instance/${encodeURIComponent(backendKey)}/connect`, 'POST', {});
-      }
-
-      logDiagnostic('GENERATE_QR_CONNECT_RESULT', { instanceId, backendKey, ok: connectRes.ok, data: connectRes.data, flavor });
-
-      // Se falhou de forma real, falhar cedo com mensagem clara
-      if (!connectRes.ok && !connectRes.data?.connected && connectRes.data?.status !== 'connected') {
-        // segue para tentar buscar QR mesmo assim (alguns backends geram QR async)
-      }
-
-      // Aguardar um momento para o QR ser gerado
-      await new Promise(r => setTimeout(r, 2000));
-    }
-
-    // Tentar obter QR até 3 vezes com intervalos
-    for (let attempt = 0; attempt < 3; attempt++) {
-      // Tentar endpoint baseado no flavor detectado
+    // Tentar obter QR por mais tempo (alguns VPS demoram para materializar o QR)
+    const maxAttempts = 15; // ~30s
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
       const qrPath = flavor === 'v8'
         ? `/api/instance/${encodeURIComponent(backendKey)}/qrcode`
         : '/qrcode';
 
       let res = await proxyRequest(instanceId, qrPath, 'GET');
 
-      const dataStr = typeof res.data === 'string' ? res.data : JSON.stringify(res.data || '');
-      const missingRoute = !res.ok && (res.status === 404 || dataStr.includes('Cannot GET') || dataStr.includes('Cannot POST'));
-
-      // Fallback simétrico: se legacy falhou por rota ausente, tentar V8
-      if (flavor === 'legacy' && missingRoute) {
-        logDiagnostic('LEGACY_QRCODE_MISSING_TRYING_V8', { instanceId, backendKey, attempt });
-        res = await proxyRequest(instanceId, `/api/instance/${encodeURIComponent(backendKey)}/qrcode`, 'GET');
-      }
-
-      // Se V8 falhou por rota ausente, tentar legacy
-      const dataStr2 = typeof res.data === 'string' ? res.data : JSON.stringify(res.data || '');
-      if (flavor === 'v8' && !res.ok && (dataStr2.includes('Cannot GET') || res.status === 404)) {
-        logDiagnostic('V8_QRCODE_FAILED_TRYING_LEGACY', { instanceId, backendKey, attempt });
-        res = await proxyRequest(instanceId, '/qrcode', 'GET');
+      // Se backend respondeu "disconnected" sem QR, reforçar /connect de tempos em tempos
+      if (attempt === 4 || attempt === 9) {
+        const backendStatus = String(res?.data?.status || '').toLowerCase();
+        if (backendStatus === 'disconnected' || backendStatus === 'idle' || backendStatus === '') {
+          await connectMaybe();
+        }
       }
 
       if (res.data?.connected || res.data?.status === 'connected') {
@@ -635,13 +616,11 @@ export function useGenesisWhatsAppConnection() {
         return await normalizeQrToDataUrl(rawQr);
       }
 
-      // Aguardar antes da próxima tentativa
-      if (attempt < 2) {
-        await new Promise(r => setTimeout(r, 2000));
-      }
+      // aguardar antes da próxima tentativa
+      await new Promise(r => setTimeout(r, 2000));
     }
 
-    throw new Error('QR Code não disponível - aguarde ou tente novamente');
+    throw new Error('QR Code não disponível - aguarde e tente novamente');
   };
 
   // === ENVIO AUTOMÁTICO ROBUSTO COM RETENTATIVAS ===
