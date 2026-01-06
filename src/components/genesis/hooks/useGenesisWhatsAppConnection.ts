@@ -370,7 +370,29 @@ export function useGenesisWhatsAppConnection() {
   // Detectar se backend é V8 (multi-instância) ou Legacy (single-instance)
   // COM CACHE em session_data para evitar requests repetidas
   const detectBackendFlavor = async (instanceId: string, forceRefresh = false): Promise<'v8' | 'legacy'> => {
-    // Verificar cache primeiro (a menos que forceRefresh)
+    const toDataStr = (v: any) => (typeof v === 'string' ? v : JSON.stringify(v ?? ''));
+    const looksLikeMissingRoute = (s: string) =>
+      s.includes('Cannot GET') || s.includes('Cannot POST') || s.includes('Cannot DELETE');
+
+    // Probe do backend: endpoint que NÃO depende da instância existir.
+    // Se /api/instances existir, tratamos como V8.
+    const probeV8Support = async (): Promise<boolean> => {
+      const res = await proxyRequest(instanceId, '/api/instances', 'GET');
+      const dataStr = toDataStr(res.data);
+
+      if (res.ok) return true;
+
+      // Mesmo sem ok, 401/403 indica que o endpoint existe e respondeu (auth falhou, mas é V8).
+      if (res.status === 401 || res.status === 403) return true;
+
+      // Legacy costuma responder 404 com HTML "Cannot GET /api/instances".
+      if (res.status === 404 && looksLikeMissingRoute(dataStr)) return false;
+
+      // Qualquer outro cenário: assumir V8 (mais moderno) para evitar mis-detect.
+      return true;
+    };
+
+    // 1) Cache (a menos que forceRefresh)
     if (!forceRefresh) {
       try {
         const { data: cached } = await supabase
@@ -378,36 +400,51 @@ export function useGenesisWhatsAppConnection() {
           .select('session_data')
           .eq('id', instanceId)
           .single();
-        
+
         const session = cached?.session_data as Record<string, unknown> | null;
-        if (session?.backend_flavor && typeof session.backend_flavor === 'string') {
-          return session.backend_flavor as 'v8' | 'legacy';
+        const cachedFlavor = session?.backend_flavor;
+
+        if (cachedFlavor === 'v8') return 'v8';
+
+        // Se cache diz "legacy", VALIDAR (porque 404 em /api/instance/:id/status pode ser apenas instância ainda não criada).
+        if (cachedFlavor === 'legacy') {
+          const healthRes = await proxyRequest(instanceId, '/health', 'GET');
+          if (!healthRes.ok) return 'v8';
+
+          const v8Supported = await probeV8Support();
+          if (v8Supported) {
+            logDiagnostic('FLAVOR_CACHE_OVERRIDDEN_TO_V8', { instanceId });
+            try {
+              const merged = await mergeSessionData(instanceId, { backend_flavor: 'v8' });
+              await supabase
+                .from('genesis_instances')
+                .update({ session_data: JSON.parse(JSON.stringify(merged)) })
+                .eq('id', instanceId);
+            } catch {}
+            return 'v8';
+          }
+
+          return 'legacy';
         }
       } catch {}
     }
-    
-    // Tentar health primeiro para ver se servidor está up
+
+    // 2) Sem cache (ou forceRefresh)
     const healthRes = await proxyRequest(instanceId, '/health', 'GET');
     if (!healthRes.ok) {
       // Servidor offline, assumir v8 (mais moderno)
       return 'v8';
     }
-    
-    // Tentar endpoint V8 específico
-    const v8Res = await proxyRequest(instanceId, `/api/instance/${instanceId}/status`, 'GET');
-    const dataStr = typeof v8Res.data === 'string' ? v8Res.data : JSON.stringify(v8Res.data || '');
-    
-    let flavor: 'v8' | 'legacy' = 'v8'; // Default para v8 (mais moderno)
-    
-    // Se V8 retornou 404 ou "Cannot GET", é legacy
-    if (!v8Res.ok && (v8Res.status === 404 || dataStr.includes('Cannot GET'))) {
-      flavor = 'legacy';
-      logDiagnostic('FLAVOR_DETECTED_LEGACY', { instanceId, status: v8Res.status });
-    } else if (v8Res.ok) {
-      flavor = 'v8';
+
+    const v8Supported = await probeV8Support();
+    const flavor: 'v8' | 'legacy' = v8Supported ? 'v8' : 'legacy';
+
+    if (flavor === 'legacy') {
+      logDiagnostic('FLAVOR_DETECTED_LEGACY', { instanceId });
+    } else {
       logDiagnostic('FLAVOR_DETECTED_V8', { instanceId });
     }
-    
+
     // Salvar no cache
     try {
       const merged = await mergeSessionData(instanceId, { backend_flavor: flavor });
@@ -416,7 +453,7 @@ export function useGenesisWhatsAppConnection() {
         .update({ session_data: JSON.parse(JSON.stringify(merged)) })
         .eq('id', instanceId);
     } catch {}
-    
+
     return flavor;
   };
 
