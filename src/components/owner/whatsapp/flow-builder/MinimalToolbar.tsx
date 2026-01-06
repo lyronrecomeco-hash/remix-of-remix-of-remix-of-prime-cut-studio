@@ -26,7 +26,8 @@ import {
   HelpCircle,
   Plus,
   Sparkles,
-  MoreHorizontal
+  MoreHorizontal,
+  LayoutTemplate
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -65,6 +66,7 @@ interface MinimalToolbarProps {
   onShowHelp: () => void;
   onAddComponent: () => void;
   onOpenLuna: () => void;
+  onOpenTemplates: () => void;
 }
 
 export const MinimalToolbar = memo(({
@@ -94,7 +96,8 @@ export const MinimalToolbar = memo(({
   onToggleFullscreen,
   onShowHelp,
   onAddComponent,
-  onOpenLuna
+  onOpenLuna,
+  onOpenTemplates
 }: MinimalToolbarProps) => {
   return (
     <>
@@ -171,6 +174,15 @@ export const MinimalToolbar = memo(({
               </Button>
             </TooltipTrigger>
             <TooltipContent>Adicionar componente</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="sm" onClick={onOpenTemplates} className="gap-2 h-8 text-amber-500 hover:text-amber-600">
+                <LayoutTemplate className="w-4 h-4" />
+                <span className="hidden sm:inline">Templates</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Templates de fluxo prontos</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>

@@ -1009,6 +1009,7 @@ const FlowBuilderContent = ({ onBack, onEditingChange, onNavigateToInstances }: 
                   onShowHelp={() => setShowHelp(true)}
                   onAddComponent={() => setShowComponentsModal(true)}
                   onOpenLuna={() => setIsLunaOpen(true)}
+                  onOpenTemplates={() => setShowTemplates(true)}
                 />
 
                 {/* Flow Controls - Zoom, Pan, Preview */}
