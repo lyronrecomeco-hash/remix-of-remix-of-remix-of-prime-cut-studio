@@ -144,15 +144,31 @@ serve(async (req) => {
       });
     }
 
-    // Get backend config from instance ONLY - each Genesis instance is independent
-    const backendUrl = instance.backend_url;
-    const backendToken = instance.backend_token;
+    // FASE 3: Buscar configuração GLOBAL da VPS (whatsapp_backend_config) como fonte primária
+    // O Owner configura a VPS central, todas as instâncias Genesis usam essa config
+    const { data: globalConfig } = await supabaseAdmin
+      .from("whatsapp_backend_config")
+      .select("backend_url, master_token")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    // Prioridade: Config GLOBAL > Config da instância (fallback)
+    const backendUrl = globalConfig?.backend_url || instance.backend_url;
+    const backendToken = globalConfig?.master_token || instance.backend_token;
+
+    console.log("genesis-backend-proxy config source", {
+      instanceId,
+      hasGlobalConfig: !!globalConfig?.backend_url,
+      usingGlobalUrl: backendUrl === globalConfig?.backend_url,
+      backendUrl: backendUrl?.replace(/\/.*/, '/***'),
+    });
 
     // Validate backend config exists
     if (!backendUrl || !backendToken) {
       return new Response(
         JSON.stringify({
-          error: "Configure a URL e Token do backend nas configurações da instância.",
+          error: "VPS não configurada. Peça ao administrador para configurar o backend em WhatsApp Automação.",
           needsConfig: true,
         }),
         {
