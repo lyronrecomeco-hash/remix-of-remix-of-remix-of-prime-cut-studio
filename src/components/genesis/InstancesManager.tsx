@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Smartphone, 
@@ -30,6 +30,13 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { InstancePanel } from './InstancePanel';
 import { ConfigureNumberModal } from './ConfigureNumberModal';
+import { 
+  normalizeStatus, 
+  calculateHeartbeatState, 
+  calculateIsUsable,
+  STATUS_CONSTANTS,
+  type OrchestratedStatus 
+} from './hooks/useUnifiedInstanceStatus';
 
 interface Instance {
   id: string;
@@ -72,6 +79,32 @@ export function InstancesManager({ onNavigateToAccount }: InstancesManagerProps 
   const maxInstances = subscription?.max_instances || 1;
   const effectiveMaxInstances = isUnlimitedInstancesUser ? 999 : maxInstances;
 
+  /**
+   * FASE 1 + FASE 4: Calcular status UNIFICADO de uma instância
+   * - orchestrated_status é a ÚNICA fonte de verdade
+   * - Heartbeat determina usabilidade, NÃO o status exibido
+   * - Frontend NUNCA altera status no banco
+   */
+  const getUnifiedStatus = useCallback((instance: Instance): {
+    status: OrchestratedStatus;
+    isUsable: boolean;
+    isStale: boolean;
+  } => {
+    // FASE 1: orchestrated_status é a fonte de verdade absoluta
+    const rawStatus = instance.orchestrated_status || instance.effective_status || instance.status;
+    const status = normalizeStatus(rawStatus);
+    
+    // FASE 4: Heartbeat determina usabilidade
+    const heartbeatState = calculateHeartbeatState(instance.last_heartbeat);
+    const isUsable = calculateIsUsable(status, heartbeatState);
+    
+    return {
+      status,
+      isUsable,
+      isStale: heartbeatState.isStale,
+    };
+  }, []);
+
   const fetchInstances = async () => {
     if (!genesisUser) return;
 
@@ -82,26 +115,8 @@ export function InstancesManager({ onNavigateToAccount }: InstancesManagerProps 
       .order('created_at', { ascending: false });
 
     if (!error && data) {
-      const now = Date.now();
-      const STALE_THRESHOLD_MS = 300000; // 5 minutos
-
-      // FASE 7: Não mais forçar sync direto no banco
-      // O orquestrador central é a única fonte de verdade para status
-      // Apenas detectar stale para exibição visual, mas não alterar status diretamente
-      for (const instance of data) {
-        if (instance.effective_status === 'connected' && instance.last_heartbeat) {
-          const lastHb = new Date(instance.last_heartbeat).getTime();
-          const isStale = now - lastHb > STALE_THRESHOLD_MS;
-          
-          if (isStale) {
-            // FASE 7: Apenas atualizar localmente para UI, NÃO escrever no banco
-            // O cleanup worker ou heartbeat vai resolver o status real
-            console.log(`[InstancesManager] Instance ${instance.id} appears stale, showing as connecting`);
-            instance.effective_status = 'connecting'; // UI only - mostra como "conectando" não "desconectado"
-          }
-        }
-      }
-
+      // FASE 1 + FASE 7: NÃO modificar dados, apenas exibir
+      // Frontend NUNCA altera status - apenas consome orchestrated_status
       setInstances(data as Instance[]);
     }
     setLoading(false);
@@ -221,30 +236,13 @@ export function InstancesManager({ onNavigateToAccount }: InstancesManagerProps 
     setSelectedInstance(instance);
   };
 
-  // Determinar status real baseado em orchestrated_status (máquina de estados) como fonte principal
-  // Isso garante "verdade única" - o status que o orquestrador central definiu
-  const getEffectiveStatus = (instance: Instance): string => {
-    // FASE 1: orchestrated_status é a fonte de verdade (máquina de estados)
-    if (instance.orchestrated_status) {
-      // Se orchestrated indica conectado mas heartbeat está muito antigo (5+ min), mostra com cautela
-      if (instance.last_heartbeat && instance.orchestrated_status === 'connected') {
-        const lastHb = new Date(instance.last_heartbeat).getTime();
-        const isStale = Date.now() - lastHb > 300000; // 5 minutos
-        if (isStale) {
-          return 'connecting'; // Mostra "conectando" em vez de "desconectado" para evitar falso negativo
-        }
-      }
-      return instance.orchestrated_status;
-    }
-    // Fallback para effective_status ou status legado
-    if (instance.effective_status) {
-      return instance.effective_status;
-    }
-    return instance.status;
-  };
-
+  /**
+   * FASE 1 + FASE 2: Configuração visual baseada no status unificado
+   * - Exibe o status REAL (orchestrated_status)
+   * - isUsable indica se a instância pode ser utilizada
+   */
   const getStatusConfig = (instance: Instance) => {
-    const effectiveStatus = getEffectiveStatus(instance);
+    const unified = getUnifiedStatus(instance);
     const isPaused = instance.is_paused;
     
     if (isPaused) return { 
@@ -253,17 +251,32 @@ export function InstancesManager({ onNavigateToAccount }: InstancesManagerProps 
       icon: Pause,
       textColor: 'text-yellow-500',
       bgColor: 'bg-yellow-500/10',
-      borderColor: 'border-yellow-500/30'
+      borderColor: 'border-yellow-500/30',
+      isUsable: false,
     };
     
-    switch (effectiveStatus) {
+    // FASE 2: Se connected mas não usável (heartbeat morto), mostrar alerta visual
+    if (unified.status === 'connected' && !unified.isUsable) {
+      return { 
+        color: 'bg-orange-500', 
+        label: 'Verificando...', 
+        icon: AlertCircle,
+        textColor: 'text-orange-500',
+        bgColor: 'bg-orange-500/10',
+        borderColor: 'border-orange-500/30',
+        isUsable: false,
+      };
+    }
+    
+    switch (unified.status) {
       case 'connected': return { 
         color: 'bg-green-500', 
         label: 'Conectado', 
         icon: CheckCircle2,
         textColor: 'text-green-500',
         bgColor: 'bg-green-500/10',
-        borderColor: 'border-green-500/30'
+        borderColor: 'border-green-500/30',
+        isUsable: unified.isUsable,
       };
       case 'disconnected': return { 
         color: 'bg-red-500', 
@@ -271,15 +284,18 @@ export function InstancesManager({ onNavigateToAccount }: InstancesManagerProps 
         icon: XCircle,
         textColor: 'text-red-500',
         bgColor: 'bg-red-500/10',
-        borderColor: 'border-red-500/30'
+        borderColor: 'border-red-500/30',
+        isUsable: false,
       };
-      case 'connecting': return { 
+      case 'connecting': 
+      case 'stabilizing': return { 
         color: 'bg-blue-500', 
         label: 'Conectando...', 
         icon: RefreshCw,
         textColor: 'text-blue-500',
         bgColor: 'bg-blue-500/10',
-        borderColor: 'border-blue-500/30'
+        borderColor: 'border-blue-500/30',
+        isUsable: false,
       };
       case 'qr_pending': return { 
         color: 'bg-purple-500', 
@@ -287,15 +303,35 @@ export function InstancesManager({ onNavigateToAccount }: InstancesManagerProps 
         icon: QrCode,
         textColor: 'text-purple-500',
         bgColor: 'bg-purple-500/10',
-        borderColor: 'border-purple-500/30'
+        borderColor: 'border-purple-500/30',
+        isUsable: false,
+      };
+      case 'cooldown': return { 
+        color: 'bg-orange-500', 
+        label: 'Em Cooldown', 
+        icon: AlertCircle,
+        textColor: 'text-orange-500',
+        bgColor: 'bg-orange-500/10',
+        borderColor: 'border-orange-500/30',
+        isUsable: false,
+      };
+      case 'error': return { 
+        color: 'bg-red-500', 
+        label: 'Erro', 
+        icon: XCircle,
+        textColor: 'text-red-500',
+        bgColor: 'bg-red-500/10',
+        borderColor: 'border-red-500/30',
+        isUsable: false,
       };
       default: return { 
         color: 'bg-gray-500', 
-        label: effectiveStatus, 
+        label: String(unified.status), 
         icon: AlertCircle,
         textColor: 'text-muted-foreground',
         bgColor: 'bg-muted/30',
-        borderColor: 'border-border'
+        borderColor: 'border-border',
+        isUsable: false,
       };
     }
   };
@@ -310,15 +346,22 @@ export function InstancesManager({ onNavigateToAccount }: InstancesManagerProps 
     );
   }
 
-  // Compute filtered stats usando status efetivo
-  const connectedCount = instances.filter(i => getEffectiveStatus(i) === 'connected' && !i.is_paused).length;
-  const disconnectedCount = instances.filter(i => getEffectiveStatus(i) !== 'connected' || i.is_paused).length;
+  // FASE 1: Compute filtered stats usando status unificado
+  const connectedCount = instances.filter(i => {
+    const unified = getUnifiedStatus(i);
+    return unified.status === 'connected' && !i.is_paused;
+  }).length;
+  
+  const disconnectedCount = instances.filter(i => {
+    const unified = getUnifiedStatus(i);
+    return unified.status !== 'connected' || i.is_paused;
+  }).length;
   
   const filteredInstances = instances.filter(i => {
-    const effectiveStatus = getEffectiveStatus(i);
+    const unified = getUnifiedStatus(i);
     if (statusFilter === 'all') return true;
-    if (statusFilter === 'connected') return effectiveStatus === 'connected' && !i.is_paused;
-    return effectiveStatus !== 'connected' || i.is_paused;
+    if (statusFilter === 'connected') return unified.status === 'connected' && !i.is_paused;
+    return unified.status !== 'connected' || i.is_paused;
   });
 
   const canAddMore = instances.length < effectiveMaxInstances;
@@ -424,10 +467,11 @@ export function InstancesManager({ onNavigateToAccount }: InstancesManagerProps 
       >
         <AnimatePresence mode="popLayout">
           {filteredInstances.map((instance) => {
-            const status = getStatusConfig(instance);
-            const StatusIcon = status.icon;
-            const effectiveStatus = getEffectiveStatus(instance);
-            const isConnected = effectiveStatus === 'connected' && !instance.is_paused;
+            const statusConfig = getStatusConfig(instance);
+            const StatusIcon = statusConfig.icon;
+            const unified = getUnifiedStatus(instance);
+            // FASE 1: isConnected baseado no status unificado
+            const isConnected = unified.status === 'connected' && !instance.is_paused;
 
             return (
               <motion.div
@@ -438,11 +482,11 @@ export function InstancesManager({ onNavigateToAccount }: InstancesManagerProps 
               >
                 <Card className={cn(
                   "relative overflow-hidden border-2 transition-all duration-300 hover:shadow-xl",
-                  status.borderColor,
+                  statusConfig.borderColor,
                   isConnected && "hover:shadow-green-500/10"
                 )}>
                   {/* Status indicator bar at top */}
-                  <div className={cn("h-1 w-full", status.color)} />
+                  <div className={cn("h-1 w-full", statusConfig.color)} />
                   
                   {/* Refresh button */}
                   <button 
@@ -457,15 +501,15 @@ export function InstancesManager({ onNavigateToAccount }: InstancesManagerProps 
                     <div className="flex items-center gap-2 mb-4">
                       <Badge className={cn(
                         "gap-1.5 text-xs font-medium",
-                        status.bgColor,
-                        status.textColor,
+                        statusConfig.bgColor,
+                        statusConfig.textColor,
                         "border-0"
                       )}>
                         <StatusIcon className={cn(
                           "w-3 h-3",
-                          effectiveStatus === 'connecting' && "animate-spin"
+                          unified.status === 'connecting' && "animate-spin"
                         )} />
-                        {status.label}
+                        {statusConfig.label}
                       </Badge>
                     </div>
                     
@@ -499,9 +543,9 @@ export function InstancesManager({ onNavigateToAccount }: InstancesManagerProps 
                         >
                           <div className={cn(
                             "w-14 h-14 rounded-full flex items-center justify-center transition-colors",
-                            status.bgColor
+                            statusConfig.bgColor
                           )}>
-                            <Smartphone className={cn("w-7 h-7", status.textColor)} />
+                            <Smartphone className={cn("w-7 h-7", statusConfig.textColor)} />
                           </div>
                         </motion.div>
                         {isConnected && (
