@@ -1294,10 +1294,10 @@ Agora você pode automatizar seu atendimento!`;
           return;
         }
 
-        // Auto-refresh QR every 45 seconds
+        // Auto-refresh QR every 45 seconds (sem re-disparar /connect para evitar loop)
         if (Date.now() - lastQrRefreshAtRef.current > HARDENING.QR_AUTO_REFRESH_MS) {
           try {
-            const nextQr = await generateQRCode(instanceId);
+            const nextQr = await generateQRCode(instanceId, true);
             if (nextQr && nextQr !== 'CONNECTED') {
               lastQrRefreshAtRef.current = Date.now();
               safeSetState(prev => ({ ...prev, qrCode: nextQr }));
@@ -1406,20 +1406,8 @@ Agora você pode automatizar seu atendimento!`;
     _backendUrl?: string,
     _token?: string
   ) => {
+    // UX: parar tudo imediatamente (sem travar UI em "Gerando QR")
     stopPolling();
-
-    try {
-      const flavor = await detectBackendFlavor(instanceId);
-      const path = flavor === 'legacy' ? '/disconnect' : `/api/instance/${instanceId}/disconnect`;
-      await proxyRequest(instanceId, path, 'POST', {});
-    } catch {}
-
-    await updateInstanceInDB(instanceId, {
-      status: 'disconnected',
-      effective_status: 'disconnected',
-      qr_code: null,
-    });
-
     safeSetState(() => ({
       isConnecting: false,
       isPolling: false,
@@ -1428,6 +1416,31 @@ Agora você pode automatizar seu atendimento!`;
       attempts: 0,
       phase: 'idle',
     }));
+
+    try {
+      const flavor = await detectBackendFlavor(instanceId, true);
+      const path = flavor === 'legacy' ? '/disconnect' : `/api/instance/${instanceId}/disconnect`;
+      await proxyRequest(instanceId, path, 'POST', {});
+    } catch {}
+
+    // Resetar status orquestrado (evita ficar preso em qr_pending)
+    const t = await requestOrchestratedTransition(instanceId, 'disconnected', 'frontend', {
+      reason: 'user_disconnect',
+    });
+    if (!t.success) {
+      await requestOrchestratedTransition(instanceId, 'idle', 'frontend', {
+        reason: 'user_disconnect_fallback',
+        error: t.error,
+      });
+    }
+
+    // Limpar QR armazenado (best-effort)
+    try {
+      await supabase
+        .from('genesis_instances')
+        .update({ qr_code: null, updated_at: new Date().toISOString() })
+        .eq('id', instanceId);
+    } catch {}
 
     toast.success('Desconectado');
   }, [stopPolling, safeSetState]);
@@ -1474,6 +1487,39 @@ Agora você pode automatizar seu atendimento!`;
     statusPollingRef.current = setInterval(poll, 3000);
   }, [getInstanceStatus, stopStatusPolling]);
 
+  const cancelConnection = useCallback(async (instanceId: string) => {
+    // "Cancelar" = parar tentativa/polling + voltar UI ao idle + tirar a instância de qr_pending.
+    stopPolling();
+
+    safeSetState(() => ({
+      isConnecting: false,
+      isPolling: false,
+      qrCode: null,
+      error: null,
+      attempts: 0,
+      phase: 'idle',
+    }));
+
+    // Evita ficar preso em qr_pending quando houve erro/timeout.
+    const t = await requestOrchestratedTransition(instanceId, 'idle', 'frontend', {
+      reason: 'user_cancel',
+    });
+
+    if (!t.success) {
+      safeSetState(prev => ({ ...prev, error: t.error || 'Falha ao cancelar', phase: 'error' }));
+      toast.error(t.error || 'Falha ao cancelar');
+      return;
+    }
+
+    // Limpar QR armazenado (best-effort)
+    try {
+      await supabase
+        .from('genesis_instances')
+        .update({ qr_code: null, updated_at: new Date().toISOString() })
+        .eq('id', instanceId);
+    } catch {}
+  }, [stopPolling, safeSetState]);
+
   const resetState = useCallback(() => {
     stopPolling();
     safeSetState(() => ({
@@ -1490,6 +1536,7 @@ Agora você pode automatizar seu atendimento!`;
     connectionState,
     startConnection,
     disconnect,
+    cancelConnection,
     stopPolling,
     getInstanceStatus,
     startStatusPolling,

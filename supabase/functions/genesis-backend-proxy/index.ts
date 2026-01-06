@@ -425,29 +425,37 @@ serve(async (req) => {
           return { resp, duration, parsed, text, tokenToUse };
         };
 
-        // 1) tentativa com token da instância
+        // 1) tentativa com token principal (config selecionada)
         let result = await doFetch(backendToken);
 
-        // 2) se token inválido, tenta master_token global (Owner)
+        // 2) se token inválido (401), tenta tokens alternativos:
+        //    - master_token global (se existir)
+        //    - token nativo (fallback final)
         if (result.resp.status === 401) {
-          const fb = await getFallbackToken();
-          if (fb && fb !== backendToken) {
-            result = await doFetch(fb);
+          const candidates = [await getFallbackToken(), NATIVE_VPS_TOKEN]
+            .filter((t): t is string => Boolean(t) && typeof t === "string")
+            .filter((t) => t !== backendToken);
+
+          for (const candidate of candidates) {
+            const attemptResult = await doFetch(candidate);
+            result = attemptResult;
 
             // se funcionou (não-401), persistir token no registro da instância
-            if (result.resp.status !== 401) {
+            if (attemptResult.resp.status !== 401) {
               try {
                 await supabaseAdmin
                   .from("genesis_instances")
-                  .update({ backend_token: fb, updated_at: new Date().toISOString() })
+                  .update({ backend_token: candidate, updated_at: new Date().toISOString() })
                   .eq("id", instanceId);
 
                 diagLog("BACKEND_TOKEN_UPDATED", {
                   reason: "fallback_token_success",
+                  tokenMode: candidate === NATIVE_VPS_TOKEN ? "native" : "global",
                 });
               } catch (e) {
                 console.warn("Failed to persist backend_token fallback", e);
               }
+              break;
             }
           }
         }
