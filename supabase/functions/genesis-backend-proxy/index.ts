@@ -475,24 +475,33 @@ serve(async (req) => {
           }
         }
 
+        // === Importante: não marcar "enviado" se o backend respondeu 200 mas com payload de erro ===
+        // (isso fazia o painel mostrar sucesso mesmo quando a VPS não enviava de verdade)
+        const isSend = path.includes('/send');
+        const parsedAny = parsed as any;
+        const computedOk = isSend
+          ? upstream.ok && !parsedAny?.error && parsedAny?.success !== false
+          : upstream.ok;
+
         // Log específico para envio de mensagem (diagnóstico crítico)
-        if (path.includes('/send')) {
+        if (isSend) {
           diagLog('SEND_MESSAGE_RESULT', {
             duration: fetchDuration,
             httpStatus: upstream.status,
             httpOk: upstream.ok,
-            parsedError: (parsed as any)?.error,
-            parsedSuccess: (parsed as any)?.success,
-            parsedMessage: (parsed as any)?.message,
+            computedOk,
+            parsedError: parsedAny?.error,
+            parsedSuccess: parsedAny?.success,
+            parsedMessage: parsedAny?.message,
             fullResponse: JSON.stringify(parsed).slice(0, 1000),
           });
 
           await logEvent(
-            upstream.ok ? 'message_sent' : 'message_error',
-            upstream.ok ? 'info' : 'error',
-            upstream.ok
+            computedOk ? 'message_sent' : 'message_error',
+            computedOk ? 'info' : 'error',
+            computedOk
               ? 'Mensagem enviada com sucesso'
-              : `Erro ao enviar mensagem: ${(parsed as any)?.error || `HTTP ${upstream.status}`}`,
+              : `Erro ao enviar mensagem: ${parsedAny?.error || `HTTP ${upstream.status}`}`,
             { path, status: upstream.status, duration: fetchDuration, response: parsed }
           );
         } else if (path.includes('/qrcode')) {
@@ -511,7 +520,7 @@ serve(async (req) => {
         }
 
         return new Response(
-          JSON.stringify({ ok: upstream.ok, status: upstream.status, data: parsed }),
+          JSON.stringify({ ok: computedOk, status: upstream.status, data: parsed }),
           {
             status: 200,
             headers: { ...corsHeaders, "Content-Type": "application/json" },

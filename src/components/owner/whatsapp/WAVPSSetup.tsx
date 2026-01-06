@@ -676,8 +676,11 @@ app.listen(PORT, '0.0.0.0', async () => {
 
   const downloadScriptV8 = () => {
     // Script v8 - Multi-instância dinâmico
+    // Normalizar encoding/line-endings pra evitar "Invalid or unexpected token" no PM2/Node
     const script = getVPSScriptV8(masterToken);
-    const blob = new Blob([script], { type: 'application/javascript' });
+    const normalized = script.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n');
+
+    const blob = new Blob([normalized], { type: 'application/javascript;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
