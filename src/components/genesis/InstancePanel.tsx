@@ -6,7 +6,6 @@ import {
   Pause,
   Play,
   RefreshCw,
-  
   Settings2,
   Link2,
   Lock,
@@ -23,7 +22,6 @@ import {
   ExternalLink,
   Activity,
   Smartphone,
-  
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,6 +34,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { GenesisWhatsAppConnect } from './GenesisWhatsAppConnect';
+import { useUnifiedInstanceStatus } from './hooks/useUnifiedInstanceStatus';
 import { cn } from '@/lib/utils';
 // Script VPS removido - configuração via WhatsApp Automação no Painel Owner
 
@@ -84,6 +83,14 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
   });
   const [saving, setSaving] = useState(false);
   
+  /**
+   * FASE 1: Hook unificado é a ÚNICA fonte de verdade
+   * - Consome orchestrated_status do banco
+   * - Calcula isUsable baseado em heartbeat (FASE 2)
+   * - Nunca calcula status localmente
+   */
+  const { status: unifiedStatus } = useUnifiedInstanceStatus(instance.id);
+  
   // Modais
   const [showActionsModal, setShowActionsModal] = useState(false);
   const [showWebhookModal, setShowWebhookModal] = useState(false);
@@ -110,10 +117,9 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
     checkGlobalBackend();
   }, []);
 
+  // Variáveis derivadas da instância
   const instanceCode = `genesis-${instance.id.slice(0, 8)}`;
   const endpoint = `https://api.genesis.com.br/instances/${instanceCode}`;
-
-  // Função removida - backend agora é configurado globalmente no /owner
 
   const fetchInstance = async () => {
     const { data, error } = await supabase
@@ -190,26 +196,14 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
     }
   };
 
-  // Status unificado - considera heartbeat recente para determinar conexão real
-  // FASE 3: Usar orchestrated_status como fonte primária (máquina de estados)
-  // Isso garante consistência entre lista e painel
-  const getEffectiveStatus = () => {
-    // orchestrated_status é a verdade da máquina de estados
-    if (instance.orchestrated_status) {
-      return instance.orchestrated_status;
-    }
-    // Fallback para effective_status ou status
-    return instance.effective_status || instance.status;
-  };
-  
-  const effectiveStatus = getEffectiveStatus();
-  const isHeartbeatRecent = instance.last_heartbeat 
-    ? (Date.now() - new Date(instance.last_heartbeat).getTime()) < 300000 // 5 minutos
-    : false;
-  
-  // Se orchestrated_status diz "connected", confiar (máquina de estados é verdade)
-  // Só verificar heartbeat como fallback visual (não bloqueante)
-  const isConnected = effectiveStatus === 'connected';
+  /**
+   * FASE 1: Status derivado APENAS do hook unificado
+   * - orchestratedStatus é a verdade absoluta
+   * - isUsable indica se podemos confiar na conexão (FASE 2)
+   * - Frontend NUNCA calcula status, apenas consome
+   */
+  const isConnected = unifiedStatus.orchestratedStatus === 'connected';
+  const isUsable = unifiedStatus.isUsable;
   
   const formattedPhone = instance.phone_number 
     ? instance.phone_number.replace(/(\d{2})(\d{2})(\d{5})(\d{4})/, '+$1 ($2) $3-$4')
