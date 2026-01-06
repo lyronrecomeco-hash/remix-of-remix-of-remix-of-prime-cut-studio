@@ -26,7 +26,118 @@ interface AutomationRule {
   is_active: boolean;
 }
 
+// =====================================================
+// HELPER: Normalização BR para números brasileiros
+// =====================================================
+function normalizeBR(phone: string): string {
+  if (!phone) return phone;
+  const digits = phone.replace(/\D/g, '');
+  // Se já começa com 55 e tem 12+ dígitos, está ok
+  if (digits.startsWith('55') && digits.length >= 12) return digits;
+  // Se tem 10 ou 11 dígitos (DDD + número), adiciona DDI 55
+  if (digits.length === 10 || digits.length === 11) return `55${digits}`;
+  return digits;
+}
+
+// =====================================================
+// HELPER: Enviar mensagem via genesis-backend-proxy
+// =====================================================
+async function sendViaProxy(
+  supabase: any,
+  instanceId: string,
+  to: string,
+  message: string,
+  messageType: string = 'text',
+  extraPayload: any = {}
+): Promise<{ success: boolean; result?: any; error?: string }> {
+  // Buscar instância do Genesis (não whatsapp_instances legada)
+  const { data: instance, error: instError } = await supabase
+    .from('genesis_instances')
+    .select('id, name, phone_number, backend_url, backend_token, status')
+    .eq('id', instanceId)
+    .single();
+
+  if (instError || !instance) {
+    console.error('[SEND] Instance not found:', instanceId);
+    return { success: false, error: 'Instance not found' };
+  }
+
+  if (instance.status !== 'connected') {
+    console.error('[SEND] Instance not connected:', instance.status);
+    return { success: false, error: `Instance not connected (status: ${instance.status})` };
+  }
+
+  const backendUrl = instance.backend_url;
+  const backendToken = instance.backend_token || 'genesis-master-token-2024-secure';
+
+  if (!backendUrl) {
+    console.error('[SEND] No backend URL configured');
+    return { success: false, error: 'Backend URL not configured' };
+  }
+
+  // Normaliza número BR
+  const normalizedTo = normalizeBR(to);
+
+  try {
+    // Usa o proxy Edge Function para maior resiliência
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
+    const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') || '';
+
+    const proxyUrl = `${SUPABASE_URL}/functions/v1/genesis-backend-proxy`;
+    
+    const payload = {
+      action: 'send',
+      instanceId,
+      endpoint: `/api/instance/${instanceId}/send`,
+      method: 'POST',
+      body: {
+        to: normalizedTo,
+        message,
+        type: messageType,
+        ...extraPayload,
+      },
+    };
+
+    console.log(`[SEND] Sending to ${normalizedTo} via proxy`, { instanceId, messageType });
+
+    const response = await fetch(proxyUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await response.json();
+    
+    // Log do envio
+    await supabase.from('whatsapp_message_logs').insert({
+      instance_id: instanceId,
+      recipient: normalizedTo,
+      message_type: messageType,
+      content: message,
+      status: response.ok && result.success !== false ? 'sent' : 'failed',
+      external_id: result.messageId || result.data?.messageId,
+      metadata: { automation: true, via: 'flow-builder' },
+    }).catch((e: any) => console.error('[SEND] Log insert error:', e));
+
+    if (!response.ok || result.success === false) {
+      console.error('[SEND] Failed:', result);
+      return { success: false, error: result.error || 'Send failed', result };
+    }
+
+    console.log('[SEND] Success:', result);
+    return { success: true, result };
+  } catch (error: any) {
+    console.error('[SEND] Exception:', error);
+    return { success: false, error: error?.message || 'Unknown error' };
+  }
+}
+
+// =====================================================
 // Process a single action
+// =====================================================
 async function processAction(
   supabase: any,
   action: any,
@@ -36,65 +147,229 @@ async function processAction(
 ): Promise<{ success: boolean; result?: any; error?: string; skip?: boolean }> {
   console.log(`Processing action: ${action.type}`, action);
 
+  // Resolve instanceId from action config or context
+  const resolveInstanceId = () => action.config?.instanceId || context.instanceId;
+
   switch (action.type) {
-    case 'send_message': {
-      const { instanceId, to, message, messageType = 'text' } = action.config;
+    // =====================================================
+    // NATIVE WHATSAPP NODES (Genesis)
+    // =====================================================
+    case 'wa_send_text': {
+      const { text, typing = true, typingDuration = 2 } = action.config;
+      const instanceId = resolveInstanceId();
+      const to = action.config.to || eventData?.from;
+
+      if (!instanceId) {
+        return { success: false, error: 'No instance configured' };
+      }
+      if (!to) {
+        return { success: false, error: 'No recipient (to) specified' };
+      }
+
+      // Replace variables in text
+      let finalText = text || '';
+      if (eventData) {
+        Object.keys(eventData).forEach(key => {
+          finalText = finalText.replace(new RegExp(`{{${key}}}`, 'g'), eventData[key] || '');
+        });
+      }
+      if (context.flowContext?.variables) {
+        Object.keys(context.flowContext.variables).forEach(key => {
+          finalText = finalText.replace(new RegExp(`{{${key}}}`, 'g'), context.flowContext.variables[key]?.value || '');
+        });
+      }
+
+      // Typing indicator delay
+      if (typing && typingDuration > 0) {
+        await new Promise(resolve => setTimeout(resolve, Math.min(typingDuration, 10) * 1000));
+      }
+
+      return await sendViaProxy(supabase, instanceId, to, finalText, 'text');
+    }
+
+    case 'wa_send_buttons': {
+      const { text, buttons = [] } = action.config;
+      const instanceId = resolveInstanceId();
+      const to = action.config.to || eventData?.from;
+
+      if (!instanceId) {
+        return { success: false, error: 'No instance configured' };
+      }
+      if (!to) {
+        return { success: false, error: 'No recipient (to) specified' };
+      }
+
+      // Replace variables
+      let finalText = text || '';
+      if (eventData) {
+        Object.keys(eventData).forEach(key => {
+          finalText = finalText.replace(new RegExp(`{{${key}}}`, 'g'), eventData[key] || '');
+        });
+      }
+
+      return await sendViaProxy(supabase, instanceId, to, finalText, 'buttons', { buttons });
+    }
+
+    case 'wa_send_list': {
+      const { title, buttonText = 'Ver opções', sections = [] } = action.config;
+      const instanceId = resolveInstanceId();
+      const to = action.config.to || eventData?.from;
+
+      if (!instanceId) {
+        return { success: false, error: 'No instance configured' };
+      }
+      if (!to) {
+        return { success: false, error: 'No recipient (to) specified' };
+      }
+
+      return await sendViaProxy(supabase, instanceId, to, title || '', 'list', { buttonText, sections });
+    }
+
+    case 'wa_wait_response': {
+      const { timeout_seconds = 300, save_to = 'user_response' } = action.config;
+
+      // This node marks that the flow should wait for user response
+      // The actual waiting is handled by the flow executor state machine
+      context.flowContext = {
+        ...context.flowContext,
+        waiting_for_response: true,
+        wait_timeout: timeout_seconds,
+        wait_started_at: new Date().toISOString(),
+        response_variable: save_to,
+      };
+
+      console.log(`[WA] Waiting for response, timeout: ${timeout_seconds}s, save to: ${save_to}`);
+
+      return { 
+        success: true, 
+        result: { 
+          waiting: true, 
+          timeout: timeout_seconds,
+          saveTo: save_to,
+        } 
+      };
+    }
+
+    case 'wa_receive': {
+      // Trigger node - just passes through event data
+      const { filter_type = 'any' } = action.config;
       
+      return { 
+        success: true, 
+        result: { 
+          type: 'trigger',
+          filterType: filter_type,
+          received: eventData,
+        } 
+      };
+    }
+
+    case 'wa_start': {
+      // Trigger node - flow entry point
+      const { triggerType = 'message_received' } = action.config;
+      
+      return { 
+        success: true, 
+        result: { 
+          type: 'trigger',
+          triggerType,
+          started: true,
+        } 
+      };
+    }
+
+    // =====================================================
+    // LEGACY send_message (compatibility)
+    // =====================================================
+    case 'send_message': {
+      const { instanceId: configInstanceId, to, message, messageType = 'text' } = action.config;
+      const instanceId = configInstanceId || resolveInstanceId();
+      
+      if (!instanceId) {
+        return { success: false, error: 'No instance configured' };
+      }
+
       // Replace variables in message
-      let finalMessage = message;
+      let finalMessage = message || '';
       if (eventData) {
         Object.keys(eventData).forEach(key => {
           finalMessage = finalMessage.replace(new RegExp(`{{${key}}}`, 'g'), eventData[key] || '');
         });
       }
 
-      // Get instance and backend config
-      const { data: instance } = await supabase
-        .from('whatsapp_instances')
-        .select('*, whatsapp_backend_config(*)')
-        .eq('id', instanceId)
-        .single();
-
-      if (!instance) {
-        return { success: false, error: 'Instance not found' };
+      const recipient = to || eventData?.from;
+      if (!recipient) {
+        return { success: false, error: 'No recipient specified' };
       }
 
-      const backend = instance.whatsapp_backend_config?.[0];
-      if (!backend || !backend.is_connected) {
-        return { success: false, error: 'Backend not connected' };
+      return await sendViaProxy(supabase, instanceId, recipient, finalMessage, messageType);
+    }
+
+    // =====================================================
+    // message node (from NODE_TEMPLATES)
+    // =====================================================
+    case 'message': {
+      const { text, typing = true } = action.config;
+      const instanceId = resolveInstanceId();
+      const to = action.config.to || eventData?.from;
+
+      if (!instanceId) {
+        return { success: false, error: 'No instance configured' };
+      }
+      if (!to) {
+        return { success: false, error: 'No recipient specified' };
       }
 
-      try {
-        const response = await fetch(`${backend.backend_url}/send`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${backend.backend_token}`,
-            'X-Instance-Token': instance.instance_token,
-          },
-          body: JSON.stringify({
-            to: (to || eventData?.from || '').replace(/\D/g, ''),
-            message: finalMessage,
-            type: messageType,
-          }),
+      // Replace variables
+      let finalText = text || '';
+      if (eventData) {
+        Object.keys(eventData).forEach(key => {
+          finalText = finalText.replace(new RegExp(`{{${key}}}`, 'g'), eventData[key] || '');
         });
-
-        const result = await response.json();
-        
-        await supabase.from('whatsapp_message_logs').insert({
-          instance_id: instanceId,
-          recipient: to || eventData?.from,
-          message_type: messageType,
-          content: finalMessage,
-          status: response.ok ? 'sent' : 'failed',
-          external_id: result.messageId,
-          metadata: { automation: true, projectId },
-        });
-
-        return { success: response.ok, result };
-      } catch (error: any) {
-        return { success: false, error: error?.message || 'Unknown error' };
       }
+
+      if (typing) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+
+      return await sendViaProxy(supabase, instanceId, to, finalText, 'text');
+    }
+
+    // =====================================================
+    // button node (from NODE_TEMPLATES)
+    // =====================================================
+    case 'button': {
+      const { text, buttons = [] } = action.config;
+      const instanceId = resolveInstanceId();
+      const to = action.config.to || eventData?.from;
+
+      if (!instanceId) {
+        return { success: false, error: 'No instance configured' };
+      }
+
+      let finalText = text || '';
+      if (eventData) {
+        Object.keys(eventData).forEach(key => {
+          finalText = finalText.replace(new RegExp(`{{${key}}}`, 'g'), eventData[key] || '');
+        });
+      }
+
+      return await sendViaProxy(supabase, instanceId, to || '', finalText, 'buttons', { buttons });
+    }
+
+    // =====================================================
+    // list node (from NODE_TEMPLATES)
+    // =====================================================
+    case 'list': {
+      const { title, sections = [] } = action.config;
+      const instanceId = resolveInstanceId();
+      const to = action.config.to || eventData?.from;
+
+      if (!instanceId) {
+        return { success: false, error: 'No instance configured' };
+      }
+
+      return await sendViaProxy(supabase, instanceId, to || '', title || '', 'list', { sections });
     }
 
     case 'update_status': {
