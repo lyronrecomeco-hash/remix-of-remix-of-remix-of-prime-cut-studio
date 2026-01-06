@@ -181,7 +181,7 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
     : null;
 
   return (
-    <div className="space-y-6 w-full">
+    <div className="space-y-4 w-full">
       
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* BLOCO 1 — IDENTIDADE DA INSTÂNCIA (TOPO) */}
@@ -189,16 +189,9 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
       <motion.div 
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative"
       >
-        <Card className="border-2 overflow-hidden">
-          <div className={cn(
-            "absolute inset-0 opacity-10",
-            isConnected 
-              ? "bg-gradient-to-r from-green-500 via-green-500/50 to-transparent" 
-              : "bg-gradient-to-r from-red-500 via-red-500/50 to-transparent"
-          )} />
-          <CardContent className="p-6 relative">
+        <Card className="border-2">
+          <CardContent className="p-4">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               {/* Lado Esquerdo - Nome e Voltar */}
               <div className="flex items-center gap-4">
@@ -206,10 +199,8 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
                   <ArrowLeft className="w-4 h-4" />
                   Voltar
                 </Button>
-                <div className="h-8 w-px bg-border" />
                 <div>
-                  <h1 className="text-2xl font-bold">{instance.name}</h1>
-                  <p className="text-sm text-muted-foreground">Gerenciamento da instância</p>
+                  <h1 className="text-2xl font-bold leading-none">{instance.name}</h1>
                 </div>
               </div>
 

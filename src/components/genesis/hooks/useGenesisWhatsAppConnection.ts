@@ -927,66 +927,9 @@ Agora você pode automatizar seu atendimento!`;
         .eq('id', instanceId)
         .single();
 
-      // ═══════════════════════════════════════════════════════════════════════════
-      // FAST-PATH: Se heartbeat recente E status connected, confiar no banco
-      // ═══════════════════════════════════════════════════════════════════════════
-      const lastHb = instanceRow?.last_heartbeat ? new Date(instanceRow.last_heartbeat).getTime() : 0;
-      const isHeartbeatFresh = lastHb > 0 && (Date.now() - lastHb) < HARDENING.FAST_PATH_HEARTBEAT_MS;
-      const isStatusConnected = instanceRow?.effective_status === 'connected';
-      
-      if (isHeartbeatFresh && isStatusConnected && instanceRow?.phone_number) {
-        console.log(`[FAST-PATH] Instance ${instanceId} has fresh heartbeat, skipping backend check`);
-        
-        safeSetState(() => ({
-          isConnecting: true,
-          isPolling: false,
-          qrCode: null,
-          error: null,
-          attempts: 0,
-          phase: 'stabilizing',
-        }));
-        
-        toast.info('Reconhecendo conexão existente...');
-        
-        // Enviar mensagem de teste SEMPRE ao clicar conectar (reconexão)
-        const nowIso = new Date().toISOString();
-        toast.info('Enviando teste de validação...');
-        const result = await sendWelcomeMessage(instanceId, instanceRow.phone_number);
-        
-        const mergedReady = await mergeSessionData(instanceId, {
-          ready_to_send: result.success,
-          welcome_sent_at: nowIso,
-          last_send_success_at: result.success ? nowIso : undefined,
-          ready_phase: result.success ? 'ready_to_send' : 'send_attempted',
-          ready_updated_at: nowIso,
-        });
-
-        await updateInstanceInDB(instanceId, {
-          effective_status: 'connected',
-          session_data: mergedReady,
-          last_heartbeat: nowIso,
-        });
-
-        connectAttemptsRef.current = 0;
-        
-        safeSetState(() => ({
-          isConnecting: false,
-          isPolling: false,
-          qrCode: null,
-          error: null,
-          attempts: 0,
-          phase: 'connected',
-        }));
-        
-        toast.success(result.success 
-          ? '✅ WhatsApp verificado e funcionando!' 
-          : '✅ WhatsApp conectado! Pronto para uso.');
-        
-        onConnected?.();
-        return;
-      }
-
       // PASSO 2: Validar saúde do backend
+      // (Sem fast-path: sempre confirmar status REAL no backend)
+
       const healthCheck = await validateBackendHealth(instanceId);
       
       if (!healthCheck.healthy) {

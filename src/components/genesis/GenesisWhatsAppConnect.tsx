@@ -88,27 +88,24 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
   };
 
   // LÓGICA UNIFICADA DE STATUS:
-  // 1. Se liveStatus.status === 'connected' E não está stale → está conectado
-  // 2. Se connectionState.phase indica ação em progresso → está conectando
-  // 3. Caso contrário → desconectado
-  const isConnected = liveStatus.status === 'connected' && !liveStatus.isStale;
-  
+  // 1. Conectado SOMENTE quando o backend confirma status "connected"
+  // 2. Stale é apenas sinal visual (não derruba / não volta botão de conectar)
+  const isConnected = liveStatus.status === 'connected';
+
   // Só mostra "conectando" se realmente há uma ação em progresso
-  const isConnecting = connectionState.isConnecting && 
+  const isConnecting = connectionState.isConnecting &&
     !isConnected && // Se já está conectado, não mostrar como conectando
-    (connectionState.phase === 'validating' || 
-     connectionState.phase === 'generating' || 
-     connectionState.phase === 'waiting' || 
+    (connectionState.phase === 'validating' ||
+     connectionState.phase === 'generating' ||
+     connectionState.phase === 'waiting' ||
      connectionState.phase === 'stabilizing');
-  
+
   // Phase: prioridade máxima para isConnected
-  const phase = isConnected 
-    ? 'connected' 
-    : isConnecting 
-      ? connectionState.phase 
-      : liveStatus.isStale 
-        ? 'idle' // Stale = mostrar como desconectado
-        : connectionState.phase;
+  const phase = isConnected
+    ? 'connected'
+    : isConnecting
+      ? connectionState.phase
+      : connectionState.phase;
 
   // Phase indicator text
   const getPhaseText = () => {
