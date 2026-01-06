@@ -512,9 +512,56 @@ const FlowBuilderContent = ({ onBack, onEditingChange, onNavigateToInstances }: 
   const onDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     setIsDraggingOver(false);
-    const templateData = event.dataTransfer.getData('application/reactflow');
-    if (!templateData) return;
-    const template: NodeTemplate = JSON.parse(templateData);
+    
+    // Check for flow template first (complete flow with nodes and edges)
+    const flowTemplateData = event.dataTransfer.getData('application/flowtemplate');
+    if (flowTemplateData) {
+      try {
+        const templateData = JSON.parse(flowTemplateData);
+        if (templateData.type === 'flow_template' && templateData.nodes && templateData.edges) {
+          const reactFlowBounds = reactFlowWrapper.current?.getBoundingClientRect();
+          if (!reactFlowBounds) return;
+          
+          // Calculate drop offset from cursor position
+          const dropX = event.clientX - reactFlowBounds.left;
+          const dropY = event.clientY - reactFlowBounds.top;
+          
+          // Get the minimum position from template nodes to use as offset base
+          const minX = Math.min(...templateData.nodes.map((n: any) => n.position.x));
+          const minY = Math.min(...templateData.nodes.map((n: any) => n.position.y));
+          
+          // Offset all nodes relative to drop position
+          const offsetNodes = templateData.nodes.map((n: any) => ({
+            ...n,
+            type: 'flowNode',
+            position: {
+              x: dropX + (n.position.x - minX),
+              y: dropY + (n.position.y - minY)
+            }
+          }));
+          
+          const rfEdges = templateData.edges.map((e: any) => ({
+            ...e,
+            type: 'custom',
+            data: { label: e.label }
+          }));
+          
+          setNodes((nds) => [...nds, ...offsetNodes]);
+          setEdges((eds) => [...eds, ...rfEdges]);
+          addToHistory();
+          toast.success(`Template aplicado com ${templateData.nodes.length} nós!`);
+          setTimeout(() => fitView({ padding: 0.2 }), 100);
+          return;
+        }
+      } catch (e) {
+        console.error('Error parsing flow template:', e);
+      }
+    }
+    
+    // Fallback to single component drop
+    const componentData = event.dataTransfer.getData('application/reactflow');
+    if (!componentData) return;
+    const template: NodeTemplate = JSON.parse(componentData);
     const reactFlowBounds = reactFlowWrapper.current?.getBoundingClientRect();
     if (!reactFlowBounds) return;
     const position = { x: event.clientX - reactFlowBounds.left - 100, y: event.clientY - reactFlowBounds.top - 40 };
@@ -522,7 +569,7 @@ const FlowBuilderContent = ({ onBack, onEditingChange, onNavigateToInstances }: 
     setNodes((nds) => nds.concat(newNode));
     addToHistory();
     toast.success(`${template.label} adicionado!`);
-  }, [setNodes, addToHistory]);
+  }, [setNodes, setEdges, addToHistory, fitView]);
 
   const onDragStart = (event: React.DragEvent, template: NodeTemplate) => { event.dataTransfer.setData('application/reactflow', JSON.stringify(template)); event.dataTransfer.effectAllowed = 'move'; };
   const updateNodeData = (nodeId: string, newData: any) => { setNodes(nds => nds.map(node => node.id === nodeId ? { ...node, data: newData } : node)); setSelectedNode(null); addToHistory(); };
