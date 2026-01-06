@@ -6976,15 +6976,25 @@ export type Database = {
         }
         Returns: Json
       }
-      genesis_orchestrate_status_change: {
-        Args: {
-          p_instance_id: string
-          p_new_status: string
-          p_payload?: Json
-          p_source?: string
-        }
-        Returns: Json
-      }
+      genesis_orchestrate_status_change:
+        | {
+            Args: {
+              p_instance_id: string
+              p_new_status: string
+              p_payload?: Json
+              p_source?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_force?: boolean
+              p_instance_id: string
+              p_new_status: string
+              p_source?: string
+            }
+            Returns: Json
+          }
       genesis_record_metrics: {
         Args: { p_instance_id: string; p_metrics: Json }
         Returns: string
