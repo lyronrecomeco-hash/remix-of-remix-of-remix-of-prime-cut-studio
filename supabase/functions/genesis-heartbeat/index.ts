@@ -104,7 +104,10 @@ serve(async (req) => {
       console.error("Error updating instance heartbeat:", updateError);
     }
 
-    // FASE 7: Se status mudou, usar orquestrador via RPC
+    // FASE 2: Usar orchestrated_status como referência (fonte de verdade)
+    // effective_status e status são apenas espelhos sincronizados pela migração
+    let transitionChanged = false;
+    
     if (instance.orchestrated_status !== effectiveStatus) {
       const { data: transitionResult, error: rpcError } = await supabase.rpc(
         'genesis_orchestrate_status_change',
@@ -121,39 +124,28 @@ serve(async (req) => {
       } else {
         const result = transitionResult as Record<string, unknown>;
         if (result.success && result.changed) {
+          transitionChanged = true;
           console.log(`Heartbeat transitioned ${instanceId}: ${result.from} -> ${result.to}`);
         }
       }
     }
 
-    // Log heartbeat event (apenas a cada ~2 minutos para não sobrecarregar - 1 em 4 chances)
-    const shouldLogHeartbeat = Math.random() < 0.008; // ~1 log a cada 120 heartbeats
-    if (shouldLogHeartbeat) {
-      await supabase.from("genesis_event_logs").insert({
-        instance_id: instanceId,
-        user_id: instance.user_id,
-        event_type: "heartbeat",
-        severity: "info",
-        message: `Heartbeat - Status: ${effectiveStatus}`,
-        details: { status: effectiveStatus, phoneNumber, metrics, timestamp: now },
-      });
-    }
-
-    // Check for status change and trigger webhooks
-    if (instance.effective_status !== effectiveStatus) {
+    // FASE 3 & 5: Só logar e disparar webhooks se houve mudança REAL via orquestrador
+    // Isso elimina loops de "connected" a cada 20s
+    if (transitionChanged) {
       const eventType = effectiveStatus === "connected" ? "connected" : "disconnected";
       
-      // Log status change event
+      // Log status change event apenas em mudanças reais
       await supabase.from("genesis_event_logs").insert({
         instance_id: instanceId,
         user_id: instance.user_id,
         event_type: eventType,
         severity: eventType === "connected" ? "info" : "warning",
         message: `Instance ${eventType}`,
-        details: { previousStatus: instance.effective_status, newStatus: effectiveStatus },
+        details: { previousStatus: instance.orchestrated_status, newStatus: effectiveStatus },
       });
 
-      // Trigger webhooks for status change
+      // Trigger webhooks apenas em mudanças reais
       const { data: webhooks } = await supabase
         .from("genesis_webhooks")
         .select("*")
