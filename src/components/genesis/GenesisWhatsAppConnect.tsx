@@ -59,6 +59,7 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
     connectionState,
     startConnection,
     disconnect,
+    cancelConnection,
     stopPolling,
   } = useGenesisWhatsAppConnection();
 
@@ -69,6 +70,11 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
    * - Frontend NUNCA calcula status, apenas consome
    */
   const displayStatus = useMemo((): OrchestratedStatus => {
+    // Se houve erro local, mostrar erro (senão o banco pode ficar em qr_pending e a UI fica em loop)
+    if (connectionState.phase === 'error' && connectionState.error) {
+      return 'error';
+    }
+
     // Durante operação ativa de conexão, mostrar o phase do hook de conexão
     if (connectionState.isConnecting || connectionState.isPolling) {
       if (connectionState.phase === 'connected') return 'connected';
@@ -77,10 +83,10 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
       if (connectionState.phase === 'generating' || connectionState.phase === 'validating') return 'connecting';
       if (connectionState.phase === 'error') return 'error';
     }
-    
+
     // Fora de operação ativa, usar status unificado (orchestrated_status)
     return unifiedStatus.orchestratedStatus;
-  }, [connectionState, unifiedStatus.orchestratedStatus]);
+  }, [connectionState.error, connectionState.isConnecting, connectionState.isPolling, connectionState.phase, unifiedStatus.orchestratedStatus]);
 
   // FASE 1: Estados derivados do displayStatus
   const isConnected = displayStatus === 'connected';
@@ -507,9 +513,9 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
             )}
 
             {isConnecting && (
-              <Button 
-                variant="outline" 
-                onClick={() => disconnect(instance.id)} 
+              <Button
+                variant="outline"
+                onClick={() => cancelConnection(instance.id)}
                 className="gap-2 flex-1 sm:flex-none"
                 size="lg"
               >
