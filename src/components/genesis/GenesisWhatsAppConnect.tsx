@@ -91,9 +91,17 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
     }
 
     return unifiedStatus.orchestratedStatus;
-
+  }, [
+    connectionState.phase,
+    connectionState.error,
+    connectionState.isConnecting,
+    connectionState.isPolling,
+    connectionState.qrCode,
+    unifiedStatus.orchestratedStatus,
+  ]);
 
   // FASE 1: Estados derivados do displayStatus
+
   const isConnected = displayStatus === 'connected';
   const isStabilizing = displayStatus === 'stabilizing';
   const isConnecting = displayStatus === 'connecting' || displayStatus === 'qr_pending';
