@@ -457,7 +457,7 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
                   <div className="flex-1">
                     <p className="text-sm font-medium">Instância conectada com sucesso!</p>
                     <p className="text-xs text-muted-foreground">
-                      {liveStatus.phoneNumber || 'Pronto para enviar mensagens'}
+                      {instance.phone_number || 'Pronto para enviar mensagens'}
                     </p>
                   </div>
                 </motion.div>
