@@ -16,11 +16,25 @@ type ProxyRequestBody = {
 
 const isAllowedPath = (path: string) => {
   if (!path.startsWith("/")) return false;
+
+  // Health
   if (path === "/health") return true;
+
+  // V8 (multi-instância)
   if (path.startsWith("/api/instance/")) return true;
   if (path.startsWith("/api/instances")) return true;
+
+  // Legacy (v6/v7)
+  if (path === "/status") return true;
+  if (path === "/connect") return true;
+  if (path === "/qrcode") return true;
+
+  // Compat
   if (path.startsWith("/api/qrcode")) return true;
+
+  // Send
   if (path === "/api/send" || path === "/send") return true;
+
   return false;
 };
 
