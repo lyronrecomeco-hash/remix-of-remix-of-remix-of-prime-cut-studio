@@ -1288,18 +1288,36 @@ Agora você pode automatizar seu atendimento!`;
         
         if (status.connected) {
           console.log('[Polling] Conectado!', status);
+          
+          // IMPORTANTE: Parar polling PRIMEIRO para evitar race conditions
           stopPolling();
           
           const nowIso = new Date().toISOString();
+          const phoneNumber = status.phoneNumber;
           
-          // Atualizar banco
+          // Atualizar banco ANTES de qualquer operação async longa
           await updateInstanceInDB(instanceId, {
             status: 'connected',
             effective_status: 'connected',
-            phone_number: status.phoneNumber,
+            phone_number: phoneNumber,
             last_heartbeat: nowIso,
           });
           
+          // CRÍTICO: Enviar mensagem de teste ANTES de alterar o state
+          // (para evitar que re-renders cancelem a operação)
+          let welcomeSuccess = false;
+          if (phoneNumber) {
+            toast.info('Conectado! Enviando teste de validação...');
+            try {
+              const result = await sendWelcomeMessage(instanceId, phoneNumber);
+              welcomeSuccess = result.success;
+              console.log('[Polling] Welcome message result:', result);
+            } catch (err) {
+              console.error('[Polling] Welcome message error:', err);
+            }
+          }
+          
+          // AGORA atualizar state após envio concluído
           safeSetState(() => ({
             isConnecting: false,
             isPolling: false,
@@ -1309,12 +1327,9 @@ Agora você pode automatizar seu atendimento!`;
             phase: 'connected',
           }));
           
-          // Enviar mensagem de teste
-          if (status.phoneNumber) {
-            toast.info('Conectado! Enviando teste de validação...');
-            const result = await sendWelcomeMessage(instanceId, status.phoneNumber);
-            
-            if (result.success) {
+          // Toast de sucesso
+          if (phoneNumber) {
+            if (welcomeSuccess) {
               toast.success('✅ WhatsApp conectado e funcionando!');
             } else {
               toast.success('✅ WhatsApp conectado! Pronto para uso.');
