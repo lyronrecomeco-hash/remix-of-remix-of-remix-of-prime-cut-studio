@@ -10,7 +10,7 @@ const corsHeaders = {
 type ProxyRequestBody = {
   instanceId?: string;
   path?: string;
-  method?: "GET" | "POST";
+  method?: "GET" | "POST" | "DELETE";
   body?: unknown;
   // Direct mode for VPS testing (Owner panel)
   action?: string;
@@ -24,7 +24,7 @@ const isAllowedPath = (path: string) => {
   // Health
   if (path === "/health") return true;
 
-  // V8 (multi-instância)
+  // V8 (multi-instância) - incluindo DELETE para reset
   if (path.startsWith("/api/instance/")) return true;
   if (path.startsWith("/api/instances")) return true;
 
@@ -309,14 +309,14 @@ serve(async (req) => {
       const h: Record<string, string> = {
         Authorization: `Bearer ${token}`,
       };
-      if (method === "POST") {
+      if (method === "POST" || method === "DELETE") {
         h["Content-Type"] = "application/json";
       }
       return h;
     };
 
     let fetchBody: string | undefined;
-    if (method === "POST") {
+    if (method === "POST" || method === "DELETE") {
       fetchBody = JSON.stringify(requestBody?.body ?? {});
     }
 

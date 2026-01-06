@@ -254,7 +254,7 @@ export function useGenesisWhatsAppConnection() {
   const proxyRequest = async (
     instanceId: string,
     path: string,
-    method: 'GET' | 'POST',
+    method: 'GET' | 'POST' | 'DELETE',
     body?: unknown
   ): Promise<{ ok: boolean; status: number; data: any; error?: string; needsConfig?: boolean }> => {
     const requestStart = Date.now();
@@ -1526,6 +1526,287 @@ Agora você pode automatizar seu atendimento!`;
     }));
   }, [stopPolling, safeSetState]);
 
+  /**
+   * CORREÇÃO DEFINITIVA: Reset de sessão completo
+   * - Apaga instância no VPS (DELETE)
+   * - Recria instância com UUID
+   * - Dispara /connect para gerar novo QR
+   * - Faz polling até obter QR ou conectar
+   */
+  const resetSession = useCallback(async (
+    instanceId: string,
+    instanceName?: string,
+    onSuccess?: () => void
+  ): Promise<{ success: boolean; error?: string; diagnostic?: Record<string, unknown> }> => {
+    const diagnostic: Record<string, unknown> = {
+      startedAt: new Date().toISOString(),
+      instanceId,
+      steps: [] as string[],
+    };
+
+    const addStep = (step: string, data?: Record<string, unknown>) => {
+      (diagnostic.steps as string[]).push(step);
+      if (data) diagnostic[step] = data;
+      logDiagnostic(`RESET_SESSION_${step.toUpperCase()}`, { instanceId, ...data });
+    };
+
+    // 1) Parar tudo e limpar UI
+    stopPolling();
+    safeSetState(() => ({
+      isConnecting: true,
+      isPolling: false,
+      qrCode: null,
+      error: null,
+      attempts: 0,
+      phase: 'validating',
+    }));
+
+    try {
+      addStep('started');
+
+      // 2) Detectar flavor do backend
+      const flavor = await detectBackendFlavor(instanceId, true);
+      addStep('flavor_detected', { flavor });
+
+      if (flavor === 'legacy') {
+        // Legacy não suporta DELETE, apenas disconnect + connect
+        addStep('legacy_disconnect');
+        await proxyRequest(instanceId, '/disconnect', 'POST', {});
+        await new Promise(r => setTimeout(r, 1000));
+        
+        addStep('legacy_connect');
+        await proxyRequest(instanceId, '/connect', 'POST', {});
+      } else {
+        // V8: DELETE + CREATE + CONNECT
+        const backendKey = instanceId;
+
+        // 3) Tentar disconnect primeiro (best-effort)
+        addStep('v8_disconnect');
+        await proxyRequest(instanceId, `/api/instance/${encodeURIComponent(backendKey)}/disconnect`, 'POST', {});
+        await new Promise(r => setTimeout(r, 500));
+
+        // 4) DELETE da instância no VPS (remove sessão/credenciais)
+        addStep('v8_delete');
+        const deleteRes = await proxyRequest(instanceId, `/api/instance/${encodeURIComponent(backendKey)}`, 'DELETE', {});
+        diagnostic.deleteResult = { ok: deleteRes.ok, status: deleteRes.status, data: deleteRes.data };
+
+        await new Promise(r => setTimeout(r, 500));
+
+        // 5) Recriar instância
+        addStep('v8_create');
+        const createName = instanceName || `instance-${instanceId.slice(0, 8)}`;
+        const createRes = await proxyRequest(instanceId, '/api/instances', 'POST', {
+          instanceId: backendKey,
+          name: createName,
+        });
+        diagnostic.createResult = { ok: createRes.ok, status: createRes.status, data: createRes.data };
+
+        if (!createRes.ok && !createRes.data?.success && !createRes.data?.id && !createRes.data?.error?.includes('já existe')) {
+          throw new Error(createRes.error || 'Falha ao recriar instância no backend');
+        }
+
+        await new Promise(r => setTimeout(r, 500));
+
+        // 6) Iniciar conexão
+        addStep('v8_connect');
+        await proxyRequest(instanceId, `/api/instance/${encodeURIComponent(backendKey)}/connect`, 'POST', {});
+      }
+
+      // 7) Resetar status no banco via orquestrador
+      addStep('orchestrator_reset');
+      await requestOrchestratedTransition(instanceId, 'qr_pending', 'frontend', {
+        reason: 'session_reset',
+      });
+
+      // Limpar session_data antiga (backend_instance_key pode estar errado)
+      const cleanSessionData = await mergeSessionData(instanceId, {
+        backend_flavor: flavor,
+        backend_instance_key: instanceId,
+        reset_at: new Date().toISOString(),
+        last_reset_diagnostic: diagnostic,
+      });
+
+      await supabase
+        .from('genesis_instances')
+        .update({
+          qr_code: null,
+          session_data: JSON.parse(JSON.stringify(cleanSessionData)),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', instanceId);
+
+      // 8) Tentar obter QR Code
+      addStep('fetch_qr');
+      safeSetState(prev => ({ ...prev, phase: 'generating' }));
+
+      let qrCode: string | null = null;
+      let connected = false;
+
+      for (let attempt = 0; attempt < 20; attempt++) {
+        await new Promise(r => setTimeout(r, 1500));
+
+        const qrPath = flavor === 'v8'
+          ? `/api/instance/${encodeURIComponent(instanceId)}/qrcode`
+          : '/qrcode';
+
+        const qrRes = await proxyRequest(instanceId, qrPath, 'GET');
+
+        // Verificar se já conectou
+        if (qrRes.data?.connected || qrRes.data?.status === 'connected') {
+          connected = true;
+          addStep('connected_during_qr_poll', { attempt });
+          break;
+        }
+
+        const rawQr = qrRes.data?.qrcode || qrRes.data?.qr || qrRes.data?.base64 || qrRes.data?.qrCode;
+        if (typeof rawQr === 'string' && rawQr.length > 10) {
+          qrCode = await normalizeQrToDataUrl(rawQr);
+          addStep('qr_obtained', { attempt });
+          break;
+        }
+
+        // Se backend ainda diz "disconnected" sem QR após 6 tentativas, re-trigger connect
+        if (attempt === 6 || attempt === 12) {
+          const connectPath = flavor === 'v8'
+            ? `/api/instance/${encodeURIComponent(instanceId)}/connect`
+            : '/connect';
+          await proxyRequest(instanceId, connectPath, 'POST', {});
+        }
+      }
+
+      if (connected) {
+        // Sucesso imediato
+        toast.success('✅ Sessão restaurada!');
+        safeSetState(() => ({
+          isConnecting: false,
+          isPolling: false,
+          qrCode: null,
+          error: null,
+          attempts: 0,
+          phase: 'connected',
+        }));
+        connectAttemptsRef.current = 0;
+        onSuccess?.();
+        return { success: true, diagnostic };
+      }
+
+      if (!qrCode) {
+        // Anti-loop: não conseguiu QR, parar e mostrar erro acionável
+        addStep('qr_failed');
+        diagnostic.finishedAt = new Date().toISOString();
+        
+        safeSetState(() => ({
+          isConnecting: false,
+          isPolling: false,
+          qrCode: null,
+          error: 'Sessão invalidada. Backend não gerou QR Code.',
+          attempts: 0,
+          phase: 'error',
+        }));
+
+        // Salvar diagnóstico para suporte
+        try {
+          await supabase.from('genesis_event_logs').insert([{
+            instance_id: instanceId,
+            event_type: 'reset_session_failed',
+            severity: 'warning',
+            message: 'Reset de sessão falhou: QR não gerado',
+            details: JSON.parse(JSON.stringify(diagnostic)),
+          }]);
+        } catch {}
+
+        return { success: false, error: 'QR Code não disponível após reset', diagnostic };
+      }
+
+      // 9) QR obtido - iniciar polling
+      addStep('polling_started');
+      lastQrRefreshAtRef.current = Date.now();
+      
+      safeSetState(() => ({
+        isConnecting: false,
+        isPolling: true,
+        qrCode,
+        error: null,
+        attempts: 0,
+        phase: 'waiting',
+      }));
+
+      toast.success('Nova sessão iniciada! Escaneie o QR Code.');
+
+      // Iniciar polling para detectar conexão
+      let pollAttempts = 0;
+      pollingRef.current = setInterval(async () => {
+        if (!mountedRef.current) {
+          stopPolling();
+          return;
+        }
+
+        pollAttempts++;
+        safeSetState(prev => ({ ...prev, attempts: pollAttempts }));
+
+        // Anti-loop: limite de polling
+        if (pollAttempts >= HARDENING.MAX_POLLING_ATTEMPTS) {
+          stopPolling();
+          safeSetState(prev => ({
+            ...prev,
+            error: 'Tempo limite excedido. Tente novamente.',
+            isPolling: false,
+            phase: 'error',
+          }));
+          toast.error('Tempo limite para conexão excedido');
+          return;
+        }
+
+        // Verificar conexão
+        const statusResult = await checkStatus(instanceId);
+        if (statusResult.connected) {
+          stopPolling();
+          const nowIso = new Date().toISOString();
+
+          await updateInstanceInDB(instanceId, {
+            status: 'connected',
+            phone_number: statusResult.phoneNumber,
+            last_heartbeat: nowIso,
+            effective_status: 'connected',
+          });
+
+          connectAttemptsRef.current = 0;
+          
+          safeSetState(() => ({
+            isConnecting: false,
+            isPolling: false,
+            qrCode: null,
+            error: null,
+            attempts: 0,
+            phase: 'connected',
+          }));
+
+          toast.success('✅ WhatsApp conectado com sucesso!');
+          onSuccess?.();
+        }
+      }, HARDENING.POLLING_INTERVAL);
+
+      return { success: true, diagnostic };
+
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao resetar sessão';
+      diagnostic.error = message;
+      diagnostic.finishedAt = new Date().toISOString();
+
+      safeSetState(() => ({
+        isConnecting: false,
+        isPolling: false,
+        qrCode: null,
+        error: message,
+        attempts: 0,
+        phase: 'error',
+      }));
+
+      toast.error(message);
+      return { success: false, error: message, diagnostic };
+    }
+  }, [stopPolling, safeSetState, normalizeQrToDataUrl, checkStatus, updateInstanceInDB, mergeSessionData, detectBackendFlavor, proxyRequest, logDiagnostic]);
+
   return {
     connectionState,
     startConnection,
@@ -1536,5 +1817,6 @@ Agora você pode automatizar seu atendimento!`;
     startStatusPolling,
     stopStatusPolling,
     resetState,
+    resetSession,
   };
 }
