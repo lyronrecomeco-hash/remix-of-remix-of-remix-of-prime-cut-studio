@@ -314,8 +314,8 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
                           Aguardando... ({Math.floor(connectionState.attempts / 60)}:{String(connectionState.attempts % 60).padStart(2, '0')})
                         </span>
                       </div>
-                      </div>
                     </div>
+                  </motion.div>
                 )}
 
                 {/* Placeholder when idle */}
