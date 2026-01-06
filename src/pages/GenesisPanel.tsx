@@ -54,7 +54,7 @@ import { GenesisMetricsDashboard } from '@/components/genesis/GenesisMetricsDash
 import { GenesisAlertRules } from '@/components/genesis/GenesisAlertRules';
 
 
-// Dashboard component with real data
+// Dashboard component with real data - Premium Design
 const GenesisDashboard = ({ onNavigate }: { onNavigate: (tab: string) => void }) => {
   const { genesisUser, credits, subscription, isSuperAdmin } = useGenesisAuth();
   const [realStats, setRealStats] = useState({
@@ -82,165 +82,314 @@ const GenesisDashboard = ({ onNavigate }: { onNavigate: (tab: string) => void })
     fetchRealStats();
   }, [genesisUser, credits]);
 
-  const stats = [
-    { label: 'Instâncias Ativas', value: realStats.instances, max: subscription?.max_instances || 1, icon: Smartphone, color: 'text-green-500' },
-    { label: 'Fluxos Criados', value: realStats.flows, max: subscription?.max_flows || 5, icon: GitBranch, color: 'text-blue-500' },
-    { label: 'Créditos Disponíveis', value: realStats.creditsAvailable, icon: CreditCard, color: 'text-amber-500' },
-    { label: 'Status', value: 'Ativo', icon: Activity, color: 'text-purple-500' },
+  const quickActions = [
+    { title: 'Nova Instância', description: 'Conecte um WhatsApp', icon: Smartphone, onClick: () => onNavigate('instances'), gradient: 'from-green-500/20 to-emerald-500/10' },
+    { title: 'Criar Fluxo', description: 'Monte automações visuais', icon: GitBranch, onClick: () => onNavigate('flows'), gradient: 'from-blue-500/20 to-cyan-500/10' },
+    { title: 'Chatbot IA', description: 'Respostas inteligentes', icon: Bot, onClick: () => onNavigate('chatbots'), gradient: 'from-purple-500/20 to-pink-500/10' },
   ];
 
-  const quickActions = [
-    { title: 'Nova Instância', description: 'Conecte um WhatsApp', icon: Smartphone, onClick: () => onNavigate('instances') },
-    { title: 'Criar Fluxo', description: 'Monte automações visuais', icon: GitBranch, onClick: () => onNavigate('flows') },
-    { title: 'Chatbot IA', description: 'Respostas inteligentes', icon: Bot, onClick: () => onNavigate('chatbots') },
-  ];
+  const instancePercent = Math.min((realStats.instances / (subscription?.max_instances || 1)) * 100, 100);
+  const flowPercent = Math.min((realStats.flows / (subscription?.max_flows || 5)) * 100, 100);
 
   return (
-    <div className="space-y-6 md:space-y-8">
-      {/* Animated Welcome */}
+    <div className="space-y-6">
+      {/* Header Section */}
       <motion.div 
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+        className="flex items-center justify-between"
       >
-        <div>
-          <motion.h1 
-            className="text-2xl sm:text-3xl font-bold"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            Olá, {genesisUser?.name?.split(' ')[0] || 'Usuário'}! 
-            <motion.span 
-              className="inline-block ml-2"
-              animate={{ rotate: [0, 20, 0] }}
-              transition={{ duration: 0.5, repeat: 3, repeatDelay: 2 }}
-            >
-              👋
-            </motion.span>
-          </motion.h1>
-          <motion.p 
-            className="text-muted-foreground mt-1 text-sm sm:text-base"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            Bem-vindo ao seu painel de automação.
-          </motion.p>
-        </div>
-        {isSuperAdmin && (
+        <div className="flex items-center gap-4">
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 200, delay: 0.3 }}
+            transition={{ type: 'spring', stiffness: 200 }}
+            className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/10"
           >
-            <Badge variant="secondary" className="gap-1 px-3 py-1.5">
-              <Crown className="w-4 h-4 text-amber-500" />
-              Super Admin
-            </Badge>
+            <LayoutDashboard className="w-7 h-7 text-primary" />
           </motion.div>
-        )}
+          <div>
+            <motion.h1 
+              className="text-2xl font-bold flex items-center gap-2"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              Olá, {genesisUser?.name?.split(' ')[0] || 'Usuário'}!
+              <motion.span 
+                className="inline-block text-xl"
+                animate={{ rotate: [0, 15, -15, 0] }}
+                transition={{ duration: 0.6, repeat: 2, repeatDelay: 3 }}
+              >
+                👋
+              </motion.span>
+            </motion.h1>
+            <motion.p 
+              className="text-sm text-muted-foreground"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              Bem-vindo ao seu painel de automação
+            </motion.p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {isSuperAdmin && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 200, delay: 0.3 }}
+            >
+              <Badge className="gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-600 border-amber-500/30">
+                <Crown className="w-3.5 h-3.5" />
+                Super Admin
+              </Badge>
+            </motion.div>
+          )}
+          <Badge variant="outline" className="gap-1.5 px-3 py-1.5 border-green-500/30 text-green-600 bg-green-500/5">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            Online
+          </Badge>
+        </div>
       </motion.div>
 
-      {/* Animated Stats Grid - 4 equal cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {stats.map((stat, index) => (
-          <AnimatedStatCard
-            key={stat.label}
-            label={stat.label}
-            value={stat.value}
-            max={stat.max}
-            icon={stat.icon}
-            color={stat.color}
-            delay={index * 100}
-          />
-        ))}
-      </div>
-
-      {/* Animated Quick Actions */}
-      <div>
-        <motion.h2 
-          className="text-base font-semibold mb-3"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
+      {/* Main Stats Grid - 2x2 Premium Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Instances Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
         >
-          Ações Rápidas
-        </motion.h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {quickActions.map((action, index) => (
-            <QuickActionCard
-              key={action.title}
-              title={action.title}
-              description={action.description}
-              icon={action.icon}
-              onClick={action.onClick}
-              delay={500 + (index * 100)}
-            />
-          ))}
-        </div>
+          <Card className="relative overflow-hidden group hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 border-primary/10">
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Smartphone className="w-4 h-4 text-green-500" />
+                    <span className="text-sm font-medium text-muted-foreground">Instâncias</span>
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-bold">{realStats.instances}</span>
+                    <span className="text-sm text-muted-foreground">/ {subscription?.max_instances || 1}</span>
+                  </div>
+                  <div className="mt-3 space-y-1.5">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Uso</span>
+                      <span className="font-medium">{instancePercent.toFixed(0)}%</span>
+                    </div>
+                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                      <motion.div 
+                        className="h-full bg-gradient-to-r from-green-500 to-emerald-400 rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${instancePercent}%` }}
+                        transition={{ duration: 0.8, delay: 0.3 }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <motion.div 
+                  className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center"
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                >
+                  <Smartphone className="w-6 h-6 text-green-500" />
+                </motion.div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Flows Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
+          <Card className="relative overflow-hidden group hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 border-primary/10">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <GitBranch className="w-4 h-4 text-blue-500" />
+                    <span className="text-sm font-medium text-muted-foreground">Fluxos</span>
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-bold">{realStats.flows}</span>
+                    <span className="text-sm text-muted-foreground">/ {subscription?.max_flows || 5}</span>
+                  </div>
+                  <div className="mt-3 space-y-1.5">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Uso</span>
+                      <span className="font-medium">{flowPercent.toFixed(0)}%</span>
+                    </div>
+                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                      <motion.div 
+                        className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${flowPercent}%` }}
+                        transition={{ duration: 0.8, delay: 0.35 }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <motion.div 
+                  className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center"
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                >
+                  <GitBranch className="w-6 h-6 text-blue-500" />
+                </motion.div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Credits Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Card className="relative overflow-hidden group hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 border-primary/10">
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <CreditCard className="w-4 h-4 text-amber-500" />
+                    <span className="text-sm font-medium text-muted-foreground">Créditos</span>
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-bold">{realStats.creditsAvailable}</span>
+                    <span className="text-sm text-muted-foreground">disponíveis</span>
+                  </div>
+                  <div className="mt-3">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-7 text-xs gap-1.5 border-amber-500/30 text-amber-600 hover:bg-amber-500/10"
+                      onClick={() => onNavigate('credits')}
+                    >
+                      <Gift className="w-3 h-3" />
+                      Comprar mais
+                    </Button>
+                  </div>
+                </div>
+                <motion.div 
+                  className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center"
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                >
+                  <CreditCard className="w-6 h-6 text-amber-500" />
+                </motion.div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Plan Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+        >
+          <Card className="relative overflow-hidden group hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 border-primary/10">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Sparkles className="w-4 h-4 text-purple-500" />
+                    <span className="text-sm font-medium text-muted-foreground">Seu Plano</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-3xl font-bold capitalize">{subscription?.plan || 'Free'}</span>
+                    <Badge className="bg-green-500/10 text-green-600 border-green-500/20">
+                      Ativo
+                    </Badge>
+                  </div>
+                  <div className="mt-3">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-7 text-xs gap-1.5 border-purple-500/30 text-purple-600 hover:bg-purple-500/10"
+                      onClick={() => onNavigate('credits')}
+                    >
+                      <Crown className="w-3 h-3" />
+                      Fazer upgrade
+                    </Button>
+                  </div>
+                </div>
+                <motion.div 
+                  className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center"
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  animate={{ rotate: [0, 360] }}
+                  transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                >
+                  <Sparkles className="w-6 h-6 text-purple-500" />
+                </motion.div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
 
-      {/* Animated Plan Info - Compact */}
+      {/* Quick Actions Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.7 }}
+        transition={{ delay: 0.3 }}
       >
-        <Card className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5" />
-          <CardContent className="relative z-10 py-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <motion.div
-                  animate={{ rotate: [0, 360] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-                  className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"
-                >
-                  <Sparkles className="w-5 h-5 text-primary" />
-                </motion.div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold">Seu Plano:</span>
-                    <span className="text-primary font-bold capitalize">{subscription?.plan || 'Free'}</span>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Zap className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold">Ações Rápidas</h2>
+          </div>
+          <Badge variant="secondary" className="text-xs">
+            {quickActions.length} disponíveis
+          </Badge>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {quickActions.map((action, index) => (
+            <motion.div
+              key={action.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35 + index * 0.05 }}
+              whileHover={{ y: -4 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Card 
+                className={cn(
+                  "relative overflow-hidden cursor-pointer group transition-all duration-300",
+                  "hover:shadow-lg hover:shadow-primary/5 border-primary/10 hover:border-primary/20"
+                )}
+                onClick={action.onClick}
+              >
+                <div className={cn("absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity", action.gradient)} />
+                <CardContent className="p-5 relative">
+                  <div className="flex items-center gap-4">
+                    <motion.div 
+                      className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center"
+                      whileHover={{ rotate: 360 }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <action.icon className="w-5 h-5 text-primary" />
+                    </motion.div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-sm">{action.title}</h3>
+                      <p className="text-xs text-muted-foreground">{action.description}</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {subscription?.plan === 'free' 
-                      ? 'Faça upgrade para mais recursos'
-                      : 'Aproveite todos os recursos'}
-                  </p>
-                </div>
-              </div>
-              
-              {/* Compact stats row */}
-              <div className="flex items-center gap-4 text-sm">
-                <div className="text-center">
-                  <p className="font-semibold">{realStats.instances}/{subscription?.max_instances || 1}</p>
-                  <p className="text-[10px] text-muted-foreground">Instâncias</p>
-                </div>
-                <div className="w-px h-8 bg-border" />
-                <div className="text-center">
-                  <p className="font-semibold">{realStats.flows}/{subscription?.max_flows || 5}</p>
-                  <p className="text-[10px] text-muted-foreground">Fluxos</p>
-                </div>
-                <div className="w-px h-8 bg-border" />
-                <div className="text-center">
-                  <p className="font-semibold">{realStats.creditsAvailable}</p>
-                  <p className="text-[10px] text-muted-foreground">Créditos</p>
-                </div>
-                <div className="w-px h-8 bg-border hidden sm:block" />
-                <Badge variant="secondary" className="bg-green-500/10 text-green-600 border-green-500/20 hidden sm:flex">
-                  Ativo
-                </Badge>
-              </div>
-              
-              <Button variant="outline" size="sm" className="gap-2 group" onClick={() => onNavigate('credits')}>
-                <Crown className="w-4 h-4 group-hover:text-amber-500 transition-colors" />
-                Upgrade
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
       </motion.div>
     </div>
   );
