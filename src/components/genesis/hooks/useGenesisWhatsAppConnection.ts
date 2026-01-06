@@ -604,9 +604,9 @@ export function useGenesisWhatsAppConnection() {
 
     const digits = (v?: string | null) => (v || '').replace(/\D/g, '');
 
-    // Destino do teste: prioriza whatsapp_test do usuário, depois whatsapp_commercial.
-    // (Enviar para o próprio número conectado pode falhar dependendo do script)
-    const testRecipient = digits((genesisUser as any)?.whatsapp_test) || digits((genesisUser as any)?.whatsapp_commercial);
+    // Destino do teste: o número salvo na conta (whatsapp_commercial).
+    // Fallback: whatsapp_test; se ambos ausentes, tenta o número conectado.
+    const testRecipient = digits((genesisUser as any)?.whatsapp_commercial) || digits((genesisUser as any)?.whatsapp_test);
     const phoneNumber = testRecipient || digits(connectedPhoneNumber);
 
     logDiagnostic('WELCOME_MESSAGE_START', {
