@@ -47,16 +47,34 @@ serve(async (req) => {
       );
     }
 
-    // Validar token se fornecido - aceita backend_token da instância
-    // Se não há token configurado, aceita qualquer heartbeat (backwards compatibility)
+    // Validar token se fornecido - aceita backend_token da instância OU MASTER_TOKEN global
+    // Se não há token configurado na instância, aceita qualquer heartbeat com token válido (backwards compatibility)
     const expectedBackendToken = (instance as Record<string, unknown>).backend_token as string | null;
     
-    if (expectedBackendToken && instanceToken) {
-      if (expectedBackendToken !== instanceToken) {
+    // Buscar MASTER_TOKEN global para validação alternativa
+    const { data: globalConfig } = await supabase
+      .from("whatsapp_backend_config")
+      .select("master_token")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    const globalMasterToken = globalConfig?.master_token || null;
+    
+    // Token nativo hardcoded para fallback (mesmo usado no proxy)
+    const NATIVE_MASTER_TOKEN = "genesis-master-token-2024-secure";
+    
+    // Validação: aceita se token == backend_token da instância OU master_token global OU token nativo
+    if (instanceToken) {
+      const validTokens = [expectedBackendToken, globalMasterToken, NATIVE_MASTER_TOKEN].filter(Boolean);
+      const isValidToken = validTokens.some(valid => valid === instanceToken);
+      
+      if (!isValidToken && validTokens.length > 0) {
         console.warn("genesis-heartbeat invalid token", {
           instanceId,
           tokenPrefix: String(instanceToken).slice(0, 8),
-          expectedPrefix: String(expectedBackendToken).slice(0, 8),
+          hasInstanceToken: !!expectedBackendToken,
+          hasGlobalToken: !!globalMasterToken,
         });
         return new Response(
           JSON.stringify({ error: "Invalid token" }),
@@ -64,6 +82,7 @@ serve(async (req) => {
         );
       }
     }
+    // Se não enviou token, permite para backwards compatibility
 
     const now = new Date().toISOString();
     

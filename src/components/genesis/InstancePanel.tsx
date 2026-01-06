@@ -100,22 +100,9 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
   // Colapsável
   const [showTechnicalInfo, setShowTechnicalInfo] = useState(false);
 
-  // Verificar se backend GLOBAL está configurado
-  const [hasGlobalBackend, setHasGlobalBackend] = useState(true);
-  
-  useEffect(() => {
-    const checkGlobalBackend = async () => {
-      const { data } = await supabase
-        .from('whatsapp_backend_config')
-        .select('backend_url, master_token')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      
-      setHasGlobalBackend(Boolean(data?.backend_url && data?.master_token));
-    };
-    checkGlobalBackend();
-  }, []);
+  // Backend GLOBAL sempre disponível via fallback nativo no proxy
+  // Não precisamos mais validar pois há fallback hardcoded
+  const hasGlobalBackend = true;
 
   // Variáveis derivadas da instância
   const instanceCode = `genesis-${instance.id.slice(0, 8)}`;
@@ -284,18 +271,6 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
             </CardTitle>
           </CardHeader>
           <CardContent className="relative space-y-6">
-            {/* Alerta se backend GLOBAL não configurado */}
-            {!hasGlobalBackend && (
-              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
-                <div className="flex items-center gap-3">
-                  <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-amber-600">Servidor não configurado</p>
-                    <p className="text-xs text-muted-foreground">Entre em contato com o suporte para ativar a conexão WhatsApp</p>
-                  </div>
-                </div>
-              </div>
-            )}
             
             {/* Componente de Conexão */}
             <GenesisWhatsAppConnect 
