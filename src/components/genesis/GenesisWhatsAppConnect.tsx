@@ -190,53 +190,45 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
               </div>
             </div>
 
-            {/* Status Badge */}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={`${isConnected}-${isConnecting}-${phase}`}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="flex items-center gap-2"
-              >
-                {isConnecting && (
-                  <Badge variant="secondary" className="gap-1.5 bg-blue-500/10 text-blue-600 border-blue-500/20 px-3 py-1.5">
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    {phase === 'validating'
-                      ? 'Verificando'
-                      : phase === 'generating'
-                        ? 'Gerando'
-                        : phase === 'stabilizing'
-                          ? 'Finalizando'
-                          : 'Conectando'}
-                  </Badge>
-                )}
-                {isConnected && (
-                  <Badge variant="secondary" className="gap-1.5 bg-green-500/10 text-green-600 border-green-500/20 px-3 py-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    Conectado
-                  </Badge>
-                )}
-                {phase === 'error' && (
-                  <Badge variant="secondary" className="gap-1.5 bg-red-500/10 text-red-600 border-red-500/20 px-3 py-1.5">
-                    <XCircle className="w-3.5 h-3.5" />
-                    Erro
-                  </Badge>
-                )}
-                {!isConnected && !isConnecting && phase !== 'error' && liveStatus.isStale && (
-                  <Badge variant="secondary" className="gap-1.5 bg-yellow-500/10 text-yellow-600 border-yellow-500/20 px-3 py-1.5">
-                    <AlertCircle className="w-3.5 h-3.5" />
-                    Verificando
-                  </Badge>
-                )}
-                {!isConnected && !isConnecting && phase === 'idle' && !liveStatus.isStale && (
-                  <Badge variant="secondary" className="gap-1.5 bg-muted text-muted-foreground border-border px-3 py-1.5">
-                    <WifiOff className="w-3.5 h-3.5" />
-                    Desconectado
-                  </Badge>
-                )}
-              </motion.div>
-            </AnimatePresence>
+            {/* Status Badge - Sem AnimatePresence para evitar warning de ref */}
+            <div className="flex items-center gap-2">
+              {isConnecting && (
+                <Badge variant="secondary" className="gap-1.5 bg-blue-500/10 text-blue-600 border-blue-500/20 px-3 py-1.5">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  {phase === 'validating'
+                    ? 'Verificando'
+                    : phase === 'generating'
+                      ? 'Gerando'
+                      : phase === 'stabilizing'
+                        ? 'Finalizando'
+                        : 'Conectando'}
+                </Badge>
+              )}
+              {isConnected && (
+                <Badge variant="secondary" className="gap-1.5 bg-green-500/10 text-green-600 border-green-500/20 px-3 py-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Conectado
+                </Badge>
+              )}
+              {phase === 'error' && (
+                <Badge variant="secondary" className="gap-1.5 bg-red-500/10 text-red-600 border-red-500/20 px-3 py-1.5">
+                  <XCircle className="w-3.5 h-3.5" />
+                  Erro
+                </Badge>
+              )}
+              {!isConnected && !isConnecting && phase !== 'error' && liveStatus.isStale && (
+                <Badge variant="secondary" className="gap-1.5 bg-yellow-500/10 text-yellow-600 border-yellow-500/20 px-3 py-1.5">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  Verificando
+                </Badge>
+              )}
+              {!isConnected && !isConnecting && phase === 'idle' && !liveStatus.isStale && (
+                <Badge variant="secondary" className="gap-1.5 bg-muted text-muted-foreground border-border px-3 py-1.5">
+                  <WifiOff className="w-3.5 h-3.5" />
+                  Desconectado
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
 
