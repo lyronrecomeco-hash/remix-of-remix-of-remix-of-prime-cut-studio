@@ -1064,358 +1064,33 @@ Agora você pode automatizar seu atendimento!`;
             }
           }
 
-          if (isReady) {
-            toast.info('Socket estável! Enviando teste...');
-            const result = await sendWelcomeMessage(instanceId, phoneNumber);
-            
-            const mergedReady = await mergeSessionData(instanceId, {
-              ready_to_send: result.success,
-              welcome_sent_at: nowIso,
-              last_send_success_at: result.success ? nowIso : undefined,
-              last_send_error_at: !result.success ? nowIso : undefined,
-              ready_phase: result.success ? 'ready_to_send' : 'send_attempted',
-              ready_updated_at: nowIso,
-            });
-
-            await updateInstanceInDB(instanceId, {
-              effective_status: 'connected',
-              session_data: mergedReady,
-            });
-
-            if (result.success) {
-              toast.success('✅ WhatsApp conectado e funcionando!');
-            } else {
-              toast.success('✅ WhatsApp conectado! Pronto para uso.');
-            }
-          } else {
-            // Socket não ficou ready, mas está conectado
-            toast.success('✅ WhatsApp conectado! Pronto para uso.');
-            
-            const mergedReady = await mergeSessionData(instanceId, {
-              ready_to_send: false,
-              ready_phase: 'connected_not_tested',
-              ready_updated_at: nowIso,
-            });
-
-            await updateInstanceInDB(instanceId, {
-              effective_status: 'connected',
-              session_data: mergedReady,
-            });
-          }
-        } else {
-          toast.success('✅ WhatsApp já está conectado e operacional!');
-        }
-
-        // Finalizar com sucesso
-        // HARDENING: Reset contador de tentativas em sucesso
-        connectAttemptsRef.current = 0;
-        
-        safeSetState(() => ({
-          isConnecting: false,
-          isPolling: false,
-          qrCode: null,
-          error: null,
-          attempts: 0,
-          phase: 'connected',
-        }));
-        
-        onConnected?.();
-        return;
-      }
-
-      // Antes de gerar um novo QR, tenta reconectar sessão existente
-      try {
-        safeSetState(prev => ({ ...prev, phase: 'generating' }));
-
-        const connectPath = ensureResult.flavor === 'legacy'
-          ? '/connect'
-          : `/api/instance/${encodeURIComponent(backendKey)}/connect`;
-
-        await proxyRequest(instanceId, connectPath, 'POST', {});
-
-        // Aguarda até 8 segundos para o backend reaproveitar credenciais
-        for (let i = 0; i < 8; i++) {
-          await new Promise((r) => setTimeout(r, 1000));
-          const resumed = await checkStatus(instanceId);
+          // V8 FIX: Backend V8 pode não retornar readyToSend, mas connected=true já é suficiente
+          // Tentar enviar mensagem de teste SEMPRE que estiver conectado
+          toast.info(isReady ? 'Socket estável! Enviando teste...' : 'Conectado! Enviando teste de validação...');
+          const result = await sendWelcomeMessage(instanceId, phoneNumber);
           
-          if (resumed.connected) {
-            const nowIso = new Date().toISOString();
-
-            await updateInstanceInDB(instanceId, {
-              status: 'connected',
-              phone_number: resumed.phoneNumber,
-              last_heartbeat: nowIso,
-              effective_status: 'connected',
-            });
-
-            safeSetState(() => ({
-              isConnecting: true,
-              isPolling: false,
-              qrCode: null,
-              error: null,
-              attempts: 0,
-              phase: 'stabilizing',
-            }));
-
-            // V7: Aguardar ready_to_send do backend
-            if (resumed.phoneNumber) {
-              toast.info('Sessão restaurada! Aguardando estabilização...');
-              
-              let isReady = resumed.readyToSend === true;
-              if (!isReady) {
-                for (let waitAttempt = 0; waitAttempt < 8; waitAttempt++) {
-                  await new Promise(r => setTimeout(r, 1000));
-                  const statusCheck = await checkStatus(instanceId);
-                  if (statusCheck.readyToSend) {
-                    isReady = true;
-                    break;
-                  }
-                }
-              }
-
-              if (isReady) {
-                toast.info('Enviando teste...');
-                const result = await sendWelcomeMessage(instanceId, resumed.phoneNumber);
-                
-                const mergedReady = await mergeSessionData(instanceId, {
-                  ready_to_send: result.success,
-                  welcome_sent_at: nowIso,
-                  last_send_success_at: result.success ? nowIso : undefined,
-                  ready_phase: result.success ? 'ready_to_send' : 'send_attempted',
-                  ready_updated_at: nowIso,
-                });
-
-                await updateInstanceInDB(instanceId, {
-                  effective_status: 'connected',
-                  session_data: mergedReady,
-                });
-
-                toast.success(result.success 
-                  ? '✅ WhatsApp reconectado e funcionando!' 
-                  : '✅ WhatsApp reconectado! Pronto para uso.');
-              } else {
-                toast.success('✅ WhatsApp reconectado! Pronto para uso.');
-              }
-            } else {
-              toast.success('✅ WhatsApp reconectado com sucesso!');
-            }
-
-            safeSetState(() => ({
-              isConnecting: false,
-              isPolling: false,
-              qrCode: null,
-              error: null,
-              attempts: 0,
-              phase: 'connected',
-            }));
-            onConnected?.();
-            return;
-          }
-        }
-      } catch {
-        // Sessão não existe, continua para QR
-      }
-
-      // Gerar QR Code - skipConnect=true pois já chamamos connect acima
-      safeSetState(prev => ({ ...prev, phase: 'generating' }));
-      
-      const qrResult = await generateQRCode(instanceId, true);
-      
-      // Se retornou CONNECTED, já está conectado (sessão existia)
-      if (qrResult === 'CONNECTED') {
-        const nowIso = new Date().toISOString();
-        const statusAfter = await checkStatus(instanceId);
-        const phone = statusAfter.phoneNumber;
-
-        await updateInstanceInDB(instanceId, {
-          status: 'connected',
-          phone_number: phone,
-          last_heartbeat: nowIso,
-          effective_status: 'connected',
-        });
-
-        safeSetState(() => ({
-          isConnecting: true,
-          isPolling: false,
-          qrCode: null,
-          error: null,
-          attempts: 0,
-          phase: 'stabilizing',
-        }));
-
-        if (phone) {
-          toast.info('Conexão detectada! Aguardando estabilização...');
-          
-          // V7: Aguardar ready_to_send
-          let isReady = statusAfter.readyToSend === true;
-          if (!isReady) {
-            for (let waitAttempt = 0; waitAttempt < 8; waitAttempt++) {
-              await new Promise(r => setTimeout(r, 1000));
-              const statusCheck = await checkStatus(instanceId);
-              if (statusCheck.readyToSend) {
-                isReady = true;
-                break;
-              }
-            }
-          }
-
-          if (isReady) {
-            toast.info('Enviando teste...');
-            const result = await sendWelcomeMessage(instanceId, phone);
-            
-            const mergedReady = await mergeSessionData(instanceId, {
-              ready_to_send: result.success,
-              welcome_sent_at: nowIso,
-              last_send_success_at: result.success ? nowIso : undefined,
-              ready_phase: result.success ? 'ready_to_send' : 'send_attempted',
-              ready_updated_at: nowIso,
-            });
-
-            await updateInstanceInDB(instanceId, {
-              effective_status: 'connected',
-              session_data: mergedReady,
-            });
-
-            toast.success(result.success 
-              ? '✅ WhatsApp conectado e funcionando!' 
-              : '✅ WhatsApp conectado! Pronto para uso.');
-          } else {
-            toast.success('✅ WhatsApp conectado! Pronto para uso.');
-          }
-        } else {
-          toast.success('✅ WhatsApp conectado!');
-        }
-
-        safeSetState(() => ({
-          isConnecting: false,
-          isPolling: false,
-          qrCode: null,
-          error: null,
-          attempts: 0,
-          phase: 'connected',
-        }));
-        onConnected?.();
-        return;
-      }
-
-      if (!qrResult) throw new Error('Não foi possível gerar o QR Code');
-
-      // Agora que temos QR, podemos sinalizar qr_pending no backend (best-effort)
-      await updateInstanceInDB(instanceId, { status: 'qr_pending' });
-
-      // Show QR and start polling
-      lastQrRefreshAtRef.current = Date.now();
-      safeSetState(() => ({
-        isConnecting: false,
-        isPolling: true,
-        qrCode: qrResult,
-        error: null,
-        attempts: 0,
-        phase: 'waiting',
-      }));
-
-      let attempts = 0;
-      pollingRef.current = setInterval(async () => {
-        if (!mountedRef.current) {
-          stopPolling();
-          return;
-        }
-
-        attempts++;
-        safeSetState(prev => ({ ...prev, attempts }));
-
-        if (attempts >= HARDENING.MAX_POLLING_ATTEMPTS) {
-          stopPolling();
-          safeSetState(prev => ({
-            ...prev,
-            error: 'Tempo limite excedido. Tente novamente.',
-            isPolling: false,
-            phase: 'error',
-          }));
-          // NÃO altera status no banco aqui: o lifecycle da instância não pode depender do frontend.
-          toast.error('Tempo limite para conexão excedido');
-          return;
-        }
-
-        // Auto-refresh QR every 45 seconds (sem re-disparar /connect para evitar loop)
-        if (Date.now() - lastQrRefreshAtRef.current > HARDENING.QR_AUTO_REFRESH_MS) {
-          try {
-            const nextQr = await generateQRCode(instanceId, true);
-            if (nextQr && nextQr !== 'CONNECTED') {
-              lastQrRefreshAtRef.current = Date.now();
-              safeSetState(prev => ({ ...prev, qrCode: nextQr }));
-            }
-          } catch {}
-        }
-
-        // Check connection status
-        const statusResult = await checkStatus(instanceId);
-        if (statusResult.connected) {
-          stopPolling();
-
-          const nowIso = new Date().toISOString();
-
-          await updateInstanceInDB(instanceId, {
-            status: 'connected',
-            phone_number: statusResult.phoneNumber,
-            last_heartbeat: nowIso,
-            effective_status: 'connected',
+          const mergedReady = await mergeSessionData(instanceId, {
+            ready_to_send: result.success,
+            welcome_sent_at: nowIso,
+            last_send_success_at: result.success ? nowIso : undefined,
+            last_send_error_at: !result.success ? nowIso : undefined,
+            ready_phase: result.success ? 'ready_to_send' : 'send_attempted',
+            ready_updated_at: nowIso,
           });
 
-          safeSetState(() => ({
-            isConnecting: true,
-            isPolling: false,
-            qrCode: null,
-            error: null,
-            attempts: 0,
-            phase: 'stabilizing',
-          }));
+          await updateInstanceInDB(instanceId, {
+            effective_status: 'connected',
+            session_data: mergedReady,
+          });
 
-          // V7: Aguardar ready_to_send antes de enviar teste
-          if (statusResult.phoneNumber) {
-            toast.info('Conectado! Aguardando estabilização...');
-            
-            let isReady = statusResult.readyToSend === true;
-            if (!isReady) {
-              for (let waitAttempt = 0; waitAttempt < 8; waitAttempt++) {
-                await new Promise(r => setTimeout(r, 1000));
-                const statusCheck = await checkStatus(instanceId);
-                if (statusCheck.readyToSend) {
-                  isReady = true;
-                  break;
-                }
-              }
-            }
-
-            if (isReady) {
-              toast.info('Enviando teste de validação...');
-              const result = await sendWelcomeMessage(instanceId, statusResult.phoneNumber);
-              
-              const mergedReady = await mergeSessionData(instanceId, {
-                ready_to_send: result.success,
-                welcome_sent_at: nowIso,
-                last_send_success_at: result.success ? nowIso : undefined,
-                ready_phase: result.success ? 'ready_to_send' : 'send_attempted',
-                ready_updated_at: nowIso,
-              });
-
-              await updateInstanceInDB(instanceId, {
-                effective_status: 'connected',
-                session_data: mergedReady,
-              });
-
-              toast.success(result.success 
-                ? '✅ WhatsApp conectado e funcionando!' 
-                : '✅ WhatsApp conectado! Pronto para uso.');
-            } else {
-              toast.success('✅ WhatsApp conectado! Pronto para uso.');
-            }
+          if (result.success) {
+            toast.success('✅ WhatsApp conectado e funcionando!');
           } else {
-            toast.success('✅ WhatsApp conectado com sucesso!');
+            toast.success('✅ WhatsApp conectado! Pronto para uso.');
           }
 
-          // HARDENING: Reset contador de tentativas em sucesso
-          connectAttemptsRef.current = 0;
+          // Parar polling após conexão bem-sucedida - NÃO reconectar
+          stopPolling();
           
           safeSetState(() => ({
             isConnecting: false,
@@ -1425,24 +1100,236 @@ Agora você pode automatizar seu atendimento!`;
             attempts: 0,
             phase: 'connected',
           }));
-          onConnected?.();
-        }
-      }, HARDENING.POLLING_INTERVAL);
 
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Erro ao conectar';
+          // Resetar contador de tentativas após sucesso
+          connectAttemptsRef.current = 0;
+          cooldownUntilRef.current = 0;
+
+          onConnected?.();
+          return;
+        }
+        
+        // Sem número de telefone, mas conectado
+        safeSetState(() => ({
+          isConnecting: false,
+          isPolling: false,
+          qrCode: null,
+          error: null,
+          attempts: 0,
+          phase: 'connected',
+        }));
+
+        // Resetar contador após sucesso
+        connectAttemptsRef.current = 0;
+        cooldownUntilRef.current = 0;
+
+        toast.success('✅ WhatsApp conectado!');
+        onConnected?.();
+        return;
+      }
+      
+      // === NÃO CONECTADO: Gerar QR ===
+      safeSetState(() => ({
+        isConnecting: true,
+        isPolling: false,
+        qrCode: null,
+        error: null,
+        attempts: 0,
+        phase: 'generating',
+      }));
+
+      // Gerar QR
+      const qrResult = await generateQRCode(instanceId);
+
+      // generateQRCode retorna string (QR ou 'CONNECTED') ou null
+      if (!qrResult) {
+        throw new Error('QR Code não foi gerado. Tente novamente.');
+      }
+
+      if (qrResult === 'CONNECTED') {
+        // Conectou durante a geração do QR (raro)
+        const statusAfter = await checkStatus(instanceId);
+        
+        await updateInstanceInDB(instanceId, {
+          status: 'connected',
+          effective_status: 'connected',
+          phone_number: statusAfter.phoneNumber,
+          last_heartbeat: nowIso,
+        });
+
+        safeSetState(() => ({
+          isConnecting: false,
+          isPolling: false,
+          qrCode: null,
+          error: null,
+          attempts: 0,
+          phase: 'connected',
+        }));
+
+        // Enviar mensagem de teste se tiver número
+        if (statusAfter.phoneNumber) {
+          toast.info('Conectado! Enviando teste de validação...');
+          const result = await sendWelcomeMessage(instanceId, statusAfter.phoneNumber);
+          
+          if (result.success) {
+            toast.success('✅ WhatsApp conectado e funcionando!');
+          } else {
+            toast.success('✅ WhatsApp conectado! Pronto para uso.');
+          }
+        } else {
+          toast.success('✅ WhatsApp conectado!');
+        }
+
+        // Resetar contadores
+        connectAttemptsRef.current = 0;
+        cooldownUntilRef.current = 0;
+
+        onConnected?.();
+        return;
+      }
+
+      // Temos um QR Code válido
+      safeSetState(() => ({
+        isConnecting: true,
+        isPolling: true,
+        qrCode: qrResult,
+        error: null,
+        attempts: 0,
+        phase: 'waiting',
+      }));
+
+      // Transição para qr_pending via orquestrador
+      try {
+        await supabase.functions.invoke('genesis-connection-orchestrator', {
+          body: {
+            instanceId,
+            action: 'transition',
+            newStatus: 'qr_pending',
+            source: 'frontend_qr_generated',
+          },
+        });
+      } catch {}
+
+      // Iniciar polling para aguardar conexão
+      startPollingForConnection(instanceId, backendKey, onConnected);
+    } catch (error: any) {
+      console.error('[startConnection] Error:', error);
+      
       safeSetState(() => ({
         isConnecting: false,
         isPolling: false,
         qrCode: null,
-        error: message,
+        error: error.message || 'Erro ao conectar',
         attempts: 0,
         phase: 'error',
       }));
-      // NÃO altera status no banco aqui: evita "desconectar" por erro de tela/reload.
-      toast.error(message);
+
+      // Logar erro
+      try {
+        await supabase.from('genesis_event_logs').insert({
+          instance_id: instanceId,
+          event_type: 'connection_error',
+          severity: 'error',
+          message: error.message || 'Erro ao conectar',
+        });
+      } catch {}
+
+      toast.error(error.message || 'Erro ao conectar');
     }
-  }, [stopPolling, normalizeQrToDataUrl, safeSetState]);
+  }, [stopPolling, validateBackendHealth, ensureInstanceExists, checkStatus, updateInstanceInDB, logDiagnostic, mergeSessionData, sendWelcomeMessage, generateQRCode]);
+
+  /**
+   * Polling para aguardar conexão após QR Code
+   * COM LIMITES ESTRITOS para evitar loops infinitos
+   */
+  const startPollingForConnection = useCallback(async (
+    instanceId: string,
+    backendKey: string,
+    onConnected?: () => void
+  ) => {
+    const maxPollingTime = 60000; // 60 segundos máximo
+    const pollInterval = 2000; // 2 segundos entre polls
+    const startTime = Date.now();
+    
+    const pollForConnection = async () => {
+      // Verificar se ainda está montado e polling ativo
+      if (!mountedRef.current) return;
+      
+      // Verificar timeout
+      if (Date.now() - startTime > maxPollingTime) {
+        console.log('[Polling] Timeout - 60s sem conexão');
+        stopPolling();
+        safeSetState(() => ({
+          isConnecting: false,
+          isPolling: false,
+          qrCode: null,
+          error: 'Tempo esgotado. Escaneie o QR Code novamente.',
+          attempts: 0,
+          phase: 'error',
+        }));
+        return;
+      }
+      
+      try {
+        const status = await checkStatus(instanceId);
+        
+        if (status.connected) {
+          console.log('[Polling] Conectado!', status);
+          stopPolling();
+          
+          const nowIso = new Date().toISOString();
+          
+          // Atualizar banco
+          await updateInstanceInDB(instanceId, {
+            status: 'connected',
+            effective_status: 'connected',
+            phone_number: status.phoneNumber,
+            last_heartbeat: nowIso,
+          });
+          
+          safeSetState(() => ({
+            isConnecting: false,
+            isPolling: false,
+            qrCode: null,
+            error: null,
+            attempts: 0,
+            phase: 'connected',
+          }));
+          
+          // Enviar mensagem de teste
+          if (status.phoneNumber) {
+            toast.info('Conectado! Enviando teste de validação...');
+            const result = await sendWelcomeMessage(instanceId, status.phoneNumber);
+            
+            if (result.success) {
+              toast.success('✅ WhatsApp conectado e funcionando!');
+            } else {
+              toast.success('✅ WhatsApp conectado! Pronto para uso.');
+            }
+          } else {
+            toast.success('✅ WhatsApp conectado!');
+          }
+          
+          // Resetar contadores
+          connectAttemptsRef.current = 0;
+          cooldownUntilRef.current = 0;
+          
+          onConnected?.();
+          return;
+        }
+        
+        // Continuar polling
+        pollingRef.current = setTimeout(pollForConnection, pollInterval) as any;
+      } catch (error) {
+        console.error('[Polling] Error:', error);
+        // Continuar tentando até timeout
+        pollingRef.current = setTimeout(pollForConnection, pollInterval) as any;
+      }
+    };
+    
+    // Iniciar polling
+    pollingRef.current = setTimeout(pollForConnection, pollInterval) as any;
+  }, [stopPolling, checkStatus, updateInstanceInDB, sendWelcomeMessage]);
 
   const disconnect = useCallback(async (
     instanceId: string,
