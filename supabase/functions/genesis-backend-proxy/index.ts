@@ -8,10 +8,14 @@ const corsHeaders = {
 };
 
 type ProxyRequestBody = {
-  instanceId: string;
-  path: string;
-  method: "GET" | "POST";
+  instanceId?: string;
+  path?: string;
+  method?: "GET" | "POST";
   body?: unknown;
+  // Direct mode for VPS testing (Owner panel)
+  action?: string;
+  directUrl?: string;
+  directToken?: string;
 };
 
 const isAllowedPath = (path: string) => {
@@ -90,6 +94,69 @@ serve(async (req) => {
     });
 
     const requestBody = (await req.json().catch(() => null)) as ProxyRequestBody | null;
+    
+    // === MODO DIRETO: Para teste de VPS sem instância (Owner panel) ===
+    if (requestBody?.action === 'health' && requestBody?.directUrl && requestBody?.directToken) {
+      console.log('[genesis-backend-proxy] Direct health check mode', {
+        url: requestBody.directUrl?.replace(/\/.*/, '/***'),
+      });
+
+      const cleanUrl = requestBody.directUrl.replace(/\/$/, '');
+      const targetUrl = `${cleanUrl}/health`;
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch(targetUrl, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${requestBody.directToken}`,
+          },
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        const text = await resp.text();
+        let parsed: unknown = text;
+        try {
+          parsed = text ? JSON.parse(text) : {};
+        } catch {
+          // keep as text
+        }
+
+        console.log('[genesis-backend-proxy] Direct health response', {
+          status: resp.status,
+          ok: resp.ok,
+        });
+
+        return new Response(
+          JSON.stringify({ ok: resp.ok, status: resp.status, data: parsed }),
+          {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      } catch (err: any) {
+        const isAbort = err.name === 'AbortError';
+        console.error('[genesis-backend-proxy] Direct health error:', err);
+
+        return new Response(
+          JSON.stringify({
+            ok: false,
+            status: 0,
+            error: isAbort ? 'Timeout ao conectar com o backend' : (err.message || 'Erro de conexão'),
+          }),
+          {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+    }
+
+    // === MODO PADRÃO: Proxy com instância ===
     const instanceId = requestBody?.instanceId;
     const path = requestBody?.path;
     const method = requestBody?.method;

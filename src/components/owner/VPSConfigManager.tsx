@@ -164,47 +164,40 @@ export default function VPSConfigManager() {
     const startTime = Date.now();
 
     try {
-      // Testar diretamente via fetch (sem precisar de instância)
-      const cleanUrl = editForm.backend_url.replace(/\/$/, '');
-      
-      console.log('[VPS] Testando conexão direta...', { url: cleanUrl });
+      console.log('[VPS] Testando conexão via proxy...');
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-      const response = await fetch(`${cleanUrl}/health`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${editForm.master_token}`,
-        },
-        signal: controller.signal,
+      // Usar o proxy para testar - envia URL e token diretamente
+      const { data, error } = await supabase.functions.invoke('genesis-backend-proxy', {
+        body: {
+          action: 'health',
+          directUrl: editForm.backend_url.replace(/\/$/, ''),
+          directToken: editForm.master_token,
+        }
       });
 
-      clearTimeout(timeoutId);
       const pingMs = Date.now() - startTime;
-      
-      const text = await response.text();
-      let data: any = {};
-      try {
-        data = JSON.parse(text);
-      } catch {
-        data = { raw: text };
+
+      console.log('[VPS] Resposta do proxy:', { data, error, pingMs });
+
+      if (error) {
+        throw new Error(error.message || 'Erro no proxy');
       }
 
-      console.log('[VPS] Resposta:', { status: response.status, data, pingMs });
-
-      if (response.ok) {
+      // Verificar resposta do proxy
+      if (data?.ok && data?.status >= 200 && data?.status < 300) {
+        const healthData = data.data || data;
+        
         setHealthResult({
           success: true,
           pingMs,
           data: {
-            status: data.status || 'ok',
-            whatsapp: data.whatsapp || data.state || 'unknown',
-            version: data.version,
-            uptime: data.uptime,
-            ready_to_send: data.ready_to_send ?? data.readyToSend,
-            instances: data.instances?.length || data.instanceCount,
-            memory_mb: data.metrics?.memory_mb || data.memory_mb,
+            status: healthData.status || 'ok',
+            whatsapp: healthData.whatsapp || healthData.state || 'unknown',
+            version: healthData.version,
+            uptime: healthData.uptime,
+            ready_to_send: healthData.ready_to_send ?? healthData.readyToSend,
+            instances: healthData.instances?.length || healthData.instanceCount,
+            memory_mb: healthData.metrics?.memory_mb || healthData.memory_mb,
           },
         });
         
@@ -224,20 +217,27 @@ export default function VPSConfigManager() {
         setHealthResult({
           success: false,
           pingMs,
-          error: data.error || `HTTP ${response.status}`,
+          error: data?.error || data?.data?.error || `HTTP ${data?.status || 'unknown'}`,
         });
+        
+        if (config?.id) {
+          await supabase
+            .from('whatsapp_backend_config')
+            .update({ is_connected: false })
+            .eq('id', config.id);
+        }
+        
         toast.error('Servidor respondeu com erro');
       }
     } catch (err: any) {
       const pingMs = Date.now() - startTime;
-      const isTimeout = err.name === 'AbortError';
       
       console.error('[VPS] Erro no teste:', err);
       
       setHealthResult({
         success: false,
         pingMs,
-        error: isTimeout ? 'Timeout - servidor não respondeu' : (err.message || 'Erro de conexão'),
+        error: err.message || 'Erro de conexão',
       });
       
       if (config?.id) {
@@ -247,7 +247,7 @@ export default function VPSConfigManager() {
           .eq('id', config.id);
       }
       
-      toast.error(isTimeout ? 'Timeout na conexão' : 'Falha ao conectar');
+      toast.error('Falha ao conectar');
     } finally {
       setTesting(false);
     }
