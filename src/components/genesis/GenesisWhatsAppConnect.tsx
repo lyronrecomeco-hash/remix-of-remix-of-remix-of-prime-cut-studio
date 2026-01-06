@@ -85,8 +85,13 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
     }
 
     // Fora de operação ativa, usar status unificado (orchestrated_status)
+    // Se ficou preso em qr_pending sem QR (ex: backend caiu), não manter loop visual.
+    if (unifiedStatus.orchestratedStatus === 'qr_pending' && !connectionState.qrCode) {
+      return 'disconnected';
+    }
+
     return unifiedStatus.orchestratedStatus;
-  }, [connectionState.error, connectionState.isConnecting, connectionState.isPolling, connectionState.phase, unifiedStatus.orchestratedStatus]);
+
 
   // FASE 1: Estados derivados do displayStatus
   const isConnected = displayStatus === 'connected';
