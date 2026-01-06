@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   QrCode,
@@ -18,6 +18,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useGenesisWhatsAppConnection } from './hooks/useGenesisWhatsAppConnection';
+import { 
+  useUnifiedInstanceStatus,
+  normalizeStatus,
+  type OrchestratedStatus
+} from './hooks/useUnifiedInstanceStatus';
 import { cn } from '@/lib/utils';
 
 interface Instance {
@@ -38,59 +43,72 @@ interface GenesisWhatsAppConnectProps {
 }
 
 export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppConnectProps) {
-  // FASE 1: Priorizar orchestrated_status (máquina de estados) como fonte de verdade
-  const getOrchestratedStatus = () => {
-    return instance.orchestrated_status || instance.effective_status || instance.status;
-  };
-
-  // Estado unificado - prioridade: orchestrated_status > liveStatus > connectionState
-  const [liveStatus, setLiveStatus] = useState({
-    status: getOrchestratedStatus(),
-    phoneNumber: instance.phone_number,
-    isStale: false,
-    hasDesalignment: false,
-  });
+  /**
+   * FASE 1: Hook unificado é a ÚNICA fonte de verdade
+   * - Consome orchestrated_status do banco
+   * - Calcula isUsable baseado em heartbeat (FASE 2)
+   * - Gerencia cooldown (FASE 3)
+   */
+  const { 
+    status: unifiedStatus, 
+    registerReconnectAttempt,
+    resetCooldown,
+  } = useUnifiedInstanceStatus(instance.id);
 
   const {
     connectionState,
     startConnection,
     disconnect,
-    startStatusPolling,
-    stopStatusPolling,
+    stopPolling,
   } = useGenesisWhatsAppConnection();
 
-  // Sincronizar com props da instância quando mudar - PRIORIZA orchestrated_status
-  useEffect(() => {
-    const orchestratedStatus = getOrchestratedStatus();
-    const hasDesalignment = instance.orchestrated_status && 
-      instance.effective_status && 
-      instance.orchestrated_status !== instance.effective_status;
+  /**
+   * FASE 1 + FASE 4: Status derivado APENAS do hook unificado
+   * - orchestratedStatus é a verdade absoluta
+   * - isUsable indica se podemos confiar na conexão
+   * - Frontend NUNCA calcula status, apenas consome
+   */
+  const displayStatus = useMemo((): OrchestratedStatus => {
+    // Durante operação ativa de conexão, mostrar o phase do hook de conexão
+    if (connectionState.isConnecting || connectionState.isPolling) {
+      if (connectionState.phase === 'connected') return 'connected';
+      if (connectionState.phase === 'stabilizing') return 'stabilizing';
+      if (connectionState.phase === 'waiting') return 'qr_pending';
+      if (connectionState.phase === 'generating' || connectionState.phase === 'validating') return 'connecting';
+      if (connectionState.phase === 'error') return 'error';
+    }
     
-    setLiveStatus(prev => ({
-      ...prev,
-      status: orchestratedStatus,
-      phoneNumber: instance.phone_number || prev.phoneNumber,
-      hasDesalignment: !!hasDesalignment,
-    }));
-  }, [instance.orchestrated_status, instance.effective_status, instance.status, instance.phone_number]);
+    // Fora de operação ativa, usar status unificado (orchestrated_status)
+    return unifiedStatus.orchestratedStatus;
+  }, [connectionState, unifiedStatus.orchestratedStatus]);
 
-  useEffect(() => {
-    startStatusPolling(instance.id, (status) => {
-      setLiveStatus(prev => ({
-        ...prev,
-        status: status.status,
-        phoneNumber: status.phoneNumber,
-        isStale: status.isStale,
-      }));
-    });
+  // FASE 1: Estados derivados do displayStatus
+  const isConnected = displayStatus === 'connected';
+  const isStabilizing = displayStatus === 'stabilizing';
+  const isConnecting = displayStatus === 'connecting' || displayStatus === 'qr_pending';
+  const hasQrCode = connectionState.qrCode && displayStatus === 'qr_pending';
 
-    return () => stopStatusPolling();
-  }, [instance.id, startStatusPolling, stopStatusPolling]);
+  // FASE 2: Flag de usabilidade (conexão real + heartbeat saudável)
+  const isUsable = unifiedStatus.isUsable;
+
+  // FASE 3: Estado de cooldown
+  const isInCooldown = unifiedStatus.isInCooldown;
 
   const handleConnect = async () => {
-    // Sempre chamar startConnection - ele vai verificar e agir apropriadamente
-    // Se já estiver conectado, vai reconhecer e enviar teste
+    // FASE 3: Verificar cooldown antes de permitir conexão
+    if (isInCooldown) {
+      return; // UI deve mostrar estado de cooldown
+    }
+
+    // FASE 3: Registrar tentativa de reconexão
+    const allowed = registerReconnectAttempt();
+    if (!allowed) {
+      return; // Entrou em cooldown
+    }
+
     await startConnection(instance.id, undefined, undefined, () => {
+      // FASE 3: Sucesso - resetar cooldown
+      resetCooldown();
       onRefresh();
     });
   };
@@ -100,47 +118,29 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
     onRefresh();
   };
 
-  // LÓGICA UNIFICADA DE STATUS (FASE 1):
-  // 1. orchestrated_status é a fonte de verdade (máquina de estados)
-  // 2. Conectado SOMENTE quando orchestrated_status === 'connected'
-  // 3. Esconder botão conectar quando connected OU stabilizing
-  // 4. Stale é apenas sinal visual (não derruba / não volta botão de conectar)
-  const isConnected = liveStatus.status === 'connected';
-  const isStabilizing = liveStatus.status === 'stabilizing';
-
-  // Só mostra "conectando" se realmente há uma ação em progresso
-  const isConnecting = connectionState.isConnecting &&
-    !isConnected && // Se já está conectado, não mostrar como conectando
-    !isStabilizing && // Se estabilizando, não mostrar como conectando
-    (connectionState.phase === 'validating' ||
-     connectionState.phase === 'generating' ||
-     connectionState.phase === 'waiting' ||
-     connectionState.phase === 'stabilizing');
-
-  // FASE 1: Esconder botão conectar quando connected OU stabilizing
-  const shouldHideConnectButton = isConnected || isStabilizing;
-
-  // Phase: prioridade máxima para isConnected
-  const phase = isConnected
-    ? 'connected'
-    : isStabilizing
-      ? 'stabilizing'
-      : isConnecting
-        ? connectionState.phase
-        : connectionState.phase;
-
-  // Phase indicator text
+  /**
+   * FASE 1: Texto de fase baseado no displayStatus
+   * - Não usa estados locais, apenas o status unificado
+   */
   const getPhaseText = () => {
-    switch (phase) {
-      case 'validating': return 'Verificando servidor...';
-      case 'generating': return 'Verificando conexão...';
-      case 'waiting': return 'Aguardando leitura...';
+    if (isInCooldown) return 'Aguarde para tentar novamente...';
+    
+    switch (displayStatus) {
+      case 'connecting': return 'Verificando servidor...';
+      case 'qr_pending': return connectionState.qrCode ? 'Aguardando leitura...' : 'Gerando QR Code...';
       case 'stabilizing': return 'Finalizando conexão...';
-      case 'connected': return 'Conectado!';
+      case 'connected': return isUsable ? 'Conectado!' : 'Verificando conexão...';
       case 'error': return 'Erro na conexão';
+      case 'cooldown': return 'Em cooldown...';
       default: return 'Clique para conectar';
     }
   };
+
+  /**
+   * FASE 1 + FASE 2: Determinar se botão de conectar deve aparecer
+   * - Esconder se connected, stabilizing, ou em cooldown
+   */
+  const shouldHideConnectButton = isConnected || isStabilizing || isInCooldown;
 
   return (
     <Card className="overflow-hidden border-0 shadow-xl bg-gradient-to-br from-card via-card to-muted/30">
@@ -152,7 +152,7 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
             ? "bg-gradient-to-r from-green-500/10 via-green-500/5 to-transparent" 
             : isConnecting
               ? "bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-transparent"
-              : phase === 'error'
+              : displayStatus === 'error' || isInCooldown
                 ? "bg-gradient-to-r from-red-500/10 via-red-500/5 to-transparent"
                 : "bg-gradient-to-r from-muted/50 via-muted/30 to-transparent"
         )}>
@@ -165,62 +165,59 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
                     ? "bg-green-500/20 shadow-lg shadow-green-500/20" 
                     : isConnecting
                       ? "bg-blue-500/20 shadow-lg shadow-blue-500/20"
-                      : phase === 'error'
+                      : displayStatus === 'error' || isInCooldown
                         ? "bg-red-500/20"
                         : "bg-muted"
                 )}
                 animate={isConnecting ? { scale: [1, 1.05, 1] } : {}}
                 transition={{ duration: 1.5, repeat: isConnecting ? Infinity : 0 }}
               >
-                {phase === 'validating' && (
+                {displayStatus === 'connecting' && (
                   <Radio className="w-7 h-7 text-blue-500 animate-pulse" />
                 )}
-                {phase === 'generating' && (
+                {displayStatus === 'qr_pending' && !connectionState.qrCode && (
                   <Sparkles className="w-7 h-7 text-blue-500 animate-pulse" />
                 )}
-                {phase === 'waiting' && (
+                {displayStatus === 'qr_pending' && connectionState.qrCode && (
                   <Loader2 className="w-7 h-7 text-blue-500 animate-spin" />
                 )}
-                {phase === 'stabilizing' && (
+                {displayStatus === 'stabilizing' && (
                   <Loader2 className="w-7 h-7 text-blue-500 animate-spin" />
                 )}
-                {(phase === 'connected' || isConnected) && (
+                {isConnected && (
                   <Wifi className="w-7 h-7 text-green-500" />
                 )}
-                {phase === 'error' && (
+                {(displayStatus === 'error' || isInCooldown) && (
                   <XCircle className="w-7 h-7 text-red-500" />
                 )}
-                {phase === 'idle' && !isConnected && (
+                {displayStatus === 'idle' && !isConnected && !isInCooldown && (
+                  <WifiOff className="w-7 h-7 text-muted-foreground" />
+                )}
+                {displayStatus === 'disconnected' && !isInCooldown && (
                   <WifiOff className="w-7 h-7 text-muted-foreground" />
                 )}
               </motion.div>
               <div>
                 <h3 className="font-bold text-lg">Conexão WhatsApp</h3>
                 <motion.p 
-                  key={phase}
+                  key={displayStatus}
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="text-sm text-muted-foreground"
                 >
                   {isConnected 
-                    ? liveStatus.phoneNumber || 'Conectado' 
+                    ? unifiedStatus.phoneNumber || 'Conectado' 
                     : getPhaseText()}
                 </motion.p>
               </div>
             </div>
 
-            {/* Status Badge - Sem AnimatePresence para evitar warning de ref */}
+            {/* Status Badge */}
             <div className="flex items-center gap-2">
               {isConnecting && (
                 <Badge variant="secondary" className="gap-1.5 bg-blue-500/10 text-blue-600 border-blue-500/20 px-3 py-1.5">
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  {phase === 'validating'
-                    ? 'Verificando'
-                    : phase === 'generating'
-                      ? 'Gerando'
-                      : phase === 'stabilizing'
-                        ? 'Finalizando'
-                        : 'Conectando'}
+                  {displayStatus === 'connecting' ? 'Verificando' : 'Conectando'}
                 </Badge>
               )}
               {isConnected && (
@@ -229,16 +226,23 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
                   Conectado
                 </Badge>
               )}
-              {phase === 'error' && (
+              {/* FASE 2: Mostrar alerta se conectado mas não usável */}
+              {isConnected && !isUsable && (
+                <Badge variant="secondary" className="gap-1.5 bg-orange-500/10 text-orange-600 border-orange-500/20 px-3 py-1.5">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  Verificando
+                </Badge>
+              )}
+              {displayStatus === 'error' && (
                 <Badge variant="secondary" className="gap-1.5 bg-red-500/10 text-red-600 border-red-500/20 px-3 py-1.5">
                   <XCircle className="w-3.5 h-3.5" />
                   Erro
                 </Badge>
               )}
-              {!isConnected && !isConnecting && phase !== 'error' && liveStatus.isStale && (
-                <Badge variant="secondary" className="gap-1.5 bg-yellow-500/10 text-yellow-600 border-yellow-500/20 px-3 py-1.5">
+              {isInCooldown && (
+                <Badge variant="secondary" className="gap-1.5 bg-orange-500/10 text-orange-600 border-orange-500/20 px-3 py-1.5">
                   <AlertCircle className="w-3.5 h-3.5" />
-                  Verificando
+                  Cooldown
                 </Badge>
               )}
               {isStabilizing && (
@@ -247,17 +251,16 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
                   Estabilizando
                 </Badge>
               )}
-              {!isConnected && !isConnecting && !isStabilizing && phase === 'idle' && !liveStatus.isStale && (
+              {displayStatus === 'disconnected' && !isInCooldown && (
                 <Badge variant="secondary" className="gap-1.5 bg-muted text-muted-foreground border-border px-3 py-1.5">
                   <WifiOff className="w-3.5 h-3.5" />
                   Desconectado
                 </Badge>
               )}
-              {/* Indicador de desalinhamento - transparência para debug */}
-              {liveStatus.hasDesalignment && (
-                <Badge variant="outline" className="gap-1 text-xs bg-orange-500/5 text-orange-500 border-orange-500/30">
-                  <AlertCircle className="w-3 h-3" />
-                  Sincronizando
+              {displayStatus === 'idle' && !isConnected && !isConnecting && !isInCooldown && (
+                <Badge variant="secondary" className="gap-1.5 bg-muted text-muted-foreground border-border px-3 py-1.5">
+                  <WifiOff className="w-3.5 h-3.5" />
+                  Desconectado
                 </Badge>
               )}
             </div>
@@ -276,7 +279,7 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
                 className="overflow-hidden"
               >
                 {/* Loading States */}
-                {(phase === 'validating' || phase === 'generating') && (
+                {displayStatus === 'connecting' && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -287,25 +290,33 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
                       animate={{ scale: [1, 1.1, 1] }}
                       transition={{ duration: 1.5, repeat: Infinity }}
                     >
-                      {phase === 'validating' ? (
-                        <Radio className="w-10 h-10 text-blue-500" />
-                      ) : (
-                        <Sparkles className="w-10 h-10 text-blue-500" />
-                      )}
+                      <Radio className="w-10 h-10 text-blue-500" />
                     </motion.div>
-                    <p className="mt-4 text-sm font-medium">
-                      {phase === 'validating' ? 'Verificando infraestrutura...' : 'Gerando QR Code...'}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {phase === 'validating'
-                        ? 'Conectando ao WhatsApp Automação' 
-                        : 'Aguarde um momento'}
-                    </p>
+                    <p className="mt-4 text-sm font-medium">Verificando infraestrutura...</p>
+                    <p className="text-xs text-muted-foreground mt-1">Conectando ao WhatsApp Automação</p>
+                  </motion.div>
+                )}
+
+                {displayStatus === 'qr_pending' && !connectionState.qrCode && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex flex-col items-center py-12"
+                  >
+                    <motion.div
+                      className="w-20 h-20 rounded-full bg-blue-500/10 flex items-center justify-center"
+                      animate={{ scale: [1, 1.1, 1] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    >
+                      <Sparkles className="w-10 h-10 text-blue-500" />
+                    </motion.div>
+                    <p className="mt-4 text-sm font-medium">Gerando QR Code...</p>
+                    <p className="text-xs text-muted-foreground mt-1">Aguarde um momento</p>
                   </motion.div>
                 )}
 
                 {/* QR Code Display */}
-                {connectionState.qrCode && phase === 'waiting' && (
+                {hasQrCode && (
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -350,8 +361,8 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
                   </motion.div>
                 )}
 
-                {/* Placeholder when idle */}
-                {phase === 'idle' && !isConnecting && (
+                {/* Placeholder when idle or disconnected */}
+                {(displayStatus === 'idle' || displayStatus === 'disconnected') && !isConnecting && !isInCooldown && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -396,6 +407,26 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
                         </motion.div>
                       ))}
                     </div>
+                  </motion.div>
+                )}
+
+                {/* FASE 3: Cooldown State */}
+                {isInCooldown && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex flex-col items-center py-10"
+                  >
+                    <div className="w-20 h-20 rounded-full bg-orange-500/10 flex items-center justify-center">
+                      <AlertCircle className="w-10 h-10 text-orange-500" />
+                    </div>
+                    <p className="mt-4 text-sm font-medium text-orange-600">Muitas tentativas</p>
+                    <p className="text-xs text-muted-foreground mt-1">Aguarde antes de tentar novamente</p>
+                    {unifiedStatus.cooldownEndsAt && (
+                      <p className="text-xs text-orange-500 mt-2">
+                        Cooldown até: {unifiedStatus.cooldownEndsAt.toLocaleTimeString()}
+                      </p>
+                    )}
                   </motion.div>
                 )}
               </motion.div>
