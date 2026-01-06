@@ -12,6 +12,10 @@ const STALE_THRESHOLD_SECONDS = 300;
 // Intervalo de heartbeat esperado: 30 segundos
 const HEARTBEAT_INTERVAL_SECONDS = 30;
 
+const isUuid = (value: unknown): value is string =>
+  typeof value === "string" &&
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -25,10 +29,12 @@ serve(async (req) => {
     const { instanceId, status, phoneNumber, metrics, forceReconnect } = await req.json();
     const instanceToken = req.headers.get("x-instance-token") || "";
 
-    if (!instanceId) {
+    if (!isUuid(instanceId)) {
+      // Backwards compatibility / proteção: alguns scripts podem enviar nome (ex: "Genesis").
+      // Não derrubamos o worker por isso; apenas ignoramos.
       return new Response(
-        JSON.stringify({ error: "instanceId is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ success: true, ignored: true, reason: "invalid_instance_id" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
