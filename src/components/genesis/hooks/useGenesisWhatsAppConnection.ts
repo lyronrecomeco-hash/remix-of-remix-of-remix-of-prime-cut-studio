@@ -669,10 +669,23 @@ export function useGenesisWhatsAppConnection() {
 
     const digits = (v?: string | null) => (v || '').replace(/\D/g, '');
 
+    // Normalização BR para evitar envio sem DDI (+55)
+    // (Causa raiz encontrada nos logs: estava tentando enviar para 2799... ao invés de 552799...)
+    const normalizeBR = (d: string) => {
+      if (!d) return d;
+      if (d.startsWith('55') && d.length >= 12) return d;
+      if (d.length === 10 || d.length === 11) return `55${d}`;
+      return d;
+    };
+
     // Destino do teste: o número salvo na conta (whatsapp_commercial).
     // Fallback: whatsapp_test; se ambos ausentes, tenta o número conectado.
-    const testRecipient = digits((genesisUser as any)?.whatsapp_commercial) || digits((genesisUser as any)?.whatsapp_test);
-    const phoneNumber = testRecipient || digits(connectedPhoneNumber);
+    const testRecipientRaw =
+      digits((genesisUser as any)?.whatsapp_commercial) ||
+      digits((genesisUser as any)?.whatsapp_test);
+
+    const connectedDigits = digits(connectedPhoneNumber);
+    const phoneNumber = normalizeBR(testRecipientRaw || connectedDigits);
 
     logDiagnostic('WELCOME_MESSAGE_START', {
       instanceId,
