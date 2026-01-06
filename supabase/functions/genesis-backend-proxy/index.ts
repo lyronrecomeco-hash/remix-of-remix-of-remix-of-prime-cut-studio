@@ -32,6 +32,7 @@ const isAllowedPath = (path: string) => {
   if (path === "/status") return true;
   if (path === "/connect") return true;
   if (path === "/qrcode") return true;
+  if (path === "/disconnect") return true;
 
   // Compat
   if (path.startsWith("/api/qrcode")) return true;
@@ -491,6 +492,11 @@ serve(async (req) => {
           ? upstream.ok && !parsedAny?.error && parsedAny?.success !== false
           : upstream.ok;
 
+        // Expor erro apenas para falhas de autenticação (para não quebrar fallbacks por 404/rotas)
+        const authError = (upstream.status === 401 || upstream.status === 403)
+          ? (parsedAny?.error || 'Não autorizado no backend (token inválido)')
+          : undefined;
+
         // Log específico para envio de mensagem (diagnóstico crítico)
         if (isSend) {
           diagLog('SEND_MESSAGE_RESULT', {
@@ -528,7 +534,7 @@ serve(async (req) => {
         }
 
         return new Response(
-          JSON.stringify({ ok: computedOk, status: upstream.status, data: parsed }),
+          JSON.stringify({ ok: computedOk, status: upstream.status, data: parsed, error: authError }),
           {
             status: 200,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
