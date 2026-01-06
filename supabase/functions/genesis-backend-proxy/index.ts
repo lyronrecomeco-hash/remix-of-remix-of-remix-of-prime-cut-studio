@@ -222,22 +222,62 @@ serve(async (req) => {
       }
     };
 
-    const headers: Record<string, string> = {
-      Authorization: `Bearer ${backendToken}`,
+    const buildHeaders = (token: string) => {
+      const h: Record<string, string> = {
+        Authorization: `Bearer ${token}`,
+      };
+      if (method === "POST") {
+        h["Content-Type"] = "application/json";
+      }
+      return h;
     };
 
     let fetchBody: string | undefined;
     if (method === "POST") {
-      headers["Content-Type"] = "application/json";
       fetchBody = JSON.stringify(requestBody?.body ?? {});
     }
 
-    diagLog('FETCH_START', {
-      targetUrl,
-      method,
-      hasAuth: Boolean(headers.Authorization),
-      bodyLength: fetchBody?.length || 0,
-    });
+    const primaryHeaders = buildHeaders(backendToken);
+
+    // Fallback: quando o token da instância estiver desatualizado, tenta usar o master_token global
+    // (mesmo padrão utilizado no proxy do painel Owner).
+    let fallbackToken: string | null = null;
+    const getFallbackToken = async (): Promise<string | null> => {
+      if (fallbackToken !== null) return fallbackToken;
+      try {
+        const { data: config } = await supabaseAdmin
+          .from("whatsapp_backend_config")
+          .select("master_token")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        fallbackToken = (config?.master_token as string | null) ?? null;
+        return fallbackToken;
+      } catch {
+        fallbackToken = null;
+        return null;
+      }
+    };
+
+    const fetchWithTimeout = async (url: string, headersForRequest: Record<string, string>) => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      const startedAt = Date.now();
+      try {
+        const resp = await fetch(url, {
+          method,
+          headers: headersForRequest,
+          body: fetchBody,
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        return { resp, duration: Date.now() - startedAt };
+      } catch (e) {
+        clearTimeout(timeoutId);
+        throw { error: e, duration: Date.now() - startedAt };
+      }
+    };
 
     // === Resiliência: fallback automático de porta (3000/3001) ===
     const getAlternateBaseUrl = (baseUrl: string): string | null => {
@@ -249,25 +289,6 @@ serve(async (req) => {
         return u.toString().replace(/\/$/, "");
       } catch {
         return null;
-      }
-    };
-
-    const fetchWithTimeout = async (url: string) => {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
-      const startedAt = Date.now();
-      try {
-        const resp = await fetch(url, {
-          method,
-          headers,
-          body: fetchBody,
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-        return { resp, duration: Date.now() - startedAt };
-      } catch (e) {
-        clearTimeout(timeoutId);
-        throw { error: e, duration: Date.now() - startedAt };
       }
     };
 
@@ -283,35 +304,76 @@ serve(async (req) => {
       const attempt = attemptUrls[i];
 
       try {
-        diagLog("FETCH_START", {
-          targetUrl: attempt.url,
-          method,
-          hasAuth: Boolean(headers.Authorization),
-          bodyLength: fetchBody?.length || 0,
-          attempt: i + 1,
-          attemptsTotal: attemptUrls.length,
-        });
+        const doFetch = async (tokenToUse: string) => {
+          const headersForReq = buildHeaders(tokenToUse);
+          const tokenMode = tokenToUse === backendToken ? "instance" : "fallback";
 
-        const { resp: upstream, duration: fetchDuration } = await fetchWithTimeout(attempt.url);
+          diagLog("FETCH_START", {
+            targetUrl: attempt.url,
+            method,
+            hasAuth: Boolean(headersForReq.Authorization),
+            bodyLength: fetchBody?.length || 0,
+            attempt: i + 1,
+            attemptsTotal: attemptUrls.length,
+            tokenMode,
+          });
 
-        const text = await upstream.text();
-        let parsed: unknown = text;
+          const { resp, duration } = await fetchWithTimeout(attempt.url, headersForReq);
 
-        try {
-          parsed = text ? JSON.parse(text) : {};
-        } catch {
-          // keep as text
+          const text = await resp.text();
+          let parsed: unknown = text;
+
+          try {
+            parsed = text ? JSON.parse(text) : {};
+          } catch {
+            // keep as text
+          }
+
+          diagLog("FETCH_RESPONSE", {
+            duration,
+            httpStatus: resp.status,
+            httpOk: resp.ok,
+            responseLength: text.length,
+            responsePreview: text.slice(0, 500),
+            parsedType: typeof parsed,
+            attempt: i + 1,
+            tokenMode,
+          });
+
+          return { resp, duration, parsed, text, tokenToUse };
+        };
+
+        // 1) tentativa com token da instância
+        let result = await doFetch(backendToken);
+
+        // 2) se token inválido, tenta master_token global (Owner)
+        if (result.resp.status === 401) {
+          const fb = await getFallbackToken();
+          if (fb && fb !== backendToken) {
+            result = await doFetch(fb);
+
+            // se funcionou (não-401), persistir token no registro da instância
+            if (result.resp.status !== 401) {
+              try {
+                await supabaseAdmin
+                  .from("genesis_instances")
+                  .update({ backend_token: fb, updated_at: new Date().toISOString() })
+                  .eq("id", instanceId);
+
+                diagLog("BACKEND_TOKEN_UPDATED", {
+                  reason: "fallback_token_success",
+                });
+              } catch (e) {
+                console.warn("Failed to persist backend_token fallback", e);
+              }
+            }
+          }
         }
 
-        diagLog("FETCH_RESPONSE", {
-          duration: fetchDuration,
-          httpStatus: upstream.status,
-          httpOk: upstream.ok,
-          responseLength: text.length,
-          responsePreview: text.slice(0, 500),
-          parsedType: typeof parsed,
-          attempt: i + 1,
-        });
+        const upstream = result.resp;
+        const fetchDuration = result.duration;
+        const parsed = result.parsed;
+        const text = result.text;
 
         // Se funcionou na porta alternativa, persistir automaticamente no DB
         if (attempt.baseUrl !== cleanBackendUrl) {
