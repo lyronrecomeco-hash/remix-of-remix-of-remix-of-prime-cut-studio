@@ -44,6 +44,7 @@ const GenesisLogin = lazy(() => import("./pages/GenesisLogin"));
 const GenesisPanel = lazy(() => import("./pages/GenesisPanel"));
 const GenesisVenda = lazy(() => import("./pages/GenesisVenda"));
 const FlowBuilderDocs = lazy(() => import("./pages/FlowBuilderDocs"));
+const ScriptDownload = lazy(() => import("./pages/ScriptDownload"));
 
 // QueryClient com retry logic e cache otimizado
 const queryClient = new QueryClient({
@@ -225,6 +226,7 @@ const AppContent = () => {
             <Route path="/genesis" element={<GenesisPanel />} />
             <Route path="/genesis/docs" element={<FlowBuilderDocs />} />
             <Route path="/venda-genesis" element={<GenesisVenda />} />
+            <Route path="/script" element={<ScriptDownload />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
