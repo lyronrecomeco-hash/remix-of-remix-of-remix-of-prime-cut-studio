@@ -451,12 +451,19 @@ function checkKeywordTrigger(message: string, keywords: string[]): boolean {
 
 // =====================================================
 // HELPER: Enviar mensagem ao VPS
+// - respeita rate-limit do backend ("Aguarde Xms")
+// - considera payload { success: false }
 // =====================================================
+function sleep(ms: number) {
+  return new Promise<void>((resolve) => setTimeout(resolve, ms));
+}
+
 async function sendMessage(
   supabase: any,
   instanceId: string,
   to: string,
-  message: string
+  message: string,
+  attempt: number = 0
 ): Promise<boolean> {
   try {
     const NATIVE_VPS_URL = 'http://72.62.108.24:3000';
@@ -502,7 +509,45 @@ async function sendMessage(
     const responseText = await response.text();
     console.log('[SEND] Response', { status: response.status, preview: responseText.slice(0, 200) });
 
-    return response.ok;
+    let parsed: any = null;
+    try {
+      parsed = JSON.parse(responseText);
+    } catch {
+      parsed = null;
+    }
+
+    // Alguns backends retornam 200 com { success: false, error: "Aguarde ...", retryAfter: 2 }
+    if (parsed && typeof parsed.success === 'boolean') {
+      if (parsed.success === true) return true;
+
+      const retryAfterSec = typeof parsed.retryAfter === 'number' ? parsed.retryAfter : null;
+      if (retryAfterSec && attempt < 2) {
+        const waitMs = Math.max(1200, Math.round(retryAfterSec * 1000));
+        await sleep(waitMs);
+        return await sendMessage(supabase, instanceId, to, message, attempt + 1);
+      }
+
+      // Tenta extrair ms do texto "Aguarde 1122ms..." caso não tenha retryAfter
+      const m = typeof parsed.error === 'string' ? parsed.error.match(/Aguarde\s+(\d+)ms/i) : null;
+      if (m && attempt < 2) {
+        const waitMs = Math.max(1200, parseInt(m[1], 10));
+        await sleep(waitMs);
+        return await sendMessage(supabase, instanceId, to, message, attempt + 1);
+      }
+
+      return false;
+    }
+
+    // HTTP não OK: pequeno retry
+    if (!response.ok) {
+      if (attempt < 1) {
+        await sleep(1300);
+        return await sendMessage(supabase, instanceId, to, message, attempt + 1);
+      }
+      return false;
+    }
+
+    return true;
   } catch (e) {
     console.error('[SEND] Error:', e);
     return false;
@@ -709,42 +754,47 @@ async function processFlowStep(
   // GREETING: Primeira mensagem (sem input do usuário)
   // =====================================================
   if (currentStep.type === 'greeting' && !userMessage) {
-    const greetingMsg = replaceVariables(currentStep.message, context);
-    await sendMessage(supabase, instanceId, contactId, greetingMsg);
-    
     // Avançar para próximo passo (menu principal)
     const nextStepId = currentStep.next || 'main_menu';
     const nextStep = flowConfig.steps[nextStepId];
-    
+
+    const greetingMsg = replaceVariables(currentStep.message, context).trim();
+
     if (nextStep && (nextStep.type === 'menu' || nextStep.type === 'submenu')) {
-      // Enviar menu automaticamente
-      const menuMsg = formatMenu(nextStep);
-      const finalMenuMsg = replaceVariables(menuMsg, context);
-      await sendMessage(supabase, instanceId, contactId, finalMenuMsg);
-      
+      const menuMsg = replaceVariables(formatMenu(nextStep), context).trim();
+      const combinedMsg = [greetingMsg, menuMsg].filter(Boolean).join('\n\n');
+
+      const ok = await sendMessage(supabase, instanceId, contactId, combinedMsg);
+      if (!ok) {
+        await logSession(supabase, session.id, chatbot.id, 'send_failed', {
+          messageOut: combinedMsg,
+          stepFrom: currentStepId,
+          stepTo: nextStepId,
+          error: 'send_failed',
+        });
+        return { success: false, response: '' };
+      }
+
       await updateSession(supabase, session.id, {
         current_step_id: nextStepId,
         awaiting_response: true,
         awaiting_type: 'menu',
         expected_options: nextStep.options || [],
         attempt_count: 0,
-        history: addToHistory(
-          addToHistory(session.history, 'bot', greetingMsg),
-          'bot',
-          finalMenuMsg
-        ),
+        history: addToHistory(session.history, 'bot', combinedMsg),
       });
-      
+
       await logSession(supabase, session.id, chatbot.id, 'step_transition', {
-        messageOut: `${greetingMsg}\n\n${finalMenuMsg}`,
+        messageOut: combinedMsg,
         stepFrom: currentStepId,
         stepTo: nextStepId,
       });
-      
-      return { success: true, response: finalMenuMsg };
+
+      return { success: true, response: combinedMsg };
     }
-    
-    return { success: true, response: greetingMsg };
+
+    const ok = await sendMessage(supabase, instanceId, contactId, greetingMsg);
+    return { success: ok, response: greetingMsg };
   }
   
   // =====================================================
@@ -778,30 +828,29 @@ async function processFlowStep(
         return { success: true, response: endMsg };
       }
       
-      // Repetir menu com fallback
+      // Repetir menu com fallback (1 envio só para evitar rate-limit/duplicação)
       const fallbackMsg = chatbot.fallback_message || 'Não entendi sua resposta. Por favor, escolha uma opção válida.';
-      await sendMessage(supabase, instanceId, contactId, fallbackMsg);
-      
-      const menuMsg = formatMenu(currentStep);
-      const finalMenuMsg = replaceVariables(menuMsg, context);
-      await sendMessage(supabase, instanceId, contactId, finalMenuMsg);
-      
+      const finalMenuMsg = replaceVariables(formatMenu(currentStep), context);
+      const combinedMsg = `${fallbackMsg}\n\n${finalMenuMsg}`.trim();
+
+      await sendMessage(supabase, instanceId, contactId, combinedMsg);
+
       await updateSession(supabase, session.id, {
         attempt_count: attemptCount,
         history: addToHistory(
           addToHistory(session.history, 'user', userMessage),
           'bot',
-          `${fallbackMsg}\n\n${finalMenuMsg}`
+          combinedMsg
         ),
       });
-      
+
       await logSession(supabase, session.id, chatbot.id, 'invalid_response', {
         messageIn: userMessage,
-        messageOut: fallbackMsg,
+        messageOut: combinedMsg,
         eventData: { attemptCount, remainingAttempts: maxAttempts - attemptCount },
       });
-      
-      return { success: true, response: fallbackMsg };
+
+      return { success: true, response: combinedMsg };
     }
     
     // Resposta válida - avançar para próximo passo
@@ -851,13 +900,19 @@ async function processFlowStep(
         { ...context, ...stepData },
         chatbot.ai_temperature || 0.7
       );
-      
-      await sendMessage(supabase, instanceId, contactId, aiResponse);
-      
+
       // Avançar para próximo passo
       const nextStepId = currentStep.next || 'end_flow';
       const nextStep = flowConfig.steps[nextStepId];
-      
+
+      const outParts: string[] = [aiResponse];
+      if (nextStep && (nextStep.type === 'menu' || nextStep.type === 'submenu')) {
+        outParts.push(replaceVariables(formatMenu(nextStep), context));
+      }
+      const outMsg = outParts.filter(Boolean).join('\n\n').trim();
+
+      await sendMessage(supabase, instanceId, contactId, outMsg);
+
       await updateSession(supabase, session.id, {
         current_step_id: nextStepId,
         step_data: stepData,
@@ -868,18 +923,11 @@ async function processFlowStep(
         history: addToHistory(
           addToHistory(session.history, 'user', userMessage),
           'bot',
-          aiResponse
+          outMsg
         ),
       });
-      
-      // Se próximo é menu, enviar automaticamente
-      if (nextStep && (nextStep.type === 'menu' || nextStep.type === 'submenu')) {
-        const menuMsg = formatMenu(nextStep);
-        const finalMenuMsg = replaceVariables(menuMsg, context);
-        await sendMessage(supabase, instanceId, contactId, finalMenuMsg);
-      }
-      
-      return { success: true, response: aiResponse };
+
+      return { success: true, response: outMsg };
     }
     
     // Sem IA, só confirmar e avançar
