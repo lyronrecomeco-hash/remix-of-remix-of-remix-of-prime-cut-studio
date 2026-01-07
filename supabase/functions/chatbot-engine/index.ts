@@ -6,10 +6,14 @@ const corsHeaders = {
 };
 
 // =====================================================
-// CHATBOT ENGINE - CORE PROCESSOR
-// Engine central para processamento de chatbots
+// CHATBOT ENGINE - ENTERPRISE FLOW CONTROL
+// Sistema de autoatendimento profissional com fluxo
+// guiado, controlado e escalável
 // =====================================================
 
+// =====================================================
+// INTERFACES
+// =====================================================
 interface ChatbotConfig {
   id: string;
   name: string;
@@ -26,6 +30,35 @@ interface ChatbotConfig {
   ai_system_prompt: string | null;
   is_active: boolean;
   instance_id: string | null;
+  flow_config: FlowConfig;
+  max_attempts: number;
+  fallback_message: string;
+  company_name: string;
+}
+
+interface FlowStep {
+  id: string;
+  type: 'greeting' | 'menu' | 'submenu' | 'collect' | 'ai' | 'transfer' | 'end';
+  message: string;
+  options?: MenuOption[];
+  next?: string;
+  transitions?: Record<string, string>;
+  ai_enabled?: boolean;
+  collect_field?: string;
+  validation?: string;
+}
+
+interface MenuOption {
+  id: string | number;
+  text: string;
+  emoji?: string;
+  next?: string;
+}
+
+interface FlowConfig {
+  version?: string;
+  steps: Record<string, FlowStep>;
+  startStep: string;
 }
 
 interface Session {
@@ -34,12 +67,15 @@ interface Session {
   contact_id: string;
   instance_id: string | null;
   current_step: string;
+  current_step_id: string;
   awaiting_response: boolean;
   awaiting_type: string | null;
   expected_options: any;
   context: Record<string, any>;
   history: Array<{ role: 'user' | 'bot'; message: string; timestamp: string }>;
   status: 'active' | 'completed' | 'timeout' | 'cancelled';
+  attempt_count: number;
+  step_data: Record<string, any>;
 }
 
 interface IncomingMessage {
@@ -50,17 +86,195 @@ interface IncomingMessage {
   timestamp?: string;
 }
 
-// Fallback message padrão
-const FALLBACK_MESSAGE = `Não entendi 😅
-Por favor, escolha uma opção válida para continuar.`;
-
-// Luna system prompt base
-const LUNA_BASE_PROMPT = `Você é Luna, a atendente virtual do Genesis Hub.
-Seu papel é conduzir o usuário de forma clara, educada e objetiva.
+// =====================================================
+// CONSTANTS
+// =====================================================
+const LUNA_BASE_PROMPT = `Você é Luna, a assistente virtual inteligente.
+Seu papel é auxiliar o usuário de forma clara, educada e objetiva.
 Você deve SEMPRE respeitar o fluxo configurado.
 Nunca avance passos sem confirmação válida.
 Nunca invente informações.
-Se o usuário sair do contexto, redirecione para o menu.`;
+Se o usuário sair do contexto, redirecione para o menu.
+Responda de forma concisa (máximo 3 parágrafos).
+Use emojis com moderação (máximo 2 por mensagem).`;
+
+// =====================================================
+// DEFAULT ENTERPRISE FLOW
+// =====================================================
+const DEFAULT_ENTERPRISE_FLOW: FlowConfig = {
+  version: '2.0',
+  startStep: 'greeting',
+  steps: {
+    greeting: {
+      id: 'greeting',
+      type: 'greeting',
+      message: '{{saudacao}}\n\nSou a assistente virtual da {{empresa}}.\nPara te atender melhor, escolha uma das opções abaixo:',
+      next: 'main_menu'
+    },
+    main_menu: {
+      id: 'main_menu',
+      type: 'menu',
+      message: '📋 *Menu Principal*\n\nEscolha uma opção:',
+      options: [
+        { id: 1, text: '💰 Financeiro', emoji: '💰', next: 'menu_financeiro' },
+        { id: 2, text: '📦 Produtos e Serviços', emoji: '📦', next: 'menu_produtos' },
+        { id: 3, text: '📅 Agendamentos', emoji: '📅', next: 'menu_agendamentos' },
+        { id: 4, text: '🔧 Suporte Técnico', emoji: '🔧', next: 'menu_suporte' },
+        { id: 5, text: '👤 Falar com atendente', emoji: '👤', next: 'transfer_human' }
+      ]
+    },
+    menu_financeiro: {
+      id: 'menu_financeiro',
+      type: 'submenu',
+      message: '💰 *Financeiro*\n\nComo posso ajudar?',
+      options: [
+        { id: 1, text: '📄 Segunda via de boleto', next: 'action_boleto' },
+        { id: 2, text: '💳 Status de pagamento', next: 'action_pagamento' },
+        { id: 3, text: '🤝 Negociação', next: 'action_negociacao' },
+        { id: 0, text: '↩️ Voltar ao menu', next: 'main_menu' }
+      ]
+    },
+    menu_produtos: {
+      id: 'menu_produtos',
+      type: 'submenu',
+      message: '📦 *Produtos e Serviços*\n\nO que você procura?',
+      options: [
+        { id: 1, text: '🔍 Ver catálogo', next: 'action_catalogo' },
+        { id: 2, text: '💵 Consultar preços', next: 'action_precos' },
+        { id: 3, text: '📝 Fazer pedido', next: 'action_pedido' },
+        { id: 0, text: '↩️ Voltar ao menu', next: 'main_menu' }
+      ]
+    },
+    menu_agendamentos: {
+      id: 'menu_agendamentos',
+      type: 'submenu',
+      message: '📅 *Agendamentos*\n\nSelecione uma opção:',
+      options: [
+        { id: 1, text: '➕ Novo agendamento', next: 'action_novo_agendamento' },
+        { id: 2, text: '🔄 Remarcar', next: 'action_remarcar' },
+        { id: 3, text: '❌ Cancelar', next: 'action_cancelar' },
+        { id: 0, text: '↩️ Voltar ao menu', next: 'main_menu' }
+      ]
+    },
+    menu_suporte: {
+      id: 'menu_suporte',
+      type: 'submenu',
+      message: '🔧 *Suporte Técnico*\n\nQual o problema?',
+      options: [
+        { id: 1, text: '🐛 Reportar problema', next: 'action_problema' },
+        { id: 2, text: '❓ Dúvidas frequentes', next: 'action_faq' },
+        { id: 3, text: '📞 Falar com técnico', next: 'transfer_human' },
+        { id: 0, text: '↩️ Voltar ao menu', next: 'main_menu' }
+      ]
+    },
+    // Ações genéricas (podem usar IA se habilitado)
+    action_boleto: {
+      id: 'action_boleto',
+      type: 'collect',
+      message: 'Para gerar a segunda via do boleto, preciso de alguns dados.\n\n📧 Por favor, informe seu *CPF ou CNPJ*:',
+      collect_field: 'documento',
+      ai_enabled: true,
+      next: 'confirm_boleto'
+    },
+    confirm_boleto: {
+      id: 'confirm_boleto',
+      type: 'ai',
+      message: 'Processando sua solicitação de segunda via...',
+      ai_enabled: true,
+      next: 'end_flow'
+    },
+    action_pagamento: {
+      id: 'action_pagamento',
+      type: 'ai',
+      message: 'Consultando status de pagamento...\n\nPor favor, informe seu *CPF ou CNPJ* para consulta:',
+      ai_enabled: true,
+      next: 'end_flow'
+    },
+    action_negociacao: {
+      id: 'action_negociacao',
+      type: 'ai',
+      message: '🤝 Vamos negociar!\n\nInforme seu *CPF ou CNPJ* para verificar suas pendências:',
+      ai_enabled: true,
+      next: 'end_flow'
+    },
+    action_catalogo: {
+      id: 'action_catalogo',
+      type: 'ai',
+      message: '📦 Nosso catálogo completo está disponível!\n\nQual categoria você procura?',
+      ai_enabled: true,
+      next: 'end_flow'
+    },
+    action_precos: {
+      id: 'action_precos',
+      type: 'ai',
+      message: '💵 Consulta de Preços\n\nQual produto você gostaria de consultar?',
+      ai_enabled: true,
+      next: 'end_flow'
+    },
+    action_pedido: {
+      id: 'action_pedido',
+      type: 'ai',
+      message: '📝 Vamos fazer seu pedido!\n\nO que você gostaria de pedir?',
+      ai_enabled: true,
+      next: 'end_flow'
+    },
+    action_novo_agendamento: {
+      id: 'action_novo_agendamento',
+      type: 'ai',
+      message: '📅 Novo Agendamento\n\nPara qual serviço você gostaria de agendar?',
+      ai_enabled: true,
+      next: 'end_flow'
+    },
+    action_remarcar: {
+      id: 'action_remarcar',
+      type: 'ai',
+      message: '🔄 Remarcar Agendamento\n\nInforme o número do seu agendamento atual:',
+      ai_enabled: true,
+      next: 'end_flow'
+    },
+    action_cancelar: {
+      id: 'action_cancelar',
+      type: 'ai',
+      message: '❌ Cancelar Agendamento\n\nInforme o número do seu agendamento:',
+      ai_enabled: true,
+      next: 'end_flow'
+    },
+    action_problema: {
+      id: 'action_problema',
+      type: 'ai',
+      message: '🐛 Reportar Problema\n\nDescreva detalhadamente o problema que você está enfrentando:',
+      ai_enabled: true,
+      next: 'end_flow'
+    },
+    action_faq: {
+      id: 'action_faq',
+      type: 'ai',
+      message: '❓ Perguntas Frequentes\n\nDigite sua dúvida que vou tentar ajudar:',
+      ai_enabled: true,
+      next: 'end_flow'
+    },
+    transfer_human: {
+      id: 'transfer_human',
+      type: 'transfer',
+      message: '👤 Transferindo para atendente humano...\n\nUm momento, por favor. Em breve você será atendido por nossa equipe.\n\n_Horário de atendimento: Seg-Sex, 08h às 18h_',
+      next: 'end_flow'
+    },
+    end_flow: {
+      id: 'end_flow',
+      type: 'menu',
+      message: '✅ Posso te ajudar com mais alguma coisa?',
+      options: [
+        { id: 1, text: '📋 Voltar ao menu principal', next: 'main_menu' },
+        { id: 2, text: '👋 Encerrar atendimento', next: 'goodbye' }
+      ]
+    },
+    goodbye: {
+      id: 'goodbye',
+      type: 'end',
+      message: '✅ Atendimento finalizado!\n\nObrigado por falar com a {{empresa}}.\nVolte sempre! 👋'
+    }
+  }
+};
 
 // =====================================================
 // HELPER: Log de sessão
@@ -99,7 +313,7 @@ async function logSession(
 }
 
 // =====================================================
-// HELPER: Normalizar texto para comparação
+// HELPER: Normalizar texto
 // =====================================================
 function normalizeText(text: string): string {
   return text
@@ -110,27 +324,60 @@ function normalizeText(text: string): string {
 }
 
 // =====================================================
+// HELPER: Gerar saudação por horário
+// =====================================================
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return 'Bom dia ☀️';
+  if (hour >= 12 && hour < 18) return 'Boa tarde 😊';
+  return 'Boa noite 🌙';
+}
+
+// =====================================================
+// HELPER: Substituir variáveis
+// =====================================================
+function replaceVariables(text: string, context: Record<string, any>): string {
+  return text
+    .replace(/\{\{saudacao\}\}/gi, getGreeting())
+    .replace(/\{\{empresa\}\}/gi, context.company_name || 'Nossa Empresa')
+    .replace(/\{\{nome\}\}/gi, context.client_name || 'Cliente')
+    .replace(/\{\{produto\}\}/gi, context.product || 'nosso produto');
+}
+
+// =====================================================
+// HELPER: Formatar menu
+// =====================================================
+function formatMenu(step: FlowStep): string {
+  if (!step.options || step.options.length === 0) return step.message;
+  
+  const optionsText = step.options
+    .map(opt => `${opt.id}️⃣ ${opt.text}`)
+    .join('\n');
+  
+  return `${step.message}\n\n${optionsText}\n\n_Digite o número da opção:_`;
+}
+
+// =====================================================
 // HELPER: Validar resposta de menu
 // =====================================================
 function validateMenuResponse(
   userMessage: string,
-  expectedOptions: any[]
-): { valid: boolean; matchedOption: any | null } {
+  options: MenuOption[]
+): { valid: boolean; matchedOption: MenuOption | null } {
   const normalized = normalizeText(userMessage);
   
-  // Tenta match por número
+  // Match por número
   const numMatch = normalized.match(/^(\d+)$/);
   if (numMatch) {
     const num = parseInt(numMatch[1]);
-    if (expectedOptions && expectedOptions[num - 1]) {
-      return { valid: true, matchedOption: expectedOptions[num - 1] };
-    }
+    const found = options.find(o => o.id === num || o.id === String(num));
+    if (found) return { valid: true, matchedOption: found };
   }
   
-  // Tenta match por texto
-  for (const option of expectedOptions || []) {
-    const optionText = normalizeText(option.text || option.label || '');
-    if (optionText.includes(normalized) || normalized.includes(optionText)) {
+  // Match por texto
+  for (const option of options) {
+    const optText = normalizeText(option.text.replace(/[^\w\s]/g, ''));
+    if (optText.includes(normalized) || normalized.includes(optText)) {
       return { valid: true, matchedOption: option };
     }
   }
@@ -139,12 +386,10 @@ function validateMenuResponse(
 }
 
 // =====================================================
-// HELPER: Verificar gatilho de palavra-chave
+// HELPER: Verificar gatilho
 // =====================================================
 function checkKeywordTrigger(message: string, keywords: string[]): boolean {
   if (!keywords || keywords.length === 0) return false;
-  
-  // Asterisco = match tudo
   if (keywords.includes('*')) return true;
   
   const normalized = normalizeText(message);
@@ -155,7 +400,7 @@ function checkKeywordTrigger(message: string, keywords: string[]): boolean {
 }
 
 // =====================================================
-// HELPER: Enviar mensagem diretamente ao VPS
+// HELPER: Enviar mensagem ao VPS
 // =====================================================
 async function sendMessage(
   supabase: any,
@@ -164,11 +409,9 @@ async function sendMessage(
   message: string
 ): Promise<boolean> {
   try {
-    // Fallback nativo (mesmo padrão do genesis-backend-proxy)
     const NATIVE_VPS_URL = 'http://72.62.108.24:3000';
     const NATIVE_VPS_TOKEN = 'genesis-master-token-2024-secure';
 
-    // Config GLOBAL (fonte primária)
     const { data: globalConfig } = await supabase
       .from('whatsapp_backend_config')
       .select('backend_url, master_token')
@@ -176,7 +419,6 @@ async function sendMessage(
       .limit(1)
       .maybeSingle();
 
-    // Config da instância (fallback)
     const { data: instance } = await supabase
       .from('genesis_instances')
       .select('backend_url, backend_token')
@@ -186,28 +428,10 @@ async function sendMessage(
     const backendUrl = (globalConfig?.backend_url || instance?.backend_url || NATIVE_VPS_URL) as string;
     const backendToken = (globalConfig?.master_token || instance?.backend_token || NATIVE_VPS_TOKEN) as string;
 
-    if (!backendUrl || !backendToken) {
-      console.error('[SEND] Missing backend config', {
-        hasUrl: Boolean(backendUrl),
-        hasToken: Boolean(backendToken),
-      });
-      return false;
-    }
-
     const cleanUrl = backendUrl.replace(/\/$/, '');
     const targetUrl = `${cleanUrl}/api/instance/${instanceId}/send`;
 
-    // Payload compat (mesmo formato do sendWithRetry)
-    const payload = {
-      phone: to,
-      message,
-      to,
-      text: message,
-      number: to,
-      instanceId,
-    };
-
-    console.log('[SEND] Sending', { instanceId, targetUrl });
+    console.log('[SEND] Sending to', { instanceId, to: to.slice(0, 10) + '...', targetUrl });
 
     const response = await fetch(targetUrl, {
       method: 'POST',
@@ -215,20 +439,20 @@ async function sendMessage(
         'Content-Type': 'application/json',
         Authorization: `Bearer ${backendToken}`,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        phone: to,
+        message,
+        to,
+        text: message,
+        number: to,
+        instanceId,
+      }),
     });
 
     const responseText = await response.text();
-    console.log('[SEND] Response', { status: response.status, preview: responseText.slice(0, 500) });
+    console.log('[SEND] Response', { status: response.status, preview: responseText.slice(0, 200) });
 
-    if (!response.ok) return false;
-
-    try {
-      const parsed = JSON.parse(responseText) as any;
-      return parsed?.success !== false && !parsed?.error;
-    } catch {
-      return true;
-    }
+    return response.ok;
   } catch (e) {
     console.error('[SEND] Error:', e);
     return false;
@@ -249,16 +473,15 @@ async function callLunaAI(
   
   if (!LOVABLE_API_KEY) {
     console.error('[LUNA] No API key configured');
-    return { response: 'Desculpe, estou com dificuldades técnicas. Tente novamente em instantes.' };
+    return { response: 'Desculpe, estou com dificuldades técnicas. Um momento, por favor.' };
   }
   
-  // Construir mensagens para a IA
   const messages = [
     { role: 'system', content: `${LUNA_BASE_PROMPT}\n\n${systemPrompt}` },
   ];
   
-  // Adicionar histórico (últimas 10 mensagens)
-  const recentHistory = history.slice(-10);
+  // Histórico recente
+  const recentHistory = history.slice(-8);
   for (const msg of recentHistory) {
     messages.push({
       role: msg.role === 'user' ? 'user' : 'assistant',
@@ -266,7 +489,6 @@ async function callLunaAI(
     });
   }
   
-  // Adicionar mensagem atual
   messages.push({ role: 'user', content: userMessage });
   
   try {
@@ -280,7 +502,7 @@ async function callLunaAI(
         model: 'google/gemini-2.5-flash',
         messages,
         temperature,
-        max_tokens: 500,
+        max_tokens: 400,
       }),
     });
     
@@ -292,10 +514,10 @@ async function callLunaAI(
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content?.trim() || '';
     
-    return { response: content, reasoning: 'AI response generated' };
+    return { response: content, reasoning: 'AI response' };
   } catch (e) {
     console.error('[LUNA] Error:', e);
-    return { response: 'Desculpe, ocorreu um erro. Por favor, tente novamente.' };
+    return { response: 'Ocorreu um erro. Por favor, tente novamente.' };
   }
 }
 
@@ -309,7 +531,6 @@ async function getOrCreateSession(
   instanceId: string,
   forceNew: boolean = false
 ): Promise<Session | null> {
-  // Se forceNew, encerra sessões antigas
   if (forceNew) {
     await supabase
       .from('chatbot_sessions')
@@ -319,20 +540,18 @@ async function getOrCreateSession(
       .eq('status', 'active');
   }
   
-  // Buscar sessão ativa existente
   const { data: existingSession } = await supabase
     .from('chatbot_sessions')
     .select('*')
     .eq('contact_id', contactId)
     .eq('instance_id', instanceId)
     .eq('status', 'active')
-    .single();
+    .maybeSingle();
   
   if (existingSession && !forceNew) {
     return existingSession as Session;
   }
   
-  // Criar nova sessão
   const { data: newSession, error } = await supabase
     .from('chatbot_sessions')
     .insert({
@@ -340,10 +559,13 @@ async function getOrCreateSession(
       contact_id: contactId,
       instance_id: instanceId,
       current_step: 'start',
+      current_step_id: 'greeting',
       awaiting_response: false,
       context: {},
       history: [],
       status: 'active',
+      attempt_count: 0,
+      step_data: {},
     })
     .select()
     .single();
@@ -382,146 +604,448 @@ function addToHistory(
   message: string
 ): Session['history'] {
   const newHistory = [...history, { role, message, timestamp: new Date().toISOString() }];
-  // Manter apenas últimas 50 mensagens
   return newHistory.slice(-50);
 }
 
 // =====================================================
-// CORE: Processar resposta de texto simples
+// CORE: Obter flow config do chatbot
 // =====================================================
-async function processTextResponse(
-  supabase: any,
-  chatbot: ChatbotConfig,
-  session: Session,
-  instanceId: string,
-  contactId: string
-): Promise<{ success: boolean; response: string }> {
-  const response = chatbot.response_content || 'Olá! Como posso ajudar?';
-  
-  // Enviar mensagem
-  await sendMessage(supabase, instanceId, contactId, response);
-  
-  // Finalizar sessão para texto simples
-  await updateSession(supabase, session.id, {
-    status: 'completed',
-    history: addToHistory(session.history, 'bot', response),
-  });
-  
-  await logSession(supabase, session.id, chatbot.id, 'message_sent', {
-    messageOut: response,
-  });
-  
-  return { success: true, response };
-}
-
-// =====================================================
-// CORE: Processar resposta com IA
-// =====================================================
-async function processAIResponse(
-  supabase: any,
-  chatbot: ChatbotConfig,
-  session: Session,
-  userMessage: string,
-  instanceId: string,
-  contactId: string
-): Promise<{ success: boolean; response: string }> {
-  const systemPrompt = chatbot.ai_system_prompt || '';
-  const temperature = chatbot.ai_temperature || 0.7;
-  
-  // Adicionar mensagem do usuário ao histórico
-  const updatedHistory = addToHistory(session.history, 'user', userMessage);
-  
-  // Chamar Luna IA
-  const { response, reasoning } = await callLunaAI(
-    systemPrompt,
-    userMessage,
-    updatedHistory,
-    session.context,
-    temperature
-  );
-  
-  // Enviar resposta
-  if (chatbot.delay_seconds > 0) {
-    await new Promise(r => setTimeout(r, Math.min(chatbot.delay_seconds, 5) * 1000));
+function getFlowConfig(chatbot: ChatbotConfig): FlowConfig {
+  // Se tem flow_config customizado, usar
+  if (chatbot.flow_config && Object.keys(chatbot.flow_config).length > 0 && chatbot.flow_config.steps) {
+    return chatbot.flow_config;
   }
   
-  await sendMessage(supabase, instanceId, contactId, response);
-  
-  // Atualizar sessão
-  const finalHistory = addToHistory(updatedHistory, 'bot', response);
-  await updateSession(supabase, session.id, {
-    history: finalHistory,
-    awaiting_response: true, // Mantém sessão aberta para IA
-    awaiting_type: 'text',
-  });
-  
-  await logSession(supabase, session.id, chatbot.id, 'luna_decision', {
-    messageIn: userMessage,
-    messageOut: response,
-    lunaReasoning: reasoning,
-  });
-  
-  return { success: true, response };
+  // Usar flow padrão enterprise
+  return DEFAULT_ENTERPRISE_FLOW;
 }
 
 // =====================================================
-// CORE: Processar resposta de menu
+// CORE: Processar passo do fluxo
 // =====================================================
-async function processMenuResponse(
+async function processFlowStep(
   supabase: any,
   chatbot: ChatbotConfig,
   session: Session,
-  userMessage: string,
+  userMessage: string | null,
   instanceId: string,
   contactId: string
 ): Promise<{ success: boolean; response: string }> {
-  // Se aguardando resposta, validar
-  if (session.awaiting_response && session.awaiting_type === 'menu') {
-    const validation = validateMenuResponse(userMessage, session.expected_options);
+  const flowConfig = getFlowConfig(chatbot);
+  const currentStepId = session.current_step_id || flowConfig.startStep || 'greeting';
+  const currentStep = flowConfig.steps[currentStepId];
+  
+  if (!currentStep) {
+    console.error('[FLOW] Step not found:', currentStepId);
+    return { success: false, response: 'Erro interno. Tente novamente.' };
+  }
+  
+  const context = {
+    ...session.context,
+    company_name: chatbot.company_name || 'Nossa Empresa',
+  };
+  
+  console.log(`[FLOW] Processing step: ${currentStepId}, type: ${currentStep.type}`);
+  
+  // =====================================================
+  // GREETING: Primeira mensagem (sem input do usuário)
+  // =====================================================
+  if (currentStep.type === 'greeting' && !userMessage) {
+    const greetingMsg = replaceVariables(currentStep.message, context);
+    await sendMessage(supabase, instanceId, contactId, greetingMsg);
     
-    if (!validation.valid) {
-      // Resposta inválida - repetir menu
-      await sendMessage(supabase, instanceId, contactId, FALLBACK_MESSAGE);
+    // Avançar para próximo passo (menu principal)
+    const nextStepId = currentStep.next || 'main_menu';
+    const nextStep = flowConfig.steps[nextStepId];
+    
+    if (nextStep && (nextStep.type === 'menu' || nextStep.type === 'submenu')) {
+      // Enviar menu automaticamente
+      const menuMsg = formatMenu(nextStep);
+      const finalMenuMsg = replaceVariables(menuMsg, context);
+      await sendMessage(supabase, instanceId, contactId, finalMenuMsg);
       
-      // Reenviar menu
-      const menuText = chatbot.response_content || 'Escolha uma opção:';
-      await sendMessage(supabase, instanceId, contactId, menuText);
-      
-      await logSession(supabase, session.id, chatbot.id, 'message_sent', {
-        messageIn: userMessage,
-        messageOut: FALLBACK_MESSAGE,
-        eventData: { invalidResponse: true },
+      await updateSession(supabase, session.id, {
+        current_step_id: nextStepId,
+        awaiting_response: true,
+        awaiting_type: 'menu',
+        expected_options: nextStep.options || [],
+        attempt_count: 0,
+        history: addToHistory(
+          addToHistory(session.history, 'bot', greetingMsg),
+          'bot',
+          finalMenuMsg
+        ),
       });
       
-      return { success: true, response: FALLBACK_MESSAGE };
+      await logSession(supabase, session.id, chatbot.id, 'step_transition', {
+        messageOut: `${greetingMsg}\n\n${finalMenuMsg}`,
+        stepFrom: currentStepId,
+        stepTo: nextStepId,
+      });
+      
+      return { success: true, response: finalMenuMsg };
     }
     
-    // Resposta válida - processar opção
-    // Aqui pode-se implementar lógica de próximo passo
-    const response = `Você escolheu: ${validation.matchedOption?.text || userMessage}. Obrigado!`;
-    await sendMessage(supabase, instanceId, contactId, response);
+    return { success: true, response: greetingMsg };
+  }
+  
+  // =====================================================
+  // MENU / SUBMENU: Aguardando resposta válida
+  // =====================================================
+  if ((currentStep.type === 'menu' || currentStep.type === 'submenu') && userMessage) {
+    const options = currentStep.options || [];
+    const validation = validateMenuResponse(userMessage, options);
+    
+    if (!validation.valid) {
+      // Resposta inválida
+      const attemptCount = (session.attempt_count || 0) + 1;
+      const maxAttempts = chatbot.max_attempts || 3;
+      
+      if (attemptCount >= maxAttempts) {
+        // Máximo de tentativas - encerrar educadamente
+        const endMsg = `😔 Desculpe, não consegui entender suas respostas.\n\nSe precisar de ajuda, digite *oi* para reiniciar o atendimento.\n\nObrigado por falar com a ${context.company_name}!`;
+        await sendMessage(supabase, instanceId, contactId, endMsg);
+        
+        await updateSession(supabase, session.id, {
+          status: 'completed',
+          history: addToHistory(session.history, 'bot', endMsg),
+        });
+        
+        await logSession(supabase, session.id, chatbot.id, 'max_attempts_reached', {
+          messageIn: userMessage,
+          messageOut: endMsg,
+          eventData: { attemptCount, maxAttempts },
+        });
+        
+        return { success: true, response: endMsg };
+      }
+      
+      // Repetir menu com fallback
+      const fallbackMsg = chatbot.fallback_message || 'Não entendi sua resposta. Por favor, escolha uma opção válida.';
+      await sendMessage(supabase, instanceId, contactId, fallbackMsg);
+      
+      const menuMsg = formatMenu(currentStep);
+      const finalMenuMsg = replaceVariables(menuMsg, context);
+      await sendMessage(supabase, instanceId, contactId, finalMenuMsg);
+      
+      await updateSession(supabase, session.id, {
+        attempt_count: attemptCount,
+        history: addToHistory(
+          addToHistory(session.history, 'user', userMessage),
+          'bot',
+          `${fallbackMsg}\n\n${finalMenuMsg}`
+        ),
+      });
+      
+      await logSession(supabase, session.id, chatbot.id, 'invalid_response', {
+        messageIn: userMessage,
+        messageOut: fallbackMsg,
+        eventData: { attemptCount, remainingAttempts: maxAttempts - attemptCount },
+      });
+      
+      return { success: true, response: fallbackMsg };
+    }
+    
+    // Resposta válida - avançar para próximo passo
+    const matchedOption = validation.matchedOption!;
+    const nextStepId = matchedOption.next || currentStep.next || 'end_flow';
+    const nextStep = flowConfig.steps[nextStepId];
+    
+    if (!nextStep) {
+      console.error('[FLOW] Next step not found:', nextStepId);
+      return { success: false, response: 'Erro interno.' };
+    }
+    
+    console.log(`[FLOW] Valid response, transitioning to: ${nextStepId}`);
+    
+    // Processar próximo passo
+    return await processNextStep(
+      supabase,
+      chatbot,
+      session,
+      userMessage,
+      instanceId,
+      contactId,
+      nextStep,
+      nextStepId,
+      context,
+      flowConfig
+    );
+  }
+  
+  // =====================================================
+  // COLLECT: Coletando dados
+  // =====================================================
+  if (currentStep.type === 'collect' && userMessage) {
+    // Armazenar dado coletado
+    const stepData = {
+      ...session.step_data,
+      [currentStep.collect_field || 'data']: userMessage,
+    };
+    
+    // Se tem IA habilitada no passo, processar com Luna
+    if (currentStep.ai_enabled && chatbot.ai_enabled) {
+      const aiPrompt = chatbot.ai_system_prompt || '';
+      const { response: aiResponse } = await callLunaAI(
+        aiPrompt,
+        userMessage,
+        session.history,
+        { ...context, ...stepData },
+        chatbot.ai_temperature || 0.7
+      );
+      
+      await sendMessage(supabase, instanceId, contactId, aiResponse);
+      
+      // Avançar para próximo passo
+      const nextStepId = currentStep.next || 'end_flow';
+      const nextStep = flowConfig.steps[nextStepId];
+      
+      await updateSession(supabase, session.id, {
+        current_step_id: nextStepId,
+        step_data: stepData,
+        awaiting_response: nextStep?.type === 'menu' || nextStep?.type === 'submenu',
+        awaiting_type: nextStep?.type === 'menu' || nextStep?.type === 'submenu' ? 'menu' : null,
+        expected_options: nextStep?.options || [],
+        attempt_count: 0,
+        history: addToHistory(
+          addToHistory(session.history, 'user', userMessage),
+          'bot',
+          aiResponse
+        ),
+      });
+      
+      // Se próximo é menu, enviar automaticamente
+      if (nextStep && (nextStep.type === 'menu' || nextStep.type === 'submenu')) {
+        const menuMsg = formatMenu(nextStep);
+        const finalMenuMsg = replaceVariables(menuMsg, context);
+        await sendMessage(supabase, instanceId, contactId, finalMenuMsg);
+      }
+      
+      return { success: true, response: aiResponse };
+    }
+    
+    // Sem IA, só confirmar e avançar
+    const confirmMsg = `✅ Dados recebidos. Processando...`;
+    await sendMessage(supabase, instanceId, contactId, confirmMsg);
+    
+    const nextStepId = currentStep.next || 'end_flow';
+    const nextStep = flowConfig.steps[nextStepId];
+    
+    if (nextStep) {
+      return await processNextStep(
+        supabase,
+        chatbot,
+        session,
+        null,
+        instanceId,
+        contactId,
+        nextStep,
+        nextStepId,
+        context,
+        flowConfig
+      );
+    }
+    
+    return { success: true, response: confirmMsg };
+  }
+  
+  // =====================================================
+  // AI: Passo com IA
+  // =====================================================
+  if (currentStep.type === 'ai' && userMessage) {
+    if (chatbot.ai_enabled) {
+      const aiPrompt = chatbot.ai_system_prompt || '';
+      const { response: aiResponse } = await callLunaAI(
+        aiPrompt,
+        userMessage,
+        session.history,
+        context,
+        chatbot.ai_temperature || 0.7
+      );
+      
+      await sendMessage(supabase, instanceId, contactId, aiResponse);
+      
+      // Avançar para próximo passo (geralmente end_flow)
+      const nextStepId = currentStep.next || 'end_flow';
+      const nextStep = flowConfig.steps[nextStepId];
+      
+      await updateSession(supabase, session.id, {
+        current_step_id: nextStepId,
+        history: addToHistory(
+          addToHistory(session.history, 'user', userMessage),
+          'bot',
+          aiResponse
+        ),
+      });
+      
+      // Se próximo é menu (end_flow), enviar
+      if (nextStep && (nextStep.type === 'menu' || nextStep.type === 'submenu')) {
+        const menuMsg = formatMenu(nextStep);
+        const finalMenuMsg = replaceVariables(menuMsg, context);
+        await sendMessage(supabase, instanceId, contactId, finalMenuMsg);
+        
+        await updateSession(supabase, session.id, {
+          awaiting_response: true,
+          awaiting_type: 'menu',
+          expected_options: nextStep.options || [],
+          attempt_count: 0,
+        });
+      }
+      
+      return { success: true, response: aiResponse };
+    }
+    
+    // Sem IA, mensagem genérica
+    const genericMsg = currentStep.message || 'Entendido! Como posso ajudar mais?';
+    await sendMessage(supabase, instanceId, contactId, genericMsg);
+    return { success: true, response: genericMsg };
+  }
+  
+  // =====================================================
+  // TRANSFER: Transferir para humano
+  // =====================================================
+  if (currentStep.type === 'transfer') {
+    const transferMsg = replaceVariables(currentStep.message, context);
+    await sendMessage(supabase, instanceId, contactId, transferMsg);
     
     await updateSession(supabase, session.id, {
       status: 'completed',
-      history: addToHistory(session.history, 'bot', response),
+      current_step_id: 'transfer_human',
+      history: addToHistory(session.history, 'bot', transferMsg),
     });
     
-    return { success: true, response };
+    await logSession(supabase, session.id, chatbot.id, 'transfer_to_human', {
+      messageOut: transferMsg,
+    });
+    
+    return { success: true, response: transferMsg };
   }
   
-  // Enviar menu inicial
-  const menuText = chatbot.response_content || 'Escolha uma opção:';
-  await sendMessage(supabase, instanceId, contactId, menuText);
+  // =====================================================
+  // END: Encerrar atendimento
+  // =====================================================
+  if (currentStep.type === 'end') {
+    const endMsg = replaceVariables(currentStep.message, context);
+    await sendMessage(supabase, instanceId, contactId, endMsg);
+    
+    await updateSession(supabase, session.id, {
+      status: 'completed',
+      history: addToHistory(session.history, 'bot', endMsg),
+    });
+    
+    await logSession(supabase, session.id, chatbot.id, 'session_completed', {
+      messageOut: endMsg,
+    });
+    
+    return { success: true, response: endMsg };
+  }
   
-  // Marcar como aguardando resposta
+  // Fallback
+  console.log('[FLOW] Unhandled step type:', currentStep.type);
+  return { success: false, response: '' };
+}
+
+// =====================================================
+// HELPER: Processar próximo passo
+// =====================================================
+async function processNextStep(
+  supabase: any,
+  chatbot: ChatbotConfig,
+  session: Session,
+  userMessage: string | null,
+  instanceId: string,
+  contactId: string,
+  nextStep: FlowStep,
+  nextStepId: string,
+  context: Record<string, any>,
+  flowConfig: FlowConfig
+): Promise<{ success: boolean; response: string }> {
+  // Atualizar sessão para novo passo
   await updateSession(supabase, session.id, {
-    awaiting_response: true,
-    awaiting_type: 'menu',
-    expected_options: chatbot.response_list?.options || [],
-    history: addToHistory(session.history, 'bot', menuText),
+    current_step_id: nextStepId,
+    attempt_count: 0,
+    history: userMessage 
+      ? addToHistory(session.history, 'user', userMessage)
+      : session.history,
   });
   
-  return { success: true, response: menuText };
+  // Menu/Submenu: Enviar opções
+  if (nextStep.type === 'menu' || nextStep.type === 'submenu') {
+    const menuMsg = formatMenu(nextStep);
+    const finalMenuMsg = replaceVariables(menuMsg, context);
+    await sendMessage(supabase, instanceId, contactId, finalMenuMsg);
+    
+    await updateSession(supabase, session.id, {
+      awaiting_response: true,
+      awaiting_type: 'menu',
+      expected_options: nextStep.options || [],
+      history: addToHistory(session.history, 'bot', finalMenuMsg),
+    });
+    
+    await logSession(supabase, session.id, chatbot.id, 'step_transition', {
+      messageIn: userMessage || undefined,
+      messageOut: finalMenuMsg,
+      stepTo: nextStepId,
+    });
+    
+    return { success: true, response: finalMenuMsg };
+  }
+  
+  // Collect: Enviar mensagem de coleta
+  if (nextStep.type === 'collect') {
+    const collectMsg = replaceVariables(nextStep.message, context);
+    await sendMessage(supabase, instanceId, contactId, collectMsg);
+    
+    await updateSession(supabase, session.id, {
+      awaiting_response: true,
+      awaiting_type: 'collect',
+      history: addToHistory(session.history, 'bot', collectMsg),
+    });
+    
+    return { success: true, response: collectMsg };
+  }
+  
+  // AI: Enviar mensagem inicial do passo IA
+  if (nextStep.type === 'ai') {
+    const aiMsg = replaceVariables(nextStep.message, context);
+    await sendMessage(supabase, instanceId, contactId, aiMsg);
+    
+    await updateSession(supabase, session.id, {
+      awaiting_response: true,
+      awaiting_type: 'ai',
+      history: addToHistory(session.history, 'bot', aiMsg),
+    });
+    
+    return { success: true, response: aiMsg };
+  }
+  
+  // Transfer
+  if (nextStep.type === 'transfer') {
+    const transferMsg = replaceVariables(nextStep.message, context);
+    await sendMessage(supabase, instanceId, contactId, transferMsg);
+    
+    await updateSession(supabase, session.id, {
+      status: 'completed',
+      history: addToHistory(session.history, 'bot', transferMsg),
+    });
+    
+    return { success: true, response: transferMsg };
+  }
+  
+  // End
+  if (nextStep.type === 'end') {
+    const endMsg = replaceVariables(nextStep.message, context);
+    await sendMessage(supabase, instanceId, contactId, endMsg);
+    
+    await updateSession(supabase, session.id, {
+      status: 'completed',
+      history: addToHistory(session.history, 'bot', endMsg),
+    });
+    
+    return { success: true, response: endMsg };
+  }
+  
+  return { success: false, response: '' };
 }
 
 // =====================================================
@@ -535,57 +1059,34 @@ async function processIncomingMessage(
   
   console.log(`[ENGINE] Processing message from ${contactId}: ${userMessage.slice(0, 50)}...`);
   
-  // PRIORIDADE 1: Verificar sessão ativa aguardando resposta
+  // PRIORIDADE 1: Verificar sessão ativa
   const { data: activeSession } = await supabase
     .from('chatbot_sessions')
     .select('*, chatbot:whatsapp_automations(*)')
     .eq('contact_id', contactId)
     .eq('instance_id', instanceId)
     .eq('status', 'active')
-    .eq('awaiting_response', true)
-    .single();
+    .maybeSingle();
   
   if (activeSession && activeSession.chatbot) {
-    console.log(`[ENGINE] Found active session awaiting response: ${activeSession.id}`);
+    console.log(`[ENGINE] Found active session: ${activeSession.id}, step: ${activeSession.current_step_id}`);
     
     const chatbot = activeSession.chatbot as ChatbotConfig;
     
     // Verificar se é palavra-chave de reinício
     if (checkKeywordTrigger(userMessage, chatbot.trigger_keywords)) {
       console.log(`[ENGINE] Keyword detected, restarting session`);
-      // Reiniciar sessão
       const newSession = await getOrCreateSession(supabase, chatbot.id, contactId, instanceId, true);
       if (newSession) {
-        await logSession(supabase, newSession.id, chatbot.id, 'session_start', {
-          messageIn: userMessage,
-          eventData: { restarted: true },
-        });
+        const result = await processFlowStep(supabase, chatbot, newSession, null, instanceId, contactId);
+        return { ...result, chatbotId: chatbot.id, chatbotName: chatbot.name };
       }
     }
     
-      // Processar de acordo com o tipo
-      if (chatbot.ai_enabled) {
-        const result = await processAIResponse(
-          supabase,
-          chatbot,
-          activeSession,
-          userMessage,
-          instanceId,
-          contactId
-        );
-        return { ...result, chatbotId: chatbot.id, chatbotName: chatbot.name };
-      } else if (activeSession.awaiting_type === 'menu') {
-        const result = await processMenuResponse(
-          supabase,
-          chatbot,
-          activeSession,
-          userMessage,
-          instanceId,
-          contactId
-        );
-        return { ...result, chatbotId: chatbot.id, chatbotName: chatbot.name };
-      }
-    }
+    // Processar mensagem no fluxo atual
+    const result = await processFlowStep(supabase, chatbot, activeSession, userMessage, instanceId, contactId);
+    return { ...result, chatbotId: chatbot.id, chatbotName: chatbot.name };
+  }
   
   // PRIORIDADE 2: Verificar gatilho de palavra-chave
   const { data: chatbots } = await supabase
@@ -612,43 +1113,24 @@ async function processIncomingMessage(
         eventData: { trigger: 'keyword' },
       });
       
-      // Processar de acordo com o tipo de resposta
-      let result;
-      if (chatbot.ai_enabled) {
-        result = await processAIResponse(supabase, chatbot, session, userMessage, instanceId, contactId);
-      } else if (chatbot.response_type === 'text') {
-        result = await processTextResponse(supabase, chatbot, session, instanceId, contactId);
-      } else if (chatbot.response_type === 'list' || chatbot.response_type === 'menu') {
-        result = await processMenuResponse(supabase, chatbot, session, userMessage, instanceId, contactId);
-      }
-      
-      if (result) {
-        return { ...result, chatbotId: chatbot.id, chatbotName: chatbot.name };
-      }
+      // Processar primeiro passo (greeting)
+      const result = await processFlowStep(supabase, chatbot, session, null, instanceId, contactId);
+      return { ...result, chatbotId: chatbot.id, chatbotName: chatbot.name };
     }
     
-    // Verificar trigger all messages
+    // Trigger all messages
     if (chatbot.trigger_type === 'all') {
       console.log(`[ENGINE] Matched all-messages chatbot: ${chatbot.name}`);
       
       const session = await getOrCreateSession(supabase, chatbot.id, contactId, instanceId);
-      
       if (!session) continue;
       
-      let result;
-      if (chatbot.ai_enabled) {
-        result = await processAIResponse(supabase, chatbot, session, userMessage, instanceId, contactId);
-      } else if (chatbot.response_type === 'text') {
-        result = await processTextResponse(supabase, chatbot, session, instanceId, contactId);
-      }
-      
-      if (result) {
-        return { ...result, chatbotId: chatbot.id, chatbotName: chatbot.name };
-      }
+      const result = await processFlowStep(supabase, chatbot, session, userMessage, instanceId, contactId);
+      return { ...result, chatbotId: chatbot.id, chatbotName: chatbot.name };
     }
   }
   
-  console.log(`[ENGINE] No matching chatbot found for message`);
+  console.log(`[ENGINE] No matching chatbot found`);
   return { success: false };
 }
 
@@ -668,14 +1150,12 @@ async function cleanupTimeoutSessions(supabase: any, timeoutMinutes: number = 30
     return 0;
   }
   
-  // Marcar como timeout
   await supabase
     .from('chatbot_sessions')
     .update({ status: 'timeout', ended_at: new Date().toISOString() })
     .eq('status', 'active')
     .lt('last_interaction_at', cutoffTime);
   
-  // Log
   for (const session of timedOutSessions) {
     await logSession(supabase, session.id, session.chatbot_id, 'timeout', {
       eventData: { timeoutMinutes },

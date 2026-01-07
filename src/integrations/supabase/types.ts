@@ -966,6 +966,7 @@ export type Database = {
       }
       chatbot_sessions: {
         Row: {
+          attempt_count: number | null
           awaiting_response: boolean | null
           awaiting_type: string | null
           chatbot_id: string
@@ -973,6 +974,7 @@ export type Database = {
           context: Json | null
           created_at: string | null
           current_step: string | null
+          current_step_id: string | null
           ended_at: string | null
           expected_options: Json | null
           history: Json | null
@@ -982,9 +984,11 @@ export type Database = {
           last_message_at: string | null
           started_at: string | null
           status: string | null
+          step_data: Json | null
           updated_at: string | null
         }
         Insert: {
+          attempt_count?: number | null
           awaiting_response?: boolean | null
           awaiting_type?: string | null
           chatbot_id: string
@@ -992,6 +996,7 @@ export type Database = {
           context?: Json | null
           created_at?: string | null
           current_step?: string | null
+          current_step_id?: string | null
           ended_at?: string | null
           expected_options?: Json | null
           history?: Json | null
@@ -1001,9 +1006,11 @@ export type Database = {
           last_message_at?: string | null
           started_at?: string | null
           status?: string | null
+          step_data?: Json | null
           updated_at?: string | null
         }
         Update: {
+          attempt_count?: number | null
           awaiting_response?: boolean | null
           awaiting_type?: string | null
           chatbot_id?: string
@@ -1011,6 +1018,7 @@ export type Database = {
           context?: Json | null
           created_at?: string | null
           current_step?: string | null
+          current_step_id?: string | null
           ended_at?: string | null
           expected_options?: Json | null
           history?: Json | null
@@ -1020,6 +1028,7 @@ export type Database = {
           last_message_at?: string | null
           started_at?: string | null
           status?: string | null
+          step_data?: Json | null
           updated_at?: string | null
         }
         Relationships: [
@@ -5366,12 +5375,16 @@ export type Database = {
           ai_model: string | null
           ai_system_prompt: string | null
           ai_temperature: number | null
+          company_name: string | null
           created_at: string | null
           delay_seconds: number | null
+          fallback_message: string | null
+          flow_config: Json | null
           id: string
           instance_id: string | null
           is_active: boolean | null
           match_count: number | null
+          max_attempts: number | null
           name: string
           next_automation_id: string | null
           priority: number | null
@@ -5391,12 +5404,16 @@ export type Database = {
           ai_model?: string | null
           ai_system_prompt?: string | null
           ai_temperature?: number | null
+          company_name?: string | null
           created_at?: string | null
           delay_seconds?: number | null
+          fallback_message?: string | null
+          flow_config?: Json | null
           id?: string
           instance_id?: string | null
           is_active?: boolean | null
           match_count?: number | null
+          max_attempts?: number | null
           name: string
           next_automation_id?: string | null
           priority?: number | null
@@ -5416,12 +5433,16 @@ export type Database = {
           ai_model?: string | null
           ai_system_prompt?: string | null
           ai_temperature?: number | null
+          company_name?: string | null
           created_at?: string | null
           delay_seconds?: number | null
+          fallback_message?: string | null
+          flow_config?: Json | null
           id?: string
           instance_id?: string | null
           is_active?: boolean | null
           match_count?: number | null
+          max_attempts?: number | null
           name?: string
           next_automation_id?: string | null
           priority?: number | null
