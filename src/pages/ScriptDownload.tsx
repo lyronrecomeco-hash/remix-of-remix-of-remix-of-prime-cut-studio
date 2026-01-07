@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Download, Copy, Check, Terminal, Server } from 'lucide-react';
-import { getVPSScriptV8 } from '@/components/genesis/scripts/vps-script-v8';
+import { getVPSScriptV8, VPS_SCRIPT_VERSION } from '@/components/genesis/scripts/vps-script-v8';
 import { toast } from 'sonner';
 
 // Token padrão do sistema
@@ -86,7 +86,7 @@ const ScriptDownload = () => {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
             <Server className="w-10 h-10 text-emerald-500" />
-            <h1 className="text-3xl font-bold text-white">Genesis VPS Script v8</h1>
+            <h1 className="text-3xl font-bold text-white">Genesis VPS Script v{VPS_SCRIPT_VERSION}</h1>
           </div>
           <p className="text-gray-400">Script atualizado para WhatsApp Multi-Instância</p>
         </div>
@@ -98,7 +98,7 @@ const ScriptDownload = () => {
               Download do Script
             </CardTitle>
             <CardDescription>
-              Versão mais recente com MASTER_TOKEN já configurado
+              Versão v{VPS_SCRIPT_VERSION} (mais recente) com MASTER_TOKEN já configurado
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
