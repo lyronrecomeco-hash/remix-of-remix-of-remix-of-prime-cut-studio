@@ -2389,6 +2389,141 @@ export type Database = {
           },
         ]
       }
+      genesis_calendar_configs: {
+        Row: {
+          calendar_id: string
+          created_at: string
+          flow_id: string
+          id: string
+          is_active: boolean
+          last_sync_at: string | null
+          oauth_id: string
+          sync_token: string | null
+          trigger_config: Json
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          calendar_id?: string
+          created_at?: string
+          flow_id: string
+          id?: string
+          is_active?: boolean
+          last_sync_at?: string | null
+          oauth_id: string
+          sync_token?: string | null
+          trigger_config?: Json
+          trigger_type?: string
+          updated_at?: string
+        }
+        Update: {
+          calendar_id?: string
+          created_at?: string
+          flow_id?: string
+          id?: string
+          is_active?: boolean
+          last_sync_at?: string | null
+          oauth_id?: string
+          sync_token?: string | null
+          trigger_config?: Json
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_calendar_configs_oauth_id_fkey"
+            columns: ["oauth_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_google_oauth"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_calendar_events: {
+        Row: {
+          config_id: string
+          created_at: string
+          event_data: Json
+          event_id: string
+          execution_id: string | null
+          id: string
+          status: string
+          trigger_at: string | null
+          triggered_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          config_id: string
+          created_at?: string
+          event_data: Json
+          event_id: string
+          execution_id?: string | null
+          id?: string
+          status?: string
+          trigger_at?: string | null
+          triggered_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          config_id?: string
+          created_at?: string
+          event_data?: Json
+          event_id?: string
+          execution_id?: string | null
+          id?: string
+          status?: string
+          trigger_at?: string | null
+          triggered_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_calendar_events_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_calendar_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_calendar_logs: {
+        Row: {
+          action: string
+          config_id: string | null
+          created_at: string
+          details: Json | null
+          error_message: string | null
+          id: string
+          status: string
+        }
+        Insert: {
+          action: string
+          config_id?: string | null
+          created_at?: string
+          details?: Json | null
+          error_message?: string | null
+          id?: string
+          status?: string
+        }
+        Update: {
+          action?: string
+          config_id?: string | null
+          created_at?: string
+          details?: Json | null
+          error_message?: string | null
+          id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_calendar_logs_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_calendar_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       genesis_credit_transactions: {
         Row: {
           amount: number
@@ -2563,6 +2698,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      genesis_google_oauth: {
+        Row: {
+          access_token: string
+          created_at: string
+          email: string | null
+          expires_at: string
+          id: string
+          project_id: string
+          refresh_token: string
+          scope: string
+          token_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          email?: string | null
+          expires_at: string
+          id?: string
+          project_id: string
+          refresh_token: string
+          scope?: string
+          token_type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          email?: string | null
+          expires_at?: string
+          id?: string
+          project_id?: string
+          refresh_token?: string
+          scope?: string
+          token_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       genesis_instance_events: {
         Row: {
