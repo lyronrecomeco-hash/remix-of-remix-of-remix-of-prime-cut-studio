@@ -30,7 +30,14 @@ import {
   ShieldAlert,
   Gauge,
   HeartPulse,
-  Lock
+  Lock,
+  Calendar,
+  CalendarDays,
+  CalendarPlus,
+  CalendarCog,
+  CalendarX,
+  CalendarClock,
+  LogIn
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FlowNodeData, NODE_COLORS, NodeType } from './types';
@@ -44,6 +51,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+
+
 
 const ICONS: Record<string, any> = {
   MessageSquare,
@@ -143,6 +152,13 @@ const getIconForType = (type: NodeType, iconName?: string) => {
     webhook_event_router: GitBranch,
     webhook_response: Send,
     webhook_dead_letter: AlertCircle,
+    // Google Calendar nodes
+    google_oauth_connect: LogIn,
+    google_calendar_list_events: CalendarDays,
+    google_calendar_create_event: CalendarPlus,
+    google_calendar_update_event: CalendarCog,
+    google_calendar_delete_event: CalendarX,
+    google_calendar_trigger: CalendarClock,
   };
   
   return typeIcons[type] || Zap;
@@ -162,6 +178,8 @@ const getNodeCategory = (type: NodeType): string => {
   if (['proxy_assign', 'proxy_rotate', 'worker_assign', 'worker_release', 'dispatch_execution', 'identity_rotate'].includes(type)) return 'INFRA';
   // Security nodes
   if (['execution_quota_guard', 'infra_rate_limit', 'if_infra_health', 'secure_context_guard'].includes(type)) return 'SEGURANÇA';
+  // Google Calendar nodes
+  if (type.startsWith('google_')) return 'CALENDAR';
   return 'AÇÃO';
 };
 

@@ -75,7 +75,14 @@ export type NodeType =
   | 'webhook_payload_parser'
   | 'webhook_event_router'
   | 'webhook_response'
-  | 'webhook_dead_letter';
+  | 'webhook_dead_letter'
+  // Google Calendar Integration Nodes
+  | 'google_oauth_connect'
+  | 'google_calendar_list_events'
+  | 'google_calendar_create_event'
+  | 'google_calendar_update_event'
+  | 'google_calendar_delete_event'
+  | 'google_calendar_trigger';
 
 // Flow Lifecycle Status
 export type FlowLifecycleStatus = 'draft' | 'validated' | 'active' | 'paused' | 'error';
@@ -161,7 +168,7 @@ export interface NodeTemplate {
   label: string;
   icon: string;
   description: string;
-  category: 'triggers' | 'conditions' | 'actions' | 'flow' | 'advanced' | 'nativos' | 'stability' | 'automation' | 'infrastructure' | 'security' | 'ai' | 'webhooks';
+  category: 'triggers' | 'conditions' | 'actions' | 'flow' | 'advanced' | 'nativos' | 'stability' | 'automation' | 'infrastructure' | 'security' | 'ai' | 'webhooks' | 'calendar';
   defaultConfig: Record<string, any>;
   requiresInstance?: boolean; // If true, requires connected WhatsApp instance
 }
@@ -519,7 +526,8 @@ export const NATIVE_WA_TEMPLATES: NodeTemplate[] = [
 
 export const NODE_CATEGORIES = {
   ai: { label: 'Agente IA', color: '#f59e0b', icon: 'Brain' },
-  webhooks: { label: 'Webhooks', color: '#06b6d4', icon: 'Webhook' }, // Cyan for Webhooks
+  webhooks: { label: 'Webhooks', color: '#06b6d4', icon: 'Webhook' },
+  calendar: { label: 'Google Calendar', color: '#4285F4', icon: 'Calendar' },
   nativos: { label: 'WhatsApp', color: '#25D366', icon: 'Smartphone' },
   triggers: { label: 'Gatilhos', color: '#22c55e', icon: 'Zap' },
   actions: { label: 'Ações', color: '#3b82f6', icon: 'Send' },
@@ -607,18 +615,25 @@ export const NODE_COLORS: Record<NodeType, string> = {
   webhook_event_router: '#a5f3fc',
   webhook_response: '#cffafe',
   webhook_dead_letter: '#083344',
+  // Google Calendar nodes (Google Blue gradient)
+  google_oauth_connect: '#4285F4',
+  google_calendar_list_events: '#34A853',
+  google_calendar_create_event: '#FBBC05',
+  google_calendar_update_event: '#EA4335',
+  google_calendar_delete_event: '#DB4437',
+  google_calendar_trigger: '#1A73E8',
 };
 
 // Connection validation rules
 export const CONNECTION_RULES = {
   // Nodes that can only have one outgoing connection
-  singleOutput: ['trigger', 'message', 'button', 'list', 'ai', 'webhook', 'delay', 'variable', 'integration', 'http_request', 'webhook_in', 'ecommerce', 'crm_sheets', 'wa_start', 'wa_send_text', 'wa_send_buttons', 'wa_send_list', 'wa_wait_response', 'wa_receive', 'queue_message', 'session_guard', 'retry_policy', 'smart_delay', 'rate_limit', 'enqueue_flow_step', 'http_request_advanced', 'webhook_trigger', 'cron_trigger', 'set_variable', 'subflow_call', 'event_emitter', 'data_transform', 'proxy_assign', 'proxy_rotate', 'worker_assign', 'worker_release', 'dispatch_execution', 'identity_rotate', 'execution_quota_guard', 'infra_rate_limit', 'secure_context_guard', 'ai_prompt_execute', 'ai_chat_context', 'ai_embedding', 'webhook_universal_trigger', 'webhook_auth_guard', 'webhook_signature_verify', 'webhook_rate_limit', 'webhook_queue', 'webhook_deduplication', 'webhook_payload_parser', 'webhook_response', 'webhook_dead_letter'],
+  singleOutput: ['trigger', 'message', 'button', 'list', 'ai', 'webhook', 'delay', 'variable', 'integration', 'http_request', 'webhook_in', 'ecommerce', 'crm_sheets', 'wa_start', 'wa_send_text', 'wa_send_buttons', 'wa_send_list', 'wa_wait_response', 'wa_receive', 'queue_message', 'session_guard', 'retry_policy', 'smart_delay', 'rate_limit', 'enqueue_flow_step', 'http_request_advanced', 'webhook_trigger', 'cron_trigger', 'set_variable', 'subflow_call', 'event_emitter', 'data_transform', 'proxy_assign', 'proxy_rotate', 'worker_assign', 'worker_release', 'dispatch_execution', 'identity_rotate', 'execution_quota_guard', 'infra_rate_limit', 'secure_context_guard', 'ai_prompt_execute', 'ai_chat_context', 'ai_embedding', 'webhook_universal_trigger', 'webhook_auth_guard', 'webhook_signature_verify', 'webhook_rate_limit', 'webhook_queue', 'webhook_deduplication', 'webhook_payload_parser', 'webhook_response', 'webhook_dead_letter', 'google_oauth_connect', 'google_calendar_list_events', 'google_calendar_create_event', 'google_calendar_update_event', 'google_calendar_delete_event'],
   // Nodes that can have multiple outgoing connections (yes/no)
-  conditionalOutput: ['condition', 'split', 'if_instance_state', 'timeout_handler', 'if_expression', 'switch_case', 'if_infra_health', 'ai_decision', 'webhook_event_router'],
+  conditionalOutput: ['condition', 'split', 'if_instance_state', 'timeout_handler', 'if_expression', 'switch_case', 'if_infra_health', 'ai_decision', 'webhook_event_router', 'google_calendar_trigger'],
   // Nodes that cannot have outgoing connections
   noOutput: ['end'],
   // Nodes that can be connected from any node
-  universalInput: ['message', 'button', 'list', 'ai', 'webhook', 'delay', 'condition', 'split', 'variable', 'integration', 'end', 'goto', 'note', 'http_request', 'ecommerce', 'crm_sheets', 'wa_send_text', 'wa_send_buttons', 'wa_send_list', 'wa_wait_response', 'wa_receive', 'queue_message', 'session_guard', 'timeout_handler', 'if_instance_state', 'retry_policy', 'smart_delay', 'rate_limit', 'enqueue_flow_step', 'http_request_advanced', 'webhook_trigger', 'cron_trigger', 'set_variable', 'if_expression', 'loop_for_each', 'switch_case', 'subflow_call', 'event_emitter', 'data_transform', 'proxy_assign', 'proxy_rotate', 'worker_assign', 'worker_release', 'dispatch_execution', 'identity_rotate', 'execution_quota_guard', 'infra_rate_limit', 'if_infra_health', 'secure_context_guard', 'ai_prompt_execute', 'ai_chat_context', 'ai_decision', 'ai_embedding', 'webhook_auth_guard', 'webhook_signature_verify', 'webhook_rate_limit', 'webhook_queue', 'webhook_deduplication', 'webhook_payload_parser', 'webhook_event_router', 'webhook_response', 'webhook_dead_letter'],
+  universalInput: ['message', 'button', 'list', 'ai', 'webhook', 'delay', 'condition', 'split', 'variable', 'integration', 'end', 'goto', 'note', 'http_request', 'ecommerce', 'crm_sheets', 'wa_send_text', 'wa_send_buttons', 'wa_send_list', 'wa_wait_response', 'wa_receive', 'queue_message', 'session_guard', 'timeout_handler', 'if_instance_state', 'retry_policy', 'smart_delay', 'rate_limit', 'enqueue_flow_step', 'http_request_advanced', 'webhook_trigger', 'cron_trigger', 'set_variable', 'if_expression', 'loop_for_each', 'switch_case', 'subflow_call', 'event_emitter', 'data_transform', 'proxy_assign', 'proxy_rotate', 'worker_assign', 'worker_release', 'dispatch_execution', 'identity_rotate', 'execution_quota_guard', 'infra_rate_limit', 'if_infra_health', 'secure_context_guard', 'ai_prompt_execute', 'ai_chat_context', 'ai_decision', 'ai_embedding', 'webhook_auth_guard', 'webhook_signature_verify', 'webhook_rate_limit', 'webhook_queue', 'webhook_deduplication', 'webhook_payload_parser', 'webhook_event_router', 'webhook_response', 'webhook_dead_letter', 'google_calendar_list_events', 'google_calendar_create_event', 'google_calendar_update_event', 'google_calendar_delete_event'],
 };
 
 // Generic Automation Engine Templates (Channel-Agnostic)
@@ -1123,5 +1138,104 @@ export const WEBHOOK_TEMPLATES: NodeTemplate[] = [
   }
 ];
 
-// Get all templates including native, stability, automation, infrastructure, security, AI, and Webhooks
-export const getAllTemplates = () => [...NATIVE_WA_TEMPLATES, ...NODE_TEMPLATES, ...STABILITY_TEMPLATES, ...AUTOMATION_TEMPLATES, ...INFRASTRUCTURE_TEMPLATES, ...SECURITY_TEMPLATES, ...AI_TEMPLATES, ...WEBHOOK_TEMPLATES];
+// Google Calendar Integration Templates
+export const GOOGLE_CALENDAR_TEMPLATES: NodeTemplate[] = [
+  {
+    type: 'google_oauth_connect',
+    label: 'Conectar Google',
+    icon: 'LogIn',
+    description: 'Conectar conta Google via OAuth 2.0',
+    category: 'calendar',
+    defaultConfig: {
+      scope: 'https://www.googleapis.com/auth/calendar',
+      save_connection_to: 'google_oauth',
+      on_fail: 'end'
+    }
+  },
+  {
+    type: 'google_calendar_list_events',
+    label: 'Listar Eventos',
+    icon: 'CalendarDays',
+    description: 'Buscar eventos do Google Calendar',
+    category: 'calendar',
+    defaultConfig: {
+      calendar_id: 'primary',
+      time_min: '{{now}}',
+      time_max: '{{now_plus_7d}}',
+      max_results: 10,
+      query: '',
+      single_events: true,
+      order_by: 'startTime',
+      save_events_to: 'calendar_events'
+    }
+  },
+  {
+    type: 'google_calendar_create_event',
+    label: 'Criar Evento',
+    icon: 'CalendarPlus',
+    description: 'Criar evento na agenda Google',
+    category: 'calendar',
+    defaultConfig: {
+      calendar_id: 'primary',
+      title: '',
+      description: '',
+      start_time: '',
+      end_time: '',
+      timezone: 'America/Sao_Paulo',
+      attendees: [],
+      location: '',
+      reminders: { use_default: true },
+      save_event_to: 'created_event'
+    }
+  },
+  {
+    type: 'google_calendar_update_event',
+    label: 'Atualizar Evento',
+    icon: 'CalendarCog',
+    description: 'Atualizar evento existente',
+    category: 'calendar',
+    defaultConfig: {
+      calendar_id: 'primary',
+      event_id: '',
+      title: '',
+      description: '',
+      start_time: '',
+      end_time: '',
+      timezone: 'America/Sao_Paulo',
+      attendees: [],
+      location: '',
+      save_event_to: 'updated_event'
+    }
+  },
+  {
+    type: 'google_calendar_delete_event',
+    label: 'Deletar Evento',
+    icon: 'CalendarX',
+    description: 'Remover evento da agenda',
+    category: 'calendar',
+    defaultConfig: {
+      calendar_id: 'primary',
+      event_id: '',
+      send_updates: 'all'
+    }
+  },
+  {
+    type: 'google_calendar_trigger',
+    label: 'Trigger Calendário',
+    icon: 'CalendarClock',
+    description: 'Dispara fluxo baseado em eventos do calendário',
+    category: 'calendar',
+    defaultConfig: {
+      calendar_id: 'primary',
+      trigger_type: 'event_start',
+      minutes_before: 30,
+      event_types: ['default', 'outOfOffice', 'focusTime'],
+      filter_query: '',
+      polling_interval_minutes: 5,
+      save_event_to: 'trigger_event'
+    }
+  }
+];
+
+// Get all templates including native, stability, automation, infrastructure, security, AI, Webhooks and Calendar
+export const getAllTemplates = () => [...NATIVE_WA_TEMPLATES, ...NODE_TEMPLATES, ...STABILITY_TEMPLATES, ...AUTOMATION_TEMPLATES, ...INFRASTRUCTURE_TEMPLATES, ...SECURITY_TEMPLATES, ...AI_TEMPLATES, ...WEBHOOK_TEMPLATES, ...GOOGLE_CALENDAR_TEMPLATES];
