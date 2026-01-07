@@ -3361,6 +3361,255 @@ export const NodeConfigPanel = ({ node, onClose, onSave, onDelete, onDuplicate }
           </div>
         );
 
+      // ============ AI NATIVE NODES ============
+      case 'ai_prompt_execute':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/20">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-amber-500" />
+                <div>
+                  <p className="text-sm font-medium">Executar Prompt IA</p>
+                  <p className="text-[11px] text-muted-foreground">Usa Lovable AI (sem API Key)</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">System Prompt</Label>
+              <Textarea value={formData.system_prompt || ''} onChange={(e) => updateField('system_prompt', e.target.value)} placeholder="Você é um assistente útil..." className="bg-muted/50 resize-none" rows={3} />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Prompt</Label>
+              <Textarea value={formData.prompt || ''} onChange={(e) => updateField('prompt', e.target.value)} placeholder="Responda à mensagem: {{message}}" className="bg-muted/50 resize-none min-h-[100px]" />
+              <div className="flex flex-wrap gap-1.5">
+                {['{{message}}', '{{nome}}', '{{telefone}}'].map((v) => (
+                  <Badge key={v} variant="secondary" className="text-[10px] cursor-pointer hover:bg-primary/20" onClick={() => updateField('prompt', (formData.prompt || '') + ' ' + v)}>{v}</Badge>
+                ))}
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Modelo</Label>
+              <Select value={formData.model || 'google/gemini-2.5-flash'} onValueChange={(v) => updateField('model', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="google/gemini-2.5-flash">⚡ Gemini 2.5 Flash</SelectItem>
+                  <SelectItem value="google/gemini-2.5-pro">💎 Gemini 2.5 Pro</SelectItem>
+                  <SelectItem value="openai/gpt-5-mini">🤖 GPT-5 Mini</SelectItem>
+                  <SelectItem value="openai/gpt-5">🧠 GPT-5</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Max Tokens</Label>
+                <Input type="number" min="100" max="4096" value={formData.max_tokens || 1024} onChange={(e) => updateField('max_tokens', parseInt(e.target.value))} className="bg-muted/50" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Temperatura</Label>
+                <Input type="number" min="0" max="1" step="0.1" value={formData.temperature || 0.7} onChange={(e) => updateField('temperature', parseFloat(e.target.value))} className="bg-muted/50" />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Salvar resposta em</Label>
+              <Input value={formData.save_response_to || 'ai_response'} onChange={(e) => updateField('save_response_to', e.target.value)} placeholder="ai_response" className="bg-muted/50 font-mono" />
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Usar contexto de chat</Label>
+                <p className="text-[11px] text-muted-foreground">Inclui histórico da conversa</p>
+              </div>
+              <Switch checked={formData.use_context ?? true} onCheckedChange={(v) => updateField('use_context', v)} />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Resposta Fallback</Label>
+              <Input value={formData.fallback_response || ''} onChange={(e) => updateField('fallback_response', e.target.value)} placeholder="Desculpe, não consegui processar..." className="bg-muted/50" />
+            </div>
+          </div>
+        );
+
+      case 'ai_chat_context':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500/10 to-yellow-500/10 border border-amber-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">💬</div>
+                <div>
+                  <p className="text-sm font-medium">Contexto de Chat IA</p>
+                  <p className="text-[11px] text-muted-foreground">Mantém histórico conversacional</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Escopo do Contexto</Label>
+              <Select value={formData.context_scope || 'execution'} onValueChange={(v) => updateField('context_scope', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="execution">🔄 Execução atual</SelectItem>
+                  <SelectItem value="session">👤 Sessão do usuário</SelectItem>
+                  <SelectItem value="global">🌍 Global</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Máx. Histórico</Label>
+                <Input type="number" min="1" max="50" value={formData.max_history || 10} onChange={(e) => updateField('max_history', parseInt(e.target.value))} className="bg-muted/50" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Chave do Contexto</Label>
+                <Input value={formData.context_key || 'chat_history'} onChange={(e) => updateField('context_key', e.target.value)} placeholder="chat_history" className="bg-muted/50 font-mono text-sm" />
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Incluir System Prompt</Label>
+                <p className="text-[11px] text-muted-foreground">Adiciona instruções do sistema</p>
+              </div>
+              <Switch checked={formData.include_system ?? true} onCheckedChange={(v) => updateField('include_system', v)} />
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Auto-resumir</Label>
+                <p className="text-[11px] text-muted-foreground">Resume conversas longas</p>
+              </div>
+              <Switch checked={formData.auto_summarize ?? false} onCheckedChange={(v) => updateField('auto_summarize', v)} />
+            </div>
+            
+            {formData.auto_summarize && (
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Resumir após X mensagens</Label>
+                <Input type="number" min="5" max="100" value={formData.summarize_after || 20} onChange={(e) => updateField('summarize_after', parseInt(e.target.value))} className="bg-muted/50" />
+              </div>
+            )}
+          </div>
+        );
+
+      case 'ai_decision':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500/10 to-green-500/10 border border-amber-500/20">
+              <div className="flex items-center gap-2">
+                <GitBranch className="w-5 h-5 text-amber-500" />
+                <div>
+                  <p className="text-sm font-medium">Decisão IA</p>
+                  <p className="text-[11px] text-muted-foreground">Retorna decisão estruturada</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Prompt de Decisão</Label>
+              <Textarea value={formData.decision_prompt || ''} onChange={(e) => updateField('decision_prompt', e.target.value)} placeholder="Analise a mensagem e decida a melhor ação..." className="bg-muted/50 resize-none" rows={3} />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Opções de Decisão</Label>
+              <Textarea 
+                value={formData.options_raw || ''} 
+                onChange={(e) => updateField('options_raw', e.target.value)} 
+                placeholder="venda|Interesse em compra&#10;suporte|Precisa de ajuda&#10;informacao|Quer saber mais&#10;outro|Outro assunto" 
+                className="bg-muted/50 resize-none font-mono text-xs" 
+                rows={5} 
+              />
+              <p className="text-[11px] text-muted-foreground">Formato: valor|descrição (um por linha)</p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Opção Padrão</Label>
+                <Input value={formData.default_option || 'outro'} onChange={(e) => updateField('default_option', e.target.value)} placeholder="outro" className="bg-muted/50 font-mono" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Confiança Mín.</Label>
+                <Input type="number" min="0" max="1" step="0.1" value={formData.confidence_threshold || 0.7} onChange={(e) => updateField('confidence_threshold', parseFloat(e.target.value))} className="bg-muted/50" />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Salvar decisão em</Label>
+                <Input value={formData.save_decision_to || 'ai_decision'} onChange={(e) => updateField('save_decision_to', e.target.value)} placeholder="ai_decision" className="bg-muted/50 font-mono text-sm" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Salvar razão em</Label>
+                <Input value={formData.save_reasoning_to || 'ai_reasoning'} onChange={(e) => updateField('save_reasoning_to', e.target.value)} placeholder="ai_reasoning" className="bg-muted/50 font-mono text-sm" />
+              </div>
+            </div>
+            
+            <div className="p-3 rounded-xl bg-muted/30">
+              <p className="text-xs text-muted-foreground">
+                <span className="text-green-400 font-medium">✓ Decisão</span> = segue caminho correspondente
+                <br />
+                <span className="text-amber-400 font-medium">⚠ Baixa confiança</span> = usa opção padrão
+              </p>
+            </div>
+          </div>
+        );
+
+      case 'ai_embedding':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500/10 to-purple-500/10 border border-amber-500/20">
+              <div className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-amber-500" />
+                <div>
+                  <p className="text-sm font-medium">Embedding IA</p>
+                  <p className="text-[11px] text-muted-foreground">Gera vetores para busca semântica</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Texto de Origem</Label>
+              <Input value={formData.text_source || '{{message}}'} onChange={(e) => updateField('text_source', e.target.value)} placeholder="{{message}}" className="bg-muted/50 font-mono" />
+              <div className="flex flex-wrap gap-1.5">
+                {['{{message}}', '{{nome}}', '{{descricao}}'].map((v) => (
+                  <Badge key={v} variant="secondary" className="text-[10px] cursor-pointer hover:bg-primary/20" onClick={() => updateField('text_source', v)}>{v}</Badge>
+                ))}
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Salvar embedding em</Label>
+              <Input value={formData.save_embedding_to || 'embedding'} onChange={(e) => updateField('save_embedding_to', e.target.value)} placeholder="embedding" className="bg-muted/50 font-mono" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Coleção de Busca (opcional)</Label>
+              <Input value={formData.search_collection || ''} onChange={(e) => updateField('search_collection', e.target.value)} placeholder="produtos, faq, base_conhecimento" className="bg-muted/50" />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Top K</Label>
+                <Input type="number" min="1" max="20" value={formData.top_k || 5} onChange={(e) => updateField('top_k', parseInt(e.target.value))} className="bg-muted/50" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Similaridade Mín.</Label>
+                <Input type="number" min="0" max="1" step="0.1" value={formData.similarity_threshold || 0.8} onChange={(e) => updateField('similarity_threshold', parseFloat(e.target.value))} className="bg-muted/50" />
+              </div>
+            </div>
+            
+            <div className="p-3 rounded-xl bg-primary/5 border border-primary/20">
+              <div className="flex items-start gap-2">
+                <Info className="w-4 h-4 text-primary mt-0.5" />
+                <p className="text-xs text-muted-foreground">Embeddings são úteis para buscar documentos similares, FAQs ou produtos baseado em significado semântico.</p>
+              </div>
+            </div>
+          </div>
+        );
+
       default:
         return (
           <div className="text-center py-8 text-muted-foreground">
