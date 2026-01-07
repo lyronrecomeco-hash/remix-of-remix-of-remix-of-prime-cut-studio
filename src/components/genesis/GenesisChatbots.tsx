@@ -556,14 +556,14 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
                   <div className="space-y-2">
                     <Label>Instância (opcional)</Label>
                     <Select
-                      value={form.instance_id}
-                      onValueChange={(v) => setForm({ ...form, instance_id: v })}
+                      value={form.instance_id || "__all__"}
+                      onValueChange={(v) => setForm({ ...form, instance_id: v === "__all__" ? "" : v })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Todas as instâncias" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Todas as instâncias</SelectItem>
+                        <SelectItem value="__all__">Todas as instâncias</SelectItem>
                         {instances.map((inst) => (
                           <SelectItem key={inst.id} value={inst.id}>
                             {inst.name}
