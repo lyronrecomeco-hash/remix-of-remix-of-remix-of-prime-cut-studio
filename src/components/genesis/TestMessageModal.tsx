@@ -111,14 +111,15 @@ export function TestMessageModal({ isOpen, onClose, instanceId, instanceName }: 
     addLog('info', `Número destino: ${normalizedPhone}`);
 
     try {
-      // Chamar o proxy para enviar mensagem
+      // Chamar o proxy para enviar mensagem usando o formato correto
       addLog('info', 'Conectando ao backend via proxy...');
 
       const { data, error } = await supabase.functions.invoke('genesis-backend-proxy', {
         body: {
           instanceId,
-          action: 'send',
-          payload: {
+          path: `/api/instance/${instanceId}/send`,
+          method: 'POST',
+          body: {
             to: normalizedPhone,
             message: customMessage,
           },
