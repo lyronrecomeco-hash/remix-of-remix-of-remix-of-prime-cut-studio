@@ -8,7 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { motion } from 'framer-motion';
-import { Loader2, Check, ArrowRight, Star, Search, Sparkles } from 'lucide-react';
+import { 
+  Loader2, Check, ArrowRight, Star, Search, Sparkles,
+  Stethoscope, Scissors, UtensilsCrossed, Dumbbell, Home, PawPrint, Scale, GraduationCap, Wrench, Target,
+  Heart, Briefcase, Car, Plane, ShoppingBag, Camera, Music, Palette, Building2, Phone
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { PROFESSIONAL_TEMPLATES, ProfessionalTemplate, buildFlowConfigFromForm, ChatbotFormState, DEFAULT_FORM_STATE } from './chatbot-config';
 
@@ -18,18 +22,79 @@ interface ChatbotTemplatesProps {
   onOpenChange: (open: boolean) => void;
 }
 
+// Mapeamento de categorias para ícones Lucide
+const CATEGORY_ICONS: Record<string, React.ElementType> = {
+  'all': Target,
+  'saude': Stethoscope,
+  'beleza': Scissors,
+  'alimentacao': UtensilsCrossed,
+  'fitness': Dumbbell,
+  'imoveis': Home,
+  'pets': PawPrint,
+  'juridico': Scale,
+  'educacao': GraduationCap,
+  'automotivo': Wrench,
+};
+
+// Mapeamento de templates para ícones Lucide baseado no slug/categoria
+const TEMPLATE_ICONS: Record<string, React.ElementType> = {
+  'clinica-medica': Stethoscope,
+  'barbearia': Scissors,
+  'restaurante': UtensilsCrossed,
+  'salao-beleza': Scissors,
+  'academia': Dumbbell,
+  'imobiliaria': Building2,
+  'petshop': PawPrint,
+  'escritorio-advocacia': Scale,
+  'escola-idiomas': GraduationCap,
+  'oficina-mecanica': Wrench,
+  'dentista': Heart,
+  'hotel': Building2,
+  'agencia-viagens': Plane,
+  'loja-roupas': ShoppingBag,
+  'fotografo': Camera,
+  'estudio-musica': Music,
+  'estudio-tatuagem': Palette,
+  'consultoria': Briefcase,
+  'auto-escola': Car,
+  'telemarketing': Phone,
+};
+
+// Cores de fundo para ícones por categoria
+const CATEGORY_COLORS: Record<string, string> = {
+  'saude': 'bg-red-500/15 text-red-500',
+  'beleza': 'bg-pink-500/15 text-pink-500',
+  'alimentacao': 'bg-green-500/15 text-green-500',
+  'fitness': 'bg-orange-500/15 text-orange-500',
+  'imoveis': 'bg-blue-500/15 text-blue-500',
+  'pets': 'bg-amber-500/15 text-amber-500',
+  'juridico': 'bg-purple-500/15 text-purple-500',
+  'educacao': 'bg-indigo-500/15 text-indigo-500',
+  'automotivo': 'bg-slate-500/15 text-slate-500',
+};
+
 const CATEGORIES = [
-  { id: 'all', label: 'Todos', icon: '🎯' },
-  { id: 'saude', label: 'Saúde', icon: '🏥' },
-  { id: 'beleza', label: 'Beleza', icon: '💅' },
-  { id: 'alimentacao', label: 'Alimentação', icon: '🍽️' },
-  { id: 'fitness', label: 'Fitness', icon: '💪' },
-  { id: 'imoveis', label: 'Imóveis', icon: '🏠' },
-  { id: 'pets', label: 'Pets', icon: '🐾' },
-  { id: 'juridico', label: 'Jurídico', icon: '⚖️' },
-  { id: 'educacao', label: 'Educação', icon: '📚' },
-  { id: 'automotivo', label: 'Automotivo', icon: '🔧' },
+  { id: 'all', label: 'Todos' },
+  { id: 'saude', label: 'Saúde' },
+  { id: 'beleza', label: 'Beleza' },
+  { id: 'alimentacao', label: 'Alimentação' },
+  { id: 'fitness', label: 'Fitness' },
+  { id: 'imoveis', label: 'Imóveis' },
+  { id: 'pets', label: 'Pets' },
+  { id: 'juridico', label: 'Jurídico' },
+  { id: 'educacao', label: 'Educação' },
+  { id: 'automotivo', label: 'Automotivo' },
 ];
+
+// Helper para obter ícone do template
+const getTemplateIcon = (template: ProfessionalTemplate): React.ElementType => {
+  return TEMPLATE_ICONS[template.slug] || CATEGORY_ICONS[template.category] || Target;
+};
+
+// Helper para obter cor do template
+const getTemplateColor = (template: ProfessionalTemplate): string => {
+  return CATEGORY_COLORS[template.category] || 'bg-primary/15 text-primary';
+};
 
 export function ChatbotTemplates({ onTemplateApply, isOpen, onOpenChange }: ChatbotTemplatesProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<ProfessionalTemplate | null>(null);
@@ -113,10 +178,12 @@ export function ChatbotTemplates({ onTemplateApply, isOpen, onOpenChange }: Chat
     }
   };
 
+  const TemplateIconComponent = selectedTemplate ? getTemplateIcon(selectedTemplate) : Target;
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
             Templates Profissionais
@@ -126,92 +193,94 @@ export function ChatbotTemplates({ onTemplateApply, isOpen, onOpenChange }: Chat
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="flex-1 overflow-hidden flex flex-col min-h-0">
           {selectedTemplate ? (
             /* Template Customization */
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6 py-4">
-              <Button variant="ghost" size="sm" onClick={() => setSelectedTemplate(null)} className="gap-2">
-                ← Voltar
-              </Button>
+            <ScrollArea className="flex-1">
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6 p-6">
+                <Button variant="ghost" size="sm" onClick={() => setSelectedTemplate(null)} className="gap-2">
+                  ← Voltar
+                </Button>
 
-              <Card className="border-primary/30">
-                <CardHeader>
-                  <div className="flex items-center gap-4">
-                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${selectedTemplate.color} flex items-center justify-center text-2xl`}>
-                      {selectedTemplate.icon}
+                <Card className="border-primary/30">
+                  <CardHeader>
+                    <div className="flex items-center gap-4">
+                      <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${getTemplateColor(selectedTemplate)}`}>
+                        <TemplateIconComponent className="w-7 h-7" />
+                      </div>
+                      <div className="flex-1">
+                        <CardTitle>{selectedTemplate.name}</CardTitle>
+                        <CardDescription>{selectedTemplate.description}</CardDescription>
+                      </div>
+                      {selectedTemplate.isFeatured && (
+                        <Badge className="bg-amber-500"><Star className="w-3 h-3 mr-1" />Popular</Badge>
+                      )}
                     </div>
-                    <div className="flex-1">
-                      <CardTitle>{selectedTemplate.name}</CardTitle>
-                      <CardDescription>{selectedTemplate.description}</CardDescription>
-                    </div>
-                    {selectedTemplate.isFeatured && (
-                      <Badge className="bg-amber-500"><Star className="w-3 h-3 mr-1" />Popular</Badge>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Company Name */}
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Nome da sua Empresa *</Label>
-                    <Input
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                      placeholder={selectedTemplate.form.company_name}
-                      className="text-lg"
-                    />
-                    <p className="text-xs text-muted-foreground">Este nome aparecerá nas mensagens do chatbot</p>
-                  </div>
-
-                  {/* Keywords */}
-                  <div>
-                    <Label className="text-sm font-medium">Palavras-chave de ativação</Label>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {selectedTemplate.keywords.slice(0, 8).map((kw, i) => (
-                        <Badge key={i} variant="secondary">{kw}</Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Preview Menu */}
-                  <div className="p-4 bg-muted/50 rounded-xl">
-                    <Label className="text-sm font-medium mb-3 block">Preview do Menu</Label>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Company Name */}
                     <div className="space-y-2">
-                      {selectedTemplate.form.menu_options?.slice(0, 5).map((opt, i) => (
-                        <div key={i} className="flex items-center gap-2 text-sm">
-                          <Badge variant="outline" className="font-mono w-6 h-6 p-0 justify-center">{i + 1}</Badge>
-                          <span>{opt.text}</span>
-                        </div>
-                      ))}
+                      <Label className="text-sm font-medium">Nome da sua Empresa *</Label>
+                      <Input
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        placeholder={selectedTemplate.form.company_name}
+                        className="text-lg"
+                      />
+                      <p className="text-xs text-muted-foreground">Este nome aparecerá nas mensagens do chatbot</p>
                     </div>
-                  </div>
 
-                  {/* Features */}
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Check className="w-4 h-4 text-green-500" />
-                      Saudação por horário
+                    {/* Keywords */}
+                    <div>
+                      <Label className="text-sm font-medium">Palavras-chave de ativação</Label>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {selectedTemplate.keywords.slice(0, 8).map((kw, i) => (
+                          <Badge key={i} variant="secondary">{kw}</Badge>
+                        ))}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Check className="w-4 h-4 text-green-500" />
-                      Menu completo
+
+                    {/* Preview Menu */}
+                    <div className="p-4 bg-muted/50 rounded-xl">
+                      <Label className="text-sm font-medium mb-3 block">Preview do Menu</Label>
+                      <div className="space-y-2">
+                        {selectedTemplate.form.menu_options?.slice(0, 5).map((opt, i) => (
+                          <div key={i} className="flex items-center gap-2 text-sm">
+                            <Badge variant="outline" className="font-mono w-6 h-6 p-0 justify-center">{i + 1}</Badge>
+                            <span>{opt.text}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Check className="w-4 h-4 text-green-500" />
-                      Coleta de dados
+
+                    {/* Features */}
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Check className="w-4 h-4 text-green-500" />
+                        Saudação por horário
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Check className="w-4 h-4 text-green-500" />
+                        Menu completo
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Check className="w-4 h-4 text-green-500" />
+                        Coleta de dados
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Check className="w-4 h-4 text-green-500" />
+                        Transferência humana
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Check className="w-4 h-4 text-green-500" />
-                      Transferência humana
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </ScrollArea>
           ) : (
             /* Template Grid */
             <>
-              {/* Search & Filter */}
-              <div className="space-y-3 pb-4 border-b">
+              {/* Search & Filter - Fixed */}
+              <div className="space-y-3 p-6 pb-4 border-b shrink-0">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -221,68 +290,73 @@ export function ChatbotTemplates({ onTemplateApply, isOpen, onOpenChange }: Chat
                     className="pl-10"
                   />
                 </div>
-                <ScrollArea className="w-full whitespace-nowrap">
-                  <div className="flex gap-2">
-                    {CATEGORIES.map((cat) => (
+                <div className="flex gap-2 flex-wrap">
+                  {CATEGORIES.map((cat) => {
+                    const CategoryIcon = CATEGORY_ICONS[cat.id];
+                    return (
                       <Button
                         key={cat.id}
                         variant={selectedCategory === cat.id ? 'default' : 'outline'}
                         size="sm"
                         onClick={() => setSelectedCategory(cat.id)}
-                        className="gap-1.5 flex-shrink-0"
+                        className="gap-1.5"
                       >
-                        <span>{cat.icon}</span>
+                        <CategoryIcon className="w-4 h-4" />
                         <span>{cat.label}</span>
                       </Button>
-                    ))}
-                  </div>
-                </ScrollArea>
+                    );
+                  })}
+                </div>
               </div>
 
-              <ScrollArea className="flex-1 pr-4">
-                <div className="grid gap-4 md:grid-cols-2 py-4">
-                  {filteredTemplates.map((template, index) => (
-                    <motion.div
-                      key={template.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                    >
-                      <Card
-                        className="cursor-pointer hover:shadow-lg transition-all hover:border-primary/50 relative overflow-hidden h-full"
-                        onClick={() => handleSelectTemplate(template)}
+              {/* Scrollable Grid */}
+              <ScrollArea className="flex-1 min-h-0">
+                <div className="grid gap-4 md:grid-cols-2 p-6">
+                  {filteredTemplates.map((template, index) => {
+                    const TemplateIcon = getTemplateIcon(template);
+                    return (
+                      <motion.div
+                        key={template.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.03 }}
                       >
-                        {template.isFeatured && (
-                          <div className="absolute top-2 right-2">
-                            <Badge className="bg-amber-500 text-white border-0 gap-1">
-                              <Star className="w-3 h-3 fill-current" />
-                              Popular
-                            </Badge>
-                          </div>
-                        )}
-                        <CardContent className="p-5">
-                          <div className="flex items-start gap-4">
-                            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${template.color} flex items-center justify-center text-xl flex-shrink-0`}>
-                              {template.icon}
+                        <Card
+                          className="cursor-pointer hover:shadow-lg transition-all hover:border-primary/50 relative overflow-hidden h-full"
+                          onClick={() => handleSelectTemplate(template)}
+                        >
+                          {template.isFeatured && (
+                            <div className="absolute top-2 right-2">
+                              <Badge className="bg-amber-500 text-white border-0 gap-1">
+                                <Star className="w-3 h-3 fill-current" />
+                                Popular
+                              </Badge>
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold mb-1">{template.name}</h4>
-                              <p className="text-sm text-muted-foreground line-clamp-2">{template.description}</p>
-                              <div className="flex items-center gap-2 mt-3">
-                                <Badge variant="outline" className="text-xs">
-                                  {template.keywords.length} palavras-chave
-                                </Badge>
-                                <Badge variant="secondary" className="text-xs">
-                                  {template.form.menu_options?.length || 5} opções
-                                </Badge>
+                          )}
+                          <CardContent className="p-5">
+                            <div className="flex items-start gap-4">
+                              <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${getTemplateColor(template)}`}>
+                                <TemplateIcon className="w-6 h-6" />
                               </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold mb-1">{template.name}</h4>
+                                <p className="text-sm text-muted-foreground line-clamp-2">{template.description}</p>
+                                <div className="flex items-center gap-2 mt-3">
+                                  <Badge variant="outline" className="text-xs">
+                                    {template.keywords.length} palavras-chave
+                                  </Badge>
+                                  <Badge variant="secondary" className="text-xs">
+                                    {template.form.menu_options?.length || 5} opções
+                                  </Badge>
+                                </div>
+                              </div>
+                              <ArrowRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
                             </div>
-                            <ArrowRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  ))}
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    );
+                  })}
                 </div>
               </ScrollArea>
             </>
@@ -290,7 +364,7 @@ export function ChatbotTemplates({ onTemplateApply, isOpen, onOpenChange }: Chat
         </div>
 
         {selectedTemplate && (
-          <DialogFooter className="border-t pt-4">
+          <DialogFooter className="border-t p-6 shrink-0">
             <Button variant="outline" onClick={() => setSelectedTemplate(null)}>Cancelar</Button>
             <Button onClick={handleApplyTemplate} disabled={isApplying || !companyName.trim()} className="gap-2">
               {isApplying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
