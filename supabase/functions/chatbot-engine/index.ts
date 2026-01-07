@@ -98,6 +98,44 @@ interface IncomingMessage {
 }
 
 // =====================================================
+// HELPER: Dedup - evitar processar mesma mensagem 2x
+// =====================================================
+async function checkAndRegisterDedup(
+  supabase: any,
+  instanceId: string,
+  messageId: string | undefined,
+  fromJid: string
+): Promise<boolean> {
+  // Se não há messageId, não podemos fazer dedup - permitir
+  if (!messageId) return true;
+
+  try {
+    const { error } = await supabase
+      .from('chatbot_inbound_dedup')
+      .insert({
+        instance_id: instanceId,
+        message_id: messageId,
+        from_jid: fromJid,
+      });
+
+    // Se constraint unique falhou = já existe = duplicada
+    if (error) {
+      if (error.code === '23505') {
+        console.log(`[DEDUP] Message ${messageId} already processed, skipping`);
+        return false; // Duplicada
+      }
+      // Outro erro, logar mas permitir
+      console.error('[DEDUP] Insert error (allowing):', error.message);
+    }
+
+    return true; // Primeira vez, processar
+  } catch (e) {
+    console.error('[DEDUP] Exception (allowing):', e);
+    return true;
+  }
+}
+
+// =====================================================
 // CONSTANTS
 // =====================================================
 const LUNA_BASE_PROMPT = `Você é Luna, a assistente virtual inteligente.
@@ -1185,9 +1223,18 @@ async function processIncomingMessage(
   supabase: any,
   message: IncomingMessage
 ): Promise<{ success: boolean; response?: string; chatbotId?: string; chatbotName?: string }> {
-  const { from: contactId, message: userMessage, instanceId } = message;
+  const { from: contactId, message: userMessage, instanceId, messageId } = message;
   
   console.log(`[ENGINE] Processing message from ${contactId}: ${userMessage.slice(0, 50)}...`);
+
+  // =====================================================
+  // ANTI-DUPLICAÇÃO: Verificar se já processamos este messageId
+  // =====================================================
+  const isNew = await checkAndRegisterDedup(supabase, instanceId, messageId, contactId);
+  if (!isNew) {
+    // Mensagem duplicada - responder success mas não processar
+    return { success: true, response: '[DEDUP] Already processed' };
+  }
   
   // PRIORIDADE 1: Verificar sessão ativa
   const { data: activeSession } = await supabase

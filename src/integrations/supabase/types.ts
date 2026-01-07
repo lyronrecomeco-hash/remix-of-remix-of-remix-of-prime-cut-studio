@@ -904,6 +904,36 @@ export type Database = {
         }
         Relationships: []
       }
+      chatbot_inbound_dedup: {
+        Row: {
+          chatbot_id: string | null
+          created_at: string
+          from_jid: string | null
+          id: string
+          instance_id: string
+          message_id: string
+          session_id: string | null
+        }
+        Insert: {
+          chatbot_id?: string | null
+          created_at?: string
+          from_jid?: string | null
+          id?: string
+          instance_id: string
+          message_id: string
+          session_id?: string | null
+        }
+        Update: {
+          chatbot_id?: string | null
+          created_at?: string
+          from_jid?: string | null
+          id?: string
+          instance_id?: string
+          message_id?: string
+          session_id?: string | null
+        }
+        Relationships: []
+      }
       chatbot_session_logs: {
         Row: {
           chatbot_id: string | null
