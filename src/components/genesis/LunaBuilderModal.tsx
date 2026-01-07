@@ -192,22 +192,19 @@ export function LunaBuilderModal({ open, onOpenChange, onComplete, instances }: 
 
     setIsSaving(true);
     try {
-      // Ensure instance_id is null if empty/invalid
-      const validInstanceId = generatedConfig.instance_id && generatedConfig.instance_id.trim() !== '' 
-        ? generatedConfig.instance_id 
-        : null;
-
+      // NEVER use instance_id from AI - always set to null
+      // User can assign instance later in the chatbot settings
       const insertData = {
         name: generatedConfig.name,
         trigger_type: generatedConfig.trigger_type,
-        trigger_keywords: generatedConfig.trigger_keywords || generatedConfig.keywords.split(',').map(k => k.trim()),
+        trigger_keywords: generatedConfig.trigger_keywords || generatedConfig.keywords?.split(',').map((k: string) => k.trim()) || [],
         response_type: 'text',
         response_content: null,
         delay_seconds: generatedConfig.delay || generatedConfig.delay_seconds || 2,
-        instance_id: validInstanceId,
+        instance_id: null,
         ai_enabled: true,
         ai_model: 'gpt-4o-mini',
-        ai_temperature: generatedConfig.ai_temperature,
+        ai_temperature: generatedConfig.ai_temperature || 0.7,
         ai_system_prompt: generatedConfig.ai_system_prompt,
         is_active: true,
         priority: 1,
