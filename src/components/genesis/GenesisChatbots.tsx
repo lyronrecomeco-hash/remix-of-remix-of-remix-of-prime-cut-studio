@@ -121,6 +121,13 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
 
   useEffect(() => {
     fetchChatbots();
+    
+    // Listen for chatbot creation from Luna
+    const handleChatbotCreated = () => {
+      fetchChatbots();
+    };
+    window.addEventListener('chatbot-created', handleChatbotCreated);
+    return () => window.removeEventListener('chatbot-created', handleChatbotCreated);
   }, [fetchChatbots]);
 
   const resetForm = () => {
