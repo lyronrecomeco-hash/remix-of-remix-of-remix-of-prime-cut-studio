@@ -102,6 +102,13 @@ class InstanceManager {
   constructor() {
     this.instances = new Map(); // instanceId -> { sock, status, phoneNumber, qrCode, ... }
     this.heartbeatIntervals = new Map();
+
+    // Anti-duplicidade local (protege contra upserts duplicados do Baileys / retries)
+    // instanceId -> Map<dedupKey, lastSeenAtMs>
+    this.inboundDedup = new Map();
+    this.INBOUND_DEDUP_TTL_MS = 10 * 60 * 1000; // 10min
+    this.INBOUND_DEDUP_MAX = 5000;
+
     this.configPath = path.join(CONFIG.DATA_DIR, 'instances.json');
     this.loadInstances();
   }
@@ -761,6 +768,45 @@ class InstanceManager {
     return true;
   }
   
+  // ════════════════════════════════════════════════════════════════════════════
+  // ANTI-DUPLICIDADE (LOCAL): evitar processar a mesma mensagem 2x no VPS
+  // ════════════════════════════════════════════════════════════════════════════
+  getInboundDedupKey(messageId, remoteJid, message, messageTimestamp) {
+    if (messageId) return String(messageId);
+    const ts = messageTimestamp ? String(messageTimestamp) : '';
+    return crypto.createHash('sha1').update(`${remoteJid}|${message}|${ts}`).digest('hex');
+  }
+
+  isDuplicateInbound(instanceId, messageId, remoteJid, message, messageTimestamp) {
+    const now = Date.now();
+
+    let map = this.inboundDedup.get(instanceId);
+    if (!map) {
+      map = new Map();
+      this.inboundDedup.set(instanceId, map);
+    }
+
+    // Limpar entradas antigas (TTL)
+    const ttl = this.INBOUND_DEDUP_TTL_MS || (10 * 60 * 1000);
+    for (const [k, seenAt] of map.entries()) {
+      if (now - seenAt > ttl) map.delete(k);
+    }
+
+    const key = this.getInboundDedupKey(messageId, remoteJid, message, messageTimestamp);
+    if (map.has(key)) return true;
+
+    map.set(key, now);
+
+    // Limitar memória (LRU simples: remove os mais antigos)
+    const max = this.INBOUND_DEDUP_MAX || 5000;
+    while (map.size > max) {
+      const oldestKey = map.keys().next().value;
+      map.delete(oldestKey);
+    }
+
+    return false;
+  }
+
   // ════════════════════════════════════════════════════════════════════════════
   // MOTOR DE INTEGRAÇÃO: ENCAMINHAR MENSAGENS PARA ENGINES (CHATBOT + FLOW BUILDER)
   // ════════════════════════════════════════════════════════════════════════════
