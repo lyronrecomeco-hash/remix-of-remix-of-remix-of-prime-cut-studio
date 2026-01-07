@@ -485,7 +485,7 @@ async function processMenuResponse(
 async function processIncomingMessage(
   supabase: any,
   message: IncomingMessage
-): Promise<{ success: boolean; response?: string; chatbotId?: string }> {
+): Promise<{ success: boolean; response?: string; chatbotId?: string; chatbotName?: string }> {
   const { from: contactId, message: userMessage, instanceId } = message;
   
   console.log(`[ENGINE] Processing message from ${contactId}: ${userMessage.slice(0, 50)}...`);
@@ -518,27 +518,29 @@ async function processIncomingMessage(
       }
     }
     
-    // Processar de acordo com o tipo
-    if (chatbot.ai_enabled) {
-      return await processAIResponse(
-        supabase,
-        chatbot,
-        activeSession,
-        userMessage,
-        instanceId,
-        contactId
-      );
-    } else if (activeSession.awaiting_type === 'menu') {
-      return await processMenuResponse(
-        supabase,
-        chatbot,
-        activeSession,
-        userMessage,
-        instanceId,
-        contactId
-      );
+      // Processar de acordo com o tipo
+      if (chatbot.ai_enabled) {
+        const result = await processAIResponse(
+          supabase,
+          chatbot,
+          activeSession,
+          userMessage,
+          instanceId,
+          contactId
+        );
+        return { ...result, chatbotId: chatbot.id, chatbotName: chatbot.name };
+      } else if (activeSession.awaiting_type === 'menu') {
+        const result = await processMenuResponse(
+          supabase,
+          chatbot,
+          activeSession,
+          userMessage,
+          instanceId,
+          contactId
+        );
+        return { ...result, chatbotId: chatbot.id, chatbotName: chatbot.name };
+      }
     }
-  }
   
   // PRIORIDADE 2: Verificar gatilho de palavra-chave
   const { data: chatbots } = await supabase
@@ -566,12 +568,17 @@ async function processIncomingMessage(
       });
       
       // Processar de acordo com o tipo de resposta
+      let result;
       if (chatbot.ai_enabled) {
-        return await processAIResponse(supabase, chatbot, session, userMessage, instanceId, contactId);
+        result = await processAIResponse(supabase, chatbot, session, userMessage, instanceId, contactId);
       } else if (chatbot.response_type === 'text') {
-        return await processTextResponse(supabase, chatbot, session, instanceId, contactId);
+        result = await processTextResponse(supabase, chatbot, session, instanceId, contactId);
       } else if (chatbot.response_type === 'list' || chatbot.response_type === 'menu') {
-        return await processMenuResponse(supabase, chatbot, session, userMessage, instanceId, contactId);
+        result = await processMenuResponse(supabase, chatbot, session, userMessage, instanceId, contactId);
+      }
+      
+      if (result) {
+        return { ...result, chatbotId: chatbot.id, chatbotName: chatbot.name };
       }
     }
     
@@ -583,10 +590,15 @@ async function processIncomingMessage(
       
       if (!session) continue;
       
+      let result;
       if (chatbot.ai_enabled) {
-        return await processAIResponse(supabase, chatbot, session, userMessage, instanceId, contactId);
+        result = await processAIResponse(supabase, chatbot, session, userMessage, instanceId, contactId);
       } else if (chatbot.response_type === 'text') {
-        return await processTextResponse(supabase, chatbot, session, instanceId, contactId);
+        result = await processTextResponse(supabase, chatbot, session, instanceId, contactId);
+      }
+      
+      if (result) {
+        return { ...result, chatbotId: chatbot.id, chatbotName: chatbot.name };
       }
     }
   }
