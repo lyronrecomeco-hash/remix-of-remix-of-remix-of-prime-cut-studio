@@ -1138,6 +1138,402 @@ async function processAction(
       }
     }
 
+    // =====================================================
+    // GOOGLE CALENDAR NODES
+    // =====================================================
+
+    case 'google_oauth_connect': {
+      const { connectionName = 'google_calendar', scopes = ['calendar'] } = action.config;
+      
+      // Check if OAuth is already configured
+      const userId = context.flowContext?.userId;
+      if (!userId) {
+        return { success: false, error: 'User ID not found in context' };
+      }
+
+      const { data: oauth } = await supabase
+        .from('genesis_google_oauth')
+        .select('id, is_connected')
+        .eq('user_id', userId)
+        .single();
+
+      if (oauth?.is_connected) {
+        context.flowContext = {
+          ...context.flowContext,
+          [connectionName]: { connected: true, oauthId: oauth.id },
+        };
+        return { success: true, result: { connected: true, oauthId: oauth.id } };
+      }
+
+      return { 
+        success: false, 
+        error: 'Google OAuth not connected. Please connect via the Genesis panel.',
+        result: { needsAuth: true, scopes }
+      };
+    }
+
+    case 'google_calendar_list_events': {
+      const { 
+        calendarId = 'primary', 
+        timeMin, 
+        timeMax, 
+        maxResults = 10, 
+        query,
+        saveEventsTo = 'calendar_events'
+      } = action.config;
+
+      const userId = context.flowContext?.userId;
+      if (!userId) {
+        return { success: false, error: 'User ID not found in context' };
+      }
+
+      // Get OAuth token
+      const { data: oauth, error: oauthError } = await supabase
+        .from('genesis_google_oauth')
+        .select('access_token, refresh_token, token_expires_at')
+        .eq('user_id', userId)
+        .eq('is_connected', true)
+        .single();
+
+      if (oauthError || !oauth) {
+        return { success: false, error: 'Google OAuth not connected' };
+      }
+
+      // Check if token needs refresh
+      let accessToken = oauth.access_token;
+      if (new Date(oauth.token_expires_at) < new Date()) {
+        // Call google-calendar-worker to refresh token
+        const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
+        const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') || '';
+        
+        const refreshResponse = await fetch(`${SUPABASE_URL}/functions/v1/google-calendar-worker`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ action: 'refresh_token', userId }),
+        });
+        
+        const refreshResult = await refreshResponse.json();
+        if (!refreshResult.success) {
+          return { success: false, error: 'Failed to refresh OAuth token' };
+        }
+        accessToken = refreshResult.accessToken;
+      }
+
+      // Call Google Calendar API via our worker
+      const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
+      const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') || '';
+      
+      const calendarResponse = await fetch(`${SUPABASE_URL}/functions/v1/google-calendar-worker`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          action: 'list_events',
+          userId,
+          config: { calendarId, timeMin, timeMax, maxResults, query },
+        }),
+      });
+
+      const calendarResult = await calendarResponse.json();
+      
+      if (!calendarResult.success) {
+        return { success: false, error: calendarResult.error || 'Failed to list events' };
+      }
+
+      // Store events in context
+      context.flowContext = {
+        ...context.flowContext,
+        variables: {
+          ...context.flowContext?.variables,
+          [saveEventsTo]: { value: calendarResult.events, scope: 'flow' },
+        },
+      };
+
+      return { 
+        success: true, 
+        result: { 
+          events: calendarResult.events,
+          count: calendarResult.events?.length || 0,
+          savedTo: saveEventsTo,
+        } 
+      };
+    }
+
+    case 'google_calendar_create_event': {
+      const { 
+        title, 
+        startTime, 
+        endTime, 
+        description, 
+        location, 
+        attendees, 
+        timezone = 'America/Sao_Paulo',
+        calendarId = 'primary',
+        saveEventIdTo = 'created_event_id'
+      } = action.config;
+
+      const userId = context.flowContext?.userId;
+      if (!userId) {
+        return { success: false, error: 'User ID not found in context' };
+      }
+
+      // Replace variables in fields
+      let finalTitle = title || '';
+      let finalDescription = description || '';
+      let finalStartTime = startTime || '';
+      let finalEndTime = endTime || '';
+      let finalLocation = location || '';
+      
+      [finalTitle, finalDescription, finalStartTime, finalEndTime, finalLocation].forEach((_, idx) => {
+        const fields = [finalTitle, finalDescription, finalStartTime, finalEndTime, finalLocation];
+        if (typeof fields[idx] === 'string') {
+          Object.keys(eventData || {}).forEach(key => {
+            fields[idx] = fields[idx].replace(new RegExp(`{{${key}}}`, 'g'), eventData[key] || '');
+          });
+          if (context.flowContext?.variables) {
+            Object.keys(context.flowContext.variables).forEach(key => {
+              fields[idx] = fields[idx].replace(new RegExp(`{{${key}}}`, 'g'), context.flowContext.variables[key]?.value || '');
+            });
+          }
+        }
+      });
+
+      // Parse attendees
+      const attendeesList = attendees 
+        ? attendees.split('\n').map((e: string) => e.trim()).filter(Boolean).map((email: string) => ({ email }))
+        : [];
+
+      // Call Google Calendar API
+      const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
+      const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') || '';
+      
+      const calendarResponse = await fetch(`${SUPABASE_URL}/functions/v1/google-calendar-worker`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          action: 'create_event',
+          userId,
+          config: {
+            calendarId,
+            event: {
+              summary: finalTitle,
+              description: finalDescription,
+              location: finalLocation,
+              start: { dateTime: finalStartTime, timeZone: timezone },
+              end: { dateTime: finalEndTime, timeZone: timezone },
+              attendees: attendeesList,
+            },
+          },
+        }),
+      });
+
+      const calendarResult = await calendarResponse.json();
+      
+      if (!calendarResult.success) {
+        return { success: false, error: calendarResult.error || 'Failed to create event' };
+      }
+
+      // Store event ID in context
+      context.flowContext = {
+        ...context.flowContext,
+        variables: {
+          ...context.flowContext?.variables,
+          [saveEventIdTo]: { value: calendarResult.eventId, scope: 'flow' },
+        },
+      };
+
+      return { 
+        success: true, 
+        result: { 
+          eventId: calendarResult.eventId,
+          eventLink: calendarResult.eventLink,
+          savedTo: saveEventIdTo,
+        } 
+      };
+    }
+
+    case 'google_calendar_update_event': {
+      const { 
+        eventId, 
+        newTitle, 
+        newStartTime, 
+        newEndTime, 
+        newDescription,
+        calendarId = 'primary',
+        sendUpdates = true
+      } = action.config;
+
+      const userId = context.flowContext?.userId;
+      if (!userId) {
+        return { success: false, error: 'User ID not found in context' };
+      }
+
+      // Resolve event ID from variable
+      let resolvedEventId = eventId || '';
+      if (resolvedEventId.startsWith('{{') && resolvedEventId.endsWith('}}')) {
+        const varName = resolvedEventId.slice(2, -2);
+        resolvedEventId = eventData?.[varName] || context.flowContext?.variables?.[varName]?.value || '';
+      }
+
+      if (!resolvedEventId) {
+        return { success: false, error: 'Event ID is required' };
+      }
+
+      // Build update payload
+      const updatePayload: any = {};
+      if (newTitle) updatePayload.summary = newTitle;
+      if (newDescription) updatePayload.description = newDescription;
+      if (newStartTime) updatePayload.start = { dateTime: newStartTime };
+      if (newEndTime) updatePayload.end = { dateTime: newEndTime };
+
+      // Call Google Calendar API
+      const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
+      const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') || '';
+      
+      const calendarResponse = await fetch(`${SUPABASE_URL}/functions/v1/google-calendar-worker`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          action: 'update_event',
+          userId,
+          config: {
+            calendarId,
+            eventId: resolvedEventId,
+            updates: updatePayload,
+            sendUpdates: sendUpdates ? 'all' : 'none',
+          },
+        }),
+      });
+
+      const calendarResult = await calendarResponse.json();
+      
+      if (!calendarResult.success) {
+        return { success: false, error: calendarResult.error || 'Failed to update event' };
+      }
+
+      return { 
+        success: true, 
+        result: { 
+          updated: true,
+          eventId: resolvedEventId,
+        } 
+      };
+    }
+
+    case 'google_calendar_delete_event': {
+      const { eventId, calendarId = 'primary', sendUpdates = true } = action.config;
+
+      const userId = context.flowContext?.userId;
+      if (!userId) {
+        return { success: false, error: 'User ID not found in context' };
+      }
+
+      // Resolve event ID from variable
+      let resolvedEventId = eventId || '';
+      if (resolvedEventId.startsWith('{{') && resolvedEventId.endsWith('}}')) {
+        const varName = resolvedEventId.slice(2, -2);
+        resolvedEventId = eventData?.[varName] || context.flowContext?.variables?.[varName]?.value || '';
+      }
+
+      if (!resolvedEventId) {
+        return { success: false, error: 'Event ID is required' };
+      }
+
+      // Call Google Calendar API
+      const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
+      const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') || '';
+      
+      const calendarResponse = await fetch(`${SUPABASE_URL}/functions/v1/google-calendar-worker`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          action: 'delete_event',
+          userId,
+          config: {
+            calendarId,
+            eventId: resolvedEventId,
+            sendUpdates: sendUpdates ? 'all' : 'none',
+          },
+        }),
+      });
+
+      const calendarResult = await calendarResponse.json();
+      
+      if (!calendarResult.success) {
+        return { success: false, error: calendarResult.error || 'Failed to delete event' };
+      }
+
+      return { 
+        success: true, 
+        result: { 
+          deleted: true,
+          eventId: resolvedEventId,
+        } 
+      };
+    }
+
+    case 'google_calendar_trigger': {
+      const { 
+        triggerType = 'event_starting', 
+        minutesBefore = 30, 
+        calendarId = 'primary',
+        titleFilter,
+        pollingInterval = 60,
+        deduplication = true
+      } = action.config;
+
+      // This is a trigger node - it defines when the flow should start
+      // The actual polling is handled by a cron job that calls the worker
+      
+      context.flowContext = {
+        ...context.flowContext,
+        calendarTrigger: {
+          type: triggerType,
+          minutesBefore,
+          calendarId,
+          titleFilter,
+          pollingInterval,
+          deduplication,
+        },
+      };
+
+      // If this is being executed as part of a polling run, the event data should be present
+      if (eventData?.event_id && eventData?.event_title) {
+        return { 
+          success: true, 
+          result: { 
+            triggered: true,
+            event: eventData,
+            triggerType,
+          } 
+        };
+      }
+
+      return { 
+        success: true, 
+        result: { 
+          configured: true,
+          triggerType,
+          minutesBefore: triggerType === 'event_starting' ? minutesBefore : null,
+          pollingInterval,
+        } 
+      };
+    }
+
     // ============ INFRASTRUCTURE NODES ============
     case 'proxy_assign': {
       const { 

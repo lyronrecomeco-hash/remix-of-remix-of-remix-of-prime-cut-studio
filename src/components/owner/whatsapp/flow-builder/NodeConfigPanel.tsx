@@ -3965,6 +3965,373 @@ export const NodeConfigPanel = ({ node, onClose, onSave, onDelete, onDuplicate }
           </div>
         );
 
+      // =====================================================
+      // GOOGLE CALENDAR NODES
+      // =====================================================
+      
+      case 'google_oauth_connect':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/10 to-sky-500/10 border border-blue-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">🔐</div>
+                <div>
+                  <p className="text-sm font-medium">Conectar Google</p>
+                  <p className="text-[11px] text-muted-foreground">Autenticação OAuth 2.0</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Escopos de Acesso</Label>
+              <div className="space-y-2">
+                {[
+                  { id: 'calendar', label: '📅 Calendar (leitura/escrita)', scope: 'https://www.googleapis.com/auth/calendar' },
+                  { id: 'calendar.readonly', label: '👁️ Calendar (somente leitura)', scope: 'https://www.googleapis.com/auth/calendar.readonly' },
+                  { id: 'calendar.events', label: '📌 Eventos apenas', scope: 'https://www.googleapis.com/auth/calendar.events' },
+                ].map(({ id, label }) => (
+                  <div key={id} className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
+                    <span className="text-sm">{label}</span>
+                    <Switch 
+                      checked={(formData.scopes || ['calendar']).includes(id)} 
+                      onCheckedChange={(v) => {
+                        const current = formData.scopes || ['calendar'];
+                        updateField('scopes', v ? [...current, id] : current.filter((s: string) => s !== id));
+                      }} 
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Refresh Automático</Label>
+                <p className="text-[11px] text-muted-foreground">Renova token automaticamente</p>
+              </div>
+              <Switch checked={formData.autoRefresh ?? true} onCheckedChange={(v) => updateField('autoRefresh', v)} />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Salvar Conexão Como</Label>
+              <Input value={formData.connectionName || 'google_calendar'} onChange={(e) => updateField('connectionName', e.target.value)} placeholder="google_calendar" className="bg-muted/50 font-mono" />
+            </div>
+            
+            <div className="p-3 rounded-xl bg-primary/5 border border-primary/20">
+              <div className="flex items-start gap-2">
+                <Info className="w-4 h-4 text-primary mt-0.5" />
+                <div className="text-xs text-muted-foreground">
+                  <p className="font-medium text-foreground mb-1">Autenticação Segura</p>
+                  <p>Os tokens são criptografados e armazenados de forma segura. O refresh é automático.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'google_calendar_list_events':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">📋</div>
+                <div>
+                  <p className="text-sm font-medium">Listar Eventos</p>
+                  <p className="text-[11px] text-muted-foreground">Busca eventos do Google Calendar</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">ID do Calendário</Label>
+              <Input value={formData.calendarId || 'primary'} onChange={(e) => updateField('calendarId', e.target.value)} placeholder="primary" className="bg-muted/50 font-mono" />
+              <p className="text-[11px] text-muted-foreground">Use "primary" para o calendário principal</p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Data Início</Label>
+                <Input value={formData.timeMin || ''} onChange={(e) => updateField('timeMin', e.target.value)} placeholder="{{now}}" className="bg-muted/50 font-mono text-xs" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Data Fim</Label>
+                <Input value={formData.timeMax || ''} onChange={(e) => updateField('timeMax', e.target.value)} placeholder="{{now_plus_7d}}" className="bg-muted/50 font-mono text-xs" />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Máximo de Resultados</Label>
+              <Input type="number" min="1" max="250" value={formData.maxResults || 10} onChange={(e) => updateField('maxResults', parseInt(e.target.value))} className="bg-muted/50" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Buscar por Texto (Opcional)</Label>
+              <Input value={formData.query || ''} onChange={(e) => updateField('query', e.target.value)} placeholder="consulta, reunião, etc." className="bg-muted/50" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Salvar Eventos Em</Label>
+              <Input value={formData.saveEventsTo || 'calendar_events'} onChange={(e) => updateField('saveEventsTo', e.target.value)} placeholder="calendar_events" className="bg-muted/50 font-mono" />
+            </div>
+            
+            <div className="p-3 rounded-xl bg-muted/30">
+              <p className="text-xs text-muted-foreground">
+                <strong>Variáveis disponíveis:</strong> <code className="bg-muted px-1 rounded">{'{{calendar_events}}'}</code>, <code className="bg-muted px-1 rounded">{'{{calendar_events.length}}'}</code>
+              </p>
+            </div>
+          </div>
+        );
+
+      case 'google_calendar_create_event':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">➕</div>
+                <div>
+                  <p className="text-sm font-medium">Criar Evento</p>
+                  <p className="text-[11px] text-muted-foreground">Adiciona evento ao calendário</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Título do Evento</Label>
+              <Input value={formData.title || ''} onChange={(e) => updateField('title', e.target.value)} placeholder="Consulta com {{nome}}" className="bg-muted/50" />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Início</Label>
+                <Input value={formData.startTime || ''} onChange={(e) => updateField('startTime', e.target.value)} placeholder="2025-01-15T10:00:00" className="bg-muted/50 font-mono text-xs" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Fim</Label>
+                <Input value={formData.endTime || ''} onChange={(e) => updateField('endTime', e.target.value)} placeholder="2025-01-15T11:00:00" className="bg-muted/50 font-mono text-xs" />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Descrição</Label>
+              <Textarea value={formData.description || ''} onChange={(e) => updateField('description', e.target.value)} placeholder="Detalhes do evento..." className="bg-muted/50 resize-none" rows={2} />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Local (Opcional)</Label>
+              <Input value={formData.location || ''} onChange={(e) => updateField('location', e.target.value)} placeholder="Rua Exemplo, 123" className="bg-muted/50" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Participantes (emails)</Label>
+              <Textarea value={formData.attendees || ''} onChange={(e) => updateField('attendees', e.target.value)} placeholder="cliente@email.com&#10;equipe@empresa.com" className="bg-muted/50 resize-none font-mono text-xs" rows={2} />
+              <p className="text-[11px] text-muted-foreground">Um email por linha</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Fuso Horário</Label>
+              <Select value={formData.timezone || 'America/Sao_Paulo'} onValueChange={(v) => updateField('timezone', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="America/Sao_Paulo">🇧🇷 São Paulo (GMT-3)</SelectItem>
+                  <SelectItem value="America/Fortaleza">🇧🇷 Fortaleza (GMT-3)</SelectItem>
+                  <SelectItem value="America/Manaus">🇧🇷 Manaus (GMT-4)</SelectItem>
+                  <SelectItem value="America/New_York">🇺🇸 New York (GMT-5)</SelectItem>
+                  <SelectItem value="Europe/London">🇬🇧 Londres (GMT+0)</SelectItem>
+                  <SelectItem value="Europe/Lisbon">🇵🇹 Lisboa (GMT+0)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Salvar ID do Evento Em</Label>
+              <Input value={formData.saveEventIdTo || 'created_event_id'} onChange={(e) => updateField('saveEventIdTo', e.target.value)} placeholder="created_event_id" className="bg-muted/50 font-mono" />
+            </div>
+          </div>
+        );
+
+      case 'google_calendar_update_event':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500/10 to-yellow-500/10 border border-amber-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">✏️</div>
+                <div>
+                  <p className="text-sm font-medium">Atualizar Evento</p>
+                  <p className="text-[11px] text-muted-foreground">Modifica evento existente</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">ID do Evento</Label>
+              <Input value={formData.eventId || ''} onChange={(e) => updateField('eventId', e.target.value)} placeholder="{{event_id}}" className="bg-muted/50 font-mono" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Novo Título (deixe vazio para manter)</Label>
+              <Input value={formData.newTitle || ''} onChange={(e) => updateField('newTitle', e.target.value)} placeholder="" className="bg-muted/50" />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Novo Início</Label>
+                <Input value={formData.newStartTime || ''} onChange={(e) => updateField('newStartTime', e.target.value)} placeholder="" className="bg-muted/50 font-mono text-xs" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Novo Fim</Label>
+                <Input value={formData.newEndTime || ''} onChange={(e) => updateField('newEndTime', e.target.value)} placeholder="" className="bg-muted/50 font-mono text-xs" />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Nova Descrição</Label>
+              <Textarea value={formData.newDescription || ''} onChange={(e) => updateField('newDescription', e.target.value)} placeholder="" className="bg-muted/50 resize-none" rows={2} />
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Notificar Participantes</Label>
+                <p className="text-[11px] text-muted-foreground">Envia email sobre a mudança</p>
+              </div>
+              <Switch checked={formData.sendUpdates ?? true} onCheckedChange={(v) => updateField('sendUpdates', v)} />
+            </div>
+          </div>
+        );
+
+      case 'google_calendar_delete_event':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-red-500/10 to-rose-500/10 border border-red-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">🗑️</div>
+                <div>
+                  <p className="text-sm font-medium">Excluir Evento</p>
+                  <p className="text-[11px] text-muted-foreground">Remove evento do calendário</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">ID do Evento</Label>
+              <Input value={formData.eventId || ''} onChange={(e) => updateField('eventId', e.target.value)} placeholder="{{event_id}}" className="bg-muted/50 font-mono" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">ID do Calendário</Label>
+              <Input value={formData.calendarId || 'primary'} onChange={(e) => updateField('calendarId', e.target.value)} placeholder="primary" className="bg-muted/50 font-mono" />
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Notificar Participantes</Label>
+                <p className="text-[11px] text-muted-foreground">Avisa sobre cancelamento</p>
+              </div>
+              <Switch checked={formData.sendUpdates ?? true} onCheckedChange={(v) => updateField('sendUpdates', v)} />
+            </div>
+            
+            <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-destructive mt-0.5" />
+                <p className="text-xs text-muted-foreground">
+                  <strong className="text-destructive">Atenção:</strong> Esta ação é irreversível.
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'google_calendar_trigger':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/10 to-violet-500/10 border border-purple-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">⚡</div>
+                <div>
+                  <p className="text-sm font-medium">Gatilho de Calendário</p>
+                  <p className="text-[11px] text-muted-foreground">Dispara fluxo baseado em eventos</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Tipo de Gatilho</Label>
+              <Select value={formData.triggerType || 'event_starting'} onValueChange={(v) => updateField('triggerType', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="event_starting">⏰ Evento prestes a iniciar</SelectItem>
+                  <SelectItem value="event_created">➕ Evento criado</SelectItem>
+                  <SelectItem value="event_updated">✏️ Evento atualizado</SelectItem>
+                  <SelectItem value="event_cancelled">❌ Evento cancelado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {formData.triggerType === 'event_starting' && (
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Minutos Antes</Label>
+                <Select value={String(formData.minutesBefore || 30)} onValueChange={(v) => updateField('minutesBefore', parseInt(v))}>
+                  <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5 minutos</SelectItem>
+                    <SelectItem value="10">10 minutos</SelectItem>
+                    <SelectItem value="15">15 minutos</SelectItem>
+                    <SelectItem value="30">30 minutos</SelectItem>
+                    <SelectItem value="60">1 hora</SelectItem>
+                    <SelectItem value="120">2 horas</SelectItem>
+                    <SelectItem value="1440">1 dia</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">ID do Calendário</Label>
+              <Input value={formData.calendarId || 'primary'} onChange={(e) => updateField('calendarId', e.target.value)} placeholder="primary" className="bg-muted/50 font-mono" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Filtro de Título (Opcional)</Label>
+              <Input value={formData.titleFilter || ''} onChange={(e) => updateField('titleFilter', e.target.value)} placeholder="Consulta, Reunião..." className="bg-muted/50" />
+              <p className="text-[11px] text-muted-foreground">Deixe vazio para todos os eventos</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Intervalo de Polling (segundos)</Label>
+              <Select value={String(formData.pollingInterval || 60)} onValueChange={(v) => updateField('pollingInterval', parseInt(v))}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="30">30 segundos</SelectItem>
+                  <SelectItem value="60">1 minuto</SelectItem>
+                  <SelectItem value="300">5 minutos</SelectItem>
+                  <SelectItem value="600">10 minutos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Evitar Duplicatas</Label>
+                <p className="text-[11px] text-muted-foreground">Não dispara para mesmo evento 2x</p>
+              </div>
+              <Switch checked={formData.deduplication ?? true} onCheckedChange={(v) => updateField('deduplication', v)} />
+            </div>
+            
+            <div className="p-3 rounded-xl bg-primary/5 border border-primary/20">
+              <div className="flex items-start gap-2">
+                <Info className="w-4 h-4 text-primary mt-0.5" />
+                <div className="text-xs text-muted-foreground">
+                  <p className="font-medium text-foreground mb-1">Variáveis Disponíveis</p>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {['{{event_id}}', '{{event_title}}', '{{event_start}}', '{{event_end}}', '{{event_attendees}}', '{{event_description}}'].map(v => (
+                      <code key={v} className="text-[10px] bg-muted px-1 rounded">{v}</code>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
       case 'end':
         return (
           <div className="space-y-4">
