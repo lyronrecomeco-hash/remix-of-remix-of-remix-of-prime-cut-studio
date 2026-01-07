@@ -63,6 +63,7 @@ import { NodeConfigPanel } from './NodeConfigPanel';
 import { MinimalToolbar } from './MinimalToolbar';
 import { FlowStats } from './FlowStats';
 import { FlowValidationPanel } from './FlowValidationPanel';
+import { FlowDebugConsole } from './FlowDebugConsole';
 import { HelpModal } from './HelpModal';
 import { LunaAIModal } from './LunaAIModal';
 import { FlowTemplates } from './FlowTemplates';
@@ -157,6 +158,7 @@ const FlowBuilderContent = ({ onBack, onEditingChange, onNavigateToInstances }: 
   
   // Validation
   const [showValidation, setShowValidation] = useState(false);
+  const [showDebugConsole, setShowDebugConsole] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const { validateFlow } = useFlowValidation();
   const [validationResult, setValidationResult] = useState({ errors: [] as any[], warnings: [] as any[] });
@@ -1001,7 +1003,7 @@ const FlowBuilderContent = ({ onBack, onEditingChange, onNavigateToInstances }: 
                   onImport={importFlow}
                   onToggleActive={() => toggleRuleActive(selectedRule)}
                   onAutoLayout={handleAutoLayout}
-                  onValidate={handleValidate}
+                  onValidate={() => setShowDebugConsole(true)}
                   onCopy={handleCopy}
                   onPaste={handlePaste}
                   onDeleteSelected={handleDeleteSelected}
@@ -1076,6 +1078,15 @@ const FlowBuilderContent = ({ onBack, onEditingChange, onNavigateToInstances }: 
               </AnimatePresence>
 
               <FlowValidationPanel isOpen={showValidation} onClose={() => setShowValidation(false)} errors={validationResult.errors} warnings={validationResult.warnings} onNavigateToNode={navigateToNode} />
+              <FlowDebugConsole 
+                isOpen={showDebugConsole} 
+                onClose={() => setShowDebugConsole(false)} 
+                ruleId={selectedRule?.id}
+                nodes={nodes}
+                edges={edges}
+                onNavigateToNode={navigateToNode}
+                localValidation={validationResult}
+              />
             </div>
 
         {/* Config Panel */}

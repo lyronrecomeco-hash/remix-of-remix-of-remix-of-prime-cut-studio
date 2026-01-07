@@ -11,6 +11,7 @@ export { HelpModal } from './HelpModal';
 export { LunaAIModal } from './LunaAIModal';
 export { FlowTemplates } from './FlowTemplates';
 export { FlowSimulator } from './FlowSimulator';
+export { FlowDebugConsole } from './FlowDebugConsole';
 export { FlowControls } from './FlowControls';
 export { NodeSearch } from './NodeSearch';
 export { KeyboardShortcutsPanel } from './KeyboardShortcutsPanel';
