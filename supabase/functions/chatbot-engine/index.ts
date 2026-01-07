@@ -436,17 +436,41 @@ function validateMenuResponse(
 }
 
 // =====================================================
-// HELPER: Verificar gatilho
+// HELPER: Verificar gatilho (início de conversa)
 // =====================================================
 function checkKeywordTrigger(message: string, keywords: string[]): boolean {
   if (!keywords || keywords.length === 0) return false;
   if (keywords.includes('*')) return true;
-  
+
   const normalized = normalizeText(message);
-  return keywords.some(keyword => {
+  return keywords.some((keyword) => {
     const normalizedKeyword = normalizeText(keyword);
     return normalized.includes(normalizedKeyword) || normalizedKeyword.includes(normalized);
   });
+}
+
+// =====================================================
+// HELPER: Verificar reinício de sessão (NÃO usa trigger_keywords)
+// Evita duplicação: usuário digita "corte" no meio do fluxo e não reinicia.
+// =====================================================
+const RESTART_KEYWORDS = new Set([
+  'oi',
+  'ola',
+  'olá',
+  'menu',
+  'reiniciar',
+  'recomecar',
+  'recomeçar',
+  'comecar',
+  'começar',
+  'inicio',
+  'início',
+  'start',
+]);
+
+function shouldRestartSession(message: string): boolean {
+  const n = normalizeText(message);
+  return RESTART_KEYWORDS.has(n);
 }
 
 // =====================================================
