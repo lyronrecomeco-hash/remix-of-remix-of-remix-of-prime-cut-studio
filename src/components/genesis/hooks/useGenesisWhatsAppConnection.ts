@@ -18,10 +18,16 @@ const requestOrchestratedTransition = async (
     const { data, error } = await supabase.functions.invoke('genesis-connection-orchestrator', {
       body: { instanceId, action: 'transition', newStatus, source, payload },
     });
+
     if (error) {
+      const dataError = (data as any)?.error;
       console.warn('[Orchestrator] Transition error:', error);
-      return { success: false, error: error.message };
+      return {
+        success: false,
+        error: typeof dataError === 'string' && dataError.trim() ? dataError : error.message,
+      };
     }
+
     return data as { success: boolean; error?: string };
   } catch (err) {
     console.warn('[Orchestrator] Exception:', err);
@@ -169,13 +175,43 @@ export function useGenesisWhatsAppConnection() {
         const mappedStatus = statusMap[newStatus] || newStatus;
         
         // Tentar transição via orquestrador (validação de state machine)
-        const orchestratorResult = await requestOrchestratedTransition(
+        const orchestratorPayload = { originalUpdates: updates };
+
+        let orchestratorResult = await requestOrchestratedTransition(
           instanceId,
           mappedStatus,
           'frontend',
-          { originalUpdates: updates }
+          orchestratorPayload
         );
-        
+
+        // Fix mínimo: quando a instância ainda está em "idle" (ex: após migração)
+        // a state machine exige passar por "connecting" antes de "connected"/"qr_pending".
+        if (!orchestratorResult.success) {
+          const errMsg = orchestratorResult.error || '';
+          const m = errMsg.match(/Invalid transition from (\w+) to (\w+)/);
+          const from = m?.[1];
+          const to = m?.[2];
+
+          const needsConnectingHop =
+            to === mappedStatus &&
+            mappedStatus !== 'connecting' &&
+            (from === 'idle' || from === 'disconnected');
+
+          if (needsConnectingHop) {
+            await requestOrchestratedTransition(instanceId, 'connecting', 'frontend', {
+              ...orchestratorPayload,
+              autoFix: 'hop_connecting',
+            });
+
+            orchestratorResult = await requestOrchestratedTransition(
+              instanceId,
+              mappedStatus,
+              'frontend',
+              { ...orchestratorPayload, autoFix: 'hop_connecting' }
+            );
+          }
+        }
+
         if (orchestratorResult.success) {
           console.log(`[updateInstanceInDB] Orchestrated transition to ${mappedStatus} succeeded`);
         } else {
