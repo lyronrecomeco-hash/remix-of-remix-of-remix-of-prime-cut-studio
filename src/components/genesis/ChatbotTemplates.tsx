@@ -32,6 +32,10 @@ interface ChatbotTemplate {
   icon: string;
   is_featured: boolean;
   trigger_keywords: string[];
+  trigger_type: string;
+  response_type: string;
+  response_content: string | null;
+  ai_enabled: boolean;
   ai_system_prompt: string;
   ai_temperature: number;
   menu_options: any;
@@ -39,7 +43,7 @@ interface ChatbotTemplate {
 }
 
 interface ChatbotTemplatesProps {
-  onTemplateApply: (template: ChatbotTemplate, customizations: Record<string, string>) => void;
+  onTemplateApply: () => void;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -96,22 +100,29 @@ export function ChatbotTemplates({ onTemplateApply, isOpen, onOpenChange }: Chat
 
     setIsApplying(true);
     try {
-      // Substituir variáveis no prompt
-      let finalPrompt = selectedTemplate.ai_system_prompt;
+      // Substituir variáveis no prompt e response_content
+      let finalPrompt = selectedTemplate.ai_system_prompt || '';
+      let finalResponseContent = selectedTemplate.response_content || '';
+      
       Object.entries(customizations).forEach(([key, value]) => {
-        finalPrompt = finalPrompt.replace(new RegExp(`{{${key}}}`, 'g'), value || `[${key}]`);
+        const regex = new RegExp(`{{${key}}}`, 'g');
+        finalPrompt = finalPrompt.replace(regex, value || `[${key}]`);
+        finalResponseContent = finalResponseContent.replace(regex, value || `[${key}]`);
       });
 
-      // Criar chatbot a partir do template
+      // Determinar response_type baseado no template
+      const responseType = selectedTemplate.ai_enabled ? 'ai' : 'text';
+
+      // Criar chatbot a partir do template com TODOS os dados
       const chatbotData = {
         name: `${selectedTemplate.name} - ${new Date().toLocaleDateString('pt-BR')}`,
-        trigger_type: 'keyword',
-        trigger_keywords: selectedTemplate.trigger_keywords,
-        response_type: 'text',
-        response_content: null,
-        ai_enabled: true,
-        ai_model: 'gpt-4o-mini',
-        ai_temperature: selectedTemplate.ai_temperature,
+        trigger_type: selectedTemplate.trigger_type || 'keyword',
+        trigger_keywords: selectedTemplate.trigger_keywords || [],
+        response_type: responseType,
+        response_content: finalResponseContent,
+        ai_enabled: selectedTemplate.ai_enabled ?? true,
+        ai_model: 'Luna IA',
+        ai_temperature: selectedTemplate.ai_temperature || 0.7,
         ai_system_prompt: finalPrompt,
         is_active: true,
         priority: 1,
@@ -124,10 +135,11 @@ export function ChatbotTemplates({ onTemplateApply, isOpen, onOpenChange }: Chat
 
       if (error) throw error;
 
-      toast.success('🎉 Chatbot criado a partir do template!');
-      onTemplateApply(selectedTemplate, customizations);
+      toast.success('🎉 Chatbot criado e ativado! Já está funcionando.');
+      onTemplateApply();
       onOpenChange(false);
       setSelectedTemplate(null);
+      setCustomizations({});
       
       // Disparar evento para atualizar lista
       window.dispatchEvent(new CustomEvent('chatbot-created'));
