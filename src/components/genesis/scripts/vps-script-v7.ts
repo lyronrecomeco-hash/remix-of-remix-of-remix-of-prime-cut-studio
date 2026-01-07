@@ -34,8 +34,8 @@ const crypto = require('crypto');
 const CONFIG = {
   PORT: parseInt(process.env.PORT || '3001'),
   MASTER_TOKEN: process.env.MASTER_TOKEN || '${token}',
-  SUPABASE_URL: process.env.SUPABASE_URL || 'https://wvnszzrvrrueuycrpgyc.supabase.co',
-  SUPABASE_KEY: process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind2bnN6enJ2cnJ1ZXV5Y3JwZ3ljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4MTE4MjYsImV4cCI6MjA4MjM4NzgyNn0.mHs-vau3qsSRLqZ9AmWMsFB5ZLMmd1s003MxdLhBPw0',
+  SUPABASE_URL: process.env.SUPABASE_URL || 'https://xeloigymjjeejvicadar.supabase.co',
+  SUPABASE_KEY: process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhlbG9pZ3ltamplZWp2aWNhZGFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3MzQ4OTYsImV4cCI6MjA4MzMxMDg5Nn0.OtCuFQNaYs5QLu3sq1ZRnHlEA1fH2VLje0h959jaAek',
   INSTANCE_ID: process.env.INSTANCE_ID || '${instanceId}',
   INSTANCE_NAME: process.env.INSTANCE_NAME || '${name}',
   HEARTBEAT_INTERVAL: 20000,
