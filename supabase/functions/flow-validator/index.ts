@@ -42,7 +42,16 @@ interface FlowEdge {
 }
 
 // Node types that are triggers
-const TRIGGER_TYPES = ['trigger', 'wa_start', 'webhook_trigger', 'cron_trigger', 'webhook_in'];
+// Keep this list in sync with the Flow Builder node catalog.
+const TRIGGER_TYPES = [
+  'trigger',
+  'wa_start',
+  'wa_receive',
+  'webhook_trigger',
+  'webhook_universal_trigger',
+  'cron_trigger',
+  'webhook_in',
+];
 
 // Node types that are ends
 const END_TYPES = ['end'];

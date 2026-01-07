@@ -173,8 +173,10 @@ export const FlowDebugConsole = memo(({
       const { data, error } = await supabase.functions.invoke('flow-validator', {
         body: {
           action: 'validate',
-          flowData,
-          ruleId,
+          // IMPORTANT: the backend function expects snake_case keys
+          flow_data: flowData,
+          // Optional: helps backend logs correlate to a saved rule
+          flow_id: ruleId,
         },
       });
 
@@ -188,13 +190,20 @@ export const FlowDebugConsole = memo(({
         throw error;
       }
 
-      // Processar resultado do backend
+      // Processar resultado do backend (normalizar formato)
       const backendErrors: ValidationIssue[] = (data?.errors || []).map((e: any) => ({
-        ...e,
+        nodeId: e.nodeId,
+        type: 'error' as const,
+        message: e.message,
+        code: e.code,
         source: 'backend' as const,
       }));
+
       const backendWarnings: ValidationIssue[] = (data?.warnings || []).map((w: any) => ({
-        ...w,
+        nodeId: w.nodeId,
+        type: 'warning' as const,
+        message: w.message,
+        code: w.code,
         source: 'backend' as const,
       }));
 
@@ -233,7 +242,7 @@ export const FlowDebugConsole = memo(({
           type: 'success',
           source: 'backend',
           message: `Validação completa! ${totalWarnings} aviso(s)`,
-          details: data?.isValid ? 'Fluxo está pronto para ativação' : 'Revise os avisos antes de ativar',
+          details: data?.valid ? 'Fluxo está pronto para ativação' : 'Revise os avisos antes de ativar',
         });
         toast.success('Validação concluída!');
       } else {
