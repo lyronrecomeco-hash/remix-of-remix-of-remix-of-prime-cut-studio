@@ -395,10 +395,30 @@ class InstanceManager {
       });
 
       sock.ev.on('messages.upsert', async ({ messages }) => {
-        if (messages[0]?.key?.fromMe === false) {
+        const msg = messages[0];
+        if (msg?.key?.fromMe === false && msg.message) {
           instance.lastActivityAt = Date.now();
-          log('msg', \`[\\x1b[35m\${instance.name}\\x1b[0m] Mensagem recebida de \${messages[0].key.remoteJid}\`);
+          const remoteJid = msg.key.remoteJid || '';
+          const from = remoteJid.replace('@s.whatsapp.net', '').replace('@g.us', '');
+          
+          // Extrair texto da mensagem
+          const textContent = 
+            msg.message.conversation || 
+            msg.message.extendedTextMessage?.text ||
+            msg.message.buttonsResponseMessage?.selectedButtonId ||
+            msg.message.listResponseMessage?.singleSelectReply?.selectedRowId ||
+            msg.message.templateButtonReplyMessage?.selectedId ||
+            '';
+          
+          log('msg', \`[\\x1b[35m\${instance.name}\\x1b[0m] Mensagem recebida de \${from}: \${textContent.slice(0, 50)}...\`);
           this.trackMessageReceived(instanceId);
+          
+          // ═══════════════════════════════════════════════════════════════════════════
+          // ENCAMINHAR PARA CHATBOT ENGINE E FLOW BUILDER
+          // ═══════════════════════════════════════════════════════════════════════════
+          if (textContent) {
+            this.forwardToEngines(instanceId, from, textContent, msg.key.id);
+          }
         }
       });
 
@@ -736,6 +756,75 @@ class InstanceManager {
     instance.silentPauseUntil = Date.now() + durationMs;
     log('info', \`[\${instance.name}] 🔇 Pausa silenciosa ativada por \${durationMs/1000}s\`);
     return true;
+  }
+  
+  // ════════════════════════════════════════════════════════════════════════════
+  // MOTOR DE INTEGRAÇÃO: ENCAMINHAR MENSAGENS PARA CHATBOT ENGINE E FLOW BUILDER
+  // ════════════════════════════════════════════════════════════════════════════
+  async forwardToEngines(instanceId, from, message, messageId) {
+    const instance = this.instances.get(instanceId);
+    if (!instance) return;
+    
+    log('info', \`[\\x1b[36m\${instance.name}\\x1b[0m] 🔄 Encaminhando mensagem para engines...\`);
+    
+    try {
+      // 1. CHATBOT ENGINE - Processa chatbots configurados
+      const chatbotResponse = await fetch(\`\${CONFIG.SUPABASE_URL}/functions/v1/chatbot-engine\`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': \`Bearer \${CONFIG.SUPABASE_KEY}\`,
+        },
+        body: JSON.stringify({
+          action: 'process_message',
+          from,
+          message,
+          instanceId,
+          messageId,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+      
+      const chatbotResult = await chatbotResponse.json();
+      
+      if (chatbotResult.success && chatbotResult.chatbotId) {
+        log('success', \`[\\x1b[32m\${instance.name}\\x1b[0m] ✓ Chatbot respondeu: \${chatbotResult.chatbotId}\`);
+        // Chatbot tratou a mensagem, não precisa ir para flow builder
+        return;
+      }
+      
+      // 2. FLOW BUILDER - Se chatbot não tratou, tenta flow builder
+      const flowResponse = await fetch(\`\${CONFIG.SUPABASE_URL}/functions/v1/whatsapp-automation-worker\`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': \`Bearer \${CONFIG.SUPABASE_KEY}\`,
+        },
+        body: JSON.stringify({
+          source: 'vps_message',
+          event_type: 'message_received',
+          event_data: {
+            from,
+            message,
+            instanceId,
+            messageId,
+            timestamp: new Date().toISOString(),
+            phone: from,
+            text: message,
+          },
+        }),
+      });
+      
+      const flowResult = await flowResponse.json();
+      
+      if (flowResult.success && flowResult.processed) {
+        log('success', \`[\\x1b[32m\${instance.name}\\x1b[0m] ✓ Flow Builder processou: \${flowResult.flowName || 'flow'}\`);
+      } else {
+        log('info', \`[\\x1b[33m\${instance.name}\\x1b[0m] Nenhum chatbot ou flow correspondente\`);
+      }
+    } catch (err) {
+      log('error', \`[\\x1b[31m\${instance.name}\\x1b[0m] Erro ao encaminhar: \${err.message}\`);
+    }
   }
 
   async sendHeartbeat(instanceId, status) {
