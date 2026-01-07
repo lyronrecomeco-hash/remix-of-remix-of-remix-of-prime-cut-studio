@@ -230,6 +230,25 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
     }
   };
 
+  const openEditDialog = (chatbot: Chatbot) => {
+    setEditingChatbot(chatbot);
+    setForm({
+      name: chatbot.name,
+      trigger_type: chatbot.trigger_type,
+      keywords: chatbot.trigger_keywords?.join(', ') || '',
+      response_type: chatbot.ai_enabled ? 'ai' : chatbot.response_type,
+      response: chatbot.response_content || '',
+      delay: chatbot.delay_seconds,
+      instance_id: chatbot.instance_id || '',
+      ai_enabled: chatbot.ai_enabled || false,
+      ai_model: chatbot.ai_model || 'Luna IA',
+      ai_temperature: chatbot.ai_temperature || 0.7,
+      ai_system_prompt: chatbot.ai_system_prompt || '',
+      buttons: chatbot.response_buttons?.length ? chatbot.response_buttons : [{ id: '', text: '' }],
+    });
+    setIsDialogOpen(true);
+  };
+
   const deleteChatbot = async (id: string) => {
     try {
       const { error } = await supabase.from('whatsapp_automations').delete().eq('id', id);
@@ -356,43 +375,44 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
       )}
 
       {/* Chatbots List */}
-      {activeTab === 'chatbots' && (
-        chatbots.length === 0 ? (
-          <Card>
-            <CardContent className="py-10 sm:py-16 text-center px-4">
-              <motion.div
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 rounded-3xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center"
-              >
-                <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
-              </motion.div>
-              <h3 className="font-semibold text-lg sm:text-xl mb-2">Crie seu primeiro chatbot</h3>
-              <p className="text-muted-foreground mb-4 sm:mb-6 max-w-md mx-auto text-sm sm:text-base">
-                Configure respostas automáticas para atender seus clientes 24/7
-              </p>
-              <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                <Button onClick={() => setIsTemplatesOpen(true)} variant="outline" className="gap-2">
-                  <FileText className="w-5 h-5" />
-                  Usar Template
-                </Button>
-                <Button onClick={() => setIsLunaOpen(true)} variant="outline" className="gap-2">
-                  <img src={lunaAvatar} alt="Luna" className="w-5 h-5 rounded-full" />
-                  Criar com Luna IA
-                </Button>
-                <Button onClick={openCreateDialog} className="gap-2">
-                  <Plus className="w-5 h-5" />
-                  Criar Chatbot
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <AnimatePresence>
-              {chatbots.map((chatbot, index) => {
-                const triggerInfo = TRIGGER_TYPES.find(t => t.value === chatbot.trigger_type);
-                const TriggerIcon = triggerInfo?.icon || Zap;
+      {activeTab === 'chatbots' && chatbots.length === 0 && (
+        <Card>
+          <CardContent className="py-10 sm:py-16 text-center px-4">
+            <motion.div
+              animate={{ y: [0, -10, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 rounded-3xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center"
+            >
+              <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
+            </motion.div>
+            <h3 className="font-semibold text-lg sm:text-xl mb-2">Crie seu primeiro chatbot</h3>
+            <p className="text-muted-foreground mb-4 sm:mb-6 max-w-md mx-auto text-sm sm:text-base">
+              Configure respostas automáticas para atender seus clientes 24/7
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+              <Button onClick={() => setIsTemplatesOpen(true)} variant="outline" className="gap-2">
+                <FileText className="w-5 h-5" />
+                Usar Template
+              </Button>
+              <Button onClick={() => setIsLunaOpen(true)} variant="outline" className="gap-2">
+                <img src={lunaAvatar} alt="Luna" className="w-5 h-5 rounded-full" />
+                Criar com Luna IA
+              </Button>
+              <Button onClick={openCreateDialog} className="gap-2">
+                <Plus className="w-5 h-5" />
+                Criar Chatbot
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {activeTab === 'chatbots' && chatbots.length > 0 && (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <AnimatePresence>
+            {chatbots.map((chatbot, index) => {
+              const triggerInfo = TRIGGER_TYPES.find(t => t.value === chatbot.trigger_type);
+              const TriggerIcon = triggerInfo?.icon || Zap;
 
               return (
                 <motion.div
@@ -426,37 +446,48 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
                         />
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      {chatbot.trigger_keywords && chatbot.trigger_keywords.length > 0 && (
+                        <div className="mb-3">
+                          <p className="text-xs text-muted-foreground mb-1.5">Palavras-chave:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {chatbot.trigger_keywords.slice(0, 3).map((kw: string, i: number) => (
+                              <Badge key={i} variant="secondary" className="text-xs">
+                                {kw}
+                              </Badge>
+                            ))}
+                            {chatbot.trigger_keywords.length > 3 && (
+                              <Badge variant="secondary" className="text-xs">
+                                +{chatbot.trigger_keywords.length - 3}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {chatbot.ai_enabled && (
+                        <div className="flex items-center gap-1 text-xs text-primary mb-3">
+                          <Brain className="w-3 h-3" />
+                          <span>IA Luna ativa</span>
+                        </div>
+                      )}
+
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                        {chatbot.response_content || 'Sem mensagem configurada'}
+                      </p>
+
+                      <div className="flex gap-2">
                         <Button
                           variant="outline"
                           size="sm"
                           className="flex-1"
-                          onClick={() => {
-                            setEditingChatbot(chatbot);
-                            setForm({
-                              name: chatbot.name,
-                              trigger_type: chatbot.trigger_type,
-                              keywords: chatbot.trigger_keywords.join(', '),
-                              response_type: chatbot.ai_enabled ? 'ai' : chatbot.response_type,
-                              response: chatbot.response_content || '',
-                              delay: chatbot.delay_seconds,
-                              instance_id: chatbot.instance_id || '',
-                              ai_enabled: chatbot.ai_enabled || false,
-                              ai_model: 'Luna IA',
-                              ai_temperature: chatbot.ai_temperature || 0.7,
-                              ai_system_prompt: chatbot.ai_system_prompt || '',
-                              buttons: chatbot.response_buttons || [],
-                            });
-                            setIsDialogOpen(true);
-                          }}
+                          onClick={() => openEditDialog(chatbot)}
                         >
-                          <Edit className="w-4 h-4 mr-1" />
+                          <Settings2 className="w-4 h-4 mr-1" />
                           Editar
                         </Button>
                         <Button
-                          variant="ghost"
+                          variant="destructive"
                           size="sm"
-                          className="text-destructive hover:text-destructive"
                           onClick={() => deleteChatbot(chatbot.id)}
                         >
                           <Trash2 className="w-4 h-4" />
