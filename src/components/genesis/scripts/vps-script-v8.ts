@@ -407,6 +407,7 @@ class InstanceManager {
           instance.lastActivityAt = Date.now();
           // IMPORTANTE: Manter JID completo para responder corretamente (@lid, @s.whatsapp.net, @g.us)
           const remoteJid = msg.key.remoteJid || '';
+          const inboundMessageId = msg.key.id || null;
           
           // Extrair texto da mensagem
           const textContent = 
@@ -425,7 +426,14 @@ class InstanceManager {
           // ═══════════════════════════════════════════════════════════════════════════
           if (textContent && !remoteJid.endsWith('@g.us')) {
             // Ignorar grupos, só processar mensagens privadas
-            this.forwardToEngines(instanceId, remoteJid, textContent, msg.key.id);
+
+            // Anti-duplicidade local: Baileys pode emitir upsert duplicado
+            if (this.isDuplicateInbound(instanceId, inboundMessageId, remoteJid, textContent, msg.messageTimestamp)) {
+              log('warn', '[DEDUP] Ignorando mensagem duplicada id=' + (inboundMessageId || 'n/a'));
+              return;
+            }
+
+            this.forwardToEngines(instanceId, remoteJid, textContent, inboundMessageId);
           }
         }
       });
@@ -774,7 +782,7 @@ class InstanceManager {
   getInboundDedupKey(messageId, remoteJid, message, messageTimestamp) {
     if (messageId) return String(messageId);
     const ts = messageTimestamp ? String(messageTimestamp) : '';
-    return crypto.createHash('sha1').update(`${remoteJid}|${message}|${ts}`).digest('hex');
+    return crypto.createHash('sha1').update(remoteJid + '|' + message + '|' + ts).digest('hex');
   }
 
   isDuplicateInbound(instanceId, messageId, remoteJid, message, messageTimestamp) {
@@ -843,10 +851,15 @@ class InstanceManager {
       clearTimeout(timeoutId);
       
       const chatbotResult = await chatbotResponse.json();
-      
-      if (chatbotResult.success && chatbotResult.chatbotId) {
+
+      const chatbotHandled =
+        chatbotResult &&
+        chatbotResult.success === true &&
+        (chatbotResult.chatbotId || chatbotResult.handled === true || chatbotResult.dedup === true);
+
+      if (chatbotHandled) {
         log('success', \`[\\x1b[32m\${instance.name}\\x1b[0m] ✓ Chatbot respondeu: \${chatbotResult.chatbotName || chatbotResult.chatbotId}\`);
-        return; // Chatbot tratou, parar aqui
+        return; // Chatbot tratou (ou dedup), parar aqui
       }
       
       // ═══════════════════════════════════════════════════════════════════════════
