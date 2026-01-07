@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,41 +6,11 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { motion } from 'framer-motion';
-import {
-  ShoppingCart,
-  Headphones,
-  Calendar,
-  MessageCircle,
-  Moon,
-  Bot,
-  Sparkles,
-  Loader2,
-  Check,
-  ArrowRight,
-  Star,
-} from 'lucide-react';
+import { Loader2, Check, ArrowRight, Star, Search, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
-
-interface ChatbotTemplate {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  category: string;
-  icon: string;
-  is_featured: boolean;
-  trigger_keywords: string[];
-  trigger_type: string;
-  response_type: string;
-  response_content: string | null;
-  ai_enabled: boolean;
-  ai_system_prompt: string;
-  ai_temperature: number;
-  menu_options: any;
-  variables: Record<string, string>;
-}
+import { PROFESSIONAL_TEMPLATES, ProfessionalTemplate, buildFlowConfigFromForm, ChatbotFormState, DEFAULT_FORM_STATE } from './chatbot-config';
 
 interface ChatbotTemplatesProps {
   onTemplateApply: () => void;
@@ -48,51 +18,36 @@ interface ChatbotTemplatesProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const ICON_MAP: Record<string, React.ComponentType<any>> = {
-  'shopping-cart': ShoppingCart,
-  'headphones': Headphones,
-  'calendar': Calendar,
-  'message-circle': MessageCircle,
-  'moon': Moon,
-  'bot': Bot,
-};
+const CATEGORIES = [
+  { id: 'all', label: 'Todos', icon: '🎯' },
+  { id: 'saude', label: 'Saúde', icon: '🏥' },
+  { id: 'beleza', label: 'Beleza', icon: '💅' },
+  { id: 'alimentacao', label: 'Alimentação', icon: '🍽️' },
+  { id: 'fitness', label: 'Fitness', icon: '💪' },
+  { id: 'imoveis', label: 'Imóveis', icon: '🏠' },
+  { id: 'pets', label: 'Pets', icon: '🐾' },
+  { id: 'juridico', label: 'Jurídico', icon: '⚖️' },
+  { id: 'educacao', label: 'Educação', icon: '📚' },
+  { id: 'automotivo', label: 'Automotivo', icon: '🔧' },
+];
 
 export function ChatbotTemplates({ onTemplateApply, isOpen, onOpenChange }: ChatbotTemplatesProps) {
-  const [templates, setTemplates] = useState<ChatbotTemplate[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedTemplate, setSelectedTemplate] = useState<ChatbotTemplate | null>(null);
-  const [customizations, setCustomizations] = useState<Record<string, string>>({});
+  const [selectedTemplate, setSelectedTemplate] = useState<ProfessionalTemplate | null>(null);
+  const [companyName, setCompanyName] = useState('');
   const [isApplying, setIsApplying] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchTemplates();
-    }
-  }, [isOpen]);
+  const filteredTemplates = PROFESSIONAL_TEMPLATES.filter(t => {
+    const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          t.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || t.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
-  const fetchTemplates = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('chatbot_templates')
-        .select('*')
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true });
-
-      if (error) throw error;
-      setTemplates((data || []) as unknown as ChatbotTemplate[]);
-    } catch (error) {
-      console.error('Error fetching templates:', error);
-      toast.error('Erro ao carregar templates');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSelectTemplate = (template: ChatbotTemplate) => {
+  const handleSelectTemplate = (template: ProfessionalTemplate) => {
     setSelectedTemplate(template);
-    // Inicializar customizações com variáveis do template
-    const vars = template.variables || {};
-    setCustomizations(vars);
+    setCompanyName(template.form.company_name || '');
   };
 
   const handleApplyTemplate = async () => {
@@ -100,49 +55,56 @@ export function ChatbotTemplates({ onTemplateApply, isOpen, onOpenChange }: Chat
 
     setIsApplying(true);
     try {
-      // Substituir variáveis no prompt e response_content
-      let finalPrompt = selectedTemplate.ai_system_prompt || '';
-      let finalResponseContent = selectedTemplate.response_content || '';
+      // Build form state from template
+      const formState: ChatbotFormState = {
+        ...DEFAULT_FORM_STATE,
+        ...selectedTemplate.form,
+        company_name: companyName || selectedTemplate.form.company_name || '',
+      } as ChatbotFormState;
+
+      // Replace {{empresa}} in all messages
+      const replaceCompany = (text: string) => text?.replace(/\{\{empresa\}\}/g, companyName || formState.company_name) || '';
       
-      Object.entries(customizations).forEach(([key, value]) => {
-        const regex = new RegExp(`{{${key}}}`, 'g');
-        finalPrompt = finalPrompt.replace(regex, value || `[${key}]`);
-        finalResponseContent = finalResponseContent.replace(regex, value || `[${key}]`);
-      });
+      formState.greeting_message = replaceCompany(formState.greeting_message);
+      formState.morning_greeting = replaceCompany(formState.morning_greeting);
+      formState.afternoon_greeting = replaceCompany(formState.afternoon_greeting);
+      formState.evening_greeting = replaceCompany(formState.evening_greeting);
+      formState.ai_system_prompt = replaceCompany(formState.ai_system_prompt);
 
-      // Determinar response_type baseado no template
-      const responseType = selectedTemplate.ai_enabled ? 'ai' : 'text';
+      // Build flow config
+      const flowConfig = buildFlowConfigFromForm(formState);
 
-      // Criar chatbot a partir do template com TODOS os dados
       const chatbotData = {
-        name: `${selectedTemplate.name} - ${new Date().toLocaleDateString('pt-BR')}`,
-        trigger_type: selectedTemplate.trigger_type || 'keyword',
-        trigger_keywords: selectedTemplate.trigger_keywords || [],
-        response_type: responseType,
-        response_content: finalResponseContent,
-        ai_enabled: selectedTemplate.ai_enabled ?? true,
-        ai_model: 'Luna IA',
-        ai_temperature: selectedTemplate.ai_temperature || 0.7,
-        ai_system_prompt: finalPrompt,
+        name: `${selectedTemplate.name} - ${companyName || 'Minha Empresa'}`,
+        trigger_type: 'keyword',
+        trigger_keywords: selectedTemplate.keywords,
+        response_type: 'menu',
+        response_content: formState.greeting_message,
+        response_list: {
+          message: `${formState.menu_title}\n\n${formState.menu_description}`,
+          options: formState.menu_options.filter(o => o.text.trim()).map((o, idx) => ({ id: String(idx + 1), text: o.text })),
+        },
+        delay_seconds: formState.delay,
+        ai_enabled: formState.ai_mode !== 'disabled',
+        ai_model: formState.ai_mode !== 'disabled' ? 'Luna IA' : null,
+        ai_temperature: formState.ai_temperature,
+        ai_system_prompt: formState.ai_system_prompt,
+        flow_config: flowConfig,
+        max_attempts: formState.max_attempts,
+        fallback_message: formState.fallback_message,
+        company_name: companyName || formState.company_name,
         is_active: true,
         priority: 1,
-        delay_seconds: 2,
       };
 
-      const { error } = await supabase
-        .from('whatsapp_automations')
-        .insert(chatbotData);
-
+      const { error } = await supabase.from('whatsapp_automations').insert(chatbotData as any);
       if (error) throw error;
 
       toast.success('🎉 Chatbot criado e ativado! Já está funcionando.');
       onTemplateApply();
       onOpenChange(false);
       setSelectedTemplate(null);
-      setCustomizations({});
-      
-      // Disparar evento para atualizar lista
-      window.dispatchEvent(new CustomEvent('chatbot-created'));
+      setCompanyName('');
     } catch (error) {
       console.error('Error applying template:', error);
       toast.error('Erro ao aplicar template');
@@ -151,180 +113,187 @@ export function ChatbotTemplates({ onTemplateApply, isOpen, onOpenChange }: Chat
     }
   };
 
-  const getIcon = (iconName: string) => {
-    const IconComponent = ICON_MAP[iconName] || Bot;
-    return IconComponent;
-  };
-
-  const getCategoryColor = (category: string) => {
-    const colors: Record<string, string> = {
-      comercial: 'from-emerald-500 to-emerald-600',
-      suporte: 'from-blue-500 to-blue-600',
-      agendamento: 'from-purple-500 to-purple-600',
-      sac: 'from-orange-500 to-orange-600',
-      '24h': 'from-indigo-500 to-indigo-600',
-    };
-    return colors[category] || 'from-primary to-primary/80';
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
-            Templates de Chatbot
+            Templates Profissionais
           </DialogTitle>
           <DialogDescription>
-            Escolha um template pronto e personalize para seu negócio
+            Chatbots prontos para cada nicho. Apenas personalize e ative!
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : selectedTemplate ? (
-            /* Template Customization View */
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="space-y-6 py-4"
-            >
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedTemplate(null)}
-                className="gap-2"
-              >
-                ← Voltar aos templates
+        <div className="flex-1 overflow-hidden flex flex-col">
+          {selectedTemplate ? (
+            /* Template Customization */
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6 py-4">
+              <Button variant="ghost" size="sm" onClick={() => setSelectedTemplate(null)} className="gap-2">
+                ← Voltar
               </Button>
 
               <Card className="border-primary/30">
                 <CardHeader>
                   <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${getCategoryColor(selectedTemplate.category)} flex items-center justify-center text-white`}>
-                      {(() => {
-                        const Icon = getIcon(selectedTemplate.icon);
-                        return <Icon className="w-6 h-6" />;
-                      })()}
+                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${selectedTemplate.color} flex items-center justify-center text-2xl`}>
+                      {selectedTemplate.icon}
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <CardTitle>{selectedTemplate.name}</CardTitle>
                       <CardDescription>{selectedTemplate.description}</CardDescription>
                     </div>
+                    {selectedTemplate.isFeatured && (
+                      <Badge className="bg-amber-500"><Star className="w-3 h-3 mr-1" />Popular</Badge>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Keywords Preview */}
+                  {/* Company Name */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Nome da sua Empresa *</Label>
+                    <Input
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                      placeholder={selectedTemplate.form.company_name}
+                      className="text-lg"
+                    />
+                    <p className="text-xs text-muted-foreground">Este nome aparecerá nas mensagens do chatbot</p>
+                  </div>
+
+                  {/* Keywords */}
                   <div>
                     <Label className="text-sm font-medium">Palavras-chave de ativação</Label>
                     <div className="flex flex-wrap gap-2 mt-2">
-                      {selectedTemplate.trigger_keywords.slice(0, 8).map((kw, i) => (
+                      {selectedTemplate.keywords.slice(0, 8).map((kw, i) => (
                         <Badge key={i} variant="secondary">{kw}</Badge>
                       ))}
-                      {selectedTemplate.trigger_keywords.length > 8 && (
-                        <Badge variant="outline">+{selectedTemplate.trigger_keywords.length - 8}</Badge>
-                      )}
                     </div>
                   </div>
 
-                  {/* Customization Fields */}
-                  {Object.keys(selectedTemplate.variables || {}).length > 0 && (
-                    <div className="space-y-4">
-                      <Label className="text-sm font-medium">Personalize para seu negócio</Label>
-                      {Object.entries(selectedTemplate.variables || {}).map(([key, defaultValue]) => (
-                        <div key={key} className="space-y-2">
-                          <Label className="text-sm capitalize">{key.replace(/_/g, ' ')}</Label>
-                          <Input
-                            value={customizations[key] || ''}
-                            onChange={(e) => setCustomizations({ ...customizations, [key]: e.target.value })}
-                            placeholder={defaultValue || `Digite ${key}`}
-                          />
+                  {/* Preview Menu */}
+                  <div className="p-4 bg-muted/50 rounded-xl">
+                    <Label className="text-sm font-medium mb-3 block">Preview do Menu</Label>
+                    <div className="space-y-2">
+                      {selectedTemplate.form.menu_options?.slice(0, 5).map((opt, i) => (
+                        <div key={i} className="flex items-center gap-2 text-sm">
+                          <Badge variant="outline" className="font-mono w-6 h-6 p-0 justify-center">{i + 1}</Badge>
+                          <span>{opt.text}</span>
                         </div>
                       ))}
                     </div>
-                  )}
+                  </div>
 
-                  {/* AI Prompt Preview */}
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Prompt da IA (preview)</Label>
-                    <Textarea
-                      value={selectedTemplate.ai_system_prompt.slice(0, 500) + '...'}
-                      readOnly
-                      rows={6}
-                      className="text-xs bg-muted/50"
-                    />
+                  {/* Features */}
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Check className="w-4 h-4 text-green-500" />
+                      Saudação por horário
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Check className="w-4 h-4 text-green-500" />
+                      Menu completo
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Check className="w-4 h-4 text-green-500" />
+                      Coleta de dados
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Check className="w-4 h-4 text-green-500" />
+                      Transferência humana
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             </motion.div>
           ) : (
             /* Template Grid */
-            <div className="grid gap-4 md:grid-cols-2 py-4">
-              {templates.map((template, index) => {
-                const Icon = getIcon(template.icon);
-                return (
-                  <motion.div
-                    key={template.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <Card 
-                      className="cursor-pointer hover:shadow-lg transition-all hover:border-primary/50 relative overflow-hidden"
-                      onClick={() => handleSelectTemplate(template)}
+            <>
+              {/* Search & Filter */}
+              <div className="space-y-3 pb-4 border-b">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Buscar template..."
+                    className="pl-10"
+                  />
+                </div>
+                <ScrollArea className="w-full whitespace-nowrap">
+                  <div className="flex gap-2">
+                    {CATEGORIES.map((cat) => (
+                      <Button
+                        key={cat.id}
+                        variant={selectedCategory === cat.id ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setSelectedCategory(cat.id)}
+                        className="gap-1.5 flex-shrink-0"
+                      >
+                        <span>{cat.icon}</span>
+                        <span>{cat.label}</span>
+                      </Button>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+
+              <ScrollArea className="flex-1 pr-4">
+                <div className="grid gap-4 md:grid-cols-2 py-4">
+                  {filteredTemplates.map((template, index) => (
+                    <motion.div
+                      key={template.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
                     >
-                      {template.is_featured && (
-                        <div className="absolute top-2 right-2">
-                          <Badge className="bg-amber-500 text-white border-0 gap-1">
-                            <Star className="w-3 h-3 fill-current" />
-                            Popular
-                          </Badge>
-                        </div>
-                      )}
-                      <CardContent className="p-5">
-                        <div className="flex items-start gap-4">
-                          <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${getCategoryColor(template.category)} flex items-center justify-center text-white flex-shrink-0`}>
-                            <Icon className="w-6 h-6" />
+                      <Card
+                        className="cursor-pointer hover:shadow-lg transition-all hover:border-primary/50 relative overflow-hidden h-full"
+                        onClick={() => handleSelectTemplate(template)}
+                      >
+                        {template.isFeatured && (
+                          <div className="absolute top-2 right-2">
+                            <Badge className="bg-amber-500 text-white border-0 gap-1">
+                              <Star className="w-3 h-3 fill-current" />
+                              Popular
+                            </Badge>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold mb-1">{template.name}</h4>
-                            <p className="text-sm text-muted-foreground line-clamp-2">
-                              {template.description}
-                            </p>
-                            <div className="flex items-center gap-2 mt-3">
-                              <Badge variant="outline" className="text-xs">
-                                {template.trigger_keywords.length} palavras-chave
-                              </Badge>
-                              <Badge variant="secondary" className="text-xs">
-                                IA integrada
-                              </Badge>
+                        )}
+                        <CardContent className="p-5">
+                          <div className="flex items-start gap-4">
+                            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${template.color} flex items-center justify-center text-xl flex-shrink-0`}>
+                              {template.icon}
                             </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold mb-1">{template.name}</h4>
+                              <p className="text-sm text-muted-foreground line-clamp-2">{template.description}</p>
+                              <div className="flex items-center gap-2 mt-3">
+                                <Badge variant="outline" className="text-xs">
+                                  {template.keywords.length} palavras-chave
+                                </Badge>
+                                <Badge variant="secondary" className="text-xs">
+                                  {template.form.menu_options?.length || 5} opções
+                                </Badge>
+                              </div>
+                            </div>
+                            <ArrowRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
                           </div>
-                          <ArrowRight className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                );
-              })}
-            </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </>
           )}
         </div>
 
         {selectedTemplate && (
           <DialogFooter className="border-t pt-4">
-            <Button variant="outline" onClick={() => setSelectedTemplate(null)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleApplyTemplate} disabled={isApplying} className="gap-2">
-              {isApplying ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Check className="w-4 h-4" />
-              )}
+            <Button variant="outline" onClick={() => setSelectedTemplate(null)}>Cancelar</Button>
+            <Button onClick={handleApplyTemplate} disabled={isApplying || !companyName.trim()} className="gap-2">
+              {isApplying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
               Criar Chatbot
             </Button>
           </DialogFooter>

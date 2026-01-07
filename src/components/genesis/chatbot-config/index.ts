@@ -1,5 +1,7 @@
 // Export all chatbot config components
 export * from './types';
+export * from './templates/professionalTemplates';
+export { BasicInfoSection } from './sections/BasicInfoSection';
 export * from './FlowBuilder';
 export * from './sections/GreetingSection';
 export * from './sections/MenuSection';
