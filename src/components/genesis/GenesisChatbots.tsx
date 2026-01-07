@@ -35,6 +35,8 @@ import {
   AlertTriangle,
   FileText,
   Activity,
+  Eye,
+  Smartphone,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useGenesisAuth } from '@/contexts/GenesisAuthContext';
@@ -107,8 +109,12 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
     ai_model: 'Luna IA',
     ai_temperature: 0.7,
     ai_system_prompt: '',
-    buttons: [{ id: '', text: '' }],
+    buttons: [{ id: '1', text: '' }],
+    menu_options: [{ id: '1', text: '', action: '' }],
   });
+  
+  // Preview tab
+  const [previewTab, setPreviewTab] = useState<'config' | 'preview'>('config');
 
   const fetchChatbots = useCallback(async () => {
     try {
@@ -150,8 +156,10 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
       ai_model: 'Luna IA',
       ai_temperature: 0.7,
       ai_system_prompt: '',
-      buttons: [{ id: '', text: '' }],
+      buttons: [{ id: '1', text: '' }],
+      menu_options: [{ id: '1', text: '', action: '' }],
     });
+    setPreviewTab('config');
   };
 
   const openCreateDialog = () => {
@@ -244,8 +252,10 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
       ai_model: chatbot.ai_model || 'Luna IA',
       ai_temperature: chatbot.ai_temperature || 0.7,
       ai_system_prompt: chatbot.ai_system_prompt || '',
-      buttons: chatbot.response_buttons?.length ? chatbot.response_buttons : [{ id: '', text: '' }],
+      buttons: chatbot.response_buttons?.length ? chatbot.response_buttons : [{ id: '1', text: '' }],
+      menu_options: chatbot.response_list?.options || [{ id: '1', text: '', action: '' }],
     });
+    setPreviewTab('config');
     setIsDialogOpen(true);
   };
 
@@ -504,7 +514,7 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
 
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-xl max-h-[90vh] flex flex-col">
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <Bot className="w-5 h-5 text-primary" />
@@ -515,169 +525,289 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto pr-2 -mr-2">
-            <div className="space-y-6 py-2">
-              {/* Name */}
-              <div className="space-y-2">
-                <Label>Nome do Chatbot</Label>
-                <Input
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="Ex: Atendimento 24h"
-                />
-              </div>
+          {/* Tabs: Config | Preview */}
+          <Tabs value={previewTab} onValueChange={(v) => setPreviewTab(v as any)} className="flex-1 flex flex-col overflow-hidden">
+            <TabsList className="grid w-full grid-cols-2 flex-shrink-0">
+              <TabsTrigger value="config" className="gap-2">
+                <Settings2 className="w-4 h-4" />
+                Configuração
+              </TabsTrigger>
+              <TabsTrigger value="preview" className="gap-2">
+                <Eye className="w-4 h-4" />
+                Preview WhatsApp
+              </TabsTrigger>
+            </TabsList>
 
-              {/* Instance */}
-              {instances.length > 0 && (
+            {/* Config Tab */}
+            <TabsContent value="config" className="flex-1 overflow-y-auto pr-2 -mr-2 mt-4">
+              <div className="space-y-6 py-2">
+                {/* Name */}
                 <div className="space-y-2">
-                  <Label>Instância (opcional)</Label>
+                  <Label>Nome do Chatbot *</Label>
+                  <Input
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    placeholder="Ex: Atendimento 24h"
+                  />
+                </div>
+
+                {/* Instance */}
+                {instances.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Instância (opcional)</Label>
+                    <Select
+                      value={form.instance_id}
+                      onValueChange={(v) => setForm({ ...form, instance_id: v })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Todas as instâncias" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Todas as instâncias</SelectItem>
+                        {instances.map((inst) => (
+                          <SelectItem key={inst.id} value={inst.id}>
+                            {inst.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Trigger Type */}
+                <div className="space-y-2">
+                  <Label>Gatilho</Label>
                   <Select
-                    value={form.instance_id}
-                    onValueChange={(v) => setForm({ ...form, instance_id: v })}
+                    value={form.trigger_type}
+                    onValueChange={(v) => setForm({ ...form, trigger_type: v })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma instância" />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {instances.map((inst) => (
-                        <SelectItem key={inst.id} value={inst.id}>
-                          {inst.name}
+                      {TRIGGER_TYPES.map((t) => (
+                        <SelectItem key={t.value} value={t.value}>
+                          <div className="flex items-center gap-2">
+                            <t.icon className="w-4 h-4" />
+                            <span>{t.label}</span>
+                            <span className="text-xs text-muted-foreground">- {t.description}</span>
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-              )}
 
-              {/* Trigger Type */}
-              <div className="space-y-2">
-                <Label>Gatilho</Label>
-                <Select
-                  value={form.trigger_type}
-                  onValueChange={(v) => setForm({ ...form, trigger_type: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TRIGGER_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>
-                        <div className="flex items-center gap-2">
-                          <t.icon className="w-4 h-4" />
-                          {t.label}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Keywords */}
-              {form.trigger_type === 'keyword' && (
-                <div className="space-y-2">
-                  <Label>Palavras-chave (separadas por vírgula)</Label>
-                  <Input
-                    value={form.keywords}
-                    onChange={(e) => setForm({ ...form, keywords: e.target.value })}
-                    placeholder="oi, olá, bom dia, preço"
-                  />
-                </div>
-              )}
-
-              {/* Response Type */}
-              <div className="space-y-2">
-                <Label>Tipo de Resposta</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {RESPONSE_TYPES.map((rt) => (
-                    <Button
-                      key={rt.value}
-                      type="button"
-                      variant={form.response_type === rt.value ? 'default' : 'outline'}
-                      className="justify-start gap-2 relative"
-                      onClick={() => !rt.disabled && setForm({ ...form, response_type: rt.value, ai_enabled: rt.value === 'ai' })}
-                      disabled={rt.disabled}
-                    >
-                      <rt.icon className="w-4 h-4" />
-                      {rt.label}
-                      {rt.disabled && (
-                        <Badge variant="secondary" className="ml-auto text-[10px] px-1">
-                          <AlertTriangle className="w-3 h-3 mr-1" />
-                          Inativo
-                        </Badge>
-                      )}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Response Content */}
-              {form.response_type === 'text' && (
-                <div className="space-y-2">
-                  <Label>Mensagem de Resposta</Label>
-                  <Textarea
-                    value={form.response}
-                    onChange={(e) => setForm({ ...form, response: e.target.value })}
-                    placeholder="Digite a resposta automática..."
-                    rows={4}
-                  />
-                </div>
-              )}
-
-              {/* AI Config */}
-              {form.response_type === 'ai' && (
-                <div className="space-y-4 p-4 bg-purple-500/5 rounded-xl border border-purple-500/20">
-                  <div className="flex items-center gap-2">
-                    <Brain className="w-5 h-5 text-purple-500" />
-                    <span className="font-medium">Configuração Luna IA</span>
-                    <Badge variant="secondary" className="bg-purple-500/10 text-purple-600">
-                      ChatGPT
-                    </Badge>
-                  </div>
-
+                {/* Keywords */}
+                {form.trigger_type === 'keyword' && (
                   <div className="space-y-2">
-                    <Label>Modelo</Label>
-                    <Input value="Luna IA (ChatGPT)" disabled className="bg-muted" />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Personalidade / System Prompt</Label>
-                    <Textarea
-                      value={form.ai_system_prompt}
-                      onChange={(e) => setForm({ ...form, ai_system_prompt: e.target.value })}
-                      placeholder="Você é um atendente amigável da empresa X..."
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Temperatura: {form.ai_temperature}</Label>
-                    <Slider
-                      value={[form.ai_temperature]}
-                      onValueChange={([v]) => setForm({ ...form, ai_temperature: v })}
-                      min={0}
-                      max={1}
-                      step={0.1}
+                    <Label>Palavras-chave (separadas por vírgula) *</Label>
+                    <Input
+                      value={form.keywords}
+                      onChange={(e) => setForm({ ...form, keywords: e.target.value })}
+                      placeholder="oi, olá, bom dia, preço, *"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Menor = mais preciso, Maior = mais criativo
+                      Use * para responder a qualquer mensagem
                     </p>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Delay */}
-              <div className="space-y-2">
-                <Label>Delay antes de responder: {form.delay}s</Label>
-                <Slider
-                  value={[form.delay]}
-                  onValueChange={([v]) => setForm({ ...form, delay: v })}
-                  min={0}
-                  max={10}
-                  step={1}
-                />
+                {/* Response Type */}
+                <div className="space-y-2">
+                  <Label>Tipo de Resposta</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {RESPONSE_TYPES.map((rt) => (
+                      <Button
+                        key={rt.value}
+                        type="button"
+                        variant={form.response_type === rt.value ? 'default' : 'outline'}
+                        className="justify-start gap-2 relative h-auto py-3"
+                        onClick={() => !rt.disabled && setForm({ ...form, response_type: rt.value, ai_enabled: rt.value === 'ai' })}
+                        disabled={rt.disabled}
+                      >
+                        <rt.icon className="w-4 h-4" />
+                        <span>{rt.label}</span>
+                        {rt.disabled && (
+                          <Badge variant="secondary" className="ml-auto text-[10px] px-1">
+                            <AlertTriangle className="w-3 h-3 mr-1" />
+                            Inativo
+                          </Badge>
+                        )}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Response Content - Text */}
+                {form.response_type === 'text' && (
+                  <div className="space-y-4 p-4 bg-green-500/5 rounded-xl border border-green-500/20">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="w-5 h-5 text-green-600" />
+                      <span className="font-medium">Mensagem de Resposta</span>
+                    </div>
+                    <Textarea
+                      value={form.response}
+                      onChange={(e) => setForm({ ...form, response: e.target.value })}
+                      placeholder={`Olá! 👋 Bem-vindo ao nosso atendimento!\n\nComo posso ajudar você hoje?\n\n1️⃣ Ver produtos\n2️⃣ Consultar preços\n3️⃣ Falar com atendente\n\nDigite o número da opção desejada:`}
+                      rows={8}
+                      className="font-mono text-sm"
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="outline" className="cursor-pointer hover:bg-muted" onClick={() => setForm({ ...form, response: form.response + ' {{nome}}' })}>
+                        + Nome
+                      </Badge>
+                      <Badge variant="outline" className="cursor-pointer hover:bg-muted" onClick={() => setForm({ ...form, response: form.response + ' {{telefone}}' })}>
+                        + Telefone
+                      </Badge>
+                      <Badge variant="outline" className="cursor-pointer hover:bg-muted" onClick={() => setForm({ ...form, response: form.response + '\n\n1️⃣ Opção 1\n2️⃣ Opção 2\n3️⃣ Opção 3' })}>
+                        + Menu numérico
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Use emojis e formatação para tornar a mensagem mais atrativa. Variáveis disponíveis: {'{{nome}}'}, {'{{telefone}}'}
+                    </p>
+                  </div>
+                )}
+
+                {/* AI Config */}
+                {form.response_type === 'ai' && (
+                  <div className="space-y-4 p-4 bg-purple-500/5 rounded-xl border border-purple-500/20">
+                    <div className="flex items-center gap-2">
+                      <Brain className="w-5 h-5 text-purple-500" />
+                      <span className="font-medium">Configuração Luna IA</span>
+                      <Badge variant="secondary" className="bg-purple-500/10 text-purple-600">
+                        Gemini 2.5
+                      </Badge>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Mensagem inicial (opcional)</Label>
+                      <Textarea
+                        value={form.response}
+                        onChange={(e) => setForm({ ...form, response: e.target.value })}
+                        placeholder="Olá! Sou a Luna, sua assistente virtual. Como posso ajudar?"
+                        rows={2}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Mensagem enviada antes da IA processar (opcional)
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Personalidade / System Prompt *</Label>
+                      <Textarea
+                        value={form.ai_system_prompt}
+                        onChange={(e) => setForm({ ...form, ai_system_prompt: e.target.value })}
+                        placeholder={`Você é Luna, atendente virtual da empresa [NOME DA EMPRESA].\n\nSeu papel:\n- Responder dúvidas sobre produtos e serviços\n- Agendar atendimentos\n- Coletar informações de contato\n\nRegras:\n- Seja sempre educado e objetivo\n- Não invente informações\n- Encaminhe para humano quando necessário`}
+                        rows={6}
+                        className="font-mono text-sm"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="flex items-center justify-between">
+                        <span>Temperatura: {form.ai_temperature}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {form.ai_temperature <= 0.3 ? '🎯 Preciso' : form.ai_temperature >= 0.7 ? '✨ Criativo' : '⚖️ Balanceado'}
+                        </span>
+                      </Label>
+                      <Slider
+                        value={[form.ai_temperature]}
+                        onValueChange={([v]) => setForm({ ...form, ai_temperature: v })}
+                        min={0}
+                        max={1}
+                        step={0.1}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Delay */}
+                <div className="space-y-2">
+                  <Label className="flex items-center justify-between">
+                    <span>Delay antes de responder</span>
+                    <span className="text-sm font-medium">{form.delay}s</span>
+                  </Label>
+                  <Slider
+                    value={[form.delay]}
+                    onValueChange={([v]) => setForm({ ...form, delay: v })}
+                    min={0}
+                    max={10}
+                    step={1}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Simula tempo de digitação humana (0 = instantâneo)
+                  </p>
+                </div>
               </div>
-            </div>
-          </div>
+            </TabsContent>
+
+            {/* Preview Tab */}
+            <TabsContent value="preview" className="flex-1 overflow-y-auto mt-4">
+              <div className="flex flex-col items-center p-4">
+                {/* WhatsApp Phone Mockup */}
+                <div className="w-full max-w-sm">
+                  <div className="bg-[#075e54] text-white p-3 rounded-t-2xl flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                      <Bot className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <p className="font-semibold">{form.name || 'Seu Chatbot'}</p>
+                      <p className="text-xs opacity-80">online</p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-[#ece5dd] dark:bg-zinc-800 p-4 min-h-[400px] space-y-3">
+                    {/* User message simulation */}
+                    <div className="flex justify-end">
+                      <div className="bg-[#dcf8c6] dark:bg-green-800 text-black dark:text-white px-3 py-2 rounded-lg max-w-[80%] shadow-sm">
+                        <p className="text-sm">{form.keywords.split(',')[0]?.trim() || 'Olá'}</p>
+                        <p className="text-[10px] text-right opacity-60 mt-1">12:00</p>
+                      </div>
+                    </div>
+
+                    {/* Bot response */}
+                    <div className="flex justify-start">
+                      <div className="bg-white dark:bg-zinc-700 text-black dark:text-white px-3 py-2 rounded-lg max-w-[80%] shadow-sm">
+                        <p className="text-sm whitespace-pre-wrap">
+                          {form.response_type === 'ai' 
+                            ? (form.response || 'Olá! Sou a Luna, sua assistente virtual. Como posso ajudar?') 
+                            : (form.response || 'Configure sua mensagem de resposta...')
+                          }
+                        </p>
+                        <p className="text-[10px] text-right opacity-60 mt-1 flex items-center justify-end gap-1">
+                          12:00
+                          <span className="text-blue-500">✓✓</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    {form.response_type === 'ai' && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground justify-center mt-4">
+                        <Brain className="w-4 h-4 text-purple-500" />
+                        <span>Luna IA responderá de forma inteligente</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="bg-[#f0f0f0] dark:bg-zinc-900 p-2 rounded-b-2xl flex items-center gap-2">
+                    <div className="flex-1 bg-white dark:bg-zinc-800 rounded-full px-4 py-2 text-sm text-muted-foreground">
+                      Digite uma mensagem...
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-[#075e54] flex items-center justify-center">
+                      <Smartphone className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-xs text-muted-foreground text-center mt-4 max-w-sm">
+                  Este é um preview de como seu chatbot aparecerá no WhatsApp. 
+                  A aparência real pode variar ligeiramente.
+                </p>
+              </div>
+            </TabsContent>
+          </Tabs>
 
           <DialogFooter className="flex-shrink-0 pt-4 border-t mt-4">
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
