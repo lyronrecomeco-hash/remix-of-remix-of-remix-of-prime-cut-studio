@@ -698,6 +698,15 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
         onComplete={handleLunaComplete}
         instances={instances}
       />
+
+      {/* Chatbot Templates Modal */}
+      <ChatbotTemplates
+        isOpen={isTemplatesOpen}
+        onOpenChange={setIsTemplatesOpen}
+        onTemplateApply={() => {
+          fetchChatbots();
+        }}
+      />
     </div>
   );
 }
