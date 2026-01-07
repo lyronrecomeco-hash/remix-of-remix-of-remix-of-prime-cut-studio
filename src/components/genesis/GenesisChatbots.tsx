@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,35 +15,42 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bot,
   Plus,
-  Edit,
   Trash2,
   Loader2,
   Zap,
   MessageSquare,
-  Clock,
   Hash,
   Users,
-  Play,
-  Pause,
-  Brain,
-  Sparkles,
   LayoutGrid,
   List,
   Moon,
   Timer,
   Settings2,
-  AlertTriangle,
   FileText,
   Activity,
   Eye,
   Smartphone,
+  X,
+  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useGenesisAuth } from '@/contexts/GenesisAuthContext';
-import { LunaBuilderModal } from './LunaBuilderModal';
 import { ChatbotTemplates } from './ChatbotTemplates';
 import { ChatbotSessionViewer } from './ChatbotSessionViewer';
-import lunaAvatar from '@/assets/luna-avatar.png';
+
+type ResponseType = 'text' | 'buttons' | 'list';
+
+type MenuOptionForm = {
+  id: string;
+  text: string;
+  reply: string;
+};
+
+type FlowConfig = {
+  version?: string;
+  startStep: string;
+  steps: Record<string, any>;
+};
 
 interface Chatbot {
   id: string;
@@ -60,10 +67,11 @@ interface Chatbot {
   priority: number;
   match_count: number;
   created_at: string;
-  ai_enabled?: boolean;
-  ai_model?: string | null;
-  ai_temperature?: number;
-  ai_system_prompt?: string | null;
+  // Fluxo (etapas)
+  flow_config?: FlowConfig | null;
+  max_attempts?: number | null;
+  fallback_message?: string | null;
+  company_name?: string | null;
 }
 
 interface GenesisChatbotsProps {
@@ -78,19 +86,103 @@ const TRIGGER_TYPES = [
   { value: 'inactivity', label: 'Inatividade', icon: Timer, description: 'Após X minutos sem resposta' },
 ];
 
-const RESPONSE_TYPES = [
-  { value: 'text', label: 'Texto simples', icon: MessageSquare, disabled: false },
-  { value: 'buttons', label: 'Com botões', icon: LayoutGrid, disabled: true, notice: 'Temporariamente inativo' },
-  { value: 'list', label: 'Menu de lista', icon: List, disabled: true, notice: 'Temporariamente inativo' },
-  { value: 'ai', label: 'Resposta IA', icon: Brain, disabled: false },
+const RESPONSE_TYPES: Array<{ value: ResponseType; label: string; icon: any }> = [
+  { value: 'text', label: 'Texto simples', icon: MessageSquare },
+  { value: 'list', label: 'Menu de lista', icon: List },
+  { value: 'buttons', label: 'Com botões', icon: LayoutGrid },
 ];
+
+function buildFlowFromMenu(params: {
+  greetingMessage: string;
+  menuMessage: string;
+  options: MenuOptionForm[];
+  fallbackMessage: string;
+  maxAttempts: number;
+}): FlowConfig {
+  const greetingMessage = params.greetingMessage?.trim() || 'Olá! 👋\n\nComo posso ajudar você hoje?';
+  const menuMessage = params.menuMessage?.trim() || '📋 *Menu Principal*\n\nEscolha uma opção:';
+
+  const safeOptions = (params.options || [])
+    .map((o, i) => ({
+      id: o.id,
+      text: o.text?.trim() || `Opção ${i + 1}`,
+      reply: o.reply?.trim() || 'Perfeito! ✅\n\nEm que mais posso ajudar?'
+    }))
+    .filter((o) => o.text.length > 0);
+
+  const steps: Record<string, any> = {
+    greeting: {
+      id: 'greeting',
+      type: 'greeting',
+      message: greetingMessage,
+      next: 'main_menu',
+    },
+    main_menu: {
+      id: 'main_menu',
+      type: 'menu',
+      message: menuMessage,
+      options: safeOptions.map((opt, idx) => ({
+        id: idx + 1,
+        text: opt.text,
+        next: `opt_${idx + 1}`,
+      })),
+    },
+    goodbye: {
+      id: 'goodbye',
+      type: 'end',
+      message: '✅ Atendimento finalizado!\n\nObrigado por falar com a {{empresa}}.\nVolte sempre! 👋',
+    },
+  };
+
+  safeOptions.forEach((opt, idx) => {
+    steps[`opt_${idx + 1}`] = {
+      id: `opt_${idx + 1}`,
+      type: 'menu',
+      message: opt.reply,
+      options: [
+        { id: 1, text: '📋 Voltar ao menu principal', next: 'main_menu' },
+        { id: 2, text: '👋 Encerrar atendimento', next: 'goodbye' },
+      ],
+    };
+  });
+
+  return {
+    version: '1.0',
+    startStep: 'greeting',
+    steps,
+  };
+}
+
+function deriveMenuOptionsFromFlow(flow: any): MenuOptionForm[] {
+  try {
+    const options = flow?.steps?.main_menu?.options || [];
+    return (options as any[]).map((o, idx) => {
+      const nextId = o?.next;
+      const reply = flow?.steps?.[nextId]?.message || '';
+      return {
+        id: String(idx + 1),
+        text: String(o?.text || ''),
+        reply: String(reply || ''),
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
+function safeParseJson<T = any>(value: string): { ok: true; data: T } | { ok: false; error: string } {
+  try {
+    return { ok: true, data: JSON.parse(value) as T };
+  } catch (e: any) {
+    return { ok: false, error: e?.message || 'JSON inválido' };
+  }
+}
 
 export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
   const { genesisUser } = useGenesisAuth();
   const [chatbots, setChatbots] = useState<Chatbot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isLunaOpen, setIsLunaOpen] = useState(false);
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'chatbots' | 'sessions'>('chatbots');
   const [editingChatbot, setEditingChatbot] = useState<Chatbot | null>(null);
@@ -101,16 +193,17 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
     name: '',
     trigger_type: 'keyword',
     keywords: '',
-    response_type: 'text',
+    response_type: 'list' as ResponseType,
     response: '',
+    menu_message: '📋 *Menu Principal*\n\nEscolha uma opção:',
     delay: 2,
     instance_id: '',
-    ai_enabled: false,
-    ai_model: 'Luna IA',
-    ai_temperature: 0.7,
-    ai_system_prompt: '',
-    buttons: [{ id: '1', text: '' }],
-    menu_options: [{ id: '1', text: '', action: '' }],
+    company_name: '',
+    max_attempts: 3,
+    fallback_message: 'Não entendi sua resposta 😅\nPor favor, digite apenas o *número* da opção desejada.',
+    menu_options: [{ id: '1', text: '', reply: '' }] as MenuOptionForm[],
+    use_flow_json: false,
+    flow_config_json: '',
   });
   
   // Preview tab
@@ -134,13 +227,6 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
 
   useEffect(() => {
     fetchChatbots();
-    
-    // Listen for chatbot creation from Luna
-    const handleChatbotCreated = () => {
-      fetchChatbots();
-    };
-    window.addEventListener('chatbot-created', handleChatbotCreated);
-    return () => window.removeEventListener('chatbot-created', handleChatbotCreated);
   }, [fetchChatbots]);
 
   const resetForm = () => {
@@ -148,16 +234,17 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
       name: '',
       trigger_type: 'keyword',
       keywords: '',
-      response_type: 'text',
+      response_type: 'list',
       response: '',
+      menu_message: '📋 *Menu Principal*\n\nEscolha uma opção:',
       delay: 2,
       instance_id: '',
-      ai_enabled: false,
-      ai_model: 'Luna IA',
-      ai_temperature: 0.7,
-      ai_system_prompt: '',
-      buttons: [{ id: '1', text: '' }],
-      menu_options: [{ id: '1', text: '', action: '' }],
+      company_name: '',
+      max_attempts: 3,
+      fallback_message: 'Não entendi sua resposta 😅\nPor favor, digite apenas o *número* da opção desejada.',
+      menu_options: [{ id: '1', text: '', reply: '' }],
+      use_flow_json: false,
+      flow_config_json: '',
     });
     setPreviewTab('config');
   };
@@ -174,28 +261,70 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
       return;
     }
 
-    if (form.response_type !== 'ai' && !form.response.trim()) {
-      toast.error('Digite uma resposta');
+    // Validação mínima do fluxo (sem IA)
+    if ((form.response_type === 'list' || form.response_type === 'buttons') && !form.response.trim()) {
+      toast.error('Digite a mensagem inicial');
+      return;
+    }
+
+    if ((form.response_type === 'list' || form.response_type === 'buttons') && form.menu_options.filter(o => o.text.trim()).length === 0) {
+      toast.error('Adicione pelo menos 1 opção de menu');
       return;
     }
 
     setIsSaving(true);
     try {
-      const isAI = form.response_type === 'ai';
+      const wantsFlow = form.response_type === 'list' || form.response_type === 'buttons';
+
+      let flowConfig: FlowConfig | null = null;
+      if (wantsFlow) {
+        if (form.use_flow_json) {
+          const parsed = safeParseJson<FlowConfig>(form.flow_config_json || '');
+          if (!parsed.ok) {
+            toast.error(`Flow JSON inválido: ${parsed.error}`);
+            setIsSaving(false);
+            return;
+          }
+          flowConfig = parsed.data;
+        } else {
+          flowConfig = buildFlowFromMenu({
+            greetingMessage: form.response,
+            menuMessage: form.menu_message,
+            options: form.menu_options,
+            fallbackMessage: form.fallback_message,
+            maxAttempts: form.max_attempts,
+          });
+        }
+      }
+
       const data: Record<string, unknown> = {
         name: form.name,
         trigger_type: form.trigger_type,
         trigger_keywords: form.keywords.split(',').map(k => k.trim()).filter(Boolean),
-        response_type: isAI ? 'text' : form.response_type,
+        response_type: wantsFlow ? 'menu' : 'text',
         response_content: form.response || null,
-        response_buttons: form.response_type === 'buttons' ? form.buttons.filter(b => b.text.trim()) : null,
+        response_buttons: form.response_type === 'buttons' ? form.menu_options.filter(o => o.text.trim()).map((o, idx) => ({ id: String(idx + 1), text: o.text })) : null,
+        response_list: wantsFlow
+          ? {
+              message: form.menu_message,
+              options: form.menu_options.filter(o => o.text.trim()).map((o, idx) => ({ id: String(idx + 1), text: o.text })),
+            }
+          : null,
         delay_seconds: form.delay,
         instance_id: form.instance_id || null,
-        ai_enabled: isAI,
-        ai_model: isAI ? 'gpt-4o-mini' : null, // Luna IA uses ChatGPT
-        ai_temperature: form.ai_temperature,
-        ai_system_prompt: form.ai_system_prompt || null,
         trigger_conditions: null,
+
+        // Sem IA
+        ai_enabled: false,
+        ai_model: null,
+        ai_temperature: null,
+        ai_system_prompt: null,
+
+        // Fluxo configurável
+        flow_config: flowConfig || {},
+        max_attempts: form.max_attempts,
+        fallback_message: form.fallback_message,
+        company_name: form.company_name || null,
       };
 
       if (editingChatbot) {
@@ -239,21 +368,25 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
   };
 
   const openEditDialog = (chatbot: Chatbot) => {
+    const flow = chatbot.flow_config || null;
+    const derivedOptions = flow ? deriveMenuOptionsFromFlow(flow) : [];
+
     setEditingChatbot(chatbot);
     setForm({
       name: chatbot.name,
       trigger_type: chatbot.trigger_type,
       keywords: chatbot.trigger_keywords?.join(', ') || '',
-      response_type: chatbot.ai_enabled ? 'ai' : chatbot.response_type,
-      response: chatbot.response_content || '',
+      response_type: (chatbot.response_type === 'menu' ? 'list' : (chatbot.response_type as ResponseType)) || 'list',
+      response: (flow?.steps?.greeting?.message as string) || chatbot.response_content || '',
+      menu_message: (flow?.steps?.main_menu?.message as string) || '📋 *Menu Principal*\n\nEscolha uma opção:',
       delay: chatbot.delay_seconds,
       instance_id: chatbot.instance_id || '',
-      ai_enabled: chatbot.ai_enabled || false,
-      ai_model: chatbot.ai_model || 'Luna IA',
-      ai_temperature: chatbot.ai_temperature || 0.7,
-      ai_system_prompt: chatbot.ai_system_prompt || '',
-      buttons: chatbot.response_buttons?.length ? chatbot.response_buttons : [{ id: '1', text: '' }],
-      menu_options: chatbot.response_list?.options || [{ id: '1', text: '', action: '' }],
+      company_name: chatbot.company_name || '',
+      max_attempts: chatbot.max_attempts || 3,
+      fallback_message: chatbot.fallback_message || 'Não entendi sua resposta 😅\nPor favor, digite apenas o *número* da opção desejada.',
+      menu_options: derivedOptions.length ? derivedOptions : [{ id: '1', text: '', reply: '' }],
+      use_flow_json: Boolean(flow && Object.keys(flow).length > 0),
+      flow_config_json: flow && Object.keys(flow).length > 0 ? JSON.stringify(flow, null, 2) : '',
     });
     setPreviewTab('config');
     setIsDialogOpen(true);
@@ -270,21 +403,9 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
     }
   };
 
-  // Luna AI Builder callback
-  const handleLunaComplete = (config: typeof form) => {
-    setForm({
-      ...config,
-      buttons: config.ai_enabled ? [] : [{ id: '', text: '' }]
-    });
-
-    // Ensure Luna modal closes before opening the create/edit dialog
-    setIsLunaOpen(false);
-    setTimeout(() => setIsDialogOpen(true), 50);
-  };
 
   // Stats
   const activeChatbots = chatbots.filter(c => c.is_active).length;
-  const aiChatbots = chatbots.filter(c => c.ai_enabled).length;
 
   if (isLoading) {
     return (
@@ -311,11 +432,10 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
               </motion.div>
               <div>
                 <CardTitle className="text-lg sm:text-2xl flex items-center gap-2 flex-wrap">
-                  Chatbots Inteligentes
-                  <Badge variant="secondary">IA</Badge>
+                  Chatbots
                 </CardTitle>
                 <CardDescription className="text-sm sm:text-base">
-                  Configure respostas automáticas com inteligência artificial
+                  Configure respostas automáticas com fluxo de etapas
                 </CardDescription>
               </div>
             </div>
@@ -329,16 +449,6 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
                 <FileText className="w-4 h-4" />
                 <span className="hidden sm:inline">Templates</span>
               </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => setIsLunaOpen(true)} 
-                className="gap-2"
-                size="sm"
-              >
-                <img src={lunaAvatar} alt="Luna" className="w-5 h-5 rounded-full" />
-                <span className="hidden sm:inline">Luna IA</span>
-                <span className="sm:hidden">Luna</span>
-              </Button>
               <Button onClick={openCreateDialog} size="sm" className="gap-2 shadow-lg">
                 <Plus className="w-4 h-4" />
                 <span className="hidden sm:inline">Novo Chatbot</span>
@@ -348,7 +458,7 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-4 sm:mt-6">
+          <div className="grid grid-cols-2 gap-2 sm:gap-4 mt-4 sm:mt-6">
             <div className="p-3 sm:p-4 bg-muted/50 rounded-xl">
               <p className="text-xl sm:text-2xl font-bold">{chatbots.length}</p>
               <p className="text-xs text-muted-foreground">Total</p>
@@ -356,10 +466,6 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
             <div className="p-3 sm:p-4 bg-green-500/10 rounded-xl">
               <p className="text-xl sm:text-2xl font-bold text-green-600">{activeChatbots}</p>
               <p className="text-xs text-muted-foreground">Ativos</p>
-            </div>
-            <div className="p-3 sm:p-4 bg-primary/10 rounded-xl">
-              <p className="text-xl sm:text-2xl font-bold text-primary">{aiChatbots}</p>
-              <p className="text-xs text-muted-foreground">Com IA</p>
             </div>
           </div>
 
@@ -396,23 +502,19 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
               <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
             </motion.div>
             <h3 className="font-semibold text-lg sm:text-xl mb-2">Crie seu primeiro chatbot</h3>
-            <p className="text-muted-foreground mb-4 sm:mb-6 max-w-md mx-auto text-sm sm:text-base">
-              Configure respostas automáticas para atender seus clientes 24/7
-            </p>
-            <div className="flex flex-col sm:flex-row gap-2 justify-center">
-              <Button onClick={() => setIsTemplatesOpen(true)} variant="outline" className="gap-2">
-                <FileText className="w-5 h-5" />
-                Usar Template
-              </Button>
-              <Button onClick={() => setIsLunaOpen(true)} variant="outline" className="gap-2">
-                <img src={lunaAvatar} alt="Luna" className="w-5 h-5 rounded-full" />
-                Criar com Luna IA
-              </Button>
-              <Button onClick={openCreateDialog} className="gap-2">
-                <Plus className="w-5 h-5" />
-                Criar Chatbot
-              </Button>
-            </div>
+             <p className="text-muted-foreground mb-4 sm:mb-6 max-w-md mx-auto text-sm sm:text-base">
+               Configure um fluxo de etapas (mensagem inicial + menu + respostas)
+             </p>
+             <div className="flex flex-col sm:flex-row gap-2 justify-center">
+               <Button onClick={() => setIsTemplatesOpen(true)} variant="outline" className="gap-2">
+                 <FileText className="w-5 h-5" />
+                 Usar Template
+               </Button>
+               <Button onClick={openCreateDialog} className="gap-2">
+                 <Plus className="w-5 h-5" />
+                 Criar Chatbot
+               </Button>
+             </div>
           </CardContent>
         </Card>
       )}
@@ -438,11 +540,11 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
                     <CardContent className="p-5">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                            chatbot.is_active ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
-                          }`}>
-                            {chatbot.ai_enabled ? <Brain className="w-5 h-5" /> : <TriggerIcon className="w-5 h-5" />}
-                          </div>
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                          chatbot.is_active ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                        }`}>
+                          <TriggerIcon className="w-5 h-5" />
+                        </div>
                           <div>
                             <h4 className="font-semibold">{chatbot.name}</h4>
                             <Badge variant="outline" className="text-xs mt-1">
@@ -474,12 +576,6 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
                         </div>
                       )}
 
-                      {chatbot.ai_enabled && (
-                        <div className="flex items-center gap-1 text-xs text-primary mb-3">
-                          <Brain className="w-3 h-3" />
-                          <span>IA Luna ativa</span>
-                        </div>
-                      )}
 
                       <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
                         {chatbot.response_content || 'Sem mensagem configurada'}
@@ -821,13 +917,6 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Luna AI Builder Modal */}
-      <LunaBuilderModal
-        open={isLunaOpen}
-        onOpenChange={setIsLunaOpen}
-        onComplete={handleLunaComplete}
-        instances={instances}
-      />
 
       {/* Chatbot Templates Modal */}
       <ChatbotTemplates
