@@ -904,6 +904,222 @@ export type Database = {
         }
         Relationships: []
       }
+      chatbot_session_logs: {
+        Row: {
+          chatbot_id: string | null
+          created_at: string | null
+          error_message: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          luna_reasoning: string | null
+          message_in: string | null
+          message_out: string | null
+          session_id: string | null
+          step_from: string | null
+          step_to: string | null
+        }
+        Insert: {
+          chatbot_id?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          luna_reasoning?: string | null
+          message_in?: string | null
+          message_out?: string | null
+          session_id?: string | null
+          step_from?: string | null
+          step_to?: string | null
+        }
+        Update: {
+          chatbot_id?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          luna_reasoning?: string | null
+          message_in?: string | null
+          message_out?: string | null
+          session_id?: string | null
+          step_from?: string | null
+          step_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatbot_session_logs_chatbot_id_fkey"
+            columns: ["chatbot_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_automations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chatbot_session_logs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "chatbot_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chatbot_sessions: {
+        Row: {
+          awaiting_response: boolean | null
+          awaiting_type: string | null
+          chatbot_id: string
+          contact_id: string
+          context: Json | null
+          created_at: string | null
+          current_step: string | null
+          ended_at: string | null
+          expected_options: Json | null
+          history: Json | null
+          id: string
+          instance_id: string | null
+          last_interaction_at: string | null
+          last_message_at: string | null
+          started_at: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          awaiting_response?: boolean | null
+          awaiting_type?: string | null
+          chatbot_id: string
+          contact_id: string
+          context?: Json | null
+          created_at?: string | null
+          current_step?: string | null
+          ended_at?: string | null
+          expected_options?: Json | null
+          history?: Json | null
+          id?: string
+          instance_id?: string | null
+          last_interaction_at?: string | null
+          last_message_at?: string | null
+          started_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          awaiting_response?: boolean | null
+          awaiting_type?: string | null
+          chatbot_id?: string
+          contact_id?: string
+          context?: Json | null
+          created_at?: string | null
+          current_step?: string | null
+          ended_at?: string | null
+          expected_options?: Json | null
+          history?: Json | null
+          id?: string
+          instance_id?: string | null
+          last_interaction_at?: string | null
+          last_message_at?: string | null
+          started_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatbot_sessions_chatbot_id_fkey"
+            columns: ["chatbot_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_automations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chatbot_sessions_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chatbot_templates: {
+        Row: {
+          ai_enabled: boolean | null
+          ai_model: string | null
+          ai_system_prompt: string
+          ai_temperature: number | null
+          category: string
+          created_at: string | null
+          description: string | null
+          editable_fields: Json | null
+          flow_structure: Json | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          menu_options: Json | null
+          name: string
+          preview_image: string | null
+          response_content: string | null
+          response_type: string | null
+          slug: string
+          sort_order: number | null
+          trigger_keywords: string[] | null
+          trigger_type: string
+          updated_at: string | null
+          variables: Json | null
+        }
+        Insert: {
+          ai_enabled?: boolean | null
+          ai_model?: string | null
+          ai_system_prompt: string
+          ai_temperature?: number | null
+          category: string
+          created_at?: string | null
+          description?: string | null
+          editable_fields?: Json | null
+          flow_structure?: Json | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          menu_options?: Json | null
+          name: string
+          preview_image?: string | null
+          response_content?: string | null
+          response_type?: string | null
+          slug: string
+          sort_order?: number | null
+          trigger_keywords?: string[] | null
+          trigger_type?: string
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Update: {
+          ai_enabled?: boolean | null
+          ai_model?: string | null
+          ai_system_prompt?: string
+          ai_temperature?: number | null
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          editable_fields?: Json | null
+          flow_structure?: Json | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          menu_options?: Json | null
+          name?: string
+          preview_image?: string | null
+          response_content?: string | null
+          response_type?: string | null
+          slug?: string
+          sort_order?: number | null
+          trigger_keywords?: string[] | null
+          trigger_type?: string
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Relationships: []
+      }
       chatpro_config: {
         Row: {
           api_token: string | null
