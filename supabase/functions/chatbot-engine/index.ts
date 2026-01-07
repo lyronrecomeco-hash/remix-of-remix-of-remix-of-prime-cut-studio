@@ -64,6 +64,12 @@ interface FlowConfig {
     afternoon?: string;
     evening?: string;
   };
+  settings?: {
+    greeting_dynamic?: boolean;
+    morning_greeting?: string;
+    afternoon_greeting?: string;
+    evening_greeting?: string;
+  };
 }
 
 interface Session {
@@ -340,18 +346,32 @@ function getGreeting(): string {
 
 // =====================================================
 // HELPER: Gerar saudação dinâmica completa (com mensagens personalizadas)
+// Suporta AMBOS formatos: greetings e settings
 // =====================================================
 function getDynamicGreeting(context: Record<string, any>): string {
   const hour = new Date().getHours();
   const companyName = context.company_name || 'nossa empresa';
   
+  // Usa saudações personalizadas se disponíveis
   if (hour >= 5 && hour < 12) {
-    return context.morning_greeting || `Bom dia! ☀️ Seja bem-vindo(a) à ${companyName}!`;
+    const customGreeting = context.morning_greeting;
+    if (customGreeting && customGreeting.trim()) {
+      return customGreeting.replace(/\{\{empresa\}\}/gi, companyName);
+    }
+    return `Bom dia! ☀️ Bem-vindo(a) à ${companyName}!`;
   }
   if (hour >= 12 && hour < 18) {
-    return context.afternoon_greeting || `Boa tarde! 🌤️ Seja bem-vindo(a) à ${companyName}!`;
+    const customGreeting = context.afternoon_greeting;
+    if (customGreeting && customGreeting.trim()) {
+      return customGreeting.replace(/\{\{empresa\}\}/gi, companyName);
+    }
+    return `Boa tarde! 🌤️ Bem-vindo(a) à ${companyName}!`;
   }
-  return context.evening_greeting || `Boa noite! 🌙 Seja bem-vindo(a) à ${companyName}!`;
+  const customGreeting = context.evening_greeting;
+  if (customGreeting && customGreeting.trim()) {
+    return customGreeting.replace(/\{\{empresa\}\}/gi, companyName);
+  }
+  return `Boa noite! 🌙 Bem-vindo(a) à ${companyName}!`;
 }
 
 // =====================================================
@@ -670,15 +690,17 @@ async function processFlowStep(
     return { success: false, response: 'Erro interno. Tente novamente.' };
   }
   
-  // Extrair saudações personalizadas do flow_config
+  // Extrair saudações personalizadas - suporta AMBOS formatos: greetings e settings
   const greetingConfig = flowConfig.greetings || {};
+  const settingsConfig = flowConfig.settings || {};
   
   const context = {
     ...session.context,
     company_name: chatbot.company_name || 'Nossa Empresa',
-    morning_greeting: greetingConfig.morning || null,
-    afternoon_greeting: greetingConfig.afternoon || null,
-    evening_greeting: greetingConfig.evening || null,
+    // Prioridade: settings (formato antigo) > greetings (formato novo)
+    morning_greeting: settingsConfig.morning_greeting || greetingConfig.morning || null,
+    afternoon_greeting: settingsConfig.afternoon_greeting || greetingConfig.afternoon || null,
+    evening_greeting: settingsConfig.evening_greeting || greetingConfig.evening || null,
   };
   
   console.log(`[FLOW] Processing step: ${currentStepId}, type: ${currentStep.type}`);

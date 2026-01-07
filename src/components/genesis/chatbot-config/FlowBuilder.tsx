@@ -147,10 +147,17 @@ export function buildFlowConfigFromForm(form: ChatbotFormState): FlowConfig {
     version: '2.0',
     startStep: 'greeting',
     steps,
+    // Suporta ambos formatos para compatibilidade
     greetings: form.use_dynamic_greeting ? {
       morning: form.morning_greeting,
       afternoon: form.afternoon_greeting,
       evening: form.evening_greeting,
+    } : undefined,
+    settings: form.use_dynamic_greeting ? {
+      greeting_dynamic: true,
+      morning_greeting: form.morning_greeting,
+      afternoon_greeting: form.afternoon_greeting,
+      evening_greeting: form.evening_greeting,
     } : undefined,
   };
 }
