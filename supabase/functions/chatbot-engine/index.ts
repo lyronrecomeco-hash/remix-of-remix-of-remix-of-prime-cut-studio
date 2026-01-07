@@ -1200,19 +1200,20 @@ async function processIncomingMessage(
   
   if (activeSession && activeSession.chatbot) {
     console.log(`[ENGINE] Found active session: ${activeSession.id}, step: ${activeSession.current_step_id}`);
-    
+
     const chatbot = activeSession.chatbot as ChatbotConfig;
-    
-    // Verificar se é palavra-chave de reinício
-    if (checkKeywordTrigger(userMessage, chatbot.trigger_keywords)) {
-      console.log(`[ENGINE] Keyword detected, restarting session`);
+
+    // Verificar reinício APENAS com palavras explícitas (oi, menu, reiniciar...)
+    // NÃO reinicia por trigger_keywords (evita duplicação: usuário digita "corte" e não reinicia)
+    if (shouldRestartSession(userMessage)) {
+      console.log(`[ENGINE] Restart keyword detected, restarting session`);
       const newSession = await getOrCreateSession(supabase, chatbot.id, contactId, instanceId, true);
       if (newSession) {
         const result = await processFlowStep(supabase, chatbot, newSession, null, instanceId, contactId);
         return { ...result, chatbotId: chatbot.id, chatbotName: chatbot.name };
       }
     }
-    
+
     // Processar mensagem no fluxo atual
     const result = await processFlowStep(supabase, chatbot, activeSession, userMessage, instanceId, contactId);
     return { ...result, chatbotId: chatbot.id, chatbotName: chatbot.name };
