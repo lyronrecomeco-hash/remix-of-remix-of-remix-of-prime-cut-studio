@@ -87,7 +87,7 @@ NUNCA invente horários ou disponibilidade. Se não souber, direcione para atend
       transfer: { id: 'transfer', type: 'transfer', message: '👨‍⚕️ Transferindo para atendente...', transfer_message: 'Aguarde um momento!' },
       end: { id: 'end', type: 'end', message: '✅ Obrigado por entrar em contato! Volte sempre. 💙' },
     },
-    settings: { greeting_dynamic: true },
+    greetings: { morning: '', afternoon: '', evening: '' },
   },
 };
 
@@ -142,7 +142,7 @@ const barbeariaTemplate: ProfessionalTemplate = {
         ]
       },
     },
-    settings: { greeting_dynamic: true },
+    greetings: { morning: '', afternoon: '', evening: '' },
   },
 };
 
@@ -198,7 +198,7 @@ NUNCA confirme reservas ou pedidos sozinho. Sempre transfira para confirmação.
       greeting: { id: 'greeting', type: 'greeting', message: '', next: 'main_menu' },
       main_menu: { id: 'main_menu', type: 'menu', message: '🍽️ Menu', options: [] },
     },
-    settings: { greeting_dynamic: true },
+    greetings: { morning: '', afternoon: '', evening: '' },
   },
 };
 
@@ -242,7 +242,7 @@ const salaoTemplate: ProfessionalTemplate = {
       greeting: { id: 'greeting', type: 'greeting', message: '', next: 'main_menu' },
       main_menu: { id: 'main_menu', type: 'menu', message: '💅 Menu', options: [] },
     },
-    settings: { greeting_dynamic: true },
+    greetings: { morning: '', afternoon: '', evening: '' },
   },
 };
 
@@ -283,7 +283,7 @@ const academiaTemplate: ProfessionalTemplate = {
     version: '2.0',
     startStep: 'greeting',
     steps: {},
-    settings: { greeting_dynamic: true },
+    greetings: { morning: '', afternoon: '', evening: '' },
   },
 };
 
@@ -333,7 +333,7 @@ NUNCA invente preços ou disponibilidade. Sempre confirme com corretor.`,
     version: '2.0',
     startStep: 'greeting',
     steps: {},
-    settings: { greeting_dynamic: true },
+    greetings: { morning: '', afternoon: '', evening: '' },
   },
 };
 
@@ -374,7 +374,7 @@ const petshopTemplate: ProfessionalTemplate = {
     version: '2.0',
     startStep: 'greeting',
     steps: {},
-    settings: { greeting_dynamic: true },
+    greetings: { morning: '', afternoon: '', evening: '' },
   },
 };
 
@@ -415,7 +415,7 @@ const advocaciaTemplate: ProfessionalTemplate = {
     version: '2.0',
     startStep: 'greeting',
     steps: {},
-    settings: { greeting_dynamic: true },
+    greetings: { morning: '', afternoon: '', evening: '' },
   },
 };
 
@@ -456,7 +456,7 @@ const escolaTemplate: ProfessionalTemplate = {
     version: '2.0',
     startStep: 'greeting',
     steps: {},
-    settings: { greeting_dynamic: true },
+    greetings: { morning: '', afternoon: '', evening: '' },
   },
 };
 
@@ -497,7 +497,7 @@ const oficinaTemplate: ProfessionalTemplate = {
     version: '2.0',
     startStep: 'greeting',
     steps: {},
-    settings: { greeting_dynamic: true },
+    greetings: { morning: '', afternoon: '', evening: '' },
   },
 };
 

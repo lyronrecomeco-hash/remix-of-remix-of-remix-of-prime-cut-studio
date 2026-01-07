@@ -37,11 +37,10 @@ export interface FlowConfig {
   version: string;
   startStep: string;
   steps: Record<string, FlowStep>;
-  settings?: {
-    greeting_dynamic?: boolean;
-    morning_greeting?: string;
-    afternoon_greeting?: string;
-    evening_greeting?: string;
+  greetings?: {
+    morning?: string;
+    afternoon?: string;
+    evening?: string;
   };
 }
 

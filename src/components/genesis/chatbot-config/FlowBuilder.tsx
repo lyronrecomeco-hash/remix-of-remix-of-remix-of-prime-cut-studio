@@ -147,11 +147,10 @@ export function buildFlowConfigFromForm(form: ChatbotFormState): FlowConfig {
     version: '2.0',
     startStep: 'greeting',
     steps,
-    settings: form.use_dynamic_greeting ? {
-      greeting_dynamic: true,
-      morning_greeting: form.morning_greeting,
-      afternoon_greeting: form.afternoon_greeting,
-      evening_greeting: form.evening_greeting,
+    greetings: form.use_dynamic_greeting ? {
+      morning: form.morning_greeting,
+      afternoon: form.afternoon_greeting,
+      evening: form.evening_greeting,
     } : undefined,
   };
 }
@@ -166,7 +165,7 @@ export function extractFormFromFlow(flow: FlowConfig | null, chatbot: any): Part
   
   const greetingStep = flow.steps.greeting;
   const mainMenu = flow.steps.main_menu;
-  const settings = flow.settings;
+  const greetings = flow.greetings;
   
   // Extract menu options
   const menuOptions: MenuOptionForm[] = (mainMenu?.options || []).map((opt: any, idx: number) => {
@@ -207,11 +206,11 @@ export function extractFormFromFlow(flow: FlowConfig | null, chatbot: any): Part
   const menuDescription = menuParts.slice(1).join('\n\n') || 'Escolha uma opção:';
   
   return {
-    greeting_message: settings?.greeting_dynamic ? '' : (greetingStep?.message || ''),
-    use_dynamic_greeting: settings?.greeting_dynamic || false,
-    morning_greeting: settings?.morning_greeting || '',
-    afternoon_greeting: settings?.afternoon_greeting || '',
-    evening_greeting: settings?.evening_greeting || '',
+    greeting_message: greetings ? '' : (greetingStep?.message || ''),
+    use_dynamic_greeting: !!greetings,
+    morning_greeting: greetings?.morning || '',
+    afternoon_greeting: greetings?.afternoon || '',
+    evening_greeting: greetings?.evening || '',
     menu_title: menuTitle,
     menu_description: menuDescription,
     menu_options: menuOptions.length ? menuOptions : undefined,
