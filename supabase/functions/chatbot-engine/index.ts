@@ -1222,7 +1222,7 @@ async function processNextStep(
 async function processIncomingMessage(
   supabase: any,
   message: IncomingMessage
-): Promise<{ success: boolean; response?: string; chatbotId?: string; chatbotName?: string }> {
+): Promise<{ success: boolean; response?: string; chatbotId?: string; chatbotName?: string; handled?: boolean; dedup?: boolean }> {
   const { from: contactId, message: userMessage, instanceId, messageId } = message;
   
   console.log(`[ENGINE] Processing message from ${contactId}: ${userMessage.slice(0, 50)}...`);
@@ -1232,10 +1232,16 @@ async function processIncomingMessage(
   // =====================================================
   const isNew = await checkAndRegisterDedup(supabase, instanceId, messageId, contactId);
   if (!isNew) {
-    // Mensagem duplicada - responder success mas não processar
-    return { success: true, response: '[DEDUP] Already processed' };
+    // Mensagem duplicada - responder success como "handled" para não acionar fallback no VPS
+    return {
+      success: true,
+      handled: true,
+      dedup: true,
+      chatbotId: 'dedup',
+      chatbotName: 'Dedup',
+      response: '[DEDUP] Already processed',
+    };
   }
-  
   // PRIORIDADE 1: Verificar sessão ativa
   const { data: activeSession } = await supabase
     .from('chatbot_sessions')
