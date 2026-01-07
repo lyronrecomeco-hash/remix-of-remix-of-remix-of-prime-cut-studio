@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bot,
@@ -31,11 +32,15 @@ import {
   Moon,
   Timer,
   Settings2,
-  AlertTriangle
+  AlertTriangle,
+  FileText,
+  Activity,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useGenesisAuth } from '@/contexts/GenesisAuthContext';
 import { LunaBuilderModal } from './LunaBuilderModal';
+import { ChatbotTemplates } from './ChatbotTemplates';
+import { ChatbotSessionViewer } from './ChatbotSessionViewer';
 import lunaAvatar from '@/assets/luna-avatar.png';
 
 interface Chatbot {
@@ -84,6 +89,8 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLunaOpen, setIsLunaOpen] = useState(false);
+  const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'chatbots' | 'sessions'>('chatbots');
   const [editingChatbot, setEditingChatbot] = useState<Chatbot | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -286,6 +293,15 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
             <div className="flex gap-2 flex-wrap">
               <Button 
                 variant="outline" 
+                onClick={() => setIsTemplatesOpen(true)} 
+                className="gap-2"
+                size="sm"
+              >
+                <FileText className="w-4 h-4" />
+                <span className="hidden sm:inline">Templates</span>
+              </Button>
+              <Button 
+                variant="outline" 
                 onClick={() => setIsLunaOpen(true)} 
                 className="gap-2"
                 size="sm"
@@ -317,42 +333,66 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
               <p className="text-xs text-muted-foreground">Com IA</p>
             </div>
           </div>
+
+          {/* Tabs for Chatbots and Sessions */}
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="mt-4">
+            <TabsList>
+              <TabsTrigger value="chatbots" className="gap-2">
+                <Bot className="w-4 h-4" />
+                Chatbots
+              </TabsTrigger>
+              <TabsTrigger value="sessions" className="gap-2">
+                <Activity className="w-4 h-4" />
+                Sessões
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </CardHeader>
       </Card>
 
+      {/* Sessions Tab */}
+      {activeTab === 'sessions' && (
+        <ChatbotSessionViewer />
+      )}
+
       {/* Chatbots List */}
-      {chatbots.length === 0 ? (
-        <Card>
-          <CardContent className="py-10 sm:py-16 text-center px-4">
-            <motion.div
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 rounded-3xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center"
-            >
-              <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
-            </motion.div>
-            <h3 className="font-semibold text-lg sm:text-xl mb-2">Crie seu primeiro chatbot</h3>
-            <p className="text-muted-foreground mb-4 sm:mb-6 max-w-md mx-auto text-sm sm:text-base">
-              Configure respostas automáticas para atender seus clientes 24/7
-            </p>
-            <div className="flex flex-col sm:flex-row gap-2 justify-center">
-              <Button onClick={() => setIsLunaOpen(true)} variant="outline" className="gap-2">
-                <img src={lunaAvatar} alt="Luna" className="w-5 h-5 rounded-full" />
-                Criar com Luna IA
-              </Button>
-              <Button onClick={openCreateDialog} className="gap-2">
-                <Plus className="w-5 h-5" />
-                Criar Chatbot
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <AnimatePresence>
-            {chatbots.map((chatbot, index) => {
-              const triggerInfo = TRIGGER_TYPES.find(t => t.value === chatbot.trigger_type);
-              const TriggerIcon = triggerInfo?.icon || Zap;
+      {activeTab === 'chatbots' && (
+        chatbots.length === 0 ? (
+          <Card>
+            <CardContent className="py-10 sm:py-16 text-center px-4">
+              <motion.div
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 rounded-3xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center"
+              >
+                <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
+              </motion.div>
+              <h3 className="font-semibold text-lg sm:text-xl mb-2">Crie seu primeiro chatbot</h3>
+              <p className="text-muted-foreground mb-4 sm:mb-6 max-w-md mx-auto text-sm sm:text-base">
+                Configure respostas automáticas para atender seus clientes 24/7
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                <Button onClick={() => setIsTemplatesOpen(true)} variant="outline" className="gap-2">
+                  <FileText className="w-5 h-5" />
+                  Usar Template
+                </Button>
+                <Button onClick={() => setIsLunaOpen(true)} variant="outline" className="gap-2">
+                  <img src={lunaAvatar} alt="Luna" className="w-5 h-5 rounded-full" />
+                  Criar com Luna IA
+                </Button>
+                <Button onClick={openCreateDialog} className="gap-2">
+                  <Plus className="w-5 h-5" />
+                  Criar Chatbot
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <AnimatePresence>
+              {chatbots.map((chatbot, index) => {
+                const triggerInfo = TRIGGER_TYPES.find(t => t.value === chatbot.trigger_type);
+                const TriggerIcon = triggerInfo?.icon || Zap;
 
               return (
                 <motion.div
