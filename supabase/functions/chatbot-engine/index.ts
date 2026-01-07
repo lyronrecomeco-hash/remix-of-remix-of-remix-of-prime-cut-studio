@@ -155,7 +155,7 @@ function checkKeywordTrigger(message: string, keywords: string[]): boolean {
 }
 
 // =====================================================
-// HELPER: Enviar mensagem via proxy
+// HELPER: Enviar mensagem diretamente ao VPS
 // =====================================================
 async function sendMessage(
   supabase: any,
@@ -164,26 +164,57 @@ async function sendMessage(
   message: string
 ): Promise<boolean> {
   try {
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
-    const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') || '';
+    // Buscar configuração do backend diretamente
+    const { data: globalConfig } = await supabase
+      .from('admin_settings')
+      .select('settings')
+      .eq('setting_type', 'genesis_backend')
+      .single();
     
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/genesis-backend-proxy`, {
+    const { data: instance } = await supabase
+      .from('genesis_instances')
+      .select('backend_url, backend_token')
+      .eq('id', instanceId)
+      .single();
+    
+    // Determinar URL e token
+    let backendUrl = globalConfig?.settings?.backend_url || instance?.backend_url;
+    const backendToken = instance?.backend_token || globalConfig?.settings?.master_token;
+    
+    if (!backendUrl) {
+      console.error('[SEND] No backend URL configured');
+      return false;
+    }
+    
+    // Garantir formato correto da URL
+    backendUrl = backendUrl.replace(/\/$/, '');
+    const targetUrl = `${backendUrl}/api/instance/${instanceId}/send`;
+    
+    console.log(`[SEND] Sending to ${targetUrl}`);
+    
+    const response = await fetch(targetUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Authorization': `Bearer ${backendToken}`,
       },
-      body: JSON.stringify({
-        action: 'send',
-        instanceId,
-        endpoint: `/api/instance/${instanceId}/send`,
-        method: 'POST',
-        body: { to, message, type: 'text' },
-      }),
+      body: JSON.stringify({ to, message }),
     });
     
-    const result = await response.json();
-    return response.ok && result.success !== false;
+    const responseText = await response.text();
+    console.log(`[SEND] Response: ${response.status} - ${responseText}`);
+    
+    if (!response.ok) {
+      console.error(`[SEND] HTTP Error: ${response.status}`);
+      return false;
+    }
+    
+    try {
+      const result = JSON.parse(responseText);
+      return result.success !== false;
+    } catch {
+      return response.ok;
+    }
   } catch (e) {
     console.error('[SEND] Error:', e);
     return false;
