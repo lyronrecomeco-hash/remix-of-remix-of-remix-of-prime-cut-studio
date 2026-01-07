@@ -72,6 +72,17 @@ export const FlowDebugConsole = memo(({
     }, ...prev]);
   }, []);
 
+  // Helper to get node type consistently
+  const getNodeType = useCallback((node: any): string => {
+    if (typeof node.data?.type === 'string') return node.data.type;
+    if (typeof node.type === 'string' && node.type !== 'flowNode') return node.type;
+    return '';
+  }, []);
+
+  // Trigger types that count as flow entry points
+  const TRIGGER_TYPES = ['trigger', 'wa_start', 'wa_receive', 'webhook_trigger', 'cron_trigger', 'webhook_universal_trigger', 'webhook_in'];
+  const END_TYPES = ['end'];
+
   const runFullValidation = useCallback(async () => {
     setIsRunning(true);
     setTestResults([]);
@@ -88,16 +99,20 @@ export const FlowDebugConsole = memo(({
 
       await new Promise(r => setTimeout(r, 300));
 
-      // Contagem de estatísticas
-      const triggerCount = nodes.filter(n => n.data?.type === 'trigger' || n.data?.type?.includes('trigger')).length;
-      const actionCount = nodes.filter(n => !['trigger', 'end'].includes(n.data?.type || '')).length;
+      // Contagem de estatísticas - usando lógica precisa
+      const triggerCount = nodes.filter(n => TRIGGER_TYPES.includes(getNodeType(n))).length;
+      const endCount = nodes.filter(n => END_TYPES.includes(getNodeType(n))).length;
+      const actionCount = nodes.filter(n => {
+        const type = getNodeType(n);
+        return !TRIGGER_TYPES.includes(type) && !END_TYPES.includes(type);
+      }).length;
       const connectionCount = edges.length;
 
       addResult({
         type: 'info',
         source: 'frontend',
         message: `Fluxo analisado: ${nodes.length} nós, ${connectionCount} conexões`,
-        details: `Gatilhos: ${triggerCount} | Ações: ${actionCount}`,
+        details: `Gatilhos: ${triggerCount} | Ações: ${actionCount} | Fins: ${endCount}`,
       });
 
       // Reportar erros locais
@@ -241,7 +256,7 @@ export const FlowDebugConsole = memo(({
     } finally {
       setIsRunning(false);
     }
-  }, [nodes, edges, ruleId, localValidation, addResult]);
+  }, [nodes, edges, ruleId, localValidation, addResult, getNodeType]);
 
   // Combinar todas as issues
   const allErrors = [
