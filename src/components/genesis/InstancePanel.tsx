@@ -34,6 +34,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { GenesisWhatsAppConnect } from './GenesisWhatsAppConnect';
+import { TestMessageModal } from './TestMessageModal';
 import { useUnifiedInstanceStatus } from './hooks/useUnifiedInstanceStatus';
 import { cn } from '@/lib/utils';
 // Script VPS removido - configuração via WhatsApp Automação no Painel Owner
@@ -96,6 +97,7 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
   const [showWebhookModal, setShowWebhookModal] = useState(false);
   const [showCreditsModal, setShowCreditsModal] = useState(false);
   const [showIntegrationsModal, setShowIntegrationsModal] = useState(false);
+  const [showTestModal, setShowTestModal] = useState(false);
   
   // Colapsável
   const [showTechnicalInfo, setShowTechnicalInfo] = useState(false);
@@ -398,7 +400,8 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
           <Button 
             variant="outline" 
             className="gap-3 h-20 text-base font-medium border-2 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all flex-col"
-            onClick={() => toast.info('Testes - Em implementação')}
+            onClick={() => setShowTestModal(true)}
+            disabled={!isConnected}
           >
             <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
               <Activity className="w-5 h-5 text-blue-500" />
@@ -781,6 +784,14 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Teste de Mensagem */}
+      <TestMessageModal
+        isOpen={showTestModal}
+        onClose={() => setShowTestModal(false)}
+        instanceId={instance.id}
+        instanceName={instance.name}
+      />
     </div>
   );
 }
