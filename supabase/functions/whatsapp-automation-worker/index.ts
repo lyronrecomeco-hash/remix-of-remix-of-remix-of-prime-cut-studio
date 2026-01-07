@@ -2769,13 +2769,60 @@ function checkConditions(conditions: any[], eventData: any): boolean {
   });
 }
 
+// =====================================================
+// HELPER: Verificar e registrar dedup (idempotência)
+// Retorna true se é mensagem NOVA, false se já foi processada
+// =====================================================
+async function checkAndRegisterDedup(
+  supabase: any,
+  instanceId: string,
+  messageId: string | undefined,
+  fromJid: string,
+  source: string = 'worker'
+): Promise<boolean> {
+  // Se não há messageId, não podemos fazer dedup - permitir
+  if (!messageId) {
+    console.log('[DEDUP] No messageId provided, allowing');
+    return true;
+  }
+
+  try {
+    const { error } = await supabase
+      .from('chatbot_inbound_dedup')
+      .insert({
+        instance_id: instanceId,
+        message_id: messageId,
+        from_jid: fromJid,
+        session_id: null,
+        chatbot_id: null,
+      });
+
+    // Se constraint unique falhou = já existe = duplicada
+    if (error) {
+      if (error.code === '23505') {
+        console.log(`[DEDUP][${source}] Message ${messageId} already processed, SKIPPING`);
+        return false; // Duplicada - NÃO processar
+      }
+      // Outro erro, logar mas permitir para não bloquear
+      console.error(`[DEDUP][${source}] Insert error (allowing):`, error.message);
+    }
+
+    console.log(`[DEDUP][${source}] Message ${messageId} is NEW, processing`);
+    return true; // Primeira vez, processar
+  } catch (e) {
+    console.error(`[DEDUP][${source}] Exception (allowing):`, e);
+    return true;
+  }
+}
+
 // Call chatbot engine for message processing
 async function callChatbotEngine(
   supabase: any,
   from: string,
   message: string,
-  instanceId: string
-): Promise<{ success: boolean; response?: string; chatbotId?: string }> {
+  instanceId: string,
+  messageId?: string
+): Promise<{ success: boolean; response?: string; chatbotId?: string; dedup?: boolean }> {
   try {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
     const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') || '';
@@ -2791,6 +2838,7 @@ async function callChatbotEngine(
         from,
         message,
         instanceId,
+        messageId, // Passa messageId para dedup no engine
       }),
     });
 
@@ -2815,11 +2863,51 @@ async function processEvent(supabase: any, event: EventQueueItem): Promise<void>
     const from = payload.from || payload.sender || payload.phone || payload.remoteJid?.split('@')[0];
     const message = payload.message || payload.text || payload.body || payload.content || '';
     const instanceId = payload.instanceId || payload.instance_id || eventData.instance_id || event.project_id;
+    const messageId = payload.messageId || payload.message_id || eventData.messageId;
+    
+    // =====================================================
+    // ANTI-DUPLICAÇÃO: Verificar ANTES de qualquer processamento
+    // =====================================================
+    if (messageId && instanceId) {
+      const isNew = await checkAndRegisterDedup(supabase, instanceId, messageId, from || 'unknown', 'worker');
+      if (!isNew) {
+        // Mensagem já processada - marcar evento como completed e SAIR
+        console.log(`[WORKER] DEDUP: Message ${messageId} already processed, skipping entirely`);
+        await supabase
+          .from('whatsapp_event_queue')
+          .update({ 
+            status: 'completed', 
+            processed_at: new Date().toISOString(),
+            result: { 
+              handler: 'dedup',
+              message: 'Already processed',
+              messageId
+            }
+          })
+          .eq('id', event.id);
+        return; // PARAR AQUI - não chamar chatbot nem automation rules
+      }
+    }
     
     if (from && message && instanceId) {
       console.log(`[WORKER] Calling chatbot engine for ${from}: ${message.slice(0, 50)}...`);
       
-      const chatbotResult = await callChatbotEngine(supabase, from, message, instanceId);
+      // Passa messageId para o engine fazer seu próprio dedup (segunda camada de segurança)
+      const chatbotResult = await callChatbotEngine(supabase, from, message, instanceId, messageId);
+      
+      // Se foi dedup no chatbot-engine, parar aqui também
+      if (chatbotResult.dedup) {
+        console.log(`[WORKER] Chatbot engine reported DEDUP, skipping`);
+        await supabase
+          .from('whatsapp_event_queue')
+          .update({ 
+            status: 'completed', 
+            processed_at: new Date().toISOString(),
+            result: { handler: 'chatbot_dedup' }
+          })
+          .eq('id', event.id);
+        return;
+      }
       
       if (chatbotResult.success && chatbotResult.chatbotId) {
         console.log(`[WORKER] Chatbot handled message: ${chatbotResult.chatbotId}`);
