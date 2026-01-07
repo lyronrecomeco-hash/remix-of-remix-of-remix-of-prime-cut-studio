@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'npm:@supabase/supabase-js@2.89.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -1271,13 +1271,13 @@ async function processIncomingMessage(
       const newSession = await getOrCreateSession(supabase, chatbot.id, contactId, instanceId, true);
       if (newSession) {
         const result = await processFlowStep(supabase, chatbot, newSession, null, instanceId, contactId);
-        return { ...result, chatbotId: chatbot.id, chatbotName: chatbot.name };
+        return { ...result, chatbotId: chatbot.id, chatbotName: chatbot.name, handled: true };
       }
     }
 
     // Processar mensagem no fluxo atual
     const result = await processFlowStep(supabase, chatbot, activeSession, userMessage, instanceId, contactId);
-    return { ...result, chatbotId: chatbot.id, chatbotName: chatbot.name };
+    return { ...result, chatbotId: chatbot.id, chatbotName: chatbot.name, handled: true };
   }
   
   // PRIORIDADE 2: Verificar gatilho de palavra-chave
@@ -1307,18 +1307,18 @@ async function processIncomingMessage(
       
       // Processar primeiro passo (greeting)
       const result = await processFlowStep(supabase, chatbot, session, null, instanceId, contactId);
-      return { ...result, chatbotId: chatbot.id, chatbotName: chatbot.name };
+      return { ...result, chatbotId: chatbot.id, chatbotName: chatbot.name, handled: true };
     }
-    
+
     // Trigger all messages
     if (chatbot.trigger_type === 'all') {
       console.log(`[ENGINE] Matched all-messages chatbot: ${chatbot.name}`);
-      
+
       const session = await getOrCreateSession(supabase, chatbot.id, contactId, instanceId);
       if (!session) continue;
-      
+
       const result = await processFlowStep(supabase, chatbot, session, userMessage, instanceId, contactId);
-      return { ...result, chatbotId: chatbot.id, chatbotName: chatbot.name };
+      return { ...result, chatbotId: chatbot.id, chatbotName: chatbot.name, handled: true };
     }
   }
   
@@ -1384,14 +1384,14 @@ Deno.serve(async (req) => {
         );
       }
 
-      case 'cleanup_timeout': {
-        const timeoutMinutes = data.timeoutMinutes || 30;
-        const count = await cleanupTimeoutSessions(supabase, timeoutMinutes);
-        return new Response(
-          JSON.stringify({ success: true, timedOut: count }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+       case 'cleanup_timeout': {
+         const timeoutMinutes = (data as any).timeoutMinutes || 30;
+         const count = await cleanupTimeoutSessions(supabase, timeoutMinutes);
+         return new Response(
+           JSON.stringify({ success: true, timedOut: count }),
+           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+         );
+       }
 
       case 'get_session': {
         const { contactId, instanceId } = data;
