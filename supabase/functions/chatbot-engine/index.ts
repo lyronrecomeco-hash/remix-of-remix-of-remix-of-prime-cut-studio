@@ -106,29 +106,37 @@ async function checkAndRegisterDedup(
   messageId: string | undefined,
   fromJid: string
 ): Promise<boolean> {
-  // Se não há messageId, não podemos fazer dedup - permitir
+  // Se não há messageId, não conseguimos garantir idempotência
   if (!messageId) return true;
+
+  // Hard-lock global por messageId (evita duplicidade entre múltiplas instâncias/motores)
+  const DEDUP_INSTANCE_ID = '00000000-0000-0000-0000-000000000000';
+
+  const normalizedFrom = (() => {
+    const raw = String(fromJid || '').trim();
+    const base = raw.includes('@') ? raw.split('@')[0] : raw;
+    const digits = base.replace(/\D/g, '');
+    return digits || base || 'unknown';
+  })();
 
   try {
     const { error } = await supabase
       .from('chatbot_inbound_dedup')
       .insert({
-        instance_id: instanceId,
+        instance_id: DEDUP_INSTANCE_ID,
         message_id: messageId,
-        from_jid: fromJid,
+        from_jid: normalizedFrom,
       });
 
-    // Se constraint unique falhou = já existe = duplicada
     if (error) {
       if (error.code === '23505') {
         console.log(`[DEDUP] Message ${messageId} already processed, skipping`);
-        return false; // Duplicada
+        return false;
       }
-      // Outro erro, logar mas permitir
       console.error('[DEDUP] Insert error (allowing):', error.message);
     }
 
-    return true; // Primeira vez, processar
+    return true;
   } catch (e) {
     console.error('[DEDUP] Exception (allowing):', e);
     return true;
