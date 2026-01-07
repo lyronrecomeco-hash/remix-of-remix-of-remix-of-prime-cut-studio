@@ -192,29 +192,42 @@ export function LunaBuilderModal({ open, onOpenChange, onComplete, instances }: 
 
     setIsSaving(true);
     try {
-      // NEVER use instance_id from AI - always set to null
-      // User can assign instance later in the chatbot settings
+      // Parse keywords properly - can be array or comma-separated string
+      let keywords: string[] = [];
+      if (Array.isArray(generatedConfig.trigger_keywords)) {
+        keywords = generatedConfig.trigger_keywords;
+      } else if (Array.isArray(generatedConfig.keywords)) {
+        keywords = generatedConfig.keywords;
+      } else if (typeof generatedConfig.keywords === 'string') {
+        keywords = generatedConfig.keywords.split(',').map((k: string) => k.trim()).filter(Boolean);
+      }
+
       const insertData = {
-        name: generatedConfig.name,
-        trigger_type: generatedConfig.trigger_type,
-        trigger_keywords: generatedConfig.trigger_keywords || generatedConfig.keywords?.split(',').map((k: string) => k.trim()) || [],
+        name: generatedConfig.name || 'Chatbot Luna',
+        trigger_type: generatedConfig.trigger_type || 'keyword',
+        trigger_keywords: keywords,
         response_type: 'text',
         response_content: null,
-        delay_seconds: generatedConfig.delay || generatedConfig.delay_seconds || 2,
-        instance_id: null,
+        delay_seconds: Number(generatedConfig.delay_seconds) || Number(generatedConfig.delay) || 2,
+        instance_id: null, // NEVER use instance_id from AI
         ai_enabled: true,
         ai_model: 'gpt-4o-mini',
-        ai_temperature: generatedConfig.ai_temperature || 0.7,
-        ai_system_prompt: generatedConfig.ai_system_prompt,
+        ai_temperature: Number(generatedConfig.ai_temperature) || 0.7,
+        ai_system_prompt: generatedConfig.ai_system_prompt || '',
         is_active: true,
         priority: 1,
       };
+
+      console.log('Saving chatbot:', insertData);
 
       const { error } = await supabase
         .from('whatsapp_automations')
         .insert(insertData as any);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw new Error(error.message);
+      }
 
       toast.success('🎉 Chatbot salvo e ativado com sucesso!');
       onOpenChange(false);
@@ -224,7 +237,7 @@ export function LunaBuilderModal({ open, onOpenChange, onComplete, instances }: 
       window.dispatchEvent(new CustomEvent('chatbot-created'));
     } catch (error) {
       console.error('Error saving chatbot:', error);
-      toast.error('Erro ao salvar chatbot');
+      toast.error(error instanceof Error ? error.message : 'Erro ao salvar chatbot');
     } finally {
       setIsSaving(false);
     }
