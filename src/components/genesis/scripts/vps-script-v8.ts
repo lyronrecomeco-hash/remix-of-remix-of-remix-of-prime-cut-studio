@@ -1,4 +1,6 @@
-// VPS Script v8.0 - MULTI-INSTANCE MANAGER
+export const VPS_SCRIPT_VERSION = "8.1";
+
+// VPS Script v8.1 - MULTI-INSTANCE MANAGER
 // Gerenciador dinâmico de múltiplas instâncias com menu interativo
 export const getVPSScriptV8 = (masterToken: string): string => {
   // IMPORTANTE: default precisa bater com o token nativo usado pelo backend/proxy,
@@ -8,7 +10,7 @@ export const getVPSScriptV8 = (masterToken: string): string => {
 
   return `#!/usr/bin/env node
 // ╔════════════════════════════════════════════════════════════════════════════════════════╗
-// ║       GENESIS WHATSAPP MULTI-INSTANCE MANAGER - v8.0 ENTERPRISE                        ║
+// ║       GENESIS WHATSAPP MULTI-INSTANCE MANAGER - v8.1 ENTERPRISE                        ║
 // ║              Dynamic Multi-Instance | Interactive Menu | PM2 Ready                     ║
 // ║                   24/7 VPS Ready | Auto-Scaling | Zero Downtime                        ║
 // ╚════════════════════════════════════════════════════════════════════════════════════════╝
