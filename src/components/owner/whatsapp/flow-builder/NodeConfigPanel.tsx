@@ -3610,6 +3610,461 @@ export const NodeConfigPanel = ({ node, onClose, onSave, onDelete, onDuplicate }
           </div>
         );
 
+      case 'http_request':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-sky-500/10 to-blue-500/10 border border-sky-500/20">
+              <div className="flex items-center gap-2">
+                <Globe className="w-5 h-5 text-sky-500" />
+                <div>
+                  <p className="text-sm font-medium">HTTP Request</p>
+                  <p className="text-[11px] text-muted-foreground">Chamada simples a APIs</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Método</Label>
+                <Select value={formData.method || 'GET'} onValueChange={(v) => updateField('method', v)}>
+                  <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="GET">GET</SelectItem>
+                    <SelectItem value="POST">POST</SelectItem>
+                    <SelectItem value="PUT">PUT</SelectItem>
+                    <SelectItem value="PATCH">PATCH</SelectItem>
+                    <SelectItem value="DELETE">DELETE</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Timeout (seg)</Label>
+                <Input type="number" min="5" max="120" value={formData.timeout || 30} onChange={(e) => updateField('timeout', parseInt(e.target.value))} className="bg-muted/50" />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">URL</Label>
+              <Input value={formData.url || ''} onChange={(e) => updateField('url', e.target.value)} placeholder="https://api.exemplo.com/endpoint" className="bg-muted/50 font-mono text-sm" />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Headers (JSON)</Label>
+              <Textarea value={formData.headers || ''} onChange={(e) => updateField('headers', e.target.value)} placeholder='{"Authorization": "Bearer token", "Content-Type": "application/json"}' className="bg-muted/50 resize-none font-mono text-xs" rows={3} />
+            </div>
+            
+            {['POST', 'PUT', 'PATCH'].includes(formData.method || 'GET') && (
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Body (JSON)</Label>
+                <Textarea value={formData.body || ''} onChange={(e) => updateField('body', e.target.value)} placeholder='{"nome": "{{nome}}", "telefone": "{{telefone}}"}' className="bg-muted/50 resize-none font-mono text-xs" rows={4} />
+              </div>
+            )}
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Salvar Resposta Em</Label>
+              <Input value={formData.saveResponseTo || ''} onChange={(e) => updateField('saveResponseTo', e.target.value)} placeholder="api_response" className="bg-muted/50 font-mono" />
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Ignorar Erros HTTP</Label>
+                <p className="text-[11px] text-muted-foreground">Continua fluxo mesmo com erro</p>
+              </div>
+              <Switch checked={formData.ignoreErrors ?? false} onCheckedChange={(v) => updateField('ignoreErrors', v)} />
+            </div>
+          </div>
+        );
+
+      case 'webhook_in':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-violet-500/10 to-purple-500/10 border border-violet-500/20">
+              <div className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-violet-500" />
+                <div>
+                  <p className="text-sm font-medium">Webhook In</p>
+                  <p className="text-[11px] text-muted-foreground">Recebe eventos de sistemas externos</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Path do Webhook</Label>
+              <Input value={formData.webhookPath || ''} onChange={(e) => updateField('webhookPath', e.target.value)} placeholder="/meu-webhook" className="bg-muted/50 font-mono" />
+              <p className="text-[11px] text-muted-foreground">Será acessível em: /functions/v1/genesis-webhook-gateway/{'{path}'}</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Secret (opcional)</Label>
+              <Input type="password" value={formData.secret || ''} onChange={(e) => updateField('secret', e.target.value)} placeholder="whsec_xxxxxx" className="bg-muted/50 font-mono" />
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Validar Payload</Label>
+                <p className="text-[11px] text-muted-foreground">Verifica estrutura do JSON</p>
+              </div>
+              <Switch checked={formData.validatePayload ?? true} onCheckedChange={(v) => updateField('validatePayload', v)} />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Métodos Aceitos</Label>
+              <Select value={formData.allowedMethods || 'POST'} onValueChange={(v) => updateField('allowedMethods', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="POST">POST apenas</SelectItem>
+                  <SelectItem value="POST,GET">POST e GET</SelectItem>
+                  <SelectItem value="ALL">Todos os métodos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Salvar Payload Em</Label>
+              <Input value={formData.savePayloadTo || 'webhook_data'} onChange={(e) => updateField('savePayloadTo', e.target.value)} placeholder="webhook_data" className="bg-muted/50 font-mono" />
+            </div>
+            
+            <div className="p-3 rounded-xl bg-primary/5 border border-primary/20">
+              <div className="flex items-start gap-2">
+                <Info className="w-4 h-4 text-primary mt-0.5" />
+                <div className="text-xs text-muted-foreground">
+                  <p className="font-medium text-foreground mb-1">Variáveis Disponíveis</p>
+                  <code className="text-[10px] bg-muted px-1 rounded">{'{{webhook.body}}'}</code>{' '}
+                  <code className="text-[10px] bg-muted px-1 rounded">{'{{webhook.headers}}'}</code>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'ecommerce':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-rose-500/10 to-pink-500/10 border border-rose-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">🛒</div>
+                <div>
+                  <p className="text-sm font-medium">E-commerce</p>
+                  <p className="text-[11px] text-muted-foreground">Integração com lojas online</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Plataforma</Label>
+              <Select value={formData.platform || 'shopify'} onValueChange={(v) => updateField('platform', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="shopify">🟢 Shopify</SelectItem>
+                  <SelectItem value="woocommerce">🔵 WooCommerce</SelectItem>
+                  <SelectItem value="nuvemshop">☁️ Nuvemshop</SelectItem>
+                  <SelectItem value="mercadoshops">🟡 Mercado Shops</SelectItem>
+                  <SelectItem value="vtex">🔴 VTEX</SelectItem>
+                  <SelectItem value="magento">🟠 Magento</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Ação</Label>
+              <Select value={formData.action || 'get_order'} onValueChange={(v) => updateField('action', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="get_order">📦 Buscar Pedido</SelectItem>
+                  <SelectItem value="get_product">🏷️ Buscar Produto</SelectItem>
+                  <SelectItem value="get_customer">👤 Buscar Cliente</SelectItem>
+                  <SelectItem value="update_order_status">✏️ Atualizar Status</SelectItem>
+                  <SelectItem value="get_stock">📊 Verificar Estoque</SelectItem>
+                  <SelectItem value="create_order">➕ Criar Pedido</SelectItem>
+                  <SelectItem value="search_products">🔍 Buscar Produtos</SelectItem>
+                  <SelectItem value="get_tracking">🚚 Rastreamento</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <AnimatePresence mode="wait">
+              {['get_order', 'update_order_status', 'get_tracking'].includes(formData.action || '') && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">ID do Pedido</Label>
+                  <Input value={formData.orderId || ''} onChange={(e) => updateField('orderId', e.target.value)} placeholder="{{order_id}} ou 12345" className="bg-muted/50 font-mono" />
+                </motion.div>
+              )}
+              
+              {['get_product', 'get_stock'].includes(formData.action || '') && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">ID do Produto</Label>
+                  <Input value={formData.productId || ''} onChange={(e) => updateField('productId', e.target.value)} placeholder="{{product_id}} ou SKU123" className="bg-muted/50 font-mono" />
+                </motion.div>
+              )}
+              
+              {formData.action === 'get_customer' && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Email ou ID do Cliente</Label>
+                  <Input value={formData.customerId || ''} onChange={(e) => updateField('customerId', e.target.value)} placeholder="{{email}} ou cliente@email.com" className="bg-muted/50 font-mono" />
+                </motion.div>
+              )}
+              
+              {formData.action === 'search_products' && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Termo de Busca</Label>
+                  <Input value={formData.searchQuery || ''} onChange={(e) => updateField('searchQuery', e.target.value)} placeholder="{{message}} ou camiseta azul" className="bg-muted/50" />
+                </motion.div>
+              )}
+              
+              {formData.action === 'update_order_status' && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Novo Status</Label>
+                  <Select value={formData.newStatus || 'processing'} onValueChange={(v) => updateField('newStatus', v)}>
+                    <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">⏳ Pendente</SelectItem>
+                      <SelectItem value="processing">🔄 Processando</SelectItem>
+                      <SelectItem value="shipped">📦 Enviado</SelectItem>
+                      <SelectItem value="delivered">✅ Entregue</SelectItem>
+                      <SelectItem value="cancelled">❌ Cancelado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Credenciais</Label>
+              <div className="p-3 rounded-xl bg-muted/30 space-y-2">
+                <Input type="password" value={formData.apiKey || ''} onChange={(e) => updateField('apiKey', e.target.value)} placeholder="API Key / Access Token" className="bg-background/50 font-mono text-xs" />
+                <Input value={formData.storeUrl || ''} onChange={(e) => updateField('storeUrl', e.target.value)} placeholder="URL da Loja (ex: minha-loja.myshopify.com)" className="bg-background/50 font-mono text-xs" />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Salvar Resposta Em</Label>
+              <Input value={formData.saveResultTo || 'ecommerce_result'} onChange={(e) => updateField('saveResultTo', e.target.value)} placeholder="ecommerce_result" className="bg-muted/50 font-mono" />
+            </div>
+          </div>
+        );
+
+      case 'crm_sheets':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500/10 to-green-500/10 border border-emerald-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">📊</div>
+                <div>
+                  <p className="text-sm font-medium">CRM / Planilhas</p>
+                  <p className="text-[11px] text-muted-foreground">Gestão de leads e dados</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Destino</Label>
+              <Select value={formData.target || 'crm'} onValueChange={(v) => updateField('target', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="crm">📇 CRM Interno</SelectItem>
+                  <SelectItem value="google_sheets">📗 Google Sheets</SelectItem>
+                  <SelectItem value="notion">📓 Notion</SelectItem>
+                  <SelectItem value="airtable">📋 Airtable</SelectItem>
+                  <SelectItem value="hubspot">🟠 HubSpot</SelectItem>
+                  <SelectItem value="pipedrive">🔵 Pipedrive</SelectItem>
+                  <SelectItem value="rdstation">🔴 RD Station</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Ação</Label>
+              <Select value={formData.action || 'create_lead'} onValueChange={(v) => updateField('action', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="create_lead">➕ Criar Lead</SelectItem>
+                  <SelectItem value="update_lead">✏️ Atualizar Lead</SelectItem>
+                  <SelectItem value="find_lead">🔍 Buscar Lead</SelectItem>
+                  <SelectItem value="add_note">📝 Adicionar Nota</SelectItem>
+                  <SelectItem value="change_stage">📊 Mudar Etapa</SelectItem>
+                  <SelectItem value="append_row">➕ Adicionar Linha</SelectItem>
+                  <SelectItem value="update_row">✏️ Atualizar Linha</SelectItem>
+                  <SelectItem value="find_row">🔍 Buscar Linha</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <AnimatePresence mode="wait">
+              {formData.target === 'google_sheets' && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">ID da Planilha</Label>
+                    <Input value={formData.spreadsheetId || ''} onChange={(e) => updateField('spreadsheetId', e.target.value)} placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms" className="bg-muted/50 font-mono text-xs" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Nome da Aba</Label>
+                    <Input value={formData.sheetName || ''} onChange={(e) => updateField('sheetName', e.target.value)} placeholder="Leads" className="bg-muted/50" />
+                  </div>
+                </motion.div>
+              )}
+              
+              {formData.target === 'notion' && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">ID do Database</Label>
+                    <Input value={formData.notionDbId || ''} onChange={(e) => updateField('notionDbId', e.target.value)} placeholder="a1b2c3d4..." className="bg-muted/50 font-mono text-xs" />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Campos / Mapeamento</Label>
+              <Textarea 
+                value={formData.fieldsMapping || ''} 
+                onChange={(e) => updateField('fieldsMapping', e.target.value)} 
+                placeholder="nome:{{nome}}&#10;email:{{email}}&#10;telefone:{{telefone}}&#10;origem:whatsapp&#10;mensagem:{{message}}"
+                className="bg-muted/50 resize-none font-mono text-xs" 
+                rows={5} 
+              />
+              <p className="text-[11px] text-muted-foreground">Formato: campo:valor (um por linha)</p>
+            </div>
+            
+            <AnimatePresence mode="wait">
+              {['find_lead', 'update_lead', 'find_row', 'update_row'].includes(formData.action || '') && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Campo de Busca</Label>
+                  <Input value={formData.lookupField || 'email'} onChange={(e) => updateField('lookupField', e.target.value)} placeholder="email" className="bg-muted/50" />
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Valor de Busca</Label>
+                  <Input value={formData.lookupValue || ''} onChange={(e) => updateField('lookupValue', e.target.value)} placeholder="{{email}}" className="bg-muted/50 font-mono" />
+                </motion.div>
+              )}
+              
+              {formData.action === 'change_stage' && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Nova Etapa</Label>
+                  <Input value={formData.newStage || ''} onChange={(e) => updateField('newStage', e.target.value)} placeholder="qualificado, proposta, fechado" className="bg-muted/50" />
+                </motion.div>
+              )}
+              
+              {formData.action === 'add_note' && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Nota</Label>
+                  <Textarea value={formData.note || ''} onChange={(e) => updateField('note', e.target.value)} placeholder="Contato via WhatsApp: {{message}}" className="bg-muted/50 resize-none" rows={3} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Salvar Resultado Em</Label>
+              <Input value={formData.saveResultTo || 'crm_result'} onChange={(e) => updateField('saveResultTo', e.target.value)} placeholder="crm_result" className="bg-muted/50 font-mono" />
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Criar se não existir</Label>
+                <p className="text-[11px] text-muted-foreground">Em update, cria novo se não encontrar</p>
+              </div>
+              <Switch checked={formData.upsert ?? true} onCheckedChange={(v) => updateField('upsert', v)} />
+            </div>
+          </div>
+        );
+
+      case 'end':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-red-500/10 to-rose-500/10 border border-red-500/20">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">🏁</div>
+                <div>
+                  <p className="text-sm font-medium">Fim do Fluxo</p>
+                  <p className="text-[11px] text-muted-foreground">Encerra a execução</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Tipo de Encerramento</Label>
+              <Select value={formData.endType || 'complete'} onValueChange={(v) => updateField('endType', v)}>
+                <SelectTrigger className="bg-muted/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="complete">✅ Sucesso</SelectItem>
+                  <SelectItem value="error">❌ Erro</SelectItem>
+                  <SelectItem value="timeout">⏱️ Timeout</SelectItem>
+                  <SelectItem value="cancelled">🚫 Cancelado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Enviar mensagem de despedida</Label>
+                <p className="text-[11px] text-muted-foreground">Mensagem final ao encerrar</p>
+              </div>
+              <Switch checked={formData.sendFarewellMessage ?? false} onCheckedChange={(v) => updateField('sendFarewellMessage', v)} />
+            </div>
+            
+            {formData.sendFarewellMessage && (
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Mensagem de Despedida</Label>
+                <Textarea value={formData.farewellMessage || ''} onChange={(e) => updateField('farewellMessage', e.target.value)} placeholder="Obrigado pelo contato! Até a próxima 👋" className="bg-muted/50 resize-none" rows={2} />
+              </div>
+            )}
+            
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+              <div>
+                <Label className="text-sm">Salvar estatísticas</Label>
+                <p className="text-[11px] text-muted-foreground">Registra métricas da execução</p>
+              </div>
+              <Switch checked={formData.saveStats ?? true} onCheckedChange={(v) => updateField('saveStats', v)} />
+            </div>
+          </div>
+        );
+
+      case 'note':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-yellow-500/10 to-amber-500/10 border border-yellow-500/20">
+              <div className="flex items-center gap-2">
+                <StickyNote className="w-5 h-5 text-yellow-500" />
+                <div>
+                  <p className="text-sm font-medium">Nota</p>
+                  <p className="text-[11px] text-muted-foreground">Comentário visual no fluxo</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Conteúdo da Nota</Label>
+              <Textarea value={formData.text || ''} onChange={(e) => updateField('text', e.target.value)} placeholder="Escreva suas anotações aqui..." className="bg-muted/50 resize-none" rows={4} />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Cor da Nota</Label>
+              <div className="flex gap-2">
+                {[
+                  { value: 'yellow', color: 'bg-yellow-400' },
+                  { value: 'blue', color: 'bg-blue-400' },
+                  { value: 'green', color: 'bg-green-400' },
+                  { value: 'pink', color: 'bg-pink-400' },
+                  { value: 'purple', color: 'bg-purple-400' },
+                  { value: 'orange', color: 'bg-orange-400' },
+                ].map(({ value, color }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => updateField('color', value)}
+                    className={cn(
+                      'w-8 h-8 rounded-lg transition-all',
+                      color,
+                      formData.color === value ? 'ring-2 ring-offset-2 ring-foreground' : 'opacity-60 hover:opacity-100'
+                    )}
+                  />
+                ))}
+              </div>
+            </div>
+            
+            <div className="p-3 rounded-xl bg-muted/30">
+              <p className="text-xs text-muted-foreground">💡 Notas são apenas visuais e não afetam a execução do fluxo. Use para documentar decisões ou lembrar de algo importante.</p>
+            </div>
+          </div>
+        );
+
       default:
         return (
           <div className="text-center py-8 text-muted-foreground">
