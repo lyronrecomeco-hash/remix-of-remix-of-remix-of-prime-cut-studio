@@ -5,10 +5,47 @@ import { Download, Copy, Check, Terminal, Server } from 'lucide-react';
 import { getVPSScriptV8 } from '@/components/genesis/scripts/vps-script-v8';
 import { toast } from 'sonner';
 
+// Token padrão do sistema
+const MASTER_TOKEN = 'genesis-master-token-2024-secure';
+
+const CopyCommand = ({ command, label }: { command: string; label: string }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(command);
+      setCopied(true);
+      toast.success(`${label} copiado!`);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      toast.error('Erro ao copiar');
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2 bg-gray-800 rounded px-3 py-2">
+      <code className="flex-1 text-emerald-400 text-sm font-mono overflow-x-auto">{command}</code>
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={handleCopy}
+        className="h-7 px-2 hover:bg-gray-700 shrink-0"
+      >
+        {copied ? (
+          <Check className="w-4 h-4 text-emerald-500" />
+        ) : (
+          <Copy className="w-4 h-4 text-gray-400" />
+        )}
+      </Button>
+    </div>
+  );
+};
+
 const ScriptDownload = () => {
   const [copied, setCopied] = useState(false);
 
-  const script = getVPSScriptV8('SEU_MASTER_TOKEN_AQUI');
+  // Script já com token atualizado
+  const script = getVPSScriptV8(MASTER_TOKEN);
 
   const handleDownload = () => {
     const blob = new Blob([script], { type: 'application/javascript' });
@@ -34,6 +71,15 @@ const ScriptDownload = () => {
     }
   };
 
+  const commands = [
+    { label: 'Parar PM2', command: 'pm2 stop genesis' },
+    { label: 'Editar arquivo', command: 'nano /opt/whatsapp-backend/genesis-v8.js' },
+    { label: 'Iniciar PM2', command: 'pm2 start /opt/whatsapp-backend/genesis-v8.js --name genesis && pm2 save' },
+    { label: 'Ver logs', command: 'pm2 logs genesis --lines 50' },
+    { label: 'Verificar linhas', command: 'wc -l /opt/whatsapp-backend/genesis-v8.js' },
+    { label: 'Reiniciar', command: 'pm2 restart genesis' },
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -52,7 +98,7 @@ const ScriptDownload = () => {
               Download do Script
             </CardTitle>
             <CardDescription>
-              Versão mais recente com integração ao Chatbot Engine
+              Versão mais recente com MASTER_TOKEN já configurado
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -77,34 +123,42 @@ const ScriptDownload = () => {
                 ) : (
                   <>
                     <Copy className="w-4 h-4 mr-2" />
-                    Copiar Código
+                    Copiar Código Completo
                   </>
                 )}
               </Button>
             </div>
 
+            <div className="bg-emerald-900/30 border border-emerald-700/50 rounded-lg p-4">
+              <h3 className="text-emerald-400 font-semibold mb-2">✅ Token Configurado:</h3>
+              <CopyCommand command={MASTER_TOKEN} label="Token" />
+            </div>
+
             <div className="bg-gray-900 rounded-lg p-4 mt-6">
-              <h3 className="text-emerald-400 font-semibold mb-3">📋 Instruções de Instalação:</h3>
-              <ol className="text-gray-300 space-y-2 text-sm list-decimal list-inside">
-                <li>Pare o PM2: <code className="bg-gray-800 px-2 py-1 rounded">pm2 stop genesis</code></li>
-                <li>Substitua o arquivo: <code className="bg-gray-800 px-2 py-1 rounded">nano /opt/whatsapp-backend/genesis-v8.js</code></li>
-                <li>Cole o conteúdo completo e salve (Ctrl+X, Y, Enter)</li>
-                <li>Atualize o <code className="bg-gray-800 px-2 py-1 rounded">MASTER_TOKEN</code> no início do arquivo</li>
-                <li>Reinicie: <code className="bg-gray-800 px-2 py-1 rounded">pm2 start genesis-v8.js --name genesis && pm2 save</code></li>
-                <li>Verifique: <code className="bg-gray-800 px-2 py-1 rounded">pm2 logs genesis --lines 50</code></li>
-              </ol>
+              <h3 className="text-emerald-400 font-semibold mb-4">📋 Comandos (clique para copiar):</h3>
+              <div className="space-y-3">
+                {commands.map((cmd, index) => (
+                  <div key={index}>
+                    <span className="text-gray-500 text-xs mb-1 block">{index + 1}. {cmd.label}</span>
+                    <CopyCommand command={cmd.command} label={cmd.label} />
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="bg-amber-900/30 border border-amber-700/50 rounded-lg p-4 mt-4">
-              <h3 className="text-amber-400 font-semibold mb-2">⚠️ Importante:</h3>
+              <h3 className="text-amber-400 font-semibold mb-2">⚠️ Atenção:</h3>
               <p className="text-amber-200 text-sm">
-                Substitua <code className="bg-gray-800 px-2 py-1 rounded">SEU_MASTER_TOKEN_AQUI</code> pelo 
-                seu token real antes de usar. O script tem ~1700 linhas - certifique-se de copiar tudo!
+                Ao colar no nano, use <kbd className="bg-gray-800 px-2 py-0.5 rounded text-xs">Ctrl+Shift+V</kbd> ou 
+                clique com botão direito. Depois <kbd className="bg-gray-800 px-2 py-0.5 rounded text-xs">Ctrl+X</kbd> → 
+                <kbd className="bg-gray-800 px-2 py-0.5 rounded text-xs">Y</kbd> → 
+                <kbd className="bg-gray-800 px-2 py-0.5 rounded text-xs">Enter</kbd> para salvar.
               </p>
             </div>
 
-            <div className="text-center text-gray-500 text-sm mt-6">
-              Linhas do script: {script.split('\n').length}
+            <div className="text-center text-gray-500 text-sm mt-6 flex items-center justify-center gap-4">
+              <span>📄 Linhas: {script.split('\n').length}</span>
+              <span>📦 Tamanho: {(script.length / 1024).toFixed(1)} KB</span>
             </div>
           </CardContent>
         </Card>
