@@ -32,7 +32,8 @@ import {
   AlertTriangle,
   FileJson,
   Layers,
-  ArrowRight
+  ArrowRight,
+  Calendar
 } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -611,19 +612,568 @@ const TEMPLATE_WEBHOOK_UNIVERSAL: FlowTemplate = {
 };
 
 // =====================================================
+// TEMPLATE 4: Google Calendar - Lembrete de Consulta
+// =====================================================
+
+const TEMPLATE_CALENDAR_REMINDER: FlowTemplate = {
+  id: 'calendar-appointment-reminder',
+  name: '📅 Lembrete de Consulta',
+  description: 'Envia lembrete automático no WhatsApp quando um evento do Google Calendar está prestes a iniciar.',
+  icon: Clock,
+  category: 'calendar' as any,
+  difficulty: 'easy',
+  nodeCount: 7,
+  tags: ['Google Calendar', 'Lembrete', 'WhatsApp', 'Consulta', 'Agendamento'],
+  userConfigurableFields: [
+    'Minutos antes do evento',
+    'Mensagem de lembrete',
+    'Filtro de título (opcional)',
+    'Instância WhatsApp'
+  ],
+  securityFeatures: [
+    'secure_context_guard - Isolamento de contexto',
+    'session_guard - Proteção anti-spam',
+    'deduplication - Evita lembretes duplicados'
+  ],
+  lifecycleStatus: 'validated',
+  nodes: [
+    {
+      id: 'cal-trigger-1',
+      type: 'flowNode',
+      position: { x: 300, y: 50 },
+      data: { 
+        label: 'Gatilho Calendário', 
+        type: 'google_calendar_trigger' as NodeType, 
+        config: { triggerType: 'event_starting', minutesBefore: 30, calendarId: 'primary', deduplication: true }, 
+        description: 'Dispara 30min antes do evento' 
+      }
+    },
+    {
+      id: 'secure-guard-cal-1',
+      type: 'flowNode',
+      position: { x: 300, y: 170 },
+      data: { 
+        label: 'Proteção Contexto', 
+        type: 'secure_context_guard' as NodeType, 
+        config: { isolate_context: true, prevent_leak: true }, 
+        description: 'Isola execução' 
+      }
+    },
+    {
+      id: 'data-transform-cal-1',
+      type: 'flowNode',
+      position: { x: 300, y: 290 },
+      data: { 
+        label: 'Extrair Dados', 
+        type: 'data_transform' as NodeType, 
+        config: { 
+          operation: 'map', 
+          source: '{{event}}', 
+          expression: '{ nome: $.attendees[0].displayName, telefone: $.extendedProperties.private.phone, titulo: $.summary, horario: $.start.dateTime }',
+          output_variable: 'evento_data'
+        }, 
+        description: 'Extrai nome, telefone e horário' 
+      }
+    },
+    {
+      id: 'if-has-phone-1',
+      type: 'flowNode',
+      position: { x: 300, y: 410 },
+      data: { 
+        label: 'Tem Telefone?', 
+        type: 'if_expression' as NodeType, 
+        config: { expression: '{{evento_data.telefone}} != null && {{evento_data.telefone}} != ""', logic: 'and', fallback: 'end' }, 
+        description: 'Só envia se tiver telefone' 
+      }
+    },
+    {
+      id: 'session-guard-cal-1',
+      type: 'flowNode',
+      position: { x: 300, y: 530 },
+      data: { 
+        label: 'Proteção Sessão', 
+        type: 'session_guard' as NodeType, 
+        config: { max_messages_per_minute: 10, burst_limit: 3, cooldown_minutes: 1, on_violation: 'pause' }, 
+        description: 'Limita envios' 
+      }
+    },
+    {
+      id: 'wa-text-cal-1',
+      type: 'flowNode',
+      position: { x: 300, y: 650 },
+      data: { 
+        label: 'Enviar Lembrete', 
+        type: 'wa_send_text' as NodeType, 
+        config: { 
+          text: 'Olá {{evento_data.nome}}! 📅\n\nLembrete: Sua consulta "{{evento_data.titulo}}" começa em 30 minutos.\n\n⏰ Horário: {{evento_data.horario}}\n\nContamos com sua presença! 😊',
+          typing: true,
+          typingDuration: 2,
+          phone_variable: '{{evento_data.telefone}}'
+        }, 
+        description: 'Mensagem de lembrete personalizada' 
+      }
+    },
+    {
+      id: 'end-cal-1',
+      type: 'flowNode',
+      position: { x: 300, y: 780 },
+      data: { 
+        label: 'Fim', 
+        type: 'end' as NodeType, 
+        config: { endType: 'complete' }, 
+        description: 'Execução finalizada' 
+      }
+    }
+  ],
+  edges: [
+    { id: 'e1', source: 'cal-trigger-1', target: 'secure-guard-cal-1' },
+    { id: 'e2', source: 'secure-guard-cal-1', target: 'data-transform-cal-1' },
+    { id: 'e3', source: 'data-transform-cal-1', target: 'if-has-phone-1' },
+    { id: 'e4', source: 'if-has-phone-1', target: 'session-guard-cal-1', sourceHandle: 'yes' },
+    { id: 'e5', source: 'session-guard-cal-1', target: 'wa-text-cal-1' },
+    { id: 'e6', source: 'wa-text-cal-1', target: 'end-cal-1' },
+    { id: 'e7', source: 'if-has-phone-1', target: 'end-cal-1', sourceHandle: 'no' }
+  ]
+};
+
+// =====================================================
+// TEMPLATE 5: Google Calendar - Confirmação de Agendamento
+// =====================================================
+
+const TEMPLATE_CALENDAR_CONFIRMATION: FlowTemplate = {
+  id: 'calendar-booking-confirmation',
+  name: '✅ Confirmação de Agendamento',
+  description: 'Cria evento no Google Calendar e envia confirmação automática no WhatsApp.',
+  icon: CheckCircle,
+  category: 'calendar' as any,
+  difficulty: 'medium',
+  nodeCount: 8,
+  tags: ['Google Calendar', 'Agendamento', 'Confirmação', 'WhatsApp', 'Criação'],
+  userConfigurableFields: [
+    'Título do evento',
+    'Duração padrão',
+    'Mensagem de confirmação',
+    'Instância WhatsApp'
+  ],
+  securityFeatures: [
+    'secure_context_guard - Isolamento de contexto',
+    'session_guard - Proteção anti-spam'
+  ],
+  lifecycleStatus: 'validated',
+  nodes: [
+    {
+      id: 'wa-start-conf-1',
+      type: 'flowNode',
+      position: { x: 300, y: 50 },
+      data: { 
+        label: 'Início WhatsApp', 
+        type: 'wa_start' as NodeType, 
+        config: { triggerType: 'message_received' }, 
+        description: 'Recebe dados do agendamento' 
+      }
+    },
+    {
+      id: 'secure-guard-conf-1',
+      type: 'flowNode',
+      position: { x: 300, y: 170 },
+      data: { 
+        label: 'Proteção Contexto', 
+        type: 'secure_context_guard' as NodeType, 
+        config: { isolate_context: true, prevent_leak: true }, 
+        description: 'Isola execução' 
+      }
+    },
+    {
+      id: 'data-transform-conf-1',
+      type: 'flowNode',
+      position: { x: 300, y: 290 },
+      data: { 
+        label: 'Preparar Dados', 
+        type: 'data_transform' as NodeType, 
+        config: { 
+          operation: 'map', 
+          source: '{{context}}', 
+          expression: '{ nome: $.nome, telefone: $.from, data: $.data_agendamento, hora: $.hora_agendamento, servico: $.servico }',
+          output_variable: 'agendamento'
+        }, 
+        description: 'Extrai dados do agendamento' 
+      }
+    },
+    {
+      id: 'cal-create-conf-1',
+      type: 'flowNode',
+      position: { x: 300, y: 410 },
+      data: { 
+        label: 'Criar Evento', 
+        type: 'google_calendar_create_event' as NodeType, 
+        config: { 
+          title: 'Consulta - {{agendamento.nome}} - {{agendamento.servico}}',
+          startTime: '{{agendamento.data}}T{{agendamento.hora}}:00',
+          endTime: '{{agendamento.data}}T{{agendamento.hora_fim}}:00',
+          description: 'Agendamento via WhatsApp\nCliente: {{agendamento.nome}}\nTelefone: {{agendamento.telefone}}\nServiço: {{agendamento.servico}}',
+          timezone: 'America/Sao_Paulo',
+          saveEventIdTo: 'evento_criado_id'
+        }, 
+        description: 'Adiciona à agenda' 
+      }
+    },
+    {
+      id: 'if-created-1',
+      type: 'flowNode',
+      position: { x: 300, y: 530 },
+      data: { 
+        label: 'Evento Criado?', 
+        type: 'if_expression' as NodeType, 
+        config: { expression: '{{evento_criado_id}} != null', logic: 'and', fallback: 'error' }, 
+        description: 'Verifica se criou com sucesso' 
+      }
+    },
+    {
+      id: 'session-guard-conf-1',
+      type: 'flowNode',
+      position: { x: 300, y: 650 },
+      data: { 
+        label: 'Proteção Sessão', 
+        type: 'session_guard' as NodeType, 
+        config: { max_messages_per_minute: 10, burst_limit: 3, cooldown_minutes: 1, on_violation: 'pause' }, 
+        description: 'Limita envios' 
+      }
+    },
+    {
+      id: 'wa-text-conf-1',
+      type: 'flowNode',
+      position: { x: 300, y: 770 },
+      data: { 
+        label: 'Enviar Confirmação', 
+        type: 'wa_send_text' as NodeType, 
+        config: { 
+          text: '✅ *Agendamento Confirmado!*\n\nOlá {{agendamento.nome}}!\n\n📅 Data: {{agendamento.data}}\n⏰ Horário: {{agendamento.hora}}\n💼 Serviço: {{agendamento.servico}}\n\nVocê receberá um lembrete antes do horário.\n\nAté lá! 👋',
+          typing: true,
+          typingDuration: 2
+        }, 
+        description: 'Mensagem de confirmação' 
+      }
+    },
+    {
+      id: 'end-conf-1',
+      type: 'flowNode',
+      position: { x: 300, y: 890 },
+      data: { 
+        label: 'Fim', 
+        type: 'end' as NodeType, 
+        config: { endType: 'complete' }, 
+        description: 'Execução finalizada' 
+      }
+    }
+  ],
+  edges: [
+    { id: 'e1', source: 'wa-start-conf-1', target: 'secure-guard-conf-1' },
+    { id: 'e2', source: 'secure-guard-conf-1', target: 'data-transform-conf-1' },
+    { id: 'e3', source: 'data-transform-conf-1', target: 'cal-create-conf-1' },
+    { id: 'e4', source: 'cal-create-conf-1', target: 'if-created-1' },
+    { id: 'e5', source: 'if-created-1', target: 'session-guard-conf-1', sourceHandle: 'yes' },
+    { id: 'e6', source: 'session-guard-conf-1', target: 'wa-text-conf-1' },
+    { id: 'e7', source: 'wa-text-conf-1', target: 'end-conf-1' },
+    { id: 'e8', source: 'if-created-1', target: 'end-conf-1', sourceHandle: 'no' }
+  ]
+};
+
+// =====================================================
+// TEMPLATE 6: Google Calendar - Reagendamento
+// =====================================================
+
+const TEMPLATE_CALENDAR_RESCHEDULE: FlowTemplate = {
+  id: 'calendar-reschedule',
+  name: '🔁 Reagendamento',
+  description: 'Atualiza evento no Google Calendar e notifica o cliente sobre a nova data/hora.',
+  icon: Repeat,
+  category: 'calendar' as any,
+  difficulty: 'medium',
+  nodeCount: 7,
+  tags: ['Google Calendar', 'Reagendamento', 'Atualização', 'WhatsApp'],
+  userConfigurableFields: [
+    'Nova data/hora',
+    'Mensagem de reagendamento',
+    'Instância WhatsApp'
+  ],
+  securityFeatures: [
+    'secure_context_guard - Isolamento de contexto',
+    'session_guard - Proteção anti-spam'
+  ],
+  lifecycleStatus: 'validated',
+  nodes: [
+    {
+      id: 'wa-start-resch-1',
+      type: 'flowNode',
+      position: { x: 300, y: 50 },
+      data: { 
+        label: 'Início WhatsApp', 
+        type: 'wa_start' as NodeType, 
+        config: { triggerType: 'message_received' }, 
+        description: 'Recebe solicitação de reagendamento' 
+      }
+    },
+    {
+      id: 'secure-guard-resch-1',
+      type: 'flowNode',
+      position: { x: 300, y: 170 },
+      data: { 
+        label: 'Proteção Contexto', 
+        type: 'secure_context_guard' as NodeType, 
+        config: { isolate_context: true, prevent_leak: true }, 
+        description: 'Isola execução' 
+      }
+    },
+    {
+      id: 'cal-update-resch-1',
+      type: 'flowNode',
+      position: { x: 300, y: 290 },
+      data: { 
+        label: 'Atualizar Evento', 
+        type: 'google_calendar_update_event' as NodeType, 
+        config: { 
+          eventId: '{{event_id}}',
+          newStartTime: '{{nova_data}}T{{nova_hora}}:00',
+          newEndTime: '{{nova_data}}T{{nova_hora_fim}}:00',
+          sendUpdates: true
+        }, 
+        description: 'Atualiza data/hora na agenda' 
+      }
+    },
+    {
+      id: 'session-guard-resch-1',
+      type: 'flowNode',
+      position: { x: 300, y: 410 },
+      data: { 
+        label: 'Proteção Sessão', 
+        type: 'session_guard' as NodeType, 
+        config: { max_messages_per_minute: 10, burst_limit: 3, cooldown_minutes: 1, on_violation: 'pause' }, 
+        description: 'Limita envios' 
+      }
+    },
+    {
+      id: 'wa-text-resch-1',
+      type: 'flowNode',
+      position: { x: 300, y: 530 },
+      data: { 
+        label: 'Notificar Cliente', 
+        type: 'wa_send_text' as NodeType, 
+        config: { 
+          text: '🔄 *Reagendamento Confirmado!*\n\nOlá {{nome}}!\n\nSeu compromisso foi reagendado para:\n\n📅 Nova Data: {{nova_data}}\n⏰ Novo Horário: {{nova_hora}}\n\nSe precisar de mais alterações, é só avisar! 😊',
+          typing: true,
+          typingDuration: 2
+        }, 
+        description: 'Mensagem de reagendamento' 
+      }
+    },
+    {
+      id: 'end-resch-1',
+      type: 'flowNode',
+      position: { x: 300, y: 650 },
+      data: { 
+        label: 'Fim', 
+        type: 'end' as NodeType, 
+        config: { endType: 'complete' }, 
+        description: 'Execução finalizada' 
+      }
+    }
+  ],
+  edges: [
+    { id: 'e1', source: 'wa-start-resch-1', target: 'secure-guard-resch-1' },
+    { id: 'e2', source: 'secure-guard-resch-1', target: 'cal-update-resch-1' },
+    { id: 'e3', source: 'cal-update-resch-1', target: 'session-guard-resch-1' },
+    { id: 'e4', source: 'session-guard-resch-1', target: 'wa-text-resch-1' },
+    { id: 'e5', source: 'wa-text-resch-1', target: 'end-resch-1' }
+  ]
+};
+
+// =====================================================
+// TEMPLATE 7: Google Calendar - Agenda como Fonte de Verdade
+// =====================================================
+
+const TEMPLATE_CALENDAR_SOURCE_OF_TRUTH: FlowTemplate = {
+  id: 'calendar-source-of-truth',
+  name: '📆 Agenda Controla Tudo',
+  description: 'Usa o Google Calendar como fonte de verdade. WhatsApp apenas notifica sobre eventos.',
+  icon: Calendar,
+  category: 'calendar' as any,
+  difficulty: 'advanced',
+  nodeCount: 10,
+  tags: ['Google Calendar', 'Fonte de Verdade', 'Sincronização', 'WhatsApp', 'Automação'],
+  userConfigurableFields: [
+    'Intervalo de verificação',
+    'Mensagem para eventos novos',
+    'Mensagem para alterações',
+    'Mensagem para cancelamentos'
+  ],
+  securityFeatures: [
+    'secure_context_guard - Isolamento de contexto',
+    'session_guard - Proteção anti-spam',
+    'deduplication - Evita notificações duplicadas',
+    'quota_guard - Limite de execuções'
+  ],
+  lifecycleStatus: 'validated',
+  nodes: [
+    {
+      id: 'cal-trigger-sot-1',
+      type: 'flowNode',
+      position: { x: 300, y: 50 },
+      data: { 
+        label: 'Monitorar Agenda', 
+        type: 'google_calendar_trigger' as NodeType, 
+        config: { triggerType: 'event_created', calendarId: 'primary', pollingInterval: 60, deduplication: true }, 
+        description: 'Detecta novos eventos' 
+      }
+    },
+    {
+      id: 'secure-guard-sot-1',
+      type: 'flowNode',
+      position: { x: 300, y: 170 },
+      data: { 
+        label: 'Proteção Contexto', 
+        type: 'secure_context_guard' as NodeType, 
+        config: { isolate_context: true, prevent_leak: true }, 
+        description: 'Isola execução' 
+      }
+    },
+    {
+      id: 'quota-guard-sot-1',
+      type: 'flowNode',
+      position: { x: 300, y: 290 },
+      data: { 
+        label: 'Limite Execuções', 
+        type: 'execution_quota_guard' as NodeType, 
+        config: { max_concurrent: 5, max_per_hour: 100, max_per_day: 500 }, 
+        description: 'Controla quota' 
+      }
+    },
+    {
+      id: 'data-transform-sot-1',
+      type: 'flowNode',
+      position: { x: 300, y: 410 },
+      data: { 
+        label: 'Extrair Dados', 
+        type: 'data_transform' as NodeType, 
+        config: { 
+          operation: 'map', 
+          source: '{{event}}', 
+          expression: '{ nome: $.attendees[0].displayName || "Cliente", telefone: $.extendedProperties.private.phone, titulo: $.summary, data: $.start.dateTime, tipo_mudanca: $.status }',
+          output_variable: 'evento'
+        }, 
+        description: 'Processa dados do evento' 
+      }
+    },
+    {
+      id: 'if-has-phone-sot-1',
+      type: 'flowNode',
+      position: { x: 300, y: 530 },
+      data: { 
+        label: 'Tem Telefone?', 
+        type: 'if_expression' as NodeType, 
+        config: { expression: '{{evento.telefone}} != null && {{evento.telefone}} != ""', logic: 'and', fallback: 'end' }, 
+        description: 'Só notifica se tiver telefone' 
+      }
+    },
+    {
+      id: 'switch-tipo-1',
+      type: 'flowNode',
+      position: { x: 300, y: 650 },
+      data: { 
+        label: 'Tipo de Evento', 
+        type: 'switch_node' as NodeType, 
+        config: { field: '{{trigger_type}}', cases: ['event_created', 'event_updated', 'event_cancelled'], default_route: 'end' }, 
+        description: 'Direciona por tipo de mudança' 
+      }
+    },
+    {
+      id: 'session-guard-sot-1',
+      type: 'flowNode',
+      position: { x: 100, y: 780 },
+      data: { 
+        label: 'Proteção Sessão', 
+        type: 'session_guard' as NodeType, 
+        config: { max_messages_per_minute: 10, burst_limit: 3, cooldown_minutes: 1, on_violation: 'pause' }, 
+        description: 'Limita envios' 
+      }
+    },
+    {
+      id: 'wa-text-sot-new',
+      type: 'flowNode',
+      position: { x: 100, y: 900 },
+      data: { 
+        label: 'Novo Agendamento', 
+        type: 'wa_send_text' as NodeType, 
+        config: { 
+          text: '🆕 *Novo Agendamento!*\n\nOlá {{evento.nome}}!\n\nSeu compromisso foi agendado:\n\n📅 {{evento.titulo}}\n⏰ {{evento.data}}\n\nContamos com sua presença! 😊',
+          typing: true,
+          typingDuration: 2,
+          phone_variable: '{{evento.telefone}}'
+        }, 
+        description: 'Notifica novo agendamento' 
+      }
+    },
+    {
+      id: 'wa-text-sot-update',
+      type: 'flowNode',
+      position: { x: 300, y: 900 },
+      data: { 
+        label: 'Alteração', 
+        type: 'wa_send_text' as NodeType, 
+        config: { 
+          text: '✏️ *Agendamento Atualizado*\n\nOlá {{evento.nome}}!\n\nHouve uma alteração no seu compromisso:\n\n📅 {{evento.titulo}}\n⏰ {{evento.data}}\n\nQualquer dúvida, estamos à disposição!',
+          typing: true,
+          typingDuration: 2,
+          phone_variable: '{{evento.telefone}}'
+        }, 
+        description: 'Notifica alteração' 
+      }
+    },
+    {
+      id: 'end-sot-1',
+      type: 'flowNode',
+      position: { x: 300, y: 1030 },
+      data: { 
+        label: 'Fim', 
+        type: 'end' as NodeType, 
+        config: { endType: 'complete' }, 
+        description: 'Execução finalizada' 
+      }
+    }
+  ],
+  edges: [
+    { id: 'e1', source: 'cal-trigger-sot-1', target: 'secure-guard-sot-1' },
+    { id: 'e2', source: 'secure-guard-sot-1', target: 'quota-guard-sot-1' },
+    { id: 'e3', source: 'quota-guard-sot-1', target: 'data-transform-sot-1' },
+    { id: 'e4', source: 'data-transform-sot-1', target: 'if-has-phone-sot-1' },
+    { id: 'e5', source: 'if-has-phone-sot-1', target: 'switch-tipo-1', sourceHandle: 'yes' },
+    { id: 'e6', source: 'switch-tipo-1', target: 'session-guard-sot-1', sourceHandle: 'event_created' },
+    { id: 'e7', source: 'session-guard-sot-1', target: 'wa-text-sot-new' },
+    { id: 'e8', source: 'wa-text-sot-new', target: 'end-sot-1' },
+    { id: 'e9', source: 'switch-tipo-1', target: 'wa-text-sot-update', sourceHandle: 'event_updated' },
+    { id: 'e10', source: 'wa-text-sot-update', target: 'end-sot-1' },
+    { id: 'e11', source: 'if-has-phone-sot-1', target: 'end-sot-1', sourceHandle: 'no' }
+  ]
+};
+
+// =====================================================
 // ALL TEMPLATES
 // =====================================================
 
 const FLOW_TEMPLATES: FlowTemplate[] = [
   TEMPLATE_WA_ATENDIMENTO,
   TEMPLATE_WEBHOOK_PIX,
-  TEMPLATE_WEBHOOK_UNIVERSAL
+  TEMPLATE_WEBHOOK_UNIVERSAL,
+  TEMPLATE_CALENDAR_REMINDER,
+  TEMPLATE_CALENDAR_CONFIRMATION,
+  TEMPLATE_CALENDAR_RESCHEDULE,
+  TEMPLATE_CALENDAR_SOURCE_OF_TRUTH
 ];
 
 const CATEGORIES = {
   whatsapp: { label: 'WhatsApp', color: '#25D366', icon: Smartphone },
   webhook: { label: 'Webhook', color: '#8b5cf6', icon: Webhook },
-  automation: { label: 'Automação', color: '#f59e0b', icon: Zap }
+  automation: { label: 'Automação', color: '#f59e0b', icon: Zap },
+  calendar: { label: 'Calendário', color: '#4285F4', icon: Clock }
 };
 
 const DIFFICULTY_CONFIG = {
