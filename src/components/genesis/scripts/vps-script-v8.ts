@@ -414,11 +414,11 @@ class InstanceManager {
           this.trackMessageReceived(instanceId);
           
           // ═══════════════════════════════════════════════════════════════════════════
-          // ENCAMINHAR PARA CHATBOT ENGINE (100% CHATBOT - SEM FLOW BUILDER)
+          // ENCAMINHAR PARA ENGINES (CHATBOT + FLOW BUILDER COM FALLBACK)
           // ═══════════════════════════════════════════════════════════════════════════
           if (textContent && !remoteJid.endsWith('@g.us')) {
             // Ignorar grupos, só processar mensagens privadas
-            this.forwardToChatbot(instanceId, remoteJid, textContent, msg.key.id);
+            this.forwardToEngines(instanceId, remoteJid, textContent, msg.key.id);
           }
         }
       });
@@ -762,16 +762,18 @@ class InstanceManager {
   }
   
   // ════════════════════════════════════════════════════════════════════════════
-  // MOTOR DE INTEGRAÇÃO: ENCAMINHAR MENSAGENS PARA CHATBOT ENGINE (100% CHATBOT)
+  // MOTOR DE INTEGRAÇÃO: ENCAMINHAR MENSAGENS PARA ENGINES (CHATBOT + FLOW BUILDER)
   // ════════════════════════════════════════════════════════════════════════════
-  async forwardToChatbot(instanceId, remoteJid, message, messageId) {
+  async forwardToEngines(instanceId, remoteJid, message, messageId) {
     const instance = this.instances.get(instanceId);
     if (!instance) return;
     
-    log('info', \`[\\x1b[36m\${instance.name}\\x1b[0m] 🤖 Encaminhando para Chatbot Engine...\`);
+    log('info', \`[\\x1b[36m\${instance.name}\\x1b[0m] 🤖 Encaminhando para engines...\`);
     
     try {
-      // Timeout curto de 15s para não atrasar
+      // ═══════════════════════════════════════════════════════════════════════════
+      // PASSO 1: Tentar Chatbot Engine primeiro
+      // ═══════════════════════════════════════════════════════════════════════════
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
       
@@ -783,7 +785,7 @@ class InstanceManager {
         },
         body: JSON.stringify({
           action: 'process_message',
-          from: remoteJid,  // JID completo para responder corretamente
+          from: remoteJid,
           message,
           instanceId,
           messageId,
@@ -796,20 +798,56 @@ class InstanceManager {
       
       const chatbotResult = await chatbotResponse.json();
       
-      if (chatbotResult.success) {
-        if (chatbotResult.chatbotId) {
-          log('success', \`[\\x1b[32m\${instance.name}\\x1b[0m] ✓ Chatbot respondeu: \${chatbotResult.chatbotName || chatbotResult.chatbotId}\`);
-        } else if (chatbotResult.response) {
-          log('success', \`[\\x1b[32m\${instance.name}\\x1b[0m] ✓ Resposta enviada\`);
-        }
-      } else {
-        log('info', \`[\\x1b[33m\${instance.name}\\x1b[0m] Nenhum chatbot correspondente para: \${message.slice(0, 30)}...\`);
+      if (chatbotResult.success && chatbotResult.chatbotId) {
+        log('success', \`[\\x1b[32m\${instance.name}\\x1b[0m] ✓ Chatbot respondeu: \${chatbotResult.chatbotName || chatbotResult.chatbotId}\`);
+        return; // Chatbot tratou, parar aqui
       }
+      
+      // ═══════════════════════════════════════════════════════════════════════════
+      // PASSO 2: Fallback para Flow Builder (whatsapp-automation-worker)
+      // ═══════════════════════════════════════════════════════════════════════════
+      log('info', \`[\\x1b[33m\${instance.name}\\x1b[0m] Chatbot não tratou, tentando Flow Builder...\`);
+      
+      const flowController = new AbortController();
+      const flowTimeoutId = setTimeout(() => flowController.abort(), 15000);
+      
+      const flowResponse = await fetch(\`\${CONFIG.SUPABASE_URL}/functions/v1/whatsapp-automation-worker\`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': \`Bearer \${CONFIG.SUPABASE_KEY}\`,
+        },
+        body: JSON.stringify({
+          source: 'vps_message',
+          event_type: 'message_received',
+          event_data: {
+            from: remoteJid,
+            message,
+            instanceId,
+            phone: remoteJid.split('@')[0],
+            text: message,
+            messageId,
+          },
+          project_id: instanceId,
+        }),
+        signal: flowController.signal,
+      });
+      
+      clearTimeout(flowTimeoutId);
+      
+      const flowResult = await flowResponse.json();
+      
+      if (flowResult.success || flowResult.processed) {
+        log('success', \`[\\x1b[32m\${instance.name}\\x1b[0m] ✓ Flow Builder processou a mensagem\`);
+      } else {
+        log('info', \`[\\x1b[33m\${instance.name}\\x1b[0m] Nenhum engine tratou: \${message.slice(0, 30)}...\`);
+      }
+      
     } catch (err) {
       if (err.name === 'AbortError') {
-        log('warn', \`[\\x1b[33m\${instance.name}\\x1b[0m] Timeout ao processar chatbot (15s)\`);
+        log('warn', \`[\\x1b[33m\${instance.name}\\x1b[0m] Timeout ao processar engines (15s)\`);
       } else {
-        log('error', \`[\\x1b[31m\${instance.name}\\x1b[0m] Erro chatbot: \${err.message}\`);
+        log('error', \`[\\x1b[31m\${instance.name}\\x1b[0m] Erro engines: \${err.message}\`);
       }
     }
   }
