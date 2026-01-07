@@ -2780,35 +2780,41 @@ async function checkAndRegisterDedup(
   fromJid: string,
   source: string = 'worker'
 ): Promise<boolean> {
-  // Se não há messageId, não podemos fazer dedup - permitir
+  // Se não há messageId, não conseguimos garantir idempotência
   if (!messageId) {
     console.log('[DEDUP] No messageId provided, allowing');
     return true;
   }
 
-  try {
-    const { error } = await supabase
-      .from('chatbot_inbound_dedup')
-      .insert({
-        instance_id: instanceId,
-        message_id: messageId,
-        from_jid: fromJid,
-        session_id: null,
-        chatbot_id: null,
-      });
+  // Hard-lock global por messageId (evita duplicidade entre múltiplas instâncias/motores)
+  const DEDUP_INSTANCE_ID = '00000000-0000-0000-0000-000000000000';
 
-    // Se constraint unique falhou = já existe = duplicada
+  const normalizedFrom = (() => {
+    const raw = String(fromJid || '').trim();
+    const base = raw.includes('@') ? raw.split('@')[0] : raw;
+    const digits = base.replace(/\D/g, '');
+    return digits || base || 'unknown';
+  })();
+
+  try {
+    const { error } = await supabase.from('chatbot_inbound_dedup').insert({
+      instance_id: DEDUP_INSTANCE_ID,
+      message_id: messageId,
+      from_jid: normalizedFrom,
+      session_id: null,
+      chatbot_id: null,
+    });
+
     if (error) {
       if (error.code === '23505') {
         console.log(`[DEDUP][${source}] Message ${messageId} already processed, SKIPPING`);
-        return false; // Duplicada - NÃO processar
+        return false;
       }
-      // Outro erro, logar mas permitir para não bloquear
       console.error(`[DEDUP][${source}] Insert error (allowing):`, error.message);
     }
 
     console.log(`[DEDUP][${source}] Message ${messageId} is NEW, processing`);
-    return true; // Primeira vez, processar
+    return true;
   } catch (e) {
     console.error(`[DEDUP][${source}] Exception (allowing):`, e);
     return true;
@@ -2860,10 +2866,35 @@ async function processEvent(supabase: any, event: EventQueueItem): Promise<void>
     const payload = eventData.payload || eventData;
     
     // Extract message info from various webhook formats
-    const from = payload.from || payload.sender || payload.phone || payload.remoteJid?.split('@')[0];
-    const message = payload.message || payload.text || payload.body || payload.content || '';
-    const instanceId = payload.instanceId || payload.instance_id || eventData.instance_id || event.project_id;
-    const messageId = payload.messageId || payload.message_id || eventData.messageId;
+    const fromRaw =
+      payload.from ??
+      payload.sender ??
+      payload.phone ??
+      payload.remoteJid ??
+      payload.remote_jid ??
+      payload.key?.remoteJid ??
+      payload.key?.remote_jid ??
+      payload.participant ??
+      payload.key?.participant ??
+      '';
+
+    const fromBase = String(fromRaw || '').includes('@') ? String(fromRaw).split('@')[0] : String(fromRaw || '');
+    const from = fromBase.replace(/\D/g, '') || fromBase;
+
+    const message = payload.message || payload.text || payload.body || payload.content || payload.conversation || '';
+
+    const instanceId = payload.instanceId || payload.instance_id || eventData.instance_id || eventData.instanceId || event.project_id;
+
+    const messageId =
+      payload.messageId ||
+      payload.message_id ||
+      eventData.messageId ||
+      eventData.message_id ||
+      payload.id ||
+      payload.key?.id ||
+      payload.msg?.key?.id ||
+      payload.data?.key?.id ||
+      payload.message?.key?.id;
     
     // =====================================================
     // ANTI-DUPLICAÇÃO: Verificar ANTES de qualquer processamento
