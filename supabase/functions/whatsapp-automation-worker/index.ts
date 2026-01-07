@@ -2769,11 +2769,80 @@ function checkConditions(conditions: any[], eventData: any): boolean {
   });
 }
 
+// Call chatbot engine for message processing
+async function callChatbotEngine(
+  supabase: any,
+  from: string,
+  message: string,
+  instanceId: string
+): Promise<{ success: boolean; response?: string; chatbotId?: string }> {
+  try {
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
+    const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') || '';
+
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/chatbot-engine`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        action: 'process_message',
+        from,
+        message,
+        instanceId,
+      }),
+    });
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('[CHATBOT ENGINE] Error:', error);
+    return { success: false };
+  }
+}
+
 // Process event with automation rules
 async function processEvent(supabase: any, event: EventQueueItem): Promise<void> {
   console.log(`Processing event: ${event.id} (${event.event_type})`);
 
-  // Get matching automation rules
+  // PRIORITY 1: For message_received events, try chatbot engine first
+  if (event.event_type === 'message_received' || event.event_type === 'webhook_received') {
+    const eventData = event.event_data || {};
+    const payload = eventData.payload || eventData;
+    
+    // Extract message info from various webhook formats
+    const from = payload.from || payload.sender || payload.phone || payload.remoteJid?.split('@')[0];
+    const message = payload.message || payload.text || payload.body || payload.content || '';
+    const instanceId = payload.instanceId || payload.instance_id || eventData.instance_id || event.project_id;
+    
+    if (from && message && instanceId) {
+      console.log(`[WORKER] Calling chatbot engine for ${from}: ${message.slice(0, 50)}...`);
+      
+      const chatbotResult = await callChatbotEngine(supabase, from, message, instanceId);
+      
+      if (chatbotResult.success && chatbotResult.chatbotId) {
+        console.log(`[WORKER] Chatbot handled message: ${chatbotResult.chatbotId}`);
+        
+        // Mark event as completed
+        await supabase
+          .from('whatsapp_event_queue')
+          .update({ 
+            status: 'completed', 
+            processed_at: new Date().toISOString(),
+            result: { 
+              handler: 'chatbot_engine',
+              chatbotId: chatbotResult.chatbotId,
+              response: chatbotResult.response?.slice(0, 100)
+            }
+          })
+          .eq('id', event.id);
+        return;
+      }
+    }
+  }
+
+  // PRIORITY 2: Get matching automation rules
   const { data: rules } = await supabase
     .from('whatsapp_automation_rules')
     .select('*')
@@ -2788,7 +2857,7 @@ async function processEvent(supabase: any, event: EventQueueItem): Promise<void>
       .update({ 
         status: 'completed', 
         processed_at: new Date().toISOString(),
-        result: { message: 'No matching rules' }
+        result: { message: 'No matching rules or chatbot' }
       })
       .eq('id', event.id);
     return;
