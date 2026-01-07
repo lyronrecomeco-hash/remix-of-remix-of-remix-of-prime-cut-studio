@@ -38,14 +38,17 @@ interface ChatbotConfig {
 
 interface FlowStep {
   id: string;
-  type: 'greeting' | 'menu' | 'submenu' | 'collect' | 'ai' | 'transfer' | 'end';
+  type: 'greeting' | 'menu' | 'submenu' | 'collect' | 'input' | 'text' | 'confirmation' | 'ai' | 'transfer' | 'end';
   message: string;
   options?: MenuOption[];
   next?: string;
   transitions?: Record<string, string>;
   ai_enabled?: boolean;
   collect_field?: string;
+  input_type?: string;
+  input_variable?: string;
   validation?: string;
+  transfer_message?: string;
 }
 
 interface MenuOption {
@@ -1026,6 +1029,120 @@ async function processFlowStep(
   }
   
   // =====================================================
+  // INPUT: Coletando dados (alias para collect)
+  // =====================================================
+  if (currentStep.type === 'input' && userMessage) {
+    // Armazenar dado coletado
+    const fieldName = currentStep.input_variable || currentStep.collect_field || 'data';
+    const stepData = {
+      ...session.step_data,
+      [fieldName]: userMessage,
+    };
+    
+    // Se tem IA habilitada no passo, processar com Luna
+    if (currentStep.ai_enabled && chatbot.ai_enabled) {
+      const aiPrompt = chatbot.ai_system_prompt || '';
+      const { response: aiResponse } = await callLunaAI(
+        aiPrompt,
+        userMessage,
+        session.history,
+        { ...context, ...stepData },
+        chatbot.ai_temperature || 0.7
+      );
+
+      const nextStepId = currentStep.next || 'end_flow';
+      const nextStep = flowConfig.steps[nextStepId];
+
+      const outParts: string[] = [aiResponse];
+      if (nextStep && (nextStep.type === 'menu' || nextStep.type === 'submenu')) {
+        outParts.push(replaceVariables(formatMenu(nextStep), context));
+      }
+      const outMsg = outParts.filter(Boolean).join('\n\n').trim();
+
+      await sendMessage(supabase, instanceId, contactId, outMsg);
+
+      await updateSession(supabase, session.id, {
+        current_step_id: nextStepId,
+        step_data: stepData,
+        awaiting_response: nextStep?.type === 'menu' || nextStep?.type === 'submenu' || nextStep?.type === 'input',
+        awaiting_type: nextStep?.type === 'menu' || nextStep?.type === 'submenu' ? 'menu' : nextStep?.type === 'input' ? 'input' : null,
+        expected_options: nextStep?.options || [],
+        attempt_count: 0,
+        history: addToHistory(
+          addToHistory(session.history, 'user', userMessage),
+          'bot',
+          outMsg
+        ),
+      });
+
+      return { success: true, response: outMsg };
+    }
+    
+    // Sem IA, confirmar recebimento e avançar
+    const nextStepId = currentStep.next || 'end_flow';
+    const nextStep = flowConfig.steps[nextStepId];
+    
+    if (nextStep) {
+      return await processNextStep(
+        supabase,
+        chatbot,
+        session,
+        userMessage,
+        instanceId,
+        contactId,
+        nextStep,
+        nextStepId,
+        context,
+        flowConfig
+      );
+    }
+    
+    const confirmMsg = `✅ Dados recebidos. Obrigado!`;
+    await sendMessage(supabase, instanceId, contactId, confirmMsg);
+    return { success: true, response: confirmMsg };
+  }
+  
+  // =====================================================
+  // TEXT: Mensagem simples (apenas envia e avança)
+  // =====================================================
+  if (currentStep.type === 'text') {
+    const textMsg = replaceVariables(currentStep.message, context);
+    await sendMessage(supabase, instanceId, contactId, textMsg);
+    
+    const nextStepId = currentStep.next || 'end_flow';
+    const nextStep = flowConfig.steps[nextStepId];
+    
+    if (nextStep) {
+      await updateSession(supabase, session.id, {
+        current_step_id: nextStepId,
+        history: addToHistory(session.history, 'bot', textMsg),
+      });
+      
+      // Se próximo é menu, enviar
+      if (nextStep.type === 'menu' || nextStep.type === 'submenu') {
+        const menuMsg = formatMenu(nextStep);
+        const finalMenuMsg = replaceVariables(menuMsg, context);
+        await sendMessage(supabase, instanceId, contactId, finalMenuMsg);
+        
+        await updateSession(supabase, session.id, {
+          awaiting_response: true,
+          awaiting_type: 'menu',
+          expected_options: nextStep.options || [],
+          attempt_count: 0,
+        });
+      }
+      
+      if (nextStep.type === 'transfer') {
+        const transferMsg = replaceVariables(nextStep.message, context);
+        await sendMessage(supabase, instanceId, contactId, transferMsg);
+        await updateSession(supabase, session.id, { status: 'completed' });
+      }
+    }
+    
+    return { success: true, response: textMsg };
+  }
+  
+  // =====================================================
   // AI: Passo com IA
   // =====================================================
   if (currentStep.type === 'ai' && userMessage) {
@@ -1179,6 +1296,58 @@ async function processNextStep(
     });
     
     return { success: true, response: collectMsg };
+  }
+  
+  // Input: Enviar mensagem de coleta (alias para collect)
+  if (nextStep.type === 'input') {
+    const inputMsg = replaceVariables(nextStep.message, context);
+    await sendMessage(supabase, instanceId, contactId, inputMsg);
+    
+    await updateSession(supabase, session.id, {
+      awaiting_response: true,
+      awaiting_type: 'input',
+      history: addToHistory(session.history, 'bot', inputMsg),
+    });
+    
+    await logSession(supabase, session.id, chatbot.id, 'step_transition', {
+      messageIn: userMessage || undefined,
+      messageOut: inputMsg,
+      stepTo: nextStepId,
+    });
+    
+    return { success: true, response: inputMsg };
+  }
+  
+  // Text: Enviar mensagem e avançar automaticamente
+  if (nextStep.type === 'text') {
+    const textMsg = replaceVariables(nextStep.message, context);
+    await sendMessage(supabase, instanceId, contactId, textMsg);
+    
+    await updateSession(supabase, session.id, {
+      history: addToHistory(session.history, 'bot', textMsg),
+    });
+    
+    // Se tem próximo passo, processar imediatamente
+    const afterTextStepId = nextStep.next;
+    if (afterTextStepId) {
+      const afterTextStep = flowConfig.steps[afterTextStepId];
+      if (afterTextStep) {
+        return await processNextStep(
+          supabase,
+          chatbot,
+          session,
+          null,
+          instanceId,
+          contactId,
+          afterTextStep,
+          afterTextStepId,
+          context,
+          flowConfig
+        );
+      }
+    }
+    
+    return { success: true, response: textMsg };
   }
   
   // AI: Enviar mensagem inicial do passo IA
