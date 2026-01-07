@@ -42,6 +42,12 @@ export interface FlowConfig {
     afternoon?: string;
     evening?: string;
   };
+  settings?: {
+    greeting_dynamic?: boolean;
+    morning_greeting?: string;
+    afternoon_greeting?: string;
+    evening_greeting?: string;
+  };
 }
 
 export interface AIConfig {
