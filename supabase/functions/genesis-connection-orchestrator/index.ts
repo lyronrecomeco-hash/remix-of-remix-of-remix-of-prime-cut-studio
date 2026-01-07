@@ -145,26 +145,66 @@ serve(async (req) => {
         );
       }
 
-      // Chamar função SQL que valida transição e registra evento
-      const { data: result, error: rpcError } = await supabase.rpc(
-        'genesis_orchestrate_status_change',
-        {
-          p_instance_id: instanceId,
-          p_new_status: newStatus,
-          p_source: source,
-          p_payload: payload,
-        }
-      );
+      const currentStatus = instance.orchestrated_status as string;
 
-      if (rpcError) {
-        console.error("[Orchestrator] RPC error:", rpcError);
-        return new Response(
-          JSON.stringify({ success: false, error: rpcError.message }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      // Helper para executar transição via RPC
+      const tryTransition = async (targetStatus: string): Promise<{
+        success: boolean;
+        changed?: boolean;
+        from?: string;
+        to?: string;
+        error?: string;
+        event_id?: string;
+      }> => {
+        const { data, error } = await supabase.rpc(
+          'genesis_orchestrate_status_change',
+          {
+            p_instance_id: instanceId,
+            p_new_status: targetStatus,
+            p_source: source,
+            p_payload: payload,
+          }
         );
-      }
+        if (error) {
+          return { success: false, error: error.message };
+        }
+        return data as any;
+      };
 
-      const rpcResult = result as Record<string, unknown>;
+      // Tentar transição direta primeiro
+      let rpcResult = await tryTransition(newStatus);
+
+      // AUTO-HOP: Se falhar por transição inválida de idle/disconnected,
+      // passar por "connecting" primeiro (state machine exige esse hop)
+      if (!rpcResult.success && rpcResult.error?.includes('Invalid transition')) {
+        const needsConnectingHop =
+          (currentStatus === 'idle' || currentStatus === 'disconnected') &&
+          (newStatus === 'connected' || newStatus === 'qr_pending' || newStatus === 'waiting_qr');
+
+        if (needsConnectingHop) {
+          console.log(`[Orchestrator] Auto-hop: ${currentStatus} -> connecting -> ${newStatus}`);
+          
+          // Primeiro: ir para connecting
+          const hopResult = await tryTransition('connecting');
+          
+          if (hopResult.success) {
+            // Atualizar status legado para connecting
+            await supabase
+              .from("genesis_instances")
+              .update({
+                status: 'connecting',
+                effective_status: 'connecting',
+                updated_at: now,
+              })
+              .eq("id", instanceId);
+
+            // Agora tentar o status final
+            rpcResult = await tryTransition(newStatus);
+          } else {
+            console.warn(`[Orchestrator] Auto-hop to connecting failed:`, hopResult.error);
+          }
+        }
+      }
 
       // Também atualizar status legado para compatibilidade
       if (rpcResult.success && rpcResult.changed) {
@@ -178,7 +218,7 @@ serve(async (req) => {
           .eq("id", instanceId);
       }
 
-      console.log(`[Orchestrator] Transition: ${instanceId} ${rpcResult.from} -> ${rpcResult.to} (${source})`);
+      console.log(`[Orchestrator] Transition: ${instanceId} ${rpcResult.from} -> ${rpcResult.to} (${source}) success=${rpcResult.success}`);
 
       return new Response(
         JSON.stringify({
