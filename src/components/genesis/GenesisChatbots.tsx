@@ -281,11 +281,11 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
         if (form.use_flow_json) {
           const parsed = safeParseJson<FlowConfig>(form.flow_config_json || '');
           if (!parsed.ok) {
-            toast.error(`Flow JSON inválido: ${parsed.error}`);
+            toast.error(`Flow JSON inválido: ${(parsed as any).error}`);
             setIsSaving(false);
             return;
           }
-          flowConfig = parsed.data;
+          flowConfig = (parsed as any).data;
         } else {
           flowConfig = buildFlowFromMenu({
             greetingMessage: form.response,
@@ -719,17 +719,10 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
                         type="button"
                         variant={form.response_type === rt.value ? 'default' : 'outline'}
                         className="justify-start gap-2 relative h-auto py-3"
-                        onClick={() => !rt.disabled && setForm({ ...form, response_type: rt.value, ai_enabled: rt.value === 'ai' })}
-                        disabled={rt.disabled}
+                        onClick={() => setForm({ ...form, response_type: rt.value })}
                       >
                         <rt.icon className="w-4 h-4" />
                         <span>{rt.label}</span>
-                        {rt.disabled && (
-                          <Badge variant="secondary" className="ml-auto text-[10px] px-1">
-                            <AlertTriangle className="w-3 h-3 mr-1" />
-                            Inativo
-                          </Badge>
-                        )}
                       </Button>
                     ))}
                   </div>
@@ -766,58 +759,6 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
                   </div>
                 )}
 
-                {/* AI Config */}
-                {form.response_type === 'ai' && (
-                  <div className="space-y-4 p-4 bg-purple-500/5 rounded-xl border border-purple-500/20">
-                    <div className="flex items-center gap-2">
-                      <Brain className="w-5 h-5 text-purple-500" />
-                      <span className="font-medium">Configuração Luna IA</span>
-                      <Badge variant="secondary" className="bg-purple-500/10 text-purple-600">
-                        Gemini 2.5
-                      </Badge>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Mensagem inicial (opcional)</Label>
-                      <Textarea
-                        value={form.response}
-                        onChange={(e) => setForm({ ...form, response: e.target.value })}
-                        placeholder="Olá! Sou a Luna, sua assistente virtual. Como posso ajudar?"
-                        rows={2}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Mensagem enviada antes da IA processar (opcional)
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Personalidade / System Prompt *</Label>
-                      <Textarea
-                        value={form.ai_system_prompt}
-                        onChange={(e) => setForm({ ...form, ai_system_prompt: e.target.value })}
-                        placeholder={`Você é Luna, atendente virtual da empresa [NOME DA EMPRESA].\n\nSeu papel:\n- Responder dúvidas sobre produtos e serviços\n- Agendar atendimentos\n- Coletar informações de contato\n\nRegras:\n- Seja sempre educado e objetivo\n- Não invente informações\n- Encaminhe para humano quando necessário`}
-                        rows={6}
-                        className="font-mono text-sm"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="flex items-center justify-between">
-                        <span>Temperatura: {form.ai_temperature}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {form.ai_temperature <= 0.3 ? '🎯 Preciso' : form.ai_temperature >= 0.7 ? '✨ Criativo' : '⚖️ Balanceado'}
-                        </span>
-                      </Label>
-                      <Slider
-                        value={[form.ai_temperature]}
-                        onValueChange={([v]) => setForm({ ...form, ai_temperature: v })}
-                        min={0}
-                        max={1}
-                        step={0.1}
-                      />
-                    </div>
-                  </div>
-                )}
 
                 {/* Delay */}
                 <div className="space-y-2">
@@ -867,10 +808,22 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
                     <div className="flex justify-start">
                       <div className="bg-white dark:bg-zinc-700 text-black dark:text-white px-3 py-2 rounded-lg max-w-[80%] shadow-sm">
                         <p className="text-sm whitespace-pre-wrap">
-                          {form.response_type === 'ai' 
-                            ? (form.response || 'Olá! Sou a Luna, sua assistente virtual. Como posso ajudar?') 
-                            : (form.response || 'Configure sua mensagem de resposta...')
-                          }
+                          {(() => {
+                            if (form.response_type === 'list' || form.response_type === 'buttons') {
+                              const options = form.menu_options
+                                .filter((o) => o.text.trim())
+                                .map((o, idx) => `${idx + 1}️⃣ ${o.text.trim()}`)
+                                .join('\n');
+
+                              const menuBlock = options
+                                ? `\n\n${form.menu_message}\n\n${options}\n\n_Digite o número da opção:_`
+                                : '';
+
+                              return `${form.response || 'Configure sua mensagem inicial...'}${menuBlock}`;
+                            }
+
+                            return form.response || 'Configure sua mensagem de resposta...';
+                          })()}
                         </p>
                         <p className="text-[10px] text-right opacity-60 mt-1 flex items-center justify-end gap-1">
                           12:00
@@ -878,13 +831,6 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
                         </p>
                       </div>
                     </div>
-
-                    {form.response_type === 'ai' && (
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground justify-center mt-4">
-                        <Brain className="w-4 h-4 text-purple-500" />
-                        <span>Luna IA responderá de forma inteligente</span>
-                      </div>
-                    )}
                   </div>
 
                   <div className="bg-[#f0f0f0] dark:bg-zinc-900 p-2 rounded-b-2xl flex items-center gap-2">
