@@ -192,6 +192,11 @@ export function LunaBuilderModal({ open, onOpenChange, onComplete, instances }: 
 
     setIsSaving(true);
     try {
+      // Ensure instance_id is null if empty/invalid
+      const validInstanceId = generatedConfig.instance_id && generatedConfig.instance_id.trim() !== '' 
+        ? generatedConfig.instance_id 
+        : null;
+
       const insertData = {
         name: generatedConfig.name,
         trigger_type: generatedConfig.trigger_type,
@@ -199,7 +204,7 @@ export function LunaBuilderModal({ open, onOpenChange, onComplete, instances }: 
         response_type: 'text',
         response_content: null,
         delay_seconds: generatedConfig.delay || generatedConfig.delay_seconds || 2,
-        instance_id: generatedConfig.instance_id || null,
+        instance_id: validInstanceId,
         ai_enabled: true,
         ai_model: 'gpt-4o-mini',
         ai_temperature: generatedConfig.ai_temperature,
