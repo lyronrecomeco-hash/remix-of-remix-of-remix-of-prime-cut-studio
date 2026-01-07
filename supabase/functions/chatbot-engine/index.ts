@@ -59,6 +59,11 @@ interface FlowConfig {
   version?: string;
   steps: Record<string, FlowStep>;
   startStep: string;
+  greetings?: {
+    morning?: string;
+    afternoon?: string;
+    evening?: string;
+  };
 }
 
 interface Session {
@@ -334,14 +339,39 @@ function getGreeting(): string {
 }
 
 // =====================================================
+// HELPER: Gerar saudação dinâmica completa (com mensagens personalizadas)
+// =====================================================
+function getDynamicGreeting(context: Record<string, any>): string {
+  const hour = new Date().getHours();
+  const companyName = context.company_name || 'nossa empresa';
+  
+  if (hour >= 5 && hour < 12) {
+    return context.morning_greeting || `Bom dia! ☀️ Seja bem-vindo(a) à ${companyName}!`;
+  }
+  if (hour >= 12 && hour < 18) {
+    return context.afternoon_greeting || `Boa tarde! 🌤️ Seja bem-vindo(a) à ${companyName}!`;
+  }
+  return context.evening_greeting || `Boa noite! 🌙 Seja bem-vindo(a) à ${companyName}!`;
+}
+
+// =====================================================
 // HELPER: Substituir variáveis
 // =====================================================
 function replaceVariables(text: string, context: Record<string, any>): string {
+  if (!text) return '';
+  
+  const greeting = getGreeting();
+  const dynamicGreeting = getDynamicGreeting(context);
+  const companyName = context.company_name || 'Nossa Empresa';
+  const clientName = context.client_name || 'Cliente';
+  const product = context.product || 'nosso produto';
+  
   return text
-    .replace(/\{\{saudacao\}\}/gi, getGreeting())
-    .replace(/\{\{empresa\}\}/gi, context.company_name || 'Nossa Empresa')
-    .replace(/\{\{nome\}\}/gi, context.client_name || 'Cliente')
-    .replace(/\{\{produto\}\}/gi, context.product || 'nosso produto');
+    .replace(/\{\{saudacao_dinamica\}\}/gi, dynamicGreeting)
+    .replace(/\{\{saudacao\}\}/gi, greeting)
+    .replace(/\{\{empresa\}\}/gi, companyName)
+    .replace(/\{\{nome\}\}/gi, clientName)
+    .replace(/\{\{produto\}\}/gi, product);
 }
 
 // =====================================================
@@ -640,9 +670,15 @@ async function processFlowStep(
     return { success: false, response: 'Erro interno. Tente novamente.' };
   }
   
+  // Extrair saudações personalizadas do flow_config
+  const greetingConfig = flowConfig.greetings || {};
+  
   const context = {
     ...session.context,
     company_name: chatbot.company_name || 'Nossa Empresa',
+    morning_greeting: greetingConfig.morning || null,
+    afternoon_greeting: greetingConfig.afternoon || null,
+    evening_greeting: greetingConfig.evening || null,
   };
   
   console.log(`[FLOW] Processing step: ${currentStepId}, type: ${currentStep.type}`);
