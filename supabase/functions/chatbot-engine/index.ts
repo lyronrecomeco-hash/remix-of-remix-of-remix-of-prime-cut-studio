@@ -164,56 +164,70 @@ async function sendMessage(
   message: string
 ): Promise<boolean> {
   try {
-    // Buscar configuração do backend diretamente
+    // Fallback nativo (mesmo padrão do genesis-backend-proxy)
+    const NATIVE_VPS_URL = 'http://72.62.108.24:3000';
+    const NATIVE_VPS_TOKEN = 'genesis-master-token-2024-secure';
+
+    // Config GLOBAL (fonte primária)
     const { data: globalConfig } = await supabase
-      .from('admin_settings')
-      .select('settings')
-      .eq('setting_type', 'genesis_backend')
-      .single();
-    
+      .from('whatsapp_backend_config')
+      .select('backend_url, master_token')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    // Config da instância (fallback)
     const { data: instance } = await supabase
       .from('genesis_instances')
       .select('backend_url, backend_token')
       .eq('id', instanceId)
-      .single();
-    
-    // Determinar URL e token
-    let backendUrl = globalConfig?.settings?.backend_url || instance?.backend_url;
-    const backendToken = instance?.backend_token || globalConfig?.settings?.master_token;
-    
-    if (!backendUrl) {
-      console.error('[SEND] No backend URL configured');
+      .maybeSingle();
+
+    const backendUrl = (globalConfig?.backend_url || instance?.backend_url || NATIVE_VPS_URL) as string;
+    const backendToken = (globalConfig?.master_token || instance?.backend_token || NATIVE_VPS_TOKEN) as string;
+
+    if (!backendUrl || !backendToken) {
+      console.error('[SEND] Missing backend config', {
+        hasUrl: Boolean(backendUrl),
+        hasToken: Boolean(backendToken),
+      });
       return false;
     }
-    
-    // Garantir formato correto da URL
-    backendUrl = backendUrl.replace(/\/$/, '');
-    const targetUrl = `${backendUrl}/api/instance/${instanceId}/send`;
-    
-    console.log(`[SEND] Sending to ${targetUrl}`);
-    
+
+    const cleanUrl = backendUrl.replace(/\/$/, '');
+    const targetUrl = `${cleanUrl}/api/instance/${instanceId}/send`;
+
+    // Payload compat (mesmo formato do sendWithRetry)
+    const payload = {
+      phone: to,
+      message,
+      to,
+      text: message,
+      number: to,
+      instanceId,
+    };
+
+    console.log('[SEND] Sending', { instanceId, targetUrl });
+
     const response = await fetch(targetUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${backendToken}`,
+        Authorization: `Bearer ${backendToken}`,
       },
-      body: JSON.stringify({ to, message }),
+      body: JSON.stringify(payload),
     });
-    
+
     const responseText = await response.text();
-    console.log(`[SEND] Response: ${response.status} - ${responseText}`);
-    
-    if (!response.ok) {
-      console.error(`[SEND] HTTP Error: ${response.status}`);
-      return false;
-    }
-    
+    console.log('[SEND] Response', { status: response.status, preview: responseText.slice(0, 500) });
+
+    if (!response.ok) return false;
+
     try {
-      const result = JSON.parse(responseText);
-      return result.success !== false;
+      const parsed = JSON.parse(responseText) as any;
+      return parsed?.success !== false && !parsed?.error;
     } catch {
-      return response.ok;
+      return true;
     }
   } catch (e) {
     console.error('[SEND] Error:', e);
