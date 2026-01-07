@@ -132,26 +132,50 @@ serve(async (req) => {
     // FASE 2: Usar orchestrated_status como referência (fonte de verdade)
     // effective_status e status são apenas espelhos sincronizados pela migração
     let transitionChanged = false;
+    const currentOrchStatus = instance.orchestrated_status as string;
     
-    if (instance.orchestrated_status !== effectiveStatus) {
-      const { data: transitionResult, error: rpcError } = await supabase.rpc(
-        'genesis_orchestrate_status_change',
-        {
-          p_instance_id: instanceId,
-          p_new_status: effectiveStatus,
-          p_source: 'heartbeat',
-          p_payload: { phoneNumber, metrics, rawStatus },
+    if (currentOrchStatus !== effectiveStatus) {
+      // Helper para tentar transição
+      const tryTransition = async (targetStatus: string): Promise<{ success: boolean; changed?: boolean; from?: string; to?: string }> => {
+        const { data, error } = await supabase.rpc(
+          'genesis_orchestrate_status_change',
+          {
+            p_instance_id: instanceId,
+            p_new_status: targetStatus,
+            p_source: 'heartbeat',
+            p_payload: { phoneNumber, metrics, rawStatus },
+          }
+        );
+        if (error) {
+          return { success: false };
         }
-      );
+        return data as { success: boolean; changed?: boolean; from?: string; to?: string };
+      };
 
-      if (rpcError) {
-        console.warn("Heartbeat orchestrated transition failed:", rpcError.message);
-      } else {
-        const result = transitionResult as Record<string, unknown>;
-        if (result.success && result.changed) {
-          transitionChanged = true;
-          console.log(`Heartbeat transitioned ${instanceId}: ${result.from} -> ${result.to}`);
+      let result = await tryTransition(effectiveStatus);
+
+      // AUTO-FIX: Se falhar por transição inválida de idle/disconnected -> connected,
+      // passar por "connecting" primeiro (state machine exige esse hop)
+      if (!result.success) {
+        const needsConnectingHop =
+          (currentOrchStatus === 'idle' || currentOrchStatus === 'disconnected') &&
+          (effectiveStatus === 'connected' || effectiveStatus === 'qr_pending' || effectiveStatus === 'waiting_qr');
+
+        if (needsConnectingHop) {
+          console.log(`Heartbeat auto-hop: ${currentOrchStatus} -> connecting -> ${effectiveStatus}`);
+          const hopResult = await tryTransition('connecting');
+          if (hopResult.success) {
+            // Agora tentar o status final
+            result = await tryTransition(effectiveStatus);
+          }
         }
+      }
+
+      if (result.success && result.changed) {
+        transitionChanged = true;
+        console.log(`Heartbeat transitioned ${instanceId}: ${result.from} -> ${result.to}`);
+      } else if (!result.success) {
+        console.warn(`Heartbeat transition failed for ${instanceId}: ${currentOrchStatus} -> ${effectiveStatus}`);
       }
     }
 
