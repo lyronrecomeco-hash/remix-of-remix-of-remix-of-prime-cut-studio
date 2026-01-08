@@ -915,129 +915,214 @@ const InstanceStatusDemo = () => {
   );
 };
 
-// ============= FLOW DEMO VISUALIZATION =============
+// ============= CAMPAIGNS DEMO =============
 
-const FlowDemoVisualization = () => {
-  const [activeStep, setActiveStep] = useState(0);
+const CampaignsDemo = () => {
+  const [activeTab, setActiveTab] = useState<'overview' | 'metrics' | 'schedule'>('overview');
   
-  const flowSteps = [
-    { id: 'trigger', label: 'Mensagem Recebida', icon: MessageSquare, color: 'bg-green-500' },
-    { id: 'condition', label: 'Análise de Intenção', icon: Brain, color: 'bg-purple-500' },
-    { id: 'luna', label: 'Luna IA Processa', icon: Bot, color: 'bg-blue-500' },
-    { id: 'action', label: 'Ação Executada', icon: Zap, color: 'bg-amber-500' },
-    { id: 'response', label: 'Resposta Enviada', icon: Send, color: 'bg-primary' },
+  const campaigns = [
+    { 
+      name: 'Black Friday 2024', 
+      status: 'active', 
+      sent: 15420, 
+      delivered: 15180, 
+      read: 12340, 
+      clicks: 3420,
+      progress: 85 
+    },
+    { 
+      name: 'Recuperação Carrinho', 
+      status: 'active', 
+      sent: 8920, 
+      delivered: 8750, 
+      read: 7200, 
+      clicks: 2100,
+      progress: 100 
+    },
+    { 
+      name: 'Boas-vindas Novos Clientes', 
+      status: 'scheduled', 
+      sent: 0, 
+      delivered: 0, 
+      read: 0, 
+      clicks: 0,
+      progress: 0 
+    },
   ];
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveStep((prev) => (prev + 1) % flowSteps.length);
-    }, 2000);
-    return () => clearInterval(interval);
-  }, []);
-
   return (
-    <div className="relative p-6 bg-muted/30 rounded-2xl border">
-      <div className="flex items-center justify-between gap-4 overflow-x-auto pb-4">
-        {flowSteps.map((step, index) => (
-          <div key={step.id} className="flex items-center">
-            <motion.div
-              animate={{
-                scale: activeStep === index ? 1.1 : 1,
-                opacity: activeStep >= index ? 1 : 0.4,
-              }}
-              transition={{ duration: 0.3 }}
-              className="flex flex-col items-center"
-            >
-              <div className={cn(
-                "w-14 h-14 rounded-xl flex items-center justify-center transition-colors",
-                activeStep === index ? step.color : "bg-muted"
-              )}>
-                <step.icon className={cn(
-                  "w-6 h-6",
-                  activeStep === index ? "text-white" : "text-muted-foreground"
-                )} />
-              </div>
-              <span className="text-xs mt-2 text-center whitespace-nowrap">{step.label}</span>
-            </motion.div>
-            
-            {index < flowSteps.length - 1 && (
-              <motion.div 
-                className="w-8 h-0.5 mx-2"
-                animate={{
-                  backgroundColor: activeStep > index ? 'hsl(var(--primary))' : 'hsl(var(--muted))',
-                }}
-                transition={{ duration: 0.3 }}
-              />
-            )}
-          </div>
-        ))}
-      </div>
-      
-      <motion.div 
-        key={activeStep}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mt-4 p-4 bg-card rounded-lg border"
-      >
-        <p className="text-sm text-muted-foreground">
-          {activeStep === 0 && "📱 Mensagem do cliente recebida via webhook da API WhatsApp Business"}
-          {activeStep === 1 && "🧠 NLP classifica intenção: suporte, venda, dúvida, reclamação..."}
-          {activeStep === 2 && "🤖 Luna IA processa contexto, histórico e gera resposta personalizada"}
-          {activeStep === 3 && "⚡ Sistema executa ações: atualiza CRM, envia email, dispara webhook..."}
-          {activeStep === 4 && "✅ Resposta enviada ao cliente em <3 segundos via API"}
-        </p>
-      </motion.div>
-    </div>
-  );
-};
-
-// ============= INSTANCE STATUS DEMO =============
-
-const InstanceStatusDemo = () => {
-  const [instances] = useState([
-    { name: 'Vendas Principal', phone: '+55 11 99999-1234', status: 'connected', messages: 1247 },
-    { name: 'Suporte 24h', phone: '+55 11 88888-5678', status: 'connected', messages: 892 },
-    { name: 'Financeiro', phone: '+55 21 77777-9012', status: 'connected', messages: 456 },
-  ]);
-
-  return (
-    <div className="space-y-2">
-      {instances.map((instance, index) => (
-        <motion.div
-          key={instance.name}
-          initial={{ opacity: 0, x: -20 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: index * 0.1 }}
-          className="flex items-center gap-3 p-3 bg-card rounded-xl border hover:shadow-md transition-shadow"
-        >
-          <div className="relative">
-            <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center">
-              <Smartphone className="w-4 h-4 text-green-500" />
+    <Card className="overflow-hidden">
+      <CardHeader className="pb-3 bg-gradient-to-r from-orange-500/10 to-red-500/10">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
+              <Rocket className="w-5 h-5 text-white" />
             </div>
-            <motion.span 
-              className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-background"
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            />
+            <div>
+              <CardTitle className="text-base">Sistema de Campanhas</CardTitle>
+              <p className="text-xs text-muted-foreground">Disparo em massa segmentado</p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <h4 className="font-semibold text-sm truncate">{instance.name}</h4>
-            <p className="text-xs text-muted-foreground">{instance.phone}</p>
-          </div>
-          <div className="text-right">
-            <motion.div 
-              className="text-sm font-bold text-primary"
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{ duration: 1, repeat: Infinity }}
+          <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/20">
+            3 Campanhas Ativas
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="p-4 space-y-4">
+        {/* Tabs */}
+        <div className="flex gap-1 p-1 bg-muted rounded-lg">
+          {[
+            { id: 'overview', label: 'Campanhas', icon: Rocket },
+            { id: 'metrics', label: 'Métricas', icon: BarChart3 },
+            { id: 'schedule', label: 'Agendamento', icon: Clock },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as typeof activeTab)}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium transition-all",
+                activeTab === tab.id 
+                  ? "bg-background shadow text-foreground" 
+                  : "text-muted-foreground hover:text-foreground"
+              )}
             >
-              {instance.messages.toLocaleString()}
+              <tab.icon className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{tab.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Content */}
+        <AnimatePresence mode="wait">
+          {activeTab === 'overview' && (
+            <motion.div
+              key="overview"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-2"
+            >
+              {campaigns.map((campaign, idx) => (
+                <motion.div
+                  key={campaign.name}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.1 }}
+                  className="p-3 bg-muted/50 rounded-lg border hover:border-primary/30 transition-all"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className={cn(
+                        "w-2 h-2 rounded-full",
+                        campaign.status === 'active' ? "bg-green-500 animate-pulse" : "bg-amber-500"
+                      )} />
+                      <span className="font-medium text-sm">{campaign.name}</span>
+                    </div>
+                    <Badge variant="secondary" className="text-[10px]">
+                      {campaign.status === 'active' ? 'Ativa' : 'Agendada'}
+                    </Badge>
+                  </div>
+                  <div className="relative h-2 bg-muted rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${campaign.progress}%` }}
+                      transition={{ duration: 1, delay: idx * 0.2 }}
+                      className="absolute inset-y-0 left-0 bg-gradient-to-r from-orange-500 to-red-500 rounded-full"
+                    />
+                  </div>
+                  <div className="flex justify-between mt-2 text-[10px] text-muted-foreground">
+                    <span>{campaign.sent.toLocaleString()} enviadas</span>
+                    <span>{campaign.progress}% concluído</span>
+                  </div>
+                </motion.div>
+              ))}
             </motion.div>
-            <p className="text-[10px] text-muted-foreground">msgs/dia</p>
+          )}
+
+          {activeTab === 'metrics' && (
+            <motion.div
+              key="metrics"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="grid grid-cols-2 gap-3"
+            >
+              {[
+                { label: 'Taxa de Entrega', value: '98.4%', icon: CheckCircle, color: 'text-green-500' },
+                { label: 'Taxa de Leitura', value: '81.3%', icon: Eye, color: 'text-blue-500' },
+                { label: 'Taxa de Cliques', value: '22.5%', icon: MousePointerClick, color: 'text-purple-500' },
+                { label: 'Conversão', value: '8.7%', icon: Target, color: 'text-amber-500' },
+              ].map((metric, idx) => (
+                <motion.div
+                  key={metric.label}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: idx * 0.1 }}
+                  className="p-3 bg-muted/50 rounded-lg border text-center"
+                >
+                  <metric.icon className={cn("w-5 h-5 mx-auto mb-1", metric.color)} />
+                  <div className="text-lg font-bold">{metric.value}</div>
+                  <div className="text-[10px] text-muted-foreground">{metric.label}</div>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+
+          {activeTab === 'schedule' && (
+            <motion.div
+              key="schedule"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-3"
+            >
+              <div className="p-3 bg-muted/50 rounded-lg border">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="w-4 h-4 text-primary" />
+                  <span className="font-medium text-sm">Agendamento Inteligente</span>
+                </div>
+                <p className="text-xs text-muted-foreground mb-3">
+                  IA analisa horários de maior engajamento de cada contato
+                </p>
+                <div className="grid grid-cols-7 gap-1">
+                  {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, idx) => (
+                    <div 
+                      key={idx}
+                      className={cn(
+                        "aspect-square rounded-md flex items-center justify-center text-xs font-medium",
+                        idx === 0 || idx === 6 
+                          ? "bg-muted text-muted-foreground" 
+                          : "bg-primary/20 text-primary"
+                      )}
+                    >
+                      {day}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 p-2 bg-green-500/10 rounded-lg border border-green-500/20">
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                <span className="text-xs text-green-700 dark:text-green-400">
+                  Próxima campanha agendada para hoje às 14:30
+                </span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Features list */}
+        <div className="pt-3 border-t">
+          <div className="flex flex-wrap gap-1">
+            {['Segmentação Avançada', 'Templates Dinâmicos', 'A/B Testing', 'Rate Limiting'].map((feature) => (
+              <Badge key={feature} variant="outline" className="text-[10px]">
+                <CheckCircle2 className="w-2.5 h-2.5 mr-1" />
+                {feature}
+              </Badge>
+            ))}
           </div>
-        </motion.div>
-      ))}
-    </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
@@ -1180,8 +1265,8 @@ export default function Sobre() {
               {[
                 { name: 'Teste WhatsApp', icon: MessageCircle, color: 'hover:bg-green-500' },
                 { name: 'Flow Builder', icon: GitBranch, color: 'hover:bg-blue-500' },
+                { name: 'Campanhas', icon: Rocket, color: 'hover:bg-orange-500' },
                 { name: 'Luna IA', icon: Bot, color: 'hover:bg-purple-500' },
-                { name: 'Arquitetura', icon: Server, color: 'hover:bg-amber-500' },
               ].map((item) => (
                 <motion.a 
                   key={item.name}
@@ -1320,6 +1405,122 @@ export default function Sobre() {
           viewport={{ once: true }}
         >
           <FlowDemoVisualization />
+        </motion.div>
+      </Section>
+
+      <Separator />
+
+      {/* Campaigns Section */}
+      <Section
+        id="campanhas"
+        badge="Disparo em Massa"
+        title="Sistema de Campanhas Inteligentes"
+        subtitle="Envie milhares de mensagens segmentadas com análise de resultados em tempo real."
+        className="bg-gradient-to-b from-background via-orange-500/5 to-background"
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+          >
+            <CampaignsDemo />
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="space-y-4"
+          >
+            <Card className="p-5">
+              <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                <Rocket className="w-5 h-5 text-orange-500" />
+                Funcionalidades Avançadas
+              </h3>
+              <div className="space-y-3">
+                {[
+                  { 
+                    icon: Users, 
+                    title: 'Segmentação Inteligente', 
+                    desc: 'Crie públicos dinâmicos baseados em comportamento, tags, histórico de compras e muito mais.' 
+                  },
+                  { 
+                    icon: Clock, 
+                    title: 'Agendamento Otimizado', 
+                    desc: 'IA identifica o melhor horário de envio para cada contato maximizando engajamento.' 
+                  },
+                  { 
+                    icon: BarChart3, 
+                    title: 'Analytics em Tempo Real', 
+                    desc: 'Dashboard com métricas de entrega, leitura, cliques e conversões em tempo real.' 
+                  },
+                  { 
+                    icon: Shield, 
+                    title: 'Rate Limiting Automático', 
+                    desc: 'Controle de velocidade inteligente para evitar bloqueios e garantir entregas.' 
+                  },
+                ].map((item) => (
+                  <div key={item.title} className="flex gap-3 p-3 bg-muted/50 rounded-lg">
+                    <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center shrink-0">
+                      <item.icon className="w-4 h-4 text-orange-500" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-sm">{item.title}</h4>
+                      <p className="text-xs text-muted-foreground">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+            
+            <Card className="p-5 bg-gradient-to-r from-orange-500/10 to-red-500/10 border-orange-500/20">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h4 className="font-bold">ROI Comprovado</h4>
+                  <p className="text-xs text-muted-foreground">Resultados de clientes reais</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div>
+                  <div className="text-2xl font-bold text-orange-600">340%</div>
+                  <div className="text-[10px] text-muted-foreground">Aumento em Vendas</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-orange-600">-67%</div>
+                  <div className="text-[10px] text-muted-foreground">Custo por Lead</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-orange-600">4.2x</div>
+                  <div className="text-[10px] text-muted-foreground">Taxa de Conversão</div>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        </div>
+        
+        {/* Instance Status */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mt-8"
+        >
+          <Card className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="font-bold flex items-center gap-2">
+                <Activity className="w-4 h-4 text-green-500 animate-pulse" />
+                Instâncias Ativas
+              </h4>
+              <Badge variant="outline" className="text-green-600 border-green-500/30">
+                3 Conectadas
+              </Badge>
+            </div>
+            <InstanceStatusDemo />
+          </Card>
         </motion.div>
       </Section>
 
