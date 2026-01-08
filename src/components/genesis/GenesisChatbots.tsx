@@ -31,6 +31,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import { useGenesisAuth } from '@/contexts/GenesisAuthContext';
 import { ChatbotTemplates } from './ChatbotTemplates';
 import { ChatbotSessionViewer } from './ChatbotSessionViewer';
@@ -289,27 +290,44 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
       )}
 
       {activeTab === 'chatbots' && chatbots.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <AnimatePresence>
             {chatbots.map((chatbot, index) => {
               const triggerInfo = TRIGGER_TYPES.find(t => t.value === chatbot.trigger_type);
               const TriggerIcon = triggerInfo?.icon || Zap;
               return (
                 <motion.div key={chatbot.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ delay: index * 0.05 }}>
-                  <Card className={`transition-all hover:shadow-lg ${chatbot.is_active ? 'border-primary/30' : 'opacity-70'}`}>
-                    <CardContent className="p-5">
+                  <Card className={cn(
+                    "relative overflow-hidden border transition-all duration-300 hover:shadow-xl group h-full",
+                    chatbot.is_active 
+                      ? 'border-primary/30 hover:border-primary/50' 
+                      : 'opacity-70 hover:opacity-90'
+                  )}>
+                    {/* Status glow effect */}
+                    {chatbot.is_active && (
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    )}
+                    
+                    <CardContent className="p-5 relative">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${chatbot.is_active ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
-                            <TriggerIcon className="w-5 h-5" />
-                          </div>
+                          <motion.div 
+                            className={cn(
+                              "w-12 h-12 rounded-xl flex items-center justify-center transition-colors",
+                              chatbot.is_active ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                            )}
+                            whileHover={{ scale: 1.05, rotate: 5 }}
+                          >
+                            <TriggerIcon className="w-6 h-6" />
+                          </motion.div>
                           <div>
-                            <h4 className="font-semibold">{chatbot.name}</h4>
+                            <h4 className="font-semibold text-base">{chatbot.name}</h4>
                             <Badge variant="outline" className="text-xs mt-1">{triggerInfo?.label}</Badge>
                           </div>
                         </div>
                         <Switch checked={chatbot.is_active} onCheckedChange={() => toggleChatbot(chatbot)} />
                       </div>
+                      
                       {chatbot.trigger_keywords && chatbot.trigger_keywords.length > 0 && (
                         <div className="mb-3">
                           <p className="text-xs text-muted-foreground mb-1.5">Palavras-chave:</p>
@@ -319,10 +337,17 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
                           </div>
                         </div>
                       )}
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{chatbot.response_content || 'Sem mensagem configurada'}</p>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="flex-1" onClick={() => openEditDialog(chatbot)}><Settings2 className="w-4 h-4 mr-1" />Editar</Button>
-                        <Button variant="destructive" size="sm" onClick={() => deleteChatbot(chatbot.id)}><Trash2 className="w-4 h-4" /></Button>
+                      
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-4 min-h-[2.5rem]">{chatbot.response_content || 'Sem mensagem configurada'}</p>
+                      
+                      <div className="flex gap-2 pt-2 border-t border-border/50">
+                        <Button variant="outline" size="sm" className="flex-1 gap-1.5" onClick={() => openEditDialog(chatbot)}>
+                          <Settings2 className="w-4 h-4" />
+                          Editar
+                        </Button>
+                        <Button variant="destructive" size="sm" className="px-3" onClick={() => deleteChatbot(chatbot.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
