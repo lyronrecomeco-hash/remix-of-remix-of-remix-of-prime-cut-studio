@@ -359,6 +359,92 @@
     --sidebar-border: 217 40% 18%;
     --sidebar-ring: 217 91% 60%;
   }
+
+  /* Genesis Light Theme - Clean modern light mode */
+  .genesis-light {
+    --background: 220 20% 97%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 217 91% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 92%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 220 14% 94%;
+    --muted-foreground: 220 10% 40%;
+    --accent: 217 91% 55%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 88%;
+    --input: 220 14% 92%;
+    --ring: 217 91% 55%;
+    --gold: 217 91% 55%;
+    --gold-light: 217 95% 65%;
+    --gold-dark: 217 85% 42%;
+    --gold-foreground: 0 0% 100%;
+    --gradient-primary: linear-gradient(135deg, hsl(217 95% 65%) 0%, hsl(217 91% 55%) 50%, hsl(217 85% 42%) 100%);
+    --gradient-gold-shine: linear-gradient(135deg, hsl(217 95% 65%) 0%, hsl(217 91% 55%) 30%, hsl(217 88% 50%) 70%, hsl(217 85% 42%) 100%);
+    --gradient-dark: linear-gradient(180deg, hsl(220 20% 97%) 0%, hsl(220 14% 92%) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(217 91% 55% / 0.1) 0%, transparent 70%);
+    --shadow-soft: 0 4px 20px -4px hsl(222 47% 11% / 0.08);
+    --shadow-glow: 0 0 40px hsl(217 91% 55% / 0.15);
+    --shadow-gold: 0 4px 30px hsl(217 91% 55% / 0.12);
+    --shadow-card: 0 8px 32px -8px hsl(222 47% 11% / 0.1);
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 217 91% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 94%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 220 13% 88%;
+    --sidebar-ring: 217 91% 55%;
+  }
+
+  /* Genesis Dark Theme - Default dark mode */
+  .genesis-dark {
+    --background: 222 47% 8%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 8%;
+    --secondary: 222 30% 16%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 222 25% 18%;
+    --muted-foreground: 210 20% 55%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 222 47% 8%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 217 40% 20%;
+    --input: 222 30% 18%;
+    --ring: 217 91% 60%;
+    --gold: 217 91% 60%;
+    --gold-light: 217 95% 70%;
+    --gold-dark: 217 85% 45%;
+    --gold-foreground: 222 47% 8%;
+    --gradient-primary: linear-gradient(135deg, hsl(217 95% 70%) 0%, hsl(217 91% 60%) 50%, hsl(217 85% 45%) 100%);
+    --gradient-gold-shine: linear-gradient(135deg, hsl(217 95% 70%) 0%, hsl(217 91% 60%) 30%, hsl(217 88% 55%) 70%, hsl(217 85% 45%) 100%);
+    --gradient-dark: linear-gradient(180deg, hsl(222 47% 11%) 0%, hsl(222 47% 8%) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(217 91% 60% / 0.15) 0%, transparent 70%);
+    --shadow-soft: 0 4px 20px -4px hsl(0 0% 0% / 0.5);
+    --shadow-glow: 0 0 40px hsl(217 91% 60% / 0.3);
+    --shadow-gold: 0 4px 30px hsl(217 91% 60% / 0.25);
+    --shadow-card: 0 8px 32px -8px hsl(0 0% 0% / 0.6);
+    --sidebar-background: 222 47% 10%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 222 47% 8%;
+    --sidebar-accent: 222 30% 16%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 40% 18%;
+    --sidebar-ring: 217 91% 60%;
+  }
 }
 
 @layer base {
