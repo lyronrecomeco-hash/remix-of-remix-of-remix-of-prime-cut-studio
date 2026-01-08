@@ -206,12 +206,43 @@ export function useCampaigns() {
     }
   };
 
-  // Start campaign
+  // Start campaign - calls edge function worker
   const startCampaign = async (id: string) => {
-    return updateCampaign(id, { 
-      status: 'running', 
-      started_at: new Date().toISOString() 
-    });
+    try {
+      // First update status to running
+      const updated = await updateCampaign(id, { 
+        status: 'running', 
+        started_at: new Date().toISOString() 
+      });
+
+      if (!updated) return false;
+
+      // Call the campaign worker edge function
+      const { data, error } = await supabase.functions.invoke('genesis-campaign-worker', {
+        body: { campaign_id: id, action: 'start' }
+      });
+
+      if (error) {
+        console.error('Error starting campaign worker:', error);
+        toast.error('Erro ao iniciar worker da campanha');
+        // Revert status if worker fails
+        await updateCampaign(id, { status: 'draft' });
+        return false;
+      }
+
+      if (!data?.success) {
+        toast.error(data?.error || 'Erro ao processar campanha');
+        await updateCampaign(id, { status: 'draft' });
+        return false;
+      }
+
+      toast.success(`Campanha iniciada! ${data.processed || 0} mensagens na fila.`);
+      return true;
+    } catch (error) {
+      console.error('Error starting campaign:', error);
+      toast.error('Erro ao iniciar campanha');
+      return false;
+    }
   };
 
   // Pause campaign
