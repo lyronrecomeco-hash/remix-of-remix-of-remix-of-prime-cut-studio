@@ -1,9 +1,9 @@
 /**
  * Genesis Sobre Page - Documentação Institucional Completa
- * Página informativa com demo ao vivo e animações avançadas
+ * Página informativa com demo ao vivo, Flow Builder e envio WhatsApp real
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence, useInView } from 'framer-motion';
 import { 
   Zap, 
@@ -52,7 +52,17 @@ import {
   MousePointerClick,
   Timer,
   Wifi,
-  WifiOff
+  WifiOff,
+  Phone,
+  MessageCircle,
+  Check,
+  X,
+  Plus,
+  Trash2,
+  GripVertical,
+  Loader2,
+  Rocket,
+  PartyPopper
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -61,16 +71,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 // ============= ANIMATED COMPONENTS =============
 
 // Floating Particles Background
 const FloatingParticles = () => (
   <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    {[...Array(20)].map((_, i) => (
+    {[...Array(30)].map((_, i) => (
       <motion.div
         key={i}
-        className="absolute w-2 h-2 rounded-full bg-primary/20"
+        className="absolute rounded-full"
+        style={{
+          width: Math.random() * 6 + 2,
+          height: Math.random() * 6 + 2,
+          background: `radial-gradient(circle, hsl(var(--primary) / ${Math.random() * 0.3 + 0.1}), transparent)`,
+        }}
         initial={{ 
           x: Math.random() * 100 + '%', 
           y: Math.random() * 100 + '%',
@@ -79,10 +95,12 @@ const FloatingParticles = () => (
         }}
         animate={{ 
           y: [null, '-100vh'],
-          opacity: [null, 0]
+          x: [null, `${Math.random() * 20 - 10}%`],
+          opacity: [null, 0],
+          rotate: [0, 360]
         }}
         transition={{
-          duration: Math.random() * 20 + 15,
+          duration: Math.random() * 25 + 15,
           repeat: Infinity,
           ease: 'linear',
           delay: Math.random() * 10
@@ -96,30 +114,30 @@ const FloatingParticles = () => (
 const GradientOrbs = () => (
   <>
     <motion.div 
-      className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl"
-      animate={{ 
-        scale: [1, 1.2, 1],
-        x: [0, 30, 0],
-        y: [0, -20, 0],
-      }}
-      transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-    />
-    <motion.div 
-      className="absolute bottom-20 right-10 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"
-      animate={{ 
-        scale: [1.2, 1, 1.2],
-        x: [0, -40, 0],
-        y: [0, 30, 0],
-      }}
-      transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-    />
-    <motion.div 
-      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-500/5 rounded-full blur-3xl"
+      className="absolute top-20 left-10 w-96 h-96 bg-gradient-radial from-primary/20 to-transparent rounded-full blur-3xl"
       animate={{ 
         scale: [1, 1.3, 1],
+        x: [0, 50, 0],
+        y: [0, -30, 0],
+      }}
+      transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+    />
+    <motion.div 
+      className="absolute bottom-20 right-10 w-[500px] h-[500px] bg-gradient-radial from-blue-500/15 to-transparent rounded-full blur-3xl"
+      animate={{ 
+        scale: [1.2, 1, 1.2],
+        x: [0, -60, 0],
+        y: [0, 40, 0],
+      }}
+      transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
+    />
+    <motion.div 
+      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-gradient-radial from-green-500/10 to-transparent rounded-full blur-3xl"
+      animate={{ 
+        scale: [1, 1.4, 1],
         rotate: [0, 180, 360],
       }}
-      transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+      transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
     />
   </>
 );
@@ -275,7 +293,7 @@ const TiltCard = ({ children, className }: { children: React.ReactNode; classNam
   );
 };
 
-// ============= LIVE DEMO COMPONENT =============
+// ============= LIVE DEMO CHAT =============
 
 interface Message {
   id: string;
@@ -427,7 +445,7 @@ REGRAS:
       </div>
 
       {/* Messages */}
-      <div className="h-72 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-muted/30 to-background">
+      <div className="h-64 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-muted/30 to-background">
         <AnimatePresence>
           {messages.map((message) => (
             <motion.div
@@ -438,17 +456,17 @@ REGRAS:
               className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div className={`flex items-end gap-2 max-w-[85%] ${message.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
                   message.role === 'user' 
                     ? 'bg-primary/20 border border-primary/30' 
                     : 'bg-gradient-to-br from-primary to-blue-600'
                 }`}>
                   {message.role === 'user' 
-                    ? <User className="w-4 h-4 text-primary" />
-                    : <Bot className="w-4 h-4 text-white" />
+                    ? <User className="w-3.5 h-3.5 text-primary" />
+                    : <Bot className="w-3.5 h-3.5 text-white" />
                   }
                 </div>
-                <div className={`rounded-2xl px-4 py-3 ${
+                <div className={`rounded-2xl px-3 py-2 ${
                   message.role === 'user'
                     ? 'bg-primary text-primary-foreground rounded-br-sm'
                     : 'bg-card border border-border/50 rounded-bl-sm'
@@ -466,11 +484,11 @@ REGRAS:
             animate={{ opacity: 1, y: 0 }}
             className="flex items-center gap-2"
           >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center">
-              <Bot className="w-4 h-4 text-white" />
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center">
+              <Bot className="w-3.5 h-3.5 text-white" />
             </div>
-            <div className="bg-card border border-border/50 rounded-2xl rounded-bl-sm px-4 py-3">
-              <div className="flex gap-1.5">
+            <div className="bg-card border border-border/50 rounded-2xl rounded-bl-sm px-3 py-2">
+              <div className="flex gap-1">
                 <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                 <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                 <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
@@ -482,9 +500,8 @@ REGRAS:
       </div>
 
       {/* Suggested Questions */}
-      <div className="px-4 py-3 border-t border-border/50 bg-muted/30">
-        <p className="text-xs text-muted-foreground mb-2">Perguntas técnicas sugeridas:</p>
-        <div className="flex flex-wrap gap-2">
+      <div className="px-4 py-2 border-t border-border/50 bg-muted/30">
+        <div className="flex flex-wrap gap-1.5">
           {suggestedQuestions.map((q, i) => (
             <motion.button
               key={i}
@@ -492,7 +509,7 @@ REGRAS:
               whileTap={{ scale: 0.98 }}
               onClick={() => sendMessage(q)}
               disabled={isLoading}
-              className="text-xs px-3 py-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-all disabled:opacity-50 border border-primary/20"
+              className="text-[11px] px-2.5 py-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-all disabled:opacity-50 border border-primary/20"
             >
               {q}
             </motion.button>
@@ -501,7 +518,7 @@ REGRAS:
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-border bg-card">
+      <div className="p-3 border-t border-border bg-card">
         <form 
           onSubmit={(e) => { e.preventDefault(); sendMessage(input); }}
           className="flex gap-2"
@@ -511,13 +528,13 @@ REGRAS:
             onChange={(e) => setInput(e.target.value)}
             placeholder="Faça uma pergunta técnica..."
             disabled={isLoading}
-            className="flex-1 bg-muted/50 border-border/50 focus:border-primary"
+            className="flex-1 h-9 text-sm bg-muted/50 border-border/50 focus:border-primary"
           />
           <Button 
             type="submit" 
             disabled={isLoading || !input.trim()} 
-            size="icon" 
-            className="shrink-0"
+            size="sm" 
+            className="shrink-0 h-9 w-9 p-0"
           >
             <Send className="w-4 h-4" />
           </Button>
@@ -527,7 +544,441 @@ REGRAS:
   );
 };
 
-// ============= FLOW DEMO COMPONENT =============
+// ============= WHATSAPP TEST MESSAGE =============
+
+const WhatsAppTestMessage = () => {
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState('');
+
+  const normalizePhone = (phone: string) => {
+    const digits = phone.replace(/\D/g, '');
+    if (digits.startsWith('55') && digits.length >= 12) return digits;
+    if (digits.length === 10 || digits.length === 11) return `55${digits}`;
+    return digits;
+  };
+
+  const formatPhoneDisplay = (phone: string) => {
+    const clean = phone.replace(/\D/g, '');
+    if (clean.length <= 2) return clean;
+    if (clean.length <= 4) return `(${clean.slice(0, 2)}) ${clean.slice(2)}`;
+    if (clean.length <= 9) return `(${clean.slice(0, 2)}) ${clean.slice(2, 7)}-${clean.slice(7)}`;
+    return `(${clean.slice(0, 2)}) ${clean.slice(2, 7)}-${clean.slice(7, 11)}`;
+  };
+
+  const sendTestMessage = async () => {
+    if (!phoneNumber || phoneNumber.replace(/\D/g, '').length < 10) {
+      setError('Digite um número válido com DDD');
+      return;
+    }
+
+    setIsSending(true);
+    setError('');
+    setSent(false);
+
+    try {
+      const normalizedPhone = normalizePhone(phoneNumber);
+      
+      // Mensagem profissional da Genesis Hub
+      const genesisMessage = `🚀 *Genesis Hub - Plataforma de Automação*
+
+Olá! Esta é uma mensagem de demonstração enviada diretamente pela nossa plataforma.
+
+✅ *O que você acabou de experimentar:*
+• Envio automatizado via API WhatsApp Business
+• Latência média de processamento: <3 segundos
+• Infraestrutura serverless com 99.9% de uptime
+
+💡 *Imagine automatizar:*
+• Atendimento 24/7 com IA contextual
+• Disparos em massa segmentados
+• Chatbots inteligentes sem código
+• Integrações com seu CRM
+
+🔗 A Genesis processa milhões de mensagens por mês para empresas de todos os portes.
+
+_Esta mensagem foi enviada pela demonstração pública do Genesis Hub._`;
+
+      // Usar o proxy do genesis-backend-proxy com a instância do super admin
+      const { data, error: fnError } = await supabase.functions.invoke('genesis-backend-proxy', {
+        body: {
+          action: 'demo-send',
+          to: normalizedPhone,
+          message: genesisMessage,
+        },
+      });
+
+      if (fnError) throw fnError;
+
+      if (data?.success) {
+        setSent(true);
+        toast.success('Mensagem enviada com sucesso!', {
+          description: 'Verifique seu WhatsApp 📱',
+          icon: <PartyPopper className="w-4 h-4" />
+        });
+      } else {
+        throw new Error(data?.error || 'Falha no envio');
+      }
+    } catch (err: any) {
+      console.error('Erro ao enviar:', err);
+      setError('Não foi possível enviar. Tente novamente.');
+      toast.error('Erro no envio', {
+        description: 'O sistema pode estar processando outras requisições'
+      });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  return (
+    <Card className="overflow-hidden border-2 border-green-500/30 shadow-2xl shadow-green-500/10 bg-card/95 backdrop-blur-xl">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-green-600 via-green-500 to-emerald-500 p-4">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center backdrop-blur">
+            <MessageCircle className="w-6 h-6 text-white" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold text-white">Teste Real no WhatsApp</h3>
+              <Badge className="bg-white/20 text-white text-[10px] border-white/30">LIVE</Badge>
+            </div>
+            <p className="text-sm text-white/80">Receba uma mensagem agora</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <CardContent className="p-5 space-y-4">
+        {!sent ? (
+          <>
+            <div className="text-center space-y-2">
+              <motion.div 
+                className="w-16 h-16 mx-auto rounded-full bg-green-500/10 flex items-center justify-center"
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <Smartphone className="w-8 h-8 text-green-600" />
+              </motion.div>
+              <h4 className="font-bold text-lg">Experimente o Envio Real</h4>
+              <p className="text-sm text-muted-foreground">
+                Digite seu número e receba uma mensagem demonstrando o poder da plataforma Genesis.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-muted-foreground" />
+                  Seu WhatsApp (com DDD)
+                </label>
+                <Input
+                  value={phoneNumber}
+                  onChange={(e) => {
+                    setPhoneNumber(formatPhoneDisplay(e.target.value));
+                    setError('');
+                  }}
+                  placeholder="(27) 99999-9999"
+                  className="text-center text-lg font-mono h-12 border-green-500/30 focus:border-green-500"
+                  maxLength={16}
+                />
+                {error && (
+                  <motion.p 
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-xs text-destructive text-center"
+                  >
+                    {error}
+                  </motion.p>
+                )}
+              </div>
+
+              <Button 
+                onClick={sendTestMessage}
+                disabled={isSending || phoneNumber.replace(/\D/g, '').length < 10}
+                className="w-full h-12 text-base font-bold bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600"
+              >
+                {isSending ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  <>
+                    <Rocket className="w-5 h-5 mr-2" />
+                    Enviar Mensagem de Teste
+                  </>
+                )}
+              </Button>
+
+              <p className="text-[10px] text-center text-muted-foreground">
+                ⚡ Latência média: menos de 3 segundos
+              </p>
+            </div>
+          </>
+        ) : (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center py-6 space-y-4"
+          >
+            <motion.div 
+              className="w-20 h-20 mx-auto rounded-full bg-green-500/20 flex items-center justify-center"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', delay: 0.2 }}
+            >
+              <Check className="w-10 h-10 text-green-600" />
+            </motion.div>
+            
+            <div>
+              <h4 className="font-bold text-xl text-green-600">Mensagem Enviada! 🎉</h4>
+              <p className="text-sm text-muted-foreground mt-2">
+                Verifique seu WhatsApp. A mensagem deve chegar em segundos.
+              </p>
+            </div>
+
+            <div className="p-4 bg-green-500/10 rounded-xl border border-green-500/20">
+              <p className="text-xs text-muted-foreground mb-2">Isso demonstra:</p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {['API Robusta', 'Baixa Latência', 'Alta Disponibilidade'].map((tag) => (
+                  <Badge key={tag} variant="outline" className="bg-green-500/10 text-green-700 border-green-500/30 text-xs">
+                    <CheckCircle2 className="w-3 h-3 mr-1" />
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setSent(false);
+                setPhoneNumber('');
+              }}
+              className="border-green-500/30"
+            >
+              Testar outro número
+            </Button>
+          </motion.div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+// ============= INTERACTIVE FLOW BUILDER DEMO =============
+
+interface FlowNode {
+  id: string;
+  type: 'trigger' | 'message' | 'condition' | 'action' | 'ai';
+  label: string;
+  config?: any;
+}
+
+const InteractiveFlowBuilder = () => {
+  const [nodes, setNodes] = useState<FlowNode[]>([
+    { id: '1', type: 'trigger', label: 'Mensagem Recebida' },
+    { id: '2', type: 'ai', label: 'Luna IA Analisa' },
+    { id: '3', type: 'condition', label: 'É Suporte?' },
+    { id: '4', type: 'message', label: 'Resposta Automática' },
+  ]);
+  
+  const [activeStep, setActiveStep] = useState(0);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simulationMessages, setSimulationMessages] = useState<string[]>([]);
+
+  const nodeTypes = {
+    trigger: { icon: MessageSquare, color: 'bg-green-500', label: 'Gatilho' },
+    message: { icon: Send, color: 'bg-blue-500', label: 'Mensagem' },
+    condition: { icon: GitBranch, color: 'bg-purple-500', label: 'Condição' },
+    action: { icon: Zap, color: 'bg-amber-500', label: 'Ação' },
+    ai: { icon: Brain, color: 'bg-pink-500', label: 'IA' },
+  };
+
+  const addNode = (type: FlowNode['type']) => {
+    const newNode: FlowNode = {
+      id: Date.now().toString(),
+      type,
+      label: `${nodeTypes[type].label} ${nodes.length + 1}`,
+    };
+    setNodes([...nodes, newNode]);
+  };
+
+  const removeNode = (id: string) => {
+    if (nodes.length > 2) {
+      setNodes(nodes.filter(n => n.id !== id));
+    }
+  };
+
+  const runSimulation = async () => {
+    setIsSimulating(true);
+    setSimulationMessages([]);
+    setActiveStep(0);
+
+    for (let i = 0; i < nodes.length; i++) {
+      setActiveStep(i);
+      const node = nodes[i];
+      
+      const messages: Record<FlowNode['type'], string> = {
+        trigger: '📱 Mensagem do cliente recebida via webhook',
+        ai: '🧠 Luna IA processando NLP e classificando intenção...',
+        condition: '🔀 Avaliando condição: roteando para branch correto',
+        message: '💬 Enviando resposta personalizada ao cliente',
+        action: '⚡ Executando ação: webhook/CRM/notificação',
+      };
+
+      setSimulationMessages(prev => [...prev, messages[node.type]]);
+      await new Promise(r => setTimeout(r, 1500));
+    }
+
+    setSimulationMessages(prev => [...prev, '✅ Flow executado com sucesso!']);
+    setIsSimulating(false);
+  };
+
+  return (
+    <Card className="overflow-hidden border-2 border-blue-500/30 shadow-2xl shadow-blue-500/10 bg-card/95 backdrop-blur-xl">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center backdrop-blur">
+              <GitBranch className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-bold text-white">Flow Builder Interativo</h3>
+              <p className="text-xs text-white/70">Monte e simule seu fluxo</p>
+            </div>
+          </div>
+          <Badge className="bg-white/20 text-white border-white/30">Demo</Badge>
+        </div>
+      </div>
+
+      <CardContent className="p-4 space-y-4">
+        {/* Flow Canvas */}
+        <div className="relative p-4 bg-muted/30 rounded-xl border min-h-[200px]">
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {nodes.map((node, index) => {
+              const nodeType = nodeTypes[node.type];
+              const Icon = nodeType.icon;
+              const isActive = activeStep === index && isSimulating;
+              
+              return (
+                <div key={node.id} className="flex items-center">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ 
+                      opacity: 1, 
+                      scale: isActive ? 1.1 : 1,
+                      boxShadow: isActive ? '0 0 20px rgba(var(--primary), 0.5)' : 'none'
+                    }}
+                    className="relative group"
+                  >
+                    <div className={cn(
+                      "flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all cursor-pointer min-w-[80px]",
+                      isActive ? "border-primary bg-primary/10" : "border-border/50 bg-card hover:border-primary/50"
+                    )}>
+                      <div className={cn(
+                        "w-10 h-10 rounded-lg flex items-center justify-center transition-transform",
+                        nodeType.color,
+                        isActive && "animate-pulse"
+                      )}>
+                        <Icon className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="text-xs font-medium text-center leading-tight">{node.label}</span>
+                      
+                      {nodes.length > 2 && !isSimulating && (
+                        <button
+                          onClick={() => removeNode(node.id)}
+                          className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  </motion.div>
+                  
+                  {index < nodes.length - 1 && (
+                    <motion.div 
+                      className="w-8 h-0.5 mx-1"
+                      animate={{
+                        backgroundColor: activeStep > index ? 'hsl(var(--primary))' : 'hsl(var(--border))',
+                      }}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Add Node Buttons */}
+        <div className="flex flex-wrap justify-center gap-2">
+          {Object.entries(nodeTypes).map(([type, config]) => {
+            const Icon = config.icon;
+            return (
+              <Button
+                key={type}
+                variant="outline"
+                size="sm"
+                onClick={() => addNode(type as FlowNode['type'])}
+                disabled={isSimulating || nodes.length >= 8}
+                className="text-xs gap-1.5"
+              >
+                <Plus className="w-3 h-3" />
+                <Icon className="w-3.5 h-3.5" />
+                {config.label}
+              </Button>
+            );
+          })}
+        </div>
+
+        {/* Simulation Console */}
+        {simulationMessages.length > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="bg-gray-900 rounded-lg p-3 font-mono text-xs space-y-1 overflow-hidden"
+          >
+            {simulationMessages.map((msg, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="text-green-400"
+              >
+                <span className="text-gray-500">[{new Date().toLocaleTimeString()}]</span> {msg}
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+
+        {/* Run Button */}
+        <Button 
+          onClick={runSimulation}
+          disabled={isSimulating}
+          className="w-full h-11 font-bold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+        >
+          {isSimulating ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Simulando Flow...
+            </>
+          ) : (
+            <>
+              <Play className="w-4 h-4 mr-2" />
+              Simular Execução
+            </>
+          )}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};
+
+// ============= FLOW DEMO VISUALIZATION =============
 
 const FlowDemoVisualization = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -613,7 +1064,7 @@ const InstanceStatusDemo = () => {
   ]);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {instances.map((instance, index) => (
         <motion.div
           key={instance.name}
@@ -621,37 +1072,31 @@ const InstanceStatusDemo = () => {
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
           transition={{ delay: index * 0.1 }}
-          className="flex items-center gap-4 p-4 bg-card rounded-xl border hover:shadow-md transition-shadow"
+          className="flex items-center gap-3 p-3 bg-card rounded-xl border hover:shadow-md transition-shadow"
         >
           <div className="relative">
-            <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center">
-              <Smartphone className="w-5 h-5 text-green-500" />
+            <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center">
+              <Smartphone className="w-4 h-4 text-green-500" />
             </div>
             <motion.span 
-              className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-background"
+              className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-background"
               animate={{ scale: [1, 1.2, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
             />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h4 className="font-semibold truncate">{instance.name}</h4>
-              <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20 text-xs">
-                <Wifi className="w-3 h-3 mr-1" />
-                Online
-              </Badge>
-            </div>
-            <p className="text-sm text-muted-foreground">{instance.phone}</p>
+            <h4 className="font-semibold text-sm truncate">{instance.name}</h4>
+            <p className="text-xs text-muted-foreground">{instance.phone}</p>
           </div>
           <div className="text-right">
             <motion.div 
-              className="text-lg font-bold text-primary"
+              className="text-sm font-bold text-primary"
               animate={{ scale: [1, 1.05, 1] }}
               transition={{ duration: 1, repeat: Infinity }}
             >
               {instance.messages.toLocaleString()}
             </motion.div>
-            <p className="text-xs text-muted-foreground">msgs/dia</p>
+            <p className="text-[10px] text-muted-foreground">msgs/dia</p>
           </div>
         </motion.div>
       ))}
@@ -677,70 +1122,47 @@ export default function Sobre() {
     {
       icon: MessageSquare,
       title: 'WhatsApp Multi-Instância',
-      description: 'Conexão simultânea de múltiplos números WhatsApp Business. Cada instância opera de forma independente com sessão persistente, permitindo gestão centralizada de diversos canais de atendimento.',
+      description: 'Conexão simultânea de múltiplos números WhatsApp Business. Cada instância opera de forma independente com sessão persistente.',
       gradient: 'from-green-500/20 to-emerald-500/10',
       features: ['Sessões persistentes', 'Anti-ban nativo', 'Webhook configurável']
     },
     {
       icon: Bot,
       title: 'Chatbots com IA Contextual',
-      description: 'Motor de processamento de linguagem natural (NLP) integrado à Luna IA. Entende contexto, histórico de conversas, e responde de forma humanizada.',
+      description: 'Motor de NLP integrado à Luna IA. Entende contexto, histórico de conversas, e responde de forma humanizada.',
       gradient: 'from-purple-500/20 to-pink-500/10',
       features: ['Memória de contexto', 'Análise de sentimento', 'Fallback inteligente']
     },
     {
       icon: GitBranch,
       title: 'Flow Builder Visual',
-      description: 'Editor drag-and-drop para construção de automações complexas sem código. Suporta condicionais, loops, variáveis dinâmicas e integrações HTTP.',
+      description: 'Editor drag-and-drop para automações complexas sem código. Suporta condicionais, loops e variáveis dinâmicas.',
       gradient: 'from-blue-500/20 to-cyan-500/10',
       features: ['15+ tipos de nós', 'Variáveis dinâmicas', 'Debug em tempo real']
     },
     {
       icon: Brain,
       title: 'Luna IA - Motor Inteligente',
-      description: 'IA proprietária treinada para contextos de negócios. Gera respostas, analisa sentimentos, classifica intenções e automatiza decisões.',
+      description: 'IA proprietária para contextos de negócios. Gera respostas, analisa sentimentos e classifica intenções.',
       gradient: 'from-amber-500/20 to-orange-500/10',
       features: ['GPT integrado', 'Fine-tuning por tenant', 'Aprendizado contínuo']
     },
   ];
 
   const technicalStack = [
-    { icon: Server, label: 'Backend Serverless', desc: 'Edge Functions com cold start <50ms' },
-    { icon: Database, label: 'PostgreSQL', desc: 'Banco relacional com RLS nativo' },
-    { icon: Lock, label: 'Criptografia E2E', desc: 'AES-256 para dados sensíveis' },
-    { icon: RefreshCw, label: 'Realtime', desc: 'WebSockets para sync instantâneo' },
-    { icon: Webhook, label: 'Webhooks', desc: 'Eventos HTTP configuráveis' },
-    { icon: FileJson, label: 'API REST', desc: 'Endpoints documentados com OpenAPI' },
-  ];
-
-  const architectureFeatures = [
-    {
-      icon: Layers,
-      title: 'Multi-Tenant Isolado',
-      description: 'Cada cliente opera em ambiente completamente isolado. Políticas de Row Level Security (RLS) garantem segregação total de dados no nível do banco.',
-    },
-    {
-      icon: Gauge,
-      title: 'Auto-Scaling Horizontal',
-      description: 'Infraestrutura escala automaticamente baseada em demanda. Suporta picos de milhões de mensagens sem degradação de performance.',
-    },
-    {
-      icon: Network,
-      title: 'CDN Global',
-      description: 'Assets e APIs distribuídos em edge locations globais. Latência média inferior a 100ms para qualquer região do Brasil.',
-    },
-    {
-      icon: History,
-      title: 'Backup Contínuo',
-      description: 'Point-in-time recovery com retenção de 30 dias. Backups automáticos a cada 5 minutos com replicação geográfica.',
-    },
+    { icon: Server, label: 'Backend Serverless', desc: 'Edge Functions <50ms' },
+    { icon: Database, label: 'PostgreSQL', desc: 'Banco com RLS nativo' },
+    { icon: Lock, label: 'Criptografia E2E', desc: 'AES-256 para dados' },
+    { icon: RefreshCw, label: 'Realtime', desc: 'WebSockets sync' },
+    { icon: Webhook, label: 'Webhooks', desc: 'Eventos HTTP' },
+    { icon: FileJson, label: 'API REST', desc: 'OpenAPI docs' },
   ];
 
   const securityFeatures = [
-    { icon: Fingerprint, title: 'Autenticação MFA', desc: 'Multi-factor authentication obrigatório' },
-    { icon: Eye, title: 'Audit Logs', desc: 'Registro imutável de todas as ações' },
-    { icon: Shield, title: 'LGPD Compliant', desc: 'Conformidade total com proteção de dados' },
-    { icon: Lock, title: 'SOC 2 Type II', desc: 'Certificação enterprise em andamento' },
+    { icon: Fingerprint, title: 'Autenticação MFA', desc: 'Multi-factor obrigatório' },
+    { icon: Eye, title: 'Audit Logs', desc: 'Registro imutável' },
+    { icon: Shield, title: 'LGPD Compliant', desc: 'Proteção de dados' },
+    { icon: Lock, title: 'SOC 2 Type II', desc: 'Certificação enterprise' },
   ];
 
   return (
@@ -784,7 +1206,7 @@ export default function Sobre() {
 
       {/* Hero */}
       <motion.section 
-        className="relative py-20 md:py-32 overflow-hidden"
+        className="relative py-16 md:py-24 overflow-hidden"
         style={{ opacity: heroOpacity, scale: heroScale }}
       >
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -800,35 +1222,37 @@ export default function Sobre() {
             >
               <Badge className="mb-6 px-4 py-2 text-sm bg-primary/10 text-primary border-primary/20">
                 <Sparkles className="w-4 h-4 mr-2 animate-pulse" />
-                Documentação Técnica Completa + Demo Ao Vivo
+                Teste ao Vivo + Flow Builder + Envio WhatsApp Real
               </Badge>
             </motion.div>
             
-            <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold tracking-tight mb-6">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-6">
               <span className="block">Genesis Hub</span>
               <span className="block text-xl sm:text-2xl md:text-3xl text-muted-foreground mt-4">
                 Plataforma de <TypewriterText texts={['Automação WhatsApp', 'Chatbots Inteligentes', 'IA Contextual', 'Multi-Instâncias']} />
               </span>
             </h1>
             
-            <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-10 leading-relaxed">
-              Documentação completa da arquitetura, módulos, capacidades técnicas e 
-              <strong className="text-foreground"> demonstração ao vivo </strong>
-              da plataforma enterprise de automação.
+            <p className="text-base text-muted-foreground max-w-2xl mx-auto mb-8">
+              Documentação completa com <strong className="text-foreground">demonstrações ao vivo</strong>, 
+              Flow Builder interativo e envio real de mensagens WhatsApp.
             </p>
 
             {/* Quick nav */}
             <div className="flex flex-wrap items-center justify-center gap-2 text-sm">
               {[
-                { name: 'Demo ao Vivo', icon: Play },
-                { name: 'Módulos', icon: Blocks },
-                { name: 'Arquitetura', icon: Server },
-                { name: 'Segurança', icon: Shield },
+                { name: 'Teste WhatsApp', icon: MessageCircle, color: 'hover:bg-green-500' },
+                { name: 'Flow Builder', icon: GitBranch, color: 'hover:bg-blue-500' },
+                { name: 'Luna IA', icon: Bot, color: 'hover:bg-purple-500' },
+                { name: 'Arquitetura', icon: Server, color: 'hover:bg-amber-500' },
               ].map((item) => (
                 <motion.a 
                   key={item.name}
                   href={`#${item.name.toLowerCase().replace(' ', '-')}`}
-                  className="px-4 py-2 rounded-full bg-muted hover:bg-primary hover:text-primary-foreground transition-colors flex items-center gap-2"
+                  className={cn(
+                    "px-4 py-2 rounded-full bg-muted transition-all flex items-center gap-2",
+                    item.color, "hover:text-white"
+                  )}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -850,9 +1274,9 @@ export default function Sobre() {
       </motion.section>
 
       {/* Stats */}
-      <section className="py-12 bg-muted/30 border-y relative">
+      <section className="py-10 bg-muted/30 border-y relative">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {stats.map((stat, idx) => (
               <motion.div
                 key={stat.label}
@@ -863,88 +1287,97 @@ export default function Sobre() {
                 className="text-center"
               >
                 <motion.div 
-                  className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary mb-1"
+                  className="text-2xl sm:text-3xl font-bold text-primary mb-1"
                   whileHover={{ scale: 1.1 }}
                 >
                   <AnimatedCounter value={stat.value} suffix={stat.suffix} />
                 </motion.div>
-                <p className="text-xs sm:text-sm text-muted-foreground">{stat.label}</p>
+                <p className="text-xs text-muted-foreground">{stat.label}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* LIVE DEMO SECTION */}
+      {/* MAIN DEMO SECTION - 3 Columns */}
       <Section
-        id="demo-ao-vivo"
-        badge="🔴 AO VIVO"
-        title="Teste a Luna IA em Tempo Real"
-        subtitle="Esta é a mesma inteligência artificial que processa milhões de mensagens. Faça perguntas técnicas e veja como ela responde."
+        id="teste-whatsapp"
+        badge="🔴 DEMONSTRAÇÃO AO VIVO"
+        title="Experimente a Plataforma Genesis"
+        subtitle="Três formas de testar a plataforma agora mesmo: converse com a Luna IA, monte um flow, ou receba uma mensagem real no seu WhatsApp."
         className="bg-gradient-to-b from-background via-primary/5 to-background"
       >
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Luna IA Chat */}
           <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.5 }}
           >
             <LiveDemoChat />
           </motion.div>
 
+          {/* Flow Builder */}
           <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            id="flow-builder"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="space-y-6"
+            transition={{ duration: 0.5, delay: 0.1 }}
           >
-            <Card className="p-6 border-primary/20">
-              <CardHeader className="p-0 mb-4">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-primary" />
-                  Instâncias Ativas (Simulação)
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <InstanceStatusDemo />
-              </CardContent>
-            </Card>
+            <InteractiveFlowBuilder />
+          </motion.div>
 
-            <Card className="p-6 bg-primary/5 border-primary/20">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <Timer className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <h4 className="font-bold mb-2">Performance Real</h4>
-                  <p className="text-sm text-muted-foreground">
-                    O tempo de resposta que você está experimentando é real. 
-                    Edge Functions processam em <strong>&lt;50ms</strong> de cold start, 
-                    e a Luna IA responde em média em <strong>&lt;3 segundos</strong>.
-                  </p>
-                </div>
-              </div>
-            </Card>
+          {/* WhatsApp Test */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <WhatsAppTestMessage />
           </motion.div>
         </div>
+
+        {/* Performance Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mt-8"
+        >
+          <Card className="p-5 bg-primary/5 border-primary/20">
+            <div className="flex flex-wrap items-center justify-center gap-8 text-center">
+              {[
+                { value: '<50ms', label: 'Cold Start' },
+                { value: '<3s', label: 'Tempo de Resposta' },
+                { value: '99.9%', label: 'Uptime SLA' },
+                { value: '10k/s', label: 'Throughput' },
+              ].map((metric) => (
+                <div key={metric.label}>
+                  <div className="text-xl font-bold text-primary">{metric.value}</div>
+                  <div className="text-xs text-muted-foreground">{metric.label}</div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </motion.div>
       </Section>
 
       <Separator />
 
-      {/* Flow Demo */}
+      {/* Flow Demo Visualization */}
       <Section
-        id="flow-demo"
+        id="luna-ia"
         badge="Automação"
-        title="Visualização de Flow em Tempo Real"
-        subtitle="Veja como uma mensagem flui pelo sistema, desde o recebimento até a resposta automatizada."
+        title="Como uma Mensagem Flui pelo Sistema"
+        subtitle="Visualização em tempo real do pipeline de processamento de mensagens."
       >
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
         >
           <FlowDemoVisualization />
         </motion.div>
@@ -952,15 +1385,14 @@ export default function Sobre() {
 
       <Separator />
 
-      {/* Módulos Core */}
+      {/* Core Modules */}
       <Section
-        id="módulos"
         badge="Funcionalidades"
         title="Módulos Principais"
-        subtitle="Os quatro pilares que formam a base da plataforma Genesis."
+        subtitle="Os quatro pilares da plataforma Genesis."
         className="bg-muted/10"
       >
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-2 gap-5">
           {coreModules.map((module, idx) => (
             <motion.div
               key={module.title}
@@ -971,19 +1403,19 @@ export default function Sobre() {
             >
               <TiltCard>
                 <Card className="h-full overflow-hidden">
-                  <CardContent className="p-6">
+                  <CardContent className="p-5">
                     <div className={cn(
-                      "w-14 h-14 rounded-2xl flex items-center justify-center mb-4 bg-gradient-to-br",
+                      "w-12 h-12 rounded-xl flex items-center justify-center mb-3 bg-gradient-to-br",
                       module.gradient
                     )}>
-                      <module.icon className="w-7 h-7 text-primary" />
+                      <module.icon className="w-6 h-6 text-primary" />
                     </div>
-                    <h3 className="text-xl font-bold mb-3">{module.title}</h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed mb-4">{module.description}</p>
-                    <div className="flex flex-wrap gap-2">
+                    <h3 className="text-lg font-bold mb-2">{module.title}</h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed mb-3">{module.description}</p>
+                    <div className="flex flex-wrap gap-1.5">
                       {module.features.map((feature) => (
-                        <Badge key={feature} variant="secondary" className="text-xs">
-                          <CheckCircle2 className="w-3 h-3 mr-1" />
+                        <Badge key={feature} variant="secondary" className="text-[10px]">
+                          <CheckCircle2 className="w-2.5 h-2.5 mr-1" />
                           {feature}
                         </Badge>
                       ))}
@@ -998,107 +1430,45 @@ export default function Sobre() {
 
       <Separator />
 
-      {/* Stack Técnica */}
+      {/* Technical Stack */}
       <Section
         id="arquitetura"
         badge="Tecnologia"
-        title="Arquitetura & Stack Técnica"
-        subtitle="Infraestrutura enterprise construída para escala e confiabilidade."
+        title="Stack Técnica"
+        subtitle="Infraestrutura enterprise construída para escala."
       >
-        <div className="space-y-12">
-          {/* Tech Stack Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {technicalStack.map((tech, idx) => (
-              <motion.div
-                key={tech.label}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.05 }}
-                whileHover={{ y: -5 }}
-              >
-                <Card className="h-full text-center p-4 hover:shadow-lg transition-all hover:border-primary/30">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                    <tech.icon className="w-5 h-5 text-primary" />
-                  </div>
-                  <h4 className="font-semibold text-sm mb-1">{tech.label}</h4>
-                  <p className="text-xs text-muted-foreground">{tech.desc}</p>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Architecture Features */}
-          <div className="grid md:grid-cols-2 gap-6">
-            {architectureFeatures.map((feature, idx) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
-              >
-                <Card className="h-full hover:shadow-lg transition-shadow border-primary/10">
-                  <CardContent className="p-6">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 bg-primary/10">
-                      <feature.icon className="w-6 h-6 text-primary" />
-                    </div>
-                    <h3 className="font-bold text-lg mb-2">{feature.title}</h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed">{feature.description}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Performance Metrics */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <Card className="p-6 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 border-primary/20">
-              <CardHeader className="p-0 mb-6">
-                <CardTitle className="flex items-center gap-2">
-                  <Gauge className="w-5 h-5 text-primary" />
-                  Métricas de Performance (Dados Reais)
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  {[
-                    { label: 'Latência Média', value: '<100ms' },
-                    { label: 'Throughput', value: '10k msg/s' },
-                    { label: 'Cold Start', value: '<50ms' },
-                    { label: 'SLA', value: '99.95%' },
-                  ].map((metric) => (
-                    <motion.div 
-                      key={metric.label} 
-                      className="text-center"
-                      whileHover={{ scale: 1.05 }}
-                    >
-                      <div className="text-2xl font-bold text-primary">{metric.value}</div>
-                      <div className="text-xs text-muted-foreground">{metric.label}</div>
-                    </motion.div>
-                  ))}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          {technicalStack.map((tech, idx) => (
+            <motion.div
+              key={tech.label}
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: idx * 0.05 }}
+              whileHover={{ y: -5 }}
+            >
+              <Card className="h-full text-center p-3 hover:shadow-lg transition-all hover:border-primary/30">
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-2">
+                  <tech.icon className="w-4 h-4 text-primary" />
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+                <h4 className="font-semibold text-xs mb-0.5">{tech.label}</h4>
+                <p className="text-[10px] text-muted-foreground">{tech.desc}</p>
+              </Card>
+            </motion.div>
+          ))}
         </div>
       </Section>
 
       <Separator />
 
-      {/* Segurança */}
+      {/* Security */}
       <Section
-        id="segurança"
         badge="Compliance"
         title="Segurança & Conformidade"
-        subtitle="Padrões enterprise de proteção de dados e privacidade."
+        subtitle="Padrões enterprise de proteção de dados."
         className="bg-muted/10"
       >
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {securityFeatures.map((feature, idx) => (
             <motion.div
               key={feature.title}
@@ -1108,43 +1478,20 @@ export default function Sobre() {
               transition={{ delay: idx * 0.1 }}
               whileHover={{ y: -5 }}
             >
-              <Card className="h-full p-5 text-center hover:shadow-lg transition-all hover:border-green-500/30">
-                <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mx-auto mb-3">
-                  <feature.icon className="w-6 h-6 text-green-600" />
+              <Card className="h-full p-4 text-center hover:shadow-lg transition-all hover:border-green-500/30">
+                <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center mx-auto mb-2">
+                  <feature.icon className="w-5 h-5 text-green-600" />
                 </div>
-                <h4 className="font-bold mb-1">{feature.title}</h4>
-                <p className="text-xs text-muted-foreground">{feature.desc}</p>
+                <h4 className="font-bold text-sm mb-0.5">{feature.title}</h4>
+                <p className="text-[10px] text-muted-foreground">{feature.desc}</p>
               </Card>
             </motion.div>
           ))}
         </div>
-
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mt-8"
-        >
-          <Card className="p-6 bg-green-500/5 border-green-500/20">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center flex-shrink-0">
-                <Shield className="w-6 h-6 text-green-600" />
-              </div>
-              <div>
-                <h4 className="font-bold mb-2">Compromisso com Segurança</h4>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Todos os dados são criptografados em trânsito (TLS 1.3) e em repouso (AES-256). 
-                  Políticas de Row Level Security (RLS) garantem isolamento completo entre tenants. 
-                  Logs de auditoria imutáveis registram todas as operações sensíveis do sistema.
-                </p>
-              </div>
-            </div>
-          </Card>
-        </motion.div>
       </Section>
 
       {/* Footer */}
-      <footer className="py-8 border-t bg-muted/30 relative">
+      <footer className="py-6 border-t bg-muted/30 relative">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
