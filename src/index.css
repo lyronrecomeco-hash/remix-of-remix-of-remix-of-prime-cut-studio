@@ -360,47 +360,47 @@
     --sidebar-ring: 217 91% 60%;
   }
 
-  /* Genesis Light Theme - Clean modern light mode */
+  /* Genesis Light Theme - Clean modern light mode with strong contrast */
   .genesis-light {
-    --background: 220 20% 97%;
-    --foreground: 222 47% 11%;
+    --background: 220 25% 96%;
+    --foreground: 222 47% 8%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 222 47% 8%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 217 91% 55%;
+    --popover-foreground: 222 47% 8%;
+    --primary: 217 91% 50%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 92%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 220 14% 94%;
-    --muted-foreground: 220 10% 40%;
-    --accent: 217 91% 55%;
+    --secondary: 220 20% 88%;
+    --secondary-foreground: 222 47% 8%;
+    --muted: 220 18% 90%;
+    --muted-foreground: 220 15% 35%;
+    --accent: 217 91% 50%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 13% 88%;
-    --input: 220 14% 92%;
-    --ring: 217 91% 55%;
-    --gold: 217 91% 55%;
-    --gold-light: 217 95% 65%;
-    --gold-dark: 217 85% 42%;
+    --border: 220 20% 82%;
+    --input: 220 18% 90%;
+    --ring: 217 91% 50%;
+    --gold: 217 91% 50%;
+    --gold-light: 217 95% 60%;
+    --gold-dark: 217 85% 38%;
     --gold-foreground: 0 0% 100%;
-    --gradient-primary: linear-gradient(135deg, hsl(217 95% 65%) 0%, hsl(217 91% 55%) 50%, hsl(217 85% 42%) 100%);
-    --gradient-gold-shine: linear-gradient(135deg, hsl(217 95% 65%) 0%, hsl(217 91% 55%) 30%, hsl(217 88% 50%) 70%, hsl(217 85% 42%) 100%);
-    --gradient-dark: linear-gradient(180deg, hsl(220 20% 97%) 0%, hsl(220 14% 92%) 100%);
-    --gradient-glow: radial-gradient(ellipse at center, hsl(217 91% 55% / 0.1) 0%, transparent 70%);
-    --shadow-soft: 0 4px 20px -4px hsl(222 47% 11% / 0.08);
-    --shadow-glow: 0 0 40px hsl(217 91% 55% / 0.15);
-    --shadow-gold: 0 4px 30px hsl(217 91% 55% / 0.12);
-    --shadow-card: 0 8px 32px -8px hsl(222 47% 11% / 0.1);
+    --gradient-primary: linear-gradient(135deg, hsl(217 95% 60%) 0%, hsl(217 91% 50%) 50%, hsl(217 85% 38%) 100%);
+    --gradient-gold-shine: linear-gradient(135deg, hsl(217 95% 60%) 0%, hsl(217 91% 50%) 30%, hsl(217 88% 45%) 70%, hsl(217 85% 38%) 100%);
+    --gradient-dark: linear-gradient(180deg, hsl(220 25% 96%) 0%, hsl(220 20% 90%) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(217 91% 50% / 0.12) 0%, transparent 70%);
+    --shadow-soft: 0 4px 24px -4px hsl(222 47% 8% / 0.12);
+    --shadow-glow: 0 0 40px hsl(217 91% 50% / 0.2);
+    --shadow-gold: 0 4px 30px hsl(217 91% 50% / 0.18);
+    --shadow-card: 0 8px 32px -8px hsl(222 47% 8% / 0.15);
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 217 91% 55%;
+    --sidebar-foreground: 222 47% 8%;
+    --sidebar-primary: 217 91% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 94%;
-    --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 220 13% 88%;
-    --sidebar-ring: 217 91% 55%;
+    --sidebar-accent: 220 18% 92%;
+    --sidebar-accent-foreground: 222 47% 8%;
+    --sidebar-border: 220 20% 82%;
+    --sidebar-ring: 217 91% 50%;
   }
 
   /* Genesis Dark Theme - Default dark mode */
@@ -557,6 +557,26 @@
     border-color: hsl(var(--gold) / 0.5);
     box-shadow: var(--shadow-gold);
   }
+}
+
+/* Genesis Light Mode Enhancements */
+.genesis-light .glass-card {
+  @apply bg-white/90 border-border;
+  box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.08);
+}
+
+.genesis-light .gold-border {
+  border-color: hsl(217 91% 50% / 0.25);
+}
+
+.genesis-light .card-gold {
+  border-color: hsl(217 91% 50% / 0.2);
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.08);
+}
+
+.genesis-light .card-gold:hover {
+  border-color: hsl(217 91% 50% / 0.4);
+  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.15);
 }
 
 @layer utilities {

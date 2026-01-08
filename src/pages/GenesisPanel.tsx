@@ -401,7 +401,7 @@ const GenesisDashboard = ({ onNavigate }: { onNavigate: (tab: string) => void })
 export default function GenesisPanel() {
   const navigate = useNavigate();
   const { user, genesisUser, credits, loading, isSuperAdmin, signOut } = useGenesisAuth();
-  const [activeTab, setActiveTab] = useState('instances');
+  const [activeTab, setActiveTab] = useState('instances'); // Default para instâncias
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hideSidebar, setHideSidebar] = useState(false);
   const [instances, setInstances] = useState<Array<{ id: string; name: string; status: string }>>([]);
@@ -475,8 +475,8 @@ export default function GenesisPanel() {
     toast.success('Até logo!');
   };
 
+  // Dashboard removido - usuário entra direto em instâncias
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'instances', label: 'Instâncias', icon: Smartphone },
     { id: 'flows', label: 'Flow Builder', icon: GitBranch },
     { id: 'chatbots', label: 'Chatbots', icon: Bot },
@@ -493,8 +493,6 @@ export default function GenesisPanel() {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'dashboard':
-        return <GenesisDashboard onNavigate={setActiveTab} />;
       case 'instances':
         return <InstancesManager onNavigateToAccount={() => setActiveTab('account')} />;
       case 'flows':
@@ -576,7 +574,7 @@ export default function GenesisPanel() {
       case 'users':
         return <div className="text-center py-20 text-muted-foreground">Em desenvolvimento...</div>;
       default:
-        return <GenesisDashboard onNavigate={setActiveTab} />;
+        return <InstancesManager onNavigateToAccount={() => setActiveTab('account')} />;
     }
   };
 
@@ -600,8 +598,11 @@ export default function GenesisPanel() {
     <div className="min-h-screen bg-background flex flex-col transition-colors duration-300">
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header - Premium Design */}
-        <header className="h-16 border-b bg-card/80 backdrop-blur-xl flex items-center justify-between px-4 lg:px-6 sticky top-0 z-40">
+        {/* Header - Premium Design with proper light mode support */}
+        <header className={cn(
+          "h-16 border-b flex items-center justify-between px-4 lg:px-6 sticky top-0 z-40 backdrop-blur-xl",
+          isDarkMode ? "bg-card/80" : "bg-white/90 border-border"
+        )}>
           <div className="flex items-center gap-4">
             <Button 
               variant="ghost" 
@@ -629,9 +630,8 @@ export default function GenesisPanel() {
             
             {/* Current page indicator */}
             <div className="hidden lg:flex items-center gap-2 ml-6 pl-6 border-l border-border">
-              <span className="text-sm text-muted-foreground">|</span>
-              <h2 className="font-semibold text-sm">
-                {navItems.find(i => i.id === activeTab)?.label || 'Dashboard'}
+              <h2 className="font-semibold text-sm text-foreground">
+                {navItems.find(i => i.id === activeTab)?.label || 'Instâncias'}
               </h2>
             </div>
           </div>
@@ -685,7 +685,7 @@ export default function GenesisPanel() {
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-popover">
+              <DropdownMenuContent align="end" className={cn("w-56", isDarkMode ? "bg-popover" : "bg-white border-border")}>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium">{genesisUser?.name}</p>
@@ -743,9 +743,12 @@ export default function GenesisPanel() {
               initial={{ x: -300 }}
               animate={{ x: 0 }}
               exit={{ x: -300 }}
-              className="fixed left-0 top-0 bottom-0 w-72 bg-card border-r z-50 lg:hidden flex flex-col"
+              className={cn(
+                "fixed left-0 top-0 bottom-0 w-72 border-r z-50 lg:hidden flex flex-col",
+                isDarkMode ? "bg-card" : "bg-white"
+              )}
             >
-              <div className="flex items-center justify-between p-5 border-b">
+              <div className="flex items-center justify-between p-5 border-b border-border">
                 <div className="flex items-center gap-3">
                   <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
                     <Zap className="w-6 h-6 text-primary-foreground" />
@@ -781,7 +784,7 @@ export default function GenesisPanel() {
         )}
       </AnimatePresence>
 
-      {/* MacOS Style Dock - Desktop - Centered - Premium Design */}
+      {/* MacOS Style Dock - Desktop - Centered - Premium Design with proper light/dark mode */}
       <AnimatePresence>
         {!shouldHideSidebar && (
           <motion.div 
@@ -792,12 +795,12 @@ export default function GenesisPanel() {
             className="hidden lg:flex fixed bottom-4 z-50 w-full justify-center pointer-events-none"
           >
             <motion.div 
-              className="flex items-end gap-1 px-4 py-3 bg-card/90 backdrop-blur-2xl border border-border/50 rounded-2xl shadow-2xl shadow-black/20 pointer-events-auto"
-              style={{
-                boxShadow: isDarkMode 
-                  ? '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) inset'
-                  : '0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.5) inset'
-              }}
+              className={cn(
+                "flex items-end gap-1.5 px-5 py-3.5 backdrop-blur-2xl border rounded-2xl pointer-events-auto",
+                isDarkMode 
+                  ? "bg-card/95 border-border/60 shadow-2xl shadow-black/40"
+                  : "bg-white/95 border-border shadow-2xl shadow-black/15"
+              )}
             >
               {navItems.map((item, index) => {
                 const isActive = activeTab === item.id;
@@ -807,7 +810,7 @@ export default function GenesisPanel() {
                     onClick={() => setActiveTab(item.id)}
                     className={cn(
                       "relative flex flex-col items-center justify-center rounded-xl transition-all duration-200 group",
-                      isActive ? "" : "hover:bg-muted/50"
+                      isActive ? "" : isDarkMode ? "hover:bg-muted/50" : "hover:bg-muted"
                     )}
                     whileHover={{ scale: 1.15, y: -10 }}
                     whileTap={{ scale: 0.95 }}
@@ -816,10 +819,12 @@ export default function GenesisPanel() {
                     transition={{ delay: 0.4 + index * 0.04 }}
                   >
                     <div className={cn(
-                      "w-11 h-11 flex items-center justify-center rounded-xl transition-all duration-300",
+                      "w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-300",
                       isActive 
                         ? "bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-lg shadow-primary/40" 
-                        : "text-muted-foreground group-hover:text-foreground group-hover:bg-muted/50"
+                        : isDarkMode 
+                          ? "text-muted-foreground group-hover:text-foreground group-hover:bg-muted/50"
+                          : "text-muted-foreground group-hover:text-foreground group-hover:bg-muted"
                     )}>
                       <item.icon className={cn("w-5 h-5", isActive && "drop-shadow-sm")} />
                     </div>
@@ -834,8 +839,13 @@ export default function GenesisPanel() {
                     )}
                     
                     {/* Tooltip on hover */}
-                    <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none scale-90 group-hover:scale-100">
-                      <div className="px-3 py-1.5 bg-popover border border-border rounded-lg shadow-xl text-xs font-medium whitespace-nowrap">
+                    <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none scale-90 group-hover:scale-100">
+                      <div className={cn(
+                        "px-3 py-1.5 border rounded-lg shadow-xl text-xs font-medium whitespace-nowrap",
+                        isDarkMode 
+                          ? "bg-popover border-border text-foreground"
+                          : "bg-white border-border text-foreground shadow-lg"
+                      )}>
                         {item.label}
                       </div>
                     </div>

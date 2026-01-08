@@ -321,22 +321,22 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
                 exit={{ opacity: 0, height: 0 }}
                 className="overflow-hidden"
               >
-                {/* Loading States */}
+                {/* Loading States - Compact */}
                 {displayStatus === 'connecting' && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="flex flex-col items-center py-12"
+                    className="flex flex-col items-center py-8"
                   >
                     <motion.div
-                      className="w-20 h-20 rounded-full bg-blue-500/10 flex items-center justify-center"
+                      className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center"
                       animate={{ scale: [1, 1.1, 1] }}
                       transition={{ duration: 1.5, repeat: Infinity }}
                     >
-                      <Radio className="w-10 h-10 text-blue-500" />
+                      <Radio className="w-8 h-8 text-blue-500" />
                     </motion.div>
-                    <p className="mt-4 text-sm font-medium">Verificando infraestrutura...</p>
-                    <p className="text-xs text-muted-foreground mt-1">Conectando ao WhatsApp Automação</p>
+                    <p className="mt-3 text-sm font-medium">Verificando infraestrutura...</p>
+                    <p className="text-xs text-muted-foreground mt-1">Conectando ao WhatsApp</p>
                   </motion.div>
                 )}
 
@@ -344,53 +344,51 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="flex flex-col items-center py-12"
+                    className="flex flex-col items-center py-8"
                   >
                     <motion.div
-                      className="w-20 h-20 rounded-full bg-blue-500/10 flex items-center justify-center"
+                      className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center"
                       animate={{ scale: [1, 1.1, 1] }}
                       transition={{ duration: 1.5, repeat: Infinity }}
                     >
-                      <Sparkles className="w-10 h-10 text-blue-500" />
+                      <Sparkles className="w-8 h-8 text-blue-500" />
                     </motion.div>
-                    <p className="mt-4 text-sm font-medium">Gerando QR Code...</p>
+                    <p className="mt-3 text-sm font-medium">Gerando QR Code...</p>
                     <p className="text-xs text-muted-foreground mt-1">Aguarde um momento</p>
                   </motion.div>
                 )}
 
-                {/* QR Code Display */}
+                {/* QR Code Display - Compact */}
                 {hasQrCode && (
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="flex flex-col items-center py-8"
+                    className="flex flex-col items-center py-5"
                   >
                     <div className="relative">
                       <motion.div 
-                        className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent rounded-3xl blur-xl"
+                        className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent rounded-2xl blur-lg"
                         animate={{ opacity: [0.5, 0.8, 0.5] }}
                         transition={{ duration: 2, repeat: Infinity }}
                       />
-                      <div className="relative bg-white p-5 rounded-2xl shadow-2xl border-4 border-primary/20">
+                      <div className="relative bg-white p-4 rounded-xl shadow-2xl border-2 border-primary/20">
                         <motion.img
                           key={connectionState.qrCode}
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           src={connectionState.qrCode}
                           alt="QR Code"
-                          className="w-56 h-56 sm:w-64 sm:h-64"
+                          className="w-44 h-44 sm:w-52 sm:h-52"
                         />
                       </div>
                     </div>
                     
-                    <div className="mt-6 text-center space-y-2">
-                      <p className="text-sm font-medium">Escaneie o código com o WhatsApp</p>
-                      <div className="text-xs text-muted-foreground space-y-1">
-                        <p><span className="font-medium">1)</span> Abra o WhatsApp no celular</p>
-                        <p><span className="font-medium">2)</span> Configurações → <span className="font-medium">Aparelhos conectados</span></p>
-                        <p><span className="font-medium">3)</span> Conectar um aparelho → Escaneie o QR</p>
+                    <div className="mt-4 text-center space-y-1.5">
+                      <p className="text-sm font-medium">Escaneie com o WhatsApp</p>
+                      <div className="text-xs text-muted-foreground">
+                        <p>Configurações → Aparelhos conectados → Conectar</p>
                       </div>
-                      <div className="flex items-center justify-center gap-2 mt-4">
+                      <div className="flex items-center justify-center gap-2 mt-3">
                         <motion.div 
                           className="w-2 h-2 rounded-full bg-blue-500"
                           animate={{ scale: [1, 1.3, 1], opacity: [1, 0.5, 1] }}
@@ -404,49 +402,50 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
                   </motion.div>
                 )}
 
-                {/* Placeholder when idle or disconnected */}
+                {/* Compact placeholder when idle or disconnected */}
                 {(displayStatus === 'idle' || displayStatus === 'disconnected') && !isConnecting && !isInCooldown && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="flex flex-col items-center py-10"
+                    className="flex flex-col items-center py-6"
                   >
                     <motion.div 
                       className="relative cursor-pointer group"
                       whileHover={{ scale: 1.02 }}
                       onClick={handleConnect}
                     >
-                      <div className="w-48 h-48 rounded-2xl bg-muted/50 border-2 border-dashed border-muted-foreground/20 flex items-center justify-center group-hover:border-primary/40 transition-colors">
-                        <QrCode className="w-20 h-20 text-muted-foreground/30 group-hover:text-primary/50 transition-colors" />
-                      </div>
-                      <div className="absolute inset-0 flex items-center justify-center">
+                      {/* Compact QR placeholder */}
+                      <div className="w-36 h-36 rounded-2xl bg-muted/50 border-2 border-dashed border-muted-foreground/20 flex items-center justify-center group-hover:border-primary/40 transition-colors relative overflow-hidden">
+                        <QrCode className="w-14 h-14 text-muted-foreground/30 group-hover:text-primary/50 transition-colors" />
+                        {/* Overlay button */}
                         <motion.div 
-                          className="bg-background/90 backdrop-blur-sm px-4 py-2 rounded-lg border shadow-lg group-hover:shadow-xl transition-shadow"
-                          whileHover={{ y: -2 }}
+                          className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity"
+                          whileHover={{ scale: 1 }}
                         >
-                          <p className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                            Clique para conectar
-                          </p>
+                          <div className="bg-primary text-primary-foreground px-4 py-2 rounded-lg shadow-lg font-medium text-sm flex items-center gap-2">
+                            <Zap className="w-4 h-4" />
+                            Conectar
+                          </div>
                         </motion.div>
                       </div>
                     </motion.div>
 
-                    {/* Features */}
-                    <div className="grid grid-cols-3 gap-4 mt-8 w-full max-w-md">
+                    {/* Compact Features */}
+                    <div className="grid grid-cols-3 gap-3 mt-5 w-full max-w-sm">
                       {[
-                        { icon: Zap, label: 'Conexão Rápida' },
-                        { icon: Shield, label: '100% Seguro' },
-                        { icon: RefreshCw, label: 'Auto Reconexão' },
+                        { icon: Zap, label: 'Rápido' },
+                        { icon: Shield, label: 'Seguro' },
+                        { icon: RefreshCw, label: 'Auto Reconectar' },
                       ].map((feature, i) => (
                         <motion.div 
                           key={feature.label}
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: i * 0.1 }}
-                          className="flex flex-col items-center gap-2 p-3 rounded-lg bg-muted/30"
+                          className="flex flex-col items-center gap-1.5 p-2.5 rounded-lg bg-muted/30"
                         >
-                          <feature.icon className="w-5 h-5 text-primary" />
-                          <span className="text-xs text-center text-muted-foreground">{feature.label}</span>
+                          <feature.icon className="w-4 h-4 text-primary" />
+                          <span className="text-[10px] text-center text-muted-foreground font-medium">{feature.label}</span>
                         </motion.div>
                       ))}
                     </div>
