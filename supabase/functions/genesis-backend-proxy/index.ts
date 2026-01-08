@@ -160,47 +160,14 @@ serve(async (req) => {
       }
     }
 
-    // === MODO DEMO: Envio público via instância do super admin (Página Sobre) ===
+    // === MODO DEMO: Envio público via configuração global (Página Sobre) ===
     if (requestBody?.action === 'demo-send' && requestBody?.to && requestBody?.message) {
       console.log('[genesis-backend-proxy] Demo send mode', {
         to: requestBody.to?.replace(/\d{4}$/, '****'),
       });
 
       try {
-        // Buscar instância conectada do super admin (genesis_users com role = 'super_admin')
-        const { data: superAdmin } = await supabaseAdmin
-          .from('genesis_users')
-          .select('id')
-          .eq('role', 'super_admin')
-          .limit(1)
-          .maybeSingle();
-
-        if (!superAdmin) {
-          console.warn('[genesis-backend-proxy] No super admin found for demo');
-          return new Response(
-            JSON.stringify({ success: false, error: 'Demo não disponível no momento' }),
-            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-
-        // Buscar instância conectada do super admin
-        const { data: demoInstance } = await supabaseAdmin
-          .from('genesis_instances')
-          .select('id, backend_url, backend_token')
-          .eq('user_id', superAdmin.id)
-          .eq('status', 'connected')
-          .limit(1)
-          .maybeSingle();
-
-        if (!demoInstance) {
-          console.warn('[genesis-backend-proxy] No connected instance for demo');
-          return new Response(
-            JSON.stringify({ success: false, error: 'Nenhuma instância demo disponível' }),
-            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-
-        // Config de VPS (prioridade: global > instância > nativa)
+        // Usar configuração global diretamente para demo (não precisa de instância)
         const NATIVE_VPS_URL = "http://72.62.108.24:3000";
         const NATIVE_VPS_TOKEN = "genesis-master-token-2024-secure";
 
@@ -211,14 +178,26 @@ serve(async (req) => {
           .limit(1)
           .maybeSingle();
 
-        const backendUrl = globalConfig?.backend_url || demoInstance.backend_url || NATIVE_VPS_URL;
-        const backendToken = globalConfig?.master_token || demoInstance.backend_token || NATIVE_VPS_TOKEN;
+        const backendUrl = globalConfig?.backend_url || NATIVE_VPS_URL;
+        const backendToken = globalConfig?.master_token || NATIVE_VPS_TOKEN;
+
+        // Buscar qualquer instância conectada para usar como referência
+        const { data: anyInstance } = await supabaseAdmin
+          .from('genesis_instances')
+          .select('id, user_id')
+          .eq('status', 'connected')
+          .limit(1)
+          .maybeSingle();
+
+        // Se não há instância conectada, usar uma instância demo fixa
+        const demoInstanceId = anyInstance?.id || 'demo-instance';
+        const demoUserId = anyInstance?.user_id || user.id;
 
         const cleanBackendUrl = String(backendUrl).replace(/\/$/, '');
         const sendUrl = `${cleanBackendUrl}/api/send`;
 
         console.log('[genesis-backend-proxy] Demo sending message', {
-          instanceId: demoInstance.id,
+          instanceId: demoInstanceId,
           to: requestBody.to?.replace(/\d{4}$/, '****'),
           msgLength: requestBody.message?.length,
         });
@@ -233,7 +212,7 @@ serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            instanceId: demoInstance.id,
+            instanceId: demoInstanceId,
             to: requestBody.to,
             message: requestBody.message,
           }),
@@ -258,18 +237,20 @@ serve(async (req) => {
 
         const success = resp.ok && parsed?.success !== false && !parsed?.error;
 
-        // Log do evento
-        try {
-          await supabaseAdmin.from('genesis_event_logs').insert({
-            instance_id: demoInstance.id,
-            user_id: superAdmin.id,
-            event_type: success ? 'demo_message_sent' : 'demo_message_error',
-            severity: success ? 'info' : 'warning',
-            message: success ? 'Mensagem demo enviada' : `Erro demo: ${parsed?.error || 'unknown'}`,
-            details: { to: requestBody.to?.replace(/\d{4}$/, '****'), source: 'sobre_page' },
-          });
-        } catch (e) {
-          console.warn('Failed to log demo event', e);
+        // Log do evento (opcional - não bloqueia)
+        if (demoInstanceId !== 'demo-instance') {
+          try {
+            await supabaseAdmin.from('genesis_event_logs').insert({
+              instance_id: demoInstanceId,
+              user_id: demoUserId,
+              event_type: success ? 'demo_message_sent' : 'demo_message_error',
+              severity: success ? 'info' : 'warning',
+              message: success ? 'Mensagem demo enviada' : `Erro demo: ${parsed?.error || 'unknown'}`,
+              details: { to: requestBody.to?.replace(/\d{4}$/, '****'), source: 'sobre_page' },
+            });
+          } catch (e) {
+            console.warn('Failed to log demo event', e);
+          }
         }
 
         return new Response(

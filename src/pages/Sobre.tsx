@@ -72,7 +72,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { FlowBuilderDemo } from '@/components/sobre/FlowBuilderDemo';
+import { RealFlowBuilderDemo } from '@/components/sobre/RealFlowBuilderDemo';
 
 // ============= ANIMATED COMPONENTS =============
 
@@ -1295,99 +1295,181 @@ export default function Sobre() {
         </div>
       </motion.section>
 
-      {/* Stats */}
-      <section className="py-10 bg-muted/30 border-y relative">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {stats.map((stat, idx) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
-                className="text-center"
-              >
-                <motion.div 
-                  className="text-2xl sm:text-3xl font-bold text-primary mb-1"
-                  whileHover={{ scale: 1.1 }}
-                >
-                  <AnimatedCounter value={stat.value} suffix={stat.suffix} />
-                </motion.div>
-                <p className="text-xs text-muted-foreground">{stat.label}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* MAIN DEMO SECTION - 3 Columns */}
+      {/* SEÇÃO 1: LUNA IA */}
       <Section
-        id="teste-whatsapp"
-        badge="🔴 DEMONSTRAÇÃO AO VIVO"
-        title="Experimente a Plataforma Genesis"
-        subtitle="Três formas de testar a plataforma agora mesmo: converse com a Luna IA, monte um flow, ou receba uma mensagem real no seu WhatsApp."
-        className="bg-gradient-to-b from-background via-primary/5 to-background"
+        id="luna-ia-demo"
+        badge="🤖 INTELIGÊNCIA ARTIFICIAL"
+        title="Luna IA - Motor de Processamento Natural"
+        subtitle="Converse com a Luna, nossa IA de processamento de linguagem natural. Ela entende contexto, histórico e responde de forma humanizada em tempo real."
+        className="bg-gradient-to-b from-background via-purple-500/5 to-background"
       >
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-          {/* Luna IA Chat */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="lg:col-span-1"
           >
             <LiveDemoChat />
           </motion.div>
-
-          {/* Flow Builder - ocupa 2 colunas no desktop */}
+          
           <motion.div
-            id="flow-builder"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="lg:col-span-1"
+            className="space-y-4"
           >
-            <FlowBuilderDemo />
+            <Card className="p-5">
+              <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                <Bot className="w-5 h-5 text-purple-500" />
+                Capacidades da Luna IA
+              </h3>
+              <div className="space-y-3">
+                {[
+                  { icon: Brain, title: 'NLP Avançado', desc: 'Entende variações de escrita, gírias e contexto regional brasileiro' },
+                  { icon: MessageSquare, title: 'Memória de Contexto', desc: 'Mantém histórico da conversa para respostas coerentes' },
+                  { icon: Zap, title: 'Classificação de Intenção', desc: 'Identifica automaticamente se é venda, suporte ou dúvida' },
+                  { icon: TrendingUp, title: 'Análise de Sentimento', desc: 'Detecta frustração ou satisfação para adaptar tom' },
+                ].map((item) => (
+                  <div key={item.title} className="flex gap-3 p-3 bg-muted/50 rounded-lg">
+                    <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
+                      <item.icon className="w-4 h-4 text-purple-500" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-sm">{item.title}</h4>
+                      <p className="text-xs text-muted-foreground">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
           </motion.div>
+        </div>
+      </Section>
 
-          {/* WhatsApp Test */}
+      <Separator />
+
+      {/* SEÇÃO 2: FLOW BUILDER */}
+      <Section
+        id="flow-builder"
+        badge="🔧 AUTOMAÇÃO VISUAL"
+        title="Flow Builder - Crie Fluxos Sem Código"
+        subtitle="Editor drag-and-drop para criar automações complexas. Arraste nós, conecte-os e veja o fluxo em ação com simulação em tempo real."
+        className="bg-gradient-to-b from-background via-blue-500/5 to-background"
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="lg:col-span-1"
+          >
+            <RealFlowBuilderDemo />
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="space-y-4"
+          >
+            <Card className="p-5">
+              <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                <GitBranch className="w-5 h-5 text-blue-500" />
+                Recursos do Flow Builder
+              </h3>
+              <div className="space-y-3">
+                {[
+                  { icon: Blocks, title: '15+ Tipos de Nós', desc: 'Gatilhos, condições, ações, delays, IA, webhooks e mais' },
+                  { icon: GitBranch, title: 'Condicionais Avançadas', desc: 'Divida fluxos com lógica baseada em variáveis e contexto' },
+                  { icon: Activity, title: 'Simulação em Tempo Real', desc: 'Teste seu fluxo antes de ativar com preview visual' },
+                  { icon: Code, title: 'Variáveis Dinâmicas', desc: 'Use {{nome}}, {{telefone}} e dados coletados no fluxo' },
+                ].map((item) => (
+                  <div key={item.title} className="flex gap-3 p-3 bg-muted/50 rounded-lg">
+                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                      <item.icon className="w-4 h-4 text-blue-500" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-sm">{item.title}</h4>
+                      <p className="text-xs text-muted-foreground">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+            
+            {/* Flow Visualization */}
+            <FlowDemoVisualization />
+          </motion.div>
+        </div>
+      </Section>
+
+      <Separator />
+
+      {/* SEÇÃO 3: WHATSAPP TESTE REAL */}
+      <Section
+        id="teste-whatsapp"
+        badge="📱 ENVIO REAL"
+        title="Teste o Envio via WhatsApp Agora"
+        subtitle="Digite seu número e receba uma mensagem demonstrando a API de envio do Genesis. É real - você vai receber no seu WhatsApp!"
+        className="bg-gradient-to-b from-background via-green-500/5 to-background"
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
           >
             <WhatsAppTestMessage />
           </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="space-y-4"
+          >
+            <Card className="p-5">
+              <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                <MessageCircle className="w-5 h-5 text-green-500" />
+                API WhatsApp Business
+              </h3>
+              <div className="space-y-3">
+                {[
+                  { icon: Zap, title: 'Latência < 3 segundos', desc: 'Envio instantâneo via conexão direta com servidores WhatsApp' },
+                  { icon: Shield, title: 'Anti-Ban Nativo', desc: 'Proteção automática com rate limiting e delays humanizados' },
+                  { icon: Activity, title: 'Multi-Instância', desc: 'Conecte múltiplos números simultaneamente com sessão persistente' },
+                  { icon: Webhook, title: 'Webhooks em Tempo Real', desc: 'Receba eventos de mensagens, leituras e status de entrega' },
+                ].map((item) => (
+                  <div key={item.title} className="flex gap-3 p-3 bg-muted/50 rounded-lg">
+                    <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0">
+                      <item.icon className="w-4 h-4 text-green-500" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-sm">{item.title}</h4>
+                      <p className="text-xs text-muted-foreground">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+            
+            {/* Performance metrics */}
+            <Card className="p-5 bg-green-500/5 border-green-500/20">
+              <div className="grid grid-cols-4 gap-3 text-center">
+                {[
+                  { value: '<50ms', label: 'Cold Start' },
+                  { value: '<3s', label: 'Latência' },
+                  { value: '99.9%', label: 'Uptime' },
+                  { value: '10k/s', label: 'Throughput' },
+                ].map((metric) => (
+                  <div key={metric.label}>
+                    <div className="text-lg font-bold text-green-600">{metric.value}</div>
+                    <div className="text-[10px] text-muted-foreground">{metric.label}</div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </motion.div>
         </div>
-
-        {/* Performance Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mt-8"
-        >
-          <Card className="p-5 bg-primary/5 border-primary/20">
-            <div className="flex flex-wrap items-center justify-center gap-8 text-center">
-              {[
-                { value: '<50ms', label: 'Cold Start' },
-                { value: '<3s', label: 'Tempo de Resposta' },
-                { value: '99.9%', label: 'Uptime SLA' },
-                { value: '10k/s', label: 'Throughput' },
-              ].map((metric) => (
-                <div key={metric.label}>
-                  <div className="text-xl font-bold text-primary">{metric.value}</div>
-                  <div className="text-xs text-muted-foreground">{metric.label}</div>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </motion.div>
       </Section>
 
       <Separator />
