@@ -59,6 +59,7 @@ interface Instance {
   id: string;
   name: string;
   status: string;
+  orchestrated_status: string;
   phone_number?: string;
 }
 
@@ -107,7 +108,7 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
       try {
         const { data, error } = await supabase
           .from('genesis_instances')
-          .select('id, name, status, phone_number')
+          .select('id, name, status, orchestrated_status, phone_number')
           .eq('user_id', genesisUser.id);
         
         if (error) throw error;
@@ -153,7 +154,7 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
   };
 
   const selectedInstance = instances.find(i => i.id === formData.instance_id);
-  const isInstanceValid = selectedInstance?.status === 'connected';
+  const isInstanceValid = selectedInstance?.orchestrated_status === 'connected';
   const creditsNeeded = formData.contacts.length;
   const hasEnoughCredits = (credits?.available_credits || 0) >= creditsNeeded;
 
@@ -325,13 +326,13 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
                               <div className="flex items-center gap-3">
                                 <div className={cn(
                                   "w-10 h-10 rounded-lg flex items-center justify-center",
-                                  instance.status === 'connected'
+                                  instance.orchestrated_status === 'connected'
                                     ? "bg-green-500/10"
                                     : "bg-yellow-500/10"
                                 )}>
                                   <Smartphone className={cn(
                                     "w-5 h-5",
-                                    instance.status === 'connected'
+                                    instance.orchestrated_status === 'connected'
                                       ? "text-green-500"
                                       : "text-yellow-500"
                                   )} />
@@ -343,8 +344,8 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
                                   </p>
                                 </div>
                               </div>
-                              <Badge variant={instance.status === 'connected' ? 'default' : 'secondary'}>
-                                {instance.status === 'connected' ? 'Conectada' : instance.status}
+                              <Badge variant={instance.orchestrated_status === 'connected' ? 'default' : 'secondary'}>
+                                {instance.orchestrated_status === 'connected' ? 'Conectada' : instance.orchestrated_status}
                               </Badge>
                             </CardContent>
                           </Card>
