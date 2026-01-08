@@ -16,6 +16,9 @@ type ProxyRequestBody = {
   action?: string;
   directUrl?: string;
   directToken?: string;
+  // Demo mode for public demo (Sobre page)
+  to?: string;
+  message?: string;
 };
 
 const isAllowedPath = (path: string) => {
@@ -153,6 +156,136 @@ serve(async (req) => {
             status: 200,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           }
+        );
+      }
+    }
+
+    // === MODO DEMO: Envio público via instância do super admin (Página Sobre) ===
+    if (requestBody?.action === 'demo-send' && requestBody?.to && requestBody?.message) {
+      console.log('[genesis-backend-proxy] Demo send mode', {
+        to: requestBody.to?.replace(/\d{4}$/, '****'),
+      });
+
+      try {
+        // Buscar instância conectada do super admin (genesis_users com role = 'super_admin')
+        const { data: superAdmin } = await supabaseAdmin
+          .from('genesis_users')
+          .select('id')
+          .eq('role', 'super_admin')
+          .limit(1)
+          .maybeSingle();
+
+        if (!superAdmin) {
+          console.warn('[genesis-backend-proxy] No super admin found for demo');
+          return new Response(
+            JSON.stringify({ success: false, error: 'Demo não disponível no momento' }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Buscar instância conectada do super admin
+        const { data: demoInstance } = await supabaseAdmin
+          .from('genesis_instances')
+          .select('id, backend_url, backend_token')
+          .eq('user_id', superAdmin.id)
+          .eq('status', 'connected')
+          .limit(1)
+          .maybeSingle();
+
+        if (!demoInstance) {
+          console.warn('[genesis-backend-proxy] No connected instance for demo');
+          return new Response(
+            JSON.stringify({ success: false, error: 'Nenhuma instância demo disponível' }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Config de VPS (prioridade: global > instância > nativa)
+        const NATIVE_VPS_URL = "http://72.62.108.24:3000";
+        const NATIVE_VPS_TOKEN = "genesis-master-token-2024-secure";
+
+        const { data: globalConfig } = await supabaseAdmin
+          .from("whatsapp_backend_config")
+          .select("backend_url, master_token")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        const backendUrl = globalConfig?.backend_url || demoInstance.backend_url || NATIVE_VPS_URL;
+        const backendToken = globalConfig?.master_token || demoInstance.backend_token || NATIVE_VPS_TOKEN;
+
+        const cleanBackendUrl = String(backendUrl).replace(/\/$/, '');
+        const sendUrl = `${cleanBackendUrl}/api/send`;
+
+        console.log('[genesis-backend-proxy] Demo sending message', {
+          instanceId: demoInstance.id,
+          to: requestBody.to?.replace(/\d{4}$/, '****'),
+          msgLength: requestBody.message?.length,
+        });
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+        const resp = await fetch(sendUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${backendToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            instanceId: demoInstance.id,
+            to: requestBody.to,
+            message: requestBody.message,
+          }),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        const text = await resp.text();
+        let parsed: any = text;
+        try {
+          parsed = text ? JSON.parse(text) : {};
+        } catch {
+          // keep as text
+        }
+
+        console.log('[genesis-backend-proxy] Demo send response', {
+          status: resp.status,
+          ok: resp.ok,
+          success: parsed?.success,
+        });
+
+        const success = resp.ok && parsed?.success !== false && !parsed?.error;
+
+        // Log do evento
+        try {
+          await supabaseAdmin.from('genesis_event_logs').insert({
+            instance_id: demoInstance.id,
+            user_id: superAdmin.id,
+            event_type: success ? 'demo_message_sent' : 'demo_message_error',
+            severity: success ? 'info' : 'warning',
+            message: success ? 'Mensagem demo enviada' : `Erro demo: ${parsed?.error || 'unknown'}`,
+            details: { to: requestBody.to?.replace(/\d{4}$/, '****'), source: 'sobre_page' },
+          });
+        } catch (e) {
+          console.warn('Failed to log demo event', e);
+        }
+
+        return new Response(
+          JSON.stringify({ success, data: parsed, error: parsed?.error }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      } catch (err: any) {
+        const isAbort = err.name === 'AbortError';
+        console.error('[genesis-backend-proxy] Demo send error:', err);
+
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: isAbort ? 'Timeout ao enviar mensagem' : (err.message || 'Erro de conexão'),
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
     }

@@ -72,6 +72,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { FlowBuilderDemo } from '@/components/sobre/FlowBuilderDemo';
 
 // ============= ANIMATED COMPONENTS =============
 
@@ -768,213 +769,149 @@ _Esta mensagem foi enviada pela demonstração pública do Genesis Hub._`;
   );
 };
 
-// ============= INTERACTIVE FLOW BUILDER DEMO =============
+// ============= FLOW DEMO VISUALIZATION =============
 
-interface FlowNode {
-  id: string;
-  type: 'trigger' | 'message' | 'condition' | 'action' | 'ai';
-  label: string;
-  config?: any;
-}
-
-const InteractiveFlowBuilder = () => {
-  const [nodes, setNodes] = useState<FlowNode[]>([
-    { id: '1', type: 'trigger', label: 'Mensagem Recebida' },
-    { id: '2', type: 'ai', label: 'Luna IA Analisa' },
-    { id: '3', type: 'condition', label: 'É Suporte?' },
-    { id: '4', type: 'message', label: 'Resposta Automática' },
-  ]);
-  
+const FlowDemoVisualization = () => {
   const [activeStep, setActiveStep] = useState(0);
-  const [isSimulating, setIsSimulating] = useState(false);
-  const [simulationMessages, setSimulationMessages] = useState<string[]>([]);
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
-  const nodeTypes = {
-    trigger: { icon: MessageSquare, color: 'bg-green-500', label: 'Gatilho' },
-    message: { icon: Send, color: 'bg-blue-500', label: 'Mensagem' },
-    condition: { icon: GitBranch, color: 'bg-purple-500', label: 'Condição' },
-    action: { icon: Zap, color: 'bg-amber-500', label: 'Ação' },
-    ai: { icon: Brain, color: 'bg-pink-500', label: 'IA' },
-  };
+  const flowSteps = [
+    { id: 'trigger', label: 'Mensagem Recebida', icon: MessageSquare, color: 'bg-green-500' },
+    { id: 'condition', label: 'Análise de Intenção', icon: Brain, color: 'bg-purple-500' },
+    { id: 'luna', label: 'Luna IA Processa', icon: Bot, color: 'bg-blue-500' },
+    { id: 'action', label: 'Ação Executada', icon: Zap, color: 'bg-amber-500' },
+    { id: 'response', label: 'Resposta Enviada', icon: Send, color: 'bg-primary' },
+  ];
 
-  const addNode = (type: FlowNode['type']) => {
-    const newNode: FlowNode = {
-      id: Date.now().toString(),
-      type,
-      label: `${nodeTypes[type].label} ${nodes.length + 1}`,
-    };
-    setNodes([...nodes, newNode]);
-  };
-
-  const removeNode = (id: string) => {
-    if (nodes.length > 2) {
-      setNodes(nodes.filter(n => n.id !== id));
-    }
-  };
-
-  const runSimulation = async () => {
-    setIsSimulating(true);
-    setSimulationMessages([]);
-    setActiveStep(0);
-
-    for (let i = 0; i < nodes.length; i++) {
-      setActiveStep(i);
-      const node = nodes[i];
-      
-      const messages: Record<FlowNode['type'], string> = {
-        trigger: '📱 Mensagem do cliente recebida via webhook',
-        ai: '🧠 Luna IA processando NLP e classificando intenção...',
-        condition: '🔀 Avaliando condição: roteando para branch correto',
-        message: '💬 Enviando resposta personalizada ao cliente',
-        action: '⚡ Executando ação: webhook/CRM/notificação',
-      };
-
-      setSimulationMessages(prev => [...prev, messages[node.type]]);
-      await new Promise(r => setTimeout(r, 1500));
-    }
-
-    setSimulationMessages(prev => [...prev, '✅ Flow executado com sucesso!']);
-    setIsSimulating(false);
-  };
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveStep((prev) => (prev + 1) % flowSteps.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <Card className="overflow-hidden border-2 border-blue-500/30 shadow-2xl shadow-blue-500/10 bg-card/95 backdrop-blur-xl">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center backdrop-blur">
-              <GitBranch className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h3 className="font-bold text-white">Flow Builder Interativo</h3>
-              <p className="text-xs text-white/70">Monte e simule seu fluxo</p>
-            </div>
+    <div className="relative p-4 sm:p-6 bg-muted/30 rounded-2xl border overflow-x-auto">
+      <div className={cn(
+        "flex items-center gap-2 sm:gap-4",
+        isMobile ? "min-w-max pb-2" : "justify-between flex-wrap"
+      )}>
+        {flowSteps.map((step, index) => (
+          <div key={step.id} className="flex items-center">
+            <motion.div
+              animate={{
+                scale: activeStep === index ? 1.1 : 1,
+                opacity: activeStep >= index ? 1 : 0.4,
+              }}
+              transition={{ duration: 0.3 }}
+              className="flex flex-col items-center"
+            >
+              <div className={cn(
+                "w-10 h-10 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center transition-colors",
+                activeStep === index ? step.color : "bg-muted"
+              )}>
+                <step.icon className={cn(
+                  "w-5 h-5 sm:w-6 sm:h-6",
+                  activeStep === index ? "text-white" : "text-muted-foreground"
+                )} />
+              </div>
+              <span className="text-[10px] sm:text-xs mt-1 sm:mt-2 text-center whitespace-nowrap">{step.label}</span>
+            </motion.div>
+            
+            {index < flowSteps.length - 1 && (
+              <motion.div 
+                className="w-4 sm:w-8 h-0.5 mx-1 sm:mx-2"
+                animate={{
+                  backgroundColor: activeStep > index ? 'hsl(var(--primary))' : 'hsl(var(--muted))',
+                }}
+                transition={{ duration: 0.3 }}
+              />
+            )}
           </div>
-          <Badge className="bg-white/20 text-white border-white/30">Demo</Badge>
-        </div>
+        ))}
       </div>
+      
+      <motion.div 
+        key={activeStep}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mt-3 sm:mt-4 p-3 sm:p-4 bg-card rounded-lg border"
+      >
+        <p className="text-xs sm:text-sm text-muted-foreground">
+          {activeStep === 0 && "📱 Mensagem do cliente recebida via webhook da API WhatsApp Business"}
+          {activeStep === 1 && "🧠 NLP classifica intenção: suporte, venda, dúvida, reclamação..."}
+          {activeStep === 2 && "🤖 Luna IA processa contexto, histórico e gera resposta personalizada"}
+          {activeStep === 3 && "⚡ Sistema executa ações: atualiza CRM, envia email, dispara webhook..."}
+          {activeStep === 4 && "✅ Resposta enviada ao cliente em <3 segundos via API"}
+        </p>
+      </motion.div>
+    </div>
+  );
+};
 
-      <CardContent className="p-4 space-y-4">
-        {/* Flow Canvas */}
-        <div className="relative p-4 bg-muted/30 rounded-xl border min-h-[200px]">
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            {nodes.map((node, index) => {
-              const nodeType = nodeTypes[node.type];
-              const Icon = nodeType.icon;
-              const isActive = activeStep === index && isSimulating;
-              
-              return (
-                <div key={node.id} className="flex items-center">
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ 
-                      opacity: 1, 
-                      scale: isActive ? 1.1 : 1,
-                      boxShadow: isActive ? '0 0 20px rgba(var(--primary), 0.5)' : 'none'
-                    }}
-                    className="relative group"
-                  >
-                    <div className={cn(
-                      "flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all cursor-pointer min-w-[80px]",
-                      isActive ? "border-primary bg-primary/10" : "border-border/50 bg-card hover:border-primary/50"
-                    )}>
-                      <div className={cn(
-                        "w-10 h-10 rounded-lg flex items-center justify-center transition-transform",
-                        nodeType.color,
-                        isActive && "animate-pulse"
-                      )}>
-                        <Icon className="w-5 h-5 text-white" />
-                      </div>
-                      <span className="text-xs font-medium text-center leading-tight">{node.label}</span>
-                      
-                      {nodes.length > 2 && !isSimulating && (
-                        <button
-                          onClick={() => removeNode(node.id)}
-                          className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      )}
-                    </div>
-                  </motion.div>
-                  
-                  {index < nodes.length - 1 && (
-                    <motion.div 
-                      className="w-8 h-0.5 mx-1"
-                      animate={{
-                        backgroundColor: activeStep > index ? 'hsl(var(--primary))' : 'hsl(var(--border))',
-                      }}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
+// ============= INSTANCE STATUS DEMO =============
 
-        {/* Add Node Buttons */}
-        <div className="flex flex-wrap justify-center gap-2">
-          {Object.entries(nodeTypes).map(([type, config]) => {
-            const Icon = config.icon;
-            return (
-              <Button
-                key={type}
-                variant="outline"
-                size="sm"
-                onClick={() => addNode(type as FlowNode['type'])}
-                disabled={isSimulating || nodes.length >= 8}
-                className="text-xs gap-1.5"
-              >
-                <Plus className="w-3 h-3" />
-                <Icon className="w-3.5 h-3.5" />
-                {config.label}
-              </Button>
-            );
-          })}
-        </div>
+const InstanceStatusDemo = () => {
+  const [isMobile, setIsMobile] = useState(false);
 
-        {/* Simulation Console */}
-        {simulationMessages.length > 0 && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            className="bg-gray-900 rounded-lg p-3 font-mono text-xs space-y-1 overflow-hidden"
-          >
-            {simulationMessages.map((msg, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.1 }}
-                className="text-green-400"
-              >
-                <span className="text-gray-500">[{new Date().toLocaleTimeString()}]</span> {msg}
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
-        {/* Run Button */}
-        <Button 
-          onClick={runSimulation}
-          disabled={isSimulating}
-          className="w-full h-11 font-bold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+  const instances = [
+    { name: 'Vendas Principal', phone: '+55 11 99999-1234', status: 'connected', messages: 1247 },
+    { name: 'Suporte 24h', phone: '+55 11 88888-5678', status: 'connected', messages: 892 },
+    { name: 'Financeiro', phone: '+55 21 77777-9012', status: 'connected', messages: 456 },
+  ];
+
+  return (
+    <div className="space-y-2">
+      {instances.map((instance, index) => (
+        <motion.div
+          key={instance.name}
+          initial={{ opacity: 0, x: -20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: index * 0.1 }}
+          className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-card rounded-xl border hover:shadow-md transition-shadow"
         >
-          {isSimulating ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Simulando Flow...
-            </>
-          ) : (
-            <>
-              <Play className="w-4 h-4 mr-2" />
-              Simular Execução
-            </>
-          )}
-        </Button>
-      </CardContent>
-    </Card>
+          <div className="relative shrink-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-green-500/10 flex items-center justify-center">
+              <Smartphone className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500" />
+            </div>
+            <motion.span 
+              className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-500 rounded-full border-2 border-background"
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h4 className="font-semibold text-xs sm:text-sm truncate">{instance.name}</h4>
+            <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{instance.phone}</p>
+          </div>
+          <div className="text-right shrink-0">
+            <motion.div 
+              className="text-xs sm:text-sm font-bold text-primary"
+              animate={{ scale: [1, 1.05, 1] }}
+              transition={{ duration: 1, repeat: Infinity }}
+            >
+              {instance.messages.toLocaleString()}
+            </motion.div>
+            <p className="text-[9px] sm:text-[10px] text-muted-foreground">msgs/dia</p>
+          </div>
+        </motion.div>
+      ))}
+    </div>
   );
 };
 
@@ -1307,26 +1244,28 @@ export default function Sobre() {
         subtitle="Três formas de testar a plataforma agora mesmo: converse com a Luna IA, monte um flow, ou receba uma mensagem real no seu WhatsApp."
         className="bg-gradient-to-b from-background via-primary/5 to-background"
       >
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Luna IA Chat */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
+            className="lg:col-span-1"
           >
             <LiveDemoChat />
           </motion.div>
 
-          {/* Flow Builder */}
+          {/* Flow Builder - ocupa 2 colunas no desktop */}
           <motion.div
             id="flow-builder"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.1 }}
+            className="lg:col-span-1"
           >
-            <InteractiveFlowBuilder />
+            <FlowBuilderDemo />
           </motion.div>
 
           {/* WhatsApp Test */}
@@ -1335,6 +1274,7 @@ export default function Sobre() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.2 }}
+            className="lg:col-span-1"
           >
             <WhatsAppTestMessage />
           </motion.div>
