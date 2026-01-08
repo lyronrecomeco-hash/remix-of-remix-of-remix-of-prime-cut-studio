@@ -167,7 +167,7 @@ serve(async (req) => {
       });
 
       try {
-        // Usar configuração global diretamente para demo (não precisa de instância)
+        // Configuração global do VPS
         const NATIVE_VPS_URL = "http://72.62.108.24:3000";
         const NATIVE_VPS_TOKEN = "genesis-master-token-2024-secure";
 
@@ -181,80 +181,138 @@ serve(async (req) => {
         const backendUrl = globalConfig?.backend_url || NATIVE_VPS_URL;
         const backendToken = globalConfig?.master_token || NATIVE_VPS_TOKEN;
 
-        // Buscar qualquer instância conectada para usar como referência
-        const { data: anyInstance } = await supabaseAdmin
+        // Buscar instância conectada - verificar múltiplos campos de status
+        // orchestrated_status e effective_status são mais confiáveis que status
+        const { data: connectedInstance } = await supabaseAdmin
           .from('genesis_instances')
-          .select('id, user_id')
-          .eq('status', 'connected')
+          .select('id, user_id, name, phone_number, orchestrated_status, effective_status, status')
+          .or('orchestrated_status.eq.connected,effective_status.eq.connected,status.eq.connected')
+          .order('updated_at', { ascending: false })
           .limit(1)
           .maybeSingle();
 
-        // Se não há instância conectada, usar uma instância demo fixa
-        const demoInstanceId = anyInstance?.id || 'demo-instance';
-        const demoUserId = anyInstance?.user_id || user.id;
+        if (!connectedInstance) {
+          console.warn('[genesis-backend-proxy] No connected instance found for demo');
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: 'Nenhuma instância WhatsApp conectada. Conecte uma instância primeiro.',
+            }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // V8 usa o NOME da instância no endpoint, não o UUID
+        const instanceKey = connectedInstance.name || connectedInstance.id;
+        const demoUserId = connectedInstance.user_id || user.id;
 
         const cleanBackendUrl = String(backendUrl).replace(/\/$/, '');
-        const sendUrl = `${cleanBackendUrl}/api/send`;
 
         console.log('[genesis-backend-proxy] Demo sending message', {
-          instanceId: demoInstanceId,
+          instanceKey,
+          instanceId: connectedInstance.id,
           to: requestBody.to?.replace(/\d{4}$/, '****'),
           msgLength: requestBody.message?.length,
         });
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000);
+        // V8 endpoints - tentar múltiplos paths
+        const v8Endpoints = [
+          `/api/instance/${encodeURIComponent(instanceKey)}/send`,
+          `/api/instance/${encodeURIComponent(instanceKey)}/send-message`,
+          `/api/instance/${encodeURIComponent(instanceKey)}/sendText`,
+          `/api/instance/${encodeURIComponent(instanceKey)}/send-text`,
+        ];
 
-        const resp = await fetch(sendUrl, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${backendToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            instanceId: demoInstanceId,
-            to: requestBody.to,
-            message: requestBody.message,
-          }),
-          signal: controller.signal,
-        });
+        const payload = {
+          instanceId: connectedInstance.id,
+          to: requestBody.to,
+          phone: requestBody.to,
+          number: requestBody.to,
+          message: requestBody.message,
+          text: requestBody.message,
+        };
 
-        clearTimeout(timeoutId);
+        let lastResp: Response | null = null;
+        let lastParsed: any = null;
+        let success = false;
 
-        const text = await resp.text();
-        let parsed: any = text;
-        try {
-          parsed = text ? JSON.parse(text) : {};
-        } catch {
-          // keep as text
-        }
+        for (const endpoint of v8Endpoints) {
+          const sendUrl = `${cleanBackendUrl}${endpoint}`;
+          console.log('[genesis-backend-proxy] Trying endpoint:', endpoint);
 
-        console.log('[genesis-backend-proxy] Demo send response', {
-          status: resp.status,
-          ok: resp.ok,
-          success: parsed?.success,
-        });
-
-        const success = resp.ok && parsed?.success !== false && !parsed?.error;
-
-        // Log do evento (opcional - não bloqueia)
-        if (demoInstanceId !== 'demo-instance') {
           try {
-            await supabaseAdmin.from('genesis_event_logs').insert({
-              instance_id: demoInstanceId,
-              user_id: demoUserId,
-              event_type: success ? 'demo_message_sent' : 'demo_message_error',
-              severity: success ? 'info' : 'warning',
-              message: success ? 'Mensagem demo enviada' : `Erro demo: ${parsed?.error || 'unknown'}`,
-              details: { to: requestBody.to?.replace(/\d{4}$/, '****'), source: 'sobre_page' },
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+            const resp = await fetch(sendUrl, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${backendToken}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(payload),
+              signal: controller.signal,
             });
-          } catch (e) {
-            console.warn('Failed to log demo event', e);
+
+            clearTimeout(timeoutId);
+            lastResp = resp;
+
+            const text = await resp.text();
+            try {
+              lastParsed = text ? JSON.parse(text) : {};
+            } catch {
+              lastParsed = text;
+            }
+
+            // Check for 404 "Cannot POST" - endpoint doesn't exist, try next
+            if (resp.status === 404 && typeof lastParsed === 'string' && lastParsed.includes('Cannot POST')) {
+              console.log('[genesis-backend-proxy] Endpoint not found, trying next:', endpoint);
+              continue;
+            }
+
+            console.log('[genesis-backend-proxy] Demo send response', {
+              endpoint,
+              status: resp.status,
+              ok: resp.ok,
+              success: lastParsed?.success,
+            });
+
+            // Success!
+            if (resp.ok && lastParsed?.success !== false && !lastParsed?.error) {
+              success = true;
+              break;
+            }
+
+            // If we got a real error (not 404), stop trying
+            if (resp.status !== 404) {
+              break;
+            }
+          } catch (e: any) {
+            console.warn('[genesis-backend-proxy] Endpoint failed:', endpoint, e.message);
+            continue;
           }
         }
 
+        // Log do evento
+        try {
+          await supabaseAdmin.from('genesis_event_logs').insert({
+            instance_id: connectedInstance.id,
+            user_id: demoUserId,
+            event_type: success ? 'demo_message_sent' : 'demo_message_error',
+            severity: success ? 'info' : 'warning',
+            message: success ? 'Mensagem demo enviada' : `Erro demo: ${lastParsed?.error || 'falha'}`,
+            details: { to: requestBody.to?.replace(/\d{4}$/, '****'), source: 'sobre_page' },
+          });
+        } catch (e) {
+          console.warn('Failed to log demo event', e);
+        }
+
         return new Response(
-          JSON.stringify({ success, data: parsed, error: parsed?.error }),
+          JSON.stringify({ 
+            success, 
+            data: lastParsed, 
+            error: success ? undefined : (lastParsed?.error || lastParsed?.message || 'Falha ao enviar mensagem'),
+          }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       } catch (err: any) {
