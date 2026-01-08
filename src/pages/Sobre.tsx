@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence, useInView } from 'framer-motion';
+import { useSecurityProtection } from '@/hooks/useSecurityProtection';
 import { 
   Zap, 
   MessageSquare, 
@@ -1130,6 +1131,9 @@ const CampaignsDemo = () => {
 // ============= MAIN COMPONENT =============
 
 export default function Sobre() {
+  // Apply security protection to prevent navigation away from this page
+  useSecurityProtection();
+  
   const { scrollYProgress } = useScroll();
   const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
   const heroScale = useTransform(scrollYProgress, [0, 0.2], [1, 0.95]);
