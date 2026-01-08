@@ -2906,6 +2906,368 @@ export type Database = {
           },
         ]
       }
+      genesis_economy_analytics: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          metadata: Json | null
+          metric_type: string
+          metric_value: number
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          metadata?: Json | null
+          metric_type: string
+          metric_value?: number
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          metadata?: Json | null
+          metric_type?: string
+          metric_value?: number
+        }
+        Relationships: []
+      }
+      genesis_economy_consumption_log: {
+        Row: {
+          action_type: string
+          chatbot_id: string | null
+          created_at: string
+          credits_consumed: number
+          flow_id: string | null
+          id: string
+          instance_id: string | null
+          metadata: Json | null
+          source_id: string | null
+          source_type: string
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          chatbot_id?: string | null
+          created_at?: string
+          credits_consumed: number
+          flow_id?: string | null
+          id?: string
+          instance_id?: string | null
+          metadata?: Json | null
+          source_id?: string | null
+          source_type: string
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          chatbot_id?: string | null
+          created_at?: string
+          credits_consumed?: number
+          flow_id?: string | null
+          id?: string
+          instance_id?: string | null
+          metadata?: Json | null
+          source_id?: string | null
+          source_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_economy_consumption_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_economy_consumption_rules: {
+        Row: {
+          action_label: string
+          action_type: string
+          created_at: string
+          credits_cost: number
+          description: string | null
+          id: string
+          is_active: boolean
+          priority_source: string
+          updated_at: string
+        }
+        Insert: {
+          action_label: string
+          action_type: string
+          created_at?: string
+          credits_cost?: number
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          priority_source?: string
+          updated_at?: string
+        }
+        Update: {
+          action_label?: string
+          action_type?: string
+          created_at?: string
+          credits_cost?: number
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          priority_source?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      genesis_economy_credit_packages: {
+        Row: {
+          bonus_credits: number | null
+          created_at: string
+          credits_amount: number
+          display_order: number | null
+          expiration_days: number | null
+          id: string
+          is_active: boolean
+          is_not_recommended: boolean | null
+          is_recommended: boolean | null
+          name: string
+          price: number
+          price_per_credit: number | null
+          updated_at: string
+        }
+        Insert: {
+          bonus_credits?: number | null
+          created_at?: string
+          credits_amount: number
+          display_order?: number | null
+          expiration_days?: number | null
+          id?: string
+          is_active?: boolean
+          is_not_recommended?: boolean | null
+          is_recommended?: boolean | null
+          name: string
+          price: number
+          price_per_credit?: number | null
+          updated_at?: string
+        }
+        Update: {
+          bonus_credits?: number | null
+          created_at?: string
+          credits_amount?: number
+          display_order?: number | null
+          expiration_days?: number | null
+          id?: string
+          is_active?: boolean
+          is_not_recommended?: boolean | null
+          is_recommended?: boolean | null
+          name?: string
+          price?: number
+          price_per_credit?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      genesis_economy_plans: {
+        Row: {
+          billing_cycle: string
+          created_at: string
+          credits_included: number
+          description: string | null
+          display_order: number | null
+          features_enabled: Json
+          id: string
+          is_active: boolean
+          is_recommended: boolean | null
+          max_ai_calls_month: number
+          max_flows: number
+          max_instances: number
+          max_messages_month: number
+          max_webhooks: number
+          name: string
+          overusage_behavior: string
+          price_monthly: number
+          price_yearly: number | null
+          processing_priority: number
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          billing_cycle?: string
+          created_at?: string
+          credits_included?: number
+          description?: string | null
+          display_order?: number | null
+          features_enabled?: Json
+          id?: string
+          is_active?: boolean
+          is_recommended?: boolean | null
+          max_ai_calls_month?: number
+          max_flows?: number
+          max_instances?: number
+          max_messages_month?: number
+          max_webhooks?: number
+          name: string
+          overusage_behavior?: string
+          price_monthly?: number
+          price_yearly?: number | null
+          processing_priority?: number
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          billing_cycle?: string
+          created_at?: string
+          credits_included?: number
+          description?: string | null
+          display_order?: number | null
+          features_enabled?: Json
+          id?: string
+          is_active?: boolean
+          is_recommended?: boolean | null
+          max_ai_calls_month?: number
+          max_flows?: number
+          max_instances?: number
+          max_messages_month?: number
+          max_webhooks?: number
+          name?: string
+          overusage_behavior?: string
+          price_monthly?: number
+          price_yearly?: number | null
+          processing_priority?: number
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      genesis_economy_user_credits: {
+        Row: {
+          created_at: string
+          credits_available: number | null
+          credits_bonus: number
+          credits_purchased: number
+          credits_used: number
+          expires_at: string | null
+          external_payment_id: string | null
+          id: string
+          package_id: string | null
+          purchased_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits_available?: number | null
+          credits_bonus?: number
+          credits_purchased?: number
+          credits_used?: number
+          expires_at?: string | null
+          external_payment_id?: string | null
+          id?: string
+          package_id?: string | null
+          purchased_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits_available?: number | null
+          credits_bonus?: number
+          credits_purchased?: number
+          credits_used?: number
+          expires_at?: string | null
+          external_payment_id?: string | null
+          id?: string
+          package_id?: string | null
+          purchased_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_economy_user_credits_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_economy_credit_packages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_economy_user_credits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_economy_user_subscriptions: {
+        Row: {
+          ai_calls_used: number
+          cancelled_at: string | null
+          created_at: string
+          expires_at: string | null
+          external_customer_id: string | null
+          external_subscription_id: string | null
+          flow_executions_used: number
+          id: string
+          messages_used: number
+          plan_id: string
+          started_at: string
+          status: string
+          updated_at: string
+          usage_reset_at: string
+          user_id: string
+          webhooks_used: number
+        }
+        Insert: {
+          ai_calls_used?: number
+          cancelled_at?: string | null
+          created_at?: string
+          expires_at?: string | null
+          external_customer_id?: string | null
+          external_subscription_id?: string | null
+          flow_executions_used?: number
+          id?: string
+          messages_used?: number
+          plan_id: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+          usage_reset_at?: string
+          user_id: string
+          webhooks_used?: number
+        }
+        Update: {
+          ai_calls_used?: number
+          cancelled_at?: string | null
+          created_at?: string
+          expires_at?: string | null
+          external_customer_id?: string | null
+          external_subscription_id?: string | null
+          flow_executions_used?: number
+          id?: string
+          messages_used?: number
+          plan_id?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+          usage_reset_at?: string
+          user_id?: string
+          webhooks_used?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_economy_user_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_economy_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_economy_user_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       genesis_event_logs: {
         Row: {
           created_at: string | null
