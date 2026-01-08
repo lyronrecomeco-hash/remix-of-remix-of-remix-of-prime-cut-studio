@@ -2779,6 +2779,420 @@ export type Database = {
           },
         ]
       }
+      genesis_campaign_audiences: {
+        Row: {
+          contact_count: number | null
+          created_at: string | null
+          description: string | null
+          filters: Json
+          id: string
+          is_active: boolean | null
+          last_calculated_at: string | null
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          contact_count?: number | null
+          created_at?: string | null
+          description?: string | null
+          filters?: Json
+          id?: string
+          is_active?: boolean | null
+          last_calculated_at?: string | null
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          contact_count?: number | null
+          created_at?: string | null
+          description?: string | null
+          filters?: Json
+          id?: string
+          is_active?: boolean | null
+          last_calculated_at?: string | null
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_campaign_audiences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_campaign_contacts: {
+        Row: {
+          attempt_count: number | null
+          campaign_id: string
+          contact_data: Json | null
+          contact_name: string | null
+          contact_phone: string
+          created_at: string | null
+          delivered_at: string | null
+          error_message: string | null
+          id: string
+          last_attempt_at: string | null
+          locked_at: string | null
+          max_attempts: number | null
+          message_sent: string | null
+          read_at: string | null
+          replied_at: string | null
+          sent_at: string | null
+          status: string | null
+          updated_at: string | null
+          variation_index: number | null
+        }
+        Insert: {
+          attempt_count?: number | null
+          campaign_id: string
+          contact_data?: Json | null
+          contact_name?: string | null
+          contact_phone: string
+          created_at?: string | null
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          locked_at?: string | null
+          max_attempts?: number | null
+          message_sent?: string | null
+          read_at?: string | null
+          replied_at?: string | null
+          sent_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          variation_index?: number | null
+        }
+        Update: {
+          attempt_count?: number | null
+          campaign_id?: string
+          contact_data?: Json | null
+          contact_name?: string | null
+          contact_phone?: string
+          created_at?: string | null
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          locked_at?: string | null
+          max_attempts?: number | null
+          message_sent?: string | null
+          read_at?: string | null
+          replied_at?: string | null
+          sent_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          variation_index?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_campaign_contacts_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_campaign_dedup: {
+        Row: {
+          campaign_id: string
+          expires_at: string
+          id: string
+          message_hash: string
+          phone_hash: string
+          sent_at: string | null
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          expires_at: string
+          id?: string
+          message_hash: string
+          phone_hash: string
+          sent_at?: string | null
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          expires_at?: string
+          id?: string
+          message_hash?: string
+          phone_hash?: string
+          sent_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_campaign_dedup_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_campaign_dedup_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_campaign_logs: {
+        Row: {
+          campaign_id: string
+          contact_id: string | null
+          created_at: string | null
+          details: Json | null
+          event_type: string
+          id: string
+          message: string
+          severity: string | null
+        }
+        Insert: {
+          campaign_id: string
+          contact_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          event_type: string
+          id?: string
+          message: string
+          severity?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          contact_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          event_type?: string
+          id?: string
+          message?: string
+          severity?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_campaign_logs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_campaign_logs_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_campaign_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_campaign_settings: {
+        Row: {
+          auto_pause_on_block: boolean | null
+          block_threshold: number | null
+          cooldown_after_block_hours: number | null
+          created_at: string | null
+          emergency_stop_enabled: boolean | null
+          id: string
+          max_messages_per_day: number | null
+          max_messages_per_hour: number | null
+          max_messages_per_minute: number | null
+          read_receipt_delay: boolean | null
+          typing_simulation: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auto_pause_on_block?: boolean | null
+          block_threshold?: number | null
+          cooldown_after_block_hours?: number | null
+          created_at?: string | null
+          emergency_stop_enabled?: boolean | null
+          id?: string
+          max_messages_per_day?: number | null
+          max_messages_per_hour?: number | null
+          max_messages_per_minute?: number | null
+          read_receipt_delay?: boolean | null
+          typing_simulation?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auto_pause_on_block?: boolean | null
+          block_threshold?: number | null
+          cooldown_after_block_hours?: number | null
+          created_at?: string | null
+          emergency_stop_enabled?: boolean | null
+          id?: string
+          max_messages_per_day?: number | null
+          max_messages_per_hour?: number | null
+          max_messages_per_minute?: number | null
+          read_receipt_delay?: boolean | null
+          typing_simulation?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_campaign_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "genesis_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_campaigns: {
+        Row: {
+          batch_size: number | null
+          blocked_count: number | null
+          campaign_type: string
+          completed_at: string | null
+          created_at: string | null
+          credits_consumed: number | null
+          credits_estimated: number | null
+          delay_max_seconds: number | null
+          delay_min_seconds: number | null
+          delivered_count: number | null
+          description: string | null
+          error_message: string | null
+          failed_count: number | null
+          id: string
+          instance_id: string
+          luna_enabled: boolean | null
+          luna_generated_variations: Json | null
+          luna_similarity_level: string | null
+          luna_variations_count: number | null
+          media_type: string | null
+          media_url: string | null
+          message_template: string
+          message_variables: Json | null
+          metadata: Json | null
+          name: string
+          pause_after_batch: number | null
+          pause_duration_seconds: number | null
+          paused_at: string | null
+          read_count: number | null
+          replied_count: number | null
+          scheduled_at: string | null
+          send_on_weekends: boolean | null
+          send_window_end: string | null
+          send_window_start: string | null
+          sent_count: number | null
+          started_at: string | null
+          status: string
+          total_contacts: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          batch_size?: number | null
+          blocked_count?: number | null
+          campaign_type?: string
+          completed_at?: string | null
+          created_at?: string | null
+          credits_consumed?: number | null
+          credits_estimated?: number | null
+          delay_max_seconds?: number | null
+          delay_min_seconds?: number | null
+          delivered_count?: number | null
+          description?: string | null
+          error_message?: string | null
+          failed_count?: number | null
+          id?: string
+          instance_id: string
+          luna_enabled?: boolean | null
+          luna_generated_variations?: Json | null
+          luna_similarity_level?: string | null
+          luna_variations_count?: number | null
+          media_type?: string | null
+          media_url?: string | null
+          message_template: string
+          message_variables?: Json | null
+          metadata?: Json | null
+          name: string
+          pause_after_batch?: number | null
+          pause_duration_seconds?: number | null
+          paused_at?: string | null
+          read_count?: number | null
+          replied_count?: number | null
+          scheduled_at?: string | null
+          send_on_weekends?: boolean | null
+          send_window_end?: string | null
+          send_window_start?: string | null
+          sent_count?: number | null
+          started_at?: string | null
+          status?: string
+          total_contacts?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          batch_size?: number | null
+          blocked_count?: number | null
+          campaign_type?: string
+          completed_at?: string | null
+          created_at?: string | null
+          credits_consumed?: number | null
+          credits_estimated?: number | null
+          delay_max_seconds?: number | null
+          delay_min_seconds?: number | null
+          delivered_count?: number | null
+          description?: string | null
+          error_message?: string | null
+          failed_count?: number | null
+          id?: string
+          instance_id?: string
+          luna_enabled?: boolean | null
+          luna_generated_variations?: Json | null
+          luna_similarity_level?: string | null
+          luna_variations_count?: number | null
+          media_type?: string | null
+          media_url?: string | null
+          message_template?: string
+          message_variables?: Json | null
+          metadata?: Json | null
+          name?: string
+          pause_after_batch?: number | null
+          pause_duration_seconds?: number | null
+          paused_at?: string | null
+          read_count?: number | null
+          replied_count?: number | null
+          scheduled_at?: string | null
+          send_on_weekends?: boolean | null
+          send_window_end?: string | null
+          send_window_start?: string | null
+          sent_count?: number | null
+          started_at?: string | null
+          status?: string
+          total_contacts?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_campaigns_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_campaigns_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       genesis_credit_transactions: {
         Row: {
           amount: number
@@ -7699,6 +8113,10 @@ export type Database = {
         Args: { p_instance_id: string }
         Returns: number
       }
+      genesis_check_campaign_dedup: {
+        Args: { p_message: string; p_phone: string; p_user: string }
+        Returns: boolean
+      }
       genesis_check_webhook_dedup: {
         Args: { p_event_id: string; p_webhook_config_id: string }
         Returns: boolean
@@ -7804,6 +8222,16 @@ export type Database = {
       genesis_record_metrics: {
         Args: { p_instance_id: string; p_metrics: Json }
         Returns: string
+      }
+      genesis_register_campaign_dedup: {
+        Args: {
+          p_campaign: string
+          p_hours?: number
+          p_message: string
+          p_phone: string
+          p_user: string
+        }
+        Returns: undefined
       }
       genesis_revoke_instance_tokens: {
         Args: { p_instance_id: string }

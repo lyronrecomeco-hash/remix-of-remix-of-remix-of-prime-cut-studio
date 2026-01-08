@@ -25,6 +25,7 @@ import {
   Gift,
   Bug,
   Webhook,
+  Send,
   Bell,
   AlertTriangle,
   Sun,
@@ -55,6 +56,7 @@ import { GenesisMyAccount } from '@/components/genesis/GenesisMyAccount';
 import { GenesisMetricsDashboard } from '@/components/genesis/GenesisMetricsDashboard';
 import { GenesisAlertRules } from '@/components/genesis/GenesisAlertRules';
 import { GenesisHelpModal } from '@/components/genesis/GenesisHelpModal';
+import { GenesisCampaigns } from '@/components/genesis/campaigns';
 // Dashboard component with real data - Premium Design
 const GenesisDashboard = ({ onNavigate }: { onNavigate: (tab: string) => void }) => {
   const { genesisUser, credits, subscription, isSuperAdmin } = useGenesisAuth();
@@ -480,6 +482,7 @@ export default function GenesisPanel() {
     { id: 'instances', label: 'Instâncias', icon: Smartphone },
     { id: 'flows', label: 'Flow Builder', icon: GitBranch },
     { id: 'chatbots', label: 'Chatbots', icon: Bot },
+    { id: 'campaigns', label: 'Campanhas', icon: Send },
     { id: 'metrics', label: 'Métricas', icon: Activity },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'credits', label: 'Créditos', icon: CreditCard },
@@ -503,6 +506,8 @@ export default function GenesisPanel() {
         />;
       case 'chatbots':
         return <GenesisChatbots instances={instances} />;
+      case 'campaigns':
+        return <GenesisCampaigns />;
       case 'metrics':
         return (
           <div className="space-y-6">
