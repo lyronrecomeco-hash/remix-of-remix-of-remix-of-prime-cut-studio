@@ -54,8 +54,7 @@ import { GenesisWebhooks } from '@/components/genesis/GenesisWebhooks';
 import { GenesisMyAccount } from '@/components/genesis/GenesisMyAccount';
 import { GenesisMetricsDashboard } from '@/components/genesis/GenesisMetricsDashboard';
 import { GenesisAlertRules } from '@/components/genesis/GenesisAlertRules';
-
-
+import { GenesisHelpModal } from '@/components/genesis/GenesisHelpModal';
 // Dashboard component with real data - Premium Design
 const GenesisDashboard = ({ onNavigate }: { onNavigate: (tab: string) => void }) => {
   const { genesisUser, credits, subscription, isSuperAdmin } = useGenesisAuth();
@@ -407,6 +406,7 @@ export default function GenesisPanel() {
   const [instances, setInstances] = useState<Array<{ id: string; name: string; status: string }>>([]);
   const [showWelcome, setShowWelcome] = useState(false);
   const [isEditingFlow, setIsEditingFlow] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('genesis-theme') !== 'light';
@@ -616,21 +616,21 @@ export default function GenesisPanel() {
             {/* Logo for desktop */}
             <div className="hidden lg:flex items-center gap-3">
               <motion.div 
-                className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary via-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20"
+                className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary via-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20"
                 whileHover={{ scale: 1.05, rotate: 5 }}
                 transition={{ type: 'spring', stiffness: 400 }}
               >
                 <Zap className="w-5 h-5 text-primary-foreground" />
               </motion.div>
               <div className="flex flex-col">
-                <span className="font-bold text-lg leading-tight">Genesis Hub</span>
-                <span className="text-[10px] text-muted-foreground leading-none">Automation Platform</span>
+                <span className="font-bold text-xl leading-tight">Genesis Hub</span>
+                <span className="text-xs text-muted-foreground leading-none">Automação WhatsApp</span>
               </div>
             </div>
             
             {/* Current page indicator */}
             <div className="hidden lg:flex items-center gap-2 ml-6 pl-6 border-l border-border">
-              <h2 className="font-semibold text-sm text-foreground">
+              <h2 className="font-semibold text-base text-foreground">
                 {navItems.find(i => i.id === activeTab)?.label || 'Instâncias'}
               </h2>
             </div>
@@ -638,9 +638,9 @@ export default function GenesisPanel() {
 
           <div className="flex items-center gap-2">
             {/* Credits Balance Badge with Genesis Coin */}
-            <Badge variant="secondary" className="gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-600 border-amber-500/20 hidden sm:flex">
-              <span className="w-4 h-4 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-[9px] font-bold text-white shadow-sm">G</span>
-              <span className="text-xs font-medium">{credits?.available_credits ?? 300} créditos disponíveis!</span>
+            <Badge variant="secondary" className="gap-2 px-4 py-1.5 bg-amber-500/10 text-amber-600 border-amber-500/20 hidden sm:flex">
+              <span className="w-5 h-5 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-[10px] font-bold text-white shadow-sm">G</span>
+              <span className="text-sm font-medium">{credits?.available_credits ?? 300} créditos disponíveis!</span>
             </Badge>
 
             {/* Theme Toggle */}
@@ -701,7 +701,7 @@ export default function GenesisPanel() {
                   <Settings className="w-4 h-4 mr-2" />
                   Configurações
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowHelpModal(true)}>
                   <HelpCircle className="w-4 h-4 mr-2" />
                   Ajuda
                 </DropdownMenuItem>
@@ -862,6 +862,12 @@ export default function GenesisPanel() {
         open={showWelcome} 
         onComplete={handleWelcomeComplete}
         userName={genesisUser?.name?.split(' ')[0]}
+      />
+
+      {/* Help Modal */}
+      <GenesisHelpModal 
+        open={showHelpModal} 
+        onOpenChange={setShowHelpModal}
       />
     </div>
   );
