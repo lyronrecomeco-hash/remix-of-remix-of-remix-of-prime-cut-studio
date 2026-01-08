@@ -25,6 +25,7 @@ import {
   Server,
   Zap,
   Github,
+  Wallet,
   HardDriveDownload
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -50,6 +51,7 @@ import ProposalsManager from '@/components/owner/ProposalsManager';
 import GenesisInstancesMonitor from '@/components/owner/GenesisInstancesMonitor';
 import GitHubManager from '@/components/owner/GitHubManager';
 import VPSConfigManager from '@/components/owner/VPSConfigManager';
+import EconomyManager from '@/components/owner/EconomyManager';
 import { OwnerProfileMenu } from '@/components/owner/OwnerProfileMenu';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -79,6 +81,7 @@ const navSections: NavSection[] = [
   {
     title: 'Gestão',
     items: [
+      { id: 'economy', label: 'Economy', icon: Wallet, badge: 'Core', badgeVariant: 'default' },
       { id: 'subscriptions', label: 'Assinaturas', icon: CreditCard },
       { id: 'users', label: 'Usuários', icon: Users },
       { id: 'affiliates', label: 'Afiliados', icon: Users },
@@ -168,6 +171,8 @@ const OwnerPanel = () => {
         return <OwnerDashboard />;
       case 'leads':
         return <LeadsManager />;
+      case 'economy':
+        return <EconomyManager />;
       case 'subscriptions':
         return <SubscriptionManager />;
       case 'users':
