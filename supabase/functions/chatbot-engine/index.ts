@@ -691,7 +691,12 @@ async function callLunaAI(
 
 // =====================================================
 // CORE: Obter ou criar sessão
+// - Garante SESSÃO ÚNICA por contato + instância
+// - Verifica timeout de inatividade (30 min default)
+// - NUNCA cria sessão duplicada
 // =====================================================
+const SESSION_TIMEOUT_MINUTES = 30;
+
 async function getOrCreateSession(
   supabase: any,
   chatbotId: string,
@@ -699,15 +704,7 @@ async function getOrCreateSession(
   instanceId: string,
   forceNew: boolean = false
 ): Promise<Session | null> {
-  if (forceNew) {
-    await supabase
-      .from('chatbot_sessions')
-      .update({ status: 'cancelled', ended_at: new Date().toISOString() })
-      .eq('contact_id', contactId)
-      .eq('instance_id', instanceId)
-      .eq('status', 'active');
-  }
-  
+  // Buscar sessão ativa existente
   const { data: existingSession } = await supabase
     .from('chatbot_sessions')
     .select('*')
@@ -716,10 +713,53 @@ async function getOrCreateSession(
     .eq('status', 'active')
     .maybeSingle();
   
-  if (existingSession && !forceNew) {
-    return existingSession as Session;
+  if (existingSession) {
+    // Verificar se sessão expirou por inatividade
+    const lastInteraction = existingSession.last_interaction_at || existingSession.created_at;
+    const inactiveMs = Date.now() - new Date(lastInteraction).getTime();
+    const inactiveMinutes = inactiveMs / (1000 * 60);
+    
+    if (inactiveMinutes > SESSION_TIMEOUT_MINUTES) {
+      console.log(`[SESSION] Session ${existingSession.id} expired (${Math.round(inactiveMinutes)} min inactive), closing`);
+      await supabase
+        .from('chatbot_sessions')
+        .update({ status: 'timeout', ended_at: new Date().toISOString() })
+        .eq('id', existingSession.id);
+      // Continuar para criar nova sessão
+    } else if (!forceNew) {
+      // Sessão válida - reusar
+      console.log(`[SESSION] Reusing active session: ${existingSession.id}`);
+      return existingSession as Session;
+    } else {
+      // forceNew=true: cancelar sessão atual
+      console.log(`[SESSION] Force new: cancelling session ${existingSession.id}`);
+      await supabase
+        .from('chatbot_sessions')
+        .update({ status: 'cancelled', ended_at: new Date().toISOString() })
+        .eq('id', existingSession.id);
+    }
   }
   
+  // Verificação extra: garantir que não há outra sessão ativa (race condition)
+  const { data: checkAgain } = await supabase
+    .from('chatbot_sessions')
+    .select('id')
+    .eq('contact_id', contactId)
+    .eq('instance_id', instanceId)
+    .eq('status', 'active')
+    .maybeSingle();
+  
+  if (checkAgain) {
+    console.log(`[SESSION] Race condition detected, reusing: ${checkAgain.id}`);
+    const { data: reuseSession } = await supabase
+      .from('chatbot_sessions')
+      .select('*')
+      .eq('id', checkAgain.id)
+      .single();
+    return reuseSession as Session;
+  }
+  
+  // Criar nova sessão
   const { data: newSession, error } = await supabase
     .from('chatbot_sessions')
     .insert({
@@ -734,15 +774,29 @@ async function getOrCreateSession(
       status: 'active',
       attempt_count: 0,
       step_data: {},
+      last_interaction_at: new Date().toISOString(),
     })
     .select()
     .single();
   
   if (error) {
+    // Constraint violation = sessão já existe (outro processo criou)
+    if (error.code === '23505') {
+      console.log('[SESSION] Session already created by another process, fetching');
+      const { data: existingNew } = await supabase
+        .from('chatbot_sessions')
+        .select('*')
+        .eq('contact_id', contactId)
+        .eq('instance_id', instanceId)
+        .eq('status', 'active')
+        .maybeSingle();
+      return existingNew as Session;
+    }
     console.error('[SESSION] Error creating session:', error);
     return null;
   }
   
+  console.log(`[SESSION] Created new session: ${newSession.id}`);
   return newSession as Session;
 }
 
@@ -804,8 +858,19 @@ async function processFlowStep(
   const currentStep = flowConfig.steps[currentStepId];
   
   if (!currentStep) {
-    console.error('[FLOW] Step not found:', currentStepId);
-    return { success: false, response: 'Erro interno. Tente novamente.' };
+    console.error('[FLOW] Step not found:', currentStepId, '- redirecting to main_menu');
+    // Fallback: redirecionar para menu principal em vez de erro
+    const fallbackStep = flowConfig.steps['main_menu'] || flowConfig.steps[flowConfig.startStep];
+    if (fallbackStep) {
+      await updateSession(supabase, session.id, {
+        current_step_id: 'main_menu',
+        attempt_count: 0,
+      });
+      const menuMsg = replaceVariables(formatMenu(fallbackStep), { company_name: chatbot.company_name });
+      await sendMessage(supabase, instanceId, contactId, `Desculpe, houve um erro. Vamos recomeçar:\n\n${menuMsg}`);
+      return { success: true, response: menuMsg };
+    }
+    return { success: false, response: 'Erro interno. Digite "oi" para reiniciar.' };
   }
   
   // Extrair saudações personalizadas - suporta AMBOS formatos: greetings e settings
@@ -1233,8 +1298,54 @@ async function processFlowStep(
     return { success: true, response: endMsg };
   }
   
-  // Fallback
-  console.log('[FLOW] Unhandled step type:', currentStep.type);
+  // =====================================================
+  // CONFIRMATION: Passo de confirmação (sim/não)
+  // =====================================================
+  if (currentStep.type === 'confirmation' && userMessage) {
+    const normalized = normalizeText(userMessage);
+    const isYes = ['sim', 's', 'yes', 'y', '1', 'confirmo', 'confirmar', 'correto', 'certo'].includes(normalized);
+    const isNo = ['nao', 'não', 'n', 'no', '2', 'cancelar', 'errado', 'incorreto'].includes(normalized);
+    
+    if (!isYes && !isNo) {
+      const attemptCount = (session.attempt_count || 0) + 1;
+      if (attemptCount >= (chatbot.max_attempts || 3)) {
+        const endMsg = `😔 Não consegui entender. Digite *oi* para reiniciar.`;
+        await sendMessage(supabase, instanceId, contactId, endMsg);
+        await updateSession(supabase, session.id, { status: 'completed' });
+        return { success: true, response: endMsg };
+      }
+      
+      const retryMsg = `Por favor, responda *Sim* ou *Não*:`;
+      await sendMessage(supabase, instanceId, contactId, retryMsg);
+      await updateSession(supabase, session.id, { attempt_count: attemptCount });
+      return { success: true, response: retryMsg };
+    }
+    
+    const nextStepId = isYes 
+      ? (currentStep.transitions?.['yes'] || currentStep.next || 'end_flow')
+      : (currentStep.transitions?.['no'] || 'main_menu');
+    
+    const nextStep = flowConfig.steps[nextStepId];
+    if (nextStep) {
+      return await processNextStep(
+        supabase, chatbot, session, userMessage, instanceId, contactId,
+        nextStep, nextStepId, context, flowConfig
+      );
+    }
+    
+    return { success: true, response: '' };
+  }
+  
+  // Fallback: tipo não tratado - redirecionar para menu
+  console.log('[FLOW] Unhandled step type:', currentStep.type, '- redirecting to menu');
+  const fallbackStep = flowConfig.steps['main_menu'] || flowConfig.steps['end_flow'];
+  if (fallbackStep && userMessage) {
+    await updateSession(supabase, session.id, { current_step_id: 'main_menu', attempt_count: 0 });
+    const menuMsg = replaceVariables(formatMenu(fallbackStep), context);
+    await sendMessage(supabase, instanceId, contactId, menuMsg);
+    return { success: true, response: menuMsg };
+  }
+  
   return { success: false, response: '' };
 }
 
