@@ -410,10 +410,26 @@ export function InstancesManager({ onNavigateToAccount }: InstancesManagerProps 
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col gap-1"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
       >
-        <h1 className="text-2xl font-bold">Minhas Instâncias</h1>
-        <p className="text-sm text-muted-foreground">Gerencie suas conexões WhatsApp</p>
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+            Minhas Instâncias
+          </h1>
+          <p className="text-sm text-muted-foreground">Gerencie suas conexões WhatsApp</p>
+        </div>
+        
+        {/* Stats summary */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-sm font-medium text-green-600">{connectedCount} online</span>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted">
+            <span className="w-2 h-2 rounded-full bg-muted-foreground" />
+            <span className="text-sm font-medium text-muted-foreground">{disconnectedCount} offline</span>
+          </div>
+        </div>
       </motion.div>
 
       {/* Status Filter Tabs */}
@@ -481,22 +497,43 @@ export function InstancesManager({ onNavigateToAccount }: InstancesManagerProps 
                 layoutId={instance.id}
               >
                 <Card className={cn(
-                  "relative overflow-hidden border-2 transition-all duration-300 hover:shadow-xl",
-                  statusConfig.borderColor,
-                  isConnected && "hover:shadow-green-500/10"
+                  "relative overflow-hidden border transition-all duration-300 hover:shadow-xl group",
+                  isConnected 
+                    ? "border-green-500/30 bg-gradient-to-b from-green-500/5 to-transparent hover:shadow-green-500/10" 
+                    : "border-border hover:border-primary/30"
                 )}>
                   {/* Status indicator bar at top */}
-                  <div className={cn("h-1 w-full", statusConfig.color)} />
+                  <div className={cn(
+                    "h-1 w-full transition-all duration-500",
+                    isConnected 
+                      ? "bg-gradient-to-r from-green-400 via-green-500 to-emerald-500" 
+                      : statusConfig.color
+                  )} />
+                  
+                  {/* Animated background pattern for connected */}
+                  {isConnected && (
+                    <div className="absolute inset-0 opacity-5">
+                      <motion.div
+                        className="absolute inset-0"
+                        style={{
+                          backgroundImage: "radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0)",
+                          backgroundSize: "24px 24px"
+                        }}
+                        animate={{ opacity: [0.3, 0.6, 0.3] }}
+                        transition={{ duration: 3, repeat: Infinity }}
+                      />
+                    </div>
+                  )}
                   
                   {/* Refresh button */}
                   <button 
-                    className="absolute top-5 right-4 p-1.5 rounded-md hover:bg-muted transition-colors"
+                    className="absolute top-5 right-4 p-1.5 rounded-md hover:bg-muted transition-colors opacity-0 group-hover:opacity-100"
                     onClick={() => fetchInstances()}
                   >
                     <RefreshCw className="w-4 h-4 text-muted-foreground" />
                   </button>
 
-                  <CardContent className="pt-6 pb-6">
+                  <CardContent className="pt-6 pb-6 relative">
                     {/* Status Badge */}
                     <div className="flex items-center gap-2 mb-4">
                       <Badge className={cn(
@@ -529,7 +566,7 @@ export function InstancesManager({ onNavigateToAccount }: InstancesManagerProps 
                       }
                     </p>
 
-                    {/* Instance Icon */}
+                    {/* Instance Icon - Animated Plug/Socket */}
                     <motion.div 
                       className="my-5 flex justify-center"
                       initial={{ scale: 0 }}
@@ -537,24 +574,100 @@ export function InstancesManager({ onNavigateToAccount }: InstancesManagerProps 
                       transition={{ type: 'spring', delay: 0.2 }}
                     >
                       <div className="relative">
+                        {/* Outer glow ring for connected */}
+                        {isConnected && (
+                          <motion.div
+                            className="absolute inset-0 rounded-full bg-green-500/20"
+                            animate={{ 
+                              scale: [1, 1.4, 1],
+                              opacity: [0.5, 0, 0.5]
+                            }}
+                            transition={{ 
+                              duration: 2, 
+                              repeat: Infinity,
+                              ease: "easeInOut"
+                            }}
+                          />
+                        )}
+                        
+                        {/* Pulse ring for disconnected */}
+                        {!isConnected && unified.status !== 'connecting' && (
+                          <motion.div
+                            className="absolute inset-0 rounded-full border-2 border-dashed border-muted-foreground/30"
+                            animate={{ rotate: 360 }}
+                            transition={{ 
+                              duration: 8, 
+                              repeat: Infinity,
+                              ease: "linear"
+                            }}
+                          />
+                        )}
+                        
+                        {/* Main socket container */}
                         <motion.div
-                          animate={isConnected ? { scale: [1, 1.05, 1] } : {}}
+                          animate={isConnected ? { 
+                            boxShadow: [
+                              "0 0 0 0 rgba(34, 197, 94, 0)",
+                              "0 0 20px 4px rgba(34, 197, 94, 0.3)",
+                              "0 0 0 0 rgba(34, 197, 94, 0)"
+                            ]
+                          } : {}}
                           transition={{ duration: 2, repeat: Infinity }}
                         >
                           <div className={cn(
-                            "w-14 h-14 rounded-full flex items-center justify-center transition-colors",
-                            statusConfig.bgColor
+                            "w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-500 relative overflow-hidden",
+                            isConnected 
+                              ? "bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg shadow-green-500/25" 
+                              : statusConfig.bgColor
                           )}>
-                            <Smartphone className={cn("w-7 h-7", statusConfig.textColor)} />
+                            {/* Animated electricity lines for connected */}
+                            {isConnected && (
+                              <>
+                                <motion.div
+                                  className="absolute inset-0 bg-gradient-to-t from-white/0 via-white/20 to-white/0"
+                                  animate={{ y: ["-100%", "100%"] }}
+                                  transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                                />
+                                <motion.div
+                                  className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-white"
+                                  animate={{ opacity: [1, 0.3, 1] }}
+                                  transition={{ duration: 0.5, repeat: Infinity }}
+                                />
+                              </>
+                            )}
+                            
+                            <Smartphone className={cn(
+                              "w-8 h-8 relative z-10",
+                              isConnected ? "text-white" : statusConfig.textColor
+                            )} />
                           </div>
                         </motion.div>
+                        
+                        {/* Connected badge */}
                         {isConnected && (
                           <motion.div 
-                            className="absolute -bottom-1 -right-1"
+                            className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-background flex items-center justify-center shadow-md"
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: 'spring', delay: 0.3 }}
+                          >
+                            <motion.div
+                              animate={{ scale: [1, 1.2, 1] }}
+                              transition={{ duration: 1, repeat: Infinity }}
+                            >
+                              <CheckCircle2 className="w-5 h-5 text-green-500" />
+                            </motion.div>
+                          </motion.div>
+                        )}
+                        
+                        {/* Disconnected indicator */}
+                        {!isConnected && unified.status === 'disconnected' && (
+                          <motion.div 
+                            className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-background flex items-center justify-center shadow-md"
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                           >
-                            <CheckCircle2 className="w-5 h-5 text-green-500 fill-green-500/20" />
+                            <XCircle className="w-5 h-5 text-red-500" />
                           </motion.div>
                         )}
                       </div>

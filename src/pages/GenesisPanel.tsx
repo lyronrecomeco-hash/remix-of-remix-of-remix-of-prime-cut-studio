@@ -26,7 +26,9 @@ import {
   Bug,
   Webhook,
   Bell,
-  AlertTriangle
+  AlertTriangle,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -399,12 +401,32 @@ const GenesisDashboard = ({ onNavigate }: { onNavigate: (tab: string) => void })
 export default function GenesisPanel() {
   const navigate = useNavigate();
   const { user, genesisUser, credits, loading, isSuperAdmin, signOut } = useGenesisAuth();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('instances');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hideSidebar, setHideSidebar] = useState(false);
   const [instances, setInstances] = useState<Array<{ id: string; name: string; status: string }>>([]);
   const [showWelcome, setShowWelcome] = useState(false);
   const [isEditingFlow, setIsEditingFlow] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('genesis-theme') !== 'light';
+    }
+    return true;
+  });
+
+  // Apply theme on mount and change
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isDarkMode) {
+      root.classList.remove('genesis-light');
+      root.classList.add('genesis-dark');
+      localStorage.setItem('genesis-theme', 'dark');
+    } else {
+      root.classList.remove('genesis-dark');
+      root.classList.add('genesis-light');
+      localStorage.setItem('genesis-theme', 'light');
+    }
+  }, [isDarkMode]);
 
   // Check if first time user
   useEffect(() => {
@@ -575,11 +597,11 @@ export default function GenesisPanel() {
   const shouldHideSidebar = activeTab === 'flows' && isEditingFlow;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col transition-colors duration-300">
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="h-14 border-b bg-card/50 backdrop-blur-sm flex items-center justify-between px-4">
+        {/* Header - Premium Design */}
+        <header className="h-16 border-b bg-card/80 backdrop-blur-xl flex items-center justify-between px-4 lg:px-6 sticky top-0 z-40">
           <div className="flex items-center gap-4">
             <Button 
               variant="ghost" 
@@ -591,16 +613,27 @@ export default function GenesisPanel() {
             </Button>
             
             {/* Logo for desktop */}
-            <div className="hidden lg:flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
-                <Zap className="w-4 h-4 text-primary-foreground" />
+            <div className="hidden lg:flex items-center gap-3">
+              <motion.div 
+                className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary via-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20"
+                whileHover={{ scale: 1.05, rotate: 5 }}
+                transition={{ type: 'spring', stiffness: 400 }}
+              >
+                <Zap className="w-5 h-5 text-primary-foreground" />
+              </motion.div>
+              <div className="flex flex-col">
+                <span className="font-bold text-lg leading-tight">Genesis Hub</span>
+                <span className="text-[10px] text-muted-foreground leading-none">Automation Platform</span>
               </div>
-              <span className="font-bold">Genesis Hub</span>
             </div>
             
-            <h2 className="font-semibold capitalize lg:ml-4">
-              {navItems.find(i => i.id === activeTab)?.label || 'Dashboard'}
-            </h2>
+            {/* Current page indicator */}
+            <div className="hidden lg:flex items-center gap-2 ml-6 pl-6 border-l border-border">
+              <span className="text-sm text-muted-foreground">|</span>
+              <h2 className="font-semibold text-sm">
+                {navItems.find(i => i.id === activeTab)?.label || 'Dashboard'}
+              </h2>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -609,6 +642,31 @@ export default function GenesisPanel() {
               <span className="w-4 h-4 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-[9px] font-bold text-white shadow-sm">G</span>
               <span className="text-xs font-medium">{credits?.available_credits ?? 300} créditos disponíveis!</span>
             </Badge>
+
+            {/* Theme Toggle */}
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className="relative overflow-hidden"
+            >
+              <motion.div
+                initial={false}
+                animate={{ rotate: isDarkMode ? 0 : 180, scale: isDarkMode ? 1 : 0 }}
+                transition={{ duration: 0.3 }}
+                className="absolute"
+              >
+                <Moon className="w-5 h-5" />
+              </motion.div>
+              <motion.div
+                initial={false}
+                animate={{ rotate: isDarkMode ? -180 : 0, scale: isDarkMode ? 0 : 1 }}
+                transition={{ duration: 0.3 }}
+                className="absolute"
+              >
+                <Sun className="w-5 h-5" />
+              </motion.div>
+            </Button>
 
             <Button variant="ghost" size="icon">
               <Search className="w-5 h-5" />
@@ -723,7 +781,7 @@ export default function GenesisPanel() {
         )}
       </AnimatePresence>
 
-      {/* MacOS Style Dock - Desktop - Centered */}
+      {/* MacOS Style Dock - Desktop - Centered - Premium Design */}
       <AnimatePresence>
         {!shouldHideSidebar && (
           <motion.div 
@@ -733,7 +791,14 @@ export default function GenesisPanel() {
             transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
             className="hidden lg:flex fixed bottom-4 z-50 w-full justify-center pointer-events-none"
           >
-            <div className="flex items-end gap-1.5 px-3 py-2 bg-card/80 backdrop-blur-xl border rounded-2xl shadow-2xl pointer-events-auto">
+            <motion.div 
+              className="flex items-end gap-1 px-4 py-3 bg-card/90 backdrop-blur-2xl border border-border/50 rounded-2xl shadow-2xl shadow-black/20 pointer-events-auto"
+              style={{
+                boxShadow: isDarkMode 
+                  ? '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) inset'
+                  : '0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.5) inset'
+              }}
+            >
               {navItems.map((item, index) => {
                 const isActive = activeTab === item.id;
                 return (
@@ -742,41 +807,42 @@ export default function GenesisPanel() {
                     onClick={() => setActiveTab(item.id)}
                     className={cn(
                       "relative flex flex-col items-center justify-center rounded-xl transition-all duration-200 group",
-                      isActive ? "bg-primary/10" : "hover:bg-muted"
+                      isActive ? "" : "hover:bg-muted/50"
                     )}
-                    whileHover={{ scale: 1.15, y: -8 }}
+                    whileHover={{ scale: 1.15, y: -10 }}
                     whileTap={{ scale: 0.95 }}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 + index * 0.05 }}
+                    transition={{ delay: 0.4 + index * 0.04 }}
                   >
                     <div className={cn(
-                      "w-12 h-12 flex items-center justify-center rounded-xl transition-colors",
+                      "w-11 h-11 flex items-center justify-center rounded-xl transition-all duration-300",
                       isActive 
-                        ? "bg-gradient-to-br from-primary to-primary/60 text-primary-foreground shadow-lg shadow-primary/30" 
-                        : "text-muted-foreground group-hover:text-foreground"
+                        ? "bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-lg shadow-primary/40" 
+                        : "text-muted-foreground group-hover:text-foreground group-hover:bg-muted/50"
                     )}>
-                      <item.icon className="w-5 h-5" />
+                      <item.icon className={cn("w-5 h-5", isActive && "drop-shadow-sm")} />
                     </div>
                     
                     {/* Active indicator dot */}
                     {isActive && (
                       <motion.div 
                         layoutId="dock-indicator"
-                        className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-primary"
+                        className="absolute -bottom-1 w-1.5 h-1.5 rounded-full bg-primary shadow-lg shadow-primary/50"
+                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                       />
                     )}
                     
                     {/* Tooltip on hover */}
-                    <div className="absolute -top-9 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                      <div className="px-2 py-1 bg-popover border rounded-lg shadow-lg text-xs font-medium whitespace-nowrap">
+                    <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none scale-90 group-hover:scale-100">
+                      <div className="px-3 py-1.5 bg-popover border border-border rounded-lg shadow-xl text-xs font-medium whitespace-nowrap">
                         {item.label}
                       </div>
                     </div>
                   </motion.button>
                 );
               })}
-            </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
