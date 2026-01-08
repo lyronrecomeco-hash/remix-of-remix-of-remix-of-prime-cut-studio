@@ -1,7 +1,7 @@
-export const VPS_SCRIPT_VERSION = "8.1";
+export const VPS_SCRIPT_VERSION = "8.2";
 
-// VPS Script v8.1 - MULTI-INSTANCE MANAGER
-// Gerenciador dinâmico de múltiplas instâncias com menu interativo
+// VPS Script v8.2 - MULTI-INSTANCE MANAGER WITH PROFESSIONAL CLI
+// Gerenciador dinâmico com menu interativo profissional e logs personalizados
 export const getVPSScriptV8 = (masterToken: string): string => {
   // IMPORTANTE: default precisa bater com o token nativo usado pelo backend/proxy,
   // senão o Heartbeat pode falhar com 401 quando o usuário deixa o campo em branco.
@@ -10,8 +10,8 @@ export const getVPSScriptV8 = (masterToken: string): string => {
 
   return `#!/usr/bin/env node
 // ╔════════════════════════════════════════════════════════════════════════════════════════╗
-// ║       GENESIS WHATSAPP MULTI-INSTANCE MANAGER - v8.1 ENTERPRISE                        ║
-// ║              Dynamic Multi-Instance | Interactive Menu | PM2 Ready                     ║
+// ║       GENESIS WHATSAPP MULTI-INSTANCE MANAGER - v8.2 ENTERPRISE                        ║
+// ║              Professional CLI | Interactive Menu | Beautiful Logs                       ║
 // ║                   24/7 VPS Ready | Auto-Scaling | Zero Downtime                        ║
 // ╚════════════════════════════════════════════════════════════════════════════════════════╝
 
@@ -1562,162 +1562,368 @@ app.get('/api/instance/:id/backups', authMiddleware, async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════
-// MENU INTERATIVO
+// PROFESSIONAL CLI - MENU INTERATIVO v2.0
 // ═══════════════════════════════════════════════════════════════════════════════════════════
 let menuMode = process.argv.includes('--menu') || process.argv.includes('-m');
+let logsBuffer = [];
+const MAX_LOGS = 100;
+
+// Capturar logs em buffer para visualização
+const originalLog = log;
+function logWithBuffer(type, ...args) {
+  const timestamp = new Date().toLocaleTimeString('pt-BR');
+  logsBuffer.push({ type, message: args.join(' '), timestamp });
+  if (logsBuffer.length > MAX_LOGS) logsBuffer.shift();
+  originalLog(type, ...args);
+}
+// Substituir função de log
+const log = logWithBuffer;
 
 function showBanner() {
   console.clear();
+  const uptime = Math.floor((Date.now() - startTime) / 1000);
+  const uptimeStr = uptime >= 3600 
+    ? \`\${Math.floor(uptime/3600)}h \${Math.floor((uptime%3600)/60)}m\` 
+    : \`\${Math.floor(uptime/60)}m \${uptime%60}s\`;
+  const instances = manager.getAllInstances();
+  const connected = instances.filter(i => i.status === 'connected').length;
+  
   console.log(\`
-\${c.cyan}╔════════════════════════════════════════════════════════════════════════════════╗\${c.reset}
-\${c.cyan}║\${c.reset}  \${c.green}\${c.bold}██████╗ ███████╗███╗   ██╗███████╗███████╗██╗███████╗\${c.reset}                      \${c.cyan}║\${c.reset}
-\${c.cyan}║\${c.reset}  \${c.green}\${c.bold}██╔════╝ ██╔════╝████╗  ██║██╔════╝██╔════╝██║██╔════╝\${c.reset}                      \${c.cyan}║\${c.reset}
-\${c.cyan}║\${c.reset}  \${c.green}\${c.bold}██║  ███╗█████╗  ██╔██╗ ██║█████╗  ███████╗██║███████╗\${c.reset}                      \${c.cyan}║\${c.reset}
-\${c.cyan}║\${c.reset}  \${c.green}\${c.bold}██║   ██║██╔══╝  ██║╚██╗██║██╔══╝  ╚════██║██║╚════██║\${c.reset}                      \${c.cyan}║\${c.reset}
-\${c.cyan}║\${c.reset}  \${c.green}\${c.bold}╚██████╔╝███████╗██║ ╚████║███████╗███████║██║███████║\${c.reset}                      \${c.cyan}║\${c.reset}
-\${c.cyan}║\${c.reset}  \${c.green}\${c.bold}╚═════╝ ╚══════╝╚═╝  ╚═══╝╚══════╝╚══════╝╚═╝╚══════╝\${c.reset}                      \${c.cyan}║\${c.reset}
-\${c.cyan}║\${c.reset}                                                                                \${c.cyan}║\${c.reset}
-\${c.cyan}║\${c.reset}       \${c.white}\${c.bold}WhatsApp Multi-Instance Manager v8.0 Enterprise\${c.reset}                       \${c.cyan}║\${c.reset}
-\${c.cyan}╠════════════════════════════════════════════════════════════════════════════════╣\${c.reset}
-\${c.cyan}║\${c.reset}  \${c.yellow}🌐 API:\${c.reset} http://0.0.0.0:\${CONFIG.PORT}                                            \${c.cyan}║\${c.reset}
-\${c.cyan}║\${c.reset}  \${c.yellow}🔐 Token:\${c.reset} \${CONFIG.MASTER_TOKEN.slice(0, 20)}...                                  \${c.cyan}║\${c.reset}
-\${c.cyan}║\${c.reset}  \${c.yellow}📦 Instâncias:\${c.reset} \${manager.getAllInstances().length} cadastradas                                        \${c.cyan}║\${c.reset}
-\${c.cyan}╚════════════════════════════════════════════════════════════════════════════════╝\${c.reset}
+\${c.cyan}╔══════════════════════════════════════════════════════════════════════════════════════════╗\${c.reset}
+\${c.cyan}║\${c.reset}                                                                                          \${c.cyan}║\${c.reset}
+\${c.cyan}║\${c.reset}    \${c.green}\${c.bold}   ██████╗ ███████╗███╗   ██╗███████╗███████╗██╗███████╗\${c.reset}                          \${c.cyan}║\${c.reset}
+\${c.cyan}║\${c.reset}    \${c.green}\${c.bold}  ██╔════╝ ██╔════╝████╗  ██║██╔════╝██╔════╝██║██╔════╝\${c.reset}                          \${c.cyan}║\${c.reset}
+\${c.cyan}║\${c.reset}    \${c.green}\${c.bold}  ██║  ███╗█████╗  ██╔██╗ ██║█████╗  ███████╗██║███████╗\${c.reset}                          \${c.cyan}║\${c.reset}
+\${c.cyan}║\${c.reset}    \${c.green}\${c.bold}  ██║   ██║██╔══╝  ██║╚██╗██║██╔══╝  ╚════██║██║╚════██║\${c.reset}                          \${c.cyan}║\${c.reset}
+\${c.cyan}║\${c.reset}    \${c.green}\${c.bold}  ╚██████╔╝███████╗██║ ╚████║███████╗███████║██║███████║\${c.reset}                          \${c.cyan}║\${c.reset}
+\${c.cyan}║\${c.reset}    \${c.green}\${c.bold}   ╚═════╝ ╚══════╝╚═╝  ╚═══╝╚══════╝╚══════╝╚═╝╚══════╝\${c.reset}                          \${c.cyan}║\${c.reset}
+\${c.cyan}║\${c.reset}                                                                                          \${c.cyan}║\${c.reset}
+\${c.cyan}║\${c.reset}            \${c.white}\${c.bold}WhatsApp Multi-Instance Manager v8.2 Enterprise\${c.reset}                             \${c.cyan}║\${c.reset}
+\${c.cyan}║\${c.reset}                                                                                          \${c.cyan}║\${c.reset}
+\${c.cyan}╠══════════════════════════════════════════════════════════════════════════════════════════╣\${c.reset}
+\${c.cyan}║\${c.reset}                                                                                          \${c.cyan}║\${c.reset}
+\${c.cyan}║\${c.reset}  \${c.yellow}🌐 API Endpoint:\${c.reset}  http://0.0.0.0:\${CONFIG.PORT}                                            \${c.cyan}║\${c.reset}
+\${c.cyan}║\${c.reset}  \${c.yellow}🔐 Auth Token:\${c.reset}    \${CONFIG.MASTER_TOKEN.slice(0, 20)}...                                    \${c.cyan}║\${c.reset}
+\${c.cyan}║\${c.reset}  \${c.yellow}📦 Instâncias:\${c.reset}    \${connected}/\${instances.length} conectadas                                              \${c.cyan}║\${c.reset}
+\${c.cyan}║\${c.reset}  \${c.yellow}⏱️  Uptime:\${c.reset}        \${uptimeStr}                                                            \${c.cyan}║\${c.reset}
+\${c.cyan}║\${c.reset}  \${c.yellow}💾 RAM:\${c.reset}           \${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB / \${Math.round(os.totalmem() / 1024 / 1024 / 1024)}GB                                                 \${c.cyan}║\${c.reset}
+\${c.cyan}║\${c.reset}                                                                                          \${c.cyan}║\${c.reset}
+\${c.cyan}╚══════════════════════════════════════════════════════════════════════════════════════════╝\${c.reset}
 \`);
 }
 
 function showMenu() {
   const instances = manager.getAllInstances();
   const connected = instances.filter(i => i.status === 'connected').length;
+  const waiting = instances.filter(i => i.status === 'waiting_qr').length;
+  const degraded = instances.filter(i => i.degraded).length;
 
   console.log(\`
-\${c.cyan}┌─────────────────────────────────────────────────────────────────────────────────┐\${c.reset}
-\${c.cyan}│\${c.reset}  \${c.bold}MENU PRINCIPAL\${c.reset}                    Conectadas: \${c.green}\${connected}\${c.reset}/\${instances.length}                       \${c.cyan}│\${c.reset}
-\${c.cyan}├─────────────────────────────────────────────────────────────────────────────────┤\${c.reset}
-\${c.cyan}│\${c.reset}                                                                                 \${c.cyan}│\${c.reset}
-\${c.cyan}│\${c.reset}  \${c.green}[1]\${c.reset} 📋 Listar Instâncias           \${c.green}[5]\${c.reset} 🔌 Desconectar Instância         \${c.cyan}│\${c.reset}
-\${c.cyan}│\${c.reset}  \${c.green}[2]\${c.reset} ➕ Criar Nova Instância        \${c.green}[6]\${c.reset} 🗑️  Deletar Instância            \${c.cyan}│\${c.reset}
-\${c.cyan}│\${c.reset}  \${c.green}[3]\${c.reset} 🔗 Conectar Instância          \${c.green}[7]\${c.reset} 📨 Enviar Mensagem de Teste      \${c.cyan}│\${c.reset}
-\${c.cyan}│\${c.reset}  \${c.green}[4]\${c.reset} 📱 Ver QR Code                 \${c.green}[8]\${c.reset} 🔄 Auto-Conectar Todas           \${c.cyan}│\${c.reset}
-\${c.cyan}│\${c.reset}                                                                                 \${c.cyan}│\${c.reset}
-\${c.cyan}│\${c.reset}  \${c.yellow}[9]\${c.reset} 📊 Status do Servidor         \${c.red}[0]\${c.reset} 🚪 Sair do Menu                  \${c.cyan}│\${c.reset}
-\${c.cyan}│\${c.reset}                                                                                 \${c.cyan}│\${c.reset}
-\${c.cyan}└─────────────────────────────────────────────────────────────────────────────────┘\${c.reset}
+\${c.cyan}┌────────────────────────────────────────────────────────────────────────────────────────────┐\${c.reset}
+\${c.cyan}│\${c.reset}  \${c.bold}\${c.white}📋 MENU GENESIS\${c.reset}           \${c.green}●\${c.reset} \${connected} online   \${c.yellow}●\${c.reset} \${waiting} QR   \${c.red}●\${c.reset} \${degraded} degraded             \${c.cyan}│\${c.reset}
+\${c.cyan}├────────────────────────────────────────────────────────────────────────────────────────────┤\${c.reset}
+\${c.cyan}│\${c.reset}                                                                                            \${c.cyan}│\${c.reset}
+\${c.cyan}│\${c.reset}  \${c.green}┌─────────────────────────────┐\${c.reset}   \${c.yellow}┌─────────────────────────────┐\${c.reset}              \${c.cyan}│\${c.reset}
+\${c.cyan}│\${c.reset}  \${c.green}│\${c.reset}  \${c.bold}INSTÂNCIAS\${c.reset}                \${c.green}│\${c.reset}   \${c.yellow}│\${c.reset}  \${c.bold}GERENCIAMENTO\${c.reset}             \${c.yellow}│\${c.reset}              \${c.cyan}│\${c.reset}
+\${c.cyan}│\${c.reset}  \${c.green}├─────────────────────────────┤\${c.reset}   \${c.yellow}├─────────────────────────────┤\${c.reset}              \${c.cyan}│\${c.reset}
+\${c.cyan}│\${c.reset}  \${c.green}│\${c.reset}  [1] 📋 Listar todas        \${c.green}│\${c.reset}   \${c.yellow}│\${c.reset}  [6] 📊 Status do servidor  \${c.yellow}│\${c.reset}              \${c.cyan}│\${c.reset}
+\${c.cyan}│\${c.reset}  \${c.green}│\${c.reset}  [2] ➕ Criar nova          \${c.green}│\${c.reset}   \${c.yellow}│\${c.reset}  [7] 📜 Ver logs recentes   \${c.yellow}│\${c.reset}              \${c.cyan}│\${c.reset}
+\${c.cyan}│\${c.reset}  \${c.green}│\${c.reset}  [3] 🔗 Conectar            \${c.green}│\${c.reset}   \${c.yellow}│\${c.reset}  [8] 🔄 Auto-conectar todas \${c.yellow}│\${c.reset}              \${c.cyan}│\${c.reset}
+\${c.cyan}│\${c.reset}  \${c.green}│\${c.reset}  [4] 📱 Obter QR Code       \${c.green}│\${c.reset}   \${c.yellow}│\${c.reset}  [9] 🧹 Limpar logs         \${c.yellow}│\${c.reset}              \${c.cyan}│\${c.reset}
+\${c.cyan}│\${c.reset}  \${c.green}│\${c.reset}  [5] 🔌 Desconectar         \${c.green}│\${c.reset}   \${c.yellow}│\${c.reset}  [0] 🚪 Sair do menu        \${c.yellow}│\${c.reset}              \${c.cyan}│\${c.reset}
+\${c.cyan}│\${c.reset}  \${c.green}└─────────────────────────────┘\${c.reset}   \${c.yellow}└─────────────────────────────┘\${c.reset}              \${c.cyan}│\${c.reset}
+\${c.cyan}│\${c.reset}                                                                                            \${c.cyan}│\${c.reset}
+\${c.cyan}│\${c.reset}  \${c.magenta}┌─────────────────────────────┐\${c.reset}   \${c.red}┌─────────────────────────────┐\${c.reset}              \${c.cyan}│\${c.reset}
+\${c.cyan}│\${c.reset}  \${c.magenta}│\${c.reset}  \${c.bold}OPERAÇÕES\${c.reset}                 \${c.magenta}│\${c.reset}   \${c.red}│\${c.reset}  \${c.bold}DANGER ZONE\${c.reset}               \${c.red}│\${c.reset}              \${c.cyan}│\${c.reset}
+\${c.cyan}│\${c.reset}  \${c.magenta}├─────────────────────────────┤\${c.reset}   \${c.red}├─────────────────────────────┤\${c.reset}              \${c.cyan}│\${c.reset}
+\${c.cyan}│\${c.reset}  \${c.magenta}│\${c.reset}  [t] 📨 Teste de envio      \${c.magenta}│\${c.reset}   \${c.red}│\${c.reset}  [d] 🗑️  Deletar instância  \${c.red}│\${c.reset}              \${c.cyan}│\${c.reset}
+\${c.cyan}│\${c.reset}  \${c.magenta}│\${c.reset}  [h] ❤️  Health check       \${c.magenta}│\${c.reset}   \${c.red}│\${c.reset}  [r] 🔁 Restart servidor    \${c.red}│\${c.reset}              \${c.cyan}│\${c.reset}
+\${c.cyan}│\${c.reset}  \${c.magenta}│\${c.reset}  [b] 💾 Backup sessões      \${c.magenta}│\${c.reset}   \${c.red}│\${c.reset}  [x] ⛔ Forçar desconexão   \${c.red}│\${c.reset}              \${c.cyan}│\${c.reset}
+\${c.cyan}│\${c.reset}  \${c.magenta}└─────────────────────────────┘\${c.reset}   \${c.red}└─────────────────────────────┘\${c.reset}              \${c.cyan}│\${c.reset}
+\${c.cyan}│\${c.reset}                                                                                            \${c.cyan}│\${c.reset}
+\${c.cyan}└────────────────────────────────────────────────────────────────────────────────────────────┘\${c.reset}
 \`);
+}
+
+function showLogs() {
+  console.log('\\n' + c.cyan + '═══════════════════════════════════════════════════════════════════════════════' + c.reset);
+  console.log(c.bold + c.white + '                              📜 LOGS RECENTES                                ' + c.reset);
+  console.log(c.cyan + '═══════════════════════════════════════════════════════════════════════════════' + c.reset);
+  
+  if (logsBuffer.length === 0) {
+    console.log(c.yellow + '   Nenhum log registrado ainda.' + c.reset);
+  } else {
+    const last20 = logsBuffer.slice(-20);
+    last20.forEach(log => {
+      const typeColors = {
+        'info': c.blue,
+        'success': c.green,
+        'warn': c.yellow,
+        'error': c.red,
+        'msg': c.magenta,
+        'debug': c.dim,
+      };
+      const color = typeColors[log.type] || c.white;
+      const icon = {
+        'info': 'ℹ️ ',
+        'success': '✅',
+        'warn': '⚠️ ',
+        'error': '❌',
+        'msg': '💬',
+        'debug': '🔍',
+      }[log.type] || '  ';
+      console.log(\`  \${c.dim}\${log.timestamp}\${c.reset} \${icon} \${color}\${log.message.slice(0, 70)}\${c.reset}\`);
+    });
+  }
+  console.log(c.cyan + '═══════════════════════════════════════════════════════════════════════════════' + c.reset);
+}
+
+function showInstanceList() {
+  const instances = manager.getAllInstances();
+  console.log('\\n' + c.cyan + '═══════════════════════════════════════════════════════════════════════════════' + c.reset);
+  console.log(c.bold + c.white + '                            📋 INSTÂNCIAS CADASTRADAS                         ' + c.reset);
+  console.log(c.cyan + '═══════════════════════════════════════════════════════════════════════════════' + c.reset);
+  
+  if (instances.length === 0) {
+    console.log(c.yellow + '   Nenhuma instância cadastrada. Use [2] para criar uma nova.' + c.reset);
+  } else {
+    console.log('');
+    instances.forEach((inst, i) => {
+      const statusIcons = {
+        'connected': \`\${c.green}● ONLINE\${c.reset}\`,
+        'waiting_qr': \`\${c.yellow}◐ QR CODE\${c.reset}\`,
+        'connecting': \`\${c.blue}◔ CONECTANDO\${c.reset}\`,
+        'disconnected': \`\${c.red}○ OFFLINE\${c.reset}\`,
+      };
+      const status = statusIcons[inst.status] || \`\${c.dim}? \${inst.status}\${c.reset}\`;
+      const degradedBadge = inst.degraded ? \` \${c.red}[DEGRADED]\${c.reset}\` : '';
+      const cooldownBadge = inst.inCooldown ? \` \${c.yellow}[COOLDOWN]\${c.reset}\` : '';
+      const phone = inst.phoneNumber ? \`📱 \${inst.phoneNumber}\` : \`\${c.dim}Sem número\${c.reset}\`;
+      
+      console.log(\`  \${c.cyan}[\${i + 1}]\${c.reset} \${c.bold}\${inst.name}\${c.reset}\`);
+      console.log(\`      ID: \${c.dim}\${inst.id.slice(0, 12)}...\${c.reset}\`);
+      console.log(\`      Status: \${status}\${degradedBadge}\${cooldownBadge}\`);
+      console.log(\`      \${phone}\`);
+      console.log('');
+    });
+  }
+  console.log(c.cyan + '═══════════════════════════════════════════════════════════════════════════════' + c.reset);
+}
+
+function showServerStatus() {
+  const uptime = Math.floor((Date.now() - startTime) / 1000);
+  const uptimeStr = uptime >= 3600 
+    ? \`\${Math.floor(uptime/3600)}h \${Math.floor((uptime%3600)/60)}m \${uptime%60}s\` 
+    : \`\${Math.floor(uptime/60)}m \${uptime%60}s\`;
+  const instances = manager.getAllInstances();
+  const memUsage = process.memoryUsage();
+  
+  console.log('\\n' + c.cyan + '═══════════════════════════════════════════════════════════════════════════════' + c.reset);
+  console.log(c.bold + c.white + '                            📊 STATUS DO SERVIDOR                             ' + c.reset);
+  console.log(c.cyan + '═══════════════════════════════════════════════════════════════════════════════' + c.reset);
+  console.log('');
+  console.log(\`  \${c.yellow}⏱️  Uptime:\${c.reset}           \${uptimeStr}\`);
+  console.log(\`  \${c.yellow}🔌 Porta:\${c.reset}            \${CONFIG.PORT}\`);
+  console.log(\`  \${c.yellow}📦 Instâncias:\${c.reset}       \${instances.filter(i => i.status === 'connected').length} online / \${instances.length} total\`);
+  console.log('');
+  console.log(\`  \${c.cyan}💾 Memória:\${c.reset}\`);
+  console.log(\`     Heap usado:      \${Math.round(memUsage.heapUsed / 1024 / 1024)} MB\`);
+  console.log(\`     Heap total:      \${Math.round(memUsage.heapTotal / 1024 / 1024)} MB\`);
+  console.log(\`     RSS:             \${Math.round(memUsage.rss / 1024 / 1024)} MB\`);
+  console.log('');
+  console.log(\`  \${c.cyan}🖥️  Sistema:\${c.reset}\`);
+  console.log(\`     CPU Load:        \${os.loadavg()[0].toFixed(2)}\`);
+  console.log(\`     RAM Total:       \${Math.round(os.totalmem() / 1024 / 1024 / 1024)} GB\`);
+  console.log(\`     RAM Livre:       \${Math.round(os.freemem() / 1024 / 1024 / 1024)} GB\`);
+  console.log(\`     Node.js:         \${process.version}\`);
+  console.log('');
+  console.log(c.cyan + '═══════════════════════════════════════════════════════════════════════════════' + c.reset);
 }
 
 async function handleMenuInput(input) {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   const question = (q) => new Promise(r => rl.question(q, r));
 
-  switch (input.trim()) {
+  switch (input.trim().toLowerCase()) {
     case '1':
-      console.log('\\n' + c.cyan + '📋 INSTÂNCIAS CADASTRADAS:' + c.reset);
-      const instances = manager.getAllInstances();
-      if (instances.length === 0) {
-        console.log(c.yellow + '   Nenhuma instância cadastrada.' + c.reset);
-      } else {
-        instances.forEach((inst, i) => {
-          const statusColor = inst.status === 'connected' ? c.green : (inst.status === 'connecting' ? c.yellow : c.red);
-          console.log(\`   \${i + 1}. \${c.bold}\${inst.name}\${c.reset} (\${inst.id.slice(0, 8)}...)\`);
-          console.log(\`      Status: \${statusColor}\${inst.status}\${c.reset} | Tel: \${inst.phoneNumber || 'N/A'} | Ready: \${inst.readyToSend ? c.green + '✓' : c.red + '✗'}\${c.reset}\`);
-        });
-      }
+      showInstanceList();
       break;
 
     case '2':
-      const newId = await question(c.yellow + '   ID da instância (UUID): ' + c.reset);
-      const newName = await question(c.yellow + '   Nome da instância: ' + c.reset);
-      if (newId) {
-        const result = await manager.createInstance(newId, newName);
-        console.log(result.success ? c.green + '   ✓ Instância criada!' + c.reset : c.red + '   ✗ ' + result.error + c.reset);
+      const newId = await question(c.cyan + '   📝 ID da instância (UUID ou deixe vazio para gerar): ' + c.reset);
+      const finalId = newId.trim() || crypto.randomUUID();
+      const newName = await question(c.cyan + '   📝 Nome da instância: ' + c.reset);
+      if (newName) {
+        const result = await manager.createInstance(finalId, newName);
+        console.log(result.success 
+          ? c.green + \`   ✅ Instância "\${newName}" criada com ID: \${finalId.slice(0, 8)}...\` + c.reset 
+          : c.red + '   ❌ ' + result.error + c.reset);
       }
       break;
 
     case '3':
-      const connectId = await question(c.yellow + '   ID da instância para conectar: ' + c.reset);
+      showInstanceList();
+      const connectId = await question(c.cyan + '   🔗 ID ou número da instância para conectar: ' + c.reset);
       if (connectId) {
-        console.log(c.cyan + '   Conectando...' + c.reset);
-        const result = await manager.connectInstance(connectId);
-        console.log(result.success ? c.green + '   ✓ Conexão iniciada! Aguarde o QR Code.' + c.reset : c.red + '   ✗ ' + result.error + c.reset);
+        const instances = manager.getAllInstances();
+        const idx = parseInt(connectId) - 1;
+        const targetId = (idx >= 0 && idx < instances.length) ? instances[idx].id : connectId;
+        console.log(c.yellow + '   ⏳ Iniciando conexão...' + c.reset);
+        const result = await manager.connectInstance(targetId);
+        console.log(result.success 
+          ? c.green + '   ✅ Conexão iniciada! Escaneie o QR Code.' + c.reset 
+          : c.red + '   ❌ ' + result.error + c.reset);
       }
       break;
 
     case '4':
-      const qrId = await question(c.yellow + '   ID da instância: ' + c.reset);
-      const status = manager.getStatus(qrId);
-      if (status?.qrCode) {
-        console.log(c.green + '   QR Code disponível! Escaneie via API ou painel.' + c.reset);
-        console.log(c.cyan + \`   GET /api/instance/\${qrId}/qrcode\` + c.reset);
-      } else {
-        console.log(c.yellow + '   QR Code não disponível. Status: ' + (status?.status || 'não encontrada') + c.reset);
+      showInstanceList();
+      const qrId = await question(c.cyan + '   📱 ID ou número da instância: ' + c.reset);
+      if (qrId) {
+        const instances = manager.getAllInstances();
+        const idx = parseInt(qrId) - 1;
+        const targetId = (idx >= 0 && idx < instances.length) ? instances[idx].id : qrId;
+        const status = manager.getStatus(targetId);
+        if (status?.qrCode) {
+          console.log('\\n' + c.green + '   ═══════════════════════════════════════' + c.reset);
+          console.log(c.green + '   QR Code disponível para escaneamento!' + c.reset);
+          console.log(c.green + '   ═══════════════════════════════════════' + c.reset);
+          console.log(c.dim + \`   Use a API: GET /api/instance/\${targetId}/qrcode\` + c.reset);
+          console.log(c.dim + '   Ou escaneie via painel web.' + c.reset);
+        } else {
+          console.log(c.yellow + \`   ⚠️  QR Code não disponível. Status: \${status?.status || 'não encontrada'}\` + c.reset);
+        }
       }
       break;
 
     case '5':
-      const disconnectId = await question(c.yellow + '   ID da instância para desconectar: ' + c.reset);
+      showInstanceList();
+      const disconnectId = await question(c.cyan + '   🔌 ID ou número da instância para desconectar: ' + c.reset);
       if (disconnectId) {
-        const result = await manager.disconnectInstance(disconnectId);
-        console.log(result.success ? c.green + '   ✓ Desconectado!' + c.reset : c.red + '   ✗ ' + result.error + c.reset);
+        const instances = manager.getAllInstances();
+        const idx = parseInt(disconnectId) - 1;
+        const targetId = (idx >= 0 && idx < instances.length) ? instances[idx].id : disconnectId;
+        const result = await manager.disconnectInstance(targetId);
+        console.log(result.success ? c.green + '   ✅ Desconectado!' + c.reset : c.red + '   ❌ ' + result.error + c.reset);
       }
       break;
 
     case '6':
-      const deleteId = await question(c.yellow + '   ID da instância para DELETAR: ' + c.reset);
-      const confirm = await question(c.red + '   Confirmar exclusão? (sim/não): ' + c.reset);
-      if (deleteId && confirm.toLowerCase() === 'sim') {
-        const result = manager.deleteInstance(deleteId);
-        console.log(result.success ? c.green + '   ✓ Deletado!' + c.reset : c.red + '   ✗ ' + result.error + c.reset);
-      }
+      showServerStatus();
       break;
 
     case '7':
-      const sendId = await question(c.yellow + '   ID da instância: ' + c.reset);
-      const sendTo = await question(c.yellow + '   Número destino (com DDI): ' + c.reset);
-      const sendMsg = await question(c.yellow + '   Mensagem: ' + c.reset);
-      if (sendId && sendTo && sendMsg) {
-        const result = await manager.sendMessage(sendId, sendTo, sendMsg);
-        console.log(result.success ? c.green + '   ✓ Mensagem enviada!' + c.reset : c.red + '   ✗ ' + result.error + c.reset);
-      }
+      showLogs();
       break;
 
     case '8':
-      console.log(c.cyan + '   Auto-conectando todas as instâncias...' + c.reset);
+      console.log(c.yellow + '   ⏳ Auto-conectando todas as instâncias...' + c.reset);
       await manager.autoConnectAll();
-      console.log(c.green + '   ✓ Processo concluído!' + c.reset);
+      console.log(c.green + '   ✅ Processo de auto-conexão concluído!' + c.reset);
       break;
 
     case '9':
-      console.log('\\n' + c.cyan + '📊 STATUS DO SERVIDOR:' + c.reset);
-      console.log(\`   Uptime: \${Math.floor((Date.now() - startTime) / 1000)}s\`);
-      console.log(\`   RAM: \${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB\`);
-      console.log(\`   CPU: \${os.loadavg()[0].toFixed(2)}\`);
-      console.log(\`   Instâncias: \${manager.getAllInstances().length}\`);
+      logsBuffer = [];
+      console.log(c.green + '   ✅ Logs limpos!' + c.reset);
       break;
 
     case '0':
       menuMode = false;
-      console.log(c.yellow + '\\n   Menu fechado. Servidor continua rodando.' + c.reset);
-      console.log(c.cyan + '   Execute: node genesis-v8.js --menu para reabrir.' + c.reset);
+      console.log('\\n' + c.yellow + '   👋 Menu fechado. Servidor continua rodando em background.' + c.reset);
+      console.log(c.dim + '   Execute: node genesis-v8.js --menu para reabrir.' + c.reset);
+      console.log('');
+      break;
+
+    case 't':
+      showInstanceList();
+      const sendId = await question(c.cyan + '   📨 ID ou número da instância: ' + c.reset);
+      const sendTo = await question(c.cyan + '   📱 Número destino (com DDI, ex: 5511999999999): ' + c.reset);
+      const sendMsg = await question(c.cyan + '   💬 Mensagem: ' + c.reset);
+      if (sendId && sendTo && sendMsg) {
+        const instances = manager.getAllInstances();
+        const idx = parseInt(sendId) - 1;
+        const targetId = (idx >= 0 && idx < instances.length) ? instances[idx].id : sendId;
+        console.log(c.yellow + '   ⏳ Enviando...' + c.reset);
+        const result = await manager.sendMessage(targetId, sendTo, sendMsg);
+        console.log(result.success ? c.green + '   ✅ Mensagem enviada!' + c.reset : c.red + '   ❌ ' + result.error + c.reset);
+      }
+      break;
+
+    case 'h':
+      console.log(c.yellow + '   ⏳ Executando health check...' + c.reset);
+      const instances = manager.getAllInstances();
+      for (const inst of instances) {
+        const status = inst.status === 'connected' ? c.green + '✅ OK' : c.red + '❌ FAIL';
+        console.log(\`   \${inst.name}: \${status}\${c.reset}\`);
+      }
+      break;
+
+    case 'b':
+      console.log(c.yellow + '   ⏳ Fazendo backup das sessões...' + c.reset);
+      manager.saveInstances();
+      console.log(c.green + '   ✅ Backup salvo em ' + CONFIG.DATA_DIR + c.reset);
+      break;
+
+    case 'd':
+      showInstanceList();
+      const deleteId = await question(c.red + '   🗑️  ID ou número da instância para DELETAR: ' + c.reset);
+      const confirmDelete = await question(c.red + '   ⚠️  Confirmar exclusão? (sim/não): ' + c.reset);
+      if (deleteId && confirmDelete.toLowerCase() === 'sim') {
+        const instances = manager.getAllInstances();
+        const idx = parseInt(deleteId) - 1;
+        const targetId = (idx >= 0 && idx < instances.length) ? instances[idx].id : deleteId;
+        const result = manager.deleteInstance(targetId);
+        console.log(result.success ? c.green + '   ✅ Instância deletada!' + c.reset : c.red + '   ❌ ' + result.error + c.reset);
+      }
+      break;
+
+    case 'r':
+      const confirmRestart = await question(c.red + '   ⚠️  Reiniciar servidor? (sim/não): ' + c.reset);
+      if (confirmRestart.toLowerCase() === 'sim') {
+        console.log(c.yellow + '   🔄 Reiniciando...' + c.reset);
+        manager.saveInstances();
+        process.exit(0);
+      }
+      break;
+
+    case 'x':
+      showInstanceList();
+      const forceId = await question(c.red + '   ⛔ ID ou número da instância para forçar desconexão: ' + c.reset);
+      if (forceId) {
+        const instances = manager.getAllInstances();
+        const idx = parseInt(forceId) - 1;
+        const targetId = (idx >= 0 && idx < instances.length) ? instances[idx].id : forceId;
+        const inst = manager.instances.get(targetId);
+        if (inst?.sock) {
+          try { inst.sock.end(); } catch (e) {}
+          inst.sock = null;
+          inst.status = 'disconnected';
+          inst.readyToSend = false;
+          console.log(c.green + '   ✅ Conexão forçadamente encerrada!' + c.reset);
+        } else {
+          console.log(c.yellow + '   ⚠️  Instância não encontrada ou já desconectada.' + c.reset);
+        }
+      }
       break;
 
     default:
-      console.log(c.red + '   Opção inválida!' + c.reset);
+      console.log(c.red + '   ❌ Opção inválida! Use 0-9, t, h, b, d, r, x' + c.reset);
   }
 
   rl.close();
   
   if (menuMode) {
     setTimeout(() => {
+      showBanner();
       showMenu();
       startMenuListener();
-    }, 2000);
+    }, 1500);
   }
 }
 
 function startMenuListener() {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  rl.question(c.green + '\\n   Escolha uma opção: ' + c.reset, (answer) => {
+  rl.question(c.white + '\\n   ➜ Escolha uma opção: ' + c.reset, (answer) => {
     rl.close();
     handleMenuInput(answer);
   });
