@@ -1376,6 +1376,10 @@ const c = {
   bgRed: '\\x1b[41m',
 };
 
+// Log buffer para CLI interativo
+let logsBuffer = [];
+const MAX_LOGS = 100;
+
 function log(type, message) {
   if (CONFIG.LOG_LEVEL === 'minimal' && !['error', 'success'].includes(type)) return;
   
@@ -1388,6 +1392,11 @@ function log(type, message) {
     msg: \`\${c.magenta}📨\${c.reset}\`,
   };
   const icon = icons[type] || icons.info;
+  
+  // Adicionar ao buffer para visualização no menu
+  logsBuffer.push({ type, message, timestamp });
+  if (logsBuffer.length > MAX_LOGS) logsBuffer.shift();
+  
   console.log(\`\${c.cyan}[\${timestamp}]\${c.reset} \${icon} \${message}\`);
 }
 
@@ -1565,19 +1574,6 @@ app.get('/api/instance/:id/backups', authMiddleware, async (req, res) => {
 // PROFESSIONAL CLI - MENU INTERATIVO v2.0
 // ═══════════════════════════════════════════════════════════════════════════════════════════
 let menuMode = process.argv.includes('--menu') || process.argv.includes('-m');
-let logsBuffer = [];
-const MAX_LOGS = 100;
-
-// Capturar logs em buffer para visualização
-const originalLog = log;
-function logWithBuffer(type, ...args) {
-  const timestamp = new Date().toLocaleTimeString('pt-BR');
-  logsBuffer.push({ type, message: args.join(' '), timestamp });
-  if (logsBuffer.length > MAX_LOGS) logsBuffer.shift();
-  originalLog(type, ...args);
-}
-// Substituir função de log
-const log = logWithBuffer;
 
 function showBanner() {
   console.clear();
