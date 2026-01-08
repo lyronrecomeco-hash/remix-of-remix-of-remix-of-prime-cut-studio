@@ -181,50 +181,87 @@ serve(async (req) => {
         const backendUrl = globalConfig?.backend_url || NATIVE_VPS_URL;
         const backendToken = globalConfig?.master_token || NATIVE_VPS_TOKEN;
 
-        // Buscar instância conectada - verificar múltiplos campos de status
-        // orchestrated_status e effective_status são mais confiáveis que status
-        const { data: connectedInstance } = await supabaseAdmin
-          .from('genesis_instances')
-          .select('id, user_id, name, phone_number, orchestrated_status, effective_status, status')
-          .or('orchestrated_status.eq.connected,effective_status.eq.connected,status.eq.connected')
-          .order('updated_at', { ascending: false })
-          .limit(1)
+        // Usar a instância da CONTA do usuário logado (ex: lyronrp@gmail.com)
+        const { data: genesisUserRow } = await supabaseAdmin
+          .from('genesis_users')
+          .select('id, email')
+          .eq('auth_user_id', user.id)
           .maybeSingle();
 
-        if (!connectedInstance) {
-          console.warn('[genesis-backend-proxy] No connected instance found for demo');
+        if (!genesisUserRow) {
           return new Response(
             JSON.stringify({
               success: false,
-              error: 'Nenhuma instância WhatsApp conectada. Conecte uma instância primeiro.',
+              error: 'Sua conta Genesis não foi encontrada. Faça login novamente.',
             }),
             { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
 
-        // V8 usa o NOME da instância no endpoint, não o UUID
-        const instanceKey = connectedInstance.name || connectedInstance.id;
-        const demoUserId = connectedInstance.user_id || user.id;
+        const { data: userInstances } = await supabaseAdmin
+          .from('genesis_instances')
+          .select('id, user_id, name, phone_number, orchestrated_status, effective_status, status, session_data, updated_at')
+          .eq('user_id', genesisUserRow.id)
+          .order('updated_at', { ascending: false })
+          .limit(10);
+
+        const isConnected = (i: any) =>
+          i?.orchestrated_status === 'connected' ||
+          i?.effective_status === 'connected' ||
+          i?.status === 'connected';
+
+        const isReadyToSend = (i: any) => Boolean(i?.session_data?.ready_to_send);
+
+        const connectedAndReady = (userInstances || []).find((i: any) => isConnected(i) && isReadyToSend(i));
+        const connectedOnly = (userInstances || []).find((i: any) => isConnected(i));
+        const connectedInstance: any = connectedAndReady || connectedOnly || (userInstances || [])[0];
+
+        if (!connectedInstance) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: 'Nenhuma instância encontrada na sua conta. Vá em Genesis → Conectar WhatsApp.',
+            }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Em V8 o identificador usado nos endpoints é o UUID do banco (instanceId).
+        // Ainda assim, tentamos também o name como fallback.
+        const candidateKeys = Array.from(
+          new Set([
+            String(connectedInstance.id),
+            connectedInstance.name ? String(connectedInstance.name) : null,
+          ].filter(Boolean) as string[])
+        );
+
+        const demoUserId = connectedInstance.user_id || genesisUserRow.id;
 
         const cleanBackendUrl = String(backendUrl).replace(/\/$/, '');
 
         console.log('[genesis-backend-proxy] Demo sending message', {
-          instanceKey,
+          genesisUserId: genesisUserRow.id,
           instanceId: connectedInstance.id,
+          instanceName: connectedInstance.name,
+          statuses: {
+            orchestrated_status: connectedInstance.orchestrated_status,
+            effective_status: connectedInstance.effective_status,
+            status: connectedInstance.status,
+          },
+          ready_to_send: Boolean((connectedInstance as any)?.session_data?.ready_to_send),
           to: requestBody.to?.replace(/\d{4}$/, '****'),
           msgLength: requestBody.message?.length,
         });
 
-        // V8 endpoints - tentar múltiplos paths
-        const v8Endpoints = [
-          `/api/instance/${encodeURIComponent(instanceKey)}/send`,
-          `/api/instance/${encodeURIComponent(instanceKey)}/send-message`,
-          `/api/instance/${encodeURIComponent(instanceKey)}/sendText`,
-          `/api/instance/${encodeURIComponent(instanceKey)}/send-text`,
-        ];
+        const v8Endpoints = candidateKeys.flatMap((key) => [
+          `/api/instance/${encodeURIComponent(key)}/send`,
+          `/api/instance/${encodeURIComponent(key)}/send-message`,
+          `/api/instance/${encodeURIComponent(key)}/sendText`,
+          `/api/instance/${encodeURIComponent(key)}/send-text`,
+        ]);
 
         const payload = {
-          instanceId: connectedInstance.id,
+          instanceId: String(connectedInstance.id),
           to: requestBody.to,
           phone: requestBody.to,
           number: requestBody.to,
