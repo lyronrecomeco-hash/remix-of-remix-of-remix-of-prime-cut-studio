@@ -623,9 +623,10 @@ _Esta mensagem foi enviada pela demonstração pública do Genesis Hub._`;
       }
     } catch (err: any) {
       console.error('Erro ao enviar:', err);
-      setError('Não foi possível enviar. Tente novamente.');
+      const errorMsg = err?.message || 'Não foi possível enviar. Tente novamente.';
+      setError(errorMsg);
       toast.error('Erro no envio', {
-        description: 'O sistema pode estar processando outras requisições'
+        description: errorMsg
       });
     } finally {
       setIsSending(false);
