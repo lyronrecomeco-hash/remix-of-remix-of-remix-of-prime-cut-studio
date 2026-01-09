@@ -49,6 +49,7 @@ import WhatsAppAPIManager from '@/components/owner/WhatsAppAPIManager';
 import CRMUsersManager from '@/components/owner/CRMUsersManager';
 import ProposalsManager from '@/components/owner/ProposalsManager';
 import GenesisInstancesMonitor from '@/components/owner/GenesisInstancesMonitor';
+import GenesisAutomation from '@/components/owner/GenesisAutomation';
 import GitHubManager from '@/components/owner/GitHubManager';
 import VPSConfigManager from '@/components/owner/VPSConfigManager';
 import EconomyManager from '@/components/owner/EconomyManager';
@@ -102,7 +103,8 @@ const navSections: NavSection[] = [
     title: 'Automação',
     items: [
       { id: 'whatsapp-automation', label: 'WhatsApp Automação', icon: Bot },
-      { id: 'genesis-monitor', label: 'Genesis Monitor', icon: Zap, badge: 'Live', badgeVariant: 'default' },
+      { id: 'genesis-automation', label: 'Genesis Automação', icon: Zap, badge: 'Admin', badgeVariant: 'default' },
+      { id: 'genesis-monitor', label: 'Genesis Monitor', icon: Activity, badge: 'Live', badgeVariant: 'default' },
       { id: 'vps', label: 'VPS', icon: HardDriveDownload, badge: 'Infra', badgeVariant: 'secondary' },
     ]
   },
@@ -193,6 +195,8 @@ const OwnerPanel = () => {
         return <WhatsAppTemplatesManager />;
       case 'whatsapp-automation':
         return <WhatsAppAutomation />;
+      case 'genesis-automation':
+        return <GenesisAutomation />;
       case 'genesis-monitor':
         return <GenesisInstancesMonitor />;
       case 'vps':

@@ -11,7 +11,12 @@ import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-
  * - Send window enforcement
  * - Deduplication
  * - Real-time progress tracking
+ * - Native VPS fallback
  */
+
+// NATIVE VPS CONFIGURATION - Fallback always works
+const NATIVE_VPS_URL = "http://72.62.108.24:3000";
+const NATIVE_VPS_TOKEN = "genesis-master-token-2024-secure";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -371,19 +376,26 @@ async function processBatch(
     variations = campaign.luna_generated_variations as string[];
   }
 
-  // Build Backend API URL
-  const backendUrl = instance?.backend_url as string;
-  const backendToken = (instance?.backend_token as string) || 'genesis-master-token-2024-secure';
+  // Build Backend API URL with native fallback - ALWAYS works
+  const { data: globalConfig } = await supabase
+    .from('whatsapp_backend_config')
+    .select('backend_url, master_token')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  // Priority: Global Config > Instance Config > Native VPS (always works)
+  const backendUrl = (globalConfig?.backend_url || instance?.backend_url || NATIVE_VPS_URL) as string;
+  const backendToken = (globalConfig?.master_token || instance?.backend_token || NATIVE_VPS_TOKEN) as string;
   const instanceId = instance?.id as string;
 
-  if (!backendUrl) {
-    await logEvent(supabase, campaignId, null, 'backend_error', 'error', 
-      'URL do Backend não configurada');
-    return new Response(
-      JSON.stringify({ success: false, error: 'Backend não configurado' }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  }
+  const configSource = globalConfig?.backend_url 
+    ? 'global' 
+    : instance?.backend_url 
+      ? 'instance' 
+      : 'native';
+
+  console.log(`[Campaign Worker] Backend config source: ${configSource}, URL: ${backendUrl.slice(0, 30)}...`);
 
   // Process each contact
   let sentCount = (campaign.sent_count as number) || 0;
