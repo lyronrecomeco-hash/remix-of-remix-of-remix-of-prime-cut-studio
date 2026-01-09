@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Mail, Eye, EyeOff, AlertCircle, Loader2, Scissors, UserPlus, LogIn, Key } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, AlertCircle, Loader2, Scissors, UserPlus, LogIn, Key, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,6 +9,10 @@ import { z } from 'zod';
 import RegisterForm from '@/components/auth/RegisterForm';
 import EmailConfirmation from '@/components/auth/EmailConfirmation';
 import useAffiliateTracking from '@/hooks/useAffiliateTracking';
+import { useLoginAttempts } from '@/hooks/useLoginAttempts';
+import TwoFactorVerify from '@/components/admin/TwoFactorVerify';
+import { use2FA } from '@/hooks/use2FA';
+
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
   password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
@@ -26,6 +30,8 @@ interface Particle {
 
 type ViewMode = 'login' | 'register' | 'confirmation' | 'forgot';
 
+type ViewModeExtended = 'login' | 'register' | 'confirmation' | 'forgot' | '2fa';
+
 const AdminLogin = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -33,6 +39,10 @@ const AdminLogin = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mouseRef = useRef({ x: 0, y: 0 });
   const particlesRef = useRef<Particle[]>([]);
+  
+  // Login attempts protection
+  const { checkCanAttempt, recordAttempt, lockoutMinutes } = useLoginAttempts();
+  const { getStatus } = use2FA();
   
   // Track affiliate ref code from URL
   useAffiliateTracking();
@@ -42,8 +52,10 @@ const AdminLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>('login');
+  const [viewMode, setViewMode] = useState<ViewModeExtended>('login');
   const [registeredEmail, setRegisteredEmail] = useState('');
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
+  const [isLockedOut, setIsLockedOut] = useState(false);
 
   // Check if coming from affiliate link
   const refCode = searchParams.get('ref');
@@ -184,11 +196,37 @@ const AdminLogin = () => {
     setIsLoading(true);
 
     try {
-      const { error } = await signIn(email, password);
+      // Check if user is locked out due to too many attempts
+      const canAttempt = await checkCanAttempt(email);
+      if (!canAttempt.canAttempt) {
+        setIsLockedOut(true);
+        setError(`Conta bloqueada por ${lockoutMinutes} minutos devido a muitas tentativas. Tente novamente mais tarde.`);
+        setIsLoading(false);
+        return;
+      }
+
+      const { error, data } = await signIn(email, password);
       
       if (error) {
+        // Record failed attempt
+        await recordAttempt(email, false);
         setError(error.message);
+        setIsLoading(false);
         return;
+      }
+
+      // Record successful attempt
+      await recordAttempt(email, true);
+
+      // Check if 2FA is enabled
+      if (data?.user) {
+        const twoFAStatus = await getStatus(data.user.id);
+        if (twoFAStatus.isEnabled) {
+          setPendingUserId(data.user.id);
+          setViewMode('2fa');
+          setIsLoading(false);
+          return;
+        }
       }
 
       navigate('/admin', { replace: true });
@@ -197,6 +235,18 @@ const AdminLogin = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handle2FASuccess = () => {
+    navigate('/admin', { replace: true });
+  };
+
+  const handle2FACancel = async () => {
+    // Sign out since they cancelled 2FA
+    const { supabase } = await import('@/integrations/supabase/client');
+    await supabase.auth.signOut();
+    setViewMode('login');
+    setPendingUserId(null);
   };
 
   const handleRegistrationSuccess = (email: string) => {
@@ -405,6 +455,21 @@ const AdminLogin = () => {
                   <EmailConfirmation
                     email={registeredEmail}
                     onBackToLogin={() => setViewMode('login')}
+                  />
+                </motion.div>
+              )}
+
+              {viewMode === '2fa' && pendingUserId && (
+                <motion.div
+                  key="2fa"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                >
+                  <TwoFactorVerify
+                    userId={pendingUserId}
+                    onSuccess={handle2FASuccess}
+                    onCancel={handle2FACancel}
                   />
                 </motion.div>
               )}

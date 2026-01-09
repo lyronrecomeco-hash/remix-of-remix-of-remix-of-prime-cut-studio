@@ -22,7 +22,7 @@ interface AuthState {
   isSuperAdmin: boolean;
   role: AppRole | null;
   adminUsers: AdminUser[];
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null; data?: { user: any } }>;
   signOut: () => Promise<void>;
   createAdminUser: (email: string, password: string, name: string, role: AppRole, expiresAt?: string) => Promise<{ error: Error | null }>;
   updateAdminUser: (userId: string, updates: Partial<AdminUser>) => Promise<{ error: Error | null }>;
@@ -144,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [isAdmin, refreshAdminUsers]);
 
-  const signIn = useCallback(async (email: string, password: string): Promise<{ error: Error | null }> => {
+  const signIn = useCallback(async (email: string, password: string): Promise<{ error: Error | null; data?: { user: any } }> => {
     try {
       // First check if user's email is confirmed in our custom system
       const { data: tokenData } = await supabase
@@ -182,7 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('User has no admin role, regular user access');
       }
 
-      return { error: null };
+      return { error: null, data: { user: data.user } };
     } catch (error) {
       return { error: error as Error };
     }

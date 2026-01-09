@@ -6369,6 +6369,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_2fa_secrets: {
+        Row: {
+          backup_codes: string[] | null
+          created_at: string | null
+          id: string
+          is_enabled: boolean | null
+          secret: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          backup_codes?: string[] | null
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          secret: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          backup_codes?: string[] | null
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          secret?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           avatar_type: string | null
@@ -6425,6 +6455,39 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          created_at: string | null
+          expires_at: string
+          id: string
+          ip_address: string | null
+          last_activity_at: string | null
+          session_token: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          ip_address?: string | null
+          last_activity_at?: string | null
+          session_token: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          last_activity_at?: string | null
+          session_token?: string
+          user_agent?: string | null
           user_id?: string
         }
         Relationships: []
@@ -8840,6 +8903,12 @@ export type Database = {
         Returns: boolean
       }
       check_ip_fraud: { Args: { check_ip: string }; Returns: boolean }
+      check_login_attempts: { Args: { p_email: string }; Returns: boolean }
+      check_session_timeout: {
+        Args: { p_timeout_minutes?: number; p_user_id: string }
+        Returns: boolean
+      }
+      cleanup_expired_sessions: { Args: never; Returns: undefined }
       cleanup_expired_verification_codes: { Args: never; Returns: undefined }
       current_tenant_id: { Args: never; Returns: string }
       current_tenant_ids: { Args: never; Returns: string[] }
@@ -9052,6 +9121,15 @@ export type Database = {
         Args: { proposal_id: string }
         Returns: boolean
       }
+      record_login_attempt: {
+        Args: {
+          p_email: string
+          p_ip_address?: string
+          p_success: boolean
+          p_user_agent?: string
+        }
+        Returns: undefined
+      }
       select_pool_instance: { Args: { p_campaign_id: string }; Returns: string }
       tenant_matches: { Args: { p_tenant: string }; Returns: boolean }
       update_flow_lifecycle_status: {
@@ -9064,6 +9142,10 @@ export type Database = {
       }
       update_instance_health: {
         Args: { p_instance_id: string }
+        Returns: undefined
+      }
+      update_session_activity: {
+        Args: { p_session_token: string }
         Returns: undefined
       }
       validate_token_owner: {
