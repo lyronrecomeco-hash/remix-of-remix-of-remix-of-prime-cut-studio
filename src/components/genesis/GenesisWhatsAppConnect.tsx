@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   QrCode,
@@ -9,10 +9,6 @@ import {
   Wifi,
   WifiOff,
   AlertCircle,
-  Zap,
-  Shield,
-  Radio,
-  Sparkles,
   RotateCcw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,7 +17,6 @@ import { Badge } from '@/components/ui/badge';
 import { useGenesisWhatsAppConnection } from './hooks/useGenesisWhatsAppConnection';
 import { 
   useUnifiedInstanceStatus,
-  normalizeStatus,
   type OrchestratedStatus
 } from './hooks/useUnifiedInstanceStatus';
 import { cn } from '@/lib/utils';
@@ -186,431 +181,277 @@ export function GenesisWhatsAppConnect({ instance, onRefresh }: GenesisWhatsAppC
   const shouldHideConnectButton = isConnected || isStabilizing || isInCooldown;
 
   return (
-    <Card className="overflow-hidden border-0 shadow-xl bg-gradient-to-br from-card via-card to-muted/30">
+    <Card className="overflow-hidden border-2 border-primary/20 shadow-lg">
       <CardContent className="p-0">
-        {/* Status Header */}
+        {/* Header Compacto */}
         <div className={cn(
-          "p-6 transition-all duration-500",
+          "px-5 py-4 flex items-center justify-between border-b transition-colors",
           isConnected 
-            ? "bg-gradient-to-r from-green-500/10 via-green-500/5 to-transparent" 
+            ? "bg-green-500/5 border-green-500/20" 
             : isConnecting
-              ? "bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-transparent"
+              ? "bg-blue-500/5 border-blue-500/20"
               : displayStatus === 'error' || isInCooldown
-                ? "bg-gradient-to-r from-red-500/10 via-red-500/5 to-transparent"
-                : "bg-gradient-to-r from-muted/50 via-muted/30 to-transparent"
+                ? "bg-red-500/5 border-red-500/20"
+                : "bg-muted/30"
         )}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <motion.div 
-                className={cn(
-                  "w-14 h-14 rounded-2xl flex items-center justify-center transition-colors duration-500",
-                  isConnected 
-                    ? "bg-green-500/20 shadow-lg shadow-green-500/20" 
-                    : isConnecting
-                      ? "bg-blue-500/20 shadow-lg shadow-blue-500/20"
-                      : displayStatus === 'error' || isInCooldown
-                        ? "bg-red-500/20"
-                        : "bg-muted"
-                )}
-                animate={isConnecting ? { scale: [1, 1.05, 1] } : {}}
-                transition={{ duration: 1.5, repeat: isConnecting ? Infinity : 0 }}
-              >
-                {displayStatus === 'connecting' && (
-                  <Radio className="w-7 h-7 text-blue-500 animate-pulse" />
-                )}
-                {displayStatus === 'qr_pending' && !connectionState.qrCode && (
-                  <Sparkles className="w-7 h-7 text-blue-500 animate-pulse" />
-                )}
-                {displayStatus === 'qr_pending' && connectionState.qrCode && (
-                  <Loader2 className="w-7 h-7 text-blue-500 animate-spin" />
-                )}
-                {displayStatus === 'stabilizing' && (
-                  <Loader2 className="w-7 h-7 text-blue-500 animate-spin" />
-                )}
-                {isConnected && (
-                  <Wifi className="w-7 h-7 text-green-500" />
-                )}
-                {(displayStatus === 'error' || isInCooldown) && (
-                  <XCircle className="w-7 h-7 text-red-500" />
-                )}
-                {displayStatus === 'idle' && !isConnected && !isInCooldown && (
-                  <WifiOff className="w-7 h-7 text-muted-foreground" />
-                )}
-                {displayStatus === 'disconnected' && !isInCooldown && (
-                  <WifiOff className="w-7 h-7 text-muted-foreground" />
-                )}
-              </motion.div>
-              <div>
-                <h3 className="font-bold text-lg">Conexão WhatsApp</h3>
-                <motion.p 
-                  key={displayStatus}
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-sm text-muted-foreground"
-                >
-                  {isConnected 
-                    ? unifiedStatus.phoneNumber || 'Conectado' 
-                    : getPhaseText()}
-                </motion.p>
-              </div>
-            </div>
-
-            {/* Status Badge */}
-            <div className="flex items-center gap-2">
-              {isConnecting && (
-                <Badge variant="secondary" className="gap-1.5 bg-blue-500/10 text-blue-600 border-blue-500/20 px-3 py-1.5">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  {displayStatus === 'connecting' ? 'Verificando' : 'Conectando'}
-                </Badge>
+          <div className="flex items-center gap-3">
+            <motion.div 
+              className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center",
+                isConnected ? "bg-green-500/15" 
+                  : isConnecting ? "bg-blue-500/15"
+                  : displayStatus === 'error' || isInCooldown ? "bg-red-500/15"
+                  : "bg-muted"
               )}
-              {isConnected && (
-                <Badge variant="secondary" className="gap-1.5 bg-green-500/10 text-green-600 border-green-500/20 px-3 py-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  Conectado
-                </Badge>
+              animate={isConnecting ? { scale: [1, 1.05, 1] } : {}}
+              transition={{ duration: 1.5, repeat: isConnecting ? Infinity : 0 }}
+            >
+              {isConnected && <Wifi className="w-5 h-5 text-green-500" />}
+              {isConnecting && <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />}
+              {(displayStatus === 'error' || isInCooldown) && <XCircle className="w-5 h-5 text-red-500" />}
+              {(displayStatus === 'idle' || displayStatus === 'disconnected') && !isInCooldown && !isConnecting && (
+                <WifiOff className="w-5 h-5 text-muted-foreground" />
               )}
-              {/* FASE 2: Mostrar alerta se conectado mas não usável */}
-              {isConnected && !isUsable && (
-                <Badge variant="secondary" className="gap-1.5 bg-orange-500/10 text-orange-600 border-orange-500/20 px-3 py-1.5">
-                  <AlertCircle className="w-3.5 h-3.5" />
-                  Verificando
-                </Badge>
-              )}
-              {displayStatus === 'error' && (
-                <Badge variant="secondary" className="gap-1.5 bg-red-500/10 text-red-600 border-red-500/20 px-3 py-1.5">
-                  <XCircle className="w-3.5 h-3.5" />
-                  Erro
-                </Badge>
-              )}
-              {isInCooldown && (
-                <Badge variant="secondary" className="gap-1.5 bg-orange-500/10 text-orange-600 border-orange-500/20 px-3 py-1.5">
-                  <AlertCircle className="w-3.5 h-3.5" />
-                  Cooldown
-                </Badge>
-              )}
-              {isStabilizing && (
-                <Badge variant="secondary" className="gap-1.5 bg-blue-500/10 text-blue-600 border-blue-500/20 px-3 py-1.5">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  Estabilizando
-                </Badge>
-              )}
-              {displayStatus === 'disconnected' && !isInCooldown && (
-                <Badge variant="secondary" className="gap-1.5 bg-muted text-muted-foreground border-border px-3 py-1.5">
-                  <WifiOff className="w-3.5 h-3.5" />
-                  Desconectado
-                </Badge>
-              )}
-              {displayStatus === 'idle' && !isConnected && !isConnecting && !isInCooldown && (
-                <Badge variant="secondary" className="gap-1.5 bg-muted text-muted-foreground border-border px-3 py-1.5">
-                  <WifiOff className="w-3.5 h-3.5" />
-                  Desconectado
-                </Badge>
-              )}
+            </motion.div>
+            <div>
+              <p className="font-semibold text-sm">
+                {isConnected ? 'WhatsApp Conectado' 
+                  : isConnecting ? 'Conectando...'
+                  : displayStatus === 'error' ? 'Erro na Conexão'
+                  : isInCooldown ? 'Aguardando...'
+                  : 'WhatsApp Desconectado'}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {isConnected && unifiedStatus.phoneNumber 
+                  ? unifiedStatus.phoneNumber 
+                  : getPhaseText()}
+              </p>
             </div>
           </div>
+
+          {/* Badge de Status */}
+          <Badge 
+            variant="secondary" 
+            className={cn(
+              "gap-1.5 px-2.5 py-1 text-xs",
+              isConnected ? "bg-green-500/10 text-green-600 border-green-500/20"
+                : isConnecting ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                : displayStatus === 'error' ? "bg-red-500/10 text-red-600 border-red-500/20"
+                : isInCooldown ? "bg-orange-500/10 text-orange-600 border-orange-500/20"
+                : "bg-muted text-muted-foreground"
+            )}
+          >
+            {isConnected && <CheckCircle2 className="w-3 h-3" />}
+            {isConnecting && <Loader2 className="w-3 h-3 animate-spin" />}
+            {displayStatus === 'error' && <XCircle className="w-3 h-3" />}
+            {isInCooldown && <AlertCircle className="w-3 h-3" />}
+            {(displayStatus === 'idle' || displayStatus === 'disconnected') && !isInCooldown && !isConnecting && (
+              <WifiOff className="w-3 h-3" />
+            )}
+            {isConnected ? 'Online' 
+              : isConnecting ? 'Conectando'
+              : displayStatus === 'error' ? 'Erro'
+              : isInCooldown ? 'Cooldown'
+              : 'Offline'}
+          </Badge>
         </div>
 
         {/* Main Content Area */}
-        <div className="p-6 pt-2">
-          {/* QR Code Section */}
+        <div className="p-5">
           <AnimatePresence mode="wait">
-            {!isConnected && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="overflow-hidden"
-              >
-                {/* Loading States - Compact */}
-                {displayStatus === 'connecting' && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex flex-col items-center py-8"
-                  >
-                    <motion.div
-                      className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center"
-                      animate={{ scale: [1, 1.1, 1] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
-                    >
-                      <Radio className="w-8 h-8 text-blue-500" />
-                    </motion.div>
-                    <p className="mt-3 text-sm font-medium">Verificando infraestrutura...</p>
-                    <p className="text-xs text-muted-foreground mt-1">Conectando ao WhatsApp</p>
-                  </motion.div>
-                )}
-
-                {displayStatus === 'qr_pending' && !connectionState.qrCode && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex flex-col items-center py-8"
-                  >
-                    <motion.div
-                      className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center"
-                      animate={{ scale: [1, 1.1, 1] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
-                    >
-                      <Sparkles className="w-8 h-8 text-blue-500" />
-                    </motion.div>
-                    <p className="mt-3 text-sm font-medium">Gerando QR Code...</p>
-                    <p className="text-xs text-muted-foreground mt-1">Aguarde um momento</p>
-                  </motion.div>
-                )}
-
-                {/* QR Code Display - Compact */}
-                {hasQrCode && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="flex flex-col items-center py-5"
-                  >
-                    <div className="relative">
-                      <motion.div 
-                        className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent rounded-2xl blur-lg"
-                        animate={{ opacity: [0.5, 0.8, 0.5] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      />
-                      <div className="relative bg-white p-4 rounded-xl shadow-2xl border-2 border-primary/20">
-                        <motion.img
-                          key={connectionState.qrCode}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          src={connectionState.qrCode}
-                          alt="QR Code"
-                          className="w-44 h-44 sm:w-52 sm:h-52"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="mt-4 text-center space-y-1.5">
-                      <p className="text-sm font-medium">Escaneie com o WhatsApp</p>
-                      <div className="text-xs text-muted-foreground">
-                        <p>Configurações → Aparelhos conectados → Conectar</p>
-                      </div>
-                      <div className="flex items-center justify-center gap-2 mt-3">
-                        <motion.div 
-                          className="w-2 h-2 rounded-full bg-blue-500"
-                          animate={{ scale: [1, 1.3, 1], opacity: [1, 0.5, 1] }}
-                          transition={{ duration: 1, repeat: Infinity }}
-                        />
-                        <span className="text-xs text-muted-foreground">
-                          Aguardando... ({Math.floor(connectionState.attempts / 60)}:{String(connectionState.attempts % 60).padStart(2, '0')})
-                        </span>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Compact placeholder when idle or disconnected */}
-                {(displayStatus === 'idle' || displayStatus === 'disconnected') && !isConnecting && !isInCooldown && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex flex-col items-center py-6"
-                  >
-                    <motion.div 
-                      className="relative cursor-pointer group"
-                      whileHover={{ scale: 1.02 }}
-                      onClick={handleConnect}
-                    >
-                      {/* Compact QR placeholder */}
-                      <div className="w-36 h-36 rounded-2xl bg-muted/50 border-2 border-dashed border-muted-foreground/20 flex items-center justify-center group-hover:border-primary/40 transition-colors relative overflow-hidden">
-                        <QrCode className="w-14 h-14 text-muted-foreground/30 group-hover:text-primary/50 transition-colors" />
-                        {/* Overlay button */}
-                        <motion.div 
-                          className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity"
-                          whileHover={{ scale: 1 }}
-                        >
-                          <div className="bg-primary text-primary-foreground px-4 py-2 rounded-lg shadow-lg font-medium text-sm flex items-center gap-2">
-                            <Zap className="w-4 h-4" />
-                            Conectar
-                          </div>
-                        </motion.div>
-                      </div>
-                    </motion.div>
-
-                    {/* Compact Features */}
-                    <div className="grid grid-cols-3 gap-3 mt-5 w-full max-w-sm">
-                      {[
-                        { icon: Zap, label: 'Rápido' },
-                        { icon: Shield, label: 'Seguro' },
-                        { icon: RefreshCw, label: 'Auto Reconectar' },
-                      ].map((feature, i) => (
-                        <motion.div 
-                          key={feature.label}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.1 }}
-                          className="flex flex-col items-center gap-1.5 p-2.5 rounded-lg bg-muted/30"
-                        >
-                          <feature.icon className="w-4 h-4 text-primary" />
-                          <span className="text-[10px] text-center text-muted-foreground font-medium">{feature.label}</span>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* FASE 3: Cooldown State */}
-                {isInCooldown && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex flex-col items-center py-10"
-                  >
-                    <div className="w-20 h-20 rounded-full bg-orange-500/10 flex items-center justify-center">
-                      <AlertCircle className="w-10 h-10 text-orange-500" />
-                    </div>
-                    <p className="mt-4 text-sm font-medium text-orange-600">Muitas tentativas</p>
-                    <p className="text-xs text-muted-foreground mt-1">Aguarde antes de tentar novamente</p>
-                    {unifiedStatus.cooldownEndsAt && (
-                      <p className="text-xs text-orange-500 mt-2">
-                        Cooldown até: {unifiedStatus.cooldownEndsAt.toLocaleTimeString()}
-                      </p>
-                    )}
-                  </motion.div>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Connected State - Test Message */}
-          <AnimatePresence>
+            {/* Estado Conectado */}
             {isConnected && (
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="space-y-4 py-4"
+                key="connected"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex items-center gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/20"
+              >
+                <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">Pronto para uso</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {instance.phone_number || 'Envie mensagens normalmente'}
+                  </p>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={handleDisconnect} 
+                  className="text-destructive hover:text-destructive shrink-0"
+                >
+                  <WifiOff className="w-4 h-4" />
+                </Button>
+              </motion.div>
+            )}
+
+            {/* Estado Conectando */}
+            {(displayStatus === 'connecting' || (displayStatus === 'qr_pending' && !connectionState.qrCode)) && (
+              <motion.div
+                key="connecting"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-col items-center py-6"
+              >
+                <motion.div
+                  className="w-14 h-14 rounded-full bg-blue-500/10 flex items-center justify-center"
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                >
+                  <Loader2 className="w-7 h-7 text-blue-500 animate-spin" />
+                </motion.div>
+                <p className="mt-3 text-sm font-medium">
+                  {displayStatus === 'connecting' ? 'Conectando...' : 'Gerando QR Code...'}
+                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => cancelConnection(instance.id)}
+                  className="mt-2 text-muted-foreground"
+                >
+                  Cancelar
+                </Button>
+              </motion.div>
+            )}
+
+            {/* QR Code */}
+            {hasQrCode && (
+              <motion.div
+                key="qrcode"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-col items-center py-4"
+              >
+                <div className="bg-white p-3 rounded-xl shadow-lg border">
+                  <img
+                    src={connectionState.qrCode}
+                    alt="QR Code"
+                    className="w-40 h-40 sm:w-48 sm:h-48"
+                  />
+                </div>
+                <div className="mt-3 text-center">
+                  <p className="text-sm font-medium">Escaneie com o WhatsApp</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Configurações → Aparelhos conectados
+                  </p>
+                  <div className="flex items-center justify-center gap-1.5 mt-2">
+                    <motion.div 
+                      className="w-1.5 h-1.5 rounded-full bg-blue-500"
+                      animate={{ opacity: [1, 0.4, 1] }}
+                      transition={{ duration: 1, repeat: Infinity }}
+                    />
+                    <span className="text-xs text-muted-foreground">Aguardando leitura...</span>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => cancelConnection(instance.id)}
+                  className="mt-3 text-muted-foreground"
+                >
+                  Cancelar
+                </Button>
+              </motion.div>
+            )}
+
+            {/* Estado Desconectado / Idle */}
+            {(displayStatus === 'idle' || displayStatus === 'disconnected') && !isConnecting && !isInCooldown && !isConnected && (
+              <motion.div
+                key="disconnected"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-col items-center py-6"
               >
                 <motion.div 
-                  className="flex items-center gap-3 p-4 rounded-xl bg-green-500/5 border border-green-500/20"
-                  initial={{ scale: 0.95 }}
-                  animate={{ scale: 1 }}
+                  className="relative cursor-pointer group"
+                  whileHover={{ scale: 1.02 }}
+                  onClick={handleConnect}
                 >
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: 'spring', delay: 0.1 }}
-                  >
-                    <CheckCircle2 className="w-5 h-5 text-green-500" />
-                  </motion.div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Instância conectada com sucesso!</p>
-                    <p className="text-xs text-muted-foreground">
-                      {instance.phone_number || 'Pronto para enviar mensagens'}
-                    </p>
+                  <div className="w-32 h-32 rounded-xl bg-muted/50 border-2 border-dashed border-muted-foreground/20 flex items-center justify-center group-hover:border-primary/40 transition-colors">
+                    <QrCode className="w-12 h-12 text-muted-foreground/30 group-hover:text-primary/50 transition-colors" />
                   </div>
                 </motion.div>
+                <Button onClick={handleConnect} className="mt-4 gap-2">
+                  <QrCode className="w-4 h-4" />
+                  Conectar WhatsApp
+                </Button>
+              </motion.div>
+            )}
 
-                <div className="p-4 rounded-xl bg-muted/30 border">
-                  <p className="text-xs text-muted-foreground">
-                    Uma mensagem de teste automática é enviada ao conectar para validar a estabilidade.
-                  </p>
+            {/* Cooldown */}
+            {isInCooldown && (
+              <motion.div
+                key="cooldown"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-col items-center py-6"
+              >
+                <div className="w-14 h-14 rounded-full bg-orange-500/10 flex items-center justify-center">
+                  <AlertCircle className="w-7 h-7 text-orange-500" />
+                </div>
+                <p className="mt-3 text-sm font-medium text-orange-600">Muitas tentativas</p>
+                <p className="text-xs text-muted-foreground mt-1">Aguarde antes de tentar novamente</p>
+                <Button 
+                  onClick={handleResetSession} 
+                  disabled={isResetting}
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 gap-2"
+                >
+                  {isResetting ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+                  {isResetting ? 'Resetando...' : 'Resetar Sessão'}
+                </Button>
+              </motion.div>
+            )}
+
+            {/* Erro */}
+            {displayStatus === 'error' && connectionState.error && !isInCooldown && (
+              <motion.div
+                key="error"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="p-4 bg-destructive/5 border border-destructive/20 rounded-lg"
+              >
+                <div className="flex items-start gap-3">
+                  <XCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-destructive">
+                      {connectionState.error.includes('invalidada') || connectionState.error.includes('401')
+                        ? 'Sessão expirada'
+                        : 'Erro na conexão'}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {connectionState.error.includes('invalidada') || connectionState.error.includes('401')
+                        ? 'O WhatsApp foi desconectado do celular.'
+                        : connectionState.error}
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleResetSession}
+                      disabled={isResetting}
+                      className="mt-3 gap-2"
+                    >
+                      {isResetting ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+                      {isResetting ? 'Resetando...' : 'Resetar Sessão'}
+                    </Button>
+                  </div>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Error Display */}
-          <AnimatePresence>
-            {connectionState.error && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="mt-4 p-4 bg-destructive/10 border border-destructive/20 rounded-xl"
-              >
-                <p className="text-sm text-destructive flex items-center gap-2">
-                  <XCircle className="w-4 h-4 shrink-0" />
-                  {connectionState.error.includes('invalidada') || connectionState.error.includes('401')
-                    ? 'Sessão expirada ou deslogada'
-                    : connectionState.error.includes('backend') || connectionState.error.includes('Configure') 
-                      ? 'Backend não configurado' 
-                      : 'Erro na conexão'
-                  }
-                </p>
-                <p className="text-xs text-muted-foreground mt-2 ml-6">
-                  {connectionState.error.includes('invalidada') || connectionState.error.includes('401')
-                    ? 'O WhatsApp foi desconectado. Clique em "Resetar Sessão" para gerar um novo QR Code.'
-                    : connectionState.error.includes('backend') || connectionState.error.includes('Configure')
-                      ? 'Acesse as configurações da instância e configure a URL e Token do seu backend VPS.'
-                      : connectionState.error
-                  }
-                </p>
-
-                {/* Botão de Reset dentro do erro */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleResetSession}
-                  disabled={isResetting}
-                  className="mt-3 ml-6 gap-2"
-                >
-                  {isResetting ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <RotateCcw className="w-4 h-4" />
-                  )}
-                  {isResetting ? 'Resetando...' : 'Resetar Sessão'}
-                </Button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-3 mt-6 pt-4 border-t">
-            {!shouldHideConnectButton && !isConnecting && !needsReset && (
-              <Button onClick={handleConnect} className="gap-2 flex-1 sm:flex-none" size="lg">
-                <QrCode className="w-5 h-5" />
-                Conectar WhatsApp
-              </Button>
-            )}
-
-            {/* Botão de Reset quando em estado de erro/cooldown */}
-            {needsReset && !isConnecting && !connectionState.isPolling && (
-              <Button 
-                onClick={handleResetSession} 
-                disabled={isResetting}
-                className="gap-2 flex-1 sm:flex-none bg-orange-600 hover:bg-orange-700" 
-                size="lg"
-              >
-                {isResetting ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <RotateCcw className="w-5 h-5" />
-                )}
-                {isResetting ? 'Resetando Sessão...' : 'Resetar Sessão'}
-              </Button>
-            )}
-
-            {isConnecting && (
-              <Button
-                variant="outline"
-                onClick={() => cancelConnection(instance.id)}
-                className="gap-2 flex-1 sm:flex-none"
-                size="lg"
-              >
-                <XCircle className="w-5 h-5" />
-                Cancelar
-              </Button>
-            )}
-
-            {isConnected && (
-              <Button 
-                variant="outline" 
-                onClick={handleDisconnect} 
-                className="gap-2 text-destructive hover:text-destructive flex-1 sm:flex-none"
-                size="lg"
-              >
-                <WifiOff className="w-5 h-5" />
-                Desconectar
-              </Button>
-            )}
-
-            <Button variant="ghost" onClick={onRefresh} size="icon" className="shrink-0">
-              <RefreshCw className="w-5 h-5" />
+          {/* Refresh Button - Discreto */}
+          <div className="flex justify-end mt-3 pt-3 border-t border-border/50">
+            <Button variant="ghost" size="sm" onClick={onRefresh} className="text-muted-foreground gap-1.5">
+              <RefreshCw className="w-3.5 h-3.5" />
+              Atualizar
             </Button>
           </div>
         </div>
