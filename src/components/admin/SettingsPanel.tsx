@@ -61,6 +61,7 @@ import { supabase } from '@/integrations/supabase/client';
 import OverloadAlertModal from './OverloadAlertModal';
 import GenesisDocumentation from './GenesisDocumentation';
 import ThemePreviewClone from './ThemePreviewClone';
+import GenesisProSection from './GenesisProSection';
 import FeatureLock from '@/components/subscription/FeatureLock';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { sendPushNotification } from '@/lib/webhooks';
@@ -237,7 +238,7 @@ const defaultBackupConfig: BackupConfig = {
 
 const daysOfWeek = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
-type SettingsSection = 'theme' | 'shop' | 'security' | 'social' | 'backup' | 'texts' | 'chatpro' | 'templates' | 'api' | 'menu' | 'booking_link' | 'docs';
+type SettingsSection = 'theme' | 'shop' | 'security' | 'social' | 'backup' | 'texts' | 'genesispro' | 'templates' | 'api' | 'menu' | 'booking_link' | 'docs';
 
 const settingsSections = [
   { id: 'theme' as SettingsSection, label: 'Tema', icon: Palette },
@@ -247,7 +248,7 @@ const settingsSections = [
   { id: 'social' as SettingsSection, label: 'Redes Sociais', icon: Instagram },
   { id: 'backup' as SettingsSection, label: 'Backup', icon: Database },
   { id: 'texts' as SettingsSection, label: 'Textos do Site', icon: Type },
-  { id: 'chatpro' as SettingsSection, label: 'ChatPro', icon: MessageCircle },
+  { id: 'genesispro' as SettingsSection, label: 'GenesisPro', icon: MessageCircle },
   { id: 'templates' as SettingsSection, label: 'Templates', icon: FileText },
   { id: 'api' as SettingsSection, label: 'API', icon: Webhook },
   { id: 'menu' as SettingsSection, label: 'Menu Admin', icon: Settings },
@@ -665,7 +666,7 @@ export default function SettingsPanel() {
       setTemplates(prev => prev.map(t => 
         t.event_type === eventType ? { ...t, chatpro_enabled: enabled } : t
       ));
-      notify.success(enabled ? 'ChatPro ativado para este evento' : 'ChatPro desativado para este evento');
+      notify.success(enabled ? 'GenesisPro ativado para este evento' : 'GenesisPro desativado para este evento');
     }
   };
 
@@ -1556,71 +1557,18 @@ Retorne APENAS a mensagem, sem explicações.`;
           </div>
         );
 
-      case 'chatpro':
+      case 'genesispro':
         return (
-          <div className="space-y-5">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold">Integração ChatPro</h3>
-              <button
-                onClick={() => chatproConfig && updateChatProConfig({ is_enabled: !chatproConfig.is_enabled })}
-                disabled={chatproLoading}
-                className={`w-14 h-7 rounded-full transition-colors relative ${
-                  chatproConfig?.is_enabled ? 'bg-primary' : 'bg-secondary'
-                }`}
-              >
-                <div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all ${
-                  chatproConfig?.is_enabled ? 'left-8' : 'left-1'
-                }`} />
-              </button>
-            </div>
-
-            {chatproConfig?.is_enabled && (
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm text-muted-foreground block mb-2">API Token</label>
-                  <Input
-                    type="password"
-                    value={chatproConfig?.api_token || ''}
-                    onChange={(e) => updateChatProConfig({ api_token: e.target.value })}
-                    placeholder="Seu token..."
-                    className="h-11"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm text-muted-foreground block mb-2">Instance ID</label>
-                    <Input
-                      value={chatproConfig?.instance_id || ''}
-                      onChange={(e) => updateChatProConfig({ instance_id: e.target.value })}
-                      placeholder="ID..."
-                      className="h-11"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm text-muted-foreground block mb-2">Endpoint</label>
-                    <Input
-                      value={chatproConfig?.base_endpoint || ''}
-                      onChange={(e) => updateChatProConfig({ base_endpoint: e.target.value })}
-                      placeholder="https://..."
-                      className="h-11"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 pt-3 border-t border-border">
-                  <Input
-                    value={testPhone}
-                    onChange={(e) => setTestPhone(e.target.value)}
-                    placeholder="5511999999999"
-                    className="h-11 flex-1"
-                  />
-                  <Button variant="outline" onClick={testChatProConnection} disabled={testingChatPro} className="h-11 px-4">
-                    {testingChatPro ? <Loader2 className="w-5 h-5 animate-spin" /> : <TestTube className="w-5 h-5" />}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
+          <GenesisProSection
+            chatproConfig={chatproConfig}
+            updateChatProConfig={updateChatProConfig}
+            chatproLoading={chatproLoading}
+            testPhone={testPhone}
+            setTestPhone={setTestPhone}
+            testChatProConnection={testChatProConnection}
+            testingChatPro={testingChatPro}
+            userEmail={user?.email || ''}
+          />
         );
 
       case 'templates':
