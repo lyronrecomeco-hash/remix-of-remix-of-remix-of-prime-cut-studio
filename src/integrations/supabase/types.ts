@@ -904,6 +904,198 @@ export type Database = {
         }
         Relationships: []
       }
+      captcha_verifications: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          success: boolean | null
+          token_hash: string
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          success?: boolean | null
+          token_hash: string
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          success?: boolean | null
+          token_hash?: string
+        }
+        Relationships: []
+      }
+      chatbot_ab_test_results: {
+        Row: {
+          completed: boolean | null
+          completed_at: string | null
+          contact_phone: string | null
+          conversion_value: number | null
+          converted: boolean | null
+          created_at: string | null
+          id: string
+          session_id: string | null
+          started_at: string | null
+          test_id: string
+          variant: string
+        }
+        Insert: {
+          completed?: boolean | null
+          completed_at?: string | null
+          contact_phone?: string | null
+          conversion_value?: number | null
+          converted?: boolean | null
+          created_at?: string | null
+          id?: string
+          session_id?: string | null
+          started_at?: string | null
+          test_id: string
+          variant: string
+        }
+        Update: {
+          completed?: boolean | null
+          completed_at?: string | null
+          contact_phone?: string | null
+          conversion_value?: number | null
+          converted?: boolean | null
+          created_at?: string | null
+          id?: string
+          session_id?: string | null
+          started_at?: string | null
+          test_id?: string
+          variant?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatbot_ab_test_results_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "chatbot_ab_tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chatbot_ab_tests: {
+        Row: {
+          chatbot_id: string
+          created_at: string | null
+          description: string | null
+          ended_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          started_at: string | null
+          traffic_split: number | null
+          updated_at: string | null
+          variant_a_flow: Json
+          variant_a_name: string | null
+          variant_b_flow: Json
+          variant_b_name: string | null
+          winner_variant: string | null
+        }
+        Insert: {
+          chatbot_id: string
+          created_at?: string | null
+          description?: string | null
+          ended_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          started_at?: string | null
+          traffic_split?: number | null
+          updated_at?: string | null
+          variant_a_flow: Json
+          variant_a_name?: string | null
+          variant_b_flow: Json
+          variant_b_name?: string | null
+          winner_variant?: string | null
+        }
+        Update: {
+          chatbot_id?: string
+          created_at?: string | null
+          description?: string | null
+          ended_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          started_at?: string | null
+          traffic_split?: number | null
+          updated_at?: string | null
+          variant_a_flow?: Json
+          variant_a_name?: string | null
+          variant_b_flow?: Json
+          variant_b_name?: string | null
+          winner_variant?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatbot_ab_tests_chatbot_id_fkey"
+            columns: ["chatbot_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_automations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chatbot_analytics: {
+        Row: {
+          abandoned_sessions: number | null
+          avg_duration_seconds: number | null
+          chatbot_id: string
+          completed_sessions: number | null
+          created_at: string | null
+          date: string
+          human_transfers: number | null
+          id: string
+          total_messages: number | null
+          total_sessions: number | null
+          unique_contacts: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          abandoned_sessions?: number | null
+          avg_duration_seconds?: number | null
+          chatbot_id: string
+          completed_sessions?: number | null
+          created_at?: string | null
+          date?: string
+          human_transfers?: number | null
+          id?: string
+          total_messages?: number | null
+          total_sessions?: number | null
+          unique_contacts?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          abandoned_sessions?: number | null
+          avg_duration_seconds?: number | null
+          chatbot_id?: string
+          completed_sessions?: number | null
+          created_at?: string | null
+          date?: string
+          human_transfers?: number | null
+          id?: string
+          total_messages?: number | null
+          total_sessions?: number | null
+          unique_contacts?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatbot_analytics_chatbot_id_fkey"
+            columns: ["chatbot_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_automations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chatbot_inbound_dedup: {
         Row: {
           chatbot_id: string | null
@@ -933,6 +1125,47 @@ export type Database = {
           session_id?: string | null
         }
         Relationships: []
+      }
+      chatbot_operating_hours: {
+        Row: {
+          chatbot_id: string
+          created_at: string | null
+          day_of_week: number
+          end_time: string
+          id: string
+          is_enabled: boolean | null
+          start_time: string
+          timezone: string | null
+        }
+        Insert: {
+          chatbot_id: string
+          created_at?: string | null
+          day_of_week: number
+          end_time?: string
+          id?: string
+          is_enabled?: boolean | null
+          start_time?: string
+          timezone?: string | null
+        }
+        Update: {
+          chatbot_id?: string
+          created_at?: string | null
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_enabled?: boolean | null
+          start_time?: string
+          timezone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatbot_operating_hours_chatbot_id_fkey"
+            columns: ["chatbot_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_automations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       chatbot_session_logs: {
         Row: {
@@ -3605,6 +3838,88 @@ export type Database = {
           },
         ]
       }
+      genesis_contact_list_items: {
+        Row: {
+          created_at: string | null
+          custom_data: Json | null
+          email: string | null
+          id: string
+          is_active: boolean | null
+          list_id: string
+          name: string | null
+          phone: string
+        }
+        Insert: {
+          created_at?: string | null
+          custom_data?: Json | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          list_id: string
+          name?: string | null
+          phone: string
+        }
+        Update: {
+          created_at?: string | null
+          custom_data?: Json | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          list_id?: string
+          name?: string | null
+          phone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_contact_list_items_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_contact_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_contact_lists: {
+        Row: {
+          contact_count: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          contact_count?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          contact_count?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_contact_lists_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       genesis_credit_transactions: {
         Row: {
           amount: number
@@ -5865,6 +6180,48 @@ export type Database = {
         }
         Relationships: []
       }
+      phone_verification_codes: {
+        Row: {
+          attempts: number | null
+          code: string
+          created_at: string | null
+          email: string | null
+          expires_at: string
+          id: string
+          max_attempts: number | null
+          name: string | null
+          password_hash: string | null
+          phone: string
+          verified_at: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          code: string
+          created_at?: string | null
+          email?: string | null
+          expires_at?: string
+          id?: string
+          max_attempts?: number | null
+          name?: string | null
+          password_hash?: string | null
+          phone: string
+          verified_at?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          code?: string
+          created_at?: string | null
+          email?: string | null
+          expires_at?: string
+          id?: string
+          max_attempts?: number | null
+          name?: string | null
+          password_hash?: string | null
+          phone?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       proposal_questionnaire_history: {
         Row: {
           ai_follow_up: string | null
@@ -6394,6 +6751,48 @@ export type Database = {
           id?: string
           is_enabled?: boolean | null
           secret?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          created_at: string | null
+          id: string
+          keyboard_shortcuts_enabled: boolean | null
+          language: string | null
+          notifications_enabled: boolean | null
+          onboarding_completed: boolean | null
+          onboarding_step: number | null
+          theme: string | null
+          timezone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          keyboard_shortcuts_enabled?: boolean | null
+          language?: string | null
+          notifications_enabled?: boolean | null
+          onboarding_completed?: boolean | null
+          onboarding_step?: number | null
+          theme?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          keyboard_shortcuts_enabled?: boolean | null
+          language?: string | null
+          notifications_enabled?: boolean | null
+          onboarding_completed?: boolean | null
+          onboarding_step?: number | null
+          theme?: string | null
+          timezone?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -7536,6 +7935,45 @@ export type Database = {
           },
         ]
       }
+      whatsapp_disconnect_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          alert_type: string
+          created_at: string | null
+          id: string
+          instance_id: string
+          message: string | null
+          sent_at: string | null
+          sent_via_email: boolean | null
+          sent_via_push: boolean | null
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          alert_type: string
+          created_at?: string | null
+          id?: string
+          instance_id: string
+          message?: string | null
+          sent_at?: string | null
+          sent_via_email?: boolean | null
+          sent_via_push?: boolean | null
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          alert_type?: string
+          created_at?: string | null
+          id?: string
+          instance_id?: string
+          message?: string | null
+          sent_at?: string | null
+          sent_via_email?: boolean | null
+          sent_via_push?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       whatsapp_event_queue: {
         Row: {
           attempts: number
@@ -8175,6 +8613,77 @@ export type Database = {
             columns: ["instance_id"]
             isOneToOne: false
             referencedRelation: "whatsapp_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_message_templates: {
+        Row: {
+          approved_at: string | null
+          body: string
+          buttons: Json | null
+          category: string
+          created_at: string | null
+          external_id: string | null
+          footer: string | null
+          header_content: string | null
+          header_type: string | null
+          id: string
+          language: string | null
+          name: string
+          rejection_reason: string | null
+          status: string | null
+          submitted_at: string | null
+          updated_at: string | null
+          user_id: string | null
+          variables: Json | null
+        }
+        Insert: {
+          approved_at?: string | null
+          body: string
+          buttons?: Json | null
+          category: string
+          created_at?: string | null
+          external_id?: string | null
+          footer?: string | null
+          header_content?: string | null
+          header_type?: string | null
+          id?: string
+          language?: string | null
+          name: string
+          rejection_reason?: string | null
+          status?: string | null
+          submitted_at?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          variables?: Json | null
+        }
+        Update: {
+          approved_at?: string | null
+          body?: string
+          buttons?: Json | null
+          category?: string
+          created_at?: string | null
+          external_id?: string | null
+          footer?: string | null
+          header_content?: string | null
+          header_type?: string | null
+          id?: string
+          language?: string | null
+          name?: string
+          rejection_reason?: string | null
+          status?: string | null
+          submitted_at?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          variables?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_message_templates_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_users"
             referencedColumns: ["id"]
           },
         ]
@@ -8902,14 +9411,32 @@ export type Database = {
         Args: { p_phone: string; p_user_id: string }
         Returns: boolean
       }
+      check_contact_list_ownership: {
+        Args: { p_list_id: string }
+        Returns: boolean
+      }
       check_ip_fraud: { Args: { check_ip: string }; Returns: boolean }
       check_login_attempts: { Args: { p_email: string }; Returns: boolean }
+      check_rate_limit: {
+        Args: {
+          p_endpoint: string
+          p_identifier: string
+          p_limit: number
+          p_window_minutes: number
+        }
+        Returns: {
+          allowed: boolean
+          remaining: number
+          reset_at: string
+        }[]
+      }
       check_session_timeout: {
         Args: { p_timeout_minutes?: number; p_user_id: string }
         Returns: boolean
       }
       cleanup_expired_sessions: { Args: never; Returns: undefined }
       cleanup_expired_verification_codes: { Args: never; Returns: undefined }
+      cleanup_old_rate_limits: { Args: never; Returns: number }
       current_tenant_id: { Args: never; Returns: string }
       current_tenant_ids: { Args: never; Returns: string[] }
       deduct_genesis_credits: {
@@ -9063,6 +9590,7 @@ export type Database = {
       get_crm_user_id: { Args: { _auth_user_id: string }; Returns: string }
       get_genesis_status_summary: { Args: never; Returns: Json }
       get_genesis_user_id: { Args: { _auth_user_id: string }; Returns: string }
+      get_genesis_user_id_for_auth: { Args: never; Returns: string }
       get_user_plan: { Args: { check_user_id: string }; Returns: string }
       get_warmup_limit: { Args: { p_instance_id: string }; Returns: number }
       has_genesis_role: {
@@ -9150,6 +9678,10 @@ export type Database = {
       }
       validate_token_owner: {
         Args: { token_user_id: string }
+        Returns: boolean
+      }
+      verify_totp_code: {
+        Args: { p_code: string; p_user_id: string }
         Returns: boolean
       }
     }
