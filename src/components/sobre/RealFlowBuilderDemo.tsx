@@ -100,28 +100,28 @@ const NODE_TEMPLATES = [
 
 const DEMO_FLOWS = [
   {
-    name: 'Atendimento Básico',
+    name: 'Atendimento',
     nodes: [
-      { id: 'trigger-1', type: 'flowNode', position: { x: 250, y: 50 }, data: { label: 'Mensagem Recebida', type: 'trigger' as DemoNodeType, description: 'Cliente envia mensagem' } },
-      { id: 'ai-1', type: 'flowNode', position: { x: 250, y: 180 }, data: { label: 'Luna IA', type: 'ai' as DemoNodeType, description: 'Processa intenção' } },
-      { id: 'condition-1', type: 'flowNode', position: { x: 250, y: 310 }, data: { label: 'Tipo de Dúvida', type: 'condition' as DemoNodeType, description: 'Classifica atendimento' } },
-      { id: 'message-1', type: 'flowNode', position: { x: 100, y: 440 }, data: { label: 'Suporte', type: 'message' as DemoNodeType, description: 'Direciona para suporte' } },
-      { id: 'message-2', type: 'flowNode', position: { x: 400, y: 440 }, data: { label: 'Vendas', type: 'message' as DemoNodeType, description: 'Direciona para vendas' } }
+      { id: 'trigger-1', type: 'flowNode', position: { x: 150, y: 30 }, data: { label: 'Msg Recebida', type: 'trigger' as DemoNodeType, description: 'Cliente envia' } },
+      { id: 'ai-1', type: 'flowNode', position: { x: 150, y: 130 }, data: { label: 'Luna IA', type: 'ai' as DemoNodeType, description: 'Processa' } },
+      { id: 'condition-1', type: 'flowNode', position: { x: 150, y: 230 }, data: { label: 'Tipo', type: 'condition' as DemoNodeType, description: 'Classifica' } },
+      { id: 'message-1', type: 'flowNode', position: { x: 50, y: 340 }, data: { label: 'Suporte', type: 'message' as DemoNodeType, description: 'Suporte' } },
+      { id: 'message-2', type: 'flowNode', position: { x: 250, y: 340 }, data: { label: 'Vendas', type: 'message' as DemoNodeType, description: 'Vendas' } }
     ],
     edges: [
       { id: 'e1', source: 'trigger-1', target: 'ai-1', animated: true },
       { id: 'e2', source: 'ai-1', target: 'condition-1', animated: true },
-      { id: 'e3', source: 'condition-1', target: 'message-1', sourceHandle: 'yes', label: 'Suporte' },
-      { id: 'e4', source: 'condition-1', target: 'message-2', sourceHandle: 'no', label: 'Vendas' }
+      { id: 'e3', source: 'condition-1', target: 'message-1', sourceHandle: 'yes', animated: true },
+      { id: 'e4', source: 'condition-1', target: 'message-2', sourceHandle: 'no', animated: true }
     ]
   },
   {
     name: 'Boas-vindas',
     nodes: [
-      { id: 'trigger-1', type: 'flowNode', position: { x: 250, y: 50 }, data: { label: 'Primeiro Contato', type: 'trigger' as DemoNodeType, description: 'Novo cliente' } },
-      { id: 'message-1', type: 'flowNode', position: { x: 250, y: 180 }, data: { label: 'Saudação', type: 'message' as DemoNodeType, description: 'Olá! Bem-vindo!' } },
-      { id: 'delay-1', type: 'flowNode', position: { x: 250, y: 310 }, data: { label: 'Aguardar 3s', type: 'delay' as DemoNodeType, description: 'Pausa natural' } },
-      { id: 'button-1', type: 'flowNode', position: { x: 250, y: 440 }, data: { label: 'Menu Principal', type: 'button' as DemoNodeType, description: 'Opções do cliente' } }
+      { id: 'trigger-1', type: 'flowNode', position: { x: 150, y: 30 }, data: { label: 'Novo Contato', type: 'trigger' as DemoNodeType, description: 'Novo cliente' } },
+      { id: 'message-1', type: 'flowNode', position: { x: 150, y: 130 }, data: { label: 'Saudação', type: 'message' as DemoNodeType, description: 'Olá!' } },
+      { id: 'delay-1', type: 'flowNode', position: { x: 150, y: 230 }, data: { label: 'Aguardar', type: 'delay' as DemoNodeType, description: '3 segundos' } },
+      { id: 'button-1', type: 'flowNode', position: { x: 150, y: 330 }, data: { label: 'Menu', type: 'button' as DemoNodeType, description: 'Opções' } }
     ],
     edges: [
       { id: 'e1', source: 'trigger-1', target: 'message-1', animated: true },
@@ -132,6 +132,8 @@ const DEMO_FLOWS = [
 ];
 
 // ============= CUSTOM NODE COMPONENT =============
+
+import { Handle, Position } from '@xyflow/react';
 
 const DemoFlowNode = ({ data, selected, id }: { data: DemoNodeData; selected?: boolean; id: string }) => {
   const nodeType = data?.type || 'trigger';
@@ -154,7 +156,7 @@ const DemoFlowNode = ({ data, selected, id }: { data: DemoNodeData; selected?: b
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       className={cn(
-        'relative rounded-xl shadow-lg border bg-card min-w-[180px] max-w-[220px] transition-all',
+        'relative rounded-xl shadow-lg border bg-card min-w-[140px] sm:min-w-[180px] max-w-[180px] sm:max-w-[220px] transition-all',
         selected && 'ring-2 ring-offset-2 ring-offset-background'
       )}
       style={{
@@ -171,49 +173,61 @@ const DemoFlowNode = ({ data, selected, id }: { data: DemoNodeData; selected?: b
         {getCategory()}
       </div>
 
-      {/* Input Handle */}
+      {/* Input Handle - Real React Flow Handle */}
       {!isTrigger && (
-        <div
-          className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full border-2 bg-card cursor-crosshair"
-          style={{ borderColor: color }}
+        <Handle
+          type="target"
+          position={Position.Top}
+          className="!w-3 !h-3 !rounded-full !border-2 !bg-card"
+          style={{ borderColor: color, top: -6 }}
         />
       )}
 
       {/* Content */}
-      <div className="p-3 pt-4">
+      <div className="p-2 sm:p-3 pt-3 sm:pt-4">
         <div className="flex items-start gap-2">
           <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+            className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center shrink-0"
             style={{ backgroundColor: `${color}20` }}
           >
-            <Icon className="w-4 h-4" style={{ color }} />
+            <Icon className="w-3 h-3 sm:w-4 sm:h-4" style={{ color }} />
           </div>
           <div className="min-w-0">
-            <p className="font-semibold text-xs truncate">{data?.label || 'Nó'}</p>
+            <p className="font-semibold text-[10px] sm:text-xs truncate">{data?.label || 'Nó'}</p>
             {data?.description && (
-              <p className="text-[10px] text-muted-foreground line-clamp-1">{data.description}</p>
+              <p className="text-[9px] sm:text-[10px] text-muted-foreground line-clamp-1 hidden sm:block">{data.description}</p>
             )}
           </div>
         </div>
       </div>
 
-      {/* Output Handles */}
+      {/* Output Handles - Real React Flow Handles */}
       {!isEnd && (
         isCondition ? (
           <>
-            <div
-              className="absolute -bottom-2 left-1/4 -translate-x-1/2 w-4 h-4 rounded-full bg-green-500 border-2 border-background cursor-crosshair"
+            <Handle
+              type="source"
+              position={Position.Bottom}
+              id="yes"
+              className="!w-3 !h-3 !rounded-full !bg-green-500 !border-2 !border-background"
+              style={{ left: '25%', bottom: -6 }}
             />
-            <div
-              className="absolute -bottom-2 left-3/4 -translate-x-1/2 w-4 h-4 rounded-full bg-red-500 border-2 border-background cursor-crosshair"
+            <Handle
+              type="source"
+              position={Position.Bottom}
+              id="no"
+              className="!w-3 !h-3 !rounded-full !bg-red-500 !border-2 !border-background"
+              style={{ left: '75%', bottom: -6 }}
             />
-            <div className="absolute -bottom-6 left-1/4 -translate-x-1/2 text-[8px] font-bold text-green-500">SIM</div>
-            <div className="absolute -bottom-6 left-3/4 -translate-x-1/2 text-[8px] font-bold text-red-500">NÃO</div>
+            <div className="absolute -bottom-5 left-1/4 -translate-x-1/2 text-[7px] font-bold text-green-500">SIM</div>
+            <div className="absolute -bottom-5 left-3/4 -translate-x-1/2 text-[7px] font-bold text-red-500">NÃO</div>
           </>
         ) : (
-          <div
-            className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full border-2 bg-card cursor-crosshair"
-            style={{ borderColor: color }}
+          <Handle
+            type="source"
+            position={Position.Bottom}
+            className="!w-3 !h-3 !rounded-full !border-2 !bg-card"
+            style={{ borderColor: color, bottom: -6 }}
           />
         )
       )}
@@ -296,63 +310,53 @@ const FlowBuilderContent = () => {
   }, [fitView]);
 
   return (
-    <Card className="overflow-hidden border-2 border-blue-500/30 shadow-2xl shadow-blue-500/10 bg-card/95 backdrop-blur-xl h-[500px]">
+    <Card className="overflow-hidden border-2 border-blue-500/30 shadow-2xl shadow-blue-500/10 bg-card/95 backdrop-blur-xl h-[400px] sm:h-[500px]">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-3">
+      <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-2 sm:p-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center backdrop-blur">
-              <GitBranch className="w-5 h-5 text-white" />
+            <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-white/20 flex items-center justify-center backdrop-blur">
+              <GitBranch className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-bold text-white text-sm">Flow Builder</h3>
-                <Badge className="bg-white/20 text-white text-[9px] border-white/30">INTERATIVO</Badge>
+                <h3 className="font-bold text-white text-xs sm:text-sm">Flow Builder</h3>
+                <Badge className="bg-white/20 text-white text-[8px] sm:text-[9px] border-white/30 hidden sm:inline-flex">INTERATIVO</Badge>
               </div>
-              <p className="text-[10px] text-white/80">Arraste e conecte os nós</p>
+              <p className="text-[9px] sm:text-[10px] text-white/80 hidden sm:block">Arraste e conecte os nós</p>
             </div>
           </div>
           
           <div className="flex items-center gap-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="icon"
-                  variant={interactionMode === 'select' ? 'secondary' : 'ghost'}
-                  className="w-7 h-7 text-white/80 hover:text-white hover:bg-white/20"
-                  onClick={() => setInteractionMode('select')}
-                >
-                  <MousePointer className="w-3.5 h-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Selecionar</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="icon"
-                  variant={interactionMode === 'pan' ? 'secondary' : 'ghost'}
-                  className="w-7 h-7 text-white/80 hover:text-white hover:bg-white/20"
-                  onClick={() => setInteractionMode('pan')}
-                >
-                  <Hand className="w-3.5 h-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Arrastar Canvas</TooltipContent>
-            </Tooltip>
+            <Button
+              size="icon"
+              variant={interactionMode === 'select' ? 'secondary' : 'ghost'}
+              className="w-6 h-6 sm:w-7 sm:h-7 text-white/80 hover:text-white hover:bg-white/20"
+              onClick={() => setInteractionMode('select')}
+            >
+              <MousePointer className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            </Button>
+            <Button
+              size="icon"
+              variant={interactionMode === 'pan' ? 'secondary' : 'ghost'}
+              className="w-6 h-6 sm:w-7 sm:h-7 text-white/80 hover:text-white hover:bg-white/20"
+              onClick={() => setInteractionMode('pan')}
+            >
+              <Hand className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            </Button>
           </div>
         </div>
       </div>
 
       {/* Toolbar */}
-      <div className="px-3 py-2 border-b bg-muted/30 flex items-center justify-between gap-2">
+      <div className="px-2 sm:px-3 py-1.5 sm:py-2 border-b bg-muted/30 flex items-center justify-between gap-1 sm:gap-2">
         <div className="flex items-center gap-1">
           {DEMO_FLOWS.map((flow, idx) => (
             <Button
               key={flow.name}
               size="sm"
               variant={selectedFlow === idx ? 'default' : 'ghost'}
-              className="h-7 text-[10px] px-2"
+              className="h-6 sm:h-7 text-[9px] sm:text-[10px] px-1.5 sm:px-2"
               onClick={() => loadDemoFlow(idx)}
             >
               {flow.name}
@@ -361,16 +365,16 @@ const FlowBuilderContent = () => {
         </div>
         
         <div className="flex items-center gap-1">
-          <Button size="icon" variant="ghost" className="w-7 h-7" onClick={() => zoomOut()}>
-            <ZoomOut className="w-3.5 h-3.5" />
+          <Button size="icon" variant="ghost" className="w-6 h-6 sm:w-7 sm:h-7 hidden sm:flex" onClick={() => zoomOut()}>
+            <ZoomOut className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           </Button>
-          <Button size="icon" variant="ghost" className="w-7 h-7" onClick={() => zoomIn()}>
-            <ZoomIn className="w-3.5 h-3.5" />
+          <Button size="icon" variant="ghost" className="w-6 h-6 sm:w-7 sm:h-7 hidden sm:flex" onClick={() => zoomIn()}>
+            <ZoomIn className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           </Button>
           <Button
             size="sm"
             className={cn(
-              "h-7 text-[10px] px-2 gap-1",
+              "h-6 sm:h-7 text-[9px] sm:text-[10px] px-1.5 sm:px-2 gap-1",
               isSimulating && "bg-green-600 hover:bg-green-700"
             )}
             onClick={runSimulation}
@@ -379,12 +383,12 @@ const FlowBuilderContent = () => {
             {isSimulating ? (
               <>
                 <Activity className="w-3 h-3 animate-pulse" />
-                Simulando...
+                <span className="hidden sm:inline">Simulando...</span>
               </>
             ) : (
               <>
                 <Play className="w-3 h-3" />
-                Simular
+                <span className="hidden sm:inline">Simular</span>
               </>
             )}
           </Button>
@@ -392,7 +396,7 @@ const FlowBuilderContent = () => {
       </div>
 
       {/* Canvas */}
-      <div ref={reactFlowWrapper} className="h-[340px] relative">
+      <div ref={reactFlowWrapper} className="h-[260px] sm:h-[340px] relative touch-none">
         <ReactFlow
           nodes={nodes.map((n, idx) => ({
             ...n,
@@ -421,8 +425,8 @@ const FlowBuilderContent = () => {
         >
           <Background variant={BackgroundVariant.Dots} gap={16} size={1} color="hsl(var(--muted-foreground) / 0.15)" />
           
-          {/* Node Palette */}
-          <Panel position="bottom-left" className="!left-2 !bottom-2">
+          {/* Node Palette - Hidden on mobile */}
+          <Panel position="bottom-left" className="!left-2 !bottom-2 hidden sm:block">
             <div className="bg-card/95 backdrop-blur border rounded-lg p-2 shadow-lg">
               <p className="text-[9px] font-semibold text-muted-foreground mb-1.5 px-1">ADICIONAR NÓ</p>
               <div className="flex gap-1 flex-wrap max-w-[200px]">
@@ -454,11 +458,11 @@ const FlowBuilderContent = () => {
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="bg-green-600 text-white px-3 py-1.5 rounded-full flex items-center gap-2 shadow-lg"
+                  className="bg-green-600 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-full flex items-center gap-1 sm:gap-2 shadow-lg"
                 >
-                  <Activity className="w-3.5 h-3.5 animate-pulse" />
-                  <span className="text-xs font-medium">
-                    Executando passo {simulationStep + 1} de {nodes.length}
+                  <Activity className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-pulse" />
+                  <span className="text-[10px] sm:text-xs font-medium">
+                    Passo {simulationStep + 1}/{nodes.length}
                   </span>
                 </motion.div>
               </Panel>
@@ -468,8 +472,8 @@ const FlowBuilderContent = () => {
       </div>
 
       {/* Footer */}
-      <div className="px-3 py-2 border-t bg-muted/30 flex items-center justify-between text-[10px] text-muted-foreground">
-        <div className="flex items-center gap-3">
+      <div className="px-2 sm:px-3 py-1.5 sm:py-2 border-t bg-muted/30 flex items-center justify-between text-[9px] sm:text-[10px] text-muted-foreground">
+        <div className="flex items-center gap-2 sm:gap-3">
           <span className="flex items-center gap-1">
             <CheckCircle2 className="w-3 h-3 text-green-500" />
             {nodes.length} nós
@@ -479,7 +483,7 @@ const FlowBuilderContent = () => {
             {edges.length} conexões
           </span>
         </div>
-        <span>Drag & drop para reorganizar</span>
+        <span className="hidden sm:inline">Drag & drop para reorganizar</span>
       </div>
     </Card>
   );
