@@ -74,7 +74,7 @@ const STEPS = [
 const DEFAULT_FORM_DATA: CampaignFormData = {
   name: '',
   description: '',
-  campaign_type: 'mass_send',
+  campaign_type: 'marketing',
   instance_id: '',
   contacts: [],
   message_template: '',
