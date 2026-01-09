@@ -257,7 +257,20 @@ export function useCampaigns() {
         return { success: false, errorType: 'unknown', errorMessage: errorMsg };
       }
 
-      toast.success(`Campanha iniciada! ${data.processed || 0} mensagens na fila.`);
+      const processedCount = data.processed || 0;
+      const remainingCount = data.remaining || 0;
+      
+      if (data.hasMore) {
+        toast.success(`Campanha iniciada! ${processedCount} enviadas, ${remainingCount} restantes. Processando...`);
+      } else if (data.completed) {
+        toast.success('Campanha concluída com sucesso!');
+      } else {
+        toast.success(`Campanha iniciada! ${processedCount} mensagens processadas.`);
+      }
+      
+      // Refresh campaigns list
+      await fetchCampaigns();
+      
       return { success: true };
     } catch (error) {
       console.error('Error starting campaign:', error);
