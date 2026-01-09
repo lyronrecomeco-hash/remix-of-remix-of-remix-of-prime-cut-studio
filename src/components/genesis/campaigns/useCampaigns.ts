@@ -207,47 +207,54 @@ export function useCampaigns() {
   };
 
   // Start campaign - calls edge function worker
-  const startCampaign = async (id: string): Promise<{ success: boolean; outsideWindow?: boolean; windowStart?: string; windowEnd?: string }> => {
+  const startCampaign = async (id: string): Promise<{ 
+    success: boolean; 
+    outsideWindow?: boolean; 
+    windowStart?: string; 
+    windowEnd?: string;
+    errorType?: string;
+    errorMessage?: string;
+  }> => {
     try {
-      // First update status to running
-      const updated = await updateCampaign(id, { 
-        status: 'running', 
-        started_at: new Date().toISOString() 
-      });
-
-      if (!updated) return { success: false };
-
-      // Call the campaign worker edge function
+      // Call the campaign worker edge function (don't update status first - let worker handle it)
       const { data, error } = await supabase.functions.invoke('genesis-campaign-worker', {
         body: { campaign_id: id, action: 'start' }
       });
 
       if (error) {
         console.error('Error starting campaign worker:', error);
-        toast.error('Erro ao iniciar worker da campanha');
-        // Revert status if worker fails
-        await updateCampaign(id, { status: 'draft' });
-        return { success: false };
+        toast.error('Erro ao conectar com servidor');
+        return { success: false, errorType: 'connection', errorMessage: 'Erro ao conectar com servidor' };
       }
 
       if (!data?.success) {
-        // Check if it's a send window error
         const errorMsg = data?.error || '';
+        
+        // Check if it's a send window error
         if (errorMsg.includes('Envio permitido apenas entre')) {
-          // Extract window times from error message
           const match = errorMsg.match(/entre (\d{2}:\d{2}(?::\d{2})?) e (\d{2}:\d{2}(?::\d{2})?)/);
-          await updateCampaign(id, { status: 'draft' });
           return { 
             success: false, 
             outsideWindow: true,
-            windowStart: match?.[1] || '08:00',
-            windowEnd: match?.[2] || '22:00'
+            windowStart: match?.[1]?.substring(0, 5) || '08:00',
+            windowEnd: match?.[2]?.substring(0, 5) || '22:00'
           };
         }
+        
+        // Check if backend not configured
+        if (errorMsg.includes('Backend não configurado') || errorMsg.includes('URL do Backend')) {
+          toast.error('Backend WhatsApp não configurado para esta instância. Configure o backend primeiro.');
+          return { success: false, errorType: 'backend', errorMessage: errorMsg };
+        }
+        
+        // Check if instance not connected
+        if (errorMsg.includes('não está conectada') || errorMsg.includes('Instância')) {
+          toast.error('Instância WhatsApp não está conectada. Conecte a instância primeiro.');
+          return { success: false, errorType: 'instance', errorMessage: errorMsg };
+        }
 
-        toast.error(data?.error || 'Erro ao processar campanha');
-        await updateCampaign(id, { status: 'draft' });
-        return { success: false };
+        toast.error(errorMsg || 'Erro ao processar campanha');
+        return { success: false, errorType: 'unknown', errorMessage: errorMsg };
       }
 
       toast.success(`Campanha iniciada! ${data.processed || 0} mensagens na fila.`);
@@ -255,7 +262,7 @@ export function useCampaigns() {
     } catch (error) {
       console.error('Error starting campaign:', error);
       toast.error('Erro ao iniciar campanha');
-      return { success: false };
+      return { success: false, errorType: 'exception', errorMessage: String(error) };
     }
   };
 
