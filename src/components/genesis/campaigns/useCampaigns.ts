@@ -207,7 +207,7 @@ export function useCampaigns() {
   };
 
   // Start campaign - calls edge function worker
-  const startCampaign = async (id: string) => {
+  const startCampaign = async (id: string): Promise<{ success: boolean; outsideWindow?: boolean; windowStart?: string; windowEnd?: string }> => {
     try {
       // First update status to running
       const updated = await updateCampaign(id, { 
@@ -215,7 +215,7 @@ export function useCampaigns() {
         started_at: new Date().toISOString() 
       });
 
-      if (!updated) return false;
+      if (!updated) return { success: false };
 
       // Call the campaign worker edge function
       const { data, error } = await supabase.functions.invoke('genesis-campaign-worker', {
@@ -227,21 +227,35 @@ export function useCampaigns() {
         toast.error('Erro ao iniciar worker da campanha');
         // Revert status if worker fails
         await updateCampaign(id, { status: 'draft' });
-        return false;
+        return { success: false };
       }
 
       if (!data?.success) {
+        // Check if it's a send window error
+        const errorMsg = data?.error || '';
+        if (errorMsg.includes('Envio permitido apenas entre')) {
+          // Extract window times from error message
+          const match = errorMsg.match(/entre (\d{2}:\d{2}(?::\d{2})?) e (\d{2}:\d{2}(?::\d{2})?)/);
+          await updateCampaign(id, { status: 'draft' });
+          return { 
+            success: false, 
+            outsideWindow: true,
+            windowStart: match?.[1] || '08:00',
+            windowEnd: match?.[2] || '22:00'
+          };
+        }
+
         toast.error(data?.error || 'Erro ao processar campanha');
         await updateCampaign(id, { status: 'draft' });
-        return false;
+        return { success: false };
       }
 
       toast.success(`Campanha iniciada! ${data.processed || 0} mensagens na fila.`);
-      return true;
+      return { success: true };
     } catch (error) {
       console.error('Error starting campaign:', error);
       toast.error('Erro ao iniciar campanha');
-      return false;
+      return { success: false };
     }
   };
 
