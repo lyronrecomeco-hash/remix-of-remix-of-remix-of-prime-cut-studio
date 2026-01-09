@@ -108,21 +108,18 @@ export function TestMessageModal({ isOpen, onClose, instanceId, instanceName }: 
 
     setIsSending(true);
     addLog('info', 'Iniciando envio de mensagem de teste...');
+    addLog('info', `Instância: ${instanceName} (${instanceId})`);
     addLog('info', `Número destino: ${normalizedPhone}`);
 
     try {
-      // Chamar o proxy para enviar mensagem usando o formato correto
+      // Usar o modo demo-send que tenta múltiplos endpoints automaticamente
       addLog('info', 'Conectando ao backend via proxy...');
 
       const { data, error } = await supabase.functions.invoke('genesis-backend-proxy', {
         body: {
-          instanceId,
-          path: `/api/instance/${instanceId}/send`,
-          method: 'POST',
-          body: {
-            to: normalizedPhone,
-            message: customMessage,
-          },
+          action: 'demo-send',
+          to: normalizedPhone,
+          message: customMessage,
         },
       });
 
@@ -141,18 +138,22 @@ export function TestMessageModal({ isOpen, onClose, instanceId, instanceName }: 
       addLog('success', 'Mensagem enviada com sucesso!', JSON.stringify(data, null, 2));
       toast.success('Mensagem de teste enviada!');
 
-      // Registrar no log de eventos
-      await supabase.from('genesis_event_logs').insert({
-        instance_id: instanceId,
-        event_type: 'test_message_sent',
-        severity: 'info',
-        message: `Teste enviado para ${normalizedPhone}`,
-        details: {
-          to: normalizedPhone,
-          message: customMessage,
-          response: data,
-        },
-      });
+      // Registrar no log de eventos (já é feito no proxy, mas logamos aqui também)
+      try {
+        await supabase.from('genesis_event_logs').insert({
+          instance_id: instanceId,
+          event_type: 'test_message_sent',
+          severity: 'info',
+          message: `Teste enviado para ${normalizedPhone}`,
+          details: {
+            to: normalizedPhone,
+            message: customMessage,
+            response: data,
+          },
+        });
+      } catch (logError) {
+        console.warn('Erro ao salvar log:', logError);
+      }
 
     } catch (error: any) {
       const errorMessage = error.message || 'Erro desconhecido';
@@ -160,17 +161,21 @@ export function TestMessageModal({ isOpen, onClose, instanceId, instanceName }: 
       toast.error(`Erro: ${errorMessage}`);
 
       // Registrar falha no log
-      await supabase.from('genesis_event_logs').insert({
-        instance_id: instanceId,
-        event_type: 'test_message_failed',
-        severity: 'error',
-        message: `Falha ao enviar para ${normalizePhoneNumber(phoneNumber)}`,
-        details: {
-          to: normalizePhoneNumber(phoneNumber),
-          message: customMessage,
-          error: errorMessage,
-        },
-      });
+      try {
+        await supabase.from('genesis_event_logs').insert({
+          instance_id: instanceId,
+          event_type: 'test_message_failed',
+          severity: 'error',
+          message: `Falha ao enviar para ${normalizedPhone}`,
+          details: {
+            to: normalizedPhone,
+            message: customMessage,
+            error: errorMessage,
+          },
+        });
+      } catch (logError) {
+        console.warn('Erro ao salvar log de erro:', logError);
+      }
     } finally {
       setIsSending(false);
     }
