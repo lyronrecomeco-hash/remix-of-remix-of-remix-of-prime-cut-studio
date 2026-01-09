@@ -178,30 +178,10 @@ const WelcomeSetupModal = ({ isOpen, onComplete }: WelcomeSetupModalProps) => {
     }
   };
 
-  const handleComplete = async () => {
+  const handleComplete = () => {
     if (user) {
-      try {
-        // First, try to delete any existing record to avoid conflicts
-        await supabase
-          .from('admin_settings')
-          .delete()
-          .eq('setting_type', `welcome_completed_${user.id}`);
-
-        // Insert new record with completed status
-        const { error } = await supabase
-          .from('admin_settings')
-          .insert({
-            setting_type: `welcome_completed_${user.id}`,
-            settings: { completed: true, completedAt: new Date().toISOString() },
-            user_id: user.id
-          });
-
-        if (error) {
-          console.error('Error saving welcome completion:', error);
-        }
-      } catch (e) {
-        console.error('Error saving welcome completion:', e);
-      }
+      // Use localStorage for reliable persistence (like other panels do)
+      localStorage.setItem(`admin_welcome_completed_${user.id}`, 'true');
     }
     onComplete();
     notify.success('Configuração concluída!', 'Bem-vindo ao Genesis');

@@ -173,22 +173,15 @@ const AdminPanel = () => {
 
   // Check if welcome modal should be shown (first login after confirmation)
   useEffect(() => {
-    const checkWelcomeStatus = async () => {
-      if (!user) return;
-      
-      // Query by setting_type only to find any existing record
-      const { data } = await supabase
-        .from('admin_settings')
-        .select('settings')
-        .eq('setting_type', `welcome_completed_${user.id}`)
-        .maybeSingle();
-      
-      // Show modal if not completed yet
-      if (!data?.settings || !(data.settings as any).completed) {
-        setShowWelcomeModal(true);
-      }
-    };
-    checkWelcomeStatus();
+    if (!user) return;
+    
+    // Use localStorage for reliable welcome check (no DB dependency)
+    const welcomeKey = `admin_welcome_completed_${user.id}`;
+    const hasSeenWelcome = localStorage.getItem(welcomeKey);
+    
+    if (!hasSeenWelcome) {
+      setShowWelcomeModal(true);
+    }
   }, [user]);
   
   // App context (now safe to destructure)
