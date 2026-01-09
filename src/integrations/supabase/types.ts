@@ -2489,6 +2489,56 @@ export type Database = {
         }
         Relationships: []
       }
+      gallery_images: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          tenant_id: string
+          title: string | null
+          updated_at: string | null
+          url: string
+          user_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          tenant_id: string
+          title?: string | null
+          updated_at?: string | null
+          url: string
+          user_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          tenant_id?: string
+          title?: string | null
+          updated_at?: string | null
+          url?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gallery_images_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       genesis_alert_rules: {
         Row: {
           alert_severity: string
@@ -2643,6 +2693,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      genesis_api_status: {
+        Row: {
+          created_at: string | null
+          details: Json | null
+          id: string
+          last_check_at: string | null
+          response_time_ms: number | null
+          service_name: string
+          service_type: string
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          last_check_at?: string | null
+          response_time_ms?: number | null
+          service_name: string
+          service_type: string
+          status: string
+        }
+        Update: {
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          last_check_at?: string | null
+          response_time_ms?: number | null
+          service_name?: string
+          service_type?: string
+          status?: string
+        }
+        Relationships: []
       }
       genesis_automation_logs: {
         Row: {
@@ -6218,14 +6301,35 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_active: boolean | null
+          name: string | null
+          owner_user_id: string | null
+          plan: string | null
+          settings: Json | null
+          slug: string | null
+          updated_at: string | null
         }
         Insert: {
           created_at?: string
           id?: string
+          is_active?: boolean | null
+          name?: string | null
+          owner_user_id?: string | null
+          plan?: string | null
+          settings?: Json | null
+          slug?: string | null
+          updated_at?: string | null
         }
         Update: {
           created_at?: string
           id?: string
+          is_active?: boolean | null
+          name?: string | null
+          owner_user_id?: string | null
+          plan?: string | null
+          settings?: Json | null
+          slug?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -6328,18 +6432,27 @@ export type Database = {
       user_tenants: {
         Row: {
           created_at: string
+          id: string | null
+          is_active: boolean | null
+          is_default: boolean | null
           role: string
           tenant_id: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          id?: string | null
+          is_active?: boolean | null
+          is_default?: boolean | null
           role?: string
           tenant_id: string
           user_id: string
         }
         Update: {
           created_at?: string
+          id?: string | null
+          is_active?: boolean | null
+          is_default?: boolean | null
           role?: string
           tenant_id?: string
           user_id?: string
@@ -8879,6 +8992,7 @@ export type Database = {
       get_affiliate_id: { Args: { _user_id: string }; Returns: string }
       get_crm_tenant_id: { Args: { _auth_user_id: string }; Returns: string }
       get_crm_user_id: { Args: { _auth_user_id: string }; Returns: string }
+      get_genesis_status_summary: { Args: never; Returns: Json }
       get_genesis_user_id: { Args: { _auth_user_id: string }; Returns: string }
       get_user_plan: { Args: { check_user_id: string }; Returns: string }
       get_warmup_limit: { Args: { p_instance_id: string }; Returns: number }
