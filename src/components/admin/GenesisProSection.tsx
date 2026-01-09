@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Modal, ModalBody, ModalFooter } from '@/components/ui/modal';
 import { 
   Loader2, 
   TestTube, 
@@ -12,7 +13,8 @@ import {
   XCircle, 
   ExternalLink,
   RefreshCw,
-  Smartphone
+  Smartphone,
+  X
 } from 'lucide-react';
 import { useNotification } from '@/contexts/NotificationContext';
 
@@ -54,11 +56,15 @@ export default function GenesisProSection({
 }: GenesisProSectionProps) {
   const { notify } = useNotification();
   const [genesisInstance, setGenesisInstance] = useState<GenesisInstance | null>(null);
+  const [allInstances, setAllInstances] = useState<GenesisInstance[]>([]);
   const [loadingGenesis, setLoadingGenesis] = useState(true);
   const [linking, setLinking] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    fetchGenesisInstance();
+    if (userEmail) {
+      fetchGenesisInstance();
+    }
   }, [userEmail]);
 
   const fetchGenesisInstance = async () => {
@@ -77,24 +83,25 @@ export default function GenesisProSection({
         .maybeSingle();
 
       if (genesisUser) {
-        // Find connected instance
-        const { data: instance } = await supabase
+        // Find ALL instances for this user
+        const { data: instances } = await supabase
           .from('genesis_instances')
           .select('id, name, status, phone_number')
           .eq('user_id', genesisUser.id)
-          .eq('status', 'connected')
-          .order('updated_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+          .order('updated_at', { ascending: false });
 
-        if (instance) {
-          setGenesisInstance(instance);
-          
-          // Auto-link if not already linked
-          if (!chatproConfig?.instance_id || chatproConfig.instance_id !== instance.id) {
-            await autoLinkInstance(instance);
-          }
+        if (instances && instances.length > 0) {
+          setAllInstances(instances);
+          // Set the first connected one as default
+          const connectedInstance = instances.find(i => i.status === 'connected') || instances[0];
+          setGenesisInstance(connectedInstance);
+        } else {
+          setAllInstances([]);
+          setGenesisInstance(null);
         }
+      } else {
+        setAllInstances([]);
+        setGenesisInstance(null);
       }
     } catch (error) {
       console.error('Error fetching Genesis instance:', error);
@@ -127,153 +134,237 @@ export default function GenesisProSection({
   const isLinked = chatproConfig?.instance_id && 
     (chatproConfig.base_endpoint === 'genesis-native' || genesisInstance?.id === chatproConfig.instance_id);
 
+  const handleToggleClick = () => {
+    if (!chatproConfig?.is_enabled) {
+      // Opening - show modal to select/confirm instance
+      setShowModal(true);
+      fetchGenesisInstance();
+    } else {
+      // Closing - just disable
+      updateChatProConfig({ is_enabled: false });
+    }
+  };
+
+  const handleSelectInstance = async (instance: GenesisInstance) => {
+    setLinking(true);
+    try {
+      await updateChatProConfig({
+        is_enabled: true,
+        instance_id: instance.id,
+        base_endpoint: 'genesis-native',
+        api_token: 'genesis-auto-linked',
+      });
+      setGenesisInstance(instance);
+      notify.success('GenesisPro ativado!', `Instância "${instance.name}" vinculada`);
+      setShowModal(false);
+    } catch (error) {
+      console.error('Error linking instance:', error);
+      notify.error('Erro ao vincular instância');
+    }
+    setLinking(false);
+  };
+
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Zap className="w-6 h-6 text-green-500" />
-          <h3 className="text-xl font-bold">Integração GenesisPro</h3>
+    <>
+      <div className="space-y-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Zap className="w-6 h-6 text-green-500" />
+            <h3 className="text-xl font-bold">Integração GenesisPro</h3>
+          </div>
+          <button
+            onClick={handleToggleClick}
+            disabled={chatproLoading}
+            className={`w-14 h-7 rounded-full transition-colors relative ${
+              chatproConfig?.is_enabled ? 'bg-green-500' : 'bg-secondary'
+            }`}
+          >
+            <div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all ${
+              chatproConfig?.is_enabled ? 'left-8' : 'left-1'
+            }`} />
+          </button>
         </div>
-        <button
-          onClick={() => chatproConfig && updateChatProConfig({ is_enabled: !chatproConfig.is_enabled })}
-          disabled={chatproLoading}
-          className={`w-14 h-7 rounded-full transition-colors relative ${
-            chatproConfig?.is_enabled ? 'bg-green-500' : 'bg-secondary'
-          }`}
-        >
-          <div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all ${
-            chatproConfig?.is_enabled ? 'left-8' : 'left-1'
-          }`} />
-        </button>
-      </div>
 
-      <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20">
-        <p className="text-sm text-green-400">
-          💡 O GenesisPro é nossa integração nativa de WhatsApp. Se você tem conta no /genesis com o mesmo email, 
-          a instância é detectada automaticamente!
-        </p>
-      </div>
-
-      {loadingGenesis ? (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        </div>
-      ) : genesisInstance ? (
-        <div className="space-y-4">
-          {/* Instance Found */}
-          <div className="p-4 rounded-xl bg-secondary/50 space-y-3">
+        {chatproConfig?.is_enabled && isLinked && genesisInstance && (
+          <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
                   <Smartphone className="w-5 h-5 text-green-500" />
                 </div>
                 <div>
-                  <p className="font-medium">{genesisInstance.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {genesisInstance.phone_number || 'Número não disponível'}
+                  <p className="font-medium text-green-400">{genesisInstance.name}</p>
+                  <p className="text-sm text-green-500/70">
+                    {genesisInstance.phone_number || 'Conectado'}
                   </p>
                 </div>
               </div>
-              <Badge variant={genesisInstance.status === 'connected' ? 'default' : 'secondary'}>
-                {genesisInstance.status === 'connected' ? (
-                  <><CheckCircle2 className="w-3 h-3 mr-1" /> Conectado</>
-                ) : (
-                  <><XCircle className="w-3 h-3 mr-1" /> {genesisInstance.status}</>
-                )}
+              <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                <CheckCircle2 className="w-3 h-3 mr-1" /> Ativo
               </Badge>
             </div>
 
-            {isLinked ? (
-              <div className="flex items-center gap-2 text-sm text-green-500">
-                <Link2 className="w-4 h-4" />
-                <span>Vinculado ao GenesisPro</span>
+            {/* Test Section */}
+            <div className="pt-3 border-t border-green-500/20 space-y-2">
+              <p className="text-sm text-green-400/80">Testar envio:</p>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={testPhone}
+                  onChange={(e) => setTestPhone(e.target.value)}
+                  placeholder="5511999999999"
+                  className="h-10 flex-1 bg-background/50 border-green-500/30"
+                />
+                <Button 
+                  variant="outline" 
+                  onClick={testChatProConnection} 
+                  disabled={testingChatPro} 
+                  className="h-10 px-4 border-green-500/30 text-green-400 hover:bg-green-500/10"
+                >
+                  {testingChatPro ? <Loader2 className="w-4 h-4 animate-spin" /> : <TestTube className="w-4 h-4" />}
+                </Button>
               </div>
-            ) : (
-              <Button 
-                onClick={handleManualLink} 
-                disabled={linking}
-                className="w-full gap-2"
-                variant="outline"
-              >
-                {linking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
-                Vincular esta instância
-              </Button>
-            )}
+            </div>
           </div>
+        )}
 
-          {/* Refresh */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={fetchGenesisInstance}
-            className="gap-2"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Atualizar status
-          </Button>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {/* No Instance Found */}
-          <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
-            <p className="text-sm text-amber-400">
-              ⚠️ Nenhuma instância Genesis conectada encontrada para <strong>{userEmail}</strong>
-            </p>
-          </div>
-
-          <div className="p-4 rounded-xl bg-secondary/50 space-y-3">
+        {!chatproConfig?.is_enabled && (
+          <div className="p-4 rounded-xl bg-secondary/50 border border-border">
             <p className="text-sm text-muted-foreground">
-              Para usar o GenesisPro, você precisa:
+              💡 Ative para enviar notificações automáticas via WhatsApp usando sua instância Genesis.
             </p>
-            <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
-              <li>Acessar o painel Genesis</li>
-              <li>Criar uma instância WhatsApp</li>
-              <li>Escanear o QR Code para conectar</li>
-            </ol>
+          </div>
+        )}
+      </div>
+
+      {/* Modal de Seleção de Instância */}
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title="Ativar GenesisPro"
+        size="md"
+      >
+        <ModalBody>
+          {loadingGenesis ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
+              <Loader2 className="w-8 h-8 animate-spin text-green-500" />
+              <p className="text-muted-foreground">Buscando instâncias...</p>
+            </div>
+          ) : allInstances.length > 0 ? (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Selecione a instância que deseja usar para enviar notificações:
+              </p>
+              
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {allInstances.map((instance) => (
+                  <button
+                    key={instance.id}
+                    onClick={() => handleSelectInstance(instance)}
+                    disabled={linking}
+                    className="w-full p-4 rounded-xl bg-secondary/50 hover:bg-secondary/80 border border-border hover:border-green-500/50 transition-all flex items-center justify-between group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        instance.status === 'connected' ? 'bg-green-500/20' : 'bg-amber-500/20'
+                      }`}>
+                        <Smartphone className={`w-5 h-5 ${
+                          instance.status === 'connected' ? 'text-green-500' : 'text-amber-500'
+                        }`} />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-medium">{instance.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {instance.phone_number || 'Número não disponível'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge 
+                        variant={instance.status === 'connected' ? 'default' : 'secondary'}
+                        className={instance.status === 'connected' ? 'bg-green-500/20 text-green-400' : ''}
+                      >
+                        {instance.status === 'connected' ? (
+                          <><CheckCircle2 className="w-3 h-3 mr-1" /> Conectado</>
+                        ) : (
+                          <><XCircle className="w-3 h-3 mr-1" /> {instance.status}</>
+                        )}
+                      </Badge>
+                      {linking ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Link2 className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity text-green-500" />
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={fetchGenesisInstance}
+                className="gap-2 w-full"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Atualizar lista
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-5 py-4">
+              <div className="flex flex-col items-center text-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center">
+                  <Smartphone className="w-8 h-8 text-amber-500" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-lg">Nenhuma instância encontrada</h4>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Não encontramos instâncias Genesis para <strong>{userEmail}</strong>
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-secondary/50 space-y-3">
+                <p className="text-sm font-medium">Para usar o GenesisPro:</p>
+                <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+                  <li>Acesse o painel Genesis</li>
+                  <li>Crie uma nova instância WhatsApp</li>
+                  <li>Escaneie o QR Code para conectar</li>
+                  <li>Volte aqui e ative o GenesisPro</li>
+                </ol>
+              </div>
+            </div>
+          )}
+        </ModalBody>
+
+        <ModalFooter>
+          {allInstances.length === 0 && !loadingGenesis ? (
+            <div className="flex gap-2 w-full">
+              <Button
+                variant="outline"
+                onClick={() => setShowModal(false)}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={() => window.open('/genesis', '_blank')}
+                className="flex-1 gap-2 bg-green-600 hover:bg-green-700"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Acessar Genesis
+              </Button>
+            </div>
+          ) : (
             <Button
               variant="outline"
-              className="w-full gap-2"
-              onClick={() => window.open('/genesis', '_blank')}
+              onClick={() => setShowModal(false)}
+              className="w-full"
             >
-              <ExternalLink className="w-4 h-4" />
-              Acessar Genesis
+              Cancelar
             </Button>
-          </div>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={fetchGenesisInstance}
-            className="gap-2"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Verificar novamente
-          </Button>
-        </div>
-      )}
-
-      {/* Test Section */}
-      {chatproConfig?.is_enabled && isLinked && (
-        <div className="space-y-3 pt-4 border-t border-border">
-          <h4 className="font-medium">Testar Envio</h4>
-          <div className="flex items-center gap-3">
-            <Input
-              value={testPhone}
-              onChange={(e) => setTestPhone(e.target.value)}
-              placeholder="5511999999999"
-              className="h-11 flex-1"
-            />
-            <Button 
-              variant="outline" 
-              onClick={testChatProConnection} 
-              disabled={testingChatPro} 
-              className="h-11 px-4"
-            >
-              {testingChatPro ? <Loader2 className="w-5 h-5 animate-spin" /> : <TestTube className="w-5 h-5" />}
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
+          )}
+        </ModalFooter>
+      </Modal>
+    </>
   );
 }
