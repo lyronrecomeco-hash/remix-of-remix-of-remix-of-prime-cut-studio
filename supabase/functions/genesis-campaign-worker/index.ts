@@ -571,6 +571,49 @@ async function processBatch(
       `Pausa de ${pauseDuration / 1000}s após ${pauseAfterBatch} mensagens`);
   }
 
+  // Check if there are more contacts to process
+  const { count: remainingCount } = await supabase
+    .from('genesis_campaign_contacts')
+    .select('*', { count: 'exact', head: true })
+    .eq('campaign_id', campaignId)
+    .eq('status', 'pending');
+
+  const hasMore = (remainingCount ?? 0) > 0;
+
+  // If there are more contacts and we're still in the send window, schedule next batch
+  if (hasMore) {
+    const stillInWindow = isWithinSendWindow(
+      (campaign.send_window_start as string) || '08:00',
+      (campaign.send_window_end as string) || '22:00',
+      (campaign.send_on_weekends as boolean) ?? true
+    );
+
+    if (stillInWindow) {
+      // Continue processing asynchronously
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      
+      // Schedule next batch in background (non-blocking)
+      const nextBatchDelay = getRandomDelay(3, 8);
+      console.log(`[Campaign Worker] Scheduling next batch in ${nextBatchDelay / 1000}s`);
+      
+      setTimeout(async () => {
+        try {
+          await fetch(`${supabaseUrl}/functions/v1/genesis-campaign-worker`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${supabaseKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ campaign_id: campaignId, action: 'process_batch' }),
+          });
+        } catch (e) {
+          console.error('Failed to schedule next batch:', e);
+        }
+      }, nextBatchDelay);
+    }
+  }
+
   return new Response(
     JSON.stringify({ 
       success: true, 
@@ -578,6 +621,8 @@ async function processBatch(
       sent: sentCount,
       failed: failedCount,
       blocked: blockedCount,
+      remaining: remainingCount ?? 0,
+      hasMore,
     }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );

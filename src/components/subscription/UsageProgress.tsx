@@ -12,14 +12,27 @@ interface UsageProgressProps {
 const UsageProgress = ({ compact = false, showUpgradeButton = true }: UsageProgressProps) => {
   const { currentPlan, subscription, showUpgradeModal } = useSubscription();
 
+  // Helper to check if features include 'all'
+  const hasAllFeatures = () => {
+    if (!currentPlan?.features) return false;
+    const features = currentPlan.features as unknown;
+    if (Array.isArray(features)) {
+      return features.includes('all');
+    }
+    if (typeof features === 'string') {
+      return features === 'all' || features.includes('all');
+    }
+    return false;
+  };
+
   // Premium/Lifetime users don't need to see usage
-  if (currentPlan?.features.includes('all')) {
+  if (hasAllFeatures()) {
     if (compact) return null;
     
     return (
       <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/20">
         <Crown className="w-4 h-4 text-primary" />
-        <span className="text-sm text-primary font-medium">{currentPlan.display_name}</span>
+        <span className="text-sm text-primary font-medium">{currentPlan?.display_name}</span>
         <span className="text-xs text-muted-foreground">• Acesso ilimitado</span>
       </div>
     );

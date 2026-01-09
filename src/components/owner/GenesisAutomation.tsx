@@ -121,7 +121,7 @@ const GenesisAutomation = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch instances with user emails
+      // Fetch instances
       const { data: instancesData, error: instancesError } = await supabase
         .from('genesis_instances')
         .select('*')
@@ -132,16 +132,27 @@ const GenesisAutomation = () => {
       // Get unique user IDs
       const userIds = [...new Set(instancesData?.map(i => i.user_id) || [])];
 
-      // Fetch user emails from auth
-      const { data: { users: authUsers } } = await supabase.functions.invoke('get-users-list', {
-        body: { user_ids: userIds }
-      }).catch(() => ({ data: { users: [] } }));
+      // Try to fetch user emails from edge function, fallback to empty array
+      let authUsers: Array<{ id: string; email: string }> = [];
+      try {
+        const response = await supabase.functions.invoke('get-users-list', {
+          body: { user_ids: userIds }
+        });
+        
+        if (response.data?.users && Array.isArray(response.data.users)) {
+          authUsers = response.data.users;
+        } else if (response.data && Array.isArray(response.data)) {
+          authUsers = response.data;
+        }
+      } catch (e) {
+        console.warn('Could not fetch user emails:', e);
+      }
 
       // Map emails to instances
-      const instancesWithEmails = instancesData?.map(instance => ({
+      const instancesWithEmails = (instancesData || []).map(instance => ({
         ...instance,
-        user_email: authUsers?.find((u: any) => u.id === instance.user_id)?.email || 'N/A'
-      })) || [];
+        user_email: authUsers.find((u) => u.id === instance.user_id)?.email || instance.user_id.slice(0, 8) + '...'
+      }));
 
       setInstances(instancesWithEmails);
 
