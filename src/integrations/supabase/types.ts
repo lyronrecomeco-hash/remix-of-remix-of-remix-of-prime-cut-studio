@@ -2644,6 +2644,139 @@ export type Database = {
           },
         ]
       }
+      genesis_automation_logs: {
+        Row: {
+          action_result: string
+          action_type: string
+          created_at: string
+          credits_consumed: number
+          duration_ms: number
+          error_message: string | null
+          event_id: string | null
+          event_type: string | null
+          id: string
+          instance_id: string
+          rule_id: string | null
+        }
+        Insert: {
+          action_result: string
+          action_type: string
+          created_at?: string
+          credits_consumed?: number
+          duration_ms?: number
+          error_message?: string | null
+          event_id?: string | null
+          event_type?: string | null
+          id?: string
+          instance_id: string
+          rule_id?: string | null
+        }
+        Update: {
+          action_result?: string
+          action_type?: string
+          created_at?: string
+          credits_consumed?: number
+          duration_ms?: number
+          error_message?: string | null
+          event_id?: string | null
+          event_type?: string | null
+          id?: string
+          instance_id?: string
+          rule_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_automation_logs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_integration_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_automation_logs_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_automation_logs_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_automation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_automation_rules: {
+        Row: {
+          action_config: Json
+          action_type: string
+          cooldown_minutes: number
+          created_at: string
+          description: string | null
+          event_type: string
+          filters: Json
+          id: string
+          instance_id: string
+          is_active: boolean
+          last_executed_at: string | null
+          max_executions_per_hour: number
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_config?: Json
+          action_type: string
+          cooldown_minutes?: number
+          created_at?: string
+          description?: string | null
+          event_type: string
+          filters?: Json
+          id?: string
+          instance_id: string
+          is_active?: boolean
+          last_executed_at?: string | null
+          max_executions_per_hour?: number
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_config?: Json
+          action_type?: string
+          cooldown_minutes?: number
+          created_at?: string
+          description?: string | null
+          event_type?: string
+          filters?: Json
+          id?: string
+          instance_id?: string
+          is_active?: boolean
+          last_executed_at?: string | null
+          max_executions_per_hour?: number
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_automation_rules_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_automation_rules_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       genesis_calendar_configs: {
         Row: {
           calendar_id: string
@@ -4191,6 +4324,69 @@ export type Database = {
             columns: ["vps_node_id"]
             isOneToOne: false
             referencedRelation: "genesis_vps_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_integration_events: {
+        Row: {
+          created_at: string
+          customer_name: string | null
+          customer_phone: string | null
+          dedup_hash: string
+          event_data: Json
+          event_type: string
+          external_id: string
+          id: string
+          instance_id: string
+          integration_id: string | null
+          processed: boolean
+          provider: string
+          raw_event: string
+        }
+        Insert: {
+          created_at?: string
+          customer_name?: string | null
+          customer_phone?: string | null
+          dedup_hash: string
+          event_data?: Json
+          event_type: string
+          external_id: string
+          id?: string
+          instance_id: string
+          integration_id?: string | null
+          processed?: boolean
+          provider: string
+          raw_event: string
+        }
+        Update: {
+          created_at?: string
+          customer_name?: string | null
+          customer_phone?: string | null
+          dedup_hash?: string
+          event_data?: Json
+          event_type?: string
+          external_id?: string
+          id?: string
+          instance_id?: string
+          integration_id?: string | null
+          processed?: boolean
+          provider?: string
+          raw_event?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_integration_events_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_integration_events_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instance_integrations"
             referencedColumns: ["id"]
           },
         ]
@@ -8338,6 +8534,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_campaign_contacts: {
+        Args: { p_campaign_id: string }
+        Returns: undefined
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_affiliate: { Args: { _user_id: string }; Returns: boolean }
