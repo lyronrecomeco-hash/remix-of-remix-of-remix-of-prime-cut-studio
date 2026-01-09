@@ -2970,13 +2970,17 @@ export type Database = {
           delivered_at: string | null
           error_message: string | null
           id: string
+          instance_used_id: string | null
+          is_warm_lead: boolean | null
           last_attempt_at: string | null
           locked_at: string | null
           max_attempts: number | null
           message_sent: string | null
+          previous_interaction_count: number | null
           read_at: string | null
           replied_at: string | null
           sent_at: string | null
+          spam_score: number | null
           status: string | null
           updated_at: string | null
           variation_index: number | null
@@ -2991,13 +2995,17 @@ export type Database = {
           delivered_at?: string | null
           error_message?: string | null
           id?: string
+          instance_used_id?: string | null
+          is_warm_lead?: boolean | null
           last_attempt_at?: string | null
           locked_at?: string | null
           max_attempts?: number | null
           message_sent?: string | null
+          previous_interaction_count?: number | null
           read_at?: string | null
           replied_at?: string | null
           sent_at?: string | null
+          spam_score?: number | null
           status?: string | null
           updated_at?: string | null
           variation_index?: number | null
@@ -3012,13 +3020,17 @@ export type Database = {
           delivered_at?: string | null
           error_message?: string | null
           id?: string
+          instance_used_id?: string | null
+          is_warm_lead?: boolean | null
           last_attempt_at?: string | null
           locked_at?: string | null
           max_attempts?: number | null
           message_sent?: string | null
+          previous_interaction_count?: number | null
           read_at?: string | null
           replied_at?: string | null
           sent_at?: string | null
+          spam_score?: number | null
           status?: string | null
           updated_at?: string | null
           variation_index?: number | null
@@ -3029,6 +3041,13 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "genesis_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_campaign_contacts_instance_used_id_fkey"
+            columns: ["instance_used_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instances"
             referencedColumns: ["id"]
           },
         ]
@@ -3074,6 +3093,69 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "genesis_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_campaign_instance_pool: {
+        Row: {
+          blocks_count: number | null
+          campaign_id: string
+          cooldown_until: string | null
+          created_at: string | null
+          health_score: number | null
+          id: string
+          instance_id: string
+          is_active: boolean | null
+          last_used_at: string | null
+          messages_failed: number | null
+          messages_sent: number | null
+          priority: number | null
+          weight: number | null
+        }
+        Insert: {
+          blocks_count?: number | null
+          campaign_id: string
+          cooldown_until?: string | null
+          created_at?: string | null
+          health_score?: number | null
+          id?: string
+          instance_id: string
+          is_active?: boolean | null
+          last_used_at?: string | null
+          messages_failed?: number | null
+          messages_sent?: number | null
+          priority?: number | null
+          weight?: number | null
+        }
+        Update: {
+          blocks_count?: number | null
+          campaign_id?: string
+          cooldown_until?: string | null
+          created_at?: string | null
+          health_score?: number | null
+          id?: string
+          instance_id?: string
+          is_active?: boolean | null
+          last_used_at?: string | null
+          messages_failed?: number | null
+          messages_sent?: number | null
+          priority?: number | null
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_campaign_instance_pool_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_campaign_instance_pool_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instances"
             referencedColumns: ["id"]
           },
         ]
@@ -3132,45 +3214,72 @@ export type Database = {
           block_threshold: number | null
           cooldown_after_block_hours: number | null
           created_at: string | null
+          default_quarantine_days: number | null
           emergency_stop_enabled: boolean | null
+          global_blacklist_enabled: boolean | null
           id: string
+          max_daily_per_instance: number | null
           max_messages_per_day: number | null
           max_messages_per_hour: number | null
           max_messages_per_minute: number | null
+          peak_hours_afternoon_end: string | null
+          peak_hours_afternoon_start: string | null
+          peak_hours_end: string | null
+          peak_hours_start: string | null
           read_receipt_delay: boolean | null
+          spam_word_block_level: string | null
           typing_simulation: boolean | null
           updated_at: string | null
           user_id: string
+          warmup_required_for_new: boolean | null
         }
         Insert: {
           auto_pause_on_block?: boolean | null
           block_threshold?: number | null
           cooldown_after_block_hours?: number | null
           created_at?: string | null
+          default_quarantine_days?: number | null
           emergency_stop_enabled?: boolean | null
+          global_blacklist_enabled?: boolean | null
           id?: string
+          max_daily_per_instance?: number | null
           max_messages_per_day?: number | null
           max_messages_per_hour?: number | null
           max_messages_per_minute?: number | null
+          peak_hours_afternoon_end?: string | null
+          peak_hours_afternoon_start?: string | null
+          peak_hours_end?: string | null
+          peak_hours_start?: string | null
           read_receipt_delay?: boolean | null
+          spam_word_block_level?: string | null
           typing_simulation?: boolean | null
           updated_at?: string | null
           user_id: string
+          warmup_required_for_new?: boolean | null
         }
         Update: {
           auto_pause_on_block?: boolean | null
           block_threshold?: number | null
           cooldown_after_block_hours?: number | null
           created_at?: string | null
+          default_quarantine_days?: number | null
           emergency_stop_enabled?: boolean | null
+          global_blacklist_enabled?: boolean | null
           id?: string
+          max_daily_per_instance?: number | null
           max_messages_per_day?: number | null
           max_messages_per_hour?: number | null
           max_messages_per_minute?: number | null
+          peak_hours_afternoon_end?: string | null
+          peak_hours_afternoon_start?: string | null
+          peak_hours_end?: string | null
+          peak_hours_start?: string | null
           read_receipt_delay?: boolean | null
+          spam_word_block_level?: string | null
           typing_simulation?: boolean | null
           updated_at?: string | null
           user_id?: string
+          warmup_required_for_new?: boolean | null
         }
         Relationships: [
           {
@@ -3184,10 +3293,13 @@ export type Database = {
       }
       genesis_campaigns: {
         Row: {
+          adaptive_delay: boolean | null
           batch_size: number | null
           blocked_count: number | null
           campaign_type: string
+          check_blacklist: boolean | null
           completed_at: string | null
+          cooldown_after_block_minutes: number | null
           created_at: string | null
           credits_consumed: number | null
           credits_estimated: number | null
@@ -3203,6 +3315,7 @@ export type Database = {
           luna_generated_variations: Json | null
           luna_similarity_level: string | null
           luna_variations_count: number | null
+          max_blocks_before_pause: number | null
           media_type: string | null
           media_url: string | null
           message_template: string
@@ -3212,24 +3325,36 @@ export type Database = {
           pause_after_batch: number | null
           pause_duration_seconds: number | null
           paused_at: string | null
+          peak_hours_boost: boolean | null
+          prioritize_warm_leads: boolean | null
+          quarantine_days: number | null
           read_count: number | null
           replied_count: number | null
+          respect_warmup: boolean | null
           scheduled_at: string | null
           send_on_weekends: boolean | null
           send_window_end: string | null
           send_window_start: string | null
           sent_count: number | null
+          spam_word_check: boolean | null
           started_at: string | null
           status: string
           total_contacts: number | null
+          typing_duration_max: number | null
+          typing_duration_min: number | null
+          typing_simulation: boolean | null
           updated_at: string | null
+          use_instance_pool: boolean | null
           user_id: string
         }
         Insert: {
+          adaptive_delay?: boolean | null
           batch_size?: number | null
           blocked_count?: number | null
           campaign_type?: string
+          check_blacklist?: boolean | null
           completed_at?: string | null
+          cooldown_after_block_minutes?: number | null
           created_at?: string | null
           credits_consumed?: number | null
           credits_estimated?: number | null
@@ -3245,6 +3370,7 @@ export type Database = {
           luna_generated_variations?: Json | null
           luna_similarity_level?: string | null
           luna_variations_count?: number | null
+          max_blocks_before_pause?: number | null
           media_type?: string | null
           media_url?: string | null
           message_template: string
@@ -3254,24 +3380,36 @@ export type Database = {
           pause_after_batch?: number | null
           pause_duration_seconds?: number | null
           paused_at?: string | null
+          peak_hours_boost?: boolean | null
+          prioritize_warm_leads?: boolean | null
+          quarantine_days?: number | null
           read_count?: number | null
           replied_count?: number | null
+          respect_warmup?: boolean | null
           scheduled_at?: string | null
           send_on_weekends?: boolean | null
           send_window_end?: string | null
           send_window_start?: string | null
           sent_count?: number | null
+          spam_word_check?: boolean | null
           started_at?: string | null
           status?: string
           total_contacts?: number | null
+          typing_duration_max?: number | null
+          typing_duration_min?: number | null
+          typing_simulation?: boolean | null
           updated_at?: string | null
+          use_instance_pool?: boolean | null
           user_id: string
         }
         Update: {
+          adaptive_delay?: boolean | null
           batch_size?: number | null
           blocked_count?: number | null
           campaign_type?: string
+          check_blacklist?: boolean | null
           completed_at?: string | null
+          cooldown_after_block_minutes?: number | null
           created_at?: string | null
           credits_consumed?: number | null
           credits_estimated?: number | null
@@ -3287,6 +3425,7 @@ export type Database = {
           luna_generated_variations?: Json | null
           luna_similarity_level?: string | null
           luna_variations_count?: number | null
+          max_blocks_before_pause?: number | null
           media_type?: string | null
           media_url?: string | null
           message_template?: string
@@ -3296,17 +3435,26 @@ export type Database = {
           pause_after_batch?: number | null
           pause_duration_seconds?: number | null
           paused_at?: string | null
+          peak_hours_boost?: boolean | null
+          prioritize_warm_leads?: boolean | null
+          quarantine_days?: number | null
           read_count?: number | null
           replied_count?: number | null
+          respect_warmup?: boolean | null
           scheduled_at?: string | null
           send_on_weekends?: boolean | null
           send_window_end?: string | null
           send_window_start?: string | null
           sent_count?: number | null
+          spam_word_check?: boolean | null
           started_at?: string | null
           status?: string
           total_contacts?: number | null
+          typing_duration_max?: number | null
+          typing_duration_min?: number | null
+          typing_simulation?: boolean | null
           updated_at?: string | null
+          use_instance_pool?: boolean | null
           user_id?: string
         }
         Relationships: [
@@ -3319,6 +3467,54 @@ export type Database = {
           },
           {
             foreignKeyName: "genesis_campaigns_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_contact_blacklist: {
+        Row: {
+          created_at: string | null
+          id: string
+          phone_hash: string
+          phone_last4: string | null
+          quarantine_until: string | null
+          reason: string
+          source_campaign_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          phone_hash: string
+          phone_last4?: string | null
+          quarantine_until?: string | null
+          reason: string
+          source_campaign_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          phone_hash?: string
+          phone_last4?: string | null
+          quarantine_until?: string | null
+          reason?: string
+          source_campaign_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_contact_blacklist_source_campaign_id_fkey"
+            columns: ["source_campaign_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_contact_blacklist_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "genesis_users"
@@ -4008,6 +4204,62 @@ export type Database = {
           },
         ]
       }
+      genesis_instance_health_metrics: {
+        Row: {
+          created_at: string | null
+          degradation_level: number | null
+          health_score: number | null
+          id: string
+          instance_id: string
+          messages_blocked: number | null
+          messages_delivered: number | null
+          messages_failed: number | null
+          messages_read: number | null
+          messages_replied: number | null
+          messages_sent: number | null
+          period_date: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          degradation_level?: number | null
+          health_score?: number | null
+          id?: string
+          instance_id: string
+          messages_blocked?: number | null
+          messages_delivered?: number | null
+          messages_failed?: number | null
+          messages_read?: number | null
+          messages_replied?: number | null
+          messages_sent?: number | null
+          period_date?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          degradation_level?: number | null
+          health_score?: number | null
+          id?: string
+          instance_id?: string
+          messages_blocked?: number | null
+          messages_delivered?: number | null
+          messages_failed?: number | null
+          messages_read?: number | null
+          messages_replied?: number | null
+          messages_sent?: number | null
+          period_date?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_instance_health_metrics_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       genesis_instance_integrations: {
         Row: {
           created_at: string
@@ -4211,6 +4463,83 @@ export type Database = {
             foreignKeyName: "genesis_instance_tokens_instance_id_fkey"
             columns: ["instance_id"]
             isOneToOne: false
+            referencedRelation: "genesis_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_instance_warmup: {
+        Row: {
+          created_at: string | null
+          day1_limit: number | null
+          day10_limit: number | null
+          day2_limit: number | null
+          day3_limit: number | null
+          day4_limit: number | null
+          day5_limit: number | null
+          day6_limit: number | null
+          day7_limit: number | null
+          day8_limit: number | null
+          day9_limit: number | null
+          id: string
+          instance_id: string
+          last_message_date: string | null
+          messages_sent_today: number | null
+          updated_at: string | null
+          warmup_completed: boolean | null
+          warmup_completed_at: string | null
+          warmup_day: number | null
+          warmup_started_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          day1_limit?: number | null
+          day10_limit?: number | null
+          day2_limit?: number | null
+          day3_limit?: number | null
+          day4_limit?: number | null
+          day5_limit?: number | null
+          day6_limit?: number | null
+          day7_limit?: number | null
+          day8_limit?: number | null
+          day9_limit?: number | null
+          id?: string
+          instance_id: string
+          last_message_date?: string | null
+          messages_sent_today?: number | null
+          updated_at?: string | null
+          warmup_completed?: boolean | null
+          warmup_completed_at?: string | null
+          warmup_day?: number | null
+          warmup_started_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          day1_limit?: number | null
+          day10_limit?: number | null
+          day2_limit?: number | null
+          day3_limit?: number | null
+          day4_limit?: number | null
+          day5_limit?: number | null
+          day6_limit?: number | null
+          day7_limit?: number | null
+          day8_limit?: number | null
+          day9_limit?: number | null
+          id?: string
+          instance_id?: string
+          last_message_date?: string | null
+          messages_sent_today?: number | null
+          updated_at?: string | null
+          warmup_completed?: boolean | null
+          warmup_completed_at?: string | null
+          warmup_day?: number | null
+          warmup_started_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_instance_warmup_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: true
             referencedRelation: "genesis_instances"
             referencedColumns: ["id"]
           },
@@ -4499,6 +4828,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      genesis_spam_words: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          severity: string | null
+          word: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          severity?: string | null
+          word: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          severity?: string | null
+          word?: string
+        }
+        Relationships: []
       }
       genesis_subscriptions: {
         Row: {
@@ -8366,6 +8722,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_contact_blacklisted: {
+        Args: { p_phone: string; p_user_id: string }
+        Returns: boolean
+      }
       check_ip_fraud: { Args: { check_ip: string }; Returns: boolean }
       cleanup_expired_verification_codes: { Args: never; Returns: undefined }
       current_tenant_id: { Args: never; Returns: string }
@@ -8521,6 +8881,7 @@ export type Database = {
       get_crm_user_id: { Args: { _auth_user_id: string }; Returns: string }
       get_genesis_user_id: { Args: { _auth_user_id: string }; Returns: string }
       get_user_plan: { Args: { check_user_id: string }; Returns: string }
+      get_warmup_limit: { Args: { p_instance_id: string }; Returns: number }
       has_genesis_role: {
         Args: {
           _role: Database["public"]["Enums"]["genesis_role"]
@@ -8577,6 +8938,7 @@ export type Database = {
         Args: { proposal_id: string }
         Returns: boolean
       }
+      select_pool_instance: { Args: { p_campaign_id: string }; Returns: string }
       tenant_matches: { Args: { p_tenant: string }; Returns: boolean }
       update_flow_lifecycle_status: {
         Args: {
@@ -8585,6 +8947,10 @@ export type Database = {
           p_validation_result?: Json
         }
         Returns: Json
+      }
+      update_instance_health: {
+        Args: { p_instance_id: string }
+        Returns: undefined
       }
       validate_token_owner: {
         Args: { token_user_id: string }

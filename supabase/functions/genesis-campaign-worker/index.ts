@@ -2,19 +2,21 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 /**
- * GENESIS CAMPAIGN WORKER - Enterprise Mass Sending
+ * GENESIS CAMPAIGN WORKER - Enterprise Mass Sending v2.0
  * 
- * Features:
- * - Anti-ban with intelligent delays
- * - Luna AI message variations
- * - Batch processing with pauses
- * - Send window enforcement
- * - Deduplication
- * - Real-time progress tracking
- * - Native VPS fallback
+ * ANTI-BAN FEATURES:
+ * ✅ Pool de Instâncias (Rotação de Números)
+ * ✅ Simulação de Digitação (composing...)
+ * ✅ Warm-up de Conta
+ * ✅ Delay Adaptativo
+ * ✅ Deduplicação Global (Blacklist)
+ * ✅ Priorização de Warm Leads
+ * ✅ Horários de Pico
+ * ✅ Detecção de Spam Words
+ * ✅ Cooldown Dinâmico após Block
+ * ✅ Métricas de Saúde da Instância
  */
 
-// NATIVE VPS CONFIGURATION - Fallback always works
 const NATIVE_VPS_URL = "http://72.62.108.24:3000";
 const NATIVE_VPS_TOKEN = "genesis-master-token-2024-secure";
 
@@ -29,10 +31,72 @@ interface CampaignRequest {
   batch_size?: number;
 }
 
-// Random delay with jitter
-function getRandomDelay(min: number, max: number): number {
-  const base = Math.floor(Math.random() * (max - min + 1) + min) * 1000;
-  const jitter = Math.floor(Math.random() * 2000);
+interface AntiBanConfig {
+  useInstancePool: boolean;
+  typingSimulation: boolean;
+  typingDurationMin: number;
+  typingDurationMax: number;
+  adaptiveDelay: boolean;
+  respectWarmup: boolean;
+  checkBlacklist: boolean;
+  quarantineDays: number;
+  prioritizeWarmLeads: boolean;
+  peakHoursBoost: boolean;
+  spamWordCheck: boolean;
+  cooldownAfterBlockMinutes: number;
+  maxBlocksBeforePause: number;
+}
+
+// =============================================
+// ANTI-BAN UTILITIES
+// =============================================
+
+// Adaptive delay based on hour, sent count, and failure rate
+function getAdaptiveDelay(
+  minDelay: number, 
+  maxDelay: number, 
+  sentCount: number, 
+  failedCount: number,
+  degradationLevel: number
+): number {
+  const now = new Date();
+  const brazilTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+  const hour = brazilTime.getHours();
+  
+  let multiplier = 1.0;
+  
+  // Night hours - slower
+  if (hour >= 21 || hour < 8) {
+    multiplier *= 2.0;
+  }
+  // Peak hours - normal or slightly slower to seem human
+  else if ((hour >= 10 && hour <= 12) || (hour >= 14 && hour <= 18)) {
+    multiplier *= 0.9;
+  }
+  
+  // Progressive slowdown based on sent count
+  if (sentCount > 100) multiplier *= 1.2;
+  if (sentCount > 300) multiplier *= 1.4;
+  if (sentCount > 500) multiplier *= 1.6;
+  
+  // Slowdown based on failure rate
+  const totalAttempts = sentCount + failedCount;
+  if (totalAttempts > 10) {
+    const failureRate = failedCount / totalAttempts;
+    if (failureRate > 0.1) multiplier *= 1.5;
+    if (failureRate > 0.2) multiplier *= 2.0;
+    if (failureRate > 0.3) multiplier *= 3.0;
+  }
+  
+  // Degradation level multiplier
+  multiplier *= (1 + degradationLevel * 0.5);
+  
+  const adjustedMin = Math.floor(minDelay * multiplier);
+  const adjustedMax = Math.floor(maxDelay * multiplier);
+  
+  const base = Math.floor(Math.random() * (adjustedMax - adjustedMin + 1) + adjustedMin) * 1000;
+  const jitter = Math.floor(Math.random() * 3000); // 0-3s jitter
+  
   return base + jitter;
 }
 
@@ -53,6 +117,26 @@ function isWithinSendWindow(startTime: string, endTime: string, sendOnWeekends: 
   const endMinutes = endH * 60 + endM;
   
   return currentMinutes >= startMinutes && currentMinutes < endMinutes;
+}
+
+// Check if within peak hours for boost
+function isWithinPeakHours(): boolean {
+  const now = new Date();
+  const brazilTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+  const hour = brazilTime.getHours();
+  const minutes = brazilTime.getMinutes();
+  const currentMinutes = hour * 60 + minutes;
+  
+  // Morning peak: 10:00-12:00
+  const morningStart = 10 * 60;
+  const morningEnd = 12 * 60;
+  
+  // Afternoon peak: 14:00-18:00
+  const afternoonStart = 14 * 60;
+  const afternoonEnd = 18 * 60;
+  
+  return (currentMinutes >= morningStart && currentMinutes < morningEnd) ||
+         (currentMinutes >= afternoonStart && currentMinutes < afternoonEnd);
 }
 
 // Log campaign event
@@ -79,6 +163,322 @@ async function logEvent(
   }
 }
 
+// =============================================
+// ANTI-BAN CHECKS
+// =============================================
+
+// Check if contact is blacklisted
+async function isContactBlacklisted(
+  supabase: SupabaseClient,
+  userId: string,
+  phone: string
+): Promise<boolean> {
+  try {
+    const { data } = await supabase.rpc('check_contact_blacklisted', {
+      p_user_id: userId,
+      p_phone: phone
+    });
+    return data === true;
+  } catch {
+    return false;
+  }
+}
+
+// Check spam words in message
+async function checkSpamWords(
+  supabase: SupabaseClient,
+  message: string,
+  blockLevel: string = 'high'
+): Promise<{ hasSpam: boolean; words: string[]; maxSeverity: string }> {
+  try {
+    const { data: spamWords } = await supabase
+      .from('genesis_spam_words')
+      .select('word, severity')
+      .eq('is_active', true);
+    
+    if (!spamWords || spamWords.length === 0) {
+      return { hasSpam: false, words: [], maxSeverity: 'low' };
+    }
+    
+    const messageLower = message.toLowerCase();
+    const foundWords: string[] = [];
+    let maxSeverity = 'low';
+    const severityOrder = ['low', 'medium', 'high', 'critical'];
+    
+    for (const sw of spamWords) {
+      if (messageLower.includes(sw.word.toLowerCase())) {
+        foundWords.push(sw.word);
+        if (severityOrder.indexOf(sw.severity) > severityOrder.indexOf(maxSeverity)) {
+          maxSeverity = sw.severity;
+        }
+      }
+    }
+    
+    const shouldBlock = severityOrder.indexOf(maxSeverity) >= severityOrder.indexOf(blockLevel);
+    
+    return { hasSpam: shouldBlock && foundWords.length > 0, words: foundWords, maxSeverity };
+  } catch {
+    return { hasSpam: false, words: [], maxSeverity: 'low' };
+  }
+}
+
+// Get warmup limit for instance
+async function getWarmupLimit(supabase: SupabaseClient, instanceId: string): Promise<number> {
+  try {
+    const { data } = await supabase.rpc('get_warmup_limit', { p_instance_id: instanceId });
+    return data ?? 999999;
+  } catch {
+    return 999999;
+  }
+}
+
+// Select best instance from pool
+async function selectPoolInstance(
+  supabase: SupabaseClient,
+  campaignId: string,
+  userId: string
+): Promise<{ instanceId: string | null; backendUrl: string | null; backendToken: string | null }> {
+  try {
+    // First try pool selection
+    const { data: poolInstanceId } = await supabase.rpc('select_pool_instance', {
+      p_campaign_id: campaignId
+    });
+    
+    if (poolInstanceId) {
+      // Get instance details
+      const { data: instance } = await supabase
+        .from('genesis_instances')
+        .select('id, backend_url, backend_token, orchestrated_status')
+        .eq('id', poolInstanceId)
+        .eq('orchestrated_status', 'connected')
+        .single();
+      
+      if (instance) {
+        return {
+          instanceId: instance.id,
+          backendUrl: instance.backend_url,
+          backendToken: instance.backend_token
+        };
+      }
+    }
+    
+    return { instanceId: null, backendUrl: null, backendToken: null };
+  } catch {
+    return { instanceId: null, backendUrl: null, backendToken: null };
+  }
+}
+
+// Update pool instance stats after send
+async function updatePoolInstanceStats(
+  supabase: SupabaseClient,
+  campaignId: string,
+  instanceId: string,
+  success: boolean,
+  blocked: boolean
+) {
+  try {
+    const updates: Record<string, unknown> = {
+      last_used_at: new Date().toISOString(),
+    };
+    
+    // Simple increment via separate updates
+    
+    // Simple increment via separate updates
+    const { data: current } = await supabase
+      .from('genesis_campaign_instance_pool')
+      .select('messages_sent, messages_failed, blocks_count, health_score')
+      .eq('campaign_id', campaignId)
+      .eq('instance_id', instanceId)
+      .single();
+    
+    if (current) {
+      const newData: Record<string, unknown> = { last_used_at: new Date().toISOString() };
+      if (success) newData.messages_sent = (current.messages_sent || 0) + 1;
+      if (!success && !blocked) newData.messages_failed = (current.messages_failed || 0) + 1;
+      if (blocked) {
+        newData.blocks_count = (current.blocks_count || 0) + 1;
+        // Reduce health score on block
+        newData.health_score = Math.max(0, (current.health_score || 100) - 10);
+        // Set cooldown for this instance in pool
+        newData.cooldown_until = new Date(Date.now() + 30 * 60 * 1000).toISOString(); // 30 min cooldown
+      }
+      
+      await supabase
+        .from('genesis_campaign_instance_pool')
+        .update(newData as never)
+        .eq('campaign_id', campaignId)
+        .eq('instance_id', instanceId);
+    }
+  } catch (e) {
+    console.error('Failed to update pool stats:', e);
+  }
+}
+
+// Update instance health metrics
+async function updateInstanceHealthMetrics(
+  supabase: SupabaseClient,
+  instanceId: string,
+  sent: boolean,
+  blocked: boolean,
+  failed: boolean
+) {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Upsert today's metrics
+    const { data: existing } = await supabase
+      .from('genesis_instance_health_metrics')
+      .select('*')
+      .eq('instance_id', instanceId)
+      .eq('period_date', today)
+      .single();
+    
+    if (existing) {
+      await supabase
+        .from('genesis_instance_health_metrics')
+        .update({
+          messages_sent: (existing.messages_sent || 0) + (sent ? 1 : 0),
+          messages_failed: (existing.messages_failed || 0) + (failed ? 1 : 0),
+          messages_blocked: (existing.messages_blocked || 0) + (blocked ? 1 : 0),
+          updated_at: new Date().toISOString(),
+        } as never)
+        .eq('id', existing.id);
+    } else {
+      await supabase
+        .from('genesis_instance_health_metrics')
+        .insert({
+          instance_id: instanceId,
+          period_date: today,
+          messages_sent: sent ? 1 : 0,
+          messages_failed: failed ? 1 : 0,
+          messages_blocked: blocked ? 1 : 0,
+        } as never);
+    }
+    
+    // Update instance health score
+    try {
+      await supabase.rpc('update_instance_health', { p_instance_id: instanceId });
+    } catch { /* ignore */ }
+  } catch (e) {
+    console.error('Failed to update health metrics:', e);
+  }
+}
+
+// Update warmup progress
+async function updateWarmupProgress(supabase: SupabaseClient, instanceId: string) {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    
+    const { data: warmup } = await supabase
+      .from('genesis_instance_warmup')
+      .select('*')
+      .eq('instance_id', instanceId)
+      .single();
+    
+    if (!warmup || warmup.warmup_completed) return;
+    
+    // Check if new day
+    if (warmup.last_message_date !== today) {
+      // New day - advance warmup day and reset counter
+      const newDay = Math.min((warmup.warmup_day || 1) + 1, 10);
+      await supabase
+        .from('genesis_instance_warmup')
+        .update({
+          warmup_day: newDay,
+          messages_sent_today: 1,
+          last_message_date: today,
+          warmup_completed: newDay >= 10,
+          warmup_completed_at: newDay >= 10 ? new Date().toISOString() : null,
+          updated_at: new Date().toISOString(),
+        } as never)
+        .eq('instance_id', instanceId);
+    } else {
+      // Same day - increment counter
+      await supabase
+        .from('genesis_instance_warmup')
+        .update({
+          messages_sent_today: (warmup.messages_sent_today || 0) + 1,
+          updated_at: new Date().toISOString(),
+        } as never)
+        .eq('instance_id', instanceId);
+    }
+  } catch (e) {
+    console.error('Failed to update warmup:', e);
+  }
+}
+
+// Add contact to blacklist
+async function addToBlacklist(
+  supabase: SupabaseClient,
+  userId: string,
+  phone: string,
+  reason: string,
+  campaignId: string,
+  quarantineDays: number
+) {
+  try {
+    const normalized = phone.replace(/\D/g, '');
+    const encoder = new TextEncoder();
+    const data = encoder.encode(normalized);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const phoneHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    const phoneLast4 = normalized.slice(-4);
+    
+    const quarantineUntil = quarantineDays > 0 
+      ? new Date(Date.now() + quarantineDays * 24 * 60 * 60 * 1000).toISOString()
+      : null;
+    
+    await supabase
+      .from('genesis_contact_blacklist')
+      .upsert({
+        user_id: userId,
+        phone_hash: phoneHash,
+        phone_last4: phoneLast4,
+        reason,
+        source_campaign_id: campaignId,
+        quarantine_until: quarantineUntil,
+      } as never, { onConflict: 'user_id,phone_hash' });
+  } catch (e) {
+    console.error('Failed to add to blacklist:', e);
+  }
+}
+
+// Send typing indicator
+async function sendTypingIndicator(
+  backendUrl: string,
+  backendToken: string,
+  instanceId: string,
+  phone: string,
+  durationMs: number
+) {
+  try {
+    const typingUrl = `${backendUrl.replace(/\/$/, '')}/api/instance/${instanceId}/typing`;
+    
+    await fetch(typingUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${backendToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        to: phone,
+        duration: Math.floor(durationMs / 1000),
+      }),
+    });
+    
+    // Wait for typing duration
+    await new Promise(resolve => setTimeout(resolve, durationMs));
+  } catch (e) {
+    // Typing indicator is non-critical, continue
+    console.warn('Typing indicator failed:', e);
+  }
+}
+
+// =============================================
+// MAIN HANDLERS
+// =============================================
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -92,73 +492,70 @@ serve(async (req) => {
     const body = await req.json();
     const { campaign_id, action, batch_size = 10 }: CampaignRequest = body;
     
-    console.log(`[Campaign Worker] Action: ${action}, Campaign ID: ${campaign_id}`);
+    console.log(`[Campaign Worker v2.0] Action: ${action}, Campaign ID: ${campaign_id}`);
 
-    // Validate campaign_id
     if (!campaign_id || typeof campaign_id !== 'string') {
-      console.error('Invalid campaign_id:', campaign_id);
       return new Response(
         JSON.stringify({ success: false, error: 'campaign_id inválido ou ausente' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Validate UUID format
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(campaign_id)) {
-      console.error('Invalid UUID format:', campaign_id);
       return new Response(
         JSON.stringify({ success: false, error: 'Formato de campaign_id inválido' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Get campaign details
+    // Get campaign with anti-ban fields
     const { data: campaign, error: campaignError } = await supabase
       .from('genesis_campaigns')
       .select(`
         *,
-        instance:genesis_instances(id, name, backend_url, backend_token, orchestrated_status)
+        instance:genesis_instances(id, name, backend_url, backend_token, orchestrated_status, user_id)
       `)
       .eq('id', campaign_id)
       .single();
 
-    if (campaignError) {
-      console.error('Campaign query error:', campaignError);
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: campaignError.code === 'PGRST116' 
-            ? 'Campanha não encontrada' 
-            : `Erro ao buscar campanha: ${campaignError.message}`,
-          details: campaignError
-        }),
-        { status: campaignError.code === 'PGRST116' ? 404 : 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (!campaign) {
-      console.error('Campaign not found for ID:', campaign_id);
+    if (campaignError || !campaign) {
       return new Response(
         JSON.stringify({ success: false, error: 'Campanha não encontrada' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`[Campaign Worker] Found campaign: ${campaign.name}, status: ${campaign.status}`);
+    // Build anti-ban config
+    const antiBanConfig: AntiBanConfig = {
+      useInstancePool: campaign.use_instance_pool ?? false,
+      typingSimulation: campaign.typing_simulation ?? true,
+      typingDurationMin: campaign.typing_duration_min ?? 2,
+      typingDurationMax: campaign.typing_duration_max ?? 5,
+      adaptiveDelay: campaign.adaptive_delay ?? true,
+      respectWarmup: campaign.respect_warmup ?? true,
+      checkBlacklist: campaign.check_blacklist ?? true,
+      quarantineDays: campaign.quarantine_days ?? 7,
+      prioritizeWarmLeads: campaign.prioritize_warm_leads ?? true,
+      peakHoursBoost: campaign.peak_hours_boost ?? true,
+      spamWordCheck: campaign.spam_word_check ?? true,
+      cooldownAfterBlockMinutes: campaign.cooldown_after_block_minutes ?? 60,
+      maxBlocksBeforePause: campaign.max_blocks_before_pause ?? 3,
+    };
 
-    // Handle different actions
+    console.log(`[Campaign Worker v2.0] Anti-ban config:`, JSON.stringify(antiBanConfig));
+
     switch (action) {
       case 'start':
-        return await handleStart(supabase, campaign);
+        return await handleStart(supabase, campaign, antiBanConfig);
       case 'pause':
         return await handlePause(supabase, campaign);
       case 'resume':
-        return await handleStart(supabase, campaign);
+        return await handleStart(supabase, campaign, antiBanConfig);
       case 'cancel':
         return await handleCancel(supabase, campaign);
       case 'process_batch':
-        return await processBatch(supabase, campaign, batch_size);
+        return await processBatch(supabase, campaign, batch_size, antiBanConfig);
       default:
         return new Response(
           JSON.stringify({ success: false, error: 'Ação inválida' }),
@@ -175,12 +572,14 @@ serve(async (req) => {
   }
 });
 
-// Start or resume campaign
-async function handleStart(supabase: SupabaseClient, campaign: Record<string, unknown>) {
+async function handleStart(
+  supabase: SupabaseClient, 
+  campaign: Record<string, unknown>,
+  antiBanConfig: AntiBanConfig
+) {
   const instance = campaign.instance as Record<string, unknown>;
   const campaignId = campaign.id as string;
   
-  // Validate instance is connected
   if (instance?.orchestrated_status !== 'connected') {
     await logEvent(supabase, campaignId, null, 'start_failed', 'error', 
       'Instância não está conectada', { status: instance?.orchestrated_status });
@@ -190,7 +589,6 @@ async function handleStart(supabase: SupabaseClient, campaign: Record<string, un
     );
   }
 
-  // Check send window
   const inWindow = isWithinSendWindow(
     (campaign.send_window_start as string) || '08:00',
     (campaign.send_window_end as string) || '22:00',
@@ -209,7 +607,22 @@ async function handleStart(supabase: SupabaseClient, campaign: Record<string, un
     );
   }
 
-  // Update campaign status
+  // Spam word check on template
+  if (antiBanConfig.spamWordCheck) {
+    const spamCheck = await checkSpamWords(supabase, campaign.message_template as string);
+    if (spamCheck.hasSpam) {
+      await logEvent(supabase, campaignId, null, 'spam_detected', 'error',
+        'Mensagem contém palavras que podem acionar filtros', { words: spamCheck.words });
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: `Mensagem contém palavras proibidas: ${spamCheck.words.join(', ')}` 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
   await supabase
     .from('genesis_campaigns')
     .update({ 
@@ -221,14 +634,15 @@ async function handleStart(supabase: SupabaseClient, campaign: Record<string, un
     .eq('id', campaignId);
 
   await logEvent(supabase, campaignId, null, 'campaign_started', 'info',
-    'Campanha iniciada', { total_contacts: campaign.total_contacts });
+    'Campanha iniciada com proteção anti-ban v2.0', { 
+      total_contacts: campaign.total_contacts,
+      anti_ban_config: antiBanConfig
+    });
 
-  // Process first batch immediately
-  const result = await processBatch(supabase, campaign, (campaign.batch_size as number) || 10);
+  const result = await processBatch(supabase, campaign, (campaign.batch_size as number) || 10, antiBanConfig);
   return result;
 }
 
-// Pause campaign
 async function handlePause(supabase: SupabaseClient, campaign: Record<string, unknown>) {
   const campaignId = campaign.id as string;
   
@@ -248,7 +662,6 @@ async function handlePause(supabase: SupabaseClient, campaign: Record<string, un
   );
 }
 
-// Cancel campaign
 async function handleCancel(supabase: SupabaseClient, campaign: Record<string, unknown>) {
   const campaignId = campaign.id as string;
   
@@ -260,7 +673,6 @@ async function handleCancel(supabase: SupabaseClient, campaign: Record<string, u
     } as never)
     .eq('id', campaignId);
 
-  // Reset pending contacts to skipped
   await supabase
     .from('genesis_campaign_contacts')
     .update({ status: 'skipped' } as never)
@@ -275,19 +687,20 @@ async function handleCancel(supabase: SupabaseClient, campaign: Record<string, u
   );
 }
 
-// Process a batch of contacts
 async function processBatch(
   supabase: SupabaseClient, 
   campaign: Record<string, unknown>,
-  batchSize: number
+  batchSize: number,
+  antiBanConfig: AntiBanConfig
 ) {
-  const instance = campaign.instance as Record<string, unknown>;
+  const defaultInstance = campaign.instance as Record<string, unknown>;
   const campaignId = campaign.id as string;
+  const userId = campaign.user_id as string;
   
   // Re-check status
   const { data: currentCampaign } = await supabase
     .from('genesis_campaigns')
-    .select('status')
+    .select('status, blocked_count')
     .eq('id', campaignId)
     .single();
 
@@ -298,7 +711,27 @@ async function processBatch(
     );
   }
 
-  // Check send window again
+  // Check if too many blocks - auto pause
+  const currentBlocks = (currentCampaign as Record<string, unknown>)?.blocked_count as number || 0;
+  if (currentBlocks >= antiBanConfig.maxBlocksBeforePause) {
+    await supabase
+      .from('genesis_campaigns')
+      .update({ 
+        status: 'paused', 
+        paused_at: new Date().toISOString(),
+        error_message: `Pausado automaticamente: ${currentBlocks} bloqueios detectados`
+      } as never)
+      .eq('id', campaignId);
+    
+    await logEvent(supabase, campaignId, null, 'auto_paused_blocks', 'warning',
+      `Campanha pausada após ${currentBlocks} bloqueios`);
+    
+    return new Response(
+      JSON.stringify({ success: true, message: 'Pausado por bloqueios' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
   const inWindow = isWithinSendWindow(
     (campaign.send_window_start as string) || '08:00',
     (campaign.send_window_end as string) || '22:00',
@@ -320,19 +753,23 @@ async function processBatch(
     );
   }
 
-  // Get pending contacts
-  const { data: contacts, error: contactsError } = await supabase
+  // Get contacts - prioritize warm leads if enabled
+  let query = supabase
     .from('genesis_campaign_contacts')
     .select('*')
     .eq('campaign_id', campaignId)
     .eq('status', 'pending')
-    .is('locked_at', null)
-    .limit(batchSize);
-
+    .is('locked_at', null);
+  
+  if (antiBanConfig.prioritizeWarmLeads) {
+    query = query.order('is_warm_lead', { ascending: false })
+                 .order('previous_interaction_count', { ascending: false });
+  }
+  
+  const { data: contacts, error: contactsError } = await query.limit(batchSize);
   const contactsList = (contacts || []) as Array<Record<string, unknown>>;
 
   if (contactsError || contactsList.length === 0) {
-    // Check if campaign is complete
     const { count: pendingCount } = await supabase
       .from('genesis_campaign_contacts')
       .select('*', { count: 'exact', head: true })
@@ -370,13 +807,13 @@ async function processBatch(
     .update({ locked_at: new Date().toISOString(), status: 'queued' } as never)
     .in('id', contactIds);
 
-  // Get Luna variations if enabled
+  // Get Luna variations
   let variations: string[] = [];
   if (campaign.luna_enabled && Array.isArray(campaign.luna_generated_variations)) {
     variations = campaign.luna_generated_variations as string[];
   }
 
-  // Build Backend API URL with native fallback - ALWAYS works
+  // Get backend config
   const { data: globalConfig } = await supabase
     .from('whatsapp_backend_config')
     .select('backend_url, master_token')
@@ -384,25 +821,23 @@ async function processBatch(
     .limit(1)
     .maybeSingle();
 
-  // Priority: Global Config > Instance Config > Native VPS (always works)
-  const backendUrl = (globalConfig?.backend_url || instance?.backend_url || NATIVE_VPS_URL) as string;
-  const backendToken = (globalConfig?.master_token || instance?.backend_token || NATIVE_VPS_TOKEN) as string;
-  const instanceId = instance?.id as string;
-
-  const configSource = globalConfig?.backend_url 
-    ? 'global' 
-    : instance?.backend_url 
-      ? 'instance' 
-      : 'native';
-
-  console.log(`[Campaign Worker] Backend config source: ${configSource}, URL: ${backendUrl.slice(0, 30)}...`);
-
-  // Process each contact
   let sentCount = (campaign.sent_count as number) || 0;
   let failedCount = (campaign.failed_count as number) || 0;
   let blockedCount = (campaign.blocked_count as number) || 0;
   let consecutiveErrors = 0;
   const maxConsecutiveErrors = 5;
+  let batchBlockCount = 0;
+
+  // Get instance degradation level
+  const { data: healthMetrics } = await supabase
+    .from('genesis_instance_health_metrics')
+    .select('degradation_level')
+    .eq('instance_id', defaultInstance?.id)
+    .order('period_date', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  
+  const degradationLevel = healthMetrics?.degradation_level || 0;
 
   for (let i = 0; i < contactsList.length; i++) {
     const contact = contactsList[i];
@@ -410,7 +845,6 @@ async function processBatch(
     const contactPhone = contact.contact_phone as string;
     const contactName = contact.contact_name as string;
     
-    // Check for too many consecutive errors
     if (consecutiveErrors >= maxConsecutiveErrors) {
       await supabase
         .from('genesis_campaigns')
@@ -427,14 +861,67 @@ async function processBatch(
       break;
     }
 
+    // Check cooldown after block
+    if (batchBlockCount > 0 && antiBanConfig.cooldownAfterBlockMinutes > 0) {
+      const cooldownMs = antiBanConfig.cooldownAfterBlockMinutes * 60 * 1000;
+      await logEvent(supabase, campaignId, null, 'cooldown_started', 'info',
+        `Cooldown de ${antiBanConfig.cooldownAfterBlockMinutes} minutos após bloqueio`);
+      await new Promise(resolve => setTimeout(resolve, Math.min(cooldownMs, 60000))); // Max 1 min wait per iteration
+      batchBlockCount = 0;
+    }
+
     try {
+      // ANTI-BAN CHECK 1: Blacklist
+      if (antiBanConfig.checkBlacklist) {
+        const isBlacklisted = await isContactBlacklisted(supabase, userId, contactPhone);
+        if (isBlacklisted) {
+          await supabase
+            .from('genesis_campaign_contacts')
+            .update({ status: 'skipped', error_message: 'Contato na blacklist', locked_at: null } as never)
+            .eq('id', contactId);
+          
+          await logEvent(supabase, campaignId, contactId, 'skipped_blacklist', 'info',
+            `Contato ${contactPhone} ignorado - blacklist`);
+          continue;
+        }
+      }
+
+      // Select instance (pool or default)
+      let activeInstanceId = defaultInstance?.id as string;
+      let backendUrl = (globalConfig?.backend_url || defaultInstance?.backend_url || NATIVE_VPS_URL) as string;
+      let backendToken = (globalConfig?.master_token || defaultInstance?.backend_token || NATIVE_VPS_TOKEN) as string;
+
+      if (antiBanConfig.useInstancePool) {
+        const poolInstance = await selectPoolInstance(supabase, campaignId, userId);
+        if (poolInstance.instanceId) {
+          activeInstanceId = poolInstance.instanceId;
+          if (poolInstance.backendUrl) backendUrl = poolInstance.backendUrl;
+          if (poolInstance.backendToken) backendToken = poolInstance.backendToken;
+        }
+      }
+
+      // ANTI-BAN CHECK 2: Warmup limit
+      if (antiBanConfig.respectWarmup) {
+        const warmupLimit = await getWarmupLimit(supabase, activeInstanceId);
+        if (warmupLimit <= 0) {
+          await logEvent(supabase, campaignId, null, 'warmup_limit_reached', 'warning',
+            `Limite de warmup atingido para instância ${activeInstanceId}`);
+          // Try next instance or pause
+          continue;
+        }
+      }
+
       // Mark as sending
       await supabase
         .from('genesis_campaign_contacts')
-        .update({ status: 'sending', last_attempt_at: new Date().toISOString() } as never)
+        .update({ 
+          status: 'sending', 
+          last_attempt_at: new Date().toISOString(),
+          instance_used_id: activeInstanceId
+        } as never)
         .eq('id', contactId);
 
-      // Get message (use variation if available)
+      // Get message
       let message = campaign.message_template as string;
       let variationIndex = 0;
       
@@ -443,7 +930,6 @@ async function processBatch(
         message = variations[variationIndex];
       }
 
-      // Replace variables
       message = message
         .replace(/\{\{nome\}\}/gi, contactName || '')
         .replace(/\{\{telefone\}\}/gi, contactPhone || '')
@@ -455,8 +941,14 @@ async function processBatch(
         phone = '55' + phone;
       }
 
-      // Send via Backend
-      const sendUrl = `${backendUrl.replace(/\/$/, '')}/api/instance/${instanceId}/send`;
+      // ANTI-BAN: Send typing indicator
+      if (antiBanConfig.typingSimulation) {
+        const typingDuration = (Math.random() * (antiBanConfig.typingDurationMax - antiBanConfig.typingDurationMin) + antiBanConfig.typingDurationMin) * 1000;
+        await sendTypingIndicator(backendUrl, backendToken, activeInstanceId, phone, typingDuration);
+      }
+
+      // Send message
+      const sendUrl = `${backendUrl.replace(/\/$/, '')}/api/instance/${activeInstanceId}/send`;
       
       const response = await fetch(sendUrl, {
         method: 'POST',
@@ -488,17 +980,26 @@ async function processBatch(
           .eq('id', contactId);
 
         await logEvent(supabase, campaignId, contactId, 'message_sent', 'info',
-          `Mensagem enviada para ${phone}`, { variation_index: variationIndex });
+          `Mensagem enviada para ${phone}`, { variation_index: variationIndex, instance_id: activeInstanceId });
+
+        // Update metrics
+        await updateInstanceHealthMetrics(supabase, activeInstanceId, true, false, false);
+        await updateWarmupProgress(supabase, activeInstanceId);
+        if (antiBanConfig.useInstancePool) {
+          await updatePoolInstanceStats(supabase, campaignId, activeInstanceId, true, false);
+        }
 
       } else {
         consecutiveErrors++;
         
-        // Check if blocked
         const isBlocked = result.error?.toLowerCase().includes('block') || 
-                         result.error?.toLowerCase().includes('banned');
+                         result.error?.toLowerCase().includes('banned') ||
+                         result.error?.toLowerCase().includes('spam');
         
         if (isBlocked) {
           blockedCount++;
+          batchBlockCount++;
+          
           await supabase
             .from('genesis_campaign_contacts')
             .update({ 
@@ -507,10 +1008,19 @@ async function processBatch(
               locked_at: null,
             } as never)
             .eq('id', contactId);
+
+          // Add to blacklist
+          if (antiBanConfig.checkBlacklist) {
+            await addToBlacklist(supabase, userId, contactPhone, 'blocked', campaignId, antiBanConfig.quarantineDays);
+          }
+
+          await updateInstanceHealthMetrics(supabase, activeInstanceId, false, true, false);
+          if (antiBanConfig.useInstancePool) {
+            await updatePoolInstanceStats(supabase, campaignId, activeInstanceId, false, true);
+          }
         } else {
           failedCount++;
           
-          // Increment attempt count
           const attempts = ((contact.attempt_count as number) || 0) + 1;
           const maxAttempts = (contact.max_attempts as number) || 3;
           
@@ -523,6 +1033,11 @@ async function processBatch(
               locked_at: null,
             } as never)
             .eq('id', contactId);
+
+          await updateInstanceHealthMetrics(supabase, activeInstanceId, false, false, true);
+          if (antiBanConfig.useInstancePool) {
+            await updatePoolInstanceStats(supabase, campaignId, activeInstanceId, false, false);
+          }
         }
 
         await logEvent(supabase, campaignId, contactId, 'send_failed', 'warning',
@@ -535,13 +1050,19 @@ async function processBatch(
         .update({ sent_count: sentCount, failed_count: failedCount, blocked_count: blockedCount } as never)
         .eq('id', campaignId);
 
-      // Apply delay between messages (not after last)
+      // ANTI-BAN: Adaptive delay
       if (i < contactsList.length - 1) {
-        const delay = getRandomDelay(
-          (campaign.delay_min_seconds as number) || 10,
-          (campaign.delay_max_seconds as number) || 30
-        );
-        console.log(`Waiting ${delay / 1000}s before next message`);
+        const delay = antiBanConfig.adaptiveDelay 
+          ? getAdaptiveDelay(
+              (campaign.delay_min_seconds as number) || 15,
+              (campaign.delay_max_seconds as number) || 45,
+              sentCount,
+              failedCount,
+              degradationLevel
+            )
+          : ((campaign.delay_min_seconds as number) || 15) * 1000 + Math.random() * ((campaign.delay_max_seconds as number) || 45) * 1000;
+        
+        console.log(`[Anti-Ban] Waiting ${Math.round(delay / 1000)}s before next message (adaptive: ${antiBanConfig.adaptiveDelay})`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
 
@@ -563,7 +1084,7 @@ async function processBatch(
     }
   }
 
-  // Check if should pause after batch
+  // Check for batch pause
   const pauseAfterBatch = (campaign.pause_after_batch as number) || 100;
   if (sentCount > 0 && sentCount % pauseAfterBatch === 0) {
     const pauseDuration = ((campaign.pause_duration_seconds as number) || 300) * 1000;
@@ -571,7 +1092,7 @@ async function processBatch(
       `Pausa de ${pauseDuration / 1000}s após ${pauseAfterBatch} mensagens`);
   }
 
-  // Check if there are more contacts to process
+  // Schedule next batch
   const { count: remainingCount } = await supabase
     .from('genesis_campaign_contacts')
     .select('*', { count: 'exact', head: true })
@@ -580,7 +1101,6 @@ async function processBatch(
 
   const hasMore = (remainingCount ?? 0) > 0;
 
-  // If there are more contacts and we're still in the send window, schedule next batch
   if (hasMore) {
     const stillInWindow = isWithinSendWindow(
       (campaign.send_window_start as string) || '08:00',
@@ -589,13 +1109,15 @@ async function processBatch(
     );
 
     if (stillInWindow) {
-      // Continue processing asynchronously
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
       const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
       
-      // Schedule next batch in background (non-blocking)
-      const nextBatchDelay = getRandomDelay(3, 8);
-      console.log(`[Campaign Worker] Scheduling next batch in ${nextBatchDelay / 1000}s`);
+      // Longer delay between batches for anti-ban
+      const nextBatchDelay = antiBanConfig.adaptiveDelay
+        ? getAdaptiveDelay(30, 60, sentCount, failedCount, degradationLevel)
+        : (30 + Math.random() * 30) * 1000;
+      
+      console.log(`[Campaign Worker v2.0] Scheduling next batch in ${Math.round(nextBatchDelay / 1000)}s`);
       
       setTimeout(async () => {
         try {
@@ -623,6 +1145,12 @@ async function processBatch(
       blocked: blockedCount,
       remaining: remainingCount ?? 0,
       hasMore,
+      antiBan: {
+        typingSimulation: antiBanConfig.typingSimulation,
+        adaptiveDelay: antiBanConfig.adaptiveDelay,
+        instancePool: antiBanConfig.useInstancePool,
+        degradationLevel,
+      }
     }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );
