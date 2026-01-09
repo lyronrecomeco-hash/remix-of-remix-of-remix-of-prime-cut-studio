@@ -258,54 +258,51 @@ export default function GenesisProSection({
               </p>
               
               <div className="space-y-2 max-h-64 overflow-y-auto">
-                {allInstances.map((instance) => (
-                  <button
-                    key={instance.id}
-                    onClick={() => handleSelectInstance(instance)}
-                    disabled={linking}
-                    className="w-full p-4 rounded-xl bg-secondary/50 hover:bg-secondary/80 border border-border hover:border-green-500/50 transition-all flex items-center justify-between group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        instance.status === 'connected' ? 'bg-green-500/20' : 'bg-amber-500/20'
-                      }`}>
-                        <Smartphone className={`w-5 h-5 ${
-                          instance.status === 'connected' ? 'text-green-500' : 'text-amber-500'
-                        }`} />
+                {allInstances.map((instance) => {
+                  const actualStatus = instance.orchestrated_status || instance.status;
+                  const isConnected = actualStatus === 'connected';
+                  return (
+                    <button
+                      key={instance.id}
+                      onClick={() => handleSelectInstance(instance)}
+                      disabled={linking}
+                      className="w-full p-4 rounded-xl bg-secondary/50 hover:bg-secondary/80 border border-border hover:border-green-500/50 transition-all flex items-center justify-between group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          isConnected ? 'bg-green-500/20' : 'bg-amber-500/20'
+                        }`}>
+                          <Smartphone className={`w-5 h-5 ${
+                            isConnected ? 'text-green-500' : 'text-amber-500'
+                          }`} />
+                        </div>
+                        <div className="text-left">
+                          <p className="font-medium">{instance.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {instance.phone_number || 'Número não disponível'}
+                          </p>
+                        </div>
                       </div>
-                      <div className="text-left">
-                        <p className="font-medium">{instance.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {instance.phone_number || 'Número não disponível'}
-                        </p>
+                      <div className="flex items-center gap-2">
+                        <Badge 
+                          variant={isConnected ? 'default' : 'secondary'}
+                          className={isConnected ? 'bg-green-500/20 text-green-400' : 'bg-amber-500/20 text-amber-400'}
+                        >
+                          {isConnected ? (
+                            <><CheckCircle2 className="w-3 h-3 mr-1" /> Conectado</>
+                          ) : (
+                            <><XCircle className="w-3 h-3 mr-1" /> {actualStatus === 'qr_pending' ? 'Aguardando QR' : actualStatus}</>
+                          )}
+                        </Badge>
+                        {linking ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Link2 className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity text-green-500" />
+                        )}
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {(() => {
-                        const actualStatus = instance.orchestrated_status || instance.status;
-                        const isConnected = actualStatus === 'connected';
-                        return (
-                          <Badge 
-                            variant={isConnected ? 'default' : 'secondary'}
-                            className={isConnected ? 'bg-green-500/20 text-green-400' : 'bg-amber-500/20 text-amber-400'}
-                          >
-                            {isConnected ? (
-                              <><CheckCircle2 className="w-3 h-3 mr-1" /> Conectado</>
-                            ) : (
-                              <><XCircle className="w-3 h-3 mr-1" /> {actualStatus === 'qr_pending' ? 'Aguardando QR' : actualStatus}</>
-                            )}
-                          </Badge>
-                        );
-                      })()}
-                    </div>
-                      {linking ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Link2 className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity text-green-500" />
-                      )}
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
 
               <Button
