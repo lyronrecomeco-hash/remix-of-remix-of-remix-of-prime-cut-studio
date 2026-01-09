@@ -9,6 +9,7 @@ import { useCampaigns } from './useCampaigns';
 import { CampaignsList } from './CampaignsList';
 import { CreateCampaignModal } from './CreateCampaignModal';
 import { CampaignDetails } from './CampaignDetails';
+import { SendWindowModal } from './SendWindowModal';
 import type { Campaign, CampaignFormData, CampaignContact, CampaignLog } from './types';
 
 export function GenesisCampaigns() {
@@ -31,6 +32,11 @@ export function GenesisCampaigns() {
   const [campaignContacts, setCampaignContacts] = useState<CampaignContact[]>([]);
   const [campaignLogs, setCampaignLogs] = useState<CampaignLog[]>([]);
   const [detailsLoading, setDetailsLoading] = useState(false);
+  
+  // Send window modal state
+  const [showWindowModal, setShowWindowModal] = useState(false);
+  const [windowStart, setWindowStart] = useState('08:00');
+  const [windowEnd, setWindowEnd] = useState('22:00');
 
   // Handle create campaign
   const handleCreateCampaign = async (formData: CampaignFormData) => {
@@ -111,8 +117,17 @@ export function GenesisCampaigns() {
 
   // Handle start campaign
   const handleStart = async (id: string) => {
-    const success = await startCampaign(id);
-    if (success) {
+    const result = await startCampaign(id);
+    
+    if (result.outsideWindow) {
+      // Show animated modal instead of error toast
+      setWindowStart(result.windowStart || '08:00');
+      setWindowEnd(result.windowEnd || '22:00');
+      setShowWindowModal(true);
+      return;
+    }
+    
+    if (result.success) {
       toast.success('Campanha iniciada!');
       if (selectedCampaign?.id === id) {
         handleRefreshDetails();
@@ -147,17 +162,26 @@ export function GenesisCampaigns() {
     const currentCampaign = campaigns.find(c => c.id === selectedCampaign.id) || selectedCampaign;
     
     return (
-      <CampaignDetails
-        campaign={currentCampaign}
-        contacts={campaignContacts}
-        logs={campaignLogs}
-        onBack={() => setSelectedCampaign(null)}
-        onStart={() => handleStart(currentCampaign.id)}
-        onPause={() => handlePause(currentCampaign.id)}
-        onCancel={handleCancel}
-        onRefresh={handleRefreshDetails}
-        loading={detailsLoading}
-      />
+      <>
+        <CampaignDetails
+          campaign={currentCampaign}
+          contacts={campaignContacts}
+          logs={campaignLogs}
+          onBack={() => setSelectedCampaign(null)}
+          onStart={() => handleStart(currentCampaign.id)}
+          onPause={() => handlePause(currentCampaign.id)}
+          onCancel={handleCancel}
+          onRefresh={handleRefreshDetails}
+          loading={detailsLoading}
+        />
+        
+        <SendWindowModal
+          open={showWindowModal}
+          onClose={() => setShowWindowModal(false)}
+          windowStart={windowStart}
+          windowEnd={windowEnd}
+        />
+      </>
     );
   }
 
@@ -177,6 +201,13 @@ export function GenesisCampaigns() {
         open={showCreateModal}
         onOpenChange={setShowCreateModal}
         onCreated={handleCreateCampaign}
+      />
+
+      <SendWindowModal
+        open={showWindowModal}
+        onClose={() => setShowWindowModal(false)}
+        windowStart={windowStart}
+        windowEnd={windowEnd}
       />
     </>
   );
