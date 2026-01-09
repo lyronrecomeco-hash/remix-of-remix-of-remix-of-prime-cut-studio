@@ -113,7 +113,7 @@ serve(async (req) => {
       .from('genesis_campaigns')
       .select(`
         *,
-        instance:genesis_instances(id, name, vps_url, api_token, orchestrated_status)
+        instance:genesis_instances(id, name, backend_url, backend_token, orchestrated_status)
       `)
       .eq('id', campaign_id)
       .single();
@@ -371,16 +371,16 @@ async function processBatch(
     variations = campaign.luna_generated_variations as string[];
   }
 
-  // Build VPS API URL
-  const vpsUrl = instance?.vps_url as string;
-  const apiToken = (instance?.api_token as string) || 'genesis-master-token-2024-secure';
+  // Build Backend API URL
+  const backendUrl = instance?.backend_url as string;
+  const backendToken = (instance?.backend_token as string) || 'genesis-master-token-2024-secure';
   const instanceId = instance?.id as string;
 
-  if (!vpsUrl) {
-    await logEvent(supabase, campaignId, null, 'vps_error', 'error', 
-      'URL do VPS não configurada');
+  if (!backendUrl) {
+    await logEvent(supabase, campaignId, null, 'backend_error', 'error', 
+      'URL do Backend não configurada');
     return new Response(
-      JSON.stringify({ success: false, error: 'VPS não configurado' }),
+      JSON.stringify({ success: false, error: 'Backend não configurado' }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
@@ -443,13 +443,13 @@ async function processBatch(
         phone = '55' + phone;
       }
 
-      // Send via VPS
-      const sendUrl = `${vpsUrl.replace(/\/$/, '')}/api/instance/${instanceId}/send`;
+      // Send via Backend
+      const sendUrl = `${backendUrl.replace(/\/$/, '')}/api/instance/${instanceId}/send`;
       
       const response = await fetch(sendUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${apiToken}`,
+          'Authorization': `Bearer ${backendToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
