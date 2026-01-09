@@ -22,6 +22,7 @@ interface GenesisInstance {
   id: string;
   name: string;
   status: string;
+  orchestrated_status?: string;
   phone_number?: string;
 }
 
@@ -86,14 +87,14 @@ export default function GenesisProSection({
         // Find ALL instances for this user
         const { data: instances } = await supabase
           .from('genesis_instances')
-          .select('id, name, status, phone_number')
+          .select('id, name, status, orchestrated_status, phone_number')
           .eq('user_id', genesisUser.id)
           .order('updated_at', { ascending: false });
 
         if (instances && instances.length > 0) {
           setAllInstances(instances);
-          // Set the first connected one as default
-          const connectedInstance = instances.find(i => i.status === 'connected') || instances[0];
+          // Set the first connected one as default (use orchestrated_status)
+          const connectedInstance = instances.find(i => i.orchestrated_status === 'connected' || i.status === 'connected') || instances[0];
           setGenesisInstance(connectedInstance);
         } else {
           setAllInstances([]);
@@ -154,7 +155,8 @@ export default function GenesisProSection({
         base_endpoint: 'genesis-native',
         api_token: 'genesis-auto-linked',
       });
-      setGenesisInstance(instance);
+      // Refresh instance status after linking
+      await fetchGenesisInstance();
       notify.success('GenesisPro ativado!', `Instância "${instance.name}" vinculada`);
       setShowModal(false);
     } catch (error) {
@@ -279,16 +281,23 @@ export default function GenesisProSection({
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge 
-                        variant={instance.status === 'connected' ? 'default' : 'secondary'}
-                        className={instance.status === 'connected' ? 'bg-green-500/20 text-green-400' : ''}
-                      >
-                        {instance.status === 'connected' ? (
-                          <><CheckCircle2 className="w-3 h-3 mr-1" /> Conectado</>
-                        ) : (
-                          <><XCircle className="w-3 h-3 mr-1" /> {instance.status}</>
-                        )}
-                      </Badge>
+                      {(() => {
+                        const actualStatus = instance.orchestrated_status || instance.status;
+                        const isConnected = actualStatus === 'connected';
+                        return (
+                          <Badge 
+                            variant={isConnected ? 'default' : 'secondary'}
+                            className={isConnected ? 'bg-green-500/20 text-green-400' : 'bg-amber-500/20 text-amber-400'}
+                          >
+                            {isConnected ? (
+                              <><CheckCircle2 className="w-3 h-3 mr-1" /> Conectado</>
+                            ) : (
+                              <><XCircle className="w-3 h-3 mr-1" /> {actualStatus === 'qr_pending' ? 'Aguardando QR' : actualStatus}</>
+                            )}
+                          </Badge>
+                        );
+                      })()}
+                    </div>
                       {linking ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
@@ -324,12 +333,13 @@ export default function GenesisProSection({
               </div>
 
               <div className="p-4 rounded-xl bg-secondary/50 space-y-3">
-                <p className="text-sm font-medium">Para usar o GenesisPro:</p>
+                <p className="text-sm font-medium">📱 Como ativar o GenesisPro:</p>
                 <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
-                  <li>Acesse o painel Genesis</li>
-                  <li>Crie uma nova instância WhatsApp</li>
-                  <li>Escaneie o QR Code para conectar</li>
-                  <li>Volte aqui e ative o GenesisPro</li>
+                  <li><strong>Acesse o Genesis</strong> - Clique no botão abaixo</li>
+                  <li><strong>Crie uma conta</strong> - Se ainda não tiver, faça o cadastro</li>
+                  <li><strong>Adicione uma instância</strong> - Crie sua conexão WhatsApp</li>
+                  <li><strong>Conecte</strong> - Escaneie o QR Code no WhatsApp</li>
+                  <li><strong>Volte aqui</strong> - Atualize e ative o GenesisPro!</li>
                 </ol>
               </div>
             </div>

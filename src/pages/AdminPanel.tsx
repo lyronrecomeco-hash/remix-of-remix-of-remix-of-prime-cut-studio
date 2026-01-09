@@ -88,7 +88,6 @@ const menuItems = [
   { id: 'servicos', label: 'Serviços', icon: Scissors },
   { id: 'galeria', label: 'Galeria', icon: Image },
   { id: 'feedbacks', label: 'Feedbacks', icon: MessageSquare },
-  { id: 'marketing', label: 'Marketing', icon: Megaphone },
   { id: 'logs', label: 'Logs de Auditoria', icon: AlertTriangle },
   { id: 'usuarios', label: 'Usuários', icon: Lock },
   { id: 'config', label: 'Configurações', icon: Settings },
@@ -1434,13 +1433,6 @@ const AdminPanel = () => {
 
       case 'config':
         return <SettingsPanel />;
-
-      case 'marketing':
-        return (
-          <FeatureLock feature="marketing">
-            <MarketingPanel />
-          </FeatureLock>
-        );
 
       case 'logs':
         return <AuditLogsSection />;

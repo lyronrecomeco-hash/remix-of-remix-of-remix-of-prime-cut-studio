@@ -1720,7 +1720,7 @@ Retorne APENAS a mensagem, sem explicações.`;
             
             <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
               <p className="text-sm">
-                <strong>Dica:</strong> Configure webhooks via ChatPro para receber notificações de eventos em tempo real.
+                <strong>Dica:</strong> Configure webhooks via GenesisPro para receber notificações de eventos em tempo real.
               </p>
             </div>
           </div>
