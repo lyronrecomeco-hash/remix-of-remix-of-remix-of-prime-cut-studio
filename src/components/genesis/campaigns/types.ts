@@ -3,7 +3,8 @@
  * Enterprise-grade campaign system types
  */
 
-export type CampaignType = 'mass_send' | 'reengagement' | 'promotion' | 'reminder' | 'custom';
+// Tipos simplificados de campanha para facilitar entendimento
+export type CampaignType = 'marketing' | 'notificacao' | 'integracao';
 
 export type CampaignStatus = 
   | 'draft' 
@@ -192,12 +193,18 @@ export interface CampaignFormData extends
   CampaignStep3Data, 
   CampaignStep4Data {}
 
+// Labels simplificados e claros
 export const CAMPAIGN_TYPE_LABELS: Record<CampaignType, string> = {
-  mass_send: 'Disparo em Massa',
-  reengagement: 'Reengajamento',
-  promotion: 'Promoção',
-  reminder: 'Aviso / Lembrete',
-  custom: 'Personalizado',
+  marketing: '📢 Marketing / Promoção',
+  notificacao: '🔔 Notificação / Lembrete',
+  integracao: '🔗 Acionada por Integração',
+};
+
+// Descrições para ajudar o usuário a entender cada tipo
+export const CAMPAIGN_TYPE_DESCRIPTIONS: Record<CampaignType, string> = {
+  marketing: 'Disparo em massa de promoções, novidades ou reengajamento',
+  notificacao: 'Avisos, lembretes, confirmações e notificações',
+  integracao: 'Acionada automaticamente por integrações (Shopify, WooCommerce, etc)',
 };
 
 export const CAMPAIGN_STATUS_LABELS: Record<CampaignStatus, string> = {
