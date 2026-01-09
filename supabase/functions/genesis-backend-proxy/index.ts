@@ -61,32 +61,15 @@ serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
+    // Parse body early so we can allow public demo-send without auth
+    const requestBody = (await req.json().catch(() => null)) as ProxyRequestBody | null;
+    const isDemoSend = Boolean(
+      requestBody?.action === "demo-send" && requestBody?.to && requestBody?.message
+    );
+
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    if (!authHeader && !isDemoSend) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Identify caller (uses anon + caller JWT)
-    const supabaseAuthed = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
-
-    const {
-      data: { user },
-      error: userError,
-    } = await supabaseAuthed.auth.getUser();
-
-    if (userError || !user) {
-      console.warn("genesis-backend-proxy invalid caller jwt", {
-        hasUser: Boolean(user),
-        error: userError?.message,
-      });
-
-      return new Response(JSON.stringify({ error: "Token inválido" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -97,7 +80,40 @@ serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    const requestBody = (await req.json().catch(() => null)) as ProxyRequestBody | null;
+    // Identify caller (optional for demo-send)
+    let user: any = null;
+    if (authHeader) {
+      const supabaseAuthed = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: authHeader } },
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+
+      const {
+        data: { user: authedUser },
+        error: userError,
+      } = await supabaseAuthed.auth.getUser();
+
+      if (userError || !authedUser) {
+        if (!isDemoSend) {
+          console.warn("genesis-backend-proxy invalid caller jwt", {
+            hasUser: Boolean(authedUser),
+            error: userError?.message,
+          });
+
+          return new Response(JSON.stringify({ error: "Token inválido" }), {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        console.warn("genesis-backend-proxy demo-send without valid jwt", {
+          error: userError?.message,
+        });
+      } else {
+        user = authedUser;
+      }
+    }
+
     
     // === MODO DIRETO: Para teste de VPS sem instância (Owner panel) ===
     if (requestBody?.action === 'health' && requestBody?.directUrl && requestBody?.directToken) {
@@ -181,29 +197,19 @@ serve(async (req) => {
         const backendUrl = globalConfig?.backend_url || NATIVE_VPS_URL;
         const backendToken = globalConfig?.master_token || NATIVE_VPS_TOKEN;
 
-        // Usar a instância da CONTA do usuário logado (ex: lyronrp@gmail.com)
-        const { data: genesisUserRow } = await supabaseAdmin
-          .from('genesis_users')
-          .select('id, email')
-          .eq('auth_user_id', user.id)
-          .maybeSingle();
+        // Preferir instância da conta do usuário (quando autenticado).
+        // Se a página estiver pública (sem login), usar uma instância demo global conectada.
+        let genesisUserRow: any = null;
 
-        if (!genesisUserRow) {
-          return new Response(
-            JSON.stringify({
-              success: false,
-              error: 'Sua conta Genesis não foi encontrada. Faça login novamente.',
-            }),
-            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
+        if (user?.id) {
+          const { data: row } = await supabaseAdmin
+            .from('genesis_users')
+            .select('id, email')
+            .eq('auth_user_id', user.id)
+            .maybeSingle();
+
+          genesisUserRow = row ?? null;
         }
-
-        const { data: userInstances } = await supabaseAdmin
-          .from('genesis_instances')
-          .select('id, user_id, name, phone_number, orchestrated_status, effective_status, status, session_data, updated_at')
-          .eq('user_id', genesisUserRow.id)
-          .order('updated_at', { ascending: false })
-          .limit(10);
 
         const isConnected = (i: any) =>
           i?.orchestrated_status === 'connected' ||
@@ -212,19 +218,51 @@ serve(async (req) => {
 
         const isReadyToSend = (i: any) => Boolean(i?.session_data?.ready_to_send);
 
-        const connectedAndReady = (userInstances || []).find((i: any) => isConnected(i) && isReadyToSend(i));
-        const connectedOnly = (userInstances || []).find((i: any) => isConnected(i));
-        const connectedInstance: any = connectedAndReady || connectedOnly || (userInstances || [])[0];
+        let connectedInstance: any = null;
 
-        if (!connectedInstance) {
-          return new Response(
-            JSON.stringify({
-              success: false,
-              error: 'Nenhuma instância encontrada na sua conta. Vá em Genesis → Conectar WhatsApp.',
-            }),
-            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
+        if (genesisUserRow) {
+          const { data: userInstances } = await supabaseAdmin
+            .from('genesis_instances')
+            .select('id, user_id, name, phone_number, orchestrated_status, effective_status, status, session_data, updated_at')
+            .eq('user_id', genesisUserRow.id)
+            .order('updated_at', { ascending: false })
+            .limit(10);
+
+          const connectedAndReady = (userInstances || []).find((i: any) => isConnected(i) && isReadyToSend(i));
+          const connectedOnly = (userInstances || []).find((i: any) => isConnected(i));
+          connectedInstance = connectedAndReady || connectedOnly || (userInstances || [])[0];
+
+          if (!connectedInstance) {
+            return new Response(
+              JSON.stringify({
+                success: false,
+                error: 'Nenhuma instância encontrada na sua conta. Conecte um WhatsApp para testar.',
+              }),
+              { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+        } else {
+          const { data: instances } = await supabaseAdmin
+            .from('genesis_instances')
+            .select('id, user_id, name, phone_number, orchestrated_status, effective_status, status, session_data, updated_at')
+            .order('updated_at', { ascending: false })
+            .limit(30);
+
+          const candidates = (instances || []).filter((i: any) => isConnected(i));
+          const connectedAndReady = candidates.find((i: any) => isReadyToSend(i));
+          connectedInstance = connectedAndReady || candidates[0];
+
+          if (!connectedInstance) {
+            return new Response(
+              JSON.stringify({
+                success: false,
+                error: 'Demonstração temporariamente indisponível. Tente novamente em instantes.',
+              }),
+              { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
         }
+
 
         // Em V8 o identificador usado nos endpoints é o UUID do banco (instanceId).
         // Ainda assim, tentamos também o name como fallback.
@@ -235,12 +273,13 @@ serve(async (req) => {
           ].filter(Boolean) as string[])
         );
 
-        const demoUserId = connectedInstance.user_id || genesisUserRow.id;
+        const demoUserId = connectedInstance.user_id || genesisUserRow?.id;
 
         const cleanBackendUrl = String(backendUrl).replace(/\/$/, '');
 
         console.log('[genesis-backend-proxy] Demo sending message', {
-          genesisUserId: genesisUserRow.id,
+          callerAuthUserId: user?.id || null,
+          genesisUserId: genesisUserRow?.id || null,
           instanceId: connectedInstance.id,
           instanceName: connectedInstance.name,
           statuses: {
