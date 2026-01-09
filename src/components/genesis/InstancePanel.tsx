@@ -22,6 +22,8 @@ import {
   ExternalLink,
   Activity,
   Smartphone,
+  Check,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,8 +38,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { GenesisWhatsAppConnect } from './GenesisWhatsAppConnect';
 import { TestMessageModal } from './TestMessageModal';
 import { useUnifiedInstanceStatus } from './hooks/useUnifiedInstanceStatus';
+import { useInstanceIntegrations, IntegrationProvider } from './hooks/useInstanceIntegrations';
+import { IntegrationConfigModal } from './integrations/IntegrationConfigModal';
 import { cn } from '@/lib/utils';
-// Script VPS removido - configuração via WhatsApp Automação no Painel Owner
 
 // Import integration logos
 import shopifyLogo from '@/assets/integrations/shopify.png';
@@ -98,6 +101,13 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
   const [showCreditsModal, setShowCreditsModal] = useState(false);
   const [showIntegrationsModal, setShowIntegrationsModal] = useState(false);
   const [showTestModal, setShowTestModal] = useState(false);
+  
+  // Integration config modal
+  const [selectedProvider, setSelectedProvider] = useState<IntegrationProvider | null>(null);
+  const [showIntegrationConfig, setShowIntegrationConfig] = useState(false);
+  
+  // Hook de integrações
+  const { integrations: instanceIntegrations, loading: integrationsLoading, refetch: refetchIntegrations, getIntegration, getStatus } = useInstanceIntegrations(instance.id);
   
   // Colapsável
   const [showTechnicalInfo, setShowTechnicalInfo] = useState(false);
@@ -754,36 +764,92 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 pt-4">
-            {integrations.map((integration) => (
-              <div 
-                key={integration.id} 
-                className="flex items-center gap-4 p-4 rounded-xl border bg-muted/20 hover:bg-muted/40 transition-colors"
-              >
-                <div className="w-14 h-14 rounded-xl bg-white border-2 flex items-center justify-center flex-shrink-0 shadow-sm">
-                  <img 
-                    src={integration.logo} 
-                    alt={integration.name} 
-                    className="w-10 h-10 object-contain"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-base">{integration.name}</p>
-                  <p className="text-sm text-muted-foreground">{integration.description}</p>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  disabled 
-                  className="gap-2 px-4 opacity-60"
-                >
-                  <Lock className="w-3.5 h-3.5" />
-                  Em breve
-                </Button>
+            {integrationsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               </div>
-            ))}
+            ) : (
+              integrations.map((integration) => {
+                const status = getStatus(integration.id as IntegrationProvider);
+                const existingIntegration = getIntegration(integration.id as IntegrationProvider);
+                const isConnected = status === 'connected';
+                const hasError = status === 'error';
+
+                return (
+                  <div 
+                    key={integration.id} 
+                    className="flex items-center gap-4 p-4 rounded-xl border bg-muted/20 hover:bg-muted/40 transition-colors"
+                  >
+                    {/* Ícones maiores */}
+                    <div className="w-16 h-16 rounded-xl bg-white border-2 flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <img 
+                        src={integration.logo} 
+                        alt={integration.name} 
+                        className="w-12 h-12 object-contain"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-base">{integration.name}</p>
+                        {isConnected && (
+                          <Badge variant="default" className="text-xs bg-green-500/20 text-green-600 border-green-500/30">
+                            <Check className="w-3 h-3 mr-1" />
+                            Conectado
+                          </Badge>
+                        )}
+                        {hasError && (
+                          <Badge variant="destructive" className="text-xs">
+                            <AlertCircle className="w-3 h-3 mr-1" />
+                            Erro
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">{integration.description}</p>
+                      {existingIntegration?.store_name && (
+                        <p className="text-xs text-muted-foreground mt-0.5">{existingIntegration.store_name}</p>
+                      )}
+                    </div>
+                    <Button 
+                      variant={isConnected ? "outline" : "default"} 
+                      size="sm" 
+                      className="gap-2 px-4"
+                      onClick={() => {
+                        setSelectedProvider(integration.id as IntegrationProvider);
+                        setShowIntegrationConfig(true);
+                      }}
+                    >
+                      {isConnected ? (
+                        <>
+                          <Settings2 className="w-3.5 h-3.5" />
+                          Configurar
+                        </>
+                      ) : (
+                        <>
+                          <Link2 className="w-3.5 h-3.5" />
+                          Conectar
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                );
+              })
+            )}
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Configuração de Integração */}
+      <IntegrationConfigModal
+        isOpen={showIntegrationConfig}
+        onClose={() => {
+          setShowIntegrationConfig(false);
+          setSelectedProvider(null);
+        }}
+        provider={selectedProvider}
+        instanceId={instance.id}
+        existingIntegration={selectedProvider ? getIntegration(selectedProvider) : null}
+        onSuccess={refetchIntegrations}
+      />
 
       {/* Modal de Teste de Mensagem */}
       <TestMessageModal

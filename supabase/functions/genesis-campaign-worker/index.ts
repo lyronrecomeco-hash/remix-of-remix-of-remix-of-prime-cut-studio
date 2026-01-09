@@ -84,8 +84,29 @@ serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
-    const { campaign_id, action, batch_size = 10 }: CampaignRequest = await req.json();
-    console.log(`[Campaign Worker] Action: ${action}, Campaign: ${campaign_id}`);
+    const body = await req.json();
+    const { campaign_id, action, batch_size = 10 }: CampaignRequest = body;
+    
+    console.log(`[Campaign Worker] Action: ${action}, Campaign ID: ${campaign_id}`);
+
+    // Validate campaign_id
+    if (!campaign_id || typeof campaign_id !== 'string') {
+      console.error('Invalid campaign_id:', campaign_id);
+      return new Response(
+        JSON.stringify({ success: false, error: 'campaign_id inválido ou ausente' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(campaign_id)) {
+      console.error('Invalid UUID format:', campaign_id);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Formato de campaign_id inválido' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Get campaign details
     const { data: campaign, error: campaignError } = await supabase
@@ -97,13 +118,29 @@ serve(async (req) => {
       .eq('id', campaign_id)
       .single();
 
-    if (campaignError || !campaign) {
-      console.error('Campaign not found:', campaignError);
+    if (campaignError) {
+      console.error('Campaign query error:', campaignError);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: campaignError.code === 'PGRST116' 
+            ? 'Campanha não encontrada' 
+            : `Erro ao buscar campanha: ${campaignError.message}`,
+          details: campaignError
+        }),
+        { status: campaignError.code === 'PGRST116' ? 404 : 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!campaign) {
+      console.error('Campaign not found for ID:', campaign_id);
       return new Response(
         JSON.stringify({ success: false, error: 'Campanha não encontrada' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    console.log(`[Campaign Worker] Found campaign: ${campaign.name}, status: ${campaign.status}`);
 
     // Handle different actions
     switch (action) {

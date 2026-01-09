@@ -3875,6 +3875,75 @@ export type Database = {
           },
         ]
       }
+      genesis_instance_integrations: {
+        Row: {
+          created_at: string
+          credentials_encrypted: string | null
+          error_message: string | null
+          id: string
+          instance_id: string
+          last_sync_at: string | null
+          metadata: Json
+          provider: string
+          status: string
+          store_name: string | null
+          store_url: string | null
+          updated_at: string
+          user_id: string
+          webhook_secret: string | null
+          webhook_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          credentials_encrypted?: string | null
+          error_message?: string | null
+          id?: string
+          instance_id: string
+          last_sync_at?: string | null
+          metadata?: Json
+          provider: string
+          status?: string
+          store_name?: string | null
+          store_url?: string | null
+          updated_at?: string
+          user_id: string
+          webhook_secret?: string | null
+          webhook_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          credentials_encrypted?: string | null
+          error_message?: string | null
+          id?: string
+          instance_id?: string
+          last_sync_at?: string | null
+          metadata?: Json
+          provider?: string
+          status?: string
+          store_name?: string | null
+          store_url?: string | null
+          updated_at?: string
+          user_id?: string
+          webhook_secret?: string | null
+          webhook_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_instance_integrations_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_instance_integrations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       genesis_instance_metrics: {
         Row: {
           api_calls: number | null
