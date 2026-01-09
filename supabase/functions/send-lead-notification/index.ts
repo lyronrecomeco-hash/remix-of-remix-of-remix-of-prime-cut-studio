@@ -7,6 +7,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Native VPS configuration (GenesisPro backend)
+const NATIVE_VPS_URL = 'http://72.62.108.24:3000';
+const NATIVE_VPS_TOKEN = 'genesis-master-token-2024-secure';
+
 interface LeadNotificationRequest {
   firstName: string;
   lastName: string;
@@ -43,7 +47,6 @@ serve(async (req: Request): Promise<Response> => {
       try {
         const resend = new Resend(resendApiKey);
         
-        // Replace variables in template
         let htmlContent = emailTemplate.html_content
           .replace(/\{\{nome\}\}/g, firstName)
           .replace(/\{\{plano\}\}/g, planType === 'vitalicio' ? 'Vitalício' : 'Premium')
@@ -62,7 +65,6 @@ serve(async (req: Request): Promise<Response> => {
 
         console.log(`[Lead Notification] Email sent to ${email}`);
 
-        // Log email
         await supabase.from("email_logs").insert({
           recipient_email: email,
           recipient_name: `${firstName} ${lastName}`,
@@ -77,7 +79,7 @@ serve(async (req: Request): Promise<Response> => {
       }
     }
 
-    // Get WhatsApp template and config
+    // Get WhatsApp template
     const { data: whatsappTemplate } = await supabase
       .from("whatsapp_templates")
       .select("*")
@@ -85,15 +87,16 @@ serve(async (req: Request): Promise<Response> => {
       .eq("is_active", true)
       .single();
 
-    const { data: chatproConfig } = await supabase
-      .from("chatpro_config")
-      .select("*")
-      .eq("is_enabled", true)
+    // Try GenesisPro first - find any connected instance
+    const { data: genesisInstance } = await supabase
+      .from('genesis_instances')
+      .select('*')
+      .eq('status', 'connected')
+      .order('updated_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
-    // Send WhatsApp if configured
-    if (chatproConfig && whatsappTemplate) {
+    if (genesisInstance && whatsappTemplate) {
       try {
         const message = whatsappTemplate.message_template
           .replace(/\{\{nome\}\}/g, firstName)
@@ -102,24 +105,64 @@ serve(async (req: Request): Promise<Response> => {
         const formattedPhone = whatsapp.replace(/\D/g, '');
         const fullPhone = formattedPhone.startsWith('55') ? formattedPhone : `55${formattedPhone}`;
 
-        const chatproUrl = `${chatproConfig.base_endpoint}/${chatproConfig.instance_id}/api/v1/send_message`;
-        
-        await fetch(chatproUrl, {
+        const backendUrl = genesisInstance.backend_url || NATIVE_VPS_URL;
+        const backendToken = genesisInstance.backend_token || NATIVE_VPS_TOKEN;
+        const apiUrl = `${backendUrl}/${genesisInstance.id}/send-text`;
+
+        await fetch(apiUrl, {
           method: 'POST',
           headers: {
-            'Authorization': chatproConfig.api_token,
+            'Authorization': `Bearer ${backendToken}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            number: fullPhone,
+            phone: fullPhone,
             message: message
           })
         });
 
-        console.log(`[Lead Notification] WhatsApp sent to ${fullPhone}`);
+        console.log(`[Lead Notification] WhatsApp sent via GenesisPro to ${fullPhone}`);
 
       } catch (whatsappError) {
-        console.error("[Lead Notification] WhatsApp error:", whatsappError);
+        console.error("[Lead Notification] GenesisPro error:", whatsappError);
+      }
+    } else {
+      // Fallback to legacy ChatPro if configured
+      const { data: chatproConfig } = await supabase
+        .from("chatpro_config")
+        .select("*")
+        .eq("is_enabled", true)
+        .limit(1)
+        .single();
+
+      if (chatproConfig && whatsappTemplate) {
+        try {
+          const message = whatsappTemplate.message_template
+            .replace(/\{\{nome\}\}/g, firstName)
+            .replace(/\{\{plano\}\}/g, planType === 'vitalicio' ? 'Vitalício' : 'Premium');
+
+          const formattedPhone = whatsapp.replace(/\D/g, '');
+          const fullPhone = formattedPhone.startsWith('55') ? formattedPhone : `55${formattedPhone}`;
+
+          const chatproUrl = `${chatproConfig.base_endpoint}/${chatproConfig.instance_id}/api/v1/send_message`;
+          
+          await fetch(chatproUrl, {
+            method: 'POST',
+            headers: {
+              'Authorization': chatproConfig.api_token,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              number: fullPhone,
+              message: message
+            })
+          });
+
+          console.log(`[Lead Notification] WhatsApp sent via ChatPro (legacy) to ${fullPhone}`);
+
+        } catch (whatsappError) {
+          console.error("[Lead Notification] ChatPro error:", whatsappError);
+        }
       }
     }
 

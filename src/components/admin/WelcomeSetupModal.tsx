@@ -10,7 +10,9 @@ import {
   CheckCircle,
   ExternalLink,
   Copy,
-  Scissors
+  Scissors,
+  Zap,
+  Link2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -48,55 +50,54 @@ const slides = [
         </div>
         <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/20 mt-4">
           <p className="text-sm text-center text-green-400">
-            ✅ <strong>Modo gratuito disponível!</strong> Use profissionalmente sem pagar nada. 
-            ChatPro e recursos essenciais inclusos.
+            ✅ <strong>Automação WhatsApp incluída!</strong> Use profissionalmente sem configurações extras.
           </p>
         </div>
       </div>
     ),
   },
   {
-    id: 'chatpro-intro',
-    title: 'Integração com WhatsApp',
-    subtitle: 'Notifique seus clientes automaticamente',
+    id: 'genesispro-intro',
+    title: 'Integração GenesisPro',
+    subtitle: 'WhatsApp Automação Nativa',
     content: (
       <div className="space-y-4">
         <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-green-500/30 to-green-500/10 flex items-center justify-center">
-          <MessageCircle className="w-12 h-12 text-green-500" />
+          <Zap className="w-12 h-12 text-green-500" />
         </div>
         <p className="text-muted-foreground text-center max-w-md mx-auto">
-          O Genesis usa o <strong>ChatPro</strong> para enviar mensagens automáticas 
-          de confirmação, lembrete e muito mais direto no WhatsApp dos seus clientes.
+          O Genesis usa o <strong>GenesisPro</strong> - nossa própria integração WhatsApp - 
+          para enviar mensagens automáticas de confirmação, lembrete e muito mais!
         </p>
         <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20">
           <p className="text-sm text-center text-green-400">
-            💡 Você precisará de uma conta no ChatPro para usar esta função
+            💡 Se você já tem conta no /genesis, a integração é automática!
           </p>
         </div>
       </div>
     ),
   },
   {
-    id: 'chatpro-create',
-    title: 'Criar conta no ChatPro',
-    subtitle: 'Passo 1: Registre-se na plataforma',
+    id: 'genesispro-connect',
+    title: 'Como Funciona',
+    subtitle: 'Integração automática com sua conta Genesis',
     content: (
       <div className="space-y-4">
         <div className="p-4 rounded-xl bg-secondary/50 space-y-4">
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold shrink-0">1</div>
             <div>
-              <p className="font-medium">Acesse o site do ChatPro</p>
-              <p className="text-sm text-muted-foreground">Clique no botão abaixo para abrir o site</p>
+              <p className="font-medium">Acesse seu painel Genesis</p>
+              <p className="text-sm text-muted-foreground">Se você já tem conta no /genesis com o mesmo email</p>
             </div>
           </div>
           <Button
             variant="outline"
             className="w-full"
-            onClick={() => window.open('https://app.chatpro.com.br/register', '_blank')}
+            onClick={() => window.open('/genesis', '_blank')}
           >
             <ExternalLink className="w-4 h-4 mr-2" />
-            Abrir ChatPro
+            Abrir Genesis
           </Button>
         </div>
         
@@ -104,146 +105,8 @@ const slides = [
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold shrink-0">2</div>
             <div>
-              <p className="font-medium">Crie sua conta</p>
-              <p className="text-sm text-muted-foreground">Preencha seus dados e crie uma conta gratuita</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="p-4 rounded-xl bg-secondary/50 space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold shrink-0">3</div>
-            <div>
-              <p className="font-medium">Escolha um plano</p>
-              <p className="text-sm text-muted-foreground">Recomendamos o plano básico para começar</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    ),
-  },
-  {
-    id: 'chatpro-instance',
-    title: 'Criar Instância',
-    subtitle: 'Passo 2: Configure sua instância WhatsApp',
-    content: (
-      <div className="space-y-4">
-        <div className="p-4 rounded-xl bg-secondary/50 space-y-4">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold shrink-0">1</div>
-            <div>
-              <p className="font-medium">Acesse o painel do ChatPro</p>
-              <p className="text-sm text-muted-foreground">Faça login na sua conta</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="p-4 rounded-xl bg-secondary/50 space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold shrink-0">2</div>
-            <div>
-              <p className="font-medium">Clique em "Instâncias"</p>
-              <p className="text-sm text-muted-foreground">No menu lateral, encontre a opção Instâncias</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="p-4 rounded-xl bg-secondary/50 space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold shrink-0">3</div>
-            <div>
-              <p className="font-medium">Crie uma nova instância</p>
-              <p className="text-sm text-muted-foreground">Clique em "+ Nova Instância" e dê um nome (ex: MinhaBarber)</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
-          <p className="text-sm text-amber-400">
-            ⚠️ <strong>Importante:</strong> Anote o ID da instância que aparecerá após criar
-          </p>
-        </div>
-      </div>
-    ),
-  },
-  {
-    id: 'chatpro-qr',
-    title: 'Conectar WhatsApp',
-    subtitle: 'Passo 3: Escaneie o QR Code',
-    content: (
-      <div className="space-y-4">
-        <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center">
-          <QrCode className="w-12 h-12 text-primary" />
-        </div>
-        
-        <div className="p-4 rounded-xl bg-secondary/50 space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold shrink-0">1</div>
-            <div>
-              <p className="font-medium">Na instância criada, clique em "Conectar"</p>
-              <p className="text-sm text-muted-foreground">Um QR Code será exibido na tela</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="p-4 rounded-xl bg-secondary/50 space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold shrink-0">2</div>
-            <div>
-              <p className="font-medium">Abra o WhatsApp no seu celular</p>
-              <p className="text-sm text-muted-foreground">Use o número da sua barbearia</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="p-4 rounded-xl bg-secondary/50 space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold shrink-0">3</div>
-            <div>
-              <p className="font-medium">Vá em Dispositivos conectados</p>
-              <p className="text-sm text-muted-foreground">Menu → Dispositivos conectados → Conectar dispositivo</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="p-4 rounded-xl bg-secondary/50 space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-500 font-bold shrink-0">4</div>
-            <div>
-              <p className="font-medium">Escaneie o QR Code</p>
-              <p className="text-sm text-muted-foreground">Aponte a câmera para o QR Code na tela do ChatPro</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    ),
-  },
-  {
-    id: 'chatpro-token',
-    title: 'Obter Token da API',
-    subtitle: 'Passo 4: Copie suas credenciais',
-    content: (
-      <div className="space-y-4">
-        <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center">
-          <Settings className="w-12 h-12 text-primary" />
-        </div>
-        
-        <div className="p-4 rounded-xl bg-secondary/50 space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold shrink-0">1</div>
-            <div>
-              <p className="font-medium">Acesse as configurações da instância</p>
-              <p className="text-sm text-muted-foreground">Clique no ícone de engrenagem ao lado da instância</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="p-4 rounded-xl bg-secondary/50 space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold shrink-0">2</div>
-            <div>
-              <p className="font-medium">Encontre o "Token da API"</p>
-              <p className="text-sm text-muted-foreground">Na aba de configurações, procure por Token ou API Key</p>
+              <p className="font-medium">Conecte uma instância WhatsApp</p>
+              <p className="text-sm text-muted-foreground">Escaneie o QR Code para conectar seu número</p>
             </div>
           </div>
         </div>
@@ -252,62 +115,8 @@ const slides = [
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-500 font-bold shrink-0">3</div>
             <div>
-              <p className="font-medium">Copie o Token e o ID da Instância</p>
-              <p className="text-sm text-muted-foreground">Você vai precisar deles no próximo passo</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
-          <p className="text-sm text-primary">
-            📝 <strong>Guarde essas informações:</strong> Token da API e ID da Instância
-          </p>
-        </div>
-      </div>
-    ),
-  },
-  {
-    id: 'chatpro-config',
-    title: 'Configurar no Genesis',
-    subtitle: 'Passo 5: Cole as credenciais',
-    content: (
-      <div className="space-y-4">
-        <div className="p-4 rounded-xl bg-secondary/50 space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold shrink-0">1</div>
-            <div>
-              <p className="font-medium">Vá em Configurações → ChatPro</p>
-              <p className="text-sm text-muted-foreground">No menu do painel, acesse as configurações</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="p-4 rounded-xl bg-secondary/50 space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold shrink-0">2</div>
-            <div>
-              <p className="font-medium">Cole o ID da Instância</p>
-              <p className="text-sm text-muted-foreground">No campo "ID da Instância"</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="p-4 rounded-xl bg-secondary/50 space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold shrink-0">3</div>
-            <div>
-              <p className="font-medium">Cole o Token da API</p>
-              <p className="text-sm text-muted-foreground">No campo "Token da API"</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="p-4 rounded-xl bg-secondary/50 space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-500 font-bold shrink-0">4</div>
-            <div>
-              <p className="font-medium">Ative a integração</p>
-              <p className="text-sm text-muted-foreground">Clique no botão para ativar e teste enviando uma mensagem</p>
+              <p className="font-medium">Pronto! Integração automática</p>
+              <p className="text-sm text-muted-foreground">O sistema detecta e usa sua instância automaticamente</p>
             </div>
           </div>
         </div>
@@ -339,7 +148,7 @@ const slides = [
         </div>
         <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 mt-4">
           <p className="text-sm text-center text-primary">
-            💡 <strong>Dica:</strong> Configure o ChatPro em Configurações → ChatPro para ativar notificações automáticas
+            💡 <strong>Dica:</strong> Configure o GenesisPro em Configurações → GenesisPro para ativar notificações automáticas
           </p>
         </div>
       </div>
@@ -372,31 +181,23 @@ const WelcomeSetupModal = ({ isOpen, onComplete }: WelcomeSetupModalProps) => {
   const handleComplete = async () => {
     if (user) {
       try {
-        // Check if any record exists with this setting_type (regardless of user_id)
-        const { data: existing } = await supabase
+        // First, try to delete any existing record to avoid conflicts
+        await supabase
           .from('admin_settings')
-          .select('id')
-          .eq('setting_type', `welcome_completed_${user.id}`)
-          .maybeSingle();
+          .delete()
+          .eq('setting_type', `welcome_completed_${user.id}`);
 
-        if (existing) {
-          // Update existing record
-          await supabase
-            .from('admin_settings')
-            .update({
-              settings: { completed: true, completedAt: new Date().toISOString() },
-              user_id: user.id
-            })
-            .eq('id', existing.id);
-        } else {
-          // Insert new record with user_id
-          await supabase
-            .from('admin_settings')
-            .insert({
-              setting_type: `welcome_completed_${user.id}`,
-              settings: { completed: true, completedAt: new Date().toISOString() },
-              user_id: user.id
-            });
+        // Insert new record with completed status
+        const { error } = await supabase
+          .from('admin_settings')
+          .insert({
+            setting_type: `welcome_completed_${user.id}`,
+            settings: { completed: true, completedAt: new Date().toISOString() },
+            user_id: user.id
+          });
+
+        if (error) {
+          console.error('Error saving welcome completion:', error);
         }
       } catch (e) {
         console.error('Error saving welcome completion:', e);
@@ -425,12 +226,25 @@ const WelcomeSetupModal = ({ isOpen, onComplete }: WelcomeSetupModalProps) => {
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="w-full max-w-xl max-h-[90vh] flex flex-col"
+            transition={{ duration: 0.3 }}
+            className="w-full max-w-lg bg-card border border-border rounded-3xl shadow-2xl overflow-hidden"
           >
-            <div className="glass-card rounded-2xl overflow-hidden border border-primary/30 flex flex-col max-h-full">
-              {/* Progress bar */}
-              <div className="h-1 bg-secondary">
+            {/* Header with progress */}
+            <div className="p-4 border-b border-border">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-muted-foreground">
+                  Passo {currentSlide + 1} de {slides.length}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleComplete}
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Pular configuração
+                </Button>
+              </div>
+              <div className="h-1 bg-secondary rounded-full overflow-hidden">
                 <motion.div
                   className="h-full bg-primary"
                   initial={{ width: 0 }}
@@ -438,80 +252,68 @@ const WelcomeSetupModal = ({ isOpen, onComplete }: WelcomeSetupModalProps) => {
                   transition={{ duration: 0.3 }}
                 />
               </div>
+            </div>
 
-              {/* Header */}
-              <div className="p-6 pb-2 text-center shrink-0">
-                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-2">
-                  <span>{currentSlide + 1}</span>
-                  <span>/</span>
-                  <span>{slides.length}</span>
-                </div>
-                <h2 className="text-xl font-bold text-foreground">
-                  {slides[currentSlide].title}
-                </h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {slides[currentSlide].subtitle}
-                </p>
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 min-h-0 overflow-y-auto p-6 pt-4">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={currentSlide}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    {slides[currentSlide].content}
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-
-              {/* Navigation */}
-              <div className="p-6 pt-4 border-t border-border shrink-0">
-                <div className="flex items-center justify-between gap-4">
-                  <Button
-                    variant="ghost"
-                    onClick={handlePrev}
-                    disabled={isFirstSlide}
-                    className="gap-2"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                    Anterior
-                  </Button>
-
-                  <div className="flex gap-1.5">
-                    {slides.map((_, idx) => (
-                      <div
-                        key={idx}
-                        className={`w-2 h-2 rounded-full transition-colors ${
-                          idx === currentSlide ? 'bg-primary' : 'bg-secondary'
-                        }`}
-                      />
-                    ))}
+            {/* Content */}
+            <div className="p-6">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentSlide}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.2 }}
+                  className="space-y-4"
+                >
+                  <div className="text-center">
+                    <h2 className="text-2xl font-bold">{slides[currentSlide].title}</h2>
+                    <p className="text-muted-foreground mt-1">{slides[currentSlide].subtitle}</p>
                   </div>
+                  {slides[currentSlide].content}
+                </motion.div>
+              </AnimatePresence>
+            </div>
 
-                  <Button
-                    variant="hero"
-                    onClick={handleNext}
-                    className="gap-2"
-                  >
-                    {isLastSlide ? (
-                      <>
-                        <Sparkles className="w-4 h-4" />
-                        Começar
-                      </>
-                    ) : (
-                      <>
-                        Próximo
-                        <ChevronRight className="w-4 h-4" />
-                      </>
-                    )}
-                  </Button>
-                </div>
+            {/* Footer */}
+            <div className="p-4 border-t border-border flex items-center justify-between">
+              <Button
+                variant="ghost"
+                onClick={handlePrev}
+                disabled={isFirstSlide}
+                className="gap-2"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Voltar
+              </Button>
+
+              <div className="flex items-center gap-1.5">
+                {slides.map((_, idx) => (
+                  <div
+                    key={idx}
+                    className={`w-2 h-2 rounded-full transition-colors ${
+                      idx === currentSlide ? 'bg-primary' : 'bg-secondary'
+                    }`}
+                  />
+                ))}
               </div>
+
+              <Button
+                variant="hero"
+                onClick={handleNext}
+                className="gap-2"
+              >
+                {isLastSlide ? (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Começar
+                  </>
+                ) : (
+                  <>
+                    Próximo
+                    <ChevronRight className="w-4 h-4" />
+                  </>
+                )}
+              </Button>
             </div>
           </motion.div>
         </div>

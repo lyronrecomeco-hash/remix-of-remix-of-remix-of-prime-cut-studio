@@ -88,7 +88,7 @@ const navSections: NavSection[] = [
       { id: 'affiliates', label: 'Afiliados', icon: Users },
       { id: 'proposals', label: 'Propostas', icon: Building2, badge: 'Novo', badgeVariant: 'default' },
       { id: 'crm', label: 'CRM', icon: Briefcase },
-      { id: 'affiliate-chatpro', label: 'ChatPro Afiliados', icon: MessageCircle },
+      { id: 'affiliate-chatpro', label: 'GenesisPro Afiliados', icon: MessageCircle },
       { id: 'database', label: 'Banco de Dados', icon: HardDrive },
     ]
   },
