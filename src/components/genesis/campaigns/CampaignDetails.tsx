@@ -25,6 +25,7 @@ import {
   Activity,
   RefreshCw,
   RotateCcw,
+  Pencil,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -47,6 +48,7 @@ interface CampaignDetailsProps {
   onRefresh: () => void;
   onRetryPending?: () => void;
   onMarkUndelivered?: () => void;
+  onEditContacts?: () => void;
   pendingCount?: number;
   sentCount?: number;
   loading?: boolean;
@@ -63,6 +65,7 @@ export function CampaignDetails({
   onRefresh,
   onRetryPending,
   onMarkUndelivered,
+  onEditContacts,
   pendingCount = 0,
   sentCount = 0,
   loading,
@@ -163,6 +166,12 @@ export function CampaignDetails({
           <Button variant="outline" onClick={onPause} className="gap-2">
             <Pause className="w-4 h-4" />
             Pausar
+          </Button>
+        )}
+        {onEditContacts && (
+          <Button variant="outline" onClick={onEditContacts} className="gap-2">
+            <Pencil className="w-4 h-4" />
+            Editar Contatos
           </Button>
         )}
         {pendingCount > 0 && onRetryPending && (

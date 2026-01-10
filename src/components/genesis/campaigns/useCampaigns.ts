@@ -405,6 +405,97 @@ export function useCampaigns() {
     }
   };
 
+  // Remove contacts from campaign
+  const removeContacts = async (campaignId: string, contactIds: string[]): Promise<boolean> => {
+    if (contactIds.length === 0) return false;
+    
+    try {
+      const { error } = await supabase
+        .from('genesis_campaign_contacts')
+        .delete()
+        .eq('campaign_id', campaignId)
+        .in('id', contactIds);
+
+      if (error) throw error;
+
+      // Update total_contacts count
+      const { data: remainingContacts, error: countError } = await supabase
+        .from('genesis_campaign_contacts')
+        .select('id')
+        .eq('campaign_id', campaignId);
+
+      if (!countError) {
+        await supabase
+          .from('genesis_campaigns')
+          .update({ total_contacts: remainingContacts?.length || 0 } as never)
+          .eq('id', campaignId);
+      }
+
+      // Log action
+      await supabase.from('genesis_campaign_logs').insert({
+        campaign_id: campaignId,
+        event_type: 'contacts_removed',
+        severity: 'info',
+        message: `${contactIds.length} contatos removidos da campanha`,
+        details: { removed_count: contactIds.length }
+      } as never);
+
+      toast.success(`${contactIds.length} contato(s) removido(s)`);
+      await fetchCampaigns();
+      return true;
+    } catch (error) {
+      console.error('Error removing contacts:', error);
+      toast.error('Erro ao remover contatos');
+      return false;
+    }
+  };
+
+  // Mark specific contacts for resend
+  const markContactsForResend = async (campaignId: string, contactIds: string[]): Promise<boolean> => {
+    if (contactIds.length === 0) return false;
+    
+    try {
+      const { error } = await supabase
+        .from('genesis_campaign_contacts')
+        .update({ 
+          status: 'pending',
+          attempt_count: 0,
+          error_message: null,
+          locked_at: null,
+          sent_at: null,
+          message_sent: null
+        } as never)
+        .eq('campaign_id', campaignId)
+        .in('id', contactIds);
+
+      if (error) throw error;
+
+      // Update campaign status to draft if needed
+      await supabase
+        .from('genesis_campaigns')
+        .update({ status: 'draft' } as never)
+        .eq('id', campaignId)
+        .in('status', ['completed', 'failed', 'cancelled', 'stopped_by_system']);
+
+      // Log action
+      await supabase.from('genesis_campaign_logs').insert({
+        campaign_id: campaignId,
+        event_type: 'contacts_marked_resend',
+        severity: 'info',
+        message: `${contactIds.length} contatos marcados para reenvio`,
+        details: { marked_count: contactIds.length }
+      } as never);
+
+      toast.success(`${contactIds.length} contato(s) preparado(s) para reenvio`);
+      await fetchCampaigns();
+      return true;
+    } catch (error) {
+      console.error('Error marking contacts for resend:', error);
+      toast.error('Erro ao marcar para reenvio');
+      return false;
+    }
+  };
+
   return {
     campaigns,
     loading,
@@ -414,6 +505,7 @@ export function useCampaigns() {
     updateCampaign,
     deleteCampaign,
     addContacts,
+    removeContacts,
     getCampaignContacts,
     getCampaignLogs,
     startCampaign,
@@ -421,5 +513,6 @@ export function useCampaigns() {
     cancelCampaign,
     retryPendingContacts,
     markSentAsUndelivered,
+    markContactsForResend,
   };
 }
