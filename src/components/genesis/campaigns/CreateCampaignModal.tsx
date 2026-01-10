@@ -1169,6 +1169,7 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
                     <CampaignTestSection
                       instanceId={formData.instance_id}
                       instanceName={selectedInstance?.name || 'Instância'}
+                      instanceStatus={selectedInstance?.orchestrated_status || selectedInstance?.status}
                       messageTemplate={formData.message_template}
                       lunaEnabled={formData.luna_enabled}
                       lunaVariations={generatedVariations}

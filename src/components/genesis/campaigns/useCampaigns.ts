@@ -24,7 +24,7 @@ export function useCampaigns() {
         .from('genesis_campaigns')
         .select(`
           *,
-          instance:genesis_instances(id, name, status, phone_number)
+          instance:genesis_instances(id, name, status, orchestrated_status, phone_number)
         `)
         .eq('user_id', genesisUser.id)
         .order('created_at', { ascending: false });
