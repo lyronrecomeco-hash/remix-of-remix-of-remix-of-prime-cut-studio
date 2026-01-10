@@ -76,17 +76,26 @@ export function ContactsPreviewCard({
   // Estado interno para seleção (todos selecionados por padrão)
   const [internalSelected, setInternalSelected] = useState<Set<string>>(new Set());
   
+  // Track se já inicializou para evitar reset infinito
+  const [initialized, setInitialized] = useState(false);
+  
   // Usar estado externo se fornecido, caso contrário interno
   const selected = selectedPhones ?? internalSelected;
   const setSelected = onSelectionChange ?? setInternalSelected;
 
-  // Quando contacts mudam, selecionar todos por padrão
+  // Quando contacts mudam, selecionar todos por padrão (apenas na primeira vez)
   useEffect(() => {
-    if (contacts.length > 0) {
+    if (contacts.length > 0 && !initialized) {
       const allPhones = new Set(contacts.map(c => c.phone));
       setSelected(allPhones);
+      setInitialized(true);
     }
-  }, [contacts, setSelected]);
+  }, [contacts, initialized, setSelected]);
+  
+  // Reset initialized quando contacts mudam completamente (novo fetch)
+  useEffect(() => {
+    setInitialized(false);
+  }, [contacts.length]);
 
   const displayedContacts = showAll ? contacts : contacts.slice(0, 5);
   const selectedCount = selected.size;
