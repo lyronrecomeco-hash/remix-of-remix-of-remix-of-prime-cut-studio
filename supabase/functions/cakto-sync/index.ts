@@ -336,10 +336,10 @@ Deno.serve(async (req) => {
             // Extract value
             const orderValue = Number(order.total || order.amount || order.value || 0) || null;
 
-            // Insert event
-            const { error: insertError } = await supabase
+            // Upsert event (insert ou update se já existir)
+            const { error: upsertError } = await supabase
               .from('genesis_cakto_events')
-              .insert({
+              .upsert({
                 instance_id: instanceId,
                 integration_id: integrationId,
                 event_type: eventType,
@@ -363,26 +363,17 @@ Deno.serve(async (req) => {
                 processed: true,
                 processed_at: now,
                 created_at: order.created_at || order.date || now,
+              }, { 
+                onConflict: 'instance_id,external_id,event_type',
+                ignoreDuplicates: false 
               });
 
-            if (insertError) {
-              if (insertError.code !== '23505') { // Ignore duplicate constraint errors
-                console.error('[CaktoSync] Insert error:', insertError);
-                errorCount++;
-              } else {
-                skippedCount++;
-              }
+            if (upsertError) {
+              console.error('[CaktoSync] Upsert error:', upsertError);
+              errorCount++;
             } else {
               insertedCount++;
             }
-
-            // Also insert into dedup table
-            await supabase.from('genesis_cakto_dedup').upsert({
-              instance_id: instanceId,
-              external_id: String(externalId),
-              event_type: eventType,
-              customer_phone: customerPhone,
-            }, { onConflict: 'instance_id,external_id,event_type' });
 
           } catch (err) {
             console.error('[CaktoSync] Order processing error:', err);
