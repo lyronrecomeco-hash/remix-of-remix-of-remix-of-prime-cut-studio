@@ -320,12 +320,17 @@ export interface CampaignStep4Data {
   // Anti-ban v2.0
   use_instance_pool?: boolean;
   typing_simulation?: boolean;
+  typing_duration_min?: number;
+  typing_duration_max?: number;
   adaptive_delay?: boolean;
   respect_warmup?: boolean;
   check_blacklist?: boolean;
+  quarantine_days?: number;
   prioritize_warm_leads?: boolean;
   peak_hours_boost?: boolean;
   spam_word_check?: boolean;
+  max_blocks_before_pause?: number;
+  cooldown_after_block_minutes?: number;
 }
 
 export interface CampaignFormData extends 

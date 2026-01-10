@@ -119,6 +119,17 @@ const DEFAULT_FORM_DATA: CampaignFormData = {
   send_window_start: '08:00',
   send_window_end: '22:00',
   send_on_weekends: true,
+  // Anti-ban v2.0 defaults
+  typing_simulation: true,
+  typing_duration_min: 2,
+  typing_duration_max: 5,
+  adaptive_delay: true,
+  check_blacklist: true,
+  prioritize_warm_leads: true,
+  peak_hours_boost: true,
+  spam_word_check: true,
+  max_blocks_before_pause: 3,
+  cooldown_after_block_minutes: 60,
 };
 
 // Eventos por tipo de integração - ATUALIZADO com PIX não pago
@@ -878,6 +889,140 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
                       Pausa automática de {Math.floor(formData.pause_duration_seconds / 60)} minutos a cada {formData.pause_after_batch} mensagens
                     </p>
                   </div>
+
+                  {/* Anti-ban v2.0 Advanced Controls */}
+                  <Card className="border-orange-500/20 bg-orange-500/5">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Settings2 className="w-5 h-5 text-orange-500" />
+                        <span className="font-medium">Proteções Anti-Ban Avançadas</span>
+                        <Badge variant="secondary" className="text-xs">v2.0</Badge>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        {/* Typing Simulation */}
+                        <div className="flex items-center justify-between p-3 bg-background/50 rounded-lg">
+                          <div>
+                            <Label className="cursor-pointer">⌨️ Simulação de Digitação</Label>
+                            <p className="text-xs text-muted-foreground">Envia "digitando..." antes de cada mensagem</p>
+                          </div>
+                          <Switch
+                            checked={formData.typing_simulation ?? true}
+                            onCheckedChange={v => setFormData(prev => ({ ...prev, typing_simulation: v }))}
+                          />
+                        </div>
+                        
+                        {formData.typing_simulation && (
+                          <div className="grid grid-cols-2 gap-4 pl-4 border-l-2 border-orange-500/20">
+                            <div className="space-y-2">
+                              <Label className="text-xs">Duração Mín (seg)</Label>
+                              <Input
+                                type="number"
+                                min={1}
+                                max={10}
+                                value={formData.typing_duration_min ?? 2}
+                                onChange={e => setFormData(prev => ({ ...prev, typing_duration_min: parseInt(e.target.value) || 2 }))}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs">Duração Máx (seg)</Label>
+                              <Input
+                                type="number"
+                                min={2}
+                                max={15}
+                                value={formData.typing_duration_max ?? 5}
+                                onChange={e => setFormData(prev => ({ ...prev, typing_duration_max: parseInt(e.target.value) || 5 }))}
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Adaptive Delay */}
+                        <div className="flex items-center justify-between p-3 bg-background/50 rounded-lg">
+                          <div>
+                            <Label className="cursor-pointer">⏱️ Delay Adaptativo</Label>
+                            <p className="text-xs text-muted-foreground">Ajusta delays baseado em horário e taxa de falha</p>
+                          </div>
+                          <Switch
+                            checked={formData.adaptive_delay ?? true}
+                            onCheckedChange={v => setFormData(prev => ({ ...prev, adaptive_delay: v }))}
+                          />
+                        </div>
+
+                        {/* Spam Word Check */}
+                        <div className="flex items-center justify-between p-3 bg-background/50 rounded-lg">
+                          <div>
+                            <Label className="cursor-pointer">🔍 Verificar Spam Words</Label>
+                            <p className="text-xs text-muted-foreground">Bloqueia mensagens com palavras que triggam filtros</p>
+                          </div>
+                          <Switch
+                            checked={formData.spam_word_check ?? true}
+                            onCheckedChange={v => setFormData(prev => ({ ...prev, spam_word_check: v }))}
+                          />
+                        </div>
+
+                        {/* Check Blacklist */}
+                        <div className="flex items-center justify-between p-3 bg-background/50 rounded-lg">
+                          <div>
+                            <Label className="cursor-pointer">🚫 Verificar Blacklist</Label>
+                            <p className="text-xs text-muted-foreground">Ignora contatos que já bloquearam ou reportaram</p>
+                          </div>
+                          <Switch
+                            checked={formData.check_blacklist ?? true}
+                            onCheckedChange={v => setFormData(prev => ({ ...prev, check_blacklist: v }))}
+                          />
+                        </div>
+
+                        {/* Prioritize Warm Leads */}
+                        <div className="flex items-center justify-between p-3 bg-background/50 rounded-lg">
+                          <div>
+                            <Label className="cursor-pointer">🔥 Priorizar Warm Leads</Label>
+                            <p className="text-xs text-muted-foreground">Envia primeiro para contatos que já interagiram</p>
+                          </div>
+                          <Switch
+                            checked={formData.prioritize_warm_leads ?? true}
+                            onCheckedChange={v => setFormData(prev => ({ ...prev, prioritize_warm_leads: v }))}
+                          />
+                        </div>
+
+                        {/* Peak Hours Boost */}
+                        <div className="flex items-center justify-between p-3 bg-background/50 rounded-lg">
+                          <div>
+                            <Label className="cursor-pointer">📈 Boost Horário de Pico</Label>
+                            <p className="text-xs text-muted-foreground">Otimiza velocidade em horários de maior engajamento</p>
+                          </div>
+                          <Switch
+                            checked={formData.peak_hours_boost ?? true}
+                            onCheckedChange={v => setFormData(prev => ({ ...prev, peak_hours_boost: v }))}
+                          />
+                        </div>
+
+                        {/* Auto-pause thresholds */}
+                        <div className="grid grid-cols-2 gap-4 pt-2 border-t border-orange-500/20">
+                          <div className="space-y-2">
+                            <Label className="text-xs">Pausar após X bloqueios</Label>
+                            <Input
+                              type="number"
+                              min={1}
+                              max={10}
+                              value={formData.max_blocks_before_pause ?? 3}
+                              onChange={e => setFormData(prev => ({ ...prev, max_blocks_before_pause: parseInt(e.target.value) || 3 }))}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs">Cooldown após bloqueio (min)</Label>
+                            <Input
+                              type="number"
+                              min={15}
+                              max={180}
+                              value={formData.cooldown_after_block_minutes ?? 60}
+                              onChange={e => setFormData(prev => ({ ...prev, cooldown_after_block_minutes: parseInt(e.target.value) || 60 }))}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
 
                   {/* Toggle para horário avançado por período */}
                   <Card className={cn(
