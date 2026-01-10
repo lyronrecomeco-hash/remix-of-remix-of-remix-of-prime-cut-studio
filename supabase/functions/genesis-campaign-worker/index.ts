@@ -928,10 +928,16 @@ async function processBatch(
       if (variations.length > 0) {
         variationIndex = i % variations.length;
         message = variations[variationIndex];
+        console.log(`[LUNA] Using variation ${variationIndex + 1}/${variations.length} for contact ${i + 1}`);
+      } else {
+        console.log(`[LUNA] No variations available, using template for contact ${i + 1}`);
       }
 
+      // Extract first name only for professional messaging
+      const firstName = contactName ? contactName.split(' ')[0] : '';
+
       message = message
-        .replace(/\{\{nome\}\}/gi, contactName || '')
+        .replace(/\{\{nome\}\}/gi, firstName)
         .replace(/\{\{telefone\}\}/gi, contactPhone || '')
         .trim();
 

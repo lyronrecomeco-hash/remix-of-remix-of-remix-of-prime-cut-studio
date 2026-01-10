@@ -10,6 +10,7 @@ import { CampaignsList } from './CampaignsList';
 import { CreateCampaignModal } from './CreateCampaignModal';
 import { CampaignDetails } from './CampaignDetails';
 import { SendWindowModal } from './SendWindowModal';
+import { EditCampaignContactsModal } from './EditCampaignContactsModal';
 import type { Campaign, CampaignFormData, CampaignContact, CampaignLog } from './types';
 
 export function GenesisCampaigns() {
@@ -27,6 +28,8 @@ export function GenesisCampaigns() {
     getCampaignLogs,
     retryPendingContacts,
     markSentAsUndelivered,
+    removeContacts,
+    markContactsForResend,
   } = useCampaigns();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -39,6 +42,9 @@ export function GenesisCampaigns() {
   const [showWindowModal, setShowWindowModal] = useState(false);
   const [windowStart, setWindowStart] = useState('08:00');
   const [windowEnd, setWindowEnd] = useState('22:00');
+  
+  // Edit contacts modal state
+  const [showEditContactsModal, setShowEditContactsModal] = useState(false);
 
   // Handle create campaign
   const handleCreateCampaign = async (formData: CampaignFormData) => {
@@ -195,6 +201,20 @@ export function GenesisCampaigns() {
     }
   };
 
+  // Handle remove contacts
+  const handleRemoveContacts = async (contactIds: string[]) => {
+    if (!selectedCampaign) return;
+    await removeContacts(selectedCampaign.id, contactIds);
+    handleRefreshDetails();
+  };
+
+  // Handle mark contacts for resend
+  const handleMarkContactsForResend = async (contactIds: string[]) => {
+    if (!selectedCampaign) return;
+    await markContactsForResend(selectedCampaign.id, contactIds);
+    handleRefreshDetails();
+  };
+
   // Show details view
   if (selectedCampaign) {
     // Find updated campaign data
@@ -213,6 +233,7 @@ export function GenesisCampaigns() {
           onRefresh={handleRefreshDetails}
           onRetryPending={handleRetryPending}
           onMarkUndelivered={handleMarkUndelivered}
+          onEditContacts={() => setShowEditContactsModal(true)}
           pendingCount={pendingCount}
           sentCount={sentCount}
           loading={detailsLoading}
@@ -223,6 +244,15 @@ export function GenesisCampaigns() {
           onClose={() => setShowWindowModal(false)}
           windowStart={windowStart}
           windowEnd={windowEnd}
+        />
+
+        <EditCampaignContactsModal
+          open={showEditContactsModal}
+          onOpenChange={setShowEditContactsModal}
+          contacts={campaignContacts}
+          onRemoveContacts={handleRemoveContacts}
+          onMarkForResend={handleMarkContactsForResend}
+          loading={detailsLoading}
         />
       </>
     );
