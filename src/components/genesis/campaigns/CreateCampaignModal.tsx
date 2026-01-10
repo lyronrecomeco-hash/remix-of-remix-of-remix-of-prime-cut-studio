@@ -1,5 +1,6 @@
 /**
  * GENESIS CAMPAIGNS - Create Campaign Modal (Step-by-Step Wizard)
+ * Com suporte para campanhas acionadas por integração
  */
 
 import { useState, useEffect } from 'react';
@@ -19,6 +20,8 @@ import {
   Upload,
   Trash2,
   Info,
+  Link2,
+  Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,7 +50,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useGenesisAuth } from '@/contexts/GenesisAuthContext';
 import { toast } from 'sonner';
 import type { CampaignType, CampaignFormData, LunaSimilarityLevel } from './types';
-import { CAMPAIGN_TYPE_LABELS } from './types';
+import { CAMPAIGN_TYPE_LABELS, CAMPAIGN_TYPE_DESCRIPTIONS } from './types';
+import { IntegrationSelector } from './IntegrationSelector';
+import { ScheduleByPeriodControl, DEFAULT_SCHEDULE, type ScheduleByPeriod } from './ScheduleByPeriodControl';
 
 interface CreateCampaignModalProps {
   open: boolean;
@@ -63,13 +68,26 @@ interface Instance {
   phone_number?: string;
 }
 
-const STEPS = [
-  { id: 1, label: 'Configuração', icon: Settings2 },
-  { id: 2, label: 'Público', icon: Users },
-  { id: 3, label: 'Mensagem', icon: MessageSquare },
-  { id: 4, label: 'Controle', icon: Settings2 },
-  { id: 5, label: 'Confirmar', icon: CreditCard },
-];
+// Steps dinâmicos baseados no tipo de campanha
+const getSteps = (campaignType: CampaignType) => {
+  if (campaignType === 'integracao') {
+    return [
+      { id: 1, label: 'Tipo', icon: Settings2 },
+      { id: 2, label: 'Integração', icon: Link2 },
+      { id: 3, label: 'Evento', icon: Zap },
+      { id: 4, label: 'Mensagem', icon: MessageSquare },
+      { id: 5, label: 'Controle', icon: Settings2 },
+      { id: 6, label: 'Confirmar', icon: CreditCard },
+    ];
+  }
+  return [
+    { id: 1, label: 'Configuração', icon: Settings2 },
+    { id: 2, label: 'Público', icon: Users },
+    { id: 3, label: 'Mensagem', icon: MessageSquare },
+    { id: 4, label: 'Controle', icon: Settings2 },
+    { id: 5, label: 'Confirmar', icon: CreditCard },
+  ];
+};
 
 const DEFAULT_FORM_DATA: CampaignFormData = {
   name: '',
@@ -91,6 +109,27 @@ const DEFAULT_FORM_DATA: CampaignFormData = {
   send_on_weekends: true,
 };
 
+// Eventos por tipo de integração
+const INTEGRATION_EVENTS: Record<string, { value: string; label: string; description: string }[]> = {
+  cakto: [
+    { value: 'initiate_checkout', label: 'Checkout Iniciado', description: 'Cliente inicia o checkout' },
+    { value: 'purchase_approved', label: 'Compra Aprovada', description: 'Pagamento confirmado' },
+    { value: 'purchase_refused', label: 'Compra Recusada', description: 'Pagamento recusado' },
+    { value: 'purchase_refunded', label: 'Reembolso', description: 'Cliente solicita reembolso' },
+    { value: 'checkout_abandonment', label: 'Carrinho Abandonado', description: 'Cliente abandonou o checkout' },
+  ],
+  shopify: [
+    { value: 'order_created', label: 'Pedido Criado', description: 'Novo pedido recebido' },
+    { value: 'order_paid', label: 'Pedido Pago', description: 'Pagamento confirmado' },
+    { value: 'order_cancelled', label: 'Pedido Cancelado', description: 'Pedido foi cancelado' },
+    { value: 'cart_abandoned', label: 'Carrinho Abandonado', description: 'Cliente abandonou carrinho' },
+  ],
+  default: [
+    { value: 'new_lead', label: 'Novo Lead', description: 'Novo lead capturado' },
+    { value: 'status_changed', label: 'Status Alterado', description: 'Status do lead alterado' },
+  ],
+};
+
 export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCampaignModalProps) {
   const { genesisUser, credits } = useGenesisAuth();
   const [step, setStep] = useState(1);
@@ -98,6 +137,16 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
   const [instances, setInstances] = useState<Instance[]>([]);
   const [loadingInstances, setLoadingInstances] = useState(true);
   const [contactsText, setContactsText] = useState('');
+  
+  // Estados para campanhas de integração
+  const [selectedIntegrationId, setSelectedIntegrationId] = useState<string | null>(null);
+  const [selectedIntegrationProvider, setSelectedIntegrationProvider] = useState<string>('');
+  const [selectedEvent, setSelectedEvent] = useState<string>('');
+  const [scheduleByPeriod, setScheduleByPeriod] = useState<ScheduleByPeriod>(DEFAULT_SCHEDULE);
+  const [useAdvancedSchedule, setUseAdvancedSchedule] = useState(false);
+  
+  // Steps dinâmicos
+  const STEPS = getSteps(formData.campaign_type);
 
   // Fetch user instances
   useEffect(() => {
@@ -125,6 +174,11 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
       setStep(1);
       setFormData(DEFAULT_FORM_DATA);
       setContactsText('');
+      setSelectedIntegrationId(null);
+      setSelectedIntegrationProvider('');
+      setSelectedEvent('');
+      setScheduleByPeriod(DEFAULT_SCHEDULE);
+      setUseAdvancedSchedule(false);
     }
   }, [open, genesisUser]);
 
@@ -153,12 +207,44 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
     setFormData(prev => ({ ...prev, contacts: parsed }));
   };
 
+  // Handlers para integração
+  const handleIntegrationSelect = (integrationId: string, provider: string) => {
+    setSelectedIntegrationId(integrationId);
+    setSelectedIntegrationProvider(provider);
+    setSelectedEvent(''); // Reset evento ao trocar integração
+  };
+
   const selectedInstance = instances.find(i => i.id === formData.instance_id);
   const isInstanceValid = selectedInstance?.orchestrated_status === 'connected';
-  const creditsNeeded = formData.contacts.length;
-  const hasEnoughCredits = (credits?.available_credits || 0) >= creditsNeeded;
+  const creditsNeeded = formData.campaign_type === 'integracao' ? 0 : formData.contacts.length;
+  const hasEnoughCredits = formData.campaign_type === 'integracao' || (credits?.available_credits || 0) >= creditsNeeded;
 
+  // Eventos disponíveis para a integração selecionada
+  const availableEvents = INTEGRATION_EVENTS[selectedIntegrationProvider] || INTEGRATION_EVENTS.default;
+
+  // Validação por step - adaptada para tipo de campanha
   const canProceed = () => {
+    if (formData.campaign_type === 'integracao') {
+      const maxStep = STEPS.length;
+      switch (step) {
+        case 1: // Tipo + instância
+          return formData.name.trim() && formData.instance_id && isInstanceValid;
+        case 2: // Integração
+          return !!selectedIntegrationId;
+        case 3: // Evento
+          return !!selectedEvent;
+        case 4: // Mensagem
+          return formData.message_template.trim().length > 0;
+        case 5: // Controle
+          return true;
+        case 6: // Confirmar
+          return true;
+        default:
+          return false;
+      }
+    }
+    
+    // Fluxo normal (marketing/notificação)
     switch (step) {
       case 1:
         return formData.name.trim() && formData.instance_id && isInstanceValid;
@@ -176,7 +262,8 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
   };
 
   const handleNext = () => {
-    if (step < 5) {
+    const maxStep = STEPS.length;
+    if (step < maxStep) {
       setStep(step + 1);
     } else {
       // Submit
@@ -184,7 +271,16 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
         toast.error('Créditos insuficientes');
         return;
       }
-      onCreated(formData);
+      
+      // Dados extras para campanhas de integração
+      const extraData = formData.campaign_type === 'integracao' ? {
+        integration_id: selectedIntegrationId,
+        integration_provider: selectedIntegrationProvider,
+        trigger_event: selectedEvent,
+        schedule_by_period: useAdvancedSchedule ? scheduleByPeriod : null,
+      } : {};
+      
+      onCreated({ ...formData, ...extraData } as CampaignFormData);
     }
   };
 
@@ -192,6 +288,12 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
     if (step > 1) {
       setStep(step - 1);
     }
+  };
+  
+  // Reset step quando muda tipo de campanha
+  const handleCampaignTypeChange = (type: CampaignType) => {
+    setFormData(prev => ({ ...prev, campaign_type: type }));
+    setStep(1);
   };
 
   return (
@@ -279,21 +381,46 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
                     />
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <Label>Tipo de Campanha</Label>
-                    <Select
-                      value={formData.campaign_type}
-                      onValueChange={v => setFormData(prev => ({ ...prev, campaign_type: v as CampaignType }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(CAMPAIGN_TYPE_LABELS).map(([value, label]) => (
-                          <SelectItem key={value} value={value}>{label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="grid gap-3">
+                      {Object.entries(CAMPAIGN_TYPE_LABELS).map(([value, label]) => (
+                        <Card
+                          key={value}
+                          className={cn(
+                            "cursor-pointer transition-all",
+                            formData.campaign_type === value
+                              ? "border-primary ring-2 ring-primary/20"
+                              : "hover:border-primary/50"
+                          )}
+                          onClick={() => handleCampaignTypeChange(value as CampaignType)}
+                        >
+                          <CardContent className="p-3 flex items-center gap-3">
+                            <div className={cn(
+                              "w-10 h-10 rounded-lg flex items-center justify-center",
+                              formData.campaign_type === value ? "bg-primary/10" : "bg-muted"
+                            )}>
+                              {value === 'integracao' ? (
+                                <Link2 className={cn("w-5 h-5", formData.campaign_type === value ? "text-primary" : "text-muted-foreground")} />
+                              ) : value === 'notificacao' ? (
+                                <MessageSquare className={cn("w-5 h-5", formData.campaign_type === value ? "text-primary" : "text-muted-foreground")} />
+                              ) : (
+                                <Sparkles className={cn("w-5 h-5", formData.campaign_type === value ? "text-primary" : "text-muted-foreground")} />
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-medium">{label}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {CAMPAIGN_TYPE_DESCRIPTIONS[value as CampaignType]}
+                              </p>
+                            </div>
+                            {formData.campaign_type === value && (
+                              <Check className="w-5 h-5 text-primary" />
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="space-y-2">
