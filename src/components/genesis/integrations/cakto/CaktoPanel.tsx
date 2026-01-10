@@ -30,7 +30,6 @@ import { CaktoConfigModal } from './CaktoConfigModal';
 import { CaktoAutomationModal } from './CaktoAutomationModal';
 import { useCaktoIntegration } from './hooks/useCaktoIntegration';
 import caktoLogo from '@/assets/integrations/cakto-logo.png';
-import caktoLogo from '@/assets/integrations/cakto-logo.png';
 import {
   Dialog,
   DialogContent,
@@ -297,8 +296,6 @@ export function CaktoPanel({ instanceId, onBack }: CaktoPanelProps) {
         instanceId={instanceId}
         integrationId={integration?.id}
       />
-    </motion.div>
-  );
     </motion.div>
   );
 }
