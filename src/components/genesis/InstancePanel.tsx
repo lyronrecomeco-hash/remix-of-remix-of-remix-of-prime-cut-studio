@@ -46,10 +46,6 @@ import nuvemshopLogo from '@/assets/integrations/nuvemshop.png';
 import mercadoshopsLogo from '@/assets/integrations/mercadoshops.png';
 import rdstationLogo from '@/assets/integrations/rdstation.png';
 import caktoLogo from '@/assets/integrations/cakto-logo.png';
-import caktoCactusIcon from '@/assets/integrations/cakto-cactus-icon.png';
-
-// Cakto Panel
-import { CaktoPanel } from './integrations/cakto';
 
 interface Instance {
   id: string;
@@ -105,19 +101,12 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
   const [showIntegrationsModal, setShowIntegrationsModal] = useState(false);
   const [showTestModal, setShowTestModal] = useState(false);
   
-  // Cakto Panel state
-  const [showCaktoPanel, setShowCaktoPanel] = useState(false);
-  
   // Integration config modal
   const [selectedProvider, setSelectedProvider] = useState<IntegrationProvider | null>(null);
   const [showIntegrationConfig, setShowIntegrationConfig] = useState(false);
   
   // Hook de integrações
   const { integrations: instanceIntegrations, loading: integrationsLoading, refetch: refetchIntegrations, getIntegration, getStatus } = useInstanceIntegrations(instance.id);
-  
-  // Check if Cakto is connected
-  const caktoStatus = getStatus('cakto' as IntegrationProvider);
-  const isCaktoConnected = caktoStatus === 'connected';
   
   // Colapsável
   const [showTechnicalInfo, setShowTechnicalInfo] = useState(false);
@@ -218,15 +207,6 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
     ? instance.phone_number.replace(/(\d{2})(\d{2})(\d{5})(\d{4})/, '+$1 ($2) $3-$4')
     : null;
 
-  // If Cakto panel is open, show only that
-  if (showCaktoPanel) {
-    return (
-      <CaktoPanel 
-        instanceId={instance.id} 
-        onBack={() => setShowCaktoPanel(false)} 
-      />
-    );
-  }
 
   return (
     <div className="space-y-4 w-full">
@@ -386,20 +366,6 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
             </div>
             <span>Testes</span>
           </Button>
-
-          {/* Cakto Button - Only shows if integration is connected */}
-          {isCaktoConnected && (
-            <Button 
-              variant="outline" 
-              className="gap-3 h-20 text-base font-medium border-2 hover:border-orange-500/50 hover:bg-orange-500/5 transition-all flex-col"
-              onClick={() => setShowCaktoPanel(true)}
-            >
-              <div className="w-10 h-10 rounded-xl bg-white border flex items-center justify-center">
-                <img src={caktoCactusIcon} alt="Cakto" className="w-6 h-6 object-contain" />
-              </div>
-              <span>Cakto</span>
-            </Button>
-          )}
         </div>
       </motion.div>
 

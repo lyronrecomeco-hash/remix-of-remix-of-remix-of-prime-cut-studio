@@ -1,6 +1,6 @@
 /**
  * CAKTO PANEL - Painel principal da integração Cakto
- * Layout profissional e organizado
+ * Layout profissional com tabs únicas
  */
 
 import { useState } from 'react';
@@ -53,121 +53,93 @@ export function CaktoPanel({ instanceId, onBack }: CaktoPanelProps) {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="space-y-6"
+      className="space-y-4"
     >
-      {/* Header Compacto e Profissional */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={onBack} className="gap-2 text-primary hover:bg-primary/10">
+      {/* Header Compacto */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={onBack} className="gap-1.5 text-primary hover:bg-primary/10 h-8 px-2">
             <ArrowLeft className="w-4 h-4" />
-            Voltar
+            <span className="hidden sm:inline">Voltar</span>
           </Button>
           
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-white border-2 flex items-center justify-center shadow-sm">
-              <img 
-                src={caktoLogo} 
-                alt="Cakto" 
-                className="w-8 h-8 object-contain"
-              />
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-lg bg-white border flex items-center justify-center">
+              <img src={caktoLogo} alt="Cakto" className="w-7 h-7 object-contain" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold">Cakto</h1>
+                <h1 className="text-lg font-semibold">Cakto</h1>
                 {isConnected && (
-                  <Badge className="bg-green-500/15 text-green-600 border-green-500/30 text-xs">
-                    <CheckCircle2 className="w-3 h-3 mr-1" />
+                  <Badge className="bg-green-500/15 text-green-600 border-green-500/30 text-[10px] px-1.5 py-0">
+                    <CheckCircle2 className="w-2.5 h-2.5 mr-0.5" />
                     Conectado
                   </Badge>
                 )}
                 {hasError && (
-                  <Badge variant="destructive" className="text-xs">
-                    <AlertCircle className="w-3 h-3 mr-1" />
+                  <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                    <AlertCircle className="w-2.5 h-2.5 mr-0.5" />
                     Erro
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">Plataforma de Infoprodutos</p>
+              <p className="text-[11px] text-muted-foreground">Infoprodutos</p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="gap-2"
-            onClick={() => refetch()}
-          >
-            <RefreshCw className="w-4 h-4" />
-            <span className="hidden sm:inline">Atualizar</span>
+        <div className="flex items-center gap-1.5">
+          <Button variant="ghost" size="sm" className="gap-1.5 h-8" onClick={() => refetch()}>
+            <RefreshCw className="w-3.5 h-3.5" />
           </Button>
-          <Button 
-            variant="default" 
-            size="sm" 
-            className="gap-2"
-            onClick={() => setShowConfig(true)}
-          >
-            <Settings2 className="w-4 h-4" />
+          <Button variant="outline" size="sm" className="gap-1.5 h-8" onClick={() => setShowConfig(true)}>
+            <Settings2 className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Configurar</span>
           </Button>
         </div>
       </div>
 
-      {/* Webhook URL Card - Compact */}
+      {/* Webhook URL - Inline */}
       {isConnected && integration?.webhook_url && (
-        <Card className="border bg-muted/30">
-          <CardContent className="p-3">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <Link2 className="w-4 h-4 text-primary" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-muted-foreground">Webhook URL</p>
-                  <p className="text-xs text-foreground truncate max-w-sm">
-                    {integration.webhook_url}
-                  </p>
-                </div>
-              </div>
-              <Button variant="ghost" size="sm" onClick={copyWebhookUrl} className="gap-1.5 flex-shrink-0 h-8">
-                <Copy className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline text-xs">Copiar</span>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/40 border text-xs">
+          <Link2 className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+          <span className="text-muted-foreground">Webhook:</span>
+          <code className="truncate flex-1 text-foreground">{integration.webhook_url}</code>
+          <Button variant="ghost" size="sm" onClick={copyWebhookUrl} className="h-6 px-2">
+            <Copy className="w-3 h-3" />
+          </Button>
+        </div>
       )}
 
-      {/* Tabs Principais - Design Limpo */}
+      {/* Tabs Únicas */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="w-full justify-start bg-muted/50 p-1 rounded-lg h-auto flex-wrap">
+        <TabsList className="w-full justify-start bg-muted/50 p-1 rounded-lg h-10">
           <TabsTrigger 
             value="dashboard" 
-            className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md px-3 py-2 text-sm"
+            className="gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md px-3 text-xs"
           >
-            <BarChart3 className="w-4 h-4" />
+            <BarChart3 className="w-3.5 h-3.5" />
             Dashboard
           </TabsTrigger>
           <TabsTrigger 
             value="rules" 
-            className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md px-3 py-2 text-sm"
+            className="gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md px-3 text-xs"
           >
-            <Zap className="w-4 h-4" />
+            <Zap className="w-3.5 h-3.5" />
             Regras
           </TabsTrigger>
           <TabsTrigger 
             value="events" 
-            className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md px-3 py-2 text-sm"
+            className="gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md px-3 text-xs"
           >
-            <History className="w-4 h-4" />
+            <History className="w-3.5 h-3.5" />
             Eventos
           </TabsTrigger>
           <TabsTrigger 
             value="simulator" 
-            className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md px-3 py-2 text-sm"
+            className="gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md px-3 text-xs"
           >
-            <TestTube2 className="w-4 h-4" />
+            <TestTube2 className="w-3.5 h-3.5" />
             Simular
           </TabsTrigger>
         </TabsList>
@@ -177,54 +149,15 @@ export function CaktoPanel({ instanceId, onBack }: CaktoPanelProps) {
         </TabsContent>
 
         <TabsContent value="rules" className="mt-0">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Zap className="w-5 h-5 text-primary" />
-                Regras de Automação
-              </CardTitle>
-              <CardDescription>
-                Configure campanhas automáticas para cada evento da Cakto
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <CaktoEventRules instanceId={instanceId} integrationId={integration?.id} />
-            </CardContent>
-          </Card>
+          <CaktoEventRules instanceId={instanceId} integrationId={integration?.id} />
         </TabsContent>
 
         <TabsContent value="events" className="mt-0">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <History className="w-5 h-5 text-primary" />
-                Histórico de Eventos
-              </CardTitle>
-              <CardDescription>
-                Eventos recebidos da Cakto e status de processamento
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <CaktoEventsLog instanceId={instanceId} />
-            </CardContent>
-          </Card>
+          <CaktoEventsLog instanceId={instanceId} />
         </TabsContent>
 
         <TabsContent value="simulator" className="mt-0">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <TestTube2 className="w-5 h-5 text-primary" />
-                Simulador de Eventos
-              </CardTitle>
-              <CardDescription>
-                Teste eventos para validar suas automações
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <CaktoSimulator instanceId={instanceId} integrationId={integration?.id} />
-            </CardContent>
-          </Card>
+          <CaktoSimulator instanceId={instanceId} integrationId={integration?.id} />
         </TabsContent>
       </Tabs>
 
