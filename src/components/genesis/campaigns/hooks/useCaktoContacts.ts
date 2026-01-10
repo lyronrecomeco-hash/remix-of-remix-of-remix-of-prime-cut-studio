@@ -141,19 +141,14 @@ export function useCaktoContacts() {
           throw pixError;
         }
 
-        // 2. Buscar TODOS os purchase_approved para verificação rigorosa (últimos 60 dias)
-        let approvedQuery = supabase
+        // 2. Buscar TODOS os purchase_approved para verificação rigorosa (SEM filtro de produto!)
+        // IMPORTANTE: Verificar em TODOS os produtos se o cliente pagou em qualquer um
+        const { data: approvedEvents, error: approvedError } = await supabase
           .from('genesis_cakto_events')
-          .select('external_id, customer_phone, customer_email, created_at')
+          .select('external_id, customer_phone, customer_email, created_at, product_id')
           .eq('instance_id', instanceId)
           .eq('event_type', 'purchase_approved')
-          .gte('created_at', subDays(new Date(), 60).toISOString());
-
-        if (productIds.length > 0) {
-          approvedQuery = approvedQuery.in('product_id', productIds);
-        }
-
-        const { data: approvedEvents, error: approvedError } = await approvedQuery;
+          .gte('created_at', subDays(new Date(), 90).toISOString()); // 90 dias para maior cobertura
 
         if (approvedError) {
           console.error('[useCaktoContacts] Approved fetch error:', approvedError);
@@ -166,6 +161,10 @@ export function useCaktoContacts() {
         const approvedEmails = new Set<string>();
         const approvedPhoneWithDate = new Map<string, Date>();
         const approvedEmailWithDate = new Map<string, Date>();
+        
+        // Map para rastrear pagamentos por telefone/email (qualquer produto)
+        const paidByPhone = new Map<string, { date: Date; productId: string }[]>();
+        const paidByEmail = new Map<string, { date: Date; productId: string }[]>();
 
         (approvedEvents || []).forEach(e => {
           // External ID
@@ -182,6 +181,12 @@ export function useCaktoContacts() {
             if (!existing || eventDate > existing) {
               approvedPhoneWithDate.set(normalizedPhone, eventDate);
             }
+            
+            // Rastrear todos os pagamentos deste telefone
+            if (!paidByPhone.has(normalizedPhone)) {
+              paidByPhone.set(normalizedPhone, []);
+            }
+            paidByPhone.get(normalizedPhone)!.push({ date: eventDate, productId: e.product_id || '' });
           }
           
           // Email normalizado
@@ -193,6 +198,12 @@ export function useCaktoContacts() {
             if (!existing || eventDate > existing) {
               approvedEmailWithDate.set(normalizedEmail, eventDate);
             }
+            
+            // Rastrear todos os pagamentos deste email
+            if (!paidByEmail.has(normalizedEmail)) {
+              paidByEmail.set(normalizedEmail, []);
+            }
+            paidByEmail.get(normalizedEmail)!.push({ date: eventDate, productId: e.product_id || '' });
           }
         });
 
@@ -202,40 +213,62 @@ export function useCaktoContacts() {
           emails: approvedEmails.size,
         });
 
-        // 4. Filtrar PIX NÃO PAGOS com verificação TRIPLA
+        // 4. Filtrar PIX NÃO PAGOS com verificação RIGOROSA
         const unpaidContacts: CaktoContact[] = [];
         const seenPhones = new Set<string>();
+
+        console.log('[useCaktoContacts] Processing', (pixEvents || []).length, 'PIX events for verification');
 
         for (const event of (pixEvents || [])) {
           const normalizedPhone = normalizePhone(event.customer_phone);
           const normalizedEmail = normalizeEmail(event.customer_email);
           const eventDate = new Date(event.created_at);
+          const eventProductId = event.product_id || '';
 
-          // VERIFICAÇÃO 1: external_id já foi aprovado?
+          // VERIFICAÇÃO 1: external_id EXATO já foi aprovado?
           if (event.external_id && approvedExternalIds.has(event.external_id)) {
-            console.log('[useCaktoContacts] Skipping - external_id paid:', event.external_id);
+            console.log('[useCaktoContacts] ✗ Skipping - SAME external_id already paid:', event.external_id);
             continue;
           }
 
-          // VERIFICAÇÃO 2: telefone gerou novo PIX e pagou depois?
-          if (normalizedPhone) {
-            const approvedDate = approvedPhoneWithDate.get(normalizedPhone);
-            if (approvedDate && approvedDate > eventDate) {
-              console.log('[useCaktoContacts] Skipping - phone paid later:', normalizedPhone);
-              continue;
+          // VERIFICAÇÃO 2: telefone pagou DEPOIS de gerar este PIX?
+          // Verifica se o mesmo telefone tem um pagamento para o MESMO produto APÓS este PIX
+          let phonePaidLater = false;
+          if (normalizedPhone && paidByPhone.has(normalizedPhone)) {
+            const payments = paidByPhone.get(normalizedPhone)!;
+            for (const payment of payments) {
+              // Pagou o mesmo produto depois de gerar o PIX
+              if (payment.productId === eventProductId && payment.date > eventDate) {
+                phonePaidLater = true;
+                console.log('[useCaktoContacts] ✗ Skipping - phone paid SAME product later:', normalizedPhone, eventProductId);
+                break;
+              }
+              // Ou pagou qualquer produto depois (pode ser segunda compra)
+              if (payment.date > eventDate) {
+                // Verificar se gerou PIX novamente para outro produto e pagou esse
+                phonePaidLater = true;
+                console.log('[useCaktoContacts] ✗ Skipping - phone paid ANY product later:', normalizedPhone);
+                break;
+              }
             }
           }
+          if (phonePaidLater) continue;
 
-          // VERIFICAÇÃO 3: email gerou novo PIX e pagou depois?
-          if (normalizedEmail) {
-            const approvedDate = approvedEmailWithDate.get(normalizedEmail);
-            if (approvedDate && approvedDate > eventDate) {
-              console.log('[useCaktoContacts] Skipping - email paid later:', normalizedEmail);
-              continue;
+          // VERIFICAÇÃO 3: email pagou DEPOIS de gerar este PIX?
+          let emailPaidLater = false;
+          if (normalizedEmail && paidByEmail.has(normalizedEmail)) {
+            const payments = paidByEmail.get(normalizedEmail)!;
+            for (const payment of payments) {
+              if (payment.date > eventDate) {
+                emailPaidLater = true;
+                console.log('[useCaktoContacts] ✗ Skipping - email paid later:', normalizedEmail);
+                break;
+              }
             }
           }
+          if (emailPaidLater) continue;
 
-          // Evitar duplicatas por telefone
+          // VERIFICAÇÃO 4: Evitar duplicatas por telefone (manter apenas o mais recente)
           if (!normalizedPhone || seenPhones.has(normalizedPhone)) {
             continue;
           }
@@ -254,11 +287,11 @@ export function useCaktoContacts() {
             eventDate: event.created_at,
             formattedDate,
             externalId: event.external_id || event.id,
-            paymentStatus: 'unpaid', // Confirmado não pago!
+            paymentStatus: 'unpaid', // ✓ Confirmado AGUARDANDO PAGAMENTO!
           });
         }
 
-        console.log('[useCaktoContacts] Found', unpaidContacts.length, 'VERIFIED unpaid PIX contacts');
+        console.log('[useCaktoContacts] ✓ Found', unpaidContacts.length, 'VERIFIED unpaid PIX contacts (zero duplicates)');
         setContacts(unpaidContacts);
         return unpaidContacts;
       }

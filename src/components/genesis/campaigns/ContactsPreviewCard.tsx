@@ -39,8 +39,8 @@ interface ContactsPreviewCardProps {
 // Status badges com cores e ícones
 const STATUS_CONFIG = {
   unpaid: {
-    label: 'Não Pago',
-    color: 'bg-red-500/10 text-red-600 border-red-500/30',
+    label: 'Aguardando Pagamento',
+    color: 'bg-amber-500/10 text-amber-600 border-amber-500/30',
     icon: AlertTriangle,
   },
   paid: {
@@ -122,9 +122,9 @@ export function ContactsPreviewCard({
               {contacts.length}
             </Badge>
             {isUnpaidEvent && hasContacts && statusCounts.unpaid && (
-              <Badge variant="destructive" className="gap-1">
+              <Badge variant="outline" className="gap-1 bg-amber-500/10 text-amber-600 border-amber-500/30">
                 <AlertTriangle className="w-3 h-3" />
-                {statusCounts.unpaid} não pagos
+                {statusCounts.unpaid} aguardando
               </Badge>
             )}
           </CardTitle>
