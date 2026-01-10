@@ -105,6 +105,8 @@ const EVENT_ICONS: Record<CaktoEventType, typeof ShoppingCart> = {
   purchase_refunded: RotateCcw,
   purchase_chargeback: AlertTriangle,
   checkout_abandonment: Clock,
+  boleto_generated: CreditCard,
+  boleto_expired: XCircle,
 };
 
 const ALL_EVENT_TYPES: CaktoEventType[] = [
@@ -116,6 +118,8 @@ const ALL_EVENT_TYPES: CaktoEventType[] = [
   'purchase_refunded',
   'purchase_chargeback',
   'checkout_abandonment',
+  'boleto_generated',
+  'boleto_expired',
 ];
 
 export function CaktoAutomationModal({ 

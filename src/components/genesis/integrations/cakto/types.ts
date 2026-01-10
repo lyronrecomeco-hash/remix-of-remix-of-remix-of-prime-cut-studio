@@ -22,7 +22,9 @@ export type CaktoEventType =
   | 'purchase_refused'
   | 'purchase_refunded'
   | 'purchase_chargeback'
-  | 'checkout_abandonment';
+  | 'checkout_abandonment'
+  | 'boleto_generated'
+  | 'boleto_expired';
 
 // Labels para cada tipo de evento
 export const CAKTO_EVENT_LABELS: Record<CaktoEventType, string> = {
@@ -30,10 +32,12 @@ export const CAKTO_EVENT_LABELS: Record<CaktoEventType, string> = {
   pix_generated: 'PIX Gerado',
   pix_expired: 'PIX Expirado',
   purchase_approved: 'Compra Aprovada',
-  purchase_refused: 'PIX Não Pago',
+  purchase_refused: 'Compra Recusada',
   purchase_refunded: 'Reembolso',
   purchase_chargeback: 'Chargeback',
   checkout_abandonment: 'Carrinho Abandonado',
+  boleto_generated: 'Boleto Gerado',
+  boleto_expired: 'Boleto Expirado',
 };
 
 // Ícones/cores para cada tipo de evento
@@ -46,6 +50,8 @@ export const CAKTO_EVENT_COLORS: Record<CaktoEventType, { bg: string; text: stri
   purchase_refunded: { bg: 'bg-orange-500/10', text: 'text-orange-600', border: 'border-orange-500/20' },
   purchase_chargeback: { bg: 'bg-rose-500/10', text: 'text-rose-600', border: 'border-rose-500/20' },
   checkout_abandonment: { bg: 'bg-yellow-500/10', text: 'text-yellow-600', border: 'border-yellow-500/20' },
+  boleto_generated: { bg: 'bg-indigo-500/10', text: 'text-indigo-600', border: 'border-indigo-500/20' },
+  boleto_expired: { bg: 'bg-gray-500/10', text: 'text-gray-600', border: 'border-gray-500/20' },
 };
 
 // Interface para evento Cakto
