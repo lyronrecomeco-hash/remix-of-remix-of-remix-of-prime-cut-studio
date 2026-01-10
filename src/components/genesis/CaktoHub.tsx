@@ -1,6 +1,6 @@
 /**
  * CAKTO HUB - Central para gerenciar Cakto de todas as instâncias
- * Layout profissional e organizado
+ * Card com mesma proporção da instância, logo grande
  */
 
 import { useState, useEffect } from 'react';
@@ -16,7 +16,9 @@ import {
   Smartphone,
   Link2,
   Zap,
-  Settings2
+  Settings2,
+  TrendingUp,
+  ShoppingCart
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useGenesisAuth } from '@/contexts/GenesisAuthContext';
@@ -133,7 +135,7 @@ export function CaktoHub({ onFocusModeChange }: CaktoHubProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
+      <div className="flex items-center justify-center h-64">
         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
       </div>
     );
@@ -144,10 +146,10 @@ export function CaktoHub({ onFocusModeChange }: CaktoHubProps) {
 
   if (totalInstances === 0) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-6">
         <Header connectedCount={0} />
         <Card className="border-dashed">
-          <CardContent className="py-16 text-center space-y-4">
+          <CardContent className="py-12 text-center space-y-4">
             <Smartphone className="w-12 h-12 mx-auto text-muted-foreground/50" />
             <div>
               <p className="text-lg text-muted-foreground">
@@ -161,11 +163,11 @@ export function CaktoHub({ onFocusModeChange }: CaktoHubProps) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <Header connectedCount={connectedCount} />
 
-      {/* Lista de Instâncias */}
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+      {/* Lista de Instâncias - Cards com mesma proporção */}
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <AnimatePresence mode="popLayout">
           {instances.map((instance, index) => {
             const integration = getIntegrationForInstance(instance.id);
@@ -213,34 +215,34 @@ export function CaktoHub({ onFocusModeChange }: CaktoHubProps) {
   );
 }
 
-// Header Component - Destaque para a Logo
+// Header Component
 function Header({ connectedCount }: { connectedCount: number }) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-6 border-b border-border">
-      <div className="flex items-center gap-5">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+      <div className="flex items-center gap-4">
         {/* Logo Grande e Destacada */}
-        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-2 border-emerald-500/20 flex items-center justify-center shadow-lg">
-          <img src={caktoLogo} alt="Cakto" className="w-14 h-14 object-contain" />
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500/15 to-emerald-600/5 border-2 border-emerald-500/25 flex items-center justify-center shadow-lg">
+          <img src={caktoLogo} alt="Cakto" className="w-12 h-12 object-contain" />
         </div>
-        <div className="space-y-1">
-          <h2 className="text-2xl font-bold tracking-tight">Cakto</h2>
-          <p className="text-base text-muted-foreground">
-            Integração com plataforma de Infoprodutos
+        <div className="space-y-0.5">
+          <h2 className="text-xl font-bold tracking-tight">Integração Cakto</h2>
+          <p className="text-sm text-muted-foreground">
+            Plataforma de Infoprodutos e Checkout
           </p>
         </div>
       </div>
       
       {connectedCount > 0 && (
-        <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30 gap-2 px-4 py-2 text-sm font-medium self-start sm:self-auto">
+        <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30 gap-2 px-3 py-1.5 text-sm font-medium self-start sm:self-auto">
           <CheckCircle2 className="w-4 h-4" />
-          {connectedCount} instância{connectedCount !== 1 ? 's' : ''} conectada{connectedCount !== 1 ? 's' : ''}
+          {connectedCount} conectada{connectedCount !== 1 ? 's' : ''}
         </Badge>
       )}
     </div>
   );
 }
 
-// Instance Card Component - Profissional e Organizado
+// Instance Card Component - Proporção igual ao card de instância
 interface InstanceCardProps {
   instance: Instance;
   integration?: CaktoIntegration;
@@ -253,7 +255,7 @@ function InstanceCard({ instance, integration, isConnected, onConnect, onManage 
   return (
     <Card className={`
       group relative overflow-hidden transition-all duration-300
-      hover:shadow-xl hover:-translate-y-1
+      hover:shadow-lg hover:-translate-y-0.5
       ${isConnected 
         ? 'border-emerald-500/40 bg-gradient-to-br from-emerald-500/5 to-transparent' 
         : 'hover:border-primary/40 bg-card'
@@ -264,83 +266,84 @@ function InstanceCard({ instance, integration, isConnected, onConnect, onManage 
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-emerald-400" />
       )}
 
-      <CardContent className="p-6">
-        {/* Header do Card */}
-        <div className="flex items-start justify-between gap-4 mb-5">
-          <div className="flex items-center gap-4">
-            {/* Logo da Cakto grande */}
-            <div className={`
-              w-14 h-14 rounded-xl flex items-center justify-center transition-all
-              ${isConnected 
-                ? 'bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border-2 border-emerald-500/30 shadow-md' 
-                : 'bg-muted border-2 border-border'
-              }
-            `}>
-              <img src={caktoLogo} alt="" className="w-9 h-9 object-contain" />
-            </div>
-            <div className="space-y-1">
-              <p className="text-lg font-semibold">{instance.name}</p>
-              <p className="text-sm text-muted-foreground">
-                {integration?.store_name || 'Cakto Infoprodutos'}
-              </p>
-            </div>
+      <CardContent className="p-5">
+        {/* Header do Card - Logo grande */}
+        <div className="flex items-start gap-4 mb-4">
+          {/* Logo da Cakto GRANDE */}
+          <div className={`
+            w-16 h-16 rounded-xl flex items-center justify-center transition-all shrink-0
+            ${isConnected 
+              ? 'bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border-2 border-emerald-500/30 shadow-md' 
+              : 'bg-muted border-2 border-border'
+            }
+          `}>
+            <img src={caktoLogo} alt="" className="w-11 h-11 object-contain" />
           </div>
           
-          {/* Badge de Status */}
-          {isConnected ? (
-            <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30 gap-1.5 px-3 py-1.5">
-              <Zap className="w-3.5 h-3.5" />
-              <span className="font-medium">Ativo</span>
-            </Badge>
-          ) : (
-            <Badge variant="secondary" className="gap-1.5 px-3 py-1.5">
-              <AlertCircle className="w-3.5 h-3.5" />
-              <span>Inativo</span>
-            </Badge>
-          )}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-base font-semibold truncate">{instance.name}</p>
+                <p className="text-sm text-muted-foreground truncate">
+                  {integration?.store_name || 'Cakto Infoprodutos'}
+                </p>
+              </div>
+              
+              {/* Badge de Status */}
+              {isConnected ? (
+                <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30 gap-1 px-2 py-0.5 shrink-0">
+                  <Zap className="w-3 h-3" />
+                  <span className="text-xs font-medium">Ativo</span>
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="gap-1 px-2 py-0.5 shrink-0">
+                  <AlertCircle className="w-3 h-3" />
+                  <span className="text-xs">Inativo</span>
+                </Badge>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Informações Extras quando Conectado */}
+        {/* Mini Stats quando Conectado */}
         {isConnected && (
-          <div className="flex items-center gap-2 mb-5 px-3 py-2 rounded-lg bg-muted/50 border border-border/50">
-            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-            <span className="text-sm text-muted-foreground">
-              Webhook configurado e recebendo eventos
-            </span>
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border/50">
+              <ShoppingCart className="w-4 h-4 text-blue-500" />
+              <div>
+                <p className="text-xs text-muted-foreground">Checkouts</p>
+                <p className="text-sm font-bold">--</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border/50">
+              <TrendingUp className="w-4 h-4 text-emerald-500" />
+              <div>
+                <p className="text-xs text-muted-foreground">Receita</p>
+                <p className="text-sm font-bold">--</p>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Botões de Ação */}
-        <div className="flex gap-3">
-          <Button 
-            variant={isConnected ? "default" : "outline"}
-            className={`flex-1 gap-2 h-11 text-base ${isConnected ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}
-            onClick={isConnected ? onManage : onConnect}
-          >
-            {isConnected ? (
-              <>
-                <Settings2 className="w-4 h-4" />
-                Gerenciar
-              </>
-            ) : (
-              <>
-                <Link2 className="w-4 h-4" />
-                Conectar Cakto
-              </>
-            )}
-          </Button>
-          
-          {isConnected && (
-            <Button 
-              variant="ghost"
-              size="icon"
-              className="h-11 w-11 shrink-0"
-              onClick={onManage}
-            >
-              <ArrowRight className="w-5 h-5" />
-            </Button>
+        {/* Botão de Ação */}
+        <Button 
+          variant={isConnected ? "default" : "outline"}
+          className={`w-full gap-2 h-10 ${isConnected ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}
+          onClick={isConnected ? onManage : onConnect}
+        >
+          {isConnected ? (
+            <>
+              <Settings2 className="w-4 h-4" />
+              Gerenciar Integração
+              <ArrowRight className="w-4 h-4 ml-auto" />
+            </>
+          ) : (
+            <>
+              <Link2 className="w-4 h-4" />
+              Conectar Cakto
+            </>
           )}
-        </div>
+        </Button>
       </CardContent>
     </Card>
   );

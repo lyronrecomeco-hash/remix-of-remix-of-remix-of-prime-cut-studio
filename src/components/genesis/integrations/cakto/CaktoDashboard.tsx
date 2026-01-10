@@ -1,9 +1,9 @@
 /**
- * CAKTO DASHBOARD - Métricas e gráficos
+ * CAKTO DASHBOARD - Métricas e gráficos estilo admin
  * Layout profissional: Métricas no TOPO, Gráficos interativos abaixo
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,11 +17,23 @@ import {
   Loader2,
   AlertCircle,
   Percent,
+  BarChart3,
 } from 'lucide-react';
 import { useCaktoIntegration } from './hooks/useCaktoIntegration';
 import { useCaktoAnalytics } from './hooks/useCaktoAnalytics';
 import { AnalyticsPeriod } from './types';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  PieChart, 
+  Pie, 
+  Cell 
+} from 'recharts';
 import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -29,28 +41,30 @@ interface CaktoDashboardProps {
   instanceId: string;
 }
 
-// Dados placeholder para gráficos quando não há dados reais
-const generatePlaceholderData = () => {
+// Dados de exemplo interativos (estilo admin)
+const generateDemoData = () => {
   const days = 7;
   const data = [];
   for (let i = days - 1; i >= 0; i--) {
     const date = subDays(new Date(), i);
+    const checkouts = Math.floor(Math.random() * 80) + 20;
+    const aprovadas = Math.floor(checkouts * (0.5 + Math.random() * 0.3));
     data.push({
+      day: format(date, 'EEE', { locale: ptBR }),
       date: format(date, 'dd/MM', { locale: ptBR }),
-      checkouts: Math.floor(Math.random() * 50) + 10,
-      aprovadas: Math.floor(Math.random() * 30) + 5,
-      recusadas: Math.floor(Math.random() * 10),
-      receita: Math.floor(Math.random() * 5000) + 500,
+      checkouts,
+      aprovadas,
+      receita: aprovadas * (97 + Math.floor(Math.random() * 200)),
     });
   }
   return data;
 };
 
-const placeholderPieData = [
+const demoPieData = [
   { name: 'Aprovadas', value: 65, color: '#10b981' },
-  { name: 'Recusadas', value: 15, color: '#ef4444' },
-  { name: 'Reembolsos', value: 8, color: '#f97316' },
-  { name: 'Abandonos', value: 12, color: '#eab308' },
+  { name: 'Recusadas', value: 12, color: '#ef4444' },
+  { name: 'Reembolsos', value: 5, color: '#f97316' },
+  { name: 'Abandonos', value: 18, color: '#eab308' },
 ];
 
 export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
@@ -74,15 +88,18 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
     analytics.total_revenue > 0
   );
 
+  // Dados para gráficos - usa reais ou demo
+  const demoData = useMemo(() => generateDemoData(), []);
+  
   const chartData = hasRealData 
     ? analytics?.daily.map(day => ({
+        day: format(new Date(day.date), 'EEE', { locale: ptBR }),
         date: format(new Date(day.date), 'dd/MM', { locale: ptBR }),
         checkouts: day.checkouts_started,
         aprovadas: day.purchases_approved,
-        recusadas: day.purchases_refused,
         receita: Number(day.total_revenue),
       })) || []
-    : generatePlaceholderData();
+    : demoData;
 
   const pieData = hasRealData 
     ? [
@@ -91,12 +108,12 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
         { name: 'Reembolsos', value: analytics?.purchases_refunded || 0, color: '#f97316' },
         { name: 'Abandonos', value: analytics?.cart_abandonments || 0, color: '#eab308' },
       ].filter(d => d.value > 0)
-    : placeholderPieData;
+    : demoPieData;
 
   // Loading State
   if (integrationLoading || analyticsLoading) {
     return (
-      <div className="flex items-center justify-center py-24">
+      <div className="flex items-center justify-center py-16">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
           <p className="text-base text-muted-foreground">Carregando métricas...</p>
@@ -109,7 +126,7 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
   if (!isConnected) {
     return (
       <Card className="border-dashed">
-        <CardContent className="py-16 text-center">
+        <CardContent className="py-12 text-center">
           <AlertCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
           <p className="text-lg text-muted-foreground">
             Configure a integração Cakto para ver as métricas
@@ -121,15 +138,35 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
 
   const ticketMedio = analytics?.purchases_approved 
     ? (analytics.total_revenue || 0) / analytics.purchases_approved
-    : 0;
+    : hasRealData ? 0 : 147.50;
+
+  // Métricas demo se não houver dados reais
+  const metrics = {
+    checkouts: hasRealData ? analytics?.checkouts_started || 0 : 234,
+    aprovadas: hasRealData ? analytics?.purchases_approved || 0 : 156,
+    conversao: hasRealData ? analytics?.conversion_rate || 0 : 66.7,
+    receita: hasRealData ? analytics?.total_revenue || 0 : 22990,
+    recusadas: hasRealData ? analytics?.purchases_refused || 0 : 28,
+    reembolsos: hasRealData ? analytics?.purchases_refunded || 0 : 8,
+    abandonos: hasRealData ? analytics?.cart_abandonments || 0 : 42,
+    ticketMedio: hasRealData ? ticketMedio : 147.50,
+  };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* ═══════════════════════════════════════════════════════════════
           SELETOR DE PERÍODO
       ═══════════════════════════════════════════════════════════════ */}
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold text-foreground">Período de Análise</h3>
+        <div className="flex items-center gap-2">
+          <BarChart3 className="w-5 h-5 text-primary" />
+          <h3 className="text-base font-semibold text-foreground">Dashboard de Vendas</h3>
+          {!hasRealData && (
+            <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+              Dados de exemplo
+            </span>
+          )}
+        </div>
         <div className="flex gap-1 bg-muted/50 p-1 rounded-lg">
           {(['today', '7d', '30d'] as AnalyticsPeriod[]).map((p) => (
             <Button
@@ -137,7 +174,7 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
               variant={period === p ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setPeriod(p)}
-              className="h-9 px-4 text-sm font-medium"
+              className="h-8 px-3 text-sm font-medium"
             >
               {p === 'today' ? 'Hoje' : p === '7d' ? '7 dias' : '30 dias'}
             </Button>
@@ -149,17 +186,17 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
           BLOCO 1: MÉTRICAS PRINCIPAIS (PRIMEIRA DOBRA)
       ═══════════════════════════════════════════════════════════════ */}
       <section>
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
           <MetricCard 
             label="Checkouts" 
-            value={analytics?.checkouts_started || 0} 
+            value={metrics.checkouts} 
             icon={ShoppingCart}
             iconColor="text-blue-500"
             iconBg="bg-blue-500/10"
           />
           <MetricCard 
             label="Aprovadas" 
-            value={analytics?.purchases_approved || 0} 
+            value={metrics.aprovadas} 
             icon={CheckCircle2}
             iconColor="text-emerald-500"
             iconBg="bg-emerald-500/10"
@@ -167,14 +204,14 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
           />
           <MetricCard 
             label="Conversão" 
-            value={formatPercent(analytics?.conversion_rate || 0)} 
+            value={formatPercent(metrics.conversao)} 
             icon={Percent}
             iconColor="text-purple-500"
             iconBg="bg-purple-500/10"
           />
           <MetricCard 
             label="Receita" 
-            value={formatCurrency(analytics?.total_revenue || 0)} 
+            value={formatCurrency(metrics.receita)} 
             icon={DollarSign}
             iconColor="text-emerald-500"
             iconBg="bg-emerald-500/10"
@@ -183,28 +220,28 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
         </div>
 
         {/* Métricas Secundárias */}
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 mt-4">
+        <div className="grid gap-3 grid-cols-2 lg:grid-cols-4 mt-3">
           <MetricCardSecondary 
             label="Recusadas" 
-            value={analytics?.purchases_refused || 0} 
+            value={metrics.recusadas} 
             icon={XCircle}
             color="red"
           />
           <MetricCardSecondary 
             label="Reembolsos" 
-            value={analytics?.purchases_refunded || 0} 
+            value={metrics.reembolsos} 
             icon={RefreshCw}
             color="orange"
           />
           <MetricCardSecondary 
             label="Abandonos" 
-            value={analytics?.cart_abandonments || 0} 
+            value={metrics.abandonos} 
             icon={Clock}
             color="yellow"
           />
           <MetricCardSecondary 
             label="Ticket Médio" 
-            value={formatCurrency(ticketMedio)} 
+            value={formatCurrency(metrics.ticketMedio)} 
             icon={TrendingUp}
             color="emerald"
           />
@@ -212,114 +249,72 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════
-          BLOCO 2: GRÁFICOS (SEGUNDA DOBRA)
+          BLOCO 2: GRÁFICOS ESTILO ADMIN (BarChart)
       ═══════════════════════════════════════════════════════════════ */}
-      <section className="grid gap-6 lg:grid-cols-3">
-        {/* Gráfico de Evolução - Principal (2/3 do espaço) */}
+      <section className="grid gap-4 lg:grid-cols-3">
+        {/* Gráfico de Barras - Receita (2/3) */}
         <Card className="lg:col-span-2">
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-primary" />
-                Evolução
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-primary" />
+                Receita dos Últimos 7 Dias
               </CardTitle>
-              {!hasRealData && (
-                <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-                  Dados de exemplo
-                </span>
-              )}
             </div>
           </CardHeader>
           <CardContent>
-            <div className="h-[320px]">
+            <div className="h-[280px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="colorCheckouts" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="colorAprovadas" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis 
-                    dataKey="date" 
-                    tick={{ fontSize: 13 }} 
-                    tickLine={false} 
-                    axisLine={false}
-                    dy={10}
+                    dataKey="day" 
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                    axisLine={{ stroke: 'hsl(var(--border))' }}
                   />
                   <YAxis 
-                    tick={{ fontSize: 13 }} 
-                    tickLine={false} 
-                    axisLine={false}
-                    dx={-10}
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                    axisLine={{ stroke: 'hsl(var(--border))' }}
+                    tickFormatter={(value) => `R$${value}`}
                   />
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--card))', 
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '10px',
-                      fontSize: '14px',
+                      borderRadius: '8px',
                       boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-                      padding: '12px 16px',
                     }}
-                    cursor={{ stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1, strokeDasharray: '4 4' }}
+                    formatter={(value: number) => [`R$ ${value.toFixed(2)}`, 'Receita']}
                   />
-                  <Area 
-                    type="monotone" 
-                    dataKey="checkouts" 
-                    stroke="#3b82f6" 
-                    fill="url(#colorCheckouts)"
-                    strokeWidth={2.5}
-                    name="Checkouts"
-                    dot={false}
-                    activeDot={{ r: 6, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2 }}
+                  <Bar 
+                    dataKey="receita" 
+                    fill="hsl(var(--primary))" 
+                    radius={[4, 4, 0, 0]}
                   />
-                  <Area 
-                    type="monotone" 
-                    dataKey="aprovadas" 
-                    stroke="#10b981" 
-                    fill="url(#colorAprovadas)"
-                    strokeWidth={2.5}
-                    name="Aprovadas"
-                    dot={false}
-                    activeDot={{ r: 6, fill: '#10b981', stroke: '#fff', strokeWidth: 2 }}
-                  />
-                </AreaChart>
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        {/* Gráfico de Distribuição - Secundário (1/3 do espaço) */}
+        {/* Gráfico de Pizza - Distribuição (1/3) */}
         <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                <Percent className="w-5 h-5 text-primary" />
-                Distribuição
-              </CardTitle>
-              {!hasRealData && (
-                <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-                  Exemplo
-                </span>
-              )}
-            </div>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <Percent className="w-5 h-5 text-primary" />
+              Status das Vendas
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[240px]">
+            <div className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={pieData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={90}
+                    innerRadius={45}
+                    outerRadius={75}
                     paddingAngle={4}
                     dataKey="value"
                   >
@@ -331,9 +326,7 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--card))', 
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '10px',
-                      fontSize: '14px',
-                      boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                      borderRadius: '8px',
                     }}
                   />
                 </PieChart>
@@ -341,11 +334,11 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
             </div>
             
             {/* Legenda */}
-            <div className="flex flex-wrap gap-x-4 gap-y-2 justify-center mt-3">
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5 justify-center mt-2">
               {pieData.map((entry) => (
-                <div key={entry.name} className="flex items-center gap-2 text-sm">
+                <div key={entry.name} className="flex items-center gap-1.5 text-sm">
                   <div 
-                    className="w-3 h-3 rounded-full" 
+                    className="w-2.5 h-2.5 rounded-full" 
                     style={{ backgroundColor: entry.color }}
                   />
                   <span className="text-muted-foreground">{entry.name}</span>
@@ -376,15 +369,15 @@ interface MetricCardProps {
 
 function MetricCard({ label, value, icon: Icon, iconColor, iconBg, valueColor }: MetricCardProps) {
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-      <CardContent className="p-6">
+    <Card className="overflow-hidden hover:shadow-md transition-shadow">
+      <CardContent className="p-5">
         <div className="flex items-start justify-between">
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <p className="text-sm font-medium text-muted-foreground">{label}</p>
             <p className={`text-2xl font-bold ${valueColor || ''}`}>{value}</p>
           </div>
-          <div className={`w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center shrink-0`}>
-            <Icon className={`w-6 h-6 ${iconColor}`} />
+          <div className={`w-11 h-11 rounded-xl ${iconBg} flex items-center justify-center shrink-0`}>
+            <Icon className={`w-5 h-5 ${iconColor}`} />
           </div>
         </div>
       </CardContent>
@@ -427,14 +420,14 @@ function MetricCardSecondary({ label, value, icon: Icon, color }: MetricCardSeco
   const classes = colorClasses[color];
 
   return (
-    <Card className={`${classes.border} bg-card/50 hover:shadow-md transition-shadow`}>
-      <CardContent className="p-5 flex items-center gap-4">
-        <div className={`w-11 h-11 rounded-xl ${classes.iconBg} flex items-center justify-center shrink-0`}>
-          <Icon className={`w-5 h-5 ${classes.iconColor}`} />
+    <Card className={`${classes.border} bg-card/50 hover:shadow-sm transition-shadow`}>
+      <CardContent className="p-4 flex items-center gap-3">
+        <div className={`w-10 h-10 rounded-xl ${classes.iconBg} flex items-center justify-center shrink-0`}>
+          <Icon className={`w-4 h-4 ${classes.iconColor}`} />
         </div>
         <div className="min-w-0">
           <p className="text-sm text-muted-foreground">{label}</p>
-          <p className="text-xl font-bold truncate">{value}</p>
+          <p className="text-lg font-bold truncate">{value}</p>
         </div>
       </CardContent>
     </Card>

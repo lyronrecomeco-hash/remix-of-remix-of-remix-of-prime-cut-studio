@@ -1,6 +1,6 @@
 /**
  * CAKTO PANEL - Painel de gerenciamento profissional
- * Layout SaaS - Dashboard direto, modais para Regras/Eventos
+ * Layout SaaS - Dashboard direto, modais para Regras/Eventos/Webhook
  */
 
 import { useState } from 'react';
@@ -15,8 +15,8 @@ import {
   RefreshCw,
   Copy,
   Link2,
-  Eye,
-  EyeOff
+  ExternalLink,
+  BookOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -44,24 +44,19 @@ export function CaktoPanel({ instanceId, onBack }: CaktoPanelProps) {
   const [showConfig, setShowConfig] = useState(false);
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [showEventsModal, setShowEventsModal] = useState(false);
-  const [webhookVisible, setWebhookVisible] = useState(false);
+  const [showWebhookModal, setShowWebhookModal] = useState(false);
   const { integration, loading, refetch, isConnected, hasError } = useCaktoIntegration(instanceId);
 
+  // Webhook URL com domínio customizado
+  const webhookUrl = integration?.webhook_url 
+    ? `https://genesishub.cloud/webhook/cakto/${integration.id}` 
+    : '';
+
   const copyWebhookUrl = () => {
-    if (integration?.webhook_url) {
-      navigator.clipboard.writeText(integration.webhook_url);
+    if (webhookUrl) {
+      navigator.clipboard.writeText(webhookUrl);
       toast.success('URL do Webhook copiada!');
     }
-  };
-
-  const maskWebhookUrl = (url: string) => {
-    if (!url) return '';
-    const parts = url.split('/');
-    if (parts.length < 2) return url;
-    const lastPart = parts[parts.length - 1];
-    const maskedPart = lastPart.slice(0, 4) + '••••••••' + lastPart.slice(-4);
-    parts[parts.length - 1] = maskedPart;
-    return parts.join('/');
   };
 
   return (
@@ -72,11 +67,10 @@ export function CaktoPanel({ instanceId, onBack }: CaktoPanelProps) {
       className="h-full flex flex-col"
     >
       {/* ═══════════════════════════════════════════════════════════════
-          HEADER FIXO - Logo, Status, Webhook, Configurar
+          HEADER FIXO - Logo, Status, Ações
       ═══════════════════════════════════════════════════════════════ */}
       <header className="flex-shrink-0 bg-background/95 backdrop-blur-sm border-b sticky top-0 z-10">
-        {/* Linha Principal */}
-        <div className="flex items-center justify-between px-6 py-5">
+        <div className="flex items-center justify-between px-6 py-4">
           {/* Esquerda: Voltar + Logo + Info */}
           <div className="flex items-center gap-4">
             <Button 
@@ -105,12 +99,20 @@ export function CaktoPanel({ instanceId, onBack }: CaktoPanelProps) {
           </div>
 
           {/* Direita: Ações */}
-          <div className="flex items-center gap-3">
-            {/* Botões Regras e Eventos */}
+          <div className="flex items-center gap-2">
             <Button 
               variant="outline" 
               size="sm"
-              className="gap-2 h-10 px-4 text-base" 
+              className="gap-2 h-10 px-4" 
+              onClick={() => setShowWebhookModal(true)}
+            >
+              <Link2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Webhook</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="gap-2 h-10 px-4" 
               onClick={() => setShowRulesModal(true)}
             >
               <Zap className="w-4 h-4" />
@@ -119,14 +121,14 @@ export function CaktoPanel({ instanceId, onBack }: CaktoPanelProps) {
             <Button 
               variant="outline" 
               size="sm"
-              className="gap-2 h-10 px-4 text-base" 
+              className="gap-2 h-10 px-4" 
               onClick={() => setShowEventsModal(true)}
             >
               <History className="w-4 h-4" />
               <span className="hidden sm:inline">Eventos</span>
             </Button>
 
-            <Separator orientation="vertical" className="h-6" />
+            <Separator orientation="vertical" className="h-6 mx-1" />
 
             <Button 
               variant="ghost" 
@@ -140,7 +142,7 @@ export function CaktoPanel({ instanceId, onBack }: CaktoPanelProps) {
             <Button 
               variant="default" 
               size="sm"
-              className="gap-2 h-10 px-4 text-base" 
+              className="gap-2 h-10 px-4" 
               onClick={() => setShowConfig(true)}
             >
               <Settings2 className="w-4 h-4" />
@@ -148,55 +150,12 @@ export function CaktoPanel({ instanceId, onBack }: CaktoPanelProps) {
             </Button>
           </div>
         </div>
-
-        {/* Webhook URL - Linha secundária com máscara */}
-        {isConnected && integration?.webhook_url && (
-          <div className="px-6 pb-5">
-            <div className="flex items-center gap-4 px-5 py-3 rounded-xl bg-muted/50 border border-border/50">
-              <Link2 className="w-5 h-5 text-primary shrink-0" />
-              <div className="flex-1 min-w-0 flex items-center gap-3">
-                <span className="text-sm font-medium text-muted-foreground shrink-0">Webhook:</span>
-                <code className="text-sm font-mono truncate flex-1">
-                  {webhookVisible ? integration.webhook_url : maskWebhookUrl(integration.webhook_url)}
-                </code>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setWebhookVisible(!webhookVisible)}
-                  className="gap-2 h-9 px-3"
-                >
-                  {webhookVisible ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
-                  <span className="hidden sm:inline text-sm">{webhookVisible ? 'Ocultar' : 'Mostrar'}</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={copyWebhookUrl} 
-                  className="gap-2 h-9 px-3"
-                >
-                  <Copy className="w-4 h-4" />
-                  <span className="hidden sm:inline text-sm">Copiar</span>
-                </Button>
-              </div>
-            </div>
-            {/* Nota sobre domínio */}
-            <p className="text-xs text-muted-foreground mt-2 px-1">
-              💡 Para usar um domínio personalizado no webhook, configure um domínio customizado nas configurações do projeto.
-            </p>
-          </div>
-        )}
       </header>
 
       {/* ═══════════════════════════════════════════════════════════════
-          CONTEÚDO - DASHBOARD DIRETO
+          CONTEÚDO - DASHBOARD DIRETO (subido)
       ═══════════════════════════════════════════════════════════════ */}
-      <div className="flex-1 overflow-auto px-6 py-6">
+      <div className="flex-1 overflow-auto px-6 py-4">
         <CaktoDashboard instanceId={instanceId} />
       </div>
 
@@ -204,6 +163,77 @@ export function CaktoPanel({ instanceId, onBack }: CaktoPanelProps) {
           MODAIS
       ═══════════════════════════════════════════════════════════════ */}
       
+      {/* Modal de Webhook com Instruções */}
+      <Dialog open={showWebhookModal} onOpenChange={setShowWebhookModal}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3 text-xl">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Link2 className="w-5 h-5 text-primary" />
+              </div>
+              Configuração de Webhook
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6 mt-4">
+            {/* URL do Webhook */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-foreground">URL do Webhook</label>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 px-4 py-3 bg-muted rounded-lg text-sm font-mono break-all border">
+                  {webhookUrl || 'Configure a integração primeiro'}
+                </code>
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  className="h-11 w-11 shrink-0"
+                  onClick={copyWebhookUrl}
+                  disabled={!webhookUrl}
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Instruções */}
+            <div className="space-y-4 p-4 bg-muted/50 rounded-xl border">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-primary" />
+                <h4 className="font-semibold">Como configurar na Cakto</h4>
+              </div>
+              
+              <ol className="space-y-3 text-sm text-muted-foreground list-decimal list-inside">
+                <li>Acesse o painel da Cakto em <strong>cakto.com.br</strong></li>
+                <li>Vá em <strong>Integrações → Webhooks</strong></li>
+                <li>Clique em <strong>"Novo Webhook"</strong></li>
+                <li>Cole a URL acima no campo de endpoint</li>
+                <li>Selecione os eventos que deseja receber:
+                  <ul className="ml-6 mt-2 space-y-1 list-disc">
+                    <li>checkout_initiated</li>
+                    <li>purchase_approved</li>
+                    <li>purchase_refused</li>
+                    <li>purchase_refunded</li>
+                    <li>cart_abandoned</li>
+                  </ul>
+                </li>
+                <li>Salve e teste o webhook</li>
+              </ol>
+            </div>
+
+            {/* Link para documentação */}
+            <a 
+              href="https://docs.cakto.com.br/webhooks" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-sm text-primary hover:underline"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Ver documentação completa da Cakto
+            </a>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Modal de Regras */}
       <Dialog open={showRulesModal} onOpenChange={setShowRulesModal}>
         <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
