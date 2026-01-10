@@ -1,6 +1,6 @@
 /**
  * CAKTO PANEL - Painel principal da integração Cakto
- * Layout profissional, compacto e responsivo
+ * Layout organizado e profissional
  */
 
 import { useState } from 'react';
@@ -16,8 +16,7 @@ import {
   AlertCircle,
   RefreshCw,
   Copy,
-  Link2,
-  ExternalLink
+  Link2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -44,142 +43,135 @@ export function CaktoPanel({ instanceId, onBack }: CaktoPanelProps) {
   const copyWebhookUrl = () => {
     if (integration?.webhook_url) {
       navigator.clipboard.writeText(integration.webhook_url);
-      toast.success('URL copiada!');
+      toast.success('URL do Webhook copiada!');
     }
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 10 }}
+      initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -10 }}
-      className="space-y-3"
+      exit={{ opacity: 0, x: -20 }}
+      className="space-y-6"
     >
-      {/* Header Compacto */}
-      <div className="flex items-center justify-between gap-3 pb-2 border-b border-border/50">
-        <div className="flex items-center gap-2">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b">
+        <div className="flex items-center gap-4">
           <Button 
             variant="ghost" 
-            size="sm" 
+            size="icon"
             onClick={onBack} 
-            className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+            className="h-9 w-9"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-5 h-5" />
           </Button>
           
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center">
-              <img src={caktoLogo} alt="Cakto" className="w-4.5 h-4.5 object-contain" />
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-white border-2 border-border flex items-center justify-center shadow-sm">
+              <img src={caktoLogo} alt="Cakto" className="w-7 h-7 object-contain" />
             </div>
             <div>
-              <div className="flex items-center gap-1.5">
-                <h1 className="text-sm font-semibold">Cakto</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-bold">Cakto</h1>
                 {isConnected && (
-                  <Badge className="bg-emerald-500/15 text-emerald-500 border-emerald-500/30 text-[9px] h-4 px-1">
-                    <CheckCircle2 className="w-2 h-2 mr-0.5" />
+                  <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30">
+                    <CheckCircle2 className="w-3 h-3 mr-1" />
                     Conectado
                   </Badge>
                 )}
                 {hasError && (
-                  <Badge variant="destructive" className="text-[9px] h-4 px-1">
-                    <AlertCircle className="w-2 h-2 mr-0.5" />
+                  <Badge variant="destructive">
+                    <AlertCircle className="w-3 h-3 mr-1" />
                     Erro
                   </Badge>
                 )}
               </div>
-              <p className="text-[10px] text-muted-foreground">Infoprodutos</p>
+              <p className="text-sm text-muted-foreground">Infoprodutos</p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <Button 
             variant="ghost" 
-            size="sm" 
-            className="h-7 w-7 p-0" 
+            size="icon"
+            className="h-9 w-9" 
             onClick={() => refetch()}
-            title="Atualizar"
           >
-            <RefreshCw className="w-3.5 h-3.5" />
+            <RefreshCw className="w-4 h-4" />
           </Button>
           <Button 
             variant="outline" 
-            size="sm" 
-            className="h-7 gap-1 text-xs px-2" 
+            className="gap-2" 
             onClick={() => setShowConfig(true)}
           >
-            <Settings2 className="w-3 h-3" />
-            <span className="hidden sm:inline">Configurar</span>
+            <Settings2 className="w-4 h-4" />
+            Configurar
           </Button>
         </div>
       </div>
 
-      {/* Webhook URL - Linha compacta */}
+      {/* Webhook URL */}
       {isConnected && integration?.webhook_url && (
-        <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-muted/50 border border-border/50">
-          <Link2 className="w-3 h-3 text-primary shrink-0" />
-          <span className="text-[10px] text-muted-foreground shrink-0">Webhook:</span>
-          <code className="text-[10px] truncate flex-1 text-foreground/80 font-mono">
-            {integration.webhook_url}
-          </code>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={copyWebhookUrl} 
-            className="h-5 w-5 p-0 shrink-0"
-            title="Copiar URL"
-          >
-            <Copy className="w-2.5 h-2.5" />
+        <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50 border">
+          <Link2 className="w-4 h-4 text-primary shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-muted-foreground mb-1">Webhook URL</p>
+            <code className="text-sm truncate block">{integration.webhook_url}</code>
+          </div>
+          <Button variant="outline" size="sm" onClick={copyWebhookUrl} className="gap-2 shrink-0">
+            <Copy className="w-4 h-4" />
+            Copiar
           </Button>
         </div>
       )}
 
-      {/* Tabs Compactas */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3">
-        <TabsList className="w-full justify-start bg-muted/40 p-0.5 rounded-lg h-8 gap-0.5">
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="w-full sm:w-auto grid grid-cols-4 sm:inline-flex bg-muted p-1 h-auto">
           <TabsTrigger 
             value="dashboard" 
-            className="gap-1 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md px-2.5 text-[11px] h-7"
+            className="gap-2 py-2.5 px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm"
           >
-            <BarChart3 className="w-3 h-3" />
-            <span className="hidden xs:inline">Dashboard</span>
+            <BarChart3 className="w-4 h-4" />
+            <span className="hidden sm:inline">Dashboard</span>
           </TabsTrigger>
           <TabsTrigger 
             value="rules" 
-            className="gap-1 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md px-2.5 text-[11px] h-7"
+            className="gap-2 py-2.5 px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm"
           >
-            <Zap className="w-3 h-3" />
-            <span className="hidden xs:inline">Regras</span>
+            <Zap className="w-4 h-4" />
+            <span className="hidden sm:inline">Regras</span>
           </TabsTrigger>
           <TabsTrigger 
             value="events" 
-            className="gap-1 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md px-2.5 text-[11px] h-7"
+            className="gap-2 py-2.5 px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm"
           >
-            <History className="w-3 h-3" />
-            <span className="hidden xs:inline">Eventos</span>
+            <History className="w-4 h-4" />
+            <span className="hidden sm:inline">Eventos</span>
           </TabsTrigger>
           <TabsTrigger 
             value="simulator" 
-            className="gap-1 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md px-2.5 text-[11px] h-7"
+            className="gap-2 py-2.5 px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm"
           >
-            <TestTube2 className="w-3 h-3" />
-            <span className="hidden xs:inline">Simular</span>
+            <TestTube2 className="w-4 h-4" />
+            <span className="hidden sm:inline">Simular</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="dashboard" className="mt-0 focus-visible:ring-0">
+        <TabsContent value="dashboard" className="mt-0">
           <CaktoDashboard instanceId={instanceId} />
         </TabsContent>
 
-        <TabsContent value="rules" className="mt-0 focus-visible:ring-0">
+        <TabsContent value="rules" className="mt-0">
           <CaktoEventRules instanceId={instanceId} integrationId={integration?.id} />
         </TabsContent>
 
-        <TabsContent value="events" className="mt-0 focus-visible:ring-0">
+        <TabsContent value="events" className="mt-0">
           <CaktoEventsLog instanceId={instanceId} />
         </TabsContent>
 
-        <TabsContent value="simulator" className="mt-0 focus-visible:ring-0">
+        <TabsContent value="simulator" className="mt-0">
           <CaktoSimulator instanceId={instanceId} integrationId={integration?.id} />
         </TabsContent>
       </Tabs>
