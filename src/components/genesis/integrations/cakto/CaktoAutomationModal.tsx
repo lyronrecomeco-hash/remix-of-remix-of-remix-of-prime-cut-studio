@@ -161,19 +161,20 @@ export function CaktoAutomationModal({
         .select('*')
         .eq('integration_id', integrationId)
         .order('name', { ascending: true })
-        .limit(50);
+        .limit(100);
 
       if (productSearch) {
         query = query.ilike('name', `%${productSearch}%`);
       }
 
-      if (productFilter !== 'all') {
+      if (productFilter && productFilter !== 'all') {
         query = query.eq('status', productFilter);
       }
 
       const { data, error } = await query;
 
       if (error) {
+        console.error('Error fetching products:', error);
         if (error.code === '42P01') {
           setProducts([]);
           return;
@@ -181,17 +182,21 @@ export function CaktoAutomationModal({
         throw error;
       }
 
+      console.log('[CaktoAutomationModal] Products fetched:', data?.length);
+
       // Map to expected format
-      setProducts((data || []).map(p => ({
+      const mappedProducts = (data || []).map(p => ({
         id: p.external_id,
-        name: p.name,
+        name: p.name || 'Sem nome',
         image: p.image_url || '',
         description: p.description || '',
-        price: p.price || 0,
+        price: Number(p.price) || 0,
         type: (p.metadata as any)?.type || 'unique',
-        status: p.status as 'active' | 'blocked' | 'deleted',
+        status: (p.status || 'active') as 'active' | 'blocked' | 'deleted',
         category: (p.metadata as any)?.category,
-      })));
+      }));
+
+      setProducts(mappedProducts);
 
       // Get last sync time
       const { data: intData } = await supabase
@@ -792,7 +797,7 @@ export function CaktoAutomationModal({
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold truncate">{product.name}</p>
                           <p className="text-lg font-bold text-primary">
-                            R$ {(product.price / 100).toFixed(2).replace('.', ',')}
+                            R$ {product.price.toFixed(2).replace('.', ',')}
                           </p>
                           <div className="flex items-center gap-2 mt-1">
                             <Badge variant={product.status === 'active' ? 'default' : 'secondary'}>

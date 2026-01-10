@@ -188,31 +188,40 @@ Deno.serve(async (req) => {
         const instanceId = integration.instance_id;
         const now = new Date().toISOString();
 
-        for (const product of allProducts) {
-          await supabase
-            .from('genesis_cakto_products')
-            .upsert({
-              instance_id: instanceId,
-              integration_id: integrationId,
-              external_id: product.id,
-              name: product.name,
-              description: product.description || null,
-              price: product.price ? product.price * 100 : null, // Store in cents
-              currency: 'BRL',
-              status: product.status || 'active',
-              image_url: product.image || null,
-              metadata: {
-                type: product.type,
-                category: product.category,
-                salesPage: product.salesPage,
-                paymentMethods: product.paymentMethods,
-                contentDeliveries: product.contentDeliveries,
-              },
-              synced_at: now,
-            }, {
-              onConflict: 'instance_id,external_id',
-            });
+        // Prepare batch upsert
+        const productsToUpsert = allProducts.map(product => ({
+          instance_id: instanceId,
+          integration_id: integrationId,
+          external_id: product.id,
+          name: product.name || 'Produto sem nome',
+          description: product.description || null,
+          price: product.price || 0, // Price already comes as decimal (e.g., 19.00)
+          currency: 'BRL',
+          status: product.status || 'active',
+          image_url: product.image || null,
+          metadata: {
+            type: product.type,
+            category: product.category,
+            salesPage: product.salesPage,
+            paymentMethods: product.paymentMethods,
+            contentDeliveries: product.contentDeliveries,
+          },
+          synced_at: now,
+        }));
+
+        // Batch upsert for better performance
+        const { error: upsertError } = await supabase
+          .from('genesis_cakto_products')
+          .upsert(productsToUpsert, {
+            onConflict: 'instance_id,external_id',
+          });
+
+        if (upsertError) {
+          console.error('[CaktoSync] Upsert error:', upsertError);
+          throw upsertError;
         }
+
+        console.log(`[CaktoSync] Products upserted: ${productsToUpsert.length}`);
 
         // Update integration last_sync_at
         await supabase
