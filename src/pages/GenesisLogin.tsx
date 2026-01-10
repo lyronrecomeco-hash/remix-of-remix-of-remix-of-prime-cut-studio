@@ -16,7 +16,12 @@ import {
   MessageSquare,
   GitBranch,
   Shield,
-  Chrome
+  Chrome,
+  ArrowLeft,
+  RefreshCw,
+  CheckCircle,
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,9 +29,11 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useGenesisAuth } from '@/contexts/GenesisAuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { useRef } from 'react';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -36,7 +43,7 @@ const loginSchema = z.object({
 const registerSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('Email inválido'),
-  phone: z.string().optional(),
+  phone: z.string().min(14, 'WhatsApp inválido'),
   companyName: z.string().optional(),
   password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
   confirmPassword: z.string(),
@@ -65,14 +72,32 @@ export default function GenesisLogin() {
     googleUserData,
     signIn, 
     signUp, 
-    signInWithGoogle,
+    signInWithGoogle, 
     createGenesisAccountForGoogleUser 
   } = useGenesisAuth();
   
-  const [mode, setMode] = useState<'login' | 'register' | 'google-complete'>('login');
+  const [mode, setMode] = useState<'login' | 'register' | 'verification' | 'google-complete'>('login');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Theme persistence
+  const [savedTheme, setSavedTheme] = useState<'light' | 'dark'>(() => {
+    const stored = localStorage.getItem('genesis_theme');
+    return (stored === 'light' || stored === 'dark') ? stored : 'dark';
+  });
+  
+  // Apply saved theme to login page right side
+  useEffect(() => {
+    const root = document.documentElement;
+    if (savedTheme === 'light') {
+      root.classList.remove('dark', 'genesis-dark');
+      root.classList.add('genesis-light');
+    } else {
+      root.classList.add('dark', 'genesis-dark');
+      root.classList.remove('genesis-light');
+    }
+  }, [savedTheme]);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -85,6 +110,16 @@ export default function GenesisLogin() {
     acceptTerms: false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  // Phone verification state
+  const [verificationCode, setVerificationCode] = useState(['', '', '', '', '', '']);
+  const [countdown, setCountdown] = useState(60);
+  const [canResend, setCanResend] = useState(false);
+  const [verificationError, setVerificationError] = useState('');
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const codeInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Handle Google OAuth callback - check if user needs registration
   useEffect(() => {
@@ -101,11 +136,41 @@ export default function GenesisLogin() {
     }
   }, [loading, user, genesisUser, needsRegistration, googleUserData, navigate]);
 
+  // Countdown timer for verification
+  useEffect(() => {
+    if (mode === 'verification' && countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (countdown === 0) {
+      setCanResend(true);
+    }
+  }, [countdown, mode]);
+
+  // Focus first code input when entering verification mode
+  useEffect(() => {
+    if (mode === 'verification') {
+      codeInputRefs.current[0]?.focus();
+    }
+  }, [mode]);
+
   const updateField = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
+  };
+
+  // Phone mask
+  const formatPhone = (value: string) => {
+    const cleaned = value.replace(/\D/g, '');
+    if (cleaned.length <= 2) return cleaned;
+    if (cleaned.length <= 7) return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2)}`;
+    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7, 11)}`;
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhone(e.target.value);
+    updateField('phone', formatted);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -154,24 +219,46 @@ export default function GenesisLogin() {
       const result = registerSchema.parse(formData);
       
       setIsSubmitting(true);
-      const { error } = await signUp(
-        result.email, 
-        result.password, 
-        result.name, 
-        result.phone || undefined, 
-        result.companyName || undefined
-      );
       
-      if (error) {
-        if (error.message?.includes('already registered')) {
-          toast.error('Este email já está cadastrado');
-        } else {
-          toast.error(error.message || 'Erro ao criar conta');
-        }
-      } else {
-        toast.success('Conta criada com sucesso! Verifique seu email.');
-        setMode('login');
+      // Format phone for sending (remove mask, add country code)
+      const cleanPhone = formData.phone.replace(/\D/g, '');
+      const phoneWithCountry = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+      
+      // Check if email already exists
+      const { data: existingUser } = await supabase
+        .from('genesis_users')
+        .select('id')
+        .eq('email', formData.email)
+        .single();
+      
+      if (existingUser) {
+        toast.error('Este email já está cadastrado');
+        setIsSubmitting(false);
+        return;
       }
+      
+      // Send verification code using Genesis automation
+      const { data, error: sendError } = await supabase.functions.invoke('genesis-send-verification', {
+        body: {
+          phone: phoneWithCountry,
+          email: formData.email,
+          name: formData.name,
+          passwordHash: btoa(formData.password),
+        },
+      });
+      
+      if (sendError || !data?.success) {
+        toast.error(data?.error || 'Erro ao enviar código de verificação');
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Go to verification step
+      setMode('verification');
+      setCountdown(60);
+      setCanResend(false);
+      toast.success('Código enviado para seu WhatsApp!');
+      
     } catch (err: any) {
       if (err.errors) {
         const newErrors: Record<string, string> = {};
@@ -182,6 +269,140 @@ export default function GenesisLogin() {
       }
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Handle verification code input
+  const handleCodeChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return;
+    
+    const newCode = [...verificationCode];
+    newCode[index] = value.slice(-1);
+    setVerificationCode(newCode);
+    setVerificationError('');
+    
+    // Auto-focus next
+    if (value && index < 5) {
+      codeInputRefs.current[index + 1]?.focus();
+    }
+    
+    // Auto-verify when complete
+    if (index === 5 && value) {
+      const fullCode = newCode.join('');
+      if (fullCode.length === 6) {
+        handleVerifyCode(fullCode);
+      }
+    }
+  };
+
+  const handleCodeKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !verificationCode[index] && index > 0) {
+      codeInputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleCodePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (pastedData.length === 6) {
+      setVerificationCode(pastedData.split(''));
+      handleVerifyCode(pastedData);
+    }
+  };
+
+  const handleVerifyCode = async (code?: string) => {
+    const codeToVerify = code || verificationCode.join('');
+    if (codeToVerify.length !== 6) {
+      setVerificationError('Digite o código completo');
+      return;
+    }
+    
+    setIsVerifying(true);
+    setVerificationError('');
+    
+    try {
+      const cleanPhone = formData.phone.replace(/\D/g, '');
+      const phoneWithCountry = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+      
+      const { data, error } = await supabase.functions.invoke('genesis-verify-code', {
+        body: { phone: phoneWithCountry, code: codeToVerify },
+      });
+      
+      if (error || !data?.success) {
+        setVerificationError(data?.error || 'Código inválido');
+        setVerificationCode(['', '', '', '', '', '']);
+        codeInputRefs.current[0]?.focus();
+        setIsVerifying(false);
+        return;
+      }
+      
+      setVerificationSuccess(true);
+      
+      // Create account after successful verification
+      setTimeout(async () => {
+        const { error: signUpError } = await signUp(
+          formData.email,
+          formData.password,
+          formData.name,
+          phoneWithCountry,
+          formData.companyName || undefined
+        );
+        
+        if (signUpError) {
+          toast.error(signUpError.message || 'Erro ao criar conta');
+          setMode('register');
+        } else {
+          toast.success('Conta criada com sucesso!');
+          setMode('login');
+          setFormData(prev => ({ ...prev, password: '', confirmPassword: '' }));
+        }
+        
+        setIsVerifying(false);
+        setVerificationSuccess(false);
+      }, 1500);
+      
+    } catch (err) {
+      console.error('Verification error:', err);
+      setVerificationError('Erro ao verificar código');
+      setIsVerifying(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (!canResend) return;
+    
+    setIsResending(true);
+    setVerificationError('');
+    
+    try {
+      const cleanPhone = formData.phone.replace(/\D/g, '');
+      const phoneWithCountry = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+      
+      const { data, error } = await supabase.functions.invoke('genesis-send-verification', {
+        body: {
+          phone: phoneWithCountry,
+          email: formData.email,
+          name: formData.name,
+          passwordHash: btoa(formData.password),
+        },
+      });
+      
+      if (error || !data?.success) {
+        setVerificationError(data?.error || 'Erro ao reenviar código');
+        return;
+      }
+      
+      setCountdown(60);
+      setCanResend(false);
+      setVerificationCode(['', '', '', '', '', '']);
+      codeInputRefs.current[0]?.focus();
+      toast.success('Novo código enviado!');
+      
+    } catch (err) {
+      console.error('Resend error:', err);
+      setVerificationError('Erro ao reenviar código');
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -230,6 +451,11 @@ export default function GenesisLogin() {
     }
   };
 
+  const getPhoneLast4 = () => {
+    const clean = formData.phone.replace(/\D/g, '');
+    return clean.slice(-4);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -252,8 +478,8 @@ export default function GenesisLogin() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left Side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-background via-primary/5 to-background relative overflow-hidden">
+      {/* Left Side - Branding (always dark) */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#0a0a0f] via-primary/5 to-[#0a0a0f] relative overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
@@ -287,7 +513,7 @@ export default function GenesisLogin() {
         </div>
 
         {/* Content */}
-        <div className="relative z-10 flex flex-col justify-center p-12 lg:p-16 xl:p-20">
+        <div className="relative z-10 flex flex-col justify-center p-12 lg:p-16 xl:p-20 text-white">
           {/* Logo */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -299,7 +525,7 @@ export default function GenesisLogin() {
             </div>
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Genesis Hub</h1>
-              <p className="text-muted-foreground text-sm">WhatsApp Automation Platform</p>
+              <p className="text-white/60 text-sm">WhatsApp Automation Platform</p>
             </div>
           </motion.div>
 
@@ -315,7 +541,7 @@ export default function GenesisLogin() {
               <br />
               <span className="text-primary">WhatsApp Business</span>
             </h2>
-            <p className="text-lg text-muted-foreground max-w-md">
+            <p className="text-lg text-white/70 max-w-md">
               Plataforma completa para gestão de automação, chatbots e fluxos inteligentes de atendimento.
             </p>
           </motion.div>
@@ -333,14 +559,14 @@ export default function GenesisLogin() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 + index * 0.1 }}
-                className="flex items-start gap-3 p-4 rounded-xl bg-card/50 backdrop-blur-sm border border-border/50"
+                className="flex items-start gap-3 p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10"
               >
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
                   <feature.icon className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-sm">{feature.label}</h3>
-                  <p className="text-xs text-muted-foreground">{feature.desc}</p>
+                  <h3 className="font-semibold text-sm text-white">{feature.label}</h3>
+                  <p className="text-xs text-white/60">{feature.desc}</p>
                 </div>
               </motion.div>
             ))}
@@ -351,25 +577,25 @@ export default function GenesisLogin() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="flex gap-8 mt-8 pt-8 border-t border-border/30"
+            className="flex gap-8 mt-8 pt-8 border-t border-white/10"
           >
             <div>
               <div className="text-3xl font-bold text-primary">10k+</div>
-              <div className="text-sm text-muted-foreground">Mensagens/dia</div>
+              <div className="text-sm text-white/60">Mensagens/dia</div>
             </div>
             <div>
               <div className="text-3xl font-bold text-primary">99.9%</div>
-              <div className="text-sm text-muted-foreground">Uptime</div>
+              <div className="text-sm text-white/60">Uptime</div>
             </div>
             <div>
               <div className="text-3xl font-bold text-primary">500+</div>
-              <div className="text-sm text-muted-foreground">Empresas</div>
+              <div className="text-sm text-white/60">Empresas</div>
             </div>
           </motion.div>
         </div>
       </div>
 
-      {/* Right Side - Form */}
+      {/* Right Side - Form (respects theme) */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-background">
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
@@ -388,235 +614,247 @@ export default function GenesisLogin() {
           </motion.div>
 
           <AnimatePresence mode="wait">
-            <motion.div
-              key={mode}
-              initial={{ opacity: 0, x: mode === 'login' ? -20 : 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: mode === 'login' ? 20 : -20 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Card className="border-0 shadow-none bg-transparent">
-                <CardHeader className="px-0">
-                  <CardTitle className="text-2xl">
-                    {mode === 'login' 
-                      ? 'Entrar na sua conta' 
-                      : mode === 'google-complete'
-                      ? 'Complete seu cadastro'
-                      : 'Criar nova conta'
-                    }
-                  </CardTitle>
-                  <CardDescription>
-                    {mode === 'login' 
-                      ? 'Bem-vindo de volta! Entre com suas credenciais.'
-                      : mode === 'google-complete'
-                      ? 'Quase lá! Complete as informações para começar.'
-                      : 'Comece a automatizar seu WhatsApp hoje mesmo.'
-                    }
-                  </CardDescription>
-                </CardHeader>
-
-                <CardContent className="px-0 space-y-6">
-                  {/* Google Complete Form */}
-                  {mode === 'google-complete' ? (
-                    <form onSubmit={handleGoogleComplete} className="space-y-4">
-                      {/* Google avatar indicator */}
-                      {googleUserData?.avatarUrl && (
-                        <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
-                          <img 
-                            src={googleUserData.avatarUrl} 
-                            alt="Avatar" 
-                            className="w-10 h-10 rounded-full"
-                          />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium">{googleUserData.name}</p>
-                            <p className="text-xs text-muted-foreground">{googleUserData.email}</p>
-                          </div>
-                          <Chrome className="w-5 h-5 text-primary" />
-                        </div>
+            {/* Verification Step */}
+            {mode === 'verification' ? (
+              <motion.div
+                key="verification"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                {/* Header */}
+                <div className="text-center space-y-3">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 200 }}
+                    className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center mx-auto"
+                  >
+                    <AnimatePresence mode="wait">
+                      {verificationSuccess ? (
+                        <motion.div
+                          key="success"
+                          initial={{ scale: 0, rotate: -180 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          exit={{ scale: 0 }}
+                        >
+                          <CheckCircle className="w-10 h-10 text-green-500" />
+                        </motion.div>
+                      ) : (
+                        <motion.div key="icon" initial={{ scale: 0 }} animate={{ scale: 1 }}>
+                          <MessageSquare className="w-10 h-10 text-green-500" />
+                        </motion.div>
                       )}
+                    </AnimatePresence>
+                  </motion.div>
+                  
+                  <h2 className="text-xl font-bold">
+                    {verificationSuccess ? 'Verificado!' : 'Verifique seu WhatsApp'}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {verificationSuccess 
+                      ? 'Seu número foi verificado com sucesso'
+                      : `Código enviado para ****${getPhoneLast4()}`
+                    }
+                  </p>
+                </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Nome completo</Label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                {/* Error */}
+                <AnimatePresence>
+                  {verificationError && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30"
+                    >
+                      <AlertCircle className="w-4 h-4 text-destructive flex-shrink-0" />
+                      <p className="text-sm text-destructive">{verificationError}</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Code Input */}
+                {!verificationSuccess && (
+                  <div className="space-y-4">
+                    <div className="flex justify-center gap-2">
+                      {verificationCode.map((digit, index) => (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                        >
                           <Input
-                            id="name"
-                            placeholder="Seu nome"
-                            value={formData.name}
-                            onChange={e => updateField('name', e.target.value)}
-                            className={`pl-10 ${errors.name ? 'border-destructive' : ''}`}
+                            ref={(el) => (codeInputRefs.current[index] = el)}
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={1}
+                            value={digit}
+                            onChange={(e) => handleCodeChange(index, e.target.value)}
+                            onKeyDown={(e) => handleCodeKeyDown(index, e)}
+                            onPaste={handleCodePaste}
+                            disabled={isVerifying}
+                            className={`
+                              w-12 h-14 text-center text-2xl font-bold
+                              bg-secondary/50 border-2 
+                              focus:border-primary focus:ring-primary/20
+                              ${digit ? 'border-primary/50 bg-primary/5' : 'border-border'}
+                              ${verificationError ? 'border-destructive/50' : ''}
+                            `}
                           />
-                        </div>
-                        {errors.name && (
-                          <p className="text-xs text-destructive">{errors.name}</p>
-                        )}
-                      </div>
+                        </motion.div>
+                      ))}
+                    </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input
-                            id="email"
-                            type="email"
-                            value={formData.email}
-                            onChange={e => updateField('email', e.target.value)}
-                            className={`pl-10 ${errors.email ? 'border-destructive' : ''}`}
-                            disabled
-                          />
-                        </div>
-                        {errors.email && (
-                          <p className="text-xs text-destructive">{errors.email}</p>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="phone">WhatsApp</Label>
-                          <div className="relative">
-                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                            <Input
-                              id="phone"
-                              placeholder="(00) 00000-0000"
-                              value={formData.phone}
-                              onChange={e => updateField('phone', e.target.value)}
-                              className="pl-10"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="companyName">Empresa</Label>
-                          <div className="relative">
-                            <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                            <Input
-                              id="companyName"
-                              placeholder="Sua empresa"
-                              value={formData.companyName}
-                              onChange={e => updateField('companyName', e.target.value)}
-                              className="pl-10"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start gap-2">
-                        <Checkbox
-                          id="acceptTerms"
-                          checked={formData.acceptTerms}
-                          onCheckedChange={(checked) => updateField('acceptTerms', checked)}
-                        />
-                        <label htmlFor="acceptTerms" className="text-sm text-muted-foreground cursor-pointer">
-                          Eu aceito os{' '}
-                          <a href="/termos" className="text-primary hover:underline">
-                            Termos de Uso
-                          </a>{' '}
-                          e a{' '}
-                          <a href="/privacidade" className="text-primary hover:underline">
-                            Política de Privacidade
-                          </a>
-                        </label>
-                      </div>
-                      {errors.acceptTerms && (
-                        <p className="text-xs text-destructive">{errors.acceptTerms}</p>
+                    {/* Verify Button */}
+                    <Button
+                      onClick={() => handleVerifyCode()}
+                      disabled={verificationCode.join('').length !== 6 || isVerifying}
+                      className="w-full h-12"
+                    >
+                      {isVerifying ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                          Verificando...
+                        </>
+                      ) : (
+                        'Verificar Código'
                       )}
+                    </Button>
 
-                      <Button 
-                        type="submit" 
-                        className="w-full h-11 gap-2"
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting ? (
-                          <motion.div
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                          >
-                            <Sparkles className="w-4 h-4" />
-                          </motion.div>
-                        ) : (
-                          <>
-                            Começar a usar
-                            <ArrowRight className="w-4 h-4" />
-                          </>
-                        )}
-                      </Button>
-                    </form>
-                  ) : (
-                    <>
-                      {/* Google Sign In */}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full h-11 gap-2"
-                        onClick={handleGoogleSignIn}
-                        disabled={isSubmitting}
-                      >
-                        <Chrome className="w-5 h-5" />
-                        Continuar com Google
-                      </Button>
-
-                      <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                          <div className="w-full border-t" />
-                        </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                          <span className="bg-background px-2 text-muted-foreground">
-                            ou continue com email
+                    {/* Resend */}
+                    <div className="text-center">
+                      {canResend ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleResendCode}
+                          disabled={isResending}
+                          className="text-primary"
+                        >
+                          {isResending ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                              Reenviando...
+                            </>
+                          ) : (
+                            <>
+                              <RefreshCw className="w-4 h-4 mr-2" />
+                              Reenviar código
+                            </>
+                          )}
+                        </Button>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          Reenviar código em{' '}
+                          <span className="font-mono font-bold text-primary">
+                            {Math.floor(countdown / 60)}:{(countdown % 60).toString().padStart(2, '0')}
                           </span>
-                        </div>
-                      </div>
+                        </p>
+                      )}
+                    </div>
 
-                      <form onSubmit={mode === 'login' ? handleLogin : handleRegister} className="space-y-4">
-                        {mode === 'register' && (
-                          <>
-                            <div className="space-y-2">
-                              <Label htmlFor="name">Nome completo</Label>
-                              <div className="relative">
-                                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                <Input
-                                  id="name"
-                                  placeholder="Seu nome"
-                                  value={formData.name}
-                                  onChange={e => updateField('name', e.target.value)}
-                                  className={`pl-10 ${errors.name ? 'border-destructive' : ''}`}
-                                />
-                              </div>
-                              {errors.name && (
-                                <p className="text-xs text-destructive">{errors.name}</p>
-                              )}
+                    {/* Back Button */}
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setMode('register');
+                        setVerificationCode(['', '', '', '', '', '']);
+                        setVerificationError('');
+                      }}
+                      className="w-full"
+                      disabled={isVerifying}
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Voltar e corrigir dados
+                    </Button>
+                  </div>
+                )}
+
+                {/* Success Animation */}
+                <AnimatePresence>
+                  {verificationSuccess && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="flex flex-col items-center gap-4 py-4"
+                    >
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: '100%' }}
+                        transition={{ duration: 1, ease: 'easeInOut' }}
+                        className="h-1 bg-gradient-to-r from-primary to-green-500 rounded-full"
+                      />
+                      <p className="text-sm text-muted-foreground animate-pulse">
+                        Criando sua conta...
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            ) : (
+              <motion.div
+                key={mode}
+                initial={{ opacity: 0, x: mode === 'login' ? -20 : 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: mode === 'login' ? 20 : -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Card className="border-0 shadow-none bg-transparent">
+                  <CardHeader className="px-0">
+                    <CardTitle className="text-2xl">
+                      {mode === 'login' 
+                        ? 'Entrar na sua conta' 
+                        : mode === 'google-complete'
+                        ? 'Complete seu cadastro'
+                        : 'Criar nova conta'
+                      }
+                    </CardTitle>
+                    <CardDescription>
+                      {mode === 'login' 
+                        ? 'Bem-vindo de volta! Entre com suas credenciais.'
+                        : mode === 'google-complete'
+                        ? 'Quase lá! Complete as informações para começar.'
+                        : 'Comece a automatizar seu WhatsApp hoje mesmo.'
+                      }
+                    </CardDescription>
+                  </CardHeader>
+
+                  <CardContent className="px-0 space-y-6">
+                    {/* Google Complete Form */}
+                    {mode === 'google-complete' ? (
+                      <form onSubmit={handleGoogleComplete} className="space-y-4">
+                        {googleUserData?.avatarUrl && (
+                          <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                            <img 
+                              src={googleUserData.avatarUrl} 
+                              alt="Avatar" 
+                              className="w-10 h-10 rounded-full"
+                            />
+                            <div className="flex-1">
+                              <p className="text-sm font-medium">{googleUserData.name}</p>
+                              <p className="text-xs text-muted-foreground">{googleUserData.email}</p>
                             </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="space-y-2">
-                                <Label htmlFor="phone">WhatsApp</Label>
-                                <div className="relative">
-                                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                  <Input
-                                    id="phone"
-                                    placeholder="(00) 00000-0000"
-                                    value={formData.phone}
-                                    onChange={e => updateField('phone', e.target.value)}
-                                    className="pl-10"
-                                  />
-                                </div>
-                              </div>
-
-                              <div className="space-y-2">
-                                <Label htmlFor="companyName">Empresa</Label>
-                                <div className="relative">
-                                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                  <Input
-                                    id="companyName"
-                                    placeholder="Sua empresa"
-                                    value={formData.companyName}
-                                    onChange={e => updateField('companyName', e.target.value)}
-                                    className="pl-10"
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          </>
+                            <Chrome className="w-5 h-5 text-primary" />
+                          </div>
                         )}
+
+                        <div className="space-y-2">
+                          <Label htmlFor="name">Nome completo</Label>
+                          <div className="relative">
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <Input
+                              id="name"
+                              placeholder="Seu nome"
+                              value={formData.name}
+                              onChange={e => updateField('name', e.target.value)}
+                              className={`pl-10 ${errors.name ? 'border-destructive' : ''}`}
+                            />
+                          </div>
+                          {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
+                        </div>
 
                         <div className="space-y-2">
                           <Label htmlFor="email">Email</Label>
@@ -625,143 +863,273 @@ export default function GenesisLogin() {
                             <Input
                               id="email"
                               type="email"
-                              placeholder="seu@email.com"
                               value={formData.email}
-                              onChange={e => updateField('email', e.target.value)}
-                              className={`pl-10 ${errors.email ? 'border-destructive' : ''}`}
+                              className="pl-10"
+                              disabled
                             />
                           </div>
-                          {errors.email && (
-                            <p className="text-xs text-destructive">{errors.email}</p>
-                          )}
                         </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="password">Senha</Label>
-                          <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                            <Input
-                              id="password"
-                              type={showPassword ? 'text' : 'password'}
-                              placeholder="••••••••"
-                              value={formData.password}
-                              onChange={e => updateField('password', e.target.value)}
-                              className={`pl-10 pr-10 ${errors.password ? 'border-destructive' : ''}`}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                            >
-                              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            </button>
-                          </div>
-                          {errors.password && (
-                            <p className="text-xs text-destructive">{errors.password}</p>
-                          )}
-                        </div>
-
-                        {mode === 'register' && (
-                          <>
-                            <div className="space-y-2">
-                              <Label htmlFor="confirmPassword">Confirmar senha</Label>
-                              <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                <Input
-                                  id="confirmPassword"
-                                  type={showConfirmPassword ? 'text' : 'password'}
-                                  placeholder="••••••••"
-                                  value={formData.confirmPassword}
-                                  onChange={e => updateField('confirmPassword', e.target.value)}
-                                  className={`pl-10 pr-10 ${errors.confirmPassword ? 'border-destructive' : ''}`}
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                                >
-                                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                </button>
-                              </div>
-                              {errors.confirmPassword && (
-                                <p className="text-xs text-destructive">{errors.confirmPassword}</p>
-                              )}
-                            </div>
-
-                            <div className="flex items-start gap-2">
-                              <Checkbox
-                                id="acceptTerms"
-                                checked={formData.acceptTerms}
-                                onCheckedChange={(checked) => updateField('acceptTerms', checked)}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="phone">WhatsApp *</Label>
+                            <div className="relative">
+                              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                              <Input
+                                id="phone"
+                                placeholder="(00) 00000-0000"
+                                value={formData.phone}
+                                onChange={handlePhoneChange}
+                                className="pl-10"
                               />
-                              <label htmlFor="acceptTerms" className="text-sm text-muted-foreground cursor-pointer">
-                                Eu aceito os{' '}
-                                <a href="/termos" className="text-primary hover:underline">
-                                  Termos de Uso
-                                </a>{' '}
-                                e a{' '}
-                                <a href="/privacidade" className="text-primary hover:underline">
-                                  Política de Privacidade
-                                </a>
-                              </label>
                             </div>
-                            {errors.acceptTerms && (
-                              <p className="text-xs text-destructive">{errors.acceptTerms}</p>
-                            )}
-                          </>
-                        )}
+                          </div>
 
-                        <Button 
-                          type="submit" 
-                          className="w-full h-11 gap-2"
-                          disabled={isSubmitting}
-                        >
+                          <div className="space-y-2">
+                            <Label htmlFor="companyName">Empresa</Label>
+                            <div className="relative">
+                              <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                              <Input
+                                id="companyName"
+                                placeholder="Sua empresa"
+                                value={formData.companyName}
+                                onChange={e => updateField('companyName', e.target.value)}
+                                className="pl-10"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-start gap-2">
+                          <Checkbox
+                            id="acceptTerms"
+                            checked={formData.acceptTerms}
+                            onCheckedChange={(checked) => updateField('acceptTerms', checked)}
+                          />
+                          <label htmlFor="acceptTerms" className="text-sm text-muted-foreground cursor-pointer">
+                            Eu aceito os{' '}
+                            <a href="/termos" className="text-primary hover:underline">Termos de Uso</a>
+                            {' '}e a{' '}
+                            <a href="/privacidade" className="text-primary hover:underline">Política de Privacidade</a>
+                          </label>
+                        </div>
+                        {errors.acceptTerms && <p className="text-xs text-destructive">{errors.acceptTerms}</p>}
+
+                        <Button type="submit" className="w-full h-11 gap-2" disabled={isSubmitting}>
                           {isSubmitting ? (
-                            <motion.div
-                              animate={{ rotate: 360 }}
-                              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                            >
-                              <Sparkles className="w-4 h-4" />
-                            </motion.div>
+                            <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
                             <>
-                              {mode === 'login' ? 'Entrar' : 'Criar conta'}
+                              Começar a usar
                               <ArrowRight className="w-4 h-4" />
                             </>
                           )}
                         </Button>
                       </form>
+                    ) : (
+                      <>
+                        {/* Google Sign In */}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full h-11 gap-2"
+                          onClick={handleGoogleSignIn}
+                          disabled={isSubmitting}
+                        >
+                          <Chrome className="w-5 h-5" />
+                          Continuar com Google
+                        </Button>
 
-                      <div className="text-center text-sm">
-                        {mode === 'login' ? (
-                          <>
-                            Não tem uma conta?{' '}
-                            <button
-                              type="button"
-                              onClick={() => setMode('register')}
-                              className="text-primary font-medium hover:underline"
-                            >
-                              Criar agora
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            Já tem uma conta?{' '}
-                            <button
-                              type="button"
-                              onClick={() => setMode('login')}
-                              className="text-primary font-medium hover:underline"
-                            >
-                              Fazer login
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
+                        <div className="relative">
+                          <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t" />
+                          </div>
+                          <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-background px-2 text-muted-foreground">
+                              ou continue com email
+                            </span>
+                          </div>
+                        </div>
+
+                        <form onSubmit={mode === 'login' ? handleLogin : handleRegister} className="space-y-4">
+                          {mode === 'register' && (
+                            <>
+                              <div className="space-y-2">
+                                <Label htmlFor="name">Nome completo *</Label>
+                                <div className="relative">
+                                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                  <Input
+                                    id="name"
+                                    placeholder="Seu nome"
+                                    value={formData.name}
+                                    onChange={e => updateField('name', e.target.value)}
+                                    className={`pl-10 ${errors.name ? 'border-destructive' : ''}`}
+                                  />
+                                </div>
+                                {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor="phone">WhatsApp *</Label>
+                                  <div className="relative">
+                                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                    <Input
+                                      id="phone"
+                                      placeholder="(00) 00000-0000"
+                                      value={formData.phone}
+                                      onChange={handlePhoneChange}
+                                      className={`pl-10 ${errors.phone ? 'border-destructive' : ''}`}
+                                    />
+                                  </div>
+                                  {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
+                                </div>
+
+                                <div className="space-y-2">
+                                  <Label htmlFor="companyName">Empresa</Label>
+                                  <div className="relative">
+                                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                    <Input
+                                      id="companyName"
+                                      placeholder="Sua empresa"
+                                      value={formData.companyName}
+                                      onChange={e => updateField('companyName', e.target.value)}
+                                      className="pl-10"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </>
+                          )}
+
+                          <div className="space-y-2">
+                            <Label htmlFor="email">Email *</Label>
+                            <div className="relative">
+                              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                              <Input
+                                id="email"
+                                type="email"
+                                placeholder="seu@email.com"
+                                value={formData.email}
+                                onChange={e => updateField('email', e.target.value)}
+                                className={`pl-10 ${errors.email ? 'border-destructive' : ''}`}
+                              />
+                            </div>
+                            {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="password">Senha *</Label>
+                            <div className="relative">
+                              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                              <Input
+                                id="password"
+                                type={showPassword ? 'text' : 'password'}
+                                placeholder="••••••••"
+                                value={formData.password}
+                                onChange={e => updateField('password', e.target.value)}
+                                className={`pl-10 pr-10 ${errors.password ? 'border-destructive' : ''}`}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                              >
+                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              </button>
+                            </div>
+                            {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
+                          </div>
+
+                          {mode === 'register' && (
+                            <>
+                              <div className="space-y-2">
+                                <Label htmlFor="confirmPassword">Confirmar senha *</Label>
+                                <div className="relative">
+                                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                  <Input
+                                    id="confirmPassword"
+                                    type={showConfirmPassword ? 'text' : 'password'}
+                                    placeholder="••••••••"
+                                    value={formData.confirmPassword}
+                                    onChange={e => updateField('confirmPassword', e.target.value)}
+                                    className={`pl-10 pr-10 ${errors.confirmPassword ? 'border-destructive' : ''}`}
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                  >
+                                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                  </button>
+                                </div>
+                                {errors.confirmPassword && <p className="text-xs text-destructive">{errors.confirmPassword}</p>}
+                              </div>
+
+                              <div className="flex items-start gap-2">
+                                <Checkbox
+                                  id="acceptTerms"
+                                  checked={formData.acceptTerms}
+                                  onCheckedChange={(checked) => updateField('acceptTerms', checked)}
+                                />
+                                <label htmlFor="acceptTerms" className="text-sm text-muted-foreground cursor-pointer">
+                                  Eu aceito os{' '}
+                                  <a href="/termos" className="text-primary hover:underline">Termos de Uso</a>
+                                  {' '}e a{' '}
+                                  <a href="/privacidade" className="text-primary hover:underline">Política de Privacidade</a>
+                                </label>
+                              </div>
+                              {errors.acceptTerms && <p className="text-xs text-destructive">{errors.acceptTerms}</p>}
+                            </>
+                          )}
+
+                          <Button 
+                            type="submit" 
+                            className="w-full h-11 gap-2"
+                            disabled={isSubmitting}
+                          >
+                            {isSubmitting ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <>
+                                {mode === 'login' ? 'Entrar' : 'Criar conta'}
+                                <ArrowRight className="w-4 h-4" />
+                              </>
+                            )}
+                          </Button>
+                        </form>
+
+                        <div className="text-center text-sm">
+                          {mode === 'login' ? (
+                            <>
+                              Não tem uma conta?{' '}
+                              <button
+                                type="button"
+                                onClick={() => setMode('register')}
+                                className="text-primary font-medium hover:underline"
+                              >
+                                Criar agora
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              Já tem uma conta?{' '}
+                              <button
+                                type="button"
+                                onClick={() => setMode('login')}
+                                className="text-primary font-medium hover:underline"
+                              >
+                                Fazer login
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
           </AnimatePresence>
 
           {/* Footer */}
