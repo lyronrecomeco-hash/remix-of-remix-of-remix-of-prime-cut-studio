@@ -119,12 +119,13 @@ export function CaktoAutomationModal({
 }: CaktoAutomationModalProps) {
   const [activeTab, setActiveTab] = useState('rules');
   
-  // Products state
+  // Products state - now fetched from local DB via edge function
   const [products, setProducts] = useState<CaktoProduct[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [productSearch, setProductSearch] = useState('');
   const [productFilter, setProductFilter] = useState<string>('all');
-  const [apiToken, setApiToken] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [lastSync, setLastSync] = useState<string | null>(null);
   
   // Rules state
   const [rules, setRules] = useState<CaktoRule[]>([]);
@@ -150,55 +151,91 @@ export function CaktoAutomationModal({
     anti_ban_enabled: true,
   });
 
-  // Fetch API token from integration metadata
-  const fetchApiToken = useCallback(async () => {
-    if (!integrationId) return;
-    try {
-      const { data } = await supabase
-        .from('genesis_instance_integrations')
-        .select('metadata')
-        .eq('id', integrationId)
-        .single();
-      if (data?.metadata && typeof data.metadata === 'object') {
-        const meta = data.metadata as { api_token?: string };
-        // Decode the base64 encoded token
-        if (meta.api_token) {
-          try {
-            setApiToken(atob(meta.api_token));
-          } catch {
-            setApiToken(meta.api_token);
-          }
-        }
-      }
-    } catch (err) {
-      console.error('Error fetching API token:', err);
-    }
-  }, [integrationId]);
-
-  // Fetch products from Cakto API
+  // Fetch products from local database (synced by edge function)
   const fetchProducts = useCallback(async () => {
-    if (!apiToken) return;
+    if (!integrationId) return;
     setLoadingProducts(true);
     try {
-      const params = new URLSearchParams();
-      if (productSearch) params.append('search', productSearch);
-      if (productFilter !== 'all') params.append('status', productFilter);
-      params.append('limit', '50');
+      let query = supabase
+        .from('genesis_cakto_products')
+        .select('*')
+        .eq('integration_id', integrationId)
+        .order('name', { ascending: true })
+        .limit(50);
 
-      const response = await fetch(
-        `https://api.cakto.com.br/api/products/?${params.toString()}`,
-        { headers: { 'Authorization': `Bearer ${apiToken}` } }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setProducts(data.results || []);
+      if (productSearch) {
+        query = query.ilike('name', `%${productSearch}%`);
+      }
+
+      if (productFilter !== 'all') {
+        query = query.eq('status', productFilter);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        if (error.code === '42P01') {
+          setProducts([]);
+          return;
+        }
+        throw error;
+      }
+
+      // Map to expected format
+      setProducts((data || []).map(p => ({
+        id: p.external_id,
+        name: p.name,
+        image: p.image_url || '',
+        description: p.description || '',
+        price: p.price || 0,
+        type: (p.metadata as any)?.type || 'unique',
+        status: p.status as 'active' | 'blocked' | 'deleted',
+        category: (p.metadata as any)?.category,
+      })));
+
+      // Get last sync time
+      const { data: intData } = await supabase
+        .from('genesis_instance_integrations')
+        .select('metadata, last_sync_at')
+        .eq('id', integrationId)
+        .single();
+      
+      if (intData?.last_sync_at) {
+        setLastSync(intData.last_sync_at);
       }
     } catch (err) {
+      console.error('Error fetching products:', err);
       toast.error('Erro ao carregar produtos');
     } finally {
       setLoadingProducts(false);
     }
-  }, [apiToken, productSearch, productFilter]);
+  }, [integrationId, productSearch, productFilter]);
+
+  // Sync products from Cakto API
+  const syncProducts = useCallback(async () => {
+    if (!integrationId) return;
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('cakto-sync', {
+        body: { action: 'sync_products', integrationId },
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success(data.message || 'Produtos sincronizados!');
+        setLastSync(new Date().toISOString());
+        await fetchProducts();
+      } else {
+        throw new Error(data?.error || 'Falha na sincronização');
+      }
+    } catch (err) {
+      console.error('Sync error:', err);
+      toast.error(err instanceof Error ? err.message : 'Erro ao sincronizar');
+    } finally {
+      setSyncing(false);
+    }
+  }, [integrationId, fetchProducts]);
 
   // Fetch rules from database
   const fetchRules = useCallback(async () => {
@@ -270,15 +307,14 @@ export function CaktoAutomationModal({
   // Initial data fetch
   useEffect(() => {
     if (open && integrationId) {
-      fetchApiToken();
       fetchRules();
       fetchCampaigns();
     }
-  }, [open, integrationId, fetchApiToken, fetchRules, fetchCampaigns]);
+  }, [open, integrationId, fetchRules, fetchCampaigns]);
 
   useEffect(() => {
-    if (open && activeTab === 'products' && apiToken) fetchProducts();
-  }, [open, activeTab, apiToken, fetchProducts]);
+    if (open && activeTab === 'products' && integrationId) fetchProducts();
+  }, [open, activeTab, integrationId, fetchProducts]);
 
   // Get rule for a specific event type
   const getRuleForEvent = (eventType: CaktoEventType): CaktoRule | undefined => {
@@ -675,51 +711,50 @@ export function CaktoAutomationModal({
 
           {/* PRODUCTS TAB */}
           <TabsContent value="products" className="flex-1 overflow-hidden flex flex-col m-0 p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar produtos..."
-                  value={productSearch}
-                  onChange={(e) => setProductSearch(e.target.value)}
-                  className="pl-10"
-                  onKeyDown={(e) => e.key === 'Enter' && fetchProducts()}
-                />
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-3 flex-1">
+                <div className="relative flex-1 max-w-sm">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar produtos..."
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    className="pl-10"
+                    onKeyDown={(e) => e.key === 'Enter' && fetchProducts()}
+                  />
+                </div>
+                <Select value={productFilter} onValueChange={setProductFilter}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="active">Ativos</SelectItem>
+                    <SelectItem value="blocked">Bloqueados</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <Select value={productFilter} onValueChange={setProductFilter}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="active">Ativos</SelectItem>
-                  <SelectItem value="blocked">Bloqueados</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button variant="outline" size="sm" onClick={fetchProducts} disabled={loadingProducts || !apiToken}>
-                <RefreshCw className={`w-4 h-4 ${loadingProducts ? 'animate-spin' : ''}`} />
-              </Button>
+              <div className="flex items-center gap-2">
+                {lastSync && (
+                  <span className="text-xs text-muted-foreground">
+                    Sync: {new Date(lastSync).toLocaleDateString('pt-BR')}
+                  </span>
+                )}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={syncProducts} 
+                  disabled={syncing || !integrationId}
+                  className="gap-2"
+                >
+                  <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+                  {syncing ? 'Sincronizando...' : 'Sincronizar'}
+                </Button>
+              </div>
             </div>
 
             <ScrollArea className="flex-1">
-              {!apiToken ? (
-                <Card className="border-dashed">
-                  <CardContent className="py-12 text-center">
-                    <AlertTriangle className="w-12 h-12 mx-auto text-amber-500 mb-4" />
-                    <p className="font-medium">Token de API não configurado</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Reconfigure as credenciais da Cakto (Client ID e Client Secret) para listar produtos.
-                    </p>
-                    <Button 
-                      variant="outline" 
-                      className="mt-4"
-                      onClick={() => onOpenChange(false)}
-                    >
-                      Ir para Configurações
-                    </Button>
-                  </CardContent>
-                </Card>
-              ) : loadingProducts ? (
+              {loadingProducts ? (
                 <div className="grid gap-4 md:grid-cols-2">
                   {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 w-full" />)}
                 </div>
@@ -729,8 +764,17 @@ export function CaktoAutomationModal({
                     <Package className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
                     <p className="font-medium">Nenhum produto encontrado</p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Verifique os filtros ou adicione produtos na Cakto.
+                      Clique em "Sincronizar" para buscar produtos da Cakto.
                     </p>
+                    <Button 
+                      variant="default" 
+                      className="mt-4 gap-2"
+                      onClick={syncProducts}
+                      disabled={syncing}
+                    >
+                      <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+                      Sincronizar Agora
+                    </Button>
                   </CardContent>
                 </Card>
               ) : (
