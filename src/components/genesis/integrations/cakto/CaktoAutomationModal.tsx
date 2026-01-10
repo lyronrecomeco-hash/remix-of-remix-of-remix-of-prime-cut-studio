@@ -309,18 +309,21 @@ export function CaktoAutomationModal({
     };
   }, [open, instanceId, integrationId, fetchRules]);
 
-  // Initial data fetch
+  // Initial data fetch - fetch products immediately when modal opens
   useEffect(() => {
     if (open && integrationId) {
       fetchRules();
       fetchCampaigns();
+      fetchProducts(); // Always fetch products when modal opens
     }
-  }, [open, integrationId, fetchRules, fetchCampaigns]);
+  }, [open, integrationId, fetchRules, fetchCampaigns, fetchProducts]);
 
+  // Refetch products when filter/search changes
   useEffect(() => {
-    if (open && activeTab === 'products' && integrationId) fetchProducts();
-  }, [open, activeTab, integrationId, fetchProducts]);
-
+    if (open && activeTab === 'products' && integrationId) {
+      fetchProducts();
+    }
+  }, [productSearch, productFilter]);
   // Get rule for a specific event type
   const getRuleForEvent = (eventType: CaktoEventType): CaktoRule | undefined => {
     return rules.find(r => r.event_type === eventType);
