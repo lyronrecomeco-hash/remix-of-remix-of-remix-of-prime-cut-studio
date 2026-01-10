@@ -17,12 +17,16 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
 };
 
-// Cakto event types
+// Cakto event types - Todos os eventos suportados pela Cakto
+// https://docs.cakto.com.br/
 const CAKTO_EVENTS = [
   'initiate_checkout',
+  'pix_generated',
+  'pix_expired',
   'purchase_approved',
   'purchase_refused',
   'purchase_refunded',
+  'purchase_chargeback',
   'checkout_abandonment',
 ] as const;
 

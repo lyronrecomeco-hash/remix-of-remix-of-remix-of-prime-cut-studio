@@ -1,7 +1,7 @@
 /**
  * CAKTO SALES MODAL
  * Modal para exibir vendas por status com atualização em tempo real
- * Inclui tab especial para PIX Não Pago com verificação
+ * Inclui tab especial para PIX Não Pago com verificação precisa
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -37,10 +37,14 @@ import {
   MessageCircle,
   ExternalLink,
   Banknote,
+  Download,
+  Loader2,
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CaktoEvent, CaktoEventType, CAKTO_EVENT_LABELS, CAKTO_EVENT_COLORS } from './types';
+import { useCaktoSync } from './hooks/useCaktoSync';
+import { useCaktoIntegration } from './hooks/useCaktoIntegration';
 
 interface CaktoSalesModalProps {
   open: boolean;
@@ -71,6 +75,11 @@ export function CaktoSalesModal({ open, onOpenChange, instanceId }: CaktoSalesMo
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [initialized, setInitialized] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CaktoEvent | null>(null);
+  const [syncing, setSyncing] = useState(false);
+
+  // Hooks
+  const { syncOrders, loading: syncLoading } = useCaktoSync();
+  const { integration } = useCaktoIntegration(instanceId);
 
   // Gerar link do WhatsApp
   const generateWhatsAppLink = (phone: string | null, name: string | null) => {
@@ -81,6 +90,20 @@ export function CaktoSalesModal({ open, onOpenChange, instanceId }: CaktoSalesMo
       `Olá${name ? ` ${name.split(' ')[0]}` : ''}! Vi que você gerou um PIX mas ainda não completou o pagamento. Posso te ajudar com alguma dúvida?`
     );
     return `https://wa.me/${cleanPhone}?text=${message}`;
+  };
+
+  // Sincronizar pedidos históricos
+  const handleSyncOrders = async () => {
+    if (!integration?.id) return;
+    setSyncing(true);
+    try {
+      await syncOrders(integration.id, { fullSync: true });
+      // Refetch events after sync
+      await fetchEvents(activeTab);
+      await fetchCounts();
+    } finally {
+      setSyncing(false);
+    }
   };
 
   // Buscar eventos - agora suporta tab pix_unpaid com verificação
@@ -385,6 +408,22 @@ export function CaktoSalesModal({ open, onOpenChange, instanceId }: CaktoSalesMo
                 </TabsList>
 
                 <div className="flex items-center gap-2">
+                  {/* Sync button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSyncOrders}
+                    disabled={syncing || syncLoading || !integration?.id}
+                    className="gap-2"
+                  >
+                    {syncing || syncLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Download className="w-4 h-4" />
+                    )}
+                    <span className="hidden md:inline">Importar Histórico</span>
+                  </Button>
+
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
