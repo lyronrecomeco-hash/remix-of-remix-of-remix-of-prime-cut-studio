@@ -25,6 +25,7 @@ export function GenesisCampaigns() {
     cancelCampaign,
     getCampaignContacts,
     getCampaignLogs,
+    retryPendingContacts,
   } = useCampaigns();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -167,6 +168,20 @@ export function GenesisCampaigns() {
     }
   };
 
+  // Handle retry pending contacts
+  const handleRetryPending = async () => {
+    if (!selectedCampaign) return;
+    const result = await retryPendingContacts(selectedCampaign.id);
+    if (result.success) {
+      handleRefreshDetails();
+    }
+  };
+
+  // Calculate pending count
+  const pendingCount = campaignContacts.filter(c => 
+    ['queued', 'pending', 'failed', 'rate_limited', 'cooldown'].includes(c.status)
+  ).length;
+
   // Show details view
   if (selectedCampaign) {
     // Find updated campaign data
@@ -183,6 +198,8 @@ export function GenesisCampaigns() {
           onPause={() => handlePause(currentCampaign.id)}
           onCancel={handleCancel}
           onRefresh={handleRefreshDetails}
+          onRetryPending={handleRetryPending}
+          pendingCount={pendingCount}
           loading={detailsLoading}
         />
         

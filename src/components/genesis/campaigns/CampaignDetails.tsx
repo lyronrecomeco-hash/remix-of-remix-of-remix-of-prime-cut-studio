@@ -24,6 +24,7 @@ import {
   FileText,
   Activity,
   RefreshCw,
+  RotateCcw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -44,6 +45,8 @@ interface CampaignDetailsProps {
   onPause: () => void;
   onCancel: () => void;
   onRefresh: () => void;
+  onRetryPending?: () => void;
+  pendingCount?: number;
   loading?: boolean;
 }
 
@@ -56,6 +59,8 @@ export function CampaignDetails({
   onPause,
   onCancel,
   onRefresh,
+  onRetryPending,
+  pendingCount = 0,
   loading,
 }: CampaignDetailsProps) {
   const progressPercent = campaign.total_contacts > 0
@@ -141,7 +146,7 @@ export function CampaignDetails({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         {canStart && (
           <Button onClick={onStart} className="gap-2">
             <Play className="w-4 h-4" />
@@ -152,6 +157,12 @@ export function CampaignDetails({
           <Button variant="outline" onClick={onPause} className="gap-2">
             <Pause className="w-4 h-4" />
             Pausar
+          </Button>
+        )}
+        {pendingCount > 0 && onRetryPending && (
+          <Button variant="secondary" onClick={onRetryPending} className="gap-2">
+            <RotateCcw className="w-4 h-4" />
+            Reenviar Pendentes ({pendingCount})
           </Button>
         )}
         {canCancel && (
