@@ -2,12 +2,14 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 /**
  * CAKTO SYNC - Sincroniza produtos, pedidos e dados da Cakto
+ * OTIMIZADO para evitar timeout - processamento em lotes menores
  * 
  * Actions:
  * - get_token: Obtém OAuth access_token usando client_id/client_secret
  * - sync_products: Sincroniza todos os produtos para genesis_cakto_products
  * - sync_orders: Sincroniza histórico de pedidos para genesis_cakto_events
  * - test_credentials: Valida credenciais obtendo token
+ * - get_products: Retorna produtos (apenas ativos por padrão)
  */
 
 const corsHeaders = {
@@ -47,14 +49,19 @@ function mapOrderStatusToEventType(status: string, paymentMethod?: string): stri
     case 'pending':
     case 'waiting':
     case 'waiting_payment':
-      // Check if it's a PIX payment waiting
       if (paymentMethod?.toLowerCase()?.includes('pix')) {
         return 'pix_generated';
+      }
+      if (paymentMethod?.toLowerCase()?.includes('boleto')) {
+        return 'boleto_generated';
       }
       return 'initiate_checkout';
     case 'expired':
       if (paymentMethod?.toLowerCase()?.includes('pix')) {
         return 'pix_expired';
+      }
+      if (paymentMethod?.toLowerCase()?.includes('boleto')) {
+        return 'boleto_expired';
       }
       return 'checkout_abandonment';
     case 'abandoned':
@@ -138,7 +145,6 @@ async function fetchOrders(accessToken: string, page = 1, limit = 100, startDate
   url.searchParams.set('page', String(page));
   url.searchParams.set('limit', String(limit));
   
-  // If start date provided, filter from that date
   if (startDate) {
     url.searchParams.set('created_at__gte', startDate);
   }
@@ -167,6 +173,100 @@ function decodeCredentials(encrypted: string): { client_id: string; client_secre
   } catch {
     throw new Error('Credenciais inválidas');
   }
+}
+
+// Process orders in batch (to avoid timeout)
+async function processOrdersBatch(
+  supabase: any, 
+  orders: any[], 
+  instanceId: string, 
+  integrationId: string,
+  now: string
+): Promise<{ inserted: number; skipped: number; errors: number }> {
+  let insertedCount = 0;
+  let skippedCount = 0;
+  let errorCount = 0;
+
+  // Prepare all events for batch upsert
+  const eventsToUpsert: any[] = [];
+
+  for (const order of orders) {
+    try {
+      const externalId = order.id || order.transaction_id || order.order_id;
+      if (!externalId) {
+        skippedCount++;
+        continue;
+      }
+
+      const paymentMethod = order.payment_method || order.paymentMethod || '';
+      const eventType = mapOrderStatusToEventType(order.status, paymentMethod);
+
+      const customer = order.customer || order.buyer || {};
+      const customerName = customer.name || customer.full_name || 
+                          `${customer.first_name || ''} ${customer.last_name || ''}`.trim() || null;
+      const customerEmail = customer.email || null;
+      const customerPhone = normalizePhone(
+        customer.phone || customer.cellphone || customer.mobile || customer.whatsapp || null
+      );
+
+      const product = order.product || order.products?.[0] || {};
+      const offer = order.offer || {};
+      const orderValue = Number(order.total || order.amount || order.value || 0) || null;
+
+      // Use the ACTUAL created_at from the order for precise timestamps
+      const orderCreatedAt = order.created_at || order.date || order.createdAt;
+
+      eventsToUpsert.push({
+        instance_id: instanceId,
+        integration_id: integrationId,
+        event_type: eventType,
+        external_id: String(externalId),
+        customer_name: customerName,
+        customer_email: customerEmail,
+        customer_phone: customerPhone,
+        product_id: product.id || null,
+        product_name: product.name || product.title || null,
+        offer_id: offer.id || null,
+        offer_name: offer.name || offer.title || null,
+        order_value: orderValue,
+        currency: order.currency || 'BRL',
+        raw_payload: order,
+        normalized_event: {
+          provider: 'cakto',
+          event: eventType,
+          source: 'api_sync',
+          synced_at: now,
+        },
+        processed: true,
+        processed_at: now,
+        created_at: orderCreatedAt ? new Date(orderCreatedAt).toISOString() : now,
+      });
+
+    } catch (err) {
+      console.error('[CaktoSync] Order processing error:', err);
+      errorCount++;
+    }
+  }
+
+  // Batch upsert all events at once
+  if (eventsToUpsert.length > 0) {
+    const { error: upsertError, data } = await supabase
+      .from('genesis_cakto_events')
+      .upsert(eventsToUpsert, { 
+        onConflict: 'instance_id,external_id,event_type',
+        ignoreDuplicates: false 
+      })
+      .select('id');
+
+    if (upsertError) {
+      console.error('[CaktoSync] Batch upsert error:', upsertError);
+      errorCount += eventsToUpsert.length;
+    } else {
+      insertedCount = data?.length || eventsToUpsert.length;
+    }
+  }
+
+  return { inserted: insertedCount, skipped: skippedCount, errors: errorCount };
 }
 
 Deno.serve(async (req) => {
@@ -222,7 +322,6 @@ Deno.serve(async (req) => {
           );
         }
 
-        // Get integration with credentials
         const { data: integration, error: intError } = await supabase
           .from('genesis_instance_integrations')
           .select('*')
@@ -244,7 +343,6 @@ Deno.serve(async (req) => {
           );
         }
 
-        // Decode credentials and get token
         const creds = decodeCredentials(integration.credentials_encrypted);
         console.log('[CaktoSync] Getting access token for orders sync...');
         const tokenData = await getAccessToken(creds.client_id, creds.client_secret);
@@ -253,131 +351,50 @@ Deno.serve(async (req) => {
         const instanceId = integration.instance_id;
         const now = new Date().toISOString();
 
-        // Determine start date for sync
+        // Determine start date for sync (default: last 7 days for faster sync)
         let syncStartDate = startDate;
         if (!syncStartDate && !fullSync) {
-          // Default: sync last 30 days
-          const thirtyDaysAgo = new Date();
-          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-          syncStartDate = thirtyDaysAgo.toISOString().split('T')[0];
+          const daysAgo = new Date();
+          daysAgo.setDate(daysAgo.getDate() - 7);
+          syncStartDate = daysAgo.toISOString().split('T')[0];
         }
 
-        // Fetch all orders with pagination
-        let allOrders: any[] = [];
+        // Fetch orders with optimized pagination (smaller batches)
+        let totalInserted = 0;
+        let totalSkipped = 0;
+        let totalErrors = 0;
         let page = 1;
         let hasMore = true;
+        const batchSize = 50; // Smaller batches for faster processing
+        const maxPages = fullSync ? 100 : 20; // Limit pages for non-full sync
 
-        while (hasMore) {
+        while (hasMore && page <= maxPages) {
           console.log(`[CaktoSync] Fetching orders page ${page}...`);
-          const ordersData = await fetchOrders(tokenData.access_token, page, 100, syncStartDate);
-          allOrders = allOrders.concat(ordersData.results);
-          hasMore = !!ordersData.next;
-          page++;
           
-          // Safety limit
-          if (page > 100) break;
-        }
-
-        console.log(`[CaktoSync] Total orders fetched: ${allOrders.length}`);
-
-        // Process each order and convert to event
-        let insertedCount = 0;
-        let skippedCount = 0;
-        let errorCount = 0;
-
-        for (const order of allOrders) {
           try {
-            // Extract external_id
-            const externalId = order.id || order.transaction_id || order.order_id;
-            if (!externalId) {
-              skippedCount++;
-              continue;
+            const ordersData = await fetchOrders(tokenData.access_token, page, batchSize, syncStartDate);
+            
+            if (ordersData.results.length > 0) {
+              // Process this batch immediately
+              const batchResult = await processOrdersBatch(
+                supabase, 
+                ordersData.results, 
+                instanceId, 
+                integrationId, 
+                now
+              );
+              
+              totalInserted += batchResult.inserted;
+              totalSkipped += batchResult.skipped;
+              totalErrors += batchResult.errors;
             }
-
-            // Map status to event type
-            const paymentMethod = order.payment_method || order.paymentMethod || '';
-            const eventType = mapOrderStatusToEventType(order.status, paymentMethod);
-
-            // Check for duplicates
-            const { data: existingEvent } = await supabase
-              .from('genesis_cakto_events')
-              .select('id')
-              .eq('instance_id', instanceId)
-              .eq('external_id', String(externalId))
-              .maybeSingle();
-
-            if (existingEvent) {
-              // Update existing event status if changed
-              await supabase
-                .from('genesis_cakto_events')
-                .update({
-                  event_type: eventType,
-                  raw_payload: order,
-                  updated_at: now,
-                })
-                .eq('id', existingEvent.id);
-              skippedCount++;
-              continue;
-            }
-
-            // Extract customer data
-            const customer = order.customer || order.buyer || {};
-            const customerName = customer.name || customer.full_name || 
-                                `${customer.first_name || ''} ${customer.last_name || ''}`.trim() || null;
-            const customerEmail = customer.email || null;
-            const customerPhone = normalizePhone(
-              customer.phone || customer.cellphone || customer.mobile || customer.whatsapp || null
-            );
-
-            // Extract product data
-            const product = order.product || order.products?.[0] || {};
-            const offer = order.offer || {};
-
-            // Extract value
-            const orderValue = Number(order.total || order.amount || order.value || 0) || null;
-
-            // Upsert event (insert ou update se já existir)
-            const { error: upsertError } = await supabase
-              .from('genesis_cakto_events')
-              .upsert({
-                instance_id: instanceId,
-                integration_id: integrationId,
-                event_type: eventType,
-                external_id: String(externalId),
-                customer_name: customerName,
-                customer_email: customerEmail,
-                customer_phone: customerPhone,
-                product_id: product.id || null,
-                product_name: product.name || product.title || null,
-                offer_id: offer.id || null,
-                offer_name: offer.name || offer.title || null,
-                order_value: orderValue,
-                currency: order.currency || 'BRL',
-                raw_payload: order,
-                normalized_event: {
-                  provider: 'cakto',
-                  event: eventType,
-                  source: 'api_sync',
-                  synced_at: now,
-                },
-                processed: true,
-                processed_at: now,
-                created_at: order.created_at || order.date || now,
-              }, { 
-                onConflict: 'instance_id,external_id,event_type',
-                ignoreDuplicates: false 
-              });
-
-            if (upsertError) {
-              console.error('[CaktoSync] Upsert error:', upsertError);
-              errorCount++;
-            } else {
-              insertedCount++;
-            }
-
-          } catch (err) {
-            console.error('[CaktoSync] Order processing error:', err);
-            errorCount++;
+            
+            hasMore = !!ordersData.next && ordersData.results.length === batchSize;
+            page++;
+            
+          } catch (fetchErr) {
+            console.error('[CaktoSync] Page fetch error:', fetchErr);
+            break;
           }
         }
 
@@ -389,23 +406,25 @@ Deno.serve(async (req) => {
             metadata: {
               ...((integration.metadata as object) || {}),
               last_orders_sync: now,
-              orders_synced: insertedCount,
-              orders_skipped: skippedCount,
+              orders_synced: totalInserted,
+              orders_skipped: totalSkipped,
+              pages_processed: page - 1,
             }
           })
           .eq('id', integrationId);
 
-        console.log(`[CaktoSync] Orders sync complete: ${insertedCount} inserted, ${skippedCount} skipped, ${errorCount} errors`);
+        console.log(`[CaktoSync] Orders sync complete: ${totalInserted} inserted, ${totalSkipped} skipped, ${totalErrors} errors`);
 
         return new Response(
           JSON.stringify({ 
             success: true, 
-            message: `Sincronização concluída! ${insertedCount} novos pedidos importados.`,
+            message: `Sincronização concluída! ${totalInserted} pedidos processados.`,
             stats: {
-              total: allOrders.length,
-              inserted: insertedCount,
-              skipped: skippedCount,
-              errors: errorCount,
+              total: totalInserted + totalSkipped,
+              inserted: totalInserted,
+              skipped: totalSkipped,
+              errors: totalErrors,
+              pages: page - 1,
             }
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -420,7 +439,6 @@ Deno.serve(async (req) => {
           );
         }
 
-        // Get integration with credentials
         const { data: integration, error: intError } = await supabase
           .from('genesis_instance_integrations')
           .select('*')
@@ -442,37 +460,27 @@ Deno.serve(async (req) => {
           );
         }
 
-        // Decode credentials
         const creds = decodeCredentials(integration.credentials_encrypted);
-        
-        // Get access token
         console.log('[CaktoSync] Getting access token...');
         const tokenData = await getAccessToken(creds.client_id, creds.client_secret);
-        console.log('[CaktoSync] Token obtained, expires in:', tokenData.expires_in);
 
-        // Fetch all products with pagination
         let allProducts: any[] = [];
         let page = 1;
         let hasMore = true;
 
-        while (hasMore) {
+        while (hasMore && page <= 20) {
           console.log(`[CaktoSync] Fetching products page ${page}...`);
           const productsData = await fetchProducts(tokenData.access_token, page, 100);
           allProducts = allProducts.concat(productsData.results);
           hasMore = !!productsData.next;
           page++;
-          
-          // Safety limit
-          if (page > 50) break;
         }
 
         console.log(`[CaktoSync] Total products fetched: ${allProducts.length}`);
 
-        // Upsert products to database
         const instanceId = integration.instance_id;
         const now = new Date().toISOString();
 
-        // Prepare batch upsert
         const productsToUpsert = allProducts.map(product => ({
           instance_id: instanceId,
           integration_id: integrationId,
@@ -493,7 +501,6 @@ Deno.serve(async (req) => {
           synced_at: now,
         }));
 
-        // Batch upsert for better performance
         const { error: upsertError } = await supabase
           .from('genesis_cakto_products')
           .upsert(productsToUpsert, {
@@ -505,9 +512,6 @@ Deno.serve(async (req) => {
           throw upsertError;
         }
 
-        console.log(`[CaktoSync] Products upserted: ${productsToUpsert.length}`);
-
-        // Update integration last_sync_at
         await supabase
           .from('genesis_instance_integrations')
           .update({ 
@@ -531,7 +535,6 @@ Deno.serve(async (req) => {
       }
 
       case 'get_products': {
-        // Get products from local database
         if (!integrationId) {
           return new Response(
             JSON.stringify({ success: false, error: 'integrationId é obrigatório' }),
@@ -539,7 +542,7 @@ Deno.serve(async (req) => {
           );
         }
 
-        const { search, status, limit = 50 } = body;
+        const { search, status = 'active', limit = 50, includeAll } = body;
 
         let query = supabase
           .from('genesis_cakto_products')
@@ -552,8 +555,13 @@ Deno.serve(async (req) => {
           query = query.ilike('name', `%${search}%`);
         }
 
-        if (status && status !== 'all') {
-          query = query.eq('status', status);
+        // Por padrão, apenas produtos ativos (status != 'deleted')
+        if (!includeAll) {
+          if (status === 'active') {
+            query = query.neq('status', 'deleted');
+          } else if (status !== 'all') {
+            query = query.eq('status', status);
+          }
         }
 
         const { data: products, error: prodError } = await query;

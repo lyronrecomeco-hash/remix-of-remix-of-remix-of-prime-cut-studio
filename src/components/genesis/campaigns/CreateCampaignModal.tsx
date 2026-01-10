@@ -2,6 +2,7 @@
  * GENESIS CAMPAIGNS - Create Campaign Modal (Step-by-Step Wizard)
  * Com suporte para campanhas acionadas por integração
  * Atualizado com extração automática de contatos PIX não pago + preview Luna
+ * FILTRO POR PRODUTO para precisão máxima
  */
 
 import { useState, useEffect } from 'react';
@@ -27,6 +28,7 @@ import {
   Loader2,
   Phone,
   Eye,
+  Package,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -59,7 +61,8 @@ import { CAMPAIGN_TYPE_LABELS, CAMPAIGN_TYPE_DESCRIPTIONS } from './types';
 import { IntegrationSelector } from './IntegrationSelector';
 import { ScheduleByPeriodControl, DEFAULT_SCHEDULE, type ScheduleByPeriod } from './ScheduleByPeriodControl';
 import { LunaVariationsPreview } from './LunaVariationsPreview';
-import { useCaktoContacts, type CaktoContact } from './hooks/useCaktoContacts';
+import { ContactsPreviewCard } from './ContactsPreviewCard';
+import { useCaktoContacts, type CaktoContact, type CaktoProduct } from './hooks/useCaktoContacts';
 
 interface CreateCampaignModalProps {
   open: boolean;
@@ -151,20 +154,23 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
   const [selectedIntegrationId, setSelectedIntegrationId] = useState<string | null>(null);
   const [selectedIntegrationProvider, setSelectedIntegrationProvider] = useState<string>('');
   const [selectedEvent, setSelectedEvent] = useState<string>('');
+  const [selectedProductId, setSelectedProductId] = useState<string>('');
   const [scheduleByPeriod, setScheduleByPeriod] = useState<ScheduleByPeriod>(DEFAULT_SCHEDULE);
   const [useAdvancedSchedule, setUseAdvancedSchedule] = useState(false);
   
   // Estados para extração de contatos e Luna preview
   const [extractedContacts, setExtractedContacts] = useState<CaktoContact[]>([]);
+  const [availableProducts, setAvailableProducts] = useState<CaktoProduct[]>([]);
   const [triggerLunaPreview, setTriggerLunaPreview] = useState(false);
-  const { contacts: caktoContacts, loading: loadingContacts, fetchContacts } = useCaktoContacts();
+  const [generatedVariations, setGeneratedVariations] = useState<string[]>([]);
+  const { contacts: caktoContacts, loading: loadingContacts, fetchContacts, fetchProducts } = useCaktoContacts();
   
   // Steps dinâmicos
   const STEPS = getSteps(formData.campaign_type);
 
   // Fetch user instances
   useEffect(() => {
-    const fetchInstances = async () => {
+    const fetchInstancesData = async () => {
       if (!genesisUser) return;
       
       setLoadingInstances(true);
@@ -184,21 +190,35 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
     };
 
     if (open) {
-      fetchInstances();
+      fetchInstancesData();
       setStep(1);
       setFormData(DEFAULT_FORM_DATA);
       setContactsText('');
       setSelectedIntegrationId(null);
       setSelectedIntegrationProvider('');
       setSelectedEvent('');
+      setSelectedProductId('');
       setScheduleByPeriod(DEFAULT_SCHEDULE);
       setUseAdvancedSchedule(false);
       setExtractedContacts([]);
+      setAvailableProducts([]);
       setTriggerLunaPreview(false);
+      setGeneratedVariations([]);
     }
   }, [open, genesisUser]);
 
-  // Extrair contatos quando evento é selecionado (campanhas de integração)
+  // Buscar produtos quando integração é selecionada
+  useEffect(() => {
+    if (selectedIntegrationId && selectedIntegrationProvider === 'cakto') {
+      console.log('[Campaign] Fetching products for integration:', selectedIntegrationId);
+      fetchProducts(selectedIntegrationId).then(products => {
+        setAvailableProducts(products);
+        console.log('[Campaign] Loaded', products.length, 'active products');
+      });
+    }
+  }, [selectedIntegrationId, selectedIntegrationProvider, fetchProducts]);
+
+  // Extrair contatos quando evento ou produto é selecionado
   useEffect(() => {
     if (
       formData.campaign_type === 'integracao' && 
@@ -206,17 +226,18 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
       selectedEvent && 
       formData.instance_id
     ) {
-      console.log('[Campaign] Extracting contacts for event:', selectedEvent);
+      console.log('[Campaign] Extracting contacts for event:', selectedEvent, 'product:', selectedProductId);
       fetchContacts({
         instanceId: formData.instance_id,
         integrationId: selectedIntegrationId,
         eventType: selectedEvent,
+        productId: selectedProductId || undefined,
       }).then(contacts => {
         setExtractedContacts(contacts);
         // Converter para formato de contatos da campanha
         const campaignContacts = contacts.map(c => ({
           phone: c.phone.replace(/\D/g, ''),
-          name: c.name,
+          name: c.name || undefined,
         }));
         setFormData(prev => ({ ...prev, contacts: campaignContacts }));
         if (contacts.length > 0) {
@@ -224,7 +245,7 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
         }
       });
     }
-  }, [selectedEvent, selectedIntegrationId, formData.instance_id, formData.campaign_type]);
+  }, [selectedEvent, selectedIntegrationId, selectedProductId, formData.instance_id, formData.campaign_type, fetchContacts]);
 
   // Parse contacts from text
   const parseContacts = (text: string) => {
@@ -256,6 +277,13 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
     setSelectedIntegrationId(integrationId);
     setSelectedIntegrationProvider(provider);
     setSelectedEvent(''); // Reset evento ao trocar integração
+    setSelectedProductId(''); // Reset produto
+  };
+
+  // Handler para variações Luna geradas
+  const handleVariationsGenerated = (variations: string[]) => {
+    setGeneratedVariations(variations);
+    console.log('[Campaign] Luna generated', variations.length, 'variations');
   };
 
   const selectedInstance = instances.find(i => i.id === formData.instance_id);
@@ -269,7 +297,6 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
   // Validação por step - adaptada para tipo de campanha
   const canProceed = () => {
     if (formData.campaign_type === 'integracao') {
-      const maxStep = STEPS.length;
       switch (step) {
         case 1: // Tipo + instância
           return formData.name.trim() && formData.instance_id && isInstanceValid;
@@ -321,7 +348,9 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
         integration_id: selectedIntegrationId,
         integration_provider: selectedIntegrationProvider,
         trigger_event: selectedEvent,
+        product_filter_id: selectedProductId || null,
         schedule_by_period: useAdvancedSchedule ? scheduleByPeriod : null,
+        luna_variations: generatedVariations.length > 0 ? generatedVariations : null,
       } : {};
       
       onCreated({ ...formData, ...extraData } as CampaignFormData);
@@ -551,7 +580,7 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
                 </div>
               )}
 
-              {/* Step 3 para integração: Seleção de Evento */}
+              {/* Step 3 para integração: Seleção de Evento + Produto */}
               {step === 3 && formData.campaign_type === 'integracao' && (
                 <div className="space-y-6">
                   <div className="space-y-2">
@@ -597,59 +626,56 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
                     ))}
                   </div>
 
-                  {/* Contatos extraídos automaticamente */}
-                  {selectedEvent && (
-                    <Card className={cn(
-                      "border-green-500/20",
-                      loadingContacts ? "bg-muted/50" : extractedContacts.length > 0 ? "bg-green-500/5" : "bg-yellow-500/5 border-yellow-500/20"
-                    )}>
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            {loadingContacts ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Users className={extractedContacts.length > 0 ? "w-4 h-4 text-green-600" : "w-4 h-4 text-yellow-600"} />
-                            )}
-                            <span className="font-medium text-sm">
-                              {loadingContacts 
-                                ? 'Extraindo contatos...' 
-                                : extractedContacts.length > 0 
-                                  ? `${extractedContacts.length} contatos encontrados`
-                                  : 'Nenhum contato encontrado'}
-                            </span>
-                          </div>
-                          <Badge variant={extractedContacts.length > 0 ? "default" : "secondary"}>
-                            {extractedContacts.length}
-                          </Badge>
+                  {/* Filtro por produto (apenas para Cakto) */}
+                  {selectedEvent && selectedIntegrationProvider === 'cakto' && availableProducts.length > 0 && (
+                    <Card className="border-blue-500/20 bg-blue-500/5">
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Package className="w-5 h-5 text-blue-500" />
+                          <Label className="font-medium">Filtrar por Produto (Opcional)</Label>
                         </div>
-                        {extractedContacts.length > 0 && (
-                          <ScrollArea className="h-32 mt-3">
-                            <div className="space-y-1">
-                              {extractedContacts.slice(0, 10).map((c, i) => (
-                                <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground p-1 rounded bg-background/50">
-                                  <Phone className="w-3 h-3" />
-                                  <span className="font-mono">{c.phone}</span>
-                                  {c.name && <span>• {c.name}</span>}
+                        <p className="text-sm text-muted-foreground">
+                          Selecione um produto específico para maior precisão na extração
+                        </p>
+                        <Select value={selectedProductId} onValueChange={setSelectedProductId}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Todos os produtos ativos" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Todos os produtos ativos</SelectItem>
+                            {availableProducts.map(product => (
+                              <SelectItem key={product.id} value={product.external_id}>
+                                <div className="flex items-center gap-2">
+                                  <span>{product.name}</span>
+                                  <span className="text-muted-foreground text-xs">
+                                    R$ {product.price}
+                                  </span>
                                 </div>
-                              ))}
-                              {extractedContacts.length > 10 && (
-                                <p className="text-xs text-muted-foreground pt-1">
-                                  +{extractedContacts.length - 10} contatos...
-                                </p>
-                              )}
-                            </div>
-                          </ScrollArea>
-                        )}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          ✓ Apenas {availableProducts.length} produtos ativos exibidos
+                        </p>
                       </CardContent>
                     </Card>
                   )}
 
+                  {/* Preview de contatos extraídos */}
+                  {selectedEvent && (
+                    <ContactsPreviewCard
+                      contacts={extractedContacts}
+                      loading={loadingContacts}
+                      eventType={selectedEvent}
+                    />
+                  )}
+
                   {/* Variáveis disponíveis para o evento */}
-                  <Card className="border-blue-500/20 bg-blue-500/5">
+                  <Card className="border-purple-500/20 bg-purple-500/5">
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
-                        <Info className="w-5 h-5 text-blue-500 mt-0.5" />
+                        <Info className="w-5 h-5 text-purple-500 mt-0.5" />
                         <div>
                           <p className="font-medium text-sm">Variáveis Disponíveis</p>
                           <p className="text-xs text-muted-foreground mt-1">
@@ -736,6 +762,19 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
                               </SelectContent>
                             </Select>
                           </div>
+
+                          {/* Luna Preview integrado */}
+                          {formData.message_template.trim() && (
+                            <div className="pt-4 border-t border-purple-500/20">
+                              <LunaVariationsPreview
+                                messageTemplate={formData.message_template}
+                                variationsCount={formData.luna_variations_count}
+                                similarityLevel={formData.luna_similarity_level}
+                                onVariationsGenerated={handleVariationsGenerated}
+                                triggerPreview={triggerLunaPreview}
+                              />
+                            </div>
+                          )}
                         </div>
                       )}
                     </CardContent>
@@ -937,6 +976,10 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
                                 {availableEvents.find(e => e.value === selectedEvent)?.label || selectedEvent}
                               </p>
                             </div>
+                            <div>
+                              <span className="text-muted-foreground">Contatos Extraídos:</span>
+                              <p className="font-medium">{extractedContacts.length}</p>
+                            </div>
                           </>
                         ) : (
                           <div>
@@ -946,7 +989,11 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
                         )}
                         <div>
                           <span className="text-muted-foreground">Luna AI:</span>
-                          <p className="font-medium">{formData.luna_enabled ? 'Ativado' : 'Desativado'}</p>
+                          <p className="font-medium">
+                            {formData.luna_enabled 
+                              ? `Ativado (${generatedVariations.length || formData.luna_variations_count} variações)` 
+                              : 'Desativado'}
+                          </p>
                         </div>
                         <div>
                           <span className="text-muted-foreground">Janela de envio:</span>
