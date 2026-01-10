@@ -292,6 +292,70 @@ export function useCampaigns() {
     return updateCampaign(id, { status: 'cancelled' });
   };
 
+  // Retry pending contacts (queued or failed)
+  const retryPendingContacts = async (campaignId: string): Promise<{ success: boolean; count: number }> => {
+    try {
+      // Get count of pending contacts
+      const { data: pendingContacts, error: fetchError } = await supabase
+        .from('genesis_campaign_contacts')
+        .select('id')
+        .eq('campaign_id', campaignId)
+        .in('status', ['queued', 'pending', 'failed', 'rate_limited', 'cooldown']);
+
+      if (fetchError) throw fetchError;
+
+      const pendingCount = pendingContacts?.length || 0;
+      
+      if (pendingCount === 0) {
+        toast.info('Não há contatos pendentes para reenviar');
+        return { success: false, count: 0 };
+      }
+
+      // Reset pending contacts to 'pending' status
+      const { error: updateError } = await supabase
+        .from('genesis_campaign_contacts')
+        .update({ 
+          status: 'pending', 
+          attempt_count: 0,
+          error_message: null,
+          locked_at: null 
+        } as never)
+        .eq('campaign_id', campaignId)
+        .in('status', ['queued', 'pending', 'failed', 'rate_limited', 'cooldown']);
+
+      if (updateError) throw updateError;
+
+      // Update campaign status to draft if completed/failed
+      const { error: campaignError } = await supabase
+        .from('genesis_campaigns')
+        .update({ status: 'draft' } as never)
+        .eq('id', campaignId)
+        .in('status', ['completed', 'failed', 'cancelled', 'stopped_by_system']);
+
+      if (campaignError) {
+        console.warn('Could not reset campaign status:', campaignError);
+      }
+
+      // Log retry action
+      await supabase.from('genesis_campaign_logs').insert({
+        campaign_id: campaignId,
+        event_type: 'retry_pending',
+        severity: 'info',
+        message: `Reenvio iniciado para ${pendingCount} contatos pendentes`,
+        details: { pending_count: pendingCount }
+      } as never);
+
+      toast.success(`${pendingCount} contatos preparados para reenvio. Clique em "Iniciar" para continuar.`);
+      await fetchCampaigns();
+      
+      return { success: true, count: pendingCount };
+    } catch (error) {
+      console.error('Error retrying pending contacts:', error);
+      toast.error('Erro ao preparar reenvio');
+      return { success: false, count: 0 };
+    }
+  };
+
   return {
     campaigns,
     loading,
@@ -306,5 +370,6 @@ export function useCampaigns() {
     startCampaign,
     pauseCampaign,
     cancelCampaign,
+    retryPendingContacts,
   };
 }
