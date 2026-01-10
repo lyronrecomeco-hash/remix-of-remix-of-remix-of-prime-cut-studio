@@ -213,68 +213,66 @@ export function useCaktoContacts() {
           emails: approvedEmails.size,
         });
 
-        // 4. Filtrar PIX NÃO PAGOS com verificação RIGOROSA
+        // 4. Filtrar PIX NÃO PAGOS com verificação ULTRA-RIGOROSA
+        // Cenário: Cliente gerou PIX, abandonou, gerou outro PIX e PAGOU
+        // Solução: Verificar se telefone OU email pagou EM QUALQUER MOMENTO (não só depois do PIX)
         const unpaidContacts: CaktoContact[] = [];
-        const seenPhones = new Set<string>();
+        const seenIdentities = new Set<string>(); // Deduplicar por identidade (phone+email)
 
-        console.log('[useCaktoContacts] Processing', (pixEvents || []).length, 'PIX events for verification');
+        console.log('[useCaktoContacts] Processing', (pixEvents || []).length, 'PIX events for ULTRA-RIGOROUS verification');
 
         for (const event of (pixEvents || [])) {
           const normalizedPhone = normalizePhone(event.customer_phone);
           const normalizedEmail = normalizeEmail(event.customer_email);
-          const eventDate = new Date(event.created_at);
-          const eventProductId = event.product_id || '';
+          
+          // Criar identidade única baseada em telefone E email
+          const identity = `${normalizedPhone}|${normalizedEmail}`;
+
+          // VERIFICAÇÃO 0: Já processamos esta identidade (phone+email)?
+          if (seenIdentities.has(identity)) {
+            continue;
+          }
 
           // VERIFICAÇÃO 1: external_id EXATO já foi aprovado?
           if (event.external_id && approvedExternalIds.has(event.external_id)) {
             console.log('[useCaktoContacts] ✗ Skipping - SAME external_id already paid:', event.external_id);
+            seenIdentities.add(identity);
             continue;
           }
 
-          // VERIFICAÇÃO 2: telefone pagou DEPOIS de gerar este PIX?
-          // Verifica se o mesmo telefone tem um pagamento para o MESMO produto APÓS este PIX
-          let phonePaidLater = false;
-          if (normalizedPhone && paidByPhone.has(normalizedPhone)) {
-            const payments = paidByPhone.get(normalizedPhone)!;
-            for (const payment of payments) {
-              // Pagou o mesmo produto depois de gerar o PIX
-              if (payment.productId === eventProductId && payment.date > eventDate) {
-                phonePaidLater = true;
-                console.log('[useCaktoContacts] ✗ Skipping - phone paid SAME product later:', normalizedPhone, eventProductId);
-                break;
-              }
-              // Ou pagou qualquer produto depois (pode ser segunda compra)
-              if (payment.date > eventDate) {
-                // Verificar se gerou PIX novamente para outro produto e pagou esse
-                phonePaidLater = true;
-                console.log('[useCaktoContacts] ✗ Skipping - phone paid ANY product later:', normalizedPhone);
-                break;
-              }
-            }
+          // VERIFICAÇÃO 2: telefone JÁ PAGOU em QUALQUER momento (não importa quando)?
+          // Se o cliente pagou QUALQUER coisa, não está mais "aguardando pagamento"
+          let phonePaidAnytime = false;
+          if (normalizedPhone && approvedPhones.has(normalizedPhone)) {
+            phonePaidAnytime = true;
+            console.log('[useCaktoContacts] ✗ Skipping - phone HAS PAID (anytime):', normalizedPhone);
           }
-          if (phonePaidLater) continue;
-
-          // VERIFICAÇÃO 3: email pagou DEPOIS de gerar este PIX?
-          let emailPaidLater = false;
-          if (normalizedEmail && paidByEmail.has(normalizedEmail)) {
-            const payments = paidByEmail.get(normalizedEmail)!;
-            for (const payment of payments) {
-              if (payment.date > eventDate) {
-                emailPaidLater = true;
-                console.log('[useCaktoContacts] ✗ Skipping - email paid later:', normalizedEmail);
-                break;
-              }
-            }
-          }
-          if (emailPaidLater) continue;
-
-          // VERIFICAÇÃO 4: Evitar duplicatas por telefone (manter apenas o mais recente)
-          if (!normalizedPhone || seenPhones.has(normalizedPhone)) {
+          if (phonePaidAnytime) {
+            seenIdentities.add(identity);
             continue;
           }
-          seenPhones.add(normalizedPhone);
+
+          // VERIFICAÇÃO 3: email JÁ PAGOU em QUALQUER momento?
+          let emailPaidAnytime = false;
+          if (normalizedEmail && approvedEmails.has(normalizedEmail)) {
+            emailPaidAnytime = true;
+            console.log('[useCaktoContacts] ✗ Skipping - email HAS PAID (anytime):', normalizedEmail);
+          }
+          if (emailPaidAnytime) {
+            seenIdentities.add(identity);
+            continue;
+          }
+
+          // VERIFICAÇÃO 4: Evitar duplicatas por telefone apenas (fallback)
+          if (!normalizedPhone) {
+            continue;
+          }
+
+          // Marcar identidade como processada
+          seenIdentities.add(identity);
 
           // Formatar data precisa
+          const eventDate = new Date(event.created_at);
           const formattedDate = format(eventDate, "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR });
 
           unpaidContacts.push({
