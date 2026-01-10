@@ -411,6 +411,7 @@ export default function GenesisPanel() {
   const [instances, setInstances] = useState<Array<{ id: string; name: string; status: string }>>([]);
   const [showWelcome, setShowWelcome] = useState(false);
   const [isEditingFlow, setIsEditingFlow] = useState(false);
+  const [isCaktoFocusMode, setIsCaktoFocusMode] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -513,7 +514,7 @@ export default function GenesisPanel() {
       case 'campaigns':
         return <GenesisCampaigns />;
       case 'cakto':
-        return <CaktoHub />;
+        return <CaktoHub onFocusModeChange={setIsCaktoFocusMode} />;
       case 'metrics':
         return (
           <div className="space-y-6">
@@ -602,8 +603,8 @@ export default function GenesisPanel() {
     );
   }
 
-  // Hide sidebar when editing flow
-  const shouldHideSidebar = activeTab === 'flows' && isEditingFlow;
+  // Hide sidebar when editing flow or in Cakto focus mode
+  const shouldHideSidebar = (activeTab === 'flows' && isEditingFlow) || (activeTab === 'cakto' && isCaktoFocusMode);
 
   return (
     <div className="min-h-screen bg-background flex flex-col transition-colors duration-300">

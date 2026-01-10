@@ -12,7 +12,6 @@ import {
   Loader2, 
   CheckCircle2, 
   AlertCircle, 
-  Settings2, 
   ArrowRight,
   Smartphone,
   Link2,
@@ -37,7 +36,11 @@ interface CaktoIntegration {
   store_name?: string;
 }
 
-export function CaktoHub() {
+interface CaktoHubProps {
+  onFocusModeChange?: (isFocused: boolean) => void;
+}
+
+export function CaktoHub({ onFocusModeChange }: CaktoHubProps) {
   const { genesisUser } = useGenesisAuth();
   const [instances, setInstances] = useState<Instance[]>([]);
   const [integrations, setIntegrations] = useState<CaktoIntegration[]>([]);
@@ -84,6 +87,11 @@ export function CaktoHub() {
     fetchData();
   }, [genesisUser?.id]);
 
+  // Controla o modo foco quando abre/fecha o painel
+  useEffect(() => {
+    onFocusModeChange?.(showPanel);
+  }, [showPanel, onFocusModeChange]);
+
   const getIntegrationForInstance = (instanceId: string) => {
     return integrations.find(i => i.instance_id === instanceId);
   };
@@ -98,6 +106,10 @@ export function CaktoHub() {
     setShowPanel(true);
   };
 
+  const handleBackFromPanel = () => {
+    setShowPanel(false);
+  };
+
   const refetchIntegrations = async () => {
     if (!genesisUser?.id) return;
     const { data } = await supabase
@@ -108,11 +120,12 @@ export function CaktoHub() {
     setIntegrations((data || []) as CaktoIntegration[]);
   };
 
+  // Modo painel - tela cheia para gerenciamento
   if (showPanel && selectedInstanceId) {
     return (
       <CaktoPanel 
         instanceId={selectedInstanceId} 
-        onBack={() => setShowPanel(false)} 
+        onBack={handleBackFromPanel} 
       />
     );
   }
