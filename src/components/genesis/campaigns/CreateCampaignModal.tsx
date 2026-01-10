@@ -299,8 +299,8 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0">
-        <DialogHeader className="p-6 pb-4 border-b">
+      <DialogContent className="max-w-3xl max-h-[85vh] p-0 flex flex-col overflow-hidden">
+        <DialogHeader className="p-6 pb-4 border-b flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
             Nova Campanha WhatsApp
@@ -308,7 +308,7 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
         </DialogHeader>
 
         {/* Step Indicators */}
-        <div className="px-6 py-4 border-b bg-muted/30">
+        <div className="px-6 py-4 border-b bg-muted/30 flex-shrink-0">
           <div className="flex items-center justify-between">
             {STEPS.map((s, index) => (
               <div key={s.id} className="flex items-center">
@@ -346,11 +346,10 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
               </div>
             ))}
           </div>
-        </div
-        >
+        </div>
 
-        {/* Step Content */}
-        <ScrollArea className="flex-1 min-h-0 p-6">
+        {/* Step Content - Scrollable */}
+        <div className="flex-1 overflow-y-auto p-6">
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
@@ -929,7 +928,7 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
               )}
             </motion.div>
           </AnimatePresence>
-        </ScrollArea>
+        </div>
 
         {/* Footer Actions */}
         <div className="p-6 pt-4 border-t flex items-center justify-between">

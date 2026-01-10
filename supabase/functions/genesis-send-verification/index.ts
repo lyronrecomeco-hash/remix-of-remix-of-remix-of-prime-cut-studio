@@ -128,7 +128,7 @@ serve(async (req) => {
       const cleanUrl = backendUrl.replace(/\/$/, "");
       const backendKey = encodeURIComponent(instanceId);
 
-      const verificationMessage = `🔐 *Código de Verificação Genesis*\n\nSeu código é: *${code}*\n\nEste código expira em 5 minutos.\n\n_Se você não solicitou este código, ignore esta mensagem._`;
+      const verificationMessage = `Seu código de verificação da Genesis é:\n\nCódigo:\n*${code}*\n\n_Este código expira em 5 minutos._`;
 
       // Payload compatível (v8/legacy) + payload evolution
       const v8Payload = {
