@@ -86,6 +86,7 @@ serve(async (req) => {
         }
 
         // Create integration first to get the ID
+        // Store api_token (clientSecret) for API calls, encrypted with base64
         const { data, error } = await supabase
           .from('genesis_instance_integrations')
           .insert({
@@ -97,7 +98,7 @@ serve(async (req) => {
             store_name: 'Cakto',
             metadata: {
               client_id: clientId,
-              client_secret_hash: btoa(clientSecret).slice(0, 20) + '...',
+              api_token: btoa(clientSecret), // Store encoded for API calls
               configured_at: new Date().toISOString(),
             },
           })
@@ -137,14 +138,24 @@ serve(async (req) => {
           );
         }
 
+        // Get existing metadata to preserve other fields
+        const { data: existing } = await supabase
+          .from('genesis_instance_integrations')
+          .select('metadata')
+          .eq('id', integrationId)
+          .single();
+
+        const existingMeta = (existing?.metadata || {}) as Record<string, unknown>;
+
         const { data, error } = await supabase
           .from('genesis_instance_integrations')
           .update({
             status: 'connected',
             error_message: null,
             metadata: {
+              ...existingMeta,
               client_id: clientId,
-              client_secret_hash: btoa(clientSecret).slice(0, 20) + '...',
+              api_token: btoa(clientSecret), // Store encoded for API calls
               updated_at: new Date().toISOString(),
             },
             updated_at: new Date().toISOString(),
