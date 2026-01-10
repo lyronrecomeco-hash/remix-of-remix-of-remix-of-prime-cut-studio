@@ -24,12 +24,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cakto-signature, x-webhook-secret',
 };
 
-// Cakto event types
+// Cakto event types - Eventos disponíveis:
+// https://docs.cakto.com.br/
 const CAKTO_EVENTS = [
   'initiate_checkout',
+  'pix_generated',
+  'pix_expired',
   'purchase_approved',
   'purchase_refused',
   'purchase_refunded',
+  'purchase_chargeback',
   'checkout_abandonment',
 ] as const;
 
