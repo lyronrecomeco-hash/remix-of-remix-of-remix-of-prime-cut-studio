@@ -65,6 +65,7 @@ import { ContactsPreviewCard } from './ContactsPreviewCard';
 import { ProductMultiSelect } from './ProductMultiSelect';
 import { useCaktoContacts, type CaktoContact, type CaktoProduct, type DateRange, getDefaultDateRange } from './hooks/useCaktoContacts';
 import { DateRangeSelector } from './DateRangeSelector';
+import { CampaignTestSection } from './CampaignTestSection';
 
 interface CreateCampaignModalProps {
   open: boolean;
@@ -1146,6 +1147,17 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
                       </div>
                     </CardContent>
                   </Card>
+
+                  {/* Campaign Test Section */}
+                  {formData.instance_id && formData.message_template && (
+                    <CampaignTestSection
+                      instanceId={formData.instance_id}
+                      instanceName={selectedInstance?.name || 'Instância'}
+                      messageTemplate={formData.message_template}
+                      lunaEnabled={formData.luna_enabled}
+                      lunaVariations={generatedVariations}
+                    />
+                  )}
 
                   {/* Credits Check - apenas para campanhas que não são de integração */}
                   {formData.campaign_type !== 'integracao' ? (
