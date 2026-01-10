@@ -6929,6 +6929,33 @@ export type Database = {
           },
         ]
       }
+      verification_config: {
+        Row: {
+          config_type: string
+          config_value: Json
+          created_at: string | null
+          id: string
+          is_enabled: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          config_type: string
+          config_value?: Json
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          config_type?: string
+          config_value?: Json
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       webhook_configs: {
         Row: {
           created_at: string
