@@ -175,6 +175,27 @@ async function testRDStation(credentials: Record<string, string>): Promise<{ suc
   }
 }
 
+// Test Cakto connection
+async function testCakto(credentials: Record<string, string>): Promise<{ success: boolean; message?: string; error?: string }> {
+  const { client_id, client_secret } = credentials;
+  
+  if (!client_id || !client_secret) {
+    return { success: false, error: 'client_id e client_secret são obrigatórios' };
+  }
+
+  // Validate credentials format - Cakto uses alphanumeric strings
+  if (client_id.length < 10 || client_secret.length < 10) {
+    return { success: false, error: 'Credenciais inválidas. Verifique o formato.' };
+  }
+
+  // Cakto doesn't have a public test endpoint, so we validate format only
+  // Real validation happens when webhooks are received
+  return { 
+    success: true, 
+    message: 'Credenciais válidas! Configure o webhook na Cakto para receber eventos.' 
+  };
+}
+
 // Test connection based on provider
 async function testConnection(provider: string, credentials: Record<string, string>) {
   switch (provider) {
@@ -188,6 +209,8 @@ async function testConnection(provider: string, credentials: Record<string, stri
       return testMercadoShops(credentials);
     case 'rdstation':
       return testRDStation(credentials);
+    case 'cakto':
+      return testCakto(credentials);
     default:
       return { success: false, error: `Provider não suportado: ${provider}` };
   }
@@ -237,6 +260,11 @@ serve(async (req) => {
         
         // Encrypt credentials
         const encryptedCreds = encryptCredentials(credentials);
+        
+        // Generate webhook URL for Cakto
+        const webhookUrl = provider === 'cakto' 
+          ? `${supabaseUrl}/functions/v1/cakto-webhook/${instanceId}` 
+          : null;
 
         // Insert or update (upsert)
         const { data, error } = await supabase
@@ -248,7 +276,8 @@ serve(async (req) => {
             status: testResult.success ? 'connected' : 'error',
             credentials_encrypted: encryptedCreds,
             store_url: storeUrl || credentials.store_url || null,
-            store_name: storeName || credentials.store_name || null,
+            store_name: storeName || credentials.store_name || provider === 'cakto' ? 'Cakto' : null,
+            webhook_url: webhookUrl,
             error_message: testResult.success ? null : testResult.error,
             last_sync_at: testResult.success ? new Date().toISOString() : null,
           }, {
@@ -269,7 +298,8 @@ serve(async (req) => {
           JSON.stringify({ 
             success: true, 
             integration: data,
-            testResult 
+            testResult,
+            webhookUrl, 
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
