@@ -268,11 +268,28 @@ export function CaktoSalesModal({ open, onOpenChange, instanceId }: CaktoSalesMo
       setInitialized(true);
       fetchEvents('all');
       fetchCounts();
+      
+      // Auto-sync: importar dados a cada 1 minuto
+      if (integration?.id) {
+        handleSyncOrders();
+      }
     }
     if (!open) {
       setInitialized(false);
     }
-  }, [open, instanceId, initialized, fetchEvents, fetchCounts]);
+  }, [open, instanceId, initialized, fetchEvents, fetchCounts, integration?.id]);
+
+  // Auto-sync a cada 1 minuto
+  useEffect(() => {
+    if (!open || !integration?.id) return;
+    
+    const syncInterval = setInterval(() => {
+      console.log('[CaktoSales] Auto-sync triggered (1 min interval)');
+      handleSyncOrders();
+    }, 60000); // 60 segundos
+    
+    return () => clearInterval(syncInterval);
+  }, [open, integration?.id]);
 
   // Refetch quando tab muda
   useEffect(() => {
@@ -370,7 +387,7 @@ export function CaktoSalesModal({ open, onOpenChange, instanceId }: CaktoSalesMo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col p-0 gap-0">
+      <DialogContent className="max-w-5xl h-[85vh] flex flex-col p-0 gap-0 overflow-hidden">
         <DialogHeader className="p-6 pb-4 border-b flex-shrink-0">
           <DialogTitle className="flex items-center gap-3 text-xl">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -380,12 +397,12 @@ export function CaktoSalesModal({ open, onOpenChange, instanceId }: CaktoSalesMo
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden min-h-0">
           {/* Tabs */}
           <Tabs 
             value={activeTab} 
             onValueChange={(v) => setActiveTab(v as SalesTab)} 
-            className="flex-1 flex flex-col min-h-0"
+            className="flex-1 flex flex-col overflow-hidden"
           >
             <div className="px-6 pt-4 flex-shrink-0">
               <div className="flex items-center justify-between gap-4 mb-4">
@@ -459,8 +476,8 @@ export function CaktoSalesModal({ open, onOpenChange, instanceId }: CaktoSalesMo
               )}
             </div>
 
-            <TabsContent value={activeTab} className="flex-1 min-h-0 overflow-hidden m-0 px-6 pb-6">
-              <div className="h-full overflow-y-auto pr-2">
+            <TabsContent value={activeTab} className="flex-1 overflow-hidden m-0 data-[state=active]:flex data-[state=active]:flex-col">
+              <div className="flex-1 overflow-y-auto px-6 pb-6">
                 {loading ? (
                   <div className="space-y-3">
                     {[1, 2, 3, 4, 5].map(i => (
