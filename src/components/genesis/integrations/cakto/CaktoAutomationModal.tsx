@@ -46,6 +46,7 @@ import {
   X,
   Megaphone,
   Settings2,
+  CreditCard,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { CaktoEventType, CAKTO_EVENT_LABELS, CAKTO_EVENT_COLORS } from './types';
@@ -97,17 +98,23 @@ interface Campaign {
 
 const EVENT_ICONS: Record<CaktoEventType, typeof ShoppingCart> = {
   initiate_checkout: ShoppingCart,
+  pix_generated: CreditCard,
+  pix_expired: XCircle,
   purchase_approved: CheckCircle2,
   purchase_refused: XCircle,
   purchase_refunded: RotateCcw,
+  purchase_chargeback: AlertTriangle,
   checkout_abandonment: Clock,
 };
 
 const ALL_EVENT_TYPES: CaktoEventType[] = [
   'initiate_checkout',
+  'pix_generated',
+  'pix_expired',
   'purchase_approved',
   'purchase_refused',
   'purchase_refunded',
+  'purchase_chargeback',
   'checkout_abandonment',
 ];
 
