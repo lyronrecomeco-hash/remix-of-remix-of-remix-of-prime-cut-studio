@@ -16,7 +16,8 @@ import {
   Copy,
   Link2,
   ExternalLink,
-  BookOpen
+  BookOpen,
+  LayoutGrid
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,7 +27,9 @@ import { CaktoDashboard } from './CaktoDashboard';
 import { CaktoEventRules } from './CaktoEventRules';
 import { CaktoEventsLog } from './CaktoEventsLog';
 import { CaktoConfigModal } from './CaktoConfigModal';
+import { CaktoAutomationModal } from './CaktoAutomationModal';
 import { useCaktoIntegration } from './hooks/useCaktoIntegration';
+import caktoLogo from '@/assets/integrations/cakto-logo.png';
 import caktoLogo from '@/assets/integrations/cakto-logo.png';
 import {
   Dialog,
@@ -45,6 +48,7 @@ export function CaktoPanel({ instanceId, onBack }: CaktoPanelProps) {
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [showEventsModal, setShowEventsModal] = useState(false);
   const [showWebhookModal, setShowWebhookModal] = useState(false);
+  const [showAutomationModal, setShowAutomationModal] = useState(false);
   const { integration, loading, refetch, isConnected, hasError } = useCaktoIntegration(instanceId);
 
   // Webhook URL com domínio customizado
@@ -100,6 +104,15 @@ export function CaktoPanel({ instanceId, onBack }: CaktoPanelProps) {
 
           {/* Direita: Ações */}
           <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="gap-2 h-10 px-4" 
+              onClick={() => setShowAutomationModal(true)}
+            >
+              <LayoutGrid className="w-4 h-4" />
+              <span className="hidden sm:inline">Automação</span>
+            </Button>
             <Button 
               variant="outline" 
               size="sm"
@@ -276,6 +289,16 @@ export function CaktoPanel({ instanceId, onBack }: CaktoPanelProps) {
         existingIntegration={integration}
         onSuccess={refetch}
       />
+
+      {/* Automation Modal */}
+      <CaktoAutomationModal
+        open={showAutomationModal}
+        onOpenChange={setShowAutomationModal}
+        instanceId={instanceId}
+        integrationId={integration?.id}
+      />
+    </motion.div>
+  );
     </motion.div>
   );
 }
