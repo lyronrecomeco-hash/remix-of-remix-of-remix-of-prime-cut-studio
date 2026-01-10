@@ -64,8 +64,11 @@ export function CaktoConfigModal({
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const isEditMode = !!existingIntegration;
+  
+  // Generate webhook URL using Supabase URL
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const webhookUrl = existingIntegration?.webhook_url || 
-    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/cakto-webhook-gateway/${instanceId}`;
+    `${supabaseUrl}/functions/v1/cakto-webhook/${instanceId}`;
 
   // Reset form quando abre
   useEffect(() => {

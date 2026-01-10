@@ -94,8 +94,8 @@ export function useCaktoIntegration(instanceId: string) {
   }, [instanceId, fetchIntegration]);
 
   // Helpers
-  const isConnected = integration?.status === 'connected' && integration?.is_active !== false;
-  const isActive = integration?.is_active === true;
+  const isConnected = integration?.status === 'connected';
+  const isActive = integration?.is_active !== false; // Default to true if undefined
   const hasError = integration?.status === 'error';
 
   return {
