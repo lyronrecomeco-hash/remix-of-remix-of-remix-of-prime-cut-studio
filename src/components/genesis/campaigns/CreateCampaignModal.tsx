@@ -62,7 +62,8 @@ import { IntegrationSelector } from './IntegrationSelector';
 import { ScheduleByPeriodControl, DEFAULT_SCHEDULE, type ScheduleByPeriod } from './ScheduleByPeriodControl';
 import { LunaVariationsPreview } from './LunaVariationsPreview';
 import { ContactsPreviewCard } from './ContactsPreviewCard';
-import { useCaktoContacts, type CaktoContact, type CaktoProduct } from './hooks/useCaktoContacts';
+import { useCaktoContacts, type CaktoContact, type CaktoProduct, type DateRange, getDefaultDateRange } from './hooks/useCaktoContacts';
+import { DateRangeSelector } from './DateRangeSelector';
 
 interface CreateCampaignModalProps {
   open: boolean;
@@ -163,6 +164,7 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
   const [availableProducts, setAvailableProducts] = useState<CaktoProduct[]>([]);
   const [triggerLunaPreview, setTriggerLunaPreview] = useState(false);
   const [generatedVariations, setGeneratedVariations] = useState<string[]>([]);
+  const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
   const { contacts: caktoContacts, loading: loadingContacts, fetchContacts, fetchProducts } = useCaktoContacts();
   
   // Steps dinâmicos
@@ -204,6 +206,7 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
       setAvailableProducts([]);
       setTriggerLunaPreview(false);
       setGeneratedVariations([]);
+      setDateRange(getDefaultDateRange());
     }
   }, [open, genesisUser]);
 
@@ -218,7 +221,7 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
     }
   }, [selectedIntegrationId, selectedIntegrationProvider, fetchProducts]);
 
-  // Extrair contatos quando evento ou produto é selecionado
+  // Extrair contatos quando evento, produto OU DATA é selecionado
   useEffect(() => {
     if (
       formData.campaign_type === 'integracao' && 
@@ -226,12 +229,13 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
       selectedEvent && 
       formData.instance_id
     ) {
-      console.log('[Campaign] Extracting contacts for event:', selectedEvent, 'product:', selectedProductId);
+      console.log('[Campaign] Extracting contacts for event:', selectedEvent, 'product:', selectedProductId, 'dateRange:', dateRange);
       fetchContacts({
         instanceId: formData.instance_id,
         integrationId: selectedIntegrationId,
         eventType: selectedEvent,
         productId: selectedProductId || undefined,
+        dateRange: dateRange,
       }).then(contacts => {
         setExtractedContacts(contacts);
         // Converter para formato de contatos da campanha
@@ -245,7 +249,7 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
         }
       });
     }
-  }, [selectedEvent, selectedIntegrationId, selectedProductId, formData.instance_id, formData.campaign_type, fetchContacts]);
+  }, [selectedEvent, selectedIntegrationId, selectedProductId, formData.instance_id, formData.campaign_type, fetchContacts, dateRange]);
 
   // Parse contacts from text
   const parseContacts = (text: string) => {
@@ -637,12 +641,12 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
                         <p className="text-sm text-muted-foreground">
                           Selecione um produto específico para maior precisão na extração
                         </p>
-                        <Select value={selectedProductId} onValueChange={setSelectedProductId}>
+                        <Select value={selectedProductId || '_all_'} onValueChange={(v) => setSelectedProductId(v === '_all_' ? '' : v)}>
                           <SelectTrigger>
                             <SelectValue placeholder="Todos os produtos ativos" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">Todos os produtos ativos</SelectItem>
+                            <SelectItem value="_all_">Todos os produtos ativos</SelectItem>
                             {availableProducts.map(product => (
                               <SelectItem key={product.id} value={product.external_id}>
                                 <div className="flex items-center gap-2">
@@ -658,6 +662,25 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
                         <p className="text-xs text-muted-foreground">
                           ✓ Apenas {availableProducts.length} produtos ativos exibidos
                         </p>
+                      </CardContent>
+                    </Card>
+                    )}
+
+                  {/* Seletor de Período (DATA) */}
+                  {selectedEvent && selectedIntegrationProvider === 'cakto' && (
+                    <Card className="border-amber-500/20 bg-amber-500/5">
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-5 h-5 text-amber-500" />
+                          <Label className="font-medium">Período de Extração</Label>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Defina o período para extrair os contatos. Padrão: últimos 2 dias.
+                        </p>
+                        <DateRangeSelector
+                          value={dateRange}
+                          onChange={setDateRange}
+                        />
                       </CardContent>
                     </Card>
                   )}

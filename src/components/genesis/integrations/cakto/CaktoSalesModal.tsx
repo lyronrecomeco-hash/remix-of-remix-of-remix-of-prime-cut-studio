@@ -1,11 +1,12 @@
 /**
- * CAKTO SALES MODAL
+ * CAKTO SALES MODAL - v2 OPTIMIZED
  * Modal para exibir vendas por status com atualização em tempo real
  * Filtro por categoria dropdown organizado + PIX Não Pago verificado
+ * OTIMIZADO: Paginação, memoização, lazy loading
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { motion } from 'framer-motion';
 import {
   Dialog,
   DialogContent,
@@ -33,24 +34,23 @@ import {
   AlertTriangle,
   Search,
   RefreshCw,
-  User,
   Phone,
   Mail,
   Package,
-  DollarSign,
   Clock,
   TrendingUp,
   CreditCard,
   MessageCircle,
-  ExternalLink,
   Banknote,
   Download,
   Loader2,
   Filter,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CaktoEvent, CaktoEventType, CAKTO_EVENT_LABELS, CAKTO_EVENT_COLORS } from './types';
+import { CaktoEvent, CaktoEventType, CAKTO_EVENT_LABELS } from './types';
 import { useCaktoSync } from './hooks/useCaktoSync';
 import { useCaktoIntegration } from './hooks/useCaktoIntegration';
 
@@ -76,6 +76,139 @@ const FILTER_OPTIONS: { value: FilterCategory; label: string; icon: React.Elemen
   { value: 'boleto_generated', label: 'Boleto Gerado', icon: CreditCard, color: 'text-indigo-500' },
 ];
 
+// Itens por página para performance
+const ITEMS_PER_PAGE = 25;
+
+// Componente de evento memoizado para evitar re-renders
+const EventItem = memo(({ 
+  event, 
+  isPixUnpaidFilter,
+  whatsappLink,
+}: { 
+  event: CaktoEvent; 
+  isPixUnpaidFilter: boolean;
+  whatsappLink: string | null;
+}) => {
+  const getEventIcon = (type: string) => {
+    switch (type) {
+      case 'purchase_approved': return CheckCircle2;
+      case 'purchase_refused': return XCircle;
+      case 'purchase_refunded': return RotateCcw;
+      case 'purchase_chargeback': return AlertTriangle;
+      case 'checkout_abandonment': return AlertTriangle;
+      case 'initiate_checkout': return ShoppingCart;
+      case 'pix_generated': return CreditCard;
+      case 'pix_expired': return XCircle;
+      case 'boleto_generated': return CreditCard;
+      default: return CreditCard;
+    }
+  };
+
+  const getEventColor = (type: string) => {
+    switch (type) {
+      case 'purchase_approved': return 'text-green-500 bg-green-500/10';
+      case 'purchase_refused': return 'text-red-500 bg-red-500/10';
+      case 'purchase_refunded': return 'text-orange-500 bg-orange-500/10';
+      case 'purchase_chargeback': return 'text-red-600 bg-red-600/10';
+      case 'checkout_abandonment': return 'text-yellow-500 bg-yellow-500/10';
+      case 'initiate_checkout': return 'text-blue-500 bg-blue-500/10';
+      case 'pix_generated': return 'text-purple-500 bg-purple-500/10';
+      case 'pix_expired': return 'text-red-400 bg-red-400/10';
+      case 'boleto_generated': return 'text-indigo-500 bg-indigo-500/10';
+      default: return 'text-muted-foreground bg-muted';
+    }
+  };
+
+  const formatCurrency = (value: number | null) => {
+    if (!value) return '-';
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
+  };
+
+  const EventIcon = getEventIcon(event.event_type);
+  const colorClass = getEventColor(event.event_type);
+
+  return (
+    <div className="group p-4 rounded-lg border bg-card hover:shadow-md transition-all">
+      <div className="flex items-start gap-4">
+        {/* Ícone do evento */}
+        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClass}`}>
+          <EventIcon className="w-5 h-5" />
+        </div>
+
+        {/* Info principal */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="font-medium truncate">
+              {event.customer_name || 'Cliente'}
+            </span>
+            <Badge variant="outline" className="text-xs">
+              {CAKTO_EVENT_LABELS[event.event_type as CaktoEventType] || event.event_type}
+            </Badge>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+            {event.customer_phone && (
+              <span className="flex items-center gap-1">
+                <Phone className="w-3 h-3" />
+                {event.customer_phone}
+              </span>
+            )}
+            {event.customer_email && (
+              <span className="flex items-center gap-1 truncate max-w-[200px]">
+                <Mail className="w-3 h-3" />
+                {event.customer_email}
+              </span>
+            )}
+            {event.product_name && (
+              <span className="flex items-center gap-1 truncate max-w-[200px]">
+                <Package className="w-3 h-3" />
+                {event.product_name}
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              {format(new Date(event.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+            </span>
+            <span className="text-muted-foreground/50">
+              ({formatDistanceToNow(new Date(event.created_at), { addSuffix: true, locale: ptBR })})
+            </span>
+          </div>
+        </div>
+
+        {/* Valor e ações */}
+        <div className="flex flex-col items-end gap-2">
+          {event.order_value && (
+            <span className="font-semibold text-lg">
+              {formatCurrency(event.order_value)}
+            </span>
+          )}
+
+          {/* Ação WhatsApp para PIX não pago */}
+          {isPixUnpaidFilter && whatsappLink && (
+            <Button
+              size="sm"
+              variant="default"
+              className="gap-1.5 bg-green-600 hover:bg-green-700"
+              onClick={() => window.open(whatsappLink, '_blank')}
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              Contatar
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
+
+EventItem.displayName = 'EventItem';
+
 export function CaktoSalesModal({ open, onOpenChange, instanceId }: CaktoSalesModalProps) {
   const [activeFilter, setActiveFilter] = useState<FilterCategory>('all');
   const [events, setEvents] = useState<CaktoEvent[]>([]);
@@ -83,22 +216,22 @@ export function CaktoSalesModal({ open, onOpenChange, instanceId }: CaktoSalesMo
   const [search, setSearch] = useState('');
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [initialized, setInitialized] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<CaktoEvent | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Hooks
   const { syncOrders, loading: syncLoading } = useCaktoSync();
   const { integration } = useCaktoIntegration(instanceId);
 
-  // Gerar link do WhatsApp
-  const generateWhatsAppLink = (phone: string | null, name: string | null) => {
+  // Gerar link do WhatsApp - memoizado
+  const generateWhatsAppLink = useCallback((phone: string | null, name: string | null) => {
     if (!phone) return null;
     const cleanPhone = phone.replace(/\D/g, '');
     const message = encodeURIComponent(
       `Olá${name ? ` ${name.split(' ')[0]}` : ''}! Vi que você gerou um PIX mas ainda não completou o pagamento. Posso te ajudar com alguma dúvida?`
     );
     return `https://wa.me/${cleanPhone}?text=${message}`;
-  };
+  }, []);
 
   // Sincronizar pedidos históricos
   const handleSyncOrders = useCallback(async () => {
@@ -112,9 +245,9 @@ export function CaktoSalesModal({ open, onOpenChange, instanceId }: CaktoSalesMo
     } finally {
       setSyncing(false);
     }
-  }, [integration?.id, syncOrders]);
+  }, [integration?.id, syncOrders, activeFilter]);
 
-  // Buscar eventos com verificação precisa de PIX não pago
+  // Buscar eventos com verificação precisa de PIX não pago - PAGINADO
   const fetchEvents = useCallback(async (filter: FilterCategory = activeFilter) => {
     if (!instanceId) {
       console.log('[CaktoSales] No instanceId provided');
@@ -123,16 +256,19 @@ export function CaktoSalesModal({ open, onOpenChange, instanceId }: CaktoSalesMo
     
     console.log('[CaktoSales] Fetching events for instance:', instanceId, 'filter:', filter);
     setLoading(true);
+    setCurrentPage(1); // Reset para página 1
+    
     try {
       // PIX Não Pago: lógica especial para verificar pagamentos
       if (filter === 'pix_unpaid') {
-        // 1. Buscar todos os pix_generated
+        // 1. Buscar todos os pix_generated (limitado para performance)
         const { data: pixEvents, error: pixError } = await supabase
           .from('genesis_cakto_events')
           .select('*')
           .eq('instance_id', instanceId)
           .in('event_type', ['pix_generated', 'pix_expired'])
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .limit(500);
 
         if (pixError) {
           console.error('[CaktoSales] Error fetching PIX events:', pixError);
@@ -170,19 +306,16 @@ export function CaktoSalesModal({ open, onOpenChange, instanceId }: CaktoSalesMo
         // 4. Filtrar PIX que NÃO foram pagos - sem duplicatas
         const seenPhones = new Set<string>();
         const unpaidPix = (pixEvents || []).filter(pixEvent => {
-          // Verificar se já foi aprovado pelo external_id
           if (pixEvent.external_id && approvedExternalIds.has(pixEvent.external_id)) {
             return false;
           }
 
-          // Verificar se há aprovação posterior para o mesmo telefone
           if (pixEvent.customer_phone) {
             const approvedDate = approvedPhoneMap.get(pixEvent.customer_phone);
             if (approvedDate && approvedDate > new Date(pixEvent.created_at)) {
               return false;
             }
             
-            // Evitar duplicatas por telefone (mantém o mais recente)
             if (seenPhones.has(pixEvent.customer_phone)) {
               return false;
             }
@@ -197,12 +330,13 @@ export function CaktoSalesModal({ open, onOpenChange, instanceId }: CaktoSalesMo
         return;
       }
 
-      // Busca normal para outras categorias
+      // Busca normal para outras categorias - COM LIMITE
       let query = supabase
         .from('genesis_cakto_events')
         .select('*')
         .eq('instance_id', instanceId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(500); // Limitar para performance
 
       if (filter !== 'all') {
         query = query.eq('event_type', filter);
@@ -226,17 +360,18 @@ export function CaktoSalesModal({ open, onOpenChange, instanceId }: CaktoSalesMo
     }
   }, [instanceId, activeFilter]);
 
-  // Buscar contagens precisas por tipo
+  // Buscar contagens precisas por tipo (APENAS uma vez, sem bloquear UI)
   const fetchCounts = useCallback(async () => {
     if (!instanceId) return;
 
     console.log('[CaktoSales] Fetching counts for instance:', instanceId);
     try {
-      // Buscar todos os eventos para contagem
+      // Buscar contagens agregadas de forma mais eficiente
       const { data: allEvents, error } = await supabase
         .from('genesis_cakto_events')
         .select('event_type, external_id, customer_phone, created_at')
-        .eq('instance_id', instanceId);
+        .eq('instance_id', instanceId)
+        .limit(2000); // Limitar para performance
 
       if (error) {
         console.error('[CaktoSales] Error fetching counts:', error);
@@ -313,17 +448,18 @@ export function CaktoSalesModal({ open, onOpenChange, instanceId }: CaktoSalesMo
     if (!open) {
       setInitialized(false);
       setActiveFilter('all');
+      setCurrentPage(1);
     }
   }, [open, instanceId, initialized, fetchEvents, fetchCounts, integration?.id, handleSyncOrders]);
 
-  // Auto-sync a cada 1 minuto
+  // Auto-sync a cada 2 minutos (aumentado para reduzir carga)
   useEffect(() => {
     if (!open || !integration?.id) return;
     
     const syncInterval = setInterval(() => {
-      console.log('[CaktoSales] Auto-sync triggered (1 min interval)');
+      console.log('[CaktoSales] Auto-sync triggered (2 min interval)');
       handleSyncOrders();
-    }, 60000);
+    }, 120000); // 2 minutos
     
     return () => clearInterval(syncInterval);
   }, [open, integration?.id, handleSyncOrders]);
@@ -336,7 +472,7 @@ export function CaktoSalesModal({ open, onOpenChange, instanceId }: CaktoSalesMo
     }
   }, [activeFilter, open, initialized, instanceId, fetchEvents]);
 
-  // Realtime updates
+  // Realtime updates - OTIMIZADO
   useEffect(() => {
     if (!open || !instanceId) return;
 
@@ -353,23 +489,10 @@ export function CaktoSalesModal({ open, onOpenChange, instanceId }: CaktoSalesMo
         (payload) => {
           const newEvent = payload.new as CaktoEvent;
           if (activeFilter === 'all' || newEvent.event_type === activeFilter) {
-            setEvents(prev => [newEvent, ...prev]);
+            setEvents(prev => [newEvent, ...prev.slice(0, 499)]); // Manter limite
           }
-          fetchCounts();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'genesis_cakto_events',
-          filter: `instance_id=eq.${instanceId}`,
-        },
-        (payload) => {
-          const updatedEvent = payload.new as CaktoEvent;
-          setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e));
-          fetchCounts();
+          // Debounce counts update
+          setTimeout(() => fetchCounts(), 1000);
         }
       )
       .subscribe();
@@ -379,58 +502,25 @@ export function CaktoSalesModal({ open, onOpenChange, instanceId }: CaktoSalesMo
     };
   }, [open, instanceId, activeFilter, fetchCounts]);
 
-  // Filtrar por busca
-  const filteredEvents = events.filter(event => {
-    if (!search) return true;
+  // Filtrar por busca - MEMOIZADO
+  const filteredEvents = useMemo(() => {
+    if (!search) return events;
     const searchLower = search.toLowerCase();
-    return (
+    return events.filter(event => 
       event.customer_name?.toLowerCase().includes(searchLower) ||
       event.customer_email?.toLowerCase().includes(searchLower) ||
       event.customer_phone?.includes(search) ||
       event.product_name?.toLowerCase().includes(searchLower)
     );
-  });
+  }, [events, search]);
 
-  // Formatar valor
-  const formatCurrency = (value: number | null) => {
-    if (!value) return '-';
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
-  };
+  // Paginação - MEMOIZADO
+  const paginatedEvents = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredEvents.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredEvents, currentPage]);
 
-  // Ícone por tipo de evento
-  const getEventIcon = (type: CaktoEventType | string) => {
-    switch (type) {
-      case 'purchase_approved': return CheckCircle2;
-      case 'purchase_refused': return XCircle;
-      case 'purchase_refunded': return RotateCcw;
-      case 'purchase_chargeback': return AlertTriangle;
-      case 'checkout_abandonment': return AlertTriangle;
-      case 'initiate_checkout': return ShoppingCart;
-      case 'pix_generated': return CreditCard;
-      case 'pix_expired': return XCircle;
-      case 'boleto_generated': return CreditCard;
-      default: return CreditCard;
-    }
-  };
-
-  // Cor do evento
-  const getEventColor = (type: CaktoEventType | string) => {
-    switch (type) {
-      case 'purchase_approved': return 'text-green-500 bg-green-500/10';
-      case 'purchase_refused': return 'text-red-500 bg-red-500/10';
-      case 'purchase_refunded': return 'text-orange-500 bg-orange-500/10';
-      case 'purchase_chargeback': return 'text-red-600 bg-red-600/10';
-      case 'checkout_abandonment': return 'text-yellow-500 bg-yellow-500/10';
-      case 'initiate_checkout': return 'text-blue-500 bg-blue-500/10';
-      case 'pix_generated': return 'text-purple-500 bg-purple-500/10';
-      case 'pix_expired': return 'text-red-400 bg-red-400/10';
-      case 'boleto_generated': return 'text-indigo-500 bg-indigo-500/10';
-      default: return 'text-muted-foreground bg-muted';
-    }
-  };
+  const totalPages = Math.ceil(filteredEvents.length / ITEMS_PER_PAGE);
 
   const isPixUnpaidFilter = activeFilter === 'pix_unpaid';
   const currentFilter = FILTER_OPTIONS.find(f => f.value === activeFilter);
@@ -543,14 +633,14 @@ export function CaktoSalesModal({ open, onOpenChange, instanceId }: CaktoSalesMo
           )}
         </div>
 
-        {/* Lista de Eventos */}
+        {/* Lista de Eventos - OTIMIZADA COM PAGINAÇÃO */}
         <ScrollArea className="flex-1">
           <div className="p-6 space-y-3">
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <Skeleton key={i} className="h-24 w-full rounded-lg" />
               ))
-            ) : filteredEvents.length === 0 ? (
+            ) : paginatedEvents.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <TrendingUp className="w-12 h-12 mx-auto mb-3 opacity-30" />
                 <p>Nenhum evento encontrado</p>
@@ -561,96 +651,49 @@ export function CaktoSalesModal({ open, onOpenChange, instanceId }: CaktoSalesMo
                 </p>
               </div>
             ) : (
-              filteredEvents.map((event, index) => {
-                const EventIcon = getEventIcon(event.event_type);
-                const colorClass = getEventColor(event.event_type);
-                const whatsappLink = generateWhatsAppLink(event.customer_phone, event.customer_name);
-                
-                return (
-                  <motion.div
+              <>
+                {paginatedEvents.map((event) => (
+                  <EventItem
                     key={event.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.02 }}
-                    className="group p-4 rounded-lg border bg-card hover:shadow-md transition-all"
-                  >
-                    <div className="flex items-start gap-4">
-                      {/* Ícone do evento */}
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClass}`}>
-                        <EventIcon className="w-5 h-5" />
-                      </div>
-
-                      {/* Info principal */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium truncate">
-                            {event.customer_name || 'Cliente'}
-                          </span>
-                          <Badge variant="outline" className="text-xs">
-                            {CAKTO_EVENT_LABELS[event.event_type as CaktoEventType] || event.event_type}
-                          </Badge>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                          {event.customer_phone && (
-                            <span className="flex items-center gap-1">
-                              <Phone className="w-3 h-3" />
-                              {event.customer_phone}
-                            </span>
-                          )}
-                          {event.customer_email && (
-                            <span className="flex items-center gap-1 truncate max-w-[200px]">
-                              <Mail className="w-3 h-3" />
-                              {event.customer_email}
-                            </span>
-                          )}
-                          {event.product_name && (
-                            <span className="flex items-center gap-1 truncate max-w-[200px]">
-                              <Package className="w-3 h-3" />
-                              {event.product_name}
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {format(new Date(event.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                          </span>
-                          <span className="text-muted-foreground/50">
-                            ({formatDistanceToNow(new Date(event.created_at), { addSuffix: true, locale: ptBR })})
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Valor e ações */}
-                      <div className="flex flex-col items-end gap-2">
-                        {event.order_value && (
-                          <span className="font-semibold text-lg">
-                            {formatCurrency(event.order_value)}
-                          </span>
-                        )}
-
-                        {/* Ação WhatsApp para PIX não pago */}
-                        {isPixUnpaidFilter && whatsappLink && (
-                          <Button
-                            size="sm"
-                            variant="default"
-                            className="gap-1.5 bg-green-600 hover:bg-green-700"
-                            onClick={() => window.open(whatsappLink, '_blank')}
-                          >
-                            <MessageCircle className="w-3.5 h-3.5" />
-                            Contatar
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })
+                    event={event}
+                    isPixUnpaidFilter={isPixUnpaidFilter}
+                    whatsappLink={generateWhatsAppLink(event.customer_phone, event.customer_name)}
+                  />
+                ))}
+              </>
             )}
           </div>
         </ScrollArea>
+
+        {/* Paginação */}
+        {filteredEvents.length > ITEMS_PER_PAGE && (
+          <div className="p-4 border-t flex items-center justify-between bg-muted/30">
+            <p className="text-sm text-muted-foreground">
+              Mostrando {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredEvents.length)} de {filteredEvents.length}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <span className="text-sm font-medium px-2">
+                {currentPage} / {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

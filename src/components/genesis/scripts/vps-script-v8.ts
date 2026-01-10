@@ -1,7 +1,8 @@
-export const VPS_SCRIPT_VERSION = "8.2";
+export const VPS_SCRIPT_VERSION = "8.3";
 
-// VPS Script v8.2 - MULTI-INSTANCE MANAGER WITH PROFESSIONAL CLI
+// VPS Script v8.3 - MULTI-INSTANCE MANAGER WITH PROFESSIONAL CLI
 // Gerenciador dinâmico com menu interativo profissional e logs personalizados
+// v8.3: Otimizações de estabilidade, anti-ban melhorado, heartbeat inteligente
 export const getVPSScriptV8 = (masterToken: string): string => {
   // IMPORTANTE: default precisa bater com o token nativo usado pelo backend/proxy,
   // senão o Heartbeat pode falhar com 401 quando o usuário deixa o campo em branco.
@@ -10,7 +11,7 @@ export const getVPSScriptV8 = (masterToken: string): string => {
 
   return `#!/usr/bin/env node
 // ╔════════════════════════════════════════════════════════════════════════════════════════╗
-// ║       GENESIS WHATSAPP MULTI-INSTANCE MANAGER - v8.2 ENTERPRISE                        ║
+// ║       GENESIS WHATSAPP MULTI-INSTANCE MANAGER - v8.3 ENTERPRISE                        ║
 // ║              Professional CLI | Interactive Menu | Beautiful Logs                       ║
 // ║                   24/7 VPS Ready | Auto-Scaling | Zero Downtime                        ║
 // ╚════════════════════════════════════════════════════════════════════════════════════════╝

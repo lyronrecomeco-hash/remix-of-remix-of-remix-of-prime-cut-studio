@@ -1,12 +1,12 @@
 /**
  * USE CAKTO CONTACTS - Hook para extrair contatos PRECISOS de eventos Cakto
  * Suporta PIX não pago e outros eventos com deduplicação rigorosa
- * Suporta filtro por produto específico
+ * Suporta filtro por produto específico e PERÍODO DE DATAS
  */
 
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { format } from 'date-fns';
+import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export interface CaktoContact {
@@ -30,12 +30,24 @@ export interface CaktoProduct {
   image_url: string | null;
 }
 
+export interface DateRange {
+  startDate: Date;
+  endDate: Date;
+}
+
 interface UseCaktoContactsOptions {
   instanceId: string;
   integrationId: string;
   eventType: string;
   productId?: string; // Filtro por produto específico
+  dateRange?: DateRange; // Filtro por período
 }
+
+// Função para obter range de datas padrão (últimos 2 dias)
+export const getDefaultDateRange = (): DateRange => ({
+  startDate: startOfDay(subDays(new Date(), 2)),
+  endDate: endOfDay(new Date()),
+});
 
 export function useCaktoContacts() {
   const [contacts, setContacts] = useState<CaktoContact[]>([]);
@@ -71,24 +83,38 @@ export function useCaktoContacts() {
     integrationId, 
     eventType,
     productId,
+    dateRange,
   }: UseCaktoContactsOptions): Promise<CaktoContact[]> => {
     setLoading(true);
     setError(null);
     setContacts([]);
 
+    // Usar date range padrão (últimos 2 dias) se não especificado
+    const range = dateRange || getDefaultDateRange();
+    const startDateISO = range.startDate.toISOString();
+    const endDateISO = range.endDate.toISOString();
+
     try {
-      console.log('[useCaktoContacts] Fetching contacts for:', { instanceId, eventType, productId });
+      console.log('[useCaktoContacts] Fetching contacts for:', { 
+        instanceId, 
+        eventType, 
+        productId,
+        dateRange: { start: startDateISO, end: endDateISO }
+      });
 
       // PIX não pago: lógica especial para verificar quais PIX não foram pagos
       if (eventType === 'pix_unpaid') {
-        // 1. Buscar todos os pix_generated com telefone válido
+        // 1. Buscar todos os pix_generated com telefone válido NO PERÍODO
         let pixQuery = supabase
           .from('genesis_cakto_events')
           .select('*')
           .eq('instance_id', instanceId)
           .in('event_type', ['pix_generated', 'pix_expired'])
           .not('customer_phone', 'is', null)
-          .order('created_at', { ascending: false });
+          .gte('created_at', startDateISO)
+          .lte('created_at', endDateISO)
+          .order('created_at', { ascending: false })
+          .limit(500); // Limitar para performance
 
         // Filtrar por produto se especificado
         if (productId) {
@@ -102,12 +128,13 @@ export function useCaktoContacts() {
           throw pixError;
         }
 
-        // 2. Buscar todos os purchase_approved para cruzamento
+        // 2. Buscar todos os purchase_approved para cruzamento (últimos 30 dias para cobrir conversões posteriores)
         let approvedQuery = supabase
           .from('genesis_cakto_events')
           .select('external_id, customer_phone, created_at')
           .eq('instance_id', instanceId)
-          .eq('event_type', 'purchase_approved');
+          .eq('event_type', 'purchase_approved')
+          .gte('created_at', subDays(new Date(), 30).toISOString());
 
         if (productId) {
           approvedQuery = approvedQuery.eq('product_id', productId);
@@ -179,19 +206,22 @@ export function useCaktoContacts() {
           }
         }
 
-        console.log('[useCaktoContacts] Found', unpaidContacts.length, 'unpaid PIX contacts');
+        console.log('[useCaktoContacts] Found', unpaidContacts.length, 'unpaid PIX contacts in date range');
         setContacts(unpaidContacts);
         return unpaidContacts;
       }
 
-      // Outros eventos: busca direta com deduplicação
+      // Outros eventos: busca direta com deduplicação e FILTRO DE DATA
       let query = supabase
         .from('genesis_cakto_events')
         .select('*')
         .eq('instance_id', instanceId)
         .eq('event_type', eventType)
         .not('customer_phone', 'is', null)
-        .order('created_at', { ascending: false });
+        .gte('created_at', startDateISO)
+        .lte('created_at', endDateISO)
+        .order('created_at', { ascending: false })
+        .limit(500);
 
       if (productId) {
         query = query.eq('product_id', productId);
