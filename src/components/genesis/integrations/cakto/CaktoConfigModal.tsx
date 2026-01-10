@@ -244,38 +244,42 @@ export function CaktoConfigModal({
             </div>
           )}
 
-          {/* Client ID */}
-          <div className="space-y-2">
-            <Label htmlFor="client_id" className="flex items-center gap-1">
-              Client ID <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="client_id"
-              placeholder="Seu Client ID da Cakto"
-              value={clientId}
-              onChange={(e) => {
-                setClientId(e.target.value);
-                setTestResult(null);
-              }}
-            />
-          </div>
+          {/* Client ID - Only show if NOT connected */}
+          {!(isEditMode && existingIntegration?.status === 'connected') && (
+            <div className="space-y-2">
+              <Label htmlFor="client_id" className="flex items-center gap-1">
+                Client ID <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="client_id"
+                placeholder="Seu Client ID da Cakto"
+                value={clientId}
+                onChange={(e) => {
+                  setClientId(e.target.value);
+                  setTestResult(null);
+                }}
+              />
+            </div>
+          )}
 
-          {/* Client Secret */}
-          <div className="space-y-2">
-            <Label htmlFor="client_secret" className="flex items-center gap-1">
-              Client Secret <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="client_secret"
-              type="password"
-              placeholder="Seu Client Secret da Cakto"
-              value={clientSecret}
-              onChange={(e) => {
-                setClientSecret(e.target.value);
-                setTestResult(null);
-              }}
-            />
-          </div>
+          {/* Client Secret - Only show if NOT connected */}
+          {!(isEditMode && existingIntegration?.status === 'connected') && (
+            <div className="space-y-2">
+              <Label htmlFor="client_secret" className="flex items-center gap-1">
+                Client Secret <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="client_secret"
+                type="password"
+                placeholder="Seu Client Secret da Cakto"
+                value={clientSecret}
+                onChange={(e) => {
+                  setClientSecret(e.target.value);
+                  setTestResult(null);
+                }}
+              />
+            </div>
+          )}
 
           {/* Test result */}
           {testResult && (
@@ -304,50 +308,70 @@ export function CaktoConfigModal({
         </div>
 
         <DialogFooter className="flex-col sm:flex-row gap-2">
-          {isEditMode && (
+          {isEditMode && existingIntegration?.status === 'connected' ? (
+            /* Connected mode - only show disconnect button */
             <Button
               variant="destructive"
               onClick={disconnectIntegration}
               disabled={deleting}
-              className="w-full sm:w-auto"
+              className="w-full"
             >
               {deleting ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
               ) : (
                 <Trash2 className="w-4 h-4 mr-2" />
               )}
-              Desconectar
+              Desconectar Integração
             </Button>
+          ) : (
+            /* Not connected - show test and connect buttons */
+            <>
+              {isEditMode && (
+                <Button
+                  variant="destructive"
+                  onClick={disconnectIntegration}
+                  disabled={deleting}
+                  className="w-full sm:w-auto"
+                >
+                  {deleting ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <Trash2 className="w-4 h-4 mr-2" />
+                  )}
+                  Desconectar
+                </Button>
+              )}
+              
+              <div className="flex gap-2 w-full sm:w-auto">
+                <Button
+                  variant="outline"
+                  onClick={testConnection}
+                  disabled={testing || saving}
+                  className="flex-1 sm:flex-none"
+                >
+                  {testing ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                  )}
+                  Testar
+                </Button>
+                
+                <Button
+                  onClick={saveIntegration}
+                  disabled={saving || testing}
+                  className="flex-1 sm:flex-none"
+                >
+                  {saving ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <Check className="w-4 h-4 mr-2" />
+                  )}
+                  {isEditMode ? 'Salvar' : 'Conectar'}
+                </Button>
+              </div>
+            </>
           )}
-          
-          <div className="flex gap-2 w-full sm:w-auto">
-            <Button
-              variant="outline"
-              onClick={testConnection}
-              disabled={testing || saving}
-              className="flex-1 sm:flex-none"
-            >
-              {testing ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              ) : (
-                <RefreshCw className="w-4 h-4 mr-2" />
-              )}
-              Testar
-            </Button>
-            
-            <Button
-              onClick={saveIntegration}
-              disabled={saving || testing}
-              className="flex-1 sm:flex-none"
-            >
-              {saving ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              ) : (
-                <Check className="w-4 h-4 mr-2" />
-              )}
-              {isEditMode ? 'Salvar' : 'Conectar'}
-            </Button>
-          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

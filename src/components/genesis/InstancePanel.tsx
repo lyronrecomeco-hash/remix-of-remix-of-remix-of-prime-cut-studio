@@ -729,11 +729,11 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
                     className="flex items-center gap-4 p-4 rounded-xl border bg-muted/20 hover:bg-muted/40 transition-colors"
                   >
                     {/* Ícones maiores */}
-                    <div className="w-16 h-16 rounded-xl bg-white border-2 flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <div className="w-20 h-20 rounded-xl bg-white border-2 flex items-center justify-center flex-shrink-0 shadow-sm">
                       <img 
                         src={integration.logo} 
                         alt={integration.name} 
-                        className="w-12 h-12 object-contain"
+                        className="w-16 h-16 object-contain"
                       />
                     </div>
                     <div className="flex-1 min-w-0">

@@ -472,7 +472,7 @@ export default function GenesisPanel() {
           .select('id')
           .eq('user_id', genesisUser.id)
           .eq('provider', 'cakto')
-          .eq('status', 'active')
+          .in('status', ['connected', 'active'])
           .limit(1)
       ]);
       
