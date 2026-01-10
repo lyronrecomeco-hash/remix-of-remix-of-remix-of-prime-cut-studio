@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useGenesisAuth } from '@/contexts/GenesisAuthContext';
 
-export type IntegrationProvider = 'shopify' | 'woocommerce' | 'nuvemshop' | 'mercadoshops' | 'rdstation';
+export type IntegrationProvider = 'shopify' | 'woocommerce' | 'nuvemshop' | 'mercadoshops' | 'rdstation' | 'cakto';
 export type IntegrationStatus = 'pending' | 'connected' | 'error' | 'disconnected';
 
 export interface InstanceIntegration {
