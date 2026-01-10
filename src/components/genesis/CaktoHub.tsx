@@ -1,15 +1,24 @@
 /**
  * CAKTO HUB - Central view para gerenciar Cakto de todas as instâncias
- * Acessível pelo menu dock do GenesisPanel
+ * Layout profissional, compacto e responsivo
  */
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, CheckCircle2, AlertCircle, Settings2, ArrowRight } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { 
+  Loader2, 
+  CheckCircle2, 
+  AlertCircle, 
+  Settings2, 
+  ArrowRight,
+  Smartphone,
+  Link2,
+  Zap
+} from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useGenesisAuth } from '@/contexts/GenesisAuthContext';
 import { CaktoPanel } from './integrations/cakto/CaktoPanel';
@@ -45,14 +54,12 @@ export function CaktoHub() {
       setLoading(true);
 
       try {
-        // Buscar instâncias
         const { data: instancesData } = await supabase
           .from('genesis_instances')
           .select('id, name, status')
           .eq('user_id', genesisUser.id)
           .order('name');
 
-        // Buscar integrações Cakto
         const { data: integrationsData } = await supabase
           .from('genesis_instance_integrations')
           .select('id, instance_id, status, store_name')
@@ -62,7 +69,6 @@ export function CaktoHub() {
         setInstances(instancesData || []);
         setIntegrations((integrationsData || []) as CaktoIntegration[]);
 
-        // Auto-selecionar primeira instância com Cakto conectado
         const connectedIntegration = integrationsData?.find(i => i.status === 'connected');
         if (connectedIntegration) {
           setSelectedInstanceId(connectedIntegration.instance_id);
@@ -115,130 +121,61 @@ export function CaktoHub() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      <div className="flex items-center justify-center h-[400px]">
+        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
-  if (instances.length === 0) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-white border-2 flex items-center justify-center">
-            <img src={caktoLogo} alt="Cakto" className="w-8 h-8 object-contain" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">Cakto</h1>
-            <p className="text-muted-foreground">Integração com Infoprodutos</p>
-          </div>
-        </div>
+  const connectedCount = integrations.filter(i => i.status === 'connected').length;
+  const totalInstances = instances.length;
 
-        <Card className="border-dashed">
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground mb-4">
-              Você precisa criar uma instância WhatsApp primeiro para conectar a Cakto.
+  if (totalInstances === 0) {
+    return (
+      <div className="space-y-4">
+        <Header connectedCount={0} />
+        <Card className="border-dashed border-muted-foreground/30">
+          <CardContent className="py-10 text-center space-y-3">
+            <Smartphone className="w-10 h-10 mx-auto text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">
+              Crie uma instância WhatsApp para conectar a Cakto
             </p>
-            <Button variant="outline">Criar Instância</Button>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  const connectedCount = integrations.filter(i => i.status === 'connected').length;
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
-      >
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-xl bg-white border-2 flex items-center justify-center shadow-sm">
-            <img src={caktoLogo} alt="Cakto" className="w-10 h-10 object-contain" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">Cakto</h1>
-            <p className="text-muted-foreground">Integração com Infoprodutos</p>
-          </div>
-        </div>
+    <div className="space-y-4">
+      <Header connectedCount={connectedCount} />
 
-        <Badge variant="secondary" className="gap-1.5">
-          <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
-          {connectedCount} conectada{connectedCount !== 1 ? 's' : ''}
-        </Badge>
-      </motion.div>
+      {/* Lista de Instâncias - Grid compacto */}
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <AnimatePresence mode="popLayout">
+          {instances.map((instance, index) => {
+            const integration = getIntegrationForInstance(instance.id);
+            const isConnected = integration?.status === 'connected';
 
-      {/* Lista de Instâncias */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {instances.map((instance, index) => {
-          const integration = getIntegrationForInstance(instance.id);
-          const isConnected = integration?.status === 'connected';
-
-          return (
-            <motion.div
-              key={instance.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-            >
-              <Card className={`hover:border-primary/50 transition-colors ${isConnected ? 'border-green-500/30' : ''}`}>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                        <img src={caktoLogo} alt="Cakto" className="w-6 h-6 object-contain opacity-80" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{instance.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {integration?.store_name || 'Não conectado'}
-                        </p>
-                      </div>
-                    </div>
-                    {isConnected ? (
-                      <Badge className="bg-green-500/15 text-green-600 border-green-500/30 text-[10px]">
-                        <CheckCircle2 className="w-2.5 h-2.5 mr-0.5" />
-                        Ativo
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary" className="text-[10px]">
-                        <AlertCircle className="w-2.5 h-2.5 mr-0.5" />
-                        Inativo
-                      </Badge>
-                    )}
-                  </div>
-
-                  <div className="flex gap-2">
-                    {isConnected ? (
-                      <Button 
-                        className="flex-1 gap-1.5" 
-                        size="sm"
-                        onClick={() => handleOpenPanel(instance.id)}
-                      >
-                        Gerenciar
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </Button>
-                    ) : (
-                      <Button 
-                        variant="outline" 
-                        className="flex-1 gap-1.5" 
-                        size="sm"
-                        onClick={() => handleConnectCakto(instance.id)}
-                      >
-                        <Settings2 className="w-3.5 h-3.5" />
-                        Conectar
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          );
-        })}
+            return (
+              <motion.div
+                key={instance.id}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ delay: index * 0.03 }}
+              >
+                <InstanceCard
+                  instance={instance}
+                  integration={integration}
+                  isConnected={isConnected}
+                  onConnect={() => handleConnectCakto(instance.id)}
+                  onManage={() => handleOpenPanel(instance.id)}
+                />
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
       </div>
 
       {/* Config Modal */}
@@ -259,5 +196,103 @@ export function CaktoHub() {
         />
       )}
     </div>
+  );
+}
+
+// Header Component
+function Header({ connectedCount }: { connectedCount: number }) {
+  return (
+    <div className="flex items-center justify-between gap-4 pb-2 border-b border-border/50">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center">
+          <img src={caktoLogo} alt="Cakto" className="w-5 h-5 object-contain" />
+        </div>
+        <div>
+          <h2 className="text-base font-semibold leading-tight">Cakto</h2>
+          <p className="text-[11px] text-muted-foreground">Integração Infoprodutos</p>
+        </div>
+      </div>
+      
+      {connectedCount > 0 && (
+        <Badge className="bg-emerald-500/15 text-emerald-500 border-emerald-500/30 gap-1 text-[10px] h-5">
+          <CheckCircle2 className="w-2.5 h-2.5" />
+          {connectedCount} ativ{connectedCount === 1 ? 'a' : 'as'}
+        </Badge>
+      )}
+    </div>
+  );
+}
+
+// Instance Card Component
+interface InstanceCardProps {
+  instance: Instance;
+  integration?: CaktoIntegration;
+  isConnected: boolean;
+  onConnect: () => void;
+  onManage: () => void;
+}
+
+function InstanceCard({ instance, integration, isConnected, onConnect, onManage }: InstanceCardProps) {
+  return (
+    <Card className={`
+      transition-all duration-200 hover:shadow-md
+      ${isConnected 
+        ? 'border-emerald-500/30 bg-emerald-500/[0.02]' 
+        : 'border-border/60 hover:border-primary/30'
+      }
+    `}>
+      <CardContent className="p-3">
+        <div className="flex items-center justify-between gap-2 mb-2.5">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className={`
+              w-8 h-8 rounded-md flex items-center justify-center shrink-0
+              ${isConnected 
+                ? 'bg-emerald-500/15' 
+                : 'bg-muted/80'
+              }
+            `}>
+              <img src={caktoLogo} alt="" className="w-4 h-4 object-contain opacity-80" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-medium truncate">{instance.name}</p>
+              <p className="text-[10px] text-muted-foreground truncate">
+                {integration?.store_name || 'Cakto'}
+              </p>
+            </div>
+          </div>
+          
+          {isConnected ? (
+            <Badge className="bg-emerald-500/15 text-emerald-500 border-emerald-500/30 text-[9px] h-4 px-1.5 shrink-0">
+              <Zap className="w-2 h-2 mr-0.5" />
+              Ativo
+            </Badge>
+          ) : (
+            <Badge variant="secondary" className="text-[9px] h-4 px-1.5 shrink-0">
+              <AlertCircle className="w-2 h-2 mr-0.5" />
+              Off
+            </Badge>
+          )}
+        </div>
+
+        <Button 
+          variant={isConnected ? "default" : "outline"}
+          size="sm"
+          className="w-full h-7 text-xs gap-1.5"
+          onClick={isConnected ? onManage : onConnect}
+        >
+          {isConnected ? (
+            <>
+              Gerenciar
+              <ArrowRight className="w-3 h-3" />
+            </>
+          ) : (
+            <>
+              <Link2 className="w-3 h-3" />
+              Conectar
+            </>
+          )}
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
