@@ -299,7 +299,7 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0 overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0">
         <DialogHeader className="p-6 pb-4 border-b">
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
@@ -346,10 +346,11 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
               </div>
             ))}
           </div>
-        </div>
+        </div
+        >
 
         {/* Step Content */}
-        <ScrollArea className="flex-1 p-6">
+        <ScrollArea className="flex-1 min-h-0 p-6">
           <AnimatePresence mode="wait">
             <motion.div
               key={step}

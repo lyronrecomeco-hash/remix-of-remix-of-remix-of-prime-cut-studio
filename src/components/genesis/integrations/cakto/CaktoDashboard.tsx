@@ -41,31 +41,8 @@ interface CaktoDashboardProps {
   instanceId: string;
 }
 
-// Dados de exemplo interativos (estilo admin)
-const generateDemoData = () => {
-  const days = 7;
-  const data = [];
-  for (let i = days - 1; i >= 0; i--) {
-    const date = subDays(new Date(), i);
-    const checkouts = Math.floor(Math.random() * 80) + 20;
-    const aprovadas = Math.floor(checkouts * (0.5 + Math.random() * 0.3));
-    data.push({
-      day: format(date, 'EEE', { locale: ptBR }),
-      date: format(date, 'dd/MM', { locale: ptBR }),
-      checkouts,
-      aprovadas,
-      receita: aprovadas * (97 + Math.floor(Math.random() * 200)),
-    });
-  }
-  return data;
-};
-
-const demoPieData = [
-  { name: 'Aprovadas', value: 65, color: '#10b981' },
-  { name: 'Recusadas', value: 12, color: '#ef4444' },
-  { name: 'Reembolsos', value: 5, color: '#f97316' },
-  { name: 'Abandonos', value: 18, color: '#eab308' },
-];
+// Observação: este dashboard exibe APENAS números reais coletados pela integração.
+// Se ainda não houver eventos recebidos, os valores serão 0.
 
 export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
   const [period, setPeriod] = useState<AnalyticsPeriod>('7d');
@@ -82,33 +59,34 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
 
   const formatPercent = (value: number) => `${value.toFixed(1)}%`;
 
-  const hasRealData = analytics && (
-    analytics.checkouts_started > 0 || 
-    analytics.purchases_approved > 0 || 
-    analytics.total_revenue > 0
-  );
+  const hasAnyData = !!analytics?.daily?.length;
 
-  // Dados para gráficos - usa reais ou demo
-  const demoData = useMemo(() => generateDemoData(), []);
-  
-  const chartData = hasRealData 
-    ? analytics?.daily.map(day => ({
-        day: format(new Date(day.date), 'EEE', { locale: ptBR }),
-        date: format(new Date(day.date), 'dd/MM', { locale: ptBR }),
-        checkouts: day.checkouts_started,
-        aprovadas: day.purchases_approved,
-        receita: Number(day.total_revenue),
-      })) || []
-    : demoData;
+  const chartData = useMemo(() => {
+    const daily = analytics?.daily || [];
+    if (!daily.length) return [];
 
-  const pieData = hasRealData 
-    ? [
-        { name: 'Aprovadas', value: analytics?.purchases_approved || 0, color: '#10b981' },
-        { name: 'Recusadas', value: analytics?.purchases_refused || 0, color: '#ef4444' },
-        { name: 'Reembolsos', value: analytics?.purchases_refunded || 0, color: '#f97316' },
-        { name: 'Abandonos', value: analytics?.cart_abandonments || 0, color: '#eab308' },
-      ].filter(d => d.value > 0)
-    : demoPieData;
+    return daily.map(day => ({
+      day: format(new Date(day.date), 'EEE', { locale: ptBR }),
+      date: format(new Date(day.date), 'dd/MM', { locale: ptBR }),
+      checkouts: day.checkouts_started,
+      aprovadas: day.purchases_approved,
+      receita: Number(day.total_revenue),
+    }));
+  }, [analytics?.daily]);
+
+  const pieData = useMemo(() => {
+    const approved = analytics?.purchases_approved || 0;
+    const refused = analytics?.purchases_refused || 0;
+    const refunded = analytics?.purchases_refunded || 0;
+    const abandoned = analytics?.cart_abandonments || 0;
+
+    return [
+      { name: 'Aprovadas', value: approved, color: 'hsl(var(--success))' },
+      { name: 'Recusadas', value: refused, color: 'hsl(var(--destructive))' },
+      { name: 'Reembolsos', value: refunded, color: 'hsl(var(--warning))' },
+      { name: 'Abandonos', value: abandoned, color: 'hsl(var(--muted-foreground))' },
+    ].filter(d => d.value > 0);
+  }, [analytics]);
 
   // Loading State
   if (integrationLoading || analyticsLoading) {
@@ -136,20 +114,19 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
     );
   }
 
-  const ticketMedio = analytics?.purchases_approved 
-    ? (analytics.total_revenue || 0) / analytics.purchases_approved
-    : hasRealData ? 0 : 147.50;
+  const ticketMedio = (analytics?.purchases_approved || 0) > 0
+    ? (analytics?.total_revenue || 0) / (analytics?.purchases_approved || 1)
+    : 0;
 
-  // Métricas demo se não houver dados reais
   const metrics = {
-    checkouts: hasRealData ? analytics?.checkouts_started || 0 : 234,
-    aprovadas: hasRealData ? analytics?.purchases_approved || 0 : 156,
-    conversao: hasRealData ? analytics?.conversion_rate || 0 : 66.7,
-    receita: hasRealData ? analytics?.total_revenue || 0 : 22990,
-    recusadas: hasRealData ? analytics?.purchases_refused || 0 : 28,
-    reembolsos: hasRealData ? analytics?.purchases_refunded || 0 : 8,
-    abandonos: hasRealData ? analytics?.cart_abandonments || 0 : 42,
-    ticketMedio: hasRealData ? ticketMedio : 147.50,
+    checkouts: analytics?.checkouts_started || 0,
+    aprovadas: analytics?.purchases_approved || 0,
+    conversao: analytics?.conversion_rate || 0,
+    receita: analytics?.total_revenue || 0,
+    recusadas: analytics?.purchases_refused || 0,
+    reembolsos: analytics?.purchases_refunded || 0,
+    abandonos: analytics?.cart_abandonments || 0,
+    ticketMedio,
   };
 
   return (
@@ -161,9 +138,9 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
         <div className="flex items-center gap-2">
           <BarChart3 className="w-5 h-5 text-primary" />
           <h3 className="text-base font-semibold text-foreground">Dashboard de Vendas</h3>
-          {!hasRealData && (
+          {!hasAnyData && (
             <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
-              Dados de exemplo
+              Aguardando eventos
             </span>
           )}
         </div>
@@ -258,41 +235,47 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-primary" />
-                Receita dos Últimos 7 Dias
+                Receita do Período
               </CardTitle>
             </div>
           </CardHeader>
           <CardContent>
             <div className="h-[280px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis 
-                    dataKey="day" 
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                    axisLine={{ stroke: 'hsl(var(--border))' }}
-                  />
-                  <YAxis 
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                    axisLine={{ stroke: 'hsl(var(--border))' }}
-                    tickFormatter={(value) => `R$${value}`}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                      boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-                    }}
-                    formatter={(value: number) => [`R$ ${value.toFixed(2)}`, 'Receita']}
-                  />
-                  <Bar 
-                    dataKey="receita" 
-                    fill="hsl(var(--primary))" 
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+              {chartData.length === 0 ? (
+                <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+                  Nenhum evento recebido no período selecionado.
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis 
+                      dataKey="day" 
+                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                      axisLine={{ stroke: 'hsl(var(--border))' }}
+                    />
+                    <YAxis 
+                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                      axisLine={{ stroke: 'hsl(var(--border))' }}
+                      tickFormatter={(value) => `R$${value}`}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                      }}
+                      formatter={(value: number) => [`R$ ${value.toFixed(2)}`, 'Receita']}
+                    />
+                    <Bar 
+                      dataKey="receita" 
+                      fill="hsl(var(--primary))" 
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </CardContent>
         </Card>

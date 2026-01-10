@@ -69,95 +69,117 @@ serve(async (req) => {
       );
     }
 
-    // Get Genesis instance for lyronrp@gmail.com to send the message
-    const { data: genesisUser } = await supabase
-      .from("genesis_users")
-      .select("id")
-      .eq("email", "lyronrp@gmail.com")
-      .single();
+    // Try to send code via configured verification sender (preferred)
+    let sent = false;
+    let sendErrorMessage: string | null = null;
 
-    if (!genesisUser) {
-      console.error("Genesis user not found");
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: "Código gerado (envio manual necessário)",
-          phoneLastDigits: cleanPhone.slice(-4),
-        }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Get connected instance
-    const { data: instance } = await supabase
-      .from("genesis_instances")
-      .select("instance_key, evolution_api_url, evolution_api_key")
-      .eq("user_id", genesisUser.id)
-      .eq("orchestrated_status", "connected")
-      .single();
-
-    if (!instance) {
-      console.error("No connected instance found");
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: "Código gerado",
-          phoneLastDigits: cleanPhone.slice(-4),
-        }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Format message
-    const message = `🔐 *Genesis Hub - Verificação*
-
-Olá! Aqui está seu código para ativação do seu cadastro na Genesis:
-
-*${code}*
-
-⚠️ *Não compartilhe esse código com ninguém!*
-
-Este código expira em 5 minutos.`;
-
-    // Send via Evolution API
-    const evolutionUrl = instance.evolution_api_url || "https://api.evolution-api.cloud";
-    const evolutionKey = instance.evolution_api_key;
-    const instanceKey = instance.instance_key;
-
+    // 1) Load global config (if exists)
+    let cfg: any = null;
     try {
-      const response = await fetch(
-        `${evolutionUrl}/message/sendText/${instanceKey}`,
-        {
+      const { data: cfgRow, error: cfgErr } = await supabase
+        .from("owner_settings")
+        .select("setting_value")
+        .eq("setting_key", "phone_verification_config")
+        .maybeSingle();
+
+      if (!cfgErr && cfgRow?.setting_value) {
+        cfg = cfgRow.setting_value;
+      }
+    } catch (_) {
+      // Ignore if table doesn't exist in this environment
+    }
+
+    const senderInstanceId = cfg?.instance_id as string | undefined;
+    const senderBackendUrl = cfg?.backend_url as string | undefined;
+    const senderBackendToken = cfg?.backend_token as string | undefined;
+
+    // 2) If no global config, try to use the owner instance (legacy fallback)
+    let fallbackSender: { instance_id: string; backend_url: string | null; backend_token: string | null } | null = null;
+    if (!senderInstanceId || !senderBackendUrl) {
+      const { data: genesisUser } = await supabase
+        .from("genesis_users")
+        .select("id")
+        .eq("email", "lyronrp@gmail.com")
+        .maybeSingle();
+
+      if (genesisUser?.id) {
+        const { data: instance } = await supabase
+          .from("genesis_instances")
+          .select("id, backend_url, backend_token")
+          .eq("user_id", genesisUser.id)
+          .eq("orchestrated_status", "connected")
+          .maybeSingle();
+
+        if (instance?.id) {
+          fallbackSender = {
+            instance_id: instance.id,
+            backend_url: instance.backend_url ?? null,
+            backend_token: instance.backend_token ?? null,
+          };
+        }
+      }
+    }
+
+    const backendUrl = (senderBackendUrl || fallbackSender?.backend_url || "").replace(/\/$/, "");
+    const backendToken = senderBackendToken || fallbackSender?.backend_token || "";
+    const instanceId = senderInstanceId || fallbackSender?.instance_id || "";
+
+    if (backendUrl && backendToken && instanceId) {
+      // Uses the same internal endpoint as other features (send-text)
+      const apiUrl = `${backendUrl}/${instanceId}/send-text`;
+
+      try {
+        const response = await fetch(apiUrl, {
           method: "POST",
           headers: {
+            "Authorization": `Bearer ${backendToken}`,
             "Content-Type": "application/json",
-            "apikey": evolutionKey,
           },
           body: JSON.stringify({
-            number: cleanPhone,
-            text: message,
+            phone: cleanPhone,
+            message,
           }),
-        }
-      );
+        });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Evolution API error:", errorText);
-      } else {
-        console.log("Message sent successfully to", cleanPhone);
+        if (!response.ok) {
+          const errorText = await response.text();
+          sendErrorMessage = `Falha ao enviar WhatsApp (${response.status}): ${errorText}`;
+        } else {
+          sent = true;
+        }
+      } catch (err) {
+        sendErrorMessage = `Erro ao enviar WhatsApp: ${String(err)}`;
       }
-    } catch (sendError) {
-      console.error("Error sending message:", sendError);
+    } else {
+      sendErrorMessage = "Configuração de envio WhatsApp não encontrada";
     }
 
     // Log the verification attempt
     await supabase.from("system_logs").insert({
       log_type: "genesis_verification",
       source: "genesis-send-verification",
-      message: `Código de verificação Genesis enviado para ${cleanPhone}`,
-      severity: "info",
-      details: { phone: cleanPhone, email },
+      message: sent
+        ? `Código de verificação Genesis enviado para ${cleanPhone}`
+        : `Código gerado mas NÃO enviado para ${cleanPhone}`,
+      severity: sent ? "info" : "warn",
+      details: {
+        phone: cleanPhone,
+        email,
+        sent,
+        error: sendErrorMessage,
+      },
     });
+
+    if (!sent) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: sendErrorMessage || "Não foi possível enviar o código no WhatsApp",
+          phoneLastDigits: cleanPhone.slice(-4),
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     return new Response(
       JSON.stringify({
