@@ -413,6 +413,7 @@ export default function GenesisPanel() {
   const [isEditingFlow, setIsEditingFlow] = useState(false);
   const [isCaktoFocusMode, setIsCaktoFocusMode] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
+  const [hasCaktoIntegration, setHasCaktoIntegration] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('genesis-theme') !== 'light';
@@ -456,17 +457,29 @@ export default function GenesisPanel() {
     setShowWelcome(false);
   };
 
-  // Fetch instances for Chatbots
+  // Fetch instances for Chatbots and check Cakto integration
   useEffect(() => {
-    const fetchInstances = async () => {
+    const fetchData = async () => {
       if (!genesisUser) return;
-      const { data } = await supabase
-        .from('genesis_instances')
-        .select('id, name, status')
-        .eq('user_id', genesisUser.id);
-      if (data) setInstances(data);
+      
+      const [instancesRes, caktoRes] = await Promise.all([
+        supabase
+          .from('genesis_instances')
+          .select('id, name, status')
+          .eq('user_id', genesisUser.id),
+        supabase
+          .from('genesis_instance_integrations')
+          .select('id')
+          .eq('user_id', genesisUser.id)
+          .eq('provider', 'cakto')
+          .eq('status', 'active')
+          .limit(1)
+      ]);
+      
+      if (instancesRes.data) setInstances(instancesRes.data);
+      setHasCaktoIntegration((caktoRes.data?.length || 0) > 0);
     };
-    fetchInstances();
+    fetchData();
   }, [genesisUser]);
 
   useEffect(() => {
@@ -482,18 +495,26 @@ export default function GenesisPanel() {
   };
 
   // Dashboard removido - usuário entra direto em instâncias
-  const navItems = [
+  const baseNavItems = [
     { id: 'instances', label: 'Instâncias', icon: Smartphone },
     { id: 'flows', label: 'Flow Builder', icon: GitBranch },
     { id: 'chatbots', label: 'Chatbots', icon: Bot },
     { id: 'campaigns', label: 'Campanhas', icon: Send },
-    { id: 'cakto', label: 'Cakto', icon: CactusIcon },
     { id: 'metrics', label: 'Métricas', icon: Activity },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'credits', label: 'Créditos', icon: CreditCard },
     { id: 'account', label: 'Minha Conta', icon: User },
     { id: 'settings', label: 'Configurações', icon: Settings },
   ];
+
+  // Add Cakto only if user has integration
+  const navItems = hasCaktoIntegration 
+    ? [
+        ...baseNavItems.slice(0, 4), // instances, flows, chatbots, campaigns
+        { id: 'cakto', label: 'Cakto', icon: CactusIcon },
+        ...baseNavItems.slice(4) // metrics, analytics, credits, account, settings
+      ]
+    : baseNavItems;
 
   if (isSuperAdmin) {
     navItems.push({ id: 'users', label: 'Usuários', icon: Users });
