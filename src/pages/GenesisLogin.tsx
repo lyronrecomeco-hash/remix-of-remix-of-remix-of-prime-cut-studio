@@ -479,14 +479,21 @@ export default function GenesisLogin() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left Side - Branding (adapts to theme) */}
+      {/* Left Side - Branding - Dark theme uses slate-900, Light theme uses primary gradient */}
       <div className={cn(
         "hidden lg:flex lg:w-1/2 relative overflow-hidden transition-colors duration-300",
-        "bg-gradient-to-br from-primary via-primary/90 to-primary/80"
+        savedTheme === 'dark' 
+          ? "bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" 
+          : "bg-gradient-to-br from-primary via-primary/90 to-primary/80"
       )}>
         {/* Background Pattern */}
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent" />
+          <div className={cn(
+            "absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))]",
+            savedTheme === 'dark' 
+              ? "from-primary/20 via-transparent to-transparent"
+              : "from-white/20 via-transparent to-transparent"
+          )} />
           <div className="absolute inset-0" style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
           }} />
@@ -497,7 +504,10 @@ export default function GenesisLogin() {
           {[...Array(5)].map((_, i) => (
             <motion.div
               key={i}
-              className="absolute w-32 h-32 rounded-full blur-xl bg-white/10"
+              className={cn(
+                "absolute w-32 h-32 rounded-full blur-xl",
+                savedTheme === 'dark' ? "bg-primary/20" : "bg-white/10"
+              )}
               style={{
                 left: `${20 + i * 15}%`,
                 top: `${10 + i * 20}%`,
@@ -563,9 +573,17 @@ export default function GenesisLogin() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 + index * 0.1 }}
-                className="flex items-start gap-3 p-4 rounded-xl backdrop-blur-sm border bg-white/10 border-white/20"
+                className={cn(
+                  "flex items-start gap-3 p-4 rounded-xl backdrop-blur-sm border",
+                  savedTheme === 'dark' 
+                    ? "bg-white/5 border-white/10" 
+                    : "bg-white/10 border-white/20"
+                )}
               >
-                <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+                <div className={cn(
+                  "w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0",
+                  savedTheme === 'dark' ? "bg-primary/30" : "bg-white/20"
+                )}>
                   <feature.icon className="w-5 h-5 text-white" />
                 </div>
                 <div>
