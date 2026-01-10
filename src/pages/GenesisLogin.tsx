@@ -482,20 +482,13 @@ export default function GenesisLogin() {
       {/* Left Side - Branding (adapts to theme) */}
       <div className={cn(
         "hidden lg:flex lg:w-1/2 relative overflow-hidden transition-colors duration-300",
-        savedTheme === 'light' 
-          ? "bg-gradient-to-br from-slate-50 via-primary/5 to-slate-100" 
-          : "bg-gradient-to-br from-[#0a0a0f] via-primary/5 to-[#0a0a0f]"
+        "bg-gradient-to-br from-primary via-primary/90 to-primary/80"
       )}>
         {/* Background Pattern */}
         <div className="absolute inset-0">
-          <div className={cn(
-            "absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))]",
-            savedTheme === 'light' 
-              ? "from-primary/5 via-transparent to-transparent" 
-              : "from-primary/10 via-transparent to-transparent"
-          )} />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent" />
           <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='${savedTheme === 'light' ? '0.08' : '0.05'}'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
           }} />
         </div>
 
@@ -504,10 +497,7 @@ export default function GenesisLogin() {
           {[...Array(5)].map((_, i) => (
             <motion.div
               key={i}
-              className={cn(
-                "absolute w-32 h-32 rounded-full blur-xl",
-                savedTheme === 'light' ? "bg-primary/10" : "bg-primary/5"
-              )}
+              className="absolute w-32 h-32 rounded-full blur-xl bg-white/10"
               style={{
                 left: `${20 + i * 15}%`,
                 top: `${10 + i * 20}%`,
@@ -527,22 +517,19 @@ export default function GenesisLogin() {
         </div>
 
         {/* Content */}
-        <div className={cn(
-          "relative z-10 flex flex-col justify-center p-12 lg:p-16 xl:p-20",
-          savedTheme === 'light' ? "text-slate-900" : "text-white"
-        )}>
+        <div className="relative z-10 flex flex-col justify-center p-12 lg:p-16 xl:p-20 text-white">
           {/* Logo */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex items-center gap-3 mb-12"
           >
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/30">
-              <Zap className="w-8 h-8 text-primary-foreground" />
+            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
+              <Zap className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Genesis Hub</h1>
-              <p className={savedTheme === 'light' ? "text-slate-500 text-sm" : "text-white/60 text-sm"}>WhatsApp Automation Platform</p>
+              <h1 className="text-3xl font-bold tracking-tight text-white">Genesis Hub</h1>
+              <p className="text-white/70 text-sm">WhatsApp Automation Platform</p>
             </div>
           </motion.div>
 
@@ -553,15 +540,12 @@ export default function GenesisLogin() {
             transition={{ delay: 0.1 }}
             className="mb-12"
           >
-            <h2 className="text-4xl xl:text-5xl font-bold leading-tight mb-4">
+            <h2 className="text-4xl xl:text-5xl font-bold leading-tight mb-4 text-white">
               Automatize seu
               <br />
-              <span className="text-primary">WhatsApp Business</span>
+              <span className="text-white/90">WhatsApp Business</span>
             </h2>
-            <p className={cn(
-              "text-lg max-w-md",
-              savedTheme === 'light' ? "text-slate-600" : "text-white/70"
-            )}>
+            <p className="text-lg max-w-md text-white/70">
               Plataforma completa para gestão de automação, chatbots e fluxos inteligentes de atendimento.
             </p>
           </motion.div>
@@ -579,19 +563,14 @@ export default function GenesisLogin() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 + index * 0.1 }}
-                className={cn(
-                  "flex items-start gap-3 p-4 rounded-xl backdrop-blur-sm border",
-                  savedTheme === 'light' 
-                    ? "bg-white/60 border-slate-200/50" 
-                    : "bg-white/5 border-white/10"
-                )}
+                className="flex items-start gap-3 p-4 rounded-xl backdrop-blur-sm border bg-white/10 border-white/20"
               >
-                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
-                  <feature.icon className="w-5 h-5 text-primary" />
+                <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+                  <feature.icon className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-sm">{feature.label}</h3>
-                  <p className={savedTheme === 'light' ? "text-xs text-slate-500" : "text-xs text-white/60"}>{feature.desc}</p>
+                  <h3 className="font-semibold text-sm text-white">{feature.label}</h3>
+                  <p className="text-xs text-white/70">{feature.desc}</p>
                 </div>
               </motion.div>
             ))}
@@ -602,22 +581,19 @@ export default function GenesisLogin() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className={cn(
-              "flex gap-8 mt-8 pt-8 border-t",
-              savedTheme === 'light' ? "border-slate-200" : "border-white/10"
-            )}
+            className="flex gap-8 mt-8 pt-8 border-t border-white/20"
           >
             <div>
-              <div className="text-3xl font-bold text-primary">10k+</div>
-              <div className={savedTheme === 'light' ? "text-sm text-slate-500" : "text-sm text-white/60"}>Mensagens/dia</div>
+              <div className="text-3xl font-bold text-white">10k+</div>
+              <div className="text-sm text-white/70">Mensagens/dia</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-primary">99.9%</div>
-              <div className={savedTheme === 'light' ? "text-sm text-slate-500" : "text-sm text-white/60"}>Uptime</div>
+              <div className="text-3xl font-bold text-white">99.9%</div>
+              <div className="text-sm text-white/70">Uptime</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-primary">500+</div>
-              <div className={savedTheme === 'light' ? "text-sm text-slate-500" : "text-sm text-white/60"}>Empresas</div>
+              <div className="text-3xl font-bold text-white">500+</div>
+              <div className="text-sm text-white/70">Empresas</div>
             </div>
           </motion.div>
         </div>
