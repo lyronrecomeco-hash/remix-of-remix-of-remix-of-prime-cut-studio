@@ -178,6 +178,7 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
   const [triggerLunaPreview, setTriggerLunaPreview] = useState(false);
   const [generatedVariations, setGeneratedVariations] = useState<string[]>([]);
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
+  const [selectedContactPhones, setSelectedContactPhones] = useState<Set<string>>(new Set());
   const { contacts: caktoContacts, loading: loadingContacts, fetchContacts, fetchProducts } = useCaktoContacts();
   
   // Steps dinâmicos
@@ -251,7 +252,10 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
         dateRange: dateRange,
       }).then(contacts => {
         setExtractedContacts(contacts);
-        // Converter para formato de contatos da campanha
+        // Selecionar todos por padrão
+        const allPhones = new Set(contacts.map(c => c.phone));
+        setSelectedContactPhones(allPhones);
+        // Converter para formato de contatos da campanha (todos selecionados inicialmente)
         const campaignContacts = contacts.map(c => ({
           phone: c.phone.replace(/\D/g, ''),
           name: c.name || undefined,
@@ -671,12 +675,24 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
                     </Card>
                   )}
 
-                  {/* Preview de contatos extraídos */}
+                  {/* Preview de contatos extraídos COM SELEÇÃO */}
                   {selectedEvent && (
                     <ContactsPreviewCard
                       contacts={extractedContacts}
                       loading={loadingContacts}
                       eventType={selectedEvent}
+                      selectedPhones={selectedContactPhones}
+                      onSelectionChange={(phones) => {
+                        setSelectedContactPhones(phones);
+                        // Atualizar formData.contacts apenas com os selecionados
+                        const selectedContacts = extractedContacts
+                          .filter(c => phones.has(c.phone))
+                          .map(c => ({
+                            phone: c.phone.replace(/\D/g, ''),
+                            name: c.name || undefined,
+                          }));
+                        setFormData(prev => ({ ...prev, contacts: selectedContacts }));
+                      }}
                     />
                   )}
 
