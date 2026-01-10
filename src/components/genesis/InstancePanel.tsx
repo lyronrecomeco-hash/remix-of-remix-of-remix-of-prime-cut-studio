@@ -46,7 +46,7 @@ import nuvemshopLogo from '@/assets/integrations/nuvemshop.png';
 import mercadoshopsLogo from '@/assets/integrations/mercadoshops.png';
 import rdstationLogo from '@/assets/integrations/rdstation.png';
 import caktoLogo from '@/assets/integrations/cakto-logo.png';
-import caktoIcon from '@/assets/integrations/cakto-icon.png';
+import caktoCactusIcon from '@/assets/integrations/cakto-cactus-icon.png';
 
 // Cakto Panel
 import { CaktoPanel } from './integrations/cakto';
@@ -395,7 +395,7 @@ export function InstancePanel({ instance: initialInstance, onBack }: InstancePan
               onClick={() => setShowCaktoPanel(true)}
             >
               <div className="w-10 h-10 rounded-xl bg-white border flex items-center justify-center">
-                <img src={caktoIcon} alt="Cakto" className="w-6 h-6 object-contain" />
+                <img src={caktoCactusIcon} alt="Cakto" className="w-6 h-6 object-contain" />
               </div>
               <span>Cakto</span>
             </Button>
