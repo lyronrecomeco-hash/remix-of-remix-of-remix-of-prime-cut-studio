@@ -121,6 +121,7 @@ export interface Campaign {
     id: string;
     name: string;
     status: string;
+    orchestrated_status?: string;
     phone_number?: string;
   };
 }

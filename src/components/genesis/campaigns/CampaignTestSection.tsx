@@ -27,6 +27,7 @@ import { cn } from '@/lib/utils';
 interface CampaignTestSectionProps {
   instanceId: string;
   instanceName: string;
+  instanceStatus?: string;
   messageTemplate: string;
   lunaEnabled: boolean;
   lunaVariations?: string[];
@@ -41,6 +42,7 @@ interface TestResult {
 export function CampaignTestSection({
   instanceId,
   instanceName,
+  instanceStatus,
   messageTemplate,
   lunaEnabled,
   lunaVariations = [],
@@ -49,6 +51,9 @@ export function CampaignTestSection({
   const [testResult, setTestResult] = useState<TestResult>({ status: 'idle' });
   const [retryInfo, setRetryInfo] = useState<string | null>(null);
   const [savedPhone, setSavedPhone] = useState<string | null>(null);
+  
+  // Verificar se a instância está conectada
+  const isInstanceConnected = instanceStatus === 'connected' || instanceStatus === 'ready';
 
   // Buscar número de teste salvo
   useEffect(() => {
@@ -98,6 +103,17 @@ export function CampaignTestSection({
   };
 
   const handleSendTest = async () => {
+    // Verificar se a instância está conectada
+    if (!isInstanceConnected) {
+      toast.error('WhatsApp desconectado! Conecte o WhatsApp antes de enviar mensagens.');
+      setTestResult({
+        status: 'error',
+        message: 'A instância não está conectada. Escaneie o QR Code para conectar o WhatsApp.',
+        timestamp: new Date(),
+      });
+      return;
+    }
+    
     if (!testPhone.trim()) {
       toast.error('Digite um número de telefone para teste');
       return;
@@ -198,6 +214,21 @@ export function CampaignTestSection({
           Envie uma mensagem de teste para verificar se tudo está configurado corretamente antes de criar a campanha.
         </p>
 
+        {/* Aviso de instância desconectada */}
+        {!isInstanceConnected && (
+          <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800">
+            <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            <div className="text-sm">
+              <p className="font-medium text-amber-700 dark:text-amber-400">
+                WhatsApp Desconectado
+              </p>
+              <p className="text-amber-600/80 dark:text-amber-400/80">
+                Conecte o WhatsApp escaneando o QR Code para enviar mensagens
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="flex gap-3">
           <div className="flex-1 space-y-2">
             <Label htmlFor="test-phone" className="text-sm">
@@ -212,7 +243,7 @@ export function CampaignTestSection({
                 value={testPhone}
                 onChange={(e) => setTestPhone(e.target.value)}
                 className="pl-10"
-                disabled={testResult.status === 'sending'}
+                disabled={testResult.status === 'sending' || !isInstanceConnected}
               />
             </div>
             {savedPhone && testPhone !== savedPhone && (
@@ -229,8 +260,9 @@ export function CampaignTestSection({
           <div className="flex items-end">
             <Button
               onClick={handleSendTest}
-              disabled={testResult.status === 'sending' || !testPhone.trim() || !messageTemplate.trim()}
+              disabled={testResult.status === 'sending' || !testPhone.trim() || !messageTemplate.trim() || !isInstanceConnected}
               className="gap-2"
+              variant={!isInstanceConnected ? "outline" : "default"}
             >
               {testResult.status === 'sending' ? (
                 <>
