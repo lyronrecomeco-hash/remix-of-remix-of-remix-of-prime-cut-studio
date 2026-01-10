@@ -125,35 +125,113 @@ serve(async (req) => {
     const instanceId = senderInstanceId || fallbackSender?.instance_id || "";
 
     if (backendUrl && backendToken && instanceId) {
-      // Uses the same internal endpoint as other features (send-text)
-      const apiUrl = `${backendUrl}/${instanceId}/send-text`;
+      const cleanUrl = backendUrl.replace(/\/$/, "");
+      const backendKey = encodeURIComponent(instanceId);
+
       const verificationMessage = `🔐 *Código de Verificação Genesis*\n\nSeu código é: *${code}*\n\nEste código expira em 5 minutos.\n\n_Se você não solicitou este código, ignore esta mensagem._`;
 
-      try {
-        const response = await fetch(apiUrl, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${backendToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            phone: cleanPhone,
-            message: verificationMessage,
-          }),
-        });
+      // Payload compatível (v8/legacy) + payload evolution
+      const v8Payload = {
+        phone: cleanPhone,
+        message: verificationMessage,
+        to: cleanPhone,
+        text: verificationMessage,
+        number: cleanPhone,
+        instanceId,
+      };
+      const evolutionPayload = {
+        number: cleanPhone,
+        text: verificationMessage,
+      };
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          sendErrorMessage = `Falha ao enviar WhatsApp (${response.status}): ${errorText}`;
-        } else {
-          sent = true;
+      const headers = {
+        "Content-Type": "application/json",
+        // Alguns backends usam Bearer, outros usam apikey
+        "Authorization": `Bearer ${backendToken}`,
+        "apikey": backendToken,
+      };
+
+      const looksLikeMissingRoute = (status: number, bodyText: string) =>
+        status === 404 && (bodyText.includes("Cannot POST") || bodyText.includes("Cannot GET"));
+
+      const tryPost = async (url: string, body: unknown) => {
+        const res = await fetch(url, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(body),
+        });
+        const text = await res.text();
+
+        let parsed: any = null;
+        try {
+          parsed = JSON.parse(text);
+        } catch {
+          parsed = null;
         }
-      } catch (err) {
-        sendErrorMessage = `Erro ao enviar WhatsApp: ${String(err)}`;
+
+        const ok = res.ok && !(parsed && parsed.success === false);
+        return { ok, status: res.status, text, parsed };
+      };
+
+      // Tentar rotas V8 (multi-instância)
+      const v8Paths = [
+        `/api/instance/${backendKey}/send`,
+        `/api/instance/${backendKey}/send-message`,
+        `/api/instance/${backendKey}/sendText`,
+        `/api/instance/${backendKey}/send-text`,
+      ];
+
+      // Fallback legacy (single-instance)
+      const legacyPaths = ["/api/send", "/send"];
+
+      // Fallback Evolution API (quando o backend_url aponta direto para Evolution)
+      const evolutionPaths = [`/message/sendText/${backendKey}`];
+
+      let lastStatus = 0;
+      let lastText = "";
+
+      for (const p of [...v8Paths, ...legacyPaths]) {
+        const url = `${cleanUrl}${p}`;
+        try {
+          const r = await tryPost(url, v8Payload);
+          if (r.ok) {
+            sent = true;
+            break;
+          }
+          lastStatus = r.status;
+          lastText = r.text;
+          if (looksLikeMissingRoute(r.status, r.text)) continue;
+        } catch (err) {
+          lastText = String(err);
+        }
+      }
+
+      if (!sent) {
+        for (const p of evolutionPaths) {
+          const url = `${cleanUrl}${p}`;
+          try {
+            const r = await tryPost(url, evolutionPayload);
+            if (r.ok) {
+              sent = true;
+              break;
+            }
+            lastStatus = r.status;
+            lastText = r.text;
+            if (looksLikeMissingRoute(r.status, r.text)) continue;
+          } catch (err) {
+            lastText = String(err);
+          }
+        }
+      }
+
+      if (!sent) {
+        const preview = (lastText || "").slice(0, 500);
+        sendErrorMessage = `Falha ao enviar WhatsApp (${lastStatus || 0}): ${preview}`;
       }
     } else {
       sendErrorMessage = "Configuração de envio WhatsApp não encontrada";
     }
+
 
     // Log the verification attempt
     await supabase.from("system_logs").insert({
