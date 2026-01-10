@@ -26,6 +26,9 @@ import {
   Lock,
 } from 'lucide-react';
 
+// Import cakto logo
+import caktoLogo from '@/assets/integrations/cakto-logo.png';
+
 // Provider configs with required fields
 const PROVIDER_CONFIGS: Record<string, {
   name: string;
@@ -33,6 +36,7 @@ const PROVIDER_CONFIGS: Record<string, {
   fields: { key: string; label: string; placeholder: string; required: boolean; type?: string }[];
   testEndpoint?: string;
   docs: string;
+  customModal?: boolean;
 }> = {
   shopify: {
     name: 'Shopify',
@@ -85,6 +89,16 @@ const PROVIDER_CONFIGS: Record<string, {
       { key: 'refresh_token', label: 'Refresh Token', placeholder: 'Seu Refresh Token', required: false, type: 'password' },
     ],
     docs: 'https://developers.rdstation.com/reference/autenticacao',
+  },
+  cakto: {
+    name: 'Cakto',
+    description: 'Conecte sua plataforma Cakto para automações de infoprodutos',
+    fields: [
+      { key: 'client_id', label: 'Client ID', placeholder: 'Seu Client ID da Cakto', required: true },
+      { key: 'client_secret', label: 'Client Secret', placeholder: 'Seu Client Secret da Cakto', required: true, type: 'password' },
+    ],
+    docs: 'https://docs.cakto.com.br/introduction',
+    customModal: false, // Uses the standard modal with custom handling
   },
 };
 
