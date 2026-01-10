@@ -150,17 +150,28 @@ export function CaktoAutomationModal({
     anti_ban_enabled: true,
   });
 
-  // Fetch API token
+  // Fetch API token from integration metadata
   const fetchApiToken = useCallback(async () => {
     if (!integrationId) return;
-    const { data } = await supabase
-      .from('genesis_instance_integrations')
-      .select('metadata')
-      .eq('id', integrationId)
-      .single();
-    if (data?.metadata && typeof data.metadata === 'object') {
-      const meta = data.metadata as { api_token?: string };
-      setApiToken(meta.api_token || null);
+    try {
+      const { data } = await supabase
+        .from('genesis_instance_integrations')
+        .select('metadata')
+        .eq('id', integrationId)
+        .single();
+      if (data?.metadata && typeof data.metadata === 'object') {
+        const meta = data.metadata as { api_token?: string };
+        // Decode the base64 encoded token
+        if (meta.api_token) {
+          try {
+            setApiToken(atob(meta.api_token));
+          } catch {
+            setApiToken(meta.api_token);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching API token:', err);
     }
   }, [integrationId]);
 
@@ -697,8 +708,15 @@ export function CaktoAutomationModal({
                     <AlertTriangle className="w-12 h-12 mx-auto text-amber-500 mb-4" />
                     <p className="font-medium">Token de API não configurado</p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Configure o token da API Cakto na integração para listar produtos.
+                      Reconfigure as credenciais da Cakto (Client ID e Client Secret) para listar produtos.
                     </p>
+                    <Button 
+                      variant="outline" 
+                      className="mt-4"
+                      onClick={() => onOpenChange(false)}
+                    >
+                      Ir para Configurações
+                    </Button>
                   </CardContent>
                 </Card>
               ) : loadingProducts ? (
