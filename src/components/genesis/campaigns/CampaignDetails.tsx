@@ -46,7 +46,9 @@ interface CampaignDetailsProps {
   onCancel: () => void;
   onRefresh: () => void;
   onRetryPending?: () => void;
+  onMarkUndelivered?: () => void;
   pendingCount?: number;
+  sentCount?: number;
   loading?: boolean;
 }
 
@@ -60,7 +62,9 @@ export function CampaignDetails({
   onCancel,
   onRefresh,
   onRetryPending,
+  onMarkUndelivered,
   pendingCount = 0,
+  sentCount = 0,
   loading,
 }: CampaignDetailsProps) {
   const progressPercent = campaign.total_contacts > 0
@@ -83,6 +87,8 @@ export function CampaignDetails({
       case 'failed':
       case 'blocked':
         return <XCircle className="w-4 h-4 text-red-500" />;
+      case 'undelivered':
+        return <AlertTriangle className="w-4 h-4 text-orange-500" />;
       default:
         return <Clock className="w-4 h-4 text-muted-foreground" />;
     }
@@ -163,6 +169,12 @@ export function CampaignDetails({
           <Button variant="secondary" onClick={onRetryPending} className="gap-2">
             <RotateCcw className="w-4 h-4" />
             Reenviar Pendentes ({pendingCount})
+          </Button>
+        )}
+        {sentCount > 0 && onMarkUndelivered && !canPause && (
+          <Button variant="outline" onClick={onMarkUndelivered} className="gap-2 text-orange-600 border-orange-300 hover:bg-orange-50">
+            <AlertTriangle className="w-4 h-4" />
+            Marcar Enviados p/ Reenvio ({sentCount})
           </Button>
         )}
         {canCancel && (

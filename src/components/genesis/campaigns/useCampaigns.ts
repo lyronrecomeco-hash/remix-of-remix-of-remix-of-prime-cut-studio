@@ -292,15 +292,15 @@ export function useCampaigns() {
     return updateCampaign(id, { status: 'cancelled' });
   };
 
-  // Retry pending contacts (queued or failed)
+  // Retry pending contacts (queued, pending, failed, or undelivered)
   const retryPendingContacts = async (campaignId: string): Promise<{ success: boolean; count: number }> => {
     try {
-      // Get count of pending contacts
+      // Get count of pending/failed contacts
       const { data: pendingContacts, error: fetchError } = await supabase
         .from('genesis_campaign_contacts')
         .select('id')
         .eq('campaign_id', campaignId)
-        .in('status', ['queued', 'pending', 'failed', 'rate_limited', 'cooldown']);
+        .in('status', ['queued', 'pending', 'failed', 'rate_limited', 'cooldown', 'undelivered']);
 
       if (fetchError) throw fetchError;
 
@@ -318,10 +318,12 @@ export function useCampaigns() {
           status: 'pending', 
           attempt_count: 0,
           error_message: null,
-          locked_at: null 
+          locked_at: null,
+          sent_at: null,
+          message_sent: null
         } as never)
         .eq('campaign_id', campaignId)
-        .in('status', ['queued', 'pending', 'failed', 'rate_limited', 'cooldown']);
+        .in('status', ['queued', 'pending', 'failed', 'rate_limited', 'cooldown', 'undelivered']);
 
       if (updateError) throw updateError;
 
@@ -356,6 +358,53 @@ export function useCampaigns() {
     }
   };
 
+  // Mark sent contacts as undelivered for retry
+  const markSentAsUndelivered = async (campaignId: string, contactIds?: string[]): Promise<{ success: boolean; count: number }> => {
+    try {
+      let query = supabase
+        .from('genesis_campaign_contacts')
+        .update({ 
+          status: 'undelivered',
+          error_message: 'Marcado para reenvio - não confirmado'
+        } as never)
+        .eq('campaign_id', campaignId)
+        .eq('status', 'sent');
+
+      if (contactIds && contactIds.length > 0) {
+        query = query.in('id', contactIds);
+      }
+
+      const { error, count } = await query;
+
+      if (error) throw error;
+
+      const markedCount = count || 0;
+
+      if (markedCount === 0) {
+        toast.info('Nenhum contato para marcar como não entregue');
+        return { success: false, count: 0 };
+      }
+
+      // Log action
+      await supabase.from('genesis_campaign_logs').insert({
+        campaign_id: campaignId,
+        event_type: 'mark_undelivered',
+        severity: 'warning',
+        message: `${markedCount} contatos marcados como não entregues para reenvio`,
+        details: { marked_count: markedCount, specific_ids: contactIds || 'all_sent' }
+      } as never);
+
+      toast.success(`${markedCount} contatos marcados para reenvio`);
+      await fetchCampaigns();
+      
+      return { success: true, count: markedCount };
+    } catch (error) {
+      console.error('Error marking as undelivered:', error);
+      toast.error('Erro ao marcar para reenvio');
+      return { success: false, count: 0 };
+    }
+  };
+
   return {
     campaigns,
     loading,
@@ -371,5 +420,6 @@ export function useCampaigns() {
     pauseCampaign,
     cancelCampaign,
     retryPendingContacts,
+    markSentAsUndelivered,
   };
 }
