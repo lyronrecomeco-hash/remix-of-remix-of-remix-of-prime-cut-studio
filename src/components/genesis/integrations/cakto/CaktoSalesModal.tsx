@@ -63,11 +63,16 @@ export function CaktoSalesModal({ open, onOpenChange, instanceId }: CaktoSalesMo
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const [initialized, setInitialized] = useState(false);
 
   // Buscar eventos
-  const fetchEvents = useCallback(async () => {
-    if (!instanceId) return;
+  const fetchEvents = useCallback(async (tab: SalesTab = activeTab) => {
+    if (!instanceId) {
+      console.log('[CaktoSales] No instanceId provided');
+      return;
+    }
     
+    console.log('[CaktoSales] Fetching events for instance:', instanceId, 'tab:', tab);
     setLoading(true);
     try {
       let query = supabase
@@ -76,20 +81,21 @@ export function CaktoSalesModal({ open, onOpenChange, instanceId }: CaktoSalesMo
         .eq('instance_id', instanceId)
         .order('created_at', { ascending: false });
 
-      if (activeTab !== 'all') {
-        query = query.eq('event_type', activeTab);
+      if (tab !== 'all') {
+        query = query.eq('event_type', tab);
       }
 
       const { data, error } = await query;
 
       if (error) {
-        console.error('Error fetching sales:', error);
+        console.error('[CaktoSales] Error fetching sales:', error);
         return;
       }
 
+      console.log('[CaktoSales] Fetched', data?.length || 0, 'events');
       setEvents((data || []) as CaktoEvent[]);
     } catch (err) {
-      console.error('Error:', err);
+      console.error('[CaktoSales] Error:', err);
     } finally {
       setLoading(false);
     }
@@ -99,35 +105,57 @@ export function CaktoSalesModal({ open, onOpenChange, instanceId }: CaktoSalesMo
   const fetchCounts = useCallback(async () => {
     if (!instanceId) return;
 
+    console.log('[CaktoSales] Fetching counts for instance:', instanceId);
     try {
-      const promises = TABS_CONFIG.filter(t => t.value !== 'all').map(async (tab) => {
-        const { count } = await supabase
-          .from('genesis_cakto_events')
-          .select('*', { count: 'exact', head: true })
-          .eq('instance_id', instanceId)
-          .eq('event_type', tab.value);
-        return { type: tab.value, count: count || 0 };
+      // Buscar todos os eventos para contagem correta
+      const { data: allEvents, error } = await supabase
+        .from('genesis_cakto_events')
+        .select('event_type')
+        .eq('instance_id', instanceId);
+
+      if (error) {
+        console.error('[CaktoSales] Error fetching counts:', error);
+        return;
+      }
+
+      // Contar por tipo
+      const countsMap: Record<string, number> = { all: 0 };
+      TABS_CONFIG.filter(t => t.value !== 'all').forEach(tab => {
+        countsMap[tab.value] = 0;
       });
 
-      const results = await Promise.all(promises);
-      const countsMap: Record<string, number> = { all: 0 };
-      results.forEach(r => {
-        countsMap[r.type] = r.count;
-        countsMap.all += r.count;
+      (allEvents || []).forEach((event: { event_type: string }) => {
+        countsMap[event.event_type] = (countsMap[event.event_type] || 0) + 1;
+        countsMap.all += 1;
       });
+
+      console.log('[CaktoSales] Counts:', countsMap);
       setCounts(countsMap);
     } catch (err) {
-      console.error('Error fetching counts:', err);
+      console.error('[CaktoSales] Error fetching counts:', err);
     }
   }, [instanceId]);
 
   // Fetch inicial quando abrir
   useEffect(() => {
-    if (open) {
-      fetchEvents();
+    if (open && instanceId && !initialized) {
+      console.log('[CaktoSales] Initial fetch on open');
+      setInitialized(true);
+      fetchEvents('all');
       fetchCounts();
     }
-  }, [open, fetchEvents, fetchCounts]);
+    if (!open) {
+      setInitialized(false);
+    }
+  }, [open, instanceId, initialized, fetchEvents, fetchCounts]);
+
+  // Refetch quando tab muda
+  useEffect(() => {
+    if (open && initialized && instanceId) {
+      console.log('[CaktoSales] Tab changed to:', activeTab);
+      fetchEvents(activeTab);
+    }
+  }, [activeTab, open, initialized, instanceId]);
 
   // Realtime updates
   useEffect(() => {
