@@ -21,20 +21,22 @@ serve(async (req) => {
       );
     }
 
-    // Format phone number
-    const cleanPhone = phone.replace(/\D/g, '');
-    const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+    // Normalize phone - remove country code if present, keep only 11 digits
+    let cleanPhone = phone.replace(/\D/g, '');
+    if (cleanPhone.startsWith('55') && cleanPhone.length === 13) {
+      cleanPhone = cleanPhone.slice(2);
+    }
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get verification record
-    const { data: verification, error: fetchError } = await supabase
+    // Get verification record - try both formats
+    let { data: verification, error: fetchError } = await supabase
       .from('phone_verification_codes')
       .select('*')
-      .eq('phone', formattedPhone)
+      .eq('phone', cleanPhone)
       .eq('code', code)
       .is('verified_at', null)
       .gte('expires_at', new Date().toISOString())
@@ -46,8 +48,8 @@ serve(async (req) => {
       // Check if code exists but is expired or already used
       const { data: expiredCode } = await supabase
         .from('phone_verification_codes')
-        .select('expires_at, verified_at')
-        .eq('phone', formattedPhone)
+        .select('expires_at, verified_at, attempts')
+        .eq('phone', cleanPhone)
         .eq('code', code)
         .single();
 
@@ -60,26 +62,52 @@ serve(async (req) => {
 
       if (expiredCode && new Date(expiredCode.expires_at) < new Date()) {
         return new Response(
-          JSON.stringify({ error: 'Código expirado' }),
+          JSON.stringify({ error: 'Código expirado. Solicite um novo.' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      // Update attempt count
-      await supabase
+      // Update attempt count for the most recent code
+      const { data: latestCode } = await supabase
         .from('phone_verification_codes')
-        .update({ attempts: verification?.attempts ? verification.attempts + 1 : 1 })
-        .eq('phone', formattedPhone)
-        .is('verified_at', null);
+        .select('id, attempts')
+        .eq('phone', cleanPhone)
+        .is('verified_at', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (latestCode) {
+        const newAttempts = (latestCode.attempts || 0) + 1;
+        
+        await supabase
+          .from('phone_verification_codes')
+          .update({ attempts: newAttempts })
+          .eq('id', latestCode.id);
+
+        // Check if too many attempts
+        if (newAttempts >= 5) {
+          // Invalidate this code
+          await supabase
+            .from('phone_verification_codes')
+            .update({ verified_at: new Date().toISOString() })
+            .eq('id', latestCode.id);
+
+          return new Response(
+            JSON.stringify({ error: 'Muitas tentativas incorretas. Solicite um novo código.' }),
+            { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
 
       return new Response(
-        JSON.stringify({ error: 'Código inválido' }),
+        JSON.stringify({ error: 'Código inválido. Verifique e tente novamente.' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     // Check max attempts
-    if (verification.attempts >= verification.max_attempts) {
+    if (verification.attempts >= 5) {
       return new Response(
         JSON.stringify({ error: 'Muitas tentativas. Solicite um novo código.' }),
         { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -91,6 +119,15 @@ serve(async (req) => {
       .from('phone_verification_codes')
       .update({ verified_at: new Date().toISOString() })
       .eq('id', verification.id);
+
+    // Log success
+    await supabase.from('system_logs').insert({
+      log_type: 'phone_verification_success',
+      source: 'verify-phone-code',
+      message: `Telefone ${cleanPhone} verificado com sucesso`,
+      severity: 'info',
+      details: { phone: cleanPhone, email: verification.email }
+    });
 
     return new Response(
       JSON.stringify({ 

@@ -21,9 +21,23 @@ serve(async (req) => {
       );
     }
 
-    // Format phone number
-    const cleanPhone = phone.replace(/\D/g, '');
-    const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+    // Format phone number - normalize to 11 digits (DDD + number)
+    let cleanPhone = phone.replace(/\D/g, '');
+    
+    // If starts with 55 (country code), remove it for storage but keep for sending
+    if (cleanPhone.startsWith('55') && cleanPhone.length === 13) {
+      cleanPhone = cleanPhone.slice(2);
+    }
+    
+    if (cleanPhone.length !== 11) {
+      return new Response(
+        JSON.stringify({ error: 'WhatsApp deve ter 11 dígitos (DDD + número)' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Format for sending (with country code)
+    const formattedPhone = `55${cleanPhone}`;
 
     // Generate 6-digit code
     const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -38,7 +52,7 @@ serve(async (req) => {
     const { count } = await supabase
       .from('phone_verification_codes')
       .select('*', { count: 'exact', head: true })
-      .eq('phone', formattedPhone)
+      .eq('phone', cleanPhone)
       .gte('created_at', tenMinutesAgo);
 
     if (count && count >= 3) {
@@ -52,7 +66,7 @@ serve(async (req) => {
     const { error: insertError } = await supabase
       .from('phone_verification_codes')
       .insert({
-        phone: formattedPhone,
+        phone: cleanPhone,
         code,
         email,
         name,
@@ -68,60 +82,147 @@ serve(async (req) => {
       );
     }
 
-    // Get WhatsApp instance for sending
-    const { data: instance } = await supabase
-      .from('genesis_instances')
-      .select('id, instance_key, api_token')
-      .eq('status', 'connected')
-      .limit(1)
+    // Get verification config from database
+    const { data: verifyConfig } = await supabase
+      .from('verification_config')
+      .select('*')
+      .eq('config_type', 'phone_verification')
+      .eq('is_enabled', true)
       .single();
 
-    if (!instance) {
-      // Fallback: return code for testing (in production, send via SMS gateway)
-      console.log('No WhatsApp instance available, code:', code);
+    if (!verifyConfig) {
+      console.log('Phone verification not configured, code saved:', code);
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: 'Código de verificação enviado!',
-          // Remove in production - only for testing
+          message: 'Código gerado (WhatsApp não configurado)',
+          code_saved: true,
           _testCode: Deno.env.get('ENVIRONMENT') === 'development' ? code : undefined
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Send via WhatsApp
-    const message = `🔐 *Código de Verificação*\n\nSeu código é: *${code}*\n\nVálido por 10 minutos.\n\n_Não compartilhe este código._`;
+    const config = verifyConfig.config_value as {
+      send_via: string;
+      instance_id: string;
+      backend_url: string;
+      backend_token: string;
+      message_template?: string;
+    };
 
+    // Build message from template
+    let message = config.message_template || 
+      '🔐 *Código de Verificação*\n\nOlá {{name}}! 👋\n\nSeu código é: *{{code}}*\n\n⏱️ Válido por 10 minutos.\n🔒 Não compartilhe este código.';
+    
+    message = message
+      .replace(/\{\{name\}\}/g, name?.split(' ')[0] || 'Usuário')
+      .replace(/\{\{code\}\}/g, code);
+
+    console.log('Sending verification to:', formattedPhone);
+    console.log('Using backend:', config.backend_url);
+    console.log('Instance ID:', config.instance_id);
+
+    // Send via Evolution API
     try {
-      const chatproUrl = `https://api.chatpro.com.br/${instance.instance_key}/api/v1/send_message`;
-      const response = await fetch(chatproUrl, {
+      const evolutionUrl = `${config.backend_url.replace(/\/$/, '')}/message/sendText/${config.instance_id}`;
+      
+      console.log('Evolution API URL:', evolutionUrl);
+      
+      const response = await fetch(evolutionUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': instance.api_token || '',
+          'apikey': config.backend_token,
         },
         body: JSON.stringify({
           number: formattedPhone,
-          message,
+          text: message,
         }),
       });
 
-      if (!response.ok) {
-        console.error('WhatsApp send failed:', await response.text());
-      }
-    } catch (sendError) {
-      console.error('Error sending WhatsApp:', sendError);
-    }
+      const responseText = await response.text();
+      console.log('Evolution response status:', response.status);
+      console.log('Evolution response:', responseText);
 
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: 'Código de verificação enviado para seu WhatsApp!',
-        phoneLastDigits: formattedPhone.slice(-4),
-      }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+      if (!response.ok) {
+        // Try to parse error
+        let errorMessage = 'Falha ao enviar código no WhatsApp';
+        try {
+          const errorData = JSON.parse(responseText);
+          if (errorData.message) {
+            errorMessage = errorData.message;
+          }
+        } catch {
+          // Keep default message
+        }
+
+        // Log error
+        await supabase.from('system_logs').insert({
+          log_type: 'phone_verification_error',
+          source: 'send-phone-verification',
+          message: 'Erro ao enviar código de verificação via Evolution API',
+          severity: 'error',
+          details: { 
+            phone: cleanPhone, 
+            status: response.status,
+            response: responseText.substring(0, 500)
+          }
+        });
+
+        // Still return success since code is saved
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            message: 'Código gerado. Verifique se o número está correto.',
+            warning: errorMessage,
+            phoneLastDigits: cleanPhone.slice(-4),
+          }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Log success
+      await supabase.from('system_logs').insert({
+        log_type: 'phone_verification',
+        source: 'send-phone-verification',
+        message: `Código de verificação enviado para ${cleanPhone}`,
+        severity: 'info',
+        details: { phone: cleanPhone, email }
+      });
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Código de verificação enviado para seu WhatsApp!',
+          phoneLastDigits: cleanPhone.slice(-4),
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+
+    } catch (sendError: any) {
+      console.error('Error sending via Evolution API:', sendError);
+      
+      // Log error
+      await supabase.from('system_logs').insert({
+        log_type: 'phone_verification_error',
+        source: 'send-phone-verification',
+        message: 'Erro de conexão com Evolution API',
+        severity: 'error',
+        details: { error: sendError.message, phone: cleanPhone }
+      });
+
+      // Return success anyway since code is saved
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Código gerado. WhatsApp temporariamente indisponível.',
+          code_saved: true,
+          phoneLastDigits: cleanPhone.slice(-4),
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
   } catch (error) {
     console.error('Error:', error);
