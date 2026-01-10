@@ -26,6 +26,7 @@ export function GenesisCampaigns() {
     getCampaignContacts,
     getCampaignLogs,
     retryPendingContacts,
+    markSentAsUndelivered,
   } = useCampaigns();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -177,10 +178,22 @@ export function GenesisCampaigns() {
     }
   };
 
-  // Calculate pending count
+  // Calculate pending count (include undelivered)
   const pendingCount = campaignContacts.filter(c => 
-    ['queued', 'pending', 'failed', 'rate_limited', 'cooldown'].includes(c.status)
+    ['queued', 'pending', 'failed', 'rate_limited', 'cooldown', 'undelivered'].includes(c.status)
   ).length;
+
+  // Calculate sent count (for mark as undelivered button)
+  const sentCount = campaignContacts.filter(c => c.status === 'sent').length;
+
+  // Handle mark sent as undelivered
+  const handleMarkUndelivered = async () => {
+    if (!selectedCampaign) return;
+    const result = await markSentAsUndelivered(selectedCampaign.id);
+    if (result.success) {
+      handleRefreshDetails();
+    }
+  };
 
   // Show details view
   if (selectedCampaign) {
@@ -199,7 +212,9 @@ export function GenesisCampaigns() {
           onCancel={handleCancel}
           onRefresh={handleRefreshDetails}
           onRetryPending={handleRetryPending}
+          onMarkUndelivered={handleMarkUndelivered}
           pendingCount={pendingCount}
+          sentCount={sentCount}
           loading={detailsLoading}
         />
         
