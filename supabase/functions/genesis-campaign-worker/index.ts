@@ -1084,12 +1084,23 @@ async function processBatch(
     }
   }
 
-  // Check for batch pause
+  // Check for batch pause - ACTUALLY PAUSE before scheduling next batch
   const pauseAfterBatch = (campaign.pause_after_batch as number) || 100;
-  if (sentCount > 0 && sentCount % pauseAfterBatch === 0) {
+  const totalSentInCampaign = (campaign.sent_count as number || 0) + sentCount;
+  let batchPauseApplied = false;
+  
+  if (pauseAfterBatch > 0 && totalSentInCampaign > 0 && totalSentInCampaign % pauseAfterBatch === 0) {
     const pauseDuration = ((campaign.pause_duration_seconds as number) || 300) * 1000;
     await logEvent(supabase, campaignId, null, 'batch_pause', 'info',
-      `Pausa de ${pauseDuration / 1000}s após ${pauseAfterBatch} mensagens`);
+      `Iniciando pausa de ${pauseDuration / 1000}s após ${totalSentInCampaign} mensagens enviadas`);
+    
+    // Actually wait for the pause duration
+    console.log(`[Anti-Ban] Batch pause: waiting ${pauseDuration / 1000}s`);
+    await new Promise(resolve => setTimeout(resolve, pauseDuration));
+    batchPauseApplied = true;
+    
+    await logEvent(supabase, campaignId, null, 'batch_pause_complete', 'info',
+      `Pausa concluída, retomando envios`);
   }
 
   // Schedule next batch
@@ -1145,10 +1156,17 @@ async function processBatch(
       blocked: blockedCount,
       remaining: remainingCount ?? 0,
       hasMore,
+      batchPauseApplied,
       antiBan: {
         typingSimulation: antiBanConfig.typingSimulation,
+        typingDurationRange: `${antiBanConfig.typingDurationMin}-${antiBanConfig.typingDurationMax}s`,
         adaptiveDelay: antiBanConfig.adaptiveDelay,
         instancePool: antiBanConfig.useInstancePool,
+        spamWordCheck: antiBanConfig.spamWordCheck,
+        checkBlacklist: antiBanConfig.checkBlacklist,
+        prioritizeWarmLeads: antiBanConfig.prioritizeWarmLeads,
+        peakHoursBoost: antiBanConfig.peakHoursBoost,
+        maxBlocksBeforePause: antiBanConfig.maxBlocksBeforePause,
         degradationLevel,
       }
     }),

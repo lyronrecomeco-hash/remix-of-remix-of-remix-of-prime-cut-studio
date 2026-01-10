@@ -61,6 +61,17 @@ export function GenesisCampaigns() {
       send_on_weekends: formData.send_on_weekends,
       total_contacts: formData.contacts.length,
       credits_estimated: formData.contacts.length,
+      // Anti-ban v2.0 fields
+      typing_simulation: formData.typing_simulation ?? true,
+      typing_duration_min: formData.typing_duration_min ?? 2,
+      typing_duration_max: formData.typing_duration_max ?? 5,
+      adaptive_delay: formData.adaptive_delay ?? true,
+      check_blacklist: formData.check_blacklist ?? true,
+      prioritize_warm_leads: formData.prioritize_warm_leads ?? true,
+      peak_hours_boost: formData.peak_hours_boost ?? true,
+      spam_word_check: formData.spam_word_check ?? true,
+      max_blocks_before_pause: formData.max_blocks_before_pause ?? 3,
+      cooldown_after_block_minutes: formData.cooldown_after_block_minutes ?? 60,
     });
 
     if (campaign) {
