@@ -1,48 +1,88 @@
 /**
  * USE CAKTO CONTACTS - Hook para extrair contatos PRECISOS de eventos Cakto
  * Suporta PIX não pago e outros eventos com deduplicação rigorosa
+ * Suporta filtro por produto específico
  */
 
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 export interface CaktoContact {
   phone: string;
   name: string | null;
   email: string | null;
   productName: string | null;
+  productId: string | null;
   orderValue: number | null;
   eventDate: string;
+  formattedDate: string;
   externalId: string;
+}
+
+export interface CaktoProduct {
+  id: string;
+  external_id: string;
+  name: string;
+  price: number;
+  status: string;
+  image_url: string | null;
 }
 
 interface UseCaktoContactsOptions {
   instanceId: string;
   integrationId: string;
   eventType: string;
+  productId?: string; // Filtro por produto específico
 }
 
 export function useCaktoContacts() {
   const [contacts, setContacts] = useState<CaktoContact[]>([]);
+  const [products, setProducts] = useState<CaktoProduct[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Buscar produtos ativos da integração
+  const fetchProducts = useCallback(async (integrationId: string): Promise<CaktoProduct[]> => {
+    try {
+      const { data, error } = await supabase.functions.invoke('cakto-sync', {
+        body: {
+          action: 'get_products',
+          integrationId,
+          status: 'active',
+          limit: 100,
+        },
+      });
+
+      if (error) throw error;
+
+      const productList = data?.products || [];
+      setProducts(productList);
+      return productList;
+    } catch (err) {
+      console.error('[useCaktoContacts] Error fetching products:', err);
+      return [];
+    }
+  }, []);
 
   const fetchContacts = useCallback(async ({ 
     instanceId, 
     integrationId, 
-    eventType 
+    eventType,
+    productId,
   }: UseCaktoContactsOptions): Promise<CaktoContact[]> => {
     setLoading(true);
     setError(null);
     setContacts([]);
 
     try {
-      console.log('[useCaktoContacts] Fetching contacts for:', { instanceId, eventType });
+      console.log('[useCaktoContacts] Fetching contacts for:', { instanceId, eventType, productId });
 
       // PIX não pago: lógica especial para verificar quais PIX não foram pagos
       if (eventType === 'pix_unpaid') {
         // 1. Buscar todos os pix_generated com telefone válido
-        const { data: pixEvents, error: pixError } = await supabase
+        let pixQuery = supabase
           .from('genesis_cakto_events')
           .select('*')
           .eq('instance_id', instanceId)
@@ -50,17 +90,30 @@ export function useCaktoContacts() {
           .not('customer_phone', 'is', null)
           .order('created_at', { ascending: false });
 
+        // Filtrar por produto se especificado
+        if (productId) {
+          pixQuery = pixQuery.eq('product_id', productId);
+        }
+
+        const { data: pixEvents, error: pixError } = await pixQuery;
+
         if (pixError) {
           console.error('[useCaktoContacts] PIX fetch error:', pixError);
           throw pixError;
         }
 
         // 2. Buscar todos os purchase_approved para cruzamento
-        const { data: approvedEvents, error: approvedError } = await supabase
+        let approvedQuery = supabase
           .from('genesis_cakto_events')
           .select('external_id, customer_phone, created_at')
           .eq('instance_id', instanceId)
           .eq('event_type', 'purchase_approved');
+
+        if (productId) {
+          approvedQuery = approvedQuery.eq('product_id', productId);
+        }
+
+        const { data: approvedEvents, error: approvedError } = await approvedQuery;
 
         if (approvedError) {
           console.error('[useCaktoContacts] Approved fetch error:', approvedError);
@@ -108,13 +161,19 @@ export function useCaktoContacts() {
             }
             seenPhones.add(normalizedPhone);
 
+            // Formatar data de forma precisa
+            const eventDateObj = new Date(event.created_at);
+            const formattedDate = format(eventDateObj, "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR });
+
             unpaidContacts.push({
               phone: normalizedPhone,
               name: event.customer_name || null,
               email: event.customer_email || null,
               productName: event.product_name || null,
+              productId: event.product_id || null,
               orderValue: event.order_value || null,
               eventDate: event.created_at,
+              formattedDate,
               externalId: event.external_id || event.id,
             });
           }
@@ -126,13 +185,19 @@ export function useCaktoContacts() {
       }
 
       // Outros eventos: busca direta com deduplicação
-      const { data: events, error: eventsError } = await supabase
+      let query = supabase
         .from('genesis_cakto_events')
         .select('*')
         .eq('instance_id', instanceId)
         .eq('event_type', eventType)
         .not('customer_phone', 'is', null)
         .order('created_at', { ascending: false });
+
+      if (productId) {
+        query = query.eq('product_id', productId);
+      }
+
+      const { data: events, error: eventsError } = await query;
 
       if (eventsError) {
         console.error('[useCaktoContacts] Events fetch error:', eventsError);
@@ -149,13 +214,19 @@ export function useCaktoContacts() {
           
           if (!seenPhones.has(normalizedPhone)) {
             seenPhones.add(normalizedPhone);
+            
+            const eventDateObj = new Date(event.created_at);
+            const formattedDate = format(eventDateObj, "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR });
+            
             uniqueContacts.push({
               phone: normalizedPhone,
               name: event.customer_name || null,
               email: event.customer_email || null,
               productName: event.product_name || null,
+              productId: event.product_id || null,
               orderValue: event.order_value || null,
               eventDate: event.created_at,
+              formattedDate,
               externalId: event.external_id || event.id,
             });
           }
@@ -177,8 +248,10 @@ export function useCaktoContacts() {
 
   return {
     contacts,
+    products,
     loading,
     error,
     fetchContacts,
+    fetchProducts,
   };
 }
