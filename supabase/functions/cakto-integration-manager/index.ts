@@ -85,10 +85,7 @@ serve(async (req) => {
           );
         }
 
-        // Generate webhook URL
-        const webhookUrl = `${supabaseUrl}/functions/v1/cakto-webhook/${instanceId}`;
-
-        // Create integration
+        // Create integration first to get the ID
         const { data, error } = await supabase
           .from('genesis_instance_integrations')
           .insert({
@@ -96,11 +93,10 @@ serve(async (req) => {
             user_id: userId,
             provider: 'cakto',
             status: 'connected',
-            webhook_url: webhookUrl,
+            webhook_url: '', // Will update after getting ID
             store_name: 'Cakto',
             metadata: {
               client_id: clientId,
-              // Store encrypted secret in production
               client_secret_hash: btoa(clientSecret).slice(0, 20) + '...',
               configured_at: new Date().toISOString(),
             },
@@ -110,13 +106,23 @@ serve(async (req) => {
 
         if (error) throw error;
 
-        console.log(`[CaktoManager] Created integration: ${data.id}`);
+        // Generate webhook URL using integration ID (for custom domain)
+        // URL format: https://genesishub.cloud/webhook/cakto/{integration_id}
+        const webhookUrl = `https://genesishub.cloud/webhook/cakto/${data.id}`;
+
+        // Update with correct webhook URL
+        await supabase
+          .from('genesis_instance_integrations')
+          .update({ webhook_url: webhookUrl })
+          .eq('id', data.id);
+
+        console.log(`[CaktoManager] Created integration: ${data.id} with webhook: ${webhookUrl}`);
 
         return new Response(
           JSON.stringify({ 
             success: true, 
             message: 'Integração criada com sucesso!',
-            integration: data,
+            integration: { ...data, webhook_url: webhookUrl },
             webhookUrl,
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -185,14 +191,15 @@ serve(async (req) => {
       }
 
       case 'get_webhook_url': {
-        if (!instanceId) {
+        if (!integrationId) {
           return new Response(
-            JSON.stringify({ success: false, error: 'Instance ID obrigatório' }),
+            JSON.stringify({ success: false, error: 'Integration ID obrigatório' }),
             { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
-        const webhookUrl = `${supabaseUrl}/functions/v1/cakto-webhook/${instanceId}`;
+        // URL format: https://genesishub.cloud/webhook/cakto/{integration_id}
+        const webhookUrl = `https://genesishub.cloud/webhook/cakto/${integrationId}`;
 
         return new Response(
           JSON.stringify({ success: true, webhookUrl }),
