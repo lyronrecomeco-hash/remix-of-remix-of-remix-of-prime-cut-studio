@@ -2,6 +2,7 @@
  * USE CAKTO CONTACTS - Hook para extrair contatos PRECISOS de eventos Cakto
  * Suporta PIX não pago com VERIFICAÇÃO RIGOROSA por email + telefone + external_id
  * Suporta MULTI-SELECT de produtos e PERÍODO DE DATAS
+ * ATUALIZADO: Remove automaticamente duplicados e contatos já enviados
  */
 
 import { useState, useCallback } from 'react';
@@ -42,6 +43,7 @@ interface UseCaktoContactsOptions {
   eventType: string;
   productIds?: string[]; // MULTI-SELECT: array de IDs de produtos
   dateRange?: DateRange;
+  excludeSentPhones?: boolean; // Nova opção para excluir contatos já enviados
 }
 
 // Função para obter range de datas padrão (últimos 2 dias)
@@ -67,6 +69,36 @@ export function useCaktoContacts() {
   const [products, setProducts] = useState<CaktoProduct[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Buscar telefones já enviados em campanhas anteriores (últimos 30 dias)
+  const fetchAlreadySentPhones = async (instanceId: string): Promise<Set<string>> => {
+    try {
+      // Buscar contatos que já foram enviados (sent, delivered, read, replied)
+      const { data, error } = await supabase
+        .from('genesis_campaign_contacts')
+        .select('contact_phone, campaign_id')
+        .in('status', ['sent', 'delivered', 'read', 'replied'])
+        .limit(5000);
+      
+      if (error) {
+        console.error('[useCaktoContacts] Error fetching sent phones:', error);
+        return new Set();
+      }
+
+      // Normalizar todos os telefones enviados
+      const sentPhones = new Set<string>();
+      (data || []).forEach(c => {
+        const normalized = normalizePhone(c.contact_phone);
+        if (normalized) sentPhones.add(normalized);
+      });
+
+      console.log('[useCaktoContacts] Found', sentPhones.size, 'already sent phones');
+      return sentPhones;
+    } catch (err) {
+      console.error('[useCaktoContacts] Error in fetchAlreadySentPhones:', err);
+      return new Set();
+    }
+  };
 
   // Buscar produtos ativos da integração
   const fetchProducts = useCallback(async (integrationId: string): Promise<CaktoProduct[]> => {
@@ -97,6 +129,7 @@ export function useCaktoContacts() {
     eventType,
     productIds = [], // Array de produtos selecionados
     dateRange,
+    excludeSentPhones = true, // Por padrão, exclui contatos já enviados
   }: UseCaktoContactsOptions): Promise<CaktoContact[]> => {
     setLoading(true);
     setError(null);
@@ -112,8 +145,16 @@ export function useCaktoContacts() {
         instanceId, 
         eventType, 
         productIds,
-        dateRange: { start: startDateISO, end: endDateISO }
+        dateRange: { start: startDateISO, end: endDateISO },
+        excludeSentPhones,
       });
+
+      // Buscar telefones já enviados se excludeSentPhones === true
+      const alreadySentPhones = excludeSentPhones 
+        ? await fetchAlreadySentPhones(instanceId)
+        : new Set<string>();
+
+      console.log('[useCaktoContacts] Will exclude', alreadySentPhones.size, 'already sent phones');
 
       // PIX não pago: VERIFICAÇÃO RIGOROSA por email + telefone + external_id
       if (eventType === 'pix_unpaid') {
@@ -268,6 +309,13 @@ export function useCaktoContacts() {
             continue;
           }
 
+          // VERIFICAÇÃO 5: Telefone JÁ FOI ENVIADO em campanha anterior?
+          if (alreadySentPhones.has(normalizedPhone)) {
+            console.log('[useCaktoContacts] ✗ Skipping - phone ALREADY SENT in campaign:', normalizedPhone);
+            seenIdentities.add(identity);
+            continue;
+          }
+
           // Marcar identidade como processada
           seenIdentities.add(identity);
 
@@ -289,7 +337,7 @@ export function useCaktoContacts() {
           });
         }
 
-        console.log('[useCaktoContacts] ✓ Found', unpaidContacts.length, 'VERIFIED unpaid PIX contacts (zero duplicates)');
+        console.log('[useCaktoContacts] ✓ Found', unpaidContacts.length, 'VERIFIED unpaid PIX contacts (excludes sent + duplicates)');
         setContacts(unpaidContacts);
         return unpaidContacts;
       }
@@ -317,35 +365,49 @@ export function useCaktoContacts() {
         throw eventsError;
       }
 
-      // Deduplicar por telefone normalizado
+      // Deduplicar por telefone normalizado + excluir já enviados
       const seenPhones = new Set<string>();
       const uniqueContacts: CaktoContact[] = [];
+      let skippedSent = 0;
+      let skippedDuplicate = 0;
 
       for (const event of (events || [])) {
         const normalizedPhone = normalizePhone(event.customer_phone);
         
-        if (normalizedPhone && !seenPhones.has(normalizedPhone)) {
-          seenPhones.add(normalizedPhone);
-          
-          const eventDateObj = new Date(event.created_at);
-          const formattedDate = format(eventDateObj, "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR });
-          
-          uniqueContacts.push({
-            phone: normalizedPhone,
-            name: event.customer_name || null,
-            email: event.customer_email || null,
-            productName: event.product_name || null,
-            productId: event.product_id || null,
-            orderValue: event.order_value || null,
-            eventDate: event.created_at,
-            formattedDate,
-            externalId: event.external_id || event.id,
-            paymentStatus: eventType === 'purchase_approved' ? 'paid' : 'unknown',
-          });
+        if (!normalizedPhone) continue;
+
+        // Verificar duplicata
+        if (seenPhones.has(normalizedPhone)) {
+          skippedDuplicate++;
+          continue;
         }
+        
+        // Verificar se já foi enviado em campanha anterior
+        if (alreadySentPhones.has(normalizedPhone)) {
+          skippedSent++;
+          continue;
+        }
+        
+        seenPhones.add(normalizedPhone);
+        
+        const eventDateObj = new Date(event.created_at);
+        const formattedDate = format(eventDateObj, "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR });
+        
+        uniqueContacts.push({
+          phone: normalizedPhone,
+          name: event.customer_name || null,
+          email: event.customer_email || null,
+          productName: event.product_name || null,
+          productId: event.product_id || null,
+          orderValue: event.order_value || null,
+          eventDate: event.created_at,
+          formattedDate,
+          externalId: event.external_id || event.id,
+          paymentStatus: eventType === 'purchase_approved' ? 'paid' : 'unknown',
+        });
       }
 
-      console.log('[useCaktoContacts] Found', uniqueContacts.length, 'unique contacts for', eventType);
+      console.log('[useCaktoContacts] Found', uniqueContacts.length, 'unique contacts for', eventType, '(skipped:', skippedDuplicate, 'duplicates,', skippedSent, 'already sent)');
       setContacts(uniqueContacts);
       return uniqueContacts;
     } catch (err) {
