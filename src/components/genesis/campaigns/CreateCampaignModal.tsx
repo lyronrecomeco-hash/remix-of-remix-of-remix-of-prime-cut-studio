@@ -62,6 +62,7 @@ import { IntegrationSelector } from './IntegrationSelector';
 import { ScheduleByPeriodControl, DEFAULT_SCHEDULE, type ScheduleByPeriod } from './ScheduleByPeriodControl';
 import { LunaVariationsPreview } from './LunaVariationsPreview';
 import { ContactsPreviewCard } from './ContactsPreviewCard';
+import { ProductMultiSelect } from './ProductMultiSelect';
 import { useCaktoContacts, type CaktoContact, type CaktoProduct, type DateRange, getDefaultDateRange } from './hooks/useCaktoContacts';
 import { DateRangeSelector } from './DateRangeSelector';
 
@@ -155,7 +156,7 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
   const [selectedIntegrationId, setSelectedIntegrationId] = useState<string | null>(null);
   const [selectedIntegrationProvider, setSelectedIntegrationProvider] = useState<string>('');
   const [selectedEvent, setSelectedEvent] = useState<string>('');
-  const [selectedProductId, setSelectedProductId] = useState<string>('');
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [scheduleByPeriod, setScheduleByPeriod] = useState<ScheduleByPeriod>(DEFAULT_SCHEDULE);
   const [useAdvancedSchedule, setUseAdvancedSchedule] = useState(false);
   
@@ -199,7 +200,7 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
       setSelectedIntegrationId(null);
       setSelectedIntegrationProvider('');
       setSelectedEvent('');
-      setSelectedProductId('');
+      setSelectedProductIds([]);
       setScheduleByPeriod(DEFAULT_SCHEDULE);
       setUseAdvancedSchedule(false);
       setExtractedContacts([]);
@@ -221,7 +222,7 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
     }
   }, [selectedIntegrationId, selectedIntegrationProvider, fetchProducts]);
 
-  // Extrair contatos quando evento, produto OU DATA é selecionado
+  // Extrair contatos quando evento, produtos OU DATA é selecionado
   useEffect(() => {
     if (
       formData.campaign_type === 'integracao' && 
@@ -229,12 +230,12 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
       selectedEvent && 
       formData.instance_id
     ) {
-      console.log('[Campaign] Extracting contacts for event:', selectedEvent, 'product:', selectedProductId, 'dateRange:', dateRange);
+      console.log('[Campaign] Extracting contacts for event:', selectedEvent, 'products:', selectedProductIds, 'dateRange:', dateRange);
       fetchContacts({
         instanceId: formData.instance_id,
         integrationId: selectedIntegrationId,
         eventType: selectedEvent,
-        productId: selectedProductId || undefined,
+        productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
         dateRange: dateRange,
       }).then(contacts => {
         setExtractedContacts(contacts);
@@ -249,7 +250,7 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
         }
       });
     }
-  }, [selectedEvent, selectedIntegrationId, selectedProductId, formData.instance_id, formData.campaign_type, fetchContacts, dateRange]);
+  }, [selectedEvent, selectedIntegrationId, selectedProductIds, formData.instance_id, formData.campaign_type, fetchContacts, dateRange]);
 
   // Parse contacts from text
   const parseContacts = (text: string) => {
@@ -281,7 +282,7 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
     setSelectedIntegrationId(integrationId);
     setSelectedIntegrationProvider(provider);
     setSelectedEvent(''); // Reset evento ao trocar integração
-    setSelectedProductId(''); // Reset produto
+    setSelectedProductIds([]); // Reset produtos
   };
 
   // Handler para variações Luna geradas
@@ -352,7 +353,7 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
         integration_id: selectedIntegrationId,
         integration_provider: selectedIntegrationProvider,
         trigger_event: selectedEvent,
-        product_filter_id: selectedProductId || null,
+        product_filter_ids: selectedProductIds.length > 0 ? selectedProductIds : null,
         schedule_by_period: useAdvancedSchedule ? scheduleByPeriod : null,
         luna_variations: generatedVariations.length > 0 ? generatedVariations : null,
       } : {};
@@ -630,41 +631,14 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
                     ))}
                   </div>
 
-                  {/* Filtro por produto (apenas para Cakto) */}
+                  {/* Multi-select de produtos (apenas para Cakto) */}
                   {selectedEvent && selectedIntegrationProvider === 'cakto' && availableProducts.length > 0 && (
-                    <Card className="border-blue-500/20 bg-blue-500/5">
-                      <CardContent className="p-4 space-y-3">
-                        <div className="flex items-center gap-2">
-                          <Package className="w-5 h-5 text-blue-500" />
-                          <Label className="font-medium">Filtrar por Produto (Opcional)</Label>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          Selecione um produto específico para maior precisão na extração
-                        </p>
-                        <Select value={selectedProductId || '_all_'} onValueChange={(v) => setSelectedProductId(v === '_all_' ? '' : v)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Todos os produtos ativos" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="_all_">Todos os produtos ativos</SelectItem>
-                            {availableProducts.map(product => (
-                              <SelectItem key={product.id} value={product.external_id}>
-                                <div className="flex items-center gap-2">
-                                  <span>{product.name}</span>
-                                  <span className="text-muted-foreground text-xs">
-                                    R$ {product.price}
-                                  </span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <p className="text-xs text-muted-foreground">
-                          ✓ Apenas {availableProducts.length} produtos ativos exibidos
-                        </p>
-                      </CardContent>
-                    </Card>
-                    )}
+                    <ProductMultiSelect
+                      products={availableProducts}
+                      selectedProductIds={selectedProductIds}
+                      onChange={setSelectedProductIds}
+                    />
+                  )}
 
                   {/* Seletor de Período (DATA) */}
                   {selectedEvent && selectedIntegrationProvider === 'cakto' && (
