@@ -1,9 +1,10 @@
 /**
  * CONTACTS PREVIEW CARD - Preview detalhado dos contatos extraídos
  * Exibe nome, telefone, email, produto, valor e data/hora precisa
+ * COM BADGE DE STATUS (não pago, pago, etc.)
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +23,8 @@ import {
   User,
   Eye,
   EyeOff,
+  AlertTriangle,
+  CheckCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { CaktoContact } from './hooks/useCaktoContacts';
@@ -32,6 +35,25 @@ interface ContactsPreviewCardProps {
   eventType: string;
   className?: string;
 }
+
+// Status badges com cores e ícones
+const STATUS_CONFIG = {
+  unpaid: {
+    label: 'Não Pago',
+    color: 'bg-red-500/10 text-red-600 border-red-500/30',
+    icon: AlertTriangle,
+  },
+  paid: {
+    label: 'Pago',
+    color: 'bg-green-500/10 text-green-600 border-green-500/30',
+    icon: CheckCircle,
+  },
+  unknown: {
+    label: '',
+    color: '',
+    icon: null,
+  },
+};
 
 export function ContactsPreviewCard({ 
   contacts, 
@@ -51,6 +73,14 @@ export function ContactsPreviewCard({
       currency: 'BRL',
     }).format(value);
   };
+
+  // Contagem de status
+  const statusCounts = useMemo(() => {
+    return contacts.reduce((acc, c) => {
+      acc[c.paymentStatus] = (acc[c.paymentStatus] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+  }, [contacts]);
 
   if (loading) {
     return (
@@ -73,8 +103,13 @@ export function ContactsPreviewCard({
   }
 
   const hasContacts = contacts.length > 0;
-  const statusColor = hasContacts ? 'border-green-500/30 bg-green-500/5' : 'border-yellow-500/30 bg-yellow-500/5';
-  const iconColor = hasContacts ? 'text-green-500' : 'text-yellow-500';
+  const isUnpaidEvent = eventType === 'pix_unpaid';
+  const statusColor = hasContacts 
+    ? (isUnpaidEvent ? 'border-red-500/30 bg-red-500/5' : 'border-green-500/30 bg-green-500/5')
+    : 'border-yellow-500/30 bg-yellow-500/5';
+  const iconColor = hasContacts 
+    ? (isUnpaidEvent ? 'text-red-500' : 'text-green-500')
+    : 'text-yellow-500';
 
   return (
     <Card className={cn(statusColor, className)}>
@@ -86,6 +121,12 @@ export function ContactsPreviewCard({
             <Badge variant={hasContacts ? "default" : "secondary"}>
               {contacts.length}
             </Badge>
+            {isUnpaidEvent && hasContacts && statusCounts.unpaid && (
+              <Badge variant="destructive" className="gap-1">
+                <AlertTriangle className="w-3 h-3" />
+                {statusCounts.unpaid} não pagos
+              </Badge>
+            )}
           </CardTitle>
           {hasContacts && (
             <Button
@@ -113,6 +154,11 @@ export function ContactsPreviewCard({
             Nenhum contato encontrado para este evento
           </p>
         )}
+        {hasContacts && isUnpaidEvent && (
+          <p className="text-xs text-muted-foreground mt-1">
+            ✓ Verificação rigorosa: email + telefone + ID da transação
+          </p>
+        )}
       </CardHeader>
 
       {hasContacts && (
@@ -120,64 +166,79 @@ export function ContactsPreviewCard({
           <ScrollArea className={cn(expanded ? "h-[300px]" : "h-auto")}>
             <AnimatePresence mode="popLayout">
               <div className="space-y-2">
-                {displayedContacts.map((contact, index) => (
-                  <motion.div
-                    key={contact.externalId || index}
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    transition={{ delay: index * 0.03 }}
-                    className="p-3 rounded-lg bg-background/80 border border-border/50 hover:border-border transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0 space-y-1.5">
-                        {/* Nome e telefone */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <div className="flex items-center gap-1.5">
-                            <User className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="font-medium text-sm truncate max-w-[150px]">
-                              {contact.name || 'Sem nome'}
-                            </span>
+                {displayedContacts.map((contact, index) => {
+                  const statusConfig = STATUS_CONFIG[contact.paymentStatus];
+                  const StatusIcon = statusConfig?.icon;
+                  
+                  return (
+                    <motion.div
+                      key={contact.externalId || index}
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      transition={{ delay: index * 0.03 }}
+                      className="p-3 rounded-lg bg-background/80 border border-border/50 hover:border-border transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0 space-y-1.5">
+                          {/* Nome, telefone e STATUS */}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <div className="flex items-center gap-1.5">
+                              <User className="w-3.5 h-3.5 text-muted-foreground" />
+                              <span className="font-medium text-sm truncate max-w-[150px]">
+                                {contact.name || 'Sem nome'}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground font-mono">
+                              <Phone className="w-3 h-3" />
+                              {contact.phone}
+                            </div>
+                            {/* STATUS BADGE - "Não Pago" */}
+                            {statusConfig?.label && (
+                              <Badge 
+                                variant="outline" 
+                                className={cn("text-xs gap-1 shrink-0", statusConfig.color)}
+                              >
+                                {StatusIcon && <StatusIcon className="w-3 h-3" />}
+                                {statusConfig.label}
+                              </Badge>
+                            )}
                           </div>
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground font-mono">
-                            <Phone className="w-3 h-3" />
-                            {contact.phone}
+
+                          {/* Email e produto */}
+                          <div className="flex items-center gap-3 flex-wrap text-xs text-muted-foreground">
+                            {contact.email && (
+                              <div className="flex items-center gap-1 truncate max-w-[180px]">
+                                <Mail className="w-3 h-3" />
+                                {contact.email}
+                              </div>
+                            )}
+                            {contact.productName && (
+                              <div className="flex items-center gap-1 truncate max-w-[150px]">
+                                <Package className="w-3 h-3" />
+                                {contact.productName}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Data/hora precisa */}
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground/70">
+                            <Clock className="w-3 h-3" />
+                            {contact.formattedDate}
                           </div>
                         </div>
 
-                        {/* Email e produto */}
-                        <div className="flex items-center gap-3 flex-wrap text-xs text-muted-foreground">
-                          {contact.email && (
-                            <div className="flex items-center gap-1 truncate max-w-[180px]">
-                              <Mail className="w-3 h-3" />
-                              {contact.email}
-                            </div>
-                          )}
-                          {contact.productName && (
-                            <div className="flex items-center gap-1 truncate max-w-[150px]">
-                              <Package className="w-3 h-3" />
-                              {contact.productName}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Data/hora precisa */}
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground/70">
-                          <Clock className="w-3 h-3" />
-                          {contact.formattedDate}
-                        </div>
+                        {/* Valor */}
+                        {contact.orderValue && (
+                          <div className="flex items-center gap-1 text-sm font-semibold text-green-600">
+                            <DollarSign className="w-3.5 h-3.5" />
+                            {formatCurrency(contact.orderValue)}
+                          </div>
+                        )}
                       </div>
-
-                      {/* Valor */}
-                      {contact.orderValue && (
-                        <div className="flex items-center gap-1 text-sm font-semibold text-green-600">
-                          <DollarSign className="w-3.5 h-3.5" />
-                          {formatCurrency(contact.orderValue)}
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
+                    </motion.div>
+                  );
+                })}
               </div>
             </AnimatePresence>
           </ScrollArea>
@@ -207,7 +268,7 @@ export function ContactsPreviewCard({
           {/* Resumo */}
           <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground">
             <span>
-              {contacts.length} contatos únicos (sem duplicatas)
+              {contacts.length} contatos únicos (verificados)
             </span>
             {contacts.some(c => c.orderValue) && (
               <span className="font-medium text-foreground">
