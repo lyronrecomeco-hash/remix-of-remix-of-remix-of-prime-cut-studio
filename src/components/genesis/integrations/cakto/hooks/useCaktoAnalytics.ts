@@ -131,11 +131,12 @@ export function useCaktoAnalytics(instanceId: string, integrationId?: string, pe
     fetchAnalytics();
   }, [fetchAnalytics]);
 
-  // Realtime updates
+  // Realtime updates - both analytics and events tables
   useEffect(() => {
     if (!instanceId) return;
 
-    const channel = supabase
+    // Channel for analytics table
+    const analyticsChannel = supabase
       .channel(`cakto-analytics-${instanceId}`)
       .on(
         'postgres_changes',
@@ -151,8 +152,27 @@ export function useCaktoAnalytics(instanceId: string, integrationId?: string, pe
       )
       .subscribe();
 
+    // Channel for events table - triggers analytics refetch on new events
+    const eventsChannel = supabase
+      .channel(`cakto-events-${instanceId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'genesis_cakto_events',
+          filter: `instance_id=eq.${instanceId}`,
+        },
+        () => {
+          // Refetch analytics when new event arrives
+          fetchAnalytics();
+        }
+      )
+      .subscribe();
+
     return () => {
-      channel.unsubscribe();
+      analyticsChannel.unsubscribe();
+      eventsChannel.unsubscribe();
     };
   }, [instanceId, fetchAnalytics]);
 
