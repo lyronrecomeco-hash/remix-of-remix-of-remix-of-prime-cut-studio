@@ -1,6 +1,6 @@
 /**
  * CAKTO DASHBOARD - Métricas e gráficos
- * Layout organizado e profissional
+ * Layout profissional: Métricas no TOPO, Gráficos abaixo
  */
 
 import { useState } from 'react';
@@ -15,11 +15,13 @@ import {
   TrendingUp,
   DollarSign,
   Loader2,
+  AlertCircle,
+  Percent,
 } from 'lucide-react';
 import { useCaktoIntegration } from './hooks/useCaktoIntegration';
 import { useCaktoAnalytics } from './hooks/useCaktoAnalytics';
 import { AnalyticsPeriod } from './types';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -57,89 +59,225 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
     { name: 'Abandonos', value: analytics?.cart_abandonments || 0, color: '#eab308' },
   ].filter(d => d.value > 0);
 
+  // Loading State
   if (integrationLoading || analyticsLoading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      <div className="flex items-center justify-center py-24">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Carregando métricas...</p>
+        </div>
       </div>
     );
   }
 
+  // Not Connected State
   if (!isConnected) {
     return (
       <Card className="border-dashed">
-        <CardContent className="py-12 text-center text-muted-foreground">
-          Configure a integração Cakto para ver as métricas
+        <CardContent className="py-16 text-center">
+          <AlertCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
+          <p className="text-muted-foreground">
+            Configure a integração Cakto para ver as métricas
+          </p>
         </CardContent>
       </Card>
     );
   }
 
+  const ticketMedio = analytics?.purchases_approved 
+    ? (analytics.total_revenue || 0) / analytics.purchases_approved
+    : 0;
+
   return (
     <div className="space-y-6">
-      {/* Seletor de período */}
-      <div className="flex gap-2">
-        {(['today', '7d', '30d'] as AnalyticsPeriod[]).map((p) => (
-          <Button
-            key={p}
-            variant={period === p ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setPeriod(p)}
-          >
-            {p === 'today' ? 'Hoje' : p === '7d' ? '7 dias' : '30 dias'}
-          </Button>
-        ))}
+      {/* ═══════════════════════════════════════════════════════════════
+          SELETOR DE PERÍODO
+      ═══════════════════════════════════════════════════════════════ */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-medium text-muted-foreground">Período</h3>
+        <div className="flex gap-1 bg-muted/50 p-1 rounded-lg">
+          {(['today', '7d', '30d'] as AnalyticsPeriod[]).map((p) => (
+            <Button
+              key={p}
+              variant={period === p ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setPeriod(p)}
+              className="h-8 px-3"
+            >
+              {p === 'today' ? 'Hoje' : p === '7d' ? '7 dias' : '30 dias'}
+            </Button>
+          ))}
+        </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KPICard 
-          label="Checkouts" 
-          value={analytics?.checkouts_started || 0} 
-          icon={ShoppingCart}
-          iconBg="bg-blue-500/10"
-          iconColor="text-blue-500"
-        />
-        <KPICard 
-          label="Aprovadas" 
-          value={analytics?.purchases_approved || 0} 
-          icon={CheckCircle2}
-          iconBg="bg-emerald-500/10"
-          iconColor="text-emerald-500"
-          valueColor="text-emerald-600"
-        />
-        <KPICard 
-          label="Conversão" 
-          value={formatPercent(analytics?.conversion_rate || 0)} 
-          icon={TrendingUp}
-          iconBg="bg-purple-500/10"
-          iconColor="text-purple-500"
-        />
-        <KPICard 
-          label="Receita" 
-          value={formatCurrency(analytics?.total_revenue || 0)} 
-          icon={DollarSign}
-          iconBg="bg-emerald-500/10"
-          iconColor="text-emerald-500"
-          valueColor="text-emerald-600"
-        />
-      </div>
+      {/* ═══════════════════════════════════════════════════════════════
+          BLOCO 1: MÉTRICAS PRINCIPAIS (PRIMEIRA DOBRA)
+      ═══════════════════════════════════════════════════════════════ */}
+      <section>
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+          <MetricCard 
+            label="Checkouts" 
+            value={analytics?.checkouts_started || 0} 
+            icon={ShoppingCart}
+            iconColor="text-blue-500"
+            iconBg="bg-blue-500/10"
+          />
+          <MetricCard 
+            label="Aprovadas" 
+            value={analytics?.purchases_approved || 0} 
+            icon={CheckCircle2}
+            iconColor="text-emerald-500"
+            iconBg="bg-emerald-500/10"
+            valueColor="text-emerald-600"
+          />
+          <MetricCard 
+            label="Conversão" 
+            value={formatPercent(analytics?.conversion_rate || 0)} 
+            icon={Percent}
+            iconColor="text-purple-500"
+            iconBg="bg-purple-500/10"
+          />
+          <MetricCard 
+            label="Receita" 
+            value={formatCurrency(analytics?.total_revenue || 0)} 
+            icon={DollarSign}
+            iconColor="text-emerald-500"
+            iconBg="bg-emerald-500/10"
+            valueColor="text-emerald-600"
+          />
+        </div>
 
-      {/* Charts */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Area Chart */}
+        {/* Métricas Secundárias */}
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 mt-4">
+          <MetricCardSecondary 
+            label="Recusadas" 
+            value={analytics?.purchases_refused || 0} 
+            icon={XCircle}
+            color="red"
+          />
+          <MetricCardSecondary 
+            label="Reembolsos" 
+            value={analytics?.purchases_refunded || 0} 
+            icon={RefreshCw}
+            color="orange"
+          />
+          <MetricCardSecondary 
+            label="Abandonos" 
+            value={analytics?.cart_abandonments || 0} 
+            icon={Clock}
+            color="yellow"
+          />
+          <MetricCardSecondary 
+            label="Ticket Médio" 
+            value={formatCurrency(ticketMedio)} 
+            icon={TrendingUp}
+            color="emerald"
+          />
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          BLOCO 2: GRÁFICOS (SEGUNDA DOBRA)
+      ═══════════════════════════════════════════════════════════════ */}
+      <section className="grid gap-6 lg:grid-cols-3">
+        {/* Gráfico de Evolução - Principal (2/3 do espaço) */}
         <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-base font-semibold">Evolução</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-primary" />
+              Evolução
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[280px]">
+            <div className="h-[300px]">
               {chartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="date" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
-                    <YAxis tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
+                    <defs>
+                      <linearGradient id="colorCheckouts" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorAprovadas" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
+                    <XAxis 
+                      dataKey="date" 
+                      tick={{ fontSize: 12 }} 
+                      tickLine={false} 
+                      axisLine={false}
+                      dy={10}
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 12 }} 
+                      tickLine={false} 
+                      axisLine={false}
+                      dx={-10}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="checkouts" 
+                      stroke="#3b82f6" 
+                      fill="url(#colorCheckouts)"
+                      strokeWidth={2}
+                      name="Checkouts"
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="aprovadas" 
+                      stroke="#10b981" 
+                      fill="url(#colorAprovadas)"
+                      strokeWidth={2}
+                      name="Aprovadas"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <EmptyState message="Sem dados no período" />
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Gráfico de Distribuição - Secundário (1/3 do espaço) */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <Percent className="w-4 h-4 text-primary" />
+              Distribuição
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[220px]">
+              {pieData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={55}
+                      outerRadius={85}
+                      paddingAngle={3}
+                      dataKey="value"
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
                     <Tooltip 
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--card))', 
@@ -148,138 +286,60 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
                         fontSize: '13px',
                       }}
                     />
-                    <Area 
-                      type="monotone" 
-                      dataKey="checkouts" 
-                      stroke="#3b82f6" 
-                      fill="#3b82f6" 
-                      fillOpacity={0.1}
-                      strokeWidth={2}
-                      name="Checkouts"
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="aprovadas" 
-                      stroke="#10b981" 
-                      fill="#10b981" 
-                      fillOpacity={0.2}
-                      strokeWidth={2}
-                      name="Aprovadas"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center text-muted-foreground">
-                  Sem dados no período
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Pie Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base font-semibold">Distribuição</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[200px]">
-              {pieData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={50}
-                      outerRadius={80}
-                      paddingAngle={2}
-                      dataKey="value"
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-full flex items-center justify-center text-muted-foreground">
-                  Sem dados
-                </div>
+                <EmptyState message="Sem dados" />
               )}
             </div>
-            {/* Legend */}
-            <div className="flex flex-wrap gap-3 justify-center mt-4">
-              {pieData.map((entry) => (
-                <div key={entry.name} className="flex items-center gap-2 text-sm">
-                  <div 
-                    className="w-3 h-3 rounded-full" 
-                    style={{ backgroundColor: entry.color }}
-                  />
-                  <span className="text-muted-foreground">{entry.name}</span>
-                </div>
-              ))}
-            </div>
+            
+            {/* Legenda */}
+            {pieData.length > 0 && (
+              <div className="flex flex-wrap gap-x-4 gap-y-2 justify-center mt-2">
+                {pieData.map((entry) => (
+                  <div key={entry.name} className="flex items-center gap-2 text-sm">
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: entry.color }}
+                    />
+                    <span className="text-muted-foreground">{entry.name}</span>
+                    <span className="font-medium">{entry.value}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
-      </div>
-
-      {/* Stats Cards Secundários */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard 
-          label="Recusadas" 
-          value={analytics?.purchases_refused || 0} 
-          icon={XCircle}
-          color="red"
-        />
-        <StatCard 
-          label="Reembolsos" 
-          value={analytics?.purchases_refunded || 0} 
-          icon={RefreshCw}
-          color="orange"
-        />
-        <StatCard 
-          label="Abandonos" 
-          value={analytics?.cart_abandonments || 0} 
-          icon={Clock}
-          color="yellow"
-        />
-        <StatCard 
-          label="Ticket Médio" 
-          value={analytics?.purchases_approved 
-            ? formatCurrency((analytics.total_revenue || 0) / analytics.purchases_approved)
-            : formatCurrency(0)
-          } 
-          icon={DollarSign}
-          color="emerald"
-        />
-      </div>
+      </section>
     </div>
   );
 }
 
-// KPI Card Component
-interface KPICardProps {
+// ═══════════════════════════════════════════════════════════════
+// COMPONENTES AUXILIARES
+// ═══════════════════════════════════════════════════════════════
+
+// Metric Card Principal
+interface MetricCardProps {
   label: string;
   value: number | string;
   icon: React.ElementType;
-  iconBg: string;
   iconColor: string;
+  iconBg: string;
   valueColor?: string;
 }
 
-function KPICard({ label, value, icon: Icon, iconBg, iconColor, valueColor }: KPICardProps) {
+function MetricCard({ label, value, icon: Icon, iconColor, iconBg, valueColor }: MetricCardProps) {
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <CardContent className="p-5">
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-start justify-between">
+          <div className="space-y-1">
             <p className="text-sm text-muted-foreground">{label}</p>
-            <p className={`text-2xl font-bold mt-1 ${valueColor || ''}`}>{value}</p>
+            <p className={`text-2xl font-bold ${valueColor || ''}`}>{value}</p>
           </div>
-          <div className={`w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center`}>
-            <Icon className={`w-6 h-6 ${iconColor}`} />
+          <div className={`w-11 h-11 rounded-xl ${iconBg} flex items-center justify-center shrink-0`}>
+            <Icon className={`w-5 h-5 ${iconColor}`} />
           </div>
         </div>
       </CardContent>
@@ -287,33 +347,33 @@ function KPICard({ label, value, icon: Icon, iconBg, iconColor, valueColor }: KP
   );
 }
 
-// Stat Card Component  
-interface StatCardProps {
+// Metric Card Secundário
+interface MetricCardSecondaryProps {
   label: string;
   value: number | string;
   icon: React.ElementType;
   color: 'red' | 'orange' | 'yellow' | 'emerald';
 }
 
-function StatCard({ label, value, icon: Icon, color }: StatCardProps) {
+function MetricCardSecondary({ label, value, icon: Icon, color }: MetricCardSecondaryProps) {
   const colorClasses = {
     red: {
-      bg: 'bg-red-500/5 border-red-500/20',
+      border: 'border-red-500/20',
       iconBg: 'bg-red-500/10',
       iconColor: 'text-red-500',
     },
     orange: {
-      bg: 'bg-orange-500/5 border-orange-500/20',
+      border: 'border-orange-500/20',
       iconBg: 'bg-orange-500/10',
       iconColor: 'text-orange-500',
     },
     yellow: {
-      bg: 'bg-yellow-500/5 border-yellow-500/20',
+      border: 'border-yellow-500/20',
       iconBg: 'bg-yellow-500/10',
       iconColor: 'text-yellow-500',
     },
     emerald: {
-      bg: 'bg-emerald-500/5 border-emerald-500/20',
+      border: 'border-emerald-500/20',
       iconBg: 'bg-emerald-500/10',
       iconColor: 'text-emerald-500',
     },
@@ -322,16 +382,26 @@ function StatCard({ label, value, icon: Icon, color }: StatCardProps) {
   const classes = colorClasses[color];
 
   return (
-    <Card className={classes.bg}>
-      <CardContent className="p-4 flex items-center gap-4">
-        <div className={`w-11 h-11 rounded-xl ${classes.iconBg} flex items-center justify-center`}>
+    <Card className={`${classes.border} bg-card/50`}>
+      <CardContent className="p-4 flex items-center gap-3">
+        <div className={`w-10 h-10 rounded-lg ${classes.iconBg} flex items-center justify-center shrink-0`}>
           <Icon className={`w-5 h-5 ${classes.iconColor}`} />
         </div>
-        <div>
-          <p className="text-sm text-muted-foreground">{label}</p>
-          <p className="text-xl font-bold">{value}</p>
+        <div className="min-w-0">
+          <p className="text-xs text-muted-foreground">{label}</p>
+          <p className="text-lg font-bold truncate">{value}</p>
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+// Empty State
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
+      <AlertCircle className="w-8 h-8 mb-2 opacity-50" />
+      <p className="text-sm">{message}</p>
+    </div>
   );
 }
