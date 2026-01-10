@@ -3093,6 +3093,379 @@ export type Database = {
           },
         ]
       }
+      genesis_cakto_analytics: {
+        Row: {
+          cart_abandonments: number | null
+          checkouts_started: number | null
+          created_at: string | null
+          date: string
+          id: string
+          instance_id: string
+          integration_id: string
+          purchases_approved: number | null
+          purchases_refunded: number | null
+          purchases_refused: number | null
+          total_revenue: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          cart_abandonments?: number | null
+          checkouts_started?: number | null
+          created_at?: string | null
+          date: string
+          id?: string
+          instance_id: string
+          integration_id: string
+          purchases_approved?: number | null
+          purchases_refunded?: number | null
+          purchases_refused?: number | null
+          total_revenue?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          cart_abandonments?: number | null
+          checkouts_started?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          instance_id?: string
+          integration_id?: string
+          purchases_approved?: number | null
+          purchases_refunded?: number | null
+          purchases_refused?: number | null
+          total_revenue?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_cakto_analytics_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_cakto_analytics_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instance_integrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_cakto_dedup: {
+        Row: {
+          customer_phone: string | null
+          event_type: string
+          external_id: string
+          id: string
+          instance_id: string
+          processed_at: string
+        }
+        Insert: {
+          customer_phone?: string | null
+          event_type: string
+          external_id: string
+          id?: string
+          instance_id: string
+          processed_at?: string
+        }
+        Update: {
+          customer_phone?: string | null
+          event_type?: string
+          external_id?: string
+          id?: string
+          instance_id?: string
+          processed_at?: string
+        }
+        Relationships: []
+      }
+      genesis_cakto_event_rules: {
+        Row: {
+          anti_ban_enabled: boolean | null
+          campaign_id: string | null
+          cooldown_minutes: number | null
+          created_at: string | null
+          delay_max_seconds: number | null
+          delay_seconds: number | null
+          event_type: string
+          id: string
+          instance_id: string
+          integration_id: string
+          is_active: boolean | null
+          max_per_hour: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          anti_ban_enabled?: boolean | null
+          campaign_id?: string | null
+          cooldown_minutes?: number | null
+          created_at?: string | null
+          delay_max_seconds?: number | null
+          delay_seconds?: number | null
+          event_type: string
+          id?: string
+          instance_id: string
+          integration_id: string
+          is_active?: boolean | null
+          max_per_hour?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          anti_ban_enabled?: boolean | null
+          campaign_id?: string | null
+          cooldown_minutes?: number | null
+          created_at?: string | null
+          delay_max_seconds?: number | null
+          delay_seconds?: number | null
+          event_type?: string
+          id?: string
+          instance_id?: string
+          integration_id?: string
+          is_active?: boolean | null
+          max_per_hour?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_cakto_event_rules_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_cakto_event_rules_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_cakto_event_rules_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instance_integrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_cakto_events: {
+        Row: {
+          campaign_triggered_id: string | null
+          created_at: string
+          currency: string | null
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          error_message: string | null
+          event_type: string
+          external_id: string
+          id: string
+          instance_id: string
+          integration_id: string | null
+          normalized_event: Json | null
+          offer_id: string | null
+          offer_name: string | null
+          order_value: number | null
+          processed: boolean | null
+          processed_at: string | null
+          product_id: string | null
+          product_name: string | null
+          raw_payload: Json
+        }
+        Insert: {
+          campaign_triggered_id?: string | null
+          created_at?: string
+          currency?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          error_message?: string | null
+          event_type: string
+          external_id: string
+          id?: string
+          instance_id: string
+          integration_id?: string | null
+          normalized_event?: Json | null
+          offer_id?: string | null
+          offer_name?: string | null
+          order_value?: number | null
+          processed?: boolean | null
+          processed_at?: string | null
+          product_id?: string | null
+          product_name?: string | null
+          raw_payload: Json
+        }
+        Update: {
+          campaign_triggered_id?: string | null
+          created_at?: string
+          currency?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          error_message?: string | null
+          event_type?: string
+          external_id?: string
+          id?: string
+          instance_id?: string
+          integration_id?: string | null
+          normalized_event?: Json | null
+          offer_id?: string | null
+          offer_name?: string | null
+          order_value?: number | null
+          processed?: boolean | null
+          processed_at?: string | null
+          product_id?: string | null
+          product_name?: string | null
+          raw_payload?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_cakto_events_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_cakto_events_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instance_integrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_cakto_offers: {
+        Row: {
+          checkout_url: string | null
+          created_at: string | null
+          currency: string | null
+          external_id: string
+          id: string
+          instance_id: string
+          integration_id: string
+          metadata: Json | null
+          name: string
+          original_price: number | null
+          price: number | null
+          product_external_id: string | null
+          status: string | null
+          synced_at: string | null
+        }
+        Insert: {
+          checkout_url?: string | null
+          created_at?: string | null
+          currency?: string | null
+          external_id: string
+          id?: string
+          instance_id: string
+          integration_id: string
+          metadata?: Json | null
+          name: string
+          original_price?: number | null
+          price?: number | null
+          product_external_id?: string | null
+          status?: string | null
+          synced_at?: string | null
+        }
+        Update: {
+          checkout_url?: string | null
+          created_at?: string | null
+          currency?: string | null
+          external_id?: string
+          id?: string
+          instance_id?: string
+          integration_id?: string
+          metadata?: Json | null
+          name?: string
+          original_price?: number | null
+          price?: number | null
+          product_external_id?: string | null
+          status?: string | null
+          synced_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_cakto_offers_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_cakto_offers_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instance_integrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_cakto_products: {
+        Row: {
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          external_id: string
+          id: string
+          image_url: string | null
+          instance_id: string
+          integration_id: string
+          metadata: Json | null
+          name: string
+          price: number | null
+          status: string | null
+          synced_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          external_id: string
+          id?: string
+          image_url?: string | null
+          instance_id: string
+          integration_id: string
+          metadata?: Json | null
+          name: string
+          price?: number | null
+          status?: string | null
+          synced_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          external_id?: string
+          id?: string
+          image_url?: string | null
+          instance_id?: string
+          integration_id?: string
+          metadata?: Json | null
+          name?: string
+          price?: number | null
+          status?: string | null
+          synced_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_cakto_products_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_cakto_products_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instance_integrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       genesis_calendar_configs: {
         Row: {
           calendar_id: string
