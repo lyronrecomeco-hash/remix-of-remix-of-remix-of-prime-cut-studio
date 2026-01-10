@@ -1,6 +1,6 @@
 /**
  * CAKTO DASHBOARD - Métricas e gráficos
- * Layout profissional: Métricas no TOPO, Gráficos abaixo
+ * Layout profissional: Métricas no TOPO, Gráficos interativos abaixo
  */
 
 import { useState } from 'react';
@@ -21,13 +21,37 @@ import {
 import { useCaktoIntegration } from './hooks/useCaktoIntegration';
 import { useCaktoAnalytics } from './hooks/useCaktoAnalytics';
 import { AnalyticsPeriod } from './types';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { format } from 'date-fns';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface CaktoDashboardProps {
   instanceId: string;
 }
+
+// Dados placeholder para gráficos quando não há dados reais
+const generatePlaceholderData = () => {
+  const days = 7;
+  const data = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const date = subDays(new Date(), i);
+    data.push({
+      date: format(date, 'dd/MM', { locale: ptBR }),
+      checkouts: Math.floor(Math.random() * 50) + 10,
+      aprovadas: Math.floor(Math.random() * 30) + 5,
+      recusadas: Math.floor(Math.random() * 10),
+      receita: Math.floor(Math.random() * 5000) + 500,
+    });
+  }
+  return data;
+};
+
+const placeholderPieData = [
+  { name: 'Aprovadas', value: 65, color: '#10b981' },
+  { name: 'Recusadas', value: 15, color: '#ef4444' },
+  { name: 'Reembolsos', value: 8, color: '#f97316' },
+  { name: 'Abandonos', value: 12, color: '#eab308' },
+];
 
 export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
   const [period, setPeriod] = useState<AnalyticsPeriod>('7d');
@@ -44,20 +68,30 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
 
   const formatPercent = (value: number) => `${value.toFixed(1)}%`;
 
-  const chartData = analytics?.daily.map(day => ({
-    date: format(new Date(day.date), 'dd/MM', { locale: ptBR }),
-    checkouts: day.checkouts_started,
-    aprovadas: day.purchases_approved,
-    recusadas: day.purchases_refused,
-    receita: Number(day.total_revenue),
-  })) || [];
+  const hasRealData = analytics && (
+    analytics.checkouts_started > 0 || 
+    analytics.purchases_approved > 0 || 
+    analytics.total_revenue > 0
+  );
 
-  const pieData = [
-    { name: 'Aprovadas', value: analytics?.purchases_approved || 0, color: '#10b981' },
-    { name: 'Recusadas', value: analytics?.purchases_refused || 0, color: '#ef4444' },
-    { name: 'Reembolsos', value: analytics?.purchases_refunded || 0, color: '#f97316' },
-    { name: 'Abandonos', value: analytics?.cart_abandonments || 0, color: '#eab308' },
-  ].filter(d => d.value > 0);
+  const chartData = hasRealData 
+    ? analytics?.daily.map(day => ({
+        date: format(new Date(day.date), 'dd/MM', { locale: ptBR }),
+        checkouts: day.checkouts_started,
+        aprovadas: day.purchases_approved,
+        recusadas: day.purchases_refused,
+        receita: Number(day.total_revenue),
+      })) || []
+    : generatePlaceholderData();
+
+  const pieData = hasRealData 
+    ? [
+        { name: 'Aprovadas', value: analytics?.purchases_approved || 0, color: '#10b981' },
+        { name: 'Recusadas', value: analytics?.purchases_refused || 0, color: '#ef4444' },
+        { name: 'Reembolsos', value: analytics?.purchases_refunded || 0, color: '#f97316' },
+        { name: 'Abandonos', value: analytics?.cart_abandonments || 0, color: '#eab308' },
+      ].filter(d => d.value > 0)
+    : placeholderPieData;
 
   // Loading State
   if (integrationLoading || analyticsLoading) {
@@ -65,7 +99,7 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
       <div className="flex items-center justify-center py-24">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Carregando métricas...</p>
+          <p className="text-base text-muted-foreground">Carregando métricas...</p>
         </div>
       </div>
     );
@@ -77,7 +111,7 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
       <Card className="border-dashed">
         <CardContent className="py-16 text-center">
           <AlertCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-          <p className="text-muted-foreground">
+          <p className="text-lg text-muted-foreground">
             Configure a integração Cakto para ver as métricas
           </p>
         </CardContent>
@@ -90,12 +124,12 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
     : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* ═══════════════════════════════════════════════════════════════
           SELETOR DE PERÍODO
       ═══════════════════════════════════════════════════════════════ */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-muted-foreground">Período</h3>
+        <h3 className="text-base font-semibold text-foreground">Período de Análise</h3>
         <div className="flex gap-1 bg-muted/50 p-1 rounded-lg">
           {(['today', '7d', '30d'] as AnalyticsPeriod[]).map((p) => (
             <Button
@@ -103,7 +137,7 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
               variant={period === p ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setPeriod(p)}
-              className="h-8 px-3"
+              className="h-9 px-4 text-sm font-medium"
             >
               {p === 'today' ? 'Hoje' : p === '7d' ? '7 dias' : '30 dias'}
             </Button>
@@ -183,131 +217,142 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
       <section className="grid gap-6 lg:grid-cols-3">
         {/* Gráfico de Evolução - Principal (2/3 do espaço) */}
         <Card className="lg:col-span-2">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-primary" />
-              Evolução
-            </CardTitle>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-primary" />
+                Evolução
+              </CardTitle>
+              {!hasRealData && (
+                <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+                  Dados de exemplo
+                </span>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
-              {chartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData}>
-                    <defs>
-                      <linearGradient id="colorCheckouts" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                      </linearGradient>
-                      <linearGradient id="colorAprovadas" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
-                    <XAxis 
-                      dataKey="date" 
-                      tick={{ fontSize: 12 }} 
-                      tickLine={false} 
-                      axisLine={false}
-                      dy={10}
-                    />
-                    <YAxis 
-                      tick={{ fontSize: 12 }} 
-                      tickLine={false} 
-                      axisLine={false}
-                      dx={-10}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px',
-                        fontSize: '13px',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                      }}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="checkouts" 
-                      stroke="#3b82f6" 
-                      fill="url(#colorCheckouts)"
-                      strokeWidth={2}
-                      name="Checkouts"
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="aprovadas" 
-                      stroke="#10b981" 
-                      fill="url(#colorAprovadas)"
-                      strokeWidth={2}
-                      name="Aprovadas"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              ) : (
-                <EmptyState message="Sem dados no período" />
-              )}
+            <div className="h-[320px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="colorCheckouts" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorAprovadas" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fontSize: 13 }} 
+                    tickLine={false} 
+                    axisLine={false}
+                    dy={10}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 13 }} 
+                    tickLine={false} 
+                    axisLine={false}
+                    dx={-10}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '10px',
+                      fontSize: '14px',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                      padding: '12px 16px',
+                    }}
+                    cursor={{ stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1, strokeDasharray: '4 4' }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="checkouts" 
+                    stroke="#3b82f6" 
+                    fill="url(#colorCheckouts)"
+                    strokeWidth={2.5}
+                    name="Checkouts"
+                    dot={false}
+                    activeDot={{ r: 6, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2 }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="aprovadas" 
+                    stroke="#10b981" 
+                    fill="url(#colorAprovadas)"
+                    strokeWidth={2.5}
+                    name="Aprovadas"
+                    dot={false}
+                    activeDot={{ r: 6, fill: '#10b981', stroke: '#fff', strokeWidth: 2 }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
         {/* Gráfico de Distribuição - Secundário (1/3 do espaço) */}
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Percent className="w-4 h-4 text-primary" />
-              Distribuição
-            </CardTitle>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                <Percent className="w-5 h-5 text-primary" />
+                Distribuição
+              </CardTitle>
+              {!hasRealData && (
+                <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+                  Exemplo
+                </span>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="h-[220px]">
-              {pieData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={55}
-                      outerRadius={85}
-                      paddingAngle={3}
-                      dataKey="value"
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px',
-                        fontSize: '13px',
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <EmptyState message="Sem dados" />
-              )}
+            <div className="h-[240px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={90}
+                    paddingAngle={4}
+                    dataKey="value"
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '10px',
+                      fontSize: '14px',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
             
             {/* Legenda */}
-            {pieData.length > 0 && (
-              <div className="flex flex-wrap gap-x-4 gap-y-2 justify-center mt-2">
-                {pieData.map((entry) => (
-                  <div key={entry.name} className="flex items-center gap-2 text-sm">
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: entry.color }}
-                    />
-                    <span className="text-muted-foreground">{entry.name}</span>
-                    <span className="font-medium">{entry.value}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+            <div className="flex flex-wrap gap-x-4 gap-y-2 justify-center mt-3">
+              {pieData.map((entry) => (
+                <div key={entry.name} className="flex items-center gap-2 text-sm">
+                  <div 
+                    className="w-3 h-3 rounded-full" 
+                    style={{ backgroundColor: entry.color }}
+                  />
+                  <span className="text-muted-foreground">{entry.name}</span>
+                  <span className="font-semibold">{entry.value}</span>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </section>
@@ -331,15 +376,15 @@ interface MetricCardProps {
 
 function MetricCard({ label, value, icon: Icon, iconColor, iconBg, valueColor }: MetricCardProps) {
   return (
-    <Card className="overflow-hidden">
-      <CardContent className="p-5">
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+      <CardContent className="p-6">
         <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">{label}</p>
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-muted-foreground">{label}</p>
             <p className={`text-2xl font-bold ${valueColor || ''}`}>{value}</p>
           </div>
-          <div className={`w-11 h-11 rounded-xl ${iconBg} flex items-center justify-center shrink-0`}>
-            <Icon className={`w-5 h-5 ${iconColor}`} />
+          <div className={`w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center shrink-0`}>
+            <Icon className={`w-6 h-6 ${iconColor}`} />
           </div>
         </div>
       </CardContent>
@@ -382,26 +427,16 @@ function MetricCardSecondary({ label, value, icon: Icon, color }: MetricCardSeco
   const classes = colorClasses[color];
 
   return (
-    <Card className={`${classes.border} bg-card/50`}>
-      <CardContent className="p-4 flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-lg ${classes.iconBg} flex items-center justify-center shrink-0`}>
+    <Card className={`${classes.border} bg-card/50 hover:shadow-md transition-shadow`}>
+      <CardContent className="p-5 flex items-center gap-4">
+        <div className={`w-11 h-11 rounded-xl ${classes.iconBg} flex items-center justify-center shrink-0`}>
           <Icon className={`w-5 h-5 ${classes.iconColor}`} />
         </div>
         <div className="min-w-0">
-          <p className="text-xs text-muted-foreground">{label}</p>
-          <p className="text-lg font-bold truncate">{value}</p>
+          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className="text-xl font-bold truncate">{value}</p>
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-// Empty State
-function EmptyState({ message }: { message: string }) {
-  return (
-    <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
-      <AlertCircle className="w-8 h-8 mb-2 opacity-50" />
-      <p className="text-sm">{message}</p>
-    </div>
   );
 }
