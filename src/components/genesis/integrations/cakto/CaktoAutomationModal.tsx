@@ -160,8 +160,7 @@ export function CaktoAutomationModal({
         .from('genesis_cakto_products')
         .select('*')
         .eq('integration_id', integrationId)
-        .order('name', { ascending: true })
-        .limit(100);
+        .order('name', { ascending: true });
 
       if (productSearch) {
         query = query.ilike('name', `%${productSearch}%`);
@@ -718,8 +717,8 @@ export function CaktoAutomationModal({
           </TabsContent>
 
           {/* PRODUCTS TAB */}
-          <TabsContent value="products" className="flex-1 overflow-hidden flex flex-col m-0 p-6">
-            <div className="flex items-center justify-between gap-3 mb-4">
+          <TabsContent value="products" className="flex-1 min-h-0 flex flex-col m-0 p-6 overflow-hidden">
+            <div className="flex items-center justify-between gap-3 mb-4 flex-shrink-0">
               <div className="flex items-center gap-3 flex-1">
                 <div className="relative flex-1 max-w-sm">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -761,7 +760,7 @@ export function CaktoAutomationModal({
               </div>
             </div>
 
-            <ScrollArea className="flex-1">
+            <div className="flex-1 min-h-0 overflow-y-auto pr-2">
               {loadingProducts ? (
                 <div className="grid gap-4 md:grid-cols-2">
                   {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 w-full" />)}
@@ -816,7 +815,7 @@ export function CaktoAutomationModal({
                   ))}
                 </div>
               )}
-            </ScrollArea>
+            </div>
           </TabsContent>
         </Tabs>
       </DialogContent>
