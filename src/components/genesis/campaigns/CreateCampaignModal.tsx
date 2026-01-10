@@ -1,6 +1,7 @@
 /**
  * GENESIS CAMPAIGNS - Create Campaign Modal (Step-by-Step Wizard)
  * Com suporte para campanhas acionadas por integração
+ * Atualizado com extração automática de contatos PIX não pago + preview Luna
  */
 
 import { useState, useEffect } from 'react';
@@ -23,6 +24,9 @@ import {
   Info,
   Link2,
   Zap,
+  Loader2,
+  Phone,
+  Eye,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,6 +58,8 @@ import type { CampaignType, CampaignFormData, LunaSimilarityLevel } from './type
 import { CAMPAIGN_TYPE_LABELS, CAMPAIGN_TYPE_DESCRIPTIONS } from './types';
 import { IntegrationSelector } from './IntegrationSelector';
 import { ScheduleByPeriodControl, DEFAULT_SCHEDULE, type ScheduleByPeriod } from './ScheduleByPeriodControl';
+import { LunaVariationsPreview } from './LunaVariationsPreview';
+import { useCaktoContacts, type CaktoContact } from './hooks/useCaktoContacts';
 
 interface CreateCampaignModalProps {
   open: boolean;
@@ -110,14 +116,16 @@ const DEFAULT_FORM_DATA: CampaignFormData = {
   send_on_weekends: true,
 };
 
-// Eventos por tipo de integração
+// Eventos por tipo de integração - ATUALIZADO com PIX não pago
 const INTEGRATION_EVENTS: Record<string, { value: string; label: string; description: string }[]> = {
   cakto: [
-    { value: 'initiate_checkout', label: 'Checkout Iniciado', description: 'Cliente inicia o checkout' },
     { value: 'purchase_approved', label: 'Compra Aprovada', description: 'Pagamento confirmado' },
+    { value: 'pix_unpaid', label: '🔥 PIX Não Pago', description: 'Cliente gerou PIX mas não pagou (recuperação)' },
+    { value: 'pix_generated', label: 'PIX Gerado', description: 'Cliente gerou um PIX para pagamento' },
+    { value: 'initiate_checkout', label: 'Checkout Iniciado', description: 'Cliente inicia o checkout' },
+    { value: 'checkout_abandonment', label: 'Carrinho Abandonado', description: 'Cliente abandonou o checkout' },
     { value: 'purchase_refused', label: 'Compra Recusada', description: 'Pagamento recusado' },
     { value: 'purchase_refunded', label: 'Reembolso', description: 'Cliente solicita reembolso' },
-    { value: 'checkout_abandonment', label: 'Carrinho Abandonado', description: 'Cliente abandonou o checkout' },
   ],
   shopify: [
     { value: 'order_created', label: 'Pedido Criado', description: 'Novo pedido recebido' },
@@ -145,6 +153,11 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
   const [selectedEvent, setSelectedEvent] = useState<string>('');
   const [scheduleByPeriod, setScheduleByPeriod] = useState<ScheduleByPeriod>(DEFAULT_SCHEDULE);
   const [useAdvancedSchedule, setUseAdvancedSchedule] = useState(false);
+  
+  // Estados para extração de contatos e Luna preview
+  const [extractedContacts, setExtractedContacts] = useState<CaktoContact[]>([]);
+  const [triggerLunaPreview, setTriggerLunaPreview] = useState(false);
+  const { contacts: caktoContacts, loading: loadingContacts, fetchContacts } = useCaktoContacts();
   
   // Steps dinâmicos
   const STEPS = getSteps(formData.campaign_type);
@@ -180,8 +193,38 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
       setSelectedEvent('');
       setScheduleByPeriod(DEFAULT_SCHEDULE);
       setUseAdvancedSchedule(false);
+      setExtractedContacts([]);
+      setTriggerLunaPreview(false);
     }
   }, [open, genesisUser]);
+
+  // Extrair contatos quando evento é selecionado (campanhas de integração)
+  useEffect(() => {
+    if (
+      formData.campaign_type === 'integracao' && 
+      selectedIntegrationId && 
+      selectedEvent && 
+      formData.instance_id
+    ) {
+      console.log('[Campaign] Extracting contacts for event:', selectedEvent);
+      fetchContacts({
+        instanceId: formData.instance_id,
+        integrationId: selectedIntegrationId,
+        eventType: selectedEvent,
+      }).then(contacts => {
+        setExtractedContacts(contacts);
+        // Converter para formato de contatos da campanha
+        const campaignContacts = contacts.map(c => ({
+          phone: c.phone.replace(/\D/g, ''),
+          name: c.name,
+        }));
+        setFormData(prev => ({ ...prev, contacts: campaignContacts }));
+        if (contacts.length > 0) {
+          toast.success(`${contacts.length} contatos extraídos automaticamente!`);
+        }
+      });
+    }
+  }, [selectedEvent, selectedIntegrationId, formData.instance_id, formData.campaign_type]);
 
   // Parse contacts from text
   const parseContacts = (text: string) => {
@@ -553,6 +596,54 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
                       </Card>
                     ))}
                   </div>
+
+                  {/* Contatos extraídos automaticamente */}
+                  {selectedEvent && (
+                    <Card className={cn(
+                      "border-green-500/20",
+                      loadingContacts ? "bg-muted/50" : extractedContacts.length > 0 ? "bg-green-500/5" : "bg-yellow-500/5 border-yellow-500/20"
+                    )}>
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {loadingContacts ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Users className={extractedContacts.length > 0 ? "w-4 h-4 text-green-600" : "w-4 h-4 text-yellow-600"} />
+                            )}
+                            <span className="font-medium text-sm">
+                              {loadingContacts 
+                                ? 'Extraindo contatos...' 
+                                : extractedContacts.length > 0 
+                                  ? `${extractedContacts.length} contatos encontrados`
+                                  : 'Nenhum contato encontrado'}
+                            </span>
+                          </div>
+                          <Badge variant={extractedContacts.length > 0 ? "default" : "secondary"}>
+                            {extractedContacts.length}
+                          </Badge>
+                        </div>
+                        {extractedContacts.length > 0 && (
+                          <ScrollArea className="h-32 mt-3">
+                            <div className="space-y-1">
+                              {extractedContacts.slice(0, 10).map((c, i) => (
+                                <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground p-1 rounded bg-background/50">
+                                  <Phone className="w-3 h-3" />
+                                  <span className="font-mono">{c.phone}</span>
+                                  {c.name && <span>• {c.name}</span>}
+                                </div>
+                              ))}
+                              {extractedContacts.length > 10 && (
+                                <p className="text-xs text-muted-foreground pt-1">
+                                  +{extractedContacts.length - 10} contatos...
+                                </p>
+                              )}
+                            </div>
+                          </ScrollArea>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
 
                   {/* Variáveis disponíveis para o evento */}
                   <Card className="border-blue-500/20 bg-blue-500/5">
