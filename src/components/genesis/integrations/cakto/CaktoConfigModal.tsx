@@ -65,10 +65,11 @@ export function CaktoConfigModal({
 
   const isEditMode = !!existingIntegration;
   
-  // Generate webhook URL using Supabase URL
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const webhookUrl = existingIntegration?.webhook_url || 
-    `${supabaseUrl}/functions/v1/cakto-webhook/${instanceId}`;
+  // Generate webhook URL using custom domain
+  // URL format: https://genesishub.cloud/webhook/cakto/{integration_id}
+  const webhookUrl = existingIntegration?.id 
+    ? `https://genesishub.cloud/webhook/cakto/${existingIntegration.id}`
+    : '';
 
   // Reset form quando abre
   useEffect(() => {
