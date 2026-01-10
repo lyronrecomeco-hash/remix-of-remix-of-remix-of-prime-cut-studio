@@ -5751,6 +5751,45 @@ export type Database = {
         }
         Relationships: []
       }
+      genesis_verification_codes: {
+        Row: {
+          attempts: number | null
+          code: string
+          created_at: string | null
+          email: string
+          expires_at: string
+          id: string
+          name: string
+          password_hash: string | null
+          phone: string
+          verified_at: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          code: string
+          created_at?: string | null
+          email: string
+          expires_at: string
+          id?: string
+          name: string
+          password_hash?: string | null
+          phone: string
+          verified_at?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          code?: string
+          created_at?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          name?: string
+          password_hash?: string | null
+          phone?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       genesis_vps_nodes: {
         Row: {
           api_token: string
@@ -9836,6 +9875,7 @@ export type Database = {
       }
       cleanup_expired_sessions: { Args: never; Returns: undefined }
       cleanup_expired_verification_codes: { Args: never; Returns: undefined }
+      cleanup_old_genesis_codes: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: number }
       current_tenant_id: { Args: never; Returns: string }
       current_tenant_ids: { Args: never; Returns: string[] }
