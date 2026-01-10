@@ -127,6 +127,7 @@ serve(async (req) => {
     if (backendUrl && backendToken && instanceId) {
       // Uses the same internal endpoint as other features (send-text)
       const apiUrl = `${backendUrl}/${instanceId}/send-text`;
+      const verificationMessage = `🔐 *Código de Verificação Genesis*\n\nSeu código é: *${code}*\n\nEste código expira em 5 minutos.\n\n_Se você não solicitou este código, ignore esta mensagem._`;
 
       try {
         const response = await fetch(apiUrl, {
@@ -137,7 +138,7 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             phone: cleanPhone,
-            message,
+            message: verificationMessage,
           }),
         });
 
