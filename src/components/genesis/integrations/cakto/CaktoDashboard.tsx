@@ -1,12 +1,11 @@
 /**
  * CAKTO DASHBOARD - Métricas e gráficos
- * Layout compacto e responsivo
+ * Layout organizado e profissional
  */
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   ShoppingCart,
   CheckCircle2,
@@ -60,16 +59,16 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
 
   if (integrationLoading || analyticsLoading) {
     return (
-      <div className="flex items-center justify-center py-10">
-        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   if (!isConnected) {
     return (
-      <Card className="border-dashed border-muted-foreground/30">
-        <CardContent className="py-8 text-center text-sm text-muted-foreground">
+      <Card className="border-dashed">
+        <CardContent className="py-12 text-center text-muted-foreground">
           Configure a integração Cakto para ver as métricas
         </CardContent>
       </Card>
@@ -77,15 +76,14 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Seletor de período */}
-      <div className="flex gap-1">
+      <div className="flex gap-2">
         {(['today', '7d', '30d'] as AnalyticsPeriod[]).map((p) => (
           <Button
             key={p}
-            variant={period === p ? 'default' : 'ghost'}
+            variant={period === p ? 'default' : 'outline'}
             size="sm"
-            className="h-6 px-2.5 text-[10px]"
             onClick={() => setPeriod(p)}
           >
             {p === 'today' ? 'Hoje' : p === '7d' ? '7 dias' : '30 dias'}
@@ -93,58 +91,61 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
         ))}
       </div>
 
-      {/* KPI Cards - Grid compacto */}
-      <div className="grid gap-2 grid-cols-2 lg:grid-cols-4">
+      {/* KPI Cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KPICard 
           label="Checkouts" 
           value={analytics?.checkouts_started || 0} 
           icon={ShoppingCart}
-          color="blue"
+          iconBg="bg-blue-500/10"
+          iconColor="text-blue-500"
         />
         <KPICard 
           label="Aprovadas" 
           value={analytics?.purchases_approved || 0} 
           icon={CheckCircle2}
-          color="emerald"
+          iconBg="bg-emerald-500/10"
+          iconColor="text-emerald-500"
+          valueColor="text-emerald-600"
         />
         <KPICard 
           label="Conversão" 
           value={formatPercent(analytics?.conversion_rate || 0)} 
           icon={TrendingUp}
-          color="purple"
-          isText
+          iconBg="bg-purple-500/10"
+          iconColor="text-purple-500"
         />
         <KPICard 
           label="Receita" 
           value={formatCurrency(analytics?.total_revenue || 0)} 
           icon={DollarSign}
-          color="emerald"
-          isText
+          iconBg="bg-emerald-500/10"
+          iconColor="text-emerald-500"
+          valueColor="text-emerald-600"
         />
       </div>
 
-      {/* Charts - Grid responsivo */}
-      <div className="grid gap-3 lg:grid-cols-3">
+      {/* Charts */}
+      <div className="grid gap-6 lg:grid-cols-3">
         {/* Area Chart */}
-        <Card className="lg:col-span-2 border-border/60">
-          <CardHeader className="pb-1 pt-3 px-3">
-            <CardTitle className="text-xs font-medium text-muted-foreground">Evolução</CardTitle>
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-base font-semibold">Evolução</CardTitle>
           </CardHeader>
-          <CardContent className="px-3 pb-3">
-            <div className="h-[180px]">
+          <CardContent>
+            <div className="h-[280px]">
               {chartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted/50" />
-                    <XAxis dataKey="date" tick={{ fontSize: 9 }} tickLine={false} axisLine={false} />
-                    <YAxis tick={{ fontSize: 9 }} tickLine={false} axisLine={false} width={25} />
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
+                    <YAxis tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
                     <Tooltip 
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--card))', 
                         border: '1px solid hsl(var(--border))',
-                        borderRadius: '6px',
-                        fontSize: '11px',
-                        padding: '6px 8px',
+                        borderRadius: '8px',
+                        fontSize: '13px',
                       }}
                     />
                     <Area 
@@ -153,7 +154,7 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
                       stroke="#3b82f6" 
                       fill="#3b82f6" 
                       fillOpacity={0.1}
-                      strokeWidth={1.5}
+                      strokeWidth={2}
                       name="Checkouts"
                     />
                     <Area 
@@ -162,13 +163,13 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
                       stroke="#10b981" 
                       fill="#10b981" 
                       fillOpacity={0.2}
-                      strokeWidth={1.5}
+                      strokeWidth={2}
                       name="Aprovadas"
                     />
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
+                <div className="h-full flex items-center justify-center text-muted-foreground">
                   Sem dados no período
                 </div>
               )}
@@ -177,12 +178,12 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
         </Card>
 
         {/* Pie Chart */}
-        <Card className="border-border/60">
-          <CardHeader className="pb-1 pt-3 px-3">
-            <CardTitle className="text-xs font-medium text-muted-foreground">Distribuição</CardTitle>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base font-semibold">Distribuição</CardTitle>
           </CardHeader>
-          <CardContent className="px-3 pb-3">
-            <div className="h-[140px]">
+          <CardContent>
+            <div className="h-[200px]">
               {pieData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -190,8 +191,8 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
                       data={pieData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={35}
-                      outerRadius={55}
+                      innerRadius={50}
+                      outerRadius={80}
                       paddingAngle={2}
                       dataKey="value"
                     >
@@ -199,27 +200,21 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip 
-                      contentStyle={{ 
-                        fontSize: '11px',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                      }} 
-                    />
+                    <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
+                <div className="h-full flex items-center justify-center text-muted-foreground">
                   Sem dados
                 </div>
               )}
             </div>
             {/* Legend */}
-            <div className="flex flex-wrap gap-x-3 gap-y-1 justify-center mt-1">
+            <div className="flex flex-wrap gap-3 justify-center mt-4">
               {pieData.map((entry) => (
-                <div key={entry.name} className="flex items-center gap-1 text-[9px]">
+                <div key={entry.name} className="flex items-center gap-2 text-sm">
                   <div 
-                    className="w-1.5 h-1.5 rounded-full" 
+                    className="w-3 h-3 rounded-full" 
                     style={{ backgroundColor: entry.color }}
                   />
                   <span className="text-muted-foreground">{entry.name}</span>
@@ -231,26 +226,26 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
       </div>
 
       {/* Stats Cards Secundários */}
-      <div className="grid gap-2 grid-cols-2 lg:grid-cols-4">
-        <MiniStatCard 
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard 
           label="Recusadas" 
           value={analytics?.purchases_refused || 0} 
           icon={XCircle}
           color="red"
         />
-        <MiniStatCard 
+        <StatCard 
           label="Reembolsos" 
           value={analytics?.purchases_refunded || 0} 
           icon={RefreshCw}
           color="orange"
         />
-        <MiniStatCard 
+        <StatCard 
           label="Abandonos" 
           value={analytics?.cart_abandonments || 0} 
           icon={Clock}
           color="yellow"
         />
-        <MiniStatCard 
+        <StatCard 
           label="Ticket Médio" 
           value={analytics?.purchases_approved 
             ? formatCurrency((analytics.total_revenue || 0) / analytics.purchases_approved)
@@ -258,7 +253,6 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
           } 
           icon={DollarSign}
           color="emerald"
-          isText
         />
       </div>
     </div>
@@ -270,32 +264,22 @@ interface KPICardProps {
   label: string;
   value: number | string;
   icon: React.ElementType;
-  color: 'blue' | 'emerald' | 'purple' | 'red' | 'orange' | 'yellow';
-  isText?: boolean;
+  iconBg: string;
+  iconColor: string;
+  valueColor?: string;
 }
 
-function KPICard({ label, value, icon: Icon, color, isText }: KPICardProps) {
-  const colorClasses = {
-    blue: 'bg-blue-500/10 text-blue-500',
-    emerald: 'bg-emerald-500/10 text-emerald-500',
-    purple: 'bg-purple-500/10 text-purple-500',
-    red: 'bg-red-500/10 text-red-500',
-    orange: 'bg-orange-500/10 text-orange-500',
-    yellow: 'bg-yellow-500/10 text-yellow-500',
-  };
-
+function KPICard({ label, value, icon: Icon, iconBg, iconColor, valueColor }: KPICardProps) {
   return (
-    <Card className="border-border/60">
-      <CardContent className="p-3">
-        <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <p className="text-[10px] text-muted-foreground truncate">{label}</p>
-            <p className={`text-lg font-bold truncate ${color === 'emerald' ? 'text-emerald-500' : ''}`}>
-              {value}
-            </p>
+    <Card>
+      <CardContent className="p-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-muted-foreground">{label}</p>
+            <p className={`text-2xl font-bold mt-1 ${valueColor || ''}`}>{value}</p>
           </div>
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${colorClasses[color]}`}>
-            <Icon className="w-4 h-4" />
+          <div className={`w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center`}>
+            <Icon className={`w-6 h-6 ${iconColor}`} />
           </div>
         </div>
       </CardContent>
@@ -303,26 +287,49 @@ function KPICard({ label, value, icon: Icon, color, isText }: KPICardProps) {
   );
 }
 
-// Mini Stat Card Component  
-function MiniStatCard({ label, value, icon: Icon, color, isText }: KPICardProps) {
+// Stat Card Component  
+interface StatCardProps {
+  label: string;
+  value: number | string;
+  icon: React.ElementType;
+  color: 'red' | 'orange' | 'yellow' | 'emerald';
+}
+
+function StatCard({ label, value, icon: Icon, color }: StatCardProps) {
   const colorClasses = {
-    blue: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-    emerald: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-    purple: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
-    red: 'bg-red-500/10 text-red-500 border-red-500/20',
-    orange: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
-    yellow: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
+    red: {
+      bg: 'bg-red-500/5 border-red-500/20',
+      iconBg: 'bg-red-500/10',
+      iconColor: 'text-red-500',
+    },
+    orange: {
+      bg: 'bg-orange-500/5 border-orange-500/20',
+      iconBg: 'bg-orange-500/10',
+      iconColor: 'text-orange-500',
+    },
+    yellow: {
+      bg: 'bg-yellow-500/5 border-yellow-500/20',
+      iconBg: 'bg-yellow-500/10',
+      iconColor: 'text-yellow-500',
+    },
+    emerald: {
+      bg: 'bg-emerald-500/5 border-emerald-500/20',
+      iconBg: 'bg-emerald-500/10',
+      iconColor: 'text-emerald-500',
+    },
   };
 
+  const classes = colorClasses[color];
+
   return (
-    <Card className={`${colorClasses[color]} bg-opacity-5`}>
-      <CardContent className="p-2.5 flex items-center gap-2">
-        <div className={`w-7 h-7 rounded-md flex items-center justify-center ${colorClasses[color]}`}>
-          <Icon className="w-3.5 h-3.5" />
+    <Card className={classes.bg}>
+      <CardContent className="p-4 flex items-center gap-4">
+        <div className={`w-11 h-11 rounded-xl ${classes.iconBg} flex items-center justify-center`}>
+          <Icon className={`w-5 h-5 ${classes.iconColor}`} />
         </div>
-        <div className="min-w-0">
-          <p className="text-[9px] text-muted-foreground truncate">{label}</p>
-          <p className="text-sm font-semibold truncate">{value}</p>
+        <div>
+          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className="text-xl font-bold">{value}</p>
         </div>
       </CardContent>
     </Card>
