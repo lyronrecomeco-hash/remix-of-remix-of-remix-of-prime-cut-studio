@@ -319,7 +319,7 @@ export function EditCampaignModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
+      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col p-0 gap-0">
         <DialogHeader className="px-6 py-4 border-b shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Settings2 className="w-5 h-5" />
@@ -327,7 +327,7 @@ export function EditCampaignModal({
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="contacts" className="flex-1 flex flex-col min-h-0">
+        <Tabs defaultValue="contacts" className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="mx-6 mt-4 shrink-0">
             <TabsTrigger value="contacts" className="gap-2">
               <Users className="w-4 h-4" />
@@ -344,7 +344,7 @@ export function EditCampaignModal({
           </TabsList>
 
           {/* Contacts Tab */}
-          <TabsContent value="contacts" className="flex-1 flex flex-col min-h-0 px-6 pb-4 mt-4 overflow-hidden">
+          <TabsContent value="contacts" className="flex-1 flex flex-col px-6 pb-4 mt-4 overflow-hidden data-[state=inactive]:hidden">
             {/* Stats Bar */}
             <div className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg text-sm shrink-0">
               <div className="flex items-center gap-1">
@@ -386,7 +386,7 @@ export function EditCampaignModal({
                   <Filter className="w-4 h-4 mr-2" />
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-background border shadow-lg z-50">
+                <SelectContent className="bg-background border shadow-lg z-[100]">
                   {STATUS_FILTERS.map(filter => (
                     <SelectItem key={filter.value} value={filter.value}>
                       {filter.label}
@@ -399,7 +399,7 @@ export function EditCampaignModal({
             {/* Quick Select Buttons */}
             <div className="flex items-center gap-2 flex-wrap mt-3 shrink-0">
               <Button variant="outline" size="sm" onClick={selectAll}>
-                {selectedIds.size === filteredContacts.length ? 'Desmarcar todos' : 'Selecionar todos'}
+                {selectedIds.size === filteredContacts.length && filteredContacts.length > 0 ? 'Desmarcar todos' : 'Selecionar todos'}
               </Button>
               <Button variant="outline" size="sm" onClick={selectSent}>
                 Selecionar enviados ({stats.sent})
@@ -416,7 +416,7 @@ export function EditCampaignModal({
 
             {/* Contacts List */}
             <div className="flex-1 mt-3 border rounded-lg overflow-hidden min-h-0">
-              <ScrollArea className="h-full">
+              <ScrollArea className="h-[300px]">
                 <div className="divide-y">
                   {filteredContacts.length === 0 ? (
                     <div className="p-8 text-center text-muted-foreground">
@@ -490,7 +490,7 @@ export function EditCampaignModal({
           </TabsContent>
 
           {/* Message & Luna Tab */}
-          <TabsContent value="message" className="flex-1 min-h-0 px-6 pb-4 mt-4 overflow-auto">
+          <TabsContent value="message" className="flex-1 px-6 pb-4 mt-4 overflow-y-auto data-[state=inactive]:hidden">
             <div className="space-y-6">
               {/* Message Template */}
               <div className="space-y-2">
@@ -502,7 +502,7 @@ export function EditCampaignModal({
                     setHasChanges(true);
                   }}
                   placeholder="Digite sua mensagem... Use {{nome}} para o primeiro nome do contato"
-                  className="min-h-[150px] resize-none"
+                  className="min-h-[120px] resize-none"
                 />
                 <p className="text-xs text-muted-foreground">
                   Variáveis disponíveis: <code className="bg-muted px-1 rounded">{'{{nome}}'}</code> (primeiro nome), 
@@ -588,7 +588,7 @@ export function EditCampaignModal({
                     {variations.length > 0 && (
                       <div className="space-y-2">
                         <Label>Variações Geradas ({variations.length})</Label>
-                        <ScrollArea className="h-64 border rounded-lg">
+                        <div className="max-h-[200px] overflow-y-auto border rounded-lg">
                           <div className="p-3 space-y-3">
                             {variations.map((variation, i) => (
                               <div key={i} className="bg-purple-500/5 rounded-lg p-3 text-sm">
@@ -597,7 +597,7 @@ export function EditCampaignModal({
                               </div>
                             ))}
                           </div>
-                        </ScrollArea>
+                        </div>
                       </div>
                     )}
                   </CardContent>
@@ -607,7 +607,7 @@ export function EditCampaignModal({
           </TabsContent>
 
           {/* Schedule Tab */}
-          <TabsContent value="schedule" className="flex-1 min-h-0 px-6 pb-4 mt-4 overflow-auto">
+          <TabsContent value="schedule" className="flex-1 px-6 pb-4 mt-4 overflow-y-auto data-[state=inactive]:hidden">
             <div className="space-y-6 max-w-lg">
               {/* Send Window */}
               <Card>
