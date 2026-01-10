@@ -17,7 +17,8 @@ import {
   Link2,
   ExternalLink,
   BookOpen,
-  LayoutGrid
+  LayoutGrid,
+  TrendingUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +29,7 @@ import { CaktoEventRules } from './CaktoEventRules';
 import { CaktoEventsLog } from './CaktoEventsLog';
 import { CaktoConfigModal } from './CaktoConfigModal';
 import { CaktoAutomationModal } from './CaktoAutomationModal';
+import { CaktoSalesModal } from './CaktoSalesModal';
 import { useCaktoIntegration } from './hooks/useCaktoIntegration';
 import caktoLogo from '@/assets/integrations/cakto-logo.png';
 import {
@@ -48,6 +50,7 @@ export function CaktoPanel({ instanceId, onBack }: CaktoPanelProps) {
   const [showEventsModal, setShowEventsModal] = useState(false);
   const [showWebhookModal, setShowWebhookModal] = useState(false);
   const [showAutomationModal, setShowAutomationModal] = useState(false);
+  const [showSalesModal, setShowSalesModal] = useState(false);
   const { integration, loading, refetch, isConnected, hasError } = useCaktoIntegration(instanceId);
 
   // Webhook URL com domínio customizado
@@ -107,12 +110,21 @@ export function CaktoPanel({ instanceId, onBack }: CaktoPanelProps) {
               variant="outline" 
               size="sm"
               className="gap-2 h-10 px-4" 
+              onClick={() => setShowSalesModal(true)}
+            >
+              <TrendingUp className="w-4 h-4" />
+              <span className="hidden sm:inline">Vendas</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="gap-2 h-10 px-4" 
               onClick={() => setShowAutomationModal(true)}
             >
               <LayoutGrid className="w-4 h-4" />
               <span className="hidden sm:inline">Automação</span>
             </Button>
-            <Button 
+            <Button
               variant="outline" 
               size="sm"
               className="gap-2 h-10 px-4" 
@@ -295,6 +307,13 @@ export function CaktoPanel({ instanceId, onBack }: CaktoPanelProps) {
         onOpenChange={setShowAutomationModal}
         instanceId={instanceId}
         integrationId={integration?.id}
+      />
+
+      {/* Sales Modal */}
+      <CaktoSalesModal
+        open={showSalesModal}
+        onOpenChange={setShowSalesModal}
+        instanceId={instanceId}
       />
     </motion.div>
   );
