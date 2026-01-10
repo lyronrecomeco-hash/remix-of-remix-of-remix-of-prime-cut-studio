@@ -81,9 +81,9 @@ export default function GenesisLogin() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Theme persistence
+  // Theme persistence - usando mesma chave do painel
   const [savedTheme, setSavedTheme] = useState<'light' | 'dark'>(() => {
-    const stored = localStorage.getItem('genesis_theme');
+    const stored = localStorage.getItem('genesis-theme');
     return (stored === 'light' || stored === 'dark') ? stored : 'dark';
   });
   

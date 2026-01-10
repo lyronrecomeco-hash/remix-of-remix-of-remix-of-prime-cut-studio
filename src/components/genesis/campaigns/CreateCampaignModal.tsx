@@ -18,6 +18,7 @@ import {
   Sparkles,
   AlertTriangle,
   Upload,
+  Clock,
   Trash2,
   Info,
   Link2,
@@ -489,52 +490,101 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
                 </div>
               )}
 
-              {/* Step 2: Audience */}
-              {step === 2 && (
+              {/* Step 2 para integração: Seletor de Integração */}
+              {step === 2 && formData.campaign_type === 'integracao' && (
                 <div className="space-y-6">
                   <div className="space-y-2">
-                    <Label>Contatos</Label>
+                    <Label className="text-base font-medium">Selecione a Integração</Label>
                     <p className="text-sm text-muted-foreground">
-                      Cole os números de telefone (um por linha). Formato: número, nome (opcional)
+                      Escolha a integração que irá acionar esta campanha automaticamente.
                     </p>
-                    <Textarea
-                      placeholder={`5511999999999, João Silva\n5511888888888, Maria Santos\n5511777777777`}
-                      value={contactsText}
-                      onChange={e => handleContactsChange(e.target.value)}
-                      rows={10}
-                      className="font-mono text-sm"
-                    />
                   </div>
 
-                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Users className="w-5 h-5 text-primary" />
-                      <span className="font-medium">Contatos válidos:</span>
-                    </div>
-                    <Badge variant={formData.contacts.length > 0 ? 'default' : 'secondary'}>
-                      {formData.contacts.length}
-                    </Badge>
-                  </div>
-
-                  {formData.contacts.length === 0 && contactsText.trim() && (
-                    <div className="flex items-center gap-2 text-sm text-yellow-600 bg-yellow-500/10 p-3 rounded-lg">
-                      <AlertTriangle className="w-4 h-4" />
-                      Nenhum número válido encontrado. Verifique o formato.
-                    </div>
-                  )}
+                  <IntegrationSelector
+                    instanceId={formData.instance_id}
+                    selectedIntegration={selectedIntegrationId}
+                    onSelect={handleIntegrationSelect}
+                  />
                 </div>
               )}
 
-              {/* Step 3: Message */}
-              {step === 3 && (
+              {/* Step 3 para integração: Seleção de Evento */}
+              {step === 3 && formData.campaign_type === 'integracao' && (
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <Label className="text-base font-medium">Evento Gatilho</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Selecione o evento que irá disparar o envio da mensagem.
+                    </p>
+                  </div>
+
+                  <div className="grid gap-3">
+                    {availableEvents.map((event) => (
+                      <Card
+                        key={event.value}
+                        className={cn(
+                          "cursor-pointer transition-all",
+                          selectedEvent === event.value
+                            ? "border-primary ring-2 ring-primary/20"
+                            : "hover:border-primary/50"
+                        )}
+                        onClick={() => setSelectedEvent(event.value)}
+                      >
+                        <CardContent className="p-4 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className={cn(
+                              "w-10 h-10 rounded-lg flex items-center justify-center",
+                              selectedEvent === event.value ? "bg-primary/10" : "bg-muted"
+                            )}>
+                              <Zap className={cn(
+                                "w-5 h-5",
+                                selectedEvent === event.value ? "text-primary" : "text-muted-foreground"
+                              )} />
+                            </div>
+                            <div>
+                              <p className="font-medium">{event.label}</p>
+                              <p className="text-sm text-muted-foreground">{event.description}</p>
+                            </div>
+                          </div>
+                          {selectedEvent === event.value && (
+                            <Check className="w-5 h-5 text-primary" />
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  {/* Variáveis disponíveis para o evento */}
+                  <Card className="border-blue-500/20 bg-blue-500/5">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <Info className="w-5 h-5 text-blue-500 mt-0.5" />
+                        <div>
+                          <p className="font-medium text-sm">Variáveis Disponíveis</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Na mensagem você poderá usar: {'{{nome}}'}, {'{{email}}'}, {'{{telefone}}'}, {'{{produto}}'}, {'{{valor}}'}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Step 4 para integração OU Step 3 para campanhas normais: Message */}
+              {((step === 4 && formData.campaign_type === 'integracao') || (step === 3 && formData.campaign_type !== 'integracao')) && (
                 <div className="space-y-6">
                   <div className="space-y-2">
                     <Label>Mensagem *</Label>
                     <p className="text-sm text-muted-foreground">
-                      Use {'{{nome}}'} para personalizar com o nome do contato
+                      {formData.campaign_type === 'integracao' 
+                        ? 'Use as variáveis como {{nome}}, {{produto}}, {{valor}} para personalizar'
+                        : 'Use {{nome}} para personalizar com o nome do contato'}
                     </p>
                     <Textarea
-                      placeholder={`Olá {{nome}}! 👋\n\nTemos uma oferta especial para você...`}
+                      placeholder={formData.campaign_type === 'integracao'
+                        ? `Olá {{nome}}! 🎉\n\nSeu pedido do {{produto}} foi confirmado!\nValor: R$ {{valor}}`
+                        : `Olá {{nome}}! 👋\n\nTemos uma oferta especial para você...`}
                       value={formData.message_template}
                       onChange={e => setFormData(prev => ({ ...prev, message_template: e.target.value }))}
                       rows={6}
@@ -602,8 +652,44 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
                 </div>
               )}
 
-              {/* Step 4: Send Control */}
-              {step === 4 && (
+              {/* Step 2 para campanhas normais: Audience */}
+              {step === 2 && formData.campaign_type !== 'integracao' && (
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <Label>Contatos</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Cole os números de telefone (um por linha). Formato: número, nome (opcional)
+                    </p>
+                    <Textarea
+                      placeholder={`5511999999999, João Silva\n5511888888888, Maria Santos\n5511777777777`}
+                      value={contactsText}
+                      onChange={e => handleContactsChange(e.target.value)}
+                      rows={10}
+                      className="font-mono text-sm"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-5 h-5 text-primary" />
+                      <span className="font-medium">Contatos válidos:</span>
+                    </div>
+                    <Badge variant={formData.contacts.length > 0 ? 'default' : 'secondary'}>
+                      {formData.contacts.length}
+                    </Badge>
+                  </div>
+
+                  {formData.contacts.length === 0 && contactsText.trim() && (
+                    <div className="flex items-center gap-2 text-sm text-yellow-600 bg-yellow-500/10 p-3 rounded-lg">
+                      <AlertTriangle className="w-4 h-4" />
+                      Nenhum número válido encontrado. Verifique o formato.
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Step 5 para integração OU Step 4 para campanhas normais: Send Control */}
+              {((step === 5 && formData.campaign_type === 'integracao') || (step === 4 && formData.campaign_type !== 'integracao')) && (
                 <div className="space-y-6">
                   <div className="flex items-center gap-2 p-3 bg-blue-500/10 rounded-lg text-sm text-blue-600">
                     <Info className="w-4 h-4" />
@@ -666,38 +752,70 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Horário Início</Label>
-                      <Input
-                        type="time"
-                        value={formData.send_window_start}
-                        onChange={e => setFormData(prev => ({ ...prev, send_window_start: e.target.value }))}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Horário Fim</Label>
-                      <Input
-                        type="time"
-                        value={formData.send_window_end}
-                        onChange={e => setFormData(prev => ({ ...prev, send_window_end: e.target.value }))}
-                      />
-                    </div>
-                  </div>
+                  {/* Toggle para horário avançado por período */}
+                  <Card className={cn(
+                    "border-2 transition-all",
+                    useAdvancedSchedule ? "border-primary/30 bg-primary/5" : "border-dashed"
+                  )}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-5 h-5 text-primary" />
+                          <span className="font-medium">Horário Avançado por Período</span>
+                          <Badge variant="secondary" className="text-xs">Recomendado</Badge>
+                        </div>
+                        <Switch
+                          checked={useAdvancedSchedule}
+                          onCheckedChange={setUseAdvancedSchedule}
+                        />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Configure horários específicos para manhã, tarde e noite
+                      </p>
+                    </CardContent>
+                  </Card>
 
-                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <Label htmlFor="weekends" className="cursor-pointer">Enviar aos finais de semana</Label>
-                    <Switch
-                      id="weekends"
-                      checked={formData.send_on_weekends}
-                      onCheckedChange={v => setFormData(prev => ({ ...prev, send_on_weekends: v }))}
+                  {useAdvancedSchedule ? (
+                    <ScheduleByPeriodControl
+                      value={scheduleByPeriod}
+                      onChange={setScheduleByPeriod}
                     />
-                  </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Horário Início</Label>
+                          <Input
+                            type="time"
+                            value={formData.send_window_start}
+                            onChange={e => setFormData(prev => ({ ...prev, send_window_start: e.target.value }))}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Horário Fim</Label>
+                          <Input
+                            type="time"
+                            value={formData.send_window_end}
+                            onChange={e => setFormData(prev => ({ ...prev, send_window_end: e.target.value }))}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                        <Label htmlFor="weekends" className="cursor-pointer">Enviar aos finais de semana</Label>
+                        <Switch
+                          id="weekends"
+                          checked={formData.send_on_weekends}
+                          onCheckedChange={v => setFormData(prev => ({ ...prev, send_on_weekends: v }))}
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
-              {/* Step 5: Confirmation */}
-              {step === 5 && (
+              {/* Step 6 para integração OU Step 5 para campanhas normais: Confirmation */}
+              {((step === 6 && formData.campaign_type === 'integracao') || (step === 5 && formData.campaign_type !== 'integracao')) && (
                 <div className="space-y-6">
                   <Card>
                     <CardContent className="p-4 space-y-4">
@@ -716,61 +834,96 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
                           <span className="text-muted-foreground">Instância:</span>
                           <p className="font-medium">{selectedInstance?.name}</p>
                         </div>
-                        <div>
-                          <span className="text-muted-foreground">Contatos:</span>
-                          <p className="font-medium">{formData.contacts.length}</p>
-                        </div>
+                        {formData.campaign_type === 'integracao' ? (
+                          <>
+                            <div>
+                              <span className="text-muted-foreground">Integração:</span>
+                              <p className="font-medium capitalize">{selectedIntegrationProvider}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Evento Gatilho:</span>
+                              <p className="font-medium">
+                                {availableEvents.find(e => e.value === selectedEvent)?.label || selectedEvent}
+                              </p>
+                            </div>
+                          </>
+                        ) : (
+                          <div>
+                            <span className="text-muted-foreground">Contatos:</span>
+                            <p className="font-medium">{formData.contacts.length}</p>
+                          </div>
+                        )}
                         <div>
                           <span className="text-muted-foreground">Luna AI:</span>
                           <p className="font-medium">{formData.luna_enabled ? 'Ativado' : 'Desativado'}</p>
                         </div>
                         <div>
                           <span className="text-muted-foreground">Janela de envio:</span>
-                          <p className="font-medium">{formData.send_window_start} - {formData.send_window_end}</p>
+                          <p className="font-medium">
+                            {useAdvancedSchedule ? 'Por período' : `${formData.send_window_start} - ${formData.send_window_end}`}
+                          </p>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
 
-                  {/* Credits Check */}
-                  <Card className={cn(
-                    "border-2",
-                    hasEnoughCredits ? "border-green-500/20 bg-green-500/5" : "border-red-500/20 bg-red-500/5"
-                  )}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-semibold flex items-center gap-2">
-                            <CreditCard className="w-5 h-5" />
-                            Custo Estimado
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            1 crédito por mensagem enviada
-                          </p>
+                  {/* Credits Check - apenas para campanhas que não são de integração */}
+                  {formData.campaign_type !== 'integracao' ? (
+                    <Card className={cn(
+                      "border-2",
+                      hasEnoughCredits ? "border-green-500/20 bg-green-500/5" : "border-red-500/20 bg-red-500/5"
+                    )}>
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="font-semibold flex items-center gap-2">
+                              <CreditCard className="w-5 h-5" />
+                              Custo Estimado
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              1 crédito por mensagem enviada
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-2xl font-bold">{creditsNeeded}</p>
+                            <p className="text-sm text-muted-foreground">
+                              créditos necessários
+                            </p>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-2xl font-bold">{creditsNeeded}</p>
-                          <p className="text-sm text-muted-foreground">
-                            créditos necessários
-                          </p>
-                        </div>
-                      </div>
 
-                      <div className="mt-4 pt-4 border-t flex items-center justify-between">
-                        <span className="text-sm">Seu saldo:</span>
-                        <Badge variant={hasEnoughCredits ? 'default' : 'destructive'}>
-                          {credits?.available_credits || 0} créditos
-                        </Badge>
-                      </div>
-
-                      {!hasEnoughCredits && (
-                        <div className="mt-4 flex items-center gap-2 text-sm text-red-600">
-                          <AlertTriangle className="w-4 h-4" />
-                          Saldo insuficiente. Compre mais créditos para continuar.
+                        <div className="mt-4 pt-4 border-t flex items-center justify-between">
+                          <span className="text-sm">Seu saldo:</span>
+                          <Badge variant={hasEnoughCredits ? 'default' : 'destructive'}>
+                            {credits?.available_credits || 0} créditos
+                          </Badge>
                         </div>
-                      )}
-                    </CardContent>
-                  </Card>
+
+                        {!hasEnoughCredits && (
+                          <div className="mt-4 flex items-center gap-2 text-sm text-red-600">
+                            <AlertTriangle className="w-4 h-4" />
+                            Saldo insuficiente. Compre mais créditos para continuar.
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <Card className="border-2 border-green-500/20 bg-green-500/5">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+                            <Zap className="w-5 h-5 text-green-500" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-green-600">Campanha Automática</h3>
+                            <p className="text-sm text-muted-foreground">
+                              Créditos serão consumidos conforme os eventos forem disparados
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
               )}
             </motion.div>
@@ -798,7 +951,7 @@ export function CreateCampaignModal({ open, onOpenChange, onCreated }: CreateCam
               disabled={!canProceed()}
               className="gap-1"
             >
-              {step === 5 ? (
+              {step === STEPS.length ? (
                 <>
                   <Check className="w-4 h-4" />
                   Criar Campanha
