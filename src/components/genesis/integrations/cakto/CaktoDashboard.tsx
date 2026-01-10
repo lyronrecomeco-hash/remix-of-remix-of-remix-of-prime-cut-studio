@@ -6,6 +6,8 @@
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   ShoppingCart,
   CheckCircle2,
@@ -18,10 +20,15 @@ import {
   AlertCircle,
   Percent,
   BarChart3,
+  Activity,
+  User,
+  Phone,
+  Package,
 } from 'lucide-react';
 import { useCaktoIntegration } from './hooks/useCaktoIntegration';
 import { useCaktoAnalytics } from './hooks/useCaktoAnalytics';
-import { AnalyticsPeriod } from './types';
+import { useCaktoEvents } from './hooks/useCaktoEvents';
+import { AnalyticsPeriod, CAKTO_EVENT_LABELS, CAKTO_EVENT_COLORS, CaktoEventType } from './types';
 import { 
   BarChart, 
   Bar, 
@@ -34,7 +41,7 @@ import {
   Pie, 
   Cell 
 } from 'recharts';
-import { format, subDays } from 'date-fns';
+import { format, subDays, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface CaktoDashboardProps {
@@ -48,7 +55,8 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
   const [period, setPeriod] = useState<AnalyticsPeriod>('7d');
 
   const { integration, loading: integrationLoading, isConnected } = useCaktoIntegration(instanceId);
-  const { data: analytics, loading: analyticsLoading } = useCaktoAnalytics(instanceId, integration?.id, period);
+  const { data: analytics, loading: analyticsLoading, refetch: refetchAnalytics } = useCaktoAnalytics(instanceId, integration?.id, period);
+  const { events, loading: eventsLoading, refetch: refetchEvents } = useCaktoEvents(instanceId, { limit: 10 });
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -329,6 +337,107 @@ export function CaktoDashboard({ instanceId }: CaktoDashboardProps) {
                 </div>
               ))}
             </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          ÚLTIMOS EVENTOS EM TEMPO REAL
+      ═══════════════════════════════════════════════════════════════ */}
+      <section className="mt-6">
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Activity className="w-5 h-5 text-primary" />
+                Últimos Eventos
+                {events.length > 0 && (
+                  <Badge variant="secondary" className="ml-2">{events.length}</Badge>
+                )}
+              </CardTitle>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => { refetchEvents(); refetchAnalytics(); }}
+                disabled={eventsLoading}
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${eventsLoading ? 'animate-spin' : ''}`} />
+                Atualizar
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {eventsLoading && events.length === 0 ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : events.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Activity className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                <p>Nenhum evento recebido ainda</p>
+                <p className="text-sm mt-1">Os eventos aparecerão aqui em tempo real</p>
+              </div>
+            ) : (
+              <ScrollArea className="h-[280px]">
+                <div className="space-y-2">
+                  {events.map((event) => {
+                    const eventColors = CAKTO_EVENT_COLORS[event.event_type as CaktoEventType] || {
+                      bg: 'bg-muted',
+                      text: 'text-muted-foreground',
+                      border: 'border-muted',
+                    };
+                    const EventIcon = event.event_type === 'purchase_approved' ? CheckCircle2 :
+                                      event.event_type === 'purchase_refused' ? XCircle :
+                                      event.event_type === 'initiate_checkout' ? ShoppingCart :
+                                      event.event_type === 'checkout_abandonment' ? Clock :
+                                      RefreshCw;
+
+                    return (
+                      <div 
+                        key={event.id} 
+                        className={`flex items-center gap-3 p-3 rounded-lg border ${eventColors.border} ${eventColors.bg} bg-opacity-30`}
+                      >
+                        <div className={`w-9 h-9 rounded-lg ${eventColors.bg} flex items-center justify-center flex-shrink-0`}>
+                          <EventIcon className={`w-4 h-4 ${eventColors.text}`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm">
+                              {CAKTO_EVENT_LABELS[event.event_type as CaktoEventType] || event.event_type}
+                            </span>
+                            {event.processed && (
+                              <Badge variant="outline" className="text-xs">Processado</Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                            {event.customer_name && (
+                              <span className="flex items-center gap-1">
+                                <User className="w-3 h-3" />
+                                {event.customer_name}
+                              </span>
+                            )}
+                            {event.product_name && (
+                              <span className="flex items-center gap-1">
+                                <Package className="w-3 h-3" />
+                                {event.product_name}
+                              </span>
+                            )}
+                            {event.order_value && (
+                              <span className="font-semibold text-primary">
+                                R$ {(event.order_value / 100).toFixed(2)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {formatDistanceToNow(new Date(event.created_at), { addSuffix: true, locale: ptBR })}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            )}
           </CardContent>
         </Card>
       </section>
