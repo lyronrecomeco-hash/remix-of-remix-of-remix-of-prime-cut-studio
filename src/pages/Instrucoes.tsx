@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, 
@@ -57,13 +57,13 @@ const sections: Section[] = [
 ];
 
 // Helper Components
-const SectionHeader = ({ icon, title, description, badge }: { 
+const SectionHeader = forwardRef<HTMLDivElement, { 
   icon: React.ReactNode; 
   title: string; 
   description: string;
   badge?: string;
-}) => (
-  <div className="mb-6">
+}>(({ icon, title, description, badge }, ref) => (
+  <div ref={ref} className="mb-6">
     <div className="flex items-center gap-3 mb-2">
       <div className="p-2 rounded-xl bg-primary/10 text-primary">
         {icon}
@@ -79,7 +79,8 @@ const SectionHeader = ({ icon, title, description, badge }: {
       </div>
     </div>
   </div>
-);
+));
+SectionHeader.displayName = 'SectionHeader';
 
 const StepCard = ({ step, title, description, children }: {
   step: number;
