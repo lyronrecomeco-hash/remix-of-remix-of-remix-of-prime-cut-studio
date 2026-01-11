@@ -109,33 +109,54 @@ const VALID_BRAZILIAN_DDDS = new Set([
   '98', '99',
 ]);
 
-// Validar DDD brasileiro
-function validateBrazilianDDD(phone: string): { isValid: boolean; ddd: string; error?: string } {
-  const cleanPhone = phone.replace(/\D/g, '');
+// Normalizar telefone brasileiro (remove DDI 55, mantém DDD + número)
+// Suporta: 5527997723328, 27997723328, +55 27 99772-3328, etc.
+function normalizeBrazilianPhone(phone: string): string {
+  if (!phone) return '';
   
-  // Remover prefixo 55 se existir
-  let phoneWithoutCountry = cleanPhone;
+  // Remove tudo que não é dígito
+  let cleanPhone = phone.replace(/\D/g, '');
+  
+  // Se começa com 55 e tem mais de 11 dígitos, remove o DDI
   if (cleanPhone.startsWith('55') && cleanPhone.length > 11) {
-    phoneWithoutCountry = cleanPhone.slice(2);
+    cleanPhone = cleanPhone.slice(2);
   }
   
-  // Extrair DDD (primeiros 2 dígitos)
-  const ddd = phoneWithoutCountry.slice(0, 2);
-  
-  if (!ddd || ddd.length < 2) {
-    return { isValid: false, ddd: '', error: 'Número muito curto' };
+  // Se ainda tiver mais de 11 dígitos (caso tenha 0 na frente ou outro prefixo)
+  if (cleanPhone.length > 11) {
+    cleanPhone = cleanPhone.slice(-11);
   }
+  
+  // Se tiver 10 dígitos (telefone fixo antigo sem 9), manter
+  // Se tiver 11 dígitos (celular com 9), manter
+  if (cleanPhone.length < 10 || cleanPhone.length > 11) {
+    return ''; // Número inválido
+  }
+  
+  return cleanPhone;
+}
+
+// Validar DDD brasileiro com normalização automática
+function validateBrazilianDDD(phone: string): { isValid: boolean; ddd: string; normalizedPhone: string; error?: string } {
+  const normalizedPhone = normalizeBrazilianPhone(phone);
+  
+  if (!normalizedPhone) {
+    return { isValid: false, ddd: '', normalizedPhone: '', error: 'Número inválido ou muito curto' };
+  }
+  
+  // Extrair DDD (primeiros 2 dígitos do número normalizado)
+  const ddd = normalizedPhone.slice(0, 2);
   
   if (!VALID_BRAZILIAN_DDDS.has(ddd)) {
-    return { isValid: false, ddd, error: `DDD ${ddd} não existe no Brasil` };
+    return { isValid: false, ddd, normalizedPhone, error: `DDD ${ddd} não existe no Brasil` };
   }
   
-  // Validar tamanho (deve ter 10 ou 11 dígitos sem DDI)
-  if (phoneWithoutCountry.length < 10 || phoneWithoutCountry.length > 11) {
-    return { isValid: false, ddd, error: 'Tamanho do número inválido' };
+  // Validar tamanho final (10 ou 11 dígitos)
+  if (normalizedPhone.length < 10 || normalizedPhone.length > 11) {
+    return { isValid: false, ddd, normalizedPhone, error: 'Tamanho do número inválido' };
   }
   
-  return { isValid: true, ddd };
+  return { isValid: true, ddd, normalizedPhone };
 }
 
 // =============================================
@@ -962,7 +983,7 @@ async function processBatch(
     }
 
     try {
-      // VALIDAÇÃO DE DDD - Verificar se o DDD é válido no Brasil
+      // VALIDAÇÃO DE DDD - Verificar e normalizar o número
       const dddValidation = validateBrazilianDDD(contactPhone);
       if (!dddValidation.isValid) {
         await supabase
@@ -979,6 +1000,9 @@ async function processBatch(
           `Contato ${contactPhone} ignorado - ${dddValidation.error}`, { ddd: dddValidation.ddd });
         continue;
       }
+      
+      // Usar o telefone normalizado (sem DDI 55, apenas DDD + número)
+      const normalizedContactPhone = dddValidation.normalizedPhone;
 
       // ANTI-BAN CHECK 1: Blacklist
       if (antiBanConfig.checkBlacklist) {
@@ -1050,11 +1074,8 @@ async function processBatch(
         .replace(/\{\{telefone\}\}/gi, contactPhone || '')
         .trim();
 
-      // Format phone
-      let phone = contactPhone.replace(/\D/g, '');
-      if (!phone.startsWith('55') && phone.length <= 11) {
-        phone = '55' + phone;
-      }
+      // Format phone - usar o número já normalizado e adicionar DDI 55
+      const phone = '55' + normalizedContactPhone;
 
       // ANTI-BAN: Send typing indicator
       if (antiBanConfig.typingSimulation) {
