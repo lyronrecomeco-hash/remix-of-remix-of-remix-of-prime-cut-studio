@@ -191,30 +191,47 @@ export function useCaktoContacts() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Buscar telefones já enviados em campanhas anteriores (últimos 30 dias)
+  // Buscar telefones já em campanhas (qualquer status exceto failed/blocked)
   const fetchAlreadySentPhones = async (instanceId: string): Promise<Set<string>> => {
     try {
-      // Buscar contatos que já foram enviados (sent, delivered, read, replied)
+      // Buscar contatos que já estão em campanhas (queued, pending, sending, sent, delivered, read, replied)
+      // Isso evita que números que já estão em fila apareçam novamente
       const { data, error } = await supabase
         .from('genesis_campaign_contacts')
-        .select('contact_phone, campaign_id')
-        .in('status', ['sent', 'delivered', 'read', 'replied'])
-        .limit(5000);
+        .select('contact_phone, campaign_id, status')
+        .in('status', ['queued', 'pending', 'sending', 'sent', 'delivered', 'read', 'replied'])
+        .limit(10000);
       
       if (error) {
-        console.error('[useCaktoContacts] Error fetching sent phones:', error);
+        console.error('[useCaktoContacts] Error fetching campaign phones:', error);
         return new Set();
       }
 
-      // Normalizar todos os telefones enviados
-      const sentPhones = new Set<string>();
+      // Normalizar todos os telefones - incluindo aqueles com prefixo 55
+      const campaignPhones = new Set<string>();
       (data || []).forEach(c => {
+        // Normalizar o telefone (remove 55 se presente, mantém DDD + número)
         const normalized = normalizePhone(c.contact_phone);
-        if (normalized) sentPhones.add(normalized);
+        if (normalized) {
+          campaignPhones.add(normalized);
+        }
+        
+        // Também adicionar a versão original caso tenha formato diferente
+        const cleanOriginal = c.contact_phone?.replace(/\D/g, '') || '';
+        if (cleanOriginal.length >= 10) {
+          // Se começa com 55, também guardar sem o 55
+          if (cleanOriginal.startsWith('55') && cleanOriginal.length > 11) {
+            campaignPhones.add(cleanOriginal.slice(2));
+          }
+          // Guardar também a versão com 55 se não tiver
+          if (!cleanOriginal.startsWith('55') && cleanOriginal.length <= 11) {
+            campaignPhones.add(cleanOriginal);
+          }
+        }
       });
 
-      console.log('[useCaktoContacts] Found', sentPhones.size, 'already sent phones');
-      return sentPhones;
+      console.log('[useCaktoContacts] Found', campaignPhones.size, 'phones already in campaigns (queued/pending/sent/etc)');
+      return campaignPhones;
     } catch (err) {
       console.error('[useCaktoContacts] Error in fetchAlreadySentPhones:', err);
       return new Set();
@@ -275,7 +292,7 @@ export function useCaktoContacts() {
         ? await fetchAlreadySentPhones(instanceId)
         : new Set<string>();
 
-      console.log('[useCaktoContacts] Will exclude', alreadySentPhones.size, 'already sent phones');
+      console.log('[useCaktoContacts] Will exclude', alreadySentPhones.size, 'phones already in campaigns (queued/pending/sent/etc)');
 
       // PIX não pago: VERIFICAÇÃO RIGOROSA por email + telefone + external_id
       if (eventType === 'pix_unpaid') {
@@ -449,9 +466,9 @@ export function useCaktoContacts() {
             continue;
           }
 
-          // VERIFICAÇÃO 5: Telefone JÁ FOI ENVIADO em campanha anterior?
+          // VERIFICAÇÃO 5: Telefone JÁ ESTÁ EM CAMPANHA (queued/pending/sent/etc)?
           if (alreadySentPhones.has(normalizedPhone)) {
-            console.log('[useCaktoContacts] ✗ Skipping - phone ALREADY SENT in campaign:', normalizedPhone);
+            console.log('[useCaktoContacts] ✗ Skipping - phone ALREADY IN CAMPAIGN:', normalizedPhone);
             seenIdentities.add(identity);
             seenPhones.add(normalizedPhone);
             skippedAlreadySent++;
@@ -495,7 +512,7 @@ export function useCaktoContacts() {
           skippedPaid,
         });
 
-        console.log('[useCaktoContacts] ✓ Found', unpaidContacts.length, 'VERIFIED unpaid PIX contacts (excludes sent + duplicates)');
+        console.log('[useCaktoContacts] ✓ Found', unpaidContacts.length, 'VERIFIED unpaid PIX contacts (excludes campaign phones + duplicates)');
         setContacts(unpaidContacts);
         return unpaidContacts;
       }
@@ -582,8 +599,9 @@ export function useCaktoContacts() {
             continue;
           }
 
-          // Verificar se já foi enviado
+          // Verificar se já está em campanha
           if (alreadySentPhones.has(normalizedPhone)) {
+            console.log('[useCaktoContacts] ✗ Skipping abandon - phone ALREADY IN CAMPAIGN:', normalizedPhone);
             skippedAlreadySent++;
             continue;
           }
@@ -669,8 +687,9 @@ export function useCaktoContacts() {
           continue;
         }
         
-        // Verificar se já foi enviado em campanha anterior
+        // Verificar se já está em campanha anterior
         if (alreadySentPhones.has(normalizedPhone)) {
+          console.log('[useCaktoContacts] ✗ Skipping - phone ALREADY IN CAMPAIGN:', normalizedPhone);
           skippedSent++;
           continue;
         }
