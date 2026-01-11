@@ -44,6 +44,7 @@ const GenesisLogin = lazy(() => import("./pages/GenesisLogin"));
 const GenesisPanel = lazy(() => import("./pages/GenesisPanel"));
 const GenesisVenda = lazy(() => import("./pages/GenesisVenda"));
 const FlowBuilderDocs = lazy(() => import("./pages/FlowBuilderDocs"));
+const Instrucoes = lazy(() => import("./pages/Instrucoes"));
 const ScriptDownload = lazy(() => import("./pages/ScriptDownload"));
 const Sobre = lazy(() => import("./pages/Sobre"));
 const StatusPage = lazy(() => import("./pages/StatusPage"));
@@ -227,6 +228,7 @@ const AppContent = () => {
             <Route path="/genesis/login" element={<GenesisLogin />} />
             <Route path="/genesis" element={<GenesisPanel />} />
             <Route path="/genesis/docs" element={<FlowBuilderDocs />} />
+            <Route path="/instrucoes" element={<Instrucoes />} />
             <Route path="/venda-genesis" element={<GenesisVenda />} />
             <Route path="/script" element={<ScriptDownload />} />
             <Route path="/sobre" element={<Sobre />} />
