@@ -18,12 +18,14 @@ import {
   Zap,
   Settings2,
   TrendingUp,
-  ShoppingCart
+  ShoppingCart,
+  Users
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useGenesisAuth } from '@/contexts/GenesisAuthContext';
 import { CaktoPanel } from './integrations/cakto/CaktoPanel';
 import { CaktoConfigModal } from './integrations/cakto/CaktoConfigModal';
+import { useCaktoAnalytics } from './integrations/cakto/hooks/useCaktoAnalytics';
 import caktoLogo from '@/assets/integrations/cakto-logo.png';
 
 interface Instance {
@@ -252,6 +254,28 @@ interface InstanceCardProps {
 }
 
 function InstanceCard({ instance, integration, isConnected, onConnect, onManage }: InstanceCardProps) {
+  // Buscar analytics reais quando conectado
+  const { data: analytics } = useCaktoAnalytics(
+    isConnected ? instance.id : '', 
+    integration?.id, 
+    '7d'
+  );
+
+  const formatCurrency = (value: number) => {
+    if (value >= 1000) {
+      return `R$ ${(value / 1000).toFixed(1)}k`;
+    }
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
+  const totalCheckouts = analytics?.checkouts_started || 0;
+  const totalRevenue = analytics?.total_revenue || 0;
+  const totalAbandonments = analytics?.cart_abandonments || 0;
+  
   return (
     <Card className={`
       group relative overflow-hidden transition-all duration-300
@@ -305,21 +329,28 @@ function InstanceCard({ instance, integration, isConnected, onConnect, onManage 
           </div>
         </div>
 
-        {/* Mini Stats quando Conectado */}
+        {/* Mini Stats quando Conectado - DADOS REAIS */}
         {isConnected && (
-          <div className="grid grid-cols-2 gap-2 mb-4">
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border/50">
-              <ShoppingCart className="w-4 h-4 text-blue-500" />
-              <div>
-                <p className="text-xs text-muted-foreground">Checkouts</p>
-                <p className="text-sm font-bold">--</p>
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            <div className="flex items-center gap-2 px-2 py-2 rounded-lg bg-muted/50 border border-border/50">
+              <ShoppingCart className="w-4 h-4 text-blue-500 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[10px] text-muted-foreground">Checkouts</p>
+                <p className="text-sm font-bold">{totalCheckouts}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border/50">
-              <TrendingUp className="w-4 h-4 text-emerald-500" />
-              <div>
-                <p className="text-xs text-muted-foreground">Receita</p>
-                <p className="text-sm font-bold">--</p>
+            <div className="flex items-center gap-2 px-2 py-2 rounded-lg bg-muted/50 border border-border/50">
+              <TrendingUp className="w-4 h-4 text-emerald-500 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[10px] text-muted-foreground">Receita</p>
+                <p className="text-sm font-bold truncate">{formatCurrency(totalRevenue)}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 px-2 py-2 rounded-lg bg-muted/50 border border-border/50">
+              <Users className="w-4 h-4 text-amber-500 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[10px] text-muted-foreground">Aband.</p>
+                <p className="text-sm font-bold">{totalAbandonments}</p>
               </div>
             </div>
           </div>

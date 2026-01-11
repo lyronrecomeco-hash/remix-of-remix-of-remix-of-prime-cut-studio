@@ -500,6 +500,125 @@ export function useCaktoContacts() {
         return unpaidContacts;
       }
 
+      // ABANDONADOS: Verificação rigorosa (excluir quem já pagou depois)
+      if (eventType === 'checkout_abandonment') {
+        // 1. Buscar todos os checkouts abandonados NO PERÍODO
+        let abandonQuery = supabase
+          .from('genesis_cakto_events')
+          .select('*')
+          .eq('instance_id', instanceId)
+          .in('event_type', ['checkout_abandonment', 'initiate_checkout'])
+          .not('customer_phone', 'is', null)
+          .gte('created_at', startDateISO)
+          .lte('created_at', endDateISO)
+          .order('created_at', { ascending: false })
+          .limit(1000);
+
+        if (productIds.length > 0) {
+          abandonQuery = abandonQuery.in('product_id', productIds);
+        }
+
+        const { data: abandonEvents, error: abandonError } = await abandonQuery;
+
+        if (abandonError) {
+          console.error('[useCaktoContacts] Abandon fetch error:', abandonError);
+          throw abandonError;
+        }
+
+        // 2. Buscar TODOS os purchase_approved para verificar quem já pagou
+        const { data: approvedEvents, error: approvedError } = await supabase
+          .from('genesis_cakto_events')
+          .select('external_id, customer_phone, customer_email, created_at, product_id')
+          .eq('instance_id', instanceId)
+          .eq('event_type', 'purchase_approved')
+          .gte('created_at', subDays(new Date(), 90).toISOString());
+
+        if (approvedError) {
+          console.error('[useCaktoContacts] Approved fetch error:', approvedError);
+          throw approvedError;
+        }
+
+        // 3. Criar sets de quem já pagou
+        const approvedPhones = new Set<string>();
+        const approvedEmails = new Set<string>();
+
+        (approvedEvents || []).forEach(e => {
+          const normalizedPhone = normalizePhone(e.customer_phone);
+          const normalizedEmail = normalizeEmail(e.customer_email);
+          if (normalizedPhone) approvedPhones.add(normalizedPhone);
+          if (normalizedEmail) approvedEmails.add(normalizedEmail);
+        });
+
+        // 4. Filtrar abandonados que NÃO pagaram depois
+        const abandonedContacts: CaktoContact[] = [];
+        const seenPhones = new Set<string>();
+        const seenNames = new Set<string>();
+        let skippedAlreadySent = 0;
+        let skippedPaid = 0;
+        let skippedDuplicate = 0;
+
+        for (const event of (abandonEvents || [])) {
+          const normalizedPhone = normalizePhone(event.customer_phone);
+          const normalizedEmail = normalizeEmail(event.customer_email);
+          const normalizedNameStr = normalizeName(event.customer_name);
+
+          if (!normalizedPhone) continue;
+
+          // Verificar duplicata por telefone
+          if (seenPhones.has(normalizedPhone)) {
+            skippedDuplicate++;
+            continue;
+          }
+
+          // Verificar duplicata por nome
+          if (normalizedNameStr && normalizedNameStr.length >= 5 && seenNames.has(normalizedNameStr)) {
+            skippedDuplicate++;
+            continue;
+          }
+
+          // Verificar se JÁ PAGOU
+          if (approvedPhones.has(normalizedPhone) || (normalizedEmail && approvedEmails.has(normalizedEmail))) {
+            skippedPaid++;
+            continue;
+          }
+
+          // Verificar se já foi enviado
+          if (alreadySentPhones.has(normalizedPhone)) {
+            skippedAlreadySent++;
+            continue;
+          }
+
+          seenPhones.add(normalizedPhone);
+          if (normalizedNameStr && normalizedNameStr.length >= 5) {
+            seenNames.add(normalizedNameStr);
+          }
+
+          const eventDate = new Date(event.created_at);
+          const formattedDate = format(eventDate, "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR });
+          const dddValidation = validateBrazilianDDD(normalizedPhone);
+
+          abandonedContacts.push({
+            phone: normalizedPhone,
+            name: event.customer_name || null,
+            email: event.customer_email || null,
+            productName: event.product_name || null,
+            productId: event.product_id || null,
+            orderValue: event.order_value || null,
+            eventDate: event.created_at,
+            formattedDate,
+            externalId: event.external_id || event.id,
+            paymentStatus: 'unpaid',
+            isValidDDD: dddValidation.isValid,
+            dddError: dddValidation.error,
+          });
+        }
+
+        console.log('[useCaktoContacts] Abandon stats:', { skippedAlreadySent, skippedPaid, skippedDuplicate });
+        console.log('[useCaktoContacts] ✓ Found', abandonedContacts.length, 'VERIFIED abandoned contacts');
+        setContacts(abandonedContacts);
+        return abandonedContacts;
+      }
+
       // Outros eventos: busca direta com deduplicação
       let query = supabase
         .from('genesis_cakto_events')
