@@ -138,9 +138,9 @@ const INTEGRATION_EVENTS: Record<string, { value: string; label: string; descrip
   cakto: [
     { value: 'purchase_approved', label: 'Compra Aprovada', description: 'Pagamento confirmado' },
     { value: 'pix_unpaid', label: '🔥 PIX Não Pago', description: 'Cliente gerou PIX mas não pagou (recuperação)' },
+    { value: 'checkout_abandonment', label: '🛒 Abandonados', description: 'Cliente abandonou o checkout sem pagar' },
     { value: 'pix_generated', label: 'PIX Gerado', description: 'Cliente gerou um PIX para pagamento' },
     { value: 'initiate_checkout', label: 'Checkout Iniciado', description: 'Cliente inicia o checkout' },
-    { value: 'checkout_abandonment', label: 'Carrinho Abandonado', description: 'Cliente abandonou o checkout' },
     { value: 'purchase_refused', label: 'Compra Recusada', description: 'Pagamento recusado' },
     { value: 'purchase_refunded', label: 'Reembolso', description: 'Cliente solicita reembolso' },
   ],
