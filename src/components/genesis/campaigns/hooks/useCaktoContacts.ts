@@ -153,6 +153,17 @@ const normalizeEmail = (email: string | null): string => {
   return email.toLowerCase().trim();
 };
 
+// Normalizar nome para comparação de duplicatas (remove acentos, espaços extras, lowercase)
+const normalizeName = (name: string | null): string => {
+  if (!name) return '';
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
 export function useCaktoContacts() {
   const [contacts, setContacts] = useState<CaktoContact[]>([]);
   const [products, setProducts] = useState<CaktoProduct[]>([]);
@@ -347,18 +358,40 @@ export function useCaktoContacts() {
         // Cenário: Cliente gerou PIX, abandonou, gerou outro PIX e PAGOU
         // Solução: Verificar se telefone OU email pagou EM QUALQUER MOMENTO (não só depois do PIX)
         const unpaidContacts: CaktoContact[] = [];
-        const seenIdentities = new Set<string>(); // Deduplicar por identidade (phone+email)
+        const seenPhones = new Set<string>(); // DEDUP: por telefone apenas
+        const seenNames = new Set<string>(); // DEDUP: por nome normalizado (pega "Raimundo Afonso" duplicado)
+        const seenIdentities = new Set<string>(); // DEDUP: por identidade (phone+email)
 
         console.log('[useCaktoContacts] Processing', (pixEvents || []).length, 'PIX events for ULTRA-RIGOROUS verification');
+
+        let skippedAlreadySent = 0;
+        let skippedDuplicatePhone = 0;
+        let skippedDuplicateName = 0;
+        let skippedPaid = 0;
 
         for (const event of (pixEvents || [])) {
           const normalizedPhone = normalizePhone(event.customer_phone);
           const normalizedEmail = normalizeEmail(event.customer_email);
+          const normalizedNameStr = normalizeName(event.customer_name);
           
           // Criar identidade única baseada em telefone E email
           const identity = `${normalizedPhone}|${normalizedEmail}`;
 
-          // VERIFICAÇÃO 0: Já processamos esta identidade (phone+email)?
+          // VERIFICAÇÃO 0a: Já processamos este TELEFONE? (mais rigoroso)
+          if (normalizedPhone && seenPhones.has(normalizedPhone)) {
+            skippedDuplicatePhone++;
+            continue;
+          }
+
+          // VERIFICAÇÃO 0b: Já processamos este NOME? (pega casos como "Raimundo Afonso" duplicado)
+          // Só aplica se o nome tiver pelo menos 5 caracteres para evitar falsos positivos
+          if (normalizedNameStr && normalizedNameStr.length >= 5 && seenNames.has(normalizedNameStr)) {
+            console.log('[useCaktoContacts] ✗ Skipping - DUPLICATE NAME:', event.customer_name);
+            skippedDuplicateName++;
+            continue;
+          }
+
+          // VERIFICAÇÃO 0c: Já processamos esta identidade (phone+email)?
           if (seenIdentities.has(identity)) {
             continue;
           }
@@ -367,29 +400,26 @@ export function useCaktoContacts() {
           if (event.external_id && approvedExternalIds.has(event.external_id)) {
             console.log('[useCaktoContacts] ✗ Skipping - SAME external_id already paid:', event.external_id);
             seenIdentities.add(identity);
+            if (normalizedPhone) seenPhones.add(normalizedPhone);
+            skippedPaid++;
             continue;
           }
 
           // VERIFICAÇÃO 2: telefone JÁ PAGOU em QUALQUER momento (não importa quando)?
-          // Se o cliente pagou QUALQUER coisa, não está mais "aguardando pagamento"
-          let phonePaidAnytime = false;
           if (normalizedPhone && approvedPhones.has(normalizedPhone)) {
-            phonePaidAnytime = true;
             console.log('[useCaktoContacts] ✗ Skipping - phone HAS PAID (anytime):', normalizedPhone);
-          }
-          if (phonePaidAnytime) {
             seenIdentities.add(identity);
+            seenPhones.add(normalizedPhone);
+            skippedPaid++;
             continue;
           }
 
           // VERIFICAÇÃO 3: email JÁ PAGOU em QUALQUER momento?
-          let emailPaidAnytime = false;
           if (normalizedEmail && approvedEmails.has(normalizedEmail)) {
-            emailPaidAnytime = true;
             console.log('[useCaktoContacts] ✗ Skipping - email HAS PAID (anytime):', normalizedEmail);
-          }
-          if (emailPaidAnytime) {
             seenIdentities.add(identity);
+            if (normalizedPhone) seenPhones.add(normalizedPhone);
+            skippedPaid++;
             continue;
           }
 
@@ -402,11 +432,17 @@ export function useCaktoContacts() {
           if (alreadySentPhones.has(normalizedPhone)) {
             console.log('[useCaktoContacts] ✗ Skipping - phone ALREADY SENT in campaign:', normalizedPhone);
             seenIdentities.add(identity);
+            seenPhones.add(normalizedPhone);
+            skippedAlreadySent++;
             continue;
           }
 
-          // Marcar identidade como processada
+          // Marcar como processado
           seenIdentities.add(identity);
+          seenPhones.add(normalizedPhone);
+          if (normalizedNameStr && normalizedNameStr.length >= 5) {
+            seenNames.add(normalizedNameStr);
+          }
 
           // Formatar data precisa
           const eventDate = new Date(event.created_at);
@@ -430,6 +466,13 @@ export function useCaktoContacts() {
             dddError: dddValidation.error,
           });
         }
+
+        console.log('[useCaktoContacts] Dedup stats:', {
+          skippedAlreadySent,
+          skippedDuplicatePhone,
+          skippedDuplicateName,
+          skippedPaid,
+        });
 
         console.log('[useCaktoContacts] ✓ Found', unpaidContacts.length, 'VERIFIED unpaid PIX contacts (excludes sent + duplicates)');
         setContacts(unpaidContacts);
@@ -459,20 +502,30 @@ export function useCaktoContacts() {
         throw eventsError;
       }
 
-      // Deduplicar por telefone normalizado + excluir já enviados
+      // Deduplicar por telefone normalizado + nome + excluir já enviados
       const seenPhones = new Set<string>();
+      const seenNames = new Set<string>(); // DEDUP: por nome normalizado
       const uniqueContacts: CaktoContact[] = [];
       let skippedSent = 0;
-      let skippedDuplicate = 0;
+      let skippedDuplicatePhone = 0;
+      let skippedDuplicateName = 0;
 
       for (const event of (events || [])) {
         const normalizedPhone = normalizePhone(event.customer_phone);
+        const normalizedNameStr = normalizeName(event.customer_name);
         
         if (!normalizedPhone) continue;
 
-        // Verificar duplicata
+        // Verificar duplicata por telefone
         if (seenPhones.has(normalizedPhone)) {
-          skippedDuplicate++;
+          skippedDuplicatePhone++;
+          continue;
+        }
+        
+        // Verificar duplicata por nome (mínimo 5 chars)
+        if (normalizedNameStr && normalizedNameStr.length >= 5 && seenNames.has(normalizedNameStr)) {
+          console.log('[useCaktoContacts] ✗ Skipping - DUPLICATE NAME:', event.customer_name);
+          skippedDuplicateName++;
           continue;
         }
         
@@ -483,6 +536,9 @@ export function useCaktoContacts() {
         }
         
         seenPhones.add(normalizedPhone);
+        if (normalizedNameStr && normalizedNameStr.length >= 5) {
+          seenNames.add(normalizedNameStr);
+        }
         
         const eventDateObj = new Date(event.created_at);
         const formattedDate = format(eventDateObj, "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR });
@@ -506,7 +562,7 @@ export function useCaktoContacts() {
         });
       }
 
-      console.log('[useCaktoContacts] Found', uniqueContacts.length, 'unique contacts for', eventType, '(skipped:', skippedDuplicate, 'duplicates,', skippedSent, 'already sent)');
+      console.log('[useCaktoContacts] Found', uniqueContacts.length, 'unique contacts for', eventType, '(skipped:', skippedDuplicatePhone + skippedDuplicateName, 'duplicates,', skippedSent, 'already sent)');
       setContacts(uniqueContacts);
       return uniqueContacts;
     } catch (err) {
