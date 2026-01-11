@@ -21,6 +21,95 @@ export interface CaktoContact {
   formattedDate: string;
   externalId: string;
   paymentStatus: 'unpaid' | 'paid' | 'unknown'; // Status de pagamento para badge
+  isValidDDD?: boolean; // Se o DDD é válido no Brasil
+  dddError?: string; // Mensagem de erro do DDD
+}
+
+// DDDs válidos no Brasil (2025)
+const VALID_BRAZILIAN_DDDS = new Set([
+  // São Paulo
+  '11', '12', '13', '14', '15', '16', '17', '18', '19',
+  // Rio de Janeiro
+  '21', '22', '24',
+  // Espírito Santo
+  '27', '28',
+  // Minas Gerais
+  '31', '32', '33', '34', '35', '37', '38',
+  // Paraná
+  '41', '42', '43', '44', '45', '46',
+  // Santa Catarina
+  '47', '48', '49',
+  // Rio Grande do Sul
+  '51', '53', '54', '55',
+  // Distrito Federal
+  '61',
+  // Goiás
+  '62', '64',
+  // Tocantins
+  '63',
+  // Mato Grosso
+  '65', '66',
+  // Mato Grosso do Sul
+  '67',
+  // Acre
+  '68',
+  // Rondônia
+  '69',
+  // Bahia
+  '71', '73', '74', '75', '77',
+  // Sergipe
+  '79',
+  // Pernambuco
+  '81', '87',
+  // Alagoas
+  '82',
+  // Paraíba
+  '83',
+  // Rio Grande do Norte
+  '84',
+  // Ceará
+  '85', '88',
+  // Piauí
+  '86', '89',
+  // Pará
+  '91', '93', '94',
+  // Amazonas
+  '92', '97',
+  // Roraima
+  '95',
+  // Amapá
+  '96',
+  // Maranhão
+  '98', '99',
+]);
+
+// Validar DDD brasileiro
+export function validateBrazilianDDD(phone: string): { isValid: boolean; ddd: string; error?: string } {
+  const cleanPhone = phone.replace(/\D/g, '');
+  
+  // Remover prefixo 55 se existir
+  let phoneWithoutCountry = cleanPhone;
+  if (cleanPhone.startsWith('55') && cleanPhone.length > 11) {
+    phoneWithoutCountry = cleanPhone.slice(2);
+  }
+  
+  // Extrair DDD (primeiros 2 dígitos)
+  const ddd = phoneWithoutCountry.slice(0, 2);
+  
+  if (!ddd || ddd.length < 2) {
+    return { isValid: false, ddd: '', error: 'Número muito curto' };
+  }
+  
+  if (!VALID_BRAZILIAN_DDDS.has(ddd)) {
+    return { isValid: false, ddd, error: `DDD ${ddd} não existe no Brasil` };
+  }
+  
+  // Validar tamanho (deve ter 10 ou 11 dígitos sem DDI)
+  if (phoneWithoutCountry.length < 10 || phoneWithoutCountry.length > 11) {
+    return { isValid: false, ddd, error: 'Tamanho do número inválido' };
+  }
+  
+  return { isValid: true, ddd };
 }
 
 export interface CaktoProduct {
@@ -323,6 +412,9 @@ export function useCaktoContacts() {
           const eventDate = new Date(event.created_at);
           const formattedDate = format(eventDate, "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR });
 
+          // Validar DDD brasileiro
+          const dddValidation = validateBrazilianDDD(normalizedPhone);
+
           unpaidContacts.push({
             phone: normalizedPhone,
             name: event.customer_name || null,
@@ -334,6 +426,8 @@ export function useCaktoContacts() {
             formattedDate,
             externalId: event.external_id || event.id,
             paymentStatus: 'unpaid', // ✓ Confirmado AGUARDANDO PAGAMENTO!
+            isValidDDD: dddValidation.isValid,
+            dddError: dddValidation.error,
           });
         }
 
@@ -393,6 +487,9 @@ export function useCaktoContacts() {
         const eventDateObj = new Date(event.created_at);
         const formattedDate = format(eventDateObj, "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR });
         
+        // Validar DDD brasileiro
+        const dddValidation = validateBrazilianDDD(normalizedPhone);
+        
         uniqueContacts.push({
           phone: normalizedPhone,
           name: event.customer_name || null,
@@ -404,6 +501,8 @@ export function useCaktoContacts() {
           formattedDate,
           externalId: event.external_id || event.id,
           paymentStatus: eventType === 'purchase_approved' ? 'paid' : 'unknown',
+          isValidDDD: dddValidation.isValid,
+          dddError: dddValidation.error,
         });
       }
 

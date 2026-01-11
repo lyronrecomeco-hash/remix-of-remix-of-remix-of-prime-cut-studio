@@ -62,6 +62,18 @@ const STATUS_CONFIG = {
   },
 };
 
+// Badge para DDD inválido
+const InvalidDDDBadge = ({ error }: { error: string }) => (
+  <Badge 
+    variant="outline" 
+    className="text-xs gap-1 bg-red-500/10 text-red-600 border-red-500/30"
+    title={error}
+  >
+    <AlertTriangle className="w-3 h-3" />
+    DDD Inválido
+  </Badge>
+);
+
 export function ContactsPreviewCard({ 
   contacts, 
   loading, 
@@ -83,11 +95,16 @@ export function ContactsPreviewCard({
   const selected = selectedPhones ?? internalSelected;
   const setSelected = onSelectionChange ?? setInternalSelected;
 
-  // Quando contacts mudam, selecionar todos por padrão (apenas na primeira vez)
+  // Quando contacts mudam, selecionar apenas números com DDD válido por padrão
   useEffect(() => {
     if (contacts.length > 0 && !initialized) {
-      const allPhones = new Set(contacts.map(c => c.phone));
-      setSelected(allPhones);
+      // Selecionar apenas contatos com DDD válido
+      const validPhones = new Set(
+        contacts
+          .filter(c => c.isValidDDD !== false) // undefined ou true são válidos
+          .map(c => c.phone)
+      );
+      setSelected(validPhones);
       setInitialized(true);
     }
   }, [contacts, initialized, setSelected]);
@@ -97,9 +114,13 @@ export function ContactsPreviewCard({
     setInitialized(false);
   }, [contacts.length]);
 
+  // Contar contatos válidos e inválidos
+  const validContactsCount = contacts.filter(c => c.isValidDDD !== false).length;
+  const invalidContactsCount = contacts.filter(c => c.isValidDDD === false).length;
+
   const displayedContacts = showAll ? contacts : contacts.slice(0, 5);
   const selectedCount = selected.size;
-  const allSelected = selectedCount === contacts.length && contacts.length > 0;
+  const allValidSelected = selectedCount === validContactsCount && validContactsCount > 0;
 
   const formatCurrency = (value: number | null) => {
     if (!value) return null;
@@ -109,8 +130,11 @@ export function ContactsPreviewCard({
     }).format(value);
   };
 
-  // Toggle individual
-  const handleToggle = (phone: string) => {
+  // Toggle individual (não permite selecionar números inválidos)
+  const handleToggle = (phone: string, isValidDDD?: boolean) => {
+    // Não permitir selecionar números com DDD inválido
+    if (isValidDDD === false) return;
+    
     const newSelected = new Set(selected);
     if (newSelected.has(phone)) {
       newSelected.delete(phone);
@@ -120,12 +144,17 @@ export function ContactsPreviewCard({
     setSelected(newSelected);
   };
 
-  // Toggle todos
+  // Toggle todos (apenas números válidos)
   const handleToggleAll = () => {
-    if (allSelected) {
+    if (allValidSelected) {
       setSelected(new Set());
     } else {
-      setSelected(new Set(contacts.map(c => c.phone)));
+      // Selecionar apenas números com DDD válido
+      setSelected(new Set(
+        contacts
+          .filter(c => c.isValidDDD !== false)
+          .map(c => c.phone)
+      ));
     }
   };
 
@@ -218,11 +247,26 @@ export function ContactsPreviewCard({
 
       {hasContacts && (
         <CardContent>
+          {/* Aviso de DDDs inválidos */}
+          {invalidContactsCount > 0 && (
+            <div className="flex items-center gap-2 p-3 mb-3 rounded-lg border border-red-500/30 bg-red-500/5">
+              <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
+              <div className="text-sm">
+                <p className="font-medium text-red-600">
+                  {invalidContactsCount} contato{invalidContactsCount > 1 ? 's' : ''} com DDD inválido
+                </p>
+                <p className="text-red-600/80 text-xs">
+                  Números com DDD inexistente no Brasil não serão enviados
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Checkbox Selecionar Todos */}
           <div className="flex items-center gap-2 p-3 mb-3 rounded-lg border border-primary/20 bg-primary/5">
             <Checkbox 
               id="select-all-contacts"
-              checked={allSelected}
+              checked={allValidSelected}
               onCheckedChange={handleToggleAll}
               className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
             />
@@ -230,16 +274,16 @@ export function ContactsPreviewCard({
               htmlFor="select-all-contacts" 
               className="cursor-pointer flex items-center gap-2 text-sm font-medium"
             >
-              {allSelected ? (
+              {allValidSelected ? (
                 <CheckSquare className="w-4 h-4 text-primary" />
               ) : (
                 <Square className="w-4 h-4 text-muted-foreground" />
               )}
-              Selecionar Todos ({contacts.length} contatos)
+              Selecionar Todos ({validContactsCount} válidos)
             </Label>
-            {selectedCount < contacts.length && selectedCount > 0 && (
+            {selectedCount < validContactsCount && selectedCount > 0 && (
               <Badge variant="secondary" className="ml-auto text-xs">
-                {contacts.length - selectedCount} desmarcados
+                {validContactsCount - selectedCount} desmarcados
               </Badge>
             )}
           </div>
@@ -251,6 +295,7 @@ export function ContactsPreviewCard({
                   const statusConfig = STATUS_CONFIG[contact.paymentStatus];
                   const StatusIcon = statusConfig?.icon;
                   const isSelected = selected.has(contact.phone);
+                  const isInvalidDDD = contact.isValidDDD === false;
                   
                   return (
                     <motion.div
@@ -259,20 +304,28 @@ export function ContactsPreviewCard({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -5 }}
                       transition={{ delay: index * 0.03 }}
-                      onClick={() => handleToggle(contact.phone)}
+                      onClick={() => handleToggle(contact.phone, contact.isValidDDD)}
                       className={cn(
-                        "p-3 rounded-lg border cursor-pointer transition-all",
-                        isSelected 
-                          ? "bg-primary/5 border-primary/30 hover:border-primary/50" 
-                          : "bg-muted/30 border-border/30 opacity-60 hover:opacity-80"
+                        "p-3 rounded-lg border transition-all",
+                        isInvalidDDD 
+                          ? "bg-red-500/5 border-red-500/30 opacity-60 cursor-not-allowed"
+                          : isSelected 
+                            ? "bg-primary/5 border-primary/30 hover:border-primary/50 cursor-pointer" 
+                            : "bg-muted/30 border-border/30 opacity-60 hover:opacity-80 cursor-pointer"
                       )}
                     >
                       <div className="flex items-start gap-3">
                         {/* Checkbox */}
                         <Checkbox 
                           checked={isSelected}
-                          onCheckedChange={() => handleToggle(contact.phone)}
-                          className="mt-1 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                          onCheckedChange={() => handleToggle(contact.phone, contact.isValidDDD)}
+                          className={cn(
+                            "mt-1",
+                            isInvalidDDD 
+                              ? "opacity-50 cursor-not-allowed"
+                              : "data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                          )}
+                          disabled={isInvalidDDD}
                           onClick={(e) => e.stopPropagation()}
                         />
                         
@@ -283,16 +336,26 @@ export function ContactsPreviewCard({
                               <div className="flex items-center gap-2 flex-wrap">
                                 <div className="flex items-center gap-1.5">
                                   <User className="w-3.5 h-3.5 text-muted-foreground" />
-                                  <span className="font-medium text-sm truncate max-w-[150px]">
+                                  <span className={cn(
+                                    "font-medium text-sm truncate max-w-[150px]",
+                                    isInvalidDDD && "text-red-600 line-through"
+                                  )}>
                                     {contact.name || 'Sem nome'}
                                   </span>
                                 </div>
-                                <div className="flex items-center gap-1 text-xs text-muted-foreground font-mono">
+                                <div className={cn(
+                                  "flex items-center gap-1 text-xs font-mono",
+                                  isInvalidDDD ? "text-red-600" : "text-muted-foreground"
+                                )}>
                                   <Phone className="w-3 h-3" />
                                   {contact.phone}
                                 </div>
+                                {/* DDD INVÁLIDO BADGE */}
+                                {isInvalidDDD && contact.dddError && (
+                                  <InvalidDDDBadge error={contact.dddError} />
+                                )}
                                 {/* STATUS BADGE */}
-                                {statusConfig?.label && (
+                                {!isInvalidDDD && statusConfig?.label && (
                                   <Badge 
                                     variant="outline" 
                                     className={cn("text-xs gap-1 shrink-0", statusConfig.color)}
