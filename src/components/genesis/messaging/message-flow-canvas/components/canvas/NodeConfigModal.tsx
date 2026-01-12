@@ -22,11 +22,12 @@ import {
   Type, LayoutGrid, List, Mic, BarChart2, Heart, Radio, Clock, GitBranch, 
   Plus, Trash2, Save, Play, Smartphone, Globe, Calendar, UserPlus, UserMinus,
   Filter, UserX, AlertTriangle, Bell, ShieldAlert, Link2Off, BookOpen, Hash,
-  Variable, Square, Zap, AlertCircle, CheckCircle
+  Variable, Square, Zap, AlertCircle, CheckCircle, RefreshCw, Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MessageNodeType } from '../../types';
 import { toast } from 'sonner';
+import { useGenesisInstances } from '../../hooks/useGenesisInstances';
 
 interface NodeConfigModalProps {
   open: boolean;
@@ -101,6 +102,9 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
   const [label, setLabel] = useState<string>((nodeData?.label as string) || '');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState('config');
+  
+  // Hook para buscar instâncias reais do usuário
+  const { instances: genesisInstances, loading: loadingInstances, refetch: refetchInstances, connectedCount } = useGenesisInstances();
 
   useEffect(() => {
     const data = node.data as Record<string, unknown>;
@@ -967,59 +971,80 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
         );
 
       case 'instance-connector':
-        // Mock available instances - in production would come from API
-        const availableInstances = [
-          { id: 'inst-1', name: 'Vendas Principal', phone: '+55 11 99999-1234', status: 'connected' },
-          { id: 'inst-2', name: 'Suporte', phone: '+55 11 88888-5678', status: 'connected' },
-          { id: 'inst-3', name: 'Marketing', phone: '+55 21 77777-9012', status: 'disconnected' },
-        ];
-        
         return (
           <div className="space-y-4">
             {/* Auto-detect banner */}
             <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
-              <div className="flex items-center gap-2 text-emerald-600 text-sm font-medium">
-                <Smartphone className="w-4 h-4" />
-                Instâncias Detectadas Automaticamente
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-emerald-600 text-sm font-medium">
+                  <Smartphone className="w-4 h-4" />
+                  Suas Instâncias
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => refetchInstances()}
+                  disabled={loadingInstances}
+                  className="h-7 px-2"
+                >
+                  {loadingInstances ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-3 h-3" />
+                  )}
+                </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {availableInstances.filter(i => i.status === 'connected').length} instância(s) conectada(s)
+                {loadingInstances ? 'Carregando...' : `${connectedCount} instância(s) conectada(s)`}
               </p>
             </div>
 
             {/* Instance selector */}
             <div className="space-y-2">
               <Label>Selecionar Instância</Label>
-              <Select
-                value={config.instanceId || ''}
-                onValueChange={(v) => {
-                  const inst = availableInstances.find(i => i.id === v);
-                  setConfig({ 
-                    ...config, 
-                    instanceId: v,
-                    instanceName: inst?.name || '',
-                    instancePhone: inst?.phone || ''
-                  });
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Escolha uma instância" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableInstances.map((inst) => (
-                    <SelectItem key={inst.id} value={inst.id} disabled={inst.status === 'disconnected'}>
-                      <div className="flex items-center gap-2">
-                        <div className={cn(
-                          "w-2 h-2 rounded-full",
-                          inst.status === 'connected' ? "bg-emerald-500" : "bg-gray-400"
-                        )} />
-                        <span>{inst.name}</span>
-                        <span className="text-xs text-muted-foreground">({inst.phone})</span>
-                      </div>
-                    </SelectItem>
+              {loadingInstances ? (
+                <div className="flex items-center justify-center p-4 border rounded-md">
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  <span className="text-sm text-muted-foreground">Carregando instâncias...</span>
+                </div>
+              ) : genesisInstances.length === 0 ? (
+                <div className="p-4 border rounded-md text-center">
+                  <p className="text-sm text-muted-foreground">Nenhuma instância encontrada</p>
+                  <p className="text-xs text-muted-foreground mt-1">Crie uma instância na aba Instâncias</p>
+                </div>
+              ) : (
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  value={config.instanceId || ''}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    const inst = genesisInstances.find(i => i.id === v);
+                    setConfig({ 
+                      ...config, 
+                      instanceId: v,
+                      instanceName: inst?.name || '',
+                      instancePhone: inst?.phone || ''
+                    });
+                  }}
+                >
+                  <option value="">Escolha uma instância</option>
+                  {genesisInstances.map((inst) => (
+                    <option 
+                      key={inst.id} 
+                      value={inst.id}
+                      disabled={inst.status !== 'connected'}
+                    >
+                      {inst.status === 'connected' ? '🟢' : '🔴'} {inst.name} {inst.phone ? `(${inst.phone})` : ''}
+                    </option>
                   ))}
-                </SelectContent>
-              </Select>
+                </select>
+              )}
+              {errors.instanceId && (
+                <p className="text-xs text-destructive flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.instanceId}
+                </p>
+              )}
             </div>
 
             {/* Selected instance details */}
@@ -1027,12 +1052,20 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
               <div className="p-3 rounded-lg bg-muted/50 border space-y-2">
                 <div className="flex items-center justify-between">
                   <Label className="text-xs text-muted-foreground">Instância Selecionada</Label>
-                  <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600">
-                    Conectada
-                  </Badge>
+                  {(() => {
+                    const selectedInst = genesisInstances.find(i => i.id === config.instanceId);
+                    const isConnected = selectedInst?.status === 'connected';
+                    return (
+                      <Badge variant="secondary" className={isConnected ? "bg-emerald-500/10 text-emerald-600" : "bg-red-500/10 text-red-600"}>
+                        {isConnected ? 'Conectada' : 'Desconectada'}
+                      </Badge>
+                    );
+                  })()}
                 </div>
                 <p className="font-medium">{config.instanceName}</p>
-                <p className="text-xs text-muted-foreground">{config.instancePhone}</p>
+                {config.instancePhone && (
+                  <p className="text-xs text-muted-foreground">{config.instancePhone}</p>
+                )}
               </div>
             )}
 
@@ -1083,26 +1116,23 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
                 />
               </div>
 
-              {config.enableFallback && (
+              {config.enableFallback && genesisInstances.filter(i => i.id !== config.instanceId && i.status === 'connected').length > 0 && (
                 <div className="space-y-2 pl-4 border-l-2 border-primary/20">
                   <Label className="text-xs">Instância de Fallback</Label>
-                  <Select
+                  <select
+                    className="flex h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
                     value={config.fallbackInstanceId || ''}
-                    onValueChange={(v) => setConfig({ ...config, fallbackInstanceId: v })}
+                    onChange={(e) => setConfig({ ...config, fallbackInstanceId: e.target.value })}
                   >
-                    <SelectTrigger className="h-8">
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableInstances
-                        .filter(i => i.id !== config.instanceId && i.status === 'connected')
-                        .map((inst) => (
-                          <SelectItem key={inst.id} value={inst.id}>
-                            {inst.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
+                    <option value="">Selecione...</option>
+                    {genesisInstances
+                      .filter(i => i.id !== config.instanceId && i.status === 'connected')
+                      .map((inst) => (
+                        <option key={inst.id} value={inst.id}>
+                          {inst.name}
+                        </option>
+                      ))}
+                  </select>
                 </div>
               )}
             </div>

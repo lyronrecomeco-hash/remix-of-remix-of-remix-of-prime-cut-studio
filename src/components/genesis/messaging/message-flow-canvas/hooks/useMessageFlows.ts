@@ -1,4 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import type { MessageFlow, MessageNode, MessageEdge, FlowErrorLog } from '../types';
 
 const STORAGE_KEY = 'genesis_message_flows';
@@ -9,6 +11,7 @@ export const useMessageFlows = () => {
   const [selectedFlowId, setSelectedFlowId] = useState<string | null>(null);
   const [errorLogs, setErrorLogs] = useState<FlowErrorLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
 
   // Load flows from localStorage
   useEffect(() => {
@@ -40,6 +43,233 @@ export const useMessageFlows = () => {
     setErrorLogs(logs);
     localStorage.setItem(ERROR_LOG_KEY, JSON.stringify(logs));
   }, []);
+
+  // Sync flow to database (creates/updates whatsapp_automations)
+  const syncFlowToDatabase = useCallback(async (flow: MessageFlow): Promise<boolean> => {
+    try {
+      setSyncing(true);
+      
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('Usuário não autenticado');
+        return false;
+      }
+
+      // Find genesis user
+      const { data: genesisUser } = await supabase
+        .from('genesis_users')
+        .select('id')
+        .eq('email', user.email)
+        .maybeSingle();
+
+      if (!genesisUser) {
+        toast.error('Usuário Genesis não encontrado');
+        return false;
+      }
+
+      // Extract instance ID from nodes (look for instance-connector node)
+      const instanceNode = flow.nodes.find(n => n.type === 'instance-connector');
+      const instanceId = instanceNode?.data?.config?.instanceId || null;
+
+      if (!instanceId) {
+        toast.error('Selecione uma instância no flow antes de ativar');
+        return false;
+      }
+
+      // Extract trigger keywords from start-trigger node
+      const startNode = flow.nodes.find(n => n.type === 'start-trigger');
+      const triggerKeywords = startNode?.data?.config?.keywords || ['*'];
+      const triggerType = startNode?.data?.config?.triggerType || 'keyword';
+
+      // Convert flow nodes/edges to flow_config format for the engine
+      const flowConfig = {
+        version: '3.0',
+        nodes: flow.nodes,
+        edges: flow.edges,
+        startStep: 'greeting',
+        settings: {
+          greeting_dynamic: true,
+        },
+        steps: convertNodesToSteps(flow.nodes, flow.edges)
+      };
+
+      // Check if chatbot already exists for this flow
+      const { data: existingChatbot } = await supabase
+        .from('whatsapp_automations')
+        .select('id')
+        .eq('name', `Flow: ${flow.name}`)
+        .eq('instance_id', instanceId)
+        .maybeSingle();
+
+      const chatbotData = {
+        name: `Flow: ${flow.name}`,
+        description: flow.description || `Fluxo de mensagens: ${flow.name}`,
+        trigger_type: triggerType,
+        trigger_keywords: triggerKeywords,
+        response_type: 'flow',
+        response_content: null,
+        is_active: flow.isActive,
+        instance_id: instanceId,
+        user_id: genesisUser.id,
+        flow_config: JSON.parse(JSON.stringify(flowConfig)) as any,
+        response_content: null,
+        is_active: flow.isActive,
+        instance_id: instanceId,
+        user_id: genesisUser.id,
+        flow_config: flowConfig,
+        ai_enabled: flow.nodes.some(n => n.data?.config?.aiEnabled),
+        ai_model: 'google/gemini-2.5-flash',
+        ai_temperature: 0.7,
+        ai_system_prompt: 'Você é um assistente virtual inteligente e prestativo.',
+        company_name: 'Empresa',
+        max_attempts: 3,
+        fallback_message: 'Desculpe, não entendi. Por favor, escolha uma das opções do menu.',
+        delay_seconds: 1
+      };
+
+      if (existingChatbot) {
+        // Update existing
+        const { error } = await supabase
+          .from('whatsapp_automations')
+          .update(chatbotData)
+          .eq('id', existingChatbot.id);
+
+        if (error) throw error;
+        console.log('[SYNC] Updated chatbot:', existingChatbot.id);
+      } else {
+        // Create new
+        const { error } = await supabase
+          .from('whatsapp_automations')
+          .insert({
+            ...chatbotData,
+            priority: 1
+          } as any);
+
+        if (error) throw error;
+        console.log('[SYNC] Created new chatbot for flow:', flow.name);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error syncing flow to database:', error);
+      toast.error('Erro ao sincronizar flow com o banco');
+      return false;
+    } finally {
+      setSyncing(false);
+    }
+  }, []);
+
+  // Helper: Convert nodes to engine steps format
+  const convertNodesToSteps = (nodes: MessageNode[], edges: MessageEdge[]): Record<string, any> => {
+    const steps: Record<string, any> = {};
+    
+    // Build edge map for finding next nodes
+    const edgeMap = new Map<string, string[]>();
+    edges.forEach(edge => {
+      const existing = edgeMap.get(edge.source) || [];
+      existing.push(edge.target);
+      edgeMap.set(edge.source, existing);
+    });
+
+    nodes.forEach(node => {
+      const nextNodes = edgeMap.get(node.id) || [];
+      const nextStepId = nextNodes[0] || 'end_flow';
+
+      switch (node.type) {
+        case 'advanced-text':
+          steps[node.id] = {
+            id: node.id,
+            type: 'text',
+            message: node.data.config?.message || '',
+            next: nextStepId
+          };
+          break;
+        case 'button-message':
+          steps[node.id] = {
+            id: node.id,
+            type: 'menu',
+            message: node.data.config?.message || '',
+            options: (node.data.config?.buttons || []).map((btn: any, i: number) => ({
+              id: i + 1,
+              text: btn.text,
+              next: nextNodes[i] || nextStepId
+            })),
+            next: nextStepId
+          };
+          break;
+        case 'list-message':
+          steps[node.id] = {
+            id: node.id,
+            type: 'menu',
+            message: node.data.config?.message || '',
+            options: (node.data.config?.items || []).map((item: any, i: number) => ({
+              id: i + 1,
+              text: item.title,
+              next: nextNodes[i] || nextStepId
+            })),
+            next: nextStepId
+          };
+          break;
+        case 'poll':
+          steps[node.id] = {
+            id: node.id,
+            type: 'menu',
+            message: node.data.config?.question || '',
+            options: (node.data.config?.options || []).map((opt: string, i: number) => ({
+              id: i + 1,
+              text: opt,
+              next: nextStepId
+            })),
+            next: nextStepId
+          };
+          break;
+        case 'smart-delay':
+          steps[node.id] = {
+            id: node.id,
+            type: 'text',
+            message: '⏳',
+            delay: node.data.config?.delay || 2000,
+            next: nextStepId
+          };
+          break;
+        case 'condition':
+          steps[node.id] = {
+            id: node.id,
+            type: 'ai',
+            message: 'Analisando...',
+            ai_enabled: true,
+            next: nextStepId
+          };
+          break;
+        case 'end-flow':
+          steps[node.id] = {
+            id: node.id,
+            type: 'end',
+            message: node.data.config?.message || 'Atendimento finalizado. Obrigado!'
+          };
+          break;
+        default:
+          steps[node.id] = {
+            id: node.id,
+            type: 'text',
+            message: node.data.label || '',
+            next: nextStepId
+          };
+      }
+    });
+
+    // Add default end step if not present
+    if (!steps['end_flow']) {
+      steps['end_flow'] = {
+        id: 'end_flow',
+        type: 'end',
+        message: '✅ Atendimento finalizado. Obrigado!'
+      };
+    }
+
+    return steps;
+  };
 
   // Create new flow
   const createFlow = useCallback((name: string, description?: string): MessageFlow => {
@@ -149,13 +379,50 @@ export const useMessageFlows = () => {
     return flows.find(f => f.id === flowId) || null;
   }, [flows]);
 
-  // Toggle flow active status
-  const toggleFlowActive = useCallback((flowId: string) => {
+  // Toggle flow active status with database sync
+  const toggleFlowActive = useCallback(async (flowId: string) => {
     const flow = flows.find(f => f.id === flowId);
     if (flow) {
-      updateFlow(flowId, { isActive: !flow.isActive });
+      const newActiveState = !flow.isActive;
+      updateFlow(flowId, { isActive: newActiveState });
+      
+      // Sync to database
+      const updatedFlow = { ...flow, isActive: newActiveState };
+      const success = await syncFlowToDatabase(updatedFlow);
+      
+      if (success) {
+        toast.success(newActiveState ? 'Flow ativado e sincronizado!' : 'Flow desativado');
+      }
     }
-  }, [flows, updateFlow]);
+  }, [flows, updateFlow, syncFlowToDatabase]);
+
+  // Save and activate flow (combined action)
+  const saveAndActivateFlow = useCallback(async (flowId: string, nodes: MessageNode[], edges: MessageEdge[]) => {
+    const flow = flows.find(f => f.id === flowId);
+    if (!flow) return false;
+
+    // Update flow with new nodes/edges
+    const updatedFlow: MessageFlow = {
+      ...flow,
+      nodes,
+      edges,
+      isActive: true,
+      updatedAt: new Date().toISOString()
+    };
+
+    // Save locally
+    const newFlows = flows.map(f => f.id === flowId ? updatedFlow : f);
+    saveFlows(newFlows);
+
+    // Sync to database
+    const success = await syncFlowToDatabase(updatedFlow);
+    
+    if (success) {
+      toast.success('Flow salvo e ativado com sucesso!');
+    }
+    
+    return success;
+  }, [flows, saveFlows, syncFlowToDatabase]);
 
   return {
     flows,
@@ -164,6 +431,7 @@ export const useMessageFlows = () => {
     setSelectedFlowId,
     errorLogs,
     loading,
+    syncing,
     createFlow,
     updateFlow,
     deleteFlow,
@@ -172,6 +440,8 @@ export const useMessageFlows = () => {
     updateEdges,
     getFlow,
     toggleFlowActive,
+    saveAndActivateFlow,
+    syncFlowToDatabase,
     addErrorLog,
     resolveError,
     clearResolvedErrors
