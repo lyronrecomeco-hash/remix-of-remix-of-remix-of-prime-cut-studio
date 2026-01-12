@@ -1578,41 +1578,36 @@ app.post('/api/instance/:id/send-buttons', authMiddleware, async (req, res) => {
   try {
     const jid = recipient.includes('@') ? recipient : recipient.replace(/\\D/g, '') + '@s.whatsapp.net';
     
-    // Tentar método nativo primeiro (experimental - pode não funcionar)
-    let sent = false;
     let sentType = 'text_buttons';
+    const hasUrlButton = buttons.some(b => b.url);
     
-    // Método 1: Interactive Message (formato proto - experimental)
-    try {
-      const hasUrlButton = buttons.some(b => b.url);
-      
-      if (!hasUrlButton && buttons.length <= 3) {
-        // Botões de resposta rápida via interactiveMessage
-        const buttonRows = buttons.slice(0, 3).map((b, i) => ({
-          buttonId: b.id || \`btn_\${i}\`,
-          buttonText: { displayText: b.text },
-          type: 1
-        }));
+    // MÉTODO 1: ENQUETE (POLL) - 100% FUNCIONAL!
+    // Polls funcionam perfeitamente com Baileys sem API Business
+    if (!hasUrlButton && buttons.length >= 2 && buttons.length <= 12) {
+      try {
+        // Enviar mensagem de contexto primeiro
+        await instance.sock.sendMessage(jid, { text: content + (footer ? '\\n\\n_' + footer + '_' : '') });
         
-        const buttonMessage = {
-          text: content,
-          footer: footer || undefined,
-          buttons: buttonRows,
-          headerType: 1
+        // Enviar enquete com as opções
+        const pollMessage = {
+          poll: {
+            name: '📋 Selecione uma opção:',
+            values: buttons.map(b => b.text),
+            selectableCount: 1 // Apenas uma opção
+          }
         };
         
-        await instance.sock.sendMessage(jid, buttonMessage);
-        sent = true;
-        sentType = 'native_buttons';
-        log('success', 'Botões nativos enviados (experimental)');
+        await instance.sock.sendMessage(jid, pollMessage);
+        sentType = 'poll';
+        log('success', 'Enquete enviada com sucesso!');
+      } catch (pollErr) {
+        log('warn', \`Enquete falhou: \${pollErr.message}. Usando texto...\`);
+        sentType = 'text_buttons';
       }
-    } catch (nativeErr) {
-      log('warn', \`Botões nativos falharam: \${nativeErr.message}. Usando texto...\`);
-      sent = false;
     }
     
-    // Método 2: Fallback para texto formatado (100% funcional)
-    if (!sent) {
+    // MÉTODO 2: TEXTO FORMATADO (fallback)
+    if (sentType === 'text_buttons') {
       let formattedMessage = content;
       
       if (footer) {
@@ -1636,7 +1631,6 @@ app.post('/api/instance/:id/send-buttons', authMiddleware, async (req, res) => {
       }
       
       await instance.sock.sendMessage(jid, { text: formattedMessage });
-      sentType = 'text_buttons';
     }
     
     instance.messagesSent = (instance.messagesSent || 0) + 1;
@@ -1674,40 +1668,47 @@ app.post('/api/instance/:id/send-list', authMiddleware, async (req, res) => {
   try {
     const jid = recipient.includes('@') ? recipient : recipient.replace(/\\D/g, '') + '@s.whatsapp.net';
     
-    // Tentar método nativo primeiro (experimental)
-    let sent = false;
     let sentType = 'text_list';
     
-    // Método 1: Lista nativa (experimental)
-    try {
-      const formattedSections = sections.map(section => ({
-        title: section.title || '',
-        rows: (section.rows || []).slice(0, 10).map((row, i) => ({
-          rowId: row.id || \`row_\${i}\`,
-          title: row.title,
-          description: row.description || ''
-        }))
-      }));
-      
-      const listMessage = {
-        text: content,
-        footer: footer || undefined,
-        title: title || undefined,
-        buttonText: buttonText,
-        sections: formattedSections
-      };
-      
-      await instance.sock.sendMessage(jid, listMessage);
-      sent = true;
-      sentType = 'native_list';
-      log('success', 'Lista nativa enviada (experimental)');
-    } catch (nativeErr) {
-      log('warn', \`Lista nativa falhou: \${nativeErr.message}. Usando texto...\`);
-      sent = false;
+    // Coletar todas as opções das seções
+    const allOptions = [];
+    sections.forEach(section => {
+      (section.rows || []).forEach(row => {
+        allOptions.push(row.title);
+      });
+    });
+    
+    // MÉTODO 1: ENQUETE (POLL) - 100% FUNCIONAL!
+    if (allOptions.length >= 2 && allOptions.length <= 12) {
+      try {
+        // Enviar mensagem de contexto primeiro
+        let contextMsg = '';
+        if (title) contextMsg += '*' + title + '*\\n\\n';
+        contextMsg += content;
+        if (footer) contextMsg += '\\n\\n_' + footer + '_';
+        
+        await instance.sock.sendMessage(jid, { text: contextMsg });
+        
+        // Enviar enquete com as opções
+        const pollMessage = {
+          poll: {
+            name: buttonText || '📋 Selecione uma opção:',
+            values: allOptions.slice(0, 12),
+            selectableCount: 1
+          }
+        };
+        
+        await instance.sock.sendMessage(jid, pollMessage);
+        sentType = 'poll';
+        log('success', 'Enquete (lista) enviada com sucesso!');
+      } catch (pollErr) {
+        log('warn', \`Enquete falhou: \${pollErr.message}. Usando texto...\`);
+        sentType = 'text_list';
+      }
     }
     
-    // Método 2: Fallback para texto formatado (100% funcional)
-    if (!sent) {
+    // MÉTODO 2: TEXTO FORMATADO (fallback)
+    if (sentType === 'text_list') {
       let formattedMessage = '';
       
       if (title) {
@@ -1738,7 +1739,6 @@ app.post('/api/instance/:id/send-list', authMiddleware, async (req, res) => {
       formattedMessage += '\\n\\n_Responda com o número da opção desejada_';
       
       await instance.sock.sendMessage(jid, { text: formattedMessage });
-      sentType = 'text_list';
     }
     
     instance.messagesSent = (instance.messagesSent || 0) + 1;
