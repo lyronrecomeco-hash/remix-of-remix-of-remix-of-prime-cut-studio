@@ -1,13 +1,10 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   BarChart2, 
   Plus, 
@@ -15,14 +12,13 @@ import {
   Send, 
   Users,
   RefreshCw,
-  Loader2,
-  CheckCircle2,
-  XCircle
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import type { InstanceOption, PollOption, PollResult, SendLog } from '../types';
+import type { InstanceOption, PollOption, SendLog } from '../types';
 import { usePollVotes } from './usePollVotes';
+import { InstanceSelect, PhoneInput, LogsPanel } from '../components';
 
 interface PollManagerProps {
   instances: InstanceOption[];
@@ -40,22 +36,18 @@ export const PollManager = ({ instances }: PollManagerProps) => {
   const [sending, setSending] = useState(false);
   const [logs, setLogs] = useState<SendLog[]>([]);
 
-  // Hook para capturar votos em tempo real
-  const { votes, results, loading: loadingVotes, refresh } = usePollVotes(selectedInstance);
+  const { results, loading: loadingVotes, refresh } = usePollVotes(selectedInstance);
 
   const addOption = () => {
     if (options.length >= 12) {
-      toast.warning('Máximo de 12 opções permitidas');
+      toast.warning('Máximo de 12 opções');
       return;
     }
     setOptions([...options, { id: Date.now().toString(), text: '' }]);
   };
 
   const removeOption = (id: string) => {
-    if (options.length <= 2) {
-      toast.warning('Mínimo de 2 opções necessárias');
-      return;
-    }
+    if (options.length <= 2) return;
     setOptions(options.filter(o => o.id !== id));
   };
 
@@ -64,35 +56,22 @@ export const PollManager = ({ instances }: PollManagerProps) => {
   };
 
   const addLog = (type: SendLog['type'], message: string, details?: string) => {
-    const log: SendLog = {
+    setLogs(prev => [{
       id: Date.now().toString(),
       timestamp: new Date(),
       type,
       message,
       details
-    };
-    setLogs(prev => [log, ...prev].slice(0, 50));
+    }, ...prev].slice(0, 50));
   };
 
   const sendPoll = async () => {
-    if (!selectedInstance) {
-      toast.error('Selecione uma instância');
-      return;
-    }
-    if (!recipientPhone.trim()) {
-      toast.error('Digite o número do destinatário');
-      return;
-    }
-    if (!pollName.trim()) {
-      toast.error('Digite o título da enquete');
-      return;
-    }
+    if (!selectedInstance) return toast.error('Selecione uma instância');
+    if (!recipientPhone.trim()) return toast.error('Digite o destinatário');
+    if (!pollName.trim()) return toast.error('Digite o título');
     
     const validOptions = options.filter(o => o.text.trim());
-    if (validOptions.length < 2) {
-      toast.error('Adicione pelo menos 2 opções');
-      return;
-    }
+    if (validOptions.length < 2) return toast.error('Mínimo 2 opções');
 
     setSending(true);
     addLog('info', 'Enviando enquete...', `Para: ${recipientPhone}`);
@@ -115,14 +94,9 @@ export const PollManager = ({ instances }: PollManagerProps) => {
 
       if (data?.success) {
         addLog('success', 'Enquete enviada!', `ID: ${data.messageId || 'N/A'}`);
-        toast.success('Enquete enviada com sucesso!');
-        
-        // Reset form
+        toast.success('Enquete enviada!');
         setPollName('');
-        setOptions([
-          { id: '1', text: '' },
-          { id: '2', text: '' },
-        ]);
+        setOptions([{ id: '1', text: '' }, { id: '2', text: '' }]);
       } else {
         throw new Error(data?.error || 'Erro desconhecido');
       }
@@ -135,73 +109,62 @@ export const PollManager = ({ instances }: PollManagerProps) => {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Create Poll */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart2 className="w-5 h-5" />
-            Criar Enquete
-          </CardTitle>
-          <CardDescription>
-            Crie enquetes interativas e capture votos automaticamente
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Instance Selection */}
-          <div className="space-y-2">
-            <Label>Instância</Label>
-            <Select value={selectedInstance} onValueChange={setSelectedInstance}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione uma instância" />
-              </SelectTrigger>
-              <SelectContent>
-                {instances.map((inst) => (
-                  <SelectItem key={inst.id} value={inst.id}>
-                    {inst.name} {inst.phone_number && `(${inst.phone_number})`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+      {/* Create Poll - Main Form */}
+      <Card className="lg:col-span-3">
+        <CardContent className="p-5">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="p-2 rounded-lg bg-blue-500/10">
+              <BarChart2 className="w-5 h-5 text-blue-500" />
+            </div>
+            <div>
+              <h3 className="font-semibold">Criar Enquete</h3>
+              <p className="text-sm text-muted-foreground">Crie enquetes interativas</p>
+            </div>
           </div>
 
-          {/* Recipient */}
-          <div className="space-y-2">
-            <Label>Destinatário</Label>
-            <Input
-              placeholder="5511999999999"
-              value={recipientPhone}
-              onChange={(e) => setRecipientPhone(e.target.value)}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <InstanceSelect 
+              value={selectedInstance} 
+              onValueChange={setSelectedInstance} 
+              instances={instances} 
+            />
+            <PhoneInput 
+              value={recipientPhone} 
+              onChange={setRecipientPhone} 
             />
           </div>
 
-          {/* Poll Name */}
-          <div className="space-y-2">
-            <Label>Título da Enquete</Label>
+          <div className="space-y-1.5 mb-4">
+            <Label className="text-xs font-medium">Título da Enquete</Label>
             <Input
               placeholder="Ex: Qual horário você prefere?"
               value={pollName}
               onChange={(e) => setPollName(e.target.value)}
+              className="h-9"
               maxLength={256}
             />
           </div>
 
-          {/* Options */}
-          <div className="space-y-2">
+          <div className="space-y-2 mb-4">
             <div className="flex items-center justify-between">
-              <Label>Opções ({options.length}/12)</Label>
-              <Button variant="ghost" size="sm" onClick={addOption}>
-                <Plus className="w-4 h-4 mr-1" />
+              <Label className="text-xs font-medium">Opções ({options.length}/12)</Label>
+              <Button variant="ghost" size="sm" onClick={addOption} className="h-7 text-xs">
+                <Plus className="w-3 h-3 mr-1" />
                 Adicionar
               </Button>
             </div>
             <div className="space-y-2">
               {options.map((option, idx) => (
                 <div key={option.id} className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0">
+                    {idx + 1}
+                  </div>
                   <Input
                     placeholder={`Opção ${idx + 1}`}
                     value={option.text}
                     onChange={(e) => updateOption(option.id, e.target.value)}
+                    className="h-9"
                     maxLength={100}
                   />
                   <Button
@@ -209,134 +172,77 @@ export const PollManager = ({ instances }: PollManagerProps) => {
                     size="icon"
                     onClick={() => removeOption(option.id)}
                     disabled={options.length <= 2}
+                    className="h-9 w-9 shrink-0"
                   >
-                    <Trash2 className="w-4 h-4 text-destructive" />
+                    <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
                   </Button>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Single Select */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 mb-4">
             <div>
-              <Label>Seleção Única</Label>
-              <p className="text-xs text-muted-foreground">
-                Permitir apenas uma resposta por pessoa
-              </p>
+              <Label className="text-sm">Seleção Única</Label>
+              <p className="text-xs text-muted-foreground">Uma resposta por pessoa</p>
             </div>
-            <Switch
-              checked={singleSelect}
-              onCheckedChange={setSingleSelect}
-            />
+            <Switch checked={singleSelect} onCheckedChange={setSingleSelect} />
           </div>
 
-          {/* Send Button */}
-          <Button 
-            onClick={sendPoll} 
-            disabled={sending || !selectedInstance}
-            className="w-full"
-          >
+          <Button onClick={sendPoll} disabled={sending || !selectedInstance} className="w-full">
             {sending ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Enviando...
-              </>
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Enviando...</>
             ) : (
-              <>
-                <Send className="w-4 h-4 mr-2" />
-                Enviar Enquete
-              </>
+              <><Send className="w-4 h-4 mr-2" />Enviar Enquete</>
             )}
           </Button>
         </CardContent>
       </Card>
 
-      {/* Poll Results & Logs */}
-      <div className="space-y-6">
+      {/* Results & Logs */}
+      <div className="lg:col-span-2 space-y-4">
         {/* Live Results */}
         <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                Votos em Tempo Real
-              </CardTitle>
-              <Button variant="ghost" size="sm" onClick={refresh} disabled={loadingVotes}>
-                <RefreshCw className={`w-4 h-4 ${loadingVotes ? 'animate-spin' : ''}`} />
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-muted-foreground" />
+                <span className="font-medium text-sm">Votos em Tempo Real</span>
+              </div>
+              <Button variant="ghost" size="icon" onClick={refresh} disabled={loadingVotes} className="h-7 w-7">
+                <RefreshCw className={`w-3.5 h-3.5 ${loadingVotes ? 'animate-spin' : ''}`} />
               </Button>
             </div>
-          </CardHeader>
-          <CardContent>
-            {results.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                Nenhum voto capturado ainda. Os votos aparecerão aqui automaticamente.
-              </p>
-            ) : (
-              <ScrollArea className="h-[200px]">
-                {results.map((result) => (
-                  <div key={result.pollId} className="mb-4 p-3 rounded-lg bg-muted/50">
-                    <p className="font-medium text-sm mb-2">{result.pollName}</p>
-                    {result.options.map((opt) => (
-                      <div key={opt.id} className="mb-2">
-                        <div className="flex items-center justify-between text-xs mb-1">
-                          <span>{opt.text}</span>
-                          <span className="text-muted-foreground">
-                            {opt.votes} ({opt.percentage.toFixed(0)}%)
-                          </span>
-                        </div>
-                        <div className="h-2 bg-muted rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-primary transition-all"
-                            style={{ width: `${opt.percentage}%` }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Total: {result.totalVotes} votos
-                    </p>
-                  </div>
-                ))}
-              </ScrollArea>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Logs */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Logs</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[150px]">
-              {logs.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  Nenhum log ainda
-                </p>
+            
+            <ScrollArea className="h-[180px]">
+              {results.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  <p className="text-xs text-center">Os votos aparecerão aqui automaticamente</p>
+                </div>
               ) : (
-                <div className="space-y-2">
-                  {logs.map((log) => (
-                    <div 
-                      key={log.id}
-                      className="flex items-start gap-2 text-xs"
-                    >
-                      {log.type === 'success' && <CheckCircle2 className="w-3 h-3 text-green-500 mt-0.5" />}
-                      {log.type === 'error' && <XCircle className="w-3 h-3 text-destructive mt-0.5" />}
-                      {log.type === 'info' && <BarChart2 className="w-3 h-3 text-blue-500 mt-0.5" />}
-                      {log.type === 'warning' && <BarChart2 className="w-3 h-3 text-yellow-500 mt-0.5" />}
-                      <div>
-                        <span className="text-muted-foreground">
-                          {log.timestamp.toLocaleTimeString()}
-                        </span>
-                        {' '}
-                        <span>{log.message}</span>
-                        {log.details && (
-                          <span className="text-muted-foreground block">
-                            {log.details}
-                          </span>
-                        )}
-                      </div>
+                <div className="space-y-3">
+                  {results.map((result) => (
+                    <div key={result.pollId} className="p-3 rounded-lg bg-muted/30">
+                      <p className="font-medium text-sm mb-2 truncate">{result.pollName}</p>
+                      {result.options.map((opt) => (
+                        <div key={opt.id} className="mb-1.5">
+                          <div className="flex items-center justify-between text-xs mb-1">
+                            <span className="truncate">{opt.text}</span>
+                            <span className="text-muted-foreground shrink-0 ml-2">
+                              {opt.votes} ({opt.percentage.toFixed(0)}%)
+                            </span>
+                          </div>
+                          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-primary transition-all"
+                              style={{ width: `${opt.percentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Total: {result.totalVotes} votos
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -344,6 +250,8 @@ export const PollManager = ({ instances }: PollManagerProps) => {
             </ScrollArea>
           </CardContent>
         </Card>
+
+        <LogsPanel logs={logs} />
       </div>
     </div>
   );

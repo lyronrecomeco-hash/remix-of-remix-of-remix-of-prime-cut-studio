@@ -1,23 +1,22 @@
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Heart, 
   Send, 
   RefreshCw,
   Loader2,
-  CheckCircle2,
-  XCircle,
-  MessageSquare
+  MessageSquare,
+  Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import type { InstanceOption, SendLog, COMMON_REACTIONS } from '../types';
+import type { InstanceOption, SendLog } from '../types';
 import { useReactions } from './useReactions';
+import { InstanceSelect, PhoneInput, LogsPanel } from '../components';
 
 interface ReactionManagerProps {
   instances: InstanceOption[];
@@ -36,32 +35,22 @@ export const ReactionManager = ({ instances }: ReactionManagerProps) => {
   const { reactions, loading: loadingReactions, refresh } = useReactions(selectedInstance);
 
   const addLog = (type: SendLog['type'], message: string, details?: string) => {
-    const log: SendLog = {
+    setLogs(prev => [{
       id: Date.now().toString(),
       timestamp: new Date(),
       type,
       message,
       details
-    };
-    setLogs(prev => [log, ...prev].slice(0, 50));
+    }, ...prev].slice(0, 50));
   };
 
   const sendReaction = async () => {
-    if (!selectedInstance) {
-      toast.error('Selecione uma instância');
-      return;
-    }
-    if (!recipientPhone.trim()) {
-      toast.error('Digite o número do destinatário');
-      return;
-    }
-    if (!messageId.trim()) {
-      toast.error('Digite o ID da mensagem');
-      return;
-    }
+    if (!selectedInstance) return toast.error('Selecione uma instância');
+    if (!recipientPhone.trim()) return toast.error('Digite o número');
+    if (!messageId.trim()) return toast.error('Digite o ID da mensagem');
 
     setSending(true);
-    addLog('info', 'Enviando reação...', `${selectedEmoji} para msg ${messageId}`);
+    addLog('info', 'Enviando reação...', `${selectedEmoji} → msg ${messageId.substring(0, 15)}...`);
 
     try {
       const { data, error } = await supabase.functions.invoke('genesis-backend-proxy', {
@@ -69,7 +58,7 @@ export const ReactionManager = ({ instances }: ReactionManagerProps) => {
           action: 'send-reaction',
           instanceId: selectedInstance,
           phone: recipientPhone.replace(/\D/g, ''),
-          messageId: messageId,
+          messageId,
           emoji: selectedEmoji
         }
       });
@@ -78,7 +67,7 @@ export const ReactionManager = ({ instances }: ReactionManagerProps) => {
 
       if (data?.success) {
         addLog('success', 'Reação enviada!', selectedEmoji);
-        toast.success('Reação enviada com sucesso!');
+        toast.success('Reação enviada!');
       } else {
         throw new Error(data?.error || 'Erro desconhecido');
       }
@@ -92,12 +81,11 @@ export const ReactionManager = ({ instances }: ReactionManagerProps) => {
 
   const removeReaction = async () => {
     if (!selectedInstance || !recipientPhone || !messageId) {
-      toast.error('Preencha todos os campos');
-      return;
+      return toast.error('Preencha todos os campos');
     }
 
     setSending(true);
-    addLog('info', 'Removendo reação...', `msg ${messageId}`);
+    addLog('info', 'Removendo reação...');
 
     try {
       const { data, error } = await supabase.functions.invoke('genesis-backend-proxy', {
@@ -105,8 +93,8 @@ export const ReactionManager = ({ instances }: ReactionManagerProps) => {
           action: 'send-reaction',
           instanceId: selectedInstance,
           phone: recipientPhone.replace(/\D/g, ''),
-          messageId: messageId,
-          emoji: '' // Empty emoji = remove reaction
+          messageId,
+          emoji: ''
         }
       });
 
@@ -114,7 +102,7 @@ export const ReactionManager = ({ instances }: ReactionManagerProps) => {
 
       if (data?.success) {
         addLog('success', 'Reação removida!');
-        toast.success('Reação removida com sucesso!');
+        toast.success('Reação removida!');
       } else {
         throw new Error(data?.error || 'Erro desconhecido');
       }
@@ -127,69 +115,55 @@ export const ReactionManager = ({ instances }: ReactionManagerProps) => {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Send Reaction */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Heart className="w-5 h-5" />
-            Enviar Reação
-          </CardTitle>
-          <CardDescription>
-            Envie reações (emoji) em mensagens específicas
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Instance Selection */}
-          <div className="space-y-2">
-            <Label>Instância</Label>
-            <Select value={selectedInstance} onValueChange={setSelectedInstance}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione uma instância" />
-              </SelectTrigger>
-              <SelectContent>
-                {instances.map((inst) => (
-                  <SelectItem key={inst.id} value={inst.id}>
-                    {inst.name} {inst.phone_number && `(${inst.phone_number})`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+      {/* Send Reaction Form */}
+      <Card className="lg:col-span-3">
+        <CardContent className="p-5">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="p-2 rounded-lg bg-pink-500/10">
+              <Heart className="w-5 h-5 text-pink-500" />
+            </div>
+            <div>
+              <h3 className="font-semibold">Enviar Reação</h3>
+              <p className="text-sm text-muted-foreground">Reaja a mensagens com emojis</p>
+            </div>
           </div>
 
-          {/* Recipient */}
-          <div className="space-y-2">
-            <Label>Número do Chat</Label>
-            <Input
-              placeholder="5511999999999"
-              value={recipientPhone}
-              onChange={(e) => setRecipientPhone(e.target.value)}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <InstanceSelect 
+              value={selectedInstance} 
+              onValueChange={setSelectedInstance} 
+              instances={instances} 
+            />
+            <PhoneInput 
+              value={recipientPhone} 
+              onChange={setRecipientPhone}
+              label="Número do Chat"
             />
           </div>
 
-          {/* Message ID */}
-          <div className="space-y-2">
-            <Label>ID da Mensagem</Label>
+          <div className="space-y-1.5 mb-4">
+            <Label className="text-xs font-medium">ID da Mensagem</Label>
             <Input
               placeholder="Ex: 3EB0A1B2C3D4E5F6..."
               value={messageId}
               onChange={(e) => setMessageId(e.target.value)}
+              className="h-9 font-mono text-xs"
             />
             <p className="text-xs text-muted-foreground">
-              O ID da mensagem é recebido nos webhooks de mensagens
+              O ID é recebido nos webhooks de mensagens
             </p>
           </div>
 
-          {/* Emoji Selection */}
-          <div className="space-y-2">
-            <Label>Emoji</Label>
+          <div className="space-y-2 mb-4">
+            <Label className="text-xs font-medium">Selecione o Emoji</Label>
             <div className="flex flex-wrap gap-2">
               {REACTION_EMOJIS.map((emoji) => (
                 <Button
                   key={emoji}
                   variant={selectedEmoji === emoji ? 'default' : 'outline'}
                   size="icon"
-                  className="text-xl h-10 w-10"
+                  className="text-xl h-11 w-11 rounded-xl"
                   onClick={() => setSelectedEmoji(emoji)}
                 >
                   {emoji}
@@ -198,117 +172,65 @@ export const ReactionManager = ({ instances }: ReactionManagerProps) => {
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex gap-2">
-            <Button 
-              onClick={sendReaction} 
-              disabled={sending || !selectedInstance}
-              className="flex-1"
-            >
+            <Button onClick={sendReaction} disabled={sending || !selectedInstance} className="flex-1">
               {sending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Enviando...
-                </>
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Enviando...</>
               ) : (
-                <>
-                  <Send className="w-4 h-4 mr-2" />
-                  Enviar {selectedEmoji}
-                </>
+                <><Send className="w-4 h-4 mr-2" />Enviar {selectedEmoji}</>
               )}
             </Button>
             <Button 
-              variant="outline"
+              variant="outline" 
               onClick={removeReaction} 
               disabled={sending || !selectedInstance}
+              className="px-4"
             >
-              Remover
+              <Trash2 className="w-4 h-4" />
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Reactions History & Logs */}
-      <div className="space-y-6">
+      {/* Reactions & Logs */}
+      <div className="lg:col-span-2 space-y-4">
         {/* Received Reactions */}
         <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base flex items-center gap-2">
-                <MessageSquare className="w-4 h-4" />
-                Reações Recebidas
-              </CardTitle>
-              <Button variant="ghost" size="sm" onClick={refresh} disabled={loadingReactions}>
-                <RefreshCw className={`w-4 h-4 ${loadingReactions ? 'animate-spin' : ''}`} />
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-muted-foreground" />
+                <span className="font-medium text-sm">Reações Recebidas</span>
+              </div>
+              <Button variant="ghost" size="icon" onClick={refresh} disabled={loadingReactions} className="h-7 w-7">
+                <RefreshCw className={`w-3.5 h-3.5 ${loadingReactions ? 'animate-spin' : ''}`} />
               </Button>
             </div>
-          </CardHeader>
-          <CardContent>
-            {reactions.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                Nenhuma reação capturada ainda. As reações aparecerão aqui quando forem recebidas.
-              </p>
-            ) : (
-              <ScrollArea className="h-[200px]">
+
+            <ScrollArea className="h-[180px]">
+              {reactions.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  <p className="text-xs text-center">As reações aparecerão aqui quando forem recebidas</p>
+                </div>
+              ) : (
                 <div className="space-y-2">
                   {reactions.map((reaction) => (
                     <div 
                       key={reaction.id}
-                      className="flex items-center gap-3 p-2 rounded-lg bg-muted/50"
+                      className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/30"
                     >
                       <span className="text-2xl">{reaction.emoji}</span>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">
                           {reaction.reactorName || reaction.reactorPhone}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-muted-foreground font-mono truncate">
                           Msg: {reaction.messageId.substring(0, 20)}...
                         </p>
                       </div>
-                      <span className="text-xs text-muted-foreground">
-                        {reaction.reactedAt.toLocaleTimeString()}
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        {reaction.reactedAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                       </span>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Logs */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Logs</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[150px]">
-              {logs.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  Nenhum log ainda
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {logs.map((log) => (
-                    <div 
-                      key={log.id}
-                      className="flex items-start gap-2 text-xs"
-                    >
-                      {log.type === 'success' && <CheckCircle2 className="w-3 h-3 text-green-500 mt-0.5" />}
-                      {log.type === 'error' && <XCircle className="w-3 h-3 text-destructive mt-0.5" />}
-                      {log.type === 'info' && <Heart className="w-3 h-3 text-pink-500 mt-0.5" />}
-                      <div>
-                        <span className="text-muted-foreground">
-                          {log.timestamp.toLocaleTimeString()}
-                        </span>
-                        {' '}
-                        <span>{log.message}</span>
-                        {log.details && (
-                          <span className="text-muted-foreground block">
-                            {log.details}
-                          </span>
-                        )}
-                      </div>
                     </div>
                   ))}
                 </div>
@@ -316,6 +238,8 @@ export const ReactionManager = ({ instances }: ReactionManagerProps) => {
             </ScrollArea>
           </CardContent>
         </Card>
+
+        <LogsPanel logs={logs} />
       </div>
     </div>
   );
