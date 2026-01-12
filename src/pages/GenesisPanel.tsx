@@ -502,7 +502,7 @@ export default function GenesisPanel() {
     { id: 'flows', label: 'Flow Builder', icon: GitBranch },
     { id: 'chatbots', label: 'Chatbots', icon: Bot },
     { id: 'campaigns', label: 'Campanhas', icon: Send },
-    { id: 'buttons', label: 'Botões', icon: MousePointerClick },
+    // { id: 'buttons', label: 'Botões', icon: MousePointerClick }, // Temporariamente desativado - botões nativos não funcionam no mobile
     { id: 'metrics', label: 'Métricas', icon: Activity },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'credits', label: 'Créditos', icon: CreditCard },
