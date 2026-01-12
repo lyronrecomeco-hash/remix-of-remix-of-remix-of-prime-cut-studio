@@ -322,6 +322,152 @@ export const useMessageFlows = () => {
             };
             break;
 
+          // Group management nodes
+          case 'group-welcome':
+            steps[node.id] = {
+              id: node.id,
+              type: 'group_action',
+              action: 'welcome',
+              message: cfg.welcomeMessage || '',
+              mentionMember: cfg.mentionMember || false,
+              delay: cfg.delay || 2,
+              sendRules: cfg.sendRules || false,
+              attachImage: cfg.attachImage || false,
+              imageUrl: cfg.imageUrl || '',
+              next: nextStepId,
+            };
+            break;
+
+          case 'group-goodbye':
+            steps[node.id] = {
+              id: node.id,
+              type: 'group_action',
+              action: 'goodbye',
+              message: cfg.goodbyeMessage || '',
+              mentionMember: cfg.mentionMember || false,
+              next: nextStepId,
+            };
+            break;
+
+          case 'keyword-filter':
+          case 'keyword-delete':
+            steps[node.id] = {
+              id: node.id,
+              type: 'group_moderation',
+              action: node.type === 'keyword-delete' ? 'keyword_delete' : 'keyword_filter',
+              keywords: cfg.keywords || [],
+              caseInsensitive: cfg.caseInsensitive ?? true,
+              moderationAction: cfg.action || (node.type === 'keyword-delete' ? 'delete' : 'warn'),
+              warningMessage: cfg.warningMessage || '',
+              ignoreAdmins: cfg.ignoreAdmins ?? true,
+              logViolations: cfg.logViolations ?? true,
+              next: nextStepId,
+            };
+            break;
+
+          case 'member-kick':
+            steps[node.id] = {
+              id: node.id,
+              type: 'group_moderation',
+              action: 'kick',
+              maxWarnings: cfg.maxWarnings || 3,
+              kickMessage: cfg.kickMessage || '',
+              notifyGroup: cfg.notifyGroup ?? true,
+              sendPrivateMessage: cfg.sendPrivateMessage || false,
+              privateMessage: cfg.privateMessage || '',
+              addToBlacklist: cfg.addToBlacklist || false,
+              next: nextStepId,
+            };
+            break;
+
+          case 'member-warn':
+            steps[node.id] = {
+              id: node.id,
+              type: 'group_moderation',
+              action: 'warn',
+              warningMessage: cfg.warningMessage || '',
+              mentionMember: cfg.mentionMember ?? true,
+              showCounter: cfg.showCounter ?? true,
+              expireHours: cfg.expireHours || 24,
+              logWarnings: cfg.logWarnings ?? true,
+              next: nextStepId,
+            };
+            break;
+
+          case 'anti-spam':
+            steps[node.id] = {
+              id: node.id,
+              type: 'group_moderation',
+              action: 'anti_spam',
+              maxMessages: cfg.maxMessages || 5,
+              timeWindow: cfg.timeWindow || 60,
+              moderationAction: cfg.action || 'warn',
+              muteTime: cfg.muteTime || 60,
+              spamWarning: cfg.spamWarning || '',
+              ignoreAdmins: cfg.ignoreAdmins ?? true,
+              detectMediaFlood: cfg.detectMediaFlood || false,
+              detectStickerFlood: cfg.detectStickerFlood || false,
+              next: nextStepId,
+            };
+            break;
+
+          case 'anti-link':
+            steps[node.id] = {
+              id: node.id,
+              type: 'group_moderation',
+              action: 'anti_link',
+              blockAll: cfg.blockAll ?? true,
+              moderationAction: cfg.action || 'delete_warn',
+              allowedDomains: cfg.allowedDomains || [],
+              linkWarning: cfg.linkWarning || '',
+              ignoreAdmins: cfg.ignoreAdmins ?? true,
+              blockGroupLinks: cfg.blockGroupLinks ?? true,
+              blockPhoneNumbers: cfg.blockPhoneNumbers || false,
+              next: nextStepId,
+            };
+            break;
+
+          case 'group-rules':
+            steps[node.id] = {
+              id: node.id,
+              type: 'group_action',
+              action: 'rules',
+              rules: cfg.rules || '',
+              trigger: cfg.trigger || 'command',
+              triggerKeywords: cfg.triggerKeywords || '',
+              scheduledTime: cfg.scheduledTime || '',
+              frequency: cfg.frequency || 'daily',
+              pinMessage: cfg.pinMessage || false,
+              next: nextStepId,
+            };
+            break;
+
+          case 'member-counter':
+            steps[node.id] = {
+              id: node.id,
+              type: 'group_action',
+              action: 'counter',
+              messageFormat: cfg.messageFormat || '',
+              showOn: cfg.showOn || 'milestone',
+              milestones: cfg.milestones || [50, 100, 500, 1000],
+              scheduledTime: cfg.scheduledTime || '',
+              includeStats: cfg.includeStats || false,
+              next: nextStepId,
+            };
+            break;
+
+          case 'group-reminder':
+            steps[node.id] = {
+              id: node.id,
+              type: 'group_action',
+              action: 'reminder',
+              reminderMessage: cfg.reminderMessage || '',
+              reminderTime: cfg.reminderTime || '',
+              repeat: cfg.repeat || 'daily',
+              next: nextStepId,
+            };
+            break;
+
           default:
             steps[node.id] = {
               id: node.id,

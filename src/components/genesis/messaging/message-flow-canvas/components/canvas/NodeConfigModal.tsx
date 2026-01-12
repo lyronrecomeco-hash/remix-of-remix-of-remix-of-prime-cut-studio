@@ -727,22 +727,75 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
             <div className="space-y-2">
               <Label>{nodeType === 'group-welcome' ? 'Mensagem de boas-vindas' : 'Mensagem de despedida'}</Label>
               <Textarea
-                placeholder="Use {{nome}} para o nome do membro"
+                placeholder={nodeType === 'group-welcome' 
+                  ? "👋 Olá, {{nome}}! Seja bem-vindo(a) ao grupo!" 
+                  : "👋 {{nome}} saiu do grupo. Até mais!"
+                }
                 value={config.welcomeMessage || config.goodbyeMessage || ''}
                 onChange={(e) => setConfig({ 
                   ...config, 
                   [nodeType === 'group-welcome' ? 'welcomeMessage' : 'goodbyeMessage']: e.target.value 
                 })}
-                className="min-h-[100px]"
+                className="min-h-[120px]"
               />
+              <p className="text-xs text-muted-foreground">
+                Variáveis: {"{{nome}}"}, {"{{telefone}}"}, {"{{grupo}}"}, {"{{membros}}"}
+              </p>
             </div>
             <div className="flex items-center justify-between">
-              <Label>Mencionar membro</Label>
+              <div>
+                <Label>Mencionar membro</Label>
+                <p className="text-xs text-muted-foreground">Adiciona @ antes do nome</p>
+              </div>
               <Switch
                 checked={config.mentionMember || false}
                 onCheckedChange={(v) => setConfig({ ...config, mentionMember: v })}
               />
             </div>
+            {nodeType === 'group-welcome' && (
+              <>
+                <div className="space-y-2">
+                  <Label>Delay antes da mensagem (segundos): {config.delay || 2}</Label>
+                  <Slider
+                    value={[config.delay || 2]}
+                    min={0}
+                    max={30}
+                    step={1}
+                    onValueChange={([v]) => setConfig({ ...config, delay: v })}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Enviar regras junto</Label>
+                    <p className="text-xs text-muted-foreground">Envia as regras após boas-vindas</p>
+                  </div>
+                  <Switch
+                    checked={config.sendRules || false}
+                    onCheckedChange={(v) => setConfig({ ...config, sendRules: v })}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Anexar imagem de boas-vindas</Label>
+                    <p className="text-xs text-muted-foreground">Imagem personalizada</p>
+                  </div>
+                  <Switch
+                    checked={config.attachImage || false}
+                    onCheckedChange={(v) => setConfig({ ...config, attachImage: v })}
+                  />
+                </div>
+                {config.attachImage && (
+                  <div className="space-y-2">
+                    <Label>URL da imagem</Label>
+                    <Input
+                      placeholder="https://exemplo.com/imagem.jpg"
+                      value={config.imageUrl || ''}
+                      onChange={(e) => setConfig({ ...config, imageUrl: e.target.value })}
+                    />
+                  </div>
+                )}
+              </>
+            )}
           </div>
         );
 
@@ -751,9 +804,9 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
         return (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Palavras-chave (uma por linha)</Label>
+              <Label>Palavras-chave bloqueadas (uma por linha)</Label>
               <Textarea
-                placeholder="palavra1&#10;palavra2&#10;palavra3"
+                placeholder="palavra1&#10;palavra2&#10;palavrão*&#10;*proibido*"
                 value={(config.keywords || []).join('\n')}
                 onChange={(e) => setConfig({ 
                   ...config, 
@@ -761,23 +814,67 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
                 })}
                 className="min-h-[120px]"
               />
+              <p className="text-xs text-muted-foreground">
+                Use * como coringa. Ex: *palavrão* detecta "essa palavrão aqui"
+              </p>
             </div>
             <div className="flex items-center justify-between">
-              <Label>Ignorar maiúsculas/minúsculas</Label>
+              <div>
+                <Label>Ignorar maiúsculas/minúsculas</Label>
+                <p className="text-xs text-muted-foreground">PALAVRA = palavra</p>
+              </div>
               <Switch
                 checked={config.caseInsensitive ?? true}
                 onCheckedChange={(v) => setConfig({ ...config, caseInsensitive: v })}
               />
             </div>
-            {nodeType === 'keyword-delete' && (
-              <div className="flex items-center justify-between">
-                <Label>Avisar membro</Label>
-                <Switch
-                  checked={config.warnMember || false}
-                  onCheckedChange={(v) => setConfig({ ...config, warnMember: v })}
-                />
+            <div className="space-y-2">
+              <Label>Ação ao detectar palavra</Label>
+              <Select
+                value={config.action || (nodeType === 'keyword-delete' ? 'delete' : 'warn')}
+                onValueChange={(v) => setConfig({ ...config, action: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="warn">Apenas avisar</SelectItem>
+                  <SelectItem value="delete">Apagar mensagem</SelectItem>
+                  <SelectItem value="delete_warn">Apagar + Avisar</SelectItem>
+                  <SelectItem value="mute">Silenciar membro</SelectItem>
+                  <SelectItem value="kick">Remover membro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Mensagem de aviso</Label>
+              <Textarea
+                placeholder="⚠️ @{{nome}}, essa palavra não é permitida aqui!"
+                value={config.warningMessage || ''}
+                onChange={(e) => setConfig({ ...config, warningMessage: e.target.value })}
+                className="min-h-[80px]"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Ignorar administradores</Label>
+                <p className="text-xs text-muted-foreground">Admins podem usar qualquer palavra</p>
               </div>
-            )}
+              <Switch
+                checked={config.ignoreAdmins ?? true}
+                onCheckedChange={(v) => setConfig({ ...config, ignoreAdmins: v })}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Registrar ocorrências</Label>
+                <p className="text-xs text-muted-foreground">Salva log de violações</p>
+              </div>
+              <Switch
+                checked={config.logViolations ?? true}
+                onCheckedChange={(v) => setConfig({ ...config, logViolations: v })}
+              />
+            </div>
           </div>
         );
 
@@ -793,13 +890,55 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
                 step={1}
                 onValueChange={([v]) => setConfig({ ...config, maxWarnings: v })}
               />
+              <p className="text-xs text-muted-foreground">Membro será removido após atingir este limite</p>
             </div>
             <div className="space-y-2">
               <Label>Mensagem ao expulsar</Label>
-              <Input
-                placeholder="Você foi removido por violar as regras"
+              <Textarea
+                placeholder="🚫 {{nome}} foi removido(a) por exceder o limite de advertências."
                 value={config.kickMessage || ''}
                 onChange={(e) => setConfig({ ...config, kickMessage: e.target.value })}
+                className="min-h-[80px]"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Avisar no grupo</Label>
+                <p className="text-xs text-muted-foreground">Notificar membros sobre remoção</p>
+              </div>
+              <Switch
+                checked={config.notifyGroup ?? true}
+                onCheckedChange={(v) => setConfig({ ...config, notifyGroup: v })}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Mensagem privada</Label>
+                <p className="text-xs text-muted-foreground">Enviar DM explicando motivo</p>
+              </div>
+              <Switch
+                checked={config.sendPrivateMessage || false}
+                onCheckedChange={(v) => setConfig({ ...config, sendPrivateMessage: v })}
+              />
+            </div>
+            {config.sendPrivateMessage && (
+              <div className="space-y-2">
+                <Label>Mensagem privada</Label>
+                <Textarea
+                  placeholder="Você foi removido do grupo por violar as regras repetidamente."
+                  value={config.privateMessage || ''}
+                  onChange={(e) => setConfig({ ...config, privateMessage: e.target.value })}
+                />
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Adicionar à blacklist</Label>
+                <p className="text-xs text-muted-foreground">Impede reentrada no grupo</p>
+              </div>
+              <Switch
+                checked={config.addToBlacklist || false}
+                onCheckedChange={(v) => setConfig({ ...config, addToBlacklist: v })}
               />
             </div>
           </div>
@@ -811,9 +950,203 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
             <div className="space-y-2">
               <Label>Mensagem de aviso</Label>
               <Textarea
-                placeholder="⚠️ {{nome}}, essa é uma advertência!"
+                placeholder="⚠️ @{{nome}}, esta é sua advertência {{avisos}}/{{maxAvisos}}. Mais uma violação e você será removido(a)."
                 value={config.warningMessage || ''}
                 onChange={(e) => setConfig({ ...config, warningMessage: e.target.value })}
+                className="min-h-[100px]"
+              />
+              <p className="text-xs text-muted-foreground">
+                Variáveis: {"{{nome}}"}, {"{{avisos}}"}, {"{{maxAvisos}}"}, {"{{motivo}}"}
+              </p>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Mencionar membro</Label>
+                <p className="text-xs text-muted-foreground">Adiciona @ antes do aviso</p>
+              </div>
+              <Switch
+                checked={config.mentionMember ?? true}
+                onCheckedChange={(v) => setConfig({ ...config, mentionMember: v })}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Mostrar contador de avisos</Label>
+                <p className="text-xs text-muted-foreground">Ex: Aviso 2/3</p>
+              </div>
+              <Switch
+                checked={config.showCounter ?? true}
+                onCheckedChange={(v) => setConfig({ ...config, showCounter: v })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Tempo para expirar avisos (horas): {config.expireHours || 24}</Label>
+              <Slider
+                value={[config.expireHours || 24]}
+                min={1}
+                max={168}
+                step={1}
+                onValueChange={([v]) => setConfig({ ...config, expireHours: v })}
+              />
+              <p className="text-xs text-muted-foreground">Avisos expiram após este período</p>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Registrar no log</Label>
+                <p className="text-xs text-muted-foreground">Salva histórico de avisos</p>
+              </div>
+              <Switch
+                checked={config.logWarnings ?? true}
+                onCheckedChange={(v) => setConfig({ ...config, logWarnings: v })}
+              />
+            </div>
+          </div>
+        );
+
+      case 'group-rules':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Regras do grupo</Label>
+              <Textarea
+                placeholder="📋 *REGRAS DO GRUPO*&#10;&#10;1️⃣ Respeite todos os membros&#10;2️⃣ Proibido spam e flood&#10;3️⃣ Sem links externos&#10;4️⃣ Sem conteúdo ofensivo&#10;5️⃣ Mantenha o foco do grupo"
+                value={config.rules || ''}
+                onChange={(e) => setConfig({ ...config, rules: e.target.value })}
+                className="min-h-[200px]"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Gatilho para exibir regras</Label>
+              <Select
+                value={config.trigger || 'command'}
+                onValueChange={(v) => setConfig({ ...config, trigger: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="command">Comando /regras</SelectItem>
+                  <SelectItem value="keyword">Palavra-chave</SelectItem>
+                  <SelectItem value="welcome">Junto com boas-vindas</SelectItem>
+                  <SelectItem value="scheduled">Agendado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {config.trigger === 'keyword' && (
+              <div className="space-y-2">
+                <Label>Palavras-chave para exibir regras</Label>
+                <Input
+                  placeholder="regras, rules, normas"
+                  value={config.triggerKeywords || ''}
+                  onChange={(e) => setConfig({ ...config, triggerKeywords: e.target.value })}
+                />
+              </div>
+            )}
+            {config.trigger === 'scheduled' && (
+              <>
+                <div className="space-y-2">
+                  <Label>Horário</Label>
+                  <Input
+                    type="time"
+                    value={config.scheduledTime || '09:00'}
+                    onChange={(e) => setConfig({ ...config, scheduledTime: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Frequência</Label>
+                  <Select
+                    value={config.frequency || 'daily'}
+                    onValueChange={(v) => setConfig({ ...config, frequency: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="daily">Diariamente</SelectItem>
+                      <SelectItem value="weekly">Semanalmente</SelectItem>
+                      <SelectItem value="monthly">Mensalmente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Fixar mensagem</Label>
+                <p className="text-xs text-muted-foreground">Fixa as regras no grupo</p>
+              </div>
+              <Switch
+                checked={config.pinMessage || false}
+                onCheckedChange={(v) => setConfig({ ...config, pinMessage: v })}
+              />
+            </div>
+          </div>
+        );
+
+      case 'member-counter':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Formato da mensagem</Label>
+              <Textarea
+                placeholder="📊 O grupo agora tem {{total}} membros!"
+                value={config.messageFormat || ''}
+                onChange={(e) => setConfig({ ...config, messageFormat: e.target.value })}
+                className="min-h-[80px]"
+              />
+              <p className="text-xs text-muted-foreground">
+                Variáveis: {"{{total}}"}, {"{{novos}}"}, {"{{saidas}}"}, {"{{grupo}}"}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label>Quando mostrar contador</Label>
+              <Select
+                value={config.showOn || 'milestone'}
+                onValueChange={(v) => setConfig({ ...config, showOn: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="always">Sempre (entrada/saída)</SelectItem>
+                  <SelectItem value="join">Apenas entradas</SelectItem>
+                  <SelectItem value="leave">Apenas saídas</SelectItem>
+                  <SelectItem value="milestone">Marcos (50, 100, 500...)</SelectItem>
+                  <SelectItem value="scheduled">Agendado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {config.showOn === 'milestone' && (
+              <div className="space-y-2">
+                <Label>Marcos personalizados</Label>
+                <Input
+                  placeholder="50, 100, 250, 500, 1000"
+                  value={(config.milestones || []).join(', ')}
+                  onChange={(e) => setConfig({ 
+                    ...config, 
+                    milestones: e.target.value.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n))
+                  })}
+                />
+              </div>
+            )}
+            {config.showOn === 'scheduled' && (
+              <div className="space-y-2">
+                <Label>Horário do relatório</Label>
+                <Input
+                  type="time"
+                  value={config.scheduledTime || '20:00'}
+                  onChange={(e) => setConfig({ ...config, scheduledTime: e.target.value })}
+                />
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Incluir estatísticas</Label>
+                <p className="text-xs text-muted-foreground">Novos hoje, saídas, etc.</p>
+              </div>
+              <Switch
+                checked={config.includeStats || false}
+                onCheckedChange={(v) => setConfig({ ...config, includeStats: v })}
               />
             </div>
           </div>
@@ -869,6 +1202,18 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
                 step={1}
                 onValueChange={([v]) => setConfig({ ...config, maxMessages: v })}
               />
+              <p className="text-xs text-muted-foreground">Limite de mensagens antes de considerar spam</p>
+            </div>
+            <div className="space-y-2">
+              <Label>Janela de detecção (segundos): {config.timeWindow || 60}</Label>
+              <Slider
+                value={[config.timeWindow || 60]}
+                min={10}
+                max={300}
+                step={10}
+                onValueChange={([v]) => setConfig({ ...config, timeWindow: v })}
+              />
+              <p className="text-xs text-muted-foreground">Intervalo de tempo para contabilizar mensagens</p>
             </div>
             <div className="space-y-2">
               <Label>Ação ao detectar spam</Label>
@@ -883,8 +1228,60 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
                   <SelectItem value="warn">Avisar</SelectItem>
                   <SelectItem value="mute">Silenciar</SelectItem>
                   <SelectItem value="kick">Remover</SelectItem>
+                  <SelectItem value="delete_warn">Apagar + Avisar</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            {config.action === 'mute' && (
+              <div className="space-y-2">
+                <Label>Tempo de silenciamento: {config.muteTime || 60} segundos</Label>
+                <Slider
+                  value={[config.muteTime || 60]}
+                  min={30}
+                  max={3600}
+                  step={30}
+                  onValueChange={([v]) => setConfig({ ...config, muteTime: v })}
+                />
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label>Mensagem de aviso (spam)</Label>
+              <Textarea
+                placeholder="⚠️ @{{nome}}, pare de enviar spam! Esta é sua advertência."
+                value={config.spamWarning || ''}
+                onChange={(e) => setConfig({ ...config, spamWarning: e.target.value })}
+                className="min-h-[80px]"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Ignorar administradores</Label>
+                <p className="text-xs text-muted-foreground">Admins não serão afetados</p>
+              </div>
+              <Switch
+                checked={config.ignoreAdmins ?? true}
+                onCheckedChange={(v) => setConfig({ ...config, ignoreAdmins: v })}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Detectar flood de mídia</Label>
+                <p className="text-xs text-muted-foreground">Imagens, vídeos, áudios em excesso</p>
+              </div>
+              <Switch
+                checked={config.detectMediaFlood || false}
+                onCheckedChange={(v) => setConfig({ ...config, detectMediaFlood: v })}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Detectar flood de stickers</Label>
+                <p className="text-xs text-muted-foreground">Figurinhas em excesso</p>
+              </div>
+              <Switch
+                checked={config.detectStickerFlood || false}
+                onCheckedChange={(v) => setConfig({ ...config, detectStickerFlood: v })}
+              />
             </div>
           </div>
         );
@@ -893,21 +1290,82 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
         return (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label>Bloquear todos os links</Label>
+              <div>
+                <Label>Bloquear todos os links</Label>
+                <p className="text-xs text-muted-foreground">Ativar para bloquear qualquer link</p>
+              </div>
               <Switch
                 checked={config.blockAll ?? true}
                 onCheckedChange={(v) => setConfig({ ...config, blockAll: v })}
               />
             </div>
             <div className="space-y-2">
-              <Label>Domínios permitidos (um por linha)</Label>
+              <Label>Ação ao detectar link</Label>
+              <Select
+                value={config.action || 'delete_warn'}
+                onValueChange={(v) => setConfig({ ...config, action: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="delete">Apenas apagar</SelectItem>
+                  <SelectItem value="warn">Apenas avisar</SelectItem>
+                  <SelectItem value="delete_warn">Apagar + Avisar</SelectItem>
+                  <SelectItem value="kick">Remover membro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Domínios permitidos (whitelist)</Label>
               <Textarea
-                placeholder="youtube.com&#10;instagram.com"
+                placeholder="youtube.com&#10;instagram.com&#10;wa.me"
                 value={(config.allowedDomains || []).join('\n')}
                 onChange={(e) => setConfig({ 
                   ...config, 
                   allowedDomains: e.target.value.split('\n').filter(d => d.trim()) 
                 })}
+                className="min-h-[100px]"
+              />
+              <p className="text-xs text-muted-foreground">Um domínio por linha. Links desses domínios serão permitidos.</p>
+            </div>
+            <div className="space-y-2">
+              <Label>Mensagem de aviso</Label>
+              <Textarea
+                placeholder="🔗 @{{nome}}, links externos não são permitidos neste grupo!"
+                value={config.linkWarning || ''}
+                onChange={(e) => setConfig({ ...config, linkWarning: e.target.value })}
+                className="min-h-[80px]"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Ignorar administradores</Label>
+                <p className="text-xs text-muted-foreground">Admins podem enviar links</p>
+              </div>
+              <Switch
+                checked={config.ignoreAdmins ?? true}
+                onCheckedChange={(v) => setConfig({ ...config, ignoreAdmins: v })}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Bloquear links de grupos</Label>
+                <p className="text-xs text-muted-foreground">Links de convite do WhatsApp</p>
+              </div>
+              <Switch
+                checked={config.blockGroupLinks ?? true}
+                onCheckedChange={(v) => setConfig({ ...config, blockGroupLinks: v })}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Bloquear números de telefone</Label>
+                <p className="text-xs text-muted-foreground">Detectar e bloquear números</p>
+              </div>
+              <Switch
+                checked={config.blockPhoneNumbers || false}
+                onCheckedChange={(v) => setConfig({ ...config, blockPhoneNumbers: v })}
               />
             </div>
           </div>
