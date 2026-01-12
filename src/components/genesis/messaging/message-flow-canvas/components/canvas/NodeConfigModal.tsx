@@ -1,4 +1,4 @@
-// Node Configuration Modal
+// Node Configuration Modal - Enhanced with all node types
 import { useState, useEffect } from 'react';
 import { Node } from '@xyflow/react';
 import {
@@ -17,9 +17,12 @@ import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
-  Type, LayoutGrid, List, Mic, BarChart2, Heart, Radio, 
-  Clock, GitBranch, Plus, Trash2, Save
+  Type, LayoutGrid, List, Mic, BarChart2, Heart, Radio, Clock, GitBranch, 
+  Plus, Trash2, Save, Play, Smartphone, Globe, Calendar, UserPlus, UserMinus,
+  Filter, UserX, AlertTriangle, Bell, ShieldAlert, Link2Off, BookOpen, Hash,
+  Variable, Square, Zap
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MessageNodeType } from '../../types';
@@ -41,6 +44,24 @@ const nodeIcons: Record<string, React.ElementType> = {
   'presence': Radio,
   'smart-delay': Clock,
   'condition': GitBranch,
+  'start-trigger': Play,
+  'instance-connector': Smartphone,
+  'webhook-trigger': Globe,
+  'schedule-trigger': Calendar,
+  'group-welcome': UserPlus,
+  'group-goodbye': UserMinus,
+  'keyword-filter': Filter,
+  'keyword-delete': Trash2,
+  'member-kick': UserX,
+  'member-warn': AlertTriangle,
+  'group-reminder': Bell,
+  'anti-spam': ShieldAlert,
+  'anti-link': Link2Off,
+  'group-rules': BookOpen,
+  'member-counter': Hash,
+  'http-request': Globe,
+  'set-variable': Variable,
+  'end-flow': Square,
 };
 
 const nodeLabels: Record<string, string> = {
@@ -53,6 +74,24 @@ const nodeLabels: Record<string, string> = {
   'presence': 'Presença',
   'smart-delay': 'Delay Inteligente',
   'condition': 'Condição',
+  'start-trigger': 'Início do Flow',
+  'instance-connector': 'Instância WhatsApp',
+  'webhook-trigger': 'Webhook',
+  'schedule-trigger': 'Agendamento',
+  'group-welcome': 'Boas-vindas',
+  'group-goodbye': 'Despedida',
+  'keyword-filter': 'Filtro de Palavras',
+  'keyword-delete': 'Apagar Mensagem',
+  'member-kick': 'Remover Membro',
+  'member-warn': 'Avisar Membro',
+  'group-reminder': 'Lembrete',
+  'anti-spam': 'Anti-Spam',
+  'anti-link': 'Anti-Link',
+  'group-rules': 'Regras do Grupo',
+  'member-counter': 'Contador',
+  'http-request': 'HTTP Request',
+  'set-variable': 'Definir Variável',
+  'end-flow': 'Fim do Flow',
 };
 
 export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfigModalProps) => {
@@ -66,7 +105,7 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
     setLabel((data?.label as string) || '');
   }, [node]);
 
-  const NodeIcon = nodeIcons[node.type as string] || Type;
+  const NodeIcon = nodeIcons[node.type as string] || Zap;
   const nodeType = node.type as MessageNodeType;
 
   const handleSave = () => {
@@ -257,132 +296,277 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
           </div>
         );
 
-      case 'presence':
+      // Group Management Nodes
+      case 'group-welcome':
+      case 'group-goodbye':
         return (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Tipo de presença</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {['composing', 'recording'].map((type) => (
-                  <Button
-                    key={type}
-                    variant={config.presenceType === type ? 'default' : 'outline'}
-                    className="w-full"
-                    onClick={() => setConfig({ ...config, presenceType: type })}
-                  >
-                    {type === 'composing' ? 'Digitando...' : 'Gravando...'}
-                  </Button>
-                ))}
-              </div>
+              <Label>{nodeType === 'group-welcome' ? 'Mensagem de boas-vindas' : 'Mensagem de despedida'}</Label>
+              <Textarea
+                placeholder="Use {{nome}} para o nome do membro"
+                value={config.welcomeMessage || config.goodbyeMessage || ''}
+                onChange={(e) => setConfig({ 
+                  ...config, 
+                  [nodeType === 'group-welcome' ? 'welcomeMessage' : 'goodbyeMessage']: e.target.value 
+                })}
+                className="min-h-[100px]"
+              />
             </div>
+            <div className="flex items-center justify-between">
+              <Label>Mencionar membro</Label>
+              <Switch
+                checked={config.mentionMember || false}
+                onCheckedChange={(v) => setConfig({ ...config, mentionMember: v })}
+              />
+            </div>
+          </div>
+        );
+
+      case 'keyword-filter':
+      case 'keyword-delete':
+        return (
+          <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Duração: {config.duration || 3}s</Label>
+              <Label>Palavras-chave (uma por linha)</Label>
+              <Textarea
+                placeholder="palavra1&#10;palavra2&#10;palavra3"
+                value={(config.keywords || []).join('\n')}
+                onChange={(e) => setConfig({ 
+                  ...config, 
+                  keywords: e.target.value.split('\n').filter(k => k.trim()) 
+                })}
+                className="min-h-[120px]"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label>Ignorar maiúsculas/minúsculas</Label>
+              <Switch
+                checked={config.caseInsensitive ?? true}
+                onCheckedChange={(v) => setConfig({ ...config, caseInsensitive: v })}
+              />
+            </div>
+            {nodeType === 'keyword-delete' && (
+              <div className="flex items-center justify-between">
+                <Label>Avisar membro</Label>
+                <Switch
+                  checked={config.warnMember || false}
+                  onCheckedChange={(v) => setConfig({ ...config, warnMember: v })}
+                />
+              </div>
+            )}
+          </div>
+        );
+
+      case 'member-kick':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Número máximo de avisos: {config.maxWarnings || 3}</Label>
               <Slider
-                value={[config.duration || 3]}
+                value={[config.maxWarnings || 3]}
                 min={1}
-                max={15}
+                max={10}
                 step={1}
-                onValueChange={([v]) => setConfig({ ...config, duration: v })}
+                onValueChange={([v]) => setConfig({ ...config, maxWarnings: v })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Mensagem ao expulsar</Label>
+              <Input
+                placeholder="Você foi removido por violar as regras"
+                value={config.kickMessage || ''}
+                onChange={(e) => setConfig({ ...config, kickMessage: e.target.value })}
               />
             </div>
           </div>
         );
 
-      case 'expected-reaction':
+      case 'member-warn':
         return (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Reações esperadas</Label>
-              <div className="flex flex-wrap gap-2">
-                {['👍', '❤️', '😂', '😮', '😢', '🙏'].map((emoji) => (
-                  <Button
-                    key={emoji}
-                    variant={(config.expectedEmojis || []).includes(emoji) ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => {
-                      const emojis = config.expectedEmojis || [];
-                      const newEmojis = emojis.includes(emoji)
-                        ? emojis.filter((e: string) => e !== emoji)
-                        : [...emojis, emoji];
-                      setConfig({ ...config, expectedEmojis: newEmojis });
-                    }}
-                  >
-                    {emoji}
-                  </Button>
-                ))}
-              </div>
+              <Label>Mensagem de aviso</Label>
+              <Textarea
+                placeholder="⚠️ {{nome}}, essa é uma advertência!"
+                value={config.warningMessage || ''}
+                onChange={(e) => setConfig({ ...config, warningMessage: e.target.value })}
+              />
+            </div>
+          </div>
+        );
+
+      case 'group-reminder':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Mensagem do lembrete</Label>
+              <Textarea
+                placeholder="🔔 Lembrete: ..."
+                value={config.reminderMessage || ''}
+                onChange={(e) => setConfig({ ...config, reminderMessage: e.target.value })}
+              />
             </div>
             <div className="space-y-2">
-              <Label>Timeout: {config.timeout || 60}s</Label>
+              <Label>Horário do lembrete</Label>
+              <Input
+                type="time"
+                value={config.reminderTime || ''}
+                onChange={(e) => setConfig({ ...config, reminderTime: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Repetir</Label>
+              <Select
+                value={config.repeat || 'daily'}
+                onValueChange={(v) => setConfig({ ...config, repeat: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="once">Uma vez</SelectItem>
+                  <SelectItem value="daily">Diariamente</SelectItem>
+                  <SelectItem value="weekly">Semanalmente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+
+      case 'anti-spam':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Máximo de mensagens por minuto: {config.maxMessages || 5}</Label>
               <Slider
-                value={[config.timeout || 60]}
-                min={10}
-                max={300}
-                step={10}
-                onValueChange={([v]) => setConfig({ ...config, timeout: v })}
+                value={[config.maxMessages || 5]}
+                min={2}
+                max={20}
+                step={1}
+                onValueChange={([v]) => setConfig({ ...config, maxMessages: v })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Ação ao detectar spam</Label>
+              <Select
+                value={config.action || 'warn'}
+                onValueChange={(v) => setConfig({ ...config, action: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="warn">Avisar</SelectItem>
+                  <SelectItem value="mute">Silenciar</SelectItem>
+                  <SelectItem value="kick">Remover</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+
+      case 'anti-link':
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label>Bloquear todos os links</Label>
+              <Switch
+                checked={config.blockAll ?? true}
+                onCheckedChange={(v) => setConfig({ ...config, blockAll: v })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Domínios permitidos (um por linha)</Label>
+              <Textarea
+                placeholder="youtube.com&#10;instagram.com"
+                value={(config.allowedDomains || []).join('\n')}
+                onChange={(e) => setConfig({ 
+                  ...config, 
+                  allowedDomains: e.target.value.split('\n').filter(d => d.trim()) 
+                })}
               />
             </div>
           </div>
         );
 
-      case 'audio-ptt':
+      case 'http-request':
         return (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Áudio da biblioteca</Label>
-              <Button variant="outline" className="w-full">
-                <Mic className="w-4 h-4 mr-2" />
-                Selecionar da biblioteca
-              </Button>
+              <Label>Método</Label>
+              <Select
+                value={config.method || 'GET'}
+                onValueChange={(v) => setConfig({ ...config, method: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="GET">GET</SelectItem>
+                  <SelectItem value="POST">POST</SelectItem>
+                  <SelectItem value="PUT">PUT</SelectItem>
+                  <SelectItem value="DELETE">DELETE</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Selecione um áudio previamente gravado na biblioteca para enviar como PTT.
-            </p>
-          </div>
-        );
-
-      case 'condition':
-        return (
-          <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Tipo de condição</Label>
-              <div className="grid grid-cols-1 gap-2">
-                {[
-                  { id: 'response', label: 'Por resposta do usuário' },
-                  { id: 'reaction', label: 'Por reação recebida' },
-                  { id: 'poll', label: 'Por voto em enquete' },
-                ].map((type) => (
-                  <Button
-                    key={type.id}
-                    variant={config.conditionType === type.id ? 'default' : 'outline'}
-                    className="w-full justify-start"
-                    onClick={() => setConfig({ ...config, conditionType: type.id })}
-                  >
-                    {type.label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
-
-      case 'list-message':
-        return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Título da lista</Label>
+              <Label>URL</Label>
               <Input
-                placeholder="Escolha uma opção"
-                value={config.title || ''}
-                onChange={(e) => setConfig({ ...config, title: e.target.value })}
+                placeholder="https://api.exemplo.com/endpoint"
+                value={config.url || ''}
+                onChange={(e) => setConfig({ ...config, url: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label>Texto do botão</Label>
+              <Label>Body (JSON)</Label>
+              <Textarea
+                placeholder='{"key": "value"}'
+                value={config.body || ''}
+                onChange={(e) => setConfig({ ...config, body: e.target.value })}
+              />
+            </div>
+          </div>
+        );
+
+      case 'set-variable':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Nome da variável</Label>
               <Input
-                placeholder="Ver opções"
-                value={config.buttonText || ''}
-                onChange={(e) => setConfig({ ...config, buttonText: e.target.value })}
+                placeholder="minha_variavel"
+                value={config.variableName || ''}
+                onChange={(e) => setConfig({ ...config, variableName: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Valor</Label>
+              <Input
+                placeholder="Valor ou expressão"
+                value={config.value || ''}
+                onChange={(e) => setConfig({ ...config, value: e.target.value })}
+              />
+            </div>
+          </div>
+        );
+
+      case 'instance-connector':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Nome da instância</Label>
+              <Input
+                placeholder="minha-instancia"
+                value={config.instanceName || ''}
+                onChange={(e) => setConfig({ ...config, instanceName: e.target.value })}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label>Verificar conexão</Label>
+              <Switch
+                checked={config.checkConnection ?? true}
+                onCheckedChange={(v) => setConfig({ ...config, checkConnection: v })}
               />
             </div>
           </div>
@@ -390,8 +574,8 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
 
       default:
         return (
-          <p className="text-muted-foreground text-sm">
-            Configurações para este tipo de nó em breve.
+          <p className="text-muted-foreground text-sm py-4 text-center">
+            Nó configurado automaticamente
           </p>
         );
     }
@@ -399,70 +583,80 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-primary/10">
+      <DialogContent className="max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
+        <DialogHeader className="pb-4 border-b">
+          <DialogTitle className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-primary/10">
               <NodeIcon className="w-5 h-5 text-primary" />
             </div>
             <span>{nodeLabels[nodeType] || 'Configurar Nó'}</span>
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="config" className="mt-4">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="config">Configuração</TabsTrigger>
-            <TabsTrigger value="advanced">Avançado</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="config" className="mt-4">
-            <ScrollArea className="max-h-[400px] pr-4">
+        <ScrollArea className="flex-1 pr-4">
+          <Tabs defaultValue="config" className="mt-4">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="config">Configuração</TabsTrigger>
+              <TabsTrigger value="advanced">Avançado</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="config" className="mt-4 space-y-4">
+              <div className="space-y-2">
+                <Label>Nome do nó</Label>
+                <Input
+                  value={label}
+                  onChange={(e) => setLabel(e.target.value)}
+                  placeholder="Nome identificador"
+                />
+              </div>
+              {renderConfigFields()}
+            </TabsContent>
+
+            <TabsContent value="advanced" className="mt-4">
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Nome do nó</Label>
-                  <Input
-                    value={label}
-                    onChange={(e) => setLabel(e.target.value)}
-                    placeholder="Nome identificador"
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Log de execução</Label>
+                    <p className="text-xs text-muted-foreground">Registrar execuções deste nó</p>
+                  </div>
+                  <Switch
+                    checked={config.enableLogging || false}
+                    onCheckedChange={(v) => setConfig({ ...config, enableLogging: v })}
                   />
                 </div>
-                {renderConfigFields()}
-              </div>
-            </ScrollArea>
-          </TabsContent>
-
-          <TabsContent value="advanced" className="mt-4">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Log de execução</Label>
-                  <p className="text-xs text-muted-foreground">Registrar execuções deste nó</p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Retry automático</Label>
+                    <p className="text-xs text-muted-foreground">Tentar novamente em caso de erro</p>
+                  </div>
+                  <Switch
+                    checked={config.enableRetry || false}
+                    onCheckedChange={(v) => setConfig({ ...config, enableRetry: v })}
+                  />
                 </div>
-                <Switch
-                  checked={config.enableLogging || false}
-                  onCheckedChange={(v) => setConfig({ ...config, enableLogging: v })}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Retry automático</Label>
-                  <p className="text-xs text-muted-foreground">Tentar novamente em caso de erro</p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Timeout</Label>
+                    <p className="text-xs text-muted-foreground">Tempo máximo de execução</p>
+                  </div>
+                  <Input
+                    type="number"
+                    className="w-20"
+                    value={config.timeout || 30}
+                    onChange={(e) => setConfig({ ...config, timeout: parseInt(e.target.value) })}
+                  />
                 </div>
-                <Switch
-                  checked={config.enableRetry || false}
-                  onCheckedChange={(v) => setConfig({ ...config, enableRetry: v })}
-                />
               </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+            </TabsContent>
+          </Tabs>
+        </ScrollArea>
 
-        <DialogFooter className="mt-6">
+        <DialogFooter className="mt-4 pt-4 border-t">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={handleSave}>
-            <Save className="w-4 h-4 mr-2" />
+          <Button onClick={handleSave} className="gap-2">
+            <Save className="w-4 h-4" />
             Salvar
           </Button>
         </DialogFooter>

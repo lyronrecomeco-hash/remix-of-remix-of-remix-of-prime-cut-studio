@@ -10,7 +10,28 @@ export type MessageNodeType =
   | 'expected-reaction'
   | 'presence'
   | 'smart-delay'
-  | 'condition';
+  | 'condition'
+  // Novos nós de conexão e ativação
+  | 'start-trigger'
+  | 'instance-connector'
+  | 'webhook-trigger'
+  | 'schedule-trigger'
+  // Gestão de Grupos
+  | 'group-welcome'
+  | 'group-goodbye'
+  | 'keyword-filter'
+  | 'keyword-delete'
+  | 'member-kick'
+  | 'member-warn'
+  | 'group-reminder'
+  | 'anti-spam'
+  | 'anti-link'
+  | 'group-rules'
+  | 'member-counter'
+  // Utilidades
+  | 'http-request'
+  | 'set-variable'
+  | 'end-flow';
 
 export interface MessageNode {
   id: string;
@@ -165,6 +186,18 @@ export interface NodeCategory {
 
 export const NODE_CATEGORIES: NodeCategory[] = [
   {
+    id: 'triggers',
+    label: 'Gatilhos',
+    icon: 'Zap',
+    color: 'bg-emerald-500',
+    nodes: [
+      { type: 'start-trigger', label: 'Início', description: 'Ponto de entrada do flow', icon: 'Play' },
+      { type: 'instance-connector', label: 'Instância', description: 'Conectar à instância WhatsApp', icon: 'Smartphone' },
+      { type: 'webhook-trigger', label: 'Webhook', description: 'Receber dados externos', icon: 'Globe' },
+      { type: 'schedule-trigger', label: 'Agendamento', description: 'Executar em horários', icon: 'Calendar' },
+    ]
+  },
+  {
     id: 'content',
     label: 'Conteúdo',
     icon: 'MessageSquare',
@@ -187,6 +220,25 @@ export const NODE_CATEGORIES: NodeCategory[] = [
     ]
   },
   {
+    id: 'group-management',
+    label: 'Gestão de Grupos',
+    icon: 'Users',
+    color: 'bg-rose-500',
+    nodes: [
+      { type: 'group-welcome', label: 'Boas-vindas', description: 'Mensagem para novos membros', icon: 'UserPlus' },
+      { type: 'group-goodbye', label: 'Despedida', description: 'Mensagem quando membro sai', icon: 'UserMinus' },
+      { type: 'keyword-filter', label: 'Filtro Palavras', description: 'Bloquear palavras proibidas', icon: 'Filter' },
+      { type: 'keyword-delete', label: 'Apagar Mensagem', description: 'Apagar por palavras-chave', icon: 'Trash2' },
+      { type: 'member-kick', label: 'Remover Membro', description: 'Expulsar por regras atingidas', icon: 'UserX' },
+      { type: 'member-warn', label: 'Avisar Membro', description: 'Sistema de advertências', icon: 'AlertTriangle' },
+      { type: 'group-reminder', label: 'Lembrete Grupo', description: 'Lembretes programados', icon: 'Bell' },
+      { type: 'anti-spam', label: 'Anti-Spam', description: 'Proteção contra spam', icon: 'ShieldAlert' },
+      { type: 'anti-link', label: 'Anti-Link', description: 'Bloquear links externos', icon: 'LinkSlash' },
+      { type: 'group-rules', label: 'Regras do Grupo', description: 'Exibir regras automaticamente', icon: 'BookOpen' },
+      { type: 'member-counter', label: 'Contador', description: 'Contar membros ativos', icon: 'Hash' },
+    ]
+  },
+  {
     id: 'flow-control',
     label: 'Controle',
     icon: 'GitBranch',
@@ -195,6 +247,9 @@ export const NODE_CATEGORIES: NodeCategory[] = [
       { type: 'presence', label: 'Presença', description: 'Simula digitando/gravando', icon: 'Radio' },
       { type: 'smart-delay', label: 'Delay Inteligente', description: 'Pausa com variação anti-ban', icon: 'Clock' },
       { type: 'condition', label: 'Condição', description: 'Branch por resposta/reação', icon: 'GitBranch' },
+      { type: 'set-variable', label: 'Variável', description: 'Definir variável no flow', icon: 'Variable' },
+      { type: 'http-request', label: 'HTTP Request', description: 'Chamar API externa', icon: 'Globe' },
+      { type: 'end-flow', label: 'Fim', description: 'Encerrar execução', icon: 'Square' },
     ]
   }
 ];
