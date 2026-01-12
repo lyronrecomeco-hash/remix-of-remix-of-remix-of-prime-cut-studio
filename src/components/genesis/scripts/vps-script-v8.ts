@@ -1608,10 +1608,10 @@ app.post('/api/instance/:id/send-buttons', authMiddleware, async (req, res) => {
     }
     
     instance.messagesSent = (instance.messagesSent || 0) + 1;
-    logActivity('send', \`Botões enviados para \${recipient.substring(0, 4)}***\`);
+    log('success', \`Botões enviados para \${recipient.substring(0, 4)}***\`);
     res.json({ success: true, to: recipient, type: urlButton ? 'url_button' : 'quick_reply' });
   } catch (err) {
-    logActivity('error', \`Erro ao enviar botões: \${err.message}\`);
+    log('error', \`Erro ao enviar botões: \${err.message}\`);
     res.status(500).json({ error: err.message });
   }
 });
@@ -1663,10 +1663,10 @@ app.post('/api/instance/:id/send-list', authMiddleware, async (req, res) => {
     await instance.sock.sendMessage(jid, listMessage);
     
     instance.messagesSent = (instance.messagesSent || 0) + 1;
-    logActivity('send', \`Lista enviada para \${recipient.substring(0, 4)}***\`);
+    log('success', \`Lista enviada para \${recipient.substring(0, 4)}***\`);
     res.json({ success: true, to: recipient, type: 'list', sectionsCount: sections.length });
   } catch (err) {
-    logActivity('error', \`Erro ao enviar lista: \${err.message}\`);
+    log('error', \`Erro ao enviar lista: \${err.message}\`);
     res.status(500).json({ error: err.message });
   }
 });
@@ -1707,10 +1707,10 @@ app.post('/api/instance/:id/send-media', authMiddleware, async (req, res) => {
     await instance.sock.sendMessage(jid, msg);
     
     instance.messagesSent = (instance.messagesSent || 0) + 1;
-    logActivity('send', \`Mídia (\${mediaType}) enviada para \${recipient.substring(0, 4)}***\`);
+    log('success', \`Mídia (\${mediaType}) enviada para \${recipient.substring(0, 4)}***\`);
     res.json({ success: true, to: recipient, type: mediaType });
   } catch (err) {
-    logActivity('error', \`Erro ao enviar mídia: \${err.message}\`);
+    log('error', \`Erro ao enviar mídia: \${err.message}\`);
     res.status(500).json({ error: err.message });
   }
 });
