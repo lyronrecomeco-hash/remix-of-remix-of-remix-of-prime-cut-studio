@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { 
   Menu, X, Zap, ArrowRight, Bot, 
-  BarChart3, GitBranch, Shield, MessageSquare
+  BarChart3, GitBranch, Building2, Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -11,8 +11,8 @@ import { cn } from '@/lib/utils';
 const navLinks = [
   { label: 'Recursos', href: '#recursos', icon: Zap },
   { label: 'Flow Builder', href: '#flow', icon: GitBranch },
-  { label: 'Demo', href: '#demo', icon: MessageSquare },
-  { label: 'Ferramentas Grátis', href: '#ferramentas', icon: Bot },
+  { label: 'Agentes IA', href: '#agentes-ia', icon: Bot },
+  { label: 'Empresas', href: '#empresas', icon: Building2 },
   { label: 'Preços', href: '#precos', icon: BarChart3 },
 ];
 
