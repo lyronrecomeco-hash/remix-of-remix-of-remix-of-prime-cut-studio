@@ -6,6 +6,7 @@ export { RealTimeErrorLogs } from './RealTimeErrorLogs';
 export { CustomEdge } from './CustomEdge';
 export { CanvasToolbar } from './CanvasToolbar';
 export { FlowTemplatesModal } from './FlowTemplatesModal';
+export { IPhonePreview } from './IPhonePreview';
 
 // Node exports
 export { BaseNode } from './nodes/BaseNode';
