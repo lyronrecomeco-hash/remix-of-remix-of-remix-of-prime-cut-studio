@@ -1,4 +1,4 @@
-export const VPS_SCRIPT_VERSION = "8.3";
+export const VPS_SCRIPT_VERSION = "8.4";
 
 // VPS Script v8.3 - MULTI-INSTANCE MANAGER WITH PROFESSIONAL CLI
 // Gerenciador dinâmico com menu interativo profissional e logs personalizados
@@ -291,6 +291,7 @@ class InstanceManager {
       const { state, saveCreds } = await useMultiFileAuthState(authDir);
 
       // HARDENING: Socket com configurações otimizadas para estabilidade
+      // v8.4: Patch para botões nativos via viewOnceMessageV2
       const sock = makeWASocket({
         auth: state,
         printQRInTerminal: false,
@@ -302,6 +303,32 @@ class InstanceManager {
         retryRequestDelayMs: 500,
         markOnlineOnConnect: false, // Evitar marcação automática para parecer mais natural
         syncFullHistory: false,     // Não sincronizar histórico completo (menos suspeito)
+        // ═══════════════════════════════════════════════════════════════════════════════
+        // PATCH v8.4: Encapsular mensagens interativas em viewOnceMessageV2
+        // Isso é necessário para que botões/listas apareçam em versões mais novas
+        // ═══════════════════════════════════════════════════════════════════════════════
+        patchMessageBeforeSending: (message) => {
+          const requiresPatch = !!(
+            message.buttonsMessage ||
+            message.templateMessage ||
+            message.listMessage ||
+            message.interactiveMessage
+          );
+          if (requiresPatch) {
+            message = {
+              viewOnceMessageV2: {
+                message: {
+                  messageContextInfo: {
+                    deviceListMetadataVersion: 2,
+                    deviceListMetadata: {}
+                  },
+                  ...message
+                }
+              }
+            };
+          }
+          return message;
+        }
       });
 
       instance.sock = sock;
@@ -1578,35 +1605,99 @@ app.post('/api/instance/:id/send-buttons', authMiddleware, async (req, res) => {
   try {
     const jid = recipient.includes('@') ? recipient : recipient.replace(/\\D/g, '') + '@s.whatsapp.net';
     
-    let sentType = 'text_buttons';
+    let sentType = 'unknown';
     const hasUrlButton = buttons.some(b => b.url);
     
-    // MÉTODO 1: ENQUETE (POLL) - 100% FUNCIONAL!
-    // Polls funcionam perfeitamente com Baileys sem API Business
-    if (!hasUrlButton && buttons.length >= 2 && buttons.length <= 12) {
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // MÉTODO 1: BOTÕES NATIVOS VIA interactiveMessage (Evolution API style)
+    // Patch viewOnceMessageV2 aplicado automaticamente pelo socket
+    // ═══════════════════════════════════════════════════════════════════════════════
+    if (!hasUrlButton && buttons.length >= 1 && buttons.length <= 3) {
       try {
-        // Enviar mensagem de contexto primeiro
-        await instance.sock.sendMessage(jid, { text: content + (footer ? '\\n\\n_' + footer + '_' : '') });
+        log('info', 'Tentando botões nativos via interactiveMessage...');
         
-        // Enviar enquete com as opções
-        const pollMessage = {
-          poll: {
-            name: '📋 Selecione uma opção:',
-            values: buttons.map(b => b.text),
-            selectableCount: 1 // Apenas uma opção
-          }
+        // Formato interactiveMessage compatível com Evolution API
+        const interactiveButtons = buttons.map((btn, idx) => ({
+          buttonId: btn.id || \`btn_\${idx}\`,
+          buttonText: { displayText: btn.text },
+          type: 1 // 1 = QUICK_REPLY
+        }));
+        
+        const buttonsMessage = {
+          text: content,
+          footer: footer || '',
+          buttons: interactiveButtons,
+          headerType: 1
         };
         
-        await instance.sock.sendMessage(jid, pollMessage);
-        sentType = 'poll';
-        log('success', 'Enquete enviada com sucesso!');
-      } catch (pollErr) {
-        log('warn', \`Enquete falhou: \${pollErr.message}. Usando texto...\`);
+        await instance.sock.sendMessage(jid, { buttonsMessage });
+        sentType = 'native_buttons';
+        log('success', '✅ Botões nativos enviados com sucesso!');
+      } catch (nativeErr) {
+        log('warn', \`Botões nativos falharam: \${nativeErr.message}. Tentando interactiveMessage v2...\`);
+        
+        // MÉTODO 1.5: interactiveMessage com nativeFlowMessage (Evolution API v2.2+)
+        try {
+          const interactiveMsg = {
+            interactiveMessage: {
+              body: { text: content },
+              footer: footer ? { text: footer } : undefined,
+              header: undefined,
+              nativeFlowMessage: {
+                buttons: buttons.map((btn, idx) => ({
+                  name: 'quick_reply',
+                  buttonParamsJson: JSON.stringify({
+                    display_text: btn.text,
+                    id: btn.id || \`qr_\${idx}\`
+                  })
+                }))
+              }
+            }
+          };
+          
+          await instance.sock.relayMessage(jid, interactiveMsg, { messageId: crypto.randomBytes(8).toString('hex').toUpperCase() });
+          sentType = 'native_interactive';
+          log('success', '✅ InteractiveMessage enviado com sucesso!');
+        } catch (interactiveErr) {
+          log('warn', \`InteractiveMessage falhou: \${interactiveErr.message}. Fallback para enquete...\`);
+          sentType = 'fallback';
+        }
+      }
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // MÉTODO 2: ENQUETE (POLL) - Fallback 100% funcional
+    // ═══════════════════════════════════════════════════════════════════════════════
+    if (sentType === 'fallback' || sentType === 'unknown') {
+      if (!hasUrlButton && buttons.length >= 2 && buttons.length <= 12) {
+        try {
+          // Enviar mensagem de contexto primeiro
+          await instance.sock.sendMessage(jid, { text: content + (footer ? '\\n\\n_' + footer + '_' : '') });
+          
+          // Enviar enquete com as opções
+          const pollMessage = {
+            poll: {
+              name: '📋 Selecione uma opção:',
+              values: buttons.map(b => b.text),
+              selectableCount: 1
+            }
+          };
+          
+          await instance.sock.sendMessage(jid, pollMessage);
+          sentType = 'poll';
+          log('success', '✅ Enquete enviada com sucesso!');
+        } catch (pollErr) {
+          log('warn', \`Enquete falhou: \${pollErr.message}. Usando texto...\`);
+          sentType = 'text_buttons';
+        }
+      } else {
         sentType = 'text_buttons';
       }
     }
     
-    // MÉTODO 2: TEXTO FORMATADO (fallback)
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // MÉTODO 3: TEXTO FORMATADO (fallback final)
+    // ═══════════════════════════════════════════════════════════════════════════════
     if (sentType === 'text_buttons') {
       let formattedMessage = content;
       
@@ -1668,46 +1759,123 @@ app.post('/api/instance/:id/send-list', authMiddleware, async (req, res) => {
   try {
     const jid = recipient.includes('@') ? recipient : recipient.replace(/\\D/g, '') + '@s.whatsapp.net';
     
-    let sentType = 'text_list';
+    let sentType = 'unknown';
     
     // Coletar todas as opções das seções
     const allOptions = [];
+    const allRows = [];
     sections.forEach(section => {
       (section.rows || []).forEach(row => {
         allOptions.push(row.title);
+        allRows.push({ id: row.id || row.title, title: row.title, description: row.description || '' });
       });
     });
     
-    // MÉTODO 1: ENQUETE (POLL) - 100% FUNCIONAL!
-    if (allOptions.length >= 2 && allOptions.length <= 12) {
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // MÉTODO 1: LISTA NATIVA VIA listMessage (com patch viewOnceMessageV2)
+    // ═══════════════════════════════════════════════════════════════════════════════
+    if (allOptions.length >= 1 && allOptions.length <= 10) {
       try {
-        // Enviar mensagem de contexto primeiro
-        let contextMsg = '';
-        if (title) contextMsg += '*' + title + '*\\n\\n';
-        contextMsg += content;
-        if (footer) contextMsg += '\\n\\n_' + footer + '_';
+        log('info', 'Tentando lista nativa via listMessage...');
         
-        await instance.sock.sendMessage(jid, { text: contextMsg });
+        // Formato listMessage do Baileys
+        const listSections = sections.map(section => ({
+          title: section.title || '',
+          rows: (section.rows || []).map((row, idx) => ({
+            rowId: row.id || \`row_\${idx}\`,
+            title: row.title,
+            description: row.description || ''
+          }))
+        }));
         
-        // Enviar enquete com as opções
-        const pollMessage = {
-          poll: {
-            name: buttonText || '📋 Selecione uma opção:',
-            values: allOptions.slice(0, 12),
-            selectableCount: 1
-          }
+        const listMessage = {
+          text: content,
+          footer: footer || '',
+          title: title || '',
+          buttonText: buttonText,
+          sections: listSections
         };
         
-        await instance.sock.sendMessage(jid, pollMessage);
-        sentType = 'poll';
-        log('success', 'Enquete (lista) enviada com sucesso!');
-      } catch (pollErr) {
-        log('warn', \`Enquete falhou: \${pollErr.message}. Usando texto...\`);
+        await instance.sock.sendMessage(jid, { listMessage });
+        sentType = 'native_list';
+        log('success', '✅ Lista nativa enviada com sucesso!');
+      } catch (nativeErr) {
+        log('warn', \`Lista nativa falhou: \${nativeErr.message}. Tentando interactiveMessage...\`);
+        
+        // MÉTODO 1.5: interactiveMessage com listMessage (Evolution API v2.2+)
+        try {
+          const interactiveList = {
+            interactiveMessage: {
+              body: { text: content },
+              footer: footer ? { text: footer } : undefined,
+              header: title ? { title: title, hasMediaAttachment: false } : undefined,
+              nativeFlowMessage: {
+                buttons: [{
+                  name: 'single_select',
+                  buttonParamsJson: JSON.stringify({
+                    title: buttonText,
+                    sections: sections.map(section => ({
+                      title: section.title || '',
+                      rows: (section.rows || []).map((row, idx) => ({
+                        id: row.id || \`row_\${idx}\`,
+                        title: row.title,
+                        description: row.description || ''
+                      }))
+                    }))
+                  })
+                }]
+              }
+            }
+          };
+          
+          await instance.sock.relayMessage(jid, interactiveList, { messageId: crypto.randomBytes(8).toString('hex').toUpperCase() });
+          sentType = 'native_interactive_list';
+          log('success', '✅ InteractiveMessage (lista) enviado com sucesso!');
+        } catch (interactiveErr) {
+          log('warn', \`InteractiveMessage falhou: \${interactiveErr.message}. Fallback para enquete...\`);
+          sentType = 'fallback';
+        }
+      }
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // MÉTODO 2: ENQUETE (POLL) - Fallback 100% funcional
+    // ═══════════════════════════════════════════════════════════════════════════════
+    if (sentType === 'fallback' || sentType === 'unknown') {
+      if (allOptions.length >= 2 && allOptions.length <= 12) {
+        try {
+          // Enviar mensagem de contexto primeiro
+          let contextMsg = '';
+          if (title) contextMsg += '*' + title + '*\\n\\n';
+          contextMsg += content;
+          if (footer) contextMsg += '\\n\\n_' + footer + '_';
+          
+          await instance.sock.sendMessage(jid, { text: contextMsg });
+          
+          // Enviar enquete com as opções
+          const pollMessage = {
+            poll: {
+              name: buttonText || '📋 Selecione uma opção:',
+              values: allOptions.slice(0, 12),
+              selectableCount: 1
+            }
+          };
+          
+          await instance.sock.sendMessage(jid, pollMessage);
+          sentType = 'poll';
+          log('success', '✅ Enquete (lista) enviada com sucesso!');
+        } catch (pollErr) {
+          log('warn', \`Enquete falhou: \${pollErr.message}. Usando texto...\`);
+          sentType = 'text_list';
+        }
+      } else {
         sentType = 'text_list';
       }
     }
     
-    // MÉTODO 2: TEXTO FORMATADO (fallback)
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // MÉTODO 3: TEXTO FORMATADO (fallback final)
+    // ═══════════════════════════════════════════════════════════════════════════════
     if (sentType === 'text_list') {
       let formattedMessage = '';
       
