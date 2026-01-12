@@ -43,6 +43,9 @@ const WADocsPage = lazy(() => import("./pages/WADocsPage"));
 const GenesisLogin = lazy(() => import("./pages/GenesisLogin"));
 const GenesisPanel = lazy(() => import("./pages/GenesisPanel"));
 const GenesisVenda = lazy(() => import("./pages/GenesisVenda"));
+const VendaFerramentas = lazy(() => import("./pages/VendaFerramentas"));
+const VendaEmpresas = lazy(() => import("./pages/VendaEmpresas"));
+const VendaAgentesIA = lazy(() => import("./pages/VendaAgentesIA"));
 const FlowBuilderDocs = lazy(() => import("./pages/FlowBuilderDocs"));
 const Instrucoes = lazy(() => import("./pages/Instrucoes"));
 const ScriptDownload = lazy(() => import("./pages/ScriptDownload"));
@@ -230,6 +233,9 @@ const AppContent = () => {
             <Route path="/genesis/docs" element={<FlowBuilderDocs />} />
             <Route path="/instrucoes" element={<Instrucoes />} />
             <Route path="/venda-genesis" element={<GenesisVenda />} />
+            <Route path="/venda-genesis/ferramentas" element={<VendaFerramentas />} />
+            <Route path="/venda-genesis/empresas" element={<VendaEmpresas />} />
+            <Route path="/venda-genesis/agentes-ia" element={<VendaAgentesIA />} />
             <Route path="/script" element={<ScriptDownload />} />
             <Route path="/sobre" element={<Sobre />} />
             <Route path="/status" element={<StatusPage />} />

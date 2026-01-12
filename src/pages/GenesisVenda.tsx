@@ -5,9 +5,6 @@ import VendaSolution from '@/components/venda/VendaSolution';
 import VendaFeatures from '@/components/venda/VendaFeatures';
 import VendaFlowDemo from '@/components/venda/VendaFlowDemo';
 import VendaRealWhatsApp from '@/components/venda/VendaRealWhatsApp';
-import VendaAgentesIA from '@/components/venda/VendaAgentesIA';
-import VendaBusinessShowcase from '@/components/venda/VendaBusinessShowcase';
-import VendaFreeTools from '@/components/venda/VendaFreeTools';
 import VendaLiveDemo from '@/components/venda/VendaLiveDemo';
 import VendaSocialProof from '@/components/venda/VendaSocialProof';
 import VendaPricing from '@/components/venda/VendaPricing';
@@ -25,12 +22,9 @@ const GenesisVenda = () => {
       <VendaFeatures />
       <VendaFlowDemo />
       <VendaRealWhatsApp />
-      <VendaAgentesIA />
-      <VendaBusinessShowcase />
       <VendaLiveDemo />
       <VendaSocialProof />
       <VendaPricing />
-      <VendaFreeTools />
       <VendaFAQ />
       <VendaFinalCTA />
       <VendaFooter />
