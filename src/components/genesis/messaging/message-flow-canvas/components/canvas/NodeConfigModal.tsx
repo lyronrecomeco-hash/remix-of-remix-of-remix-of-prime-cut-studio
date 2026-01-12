@@ -1,5 +1,5 @@
-// Node Configuration Modal - Enhanced with all node types
-import { useState, useEffect } from 'react';
+// Node Configuration Modal - Enhanced with all node types and fixed scroll
+import { useState, useEffect, useCallback } from 'react';
 import { Node } from '@xyflow/react';
 import {
   Dialog,
@@ -22,10 +22,11 @@ import {
   Type, LayoutGrid, List, Mic, BarChart2, Heart, Radio, Clock, GitBranch, 
   Plus, Trash2, Save, Play, Smartphone, Globe, Calendar, UserPlus, UserMinus,
   Filter, UserX, AlertTriangle, Bell, ShieldAlert, Link2Off, BookOpen, Hash,
-  Variable, Square, Zap, AlertCircle
+  Variable, Square, Zap, AlertCircle, CheckCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MessageNodeType } from '../../types';
+import { toast } from 'sonner';
 
 interface NodeConfigModalProps {
   open: boolean;
@@ -98,19 +99,92 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
   const nodeData = node.data as Record<string, unknown>;
   const [config, setConfig] = useState<Record<string, any>>((nodeData?.config as Record<string, any>) || {});
   const [label, setLabel] = useState<string>((nodeData?.label as string) || '');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [activeTab, setActiveTab] = useState('config');
 
   useEffect(() => {
     const data = node.data as Record<string, unknown>;
     setConfig((data?.config as Record<string, any>) || {});
     setLabel((data?.label as string) || '');
+    setErrors({});
   }, [node]);
 
   const NodeIcon = nodeIcons[node.type as string] || Zap;
   const nodeType = node.type as MessageNodeType;
 
-  const handleSave = () => {
-    onSave({ ...config, label });
-  };
+  // Validation function
+  const validateConfig = useCallback((): boolean => {
+    const newErrors: Record<string, string> = {};
+    
+    // Common validation
+    if (!label.trim()) {
+      newErrors.label = 'Nome do nó é obrigatório';
+    }
+
+    // Type-specific validations
+    switch (nodeType) {
+      case 'advanced-text':
+        if (!config.message?.trim()) {
+          newErrors.message = 'Mensagem é obrigatória';
+        }
+        break;
+      case 'button-message':
+        if (!config.message?.trim()) {
+          newErrors.message = 'Mensagem é obrigatória';
+        }
+        if (!config.buttons?.length || config.buttons.length === 0) {
+          newErrors.buttons = 'Adicione pelo menos um botão';
+        } else if (config.buttons.some((b: any) => !b.text?.trim())) {
+          newErrors.buttons = 'Todos os botões precisam de texto';
+        }
+        break;
+      case 'poll':
+        if (!config.question?.trim()) {
+          newErrors.question = 'Pergunta é obrigatória';
+        }
+        if (!config.options?.length || config.options.length < 2) {
+          newErrors.options = 'Adicione pelo menos 2 opções';
+        }
+        break;
+      case 'instance-connector':
+        if (!config.instanceId) {
+          newErrors.instanceId = 'Selecione uma instância';
+        }
+        break;
+      case 'webhook-trigger':
+        if (!config.webhookUrl?.trim()) {
+          newErrors.webhookUrl = 'URL do webhook é obrigatória';
+        }
+        break;
+      case 'http-request':
+        if (!config.url?.trim()) {
+          newErrors.url = 'URL é obrigatória';
+        }
+        break;
+      case 'set-variable':
+        if (!config.variableName?.trim()) {
+          newErrors.variableName = 'Nome da variável é obrigatório';
+        }
+        break;
+      case 'audio-ptt':
+        if (!config.audioUrl?.trim() && !config.audioBase64) {
+          newErrors.audioUrl = 'URL ou arquivo de áudio é obrigatório';
+        }
+        break;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }, [config, label, nodeType]);
+
+  const handleSave = useCallback(() => {
+    if (validateConfig()) {
+      onSave({ ...config, label });
+      toast.success('Configurações salvas com sucesso!');
+    } else {
+      toast.error('Corrija os erros antes de salvar');
+    }
+  }, [config, label, onSave, validateConfig]);
 
   const renderConfigFields = () => {
     switch (nodeType) {
@@ -1802,8 +1876,8 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-hidden flex flex-col z-[200]">
-        <DialogHeader className="pb-4 border-b">
+      <DialogContent className="max-w-xl max-h-[90vh] p-0 overflow-hidden flex flex-col z-[200]">
+        <DialogHeader className="px-6 py-4 border-b flex-shrink-0">
           <DialogTitle className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-primary/10">
               <NodeIcon className="w-5 h-5 text-primary" />
@@ -1812,26 +1886,28 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-4">
-          <Tabs defaultValue="config" className="mt-4">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="config">Configuração</TabsTrigger>
-              <TabsTrigger value="advanced">Avançado</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="config" className="mt-4 space-y-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+          <TabsList className="grid w-full grid-cols-2 mx-6 mt-4 max-w-[calc(100%-48px)]">
+            <TabsTrigger value="config">Configuração</TabsTrigger>
+            <TabsTrigger value="advanced">Avançado</TabsTrigger>
+          </TabsList>
+          
+          <div className="flex-1 overflow-y-auto px-6 py-4" style={{ maxHeight: 'calc(90vh - 200px)' }}>
+            <TabsContent value="config" className="mt-0 space-y-4 data-[state=inactive]:hidden">
               <div className="space-y-2">
                 <Label>Nome do nó</Label>
                 <Input
                   value={label}
                   onChange={(e) => setLabel(e.target.value)}
                   placeholder="Nome identificador"
+                  className={cn(errors.label && "border-destructive")}
                 />
+                {errors.label && <p className="text-xs text-destructive">{errors.label}</p>}
               </div>
               {renderConfigFields()}
             </TabsContent>
 
-            <TabsContent value="advanced" className="mt-4">
+            <TabsContent value="advanced" className="mt-0 data-[state=inactive]:hidden">
               <div className="space-y-4">
                 {/* Execution Settings */}
                 <div className="space-y-3 p-3 rounded-lg bg-muted/30 border">
@@ -2061,10 +2137,10 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
                 </div>
               </div>
             </TabsContent>
-          </Tabs>
-        </ScrollArea>
+          </div>
+        </Tabs>
 
-        <DialogFooter className="mt-4 pt-4 border-t">
+        <DialogFooter className="px-6 py-4 border-t flex-shrink-0">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
