@@ -1578,38 +1578,40 @@ app.post('/api/instance/:id/send-buttons', authMiddleware, async (req, res) => {
   try {
     const jid = recipient.includes('@') ? recipient : recipient.replace(/\\D/g, '') + '@s.whatsapp.net';
     
-    // Verificar se há botão URL
-    const urlButton = buttons.find(b => b.url);
+    // WhatsApp descontinuou botões nativos para contas normais
+    // Enviamos como texto formatado (funciona 100%)
+    let formattedMessage = content;
     
-    if (urlButton) {
-      // Mensagem com botão URL (template message)
-      await instance.sock.sendMessage(jid, {
-        text: content + (footer ? '\\n\\n' + footer : ''),
-      });
-      
-      // Enviar link separado (WhatsApp não suporta mais botões URL nativos)
-      await instance.sock.sendMessage(jid, {
-        text: '🔗 ' + (urlButton.text || 'Acessar') + ': ' + urlButton.url,
-      });
-    } else {
-      // Botões de resposta rápida (quick reply)
-      const buttonMessage = {
-        text: content,
-        footer: footer || '',
-        buttons: buttons.slice(0, 3).map((b, i) => ({
-          buttonId: b.id || 'btn_' + i,
-          buttonText: { displayText: b.text },
-          type: 1
-        })),
-        headerType: 1
-      };
-      
-      await instance.sock.sendMessage(jid, buttonMessage);
+    // Adicionar footer se existir
+    if (footer) {
+      formattedMessage += '\\n\\n_' + footer + '_';
     }
     
+    // Formatar botões como opções numeradas
+    if (buttons.length > 0) {
+      formattedMessage += '\\n\\n';
+      buttons.forEach((btn, i) => {
+        if (btn.url) {
+          // Botão URL
+          formattedMessage += '🔗 *' + (btn.text || 'Link') + '*: ' + btn.url + '\\n';
+        } else {
+          // Botão de resposta rápida
+          formattedMessage += (i + 1) + '. ' + btn.text + '\\n';
+        }
+      });
+      
+      // Se tem botões de resposta, adicionar instrução
+      const hasReplyButtons = buttons.some(b => !b.url);
+      if (hasReplyButtons) {
+        formattedMessage += '\\n_Responda com o número da opção desejada_';
+      }
+    }
+    
+    await instance.sock.sendMessage(jid, { text: formattedMessage });
+    
     instance.messagesSent = (instance.messagesSent || 0) + 1;
-    log('success', \`Botões enviados para \${recipient.substring(0, 4)}***\`);
-    res.json({ success: true, to: recipient, type: urlButton ? 'url_button' : 'quick_reply' });
+    log('success', \`Botões (texto) enviados para \${recipient.substring(0, 4)}***\`);
+    res.json({ success: true, to: recipient, type: 'text_buttons', buttonsCount: buttons.length });
   } catch (err) {
     log('error', \`Erro ao enviar botões: \${err.message}\`);
     res.status(500).json({ error: err.message });
@@ -1642,29 +1644,47 @@ app.post('/api/instance/:id/send-list', authMiddleware, async (req, res) => {
   try {
     const jid = recipient.includes('@') ? recipient : recipient.replace(/\\D/g, '') + '@s.whatsapp.net';
     
-    // Formatar seções para o Baileys
-    const formattedSections = sections.map(section => ({
-      title: section.title || '',
-      rows: (section.rows || []).slice(0, 10).map((row, i) => ({
-        rowId: row.id || 'row_' + i,
-        title: row.title,
-        description: row.description || ''
-      }))
-    }));
+    // WhatsApp descontinuou listas nativas para contas normais
+    // Enviamos como texto formatado (funciona 100%)
+    let formattedMessage = '';
     
-    const listMessage = {
-      text: content,
-      footer: footer || '',
-      title: title || '',
-      buttonText: buttonText,
-      sections: formattedSections
-    };
+    // Título se existir
+    if (title) {
+      formattedMessage += '*' + title + '*\\n\\n';
+    }
     
-    await instance.sock.sendMessage(jid, listMessage);
+    // Conteúdo principal
+    formattedMessage += content + '\\n';
+    
+    // Formatar seções como menu numerado
+    let optionNumber = 1;
+    sections.forEach(section => {
+      if (section.title) {
+        formattedMessage += '\\n*' + section.title + '*\\n';
+      }
+      (section.rows || []).forEach(row => {
+        formattedMessage += optionNumber + '. ' + row.title;
+        if (row.description) {
+          formattedMessage += ' - _' + row.description + '_';
+        }
+        formattedMessage += '\\n';
+        optionNumber++;
+      });
+    });
+    
+    // Footer
+    if (footer) {
+      formattedMessage += '\\n_' + footer + '_';
+    }
+    
+    // Instrução
+    formattedMessage += '\\n\\n_Responda com o número da opção desejada_';
+    
+    await instance.sock.sendMessage(jid, { text: formattedMessage });
     
     instance.messagesSent = (instance.messagesSent || 0) + 1;
-    log('success', \`Lista enviada para \${recipient.substring(0, 4)}***\`);
-    res.json({ success: true, to: recipient, type: 'list', sectionsCount: sections.length });
+    log('success', \`Lista (texto) enviada para \${recipient.substring(0, 4)}***\`);
+    res.json({ success: true, to: recipient, type: 'text_list', sectionsCount: sections.length });
   } catch (err) {
     log('error', \`Erro ao enviar lista: \${err.message}\`);
     res.status(500).json({ error: err.message });
