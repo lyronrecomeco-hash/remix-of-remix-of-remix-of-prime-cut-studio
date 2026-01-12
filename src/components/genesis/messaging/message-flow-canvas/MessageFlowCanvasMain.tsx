@@ -15,11 +15,13 @@ import { FlowCard } from './components/FlowCard';
 import { CreateFlowModal } from './components/CreateFlowModal';
 import { AudioLibraryModal } from './components/AudioLibraryModal';
 import { ErrorLogsPanel } from './components/ErrorLogsPanel';
+import { MessageFlowCanvas } from './components/canvas';
+import { MessageNode, MessageEdge } from './types';
 
 export const MessageFlowCanvasMain = () => {
   const {
     flows, selectedFlowId, setSelectedFlowId, errorLogs,
-    createFlow, deleteFlow, duplicateFlow, toggleFlowActive,
+    createFlow, updateFlow, deleteFlow, duplicateFlow, toggleFlowActive,
     resolveError, clearResolvedErrors
   } = useMessageFlows();
 
@@ -41,34 +43,25 @@ export const MessageFlowCanvasMain = () => {
     setSelectedFlowId(newFlow.id);
   };
 
-  // Canvas view (editing a flow) - placeholder for full canvas implementation
+  const handleSaveFlow = (nodes: MessageNode[], edges: MessageEdge[]) => {
+    if (selectedFlowId) {
+      updateFlow(selectedFlowId, { nodes, edges });
+    }
+  };
+
+  // Canvas view (editing a flow) - Full visual canvas
   if (selectedFlowId) {
     const selectedFlow = flows.find(f => f.id === selectedFlowId);
+    if (!selectedFlow) return null;
+    
     return (
-      <div className="h-full flex flex-col">
-        <div className="flex items-center gap-4 p-4 border-b bg-background">
-          <Button variant="ghost" size="sm" onClick={() => setSelectedFlowId(null)}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar
-          </Button>
-          <div className="flex-1">
-            <h2 className="font-semibold">{selectedFlow?.name}</h2>
-            <p className="text-xs text-muted-foreground">{selectedFlow?.description || 'Sem descrição'}</p>
-          </div>
-          <Badge variant={selectedFlow?.isActive ? 'default' : 'secondary'}>
-            {selectedFlow?.isActive ? 'Ativo' : 'Inativo'}
-          </Badge>
-        </div>
-        <div className="flex-1 flex items-center justify-center bg-muted/30">
-          <div className="text-center">
-            <GitBranch className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
-            <h3 className="font-semibold text-lg mb-2">Canvas Visual</h3>
-            <p className="text-muted-foreground text-sm max-w-md">
-              O canvas visual completo será implementado aqui. 
-              Arraste nós de mensagem para criar seu flow inteligente.
-            </p>
-          </div>
-        </div>
+      <div className="h-[calc(100vh-200px)] min-h-[600px]">
+        <MessageFlowCanvas
+          flow={selectedFlow}
+          onBack={() => setSelectedFlowId(null)}
+          onSave={handleSaveFlow}
+          onToggleActive={toggleFlowActive}
+        />
       </div>
     );
   }
