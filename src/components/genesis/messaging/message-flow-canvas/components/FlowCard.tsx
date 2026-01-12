@@ -62,7 +62,7 @@ export const FlowCard = ({
       <Card 
         className={cn(
           "relative overflow-hidden cursor-pointer transition-all duration-300",
-          "border-2 hover:shadow-lg",
+          "border hover:shadow-lg max-w-[320px]",
           flow.isActive 
             ? "border-green-500/50 bg-green-500/5" 
             : "border-border hover:border-primary/30",
@@ -74,20 +74,20 @@ export const FlowCard = ({
       >
         {/* Status indicator */}
         <div className={cn(
-          "absolute top-0 left-0 right-0 h-1",
+          "absolute top-0 left-0 right-0 h-0.5",
           flow.isActive ? "bg-green-500" : "bg-muted"
         )} />
 
-        <CardContent className="p-4 pt-5">
+        <CardContent className="p-3 pt-4">
           {/* Header */}
-          <div className="flex items-start justify-between mb-3">
+          <div className="flex items-start justify-between mb-2">
             <div className="flex-1 min-w-0 pr-2">
-              <div className="flex items-center gap-2 mb-1">
-                <GitBranch className="w-4 h-4 text-primary shrink-0" />
-                <h3 className="font-semibold text-sm truncate">{flow.name}</h3>
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <GitBranch className="w-3.5 h-3.5 text-primary shrink-0" />
+                <h3 className="font-semibold text-xs truncate">{flow.name}</h3>
               </div>
               {flow.description && (
-                <p className="text-xs text-muted-foreground line-clamp-2">
+                <p className="text-[10px] text-muted-foreground line-clamp-1">
                   {flow.description}
                 </p>
               )}
@@ -129,38 +129,38 @@ export const FlowCard = ({
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-2 mb-3">
-            <div className="text-center p-2 rounded-lg bg-muted/50">
-              <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-1">
-                <Zap className="w-3 h-3" />
+          <div className="grid grid-cols-3 gap-1.5 mb-2">
+            <div className="text-center py-1.5 px-1 rounded-md bg-muted/50">
+              <div className="flex items-center justify-center gap-0.5 text-[10px] text-muted-foreground mb-0.5">
+                <Zap className="w-2.5 h-2.5" />
                 <span>Execuções</span>
               </div>
-              <p className="font-bold text-sm">{flow.stats.totalExecutions}</p>
+              <p className="font-bold text-xs">{flow.stats.totalExecutions}</p>
             </div>
             
-            <div className="text-center p-2 rounded-lg bg-muted/50">
-              <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-1">
+            <div className="text-center py-1.5 px-1 rounded-md bg-muted/50">
+              <div className="flex items-center justify-center gap-0.5 text-[10px] text-muted-foreground mb-0.5">
                 {flow.stats.successRate >= 90 ? (
-                  <CheckCircle2 className="w-3 h-3 text-green-500" />
+                  <CheckCircle2 className="w-2.5 h-2.5 text-green-500" />
                 ) : (
-                  <AlertTriangle className="w-3 h-3 text-amber-500" />
+                  <AlertTriangle className="w-2.5 h-2.5 text-amber-500" />
                 )}
                 <span>Sucesso</span>
               </div>
               <p className={cn(
-                "font-bold text-sm",
+                "font-bold text-xs",
                 flow.stats.successRate >= 90 ? "text-green-500" : "text-amber-500"
               )}>
                 {flow.stats.successRate}%
               </p>
             </div>
             
-            <div className="text-center p-2 rounded-lg bg-muted/50">
-              <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-1">
-                <BarChart2 className="w-3 h-3" />
+            <div className="text-center py-1.5 px-1 rounded-md bg-muted/50">
+              <div className="flex items-center justify-center gap-0.5 text-[10px] text-muted-foreground mb-0.5">
+                <BarChart2 className="w-2.5 h-2.5" />
                 <span>Nós</span>
               </div>
-              <p className="font-bold text-sm">{nodeCount}</p>
+              <p className="font-bold text-xs">{nodeCount}</p>
             </div>
           </div>
 

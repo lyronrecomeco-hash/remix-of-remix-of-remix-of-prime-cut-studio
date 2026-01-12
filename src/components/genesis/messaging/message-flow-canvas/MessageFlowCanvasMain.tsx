@@ -55,14 +55,12 @@ export const MessageFlowCanvasMain = () => {
     if (!selectedFlow) return null;
     
     return (
-      <div className="h-[calc(100vh-200px)] min-h-[600px]">
-        <MessageFlowCanvas
-          flow={selectedFlow}
-          onBack={() => setSelectedFlowId(null)}
-          onSave={handleSaveFlow}
-          onToggleActive={toggleFlowActive}
-        />
-      </div>
+      <MessageFlowCanvas
+        flow={selectedFlow}
+        onBack={() => setSelectedFlowId(null)}
+        onSave={handleSaveFlow}
+        onToggleActive={toggleFlowActive}
+      />
     );
   }
 
