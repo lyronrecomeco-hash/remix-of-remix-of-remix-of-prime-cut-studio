@@ -8,3 +8,4 @@ export { AudioLibraryModal } from './components/AudioLibraryModal';
 export { CreateFlowModal } from './components/CreateFlowModal';
 export { ErrorLogsPanel } from './components/ErrorLogsPanel';
 export { MessageFlowCanvasMain } from './MessageFlowCanvasMain';
+export { MessageFlowCanvas } from './components/canvas';
