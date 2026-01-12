@@ -140,7 +140,7 @@ REGRAS PARA RESPOSTAS:
   };
 
   return (
-    <section id="demo" ref={ref} className="py-20 md:py-32 bg-gradient-to-b from-muted/20 via-background to-muted/10 relative overflow-hidden">
+    <section id="demo-live" ref={ref} className="py-20 md:py-32 bg-gradient-to-b from-muted/20 via-background to-muted/10 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent" />
       <div className="absolute top-20 right-20 w-40 h-40 bg-green-500/10 rounded-full blur-3xl animate-pulse" />

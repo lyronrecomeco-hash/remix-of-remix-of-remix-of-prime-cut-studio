@@ -1,11 +1,11 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
 import { 
-  MessageSquare, Bot, Check, CheckCheck, 
-  Play, Pause, RotateCcw, Sparkles, Phone
+  MessageSquare, Bot, CheckCheck, 
+  Play, Pause, RotateCcw, Phone, Video, MoreVertical,
+  Wifi, Battery, Signal
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
 interface Message {
@@ -32,17 +32,24 @@ const conversationScript: Message[] = [
 const VendaRealWhatsApp = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showTyping, setShowTyping] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
 
-  // Auto scroll to bottom
+  // Scroll to bottom of messages container only
+  const scrollToBottom = useCallback(() => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+  }, []);
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
 
   // Play conversation
   useEffect(() => {
@@ -72,15 +79,16 @@ const VendaRealWhatsApp = () => {
     }
   }, [isPlaying, currentIndex]);
 
-  // Auto-play when in view
+  // Auto-play when in view (only once)
   useEffect(() => {
-    if (isInView && messages.length === 0) {
+    if (isInView && !hasStarted) {
       const timer = setTimeout(() => {
         setIsPlaying(true);
+        setHasStarted(true);
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [isInView, messages.length]);
+  }, [isInView, hasStarted]);
 
   const handlePlay = () => {
     if (currentIndex >= conversationScript.length) {
@@ -103,7 +111,7 @@ const VendaRealWhatsApp = () => {
   };
 
   return (
-    <section id="demo" ref={ref} className="py-20 md:py-32 bg-gradient-to-b from-background via-muted/10 to-background relative overflow-hidden">
+    <section id="demo-whatsapp" ref={ref} className="py-20 md:py-32 bg-gradient-to-b from-background via-muted/10 to-background relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.02)_1px,transparent_1px)] bg-[size:60px_60px]" />
       <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-green-500/5 rounded-full blur-3xl" />
@@ -139,45 +147,61 @@ const VendaRealWhatsApp = () => {
           </p>
         </motion.div>
 
-        <div className="max-w-lg mx-auto">
-          {/* iPhone Frame */}
+        <div className="max-w-sm mx-auto">
+          {/* iPhone Frame - Realistic */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.2 }}
+            className="relative"
           >
-            <Card className="overflow-hidden border-2 border-border/80 shadow-2xl shadow-black/20 rounded-[2.5rem] bg-black p-3">
-              {/* iPhone Notch */}
-              <div className="relative">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-7 bg-black rounded-b-3xl z-10" />
-              </div>
+            {/* iPhone Body */}
+            <div className="relative bg-[#1a1a1a] rounded-[3rem] p-3 shadow-2xl shadow-black/50">
+              {/* iPhone Dynamic Island */}
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 w-28 h-8 bg-black rounded-full z-20" />
+              
+              {/* Screen */}
+              <div className="rounded-[2.2rem] overflow-hidden bg-black">
+                {/* Status Bar */}
+                <div className="bg-[#0b141a] px-6 py-2 flex items-center justify-between relative pt-10">
+                  <span className="text-white text-xs font-medium">14:32</span>
+                  <div className="flex items-center gap-1">
+                    <Signal className="w-4 h-4 text-white" />
+                    <Wifi className="w-4 h-4 text-white" />
+                    <Battery className="w-5 h-5 text-white" />
+                  </div>
+                </div>
 
-              {/* WhatsApp Container */}
-              <div className="rounded-[2rem] overflow-hidden bg-[#0b141a]">
                 {/* WhatsApp Header */}
-                <div className="bg-[#1f2c33] px-4 py-3 flex items-center gap-3 border-b border-[#2a3942]">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center">
+                <div className="bg-[#1f2c33] px-4 py-3 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shrink-0">
                     <Bot className="w-5 h-5 text-white" />
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-white text-sm">Clínica Estética Premium</span>
-                      <Badge className="bg-green-500/20 text-green-400 text-[9px] border-green-500/30">IA</Badge>
+                      <span className="font-semibold text-white text-sm truncate">Clínica Estética Premium</span>
+                      <Badge className="bg-green-500/20 text-green-400 text-[9px] border-green-500/30 shrink-0">IA</Badge>
                     </div>
                     <span className="text-xs text-green-400">online • Luna IA ativa</span>
                   </div>
-                  <Phone className="w-5 h-5 text-[#8696a0]" />
+                  <div className="flex items-center gap-4 shrink-0">
+                    <Video className="w-5 h-5 text-[#8696a0]" />
+                    <Phone className="w-5 h-5 text-[#8696a0]" />
+                    <MoreVertical className="w-5 h-5 text-[#8696a0]" />
+                  </div>
                 </div>
 
                 {/* Messages Container */}
                 <div 
-                  className="h-[450px] overflow-y-auto p-4 space-y-3"
+                  ref={messagesContainerRef}
+                  className="h-[420px] overflow-y-auto p-3 space-y-2"
                   style={{ 
-                    backgroundImage: 'url("data:image/svg+xml,%3Csvg width="60" height="60" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M0 0h60v60H0z" fill="%230b141a"/%3E%3Cpath d="M30 5v50M5 30h50" stroke="%231a2e35" stroke-width="0.5"/%3E%3C/svg%3E")',
+                    backgroundColor: '#0b141a',
+                    backgroundImage: 'url("data:image/svg+xml,%3Csvg width="60" height="60" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M0 0h60v60H0z" fill="%230b141a"/%3E%3Cpath d="M30 5v50M5 30h50" stroke="%231a2e35" stroke-width="0.3"/%3E%3C/svg%3E")',
                     backgroundSize: '60px 60px'
                   }}
                 >
-                  {messages.map((msg, index) => (
+                  {messages.map((msg) => (
                     <motion.div
                       key={msg.id}
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -192,15 +216,15 @@ const VendaRealWhatsApp = () => {
                             : 'bg-[#1f2c33] text-white rounded-tl-none'
                         }`}
                       >
-                        <p className="text-sm whitespace-pre-line leading-relaxed">{msg.content}</p>
+                        <p className="text-[13px] whitespace-pre-line leading-relaxed">{msg.content}</p>
                         
                         {/* Buttons */}
                         {msg.buttons && (
-                          <div className="flex flex-wrap gap-2 mt-3">
+                          <div className="flex flex-wrap gap-1.5 mt-2">
                             {msg.buttons.map((btn, i) => (
                               <span 
                                 key={i} 
-                                className="px-3 py-1.5 rounded-full text-xs font-medium bg-[#00a884]/20 text-[#00a884] border border-[#00a884]/30"
+                                className="px-2.5 py-1 rounded-full text-[10px] font-medium bg-[#00a884]/20 text-[#00a884] border border-[#00a884]/30"
                               >
                                 {btn}
                               </span>
@@ -237,8 +261,6 @@ const VendaRealWhatsApp = () => {
                       </motion.div>
                     )}
                   </AnimatePresence>
-
-                  <div ref={messagesEndRef} />
                 </div>
 
                 {/* Input Bar */}
@@ -246,19 +268,30 @@ const VendaRealWhatsApp = () => {
                   <div className="flex-1 bg-[#2a3942] rounded-full px-4 py-2">
                     <span className="text-sm text-[#8696a0]">Digite uma mensagem</span>
                   </div>
+                  <div className="w-10 h-10 rounded-full bg-[#00a884] flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                      <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Home Indicator */}
+                <div className="bg-[#0b141a] h-8 flex items-center justify-center">
+                  <div className="w-32 h-1 bg-white/30 rounded-full" />
                 </div>
               </div>
-            </Card>
+            </div>
 
-            {/* Controls */}
+            {/* Controls Below Phone */}
             <div className="flex justify-center gap-3 mt-6">
               {isPlaying ? (
-                <Button onClick={handlePause} variant="outline" className="gap-2">
+                <Button onClick={handlePause} variant="outline" size="sm" className="gap-2">
                   <Pause className="w-4 h-4" />
                   Pausar
                 </Button>
               ) : (
-                <Button onClick={handlePlay} className="gap-2 bg-green-600 hover:bg-green-700">
+                <Button onClick={handlePlay} size="sm" className="gap-2 bg-green-600 hover:bg-green-700">
                   <Play className="w-4 h-4" />
                   {currentIndex >= conversationScript.length ? 'Replay' : 'Iniciar'}
                 </Button>
@@ -269,18 +302,18 @@ const VendaRealWhatsApp = () => {
             </div>
 
             {/* Stats */}
-            <div className="flex justify-center gap-8 mt-8 text-center">
+            <div className="flex justify-center gap-8 mt-6 text-center">
               <div>
-                <div className="text-2xl font-bold text-green-500">~3s</div>
-                <div className="text-xs text-muted-foreground">Tempo de resposta</div>
+                <div className="text-xl font-bold text-green-500">~3s</div>
+                <div className="text-[10px] text-muted-foreground">Tempo de resposta</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-primary">97%</div>
-                <div className="text-xs text-muted-foreground">Taxa de resolução</div>
+                <div className="text-xl font-bold text-primary">97%</div>
+                <div className="text-[10px] text-muted-foreground">Taxa de resolução</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-amber-500">24/7</div>
-                <div className="text-xs text-muted-foreground">Disponibilidade</div>
+                <div className="text-xl font-bold text-amber-500">24/7</div>
+                <div className="text-[10px] text-muted-foreground">Disponibilidade</div>
               </div>
             </div>
           </motion.div>

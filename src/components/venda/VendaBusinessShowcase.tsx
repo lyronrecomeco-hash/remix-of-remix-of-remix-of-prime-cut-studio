@@ -3,7 +3,7 @@ import { motion, useInView } from 'framer-motion';
 import { 
   TrendingUp, MessageSquare, Clock, Users, 
   DollarSign, CheckCircle2, ArrowRight, Star,
-  Building2, Sparkles, BarChart3, Zap
+  Building2, Zap, BarChart3
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -85,7 +85,7 @@ const VendaBusinessShowcase = () => {
   const isInView = useInView(ref, { once: true, margin: '-100px' });
 
   return (
-    <section ref={ref} className="py-20 md:py-32 bg-gradient-to-b from-muted/20 via-background to-muted/10 relative overflow-hidden">
+    <section id="empresas" ref={ref} className="py-20 md:py-32 bg-gradient-to-b from-muted/20 via-background to-muted/10 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
       <div className="absolute top-1/4 left-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl" />
@@ -135,7 +135,7 @@ const VendaBusinessShowcase = () => {
               animate={isInView ? { opacity: 1, scale: 1 } : {}}
               transition={{ delay: 0.2 + index * 0.1 }}
             >
-              <Card className="p-4 md:p-6 text-center bg-card/50 backdrop-blur border-border/50 hover:border-primary/40 transition-all group">
+              <Card className="p-4 md:p-6 text-center bg-card/50 backdrop-blur border-border/50 transition-all group">
                 <div className={`w-12 h-12 mx-auto mb-4 rounded-xl bg-gradient-to-br ${metric.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
                   <metric.icon className="w-6 h-6 text-white" />
                 </div>
@@ -158,7 +158,7 @@ const VendaBusinessShowcase = () => {
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 0.3 + index * 0.1 }}
             >
-              <Card className="p-4 md:p-6 h-full bg-card/50 backdrop-blur border-border/50 hover:border-primary/40 transition-all group">
+              <Card className="p-4 md:p-6 h-full bg-card/50 backdrop-blur border-border/50 transition-all group">
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-4 pb-4 border-b border-border/50">
                   <div className="text-3xl">{convo.avatar}</div>
@@ -268,10 +268,6 @@ const VendaBusinessShowcase = () => {
                       Começar Agora
                       <ArrowRight className="w-4 h-4" />
                     </Link>
-                  </Button>
-                  <Button variant="outline" size="lg" className="gap-2">
-                    <MessageSquare className="w-4 h-4" />
-                    Ver Mais Cases
                   </Button>
                 </div>
               </div>
