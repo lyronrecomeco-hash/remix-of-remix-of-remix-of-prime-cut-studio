@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Building2, TrendingUp, MessageSquare, Clock, DollarSign, Users, Play, Pause, RotateCcw, CheckCheck, Zap, Target, Shield, BarChart3, Headphones, Globe, LineChart, Award, ArrowRight } from 'lucide-react';
+import { Building2, TrendingUp, MessageSquare, Clock, DollarSign, Users, Play, Pause, RotateCcw, CheckCheck, Zap, Target, Shield, BarChart3, Headphones, Globe, LineChart, Award, ArrowRight, Server, RefreshCw, FileText, Layers, Activity, Check, X, ShoppingCart, Stethoscope, GraduationCap, Briefcase, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import VendaHeader from '@/components/venda/VendaHeader';
 import RealisticPhoneMockup from '@/components/venda/RealisticPhoneMockup';
@@ -57,7 +57,6 @@ const VendaEmpresas = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to top on mount
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -83,35 +82,44 @@ const VendaEmpresas = () => {
   }, [currentIndex, isPlaying, activeConversation]);
 
   const stats = [
-    { icon: TrendingUp, value: '+340%', label: 'Aumento Vendas' },
-    { icon: Clock, value: '< 5s', label: 'Tempo Resposta' },
-    { icon: Users, value: '+15k', label: 'Clientes/mês' },
+    { icon: TrendingUp, value: '+340%', label: 'Aumento em Vendas' },
+    { icon: Clock, value: '< 5s', label: 'Tempo de Resposta' },
+    { icon: Users, value: '+15k', label: 'Atendimentos/mês' },
     { icon: DollarSign, value: 'R$89k', label: 'Economia Mensal' },
   ];
 
-  const benefits = [
-    { icon: Zap, title: 'Atendimento 24/7', desc: 'Nunca perca uma venda por falta de atendimento' },
-    { icon: Target, title: 'Conversão Otimizada', desc: 'IA treinada para fechar vendas com eficiência' },
-    { icon: Shield, title: 'Suporte Integrado', desc: 'Escalonamento automático para humanos' },
-    { icon: BarChart3, title: 'Analytics Completo', desc: 'Dashboards e métricas em tempo real' },
+  // Seção 1 - Infraestrutura
+  const infrastructure = [
+    { icon: Layers, title: 'Multi-instâncias', description: 'Gerencie múltiplos números de forma centralizada' },
+    { icon: Shield, title: 'Anti-ban Avançado', description: 'Proteção inteligente contra bloqueios' },
+    { icon: RefreshCw, title: 'Rotação de Números', description: 'Distribua carga entre instâncias automaticamente' },
+    { icon: FileText, title: 'Logs e Auditoria', description: 'Rastreabilidade completa de todas as operações' },
   ];
 
-  const industries = [
-    { icon: '🛒', name: 'E-commerce', desc: 'Vendas e suporte 24h' },
-    { icon: '🏥', name: 'Clínicas', desc: 'Agendamento automático' },
-    { icon: '🍕', name: 'Restaurantes', desc: 'Pedidos via WhatsApp' },
-    { icon: '🏠', name: 'Imobiliárias', desc: 'Qualificação de leads' },
-    { icon: '🎓', name: 'Educação', desc: 'Matrículas e suporte' },
-    { icon: '💼', name: 'Serviços', desc: 'Orçamentos automáticos' },
-    { icon: '🏋️', name: 'Academias', desc: 'Check-in e agendas' },
-    { icon: '✈️', name: 'Turismo', desc: 'Reservas e pacotes' },
+  // Seção 2 - Escala
+  const scaleMetrics = [
+    { value: '50k+', label: 'Mensagens/hora', desc: 'Capacidade de envio' },
+    { value: '99.9%', label: 'Uptime', desc: 'Disponibilidade garantida' },
+    { value: '< 200ms', label: 'Latência', desc: 'Tempo de processamento' },
+    { value: '∞', label: 'Instâncias', desc: 'Sem limite de números' },
   ];
 
-  const differentials = [
-    { icon: Globe, title: 'Multi-canal', desc: 'WhatsApp, Instagram, Telegram e mais' },
-    { icon: Headphones, title: 'Suporte Humano', desc: 'Transferência inteligente quando necessário' },
-    { icon: LineChart, title: 'Relatórios', desc: 'Métricas detalhadas de performance' },
-    { icon: Award, title: 'Treinamento', desc: 'IA treinada pro seu negócio' },
+  // Seção 3 - Segmentos
+  const segments = [
+    { icon: ShoppingCart, name: 'E-commerce', desc: 'Vendas, carrinho abandonado, pós-venda' },
+    { icon: GraduationCap, name: 'Infoprodutos', desc: 'Lançamentos, suporte, comunidade' },
+    { icon: Headphones, name: 'Suporte', desc: 'Tickets, FAQ, escalonamento' },
+    { icon: Briefcase, name: 'SDR / Vendas', desc: 'Qualificação, follow-up, agendamento' },
+  ];
+
+  // Seção 4 - Comparativo
+  const comparison = [
+    { feature: 'Multi-instâncias ilimitadas', genesis: true, others: false },
+    { feature: 'IA nativa com raciocínio', genesis: true, others: false },
+    { feature: 'Anti-ban inteligente', genesis: true, others: false },
+    { feature: 'Logs completos de auditoria', genesis: true, others: false },
+    { feature: 'Rotação automática de números', genesis: true, others: false },
+    { feature: 'Suporte técnico especializado', genesis: true, others: false },
   ];
 
   return (
@@ -121,14 +129,14 @@ const VendaEmpresas = () => {
       <main className="pt-24 pb-16 px-4">
         <div className="container mx-auto max-w-6xl">
           {/* Hero */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-16">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-20">
             <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">+500 Empresas Confiam</Badge>
             <h1 className="text-3xl md:text-5xl font-bold mb-4">Genesis para <span className="text-primary">Empresas</span></h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Automatize o atendimento do seu negócio com inteligência artificial</p>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Infraestrutura profissional para operações em escala — controle, segurança e ROI garantido</p>
           </motion.div>
 
           {/* Stats */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-20">
             {stats.map((stat, i) => (
               <Card key={i} className="text-center border-border/50 bg-card/50">
                 <CardContent className="pt-6">
@@ -140,26 +148,86 @@ const VendaEmpresas = () => {
             ))}
           </motion.div>
 
-          {/* Industries */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="mb-16">
-            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">Para <span className="text-primary">Todos os Segmentos</span></h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {industries.map((ind, i) => (
-                <Card key={i} className="text-center border-border/50 bg-card/30 hover:bg-card/50 transition-colors cursor-default">
-                  <CardContent className="py-6">
-                    <span className="text-4xl mb-3 block">{ind.icon}</span>
-                    <h3 className="font-semibold mb-1">{ind.name}</h3>
-                    <p className="text-xs text-muted-foreground">{ind.desc}</p>
-                  </CardContent>
-                </Card>
+          {/* Seção 1 - Infraestrutura Profissional */}
+          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="mb-20">
+            <div className="text-center mb-10">
+              <Badge variant="outline" className="mb-3 text-primary border-primary/30">Infraestrutura</Badge>
+              <h2 className="text-2xl md:text-3xl font-bold">Arquitetura <span className="text-primary">Profissional</span></h2>
+              <p className="text-muted-foreground mt-2 max-w-xl mx-auto">Projetada para operações enterprise com alta disponibilidade</p>
+            </div>
+            
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {infrastructure.map((item, i) => (
+                <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.05 }}>
+                  <Card className="h-full border-border/50 bg-card/50 hover:bg-card/80 transition-colors">
+                    <CardContent className="pt-6">
+                      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center mb-4">
+                        <item.icon className="w-7 h-7 text-white" />
+                      </div>
+                      <h3 className="font-semibold mb-2">{item.title}</h3>
+                      <p className="text-sm text-muted-foreground">{item.description}</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
               ))}
             </div>
-          </motion.div>
+          </motion.section>
 
-          {/* Conversations Demo */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mb-16">
-            <h2 className="text-2xl md:text-3xl font-bold text-center mb-4">Conversas <span className="text-primary">Reais</span> em Ação</h2>
-            <p className="text-center text-muted-foreground mb-8 max-w-xl mx-auto">Veja como a Genesis atende diferentes tipos de negócios</p>
+          {/* Seção 2 - Escala Comprovada */}
+          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="mb-20">
+            <div className="text-center mb-10">
+              <Badge variant="outline" className="mb-3 text-primary border-primary/30">Performance</Badge>
+              <h2 className="text-2xl md:text-3xl font-bold">Escala <span className="text-primary">Comprovada</span></h2>
+              <p className="text-muted-foreground mt-2 max-w-xl mx-auto">Métricas reais de infraestrutura Genesis</p>
+            </div>
+            
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {scaleMetrics.map((metric, i) => (
+                <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.05 }}>
+                  <Card className="text-center border-primary/10 bg-gradient-to-br from-primary/5 to-blue-600/5">
+                    <CardContent className="py-8">
+                      <p className="text-3xl md:text-4xl font-bold text-primary mb-1">{metric.value}</p>
+                      <p className="font-semibold text-sm">{metric.label}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{metric.desc}</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </motion.section>
+
+          {/* Seção 3 - Segmentos */}
+          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="mb-20">
+            <div className="text-center mb-10">
+              <Badge variant="outline" className="mb-3 text-primary border-primary/30">Segmentos</Badge>
+              <h2 className="text-2xl md:text-3xl font-bold">Soluções por <span className="text-primary">Área</span></h2>
+              <p className="text-muted-foreground mt-2 max-w-xl mx-auto">Configurações otimizadas para cada modelo de negócio</p>
+            </div>
+            
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {segments.map((seg, i) => (
+                <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 + i * 0.05 }}>
+                  <Card className="h-full border-border/50 bg-card/50 hover:bg-card/80 transition-colors">
+                    <CardContent className="pt-6 text-center">
+                      <div className="w-14 h-14 mx-auto rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center mb-4">
+                        <seg.icon className="w-7 h-7 text-white" />
+                      </div>
+                      <h3 className="font-semibold mb-2">{seg.name}</h3>
+                      <p className="text-sm text-muted-foreground">{seg.desc}</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </motion.section>
+
+          {/* Demo de Conversas */}
+          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="mb-20">
+            <div className="text-center mb-10">
+              <Badge variant="outline" className="mb-3 text-primary border-primary/30">Demonstração</Badge>
+              <h2 className="text-2xl md:text-3xl font-bold">Conversas <span className="text-primary">Reais</span></h2>
+              <p className="text-muted-foreground mt-2 max-w-xl mx-auto">Veja como a Genesis atende diferentes tipos de negócios</p>
+            </div>
             
             <div className="flex flex-wrap justify-center gap-2 md:gap-4 mb-8">
               {Object.entries(conversations).map(([key, conv]) => (
@@ -192,55 +260,78 @@ const VendaEmpresas = () => {
               <Button variant="outline" size="sm" onClick={() => setIsPlaying(!isPlaying)}>{isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}</Button>
               <Button variant="outline" size="sm" onClick={() => { setDisplayedMessages([]); setCurrentIndex(0); setIsPlaying(true); }}><RotateCcw className="w-4 h-4" /></Button>
             </div>
-          </motion.div>
+          </motion.section>
 
-          {/* Benefits */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mb-16">
-            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">Por que <span className="text-primary">Empresas Escolhem</span> a Genesis</h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {benefits.map((b, i) => (
-                <Card key={i} className="border-border/50 bg-card/50">
-                  <CardContent className="pt-6">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center mb-4"><b.icon className="w-6 h-6 text-white" /></div>
-                    <h3 className="font-semibold mb-2">{b.title}</h3>
-                    <p className="text-sm text-muted-foreground">{b.desc}</p>
-                  </CardContent>
-                </Card>
-              ))}
+          {/* Seção 4 - Comparativo */}
+          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="mb-20">
+            <div className="text-center mb-10">
+              <Badge variant="outline" className="mb-3 text-primary border-primary/30">Comparativo</Badge>
+              <h2 className="text-2xl md:text-3xl font-bold">Genesis vs <span className="text-primary">Soluções Comuns</span></h2>
+              <p className="text-muted-foreground mt-2 max-w-xl mx-auto">Veja o que nos diferencia no mercado</p>
             </div>
-          </motion.div>
-
-          {/* Differentials */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="mb-16">
-            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">Diferenciais <span className="text-primary">Exclusivos</span></h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {differentials.map((d, i) => (
-                <Card key={i} className="border-primary/10 bg-gradient-to-br from-primary/5 to-blue-600/5">
-                  <CardContent className="pt-6 text-center">
-                    <d.icon className="w-10 h-10 mx-auto mb-4 text-primary" />
-                    <h3 className="font-semibold mb-2">{d.title}</h3>
-                    <p className="text-sm text-muted-foreground">{d.desc}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* CTA */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="text-center">
-            <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-blue-600/5">
-              <CardContent className="py-12 md:py-16">
-                <h2 className="text-2xl md:text-3xl font-bold mb-4">Pronto para transformar seu atendimento?</h2>
-                <p className="text-muted-foreground mb-8 max-w-xl mx-auto">Junte-se a mais de 500 empresas que já automatizaram o atendimento com a Genesis</p>
-                <Button asChild size="lg" className="gap-2">
-                  <a href="/venda-genesis#precos">
-                    Ver Planos
-                    <ArrowRight className="w-4 h-4" />
-                  </a>
-                </Button>
+            
+            <Card className="border-border/50 bg-card/50 overflow-hidden">
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border/50">
+                        <th className="text-left p-4 font-semibold">Funcionalidade</th>
+                        <th className="p-4 font-semibold text-center text-primary">Genesis</th>
+                        <th className="p-4 font-semibold text-center text-muted-foreground">Outros</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {comparison.map((row, i) => (
+                        <tr key={i} className="border-b border-border/30 last:border-0">
+                          <td className="p-4 text-sm">{row.feature}</td>
+                          <td className="p-4 text-center">
+                            {row.genesis ? (
+                              <Check className="w-5 h-5 mx-auto text-green-500" />
+                            ) : (
+                              <X className="w-5 h-5 mx-auto text-red-500" />
+                            )}
+                          </td>
+                          <td className="p-4 text-center">
+                            {row.others ? (
+                              <Check className="w-5 h-5 mx-auto text-green-500" />
+                            ) : (
+                              <X className="w-5 h-5 mx-auto text-red-500" />
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </CardContent>
             </Card>
-          </motion.div>
+          </motion.section>
+
+          {/* CTA Enterprise */}
+          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="text-center">
+            <Card className="border-primary/20 bg-gradient-to-br from-primary/10 to-blue-600/10">
+              <CardContent className="py-12 md:py-16">
+                <Building2 className="w-16 h-16 mx-auto mb-6 text-primary" />
+                <h2 className="text-2xl md:text-3xl font-bold mb-4">Pronto para escalar seu atendimento?</h2>
+                <p className="text-muted-foreground mb-8 max-w-xl mx-auto">Fale com nossos especialistas e descubra como a Genesis pode transformar sua operação</p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button asChild size="lg" className="gap-2">
+                    <a href="/venda-genesis#precos">
+                      Ver Planos
+                      <ArrowRight className="w-4 h-4" />
+                    </a>
+                  </Button>
+                  <Button asChild size="lg" variant="outline" className="gap-2">
+                    <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer">
+                      <Phone className="w-4 h-4" />
+                      Falar com Especialista
+                    </a>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.section>
         </div>
       </main>
     </div>
