@@ -142,7 +142,8 @@ export const BaseNode = memo(({
             key={index}
             type="source"
             position={Position.Right}
-            id={`output-${index}`}
+            // NOTE: 1-based ids to match existing saved edges (output-1, output-2, ...)
+            id={`output-${index + 1}`}
             className={cn(
               "!w-4 !h-4 !border-[3px] !border-background !rounded-full transition-transform hover:scale-125",
               styles.handle

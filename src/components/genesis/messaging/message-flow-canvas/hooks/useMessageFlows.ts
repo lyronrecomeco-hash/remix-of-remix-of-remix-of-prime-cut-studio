@@ -48,28 +48,15 @@ export const useMessageFlows = () => {
   const syncFlowToDatabase = useCallback(async (flow: MessageFlow): Promise<boolean> => {
     try {
       setSyncing(true);
-      
-      // Get current user
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error('Usuário não autenticado');
         return false;
       }
 
-      // Find genesis user
-      const { data: genesisUser } = await supabase
-        .from('genesis_users')
-        .select('id')
-        .eq('email', user.email)
-        .maybeSingle();
-
-      if (!genesisUser) {
-        toast.error('Usuário Genesis não encontrado');
-        return false;
-      }
-
       // Extract instance ID from nodes (look for instance-connector node)
-      const instanceNode = flow.nodes.find(n => n.type === 'instance-connector');
+      const instanceNode = flow.nodes.find((n) => n.type === 'instance-connector');
       const instanceId = instanceNode?.data?.config?.instanceId || null;
 
       if (!instanceId) {
@@ -77,10 +64,34 @@ export const useMessageFlows = () => {
         return false;
       }
 
-      // Extract trigger keywords from start-trigger node
-      const startNode = flow.nodes.find(n => n.type === 'start-trigger');
-      const triggerKeywords = startNode?.data?.config?.keywords || ['*'];
-      const triggerType = startNode?.data?.config?.triggerType || 'keyword';
+      // Extract trigger info from start-trigger node
+      const startNode = flow.nodes.find((n) => n.type === 'start-trigger');
+      const rawTriggerType =
+        startNode?.data?.config?.triggerType ??
+        startNode?.data?.config?.trigger_type ??
+        'keyword';
+
+      const triggerType = (() => {
+        const t = String(rawTriggerType || '').toLowerCase();
+        if (t === 'any_message' || t === 'all_messages' || t === 'all' || t === 'any') return 'all';
+        if (t === 'keyword' || t === 'keywords') return 'keyword';
+        return 'keyword';
+      })();
+
+      const rawKeywords =
+        startNode?.data?.config?.keywords ??
+        startNode?.data?.config?.trigger_keywords ??
+        [];
+
+      const triggerKeywords = triggerType === 'all'
+        ? ['*']
+        : (Array.isArray(rawKeywords) ? rawKeywords : [])
+            .map((k) => String(k || '').trim())
+            .filter(Boolean);
+
+      if (triggerType === 'keyword' && triggerKeywords.length === 0) {
+        triggerKeywords.push('*');
+      }
 
       // Convert flow nodes/edges to flow_config format for the engine
       const flowConfig = {
@@ -91,7 +102,7 @@ export const useMessageFlows = () => {
         settings: {
           greeting_dynamic: true,
         },
-        steps: convertNodesToSteps(flow.nodes, flow.edges)
+        steps: convertNodesToSteps(flow.nodes, flow.edges),
       };
 
       // Check if chatbot already exists for this flow
@@ -102,29 +113,28 @@ export const useMessageFlows = () => {
         .eq('instance_id', instanceId)
         .maybeSingle();
 
+      // IMPORTANT: only include columns that exist in whatsapp_automations
       const chatbotData = {
         name: `Flow: ${flow.name}`,
-        description: flow.description || `Fluxo de mensagens: ${flow.name}`,
         trigger_type: triggerType,
         trigger_keywords: triggerKeywords,
         response_type: 'flow',
         response_content: null,
         is_active: flow.isActive,
         instance_id: instanceId,
-        user_id: genesisUser.id,
         flow_config: JSON.parse(JSON.stringify(flowConfig)),
-        ai_enabled: flow.nodes.some(n => n.data?.config?.aiEnabled),
+        ai_enabled: flow.nodes.some((n) => n.data?.config?.aiEnabled),
         ai_model: 'google/gemini-2.5-flash',
         ai_temperature: 0.7,
         ai_system_prompt: 'Você é um assistente virtual inteligente e prestativo.',
         company_name: 'Empresa',
         max_attempts: 3,
         fallback_message: 'Desculpe, não entendi. Por favor, escolha uma das opções do menu.',
-        delay_seconds: 1
+        delay_seconds: 1,
+        priority: 1,
       };
 
       if (existingChatbot) {
-        // Update existing
         const { error } = await supabase
           .from('whatsapp_automations')
           .update(chatbotData)
@@ -133,13 +143,9 @@ export const useMessageFlows = () => {
         if (error) throw error;
         console.log('[SYNC] Updated chatbot:', existingChatbot.id);
       } else {
-        // Create new
         const { error } = await supabase
           .from('whatsapp_automations')
-          .insert({
-            ...chatbotData,
-            priority: 1
-          } as any);
+          .insert(chatbotData as any);
 
         if (error) throw error;
         console.log('[SYNC] Created new chatbot for flow:', flow.name);
@@ -158,108 +164,180 @@ export const useMessageFlows = () => {
   // Helper: Convert nodes to engine steps format
   const convertNodesToSteps = (nodes: MessageNode[], edges: MessageEdge[]): Record<string, any> => {
     const steps: Record<string, any> = {};
-    
-    // Build edge map for finding next nodes
-    const edgeMap = new Map<string, string[]>();
-    edges.forEach(edge => {
-      const existing = edgeMap.get(edge.source) || [];
-      existing.push(edge.target);
-      edgeMap.set(edge.source, existing);
+
+    const isTriggerNode = (type: string) =>
+      type === 'start-trigger' ||
+      type === 'instance-connector' ||
+      type === 'webhook-trigger' ||
+      type === 'schedule-trigger';
+
+    // Build outgoing edges map
+    const outgoing = new Map<string, MessageEdge[]>();
+    edges.forEach((edge) => {
+      const arr = outgoing.get(edge.source) || [];
+      arr.push(edge);
+      outgoing.set(edge.source, arr);
     });
 
-    nodes.forEach(node => {
-      const nextNodes = edgeMap.get(node.id) || [];
-      const nextStepId = nextNodes[0] || 'end_flow';
+    const getDefaultNext = (sourceId: string) => (outgoing.get(sourceId) || [])[0]?.target || 'end_flow';
 
-      switch (node.type) {
-        case 'advanced-text':
-          steps[node.id] = {
-            id: node.id,
-            type: 'text',
-            message: node.data.config?.message || '',
-            next: nextStepId
-          };
-          break;
-        case 'button-message':
-          steps[node.id] = {
-            id: node.id,
-            type: 'menu',
-            message: node.data.config?.message || '',
-            options: (node.data.config?.buttons || []).map((btn: any, i: number) => ({
-              id: i + 1,
-              text: btn.text,
-              next: nextNodes[i] || nextStepId
-            })),
-            next: nextStepId
-          };
-          break;
-        case 'list-message':
-          steps[node.id] = {
-            id: node.id,
-            type: 'menu',
-            message: node.data.config?.message || '',
-            options: (node.data.config?.items || []).map((item: any, i: number) => ({
-              id: i + 1,
-              text: item.title,
-              next: nextNodes[i] || nextStepId
-            })),
-            next: nextStepId
-          };
-          break;
-        case 'poll':
-          steps[node.id] = {
-            id: node.id,
-            type: 'menu',
-            message: node.data.config?.question || '',
-            options: (node.data.config?.options || []).map((opt: string, i: number) => ({
-              id: i + 1,
-              text: opt,
-              next: nextStepId
-            })),
-            next: nextStepId
-          };
-          break;
-        case 'smart-delay':
-          steps[node.id] = {
-            id: node.id,
-            type: 'text',
-            message: '⏳',
-            delay: node.data.config?.delay || 2000,
-            next: nextStepId
-          };
-          break;
-        case 'condition':
-          steps[node.id] = {
-            id: node.id,
-            type: 'ai',
-            message: 'Analisando...',
-            ai_enabled: true,
-            next: nextStepId
-          };
-          break;
-        case 'end-flow':
-          steps[node.id] = {
-            id: node.id,
-            type: 'end',
-            message: node.data.config?.message || 'Atendimento finalizado. Obrigado!'
-          };
-          break;
-        default:
-          steps[node.id] = {
-            id: node.id,
-            type: 'text',
-            message: node.data.label || '',
-            next: nextStepId
-          };
+    const getTargetForOption = (sourceId: string, optionIndex: number) => {
+      const out = outgoing.get(sourceId) || [];
+      const handleCandidates = [`output-${optionIndex + 1}`, `output-${optionIndex}`];
+
+      for (const handleId of handleCandidates) {
+        const found = out.find((e) => e.sourceHandle === handleId);
+        if (found?.target) return found.target;
       }
-    });
+
+      // fallback: by order
+      return out[optionIndex]?.target || out[0]?.target || 'end_flow';
+    };
+
+    // Create a deterministic entry point compatible with chatbot-engine (it starts sessions at "greeting")
+    const startNode = nodes.find((n) => n.type === 'start-trigger');
+    let firstRealNodeId: string | null = null;
+
+    if (startNode) {
+      let cursor: string | undefined = startNode.id;
+      let safety = 0;
+      while (cursor && safety < 50) {
+        safety++;
+        const nextId = (outgoing.get(cursor) || [])[0]?.target;
+        if (!nextId) break;
+        const nextNode = nodes.find((n) => n.id === nextId);
+        if (!nextNode) break;
+        if (isTriggerNode(nextNode.type)) {
+          cursor = nextId;
+          continue;
+        }
+        firstRealNodeId = nextId;
+        break;
+      }
+    }
+
+    if (!firstRealNodeId) {
+      firstRealNodeId = nodes.find((n) => !isTriggerNode(n.type))?.id || null;
+    }
+
+    steps['greeting'] = {
+      id: 'greeting',
+      type: 'greeting',
+      message: '{{saudacao_dinamica}}',
+      next: firstRealNodeId || 'end_flow',
+    };
+
+    // Map nodes to steps (skip triggers)
+    nodes
+      .filter((node) => !isTriggerNode(node.type))
+      .forEach((node) => {
+        const cfg = node.data.config || {};
+        const nextStepId = getDefaultNext(node.id);
+
+        switch (node.type) {
+          case 'advanced-text':
+            steps[node.id] = {
+              id: node.id,
+              type: 'text',
+              message: cfg.message || '',
+              next: nextStepId,
+            };
+            break;
+
+          case 'button-message': {
+            const buttons = Array.isArray(cfg.buttons) ? cfg.buttons : [];
+            steps[node.id] = {
+              id: node.id,
+              type: 'menu',
+              message: cfg.message || '',
+              options: buttons.map((btn: any, i: number) => ({
+                id: i + 1,
+                text: btn.text,
+                next: getTargetForOption(node.id, i) || nextStepId,
+              })),
+              next: nextStepId,
+            };
+            break;
+          }
+
+          case 'list-message': {
+            const title = cfg.title || cfg.message || '';
+
+            // Support both shapes: items[] OR sections[].rows[]
+            const items = Array.isArray(cfg.items)
+              ? cfg.items
+              : Array.isArray(cfg.sections)
+                  ? cfg.sections.flatMap((s: any) => (Array.isArray(s?.rows) ? s.rows : []))
+                  : [];
+
+            steps[node.id] = {
+              id: node.id,
+              type: 'menu',
+              message: title,
+              options: items.map((item: any, i: number) => ({
+                id: i + 1,
+                text: item.title || item.text || `Opção ${i + 1}`,
+                next: getTargetForOption(node.id, i) || nextStepId,
+              })),
+              next: nextStepId,
+            };
+            break;
+          }
+
+          case 'poll': {
+            const opts = Array.isArray(cfg.options) ? cfg.options : [];
+            steps[node.id] = {
+              id: node.id,
+              type: 'menu',
+              message: cfg.question || '',
+              options: opts.map((opt: any, i: number) => ({
+                id: i + 1,
+                text: String(opt || ''),
+                next: getTargetForOption(node.id, i) || nextStepId,
+              })),
+              next: nextStepId,
+            };
+            break;
+          }
+
+          case 'condition':
+          case 'presence':
+          case 'smart-delay':
+          case 'http-request':
+          case 'set-variable':
+            // Not supported by chatbot-engine as true actions yet; treat as passthrough
+            steps[node.id] = {
+              id: node.id,
+              type: 'text',
+              message: '',
+              next: nextStepId,
+            };
+            break;
+
+          case 'end-flow':
+            steps[node.id] = {
+              id: node.id,
+              type: 'end',
+              message: cfg.message || '✅ Atendimento finalizado. Obrigado!',
+            };
+            break;
+
+          default:
+            steps[node.id] = {
+              id: node.id,
+              type: 'text',
+              message: node.data.label || '',
+              next: nextStepId,
+            };
+        }
+      });
 
     // Add default end step if not present
     if (!steps['end_flow']) {
       steps['end_flow'] = {
         id: 'end_flow',
         type: 'end',
-        message: '✅ Atendimento finalizado. Obrigado!'
+        message: '✅ Atendimento finalizado. Obrigado!',
       };
     }
 
