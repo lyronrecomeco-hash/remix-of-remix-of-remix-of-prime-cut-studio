@@ -22,7 +22,7 @@ import {
   Type, LayoutGrid, List, Mic, BarChart2, Heart, Radio, Clock, GitBranch, 
   Plus, Trash2, Save, Play, Smartphone, Globe, Calendar, UserPlus, UserMinus,
   Filter, UserX, AlertTriangle, Bell, ShieldAlert, Link2Off, BookOpen, Hash,
-  Variable, Square, Zap
+  Variable, Square, Zap, AlertCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MessageNodeType } from '../../types';
@@ -126,21 +126,89 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
                 className="min-h-[120px]"
               />
             </div>
+            
             <div className="space-y-2">
               <Label>Variáveis disponíveis</Label>
               <div className="flex flex-wrap gap-1.5">
-                {['nome', 'telefone', 'email', 'empresa'].map((v) => (
-                  <Badge key={v} variant="secondary" className="text-xs cursor-pointer hover:bg-primary/20">
+                {['nome', 'telefone', 'email', 'empresa', 'data', 'hora', 'protocolo'].map((v) => (
+                  <Badge 
+                    key={v} 
+                    variant="secondary" 
+                    className="text-xs cursor-pointer hover:bg-primary/20 transition-colors"
+                    onClick={() => setConfig({ ...config, message: (config.message || '') + `{{${v}}}` })}
+                  >
                     {`{{${v}}}`}
                   </Badge>
                 ))}
               </div>
             </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
+                <Label className="text-xs">Formatação WhatsApp</Label>
+                <Switch
+                  checked={config.useFormatting ?? true}
+                  onCheckedChange={(v) => setConfig({ ...config, useFormatting: v })}
+                />
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
+                <Label className="text-xs">Preview de link</Label>
+                <Switch
+                  checked={config.linkPreview ?? true}
+                  onCheckedChange={(v) => setConfig({ ...config, linkPreview: v })}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Tipo de mídia anexa</Label>
+              <Select
+                value={config.mediaType || 'none'}
+                onValueChange={(v) => setConfig({ ...config, mediaType: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sem mídia</SelectItem>
+                  <SelectItem value="image">Imagem</SelectItem>
+                  <SelectItem value="video">Vídeo</SelectItem>
+                  <SelectItem value="document">Documento</SelectItem>
+                  <SelectItem value="sticker">Sticker</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {config.mediaType && config.mediaType !== 'none' && (
+              <div className="space-y-2">
+                <Label>URL da mídia</Label>
+                <Input
+                  placeholder="https://exemplo.com/arquivo.jpg"
+                  value={config.mediaUrl || ''}
+                  onChange={(e) => setConfig({ ...config, mediaUrl: e.target.value })}
+                />
+              </div>
+            )}
+
             <div className="flex items-center justify-between">
-              <Label>Formatação WhatsApp</Label>
+              <div>
+                <Label>Mencionar contato</Label>
+                <p className="text-xs text-muted-foreground">Adiciona @ antes da mensagem</p>
+              </div>
               <Switch
-                checked={config.useFormatting || false}
-                onCheckedChange={(v) => setConfig({ ...config, useFormatting: v })}
+                checked={config.mentionContact || false}
+                onCheckedChange={(v) => setConfig({ ...config, mentionContact: v })}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Responder mensagem anterior</Label>
+                <p className="text-xs text-muted-foreground">Cita a última mensagem recebida</p>
+              </div>
+              <Switch
+                checked={config.replyToLast || false}
+                onCheckedChange={(v) => setConfig({ ...config, replyToLast: v })}
               />
             </div>
           </div>
@@ -150,13 +218,65 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
         return (
           <div className="space-y-4">
             <div className="space-y-2">
+              <Label>Cabeçalho (opcional)</Label>
+              <Select
+                value={config.headerType || 'none'}
+                onValueChange={(v) => setConfig({ ...config, headerType: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Tipo de cabeçalho" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sem cabeçalho</SelectItem>
+                  <SelectItem value="text">Texto</SelectItem>
+                  <SelectItem value="image">Imagem</SelectItem>
+                  <SelectItem value="video">Vídeo</SelectItem>
+                  <SelectItem value="document">Documento</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {config.headerType === 'text' && (
+              <div className="space-y-2">
+                <Label>Texto do cabeçalho</Label>
+                <Input
+                  placeholder="Título em negrito"
+                  value={config.headerText || ''}
+                  onChange={(e) => setConfig({ ...config, headerText: e.target.value })}
+                />
+              </div>
+            )}
+
+            {(config.headerType === 'image' || config.headerType === 'video' || config.headerType === 'document') && (
+              <div className="space-y-2">
+                <Label>URL da mídia</Label>
+                <Input
+                  placeholder="https://exemplo.com/arquivo"
+                  value={config.headerMediaUrl || ''}
+                  onChange={(e) => setConfig({ ...config, headerMediaUrl: e.target.value })}
+                />
+              </div>
+            )}
+
+            <div className="space-y-2">
               <Label>Texto da mensagem</Label>
               <Textarea
                 placeholder="Mensagem que acompanha os botões"
                 value={config.message || ''}
                 onChange={(e) => setConfig({ ...config, message: e.target.value })}
+                className="min-h-[80px]"
               />
             </div>
+
+            <div className="space-y-2">
+              <Label>Rodapé (opcional)</Label>
+              <Input
+                placeholder="Texto do rodapé"
+                value={config.footer || ''}
+                onChange={(e) => setConfig({ ...config, footer: e.target.value })}
+              />
+            </div>
+
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Botões (máx. 3)</Label>
@@ -166,7 +286,7 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
                     size="sm"
                     onClick={() => setConfig({
                       ...config,
-                      buttons: [...(config.buttons || []), { id: Date.now(), text: '' }]
+                      buttons: [...(config.buttons || []), { id: Date.now(), text: '', action: 'reply' }]
                     })}
                   >
                     <Plus className="w-4 h-4 mr-1" />
@@ -176,30 +296,89 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
               </div>
               <div className="space-y-2">
                 {(config.buttons || []).map((btn: any, i: number) => (
-                  <div key={btn.id} className="flex gap-2">
-                    <Input
-                      placeholder={`Botão ${i + 1}`}
-                      value={btn.text}
-                      onChange={(e) => {
-                        const buttons = [...config.buttons];
-                        buttons[i] = { ...btn, text: e.target.value };
-                        setConfig({ ...config, buttons });
-                      }}
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        const buttons = config.buttons.filter((_: any, j: number) => j !== i);
-                        setConfig({ ...config, buttons });
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
+                  <div key={btn.id} className="p-3 rounded-lg border bg-muted/20 space-y-2">
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder={`Texto do botão ${i + 1}`}
+                        value={btn.text}
+                        onChange={(e) => {
+                          const buttons = [...config.buttons];
+                          buttons[i] = { ...btn, text: e.target.value };
+                          setConfig({ ...config, buttons });
+                        }}
+                        className="flex-1"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          const buttons = config.buttons.filter((_: any, j: number) => j !== i);
+                          setConfig({ ...config, buttons });
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
+                    <div className="flex gap-2">
+                      <Select
+                        value={btn.action || 'reply'}
+                        onValueChange={(v) => {
+                          const buttons = [...config.buttons];
+                          buttons[i] = { ...btn, action: v };
+                          setConfig({ ...config, buttons });
+                        }}
+                      >
+                        <SelectTrigger className="h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="reply">Resposta rápida</SelectItem>
+                          <SelectItem value="url">Abrir URL</SelectItem>
+                          <SelectItem value="call">Ligar</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {btn.action === 'url' && (
+                        <Input
+                          placeholder="https://..."
+                          value={btn.url || ''}
+                          onChange={(e) => {
+                            const buttons = [...config.buttons];
+                            buttons[i] = { ...btn, url: e.target.value };
+                            setConfig({ ...config, buttons });
+                          }}
+                          className="h-8 flex-1"
+                        />
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Expirar botões</Label>
+                <p className="text-xs text-muted-foreground">Desativa após tempo limite</p>
+              </div>
+              <Switch
+                checked={config.expireButtons || false}
+                onCheckedChange={(v) => setConfig({ ...config, expireButtons: v })}
+              />
+            </div>
+
+            {config.expireButtons && (
+              <div className="space-y-2">
+                <Label>Tempo de expiração (segundos)</Label>
+                <Slider
+                  value={[config.buttonExpireTime || 60]}
+                  min={10}
+                  max={300}
+                  step={10}
+                  onValueChange={([v]) => setConfig({ ...config, buttonExpireTime: v })}
+                />
+                <p className="text-xs text-muted-foreground text-right">{config.buttonExpireTime || 60}s</p>
+              </div>
+            )}
           </div>
         );
 
@@ -214,23 +393,29 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
                 onChange={(e) => setConfig({ ...config, question: e.target.value })}
               />
             </div>
+            
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>Opções</Label>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setConfig({
-                    ...config,
-                    options: [...(config.options || []), '']
-                  })}
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Adicionar
-                </Button>
+                <Label>Opções (mín. 2, máx. 12)</Label>
+                {(config.options?.length || 0) < 12 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setConfig({
+                      ...config,
+                      options: [...(config.options || []), '']
+                    })}
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Adicionar
+                  </Button>
+                )}
               </div>
               {(config.options || []).map((opt: string, i: number) => (
                 <div key={i} className="flex gap-2">
+                  <div className="flex items-center justify-center w-8 h-9 rounded-lg bg-muted text-xs font-medium">
+                    {i + 1}
+                  </div>
                   <Input
                     placeholder={`Opção ${i + 1}`}
                     value={opt}
@@ -239,6 +424,7 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
                       options[i] = e.target.value;
                       setConfig({ ...config, options });
                     }}
+                    className="flex-1"
                   />
                   <Button
                     variant="ghost"
@@ -247,19 +433,69 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
                       const options = config.options.filter((_: any, j: number) => j !== i);
                       setConfig({ ...config, options });
                     }}
+                    disabled={(config.options?.length || 0) <= 2}
                   >
                     <Trash2 className="w-4 h-4 text-destructive" />
                   </Button>
                 </div>
               ))}
             </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
+                <Label className="text-xs">Múltiplas respostas</Label>
+                <Switch
+                  checked={config.allowMultiple || false}
+                  onCheckedChange={(v) => setConfig({ ...config, allowMultiple: v })}
+                />
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
+                <Label className="text-xs">Resultados anônimos</Label>
+                <Switch
+                  checked={config.anonymousVotes || false}
+                  onCheckedChange={(v) => setConfig({ ...config, anonymousVotes: v })}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Limite de seleções</Label>
+              <Slider
+                value={[config.maxSelections || 1]}
+                min={1}
+                max={config.options?.length || 5}
+                step={1}
+                onValueChange={([v]) => setConfig({ ...config, maxSelections: v })}
+              />
+              <p className="text-xs text-muted-foreground text-right">
+                Máximo de {config.maxSelections || 1} seleção(ões)
+              </p>
+            </div>
+
             <div className="flex items-center justify-between">
-              <Label>Permitir múltiplas respostas</Label>
+              <div>
+                <Label>Timeout de resposta</Label>
+                <p className="text-xs text-muted-foreground">Encerra após tempo limite</p>
+              </div>
               <Switch
-                checked={config.allowMultiple || false}
-                onCheckedChange={(v) => setConfig({ ...config, allowMultiple: v })}
+                checked={config.enableTimeout || false}
+                onCheckedChange={(v) => setConfig({ ...config, enableTimeout: v })}
               />
             </div>
+
+            {config.enableTimeout && (
+              <div className="space-y-2">
+                <Label>Tempo limite (segundos)</Label>
+                <Slider
+                  value={[config.pollTimeout || 60]}
+                  min={30}
+                  max={600}
+                  step={30}
+                  onValueChange={([v]) => setConfig({ ...config, pollTimeout: v })}
+                />
+                <p className="text-xs text-muted-foreground text-right">{config.pollTimeout || 60}s</p>
+              </div>
+            )}
           </div>
         );
 
@@ -267,27 +503,132 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
         return (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Delay base (segundos): {config.baseDelay || 3}s</Label>
-              <Slider
-                value={[config.baseDelay || 3]}
-                min={1}
-                max={30}
-                step={1}
-                onValueChange={([v]) => setConfig({ ...config, baseDelay: v })}
-              />
+              <Label>Tipo de Delay</Label>
+              <Select
+                value={config.delayType || 'fixed'}
+                onValueChange={(v) => setConfig({ ...config, delayType: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fixed">Fixo</SelectItem>
+                  <SelectItem value="random">Aleatório</SelectItem>
+                  <SelectItem value="adaptive">Adaptativo (anti-ban)</SelectItem>
+                  <SelectItem value="typing">Baseado em digitação</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Variação aleatória: ±{config.variation || 1}s</Label>
-              <Slider
-                value={[config.variation || 1]}
-                min={0}
-                max={10}
-                step={0.5}
-                onValueChange={([v]) => setConfig({ ...config, variation: v })}
-              />
-            </div>
+
+            {(config.delayType === 'fixed' || !config.delayType) && (
+              <div className="space-y-2">
+                <Label>Delay fixo (segundos): {config.baseDelay || 3}s</Label>
+                <Slider
+                  value={[config.baseDelay || 3]}
+                  min={1}
+                  max={60}
+                  step={1}
+                  onValueChange={([v]) => setConfig({ ...config, baseDelay: v })}
+                />
+              </div>
+            )}
+
+            {config.delayType === 'random' && (
+              <>
+                <div className="space-y-2">
+                  <Label>Delay mínimo: {config.minDelay || 2}s</Label>
+                  <Slider
+                    value={[config.minDelay || 2]}
+                    min={1}
+                    max={30}
+                    step={1}
+                    onValueChange={([v]) => setConfig({ ...config, minDelay: v })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Delay máximo: {config.maxDelay || 10}s</Label>
+                  <Slider
+                    value={[config.maxDelay || 10]}
+                    min={5}
+                    max={120}
+                    step={1}
+                    onValueChange={([v]) => setConfig({ ...config, maxDelay: v })}
+                  />
+                </div>
+              </>
+            )}
+
+            {config.delayType === 'adaptive' && (
+              <div className="space-y-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                <p className="text-xs text-amber-600">
+                  O delay adaptativo ajusta automaticamente baseado no histórico de envios 
+                  para simular comportamento humano e evitar bloqueios.
+                </p>
+                <div className="space-y-2">
+                  <Label>Delay base: {config.baseDelay || 5}s</Label>
+                  <Slider
+                    value={[config.baseDelay || 5]}
+                    min={3}
+                    max={30}
+                    step={1}
+                    onValueChange={([v]) => setConfig({ ...config, baseDelay: v })}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Adicionar variação aleatória</Label>
+                  <Switch
+                    checked={config.addVariation ?? true}
+                    onCheckedChange={(v) => setConfig({ ...config, addVariation: v })}
+                  />
+                </div>
+              </div>
+            )}
+
+            {config.delayType === 'typing' && (
+              <div className="space-y-3 p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                <p className="text-xs text-blue-600">
+                  Calcula o delay baseado no tamanho da próxima mensagem, 
+                  simulando tempo real de digitação.
+                </p>
+                <div className="space-y-2">
+                  <Label>Caracteres por segundo: {config.charsPerSecond || 6}</Label>
+                  <Slider
+                    value={[config.charsPerSecond || 6]}
+                    min={2}
+                    max={15}
+                    step={1}
+                    onValueChange={([v]) => setConfig({ ...config, charsPerSecond: v })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Delay mínimo: {config.minTypingDelay || 2}s</Label>
+                  <Slider
+                    value={[config.minTypingDelay || 2]}
+                    min={1}
+                    max={10}
+                    step={0.5}
+                    onValueChange={([v]) => setConfig({ ...config, minTypingDelay: v })}
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center justify-between">
-              <Label>Anti-ban (delay adaptativo)</Label>
+              <div>
+                <Label>Mostrar "digitando..."</Label>
+                <p className="text-xs text-muted-foreground">Exibe presença durante delay</p>
+              </div>
+              <Switch
+                checked={config.showTyping ?? true}
+                onCheckedChange={(v) => setConfig({ ...config, showTyping: v })}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Modo anti-ban</Label>
+                <p className="text-xs text-muted-foreground">Aumenta delays gradualmente</p>
+              </div>
               <Switch
                 checked={config.antiBan || false}
                 onCheckedChange={(v) => setConfig({ ...config, antiBan: v })}
@@ -1492,37 +1833,231 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
 
             <TabsContent value="advanced" className="mt-4">
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Log de execução</Label>
-                    <p className="text-xs text-muted-foreground">Registrar execuções deste nó</p>
+                {/* Execution Settings */}
+                <div className="space-y-3 p-3 rounded-lg bg-muted/30 border">
+                  <h4 className="text-sm font-medium flex items-center gap-2">
+                    <Zap className="w-4 h-4" />
+                    Configurações de Execução
+                  </h4>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Log de execução</Label>
+                      <p className="text-xs text-muted-foreground">Registrar execuções deste nó</p>
+                    </div>
+                    <Switch
+                      checked={config.enableLogging ?? true}
+                      onCheckedChange={(v) => setConfig({ ...config, enableLogging: v })}
+                    />
                   </div>
-                  <Switch
-                    checked={config.enableLogging || false}
-                    onCheckedChange={(v) => setConfig({ ...config, enableLogging: v })}
-                  />
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Retry automático</Label>
+                      <p className="text-xs text-muted-foreground">Tentar novamente em erro</p>
+                    </div>
+                    <Switch
+                      checked={config.enableRetry || false}
+                      onCheckedChange={(v) => setConfig({ ...config, enableRetry: v })}
+                    />
+                  </div>
+
+                  {config.enableRetry && (
+                    <div className="pl-4 border-l-2 border-primary/20 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">Máximo de tentativas</Label>
+                        <Input
+                          type="number"
+                          className="w-16 h-7 text-xs"
+                          value={config.maxRetries || 3}
+                          onChange={(e) => setConfig({ ...config, maxRetries: parseInt(e.target.value) })}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">Intervalo entre tentativas (seg)</Label>
+                        <Input
+                          type="number"
+                          className="w-16 h-7 text-xs"
+                          value={config.retryInterval || 5}
+                          onChange={(e) => setConfig({ ...config, retryInterval: parseInt(e.target.value) })}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Timeout (segundos)</Label>
+                      <p className="text-xs text-muted-foreground">Tempo máximo de execução</p>
+                    </div>
+                    <Input
+                      type="number"
+                      className="w-20 h-8"
+                      value={config.timeout || 30}
+                      onChange={(e) => setConfig({ ...config, timeout: parseInt(e.target.value) })}
+                    />
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Retry automático</Label>
-                    <p className="text-xs text-muted-foreground">Tentar novamente em caso de erro</p>
+
+                {/* Error Handling */}
+                <div className="space-y-3 p-3 rounded-lg bg-muted/30 border">
+                  <h4 className="text-sm font-medium flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4" />
+                    Tratamento de Erros
+                  </h4>
+                  
+                  <div className="space-y-2">
+                    <Label className="text-sm">Ação em caso de erro</Label>
+                    <Select
+                      value={config.errorAction || 'continue'}
+                      onValueChange={(v) => setConfig({ ...config, errorAction: v })}
+                    >
+                      <SelectTrigger className="h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="continue">Continuar flow</SelectItem>
+                        <SelectItem value="stop">Parar flow</SelectItem>
+                        <SelectItem value="notify">Notificar e continuar</SelectItem>
+                        <SelectItem value="fallback">Ir para nó de fallback</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <Switch
-                    checked={config.enableRetry || false}
-                    onCheckedChange={(v) => setConfig({ ...config, enableRetry: v })}
-                  />
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Notificar admin em erro</Label>
+                      <p className="text-xs text-muted-foreground">Envia alerta para administrador</p>
+                    </div>
+                    <Switch
+                      checked={config.notifyOnError || false}
+                      onCheckedChange={(v) => setConfig({ ...config, notifyOnError: v })}
+                    />
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Timeout</Label>
-                    <p className="text-xs text-muted-foreground">Tempo máximo de execução</p>
+
+                {/* Conditions */}
+                <div className="space-y-3 p-3 rounded-lg bg-muted/30 border">
+                  <h4 className="text-sm font-medium flex items-center gap-2">
+                    <Filter className="w-4 h-4" />
+                    Condições de Execução
+                  </h4>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Executar apenas em horário comercial</Label>
+                    </div>
+                    <Switch
+                      checked={config.businessHoursOnly || false}
+                      onCheckedChange={(v) => setConfig({ ...config, businessHoursOnly: v })}
+                    />
                   </div>
-                  <Input
-                    type="number"
-                    className="w-20"
-                    value={config.timeout || 30}
-                    onChange={(e) => setConfig({ ...config, timeout: parseInt(e.target.value) })}
-                  />
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Pular se já executou antes</Label>
+                      <p className="text-xs text-muted-foreground">Evita execução duplicada</p>
+                    </div>
+                    <Switch
+                      checked={config.skipIfExecuted || false}
+                      onCheckedChange={(v) => setConfig({ ...config, skipIfExecuted: v })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm">Delay antes de executar (segundos)</Label>
+                    <Slider
+                      value={[config.preDelay || 0]}
+                      min={0}
+                      max={30}
+                      step={1}
+                      onValueChange={([v]) => setConfig({ ...config, preDelay: v })}
+                    />
+                    <p className="text-xs text-muted-foreground text-right">{config.preDelay || 0}s</p>
+                  </div>
+                </div>
+
+                {/* Analytics */}
+                <div className="space-y-3 p-3 rounded-lg bg-muted/30 border">
+                  <h4 className="text-sm font-medium flex items-center gap-2">
+                    <BarChart2 className="w-4 h-4" />
+                    Analytics e Métricas
+                  </h4>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Rastrear conversão</Label>
+                      <p className="text-xs text-muted-foreground">Marcar como ponto de conversão</p>
+                    </div>
+                    <Switch
+                      checked={config.trackConversion || false}
+                      onCheckedChange={(v) => setConfig({ ...config, trackConversion: v })}
+                    />
+                  </div>
+
+                  {config.trackConversion && (
+                    <div className="pl-4 border-l-2 border-primary/20 space-y-2">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Nome do evento</Label>
+                        <Input
+                          placeholder="lead_qualified"
+                          value={config.conversionEventName || ''}
+                          onChange={(e) => setConfig({ ...config, conversionEventName: e.target.value })}
+                          className="h-7 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Valor da conversão (R$)</Label>
+                        <Input
+                          type="number"
+                          placeholder="0.00"
+                          value={config.conversionValue || ''}
+                          onChange={(e) => setConfig({ ...config, conversionValue: parseFloat(e.target.value) })}
+                          className="h-7 text-xs"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <Label className="text-sm">Tags para adicionar ao contato</Label>
+                    <Input
+                      placeholder="tag1, tag2, tag3"
+                      value={config.addTags || ''}
+                      onChange={(e) => setConfig({ ...config, addTags: e.target.value })}
+                    />
+                    <p className="text-xs text-muted-foreground">Separadas por vírgula</p>
+                  </div>
+                </div>
+
+                {/* Debug */}
+                <div className="space-y-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                  <h4 className="text-sm font-medium flex items-center gap-2 text-amber-600">
+                    <AlertCircle className="w-4 h-4" />
+                    Modo Debug
+                  </h4>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Ativar debug</Label>
+                      <p className="text-xs text-muted-foreground">Logs detalhados no console</p>
+                    </div>
+                    <Switch
+                      checked={config.debugMode || false}
+                      onCheckedChange={(v) => setConfig({ ...config, debugMode: v })}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Pausar neste nó</Label>
+                      <p className="text-xs text-muted-foreground">Aguarda confirmação manual</p>
+                    </div>
+                    <Switch
+                      checked={config.pauseExecution || false}
+                      onCheckedChange={(v) => setConfig({ ...config, pauseExecution: v })}
+                    />
+                  </div>
                 </div>
               </div>
             </TabsContent>
