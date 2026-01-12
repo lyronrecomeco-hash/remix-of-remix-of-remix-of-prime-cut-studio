@@ -1,4 +1,4 @@
-// Group Management Node - Nodes for group management
+// Group Management Node - Nodes for group management with complete config previews
 import { memo } from 'react';
 import { NodeProps } from '@xyflow/react';
 import { 
@@ -32,37 +32,93 @@ export const GroupManagementNode = memo((props: NodeProps) => {
 
   const getConfigPreview = () => {
     if (!nodeData.isConfigured) return null;
+    const cfg = nodeData.config;
     
     switch (props.type) {
       case 'group-welcome':
-        return nodeData.config.welcomeMessage && (
-          <p className="line-clamp-2">{nodeData.config.welcomeMessage}</p>
+        return (
+          <div className="space-y-1">
+            {cfg.welcomeMessage && <p className="line-clamp-2">{cfg.welcomeMessage}</p>}
+            {cfg.mentionMember && <span className="text-xs opacity-70">📌 Menciona membro</span>}
+            {cfg.sendRules && <span className="text-xs opacity-70 ml-1">📋 +Regras</span>}
+          </div>
         );
+
+      case 'group-goodbye':
+        return cfg.goodbyeMessage && <p className="line-clamp-2">{cfg.goodbyeMessage}</p>;
+
       case 'keyword-filter':
       case 'keyword-delete':
-        return nodeData.config.keywords?.length > 0 && (
-          <p>{nodeData.config.keywords.length} palavras configuradas</p>
+        return (
+          <div className="space-y-1">
+            <p>{cfg.keywords?.length || 0} palavras bloqueadas</p>
+            {cfg.action && <span className="text-xs opacity-70">Ação: {cfg.action}</span>}
+          </div>
         );
+
       case 'member-kick':
-        return nodeData.config.maxWarnings && (
-          <p>Após {nodeData.config.maxWarnings} avisos</p>
+        return (
+          <div className="space-y-1">
+            <p>Após {cfg.maxWarnings || 3} avisos</p>
+            {cfg.addToBlacklist && <span className="text-xs opacity-70">🚫 +Blacklist</span>}
+          </div>
         );
+
       case 'member-warn':
-        return nodeData.config.warningMessage && (
-          <p className="line-clamp-2">{nodeData.config.warningMessage}</p>
+        return (
+          <div className="space-y-1">
+            {cfg.warningMessage && <p className="line-clamp-2">{cfg.warningMessage}</p>}
+            {cfg.expireHours && <span className="text-xs opacity-70">Expira em {cfg.expireHours}h</span>}
+          </div>
         );
+
       case 'group-reminder':
-        return nodeData.config.reminderTime && (
-          <p>Lembrete: {nodeData.config.reminderTime}</p>
+        return (
+          <div className="space-y-1">
+            {cfg.reminderTime && <p>⏰ {cfg.reminderTime}</p>}
+            {cfg.repeat && <span className="text-xs opacity-70">{cfg.repeat}</span>}
+          </div>
         );
+
       case 'anti-spam':
-        return nodeData.config.maxMessages && (
-          <p>Máx {nodeData.config.maxMessages} msgs/min</p>
+        return (
+          <div className="space-y-1">
+            <p>Máx {cfg.maxMessages || 5} msgs/{cfg.timeWindow || 60}s</p>
+            <span className="text-xs opacity-70">
+              Ação: {cfg.action || 'warn'}
+              {cfg.detectMediaFlood && ' 📷'}
+              {cfg.detectStickerFlood && ' 🎭'}
+            </span>
+          </div>
         );
+
       case 'anti-link':
         return (
-          <p>Bloqueia links externos</p>
+          <div className="space-y-1">
+            <p>{cfg.blockAll ? 'Bloqueia todos' : 'Whitelist ativa'}</p>
+            <span className="text-xs opacity-70">
+              {cfg.allowedDomains?.length || 0} domínios permitidos
+              {cfg.blockGroupLinks && ' 🔗'}
+            </span>
+          </div>
         );
+
+      case 'group-rules':
+        return (
+          <div className="space-y-1">
+            {cfg.rules && <p className="line-clamp-2">{cfg.rules.substring(0, 50)}...</p>}
+            <span className="text-xs opacity-70">Gatilho: {cfg.trigger || 'comando'}</span>
+          </div>
+        );
+
+      case 'member-counter':
+        return (
+          <div className="space-y-1">
+            <p>Mostra: {cfg.showOn || 'marcos'}</p>
+            {cfg.includeStats && <span className="text-xs opacity-70">📊 +Estatísticas</span>}
+          </div>
+        );
+
       default:
         return null;
     }
