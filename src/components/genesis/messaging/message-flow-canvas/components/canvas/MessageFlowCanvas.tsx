@@ -27,7 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { 
   ArrowLeft, Save, Play, Pause, ZoomIn, ZoomOut, 
   Maximize2, Trash2, Lock, Unlock, Plus, AlertCircle,
-  Activity, X, Smartphone
+  Activity, X, MessageSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -150,7 +150,7 @@ export const MessageFlowCanvas = ({ flow, onBack, onSave, onToggleActive }: Mess
   const [hasChanges, setHasChanges] = useState(false);
   const [showErrorLogs, setShowErrorLogs] = useState(false);
   const [errorLogs, setErrorLogs] = useState<FlowErrorLog[]>([]);
-  const [showPreview, setShowPreview] = useState(true);
+  const [showPreview, setShowPreview] = useState(false);
 
   // Simulate real-time error logs
   useEffect(() => {
@@ -260,15 +260,28 @@ export const MessageFlowCanvas = ({ flow, onBack, onSave, onToggleActive }: Mess
   }, [nodes, edges, onSave]);
 
   // Update node config
-  const handleNodeConfigSave = useCallback((nodeId: string, config: Record<string, any>) => {
-    setNodes((nds) => nds.map((n) => 
-      n.id === nodeId 
-        ? { ...n, data: { ...n.data, ...config, isConfigured: true } }
-        : n
-    ));
-    setShowConfigModal(false);
-    setHasChanges(true);
-  }, [setNodes]);
+  const handleNodeConfigSave = useCallback(
+    (nodeId: string, payload: { label: string; config: Record<string, any> }) => {
+      setNodes((nds) =>
+        nds.map((n) =>
+          n.id === nodeId
+            ? {
+                ...n,
+                data: {
+                  ...(n.data as Record<string, unknown>),
+                  label: payload.label,
+                  config: payload.config,
+                  isConfigured: true,
+                },
+              }
+            : n
+        )
+      );
+      setShowConfigModal(false);
+      setHasChanges(true);
+    },
+    [setNodes]
+  );
 
   // Add node from modal
   const handleAddNode = useCallback((type: string, label: string) => {
@@ -378,15 +391,16 @@ export const MessageFlowCanvas = ({ flow, onBack, onSave, onToggleActive }: Mess
             <Trash2 className="w-4 h-4" />
           </Button>
 
-          <Button 
-            variant={showPreview ? "default" : "ghost"} 
-            size="icon" 
-            className="h-8 w-8"
-            onClick={() => setShowPreview(!showPreview)}
-            title={showPreview ? "Ocultar Preview" : "Mostrar Preview"}
-          >
-            <Smartphone className="w-4 h-4" />
-          </Button>
+           <Button 
+             variant={showPreview ? "default" : "ghost"} 
+             size="sm" 
+             className="h-8"
+             onClick={() => setShowPreview(!showPreview)}
+             title={showPreview ? "Ocultar Preview" : "Mostrar Preview"}
+           >
+             <MessageSquare className="w-4 h-4" />
+             <span className="hidden sm:inline ml-1">Preview</span>
+           </Button>
 
           <div className="w-px h-6 bg-border mx-1" />
           
@@ -519,9 +533,20 @@ export const MessageFlowCanvas = ({ flow, onBack, onSave, onToggleActive }: Mess
         <AnimatePresence>
           {showPreview && (
             <IPhonePreview 
+              flowNodes={nodes.map(toMessageNode)}
+              flowEdges={edges.map((e) => ({
+                id: e.id,
+                source: e.source,
+                target: e.target,
+                sourceHandle: e.sourceHandle || undefined,
+                targetHandle: e.targetHandle || undefined,
+                label: e.label as string,
+                animated: e.animated,
+              }))}
+              contactName={flow.name}
               onClose={() => setShowPreview(false)}
               onRestart={() => {
-                // TODO: Reset simulation
+                // preview is derived from nodes/edges; restart is a no-op for now
               }}
             />
           )}
@@ -548,7 +573,7 @@ export const MessageFlowCanvas = ({ flow, onBack, onSave, onToggleActive }: Mess
           open={showConfigModal}
           onOpenChange={setShowConfigModal}
           node={selectedNode}
-          onSave={(config) => handleNodeConfigSave(selectedNode.id, config)}
+          onSave={(payload) => handleNodeConfigSave(selectedNode.id, payload)}
         />
       )}
 

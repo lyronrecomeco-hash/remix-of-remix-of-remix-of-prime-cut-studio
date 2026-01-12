@@ -1,9 +1,10 @@
 // iPhone Preview Component - Style matching Flow Builder (WhatsAppPreviewPanel)
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, ArrowLeft, Phone, Video, MoreVertical, Smile, Mic, Camera, Send, X, RotateCcw, Play, Bot } from 'lucide-react';
+import { ArrowLeft, Phone, Video, MoreVertical, Smile, Mic, Camera, Send, X, RotateCcw, Play, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import type { MessageEdge, MessageNode } from '../../types';
 
 interface Message {
   id: string;
@@ -13,7 +14,11 @@ interface Message {
 }
 
 interface IPhonePreviewProps {
+  /** If provided, takes precedence over flowNodes/flowEdges */
   messages?: Message[];
+  /** When provided, preview will be derived from the flow in real-time */
+  flowNodes?: MessageNode[];
+  flowEdges?: MessageEdge[];
   contactName?: string;
   className?: string;
   onClose?: () => void;
@@ -30,8 +35,152 @@ const defaultMessages: Message[] = [
   { id: '5', type: 'received', content: '1️⃣ Plano Básico\n2️⃣ Plano Pro\n3️⃣ Plano Enterprise', time: '10:31' },
 ];
 
+const isTriggerNode = (type: string) =>
+  type === 'start-trigger' ||
+  type === 'instance-connector' ||
+  type === 'webhook-trigger' ||
+  type === 'schedule-trigger';
+
+const formatTime = (index: number) => {
+  const baseMinutes = 9 * 60 + 41; // 09:41
+  const minutes = baseMinutes + index;
+  const hh = String(Math.floor(minutes / 60) % 24).padStart(2, '0');
+  const mm = String(minutes % 60).padStart(2, '0');
+  return `${hh}:${mm}`;
+};
+
+const nodeToPreviewText = (node: MessageNode): string => {
+  const cfg = node.data?.config || {};
+
+  switch (node.type) {
+    case 'advanced-text':
+      return (cfg.message || '').trim();
+
+    case 'button-message': {
+      const msg = (cfg.message || '').trim();
+      const buttons: any[] = cfg.buttons || [];
+      const list = buttons
+        .filter((b) => (b?.text || '').trim())
+        .map((b, i) => `${i + 1}) ${String(b.text).trim()}`)
+        .join('\n');
+      return [msg, list].filter(Boolean).join('\n\n');
+    }
+
+    case 'list-message': {
+      const msg = (cfg.message || '').trim();
+      const items: any[] = cfg.items || [];
+      const list = items
+        .filter((it) => (it?.title || '').trim())
+        .map((it, i) => `${i + 1}) ${String(it.title).trim()}`)
+        .join('\n');
+      return [msg, list].filter(Boolean).join('\n\n');
+    }
+
+    case 'poll': {
+      const q = (cfg.question || '').trim();
+      const opts: any[] = cfg.options || [];
+      const list = opts
+        .filter((o) => String(o || '').trim())
+        .map((o, i) => `${i + 1}) ${String(o).trim()}`)
+        .join('\n');
+      return [q, list].filter(Boolean).join('\n\n');
+    }
+
+    case 'smart-delay': {
+      const ms = Number(cfg.delay ?? 2000);
+      const seconds = Math.max(0, Math.round(ms / 1000));
+      return `⏳ Delay: ${seconds}s`;
+    }
+
+    case 'presence':
+      return '⌨️ Simulando presença (digitando...)';
+
+    case 'http-request':
+      return `🌐 HTTP ${(cfg.method || 'GET').toString().toUpperCase()} ${cfg.url || ''}`.trim();
+
+    case 'set-variable':
+      return `🔧 Definir variável: ${cfg.variableName || 'variavel'} = ${cfg.value ?? ''}`.trim();
+
+    case 'end-flow':
+      return (cfg.message || '✅ Fim do flow.').trim();
+
+    default:
+      return (node.data?.label || '').trim();
+  }
+};
+
+const buildPreviewMessagesFromFlow = (flowNodes: MessageNode[], flowEdges: MessageEdge[]): Message[] => {
+  const byId = new Map(flowNodes.map((n) => [n.id, n] as const));
+
+  const outgoing = new Map<string, MessageEdge[]>();
+  for (const e of flowEdges) {
+    const arr = outgoing.get(e.source) || [];
+    arr.push(e);
+    outgoing.set(e.source, arr);
+  }
+
+  // deterministic edge ordering (left-to-right)
+  for (const [source, arr] of outgoing.entries()) {
+    arr.sort((a, b) => {
+      const na = byId.get(a.target);
+      const nb = byId.get(b.target);
+      const ax = na?.position?.x ?? 0;
+      const bx = nb?.position?.x ?? 0;
+      if (ax !== bx) return ax - bx;
+      const ay = na?.position?.y ?? 0;
+      const by = nb?.position?.y ?? 0;
+      return ay - by;
+    });
+    outgoing.set(source, arr);
+  }
+
+  const startNode =
+    flowNodes.find((n) => n.type === 'start-trigger') ||
+    flowNodes.find((n) => n.type === 'instance-connector') ||
+    flowNodes.find((n) => !isTriggerNode(n.type)) ||
+    flowNodes[0];
+
+  if (!startNode) return [];
+
+  const visited = new Set<string>();
+  const messages: Message[] = [];
+
+  let currentId: string | undefined = startNode.id;
+  let msgIndex = 0;
+  let safety = 0;
+
+  while (currentId && safety < 100) {
+    safety++;
+    if (visited.has(currentId)) break;
+    visited.add(currentId);
+
+    const node = byId.get(currentId);
+    if (!node) break;
+
+    if (!isTriggerNode(node.type)) {
+      const content = nodeToPreviewText(node);
+      if (content) {
+        messages.push({
+          id: `pv_${node.id}`,
+          type: 'received',
+          content,
+          time: formatTime(msgIndex),
+        });
+        msgIndex++;
+      }
+    }
+
+    const next = (outgoing.get(currentId) || [])[0];
+    currentId = next?.target;
+  }
+
+  return messages;
+};
+
 export const IPhonePreview = ({ 
-  messages = defaultMessages, 
+  messages,
+  flowNodes,
+  flowEdges,
   contactName = 'Genesis Bot',
   className,
   onClose,
@@ -41,6 +190,12 @@ export const IPhonePreview = ({
 }: IPhonePreviewProps) => {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+
+  const renderedMessages = useMemo(() => {
+    if (messages !== undefined) return messages;
+    if (flowNodes !== undefined) return buildPreviewMessagesFromFlow(flowNodes, flowEdges || []);
+    return defaultMessages;
+  }, [messages, flowNodes, flowEdges]);
 
   return (
     <motion.div
@@ -71,7 +226,7 @@ export const IPhonePreview = ({
               <RotateCcw className="w-3.5 h-3.5" />
               Reiniciar
             </Button>
-            {!isSimulating && messages.length === 0 && onStart && (
+            {!isSimulating && renderedMessages.length === 0 && onStart && (
               <Button
                 size="sm"
                 variant="default"
@@ -142,7 +297,7 @@ export const IPhonePreview = ({
               }}
             >
               <AnimatePresence>
-                {messages.map((message, index) => (
+                {renderedMessages.map((message, index) => (
                   <motion.div
                     key={message.id}
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}

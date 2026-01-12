@@ -33,7 +33,7 @@ interface NodeConfigModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   node: Node;
-  onSave: (config: Record<string, any>) => void;
+  onSave: (payload: { label: string; config: Record<string, any> }) => void;
 }
 
 const nodeIcons: Record<string, React.ElementType> = {
@@ -107,9 +107,13 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
   const { instances: genesisInstances, loading: loadingInstances, refetch: refetchInstances, connectedCount } = useGenesisInstances();
 
   useEffect(() => {
-    const data = node.data as Record<string, unknown>;
-    setConfig((data?.config as Record<string, any>) || {});
-    setLabel((data?.label as string) || '');
+    const dataAny = node.data as any;
+    const rawConfig = (dataAny?.config ?? {}) as Record<string, any>;
+    const { config: _ignoredConfig, label: _ignoredLabel, isConfigured: _ignoredIsConfigured, ...legacyConfig } = dataAny ?? {};
+
+    // Support older saves where config fields were accidentally stored at the top-level of node.data
+    setConfig({ ...legacyConfig, ...rawConfig });
+    setLabel((dataAny?.label as string) || '');
     setErrors({});
   }, [node]);
 
@@ -183,7 +187,7 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
 
   const handleSave = useCallback(() => {
     if (validateConfig()) {
-      onSave({ ...config, label });
+      onSave({ label, config });
       toast.success('Configurações salvas com sucesso!');
     } else {
       toast.error('Corrija os erros antes de salvar');
