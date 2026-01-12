@@ -1,4 +1,4 @@
-export const VPS_SCRIPT_VERSION = "8.5";
+export const VPS_SCRIPT_VERSION = "8.6";
 
 // VPS Script v8.3 - MULTI-INSTANCE MANAGER WITH PROFESSIONAL CLI
 // Gerenciador dinâmico com menu interativo profissional e logs personalizados
@@ -1609,14 +1609,14 @@ app.post('/api/instance/:id/send-buttons', authMiddleware, async (req, res) => {
     const hasUrlButton = buttons.some(b => b.url);
     
     // ═══════════════════════════════════════════════════════════════════════════════
-    // MÉTODO 1: BOTÕES VIA generateWAMessageFromContent + viewOnceMessageV2
-    // Este método encapsula em viewOnce para forçar exibição nativa
+    // MÉTODO 1: BOTÕES VIA deviceSentMessage (tenta bypass mais agressivo)
+    // Este método tenta fazer o WhatsApp pensar que é uma mensagem do próprio device
     // ═══════════════════════════════════════════════════════════════════════════════
     if (!hasUrlButton && buttons.length >= 1 && buttons.length <= 3) {
       try {
-        log('info', 'Tentando botões via generateWAMessageFromContent...');
+        log('info', '[v8.6] Tentando botões via deviceSentMessage...');
         
-        const { generateWAMessageFromContent, proto } = require('@whiskeysockets/baileys');
+        const { generateWAMessageFromContent, getContentType } = require('@whiskeysockets/baileys');
         
         // Criar botões no formato nativo
         const nativeButtons = buttons.map((btn, idx) => ({
@@ -1625,9 +1625,10 @@ app.post('/api/instance/:id/send-buttons', authMiddleware, async (req, res) => {
           type: 1
         }));
         
-        // Gerar mensagem com viewOnceMessageV2 wrapper
-        const msg = generateWAMessageFromContent(jid, {
-          viewOnceMessage: {
+        // MÉTODO 1A: deviceSentMessage wrapper (bypass mobile)
+        const msgDeviceSent = generateWAMessageFromContent(jid, {
+          deviceSentMessage: {
+            destinationJid: jid,
             message: {
               buttonsMessage: {
                 contentText: content,
@@ -1639,42 +1640,105 @@ app.post('/api/instance/:id/send-buttons', authMiddleware, async (req, res) => {
           }
         }, { userJid: instance.sock.user.id });
         
-        await instance.sock.relayMessage(jid, msg.message, { messageId: msg.key.id });
-        sentType = 'native_buttons_v2';
-        log('success', '✅ Botões (viewOnceV2) enviados com sucesso!');
-      } catch (nativeErr) {
-        log('warn', \`Botões viewOnceV2 falharam: \${nativeErr.message}. Tentando interactiveMessage...\`);
+        await instance.sock.relayMessage(jid, msgDeviceSent.message, { messageId: msgDeviceSent.key.id });
+        sentType = 'native_device_sent';
+        log('success', '✅ Botões (deviceSentMessage) enviados!');
+      } catch (deviceErr) {
+        log('warn', \`deviceSentMessage falhou: \${deviceErr.message}. Tentando viewOnce...\`);
         
-        // MÉTODO 1.5: interactiveMessage com nativeFlowMessage via generateWAMessageFromContent
+        // MÉTODO 1B: viewOnceMessageV2 wrapper (funciona no Web)
         try {
-          const { generateWAMessageFromContent, proto } = require('@whiskeysockets/baileys');
+          const { generateWAMessageFromContent } = require('@whiskeysockets/baileys');
+          
+          const nativeButtons = buttons.map((btn, idx) => ({
+            buttonId: btn.id || \`btn_\${idx}\`,
+            buttonText: { displayText: btn.text },
+            type: 1
+          }));
           
           const msg = generateWAMessageFromContent(jid, {
             viewOnceMessage: {
               message: {
-                interactiveMessage: {
-                  body: { text: content },
-                  footer: footer ? { text: footer } : undefined,
-                  nativeFlowMessage: {
-                    buttons: buttons.map((btn, idx) => ({
-                      name: 'quick_reply',
-                      buttonParamsJson: JSON.stringify({
-                        display_text: btn.text,
-                        id: btn.id || \`qr_\${idx}\`
-                      })
-                    }))
-                  }
+                buttonsMessage: {
+                  contentText: content,
+                  footerText: footer || '',
+                  buttons: nativeButtons,
+                  headerType: 1
                 }
               }
             }
           }, { userJid: instance.sock.user.id });
           
           await instance.sock.relayMessage(jid, msg.message, { messageId: msg.key.id });
-          sentType = 'native_interactive_v2';
-          log('success', '✅ InteractiveMessage (viewOnceV2) enviado com sucesso!');
-        } catch (interactiveErr) {
-          log('warn', \`InteractiveMessage v2 falhou: \${interactiveErr.message}. Fallback para enquete...\`);
-          sentType = 'fallback';
+          sentType = 'native_viewonce';
+          log('success', '✅ Botões (viewOnceV2) enviados!');
+        } catch (viewOnceErr) {
+          log('warn', \`viewOnceV2 falhou: \${viewOnceErr.message}. Tentando templateMessage...\`);
+          
+          // MÉTODO 1C: templateMessage (formato business oficial)
+          try {
+            const { generateWAMessageFromContent } = require('@whiskeysockets/baileys');
+            
+            const templateButtons = buttons.map((btn, idx) => ({
+              index: idx + 1,
+              quickReplyButton: {
+                displayText: btn.text,
+                id: btn.id || \`qr_\${idx}\`
+              }
+            }));
+            
+            const msg = generateWAMessageFromContent(jid, {
+              viewOnceMessage: {
+                message: {
+                  templateMessage: {
+                    hydratedTemplate: {
+                      hydratedContentText: content,
+                      hydratedFooterText: footer || '',
+                      hydratedButtons: templateButtons
+                    }
+                  }
+                }
+              }
+            }, { userJid: instance.sock.user.id });
+            
+            await instance.sock.relayMessage(jid, msg.message, { messageId: msg.key.id });
+            sentType = 'native_template';
+            log('success', '✅ Botões (templateMessage) enviados!');
+          } catch (templateErr) {
+            log('warn', \`templateMessage falhou: \${templateErr.message}. Tentando interactiveMessage...\`);
+            
+            // MÉTODO 1D: interactiveMessage com nativeFlowMessage
+            try {
+              const { generateWAMessageFromContent } = require('@whiskeysockets/baileys');
+              
+              const msg = generateWAMessageFromContent(jid, {
+                viewOnceMessage: {
+                  message: {
+                    interactiveMessage: {
+                      body: { text: content },
+                      footer: footer ? { text: footer } : undefined,
+                      nativeFlowMessage: {
+                        buttons: buttons.map((btn, idx) => ({
+                          name: 'quick_reply',
+                          buttonParamsJson: JSON.stringify({
+                            display_text: btn.text,
+                            id: btn.id || \`qr_\${idx}\`
+                          })
+                        }))
+                      }
+                    }
+                  }
+                }
+              }, { userJid: instance.sock.user.id });
+              
+              await instance.sock.relayMessage(jid, msg.message, { messageId: msg.key.id });
+              sentType = 'native_interactive';
+              log('success', '✅ InteractiveMessage enviado!');
+            } catch (interactiveErr) {
+              log('warn', \`Todos métodos nativos falharam. Fallback para enquete...\`);
+              sentType = 'fallback';
+            }
+          }
         }
       }
     }
