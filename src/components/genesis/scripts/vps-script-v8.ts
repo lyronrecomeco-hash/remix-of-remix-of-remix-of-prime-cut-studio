@@ -1,4 +1,4 @@
-export const VPS_SCRIPT_VERSION = "8.4.1";
+export const VPS_SCRIPT_VERSION = "8.5";
 
 // VPS Script v8.3 - MULTI-INSTANCE MANAGER WITH PROFESSIONAL CLI
 // Gerenciador dinâmico com menu interativo profissional e logs personalizados
@@ -1609,57 +1609,71 @@ app.post('/api/instance/:id/send-buttons', authMiddleware, async (req, res) => {
     const hasUrlButton = buttons.some(b => b.url);
     
     // ═══════════════════════════════════════════════════════════════════════════════
-    // MÉTODO 1: BOTÕES NATIVOS VIA interactiveMessage (Evolution API style)
-    // Patch viewOnceMessageV2 aplicado automaticamente pelo socket
+    // MÉTODO 1: BOTÕES VIA generateWAMessageFromContent + viewOnceMessageV2
+    // Este método encapsula em viewOnce para forçar exibição nativa
     // ═══════════════════════════════════════════════════════════════════════════════
     if (!hasUrlButton && buttons.length >= 1 && buttons.length <= 3) {
       try {
-        log('info', 'Tentando botões nativos via interactiveMessage...');
+        log('info', 'Tentando botões via generateWAMessageFromContent...');
         
-        // Formato interactiveMessage compatível com Evolution API
-        const interactiveButtons = buttons.map((btn, idx) => ({
+        const { generateWAMessageFromContent, proto } = require('@whiskeysockets/baileys');
+        
+        // Criar botões no formato nativo
+        const nativeButtons = buttons.map((btn, idx) => ({
           buttonId: btn.id || \`btn_\${idx}\`,
           buttonText: { displayText: btn.text },
-          type: 1 // 1 = QUICK_REPLY
+          type: 1
         }));
         
-        const buttonsMessage = {
-          text: content,
-          footer: footer || '',
-          buttons: interactiveButtons,
-          headerType: 1
-        };
-        
-        await instance.sock.sendMessage(jid, { buttonsMessage });
-        sentType = 'native_buttons';
-        log('success', '✅ Botões nativos enviados com sucesso!');
-      } catch (nativeErr) {
-        log('warn', \`Botões nativos falharam: \${nativeErr.message}. Tentando interactiveMessage v2...\`);
-        
-        // MÉTODO 1.5: interactiveMessage com nativeFlowMessage (Evolution API v2.2+)
-        try {
-          const interactiveMsg = {
-            interactiveMessage: {
-              body: { text: content },
-              footer: footer ? { text: footer } : undefined,
-              header: undefined,
-              nativeFlowMessage: {
-                buttons: buttons.map((btn, idx) => ({
-                  name: 'quick_reply',
-                  buttonParamsJson: JSON.stringify({
-                    display_text: btn.text,
-                    id: btn.id || \`qr_\${idx}\`
-                  })
-                }))
+        // Gerar mensagem com viewOnceMessageV2 wrapper
+        const msg = generateWAMessageFromContent(jid, {
+          viewOnceMessage: {
+            message: {
+              buttonsMessage: {
+                contentText: content,
+                footerText: footer || '',
+                buttons: nativeButtons,
+                headerType: 1
               }
             }
-          };
+          }
+        }, { userJid: instance.sock.user.id });
+        
+        await instance.sock.relayMessage(jid, msg.message, { messageId: msg.key.id });
+        sentType = 'native_buttons_v2';
+        log('success', '✅ Botões (viewOnceV2) enviados com sucesso!');
+      } catch (nativeErr) {
+        log('warn', \`Botões viewOnceV2 falharam: \${nativeErr.message}. Tentando interactiveMessage...\`);
+        
+        // MÉTODO 1.5: interactiveMessage com nativeFlowMessage via generateWAMessageFromContent
+        try {
+          const { generateWAMessageFromContent, proto } = require('@whiskeysockets/baileys');
           
-          await instance.sock.relayMessage(jid, interactiveMsg, { messageId: crypto.randomBytes(8).toString('hex').toUpperCase() });
-          sentType = 'native_interactive';
-          log('success', '✅ InteractiveMessage enviado com sucesso!');
+          const msg = generateWAMessageFromContent(jid, {
+            viewOnceMessage: {
+              message: {
+                interactiveMessage: {
+                  body: { text: content },
+                  footer: footer ? { text: footer } : undefined,
+                  nativeFlowMessage: {
+                    buttons: buttons.map((btn, idx) => ({
+                      name: 'quick_reply',
+                      buttonParamsJson: JSON.stringify({
+                        display_text: btn.text,
+                        id: btn.id || \`qr_\${idx}\`
+                      })
+                    }))
+                  }
+                }
+              }
+            }
+          }, { userJid: instance.sock.user.id });
+          
+          await instance.sock.relayMessage(jid, msg.message, { messageId: msg.key.id });
+          sentType = 'native_interactive_v2';
+          log('success', '✅ InteractiveMessage (viewOnceV2) enviado com sucesso!');
         } catch (interactiveErr) {
-          log('warn', \`InteractiveMessage falhou: \${interactiveErr.message}. Fallback para enquete...\`);
+          log('warn', \`InteractiveMessage v2 falhou: \${interactiveErr.message}. Fallback para enquete...\`);
           sentType = 'fallback';
         }
       }
@@ -1772,11 +1786,13 @@ app.post('/api/instance/:id/send-list', authMiddleware, async (req, res) => {
     });
     
     // ═══════════════════════════════════════════════════════════════════════════════
-    // MÉTODO 1: LISTA NATIVA VIA listMessage (com patch viewOnceMessageV2)
+    // MÉTODO 1: LISTA VIA generateWAMessageFromContent + viewOnceMessageV2
     // ═══════════════════════════════════════════════════════════════════════════════
     if (allOptions.length >= 1 && allOptions.length <= 10) {
       try {
-        log('info', 'Tentando lista nativa via listMessage...');
+        log('info', 'Tentando lista via generateWAMessageFromContent...');
+        
+        const { generateWAMessageFromContent } = require('@whiskeysockets/baileys');
         
         // Formato listMessage do Baileys
         const listSections = sections.map(section => ({
@@ -1788,51 +1804,65 @@ app.post('/api/instance/:id/send-list', authMiddleware, async (req, res) => {
           }))
         }));
         
-        const listMessage = {
-          text: content,
-          footer: footer || '',
-          title: title || '',
-          buttonText: buttonText,
-          sections: listSections
-        };
-        
-        await instance.sock.sendMessage(jid, { listMessage });
-        sentType = 'native_list';
-        log('success', '✅ Lista nativa enviada com sucesso!');
-      } catch (nativeErr) {
-        log('warn', \`Lista nativa falhou: \${nativeErr.message}. Tentando interactiveMessage...\`);
-        
-        // MÉTODO 1.5: interactiveMessage com listMessage (Evolution API v2.2+)
-        try {
-          const interactiveList = {
-            interactiveMessage: {
-              body: { text: content },
-              footer: footer ? { text: footer } : undefined,
-              header: title ? { title: title, hasMediaAttachment: false } : undefined,
-              nativeFlowMessage: {
-                buttons: [{
-                  name: 'single_select',
-                  buttonParamsJson: JSON.stringify({
-                    title: buttonText,
-                    sections: sections.map(section => ({
-                      title: section.title || '',
-                      rows: (section.rows || []).map((row, idx) => ({
-                        id: row.id || \`row_\${idx}\`,
-                        title: row.title,
-                        description: row.description || ''
-                      }))
-                    }))
-                  })
-                }]
+        // Gerar mensagem com viewOnceMessageV2 wrapper
+        const msg = generateWAMessageFromContent(jid, {
+          viewOnceMessage: {
+            message: {
+              listMessage: {
+                title: title || '',
+                description: content,
+                footerText: footer || '',
+                buttonText: buttonText,
+                listType: 1,
+                sections: listSections
               }
             }
-          };
+          }
+        }, { userJid: instance.sock.user.id });
+        
+        await instance.sock.relayMessage(jid, msg.message, { messageId: msg.key.id });
+        sentType = 'native_list_v2';
+        log('success', '✅ Lista (viewOnceV2) enviada com sucesso!');
+      } catch (nativeErr) {
+        log('warn', \`Lista viewOnceV2 falhou: \${nativeErr.message}. Tentando interactiveMessage...\`);
+        
+        // MÉTODO 1.5: interactiveMessage com single_select (Evolution API v2.2+)
+        try {
+          const { generateWAMessageFromContent } = require('@whiskeysockets/baileys');
           
-          await instance.sock.relayMessage(jid, interactiveList, { messageId: crypto.randomBytes(8).toString('hex').toUpperCase() });
-          sentType = 'native_interactive_list';
-          log('success', '✅ InteractiveMessage (lista) enviado com sucesso!');
+          const msg = generateWAMessageFromContent(jid, {
+            viewOnceMessage: {
+              message: {
+                interactiveMessage: {
+                  body: { text: content },
+                  footer: footer ? { text: footer } : undefined,
+                  header: title ? { title: title, hasMediaAttachment: false } : undefined,
+                  nativeFlowMessage: {
+                    buttons: [{
+                      name: 'single_select',
+                      buttonParamsJson: JSON.stringify({
+                        title: buttonText,
+                        sections: sections.map(section => ({
+                          title: section.title || '',
+                          rows: (section.rows || []).map((row, idx) => ({
+                            id: row.id || \`row_\${idx}\`,
+                            title: row.title,
+                            description: row.description || ''
+                          }))
+                        }))
+                      })
+                    }]
+                  }
+                }
+              }
+            }
+          }, { userJid: instance.sock.user.id });
+          
+          await instance.sock.relayMessage(jid, msg.message, { messageId: msg.key.id });
+          sentType = 'native_interactive_list_v2';
+          log('success', '✅ InteractiveMessage lista (viewOnceV2) enviado!');
         } catch (interactiveErr) {
-          log('warn', \`InteractiveMessage falhou: \${interactiveErr.message}. Fallback para enquete...\`);
+          log('warn', \`InteractiveMessage lista v2 falhou: \${interactiveErr.message}. Fallback...\`);
           sentType = 'fallback';
         }
       }
