@@ -1549,6 +1549,173 @@ app.post('/api/instance/:id/send', authMiddleware, async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════
+// ENDPOINTS DE MENSAGENS INTERATIVAS (BOTÕES & LISTAS)
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+
+// Enviar mensagem com botões
+app.post('/api/instance/:id/send-buttons', authMiddleware, async (req, res) => {
+  const { phone, to, message, text, buttons, footer } = req.body;
+  const recipient = phone || to;
+  const content = message || text;
+  
+  if (!recipient || !content || !buttons || !Array.isArray(buttons)) {
+    return res.status(400).json({ error: 'phone, message e buttons são obrigatórios' });
+  }
+  
+  const instance = manager.instances.get(req.params.id);
+  if (!instance || !instance.sock) {
+    return res.status(404).json({ error: 'Instância não encontrada ou não conectada' });
+  }
+  
+  if (instance.status !== 'connected') {
+    return res.status(503).json({ error: 'WhatsApp não conectado', code: 'NOT_CONNECTED' });
+  }
+  
+  if (!instance.readyToSend) {
+    return res.status(503).json({ error: 'Socket estabilizando, aguarde', code: 'NOT_READY' });
+  }
+  
+  try {
+    const jid = recipient.includes('@') ? recipient : recipient.replace(/\\D/g, '') + '@s.whatsapp.net';
+    
+    // Verificar se há botão URL
+    const urlButton = buttons.find(b => b.url);
+    
+    if (urlButton) {
+      // Mensagem com botão URL (template message)
+      await instance.sock.sendMessage(jid, {
+        text: content + (footer ? '\\n\\n' + footer : ''),
+      });
+      
+      // Enviar link separado (WhatsApp não suporta mais botões URL nativos)
+      await instance.sock.sendMessage(jid, {
+        text: '🔗 ' + (urlButton.text || 'Acessar') + ': ' + urlButton.url,
+      });
+    } else {
+      // Botões de resposta rápida (quick reply)
+      const buttonMessage = {
+        text: content,
+        footer: footer || '',
+        buttons: buttons.slice(0, 3).map((b, i) => ({
+          buttonId: b.id || 'btn_' + i,
+          buttonText: { displayText: b.text },
+          type: 1
+        })),
+        headerType: 1
+      };
+      
+      await instance.sock.sendMessage(jid, buttonMessage);
+    }
+    
+    instance.messagesSent = (instance.messagesSent || 0) + 1;
+    logActivity('send', \`Botões enviados para \${recipient.substring(0, 4)}***\`);
+    res.json({ success: true, to: recipient, type: urlButton ? 'url_button' : 'quick_reply' });
+  } catch (err) {
+    logActivity('error', \`Erro ao enviar botões: \${err.message}\`);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Enviar mensagem com lista (menu)
+app.post('/api/instance/:id/send-list', authMiddleware, async (req, res) => {
+  const { phone, to, body, text, buttonText, sections, footer, title } = req.body;
+  const recipient = phone || to;
+  const content = body || text;
+  
+  if (!recipient || !content || !buttonText || !sections || !Array.isArray(sections)) {
+    return res.status(400).json({ error: 'phone, body, buttonText e sections são obrigatórios' });
+  }
+  
+  const instance = manager.instances.get(req.params.id);
+  if (!instance || !instance.sock) {
+    return res.status(404).json({ error: 'Instância não encontrada ou não conectada' });
+  }
+  
+  if (instance.status !== 'connected') {
+    return res.status(503).json({ error: 'WhatsApp não conectado', code: 'NOT_CONNECTED' });
+  }
+  
+  if (!instance.readyToSend) {
+    return res.status(503).json({ error: 'Socket estabilizando, aguarde', code: 'NOT_READY' });
+  }
+  
+  try {
+    const jid = recipient.includes('@') ? recipient : recipient.replace(/\\D/g, '') + '@s.whatsapp.net';
+    
+    // Formatar seções para o Baileys
+    const formattedSections = sections.map(section => ({
+      title: section.title || '',
+      rows: (section.rows || []).slice(0, 10).map((row, i) => ({
+        rowId: row.id || 'row_' + i,
+        title: row.title,
+        description: row.description || ''
+      }))
+    }));
+    
+    const listMessage = {
+      text: content,
+      footer: footer || '',
+      title: title || '',
+      buttonText: buttonText,
+      sections: formattedSections
+    };
+    
+    await instance.sock.sendMessage(jid, listMessage);
+    
+    instance.messagesSent = (instance.messagesSent || 0) + 1;
+    logActivity('send', \`Lista enviada para \${recipient.substring(0, 4)}***\`);
+    res.json({ success: true, to: recipient, type: 'list', sectionsCount: sections.length });
+  } catch (err) {
+    logActivity('error', \`Erro ao enviar lista: \${err.message}\`);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Enviar mídia
+app.post('/api/instance/:id/send-media', authMiddleware, async (req, res) => {
+  const { phone, to, mediaUrl, caption, type } = req.body;
+  const recipient = phone || to;
+  
+  if (!recipient || !mediaUrl) {
+    return res.status(400).json({ error: 'phone e mediaUrl são obrigatórios' });
+  }
+  
+  const instance = manager.instances.get(req.params.id);
+  if (!instance || !instance.sock) {
+    return res.status(404).json({ error: 'Instância não encontrada ou não conectada' });
+  }
+  
+  if (instance.status !== 'connected') {
+    return res.status(503).json({ error: 'WhatsApp não conectado', code: 'NOT_CONNECTED' });
+  }
+  
+  try {
+    const jid = recipient.includes('@') ? recipient : recipient.replace(/\\D/g, '') + '@s.whatsapp.net';
+    const mediaType = type || 'image';
+    let msg = {};
+    
+    if (mediaType === 'image') {
+      msg = { image: { url: mediaUrl }, caption: caption || '' };
+    } else if (mediaType === 'video') {
+      msg = { video: { url: mediaUrl }, caption: caption || '' };
+    } else if (mediaType === 'audio') {
+      msg = { audio: { url: mediaUrl }, mimetype: 'audio/mp4' };
+    } else if (mediaType === 'document') {
+      msg = { document: { url: mediaUrl }, fileName: caption || 'file' };
+    }
+    
+    await instance.sock.sendMessage(jid, msg);
+    
+    instance.messagesSent = (instance.messagesSent || 0) + 1;
+    logActivity('send', \`Mídia (\${mediaType}) enviada para \${recipient.substring(0, 4)}***\`);
+    res.json({ success: true, to: recipient, type: mediaType });
+  } catch (err) {
+    logActivity('error', \`Erro ao enviar mídia: \${err.message}\`);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════════════════
 // ENDPOINTS DE BACKUP DE SESSÃO (FASE 8)
 // ═══════════════════════════════════════════════════════════════════════════════════════════
 
