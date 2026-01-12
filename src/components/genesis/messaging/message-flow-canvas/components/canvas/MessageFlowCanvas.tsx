@@ -113,7 +113,7 @@ const toMessageNode = (node: Node): MessageNode => {
   };
 };
 
-// Convert edges
+// Convert edges - Modern smooth bezier with gradient
 const toFlowEdge = (edge: MessageEdge): Edge => ({
   id: edge.id,
   source: edge.source,
@@ -121,35 +121,34 @@ const toFlowEdge = (edge: MessageEdge): Edge => ({
   sourceHandle: edge.sourceHandle,
   targetHandle: edge.targetHandle,
   label: edge.label,
-  animated: edge.animated ?? true,
-  type: 'smoothstep',
+  animated: false,
+  type: 'default',
   markerEnd: { 
     type: MarkerType.ArrowClosed,
-    width: 20,
-    height: 20,
-    color: 'hsl(var(--primary))',
+    width: 16,
+    height: 16,
+    color: 'hsl(142 76% 36%)',
   },
   style: { 
-    strokeWidth: 2,
-    stroke: 'hsl(var(--primary))',
-    strokeDasharray: '5,5',
+    strokeWidth: 3,
+    stroke: 'url(#edge-gradient)',
+    strokeLinecap: 'round',
   },
 });
 
-// Custom edge styles
+// Modern edge styles - solid gradient lines
 const defaultEdgeOptions = {
-  type: 'smoothstep',
-  animated: true,
+  type: 'default',
+  animated: false,
   style: { 
-    strokeWidth: 2, 
+    strokeWidth: 3, 
     stroke: 'hsl(var(--primary))',
-    strokeDasharray: '8,4',
   },
   markerEnd: {
     type: MarkerType.ArrowClosed,
-    width: 20,
-    height: 20,
-    color: 'hsl(var(--primary))',
+    width: 16,
+    height: 16,
+    color: 'hsl(142 76% 36%)',
   },
 };
 
@@ -455,24 +454,46 @@ export const MessageFlowCanvas = ({ flow, onBack, onSave, onToggleActive }: Mess
               style={{ width: 150, height: 100 }}
             />
 
-            {/* Add Node FAB */}
-            <Panel position="bottom-center" className="!mb-6">
+            {/* Top Toolbar with Add Node */}
+            <Panel position="top-center" className="!mt-4">
               <motion.div
-                initial={{ y: 20, opacity: 0 }}
+                initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
+                transition={{ delay: 0.2 }}
+                className="flex items-center gap-2 px-4 py-2 bg-card/95 backdrop-blur-xl rounded-2xl border border-border/50 shadow-2xl"
               >
                 <Button 
-                  size="lg"
+                  size="sm"
                   onClick={() => setShowPaletteModal(true)}
                   disabled={isLocked}
-                  className="gap-2 rounded-full shadow-2xl px-6 h-12"
+                  className="gap-2 rounded-xl h-9 px-4"
                 >
-                  <Plus className="w-5 h-5" />
+                  <Plus className="w-4 h-4" />
                   Adicionar Nó
+                </Button>
+                <div className="w-px h-6 bg-border" />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {}}
+                  disabled={isLocked}
+                  className="gap-2 rounded-xl h-9 px-4"
+                >
+                  <Activity className="w-4 h-4" />
+                  Templates
                 </Button>
               </motion.div>
             </Panel>
+
+            {/* SVG Gradient Definition for Edges */}
+            <svg style={{ position: 'absolute', width: 0, height: 0 }}>
+              <defs>
+                <linearGradient id="edge-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="hsl(var(--primary))" />
+                  <stop offset="100%" stopColor="hsl(142 76% 36%)" />
+                </linearGradient>
+              </defs>
+            </svg>
           </ReactFlow>
         </div>
 

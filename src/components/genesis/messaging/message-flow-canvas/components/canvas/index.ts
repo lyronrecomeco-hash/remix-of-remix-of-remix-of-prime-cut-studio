@@ -3,6 +3,9 @@ export { MessageFlowCanvasWrapper as MessageFlowCanvas } from './MessageFlowCanv
 export { NodePaletteModal } from './NodePaletteModal';
 export { NodeConfigModal } from './NodeConfigModal';
 export { RealTimeErrorLogs } from './RealTimeErrorLogs';
+export { CustomEdge } from './CustomEdge';
+export { CanvasToolbar } from './CanvasToolbar';
+export { FlowTemplatesModal } from './FlowTemplatesModal';
 
 // Node exports
 export { BaseNode } from './nodes/BaseNode';
