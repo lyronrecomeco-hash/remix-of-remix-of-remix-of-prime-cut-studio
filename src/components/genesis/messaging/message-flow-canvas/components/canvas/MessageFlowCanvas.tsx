@@ -13,6 +13,7 @@ import {
   Node,
   Edge,
   NodeTypes,
+  EdgeTypes,
   ConnectionLineType,
   MarkerType,
   BackgroundVariant,
@@ -33,6 +34,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MessageFlow, MessageNode, MessageEdge, NODE_CATEGORIES, FlowErrorLog } from '../../types';
 import { NodePaletteModal } from './NodePaletteModal';
 import { FlowTemplatesModal } from './FlowTemplatesModal';
+import { CustomEdge } from './CustomEdge';
 import { AdvancedTextNode } from './nodes/AdvancedTextNode';
 import { ButtonMessageNode } from './nodes/ButtonMessageNode';
 import { ListMessageNode } from './nodes/ListMessageNode';
@@ -89,6 +91,11 @@ const nodeTypes: NodeTypes = {
   'end-flow': UtilityNode,
 };
 
+// Custom edge types mapping
+const edgeTypes: EdgeTypes = {
+  'custom': CustomEdge,
+};
+
 // Convert MessageNode to React Flow node
 const toFlowNode = (node: MessageNode): Node => ({
   id: node.id,
@@ -114,43 +121,31 @@ const toMessageNode = (node: Node): MessageNode => {
   };
 };
 
-// Convert edges - Modern smooth bezier with gradient (NO dashes)
+// Convert edges - Modern custom edge with animations
 const toFlowEdge = (edge: MessageEdge): Edge => ({
   id: edge.id,
   source: edge.source,
   target: edge.target,
   sourceHandle: edge.sourceHandle,
   targetHandle: edge.targetHandle,
-  label: edge.label,
-  animated: false,
-  type: 'smoothstep',
+  data: { label: edge.label },
+  type: 'custom',
   markerEnd: { 
     type: MarkerType.ArrowClosed,
-    width: 20,
-    height: 20,
-    color: '#22c55e',
-  },
-  style: { 
-    strokeWidth: 3,
-    stroke: '#3b82f6',
-    strokeLinecap: 'round' as const,
+    width: 24,
+    height: 24,
+    color: 'hsl(142 76% 46%)',
   },
 });
 
-// Modern edge styles - SOLID lines with color
+// Modern edge options - using custom edge
 const defaultEdgeOptions = {
-  type: 'smoothstep',
-  animated: false,
-  style: { 
-    strokeWidth: 3, 
-    stroke: '#3b82f6',
-    strokeLinecap: 'round' as const,
-  },
+  type: 'custom',
   markerEnd: {
     type: MarkerType.ArrowClosed,
-    width: 20,
-    height: 20,
-    color: '#22c55e',
+    width: 24,
+    height: 24,
+    color: 'hsl(142 76% 46%)',
   },
 };
 
@@ -435,6 +430,7 @@ export const MessageFlowCanvas = ({ flow, onBack, onSave, onToggleActive }: Mess
             onDrop={onDrop}
             onNodeClick={onNodeClick}
             nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             connectionLineType={ConnectionLineType.SmoothStep}
             connectionMode={ConnectionMode.Loose}
             defaultEdgeOptions={defaultEdgeOptions}
