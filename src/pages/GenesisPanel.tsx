@@ -29,7 +29,8 @@ import {
   Bell,
   AlertTriangle,
   Sun,
-  Moon
+  Moon,
+  MousePointerClick
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -59,6 +60,7 @@ import { GenesisHelpModal } from '@/components/genesis/GenesisHelpModal';
 import { GenesisCampaigns } from '@/components/genesis/campaigns';
 import { CaktoHub } from '@/components/genesis/CaktoHub';
 import { CactusIcon } from '@/components/genesis/icons';
+import { GenesisButtons } from '@/components/genesis/buttons';
 
 // Dashboard component with real data - Premium Design
 const GenesisDashboard = ({ onNavigate }: { onNavigate: (tab: string) => void }) => {
@@ -500,6 +502,7 @@ export default function GenesisPanel() {
     { id: 'flows', label: 'Flow Builder', icon: GitBranch },
     { id: 'chatbots', label: 'Chatbots', icon: Bot },
     { id: 'campaigns', label: 'Campanhas', icon: Send },
+    { id: 'buttons', label: 'Botões', icon: MousePointerClick },
     { id: 'metrics', label: 'Métricas', icon: Activity },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'credits', label: 'Créditos', icon: CreditCard },
@@ -534,6 +537,8 @@ export default function GenesisPanel() {
         return <GenesisChatbots instances={instances} />;
       case 'campaigns':
         return <GenesisCampaigns />;
+      case 'buttons':
+        return <GenesisButtons />;
       case 'cakto':
         return <CaktoHub onFocusModeChange={setIsCaktoFocusMode} />;
       case 'metrics':
