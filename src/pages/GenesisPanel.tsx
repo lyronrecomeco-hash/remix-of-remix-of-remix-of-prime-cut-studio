@@ -30,7 +30,8 @@ import {
   AlertTriangle,
   Sun,
   Moon,
-  MousePointerClick
+  MousePointerClick,
+  MessageSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -61,6 +62,7 @@ import { GenesisCampaigns } from '@/components/genesis/campaigns';
 import { CaktoHub } from '@/components/genesis/CaktoHub';
 import { CactusIcon } from '@/components/genesis/icons';
 import { GenesisButtons } from '@/components/genesis/buttons';
+import { MessagingFeatures } from '@/components/genesis/messaging';
 
 // Dashboard component with real data - Premium Design
 const GenesisDashboard = ({ onNavigate }: { onNavigate: (tab: string) => void }) => {
@@ -502,6 +504,7 @@ export default function GenesisPanel() {
     { id: 'flows', label: 'Flow Builder', icon: GitBranch },
     { id: 'chatbots', label: 'Chatbots', icon: Bot },
     { id: 'campaigns', label: 'Campanhas', icon: Send },
+    { id: 'messaging', label: 'Mensagens', icon: MessageSquare },
     // { id: 'buttons', label: 'Botões', icon: MousePointerClick }, // Temporariamente desativado - botões nativos não funcionam no mobile
     { id: 'metrics', label: 'Métricas', icon: Activity },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
@@ -539,6 +542,8 @@ export default function GenesisPanel() {
         return <GenesisCampaigns />;
       case 'buttons':
         return <GenesisButtons />;
+      case 'messaging':
+        return <MessagingFeatures />;
       case 'cakto':
         return <CaktoHub onFocusModeChange={setIsCaktoFocusMode} />;
       case 'metrics':
