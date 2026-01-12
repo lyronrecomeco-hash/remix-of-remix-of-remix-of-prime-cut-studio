@@ -1,4 +1,4 @@
-export const VPS_SCRIPT_VERSION = "8.6";
+export const VPS_SCRIPT_VERSION = "8.7";
 
 // VPS Script v8.3 - MULTI-INSTANCE MANAGER WITH PROFESSIONAL CLI
 // Gerenciador dinâmico com menu interativo profissional e logs personalizados
@@ -2057,6 +2057,179 @@ app.post('/api/instance/:id/send-media', authMiddleware, async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════
+// ENDPOINTS FASE 1 - FEATURES AVANÇADAS (Polls, Reactions, Audio PTT, Presence)
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+
+// Enviar enquete (Poll)
+app.post('/api/instance/:id/send-poll', authMiddleware, async (req, res) => {
+  const { phone, to, name, values, options, selectableCount } = req.body;
+  const recipient = phone || to;
+  const pollOptions = values || options || [];
+  
+  if (!recipient || !name || !pollOptions.length) {
+    return res.status(400).json({ error: 'phone, name e values/options são obrigatórios' });
+  }
+  
+  const instance = manager.instances.get(req.params.id);
+  if (!instance || !instance.sock) {
+    return res.status(404).json({ error: 'Instância não encontrada ou não conectada' });
+  }
+  
+  if (instance.status !== 'connected' || !instance.readyToSend) {
+    return res.status(503).json({ error: 'WhatsApp não pronto', code: 'NOT_READY' });
+  }
+  
+  try {
+    const jid = recipient.includes('@') ? recipient : recipient.replace(/\\D/g, '') + '@s.whatsapp.net';
+    
+    const pollMessage = {
+      poll: {
+        name: name,
+        values: pollOptions.slice(0, 12), // Max 12 opções
+        selectableCount: selectableCount || 1
+      }
+    };
+    
+    const result = await instance.sock.sendMessage(jid, pollMessage);
+    
+    instance.messagesSent = (instance.messagesSent || 0) + 1;
+    log('success', \`Enquete enviada para \${recipient.substring(0, 4)}*** - \${pollOptions.length} opções\`);
+    res.json({ success: true, to: recipient, messageId: result?.key?.id, optionsCount: pollOptions.length });
+  } catch (err) {
+    log('error', \`Erro ao enviar enquete: \${err.message}\`);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Enviar reação (Reaction)
+app.post('/api/instance/:id/send-reaction', authMiddleware, async (req, res) => {
+  const { phone, to, messageId, emoji } = req.body;
+  const recipient = phone || to;
+  
+  if (!recipient || !messageId) {
+    return res.status(400).json({ error: 'phone e messageId são obrigatórios' });
+  }
+  
+  const instance = manager.instances.get(req.params.id);
+  if (!instance || !instance.sock) {
+    return res.status(404).json({ error: 'Instância não encontrada ou não conectada' });
+  }
+  
+  if (instance.status !== 'connected' || !instance.readyToSend) {
+    return res.status(503).json({ error: 'WhatsApp não pronto', code: 'NOT_READY' });
+  }
+  
+  try {
+    const jid = recipient.includes('@') ? recipient : recipient.replace(/\\D/g, '') + '@s.whatsapp.net';
+    
+    await instance.sock.sendMessage(jid, {
+      react: {
+        text: emoji || '', // Emoji vazio = remover reação
+        key: {
+          remoteJid: jid,
+          id: messageId,
+          fromMe: false
+        }
+      }
+    });
+    
+    log('success', \`Reação \${emoji || '(removida)'} enviada para msg \${messageId.substring(0, 10)}...\`);
+    res.json({ success: true, to: recipient, messageId, emoji: emoji || null });
+  } catch (err) {
+    log('error', \`Erro ao enviar reação: \${err.message}\`);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Enviar áudio PTT (Push to Talk)
+app.post('/api/instance/:id/send-audio', authMiddleware, async (req, res) => {
+  const { phone, to, audio, audioUrl, ptt, mimetype, seconds } = req.body;
+  const recipient = phone || to;
+  const audioSource = audio || audioUrl;
+  
+  if (!recipient || !audioSource) {
+    return res.status(400).json({ error: 'phone e audio/audioUrl são obrigatórios' });
+  }
+  
+  const instance = manager.instances.get(req.params.id);
+  if (!instance || !instance.sock) {
+    return res.status(404).json({ error: 'Instância não encontrada ou não conectada' });
+  }
+  
+  if (instance.status !== 'connected' || !instance.readyToSend) {
+    return res.status(503).json({ error: 'WhatsApp não pronto', code: 'NOT_READY' });
+  }
+  
+  try {
+    const jid = recipient.includes('@') ? recipient : recipient.replace(/\\D/g, '') + '@s.whatsapp.net';
+    
+    let audioBuffer;
+    if (audio && audio.startsWith('data:')) {
+      // Base64 data URL
+      audioBuffer = Buffer.from(audio.split(',')[1], 'base64');
+    } else if (audio && !audio.startsWith('http')) {
+      // Pure base64
+      audioBuffer = Buffer.from(audio, 'base64');
+    } else {
+      // URL - fetch first
+      const response = await fetch(audioSource);
+      const arrayBuffer = await response.arrayBuffer();
+      audioBuffer = Buffer.from(arrayBuffer);
+    }
+    
+    const result = await instance.sock.sendMessage(jid, {
+      audio: audioBuffer,
+      mimetype: mimetype || 'audio/ogg; codecs=opus',
+      ptt: ptt !== false, // Default true (PTT)
+      seconds: seconds || undefined
+    });
+    
+    instance.messagesSent = (instance.messagesSent || 0) + 1;
+    log('success', \`Áudio \${ptt ? 'PTT' : 'normal'} enviado para \${recipient.substring(0, 4)}***\`);
+    res.json({ success: true, to: recipient, messageId: result?.key?.id, ptt: ptt !== false });
+  } catch (err) {
+    log('error', \`Erro ao enviar áudio: \${err.message}\`);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Enviar indicador de presença (Typing/Recording)
+app.post('/api/instance/:id/send-presence', authMiddleware, async (req, res) => {
+  const { phone, to, presence } = req.body;
+  const recipient = phone || to;
+  
+  if (!recipient) {
+    return res.status(400).json({ error: 'phone é obrigatório' });
+  }
+  
+  const validPresences = ['available', 'unavailable', 'composing', 'recording', 'paused'];
+  if (presence && !validPresences.includes(presence)) {
+    return res.status(400).json({ error: \`presence deve ser: \${validPresences.join(', ')}\` });
+  }
+  
+  const instance = manager.instances.get(req.params.id);
+  if (!instance || !instance.sock) {
+    return res.status(404).json({ error: 'Instância não encontrada ou não conectada' });
+  }
+  
+  if (instance.status !== 'connected') {
+    return res.status(503).json({ error: 'WhatsApp não conectado', code: 'NOT_CONNECTED' });
+  }
+  
+  try {
+    const jid = recipient.includes('@') ? recipient : recipient.replace(/\\D/g, '') + '@s.whatsapp.net';
+    
+    await instance.sock.sendPresenceUpdate(presence || 'composing', jid);
+    
+    log('info', \`Presença "\${presence || 'composing'}" enviada para \${recipient.substring(0, 4)}***\`);
+    res.json({ success: true, to: recipient, presence: presence || 'composing' });
+  } catch (err) {
+    log('error', \`Erro ao enviar presença: \${err.message}\`);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════════════════
 // ENDPOINTS DE BACKUP DE SESSÃO (FASE 8)
 // ═══════════════════════════════════════════════════════════════════════════════════════════
 
@@ -2505,10 +2678,9 @@ app.listen(CONFIG.PORT, '0.0.0.0', async () => {
   // Iniciar heartbeat do pool (se configurado)
   startNodeHeartbeat();
 
-  // Auto-conectar instâncias existentes
-  setTimeout(() => {
-    manager.autoConnectAll();
-  }, 3000);
+  // Auto-connect DESATIVADO - conexões devem ser iniciadas manualmente pelo painel
+  // Isso evita loops de reconexão e problemas com instâncias que foram desconectadas intencionalmente
+  log('info', 'Auto-connect desativado. Conecte instâncias pelo painel.');
 
   if (menuMode) {
     showMenu();
