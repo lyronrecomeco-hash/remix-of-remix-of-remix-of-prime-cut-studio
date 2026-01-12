@@ -11,12 +11,30 @@ export const ListMessageNode = memo((props: NodeProps) => {
     config: (rawData?.config as Record<string, any>) || {},
     isConfigured: (rawData?.isConfigured as boolean) || false,
   };
-  
+
+  const cfg = data.config || {};
+
+  const itemsFromItems = Array.isArray(cfg.items) ? cfg.items : [];
+  const itemsFromSections = Array.isArray(cfg.sections)
+    ? cfg.sections.flatMap((s: any) => (Array.isArray(s?.rows) ? s.rows : []))
+    : [];
+
+  const rows = (itemsFromItems.length ? itemsFromItems : itemsFromSections)
+    .map((it: any) => String(it?.title || it?.text || '').trim())
+    .filter(Boolean);
+
+  const outputLabels = rows.slice(0, 6).map((t, i) => t || `Opção ${i + 1}`);
+
   return (
-    <BaseNode {...props} icon={List} title="Lista" category="content">
-      {data.config?.title && (
-        <p className="line-clamp-1">{data.config.title}</p>
-      )}
+    <BaseNode
+      {...props}
+      icon={List}
+      title="Lista"
+      category="content"
+      hasMultipleOutputs={outputLabels.length > 0}
+      outputLabels={outputLabels}
+    >
+      {cfg.title && <p className="line-clamp-1">{cfg.title}</p>}
     </BaseNode>
   );
 });

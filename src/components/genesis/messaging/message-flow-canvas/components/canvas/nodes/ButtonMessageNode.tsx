@@ -12,10 +12,21 @@ export const ButtonMessageNode = memo((props: NodeProps) => {
     config: (rawData?.config as Record<string, any>) || {},
     isConfigured: (rawData?.isConfigured as boolean) || false,
   };
-  const buttons = data.config?.buttons || [];
-  
+
+  const buttons = Array.isArray(data.config?.buttons) ? data.config.buttons : [];
+  const outputLabels = buttons
+    .slice(0, 3)
+    .map((b: any, i: number) => (b?.text ? String(b.text) : `Opção ${i + 1}`));
+
   return (
-    <BaseNode {...props} icon={LayoutGrid} title="Botões" category="content">
+    <BaseNode
+      {...props}
+      icon={LayoutGrid}
+      title="Botões"
+      category="content"
+      hasMultipleOutputs={outputLabels.length > 0}
+      outputLabels={outputLabels}
+    >
       {buttons.length > 0 ? (
         <div className="flex flex-wrap gap-1">
           {buttons.slice(0, 3).map((btn: any, i: number) => (
