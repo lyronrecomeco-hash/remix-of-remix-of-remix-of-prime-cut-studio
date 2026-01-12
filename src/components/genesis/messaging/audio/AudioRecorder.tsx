@@ -1,18 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { 
   Mic, 
   Square, 
   Send, 
   Loader2,
-  CheckCircle2,
-  XCircle,
   Play,
   Pause,
   Trash2,
@@ -21,6 +16,7 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import type { InstanceOption, SendLog } from '../types';
+import { InstanceSelect, PhoneInput, LogsPanel } from '../components';
 
 interface AudioRecorderProps {
   instances: InstanceOption[];
@@ -29,7 +25,7 @@ interface AudioRecorderProps {
 export const AudioRecorder = ({ instances }: AudioRecorderProps) => {
   const [selectedInstance, setSelectedInstance] = useState<string>('');
   const [recipientPhone, setRecipientPhone] = useState('');
-  const [isPtt, setIsPtt] = useState(true); // Push to talk (voice message style)
+  const [isPtt, setIsPtt] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
@@ -43,7 +39,6 @@ export const AudioRecorder = ({ instances }: AudioRecorderProps) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (audioUrl) URL.revokeObjectURL(audioUrl);
@@ -52,14 +47,13 @@ export const AudioRecorder = ({ instances }: AudioRecorderProps) => {
   }, [audioUrl]);
 
   const addLog = (type: SendLog['type'], message: string, details?: string) => {
-    const log: SendLog = {
+    setLogs(prev => [{
       id: Date.now().toString(),
       timestamp: new Date(),
       type,
       message,
       details
-    };
-    setLogs(prev => [log, ...prev].slice(0, 50));
+    }, ...prev].slice(0, 50));
   };
 
   const startRecording = async () => {
@@ -70,41 +64,27 @@ export const AudioRecorder = ({ instances }: AudioRecorderProps) => {
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
       };
 
       mediaRecorder.onstop = () => {
         const blob = new Blob(audioChunksRef.current, { type: 'audio/webm;codecs=opus' });
         setAudioBlob(blob);
-        
-        // Revoke previous URL
         if (audioUrl) URL.revokeObjectURL(audioUrl);
-        
-        const url = URL.createObjectURL(blob);
-        setAudioUrl(url);
-        
-        // Stop all tracks
+        setAudioUrl(URL.createObjectURL(blob));
         stream.getTracks().forEach(track => track.stop());
-        
         addLog('success', 'Gravação concluída', `${recordingTime}s`);
       };
 
-      mediaRecorder.start(100); // Collect data every 100ms
+      mediaRecorder.start(100);
       setIsRecording(true);
       setRecordingTime(0);
-
-      // Start timer
-      timerRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
-      }, 1000);
-
+      timerRef.current = setInterval(() => setRecordingTime(prev => prev + 1), 1000);
       addLog('info', 'Gravação iniciada');
     } catch (err: any) {
-      addLog('error', 'Erro ao iniciar gravação', err.message);
-      toast.error('Erro ao acessar microfone. Verifique as permissões.');
+      addLog('error', 'Erro no microfone', err.message);
+      toast.error('Erro ao acessar microfone');
     }
   };
 
@@ -112,22 +92,16 @@ export const AudioRecorder = ({ instances }: AudioRecorderProps) => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
-      
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
+      if (timerRef.current) clearInterval(timerRef.current);
     }
   };
 
   const playAudio = () => {
     if (!audioUrl) return;
-    
     if (!audioRef.current) {
       audioRef.current = new Audio(audioUrl);
       audioRef.current.onended = () => setIsPlaying(false);
     }
-    
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
@@ -151,30 +125,17 @@ export const AudioRecorder = ({ instances }: AudioRecorderProps) => {
   };
 
   const sendAudio = async () => {
-    if (!selectedInstance) {
-      toast.error('Selecione uma instância');
-      return;
-    }
-    if (!recipientPhone.trim()) {
-      toast.error('Digite o número do destinatário');
-      return;
-    }
-    if (!audioBlob) {
-      toast.error('Grave um áudio primeiro');
-      return;
-    }
+    if (!selectedInstance) return toast.error('Selecione uma instância');
+    if (!recipientPhone.trim()) return toast.error('Digite o destinatário');
+    if (!audioBlob) return toast.error('Grave um áudio primeiro');
 
     setSending(true);
     addLog('info', 'Enviando áudio...', `Para: ${recipientPhone}`);
 
     try {
-      // Convert blob to base64
       const reader = new FileReader();
       const base64Promise = new Promise<string>((resolve, reject) => {
-        reader.onloadend = () => {
-          const base64 = (reader.result as string).split(',')[1];
-          resolve(base64);
-        };
+        reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
         reader.onerror = reject;
       });
       reader.readAsDataURL(audioBlob);
@@ -196,8 +157,8 @@ export const AudioRecorder = ({ instances }: AudioRecorderProps) => {
       if (error) throw error;
 
       if (data?.success) {
-        addLog('success', 'Áudio enviado!', isPtt ? 'Como mensagem de voz' : 'Como arquivo de áudio');
-        toast.success('Áudio enviado com sucesso!');
+        addLog('success', 'Áudio enviado!', isPtt ? 'Mensagem de voz' : 'Arquivo');
+        toast.success('Áudio enviado!');
         deleteRecording();
       } else {
         throw new Error(data?.error || 'Erro desconhecido');
@@ -210,86 +171,60 @@ export const AudioRecorder = ({ instances }: AudioRecorderProps) => {
     }
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
       {/* Audio Recorder */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Mic className="w-5 h-5" />
-            Gravar Áudio
-          </CardTitle>
-          <CardDescription>
-            Grave e envie áudios como mensagem de voz (PTT)
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Instance Selection */}
-          <div className="space-y-2">
-            <Label>Instância</Label>
-            <Select value={selectedInstance} onValueChange={setSelectedInstance}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione uma instância" />
-              </SelectTrigger>
-              <SelectContent>
-                {instances.map((inst) => (
-                  <SelectItem key={inst.id} value={inst.id}>
-                    {inst.name} {inst.phone_number && `(${inst.phone_number})`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Recipient */}
-          <div className="space-y-2">
-            <Label>Destinatário</Label>
-            <Input
-              placeholder="5511999999999"
-              value={recipientPhone}
-              onChange={(e) => setRecipientPhone(e.target.value)}
-            />
-          </div>
-
-          {/* PTT Toggle */}
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="flex items-center gap-2">
-                <Radio className="w-4 h-4" />
-                Mensagem de Voz (PTT)
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Envia como áudio que toca no chat (não como arquivo)
-              </p>
+      <Card className="lg:col-span-3">
+        <CardContent className="p-5">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="p-2 rounded-lg bg-green-500/10">
+              <Mic className="w-5 h-5 text-green-500" />
             </div>
-            <Switch
-              checked={isPtt}
-              onCheckedChange={setIsPtt}
+            <div>
+              <h3 className="font-semibold">Gravar Áudio</h3>
+              <p className="text-sm text-muted-foreground">Envie mensagens de voz (PTT)</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+            <InstanceSelect 
+              value={selectedInstance} 
+              onValueChange={setSelectedInstance} 
+              instances={instances} 
             />
+            <PhoneInput 
+              value={recipientPhone} 
+              onChange={setRecipientPhone} 
+            />
+          </div>
+
+          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 mb-5">
+            <div className="flex items-center gap-2">
+              <Radio className="w-4 h-4 text-muted-foreground" />
+              <div>
+                <Label className="text-sm">Mensagem de Voz (PTT)</Label>
+                <p className="text-xs text-muted-foreground">Toca direto no chat</p>
+              </div>
+            </div>
+            <Switch checked={isPtt} onCheckedChange={setIsPtt} />
           </div>
 
           {/* Recording Controls */}
-          <div className="flex flex-col items-center gap-4 py-4">
-            {/* Recording Button */}
+          <div className="flex flex-col items-center gap-4 py-6 mb-4 rounded-xl bg-muted/30">
             {!isRecording && !audioBlob && (
               <Button
                 size="lg"
                 onClick={startRecording}
-                className="w-20 h-20 rounded-full"
+                className="w-20 h-20 rounded-full text-lg"
               >
                 <Mic className="w-8 h-8" />
               </Button>
             )}
 
-            {/* Stop Button */}
             {isRecording && (
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex flex-col items-center gap-3">
                 <Button
                   size="lg"
                   variant="destructive"
@@ -298,114 +233,55 @@ export const AudioRecorder = ({ instances }: AudioRecorderProps) => {
                 >
                   <Square className="w-8 h-8" />
                 </Button>
-                <span className="text-lg font-mono">
+                <span className="text-2xl font-mono font-bold">
                   {formatTime(recordingTime)}
                 </span>
               </div>
             )}
 
-            {/* Playback Controls */}
             {audioBlob && !isRecording && (
-              <div className="flex flex-col items-center gap-4">
-                <div className="flex items-center gap-4">
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    onClick={playAudio}
-                    className="w-12 h-12 rounded-full"
-                  >
-                    {isPlaying ? (
-                      <Pause className="w-5 h-5" />
-                    ) : (
-                      <Play className="w-5 h-5" />
-                    )}
-                  </Button>
-                  <span className="text-lg font-mono">
-                    {formatTime(recordingTime)}
-                  </span>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={deleteRecording}
-                    className="w-12 h-12 rounded-full"
-                  >
-                    <Trash2 className="w-5 h-5 text-destructive" />
-                  </Button>
-                </div>
+              <div className="flex items-center gap-4">
+                <Button
+                  size="icon"
+                  variant="outline"
+                  onClick={playAudio}
+                  className="w-14 h-14 rounded-full"
+                >
+                  {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+                </Button>
+                <span className="text-xl font-mono font-bold min-w-[60px] text-center">
+                  {formatTime(recordingTime)}
+                </span>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={deleteRecording}
+                  className="w-14 h-14 rounded-full hover:bg-destructive/10"
+                >
+                  <Trash2 className="w-5 h-5 text-destructive" />
+                </Button>
               </div>
             )}
 
-            <p className="text-xs text-muted-foreground text-center">
-              {isRecording 
-                ? 'Clique para parar a gravação'
-                : audioBlob
-                  ? 'Pronto para enviar'
-                  : 'Clique para começar a gravar'
-              }
+            <p className="text-xs text-muted-foreground">
+              {isRecording ? 'Clique para parar' : audioBlob ? 'Pronto para enviar' : 'Clique para gravar'}
             </p>
           </div>
 
-          {/* Send Button */}
-          <Button 
-            onClick={sendAudio} 
-            disabled={sending || !selectedInstance || !audioBlob}
-            className="w-full"
-          >
+          <Button onClick={sendAudio} disabled={sending || !selectedInstance || !audioBlob} className="w-full">
             {sending ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Enviando...
-              </>
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Enviando...</>
             ) : (
-              <>
-                <Send className="w-4 h-4 mr-2" />
-                Enviar Áudio
-              </>
+              <><Send className="w-4 h-4 mr-2" />Enviar Áudio</>
             )}
           </Button>
         </CardContent>
       </Card>
 
       {/* Logs */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Logs</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-[400px]">
-            {logs.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                Nenhum log ainda
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {logs.map((log) => (
-                  <div 
-                    key={log.id}
-                    className="flex items-start gap-2 text-xs"
-                  >
-                    {log.type === 'success' && <CheckCircle2 className="w-3 h-3 text-green-500 mt-0.5" />}
-                    {log.type === 'error' && <XCircle className="w-3 h-3 text-destructive mt-0.5" />}
-                    {log.type === 'info' && <Mic className="w-3 h-3 text-blue-500 mt-0.5" />}
-                    <div>
-                      <span className="text-muted-foreground">
-                        {log.timestamp.toLocaleTimeString()}
-                      </span>
-                      {' '}
-                      <span>{log.message}</span>
-                      {log.details && (
-                        <span className="text-muted-foreground block">
-                          {log.details}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </ScrollArea>
-        </CardContent>
-      </Card>
+      <div className="lg:col-span-2">
+        <LogsPanel logs={logs} maxHeight="h-[400px]" />
+      </div>
     </div>
   );
 };
