@@ -11,7 +11,8 @@ interface EventQueueItem {
   event_type: string;
   event_data: any;
   status: string;
-  retry_count: number;
+  attempts: number;
+  max_attempts: number;
   created_at: string;
 }
 
@@ -3112,12 +3113,14 @@ Deno.serve(async (req) => {
       } catch (error: any) {
         console.error(`Error processing event ${event.id}:`, error);
         
-        // Increment retry count
+        // Increment attempts count
+        const currentAttempts = event.attempts || 0;
+        const eventMaxAttempts = event.max_attempts || maxRetries;
         await supabase
           .from('whatsapp_event_queue')
           .update({ 
-            status: event.retry_count + 1 >= maxRetries ? 'failed' : 'pending',
-            retry_count: event.retry_count + 1,
+            status: currentAttempts + 1 >= eventMaxAttempts ? 'failed' : 'pending',
+            attempts: currentAttempts + 1,
             error_message: error?.message || 'Unknown error',
           })
           .eq('id', event.id);
