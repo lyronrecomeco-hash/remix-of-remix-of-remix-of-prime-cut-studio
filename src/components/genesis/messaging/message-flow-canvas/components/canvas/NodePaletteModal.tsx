@@ -112,7 +112,7 @@ export const NodePaletteModal = ({ open, onOpenChange, onSelectNode }: NodePalet
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[85vh] p-0 overflow-hidden">
+      <DialogContent className="max-w-4xl max-h-[85vh] p-0 overflow-hidden z-[200]">
         <DialogHeader className="p-6 pb-4 border-b">
           <DialogTitle className="text-xl flex items-center gap-3">
             <div className="p-2 rounded-xl bg-primary/10">

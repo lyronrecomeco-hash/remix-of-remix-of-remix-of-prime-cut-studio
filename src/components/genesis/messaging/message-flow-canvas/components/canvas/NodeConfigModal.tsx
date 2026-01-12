@@ -583,7 +583,7 @@ export const NodeConfigModal = ({ open, onOpenChange, node, onSave }: NodeConfig
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-lg max-h-[85vh] overflow-hidden flex flex-col z-[200]">
         <DialogHeader className="pb-4 border-b">
           <DialogTitle className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-primary/10">
