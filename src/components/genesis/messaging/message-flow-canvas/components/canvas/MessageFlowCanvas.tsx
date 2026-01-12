@@ -1,5 +1,5 @@
-// Message Flow Canvas - Visual Interactive Canvas
-import { useCallback, useRef, useState, useMemo } from 'react';
+// Message Flow Canvas - Supreme Visual Interactive Canvas
+import { useCallback, useRef, useState, useMemo, useEffect } from 'react';
 import {
   ReactFlow,
   Background,
@@ -17,18 +17,21 @@ import {
   MarkerType,
   BackgroundVariant,
   ReactFlowProvider,
+  useReactFlow,
+  ConnectionMode,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
-  ArrowLeft, Save, Play, Pause, Settings2, ZoomIn, ZoomOut, 
-  Maximize2, Undo, Redo, Copy, Trash2, Lock, Unlock
+  ArrowLeft, Save, Play, Pause, ZoomIn, ZoomOut, 
+  Maximize2, Trash2, Lock, Unlock, Plus, AlertCircle,
+  Activity, X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageFlow, MessageNode, MessageEdge, NODE_CATEGORIES } from '../../types';
-import { NodePalette } from './NodePalette';
+import { MessageFlow, MessageNode, MessageEdge, NODE_CATEGORIES, FlowErrorLog } from '../../types';
+import { NodePaletteModal } from './NodePaletteModal';
 import { AdvancedTextNode } from './nodes/AdvancedTextNode';
 import { ButtonMessageNode } from './nodes/ButtonMessageNode';
 import { ListMessageNode } from './nodes/ListMessageNode';
@@ -38,7 +41,11 @@ import { ReactionNode } from './nodes/ReactionNode';
 import { PresenceNode } from './nodes/PresenceNode';
 import { SmartDelayNode } from './nodes/SmartDelayNode';
 import { ConditionNode } from './nodes/ConditionNode';
+import { TriggerNode } from './nodes/TriggerNode';
+import { GroupManagementNode } from './nodes/GroupManagementNode';
+import { UtilityNode } from './nodes/UtilityNode';
 import { NodeConfigModal } from './NodeConfigModal';
+import { RealTimeErrorLogs } from './RealTimeErrorLogs';
 
 interface MessageFlowCanvasProps {
   flow: MessageFlow;
@@ -58,6 +65,27 @@ const nodeTypes: NodeTypes = {
   'presence': PresenceNode,
   'smart-delay': SmartDelayNode,
   'condition': ConditionNode,
+  // Triggers
+  'start-trigger': TriggerNode,
+  'instance-connector': TriggerNode,
+  'webhook-trigger': TriggerNode,
+  'schedule-trigger': TriggerNode,
+  // Group Management
+  'group-welcome': GroupManagementNode,
+  'group-goodbye': GroupManagementNode,
+  'keyword-filter': GroupManagementNode,
+  'keyword-delete': GroupManagementNode,
+  'member-kick': GroupManagementNode,
+  'member-warn': GroupManagementNode,
+  'group-reminder': GroupManagementNode,
+  'anti-spam': GroupManagementNode,
+  'anti-link': GroupManagementNode,
+  'group-rules': GroupManagementNode,
+  'member-counter': GroupManagementNode,
+  // Utilities
+  'http-request': UtilityNode,
+  'set-variable': UtilityNode,
+  'end-flow': UtilityNode,
 };
 
 // Convert MessageNode to React Flow node
@@ -93,31 +121,85 @@ const toFlowEdge = (edge: MessageEdge): Edge => ({
   sourceHandle: edge.sourceHandle,
   targetHandle: edge.targetHandle,
   label: edge.label,
-  animated: edge.animated,
-  markerEnd: { type: MarkerType.ArrowClosed },
-  style: { strokeWidth: 2 },
+  animated: edge.animated ?? true,
+  type: 'smoothstep',
+  markerEnd: { 
+    type: MarkerType.ArrowClosed,
+    width: 20,
+    height: 20,
+    color: 'hsl(var(--primary))',
+  },
+  style: { 
+    strokeWidth: 2,
+    stroke: 'hsl(var(--primary))',
+    strokeDasharray: '5,5',
+  },
 });
+
+// Custom edge styles
+const defaultEdgeOptions = {
+  type: 'smoothstep',
+  animated: true,
+  style: { 
+    strokeWidth: 2, 
+    stroke: 'hsl(var(--primary))',
+    strokeDasharray: '8,4',
+  },
+  markerEnd: {
+    type: MarkerType.ArrowClosed,
+    width: 20,
+    height: 20,
+    color: 'hsl(var(--primary))',
+  },
+};
 
 export const MessageFlowCanvas = ({ flow, onBack, onSave, onToggleActive }: MessageFlowCanvasProps) => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState(flow.nodes.map(toFlowNode));
   const [edges, setEdges, onEdgesChange] = useEdgesState(flow.edges.map(toFlowEdge));
-  const [isPaletteDocked, setIsPaletteDocked] = useState(true);
+  const [showPaletteModal, setShowPaletteModal] = useState(false);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
-  const [history, setHistory] = useState<{ nodes: Node[]; edges: Edge[] }[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
   const [hasChanges, setHasChanges] = useState(false);
+  const [showErrorLogs, setShowErrorLogs] = useState(false);
+  const [errorLogs, setErrorLogs] = useState<FlowErrorLog[]>([]);
+
+  // Simulate real-time error logs
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Simulated error detection
+      const unconfiguredNodes = nodes.filter(n => {
+        const data = n.data as Record<string, unknown>;
+        return !(data?.isConfigured as boolean);
+      });
+      
+      if (unconfiguredNodes.length > 0 && Math.random() > 0.8) {
+        const randomNode = unconfiguredNodes[Math.floor(Math.random() * unconfiguredNodes.length)];
+        const data = randomNode.data as Record<string, unknown>;
+        const newError: FlowErrorLog = {
+          id: `error-${Date.now()}`,
+          flowId: flow.id,
+          nodeId: randomNode.id,
+          nodeType: randomNode.type as any,
+          errorType: 'validation',
+          message: `Nó "${(data?.label as string) || randomNode.type}" não está configurado`,
+          timestamp: new Date().toISOString(),
+          resolved: false,
+        };
+        setErrorLogs(prev => [newError, ...prev].slice(0, 50));
+      }
+    }, 10000);
+    
+    return () => clearInterval(interval);
+  }, [nodes, flow.id]);
 
   // Handle connections
   const onConnect = useCallback((params: Connection) => {
     if (isLocked) return;
     setEdges((eds) => addEdge({
       ...params,
-      markerEnd: { type: MarkerType.ArrowClosed },
-      animated: true,
-      style: { strokeWidth: 2, stroke: 'hsl(var(--primary))' },
+      ...defaultEdgeOptions,
     }, eds));
     setHasChanges(true);
   }, [setEdges, isLocked]);
@@ -158,11 +240,13 @@ export const MessageFlowCanvas = ({ flow, onBack, onSave, onToggleActive }: Mess
     setHasChanges(true);
   }, [setNodes, isLocked]);
 
-  // Handle node selection for configuration
-  const onNodeDoubleClick = useCallback((_: React.MouseEvent, node: Node) => {
-    setSelectedNode(node);
-    setShowConfigModal(true);
-  }, []);
+  // Handle node click for configuration (1 click instead of 2)
+  const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
+    if (!isLocked) {
+      setSelectedNode(node);
+      setShowConfigModal(true);
+    }
+  }, [isLocked]);
 
   // Handle node delete
   const onDeleteSelected = useCallback(() => {
@@ -192,48 +276,94 @@ export const MessageFlowCanvas = ({ flow, onBack, onSave, onToggleActive }: Mess
   const handleNodeConfigSave = useCallback((nodeId: string, config: Record<string, any>) => {
     setNodes((nds) => nds.map((n) => 
       n.id === nodeId 
-        ? { ...n, data: { ...n.data, config, isConfigured: true } }
+        ? { ...n, data: { ...n.data, ...config, isConfigured: true } }
         : n
     ));
     setShowConfigModal(false);
     setHasChanges(true);
   }, [setNodes]);
 
+  // Add node from modal
+  const handleAddNode = useCallback((type: string, label: string) => {
+    const newNode: Node = {
+      id: `${type}-${Date.now()}`,
+      type,
+      position: { x: 200 + Math.random() * 300, y: 100 + Math.random() * 200 },
+      data: { 
+        label, 
+        config: {},
+        isConfigured: false 
+      },
+    };
+    setNodes((nds) => [...nds, newNode]);
+    setShowPaletteModal(false);
+    setHasChanges(true);
+  }, [setNodes]);
+
   // MiniMap node color based on type
   const nodeColor = useCallback((node: Node) => {
     const category = NODE_CATEGORIES.find((c) => c.nodes.some((n) => n.type === node.type));
+    if (category?.id === 'triggers') return '#10b981';
     if (category?.id === 'content') return '#3b82f6';
     if (category?.id === 'interactive') return '#a855f7';
+    if (category?.id === 'group-management') return '#f43f5e';
     if (category?.id === 'flow-control') return '#f59e0b';
     return '#6b7280';
   }, []);
 
+  const unresolvedErrors = errorLogs.filter(e => !e.resolved).length;
+
   return (
-    <div className="h-full flex flex-col bg-background">
-      {/* Canvas Header */}
+    <div className="fixed inset-0 z-50 bg-background flex flex-col">
+      {/* Minimal Header */}
       <motion.div 
-        initial={{ y: -20, opacity: 0 }}
+        initial={{ y: -60, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="flex items-center gap-4 p-3 border-b bg-card/80 backdrop-blur-sm z-10"
+        className="h-14 flex items-center gap-3 px-4 border-b bg-card/95 backdrop-blur-xl z-20"
       >
-        <Button variant="ghost" size="sm" onClick={onBack}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Voltar
+        <Button variant="ghost" size="sm" onClick={onBack} className="gap-2">
+          <ArrowLeft className="w-4 h-4" />
+          <span className="hidden sm:inline">Voltar</span>
         </Button>
         
-        <div className="flex-1 flex items-center gap-3">
-          <div>
-            <h2 className="font-semibold text-sm">{flow.name}</h2>
-            <p className="text-xs text-muted-foreground">{flow.description || 'Sem descrição'}</p>
+        <div className="h-6 w-px bg-border" />
+        
+        <div className="flex-1 flex items-center gap-3 min-w-0">
+          <div className="min-w-0">
+            <h2 className="font-semibold text-sm truncate">{flow.name}</h2>
           </div>
-          {hasChanges && (
-            <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/30">
-              Alterações não salvas
-            </Badge>
-          )}
+          <AnimatePresence>
+            {hasChanges && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0 }}
+              >
+                <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/30 whitespace-nowrap">
+                  Não salvo
+                </Badge>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
+          {/* Error indicator */}
+          <Button 
+            variant="ghost" 
+            size="sm"
+            className={cn(
+              "gap-1.5 h-8",
+              unresolvedErrors > 0 && "text-red-500"
+            )}
+            onClick={() => setShowErrorLogs(!showErrorLogs)}
+          >
+            <AlertCircle className="w-4 h-4" />
+            {unresolvedErrors > 0 && (
+              <span className="text-xs font-medium">{unresolvedErrors}</span>
+            )}
+          </Button>
+
           <Button 
             variant="ghost" 
             size="icon" 
@@ -253,47 +383,36 @@ export const MessageFlowCanvas = ({ flow, onBack, onSave, onToggleActive }: Mess
             <Trash2 className="w-4 h-4" />
           </Button>
 
-          <div className="w-px h-6 bg-border" />
+          <div className="w-px h-6 bg-border mx-1" />
           
           <Button 
             variant={flow.isActive ? "default" : "outline"} 
             size="sm"
             onClick={() => onToggleActive(flow.id)}
-            className="gap-2"
+            className="gap-1.5 h-8"
           >
-            {flow.isActive ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-            {flow.isActive ? 'Pausar' : 'Ativar'}
+            {flow.isActive ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+            <span className="hidden sm:inline">{flow.isActive ? 'Pausar' : 'Ativar'}</span>
           </Button>
           
           <Button 
             size="sm" 
             onClick={handleSave}
             disabled={!hasChanges}
-            className="gap-2"
+            className="gap-1.5 h-8"
           >
-            <Save className="w-4 h-4" />
-            Salvar
+            <Save className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Salvar</span>
           </Button>
         </div>
       </motion.div>
 
-      {/* Canvas Area */}
-      <div className="flex-1 flex">
-        {/* Node Palette */}
-        <AnimatePresence>
-          {isPaletteDocked && (
-            <NodePalette 
-              onClose={() => setIsPaletteDocked(false)}
-              isLocked={isLocked}
-            />
-          )}
-        </AnimatePresence>
-
+      {/* Canvas Area - Full Screen */}
+      <div className="flex-1 relative">
         {/* React Flow Canvas */}
         <div 
           ref={reactFlowWrapper} 
-          className="flex-1"
-          style={{ height: '100%' }}
+          className="absolute inset-0"
         >
           <ReactFlow
             nodes={nodes}
@@ -303,55 +422,77 @@ export const MessageFlowCanvas = ({ flow, onBack, onSave, onToggleActive }: Mess
             onConnect={onConnect}
             onDragOver={onDragOver}
             onDrop={onDrop}
-            onNodeDoubleClick={onNodeDoubleClick}
+            onNodeClick={onNodeClick}
             nodeTypes={nodeTypes}
             connectionLineType={ConnectionLineType.SmoothStep}
-            defaultEdgeOptions={{
-              type: 'smoothstep',
-              animated: true,
-            }}
+            connectionMode={ConnectionMode.Loose}
+            defaultEdgeOptions={defaultEdgeOptions}
             fitView
             snapToGrid
-            snapGrid={[15, 15]}
-            className="message-flow-canvas"
+            snapGrid={[20, 20]}
+            className="message-flow-canvas-supreme"
+            proOptions={{ hideAttribution: true }}
           >
             <Background 
               variant={BackgroundVariant.Dots} 
-              gap={20} 
-              size={1} 
-              className="!bg-muted/30"
+              gap={24} 
+              size={1.5} 
+              color="hsl(var(--muted-foreground) / 0.15)"
             />
             <Controls 
-              className="!bg-card !border-border !shadow-lg"
+              className="!bg-card !border !border-border !rounded-xl !shadow-xl [&>button]:!bg-card [&>button]:!border-border [&>button]:!text-foreground [&>button:hover]:!bg-muted"
               showZoom
               showFitView
               showInteractive={false}
             />
             <MiniMap 
               nodeColor={nodeColor}
-              maskColor="hsl(var(--background) / 0.8)"
-              className="!bg-card !border-border !shadow-lg"
+              maskColor="hsl(var(--background) / 0.9)"
+              className="!bg-card !border !border-border !rounded-xl !shadow-xl"
               zoomable
               pannable
+              style={{ width: 150, height: 100 }}
             />
 
-            {/* Floating palette toggle when collapsed */}
-            {!isPaletteDocked && (
-              <Panel position="top-left">
+            {/* Add Node FAB */}
+            <Panel position="bottom-center" className="!mb-6">
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+              >
                 <Button 
-                  variant="secondary" 
-                  size="sm"
-                  onClick={() => setIsPaletteDocked(true)}
-                  className="shadow-lg"
+                  size="lg"
+                  onClick={() => setShowPaletteModal(true)}
+                  disabled={isLocked}
+                  className="gap-2 rounded-full shadow-2xl px-6 h-12"
                 >
-                  <Settings2 className="w-4 h-4 mr-2" />
-                  Nós
+                  <Plus className="w-5 h-5" />
+                  Adicionar Nó
                 </Button>
-              </Panel>
-            )}
+              </motion.div>
+            </Panel>
           </ReactFlow>
         </div>
+
+        {/* Real-time Error Logs Panel */}
+        <AnimatePresence>
+          {showErrorLogs && (
+            <RealTimeErrorLogs 
+              errors={errorLogs}
+              onClose={() => setShowErrorLogs(false)}
+              onResolve={(id) => setErrorLogs(prev => prev.map(e => e.id === id ? { ...e, resolved: true } : e))}
+            />
+          )}
+        </AnimatePresence>
       </div>
+
+      {/* Node Palette Modal */}
+      <NodePaletteModal
+        open={showPaletteModal}
+        onOpenChange={setShowPaletteModal}
+        onSelectNode={handleAddNode}
+      />
 
       {/* Node Configuration Modal */}
       {selectedNode && (
@@ -362,6 +503,38 @@ export const MessageFlowCanvas = ({ flow, onBack, onSave, onToggleActive }: Mess
           onSave={(config) => handleNodeConfigSave(selectedNode.id, config)}
         />
       )}
+
+      {/* Custom styles */}
+      <style>{`
+        .message-flow-canvas-supreme .react-flow__edge-path {
+          stroke-dasharray: 8 4;
+          animation: dash 0.5s linear infinite;
+        }
+        
+        @keyframes dash {
+          to {
+            stroke-dashoffset: -12;
+          }
+        }
+        
+        .message-flow-canvas-supreme .react-flow__handle {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          border: 3px solid hsl(var(--background));
+          transition: all 0.2s;
+        }
+        
+        .message-flow-canvas-supreme .react-flow__handle:hover {
+          transform: scale(1.3);
+        }
+        
+        .message-flow-canvas-supreme .react-flow__connection-line {
+          stroke: hsl(var(--primary));
+          stroke-width: 2;
+          stroke-dasharray: 8 4;
+        }
+      `}</style>
     </div>
   );
 };
