@@ -1,8 +1,9 @@
 // Trigger Node - Start triggers for flows
 import { memo } from 'react';
 import { NodeProps } from '@xyflow/react';
-import { Play, Smartphone, Globe, Calendar, Zap } from 'lucide-react';
+import { Play, Smartphone, Globe, Calendar, Zap, CheckCircle, Wifi } from 'lucide-react';
 import { BaseNode, BaseNodeData } from './BaseNode';
+import { Badge } from '@/components/ui/badge';
 
 const triggerConfig: Record<string, { icon: React.ElementType; title: string }> = {
   'start-trigger': { icon: Play, title: 'Início do Flow' },
@@ -25,19 +26,22 @@ export const TriggerNode = memo((props: NodeProps) => {
     
     switch (props.type) {
       case 'instance-connector':
-        return nodeData.config.instanceName && (
-          <p>Instância: {nodeData.config.instanceName}</p>
-        );
+        return nodeData.config.instanceName ? (
+          <div className="flex items-center gap-1.5">
+            <Wifi className="w-3 h-3 text-emerald-500" />
+            <span className="text-emerald-600 font-medium">{nodeData.config.instanceName}</span>
+          </div>
+        ) : null;
       case 'webhook-trigger':
         return nodeData.config.webhookUrl && (
-          <p className="truncate">URL: {nodeData.config.webhookUrl}</p>
+          <p className="truncate text-xs">URL: {nodeData.config.webhookUrl}</p>
         );
       case 'schedule-trigger':
         return nodeData.config.schedule && (
-          <p>Horário: {nodeData.config.schedule}</p>
+          <p className="text-xs">⏰ {nodeData.config.schedule}</p>
         );
       default:
-        return <p>Ponto de entrada do flow</p>;
+        return <p className="text-xs text-emerald-600">▶ Ponto de entrada</p>;
     }
   };
 
@@ -46,7 +50,7 @@ export const TriggerNode = memo((props: NodeProps) => {
       {...props}
       icon={config.icon}
       title={config.title}
-      category="flow-control"
+      category="triggers"
     >
       {getConfigPreview()}
     </BaseNode>
