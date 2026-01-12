@@ -314,7 +314,7 @@ export const MessageFlowCanvas = ({ flow, onBack, onSave, onToggleActive }: Mess
   const unresolvedErrors = errorLogs.filter(e => !e.resolved).length;
 
   return (
-    <div className="fixed inset-0 z-50 bg-background flex flex-col">
+    <div className="fixed inset-0 z-[100] bg-background flex flex-col" style={{ backgroundColor: 'hsl(var(--background))' }}>
       {/* Minimal Header */}
       <motion.div 
         initial={{ y: -60, opacity: 0 }}
@@ -408,11 +408,12 @@ export const MessageFlowCanvas = ({ flow, onBack, onSave, onToggleActive }: Mess
       </motion.div>
 
       {/* Canvas Area - Full Screen */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative bg-background" style={{ backgroundColor: 'hsl(var(--background))' }}>
         {/* React Flow Canvas */}
         <div 
           ref={reactFlowWrapper} 
-          className="absolute inset-0"
+          className="absolute inset-0 bg-background"
+          style={{ backgroundColor: 'hsl(var(--background))' }}
         >
           <ReactFlow
             nodes={nodes}
