@@ -34,6 +34,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MessageFlow, MessageNode, MessageEdge, NODE_CATEGORIES, FlowErrorLog } from '../../types';
 import { NodePaletteModal } from './NodePaletteModal';
 import { FlowTemplatesModal } from './FlowTemplatesModal';
+import { IPhonePreview } from './IPhonePreview';
 import { CustomEdge } from './CustomEdge';
 import { AdvancedTextNode } from './nodes/AdvancedTextNode';
 import { ButtonMessageNode } from './nodes/ButtonMessageNode';
@@ -121,7 +122,7 @@ const toMessageNode = (node: Node): MessageNode => {
   };
 };
 
-// Convert edges - Modern custom edge with animations
+// Convert edges - Clean modern edge
 const toFlowEdge = (edge: MessageEdge): Edge => ({
   id: edge.id,
   source: edge.source,
@@ -130,23 +131,11 @@ const toFlowEdge = (edge: MessageEdge): Edge => ({
   targetHandle: edge.targetHandle,
   data: { label: edge.label },
   type: 'custom',
-  markerEnd: { 
-    type: MarkerType.ArrowClosed,
-    width: 24,
-    height: 24,
-    color: 'hsl(142 76% 46%)',
-  },
 });
 
-// Modern edge options - using custom edge
+// Modern edge options
 const defaultEdgeOptions = {
   type: 'custom',
-  markerEnd: {
-    type: MarkerType.ArrowClosed,
-    width: 24,
-    height: 24,
-    color: 'hsl(142 76% 46%)',
-  },
 };
 
 export const MessageFlowCanvas = ({ flow, onBack, onSave, onToggleActive }: MessageFlowCanvasProps) => {
@@ -514,6 +503,9 @@ export const MessageFlowCanvas = ({ flow, onBack, onSave, onToggleActive }: Mess
             />
           )}
         </AnimatePresence>
+
+        {/* iPhone 16 Pro Preview */}
+        <IPhonePreview />
       </div>
 
       {/* Node Palette Modal */}
