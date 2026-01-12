@@ -1,0 +1,31 @@
+import VendaHero from '@/components/venda/VendaHero';
+import VendaProblems from '@/components/venda/VendaProblems';
+import VendaSolution from '@/components/venda/VendaSolution';
+import VendaFeatures from '@/components/venda/VendaFeatures';
+import VendaFlowDemo from '@/components/venda/VendaFlowDemo';
+import VendaLiveDemo from '@/components/venda/VendaLiveDemo';
+import VendaSocialProof from '@/components/venda/VendaSocialProof';
+import VendaPricing from '@/components/venda/VendaPricing';
+import VendaFAQ from '@/components/venda/VendaFAQ';
+import VendaFinalCTA from '@/components/venda/VendaFinalCTA';
+import VendaFooter from '@/components/venda/VendaFooter';
+
+const GenesisVenda = () => {
+  return (
+    <div className="min-h-screen bg-background overflow-x-hidden">
+      <VendaHero />
+      <VendaProblems />
+      <VendaSolution />
+      <VendaFeatures />
+      <VendaFlowDemo />
+      <VendaLiveDemo />
+      <VendaSocialProof />
+      <VendaPricing />
+      <VendaFAQ />
+      <VendaFinalCTA />
+      <VendaFooter />
+    </div>
+  );
+};
+
+export default GenesisVenda;

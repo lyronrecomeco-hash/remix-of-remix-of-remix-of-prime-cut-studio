@@ -42,7 +42,7 @@ const ProposalPage = lazy(() => import("./pages/ProposalPage"));
 const WADocsPage = lazy(() => import("./pages/WADocsPage"));
 const GenesisLogin = lazy(() => import("./pages/GenesisLogin"));
 const GenesisPanel = lazy(() => import("./pages/GenesisPanel"));
-const Comercial = lazy(() => import("./pages/Comercial"));
+const GenesisVenda = lazy(() => import("./pages/GenesisVenda"));
 const FlowBuilderDocs = lazy(() => import("./pages/FlowBuilderDocs"));
 const Instrucoes = lazy(() => import("./pages/Instrucoes"));
 const ScriptDownload = lazy(() => import("./pages/ScriptDownload"));
@@ -229,7 +229,7 @@ const AppContent = () => {
             <Route path="/genesis" element={<GenesisPanel />} />
             <Route path="/genesis/docs" element={<FlowBuilderDocs />} />
             <Route path="/instrucoes" element={<Instrucoes />} />
-            <Route path="/comercial" element={<Comercial />} />
+            <Route path="/venda-genesis" element={<GenesisVenda />} />
             <Route path="/script" element={<ScriptDownload />} />
             <Route path="/sobre" element={<Sobre />} />
             <Route path="/status" element={<StatusPage />} />
