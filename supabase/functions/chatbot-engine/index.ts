@@ -934,54 +934,69 @@ async function processFlowStep(
   // GREETING: Primeira mensagem (sem input do usuário)
   // =====================================================
   if (currentStep.type === 'greeting' && !userMessage) {
-    // Collect greeting + all text messages + menu
-    const { messages, menuStep, menuStepId } = collectMessagesUntilMenu(currentStepId, context);
+    // Get greeting message first
+    const greetingMsg = replaceVariables(currentStep.message, context).trim();
+    const messages: string[] = [];
+    if (greetingMsg) messages.push(greetingMsg);
     
-    if (menuStep && menuStepId) {
-      // Add menu to the messages
-      const menuMsg = replaceVariables(formatMenu(menuStep), context).trim();
-      if (menuMsg) messages.push(menuMsg);
+    // Collect messages starting from the NEXT step (after greeting)
+    const nextStepId = currentStep.next;
+    if (nextStepId) {
+      const { messages: followingMessages, menuStep, menuStepId } = collectMessagesUntilMenu(nextStepId, context);
       
-      const combinedMsg = messages.join('\n\n');
+      // Add following messages (avoiding duplicates)
+      for (const msg of followingMessages) {
+        // Skip if message is same as greeting (avoid duplication)
+        if (msg !== greetingMsg && !messages.includes(msg)) {
+          messages.push(msg);
+        }
+      }
       
-      const ok = await sendMessage(supabase, instanceId, contactId, combinedMsg);
-      if (!ok) {
-        await logSession(supabase, session.id, chatbot.id, 'send_failed', {
+      if (menuStep && menuStepId) {
+        // Add menu to the messages
+        const menuMsg = replaceVariables(formatMenu(menuStep), context).trim();
+        if (menuMsg) messages.push(menuMsg);
+        
+        const combinedMsg = messages.join('\n\n');
+        
+        const ok = await sendMessage(supabase, instanceId, contactId, combinedMsg);
+        if (!ok) {
+          await logSession(supabase, session.id, chatbot.id, 'send_failed', {
+            messageOut: combinedMsg,
+            stepFrom: currentStepId,
+            stepTo: menuStepId,
+            error: 'send_failed',
+          });
+          return { success: false, response: '' };
+        }
+        
+        await updateSession(supabase, session.id, {
+          current_step_id: menuStepId,
+          awaiting_response: true,
+          awaiting_type: 'menu',
+          expected_options: menuStep.options || [],
+          attempt_count: 0,
+          history: addToHistory(session.history, 'bot', combinedMsg),
+        });
+        
+        await logSession(supabase, session.id, chatbot.id, 'step_transition', {
           messageOut: combinedMsg,
           stepFrom: currentStepId,
           stepTo: menuStepId,
-          error: 'send_failed',
         });
-        return { success: false, response: '' };
+        
+        return { success: true, response: combinedMsg };
       }
-      
-      await updateSession(supabase, session.id, {
-        current_step_id: menuStepId,
-        awaiting_response: true,
-        awaiting_type: 'menu',
-        expected_options: menuStep.options || [],
-        attempt_count: 0,
-        history: addToHistory(session.history, 'bot', combinedMsg),
-      });
-      
-      await logSession(supabase, session.id, chatbot.id, 'step_transition', {
-        messageOut: combinedMsg,
-        stepFrom: currentStepId,
-        stepTo: menuStepId,
-      });
-      
-      return { success: true, response: combinedMsg };
     }
     
     // No menu found, just send collected messages
-    const combinedMsg = messages.join('\n\n');
-    if (combinedMsg) {
-      const ok = await sendMessage(supabase, instanceId, contactId, combinedMsg);
-      return { success: ok, response: combinedMsg };
+    const combinedMsgFallback = messages.join('\n\n');
+    if (combinedMsgFallback) {
+      const ok = await sendMessage(supabase, instanceId, contactId, combinedMsgFallback);
+      return { success: ok, response: combinedMsgFallback };
     }
     
     // Fallback to default greeting
-    const greetingMsg = replaceVariables(currentStep.message, context).trim();
     const ok = await sendMessage(supabase, instanceId, contactId, greetingMsg);
     return { success: ok, response: greetingMsg };
   }
