@@ -32,6 +32,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageFlow, MessageNode, MessageEdge, NODE_CATEGORIES, FlowErrorLog } from '../../types';
 import { NodePaletteModal } from './NodePaletteModal';
+import { FlowTemplatesModal } from './FlowTemplatesModal';
 import { AdvancedTextNode } from './nodes/AdvancedTextNode';
 import { ButtonMessageNode } from './nodes/ButtonMessageNode';
 import { ListMessageNode } from './nodes/ListMessageNode';
@@ -113,7 +114,7 @@ const toMessageNode = (node: Node): MessageNode => {
   };
 };
 
-// Convert edges - Modern smooth bezier with gradient
+// Convert edges - Modern smooth bezier with gradient (NO dashes)
 const toFlowEdge = (edge: MessageEdge): Edge => ({
   id: edge.id,
   source: edge.source,
@@ -122,33 +123,34 @@ const toFlowEdge = (edge: MessageEdge): Edge => ({
   targetHandle: edge.targetHandle,
   label: edge.label,
   animated: false,
-  type: 'default',
+  type: 'smoothstep',
   markerEnd: { 
     type: MarkerType.ArrowClosed,
-    width: 16,
-    height: 16,
-    color: 'hsl(142 76% 36%)',
+    width: 20,
+    height: 20,
+    color: '#22c55e',
   },
   style: { 
     strokeWidth: 3,
-    stroke: 'url(#edge-gradient)',
-    strokeLinecap: 'round',
+    stroke: '#3b82f6',
+    strokeLinecap: 'round' as const,
   },
 });
 
-// Modern edge styles - solid gradient lines
+// Modern edge styles - SOLID lines with color
 const defaultEdgeOptions = {
-  type: 'default',
+  type: 'smoothstep',
   animated: false,
   style: { 
     strokeWidth: 3, 
-    stroke: 'hsl(var(--primary))',
+    stroke: '#3b82f6',
+    strokeLinecap: 'round' as const,
   },
   markerEnd: {
     type: MarkerType.ArrowClosed,
-    width: 16,
-    height: 16,
-    color: 'hsl(142 76% 36%)',
+    width: 20,
+    height: 20,
+    color: '#22c55e',
   },
 };
 
@@ -157,6 +159,7 @@ export const MessageFlowCanvas = ({ flow, onBack, onSave, onToggleActive }: Mess
   const [nodes, setNodes, onNodesChange] = useNodesState(flow.nodes.map(toFlowNode));
   const [edges, setEdges, onEdgesChange] = useEdgesState(flow.edges.map(toFlowEdge));
   const [showPaletteModal, setShowPaletteModal] = useState(false);
+  const [showTemplatesModal, setShowTemplatesModal] = useState(false);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
@@ -298,6 +301,14 @@ export const MessageFlowCanvas = ({ flow, onBack, onSave, onToggleActive }: Mess
     setShowPaletteModal(false);
     setHasChanges(true);
   }, [setNodes]);
+
+  // Load template into canvas
+  const handleLoadTemplate = useCallback((templateNodes: MessageNode[], templateEdges: MessageEdge[]) => {
+    setNodes(templateNodes.map(toFlowNode));
+    setEdges(templateEdges.map(toFlowEdge));
+    setShowTemplatesModal(false);
+    setHasChanges(true);
+  }, [setNodes, setEdges]);
 
   // MiniMap node color based on type
   const nodeColor = useCallback((node: Node) => {
@@ -475,7 +486,7 @@ export const MessageFlowCanvas = ({ flow, onBack, onSave, onToggleActive }: Mess
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {}}
+                  onClick={() => setShowTemplatesModal(true)}
                   disabled={isLocked}
                   className="gap-2 rounded-xl h-9 px-4"
                 >
@@ -516,6 +527,13 @@ export const MessageFlowCanvas = ({ flow, onBack, onSave, onToggleActive }: Mess
         onSelectNode={handleAddNode}
       />
 
+      {/* Flow Templates Modal */}
+      <FlowTemplatesModal
+        open={showTemplatesModal}
+        onOpenChange={setShowTemplatesModal}
+        onSelectTemplate={handleLoadTemplate}
+      />
+
       {/* Node Configuration Modal */}
       {selectedNode && (
         <NodeConfigModal
@@ -526,22 +544,21 @@ export const MessageFlowCanvas = ({ flow, onBack, onSave, onToggleActive }: Mess
         />
       )}
 
-      {/* Custom styles */}
+      {/* Modern Edge Styles */}
       <style>{`
         .message-flow-canvas-supreme .react-flow__edge-path {
-          stroke-dasharray: 8 4;
-          animation: dash 0.5s linear infinite;
+          stroke-linecap: round;
+          stroke-linejoin: round;
         }
         
-        @keyframes dash {
-          to {
-            stroke-dashoffset: -12;
-          }
+        .message-flow-canvas-supreme .react-flow__edge.selected .react-flow__edge-path {
+          stroke-width: 4;
+          filter: drop-shadow(0 0 8px hsl(var(--primary) / 0.5));
         }
         
         .message-flow-canvas-supreme .react-flow__handle {
-          width: 12px;
-          height: 12px;
+          width: 14px;
+          height: 14px;
           border-radius: 50%;
           border: 3px solid hsl(var(--background));
           transition: all 0.2s;
@@ -549,12 +566,17 @@ export const MessageFlowCanvas = ({ flow, onBack, onSave, onToggleActive }: Mess
         
         .message-flow-canvas-supreme .react-flow__handle:hover {
           transform: scale(1.3);
+          filter: drop-shadow(0 0 6px currentColor);
         }
         
         .message-flow-canvas-supreme .react-flow__connection-line {
           stroke: hsl(var(--primary));
-          stroke-width: 2;
-          stroke-dasharray: 8 4;
+          stroke-width: 3;
+          stroke-linecap: round;
+        }
+        
+        .message-flow-canvas-supreme .react-flow__edge-interaction {
+          stroke-width: 20;
         }
       `}</style>
     </div>
