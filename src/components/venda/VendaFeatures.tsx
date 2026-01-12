@@ -133,18 +133,7 @@ const VendaFeatures = () => {
               onMouseEnter={() => setHoveredFeature(index)}
               onMouseLeave={() => setHoveredFeature(null)}
             >
-              <Card className="p-5 md:p-6 h-full bg-card/50 backdrop-blur border-border/50 hover:border-primary/40 transition-all group cursor-pointer relative overflow-hidden">
-                {/* Hover Glow */}
-                <AnimatePresence>
-                  {hoveredFeature === index && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-5`}
-                    />
-                  )}
-                </AnimatePresence>
+              <Card className="p-5 md:p-6 h-full bg-card/50 backdrop-blur border-border/50 hover:border-primary/40 transition-all group cursor-pointer relative overflow-hidden hover:bg-card/80">
                 
                 <div className="relative">
                   {/* Badge */}
