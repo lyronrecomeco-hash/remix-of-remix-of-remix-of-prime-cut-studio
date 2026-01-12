@@ -13,7 +13,6 @@ import ComercialFooter from '@/components/comercial/ComercialFooter';
 
 const Comercial = () => {
   useEffect(() => {
-    // Smooth scroll behavior
     document.documentElement.style.scrollBehavior = 'smooth';
     return () => {
       document.documentElement.style.scrollBehavior = 'auto';
@@ -21,7 +20,7 @@ const Comercial = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white overflow-x-hidden">
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden genesis-dark">
       <ComercialNav />
       <ComercialHero />
       <ComercialProblems />
