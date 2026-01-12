@@ -2,11 +2,11 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
 import { 
   MessageSquare, Bot, CheckCheck, 
-  Play, Pause, RotateCcw, Phone, Video, MoreVertical,
-  Wifi, Battery, Signal
+  Play, Pause, RotateCcw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import phoneMockup from '@/assets/phone-mockup.png';
 
 interface Message {
   id: string;
@@ -40,10 +40,14 @@ const VendaRealWhatsApp = () => {
   const [showTyping, setShowTyping] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
 
-  // Scroll to bottom of messages container only
+  // Scroll only inside messages container - NOT the page
   const scrollToBottom = useCallback(() => {
     if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      const container = messagesContainerRef.current;
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'smooth'
+      });
     }
   }, []);
 
@@ -92,7 +96,6 @@ const VendaRealWhatsApp = () => {
 
   const handlePlay = () => {
     if (currentIndex >= conversationScript.length) {
-      // Reset and play again
       setMessages([]);
       setCurrentIndex(0);
     }
@@ -114,7 +117,7 @@ const VendaRealWhatsApp = () => {
     <section id="demo-whatsapp" ref={ref} className="py-20 md:py-32 bg-gradient-to-b from-background via-muted/10 to-background relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.02)_1px,transparent_1px)] bg-[size:60px_60px]" />
-      <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-green-500/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl" />
 
       <div className="container px-4 relative z-10">
         {/* Header */}
@@ -127,74 +130,73 @@ const VendaRealWhatsApp = () => {
           <motion.div 
             initial={{ scale: 0.9, opacity: 0 }}
             animate={isInView ? { scale: 1, opacity: 1 } : {}}
-            className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-sm font-medium rounded-full bg-green-500/10 border border-green-500/20 text-green-500"
+            className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-sm font-medium rounded-full bg-primary/10 border border-primary/20 text-primary"
           >
             <MessageSquare className="w-4 h-4" />
             Conversa Real
-            <Badge variant="secondary" className="ml-1 text-[10px] bg-green-500/20 text-green-500 border-green-500/30">AO VIVO</Badge>
+            <Badge variant="secondary" className="ml-1 text-[10px] bg-primary/20 text-primary border-primary/30">AO VIVO</Badge>
           </motion.div>
           
           <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-6">
             Veja a Genesis
             <br />
-            <span className="text-green-500">em ação</span>
+            <span className="text-primary">em ação</span>
           </h2>
           
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
             Uma conversa <span className="text-foreground font-semibold">real</span> entre um cliente e a Luna IA.
             <br className="hidden md:block" />
-            Atendimento automático, natural e que <span className="text-green-500 font-semibold">converte</span>.
+            Atendimento automático, natural e que <span className="text-primary font-semibold">converte</span>.
           </p>
         </motion.div>
 
-        <div className="max-w-sm mx-auto">
-          {/* iPhone Frame - Realistic */}
+        <div className="max-w-[320px] mx-auto">
+          {/* Realistic Phone Frame */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="relative"
           >
-            {/* iPhone Body */}
-            <div className="relative bg-[#1a1a1a] rounded-[3rem] p-3 shadow-2xl shadow-black/50">
-              {/* iPhone Dynamic Island */}
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 w-28 h-8 bg-black rounded-full z-20" />
+            {/* Phone Image Container */}
+            <div className="relative">
+              {/* Phone Frame Image */}
+              <img 
+                src={phoneMockup} 
+                alt="Phone" 
+                className="w-full h-auto relative z-10 pointer-events-none"
+              />
               
-              {/* Screen */}
-              <div className="rounded-[2.2rem] overflow-hidden bg-black">
+              {/* Screen Content - Positioned inside the phone */}
+              <div className="absolute inset-[4%] top-[3%] bottom-[3%] rounded-[32px] overflow-hidden bg-[#0b141a]">
                 {/* Status Bar */}
-                <div className="bg-[#0b141a] px-6 py-2 flex items-center justify-between relative pt-10">
+                <div className="bg-[#1f2c33] px-4 py-2 flex items-center justify-between">
                   <span className="text-white text-xs font-medium">14:32</span>
                   <div className="flex items-center gap-1">
-                    <Signal className="w-4 h-4 text-white" />
-                    <Wifi className="w-4 h-4 text-white" />
-                    <Battery className="w-5 h-5 text-white" />
+                    <div className="w-4 h-2 border border-white/60 rounded-sm">
+                      <div className="w-2/3 h-full bg-white/60 rounded-sm" />
+                    </div>
                   </div>
                 </div>
 
                 {/* WhatsApp Header */}
-                <div className="bg-[#1f2c33] px-4 py-3 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shrink-0">
-                    <Bot className="w-5 h-5 text-white" />
+                <div className="bg-[#1f2c33] px-3 py-2 flex items-center gap-2 border-b border-[#2a3942]">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shrink-0">
+                    <Bot className="w-4 h-4 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-white text-sm truncate">Clínica Estética Premium</span>
-                      <Badge className="bg-green-500/20 text-green-400 text-[9px] border-green-500/30 shrink-0">IA</Badge>
+                    <div className="flex items-center gap-1">
+                      <span className="font-semibold text-white text-xs truncate">Clínica Estética</span>
+                      <Badge className="bg-primary/20 text-primary text-[8px] border-primary/30 shrink-0 px-1">IA</Badge>
                     </div>
-                    <span className="text-xs text-green-400">online • Luna IA ativa</span>
-                  </div>
-                  <div className="flex items-center gap-4 shrink-0">
-                    <Video className="w-5 h-5 text-[#8696a0]" />
-                    <Phone className="w-5 h-5 text-[#8696a0]" />
-                    <MoreVertical className="w-5 h-5 text-[#8696a0]" />
+                    <span className="text-[10px] text-primary">online</span>
                   </div>
                 </div>
 
-                {/* Messages Container */}
+                {/* Messages Container - Fixed height, internal scroll */}
                 <div 
                   ref={messagesContainerRef}
-                  className="h-[420px] overflow-y-auto p-3 space-y-2"
+                  className="h-[340px] overflow-y-auto overflow-x-hidden p-2 space-y-1.5"
                   style={{ 
                     backgroundColor: '#0b141a',
                     backgroundImage: 'url("data:image/svg+xml,%3Csvg width="60" height="60" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M0 0h60v60H0z" fill="%230b141a"/%3E%3Cpath d="M30 5v50M5 30h50" stroke="%231a2e35" stroke-width="0.3"/%3E%3C/svg%3E")',
@@ -210,21 +212,21 @@ const VendaRealWhatsApp = () => {
                       className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
                       <div 
-                        className={`max-w-[85%] rounded-lg px-3 py-2 shadow-sm ${
+                        className={`max-w-[85%] rounded-lg px-2 py-1.5 shadow-sm ${
                           msg.role === 'user' 
                             ? 'bg-[#005c4b] text-white rounded-tr-none' 
                             : 'bg-[#1f2c33] text-white rounded-tl-none'
                         }`}
                       >
-                        <p className="text-[13px] whitespace-pre-line leading-relaxed">{msg.content}</p>
+                        <p className="text-[11px] whitespace-pre-line leading-relaxed">{msg.content}</p>
                         
                         {/* Buttons */}
                         {msg.buttons && (
-                          <div className="flex flex-wrap gap-1.5 mt-2">
+                          <div className="flex flex-wrap gap-1 mt-1">
                             {msg.buttons.map((btn, i) => (
                               <span 
                                 key={i} 
-                                className="px-2.5 py-1 rounded-full text-[10px] font-medium bg-[#00a884]/20 text-[#00a884] border border-[#00a884]/30"
+                                className="px-1.5 py-0.5 rounded-full text-[8px] font-medium bg-[#00a884]/20 text-[#00a884] border border-[#00a884]/30"
                               >
                                 {btn}
                               </span>
@@ -232,10 +234,10 @@ const VendaRealWhatsApp = () => {
                           </div>
                         )}
                         
-                        <div className="flex items-center justify-end gap-1 mt-1">
-                          <span className="text-[10px] text-[#8696a0]">{msg.time}</span>
+                        <div className="flex items-center justify-end gap-1 mt-0.5">
+                          <span className="text-[8px] text-[#8696a0]">{msg.time}</span>
                           {msg.role === 'user' && (
-                            <CheckCheck className="w-3.5 h-3.5 text-[#53bdeb]" />
+                            <CheckCheck className="w-3 h-3 text-[#53bdeb]" />
                           )}
                         </div>
                       </div>
@@ -251,11 +253,11 @@ const VendaRealWhatsApp = () => {
                         exit={{ opacity: 0, y: -10 }}
                         className="flex justify-start"
                       >
-                        <div className="bg-[#1f2c33] rounded-lg rounded-tl-none px-4 py-3 shadow-sm">
+                        <div className="bg-[#1f2c33] rounded-lg rounded-tl-none px-3 py-2 shadow-sm">
                           <div className="flex gap-1">
-                            <span className="w-2 h-2 rounded-full bg-[#8696a0] animate-bounce" style={{ animationDelay: '0ms' }} />
-                            <span className="w-2 h-2 rounded-full bg-[#8696a0] animate-bounce" style={{ animationDelay: '150ms' }} />
-                            <span className="w-2 h-2 rounded-full bg-[#8696a0] animate-bounce" style={{ animationDelay: '300ms' }} />
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#8696a0] animate-bounce" style={{ animationDelay: '0ms' }} />
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#8696a0] animate-bounce" style={{ animationDelay: '150ms' }} />
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#8696a0] animate-bounce" style={{ animationDelay: '300ms' }} />
                           </div>
                         </div>
                       </motion.div>
@@ -264,21 +266,16 @@ const VendaRealWhatsApp = () => {
                 </div>
 
                 {/* Input Bar */}
-                <div className="bg-[#1f2c33] px-3 py-2 flex items-center gap-2 border-t border-[#2a3942]">
-                  <div className="flex-1 bg-[#2a3942] rounded-full px-4 py-2">
-                    <span className="text-sm text-[#8696a0]">Digite uma mensagem</span>
+                <div className="bg-[#1f2c33] px-2 py-1.5 flex items-center gap-1.5 border-t border-[#2a3942]">
+                  <div className="flex-1 bg-[#2a3942] rounded-full px-3 py-1.5">
+                    <span className="text-[10px] text-[#8696a0]">Mensagem</span>
                   </div>
-                  <div className="w-10 h-10 rounded-full bg-[#00a884] flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                  <div className="w-7 h-7 rounded-full bg-[#00a884] flex items-center justify-center">
+                    <svg className="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
                       <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
                     </svg>
                   </div>
-                </div>
-
-                {/* Home Indicator */}
-                <div className="bg-[#0b141a] h-8 flex items-center justify-center">
-                  <div className="w-32 h-1 bg-white/30 rounded-full" />
                 </div>
               </div>
             </div>
@@ -291,7 +288,7 @@ const VendaRealWhatsApp = () => {
                   Pausar
                 </Button>
               ) : (
-                <Button onClick={handlePlay} size="sm" className="gap-2 bg-green-600 hover:bg-green-700">
+                <Button onClick={handlePlay} size="sm" className="gap-2">
                   <Play className="w-4 h-4" />
                   {currentIndex >= conversationScript.length ? 'Replay' : 'Iniciar'}
                 </Button>
@@ -304,16 +301,16 @@ const VendaRealWhatsApp = () => {
             {/* Stats */}
             <div className="flex justify-center gap-8 mt-6 text-center">
               <div>
-                <div className="text-xl font-bold text-green-500">~3s</div>
-                <div className="text-[10px] text-muted-foreground">Tempo de resposta</div>
+                <div className="text-xl font-bold text-primary">~3s</div>
+                <div className="text-[10px] text-muted-foreground">Resposta</div>
               </div>
               <div>
                 <div className="text-xl font-bold text-primary">97%</div>
-                <div className="text-[10px] text-muted-foreground">Taxa de resolução</div>
+                <div className="text-[10px] text-muted-foreground">Resolução</div>
               </div>
               <div>
-                <div className="text-xl font-bold text-amber-500">24/7</div>
-                <div className="text-[10px] text-muted-foreground">Disponibilidade</div>
+                <div className="text-xl font-bold text-primary">24/7</div>
+                <div className="text-[10px] text-muted-foreground">Disponível</div>
               </div>
             </div>
           </motion.div>

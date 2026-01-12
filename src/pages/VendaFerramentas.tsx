@@ -1,18 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Link, QrCode, Copy, Check, Download, ArrowLeft, Smartphone, ExternalLink } from 'lucide-react';
+import { Link as LinkIcon, QrCode, Copy, Check, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { useNavigate } from 'react-router-dom';
+import VendaHeader from '@/components/venda/VendaHeader';
 import QRCode from 'qrcode';
 
 const VendaFerramentas = () => {
-  const navigate = useNavigate();
-  
   // Link Generator State
   const [phoneNumber, setPhoneNumber] = useState('');
   const [message, setMessage] = useState('');
@@ -48,13 +46,15 @@ const VendaFerramentas = () => {
     }
     
     try {
+      // Generate QR with Genesis branding colors
       const url = await QRCode.toDataURL(content, {
-        width: 300,
-        margin: 2,
+        width: 280,
+        margin: 3,
         color: {
-          dark: '#000000',
+          dark: '#1a1a2e',
           light: '#ffffff'
-        }
+        },
+        errorCorrectionLevel: 'H' // High error correction to allow logo overlay
       });
       setQrImageUrl(url);
     } catch (err) {
@@ -64,44 +64,48 @@ const VendaFerramentas = () => {
 
   const downloadQr = () => {
     if (!qrImageUrl) return;
-    const link = document.createElement('a');
-    link.download = `genesis-qrcode-${Date.now()}.png`;
-    link.href = qrImageUrl;
-    link.click();
+    
+    // Create canvas to add Genesis branding
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height + 40;
+      
+      if (ctx) {
+        // White background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw QR
+        ctx.drawImage(img, 0, 0);
+        
+        // Add Genesis branding at bottom
+        ctx.fillStyle = '#3b82f6';
+        ctx.fillRect(0, img.height, canvas.width, 40);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 14px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Genesis • Automação WhatsApp', canvas.width / 2, img.height + 25);
+        
+        // Download
+        const link = document.createElement('a');
+        link.download = `genesis-qrcode-${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      }
+    };
+    
+    img.src = qrImageUrl;
   };
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <button 
-              onClick={() => navigate('/venda-genesis')}
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span className="hidden sm:inline">Voltar</span>
-            </button>
-            
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">G</span>
-              </div>
-              <span className="font-bold text-lg">Ferramentas Grátis</span>
-            </div>
-
-            <Button 
-              onClick={() => navigate('/venda-genesis#precos')}
-              className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-              size="sm"
-            >
-              <span className="hidden sm:inline">Começar Grátis</span>
-              <span className="sm:hidden">Começar</span>
-            </Button>
-          </div>
-        </div>
-      </header>
+      {/* Use the same header as main Genesis page */}
+      <VendaHeader />
 
       {/* Main Content */}
       <main className="pt-24 pb-16 px-4">
@@ -112,11 +116,11 @@ const VendaFerramentas = () => {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-12"
           >
-            <Badge className="mb-4 bg-green-500/10 text-green-500 border-green-500/20">
+            <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">
               100% Gratuito • Sem Cadastro
             </Badge>
             <h1 className="text-3xl md:text-5xl font-bold mb-4">
-              Ferramentas <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-emerald-600">Gratuitas</span>
+              Ferramentas <span className="text-primary">Gratuitas</span>
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Gere links e QR codes para WhatsApp sem cadastro, totalmente gratuito
@@ -134,8 +138,8 @@ const VendaFerramentas = () => {
               <Card className="h-full border-border/50 bg-card/50 backdrop-blur">
                 <CardHeader>
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-                      <Link className="w-6 h-6 text-white" />
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center">
+                      <LinkIcon className="w-6 h-6 text-white" />
                     </div>
                     <div>
                       <CardTitle className="text-xl">Gerador de Link</CardTitle>
@@ -172,9 +176,9 @@ const VendaFerramentas = () => {
 
                   <Button 
                     onClick={generateLink}
-                    className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                    className="w-full"
                   >
-                    <Link className="w-4 h-4 mr-2" />
+                    <LinkIcon className="w-4 h-4 mr-2" />
                     Gerar Link
                   </Button>
 
@@ -185,8 +189,7 @@ const VendaFerramentas = () => {
                       className="p-4 bg-muted rounded-xl space-y-3"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-green-500">Link Gerado!</span>
-                        <ExternalLink className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm font-medium text-primary">Link Gerado!</span>
                       </div>
                       <div className="flex gap-2">
                         <Input value={generatedLink} readOnly className="flex-1 text-sm" />
@@ -195,7 +198,7 @@ const VendaFerramentas = () => {
                           variant="outline"
                           className="shrink-0"
                         >
-                          {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                          {copied ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
                         </Button>
                       </div>
                     </motion.div>
@@ -213,12 +216,12 @@ const VendaFerramentas = () => {
               <Card className="h-full border-border/50 bg-card/50 backdrop-blur">
                 <CardHeader>
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center">
                       <QrCode className="w-6 h-6 text-white" />
                     </div>
                     <div>
                       <CardTitle className="text-xl">Gerador de QR Code</CardTitle>
-                      <CardDescription>Com marca Genesis</CardDescription>
+                      <CardDescription>Com marca Genesis integrada</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
@@ -243,7 +246,7 @@ const VendaFerramentas = () => {
 
                   <Button 
                     onClick={generateQr}
-                    className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700"
+                    className="w-full"
                   >
                     <QrCode className="w-4 h-4 mr-2" />
                     Gerar QR Code
@@ -256,25 +259,22 @@ const VendaFerramentas = () => {
                       className="flex flex-col items-center gap-4 p-6 bg-muted rounded-xl"
                     >
                       {/* QR Code with Genesis Branding */}
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-600/10 rounded-xl" />
-                        <div className="relative bg-white p-4 rounded-xl shadow-lg">
-                          <img src={qrImageUrl} alt="QR Code" className="w-48 h-48 md:w-64 md:h-64" />
-                          {/* Genesis Logo Overlay */}
-                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg">
-                              <span className="text-white font-bold text-xl md:text-2xl">G</span>
-                            </div>
+                      <div className="relative bg-white p-4 rounded-xl shadow-lg">
+                        <img src={qrImageUrl} alt="QR Code" className="w-56 h-56 md:w-64 md:h-64" />
+                        {/* Genesis Logo Overlay in center */}
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shadow-lg border-4 border-white">
+                            <span className="text-white font-bold text-xl md:text-2xl">G</span>
                           </div>
                         </div>
-                        {/* Genesis Watermark */}
-                        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full">
-                          <span className="text-white text-xs font-medium">Powered by Genesis</span>
+                        {/* Bottom branding bar */}
+                        <div className="mt-3 pt-3 border-t border-border/30 text-center">
+                          <span className="text-xs font-medium text-muted-foreground">Genesis • Automação WhatsApp</span>
                         </div>
                       </div>
 
                       {qrType === 'temporary' && (
-                        <Badge variant="outline" className="text-orange-500 border-orange-500/50">
+                        <Badge variant="outline" className="text-amber-500 border-amber-500/50">
                           ⏱️ Expira em 24 horas
                         </Badge>
                       )}
@@ -324,7 +324,7 @@ const VendaFerramentas = () => {
             transition={{ delay: 0.4 }}
             className="mt-16 text-center"
           >
-            <Card className="border-green-500/20 bg-gradient-to-br from-green-500/5 to-emerald-600/5">
+            <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-blue-600/5">
               <CardContent className="py-8 md:py-12">
                 <h2 className="text-xl md:text-2xl font-bold mb-4">
                   Quer mais recursos?
@@ -333,11 +333,10 @@ const VendaFerramentas = () => {
                   Descubra como a Genesis pode automatizar todo seu atendimento no WhatsApp com IA
                 </p>
                 <Button 
-                  onClick={() => navigate('/venda-genesis')}
+                  asChild
                   size="lg"
-                  className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
                 >
-                  Conhecer a Genesis
+                  <a href="/venda-genesis#precos">Conhecer Planos</a>
                 </Button>
               </CardContent>
             </Card>
