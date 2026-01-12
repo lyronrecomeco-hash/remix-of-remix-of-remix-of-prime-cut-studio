@@ -27,7 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { 
   ArrowLeft, Save, Play, Pause, ZoomIn, ZoomOut, 
   Maximize2, Trash2, Lock, Unlock, Plus, AlertCircle,
-  Activity, X
+  Activity, X, Smartphone
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -150,6 +150,7 @@ export const MessageFlowCanvas = ({ flow, onBack, onSave, onToggleActive }: Mess
   const [hasChanges, setHasChanges] = useState(false);
   const [showErrorLogs, setShowErrorLogs] = useState(false);
   const [errorLogs, setErrorLogs] = useState<FlowErrorLog[]>([]);
+  const [showPreview, setShowPreview] = useState(true);
 
   // Simulate real-time error logs
   useEffect(() => {
@@ -377,6 +378,16 @@ export const MessageFlowCanvas = ({ flow, onBack, onSave, onToggleActive }: Mess
             <Trash2 className="w-4 h-4" />
           </Button>
 
+          <Button 
+            variant={showPreview ? "default" : "ghost"} 
+            size="icon" 
+            className="h-8 w-8"
+            onClick={() => setShowPreview(!showPreview)}
+            title={showPreview ? "Ocultar Preview" : "Mostrar Preview"}
+          >
+            <Smartphone className="w-4 h-4" />
+          </Button>
+
           <div className="w-px h-6 bg-border mx-1" />
           
           <Button 
@@ -504,8 +515,17 @@ export const MessageFlowCanvas = ({ flow, onBack, onSave, onToggleActive }: Mess
           )}
         </AnimatePresence>
 
-        {/* iPhone 16 Pro Preview */}
-        <IPhonePreview />
+        {/* iPhone Preview - Same style as Flow Builder */}
+        <AnimatePresence>
+          {showPreview && (
+            <IPhonePreview 
+              onClose={() => setShowPreview(false)}
+              onRestart={() => {
+                // TODO: Reset simulation
+              }}
+            />
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Node Palette Modal */}
