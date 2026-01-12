@@ -7902,7 +7902,7 @@ export type Database = {
             foreignKeyName: "whatsapp_automations_instance_id_fkey"
             columns: ["instance_id"]
             isOneToOne: false
-            referencedRelation: "whatsapp_instances"
+            referencedRelation: "genesis_instances"
             referencedColumns: ["id"]
           },
           {
