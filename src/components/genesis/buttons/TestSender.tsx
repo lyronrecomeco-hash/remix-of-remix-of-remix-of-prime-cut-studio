@@ -228,6 +228,15 @@ export function TestSender({ message }: TestSenderProps) {
         throw error;
       }
 
+      // Check for proxy-level errors (ok: false means VPS returned error)
+      if (data?.ok === false || data?.status === 404) {
+        const errorMsg = data?.data?.includes?.('Cannot POST') 
+          ? 'Endpoint não encontrado no VPS. Atualize o script para v8.3 em /script'
+          : (data?.error || data?.message || 'Erro desconhecido do backend');
+        addLog('error', 'VPS retornou erro', `Status: ${data?.status || 'N/A'} - ${errorMsg}`);
+        throw new Error(errorMsg);
+      }
+
       if (data?.success === false || data?.error) {
         const errorMsg = data?.error || data?.message || 'Erro desconhecido do backend';
         addLog('error', 'Backend retornou erro', errorMsg);
