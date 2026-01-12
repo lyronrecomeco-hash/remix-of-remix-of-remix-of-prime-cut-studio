@@ -40,7 +40,7 @@ export const IPhonePreview = ({
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="absolute right-8 top-1/2 -translate-y-1/2 z-40"
+        className="fixed right-6 top-[50%] -translate-y-1/2 z-50"
       >
         <Button
           onClick={() => setIsOpen(true)}
@@ -60,7 +60,7 @@ export const IPhonePreview = ({
       exit={{ x: 100, opacity: 0, scale: 0.9 }}
       transition={{ type: 'spring', damping: 25, stiffness: 300 }}
       className={cn(
-        "absolute right-8 top-1/2 -translate-y-1/2 z-40",
+        "fixed right-6 top-[50%] -translate-y-1/2 z-50",
         className
       )}
     >
