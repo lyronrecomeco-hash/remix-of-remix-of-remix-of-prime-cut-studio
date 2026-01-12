@@ -1,4 +1,4 @@
-export const VPS_SCRIPT_VERSION = "8.4";
+export const VPS_SCRIPT_VERSION = "8.4.1";
 
 // VPS Script v8.3 - MULTI-INSTANCE MANAGER WITH PROFESSIONAL CLI
 // Gerenciador dinâmico com menu interativo profissional e logs personalizados
