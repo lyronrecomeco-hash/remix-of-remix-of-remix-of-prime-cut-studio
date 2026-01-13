@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Building2, TrendingUp, MessageSquare, Clock, DollarSign, Users, Play, Pause, RotateCcw, CheckCheck, Zap, Target, Shield, BarChart3, Headphones, Globe, LineChart, Award, ArrowRight, Server, RefreshCw, FileText, Layers, Activity, Check, X, ShoppingCart, Stethoscope, GraduationCap, Briefcase, Phone } from 'lucide-react';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
+import { Building2, TrendingUp, MessageSquare, Clock, DollarSign, Users, Play, Pause, RotateCcw, CheckCheck, Zap, Target, Shield, BarChart3, ArrowRight, Server, RefreshCw, FileText, Layers, Check, X, ShoppingCart, GraduationCap, Headphones, Briefcase, Phone, ChevronRight, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import VendaHeader from '@/components/venda/VendaHeader';
 import RealisticPhoneMockup from '@/components/venda/RealisticPhoneMockup';
 import WhatsAppScreen from '@/components/venda/WhatsAppScreen';
+import { useNavigate } from 'react-router-dom';
 
 interface Message {
   id: number;
@@ -50,16 +50,39 @@ const conversations = {
   ]}
 };
 
+// Animated Counter
+const AnimatedCounter = ({ target, suffix = '', prefix = '' }: { target: number; suffix?: string; prefix?: string }) => {
+  const [count, setCount] = useState(0);
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true });
+
+  useEffect(() => {
+    if (!isInView) return;
+    const duration = 2000;
+    const steps = 60;
+    const increment = target / steps;
+    let current = 0;
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= target) { setCount(target); clearInterval(timer); }
+      else { setCount(Math.floor(current)); }
+    }, duration / steps);
+    return () => clearInterval(timer);
+  }, [target, isInView]);
+
+  return <span ref={ref}>{prefix}{count.toLocaleString('pt-BR')}{suffix}</span>;
+};
+
 const VendaEmpresas = () => {
+  const navigate = useNavigate();
   const [activeConversation, setActiveConversation] = useState<keyof typeof conversations>('ecommerce');
   const [displayedMessages, setDisplayedMessages] = useState<Message[]>([]);
   const [isPlaying, setIsPlaying] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [activeSegment, setActiveSegment] = useState(0);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+  useEffect(() => { window.scrollTo(0, 0); }, []);
 
   const scrollToBottom = useCallback(() => {
     if (messagesContainerRef.current) {
@@ -81,169 +104,261 @@ const VendaEmpresas = () => {
     return () => clearTimeout(timer);
   }, [currentIndex, isPlaying, activeConversation]);
 
-  const stats = [
-    { icon: TrendingUp, value: '+340%', label: 'Aumento em Vendas' },
-    { icon: Clock, value: '< 5s', label: 'Tempo de Resposta' },
-    { icon: Users, value: '+15k', label: 'Atendimentos/mês' },
-    { icon: DollarSign, value: 'R$89k', label: 'Economia Mensal' },
+  // Data
+  const metrics = [
+    { icon: TrendingUp, value: 340, suffix: '%', prefix: '+', label: 'Aumento em Vendas' },
+    { icon: Clock, value: 5, suffix: 's', prefix: '<', label: 'Tempo de Resposta' },
+    { icon: Users, value: 15, suffix: 'k+', prefix: '', label: 'Atendimentos/mês' },
+    { icon: DollarSign, value: 89, suffix: 'k', prefix: 'R$', label: 'Economia Mensal' },
   ];
 
-  // Seção 1 - Infraestrutura
   const infrastructure = [
-    { icon: Layers, title: 'Multi-instâncias', description: 'Gerencie múltiplos números de forma centralizada' },
-    { icon: Shield, title: 'Anti-ban Avançado', description: 'Proteção inteligente contra bloqueios' },
-    { icon: RefreshCw, title: 'Rotação de Números', description: 'Distribua carga entre instâncias automaticamente' },
-    { icon: FileText, title: 'Logs e Auditoria', description: 'Rastreabilidade completa de todas as operações' },
+    { icon: Layers, title: 'Multi-instâncias', desc: 'Gerencie múltiplos números centralizadamente', detail: 'Sem limite de chips' },
+    { icon: Shield, title: 'Anti-ban', desc: 'Proteção inteligente contra bloqueios', detail: 'Padrões naturais' },
+    { icon: RefreshCw, title: 'Rotação', desc: 'Distribua carga automaticamente', detail: 'Load balancing' },
+    { icon: FileText, title: 'Auditoria', desc: 'Logs completos de todas operações', detail: 'Compliance ready' },
   ];
 
-  // Seção 2 - Escala
-  const scaleMetrics = [
-    { value: '50k+', label: 'Mensagens/hora', desc: 'Capacidade de envio' },
-    { value: '99.9%', label: 'Uptime', desc: 'Disponibilidade garantida' },
-    { value: '< 200ms', label: 'Latência', desc: 'Tempo de processamento' },
-    { value: '∞', label: 'Instâncias', desc: 'Sem limite de números' },
-  ];
-
-  // Seção 3 - Segmentos
   const segments = [
-    { icon: ShoppingCart, name: 'E-commerce', desc: 'Vendas, carrinho abandonado, pós-venda' },
-    { icon: GraduationCap, name: 'Infoprodutos', desc: 'Lançamentos, suporte, comunidade' },
-    { icon: Headphones, name: 'Suporte', desc: 'Tickets, FAQ, escalonamento' },
-    { icon: Briefcase, name: 'SDR / Vendas', desc: 'Qualificação, follow-up, agendamento' },
+    { icon: ShoppingCart, name: 'E-commerce', desc: 'Vendas, carrinho abandonado, pós-venda', results: ['Recuperação 32%', 'Conversão +45%', 'NPS +20 pts'] },
+    { icon: GraduationCap, name: 'Infoprodutos', desc: 'Lançamentos, suporte, comunidade', results: ['CPL -40%', 'Engajamento +60%', 'LTV +35%'] },
+    { icon: Headphones, name: 'Suporte', desc: 'Tickets, FAQ, escalonamento', results: ['Resolução -70%', 'CSAT 4.8★', 'Custo -50%'] },
+    { icon: Briefcase, name: 'SDR / Vendas', desc: 'Qualificação, follow-up, agendamento', results: ['Reuniões 3x', 'No-show -60%', 'Pipeline +80%'] },
   ];
 
-  // Seção 4 - Comparativo
   const comparison = [
     { feature: 'Multi-instâncias ilimitadas', genesis: true, others: false },
     { feature: 'IA nativa com raciocínio', genesis: true, others: false },
     { feature: 'Anti-ban inteligente', genesis: true, others: false },
-    { feature: 'Logs completos de auditoria', genesis: true, others: false },
+    { feature: 'Logs de auditoria completos', genesis: true, others: false },
     { feature: 'Rotação automática de números', genesis: true, others: false },
     { feature: 'Suporte técnico especializado', genesis: true, others: false },
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-hidden">
       <VendaHeader />
 
       <main className="pt-24 pb-16 px-4">
         <div className="container mx-auto max-w-6xl">
-          {/* Hero */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-20">
-            <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">+500 Empresas Confiam</Badge>
-            <h1 className="text-3xl md:text-5xl font-bold mb-4">Genesis para <span className="text-primary">Empresas</span></h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Infraestrutura profissional para operações em escala — controle, segurança e ROI garantido</p>
-          </motion.div>
-
-          {/* Stats */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-20">
-            {stats.map((stat, i) => (
-              <Card key={i} className="text-center border-border/50 bg-card/50">
-                <CardContent className="pt-6">
-                  <stat.icon className="w-8 h-8 mx-auto mb-2 text-primary" />
-                  <p className="text-2xl md:text-3xl font-bold text-primary">{stat.value}</p>
-                  <p className="text-sm text-muted-foreground">{stat.label}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </motion.div>
-
-          {/* Seção 1 - Infraestrutura Profissional */}
-          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="mb-20">
-            <div className="text-center mb-10">
-              <Badge variant="outline" className="mb-3 text-primary border-primary/30">Infraestrutura</Badge>
-              <h2 className="text-2xl md:text-3xl font-bold">Arquitetura <span className="text-primary">Profissional</span></h2>
-              <p className="text-muted-foreground mt-2 max-w-xl mx-auto">Projetada para operações enterprise com alta disponibilidade</p>
-            </div>
+          {/* Hero - Enterprise Focus */}
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-24">
+            <Badge className="mb-6 bg-primary/10 text-primary border-primary/20 px-4 py-2">
+              <Building2 className="w-4 h-4 mr-2 inline" />
+              +500 Empresas Confiam
+            </Badge>
             
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+              Infraestrutura de{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-600">
+                verdade
+              </span>
+            </h1>
+            
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-12">
+              Operações em escala exigem mais que um chatbot. Exigem arquitetura profissional, 
+              controle total e ROI comprovado.
+            </p>
+
+            {/* Animated Metrics */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+              {metrics.map((metric, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 + i * 0.1 }}
+                  className="p-6 rounded-2xl border border-border/50 bg-card/30"
+                >
+                  <metric.icon className="w-8 h-8 mx-auto mb-3 text-primary" />
+                  <p className="text-3xl font-bold text-primary">
+                    <AnimatedCounter target={metric.value} suffix={metric.suffix} prefix={metric.prefix} />
+                  </p>
+                  <p className="text-sm text-muted-foreground">{metric.label}</p>
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" className="text-lg px-8 h-14 bg-gradient-to-r from-primary to-blue-600" onClick={() => navigate('/genesis/login')}>
+                Começar Agora
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+              <Button size="lg" variant="outline" className="text-lg px-8 h-14" asChild>
+                <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer">
+                  <Phone className="w-5 h-5 mr-2" />
+                  Falar com Especialista
+                </a>
+              </Button>
+            </div>
+          </motion.div>
+
+          {/* Section 1 - Infrastructure (Interactive) */}
+          <motion.section initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-24">
+            <div className="text-center mb-12">
+              <Badge variant="outline" className="mb-4 text-primary border-primary/30">
+                <Server className="w-4 h-4 mr-2 inline" />
+                Infraestrutura
+              </Badge>
+              <h2 className="text-3xl md:text-4xl font-bold">
+                Arquitetura para <span className="text-primary">escala real</span>
+              </h2>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
               {infrastructure.map((item, i) => (
-                <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.05 }}>
-                  <Card className="h-full border-border/50 bg-card/50 hover:bg-card/80 transition-colors">
-                    <CardContent className="pt-6">
-                      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center mb-4">
-                        <item.icon className="w-7 h-7 text-white" />
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: i % 2 === 0 ? -20 : 20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  whileHover={{ scale: 1.02 }}
+                  className="p-6 rounded-2xl border border-border/50 bg-card/30 hover:border-primary/30 transition-all cursor-default"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shrink-0">
+                      <item.icon className="w-7 h-7 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-semibold text-lg">{item.title}</h3>
+                        <Badge variant="outline" className="text-xs">{item.detail}</Badge>
                       </div>
-                      <h3 className="font-semibold mb-2">{item.title}</h3>
-                      <p className="text-sm text-muted-foreground">{item.description}</p>
-                    </CardContent>
-                  </Card>
+                      <p className="text-muted-foreground">{item.desc}</p>
+                    </div>
+                  </div>
                 </motion.div>
               ))}
             </div>
           </motion.section>
 
-          {/* Seção 2 - Escala Comprovada */}
-          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="mb-20">
-            <div className="text-center mb-10">
-              <Badge variant="outline" className="mb-3 text-primary border-primary/30">Performance</Badge>
-              <h2 className="text-2xl md:text-3xl font-bold">Escala <span className="text-primary">Comprovada</span></h2>
-              <p className="text-muted-foreground mt-2 max-w-xl mx-auto">Métricas reais de infraestrutura Genesis</p>
-            </div>
-            
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {scaleMetrics.map((metric, i) => (
-                <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.05 }}>
-                  <Card className="text-center border-primary/10 bg-gradient-to-br from-primary/5 to-blue-600/5">
-                    <CardContent className="py-8">
-                      <p className="text-3xl md:text-4xl font-bold text-primary mb-1">{metric.value}</p>
-                      <p className="font-semibold text-sm">{metric.label}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{metric.desc}</p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
+          {/* Section 2 - Scale Proof */}
+          <motion.section initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-24">
+            <div className="p-8 md:p-12 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-blue-600/5">
+              <div className="text-center mb-10">
+                <Badge variant="outline" className="mb-4 text-primary border-primary/30">Performance</Badge>
+                <h2 className="text-3xl md:text-4xl font-bold">
+                  Números que <span className="text-primary">comprovam</span>
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                {[
+                  { value: '50k+', label: 'Mensagens/hora', desc: 'Capacidade de envio' },
+                  { value: '99.9%', label: 'Uptime', desc: 'Disponibilidade' },
+                  { value: '<200ms', label: 'Latência', desc: 'Processamento' },
+                  { value: '∞', label: 'Instâncias', desc: 'Sem limite' },
+                ].map((stat, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.1 }}
+                    className="text-center"
+                  >
+                    <p className="text-4xl font-bold text-primary mb-1">{stat.value}</p>
+                    <p className="font-semibold">{stat.label}</p>
+                    <p className="text-sm text-muted-foreground">{stat.desc}</p>
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </motion.section>
 
-          {/* Seção 3 - Segmentos */}
-          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="mb-20">
-            <div className="text-center mb-10">
-              <Badge variant="outline" className="mb-3 text-primary border-primary/30">Segmentos</Badge>
-              <h2 className="text-2xl md:text-3xl font-bold">Soluções por <span className="text-primary">Área</span></h2>
-              <p className="text-muted-foreground mt-2 max-w-xl mx-auto">Configurações otimizadas para cada modelo de negócio</p>
+          {/* Section 3 - Segments (Interactive Tabs) */}
+          <motion.section initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-24">
+            <div className="text-center mb-12">
+              <Badge variant="outline" className="mb-4 text-primary border-primary/30">Segmentos</Badge>
+              <h2 className="text-3xl md:text-4xl font-bold">
+                Configurações por <span className="text-primary">área</span>
+              </h2>
             </div>
-            
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+            <div className="flex flex-wrap justify-center gap-3 mb-8">
               {segments.map((seg, i) => (
-                <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 + i * 0.05 }}>
-                  <Card className="h-full border-border/50 bg-card/50 hover:bg-card/80 transition-colors">
-                    <CardContent className="pt-6 text-center">
-                      <div className="w-14 h-14 mx-auto rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center mb-4">
-                        <seg.icon className="w-7 h-7 text-white" />
-                      </div>
-                      <h3 className="font-semibold mb-2">{seg.name}</h3>
-                      <p className="text-sm text-muted-foreground">{seg.desc}</p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
+                <Button
+                  key={i}
+                  variant={activeSegment === i ? 'default' : 'outline'}
+                  onClick={() => setActiveSegment(i)}
+                  className="gap-2"
+                >
+                  <seg.icon className="w-4 h-4" />
+                  {seg.name}
+                </Button>
               ))}
             </div>
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeSegment}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="p-8 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-blue-600/5"
+              >
+                <div className="flex flex-col md:flex-row items-center gap-8">
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shrink-0">
+                    {(() => { const Icon = segments[activeSegment].icon; return <Icon className="w-10 h-10 text-white" />; })()}
+                  </div>
+                  <div className="flex-1 text-center md:text-left">
+                    <h3 className="text-2xl font-bold mb-2">{segments[activeSegment].name}</h3>
+                    <p className="text-lg text-muted-foreground">{segments[activeSegment].desc}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    {segments[activeSegment].results.map((result, i) => (
+                      <Badge key={i} className="bg-green-500/10 text-green-500 border-green-500/30">
+                        {result}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
           </motion.section>
 
-          {/* Demo de Conversas */}
-          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="mb-20">
-            <div className="text-center mb-10">
-              <Badge variant="outline" className="mb-3 text-primary border-primary/30">Demonstração</Badge>
-              <h2 className="text-2xl md:text-3xl font-bold">Conversas <span className="text-primary">Reais</span></h2>
-              <p className="text-muted-foreground mt-2 max-w-xl mx-auto">Veja como a Genesis atende diferentes tipos de negócios</p>
+          {/* Section 4 - Live Demo */}
+          <motion.section initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-24">
+            <div className="text-center mb-12">
+              <Badge variant="outline" className="mb-4 text-primary border-primary/30">
+                <Play className="w-4 h-4 mr-2 inline" />
+                Demonstração
+              </Badge>
+              <h2 className="text-3xl md:text-4xl font-bold">
+                Atendimento em <span className="text-primary">diferentes nichos</span>
+              </h2>
             </div>
             
-            <div className="flex flex-wrap justify-center gap-2 md:gap-4 mb-8">
+            <div className="flex flex-wrap justify-center gap-2 mb-8">
               {Object.entries(conversations).map(([key, conv]) => (
-                <Button key={key} variant={activeConversation === key ? 'default' : 'outline'} onClick={() => setActiveConversation(key as keyof typeof conversations)} size="sm">
-                  <span className="mr-2">{conv.icon}</span><span className="hidden sm:inline">{conv.title}</span>
+                <Button 
+                  key={key} 
+                  variant={activeConversation === key ? 'default' : 'outline'} 
+                  onClick={() => setActiveConversation(key as keyof typeof conversations)}
+                >
+                  <span className="mr-2">{conv.icon}</span>
+                  {conv.title}
                 </Button>
               ))}
             </div>
 
             <div className="flex justify-center">
               <RealisticPhoneMockup>
-                <WhatsAppScreen title={conversations[activeConversation].title} subtitle={conversations[activeConversation].subtitle} icon={<span className="text-xl">{conversations[activeConversation].icon}</span>}>
+                <WhatsAppScreen 
+                  title={conversations[activeConversation].title} 
+                  subtitle={conversations[activeConversation].subtitle} 
+                  icon={<span className="text-xl">{conversations[activeConversation].icon}</span>}
+                >
                   <div ref={messagesContainerRef} className="h-full overflow-y-auto p-3 space-y-2 bg-[#0B141A]">
                     <AnimatePresence>
                       {displayedMessages.map((msg) => (
-                        <motion.div key={msg.id} initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} className={`flex ${msg.type === 'sent' ? 'justify-end' : 'justify-start'}`}>
+                        <motion.div 
+                          key={msg.id} 
+                          initial={{ opacity: 0, y: 10, scale: 0.95 }} 
+                          animate={{ opacity: 1, y: 0, scale: 1 }} 
+                          className={`flex ${msg.type === 'sent' ? 'justify-end' : 'justify-start'}`}
+                        >
                           <div className={`max-w-[85%] rounded-lg px-3 py-2 ${msg.type === 'sent' ? 'bg-[#005C4B] rounded-tr-none' : 'bg-[#1F2C34] rounded-tl-none'} text-white`}>
                             <p className="text-sm whitespace-pre-line">{msg.text}</p>
                             <p className="text-[10px] mt-1 text-right text-gray-400">{msg.time} {msg.type === 'sent' && <CheckCheck className="w-3 h-3 inline" />}</p>
@@ -257,80 +372,81 @@ const VendaEmpresas = () => {
             </div>
 
             <div className="flex justify-center gap-4 mt-6">
-              <Button variant="outline" size="sm" onClick={() => setIsPlaying(!isPlaying)}>{isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}</Button>
-              <Button variant="outline" size="sm" onClick={() => { setDisplayedMessages([]); setCurrentIndex(0); setIsPlaying(true); }}><RotateCcw className="w-4 h-4" /></Button>
+              <Button variant="outline" size="sm" onClick={() => setIsPlaying(!isPlaying)}>
+                {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => { setDisplayedMessages([]); setCurrentIndex(0); setIsPlaying(true); }}>
+                <RotateCcw className="w-4 h-4" />
+              </Button>
             </div>
           </motion.section>
 
-          {/* Seção 4 - Comparativo */}
-          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="mb-20">
-            <div className="text-center mb-10">
-              <Badge variant="outline" className="mb-3 text-primary border-primary/30">Comparativo</Badge>
-              <h2 className="text-2xl md:text-3xl font-bold">Genesis vs <span className="text-primary">Soluções Comuns</span></h2>
-              <p className="text-muted-foreground mt-2 max-w-xl mx-auto">Veja o que nos diferencia no mercado</p>
+          {/* Section 5 - Comparison */}
+          <motion.section initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-24">
+            <div className="text-center mb-12">
+              <Badge variant="outline" className="mb-4 text-primary border-primary/30">
+                <Award className="w-4 h-4 mr-2 inline" />
+                Comparativo
+              </Badge>
+              <h2 className="text-3xl md:text-4xl font-bold">
+                Genesis vs <span className="text-primary">soluções comuns</span>
+              </h2>
             </div>
-            
-            <Card className="border-border/50 bg-card/50 overflow-hidden">
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border/50">
-                        <th className="text-left p-4 font-semibold">Funcionalidade</th>
-                        <th className="p-4 font-semibold text-center text-primary">Genesis</th>
-                        <th className="p-4 font-semibold text-center text-muted-foreground">Outros</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {comparison.map((row, i) => (
-                        <tr key={i} className="border-b border-border/30 last:border-0">
-                          <td className="p-4 text-sm">{row.feature}</td>
-                          <td className="p-4 text-center">
-                            {row.genesis ? (
-                              <Check className="w-5 h-5 mx-auto text-green-500" />
-                            ) : (
-                              <X className="w-5 h-5 mx-auto text-red-500" />
-                            )}
-                          </td>
-                          <td className="p-4 text-center">
-                            {row.others ? (
-                              <Check className="w-5 h-5 mx-auto text-green-500" />
-                            ) : (
-                              <X className="w-5 h-5 mx-auto text-red-500" />
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
+
+            <div className="max-w-2xl mx-auto">
+              <div className="grid grid-cols-3 gap-4 p-4 bg-muted/50 rounded-t-2xl font-semibold text-center">
+                <div>Funcionalidade</div>
+                <div className="text-primary">Genesis</div>
+                <div className="text-muted-foreground">Outros</div>
+              </div>
+              
+              {comparison.map((row, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.05 }}
+                  className={`grid grid-cols-3 gap-4 p-4 items-center text-center ${i % 2 === 0 ? 'bg-card/30' : ''}`}
+                >
+                  <div className="text-left text-sm">{row.feature}</div>
+                  <div><Check className="w-5 h-5 mx-auto text-green-500" /></div>
+                  <div><X className="w-5 h-5 mx-auto text-red-500/50" /></div>
+                </motion.div>
+              ))}
+              
+              <div className="p-4 bg-primary/10 rounded-b-2xl text-center">
+                <p className="text-sm text-muted-foreground">
+                  <Zap className="w-4 h-4 inline mr-1 text-primary" />
+                  Arquitetura enterprise, preço acessível
+                </p>
+              </div>
+            </div>
           </motion.section>
 
-          {/* CTA Enterprise */}
-          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="text-center">
-            <Card className="border-primary/20 bg-gradient-to-br from-primary/10 to-blue-600/10">
-              <CardContent className="py-12 md:py-16">
-                <Building2 className="w-16 h-16 mx-auto mb-6 text-primary" />
-                <h2 className="text-2xl md:text-3xl font-bold mb-4">Pronto para escalar seu atendimento?</h2>
-                <p className="text-muted-foreground mb-8 max-w-xl mx-auto">Fale com nossos especialistas e descubra como a Genesis pode transformar sua operação</p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button asChild size="lg" className="gap-2">
-                    <a href="/venda-genesis#precos">
-                      Ver Planos
-                      <ArrowRight className="w-4 h-4" />
-                    </a>
-                  </Button>
-                  <Button asChild size="lg" variant="outline" className="gap-2">
-                    <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer">
-                      <Phone className="w-4 h-4" />
-                      Falar com Especialista
-                    </a>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+          {/* Final CTA */}
+          <motion.section initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+            <div className="p-8 md:p-12 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 to-blue-600/10 text-center">
+              <Building2 className="w-16 h-16 mx-auto mb-6 text-primary" />
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                Pronto para <span className="text-primary">escalar</span>?
+              </h2>
+              <p className="text-xl text-muted-foreground mb-8 max-w-xl mx-auto">
+                Fale com nossos especialistas e descubra como a Genesis pode transformar sua operação
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button size="lg" className="text-lg px-8 h-14" onClick={() => navigate('/genesis/login')}>
+                  Começar Agora
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+                <Button size="lg" variant="outline" className="text-lg px-8 h-14" asChild>
+                  <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer">
+                    <Phone className="w-5 h-5 mr-2" />
+                    Falar com Especialista
+                  </a>
+                </Button>
+              </div>
+            </div>
           </motion.section>
         </div>
       </main>
