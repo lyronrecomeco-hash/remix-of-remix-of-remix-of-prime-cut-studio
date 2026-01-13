@@ -118,10 +118,10 @@ export const AffiliateProspecting = ({ affiliateId }: AffiliateProspectingProps)
   const renderHeader = () => {
     const isSubTab = activeTab !== 'cards';
 
-    // Sub-tab header: just back button + title
+    // Sub-tab header: just back button + title - positioned to replace parent header
     if (isSubTab) {
       return (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 -mt-2">
           <Button
             variant="ghost"
             size="icon"
@@ -130,7 +130,7 @@ export const AffiliateProspecting = ({ affiliateId }: AffiliateProspectingProps)
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="text-xl font-bold text-foreground">
+          <h1 className="text-lg font-semibold text-foreground">
             {getTabTitle()}
           </h1>
         </div>
@@ -205,8 +205,11 @@ export const AffiliateProspecting = ({ affiliateId }: AffiliateProspectingProps)
     );
   };
 
+  // Hide parent header when in sub-tab
+  const isSubTab = activeTab !== 'cards';
+
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${isSubTab ? '-mt-12 lg:-mt-14' : ''}`}>
       {/* Header */}
       {renderHeader()}
 
