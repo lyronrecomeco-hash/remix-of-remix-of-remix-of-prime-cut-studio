@@ -12,7 +12,8 @@ import {
   X,
   Sparkles,
   Building2,
-  Settings
+  Settings,
+  Target
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,6 +29,7 @@ import AffiliateProposals from '@/components/affiliate/AffiliateProposals';
 import HowItWorksModal from '@/components/affiliate/HowItWorksModal';
 import AffiliateWelcomeModal from '@/components/affiliate/AffiliateWelcomeModal';
 import { AffiliateProfileMenu } from '@/components/affiliate/AffiliateProfileMenu';
+import AffiliateProspecting from '@/components/affiliate/prospecting/AffiliateProspecting';
 
 interface Affiliate {
   id: string;
@@ -46,6 +48,7 @@ interface Affiliate {
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'prospecting', label: 'Prospectar', icon: Target },
   { id: 'proposals', label: 'Modo Empresa', icon: Building2 },
   { id: 'sales', label: 'Minhas Vendas', icon: TrendingUp },
   { id: 'ai', label: 'Criar com IA', icon: Sparkles },
@@ -132,6 +135,8 @@ const AffiliatePanel = () => {
     switch (activeTab) {
       case 'dashboard':
         return <AffiliateDashboard affiliate={affiliate} />;
+      case 'prospecting':
+        return <AffiliateProspecting affiliateId={affiliate.id} />;
       case 'proposals':
         return <AffiliateProposals affiliateId={affiliate.id} />;
       case 'sales':
