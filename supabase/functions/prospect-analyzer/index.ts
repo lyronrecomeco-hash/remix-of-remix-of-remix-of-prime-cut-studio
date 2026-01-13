@@ -16,13 +16,17 @@ const corsHeaders = {
 };
 
 interface AnalysisRequest {
-  prospect_id: string;
-  company_name: string;
+  prospect_id?: string;
+  company_name?: string;
   company_website?: string;
   company_phone?: string;
   niche?: string;
   company_city?: string;
-  action: 'analyze' | 'generate_proposal' | 'analyze_and_propose';
+  main_pain?: string;
+  additional_info?: string;
+  city?: string;
+  state?: string;
+  action: 'analyze' | 'generate_proposal' | 'analyze_and_propose' | 'search_businesses' | 'generate_proposal_only';
 }
 
 interface SiteAnalysis {
@@ -113,9 +117,188 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
     
     const body: AnalysisRequest = await req.json();
-    const { prospect_id, company_name, company_website, company_phone, niche, company_city, action } = body;
+    const { action, prospect_id, company_name, company_website, company_phone, niche, company_city, main_pain, additional_info, city, state } = body;
 
-    console.log(`[ProspectAnalyzer] Action: ${action}, Company: ${company_name}`);
+    console.log(`[ProspectAnalyzer] Action: ${action}`);
+
+    // ==================== BUSCAR NEGÓCIOS ====================
+    if (action === 'search_businesses') {
+      if (!city || !state || !niche) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Cidade, estado e nicho são obrigatórios' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log(`[ProspectAnalyzer] Buscando ${niche} em ${city}, ${state}...`);
+
+      // Usar Luna AI para simular busca de negócios (em produção usaria APIs reais como Google Places)
+      if (!lovableApiKey) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'API de IA não configurada' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const searchPrompt = `Você é um assistente que simula resultados de busca de estabelecimentos comerciais.
+
+Gere uma lista de 8 a 12 estabelecimentos FICTÍCIOS mas REALISTAS do tipo "${niche}" na cidade de ${city}, ${state}, Brasil.
+
+Para cada estabelecimento, inclua:
+- name: Nome criativo e realista para o tipo de negócio
+- address: Endereço fictício mas plausível para ${city}
+- phone: Telefone no formato (DDD) XXXXX-XXXX
+- rating: Nota de 3.5 a 5.0
+- category: "${niche}"
+
+Responda APENAS com um JSON array válido, sem explicações:
+[{"name": "...", "address": "...", "phone": "...", "rating": 4.5, "category": "..."}]`;
+
+      try {
+        const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${lovableApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash',
+            messages: [{ role: 'user', content: searchPrompt }],
+            temperature: 0.9,
+          }),
+        });
+
+        if (!aiResponse.ok) {
+          throw new Error(`AI API error: ${aiResponse.status}`);
+        }
+
+        const aiData = await aiResponse.json();
+        const content = aiData.choices?.[0]?.message?.content || '[]';
+        
+        const jsonMatch = content.match(/\[[\s\S]*\]/);
+        const results = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+
+        return new Response(
+          JSON.stringify({ success: true, results }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (error) {
+        console.error('[ProspectAnalyzer] Erro na busca:', error);
+        return new Response(
+          JSON.stringify({ success: false, error: String(error), results: [] }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // ==================== GERAR PROPOSTA DIRETA ====================
+    if (action === 'generate_proposal_only') {
+      if (!company_name || !niche) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Nome da empresa e nicho são obrigatórios' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (!lovableApiKey) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'API de IA não configurada' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log(`[ProspectAnalyzer] Gerando proposta para ${company_name}...`);
+
+      const systemPrompt = `Você é Luna, a IA especialista em vendas da Genesis Hub. Crie propostas comerciais ALTAMENTE CONVERSÍVEIS.
+
+GENESIS HUB oferece:
+- Sites profissionais e landing pages
+- Automação de WhatsApp com chatbots
+- Sistema de agendamento online
+- CRM completo para gestão de clientes
+- Planos de R$ 97/mês a R$ 497/mês
+
+REGRAS:
+1. Seja EXTREMAMENTE persuasivo e personalizado
+2. Use números e estatísticas
+3. Crie urgência (concorrentes, perda de clientes)
+4. Mensagem WhatsApp deve ter NO MÁXIMO 400 caracteres, com emojis
+5. Seja direto e profissional
+
+RETORNE APENAS JSON VÁLIDO:`;
+
+      const userPrompt = `Crie uma proposta para:
+EMPRESA: ${company_name}
+NICHO: ${niche}
+CIDADE: ${company_city || 'Não informada'}
+WEBSITE: ${company_website || 'Não possui'}
+WHATSAPP: ${company_phone || 'Não informado'}
+DOR PRINCIPAL: ${main_pain || 'Não especificada'}
+INFO ADICIONAL: ${additional_info || 'Nenhuma'}
+
+JSON esperado:
+{
+  "headline": "Título de impacto",
+  "problema_identificado": "Descrição do problema",
+  "solucao_proposta": "Como resolvemos",
+  "beneficios": ["Benefício 1", "Benefício 2", "Benefício 3"],
+  "oferta_especial": "Desconto ou bônus",
+  "investimento": "Valor sugerido",
+  "mensagem_whatsapp": "Mensagem curta com emojis (max 400 chars)"
+}`;
+
+      try {
+        const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${lovableApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-3-flash-preview',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt }
+            ],
+            temperature: 0.8,
+          }),
+        });
+
+        if (!aiResponse.ok) {
+          throw new Error(`AI API error: ${aiResponse.status}`);
+        }
+
+        const aiData = await aiResponse.json();
+        const content = aiData.choices?.[0]?.message?.content || '';
+        
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        let proposal = null;
+        
+        if (jsonMatch) {
+          try {
+            proposal = JSON.parse(jsonMatch[0]);
+          } catch {
+            proposal = { raw_content: content };
+          }
+        } else {
+          proposal = { raw_content: content };
+        }
+
+        return new Response(
+          JSON.stringify({ success: true, proposal }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (error) {
+        console.error('[ProspectAnalyzer] Erro ao gerar proposta:', error);
+        return new Response(
+          JSON.stringify({ success: false, error: String(error) }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // ==================== ANÁLISE COMPLETA (original) ====================
+    console.log(`[ProspectAnalyzer] Analyzing: ${company_name}`);
 
     // Atualizar status para analyzing
     if (prospect_id) {
