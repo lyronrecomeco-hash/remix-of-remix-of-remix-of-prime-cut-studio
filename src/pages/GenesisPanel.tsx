@@ -63,6 +63,7 @@ import { CaktoHub } from '@/components/genesis/CaktoHub';
 import { CactusIcon } from '@/components/genesis/icons';
 import { GenesisButtons } from '@/components/genesis/buttons';
 import { MessagingFeatures } from '@/components/genesis/messaging';
+import { GenesisProfessionalSettings } from '@/components/genesis/professional/GenesisProfessionalSettings';
 
 // Dashboard component with real data - Premium Design
 const GenesisDashboard = ({ onNavigate }: { onNavigate: (tab: string) => void }) => {
@@ -505,6 +506,7 @@ export default function GenesisPanel() {
     { id: 'chatbots', label: 'Chatbots', icon: Bot },
     { id: 'campaigns', label: 'Campanhas', icon: Send },
     { id: 'messaging', label: 'Mensagens', icon: MessageSquare },
+    { id: 'professional', label: 'Profissional', icon: Crown },
     // { id: 'buttons', label: 'Botões', icon: MousePointerClick }, // Temporariamente desativado - botões nativos não funcionam no mobile
     { id: 'metrics', label: 'Métricas', icon: Activity },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
@@ -544,6 +546,8 @@ export default function GenesisPanel() {
         return <GenesisButtons />;
       case 'messaging':
         return <MessagingFeatures />;
+      case 'professional':
+        return <GenesisProfessionalSettings />;
       case 'cakto':
         return <CaktoHub onFocusModeChange={setIsCaktoFocusMode} />;
       case 'metrics':
