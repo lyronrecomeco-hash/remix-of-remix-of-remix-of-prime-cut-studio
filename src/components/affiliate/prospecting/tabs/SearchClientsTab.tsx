@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Search, 
   MapPin, 
@@ -6,12 +6,18 @@ import {
   Loader2, 
   Phone, 
   Globe, 
-  Star, 
-  Plus,
+  Star,
   ExternalLink,
   CheckCircle,
-  MapPinned,
-  AlertCircle
+  Sparkles,
+  MessageSquare,
+  Send,
+  Copy,
+  Check,
+  Zap,
+  Target,
+  TrendingUp,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +27,8 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -36,6 +44,7 @@ interface SearchResult {
 
 interface SearchClientsTabProps {
   affiliateId: string;
+  affiliateName?: string;
   onAddProspect: (data: {
     company_name: string;
     company_phone?: string;
@@ -115,7 +124,7 @@ const STATES = [
   { value: 'TO', label: 'Tocantins' },
 ];
 
-export const SearchClientsTab = ({ affiliateId, onAddProspect }: SearchClientsTabProps) => {
+export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: SearchClientsTabProps) => {
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [niche, setNiche] = useState('');
@@ -124,6 +133,27 @@ export const SearchClientsTab = ({ affiliateId, onAddProspect }: SearchClientsTa
   const [addingId, setAddingId] = useState<string | null>(null);
   const [selectedResult, setSelectedResult] = useState<SearchResult | null>(null);
   const [addedNames, setAddedNames] = useState<Set<string>>(new Set());
+  const [generatingProposal, setGeneratingProposal] = useState(false);
+  const [generatedMessage, setGeneratedMessage] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [currentAffiliateName, setCurrentAffiliateName] = useState(affiliateName || '');
+
+  // Fetch affiliate name if not provided
+  useEffect(() => {
+    const fetchAffiliateName = async () => {
+      if (!affiliateName && affiliateId) {
+        const { data } = await supabase
+          .from('affiliates')
+          .select('name')
+          .eq('id', affiliateId)
+          .single();
+        if (data?.name) {
+          setCurrentAffiliateName(data.name);
+        }
+      }
+    };
+    fetchAffiliateName();
+  }, [affiliateId, affiliateName]);
 
   const handleSearch = async () => {
     if (!city.trim() || !state || !niche) {
@@ -136,11 +166,7 @@ export const SearchClientsTab = ({ affiliateId, onAddProspect }: SearchClientsTa
 
     try {
       const { data, error } = await supabase.functions.invoke('search-businesses', {
-        body: {
-          city: city.trim(),
-          state,
-          niche,
-        },
+        body: { city: city.trim(), state, niche },
       });
 
       if (error) throw error;
@@ -155,7 +181,7 @@ export const SearchClientsTab = ({ affiliateId, onAddProspect }: SearchClientsTa
       }
     } catch (error) {
       console.error('Erro na busca:', error);
-      toast.error('Erro ao buscar estabelecimentos. Verifique a configuração do Serper.');
+      toast.error('Erro ao buscar estabelecimentos');
     } finally {
       setSearching(false);
     }
@@ -185,36 +211,89 @@ export const SearchClientsTab = ({ affiliateId, onAddProspect }: SearchClientsTa
     }
   };
 
+  const generateProposal = async (result: SearchResult) => {
+    setGeneratingProposal(true);
+    setGeneratedMessage('');
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('luna-prospect-proposal', {
+        body: {
+          businessName: result.name,
+          businessNiche: result.category || niche,
+          businessAddress: result.address,
+          businessPhone: result.phone,
+          businessWebsite: result.website,
+          businessRating: result.rating,
+          affiliateName: currentAffiliateName || 'Consultor Genesis',
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.message) {
+        setGeneratedMessage(data.message);
+      }
+    } catch (error) {
+      console.error('Erro ao gerar proposta:', error);
+      // Fallback to base template
+      const baseMessage = `Olá, tudo bem?
+
+Me chamo ${currentAffiliateName || '{SEU NOME}'} e atualmente trabalho em uma empresa especializada em ajudar negócios locais a fortalecer a presença no Google e automatizar processos do dia a dia.
+
+Hoje ajudamos empresas como a ${result.name} a:
+
+✅ Ter um site profissional que gera mais confiança
+✅ Aparecer melhor nas buscas do Google
+✅ Utilizar sistemas de agendamento automatizado, reduzindo atendimentos manuais
+✅ Melhorar a comunicação com clientes via WhatsApp
+
+Entrei em contato porque identifiquei que seu negócio tem potencial para aumentar a visibilidade online e otimizar o atendimento, sem complicação técnica.
+
+Se fizer sentido, posso te explicar rapidamente como isso funciona.`;
+      setGeneratedMessage(baseMessage);
+    } finally {
+      setGeneratingProposal(false);
+    }
+  };
+
+  const copyToClipboard = async () => {
+    await navigator.clipboard.writeText(generatedMessage);
+    setCopied(true);
+    toast.success('Mensagem copiada!');
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const sendViaWhatsApp = () => {
+    if (selectedResult?.phone) {
+      const phone = selectedResult.phone.replace(/\D/g, '');
+      const message = encodeURIComponent(generatedMessage);
+      window.open(`https://wa.me/55${phone}?text=${message}`, '_blank');
+    }
+  };
+
   return (
     <div className="space-y-6">
-      {/* Search Form */}
-      <Card className="border-2 border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-cyan-500/5">
+      {/* Search Form - Genesis Theme */}
+      <Card className="border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
         <CardContent className="p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-              <Search className="w-5 h-5 text-white" />
-            </div>
-            Buscar Estabelecimentos Reais
-          </h3>
-          
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <Label className="text-sm font-medium flex items-center gap-2 mb-2">
-                <MapPin className="w-4 h-4 text-muted-foreground" />
+                <MapPin className="w-4 h-4 text-primary" />
                 Cidade
               </Label>
               <Input
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 placeholder="Ex: São Paulo"
-                className="bg-background border-border"
+                className="bg-background/50 border-border focus:border-primary"
               />
             </div>
             
             <div>
               <Label className="text-sm font-medium mb-2 block">Estado</Label>
               <Select value={state} onValueChange={setState}>
-                <SelectTrigger className="bg-background border-border">
+                <SelectTrigger className="bg-background/50 border-border focus:border-primary">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
@@ -227,11 +306,11 @@ export const SearchClientsTab = ({ affiliateId, onAddProspect }: SearchClientsTa
             
             <div>
               <Label className="text-sm font-medium flex items-center gap-2 mb-2">
-                <Building2 className="w-4 h-4 text-muted-foreground" />
+                <Building2 className="w-4 h-4 text-primary" />
                 Nicho
               </Label>
               <Select value={niche} onValueChange={setNiche}>
-                <SelectTrigger className="bg-background border-border">
+                <SelectTrigger className="bg-background/50 border-border focus:border-primary">
                   <SelectValue placeholder="Selecione o nicho" />
                 </SelectTrigger>
                 <SelectContent>
@@ -246,7 +325,7 @@ export const SearchClientsTab = ({ affiliateId, onAddProspect }: SearchClientsTa
               <Button 
                 onClick={handleSearch} 
                 disabled={searching || !city || !state || !niche}
-                className="w-full gap-2 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shadow-lg"
+                className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
               >
                 {searching ? (
                   <>
@@ -262,250 +341,368 @@ export const SearchClientsTab = ({ affiliateId, onAddProspect }: SearchClientsTa
               </Button>
             </div>
           </div>
-          
-          <div className="flex items-center gap-2 mt-4 text-xs text-muted-foreground">
-            <AlertCircle className="w-3.5 h-3.5" />
-            <span>Dados reais do Google Places via Serper.dev. Alta precisão.</span>
-          </div>
         </CardContent>
       </Card>
 
-      {/* Results */}
+      {/* Results Grid */}
       {results.length > 0 && (
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <MapPinned className="w-5 h-5 text-blue-500" />
-                Resultados ({results.length})
-              </h3>
-              <Badge variant="secondary" className="text-xs bg-blue-500/10 text-blue-600 border-blue-500/30">
-                Dados Reais
-              </Badge>
-            </div>
-            
-            <ScrollArea className="h-[500px] pr-4">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {results.map((result, idx) => {
-                  const isAdded = addedNames.has(result.name);
-                  const isAdding = addingId === result.name;
-                  
-                  return (
-                    <div
-                      key={idx}
-                      className={`relative bg-background border-2 rounded-xl p-4 transition-all duration-300 hover:shadow-lg ${
-                        isAdded 
-                          ? 'border-green-500/50 bg-green-500/5' 
-                          : 'border-border hover:border-blue-500/50'
-                      }`}
-                    >
-                      {isAdded && (
-                        <div className="absolute top-3 right-3">
-                          <Badge className="bg-green-500 text-white gap-1">
-                            <CheckCircle className="w-3 h-3" />
-                            Adicionado
-                          </Badge>
-                        </div>
-                      )}
-                      
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shrink-0">
-                          <Building2 className="w-6 h-6 text-white" />
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Target className="w-5 h-5 text-primary" />
+              {results.length} Estabelecimentos Encontrados
+            </h3>
+            <Badge className="bg-primary/10 text-primary border-primary/30">
+              Google Places
+            </Badge>
+          </div>
+          
+          <ScrollArea className="h-[500px] pr-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+              {results.map((result, idx) => {
+                const isAdded = addedNames.has(result.name);
+                const isAdding = addingId === result.name;
+                
+                return (
+                  <Card
+                    key={idx}
+                    className={`group relative overflow-hidden transition-all duration-300 hover:shadow-xl cursor-pointer ${
+                      isAdded 
+                        ? 'border-green-500/50 bg-green-500/5' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                    onClick={() => setSelectedResult(result)}
+                  >
+                    {isAdded && (
+                      <div className="absolute top-3 right-3 z-10">
+                        <Badge className="bg-green-500 text-white gap-1">
+                          <CheckCircle className="w-3 h-3" />
+                          Salvo
+                        </Badge>
+                      </div>
+                    )}
+                    
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                          <Building2 className="w-6 h-6 text-primary" />
                         </div>
                         
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-foreground truncate pr-24">
+                          <h4 className="font-semibold text-foreground truncate pr-16 group-hover:text-primary transition-colors">
                             {result.name}
                           </h4>
                           
-                          <p className="text-sm text-muted-foreground flex items-start gap-1 mt-1">
+                          <p className="text-sm text-muted-foreground flex items-start gap-1 mt-1 line-clamp-1">
                             <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                            <span className="line-clamp-2">{result.address}</span>
+                            {result.address}
                           </p>
                           
                           <div className="flex flex-wrap items-center gap-2 mt-3">
-                            {result.phone && (
-                              <Badge variant="outline" className="text-xs gap-1 font-mono">
-                                <Phone className="w-3 h-3" />
-                                {result.phone}
+                            {result.rating && (
+                              <Badge variant="secondary" className="text-xs gap-1 bg-amber-500/10 text-amber-500 border-amber-500/30">
+                                <Star className="w-3 h-3 fill-current" />
+                                {result.rating}
                               </Badge>
                             )}
                             
-                            {result.rating && (
-                              <Badge variant="secondary" className="text-xs gap-1 bg-yellow-500/10 text-yellow-600 border-yellow-500/30">
-                                <Star className="w-3 h-3 fill-current" />
-                                {result.rating}
-                                {result.reviews_count && ` (${result.reviews_count})`}
+                            {result.phone && (
+                              <Badge variant="outline" className="text-xs gap-1 font-mono">
+                                <Phone className="w-3 h-3" />
+                                {result.phone.slice(0, 14)}...
                               </Badge>
                             )}
                             
                             {result.website && (
-                              <a 
-                                href={result.website.startsWith('http') ? result.website : `https://${result.website}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-xs text-blue-500 hover:underline"
-                                onClick={(e) => e.stopPropagation()}
-                              >
+                              <Badge variant="outline" className="text-xs gap-1 text-primary border-primary/30">
                                 <Globe className="w-3 h-3" />
                                 Site
-                                <ExternalLink className="w-2.5 h-2.5" />
-                              </a>
-                            )}
-                          </div>
-                          
-                          <div className="flex items-center gap-2 mt-4">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setSelectedResult(result)}
-                              className="gap-1"
-                            >
-                              Ver Detalhes
-                            </Button>
-                            
-                            {!isAdded && (
-                              <Button
-                                size="sm"
-                                onClick={() => handleAddToProspects(result)}
-                                disabled={isAdding}
-                                className="gap-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white"
-                              >
-                                {isAdding ? (
-                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                ) : (
-                                  <Plus className="w-3.5 h-3.5" />
-                                )}
-                                Adicionar
-                              </Button>
+                              </Badge>
                             )}
                           </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
+                      
+                      <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="flex-1 gap-1 text-xs"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedResult(result);
+                          }}
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          Ver Detalhes
+                        </Button>
+                        
+                        {!isAdded && (
+                          <Button
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddToProspects(result);
+                            }}
+                            disabled={isAdding}
+                            className="flex-1 gap-1 text-xs bg-primary hover:bg-primary/90"
+                          >
+                            {isAdding ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <TrendingUp className="w-3.5 h-3.5" />
+                            )}
+                            Salvar
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </ScrollArea>
+        </div>
       )}
 
       {/* Empty State */}
       {!searching && results.length === 0 && (
-        <Card className="border-dashed">
+        <Card className="border-dashed border-2 border-primary/20">
           <CardContent className="p-12 text-center">
-            <div className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
-              <Search className="w-8 h-8 text-blue-500" />
+            <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
+              <Search className="w-10 h-10 text-primary" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              Busque Estabelecimentos Reais
+            <h3 className="text-xl font-semibold text-foreground mb-2">
+              Encontre Clientes em Potencial
             </h3>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              Digite a cidade, estado e nicho para encontrar estabelecimentos reais 
-              com telefone, endereço e mais informações direto da web.
+            <p className="text-muted-foreground max-w-md mx-auto mb-6">
+              Busque estabelecimentos reais por cidade e nicho. 
+              Gere propostas personalizadas com IA e aumente suas conversões.
             </p>
+            <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Zap className="w-4 h-4 text-primary" />
+                Dados do Google
+              </span>
+              <span className="flex items-center gap-1">
+                <Sparkles className="w-4 h-4 text-primary" />
+                Proposta com IA
+              </span>
+            </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Detail Modal */}
-      <Dialog open={!!selectedResult} onOpenChange={() => setSelectedResult(null)}>
-        <DialogContent className="max-w-lg">
+      {/* Detail Modal with Proposal Generator */}
+      <Dialog open={!!selectedResult} onOpenChange={() => {
+        setSelectedResult(null);
+        setGeneratedMessage('');
+      }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-                <Building2 className="w-5 h-5 text-white" />
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Building2 className="w-6 h-6 text-primary" />
               </div>
-              {selectedResult?.name}
+              <div className="flex-1">
+                <span className="block">{selectedResult?.name}</span>
+                <span className="text-sm font-normal text-muted-foreground">
+                  {selectedResult?.category || niche}
+                </span>
+              </div>
             </DialogTitle>
           </DialogHeader>
           
           {selectedResult && (
-            <div className="space-y-4 mt-4">
-              <div className="space-y-3">
-                <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                  <MapPin className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium">Endereço</p>
-                    <p className="text-sm text-muted-foreground">{selectedResult.address}</p>
-                  </div>
-                </div>
-                
-                {selectedResult.phone && (
-                  <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                    <Phone className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
+            <Tabs defaultValue="info" className="mt-4">
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="info" className="gap-2">
+                  <Building2 className="w-4 h-4" />
+                  Informações
+                </TabsTrigger>
+                <TabsTrigger value="proposal" className="gap-2">
+                  <Sparkles className="w-4 h-4" />
+                  Gerar Proposta
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="info" className="space-y-4">
+                {/* Business Info */}
+                <div className="grid gap-3">
+                  <div className="flex items-start gap-3 p-4 bg-muted/30 rounded-xl border border-border">
+                    <MapPin className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium">Telefone</p>
-                      <p className="text-sm text-muted-foreground font-mono">{selectedResult.phone}</p>
+                      <p className="text-sm font-medium text-foreground">Endereço</p>
+                      <p className="text-sm text-muted-foreground">{selectedResult.address}</p>
                     </div>
                   </div>
-                )}
-                
-                {selectedResult.website && (
-                  <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                    <Globe className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium">Website</p>
-                      <a 
-                        href={selectedResult.website.startsWith('http') ? selectedResult.website : `https://${selectedResult.website}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-500 hover:underline flex items-center gap-1"
+                  
+                  {selectedResult.phone && (
+                    <div className="flex items-start gap-3 p-4 bg-muted/30 rounded-xl border border-border">
+                      <Phone className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">Telefone</p>
+                        <p className="text-sm text-muted-foreground font-mono">{selectedResult.phone}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => window.open(`tel:${selectedResult.phone}`, '_self')}
+                        className="shrink-0"
                       >
-                        {selectedResult.website}
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
+                        Ligar
+                      </Button>
                     </div>
-                  </div>
-                )}
-                
-                {selectedResult.rating && (
-                  <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                    <Star className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium">Avaliação</p>
-                      <p className="text-sm text-muted-foreground">
-                        {selectedResult.rating} estrelas
-                        {selectedResult.reviews_count && ` (${selectedResult.reviews_count} avaliações)`}
-                      </p>
+                  )}
+                  
+                  {selectedResult.website && (
+                    <div className="flex items-start gap-3 p-4 bg-muted/30 rounded-xl border border-border">
+                      <Globe className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">Website</p>
+                        <a 
+                          href={selectedResult.website.startsWith('http') ? selectedResult.website : `https://${selectedResult.website}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary hover:underline flex items-center gap-1"
+                        >
+                          {selectedResult.website}
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
                     </div>
-                  </div>
-                )}
-                
-                {selectedResult.category && (
-                  <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                    <Building2 className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium">Categoria</p>
-                      <p className="text-sm text-muted-foreground">{selectedResult.category}</p>
+                  )}
+                  
+                  {selectedResult.rating && (
+                    <div className="flex items-start gap-3 p-4 bg-muted/30 rounded-xl border border-border">
+                      <Star className="w-5 h-5 text-amber-500 shrink-0 mt-0.5 fill-current" />
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Avaliação</p>
+                        <p className="text-sm text-muted-foreground">
+                          {selectedResult.rating} estrelas
+                          {selectedResult.reviews_count && ` • ${selectedResult.reviews_count} avaliações`}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-              
-              <div className="flex gap-2 pt-4">
-                {!addedNames.has(selectedResult.name) && (
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-4 border-t border-border">
+                  {!addedNames.has(selectedResult.name) && (
+                    <Button
+                      onClick={() => {
+                        handleAddToProspects(selectedResult);
+                      }}
+                      className="flex-1 gap-2 bg-primary hover:bg-primary/90"
+                    >
+                      <TrendingUp className="w-4 h-4" />
+                      Salvar Prospect
+                    </Button>
+                  )}
                   <Button
-                    onClick={() => {
-                      handleAddToProspects(selectedResult);
-                      setSelectedResult(null);
-                    }}
-                    className="flex-1 gap-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white"
+                    variant="outline"
+                    onClick={() => setSelectedResult(null)}
+                    className={addedNames.has(selectedResult.name) ? "flex-1" : ""}
                   >
-                    <Plus className="w-4 h-4" />
-                    Adicionar aos Prospects
+                    Fechar
                   </Button>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="proposal" className="space-y-4">
+                {/* Generate Proposal */}
+                {!generatedMessage ? (
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                      <Sparkles className="w-8 h-8 text-primary" />
+                    </div>
+                    <h4 className="font-semibold text-foreground mb-2">
+                      Gerar Proposta Personalizada
+                    </h4>
+                    <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
+                      A Luna AI vai criar uma mensagem personalizada para {selectedResult.name} 
+                      baseada no perfil do negócio.
+                    </p>
+                    <Button
+                      onClick={() => generateProposal(selectedResult)}
+                      disabled={generatingProposal}
+                      className="gap-2 bg-primary hover:bg-primary/90"
+                    >
+                      {generatingProposal ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Luna está criando...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4" />
+                          Gerar com IA
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-semibold text-foreground flex items-center gap-2">
+                        <MessageSquare className="w-4 h-4 text-primary" />
+                        Mensagem Gerada
+                      </h4>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={copyToClipboard}
+                          className="gap-1"
+                        >
+                          {copied ? (
+                            <Check className="w-3.5 h-3.5 text-green-500" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                          {copied ? 'Copiado!' : 'Copiar'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => generateProposal(selectedResult)}
+                          disabled={generatingProposal}
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <Textarea
+                      value={generatedMessage}
+                      onChange={(e) => setGeneratedMessage(e.target.value)}
+                      className="min-h-[250px] bg-muted/30 border-border resize-none"
+                    />
+
+                    <div className="flex gap-3">
+                      {selectedResult.phone && (
+                        <Button
+                          onClick={sendViaWhatsApp}
+                          className="flex-1 gap-2 bg-green-600 hover:bg-green-700"
+                        >
+                          <Send className="w-4 h-4" />
+                          Enviar via WhatsApp
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        onClick={copyToClipboard}
+                        className={!selectedResult.phone ? "flex-1" : ""}
+                      >
+                        <Copy className="w-4 h-4 mr-2" />
+                        Copiar Mensagem
+                      </Button>
+                    </div>
+                  </div>
                 )}
-                <Button
-                  variant="outline"
-                  onClick={() => setSelectedResult(null)}
-                  className={addedNames.has(selectedResult.name) ? "flex-1" : ""}
-                >
-                  Fechar
-                </Button>
-              </div>
-            </div>
+              </TabsContent>
+            </Tabs>
           )}
         </DialogContent>
       </Dialog>
