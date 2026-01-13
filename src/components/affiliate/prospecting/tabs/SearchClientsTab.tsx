@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { 
   Search, 
   MapPin, 
@@ -17,6 +17,8 @@ import {
   Zap,
   Target,
   TrendingUp,
+  ChevronLeft,
+  ChevronRight,
   X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -24,13 +26,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+
+const ITEMS_PER_PAGE = 12;
 
 interface SearchResult {
   name: string;
@@ -138,6 +141,14 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
   const [copied, setCopied] = useState(false);
   const [currentAffiliateName, setCurrentAffiliateName] = useState(affiliateName || '');
 
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.max(1, Math.ceil(results.length / ITEMS_PER_PAGE));
+  const paginatedResults = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return results.slice(start, start + ITEMS_PER_PAGE);
+  }, [results, currentPage]);
+
   // Fetch affiliate name if not provided
   useEffect(() => {
     const fetchAffiliateName = async () => {
@@ -163,6 +174,7 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
 
     setSearching(true);
     setResults([]);
+    setCurrentPage(1);
 
     try {
       const { data, error } = await supabase.functions.invoke('search-businesses', {
@@ -351,116 +363,168 @@ Se fizer sentido, posso te explicar rapidamente como funciona.`;
               <Target className="w-5 h-5 text-primary" />
               {results.length} Estabelecimentos Encontrados
             </h3>
-            <Badge className="bg-primary/10 text-primary border-primary/30">
-              Google Places
-            </Badge>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">
+                Página {currentPage} de {totalPages}
+              </span>
+              <Badge className="bg-primary/10 text-primary border-primary/30">
+                Google Places
+              </Badge>
+            </div>
           </div>
-          
-          <ScrollArea className="h-[500px] pr-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-              {results.map((result, idx) => {
-                const isAdded = addedNames.has(result.name);
-                const isAdding = addingId === result.name;
-                
-                return (
-                  <Card
-                    key={idx}
-                    className={`group relative overflow-hidden transition-all duration-300 hover:shadow-xl cursor-pointer ${
-                      isAdded 
-                        ? 'border-green-500/50 bg-green-500/5' 
-                        : 'border-border hover:border-primary/50'
-                    }`}
-                    onClick={() => setSelectedResult(result)}
-                  >
-                    {isAdded && (
-                      <div className="absolute top-3 right-3 z-10">
-                        <Badge className="bg-green-500 text-white gap-1">
-                          <CheckCircle className="w-3 h-3" />
-                          Salvo
-                        </Badge>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+            {paginatedResults.map((result, idx) => {
+              const isAdded = addedNames.has(result.name);
+              const isAdding = addingId === result.name;
+
+              return (
+                <Card
+                  key={`${result.name}-${idx}`}
+                  className={`group relative overflow-hidden transition-all duration-300 hover:shadow-xl cursor-pointer ${
+                    isAdded 
+                      ? 'border-green-500/50 bg-green-500/5' 
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                  onClick={() => setSelectedResult(result)}
+                >
+                  {isAdded && (
+                    <div className="absolute top-3 right-3 z-10">
+                      <Badge className="bg-green-500 text-white gap-1">
+                        <CheckCircle className="w-3 h-3" />
+                        Salvo
+                      </Badge>
+                    </div>
+                  )}
+
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                        <Building2 className="w-6 h-6 text-primary" />
                       </div>
-                    )}
-                    
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                          <Building2 className="w-6 h-6 text-primary" />
-                        </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-foreground truncate pr-16 group-hover:text-primary transition-colors">
-                            {result.name}
-                          </h4>
-                          
-                          <p className="text-sm text-muted-foreground flex items-start gap-1 mt-1 line-clamp-1">
-                            <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                            {result.address}
-                          </p>
-                          
-                          <div className="flex flex-wrap items-center gap-2 mt-3">
-                            {result.rating && (
-                              <Badge variant="secondary" className="text-xs gap-1 bg-amber-500/10 text-amber-500 border-amber-500/30">
-                                <Star className="w-3 h-3 fill-current" />
-                                {result.rating}
-                              </Badge>
-                            )}
-                            
-                            {result.phone && (
-                              <Badge variant="outline" className="text-xs gap-1 font-mono">
-                                <Phone className="w-3 h-3" />
-                                {result.phone.slice(0, 14)}...
-                              </Badge>
-                            )}
-                            
-                            {result.website && (
-                              <Badge variant="outline" className="text-xs gap-1 text-primary border-primary/30">
-                                <Globe className="w-3 h-3" />
-                                Site
-                              </Badge>
-                            )}
-                          </div>
+
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-foreground truncate pr-16 group-hover:text-primary transition-colors">
+                          {result.name}
+                        </h4>
+
+                        <p className="text-sm text-muted-foreground flex items-start gap-1 mt-1 line-clamp-1">
+                          <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                          {result.address}
+                        </p>
+
+                        <div className="flex flex-wrap items-center gap-2 mt-3">
+                          {result.rating && (
+                            <Badge variant="secondary" className="text-xs gap-1 bg-amber-500/10 text-amber-500 border-amber-500/30">
+                              <Star className="w-3 h-3 fill-current" />
+                              {result.rating}
+                            </Badge>
+                          )}
+
+                          {result.phone && (
+                            <Badge variant="outline" className="text-xs gap-1 font-mono">
+                              <Phone className="w-3 h-3" />
+                              {result.phone.slice(0, 14)}...
+                            </Badge>
+                          )}
+
+                          {result.website && (
+                            <Badge variant="outline" className="text-xs gap-1 text-primary border-primary/30">
+                              <Globe className="w-3 h-3" />
+                              Site
+                            </Badge>
+                          )}
                         </div>
                       </div>
-                      
-                      <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border">
+                    </div>
+
+                    <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="flex-1 gap-1 text-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedResult(result);
+                        }}
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        Ver Detalhes
+                      </Button>
+
+                      {!isAdded && (
                         <Button
                           size="sm"
-                          variant="ghost"
-                          className="flex-1 gap-1 text-xs"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedResult(result);
+                            handleAddToProspects(result);
                           }}
+                          disabled={isAdding}
+                          className="flex-1 gap-1 text-xs bg-primary hover:bg-primary/90"
                         >
-                          <Sparkles className="w-3.5 h-3.5" />
-                          Ver Detalhes
+                          {isAdding ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <TrendingUp className="w-3.5 h-3.5" />
+                          )}
+                          Salvar
                         </Button>
-                        
-                        {!isAdded && (
-                          <Button
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAddToProspects(result);
-                            }}
-                            disabled={isAdding}
-                            className="flex-1 gap-1 text-xs bg-primary hover:bg-primary/90"
-                          >
-                            {isAdding ? (
-                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            ) : (
-                              <TrendingUp className="w-3.5 h-3.5" />
-                            )}
-                            Salvar
-                          </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
+                  let pageNum: number;
+                  if (totalPages <= 7) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 4) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 3) {
+                    pageNum = totalPages - 6 + i;
+                  } else {
+                    pageNum = currentPage - 3 + i;
+                  }
+
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? 'default' : 'outline'}
+                      size="sm"
+                      className="w-9 h-9 p-0"
+                      onClick={() => setCurrentPage(pageNum)}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
             </div>
-          </ScrollArea>
+          )}
         </div>
       )}
 
