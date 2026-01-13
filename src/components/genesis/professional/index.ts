@@ -1,4 +1,7 @@
 // Genesis Professional Features - Organized Exports
+// Main Settings Component
+export { GenesisProfessionalSettings } from './GenesisProfessionalSettings';
+
 // Core Features
 export { SecuritySettings } from './SecuritySettings';
 export { WorkScheduleSettings } from './WorkScheduleSettings';
@@ -17,14 +20,3 @@ export { NPSSurveys } from './customer/NPSSurveys';
 export { ContactAssignments } from './customer/ContactAssignments';
 export { ClosureReasons } from './customer/ClosureReasons';
 export { QuickRepliesManager } from './customer/QuickRepliesManager';
-
-// Marketing & Campaigns - Placeholder components (need schema alignment)
-export const WidgetBuilder = () => null;
-export const WidgetLeads = () => null;
-export const BroadcastCampaigns = () => null;
-export const AgentScheduler = () => null;
-
-// Reports & Analytics - Placeholder components (need schema alignment)
-export const ReportsCenter = () => null;
-export const SyntheticReport = () => null;
-export const AnalyticReport = () => null;
