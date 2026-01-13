@@ -147,26 +147,6 @@ export const HistoryTab = ({
         </CardContent>
       </Card>
 
-      {/* Stats Summary */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-primary/5 border border-primary/20 rounded-xl p-3 text-center">
-          <div className="text-2xl font-bold text-primary">{prospects.length}</div>
-          <div className="text-xs text-muted-foreground">Total</div>
-        </div>
-        <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-xl p-3 text-center">
-          <div className="text-2xl font-bold text-yellow-600">{statusCounts.pending || 0}</div>
-          <div className="text-xs text-muted-foreground">Pendentes</div>
-        </div>
-        <div className="bg-green-500/5 border border-green-500/20 rounded-xl p-3 text-center">
-          <div className="text-2xl font-bold text-green-600">{statusCounts.sent || 0}</div>
-          <div className="text-xs text-muted-foreground">Enviados</div>
-        </div>
-        <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 text-center">
-          <div className="text-2xl font-bold text-amber-600">{statusCounts.converted || 0}</div>
-          <div className="text-xs text-muted-foreground">Convertidos</div>
-        </div>
-      </div>
-
       {/* Prospects List */}
       <Card className="border-border">
         <CardContent className="p-4">
