@@ -146,14 +146,19 @@ export const AffiliateProspecting = ({ affiliateId, onSubHeaderChange }: Affilia
     );
   };
 
-  // Dynamic header based on active tab
+  // Dynamic header based on active tab - only show when parent doesn't handle it
   const renderHeader = () => {
+    // If parent handles the sub-header, don't render internal sub-header
+    if (onSubHeaderChange && activeTab !== 'cards') {
+      return null;
+    }
+
     const isSubTab = activeTab !== 'cards';
 
-    // Sub-tab header: just back button + title - positioned to replace parent header
+    // Sub-tab header: just back button + title (only for mobile or when no parent callback)
     if (isSubTab) {
       return (
-        <div className="flex items-center gap-3 -mt-2">
+        <div className="flex items-center gap-3 lg:hidden">
           <Button
             variant="ghost"
             size="icon"
@@ -237,11 +242,12 @@ export const AffiliateProspecting = ({ affiliateId, onSubHeaderChange }: Affilia
     );
   };
 
-  // Hide parent header when in sub-tab
+  // Hide parent header when in sub-tab (only for mobile when parent doesn't handle)
   const isSubTab = activeTab !== 'cards';
+  const needsMobileOffset = isSubTab && !onSubHeaderChange;
 
   return (
-    <div className={`space-y-6 ${isSubTab ? '-mt-12 lg:-mt-14' : ''}`}>
+    <div className={`space-y-6 ${needsMobileOffset ? '-mt-12 lg:-mt-0' : ''}`}>
       {/* Header */}
       {renderHeader()}
 

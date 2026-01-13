@@ -172,21 +172,20 @@ export const CreateProposalTab = ({ affiliateId }: CreateProposalTabProps) => {
       }
     } catch (error) {
       console.error('Erro ao gerar proposta:', error);
-      // Fallback proposal
+      // Fallback proposal - mensagem base simples
       setGeneratedProposal(`Olá, tudo bem?
 
-Me chamo ${affiliateName} e atualmente trabalho em uma empresa especializada em ajudar negócios locais a fortalecer a presença no Google e automatizar processos do dia a dia.
+Me chamo ${affiliateName} e trabalho ajudando negócios locais a ter presença no Google e automatizar agendamentos e atendimentos.
 
-Hoje ajudamos empresas como a ${answers.company_name} a:
+Hoje desenvolvemos:
 
-✅ Ter um site profissional que gera mais confiança
-✅ Aparecer melhor nas buscas do Google
-✅ Utilizar sistemas de agendamento automatizado
-✅ Melhorar a comunicação com clientes via WhatsApp
+✅ Sites profissionais
+✅ Sistema de agendamento automático  
+✅ Automação de WhatsApp, reduzindo atendimento manual
 
-Identificamos que ${answers.main_problem?.toLowerCase() || 'há oportunidades de melhoria'}.
+Entrei em contato porque acredito que essas soluções podem otimizar o dia a dia da ${answers.company_name} e aumentar a conversão de clientes.
 
-Posso te mostrar como podemos ajudar?`);
+Se fizer sentido, posso te explicar rapidamente como funciona.`);
     } finally {
       setIsGeneratingProposal(false);
     }

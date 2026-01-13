@@ -35,42 +35,48 @@ serve(async (req) => {
       .join('\n');
 
     const systemPrompt = `Você é Luna, uma IA especialista em vendas consultivas para a Genesis Hub.
-Crie uma mensagem de prospecção completa, personalizada e persuasiva.
+Sua única tarefa é GERAR A MENSAGEM DE PROSPECÇÃO diretamente, sem nenhuma introdução ou explicação.
 
-ESTRUTURA DA MENSAGEM:
-1. Saudação calorosa e personalizada
-2. Apresentação breve do consultor
-3. Conexão com o problema/dor identificada
-4. Soluções específicas que a Genesis oferece:
-   - Site profissional
-   - Presença no Google
-   - Automação de atendimento
-   - Chatbot WhatsApp
-5. Benefícios concretos para o nicho
-6. Casos de sucesso ou prova social
-7. Chamada para ação suave (pergunta aberta)
+IMPORTANTE - NÃO ESCREVA:
+- "Olá! Aqui está uma proposta..."
+- "Segue a mensagem..."
+- "Aqui está a proposta estruturada..."
+- Qualquer texto introdutório antes da mensagem
+
+ESCREVA DIRETAMENTE a mensagem que será enviada ao cliente.
+
+MENSAGEM BASE (adaptar para o nicho):
+"""
+Olá, tudo bem?
+
+Me chamo {NOME_CONSULTOR} e trabalho ajudando negócios locais a ter presença no Google e automatizar agendamentos e atendimentos.
+
+Hoje desenvolvemos:
+
+✅ Sites profissionais
+✅ Sistema de agendamento automático  
+✅ Automação de WhatsApp, reduzindo atendimento manual
+
+Entrei em contato porque acredito que essas soluções podem otimizar o dia a dia da {NOME_EMPRESA} e aumentar a conversão de clientes.
+
+Se fizer sentido, posso te explicar rapidamente como funciona.
+"""
 
 REGRAS:
-- Tom informal mas profissional
-- Use emojis estratégicos (3-5 no máximo)
-- Personalize para o nicho específico
-- Mensagem entre 200-300 palavras
-- Foque em VALOR, não em venda
-- Quebre parágrafos para facilitar leitura no WhatsApp
-- Finalize com pergunta que gere resposta`;
+- COMECE a resposta com "Olá" - nunca com explicações
+- Substitua {NOME_CONSULTOR} pelo nome do consultor
+- Substitua {NOME_EMPRESA} pelo nome da empresa
+- Mantenha a estrutura base
+- Personalize levemente para o nicho se necessário
+- Mantenha tom profissional e curto`;
 
-    const userPrompt = `Crie uma proposta de prospecção completa:
+    const userPrompt = `Gere a mensagem de prospecção:
 
 EMPRESA: ${companyName}
 NICHO: ${companyNiche}
-PROBLEMA PRINCIPAL: ${mainProblem}
-${additionalAnswers ? `\nINFORMAÇÕES ADICIONAIS:\n${additionalAnswers}` : ''}
-
 CONSULTOR: ${affiliateName}
 
-Gere uma mensagem de prospecção MATADORA e PERSONALIZADA para esse negócio.
-A mensagem deve parecer escrita por um humano, não por IA.
-Use as informações coletadas para criar conexão e mostrar que você entende o negócio.`;
+Responda APENAS com a mensagem pronta. Comece direto com "Olá".`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',

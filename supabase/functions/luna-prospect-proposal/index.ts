@@ -42,7 +42,15 @@ serve(async (req) => {
     const hasLowRating = businessRating && businessRating < 3.5;
 
     const systemPrompt = `Você é Luna, uma IA especialista em vendas consultivas para a Genesis Hub.
-Sua missão é adaptar a mensagem base de prospecção para cada nicho específico.
+Sua única tarefa é GERAR A MENSAGEM DE PROSPECÇÃO diretamente, sem nenhuma introdução ou explicação.
+
+IMPORTANTE - NÃO ESCREVA:
+- "Olá! Aqui está uma proposta..."
+- "Segue a mensagem..."
+- "Aqui está a proposta estruturada..."
+- Qualquer texto introdutório antes da mensagem
+
+ESCREVA DIRETAMENTE a mensagem que será enviada ao cliente.
 
 MENSAGEM BASE (adaptar para o nicho):
 """
@@ -56,34 +64,26 @@ Hoje desenvolvemos:
 ✅ Sistema de agendamento automático  
 ✅ Automação de WhatsApp, reduzindo atendimento manual
 
-Entrei em contato porque acredito que essas soluções podem otimizar o dia a dia do seu negócio e aumentar a conversão de clientes.
+Entrei em contato porque acredito que essas soluções podem otimizar o dia a dia da {NOME_EMPRESA} e aumentar a conversão de clientes.
 
 Se fizer sentido, posso te explicar rapidamente como funciona.
 """
 
-REGRAS DE ADAPTAÇÃO:
-- Mantenha a estrutura da mensagem base
-- Personalize os exemplos para o nicho específico
-- Use emojis ✅ para os benefícios
-- Mensagem curta e direta
-- Substitua {NOME_CONSULTOR} pelo nome real
-- Finalize com pergunta aberta
+REGRAS:
+- COMECE a resposta com "Olá" - nunca com explicações
+- Substitua {NOME_CONSULTOR} pelo nome do consultor
+- Substitua {NOME_EMPRESA} pelo nome da empresa
+- Mantenha a estrutura base
+- Personalize levemente para o nicho se necessário
+- Mantenha tom profissional e curto`;
 
-IMPORTANTE: 
-- Não invente serviços - mantenha: site, agendamento automático e automação WhatsApp
-- Adapte os exemplos para o contexto do nicho
-- Mantenha tom profissional mas acessível`;
-
-    const userPrompt = `Adapte a mensagem base para:
+    const userPrompt = `Gere a mensagem de prospecção:
 
 NEGÓCIO: ${businessName}
 NICHO: ${businessNiche}
 CONSULTOR: ${affiliateName}
-${businessAddress ? `LOCAL: ${businessAddress}` : ''}
-${hasWebsite ? `TEM SITE: Sim` : 'TEM SITE: Não'}
-${businessRating ? `AVALIAÇÃO: ${businessRating} estrelas` : ''}
 
-Gere a mensagem adaptada para este ${businessNiche}, mantendo a estrutura base mas personalizando os exemplos para o nicho.`;
+Responda APENAS com a mensagem pronta. Comece direto com "Olá".`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
