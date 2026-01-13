@@ -4,7 +4,8 @@ import {
   Settings, 
   RefreshCw,
   Zap,
-  Sparkles
+  Sparkles,
+  ArrowLeft
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,14 +14,20 @@ import { ProspectStats } from './ProspectStats';
 import { ProspectViewer } from './ProspectViewer';
 import { ProspectSettingsComponent } from './ProspectSettings';
 import { ProspectingCards } from './ProspectingCards';
+import { SearchClientsTab } from './tabs/SearchClientsTab';
+import { CreateProposalTab } from './tabs/CreateProposalTab';
+import { HistoryTab } from './tabs/HistoryTab';
 import { Prospect, ProspectStatus } from './types';
 
 interface AffiliateProspectingProps {
   affiliateId: string;
 }
 
+type ToolsTab = 'cards' | 'search' | 'proposal' | 'history';
+
 export const AffiliateProspecting = ({ affiliateId }: AffiliateProspectingProps) => {
-  const [activeTab, setActiveTab] = useState('tools');
+  const [activeMainTab, setActiveMainTab] = useState('tools');
+  const [activeToolsTab, setActiveToolsTab] = useState<ToolsTab>('cards');
   const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null);
   
   const {
@@ -47,6 +54,71 @@ export const AffiliateProspecting = ({ affiliateId }: AffiliateProspectingProps)
 
   const handleUpdateStatus = async (id: string, status: ProspectStatus) => {
     await updateProspect(id, { status } as Partial<Prospect>);
+  };
+
+  const getTabTitle = () => {
+    switch (activeToolsTab) {
+      case 'search': return 'Buscar Clientes';
+      case 'proposal': return 'Criar Proposta';
+      case 'history': return 'Histórico de Prospects';
+      default: return null;
+    }
+  };
+
+  const renderToolsContent = () => {
+    if (activeToolsTab === 'cards') {
+      return (
+        <ProspectingCards
+          affiliateId={affiliateId}
+          prospects={prospects}
+          activeTab={activeToolsTab}
+          onTabChange={setActiveToolsTab}
+        />
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        {/* Back Button and Title */}
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setActiveToolsTab('cards')}
+            className="shrink-0"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h2 className="text-xl font-bold text-foreground">{getTabTitle()}</h2>
+        </div>
+
+        {/* Tab Content */}
+        {activeToolsTab === 'search' && (
+          <SearchClientsTab
+            affiliateId={affiliateId}
+            onAddProspect={createProspect}
+          />
+        )}
+        
+        {activeToolsTab === 'proposal' && (
+          <CreateProposalTab affiliateId={affiliateId} />
+        )}
+        
+        {activeToolsTab === 'history' && (
+          <HistoryTab
+            prospects={prospects}
+            loading={loading}
+            analyzing={analyzing}
+            sending={sending}
+            onAnalyze={analyzeProspect}
+            onSend={sendProposal}
+            onView={setSelectedProspect}
+            onDelete={deleteProspect}
+            onUpdateStatus={handleUpdateStatus}
+          />
+        )}
+      </div>
+    );
   };
 
   return (
@@ -108,7 +180,7 @@ export const AffiliateProspecting = ({ affiliateId }: AffiliateProspectingProps)
       <ProspectStats stats={stats} />
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeMainTab} onValueChange={setActiveMainTab}>
         <TabsList className="grid w-full grid-cols-2 lg:w-auto lg:inline-grid">
           <TabsTrigger value="tools" className="gap-2">
             <Target className="w-4 h-4" />
@@ -121,19 +193,7 @@ export const AffiliateProspecting = ({ affiliateId }: AffiliateProspectingProps)
         </TabsList>
 
         <TabsContent value="tools" className="mt-6">
-          <ProspectingCards
-            affiliateId={affiliateId}
-            prospects={prospects}
-            loading={loading}
-            analyzing={analyzing}
-            sending={sending}
-            onCreateProspect={createProspect}
-            onAnalyze={analyzeProspect}
-            onSend={sendProposal}
-            onView={setSelectedProspect}
-            onDelete={deleteProspect}
-            onUpdateStatus={handleUpdateStatus}
-          />
+          {renderToolsContent()}
         </TabsContent>
 
         <TabsContent value="settings" className="mt-6">

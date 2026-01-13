@@ -9,9 +9,9 @@ import {
   Star, 
   Plus,
   ExternalLink,
-  Info,
   CheckCircle,
-  MapPinned
+  MapPinned,
+  AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -31,10 +32,9 @@ interface SearchResult {
   rating?: number;
   reviews_count?: number;
   category?: string;
-  opening_hours?: string;
 }
 
-interface SearchClientsPanelProps {
+interface SearchClientsTabProps {
   affiliateId: string;
   onAddProspect: (data: {
     company_name: string;
@@ -45,7 +45,6 @@ interface SearchClientsPanelProps {
     company_state?: string;
     niche?: string;
   }) => Promise<unknown>;
-  onClose: () => void;
 }
 
 const NICHES = [
@@ -116,7 +115,7 @@ const STATES = [
   { value: 'TO', label: 'Tocantins' },
 ];
 
-export const SearchClientsPanel = ({ affiliateId, onAddProspect, onClose }: SearchClientsPanelProps) => {
+export const SearchClientsTab = ({ affiliateId, onAddProspect }: SearchClientsTabProps) => {
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [niche, setNiche] = useState('');
@@ -156,7 +155,7 @@ export const SearchClientsPanel = ({ affiliateId, onAddProspect, onClose }: Sear
       }
     } catch (error) {
       console.error('Erro na busca:', error);
-      toast.error('Erro ao buscar estabelecimentos');
+      toast.error('Erro ao buscar estabelecimentos. Verifique a configuração do Firecrawl.');
     } finally {
       setSearching(false);
     }
@@ -189,213 +188,225 @@ export const SearchClientsPanel = ({ affiliateId, onAddProspect, onClose }: Sear
   return (
     <div className="space-y-6">
       {/* Search Form */}
-      <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Search className="w-5 h-5 text-blue-500" />
-          Buscar Estabelecimentos
-        </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="md:col-span-1">
-            <Label className="text-sm font-medium flex items-center gap-2 mb-2">
-              <MapPin className="w-4 h-4 text-muted-foreground" />
-              Cidade
-            </Label>
-            <Input
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              placeholder="Ex: São Paulo"
-              className="bg-background"
-            />
+      <Card className="border-2 border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-cyan-500/5">
+        <CardContent className="p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+              <Search className="w-5 h-5 text-white" />
+            </div>
+            Buscar Estabelecimentos Reais
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <Label className="text-sm font-medium flex items-center gap-2 mb-2">
+                <MapPin className="w-4 h-4 text-muted-foreground" />
+                Cidade
+              </Label>
+              <Input
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder="Ex: São Paulo"
+                className="bg-background border-border"
+              />
+            </div>
+            
+            <div>
+              <Label className="text-sm font-medium mb-2 block">Estado</Label>
+              <Select value={state} onValueChange={setState}>
+                <SelectTrigger className="bg-background border-border">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATES.map(s => (
+                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label className="text-sm font-medium flex items-center gap-2 mb-2">
+                <Building2 className="w-4 h-4 text-muted-foreground" />
+                Nicho
+              </Label>
+              <Select value={niche} onValueChange={setNiche}>
+                <SelectTrigger className="bg-background border-border">
+                  <SelectValue placeholder="Selecione o nicho" />
+                </SelectTrigger>
+                <SelectContent>
+                  {NICHES.map(n => (
+                    <SelectItem key={n} value={n}>{n}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-end">
+              <Button 
+                onClick={handleSearch} 
+                disabled={searching || !city || !state || !niche}
+                className="w-full gap-2 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shadow-lg"
+              >
+                {searching ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Buscando...
+                  </>
+                ) : (
+                  <>
+                    <Search className="w-4 h-4" />
+                    Buscar
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
           
-          <div className="md:col-span-1">
-            <Label className="text-sm font-medium mb-2 block">Estado</Label>
-            <Select value={state} onValueChange={setState}>
-              <SelectTrigger className="bg-background">
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent>
-                {STATES.map(s => (
-                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex items-center gap-2 mt-4 text-xs text-muted-foreground">
+            <AlertCircle className="w-3.5 h-3.5" />
+            <span>Dados reais extraídos da web via Firecrawl. Resultados podem variar.</span>
           </div>
-          
-          <div className="md:col-span-1">
-            <Label className="text-sm font-medium flex items-center gap-2 mb-2">
-              <Building2 className="w-4 h-4 text-muted-foreground" />
-              Nicho
-            </Label>
-            <Select value={niche} onValueChange={setNiche}>
-              <SelectTrigger className="bg-background">
-                <SelectValue placeholder="Selecione o nicho" />
-              </SelectTrigger>
-              <SelectContent>
-                {NICHES.map(n => (
-                  <SelectItem key={n} value={n}>{n}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="md:col-span-1 flex items-end">
-            <Button 
-              onClick={handleSearch} 
-              disabled={searching || !city || !state || !niche}
-              className="w-full gap-2 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
-            >
-              {searching ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Buscando...
-                </>
-              ) : (
-                <>
-                  <Search className="w-4 h-4" />
-                  Buscar
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Results */}
       {results.length > 0 && (
-        <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <MapPinned className="w-5 h-5 text-blue-500" />
-              Resultados ({results.length})
-            </h3>
-            <Badge variant="secondary" className="text-xs">
-              Dados reais via Web Scraping
-            </Badge>
-          </div>
-          
-          <ScrollArea className="h-[500px]">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {results.map((result, idx) => {
-                const isAdded = addedNames.has(result.name);
-                const isAdding = addingId === result.name;
-                
-                return (
-                  <div
-                    key={idx}
-                    className={`relative bg-background border rounded-xl p-4 transition-all duration-300 hover:shadow-lg ${
-                      isAdded 
-                        ? 'border-green-500/50 bg-green-500/5' 
-                        : 'border-border hover:border-blue-500/50'
-                    }`}
-                  >
-                    {isAdded && (
-                      <div className="absolute top-3 right-3">
-                        <Badge className="bg-green-500 text-white gap-1">
-                          <CheckCircle className="w-3 h-3" />
-                          Adicionado
-                        </Badge>
-                      </div>
-                    )}
-                    
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shrink-0">
-                        <Building2 className="w-6 h-6 text-white" />
-                      </div>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <MapPinned className="w-5 h-5 text-blue-500" />
+                Resultados ({results.length})
+              </h3>
+              <Badge variant="secondary" className="text-xs bg-blue-500/10 text-blue-600 border-blue-500/30">
+                Dados Reais
+              </Badge>
+            </div>
+            
+            <ScrollArea className="h-[500px] pr-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {results.map((result, idx) => {
+                  const isAdded = addedNames.has(result.name);
+                  const isAdding = addingId === result.name;
+                  
+                  return (
+                    <div
+                      key={idx}
+                      className={`relative bg-background border-2 rounded-xl p-4 transition-all duration-300 hover:shadow-lg ${
+                        isAdded 
+                          ? 'border-green-500/50 bg-green-500/5' 
+                          : 'border-border hover:border-blue-500/50'
+                      }`}
+                    >
+                      {isAdded && (
+                        <div className="absolute top-3 right-3">
+                          <Badge className="bg-green-500 text-white gap-1">
+                            <CheckCircle className="w-3 h-3" />
+                            Adicionado
+                          </Badge>
+                        </div>
+                      )}
                       
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-foreground truncate pr-24">
-                          {result.name}
-                        </h4>
-                        
-                        <p className="text-sm text-muted-foreground flex items-start gap-1 mt-1">
-                          <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                          <span className="line-clamp-2">{result.address}</span>
-                        </p>
-                        
-                        <div className="flex flex-wrap items-center gap-2 mt-3">
-                          {result.phone && (
-                            <Badge variant="outline" className="text-xs gap-1">
-                              <Phone className="w-3 h-3" />
-                              {result.phone}
-                            </Badge>
-                          )}
-                          
-                          {result.rating && (
-                            <Badge variant="secondary" className="text-xs gap-1 bg-yellow-500/10 text-yellow-600 border-yellow-500/30">
-                              <Star className="w-3 h-3 fill-current" />
-                              {result.rating}
-                              {result.reviews_count && ` (${result.reviews_count})`}
-                            </Badge>
-                          )}
-                          
-                          {result.website && (
-                            <a 
-                              href={result.website.startsWith('http') ? result.website : `https://${result.website}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-xs text-blue-500 hover:underline"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Globe className="w-3 h-3" />
-                              Site
-                              <ExternalLink className="w-2.5 h-2.5" />
-                            </a>
-                          )}
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shrink-0">
+                          <Building2 className="w-6 h-6 text-white" />
                         </div>
                         
-                        <div className="flex items-center gap-2 mt-4">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setSelectedResult(result)}
-                            className="gap-1"
-                          >
-                            <Info className="w-3.5 h-3.5" />
-                            Detalhes
-                          </Button>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-foreground truncate pr-24">
+                            {result.name}
+                          </h4>
                           
-                          {!isAdded && (
+                          <p className="text-sm text-muted-foreground flex items-start gap-1 mt-1">
+                            <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                            <span className="line-clamp-2">{result.address}</span>
+                          </p>
+                          
+                          <div className="flex flex-wrap items-center gap-2 mt-3">
+                            {result.phone && (
+                              <Badge variant="outline" className="text-xs gap-1 font-mono">
+                                <Phone className="w-3 h-3" />
+                                {result.phone}
+                              </Badge>
+                            )}
+                            
+                            {result.rating && (
+                              <Badge variant="secondary" className="text-xs gap-1 bg-yellow-500/10 text-yellow-600 border-yellow-500/30">
+                                <Star className="w-3 h-3 fill-current" />
+                                {result.rating}
+                                {result.reviews_count && ` (${result.reviews_count})`}
+                              </Badge>
+                            )}
+                            
+                            {result.website && (
+                              <a 
+                                href={result.website.startsWith('http') ? result.website : `https://${result.website}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-xs text-blue-500 hover:underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Globe className="w-3 h-3" />
+                                Site
+                                <ExternalLink className="w-2.5 h-2.5" />
+                              </a>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center gap-2 mt-4">
                             <Button
                               size="sm"
-                              onClick={() => handleAddToProspects(result)}
-                              disabled={isAdding}
-                              className="gap-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white"
+                              variant="outline"
+                              onClick={() => setSelectedResult(result)}
+                              className="gap-1"
                             >
-                              {isAdding ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              ) : (
-                                <Plus className="w-3.5 h-3.5" />
-                              )}
-                              Adicionar
+                              Ver Detalhes
                             </Button>
-                          )}
+                            
+                            {!isAdded && (
+                              <Button
+                                size="sm"
+                                onClick={() => handleAddToProspects(result)}
+                                disabled={isAdding}
+                                className="gap-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white"
+                              >
+                                {isAdding ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <Plus className="w-3.5 h-3.5" />
+                                )}
+                                Adicionar
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          </ScrollArea>
-        </div>
+                  );
+                })}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
       )}
 
       {/* Empty State */}
       {!searching && results.length === 0 && (
-        <div className="bg-card border border-dashed border-border rounded-xl p-12 text-center">
-          <div className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
-            <Search className="w-8 h-8 text-blue-500" />
-          </div>
-          <h3 className="text-lg font-semibold text-foreground mb-2">
-            Busque Estabelecimentos
-          </h3>
-          <p className="text-muted-foreground max-w-md mx-auto">
-            Digite a cidade, estado e nicho para encontrar estabelecimentos reais 
-            com telefone, endereço e mais informações.
-          </p>
-        </div>
+        <Card className="border-dashed">
+          <CardContent className="p-12 text-center">
+            <div className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
+              <Search className="w-8 h-8 text-blue-500" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              Busque Estabelecimentos Reais
+            </h3>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              Digite a cidade, estado e nicho para encontrar estabelecimentos reais 
+              com telefone, endereço e mais informações direto da web.
+            </p>
+          </CardContent>
+        </Card>
       )}
 
       {/* Detail Modal */}
@@ -426,7 +437,7 @@ export const SearchClientsPanel = ({ affiliateId, onAddProspect, onClose }: Sear
                     <Phone className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
                     <div>
                       <p className="text-sm font-medium">Telefone</p>
-                      <p className="text-sm text-muted-foreground">{selectedResult.phone}</p>
+                      <p className="text-sm text-muted-foreground font-mono">{selectedResult.phone}</p>
                     </div>
                   </div>
                 )}
@@ -473,7 +484,7 @@ export const SearchClientsPanel = ({ affiliateId, onAddProspect, onClose }: Sear
                 )}
               </div>
               
-              <div className="flex gap-2 pt-2">
+              <div className="flex gap-2 pt-4">
                 {!addedNames.has(selectedResult.name) && (
                   <Button
                     onClick={() => {
@@ -489,7 +500,7 @@ export const SearchClientsPanel = ({ affiliateId, onAddProspect, onClose }: Sear
                 <Button
                   variant="outline"
                   onClick={() => setSelectedResult(null)}
-                  className={addedNames.has(selectedResult.name) ? 'flex-1' : ''}
+                  className={addedNames.has(selectedResult.name) ? "flex-1" : ""}
                 >
                   Fechar
                 </Button>
