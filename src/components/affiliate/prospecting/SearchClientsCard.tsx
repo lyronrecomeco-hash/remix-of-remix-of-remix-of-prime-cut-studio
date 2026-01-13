@@ -1,12 +1,11 @@
-import { useState } from 'react';
-import { Search, MapPin, Building2, Loader2, Users, ExternalLink } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Search, MapPin, Building2, Loader2, Users, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -84,6 +83,8 @@ const STATES = [
   { value: 'TO', label: 'Tocantins' },
 ];
 
+const ITEMS_PER_PAGE = 10;
+
 export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsCardProps) => {
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
@@ -91,6 +92,14 @@ export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsC
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [addingId, setAddingId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Paginação
+  const totalPages = Math.ceil(results.length / ITEMS_PER_PAGE);
+  const paginatedResults = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return results.slice(start, start + ITEMS_PER_PAGE);
+  }, [results, currentPage]);
 
   const handleSearch = async () => {
     if (!city.trim() || !state || !niche) {
@@ -100,6 +109,7 @@ export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsC
 
     setSearching(true);
     setResults([]);
+    setCurrentPage(1);
 
     try {
       const { data, error } = await supabase.functions.invoke('search-businesses', {
@@ -238,65 +248,116 @@ export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsC
                 <Users className="w-4 h-4 text-primary" />
                 Resultados ({results.length})
               </h4>
+              <span className="text-xs text-muted-foreground">
+                Página {currentPage} de {totalPages}
+              </span>
             </div>
             
-            <ScrollArea className="h-[300px] pr-2">
-              <div className="space-y-2">
-                {results.map((result, idx) => (
-                  <div
-                    key={idx}
-                    className="bg-background/80 border border-border rounded-lg p-3 hover:border-primary/50 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <h5 className="font-medium text-foreground truncate">
-                          {result.name}
-                        </h5>
-                        <p className="text-xs text-muted-foreground truncate mt-0.5">
-                          📍 {result.address}
-                        </p>
-                        <div className="flex flex-wrap items-center gap-2 mt-2">
-                          {result.phone && (
-                            <Badge variant="outline" className="text-xs">
-                              📞 {result.phone}
-                            </Badge>
-                          )}
-                          {result.rating && (
-                            <Badge variant="secondary" className="text-xs">
-                              ⭐ {result.rating}
-                            </Badge>
-                          )}
-                          {result.website && (
-                            <a 
-                              href={result.website.startsWith('http') ? result.website : `https://${result.website}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs text-primary hover:underline flex items-center gap-1"
-                            >
-                              <ExternalLink className="w-3 h-3" />
-                              Site
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <Button
-                        size="sm"
-                        onClick={() => handleAddToProspects(result)}
-                        disabled={addingId === (result.name + result.address)}
-                        className="shrink-0"
-                      >
-                        {addingId === (result.name + result.address) ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          '+ Adicionar'
+            <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+              {paginatedResults.map((result, idx) => (
+                <div
+                  key={idx}
+                  className="bg-background/80 border border-border rounded-lg p-3 hover:border-primary/50 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <h5 className="font-medium text-foreground truncate">
+                        {result.name}
+                      </h5>
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">
+                        📍 {result.address}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        {result.phone && (
+                          <Badge variant="outline" className="text-xs">
+                            📞 {result.phone}
+                          </Badge>
                         )}
-                      </Button>
+                        {result.rating && (
+                          <Badge variant="secondary" className="text-xs">
+                            ⭐ {result.rating}
+                          </Badge>
+                        )}
+                        {result.website && (
+                          <a 
+                            href={result.website.startsWith('http') ? result.website : `https://${result.website}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-primary hover:underline flex items-center gap-1"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            Site
+                          </a>
+                        )}
+                      </div>
                     </div>
+                    
+                    <Button
+                      size="sm"
+                      onClick={() => handleAddToProspects(result)}
+                      disabled={addingId === (result.name + result.address)}
+                      className="shrink-0"
+                    >
+                      {addingId === (result.name + result.address) ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        '+ Adicionar'
+                      )}
+                    </Button>
                   </div>
-                ))}
+                </div>
+              ))}
+            </div>
+
+            {/* Paginação */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-4 pt-3 border-t">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum: number;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        className="w-8 h-8 p-0"
+                        onClick={() => setCurrentPage(pageNum)}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
               </div>
-            </ScrollArea>
+            )}
           </div>
         )}
       </CardContent>

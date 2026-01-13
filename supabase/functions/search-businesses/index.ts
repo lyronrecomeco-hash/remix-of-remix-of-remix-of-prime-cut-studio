@@ -61,7 +61,7 @@ serve(async (req) => {
         q: searchQuery,
         gl: 'br',
         hl: 'pt-br',
-        num: 20,
+        num: 100,
       }),
     });
 
