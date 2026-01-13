@@ -50,48 +50,74 @@ serve(async (req) => {
 
     // Busca otimizada para Google Maps/Places via Serper
     const searchQuery = `${niche} em ${city} ${state}`;
-    
-    const searchResponse = await fetch('https://google.serper.dev/places', {
-      method: 'POST',
-      headers: {
-        'X-API-KEY': apiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        q: searchQuery,
-        gl: 'br',
-        hl: 'pt-br',
-        num: 100,
-      }),
-    });
 
-    if (!searchResponse.ok) {
-      const errorText = await searchResponse.text();
-      console.error('Erro Serper:', searchResponse.status, errorText);
-      return new Response(
-        JSON.stringify({ success: false, error: `Erro na busca: ${searchResponse.status}` }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    const MAX_PER_PAGE = 100;
+    const MAX_PAGES = 5; // até 500 resultados (evita timeout/custo)
+
+    const allPlaces: any[] = [];
+
+    for (let page = 1; page <= MAX_PAGES; page++) {
+      const searchResponse = await fetch('https://google.serper.dev/places', {
+        method: 'POST',
+        headers: {
+          'X-API-KEY': apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          q: searchQuery,
+          gl: 'br',
+          hl: 'pt-br',
+          num: MAX_PER_PAGE,
+          page,
+        }),
+      });
+
+      if (!searchResponse.ok) {
+        const errorText = await searchResponse.text();
+        console.error('Erro Serper:', searchResponse.status, errorText);
+        return new Response(
+          JSON.stringify({ success: false, error: `Erro na busca: ${searchResponse.status}` }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const searchData = await searchResponse.json();
+      const places = searchData.places || [];
+      console.log(`Resultados Serper (page ${page}): ${places.length}`);
+
+      allPlaces.push(...places);
+
+      // Se vier menos que o máximo, acabou
+      if (places.length < MAX_PER_PAGE) break;
     }
 
-    const searchData = await searchResponse.json();
-    console.log(`Resultados Serper: ${searchData.places?.length || 0}`);
+    // Deduplicar e processar
+    const seen = new Set<string>();
+    const results: BusinessResult[] = allPlaces
+      .map((place: any) => {
+        const placeId = place.placeId || place.cid || '';
+        const name = place.title || place.name || '';
+        const address = place.address || `${city}, ${state}`;
+        const key = `${placeId}::${name}::${address}`.toLowerCase();
 
-    const places = searchData.places || [];
-    
-    // Processar resultados do Serper Places
-    const results: BusinessResult[] = places.map((place: any) => ({
-      name: place.title || place.name || '',
-      address: place.address || `${city}, ${state}`,
-      phone: extractPhone(place.phoneNumber || place.phone || ''),
-      website: extractDomain(place.website || ''),
-      rating: place.rating ? parseFloat(place.rating) : undefined,
-      reviews_count: place.reviewsCount || place.reviews || undefined,
-      category: place.category || niche,
-      place_id: place.placeId || place.cid || undefined,
-    })).filter((r: BusinessResult) => r.name && r.name.length >= 3);
+        if (!name || name.length < 3) return null;
+        if (seen.has(key)) return null;
+        seen.add(key);
 
-    console.log(`Resultados processados: ${results.length}`);
+        return {
+          name,
+          address,
+          phone: extractPhone(place.phoneNumber || place.phone || ''),
+          website: extractDomain(place.website || ''),
+          rating: place.rating ? parseFloat(place.rating) : undefined,
+          reviews_count: place.reviewsCount || place.reviews || undefined,
+          category: place.category || niche,
+          place_id: placeId || undefined,
+        } as BusinessResult;
+      })
+      .filter((r: BusinessResult | null): r is BusinessResult => !!r);
+
+    console.log(`Resultados processados (dedup): ${results.length}`);
 
     return new Response(
       JSON.stringify({ success: true, results }),
