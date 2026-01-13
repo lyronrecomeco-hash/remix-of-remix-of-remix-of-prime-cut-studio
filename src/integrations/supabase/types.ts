@@ -247,6 +247,265 @@ export type Database = {
           },
         ]
       }
+      affiliate_prospect_sends: {
+        Row: {
+          affiliate_id: string
+          channel: string
+          created_at: string
+          delivered_at: string | null
+          error_message: string | null
+          id: string
+          message_content: string | null
+          proposal_snapshot: Json | null
+          prospect_id: string
+          queued_at: string | null
+          read_at: string | null
+          replied_at: string | null
+          reply_content: string | null
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          affiliate_id: string
+          channel: string
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          message_content?: string | null
+          proposal_snapshot?: Json | null
+          prospect_id: string
+          queued_at?: string | null
+          read_at?: string | null
+          replied_at?: string | null
+          reply_content?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          affiliate_id?: string
+          channel?: string
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          message_content?: string | null
+          proposal_snapshot?: Json | null
+          prospect_id?: string
+          queued_at?: string | null
+          read_at?: string | null
+          replied_at?: string | null
+          reply_content?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_prospect_sends_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_prospect_sends_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_prospect_settings: {
+        Row: {
+          affiliate_id: string
+          auto_send_enabled: boolean | null
+          created_at: string
+          daily_limit: number | null
+          genesis_instance_id: string | null
+          id: string
+          include_analysis: boolean | null
+          include_proposal_link: boolean | null
+          last_sent_at: string | null
+          max_delay_seconds: number | null
+          message_template: string | null
+          messages_per_hour: number | null
+          min_delay_seconds: number | null
+          send_days: number[] | null
+          send_end_hour: number | null
+          send_start_hour: number | null
+          total_sent_month: number | null
+          total_sent_today: number | null
+          total_sent_week: number | null
+          updated_at: string
+          warmup_day: number | null
+          warmup_enabled: boolean | null
+          warmup_increment_percent: number | null
+        }
+        Insert: {
+          affiliate_id: string
+          auto_send_enabled?: boolean | null
+          created_at?: string
+          daily_limit?: number | null
+          genesis_instance_id?: string | null
+          id?: string
+          include_analysis?: boolean | null
+          include_proposal_link?: boolean | null
+          last_sent_at?: string | null
+          max_delay_seconds?: number | null
+          message_template?: string | null
+          messages_per_hour?: number | null
+          min_delay_seconds?: number | null
+          send_days?: number[] | null
+          send_end_hour?: number | null
+          send_start_hour?: number | null
+          total_sent_month?: number | null
+          total_sent_today?: number | null
+          total_sent_week?: number | null
+          updated_at?: string
+          warmup_day?: number | null
+          warmup_enabled?: boolean | null
+          warmup_increment_percent?: number | null
+        }
+        Update: {
+          affiliate_id?: string
+          auto_send_enabled?: boolean | null
+          created_at?: string
+          daily_limit?: number | null
+          genesis_instance_id?: string | null
+          id?: string
+          include_analysis?: boolean | null
+          include_proposal_link?: boolean | null
+          last_sent_at?: string | null
+          max_delay_seconds?: number | null
+          message_template?: string | null
+          messages_per_hour?: number | null
+          min_delay_seconds?: number | null
+          send_days?: number[] | null
+          send_end_hour?: number | null
+          send_start_hour?: number | null
+          total_sent_month?: number | null
+          total_sent_today?: number | null
+          total_sent_week?: number | null
+          updated_at?: string
+          warmup_day?: number | null
+          warmup_enabled?: boolean | null
+          warmup_increment_percent?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_prospect_settings_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: true
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_prospects: {
+        Row: {
+          affiliate_id: string
+          analysis_data: Json | null
+          analysis_score: number | null
+          auto_send_enabled: boolean | null
+          company_address: string | null
+          company_city: string | null
+          company_email: string | null
+          company_name: string
+          company_phone: string | null
+          company_state: string | null
+          company_website: string | null
+          created_at: string
+          generated_proposal: Json | null
+          id: string
+          message_sent: string | null
+          missing_features: string[] | null
+          niche: string | null
+          notes: string | null
+          pain_points: string[] | null
+          proposal_generated_at: string | null
+          reply_received: string | null
+          reply_received_at: string | null
+          scheduled_send_at: string | null
+          sent_at: string | null
+          sent_via: string | null
+          source: string | null
+          status: string
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          affiliate_id: string
+          analysis_data?: Json | null
+          analysis_score?: number | null
+          auto_send_enabled?: boolean | null
+          company_address?: string | null
+          company_city?: string | null
+          company_email?: string | null
+          company_name: string
+          company_phone?: string | null
+          company_state?: string | null
+          company_website?: string | null
+          created_at?: string
+          generated_proposal?: Json | null
+          id?: string
+          message_sent?: string | null
+          missing_features?: string[] | null
+          niche?: string | null
+          notes?: string | null
+          pain_points?: string[] | null
+          proposal_generated_at?: string | null
+          reply_received?: string | null
+          reply_received_at?: string | null
+          scheduled_send_at?: string | null
+          sent_at?: string | null
+          sent_via?: string | null
+          source?: string | null
+          status?: string
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          affiliate_id?: string
+          analysis_data?: Json | null
+          analysis_score?: number | null
+          auto_send_enabled?: boolean | null
+          company_address?: string | null
+          company_city?: string | null
+          company_email?: string | null
+          company_name?: string
+          company_phone?: string | null
+          company_state?: string | null
+          company_website?: string | null
+          created_at?: string
+          generated_proposal?: Json | null
+          id?: string
+          message_sent?: string | null
+          missing_features?: string[] | null
+          niche?: string | null
+          notes?: string | null
+          pain_points?: string[] | null
+          proposal_generated_at?: string | null
+          reply_received?: string | null
+          reply_received_at?: string | null
+          scheduled_send_at?: string | null
+          sent_at?: string | null
+          sent_via?: string | null
+          source?: string | null
+          status?: string
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_prospects_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       affiliate_referrals: {
         Row: {
           affiliate_id: string
