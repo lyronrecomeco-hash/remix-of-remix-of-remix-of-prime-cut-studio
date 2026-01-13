@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Target, 
   Settings, 
@@ -16,14 +16,16 @@ import { SearchClientsTab } from './tabs/SearchClientsTab';
 import { CreateProposalTab } from './tabs/CreateProposalTab';
 import { HistoryTab } from './tabs/HistoryTab';
 import { Prospect, ProspectStatus } from './types';
+import React from 'react';
 
 interface AffiliateProspectingProps {
   affiliateId: string;
+  onSubHeaderChange?: (header: React.ReactNode | null) => void;
 }
 
 type ToolsTab = 'cards' | 'search' | 'proposal' | 'history' | 'settings';
 
-export const AffiliateProspecting = ({ affiliateId }: AffiliateProspectingProps) => {
+export const AffiliateProspecting = ({ affiliateId, onSubHeaderChange }: AffiliateProspectingProps) => {
   const [activeTab, setActiveTab] = useState<ToolsTab>('cards');
   const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null);
   
@@ -49,10 +51,6 @@ export const AffiliateProspecting = ({ affiliateId }: AffiliateProspectingProps)
   const pendingCount = stats.pending;
   const readyToSendCount = stats.proposal_ready + stats.analyzed;
 
-  const handleUpdateStatus = async (id: string, status: ProspectStatus) => {
-    await updateProspect(id, { status } as Partial<Prospect>);
-  };
-
   const getTabTitle = () => {
     switch (activeTab) {
       case 'search': return 'Buscar Clientes';
@@ -61,6 +59,40 @@ export const AffiliateProspecting = ({ affiliateId }: AffiliateProspectingProps)
       case 'settings': return 'Configurações de Automação';
       default: return null;
     }
+  };
+
+  // Notify parent about sub-header when tab changes
+  useEffect(() => {
+    if (!onSubHeaderChange) return;
+
+    if (activeTab !== 'cards') {
+      const subHeader = (
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setActiveTab('cards')}
+            className="shrink-0 h-9 w-9"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h2 className="text-lg font-semibold text-foreground">
+            {getTabTitle()}
+          </h2>
+        </div>
+      );
+      onSubHeaderChange(subHeader);
+    } else {
+      onSubHeaderChange(null);
+    }
+
+    return () => {
+      onSubHeaderChange(null);
+    };
+  }, [activeTab, onSubHeaderChange]);
+
+  const handleUpdateStatus = async (id: string, status: ProspectStatus) => {
+    await updateProspect(id, { status } as Partial<Prospect>);
   };
 
   const renderContent = () => {

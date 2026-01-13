@@ -63,6 +63,7 @@ const AffiliatePanel = () => {
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [prospectingSubHeader, setProspectingSubHeader] = useState<React.ReactNode | null>(null);
 
   useEffect(() => {
     checkAffiliateAuth();
@@ -136,7 +137,7 @@ const AffiliatePanel = () => {
       case 'dashboard':
         return <AffiliateDashboard affiliate={affiliate} />;
       case 'prospecting':
-        return <AffiliateProspecting affiliateId={affiliate.id} />;
+        return <AffiliateProspecting affiliateId={affiliate.id} onSubHeaderChange={setProspectingSubHeader} />;
       case 'proposals':
         return <AffiliateProposals affiliateId={affiliate.id} />;
       case 'sales':
@@ -276,13 +277,17 @@ const AffiliatePanel = () => {
         {/* Desktop Header */}
         <div className="hidden lg:flex items-center justify-between px-8 py-4 border-b border-border bg-card/50">
           <div>
-            <h2 className="text-lg font-semibold text-foreground">
-              {navItems.find(n => n.id === activeTab)?.label || 
-               (activeTab === 'profile' ? 'Meu Perfil' : 
-                activeTab === 'settings' ? 'Configurações' : 'Dashboard')}
-            </h2>
+            {activeTab === 'prospecting' && prospectingSubHeader ? (
+              prospectingSubHeader
+            ) : (
+              <h2 className="text-lg font-semibold text-foreground">
+                {navItems.find(n => n.id === activeTab)?.label || 
+                 (activeTab === 'profile' ? 'Meu Perfil' : 
+                  activeTab === 'settings' ? 'Configurações' : 'Dashboard')}
+              </h2>
+            )}
           </div>
-          {affiliate && (
+          {!(activeTab === 'prospecting' && prospectingSubHeader) && affiliate && (
             <AffiliateProfileMenu
               affiliateName={affiliate.name}
               affiliateCode={affiliate.affiliate_code}
