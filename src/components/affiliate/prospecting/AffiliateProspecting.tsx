@@ -1,31 +1,28 @@
 import { useState } from 'react';
 import { 
   Target, 
-  Plus, 
-  Sparkles, 
-  Send, 
   Settings, 
   RefreshCw,
   Zap,
-  TrendingUp
+  Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useProspects } from './hooks/useProspects';
 import { ProspectStats } from './ProspectStats';
-import { ProspectList } from './ProspectList';
 import { ProspectViewer } from './ProspectViewer';
 import { ProspectSettingsComponent } from './ProspectSettings';
-import { AddProspectModal } from './AddProspectModal';
-import { Prospect } from './types';
+import { SearchClientsCard } from './SearchClientsCard';
+import { CreateProposalCard } from './CreateProposalCard';
+import { HistoryCard } from './HistoryCard';
+import { Prospect, ProspectStatus } from './types';
 
 interface AffiliateProspectingProps {
   affiliateId: string;
 }
 
 export const AffiliateProspecting = ({ affiliateId }: AffiliateProspectingProps) => {
-  const [activeTab, setActiveTab] = useState('prospects');
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [activeTab, setActiveTab] = useState('tools');
   const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null);
   
   const {
@@ -50,7 +47,7 @@ export const AffiliateProspecting = ({ affiliateId }: AffiliateProspectingProps)
   const pendingCount = stats.pending;
   const readyToSendCount = stats.proposal_ready + stats.analyzed;
 
-  const handleUpdateStatus = async (id: string, status: string) => {
+  const handleUpdateStatus = async (id: string, status: ProspectStatus) => {
     await updateProspect(id, { status } as Partial<Prospect>);
   };
 
@@ -60,11 +57,13 @@ export const AffiliateProspecting = ({ affiliateId }: AffiliateProspectingProps)
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Target className="w-7 h-7 text-primary" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg">
+              <Target className="w-5 h-5 text-primary-foreground" />
+            </div>
             ProspectAI Genesis
           </h1>
           <p className="text-muted-foreground mt-1">
-            Sistema inteligente de prospecção com análise automática e envio via WhatsApp
+            Sistema inteligente de prospecção com IA
           </p>
         </div>
         
@@ -104,14 +103,6 @@ export const AffiliateProspecting = ({ affiliateId }: AffiliateProspectingProps)
               Enviar Lote ({readyToSendCount})
             </Button>
           )}
-          
-          <Button
-            onClick={() => setShowAddModal(true)}
-            className="gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Adicionar
-          </Button>
         </div>
       </div>
 
@@ -121,9 +112,9 @@ export const AffiliateProspecting = ({ affiliateId }: AffiliateProspectingProps)
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2 lg:w-auto lg:inline-grid">
-          <TabsTrigger value="prospects" className="gap-2">
-            <TrendingUp className="w-4 h-4" />
-            Prospects
+          <TabsTrigger value="tools" className="gap-2">
+            <Target className="w-4 h-4" />
+            Ferramentas
           </TabsTrigger>
           <TabsTrigger value="settings" className="gap-2">
             <Settings className="w-4 h-4" />
@@ -131,21 +122,35 @@ export const AffiliateProspecting = ({ affiliateId }: AffiliateProspectingProps)
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="prospects" className="mt-4">
-          <ProspectList
-            prospects={prospects}
-            loading={loading}
-            analyzing={analyzing}
-            sending={sending}
-            onAnalyze={analyzeProspect}
-            onSend={sendProposal}
-            onView={setSelectedProspect}
-            onDelete={deleteProspect}
-            onUpdateStatus={handleUpdateStatus}
-          />
+        <TabsContent value="tools" className="mt-6">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            {/* Card Buscar Clientes */}
+            <SearchClientsCard 
+              affiliateId={affiliateId} 
+              onAddProspect={createProspect}
+            />
+            
+            {/* Card Criar Proposta */}
+            <CreateProposalCard affiliateId={affiliateId} />
+            
+            {/* Card Histórico - Full Width */}
+            <div className="xl:col-span-2">
+              <HistoryCard
+                prospects={prospects}
+                loading={loading}
+                analyzing={analyzing}
+                sending={sending}
+                onAnalyze={analyzeProspect}
+                onSend={sendProposal}
+                onView={setSelectedProspect}
+                onDelete={deleteProspect}
+                onUpdateStatus={handleUpdateStatus}
+              />
+            </div>
+          </div>
         </TabsContent>
 
-        <TabsContent value="settings" className="mt-4">
+        <TabsContent value="settings" className="mt-6">
           <ProspectSettingsComponent
             settings={settings}
             onSave={saveSettings}
@@ -154,13 +159,7 @@ export const AffiliateProspecting = ({ affiliateId }: AffiliateProspectingProps)
         </TabsContent>
       </Tabs>
 
-      {/* Modals */}
-      <AddProspectModal
-        open={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onSubmit={createProspect}
-      />
-
+      {/* Modal Viewer */}
       {selectedProspect && (
         <ProspectViewer
           prospect={selectedProspect}
