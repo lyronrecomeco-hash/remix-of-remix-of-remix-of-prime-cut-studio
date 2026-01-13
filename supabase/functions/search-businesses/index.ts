@@ -47,8 +47,8 @@ serve(async (req) => {
 
     console.log(`Buscando: ${niche} em ${city}, ${state}`);
 
-    // Usar Firecrawl Search para encontrar estabelecimentos
-    const searchQuery = `${niche} ${city} ${state} telefone endereço`;
+    // Query mais precisa para Google Maps/Places
+    const searchQuery = `"${niche}" "${city}" "${state}" site:google.com/maps OR contato telefone endereço`;
     
     console.log('Query de busca:', searchQuery);
 
@@ -60,11 +60,11 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         query: searchQuery,
-        limit: 20,
+        limit: 30,
         lang: 'pt-BR',
         country: 'BR',
         scrapeOptions: {
-          formats: ['markdown'],
+          formats: ['markdown', 'html'],
         },
       }),
     });
@@ -108,18 +108,30 @@ function processSearchResults(data: any[], city: string, state: string, niche: s
   const results: BusinessResult[] = [];
   const seenNames = new Set<string>();
   
-  // Padrões para extrair dados
+  // Padrões para extrair telefones brasileiros
   const phonePatterns = [
-    /\(?\d{2}\)?\s*\d{4,5}[-.\s]?\d{4}/g,
-    /\+55\s*\d{2}\s*\d{4,5}[-.\s]?\d{4}/g,
+    /(?:\+55\s?)?(?:\(?\d{2}\)?[\s.-]?)?\d{4,5}[\s.-]?\d{4}/g,
+    /\(\d{2}\)\s*\d{4,5}[-.\s]?\d{4}/g,
+    /\d{2}\s*\d{4,5}[-.\s]?\d{4}/g,
   ];
   
+  // URLs a pular (agregadores, não estabelecimentos reais)
   const urlsToSkip = [
-    'google.com', 'facebook.com', 'instagram.com', 'twitter.com', 
+    'google.com/maps', 'facebook.com', 'instagram.com', 'twitter.com', 
     'linkedin.com', 'youtube.com', 'tripadvisor.com', 'yelp.com',
     'foursquare.com', 'wikipedia.org', 'gov.br', 'reclameaqui.com',
     'mercadolivre.com', 'olx.com', 'amazon.com', 'ifood.com',
-    'guiamais.com', 'apontador.com', 'telelistas.net', 'encontraja.com.br'
+    'guiamais.com', 'apontador.com', 'telelistas.net', 'encontraja.com.br',
+    'hagah.com.br', 'cylex.com.br', 'listaonline.com.br', 'yelp.com.br',
+    'yellowpages', 'paginas-amarelas', 'kekanto', '123i.uol'
+  ];
+
+  // Palavras que indicam que não é um estabelecimento
+  const skipTitlePatterns = [
+    /^(Menu|Mais|Ver|Google|Maps|Buscar|Filtros|Avaliações|Fotos|Horário)/i,
+    /^(Como chegar|Rotas|Direções|Mapa)/i,
+    /^(Top|Melhores|Lista|Ranking|Guia)/i,
+    /\d+\s*(melhores|principais|top)/i,
   ];
 
   for (const item of data) {
@@ -128,8 +140,9 @@ function processSearchResults(data: any[], city: string, state: string, niche: s
       const title = item.title || '';
       const markdown = item.markdown || '';
       const description = item.description || '';
+      const html = item.html || '';
       
-      // Pular sites não relevantes
+      // Pular sites agregadores
       if (urlsToSkip.some(skip => url.toLowerCase().includes(skip))) {
         continue;
       }
@@ -139,56 +152,74 @@ function processSearchResults(data: any[], city: string, state: string, niche: s
         .split(' - ')[0]
         .split(' | ')[0]
         .split(' – ')[0]
+        .split(' :: ')[0]
         .trim();
       
       // Limpar nome
       name = name
         .replace(/^(Site|Página|Website|Home|Início|Blog|Contato|Sobre|Quem Somos)\s*[-|:]/gi, '')
-        .replace(/\s+(Oficial|Loja|Online|Store)$/gi, '')
+        .replace(/\s+(Oficial|Loja|Online|Store|BR|Brasil)$/gi, '')
+        .replace(/^\s*[-–|]\s*/, '')
         .trim();
       
       // Validar nome
       if (!name || name.length < 3 || name.length > 80) continue;
-      if (/^(Menu|Mais|Ver|Google|Maps|Buscar|Filtros|Avaliações|Fotos|Horário)/i.test(name)) continue;
+      if (skipTitlePatterns.some(pattern => pattern.test(name))) continue;
       
       // Evitar duplicatas
       const normalizedName = name.toLowerCase().trim();
       if (seenNames.has(normalizedName)) continue;
       
+      // Combinar todo o texto para análise
+      const fullText = `${title} ${markdown} ${description} ${html}`;
+      
       // Extrair telefone
       let phone: string | undefined;
-      const fullText = `${markdown} ${description}`;
-      
       for (const pattern of phonePatterns) {
         const matches = fullText.match(pattern);
         if (matches && matches.length > 0) {
-          phone = matches[0].trim();
-          break;
+          // Pegar o primeiro telefone válido (com pelo menos 10 dígitos)
+          for (const match of matches) {
+            const digits = match.replace(/\D/g, '');
+            if (digits.length >= 10 && digits.length <= 13) {
+              phone = match.trim();
+              break;
+            }
+          }
+          if (phone) break;
         }
       }
       
-      // Extrair endereço
+      // Extrair endereço com padrões brasileiros
       let address = '';
       const addressPatterns = [
-        /(?:Endereço|Localização|Address|Local)[:\s]*([^\n]+)/i,
-        /(?:R\.|Rua|Av\.|Avenida|Pç\.|Praça|Al\.|Alameda|Trav\.|Travessa)[^,\n]+[,][^,\n]+/i,
-        /[A-Z][^,\n]+,\s*\d+[^,\n]*/,
+        /(?:Endereço|Localização|Local|Address)[:\s]*([^<\n]{10,100})/i,
+        /((?:R\.|Rua|Av\.|Avenida|Pç\.|Praça|Al\.|Alameda|Trav\.|Travessa)\s+[^,<\n]+,?\s*(?:\d+)?[^<\n]{0,60})/i,
+        /(\d{5}[-]?\d{3})/i, // CEP
       ];
       
       for (const pattern of addressPatterns) {
         const match = fullText.match(pattern);
         if (match) {
-          address = (match[1] || match[0]).trim();
-          break;
+          const extracted = (match[1] || match[0]).trim();
+          if (extracted.length > 10 && extracted.length < 150) {
+            address = extracted;
+            break;
+          }
         }
       }
       
+      // Fallback para endereço genérico
       if (!address) {
         address = `${city}, ${state}`;
       }
       
       // Limpar endereço
-      address = address.substring(0, 150).trim();
+      address = address
+        .replace(/<[^>]+>/g, '') // Remove HTML tags
+        .replace(/\s+/g, ' ')
+        .trim()
+        .substring(0, 150);
       
       // Extrair website
       let website: string | undefined;
@@ -201,19 +232,39 @@ function processSearchResults(data: any[], city: string, state: string, niche: s
       
       // Extrair rating
       let rating: number | undefined;
-      const ratingMatch = fullText.match(/(\d[.,]\d)\s*(?:estrelas?|stars?|⭐|\/5)/i);
-      if (ratingMatch) {
-        const parsed = parseFloat(ratingMatch[1].replace(',', '.'));
-        if (parsed >= 1 && parsed <= 5) {
-          rating = parsed;
+      const ratingPatterns = [
+        /(\d[.,]\d)\s*(?:estrelas?|stars?|⭐|\/5)/i,
+        /nota[:\s]*(\d[.,]\d)/i,
+        /avaliação[:\s]*(\d[.,]\d)/i,
+      ];
+      
+      for (const pattern of ratingPatterns) {
+        const match = fullText.match(pattern);
+        if (match) {
+          const parsed = parseFloat(match[1].replace(',', '.'));
+          if (parsed >= 1 && parsed <= 5) {
+            rating = Math.round(parsed * 10) / 10;
+            break;
+          }
         }
       }
       
       // Extrair número de avaliações
       let reviews_count: number | undefined;
-      const reviewsMatch = fullText.match(/(\d+)\s*(?:avaliações?|reviews?|opiniões?)/i);
-      if (reviewsMatch) {
-        reviews_count = parseInt(reviewsMatch[1]);
+      const reviewsPatterns = [
+        /(\d+)\s*(?:avaliações?|reviews?|opiniões?|comentários?)/i,
+        /\((\d+)\)/,
+      ];
+      
+      for (const pattern of reviewsPatterns) {
+        const match = fullText.match(pattern);
+        if (match) {
+          const count = parseInt(match[1]);
+          if (count > 0 && count < 100000) {
+            reviews_count = count;
+            break;
+          }
+        }
       }
       
       seenNames.add(normalizedName);
@@ -228,7 +279,7 @@ function processSearchResults(data: any[], city: string, state: string, niche: s
         category: niche,
       });
       
-      // Limitar resultados
+      // Limitar a 15 resultados de qualidade
       if (results.length >= 15) break;
       
     } catch (e) {
@@ -237,10 +288,10 @@ function processSearchResults(data: any[], city: string, state: string, niche: s
     }
   }
   
-  // Ordenar por ter mais informações
+  // Ordenar por qualidade de dados (mais completos primeiro)
   results.sort((a, b) => {
-    const scoreA = (a.phone ? 3 : 0) + (a.website ? 2 : 0) + (a.rating ? 1 : 0);
-    const scoreB = (b.phone ? 3 : 0) + (b.website ? 2 : 0) + (b.rating ? 1 : 0);
+    const scoreA = (a.phone ? 4 : 0) + (a.website ? 2 : 0) + (a.rating ? 1 : 0) + (a.reviews_count ? 1 : 0);
+    const scoreB = (b.phone ? 4 : 0) + (b.website ? 2 : 0) + (b.rating ? 1 : 0) + (b.reviews_count ? 1 : 0);
     return scoreB - scoreA;
   });
   
