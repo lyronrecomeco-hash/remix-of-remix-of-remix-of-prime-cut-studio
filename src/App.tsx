@@ -52,6 +52,7 @@ const Instrucoes = lazy(() => import("./pages/Instrucoes"));
 const ScriptDownload = lazy(() => import("./pages/ScriptDownload"));
 const Sobre = lazy(() => import("./pages/Sobre"));
 const StatusPage = lazy(() => import("./pages/StatusPage"));
+const DocProspeccao = lazy(() => import("./pages/DocProspeccao"));
 
 // QueryClient com retry logic e cache otimizado
 const queryClient = new QueryClient({
@@ -241,6 +242,7 @@ const AppContent = () => {
             <Route path="/script" element={<ScriptDownload />} />
             <Route path="/sobre" element={<Sobre />} />
             <Route path="/status" element={<StatusPage />} />
+            <Route path="/doc-prospeccao" element={<DocProspeccao />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
