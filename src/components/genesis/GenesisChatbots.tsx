@@ -35,6 +35,7 @@ import { cn } from '@/lib/utils';
 import { useGenesisAuth } from '@/contexts/GenesisAuthContext';
 import { ChatbotTemplates } from './ChatbotTemplates';
 import { ChatbotSessionViewer } from './ChatbotSessionViewer';
+import { AIAssistant } from './professional/ai/AIAssistant';
 import {
   ChatbotFormState,
   DEFAULT_FORM_STATE,
@@ -76,7 +77,7 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'chatbots' | 'sessions'>('chatbots');
+  const [activeTab, setActiveTab] = useState<'chatbots' | 'sessions' | 'assistant'>('chatbots');
   const [editingChatbot, setEditingChatbot] = useState<Chatbot | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [previewTab, setPreviewTab] = useState<'config' | 'preview'>('config');
@@ -266,12 +267,15 @@ export function GenesisChatbots({ instances }: GenesisChatbotsProps) {
             <TabsList>
               <TabsTrigger value="chatbots" className="gap-2"><Bot className="w-4 h-4" />Chatbots</TabsTrigger>
               <TabsTrigger value="sessions" className="gap-2"><Activity className="w-4 h-4" />Sessões</TabsTrigger>
+              <TabsTrigger value="assistant" className="gap-2"><Sparkles className="w-4 h-4" />Assistente IA</TabsTrigger>
             </TabsList>
           </Tabs>
         </CardHeader>
       </Card>
 
       {activeTab === 'sessions' && <ChatbotSessionViewer />}
+
+      {activeTab === 'assistant' && <AIAssistant />}
 
       {activeTab === 'chatbots' && chatbots.length === 0 && (
         <Card>

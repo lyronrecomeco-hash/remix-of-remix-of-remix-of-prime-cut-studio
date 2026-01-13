@@ -1,6 +1,4 @@
 // Genesis Professional Features - Organized Exports
-// Main Settings Component
-export { GenesisProfessionalSettings } from './GenesisProfessionalSettings';
 
 // Core Features
 export { SecuritySettings } from './SecuritySettings';
@@ -20,3 +18,6 @@ export { NPSSurveys } from './customer/NPSSurveys';
 export { ContactAssignments } from './customer/ContactAssignments';
 export { ClosureReasons } from './customer/ClosureReasons';
 export { QuickRepliesManager } from './customer/QuickRepliesManager';
+
+// Reports
+export { SyntheticReport, AnalyticReport } from './reports';
