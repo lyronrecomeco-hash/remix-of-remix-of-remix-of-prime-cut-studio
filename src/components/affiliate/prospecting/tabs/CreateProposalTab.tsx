@@ -3,23 +3,22 @@ import {
   Sparkles, 
   ChevronRight, 
   ChevronLeft,
-  CheckCircle,
   Loader2,
   Copy,
-  Send,
   Check,
   MessageSquare,
   User,
   Building2,
   Target,
-  Lightbulb
+  Lightbulb,
+  RefreshCw
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -213,16 +212,17 @@ Posso te mostrar como podemos ajudar?`);
     return (
       <Card className="border border-primary/20 overflow-hidden">
         <div className="bg-primary/10 p-6 border-b border-primary/20">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-primary" />
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center">
+              <Sparkles className="w-7 h-7 text-primary" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-foreground">
+              <h3 className="text-xl font-bold text-foreground">
                 Proposta Gerada com Sucesso!
               </h3>
-              <p className="text-sm text-muted-foreground">
-                Para: {answers.company_name}
+              <p className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+                <Building2 className="w-4 h-4" />
+                {answers.company_name}
               </p>
             </div>
           </div>
@@ -230,27 +230,34 @@ Posso te mostrar como podemos ajudar?`);
 
         <CardContent className="p-6 space-y-4">
           {isGeneratingProposal ? (
-            <div className="text-center py-12">
-              <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
-              <p className="text-muted-foreground">Luna está criando sua proposta personalizada...</p>
+            <div className="text-center py-16">
+              <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
+                <Loader2 className="w-10 h-10 text-primary animate-spin" />
+              </div>
+              <h4 className="text-lg font-semibold text-foreground mb-2">
+                Luna está criando sua proposta...
+              </h4>
+              <p className="text-muted-foreground">
+                Analisando dados e personalizando para {answers.company_niche}
+              </p>
             </div>
           ) : (
             <>
-              <div className="flex items-center justify-between mb-2">
-                <Label className="flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-primary" />
+              <div className="flex items-center justify-between">
+                <Badge variant="outline" className="gap-2 text-primary border-primary/30">
+                  <MessageSquare className="w-3.5 h-3.5" />
                   Mensagem de Prospecção
-                </Label>
+                </Badge>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={copyToClipboard}
-                  className="gap-1"
+                  className="gap-2"
                 >
                   {copied ? (
-                    <Check className="w-3.5 h-3.5 text-green-500" />
+                    <Check className="w-4 h-4 text-green-500" />
                   ) : (
-                    <Copy className="w-3.5 h-3.5" />
+                    <Copy className="w-4 h-4" />
                   )}
                   {copied ? 'Copiado!' : 'Copiar'}
                 </Button>
@@ -259,7 +266,7 @@ Posso te mostrar como podemos ajudar?`);
               <Textarea
                 value={generatedProposal}
                 onChange={(e) => setGeneratedProposal(e.target.value)}
-                className="min-h-[300px] bg-muted/30 border-border resize-none text-sm"
+                className="min-h-[350px] bg-muted/30 border-border resize-none text-sm leading-relaxed"
               />
 
               <div className="flex gap-3 pt-4">
@@ -275,7 +282,7 @@ Posso te mostrar como podemos ajudar?`);
                   onClick={resetForm}
                   className="gap-2"
                 >
-                  <Sparkles className="w-4 h-4" />
+                  <RefreshCw className="w-4 h-4" />
                   Nova Proposta
                 </Button>
               </div>
@@ -290,33 +297,37 @@ Posso te mostrar como podemos ajudar?`);
   return (
     <div className="space-y-6">
       {/* Progress Header */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">
-            Pergunta {currentStep + 1} de {allQuestions.length}
-          </span>
-          <span className="text-primary font-medium">
-            {Math.round(progress)}%
-          </span>
-        </div>
-        <Progress value={progress} className="h-2" />
-      </div>
+      <Card className="border-border">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between text-sm mb-2">
+            <span className="text-muted-foreground">
+              Pergunta {currentStep + 1} de {allQuestions.length}
+            </span>
+            <Badge variant="outline" className="text-primary border-primary/30">
+              {Math.round(progress)}% completo
+            </Badge>
+          </div>
+          <Progress value={progress} className="h-2" />
+        </CardContent>
+      </Card>
 
       {/* Question Card */}
       <Card className="border border-primary/20 overflow-hidden">
         <div className="bg-primary/10 p-4 border-b border-primary/20">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
+            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
               {currentQuestion?.icon}
             </div>
             <div className="flex-1">
               {currentStep < FIXED_QUESTIONS.length ? (
-                <span className="text-xs text-muted-foreground">Pergunta Base</span>
+                <Badge variant="secondary" className="text-xs">
+                  Pergunta Base {currentStep + 1}/{FIXED_QUESTIONS.length}
+                </Badge>
               ) : (
-                <span className="text-xs text-primary flex items-center gap-1">
+                <Badge className="text-xs gap-1 bg-primary/20 text-primary border-primary/30">
                   <Sparkles className="w-3 h-3" />
-                  Pergunta da Luna AI
-                </span>
+                  Pergunta Luna AI
+                </Badge>
               )}
             </div>
           </div>
@@ -324,17 +335,21 @@ Posso te mostrar como podemos ajudar?`);
 
         <CardContent className="p-6 space-y-6">
           {isLoadingAI ? (
-            <div className="text-center py-8">
-              <Loader2 className="w-10 h-10 text-primary animate-spin mx-auto mb-4" />
-              <p className="text-foreground font-medium">Luna está pensando...</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Criando perguntas personalizadas para sua proposta
+            <div className="text-center py-12">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <Loader2 className="w-8 h-8 text-primary animate-spin" />
+              </div>
+              <h4 className="text-lg font-semibold text-foreground mb-2">
+                Luna está pensando...
+              </h4>
+              <p className="text-sm text-muted-foreground">
+                Criando perguntas personalizadas para {answers.company_niche}
               </p>
             </div>
           ) : currentQuestion ? (
             <>
               <div>
-                <h3 className="text-xl font-semibold text-foreground mb-2">
+                <h3 className="text-xl font-bold text-foreground mb-2">
                   {currentQuestion.question}
                 </h3>
                 {currentQuestion.helperText && (
@@ -352,7 +367,7 @@ Posso te mostrar como podemos ajudar?`);
                     [currentQuestion.id]: e.target.value
                   }))}
                   placeholder={currentQuestion.placeholder}
-                  className="min-h-[120px] bg-muted/30 border-border resize-none"
+                  className="min-h-[140px] bg-muted/30 border-border resize-none text-base"
                 />
               ) : (
                 <Input
@@ -362,14 +377,14 @@ Posso te mostrar como podemos ajudar?`);
                     [currentQuestion.id]: e.target.value
                   }))}
                   placeholder={currentQuestion.placeholder}
-                  className="bg-muted/30 border-border text-lg py-6"
+                  className="bg-muted/30 border-border text-lg h-14"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') handleNext();
                   }}
                 />
               )}
 
-              <div className="flex items-center justify-between pt-4">
+              <div className="flex items-center justify-between pt-4 border-t border-border">
                 <Button
                   variant="ghost"
                   onClick={handleBack}
@@ -383,7 +398,7 @@ Posso te mostrar como podemos ajudar?`);
                 <Button
                   onClick={handleNext}
                   disabled={!answers[currentQuestion.id]?.trim()}
-                  className="gap-2 bg-primary hover:bg-primary/90"
+                  className="gap-2 bg-primary hover:bg-primary/90 min-w-[160px]"
                 >
                   {isLastQuestion ? (
                     <>
@@ -404,10 +419,23 @@ Posso te mostrar como podemos ajudar?`);
       </Card>
 
       {/* Info Footer */}
-      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-        <User className="w-4 h-4" />
-        <span>Proposta será gerada em nome de: <strong className="text-foreground">{affiliateName || 'Carregando...'}</strong></span>
-      </div>
+      <Card className="border-border bg-muted/30">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3 text-sm">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <User className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-muted-foreground">
+                Proposta será gerada em nome de:
+              </p>
+              <p className="font-semibold text-foreground">
+                {affiliateName || 'Carregando...'}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
