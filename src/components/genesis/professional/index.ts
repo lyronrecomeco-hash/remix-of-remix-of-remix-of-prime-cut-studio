@@ -18,13 +18,13 @@ export { ContactAssignments } from './customer/ContactAssignments';
 export { ClosureReasons } from './customer/ClosureReasons';
 export { QuickRepliesManager } from './customer/QuickRepliesManager';
 
-// Marketing & Campaigns - placeholder exports
+// Marketing & Campaigns - Placeholder components (need schema alignment)
 export const WidgetBuilder = () => null;
 export const WidgetLeads = () => null;
 export const BroadcastCampaigns = () => null;
 export const AgentScheduler = () => null;
 
-// Reports & Analytics - placeholder exports
+// Reports & Analytics - Placeholder components (need schema alignment)
 export const ReportsCenter = () => null;
 export const SyntheticReport = () => null;
 export const AnalyticReport = () => null;
