@@ -63,7 +63,9 @@ import { CaktoHub } from '@/components/genesis/CaktoHub';
 import { CactusIcon } from '@/components/genesis/icons';
 import { GenesisButtons } from '@/components/genesis/buttons';
 import { MessagingFeatures } from '@/components/genesis/messaging';
-import { GenesisProfessionalSettings } from '@/components/genesis/professional/GenesisProfessionalSettings';
+import { SecuritySettings, BrandingSettings, AIAssistant } from '@/components/genesis/professional';
+import { NPSSurveys, QuickRepliesManager, ClosureReasons } from '@/components/genesis/professional';
+import { SyntheticReport, AnalyticReport } from '@/components/genesis/professional/reports';
 
 // Dashboard component with real data - Premium Design
 const GenesisDashboard = ({ onNavigate }: { onNavigate: (tab: string) => void }) => {
@@ -506,7 +508,6 @@ export default function GenesisPanel() {
     { id: 'chatbots', label: 'Chatbots', icon: Bot },
     { id: 'campaigns', label: 'Campanhas', icon: Send },
     { id: 'messaging', label: 'Mensagens', icon: MessageSquare },
-    { id: 'professional', label: 'Profissional', icon: Crown },
     // { id: 'buttons', label: 'Botões', icon: MousePointerClick }, // Temporariamente desativado - botões nativos não funcionam no mobile
     { id: 'metrics', label: 'Métricas', icon: Activity },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
@@ -546,26 +547,45 @@ export default function GenesisPanel() {
         return <GenesisButtons />;
       case 'messaging':
         return <MessagingFeatures />;
-      case 'professional':
-        return <GenesisProfessionalSettings />;
       case 'cakto':
         return <CaktoHub onFocusModeChange={setIsCaktoFocusMode} />;
       case 'metrics':
         return (
           <div className="space-y-6">
             <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 max-w-xs">
+              <TabsList className="grid w-full grid-cols-5 max-w-2xl">
                 <TabsTrigger value="overview" className="gap-1">
                   <Activity className="w-4 h-4" />
-                  Visão Geral
+                  <span className="hidden sm:inline">Visão Geral</span>
+                </TabsTrigger>
+                <TabsTrigger value="synthetic" className="gap-1">
+                  <BarChart3 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Sintético</span>
+                </TabsTrigger>
+                <TabsTrigger value="analytic" className="gap-1">
+                  <BarChart3 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Analítico</span>
+                </TabsTrigger>
+                <TabsTrigger value="nps" className="gap-1">
+                  <Gift className="w-4 h-4" />
+                  <span className="hidden sm:inline">NPS</span>
                 </TabsTrigger>
                 <TabsTrigger value="rules" className="gap-1">
                   <Bell className="w-4 h-4" />
-                  Regras
+                  <span className="hidden sm:inline">Regras</span>
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="overview" className="mt-6">
                 <GenesisMetricsDashboard />
+              </TabsContent>
+              <TabsContent value="synthetic" className="mt-6">
+                <SyntheticReport />
+              </TabsContent>
+              <TabsContent value="analytic" className="mt-6">
+                <AnalyticReport />
+              </TabsContent>
+              <TabsContent value="nps" className="mt-6">
+                <NPSSurveys />
               </TabsContent>
               <TabsContent value="rules" className="mt-6">
                 <GenesisAlertRules />
@@ -586,21 +606,35 @@ export default function GenesisPanel() {
               <Settings className="w-6 h-6 text-primary" />
               <h2 className="text-2xl font-bold">Configurações</h2>
             </div>
-            <Tabs defaultValue="webhooks" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 max-w-md">
+            <Tabs defaultValue="security" className="w-full">
+              <TabsList className="grid w-full grid-cols-5 max-w-2xl">
+                <TabsTrigger value="security" className="gap-1">
+                  <AlertTriangle className="w-4 h-4" />
+                  <span className="hidden sm:inline">Segurança</span>
+                </TabsTrigger>
+                <TabsTrigger value="branding" className="gap-1">
+                  <Sparkles className="w-4 h-4" />
+                  <span className="hidden sm:inline">Marca</span>
+                </TabsTrigger>
                 <TabsTrigger value="webhooks" className="gap-1">
                   <Webhook className="w-4 h-4" />
-                  Webhooks
+                  <span className="hidden sm:inline">Webhooks</span>
                 </TabsTrigger>
                 <TabsTrigger value="usage" className="gap-1">
                   <CreditCard className="w-4 h-4" />
-                  Consumo
+                  <span className="hidden sm:inline">Consumo</span>
                 </TabsTrigger>
                 <TabsTrigger value="debug" className="gap-1">
                   <Bug className="w-4 h-4" />
-                  Debug
+                  <span className="hidden sm:inline">Debug</span>
                 </TabsTrigger>
               </TabsList>
+              <TabsContent value="security" className="mt-6">
+                <SecuritySettings />
+              </TabsContent>
+              <TabsContent value="branding" className="mt-6">
+                <BrandingSettings />
+              </TabsContent>
               <TabsContent value="webhooks" className="mt-6">
                 {genesisUser && <GenesisWebhooks userId={genesisUser.id} />}
               </TabsContent>
