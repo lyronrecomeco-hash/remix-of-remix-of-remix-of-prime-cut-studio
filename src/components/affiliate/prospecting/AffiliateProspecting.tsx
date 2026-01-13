@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useProspects } from './hooks/useProspects';
-import { ProspectStats } from './ProspectStats';
 import { ProspectViewer } from './ProspectViewer';
 import { ProspectSettingsComponent } from './ProspectSettings';
 import { ProspectingCards } from './ProspectingCards';
@@ -194,9 +193,6 @@ export const AffiliateProspecting = ({ affiliateId }: AffiliateProspectingProps)
           )}
         </div>
       </div>
-
-      {/* Stats */}
-      <ProspectStats stats={stats} />
 
       {/* Content */}
       {renderContent()}
