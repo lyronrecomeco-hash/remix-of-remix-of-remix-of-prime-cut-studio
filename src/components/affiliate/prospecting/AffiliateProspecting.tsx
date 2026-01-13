@@ -12,9 +12,7 @@ import { useProspects } from './hooks/useProspects';
 import { ProspectStats } from './ProspectStats';
 import { ProspectViewer } from './ProspectViewer';
 import { ProspectSettingsComponent } from './ProspectSettings';
-import { SearchClientsCard } from './SearchClientsCard';
-import { CreateProposalCard } from './CreateProposalCard';
-import { HistoryCard } from './HistoryCard';
+import { ProspectingCards } from './ProspectingCards';
 import { Prospect, ProspectStatus } from './types';
 
 interface AffiliateProspectingProps {
@@ -56,9 +54,9 @@ export const AffiliateProspecting = ({ affiliateId }: AffiliateProspectingProps)
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg">
-              <Target className="w-5 h-5 text-primary-foreground" />
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg">
+              <Target className="w-6 h-6 text-primary-foreground" />
             </div>
             ProspectAI Genesis
           </h1>
@@ -123,31 +121,19 @@ export const AffiliateProspecting = ({ affiliateId }: AffiliateProspectingProps)
         </TabsList>
 
         <TabsContent value="tools" className="mt-6">
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            {/* Card Buscar Clientes */}
-            <SearchClientsCard 
-              affiliateId={affiliateId} 
-              onAddProspect={createProspect}
-            />
-            
-            {/* Card Criar Proposta */}
-            <CreateProposalCard affiliateId={affiliateId} />
-            
-            {/* Card Histórico - Full Width */}
-            <div className="xl:col-span-2">
-              <HistoryCard
-                prospects={prospects}
-                loading={loading}
-                analyzing={analyzing}
-                sending={sending}
-                onAnalyze={analyzeProspect}
-                onSend={sendProposal}
-                onView={setSelectedProspect}
-                onDelete={deleteProspect}
-                onUpdateStatus={handleUpdateStatus}
-              />
-            </div>
-          </div>
+          <ProspectingCards
+            affiliateId={affiliateId}
+            prospects={prospects}
+            loading={loading}
+            analyzing={analyzing}
+            sending={sending}
+            onCreateProspect={createProspect}
+            onAnalyze={analyzeProspect}
+            onSend={sendProposal}
+            onView={setSelectedProspect}
+            onDelete={deleteProspect}
+            onUpdateStatus={handleUpdateStatus}
+          />
         </TabsContent>
 
         <TabsContent value="settings" className="mt-6">
