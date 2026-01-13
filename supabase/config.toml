@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.chatbot-luna-builder]
 verify_jwt = false
+
+[functions.prospect-analyzer]
+verify_jwt = false
+
+[functions.prospect-sender]
+verify_jwt = false
