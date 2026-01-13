@@ -16,7 +16,10 @@ interface SearchResult {
   phone?: string;
   website?: string;
   rating?: number;
+  reviews_count?: number;
   category?: string;
+  opening_hours?: string;
+  place_id?: string;
 }
 
 interface SearchClientsCardProps {
@@ -99,9 +102,8 @@ export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsC
     setResults([]);
 
     try {
-      const { data, error } = await supabase.functions.invoke('prospect-analyzer', {
+      const { data, error } = await supabase.functions.invoke('search-businesses', {
         body: {
-          action: 'search_businesses',
           city: city.trim(),
           state,
           niche,
