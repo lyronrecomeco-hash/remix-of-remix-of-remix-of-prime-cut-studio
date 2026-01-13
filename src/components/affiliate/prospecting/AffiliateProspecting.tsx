@@ -117,35 +117,40 @@ export const AffiliateProspecting = ({ affiliateId }: AffiliateProspectingProps)
   // Dynamic header based on active tab
   const renderHeader = () => {
     const isSubTab = activeTab !== 'cards';
-    const title = getTabTitle() || 'ProspectAI Genesis';
-    const subtitle = isSubTab ? null : 'Sistema inteligente de prospecção com IA';
 
+    // Sub-tab header: just back button + title
+    if (isSubTab) {
+      return (
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setActiveTab('cards')}
+            className="shrink-0 h-10 w-10"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h1 className="text-xl font-bold text-foreground">
+            {getTabTitle()}
+          </h1>
+        </div>
+      );
+    }
+
+    // Main tab header: full header with buttons
     return (
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          {isSubTab ? (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setActiveTab('cards')}
-              className="shrink-0 h-10 w-10"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-          ) : (
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg">
-              <Target className="w-5 h-5 text-primary-foreground" />
-            </div>
-          )}
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg">
+            <Target className="w-5 h-5 text-primary-foreground" />
+          </div>
           <div>
             <h1 className="text-xl font-bold text-foreground">
-              {title}
+              ProspectAI Genesis
             </h1>
-            {subtitle && (
-              <p className="text-sm text-muted-foreground">
-                {subtitle}
-              </p>
-            )}
+            <p className="text-sm text-muted-foreground">
+              Sistema inteligente de prospecção com IA
+            </p>
           </div>
         </div>
         
