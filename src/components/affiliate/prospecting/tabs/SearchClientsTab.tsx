@@ -238,18 +238,17 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
       // Fallback to base template
       const baseMessage = `Olá, tudo bem?
 
-Me chamo ${currentAffiliateName || '{SEU NOME}'} e atualmente trabalho em uma empresa especializada em ajudar negócios locais a fortalecer a presença no Google e automatizar processos do dia a dia.
+Me chamo ${currentAffiliateName || 'Consultor Genesis'} e trabalho ajudando negócios locais a ter presença no Google e automatizar agendamentos e atendimentos.
 
-Hoje ajudamos empresas como a ${result.name} a:
+Hoje desenvolvemos:
 
-✅ Ter um site profissional que gera mais confiança
-✅ Aparecer melhor nas buscas do Google
-✅ Utilizar sistemas de agendamento automatizado, reduzindo atendimentos manuais
-✅ Melhorar a comunicação com clientes via WhatsApp
+✅ Sites profissionais
+✅ Sistema de agendamento automático
+✅ Automação de WhatsApp, reduzindo atendimento manual
 
-Entrei em contato porque identifiquei que seu negócio tem potencial para aumentar a visibilidade online e otimizar o atendimento, sem complicação técnica.
+Entrei em contato porque acredito que essas soluções podem otimizar o dia a dia do seu negócio e aumentar a conversão de clientes.
 
-Se fizer sentido, posso te explicar rapidamente como isso funciona.`;
+Se fizer sentido, posso te explicar rapidamente como funciona.`;
       setGeneratedMessage(baseMessage);
     } finally {
       setGeneratingProposal(false);

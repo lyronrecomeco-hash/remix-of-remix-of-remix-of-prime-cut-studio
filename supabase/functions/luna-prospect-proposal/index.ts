@@ -42,41 +42,48 @@ serve(async (req) => {
     const hasLowRating = businessRating && businessRating < 3.5;
 
     const systemPrompt = `Você é Luna, uma IA especialista em vendas consultivas para a Genesis Hub.
-Sua missão é criar mensagens de prospecção personalizadas, naturais e persuasivas.
+Sua missão é adaptar a mensagem base de prospecção para cada nicho específico.
 
-REGRAS:
-- Mensagem deve ser informal mas profissional
-- Use emojis com moderação (máximo 3-4)
-- Personalize baseado no nicho e informações do negócio
-- Foque em DOR + SOLUÇÃO
-- Não seja genérico - mencione o nome do negócio
-- Mensagem entre 150-250 palavras
-- Use quebras de linha para facilitar leitura
-- Finalize com uma pergunta aberta
+MENSAGEM BASE (adaptar para o nicho):
+"""
+Olá, tudo bem?
 
-ESTRUTURA:
-1. Saudação personalizada
-2. Apresentação breve do consultor
-3. Identificação de oportunidades específicas para o nicho
-4. Benefícios concretos (site, Google, automação, WhatsApp)
-5. Chamada para ação suave`;
+Me chamo {NOME_CONSULTOR} e trabalho ajudando negócios locais a ter presença no Google e automatizar agendamentos e atendimentos.
 
-    const userPrompt = `Crie uma mensagem de prospecção para:
+Hoje desenvolvemos:
+
+✅ Sites profissionais
+✅ Sistema de agendamento automático  
+✅ Automação de WhatsApp, reduzindo atendimento manual
+
+Entrei em contato porque acredito que essas soluções podem otimizar o dia a dia do seu negócio e aumentar a conversão de clientes.
+
+Se fizer sentido, posso te explicar rapidamente como funciona.
+"""
+
+REGRAS DE ADAPTAÇÃO:
+- Mantenha a estrutura da mensagem base
+- Personalize os exemplos para o nicho específico
+- Use emojis ✅ para os benefícios
+- Mensagem curta e direta
+- Substitua {NOME_CONSULTOR} pelo nome real
+- Finalize com pergunta aberta
+
+IMPORTANTE: 
+- Não invente serviços - mantenha: site, agendamento automático e automação WhatsApp
+- Adapte os exemplos para o contexto do nicho
+- Mantenha tom profissional mas acessível`;
+
+    const userPrompt = `Adapte a mensagem base para:
 
 NEGÓCIO: ${businessName}
 NICHO: ${businessNiche}
-${businessAddress ? `LOCALIZAÇÃO: ${businessAddress}` : ''}
-${hasWebsite ? `TEM WEBSITE: Sim (${businessWebsite})` : 'TEM WEBSITE: Não - oportunidade de criar um'}
-${businessRating ? `AVALIAÇÃO: ${businessRating} estrelas${hasLowRating ? ' - oportunidade de melhorar presença online' : hasHighRating ? ' - bom potencial de crescimento' : ''}` : ''}
-
 CONSULTOR: ${affiliateName}
+${businessAddress ? `LOCAL: ${businessAddress}` : ''}
+${hasWebsite ? `TEM SITE: Sim` : 'TEM SITE: Não'}
+${businessRating ? `AVALIAÇÃO: ${businessRating} estrelas` : ''}
 
-Gere uma mensagem personalizada para este ${businessNiche} considerando:
-${!hasWebsite ? '- Eles não têm site - mencione a importância de ter um site profissional' : '- Eles já têm site - foque em otimização e automação'}
-${hasLowRating ? '- A avaliação está baixa - foque em melhorar presença online e reputação' : ''}
-${hasHighRating ? '- Boa avaliação - mencione que podem crescer ainda mais com automação' : ''}
-
-A mensagem deve ser ÚNICA para este negócio, não genérica.`;
+Gere a mensagem adaptada para este ${businessNiche}, mantendo a estrutura base mas personalizando os exemplos para o nicho.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
