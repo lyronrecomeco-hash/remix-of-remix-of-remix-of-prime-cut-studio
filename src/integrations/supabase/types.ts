@@ -2772,6 +2772,177 @@ export type Database = {
           },
         ]
       }
+      genesis_agent_metrics_daily: {
+        Row: {
+          agent_id: string
+          avg_handling_time_seconds: number | null
+          avg_response_time_seconds: number | null
+          away_minutes: number | null
+          conversations_handled: number | null
+          created_at: string | null
+          date: string
+          first_response_within_sla: number | null
+          id: string
+          instance_id: string
+          messages_sent: number | null
+          nps_responses: number | null
+          nps_score_avg: number | null
+          online_minutes: number | null
+          resolution_within_sla: number | null
+          transfers_in: number | null
+          transfers_out: number | null
+        }
+        Insert: {
+          agent_id: string
+          avg_handling_time_seconds?: number | null
+          avg_response_time_seconds?: number | null
+          away_minutes?: number | null
+          conversations_handled?: number | null
+          created_at?: string | null
+          date: string
+          first_response_within_sla?: number | null
+          id?: string
+          instance_id: string
+          messages_sent?: number | null
+          nps_responses?: number | null
+          nps_score_avg?: number | null
+          online_minutes?: number | null
+          resolution_within_sla?: number | null
+          transfers_in?: number | null
+          transfers_out?: number | null
+        }
+        Update: {
+          agent_id?: string
+          avg_handling_time_seconds?: number | null
+          avg_response_time_seconds?: number | null
+          away_minutes?: number | null
+          conversations_handled?: number | null
+          created_at?: string | null
+          date?: string
+          first_response_within_sla?: number | null
+          id?: string
+          instance_id?: string
+          messages_sent?: number | null
+          nps_responses?: number | null
+          nps_score_avg?: number | null
+          online_minutes?: number | null
+          resolution_within_sla?: number | null
+          transfers_in?: number | null
+          transfers_out?: number | null
+        }
+        Relationships: []
+      }
+      genesis_agent_schedules: {
+        Row: {
+          agent_id: string
+          auto_message: string | null
+          auto_message_sent: boolean | null
+          client_name: string | null
+          client_phone: string
+          created_at: string | null
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          instance_id: string
+          notes: string | null
+          reminder_minutes: number[] | null
+          reminder_sent: boolean[] | null
+          scheduled_at: string
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          agent_id: string
+          auto_message?: string | null
+          auto_message_sent?: boolean | null
+          client_name?: string | null
+          client_phone: string
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          instance_id: string
+          notes?: string | null
+          reminder_minutes?: number[] | null
+          reminder_sent?: boolean[] | null
+          scheduled_at: string
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          agent_id?: string
+          auto_message?: string | null
+          auto_message_sent?: boolean | null
+          client_name?: string | null
+          client_phone?: string
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          instance_id?: string
+          notes?: string | null
+          reminder_minutes?: number[] | null
+          reminder_sent?: boolean[] | null
+          scheduled_at?: string
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      genesis_ai_assistant_logs: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          error_message: string | null
+          id: string
+          input_text: string | null
+          instance_id: string | null
+          latency_ms: number | null
+          metadata: Json | null
+          output_text: string | null
+          rewrite_style: string | null
+          session_id: string | null
+          success: boolean | null
+          tokens_used: number | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          input_text?: string | null
+          instance_id?: string | null
+          latency_ms?: number | null
+          metadata?: Json | null
+          output_text?: string | null
+          rewrite_style?: string | null
+          session_id?: string | null
+          success?: boolean | null
+          tokens_used?: number | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          input_text?: string | null
+          instance_id?: string | null
+          latency_ms?: number | null
+          metadata?: Json | null
+          output_text?: string | null
+          rewrite_style?: string | null
+          session_id?: string | null
+          success?: boolean | null
+          tokens_used?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       genesis_alert_rules: {
         Row: {
           alert_severity: string
@@ -3089,6 +3260,188 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "genesis_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_branding: {
+        Row: {
+          company_name: string | null
+          created_at: string | null
+          custom_css: string | null
+          custom_domain: string | null
+          favicon_url: string | null
+          id: string
+          logo_dark_url: string | null
+          logo_url: string | null
+          primary_color: string | null
+          secondary_color: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string | null
+          custom_css?: string | null
+          custom_domain?: string | null
+          favicon_url?: string | null
+          id?: string
+          logo_dark_url?: string | null
+          logo_url?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string | null
+          custom_css?: string | null
+          custom_domain?: string | null
+          favicon_url?: string | null
+          id?: string
+          logo_dark_url?: string | null
+          logo_url?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      genesis_broadcast_campaigns: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          created_by: string
+          delay_between_ms: number | null
+          delivered_count: number | null
+          description: string | null
+          failed_count: number | null
+          id: string
+          instance_id: string
+          media_url: string | null
+          message_template: string
+          message_type: string | null
+          name: string
+          rate_limit_per_minute: number | null
+          read_count: number | null
+          scheduled_at: string | null
+          sent_count: number | null
+          started_at: string | null
+          status: string | null
+          target_segment_id: string | null
+          target_tags: string[] | null
+          target_type: string | null
+          template_id: string | null
+          total_recipients: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          created_by: string
+          delay_between_ms?: number | null
+          delivered_count?: number | null
+          description?: string | null
+          failed_count?: number | null
+          id?: string
+          instance_id: string
+          media_url?: string | null
+          message_template: string
+          message_type?: string | null
+          name: string
+          rate_limit_per_minute?: number | null
+          read_count?: number | null
+          scheduled_at?: string | null
+          sent_count?: number | null
+          started_at?: string | null
+          status?: string | null
+          target_segment_id?: string | null
+          target_tags?: string[] | null
+          target_type?: string | null
+          template_id?: string | null
+          total_recipients?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string
+          delay_between_ms?: number | null
+          delivered_count?: number | null
+          description?: string | null
+          failed_count?: number | null
+          id?: string
+          instance_id?: string
+          media_url?: string | null
+          message_template?: string
+          message_type?: string | null
+          name?: string
+          rate_limit_per_minute?: number | null
+          read_count?: number | null
+          scheduled_at?: string | null
+          sent_count?: number | null
+          started_at?: string | null
+          status?: string | null
+          target_segment_id?: string | null
+          target_tags?: string[] | null
+          target_type?: string | null
+          template_id?: string | null
+          total_recipients?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      genesis_broadcast_recipients: {
+        Row: {
+          campaign_id: string
+          created_at: string | null
+          delivered_at: string | null
+          error_message: string | null
+          id: string
+          message_id: string | null
+          name: string | null
+          phone: string
+          read_at: string | null
+          sent_at: string | null
+          status: string | null
+          variables: Json | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string | null
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          message_id?: string | null
+          name?: string | null
+          phone: string
+          read_at?: string | null
+          sent_at?: string | null
+          status?: string | null
+          variables?: Json | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string | null
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          message_id?: string | null
+          name?: string | null
+          phone?: string
+          read_at?: string | null
+          sent_at?: string | null
+          status?: string | null
+          variables?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_broadcast_recipients_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_broadcast_campaigns"
             referencedColumns: ["id"]
           },
         ]
@@ -4163,6 +4516,84 @@ export type Database = {
           },
         ]
       }
+      genesis_closure_reasons: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          instance_id: string
+          is_active: boolean | null
+          name: string
+          requires_note: boolean | null
+          sort_order: number | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          instance_id: string
+          is_active?: boolean | null
+          name: string
+          requires_note?: boolean | null
+          sort_order?: number | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          instance_id?: string
+          is_active?: boolean | null
+          name?: string
+          requires_note?: boolean | null
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
+      genesis_contact_assignments: {
+        Row: {
+          assigned_agent_id: string
+          contact_name: string | null
+          contact_phone: string
+          created_at: string | null
+          id: string
+          instance_id: string
+          last_contact_at: string | null
+          notes: string | null
+          priority: string | null
+          tags: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_agent_id: string
+          contact_name?: string | null
+          contact_phone: string
+          created_at?: string | null
+          id?: string
+          instance_id: string
+          last_contact_at?: string | null
+          notes?: string | null
+          priority?: string | null
+          tags?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_agent_id?: string
+          contact_name?: string | null
+          contact_phone?: string
+          created_at?: string | null
+          id?: string
+          instance_id?: string
+          last_contact_at?: string | null
+          notes?: string | null
+          priority?: string | null
+          tags?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       genesis_contact_blacklist: {
         Row: {
           created_at: string | null
@@ -4419,6 +4850,92 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      genesis_department_agents: {
+        Row: {
+          can_transfer_out: boolean | null
+          can_view_others_chats: boolean | null
+          created_at: string | null
+          department_id: string
+          id: string
+          max_concurrent: number | null
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          can_transfer_out?: boolean | null
+          can_view_others_chats?: boolean | null
+          created_at?: string | null
+          department_id: string
+          id?: string
+          max_concurrent?: number | null
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          can_transfer_out?: boolean | null
+          can_view_others_chats?: boolean | null
+          created_at?: string | null
+          department_id?: string
+          id?: string
+          max_concurrent?: number | null
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_department_agents_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_departments: {
+        Row: {
+          auto_assign: boolean | null
+          color: string | null
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          instance_id: string
+          is_active: boolean | null
+          max_queue_size: number | null
+          name: string
+          operating_hours: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          auto_assign?: boolean | null
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          instance_id: string
+          is_active?: boolean | null
+          max_queue_size?: number | null
+          name: string
+          operating_hours?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          auto_assign?: boolean | null
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          instance_id?: string
+          is_active?: boolean | null
+          max_queue_size?: number | null
+          name?: string
+          operating_hours?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       genesis_economy_analytics: {
         Row: {
@@ -5491,6 +6008,293 @@ export type Database = {
           },
         ]
       }
+      genesis_internal_chat_members: {
+        Row: {
+          chat_id: string
+          id: string
+          joined_at: string | null
+          last_read_at: string | null
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          chat_id: string
+          id?: string
+          joined_at?: string | null
+          last_read_at?: string | null
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          chat_id?: string
+          id?: string
+          joined_at?: string | null
+          last_read_at?: string | null
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_internal_chat_members_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_internal_chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_internal_chats: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          department_id: string | null
+          id: string
+          name: string | null
+          tenant_id: string | null
+          type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          department_id?: string | null
+          id?: string
+          name?: string | null
+          tenant_id?: string | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          department_id?: string | null
+          id?: string
+          name?: string | null
+          tenant_id?: string | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      genesis_internal_messages: {
+        Row: {
+          chat_id: string
+          content: string | null
+          created_at: string | null
+          edited_at: string | null
+          id: string
+          is_edited: boolean | null
+          media_mimetype: string | null
+          media_url: string | null
+          message_type: string | null
+          reply_to_id: string | null
+          sender_id: string
+        }
+        Insert: {
+          chat_id: string
+          content?: string | null
+          created_at?: string | null
+          edited_at?: string | null
+          id?: string
+          is_edited?: boolean | null
+          media_mimetype?: string | null
+          media_url?: string | null
+          message_type?: string | null
+          reply_to_id?: string | null
+          sender_id: string
+        }
+        Update: {
+          chat_id?: string
+          content?: string | null
+          created_at?: string | null
+          edited_at?: string | null
+          id?: string
+          is_edited?: boolean | null
+          media_mimetype?: string | null
+          media_url?: string | null
+          message_type?: string | null
+          reply_to_id?: string | null
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_internal_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_internal_chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "genesis_internal_messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_internal_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_metrics_daily: {
+        Row: {
+          avg_conversation_duration_seconds: number | null
+          avg_first_response_seconds: number | null
+          avg_response_time_seconds: number | null
+          closed_conversations: number | null
+          created_at: string | null
+          date: string
+          escalations: number | null
+          id: string
+          instance_id: string
+          metadata: Json | null
+          new_contacts: number | null
+          new_conversations: number | null
+          nps_responses: number | null
+          nps_score_avg: number | null
+          returning_contacts: number | null
+          total_conversations: number | null
+          total_messages_in: number | null
+          total_messages_out: number | null
+          transfers: number | null
+          unique_contacts: number | null
+        }
+        Insert: {
+          avg_conversation_duration_seconds?: number | null
+          avg_first_response_seconds?: number | null
+          avg_response_time_seconds?: number | null
+          closed_conversations?: number | null
+          created_at?: string | null
+          date: string
+          escalations?: number | null
+          id?: string
+          instance_id: string
+          metadata?: Json | null
+          new_contacts?: number | null
+          new_conversations?: number | null
+          nps_responses?: number | null
+          nps_score_avg?: number | null
+          returning_contacts?: number | null
+          total_conversations?: number | null
+          total_messages_in?: number | null
+          total_messages_out?: number | null
+          transfers?: number | null
+          unique_contacts?: number | null
+        }
+        Update: {
+          avg_conversation_duration_seconds?: number | null
+          avg_first_response_seconds?: number | null
+          avg_response_time_seconds?: number | null
+          closed_conversations?: number | null
+          created_at?: string | null
+          date?: string
+          escalations?: number | null
+          id?: string
+          instance_id?: string
+          metadata?: Json | null
+          new_contacts?: number | null
+          new_conversations?: number | null
+          nps_responses?: number | null
+          nps_score_avg?: number | null
+          returning_contacts?: number | null
+          total_conversations?: number | null
+          total_messages_in?: number | null
+          total_messages_out?: number | null
+          transfers?: number | null
+          unique_contacts?: number | null
+        }
+        Relationships: []
+      }
+      genesis_nps_surveys: {
+        Row: {
+          agent_id: string | null
+          agent_name: string | null
+          answered_at: string | null
+          contact_name: string | null
+          contact_phone: string
+          created_at: string | null
+          department: string | null
+          feedback: string | null
+          id: string
+          instance_id: string
+          score: number | null
+          sent_at: string | null
+          session_id: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          agent_name?: string | null
+          answered_at?: string | null
+          contact_name?: string | null
+          contact_phone: string
+          created_at?: string | null
+          department?: string | null
+          feedback?: string | null
+          id?: string
+          instance_id: string
+          score?: number | null
+          sent_at?: string | null
+          session_id?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          agent_name?: string | null
+          answered_at?: string | null
+          contact_name?: string | null
+          contact_phone?: string
+          created_at?: string | null
+          department?: string | null
+          feedback?: string | null
+          id?: string
+          instance_id?: string
+          score?: number | null
+          sent_at?: string | null
+          session_id?: string | null
+        }
+        Relationships: []
+      }
+      genesis_quick_replies: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          id: string
+          instance_id: string
+          is_global: boolean | null
+          messages: Json
+          shortcut: string
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          use_count: number | null
+          user_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          instance_id: string
+          is_global?: boolean | null
+          messages?: Json
+          shortcut: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          use_count?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          instance_id?: string
+          is_global?: boolean | null
+          messages?: Json
+          shortcut?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          use_count?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       genesis_realtime_metrics: {
         Row: {
           current_status: string
@@ -5543,6 +6347,159 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      genesis_reports: {
+        Row: {
+          created_at: string | null
+          data: Json | null
+          expires_at: string | null
+          file_format: string | null
+          file_url: string | null
+          filters: Json | null
+          generated_at: string | null
+          id: string
+          instance_id: string | null
+          name: string
+          period_end: string
+          period_start: string
+          report_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          data?: Json | null
+          expires_at?: string | null
+          file_format?: string | null
+          file_url?: string | null
+          filters?: Json | null
+          generated_at?: string | null
+          id?: string
+          instance_id?: string | null
+          name: string
+          period_end: string
+          period_start: string
+          report_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json | null
+          expires_at?: string | null
+          file_format?: string | null
+          file_url?: string | null
+          filters?: Json | null
+          generated_at?: string | null
+          id?: string
+          instance_id?: string | null
+          name?: string
+          period_end?: string
+          period_start?: string
+          report_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      genesis_routing_rules: {
+        Row: {
+          conditions: Json | null
+          created_at: string | null
+          distribution_method: string | null
+          fallback_action: string | null
+          id: string
+          instance_id: string
+          is_active: boolean | null
+          max_concurrent_per_agent: number | null
+          name: string
+          priority: number | null
+          target_ids: string[] | null
+          target_type: string | null
+          timeout_seconds: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          conditions?: Json | null
+          created_at?: string | null
+          distribution_method?: string | null
+          fallback_action?: string | null
+          id?: string
+          instance_id: string
+          is_active?: boolean | null
+          max_concurrent_per_agent?: number | null
+          name: string
+          priority?: number | null
+          target_ids?: string[] | null
+          target_type?: string | null
+          timeout_seconds?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          conditions?: Json | null
+          created_at?: string | null
+          distribution_method?: string | null
+          fallback_action?: string | null
+          id?: string
+          instance_id?: string
+          is_active?: boolean | null
+          max_concurrent_per_agent?: number | null
+          name?: string
+          priority?: number | null
+          target_ids?: string[] | null
+          target_type?: string | null
+          timeout_seconds?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      genesis_security_settings: {
+        Row: {
+          created_at: string | null
+          hide_phone_partially: boolean | null
+          id: string
+          lockout_duration_minutes: number | null
+          max_failed_attempts: number | null
+          min_password_length: number | null
+          phone_visible_digits: number | null
+          require_number: boolean | null
+          require_special_char: boolean | null
+          require_strong_password: boolean | null
+          require_uppercase: boolean | null
+          session_timeout_minutes: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          hide_phone_partially?: boolean | null
+          id?: string
+          lockout_duration_minutes?: number | null
+          max_failed_attempts?: number | null
+          min_password_length?: number | null
+          phone_visible_digits?: number | null
+          require_number?: boolean | null
+          require_special_char?: boolean | null
+          require_strong_password?: boolean | null
+          require_uppercase?: boolean | null
+          session_timeout_minutes?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          hide_phone_partially?: boolean | null
+          id?: string
+          lockout_duration_minutes?: number | null
+          max_failed_attempts?: number | null
+          min_password_length?: number | null
+          phone_visible_digits?: number | null
+          require_number?: boolean | null
+          require_special_char?: boolean | null
+          require_strong_password?: boolean | null
+          require_uppercase?: boolean | null
+          session_timeout_minutes?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       genesis_session_backups: {
         Row: {
@@ -6212,6 +7169,176 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      genesis_widget_leads: {
+        Row: {
+          city: string | null
+          converted: boolean | null
+          converted_at: string | null
+          country: string | null
+          created_at: string | null
+          email: string | null
+          first_message: string | null
+          id: string
+          instance_id: string
+          ip_address: string | null
+          name: string | null
+          page_url: string | null
+          phone: string | null
+          referrer: string | null
+          user_agent: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+          widget_id: string
+        }
+        Insert: {
+          city?: string | null
+          converted?: boolean | null
+          converted_at?: string | null
+          country?: string | null
+          created_at?: string | null
+          email?: string | null
+          first_message?: string | null
+          id?: string
+          instance_id: string
+          ip_address?: string | null
+          name?: string | null
+          page_url?: string | null
+          phone?: string | null
+          referrer?: string | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          widget_id: string
+        }
+        Update: {
+          city?: string | null
+          converted?: boolean | null
+          converted_at?: string | null
+          country?: string | null
+          created_at?: string | null
+          email?: string | null
+          first_message?: string | null
+          id?: string
+          instance_id?: string
+          ip_address?: string | null
+          name?: string | null
+          page_url?: string | null
+          phone?: string | null
+          referrer?: string | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          widget_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_widget_leads_widget_id_fkey"
+            columns: ["widget_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_widgets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genesis_widgets: {
+        Row: {
+          away_message: string | null
+          collect_info: boolean | null
+          created_at: string | null
+          custom_css: string | null
+          domain_whitelist: string[] | null
+          id: string
+          instance_id: string
+          is_active: boolean | null
+          name: string
+          position: string | null
+          required_fields: string[] | null
+          theme: Json | null
+          updated_at: string | null
+          utm_tracking: boolean | null
+          welcome_message: string | null
+        }
+        Insert: {
+          away_message?: string | null
+          collect_info?: boolean | null
+          created_at?: string | null
+          custom_css?: string | null
+          domain_whitelist?: string[] | null
+          id?: string
+          instance_id: string
+          is_active?: boolean | null
+          name: string
+          position?: string | null
+          required_fields?: string[] | null
+          theme?: Json | null
+          updated_at?: string | null
+          utm_tracking?: boolean | null
+          welcome_message?: string | null
+        }
+        Update: {
+          away_message?: string | null
+          collect_info?: boolean | null
+          created_at?: string | null
+          custom_css?: string | null
+          domain_whitelist?: string[] | null
+          id?: string
+          instance_id?: string
+          is_active?: boolean | null
+          name?: string
+          position?: string | null
+          required_fields?: string[] | null
+          theme?: Json | null
+          updated_at?: string | null
+          utm_tracking?: boolean | null
+          welcome_message?: string | null
+        }
+        Relationships: []
+      }
+      genesis_work_schedules: {
+        Row: {
+          created_at: string | null
+          day_of_week: number
+          end_time: string
+          id: string
+          is_enabled: boolean | null
+          start_time: string
+          tenant_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          day_of_week: number
+          end_time?: string
+          id?: string
+          is_enabled?: boolean | null
+          start_time?: string
+          tenant_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_enabled?: boolean | null
+          start_time?: string
+          tenant_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       login_attempts: {
         Row: {
