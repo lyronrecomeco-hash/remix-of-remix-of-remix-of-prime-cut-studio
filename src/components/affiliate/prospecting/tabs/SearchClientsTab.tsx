@@ -155,7 +155,7 @@ export const SearchClientsTab = ({ affiliateId, onAddProspect }: SearchClientsTa
       }
     } catch (error) {
       console.error('Erro na busca:', error);
-      toast.error('Erro ao buscar estabelecimentos. Verifique a configuração do Firecrawl.');
+      toast.error('Erro ao buscar estabelecimentos. Verifique a configuração do Serper.');
     } finally {
       setSearching(false);
     }
@@ -265,7 +265,7 @@ export const SearchClientsTab = ({ affiliateId, onAddProspect }: SearchClientsTa
           
           <div className="flex items-center gap-2 mt-4 text-xs text-muted-foreground">
             <AlertCircle className="w-3.5 h-3.5" />
-            <span>Dados reais extraídos da web via Firecrawl. Resultados podem variar.</span>
+            <span>Dados reais do Google Places via Serper.dev. Alta precisão.</span>
           </div>
         </CardContent>
       </Card>
