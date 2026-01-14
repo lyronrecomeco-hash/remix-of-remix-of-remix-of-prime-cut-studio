@@ -284,7 +284,7 @@ function DemoHeader({ config }: { config: TemplateConfig }) {
 
           <div className="flex items-center gap-2">
             <Button asChild variant="hero" size="sm" className="hidden sm:flex">
-              <Link to="/agendar">
+              <Link to="/agendamento-direto">
                 <Calendar className="w-4 h-4" />
                 Agendar
               </Link>
@@ -320,7 +320,7 @@ function DemoHeader({ config }: { config: TemplateConfig }) {
                 </a>
               ))}
               <Button asChild variant="hero" size="lg" className="mt-2">
-                <Link to="/agendar" onClick={() => setIsMobileMenuOpen(false)}>
+                <Link to="/agendamento-direto" onClick={() => setIsMobileMenuOpen(false)}>
                   <Calendar className="w-4 h-4" />
                   Agendar Agora
                 </Link>
@@ -388,7 +388,7 @@ function DemoHero({ config }: { config: TemplateConfig }) {
           className="flex flex-col sm:flex-row gap-4 justify-center"
         >
           <Button asChild variant="hero" size="xl">
-            <Link to="/agendar">
+            <Link to="/agendamento-direto">
               <Calendar className="w-5 h-5" />
               Agendar Horário
             </Link>
@@ -565,7 +565,7 @@ function DemoCTA({ config }: { config: TemplateConfig }) {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild variant="hero" size="xl">
-              <Link to="/agendar">
+              <Link to="/agendamento-direto">
                 <Calendar className="w-5 h-5" />
                 Agendar Agora
                 <ArrowRight className="w-5 h-5" />
@@ -710,7 +710,7 @@ function DemoServices() {
                     ⏱ {service.duration} min
                   </span>
                   <Button asChild variant="ghost" size="sm" className="text-primary hover:text-primary">
-                    <Link to="/agendar">Agendar</Link>
+                    <Link to="/agendamento-direto">Agendar</Link>
                   </Button>
                 </div>
               </motion.div>
