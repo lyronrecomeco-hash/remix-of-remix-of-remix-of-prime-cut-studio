@@ -34,6 +34,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { RadiusFilterModal } from '../RadiusFilterModal';
+import { COUNTRIES, getNichesForCountry, getCountryByCode } from '../global/globalSearchData';
 
 const ITEMS_PER_PAGE = 12;
 const MAX_RESULTS_OPTIONS = [
@@ -69,79 +70,14 @@ interface SearchClientsTabProps {
   }) => Promise<unknown>;
 }
 
-const NICHES = [
-  'Barbearia',
-  'Salão de Beleza',
-  'Clínica Médica',
-  'Clínica Odontológica',
-  'Academia',
-  'Restaurante',
-  'Pizzaria',
-  'Hamburgueria',
-  'Padaria',
-  'Cafeteria',
-  'Loja de Roupas',
-  'Pet Shop',
-  'Clínica Veterinária',
-  'Oficina Mecânica',
-  'Lava Rápido',
-  'Imobiliária',
-  'Escritório de Advocacia',
-  'Escritório de Contabilidade',
-  'Estúdio de Tatuagem',
-  'Estúdio de Pilates',
-  'Escola de Idiomas',
-  'Auto Escola',
-  'Hotel',
-  'Pousada',
-  'Farmácia',
-  'Ótica',
-  'Joalheria',
-  'Floricultura',
-  'Supermercado',
-  'Mercado',
-  'Açougue',
-  'Papelaria',
-  'Loja de Eletrônicos',
-  'Loja de Móveis',
-  'Loja de Materiais de Construção',
-];
-
-const STATES = [
-  { value: 'AC', label: 'Acre' },
-  { value: 'AL', label: 'Alagoas' },
-  { value: 'AP', label: 'Amapá' },
-  { value: 'AM', label: 'Amazonas' },
-  { value: 'BA', label: 'Bahia' },
-  { value: 'CE', label: 'Ceará' },
-  { value: 'DF', label: 'Distrito Federal' },
-  { value: 'ES', label: 'Espírito Santo' },
-  { value: 'GO', label: 'Goiás' },
-  { value: 'MA', label: 'Maranhão' },
-  { value: 'MT', label: 'Mato Grosso' },
-  { value: 'MS', label: 'Mato Grosso do Sul' },
-  { value: 'MG', label: 'Minas Gerais' },
-  { value: 'PA', label: 'Pará' },
-  { value: 'PB', label: 'Paraíba' },
-  { value: 'PR', label: 'Paraná' },
-  { value: 'PE', label: 'Pernambuco' },
-  { value: 'PI', label: 'Piauí' },
-  { value: 'RJ', label: 'Rio de Janeiro' },
-  { value: 'RN', label: 'Rio Grande do Norte' },
-  { value: 'RS', label: 'Rio Grande do Sul' },
-  { value: 'RO', label: 'Rondônia' },
-  { value: 'RR', label: 'Roraima' },
-  { value: 'SC', label: 'Santa Catarina' },
-  { value: 'SP', label: 'São Paulo' },
-  { value: 'SE', label: 'Sergipe' },
-  { value: 'TO', label: 'Tocantins' },
-];
-
 export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: SearchClientsTabProps) => {
+  // Search form state
+  const [countryCode, setCountryCode] = useState('BR');
   const [city, setCity] = useState('');
-  const [state, setState] = useState('');
   const [niche, setNiche] = useState('');
   const [maxResults, setMaxResults] = useState<string>('200');
+  
+  // Results state
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [originalResults, setOriginalResults] = useState<SearchResult[]>([]);
@@ -149,6 +85,7 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
   const [radiusModalOpen, setRadiusModalOpen] = useState(false);
   const [isFiltered, setIsFiltered] = useState(false);
 
+  // Modal state
   const [selectedResult, setSelectedResult] = useState<SearchResult | null>(null);
   const [addedNames, setAddedNames] = useState<Set<string>>(new Set());
   const [generatingProposal, setGeneratingProposal] = useState(false);
@@ -156,13 +93,23 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
   const [copied, setCopied] = useState(false);
   const [currentAffiliateName, setCurrentAffiliateName] = useState(affiliateName || '');
 
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-
   const totalPages = Math.max(1, Math.ceil(results.length / ITEMS_PER_PAGE));
   const paginatedResults = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return results.slice(start, start + ITEMS_PER_PAGE);
   }, [results, currentPage]);
+
+  // Get niches for selected country
+  const availableNiches = useMemo(() => {
+    return getNichesForCountry(countryCode);
+  }, [countryCode]);
+
+  // Reset niche when country changes
+  useEffect(() => {
+    setNiche('');
+  }, [countryCode]);
 
   // Fetch affiliate name if not provided
   useEffect(() => {
@@ -182,8 +129,8 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
   }, [affiliateId, affiliateName]);
 
   const handleSearch = async () => {
-    if (!city.trim() || !state || !niche) {
-      toast.error('Preencha todos os campos para buscar');
+    if (!city.trim() || !countryCode || !niche) {
+      toast.error('Fill in all fields to search');
       return;
     }
 
@@ -194,8 +141,8 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
     setIsFiltered(false);
 
     try {
-      const { data, error } = await supabase.functions.invoke('search-businesses', {
-        body: { city: city.trim(), state, niche, maxResults: parseInt(maxResults, 10) },
+      const { data, error } = await supabase.functions.invoke('search-businesses-global', {
+        body: { city: city.trim(), countryCode, niche, maxResults: parseInt(maxResults, 10) },
       });
 
       if (error) throw error;
@@ -203,15 +150,15 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
       if (data?.success && data.results && data.results.length > 0) {
         setResults(data.results);
         setOriginalResults(data.results);
-        toast.success(`${data.results.length} estabelecimentos encontrados!`);
+        toast.success(`${data.results.length} businesses found!`);
       } else if (data?.error) {
         toast.error(data.error);
       } else {
-        toast.info('Nenhum estabelecimento encontrado. Tente outra busca.');
+        toast.info('No businesses found. Try another search.');
       }
     } catch (error) {
-      console.error('Erro na busca:', error);
-      toast.error('Erro ao buscar estabelecimentos');
+      console.error('Search error:', error);
+      toast.error('Error searching businesses');
     } finally {
       setSearching(false);
     }
@@ -221,12 +168,12 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
     if (filteredResults.length === originalResults.length) {
       setResults(originalResults);
       setIsFiltered(false);
-      toast.info('Filtro removido');
+      toast.info('Filter removed');
     } else {
       setResults(filteredResults);
       setIsFiltered(true);
       setCurrentPage(1);
-      toast.success(`${filteredResults.length} estabelecimentos na área selecionada`);
+      toast.success(`${filteredResults.length} businesses in selected area`);
     }
   };
 
@@ -241,14 +188,14 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
         company_website: result.website,
         company_address: result.address,
         company_city: city,
-        company_state: state,
+        company_state: countryCode,
         niche,
       });
       
       setAddedNames(prev => new Set([...prev, result.name]));
-      toast.success(`${result.name} adicionado aos prospects!`);
+      toast.success(`${result.name} added to prospects!`);
     } catch (error) {
-      toast.error('Erro ao adicionar prospect');
+      toast.error('Error adding prospect');
     } finally {
       setAddingId(null);
     }
@@ -267,7 +214,8 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
           businessPhone: result.phone,
           businessWebsite: result.website,
           businessRating: result.rating,
-          affiliateName: currentAffiliateName || 'Consultor Genesis',
+          affiliateName: currentAffiliateName || 'Genesis Consultant',
+          countryCode,
         },
       });
 
@@ -277,21 +225,13 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
         setGeneratedMessage(data.message);
       }
     } catch (error) {
-      console.error('Erro ao gerar proposta:', error);
-      // Fallback to base template
-      const baseMessage = `Olá, tudo bem?
-
-Me chamo ${currentAffiliateName || 'Consultor Genesis'} e trabalho ajudando negócios locais a ter presença no Google e automatizar agendamentos e atendimentos.
-
-Hoje desenvolvemos:
-
-✅ Sites profissionais
-✅ Sistema de agendamento automático
-✅ Automação de WhatsApp, reduzindo atendimento manual
-
-Entrei em contato porque acredito que essas soluções podem otimizar o dia a dia do seu negócio e aumentar a conversão de clientes.
-
-Se fizer sentido, posso te explicar rapidamente como funciona.`;
+      console.error('Error generating proposal:', error);
+      const country = getCountryByCode(countryCode);
+      const isPortuguese = country?.language.startsWith('pt');
+      
+      const baseMessage = isPortuguese 
+        ? `Olá, tudo bem?\n\nMe chamo ${currentAffiliateName || 'Consultor Genesis'} e trabalho ajudando negócios locais a ter presença no Google e automatizar agendamentos e atendimentos.\n\nHoje desenvolvemos:\n\n✅ Sites profissionais\n✅ Sistema de agendamento automático\n✅ Automação de WhatsApp, reduzindo atendimento manual\n\nEntrei em contato porque acredito que essas soluções podem otimizar o dia a dia do seu negócio e aumentar a conversão de clientes.\n\nSe fizer sentido, posso te explicar rapidamente como funciona.`
+        : `Hello!\n\nMy name is ${currentAffiliateName || 'Genesis Consultant'} and I help local businesses improve their online presence and automate appointments and customer service.\n\nWe offer:\n\n✅ Professional websites\n✅ Automatic scheduling system\n✅ WhatsApp automation\n\nI'm reaching out because I believe these solutions can optimize your business operations and increase customer conversions.\n\nIf this sounds interesting, I can quickly explain how it works.`;
       setGeneratedMessage(baseMessage);
     } finally {
       setGeneratingProposal(false);
@@ -301,88 +241,111 @@ Se fizer sentido, posso te explicar rapidamente como funciona.`;
   const copyToClipboard = async () => {
     await navigator.clipboard.writeText(generatedMessage);
     setCopied(true);
-    toast.success('Mensagem copiada!');
+    toast.success('Message copied!');
     setTimeout(() => setCopied(false), 2000);
   };
 
   const sendViaWhatsApp = () => {
     if (selectedResult?.phone) {
       const phone = selectedResult.phone.replace(/\D/g, '');
+      const country = getCountryByCode(countryCode);
+      const prefix = country?.searchParams.gl === 'br' ? '55' : '';
       const message = encodeURIComponent(generatedMessage);
-      window.open(`https://wa.me/55${phone}?text=${message}`, '_blank');
+      window.open(`https://wa.me/${prefix}${phone}?text=${message}`, '_blank');
     }
   };
 
+  const selectedCountry = getCountryByCode(countryCode);
+
   return (
     <div className="space-y-6">
-      {/* Search Form - Genesis Theme */}
+      {/* Search Form - Global Theme */}
       <Card className="border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Country Selector - FIRST */}
             <div>
               <Label className="text-sm font-medium flex items-center gap-2 mb-2">
-                <MapPin className="w-4 h-4 text-primary" />
-                Cidade
+                🌍 Country
               </Label>
-              <Input
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                placeholder="Ex: São Paulo"
-                className="bg-background/50 border-border focus:border-primary"
-              />
-            </div>
-            
-            <div>
-              <Label className="text-sm font-medium mb-2 block">Estado</Label>
-              <Select value={state} onValueChange={setState}>
+              <Select value={countryCode} onValueChange={setCountryCode}>
                 <SelectTrigger className="bg-background/50 border-border focus:border-primary">
-                  <SelectValue placeholder="Selecione" />
+                  <SelectValue placeholder="Select country" />
                 </SelectTrigger>
                 <SelectContent>
-                  {STATES.map(s => (
-                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                  {COUNTRIES.map(country => (
+                    <SelectItem key={country.code} value={country.code}>
+                      <span className="flex items-center gap-2">
+                        <span>{country.flag}</span>
+                        <span>{country.name}</span>
+                      </span>
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+
+            {/* City Input */}
+            <div>
+              <Label className="text-sm font-medium flex items-center gap-2 mb-2">
+                <MapPin className="w-4 h-4 text-primary" />
+                City
+              </Label>
+              <Input
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder={countryCode === 'BR' ? 'Ex: São Paulo' : 'Ex: New York'}
+                className="bg-background/50 border-border focus:border-primary"
+              />
+            </div>
             
+            {/* Niche Selector - Adapts to country */}
             <div>
               <Label className="text-sm font-medium flex items-center gap-2 mb-2">
                 <Building2 className="w-4 h-4 text-primary" />
-                Nicho
+                Niche
               </Label>
               <Select value={niche} onValueChange={setNiche}>
                 <SelectTrigger className="bg-background/50 border-border focus:border-primary">
-                  <SelectValue placeholder="Selecione o nicho" />
+                  <SelectValue placeholder="Select niche" />
                 </SelectTrigger>
-                <SelectContent>
-                  {NICHES.map(n => (
+                <SelectContent className="max-h-[300px]">
+                  {availableNiches.map(n => (
                     <SelectItem key={n} value={n}>{n}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             
+            {/* Search Button */}
             <div className="flex items-end">
               <Button 
                 onClick={handleSearch} 
-                disabled={searching || !city || !state || !niche}
+                disabled={searching || !city || !countryCode || !niche}
                 className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
               >
                 {searching ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Buscando, aguarde...
+                    Searching...
                   </>
                 ) : (
                   <>
                     <Search className="w-4 h-4" />
-                    Buscar
+                    Search
                   </>
                 )}
               </Button>
             </div>
           </div>
+
+          {/* Selected country indicator */}
+          {selectedCountry && (
+            <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+              <span>{selectedCountry.flag}</span>
+              <span>Searching in {selectedCountry.name} ({selectedCountry.language})</span>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -390,8 +353,8 @@ Se fizer sentido, posso te explicar rapidamente como funciona.`;
       {searching && (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <Loader2 className="w-12 h-12 animate-spin text-primary" />
-          <p className="text-lg text-muted-foreground font-medium">Buscando estabelecimentos, aguarde...</p>
-          <p className="text-sm text-muted-foreground">Isso pode levar alguns segundos</p>
+          <p className="text-lg text-muted-foreground font-medium">Searching businesses, please wait...</p>
+          <p className="text-sm text-muted-foreground">This may take a few seconds</p>
         </div>
       )}
 
@@ -401,11 +364,11 @@ Se fizer sentido, posso te explicar rapidamente como funciona.`;
           <div className="flex items-center justify-between flex-wrap gap-2">
             <h3 className="text-lg font-semibold flex items-center gap-2">
               <Target className="w-5 h-5 text-primary" />
-              {results.length} Estabelecimentos Encontrados
+              {results.length} Businesses Found
               {isFiltered && (
                 <Badge variant="secondary" className="text-xs">
                   <Filter className="w-3 h-3 mr-1" />
-                  Filtrado por Bairro
+                  Filtered by Area
                 </Badge>
               )}
             </h3>
@@ -417,13 +380,13 @@ Se fizer sentido, posso te explicar rapidamente como funciona.`;
                 className="gap-1.5"
               >
                 <MapPin className="w-4 h-4" />
-                Filtrar por Bairro
+                Filter by Area
               </Button>
               <span className="text-xs text-muted-foreground">
-                Página {currentPage} de {totalPages}
+                Page {currentPage} of {totalPages}
               </span>
               <Badge className="bg-primary/10 text-primary border-primary/30">
-                Google Places
+                {selectedCountry?.flag} {selectedCountry?.code}
               </Badge>
             </div>
           </div>
@@ -447,7 +410,7 @@ Se fizer sentido, posso te explicar rapidamente como funciona.`;
                     <div className="absolute top-3 right-3 z-10">
                       <Badge className="bg-green-500 text-white gap-1">
                         <CheckCircle className="w-3 h-3" />
-                        Salvo
+                        Saved
                       </Badge>
                     </div>
                   )}
@@ -501,30 +464,37 @@ Se fizer sentido, posso te explicar rapidamente como funciona.`;
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedResult(result);
+                          generateProposal(result);
                         }}
                       >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        Ver Detalhes
+                        <Sparkles className="w-3 h-3" />
+                        Generate Message
                       </Button>
 
-                      {!isAdded && (
-                        <Button
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAddToProspects(result);
-                          }}
-                          disabled={isAdding}
-                          className="flex-1 gap-1 text-xs bg-primary hover:bg-primary/90"
-                        >
-                          {isAdding ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          ) : (
-                            <TrendingUp className="w-3.5 h-3.5" />
-                          )}
-                          Salvar
-                        </Button>
-                      )}
+                      <Button
+                        size="sm"
+                        variant={isAdded ? 'secondary' : 'default'}
+                        className="gap-1"
+                        disabled={isAdded || isAdding}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddToProspects(result);
+                        }}
+                      >
+                        {isAdding ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : isAdded ? (
+                          <>
+                            <CheckCircle className="w-3 h-3" />
+                            Added
+                          </>
+                        ) : (
+                          <>
+                            <Zap className="w-3 h-3" />
+                            Add
+                          </>
+                        )}
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -532,36 +502,37 @@ Se fizer sentido, posso te explicar rapidamente como funciona.`;
             })}
           </div>
 
+          {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-2">
+            <div className="flex items-center justify-center gap-2 pt-4">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
-
+              
               <div className="flex items-center gap-1">
-                {Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   let pageNum: number;
-                  if (totalPages <= 7) {
+                  if (totalPages <= 5) {
                     pageNum = i + 1;
-                  } else if (currentPage <= 4) {
+                  } else if (currentPage <= 3) {
                     pageNum = i + 1;
-                  } else if (currentPage >= totalPages - 3) {
-                    pageNum = totalPages - 6 + i;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
                   } else {
-                    pageNum = currentPage - 3 + i;
+                    pageNum = currentPage - 2 + i;
                   }
-
+                  
                   return (
                     <Button
                       key={pageNum}
                       variant={currentPage === pageNum ? 'default' : 'outline'}
                       size="sm"
-                      className="w-9 h-9 p-0"
+                      className="w-8 h-8 p-0"
                       onClick={() => setCurrentPage(pageNum)}
                     >
                       {pageNum}
@@ -569,11 +540,11 @@ Se fizer sentido, posso te explicar rapidamente como funciona.`;
                   );
                 })}
               </div>
-
+              
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
               >
                 <ChevronRight className="w-4 h-4" />
@@ -583,255 +554,163 @@ Se fizer sentido, posso te explicar rapidamente como funciona.`;
         </div>
       )}
 
-      {/* Empty State */}
-      {!searching && results.length === 0 && (
-        <Card className="border-dashed border-2 border-primary/20">
-          <CardContent className="p-12 text-center">
-            <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-              <Search className="w-10 h-10 text-primary" />
-            </div>
-            <h3 className="text-xl font-semibold text-foreground mb-2">
-              Encontre Clientes em Potencial
-            </h3>
-            <p className="text-muted-foreground max-w-md mx-auto mb-6">
-              Busque estabelecimentos reais por cidade e nicho. 
-              Gere propostas personalizadas com IA e aumente suas conversões.
-            </p>
-            <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Zap className="w-4 h-4 text-primary" />
-                Dados do Google
-              </span>
-              <span className="flex items-center gap-1">
-                <Sparkles className="w-4 h-4 text-primary" />
-                Proposta com IA
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Detail Modal with Proposal Generator */}
-      <Dialog open={!!selectedResult} onOpenChange={() => {
-        setSelectedResult(null);
-        setGeneratedMessage('');
-      }}>
+      {/* Business Detail Modal */}
+      <Dialog open={!!selectedResult} onOpenChange={(open) => !open && setSelectedResult(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <span className="block">{selectedResult?.name}</span>
-                <span className="text-sm font-normal text-muted-foreground">
-                  {selectedResult?.category || niche}
-                </span>
-              </div>
-            </DialogTitle>
-          </DialogHeader>
-          
           {selectedResult && (
-            <Tabs defaultValue="info" className="mt-4">
-              <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger value="info" className="gap-2">
-                  <Building2 className="w-4 h-4" />
-                  Informações
-                </TabsTrigger>
-                <TabsTrigger value="proposal" className="gap-2">
-                  <Sparkles className="w-4 h-4" />
-                  Gerar Proposta
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="info" className="space-y-4">
-                {/* Business Info */}
-                <div className="grid gap-3">
-                  <div className="flex items-start gap-3 p-4 bg-muted/30 rounded-xl border border-border">
-                    <MapPin className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">Endereço</p>
-                      <p className="text-sm text-muted-foreground">{selectedResult.address}</p>
-                    </div>
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Building2 className="w-5 h-5 text-primary" />
                   </div>
-                  
-                  {selectedResult.phone && (
-                    <div className="flex items-start gap-3 p-4 bg-muted/30 rounded-xl border border-border">
-                      <Phone className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-foreground">Telefone</p>
-                        <p className="text-sm text-muted-foreground font-mono">{selectedResult.phone}</p>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => window.open(`tel:${selectedResult.phone}`, '_self')}
-                        className="shrink-0"
-                      >
-                        Ligar
-                      </Button>
+                  <div>
+                    <span className="block">{selectedResult.name}</span>
+                    <span className="text-sm font-normal text-muted-foreground">{niche}</span>
+                  </div>
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4 mt-4">
+                {/* Business Info */}
+                <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <MapPin className="w-4 h-4 text-muted-foreground" />
+                      <span>{selectedResult.address}</span>
                     </div>
-                  )}
-                  
-                  {selectedResult.website && (
-                    <div className="flex items-start gap-3 p-4 bg-muted/30 rounded-xl border border-border">
-                      <Globe className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-foreground">Website</p>
+                    {selectedResult.phone && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Phone className="w-4 h-4 text-muted-foreground" />
+                        <span className="font-mono">{selectedResult.phone}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    {selectedResult.website && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Globe className="w-4 h-4 text-muted-foreground" />
                         <a 
-                          href={selectedResult.website.startsWith('http') ? selectedResult.website : `https://${selectedResult.website}`}
+                          href={`https://${selectedResult.website}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm text-primary hover:underline flex items-center gap-1"
+                          className="text-primary hover:underline flex items-center gap-1"
                         >
                           {selectedResult.website}
                           <ExternalLink className="w-3 h-3" />
                         </a>
                       </div>
-                    </div>
-                  )}
-                  
-                  {selectedResult.rating && (
-                    <div className="flex items-start gap-3 p-4 bg-muted/30 rounded-xl border border-border">
-                      <Star className="w-5 h-5 text-amber-500 shrink-0 mt-0.5 fill-current" />
-                      <div>
-                        <p className="text-sm font-medium text-foreground">Avaliação</p>
-                        <p className="text-sm text-muted-foreground">
-                          {selectedResult.rating} estrelas
-                          {selectedResult.reviews_count && ` • ${selectedResult.reviews_count} avaliações`}
-                        </p>
+                    )}
+                    {selectedResult.rating && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Star className="w-4 h-4 text-amber-500 fill-current" />
+                        <span>{selectedResult.rating} ({selectedResult.reviews_count || 0} reviews)</span>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex gap-3 pt-4 border-t border-border">
-                  {!addedNames.has(selectedResult.name) && (
+                {/* Message Generation */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4" />
+                      Outreach Message
+                    </Label>
                     <Button
-                      onClick={() => {
-                        handleAddToProspects(selectedResult);
-                      }}
-                      className="flex-1 gap-2 bg-primary hover:bg-primary/90"
-                    >
-                      <TrendingUp className="w-4 h-4" />
-                      Salvar Prospect
-                    </Button>
-                  )}
-                  <Button
-                    variant="outline"
-                    onClick={() => setSelectedResult(null)}
-                    className={addedNames.has(selectedResult.name) ? "flex-1" : ""}
-                  >
-                    Fechar
-                  </Button>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="proposal" className="space-y-4">
-                {/* Generate Proposal */}
-                {!generatedMessage ? (
-                  <div className="text-center py-8">
-                    <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                      <Sparkles className="w-8 h-8 text-primary" />
-                    </div>
-                    <h4 className="font-semibold text-foreground mb-2">
-                      Gerar Proposta Personalizada
-                    </h4>
-                    <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
-                      A Luna AI vai criar uma mensagem personalizada para {selectedResult.name} 
-                      baseada no perfil do negócio.
-                    </p>
-                    <Button
+                      size="sm"
+                      variant="outline"
                       onClick={() => generateProposal(selectedResult)}
                       disabled={generatingProposal}
-                      className="gap-2 bg-primary hover:bg-primary/90"
+                      className="gap-1.5"
                     >
                       {generatingProposal ? (
                         <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Luna está criando...
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          Generating...
                         </>
                       ) : (
                         <>
-                          <Sparkles className="w-4 h-4" />
-                          Gerar com IA
+                          <Sparkles className="w-3 h-3" />
+                          Generate with AI
                         </>
                       )}
                     </Button>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-semibold text-foreground flex items-center gap-2">
-                        <MessageSquare className="w-4 h-4 text-primary" />
-                        Mensagem Gerada
-                      </h4>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={copyToClipboard}
-                          className="gap-1"
-                        >
-                          {copied ? (
-                            <Check className="w-3.5 h-3.5 text-green-500" />
-                          ) : (
-                            <Copy className="w-3.5 h-3.5" />
-                          )}
-                          {copied ? 'Copiado!' : 'Copiar'}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => generateProposal(selectedResult)}
-                          disabled={generatingProposal}
-                        >
-                          <Sparkles className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
-                    </div>
 
-                    <Textarea
-                      value={generatedMessage}
-                      onChange={(e) => setGeneratedMessage(e.target.value)}
-                      className="min-h-[250px] bg-muted/30 border-border resize-none"
-                    />
+                  <Textarea
+                    value={generatedMessage}
+                    onChange={(e) => setGeneratedMessage(e.target.value)}
+                    placeholder="Click 'Generate with AI' to create a personalized message..."
+                    className="min-h-[200px] resize-none"
+                  />
 
-                    <div className="flex gap-3">
-                      {selectedResult.phone && (
-                        <Button
-                          onClick={sendViaWhatsApp}
-                          className="flex-1 gap-2 bg-green-600 hover:bg-green-700"
-                        >
-                          <Send className="w-4 h-4" />
-                          Enviar via WhatsApp
-                        </Button>
-                      )}
+                  {generatedMessage && (
+                    <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
+                        className="flex-1 gap-2"
                         onClick={copyToClipboard}
-                        className={!selectedResult.phone ? "flex-1" : ""}
                       >
-                        <Copy className="w-4 h-4 mr-2" />
-                        Copiar Mensagem
+                        {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                        {copied ? 'Copied!' : 'Copy'}
                       </Button>
+
+                      {selectedResult.phone && (
+                        <Button
+                          className="flex-1 gap-2 bg-green-600 hover:bg-green-700"
+                          onClick={sendViaWhatsApp}
+                        >
+                          <Send className="w-4 h-4" />
+                          Send via WhatsApp
+                        </Button>
+                      )}
                     </div>
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-2 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setSelectedResult(null)}
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Close
+                  </Button>
+                  
+                  <Button
+                    className="flex-1 gap-2"
+                    disabled={addedNames.has(selectedResult.name)}
+                    onClick={() => handleAddToProspects(selectedResult)}
+                  >
+                    {addedNames.has(selectedResult.name) ? (
+                      <>
+                        <CheckCircle className="w-4 h-4" />
+                        Already Added
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-4 h-4" />
+                        Add to Prospects
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Filtro por Raio */}
+      {/* Radius Filter Modal */}
       <RadiusFilterModal
         open={radiusModalOpen}
         onOpenChange={setRadiusModalOpen}
         results={originalResults}
         city={city}
-        state={state}
+        state={countryCode}
         onFilterResults={handleRadiusFilter}
       />
     </div>
