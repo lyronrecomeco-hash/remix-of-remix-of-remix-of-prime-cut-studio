@@ -212,35 +212,63 @@ export const WizardProvider: React.FC<WizardProviderProps> = ({ children }) => {
       'it-IT': 'Italiano',
     };
 
+    const projectTypeMap: Record<string, string> = {
+      'barbearia': 'Site para Barbearia',
+      'restaurante': 'Site para Restaurante',
+      'ecommerce': 'E-commerce / Loja Virtual',
+      'portfolio': 'Portfólio Profissional',
+      'servicos': 'Site de Serviços',
+      'saude': 'Site de Saúde/Clínica',
+      'educacao': 'Plataforma Educacional',
+      'imobiliaria': 'Site Imobiliário',
+    };
+
+    const visualStyleMap: Record<string, string> = {
+      'moderno': 'Moderno e Minimalista',
+      'elegante': 'Elegante e Sofisticado',
+      'vibrante': 'Vibrante e Colorido',
+      'corporativo': 'Corporativo e Profissional',
+      'criativo': 'Criativo e Artístico',
+      'rustico': 'Rústico e Aconchegante',
+    };
+
+    const layoutStyleMap: Record<string, string> = {
+      'single-page': 'Single Page (One Page)',
+      'multi-section': 'Multi-seções com navegação',
+      'card-based': 'Baseado em Cards',
+      'magazine': 'Estilo Magazine/Editorial',
+    };
+
     const prompt = `
 # 🎯 BRIEFING DE PROJETO - ${businessName.toUpperCase()}
 
 ## 📋 INFORMAÇÕES BÁSICAS
 - **Nome do Negócio:** ${businessName}
-- **Tipo de Projeto:** ${projectType}
+- **Tipo de Projeto:** ${projectTypeMap[projectType] || projectType}
 - **Idioma Principal:** ${languageMap[language] || language}
 
 ## 🎨 IDENTIDADE VISUAL
-- **Estilo Visual:** ${visualStyle}
-- **Cor Primária:** ${primaryColor}
-- **Cor Secundária:** ${secondaryColor}
-- **Cor de Destaque:** ${accentColor}
+- **Estilo Visual:** ${visualStyleMap[visualStyle] || visualStyle}
+- **Paleta de Cores:**
+  - Cor Primária: ${primaryColor}
+  - Cor Secundária: ${secondaryColor}
+  - Cor de Destaque: ${accentColor}
 
 ## ✍️ TIPOGRAFIA & LAYOUT
 - **Fonte de Títulos:** ${headingFont}
 - **Fonte de Texto:** ${bodyFont}
-- **Estilo de Layout:** ${layoutStyle}
+- **Estilo de Layout:** ${layoutStyleMap[layoutStyle] || layoutStyle}
 
 ## ⚡ FUNCIONALIDADES REQUERIDAS
-${features.map(f => `- ${f}`).join('\n')}
+${features.length > 0 ? features.map(f => `- ${f}`).join('\n') : '- Nenhuma funcionalidade selecionada'}
 
 ## 👥 PÚBLICO-ALVO
-${targetAudience}
+${targetAudience || 'Não especificado'}
 
 ## 📝 DESCRIÇÃO DO NEGÓCIO
-${businessDescription}
+${businessDescription || 'Não especificado'}
 
-${uniqueSellingPoints.length > 0 ? `## 💎 DIFERENCIAIS
+${uniqueSellingPoints.length > 0 ? `## 💎 DIFERENCIAIS COMPETITIVOS
 ${uniqueSellingPoints.map(usp => `- ${usp}`).join('\n')}` : ''}
 
 ${inspirationUrls.length > 0 ? `## 🔗 REFERÊNCIAS DE INSPIRAÇÃO
@@ -252,26 +280,36 @@ ${inspirationUrls.map(url => `- ${url}`).join('\n')}` : ''}
 
 Crie um site/landing page profissional seguindo TODAS as especificações acima.
 
-**Requisitos Técnicos:**
+### Requisitos Técnicos:
 - Design responsivo (mobile-first)
-- Código limpo e semântico
-- Otimizado para SEO
-- Performance otimizada
-- Acessibilidade (WCAG 2.1)
+- Código limpo e semântico (HTML5)
+- Otimizado para SEO (meta tags, headings, alt texts)
+- Performance otimizada (lazy loading, otimização de imagens)
+- Acessibilidade (WCAG 2.1 AA)
+- Animações suaves com Framer Motion
 
-**Seções Obrigatórias:**
-1. Hero Section impactante
-2. Sobre/Quem Somos
-3. Serviços/Produtos
-4. Depoimentos/Social Proof
-5. CTA (Call-to-Action) claro
-6. Footer com informações de contato
+### Seções Obrigatórias:
+1. **Hero Section** - Impactante com CTA principal
+2. **Sobre/Quem Somos** - História e valores
+3. **Serviços/Produtos** - Cards ou grid visual
+4. **Depoimentos** - Social proof com avatares
+5. **Galeria/Portfólio** - Showcase visual (se aplicável)
+6. **Contato/CTA Final** - Formulário ou links diretos
+7. **Footer** - Informações, links e redes sociais
 
-**Estilo de Código:**
-- React + TypeScript
-- Tailwind CSS
-- Componentes reutilizáveis
+### Stack Técnica:
+- React 18+ com TypeScript
+- Tailwind CSS para estilização
+- Shadcn/UI para componentes base
 - Framer Motion para animações
+- Lucide React para ícones
+
+### Boas Práticas:
+- Componentes reutilizáveis e bem organizados
+- Hooks customizados quando necessário
+- Responsividade em todos os breakpoints
+- Dark mode support (opcional)
+- Loading states e error handling
 `.trim();
 
     return prompt;
