@@ -22,13 +22,15 @@ import {
   Star,
   Calendar,
   User,
-  Loader2
+  Loader2,
+  Languages
 } from 'lucide-react';
 import { Prospect } from './types';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { GlobalMessageGenerator } from './global/GlobalMessageGenerator';
 
 interface ProspectViewerProps {
   prospect: Prospect | null;
@@ -158,6 +160,10 @@ export const ProspectViewer = ({
                 <TabsTrigger value="proposal" className="gap-2">
                   <MessageSquare className="w-4 h-4" />
                   Proposta
+                </TabsTrigger>
+                <TabsTrigger value="global" className="gap-2">
+                  <Languages className="w-4 h-4" />
+                  Global
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -513,6 +519,39 @@ export const ProspectViewer = ({
                   </div>
                 </div>
               )}
+            </TabsContent>
+
+            {/* Global Message Generator Tab */}
+            <TabsContent value="global" className="p-6 mt-0">
+              <GlobalMessageGenerator
+                prospect={{
+                  id: prospect.id,
+                  company_name: prospect.company_name,
+                  contact_name: undefined,
+                  niche: prospect.niche || undefined,
+                  company_phone: prospect.company_phone || undefined,
+                  company_website: prospect.company_website || undefined,
+                  pain_points: prospect.pain_points || undefined,
+                }}
+                affiliate={{
+                  id: prospect.affiliate_id,
+                  name: 'Afiliado', // TODO: Get from context
+                  company: undefined,
+                }}
+                onMessageGenerated={(message) => {
+                  toast.success('Mensagem global gerada!');
+                }}
+                onSend={(message, channel) => {
+                  if (channel === 'whatsapp' && prospect.company_phone) {
+                    const cleanPhone = prospect.company_phone.replace(/\D/g, '');
+                    const encoded = encodeURIComponent(message);
+                    window.open(`https://wa.me/${cleanPhone}?text=${encoded}`, '_blank');
+                  } else {
+                    navigator.clipboard.writeText(message);
+                    toast.success('Mensagem copiada para envio!');
+                  }
+                }}
+              />
             </TabsContent>
           </Tabs>
         </ScrollArea>

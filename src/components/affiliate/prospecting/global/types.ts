@@ -232,6 +232,15 @@ export const DECISION_SPEED_LABELS: Record<DecisionSpeed, string> = {
   slow: 'Lenta',
 };
 
+export const EMOJI_TOLERANCE_LABELS: Record<EmojiTolerance, string> = {
+  0: 'Proibido',
+  1: 'Evitar',
+  2: 'Mínimo',
+  3: 'Moderado',
+  4: 'Liberado',
+  5: 'Incentivado',
+};
+
 // ==================== COUNTRY PHONE PREFIXES ====================
 
 export const COUNTRY_PHONE_PREFIXES: Record<string, string[]> = {

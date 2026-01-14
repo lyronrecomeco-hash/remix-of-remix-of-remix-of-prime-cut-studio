@@ -5,16 +5,54 @@ import {
   IntentTemplate, 
   MessageIntent,
   ChannelType,
-  MessageGenerationRequest,
-  MessageGenerationResponse,
   ComplianceCheck
 } from './types';
+
+interface GeneratedMessage {
+  message: string;
+  subject_line?: string;
+  cultural_adaptations: string[];
+  compliance_notes?: string[];
+  suggested_send_time?: string;
+  alternative_openings?: string[];
+  validation: {
+    valid: boolean;
+    warnings: string[];
+  };
+  metadata: {
+    country_code: string;
+    language_code: string;
+    intent_type: string;
+    channel: string;
+    generated_at: string;
+  };
+}
+
+interface ProspectData {
+  company_name: string;
+  contact_name?: string;
+  niche?: string;
+  pain_points?: string[];
+  website?: string;
+}
+
+interface AffiliateData {
+  name: string;
+  company?: string;
+}
 
 interface UseMessageGenerationReturn {
   generating: boolean;
   error: string | null;
-  lastGeneration: MessageGenerationResponse | null;
-  generateMessage: (request: MessageGenerationRequest) => Promise<MessageGenerationResponse | null>;
+  lastGeneration: GeneratedMessage | null;
+  generateMessage: (
+    context: ProspectingContext,
+    template: IntentTemplate,
+    prospect: ProspectData,
+    affiliate: AffiliateData,
+    channel: ChannelType,
+    customInstructions?: string
+  ) => Promise<GeneratedMessage | null>;
   validateCompliance: (context: ProspectingContext, channel: ChannelType) => ComplianceCheck[];
   checkBusinessHours: (context: ProspectingContext) => boolean;
   logMessage: (
@@ -33,7 +71,7 @@ interface UseMessageGenerationReturn {
 export const useMessageGeneration = (): UseMessageGenerationReturn => {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lastGeneration, setLastGeneration] = useState<MessageGenerationResponse | null>(null);
+  const [lastGeneration, setLastGeneration] = useState<GeneratedMessage | null>(null);
 
   // Validate compliance based on context
   const validateCompliance = useCallback((
@@ -86,7 +124,6 @@ export const useMessageGeneration = (): UseMessageGenerationReturn => {
   // Check if current time is within business hours
   const checkBusinessHours = useCallback((context: ProspectingContext): boolean => {
     try {
-      // Get current time in the context's timezone
       const now = new Date();
       const formatter = new Intl.DateTimeFormat('en-US', {
         timeZone: context.timezone,
@@ -107,21 +144,25 @@ export const useMessageGeneration = (): UseMessageGenerationReturn => {
 
       return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
     } catch {
-      return true; // Default to true if timezone check fails
+      return true;
     }
   }, []);
 
-  // Generate message using AI
+  // Generate message using Edge Function
   const generateMessage = useCallback(async (
-    request: MessageGenerationRequest
-  ): Promise<MessageGenerationResponse | null> => {
+    context: ProspectingContext,
+    template: IntentTemplate,
+    prospect: ProspectData,
+    affiliate: AffiliateData,
+    channel: ChannelType,
+    customInstructions?: string
+  ): Promise<GeneratedMessage | null> => {
     setGenerating(true);
     setError(null);
-    const startTime = Date.now();
 
     try {
       // Validate compliance first
-      const complianceChecks = validateCompliance(request.context, request.channel);
+      const complianceChecks = validateCompliance(context, channel);
       const failedChecks = complianceChecks.filter(c => !c.passed);
       
       if (failedChecks.length > 0) {
@@ -129,42 +170,64 @@ export const useMessageGeneration = (): UseMessageGenerationReturn => {
         return null;
       }
 
-      // Build the prompt based on context and template
-      const systemPrompt = buildSystemPrompt(request.context, request.template, request.intent);
-      const userPrompt = buildUserPrompt(request.prospect_data, request.intent);
-
-      // Call Supabase Edge Function for AI generation
-      const { data, error: fnError } = await supabase.functions.invoke('global-message-generator', {
-        body: {
-          system_prompt: systemPrompt,
-          user_prompt: userPrompt,
-          context: request.context,
-          template: request.template,
-          intent: request.intent,
-          channel: request.channel,
-          prospect_data: request.prospect_data,
+      // Transform context to match Edge Function expected format
+      const edgeFunctionPayload = {
+        context: {
+          country_code: context.country_code,
+          country_name: context.country_name,
+          language_code: context.language,
+          formality_level: context.formality_level,
+          directness_level: context.directness_level,
+          emoji_tolerance: context.emoji_tolerance,
+          decision_speed: context.decision_speed,
+          preferred_channels: context.channel_priority,
+          business_hours_start: context.business_hours.start,
+          business_hours_end: context.business_hours.end,
+          timezone: context.timezone,
+          currency_code: 'BRL', // Default, could be expanded
+          cultural_notes: [], // Could be added to context
+          forbidden_phrases: template.forbidden_patterns,
+          recommended_phrases: template.required_elements,
+          holidays: [],
         },
-      });
-
-      if (fnError) throw fnError;
-
-      const generationTime = Date.now() - startTime;
-
-      const response: MessageGenerationResponse = {
-        message: data.message || '',
-        subject_line: data.subject_line,
-        warnings: data.warnings || [],
-        compliance_checks: complianceChecks,
-        generation_time_ms: generationTime,
-        tokens_used: data.tokens_used || 0,
+        template: {
+          intent_type: template.intent,
+          base_message: template.base_message,
+          subject_line: template.subject_line || '',
+          tone_guidelines: [template.tone_guidelines],
+          opening_style: template.opening_style || '',
+          closing_style: template.closing_style || '',
+          forbidden_patterns: template.forbidden_patterns,
+          required_elements: template.required_elements,
+          max_length: template.max_length,
+        },
+        prospect,
+        affiliate,
+        channel,
+        customInstructions,
       };
 
-      setLastGeneration(response);
-      return response;
+      const { data, error: fnError } = await supabase.functions.invoke('global-message-generator', {
+        body: edgeFunctionPayload,
+      });
+
+      if (fnError) {
+        console.error('Edge function error:', fnError);
+        throw new Error(fnError.message || 'Erro na edge function');
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || 'Erro ao gerar mensagem');
+      }
+
+      const generatedData = data.data as GeneratedMessage;
+      setLastGeneration(generatedData);
+      return generatedData;
 
     } catch (err) {
       console.error('Error generating message:', err);
-      setError('Erro ao gerar mensagem. Tente novamente.');
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao gerar mensagem';
+      setError(errorMessage);
       return null;
     } finally {
       setGenerating(false);
@@ -198,14 +261,14 @@ export const useMessageGeneration = (): UseMessageGenerationReturn => {
         auto_detected_language: context.language,
         detection_confidence: detectionConfidence,
         manual_override: manualOverride,
-        ai_model_used: 'gemini-2.5-flash',
-        tokens_used: lastGeneration?.tokens_used || null,
-        generation_time_ms: lastGeneration?.generation_time_ms || null,
+        ai_model_used: 'google/gemini-3-flash-preview',
+        tokens_used: null,
+        generation_time_ms: null,
       }]);
     } catch (err) {
       console.error('Error logging message:', err);
     }
-  }, [lastGeneration]);
+  }, []);
 
   return {
     generating,
@@ -217,66 +280,3 @@ export const useMessageGeneration = (): UseMessageGenerationReturn => {
     logMessage,
   };
 };
-
-// ==================== HELPER FUNCTIONS ====================
-
-function buildSystemPrompt(
-  context: ProspectingContext, 
-  template: IntentTemplate | null,
-  intent: MessageIntent
-): string {
-  const basePrompt = `You are a global B2B sales assistant specialized in culturally-aware communication.
-
-STRICT RULES - You MUST follow these:
-
-1. LANGUAGE: Write ONLY in ${context.language}. Never mix languages.
-
-2. FORMALITY: Level ${context.formality_level}/5
-   ${context.formality_level >= 4 ? '- Use formal pronouns and titles' : '- Casual but professional tone'}
-
-3. DIRECTNESS: Level ${context.directness_level}/5
-   ${context.directness_level >= 4 ? '- Be direct and to the point' : '- Build rapport before the ask'}
-
-4. EMOJIS: Tolerance ${context.emoji_tolerance}/5
-   ${context.emoji_tolerance === 0 ? '- NEVER use emojis' : context.emoji_tolerance >= 4 ? '- Emojis are welcome' : '- Use emojis sparingly if at all'}
-
-5. COMPLIANCE: Respect these regulations: ${context.compliance_tags.join(', ') || 'None'}
-
-6. CHANNEL PRIORITY: ${context.channel_priority.join(' > ')}
-
-7. BUSINESS HOURS: ${context.business_hours.start} - ${context.business_hours.end} (${context.timezone})
-
-8. COUNTRY CONTEXT: ${context.country_name} (${context.region_code})
-
-${template ? `
-TEMPLATE GUIDELINES:
-- Tone: ${template.tone_guidelines}
-- Opening: ${template.opening_style || 'Standard greeting'}
-- Closing: ${template.closing_style || 'Standard closing'}
-- Max Length: ${template.max_length} characters
-- FORBIDDEN patterns: ${template.forbidden_patterns.join(', ') || 'None'}
-- REQUIRED elements: ${template.required_elements.join(', ') || 'None'}
-` : ''}
-
-INTENT: ${intent}
-
-Generate a message that feels native to ${context.country_name}, not translated.`;
-
-  return basePrompt;
-}
-
-function buildUserPrompt(
-  prospectData: Record<string, string | undefined>,
-  intent: MessageIntent
-): string {
-  const variables = Object.entries(prospectData)
-    .filter(([_, value]) => value)
-    .map(([key, value]) => `- ${key}: ${value}`)
-    .join('\n');
-
-  return `Generate a ${intent.replace('_', ' ')} message for this prospect:
-
-${variables}
-
-Return ONLY the message text, nothing else.`;
-}
