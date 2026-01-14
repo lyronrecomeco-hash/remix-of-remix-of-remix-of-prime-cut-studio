@@ -17,6 +17,25 @@ type ViewState =
   | { type: 'select-template' }
   | { type: 'editor'; template: TemplateInfo; existingConfig?: AffiliateTemplateConfig };
 
+// Templates disponíveis
+const TEMPLATES: TemplateInfo[] = [
+  {
+    id: 'barbearia',
+    name: 'Barbearia Premium',
+    description: 'Para barbearias modernas e tradicionais',
+    category: 'beauty',
+    route: '/barbearia',
+    gradient: 'from-amber-900 via-zinc-900 to-zinc-950',
+    accent: 'amber',
+    available: true,
+    preview: {
+      title: 'Barber Studio',
+      subtitle: 'Tradição e Estilo',
+      badge: '✂️ Experiência Premium'
+    }
+  },
+];
+
 export function TemplatePortfolioSystem({ affiliateId }: TemplatePortfolioSystemProps) {
   const [activeTab, setActiveTab] = useState<'templates' | 'portfolios'>('templates');
   const [viewState, setViewState] = useState<ViewState>({ type: 'list' });
@@ -35,7 +54,6 @@ export function TemplatePortfolioSystem({ affiliateId }: TemplatePortfolioSystem
   };
 
   const handleEditConfig = (config: AffiliateTemplateConfig) => {
-    // Encontrar o template correspondente
     const template = TEMPLATES.find(t => t.id === config.template_slug);
     if (template) {
       setViewState({ type: 'editor', template, existingConfig: config });
@@ -127,97 +145,3 @@ export function TemplatePortfolioSystem({ affiliateId }: TemplatePortfolioSystem
     </div>
   );
 }
-
-// Templates disponíveis
-const TEMPLATES: TemplateInfo[] = [
-  {
-    id: 'barbearia',
-    name: 'Barbearia Premium',
-    description: 'Para barbearias modernas e tradicionais',
-    category: 'beauty',
-    route: '/barbearia',
-    gradient: 'from-amber-900 via-zinc-900 to-zinc-950',
-    accent: 'amber',
-    available: true,
-    preview: {
-      title: 'Barber Studio',
-      subtitle: 'Tradição e Estilo',
-      badge: '✂️ Experiência Premium'
-    }
-  },
-  {
-    id: 'academia',
-    name: 'Academia Fitness',
-    description: 'Academias, personal trainers e crossfit',
-    category: 'health',
-    route: '/academia',
-    gradient: 'from-red-900 via-zinc-900 to-zinc-950',
-    accent: 'red',
-    available: false,
-    preview: {
-      title: 'Power Gym',
-      subtitle: 'Transforme seu corpo',
-      badge: '💪 Treine com os melhores'
-    }
-  },
-  {
-    id: 'clinica',
-    name: 'Clínica Médica',
-    description: 'Consultórios, clínicas e especialistas',
-    category: 'health',
-    route: '/clinica',
-    gradient: 'from-blue-900 via-zinc-900 to-zinc-950',
-    accent: 'blue',
-    available: false,
-    preview: {
-      title: 'Clínica Vida',
-      subtitle: 'Cuidando de você',
-      badge: '🏥 Saúde em primeiro lugar'
-    }
-  },
-  {
-    id: 'restaurante',
-    name: 'Restaurante & Delivery',
-    description: 'Cardápio digital e pedidos online',
-    category: 'food',
-    route: '/restaurante',
-    gradient: 'from-orange-900 via-zinc-900 to-zinc-950',
-    accent: 'orange',
-    available: false,
-    preview: {
-      title: 'Sabor & Arte',
-      subtitle: 'Gastronomia de verdade',
-      badge: '🍽️ Cardápio digital'
-    }
-  },
-  {
-    id: 'salao',
-    name: 'Salão de Beleza',
-    description: 'Salões, nail designers e estéticas',
-    category: 'beauty',
-    route: '/salao',
-    gradient: 'from-pink-900 via-zinc-900 to-zinc-950',
-    accent: 'pink',
-    available: false,
-    preview: {
-      title: 'Belle Studio',
-      subtitle: 'Realce sua beleza',
-      badge: '💅 Beleza & Bem-estar'
-    }
-  },
-  {
-    id: 'petshop',
-    name: 'Pet Shop',
-    description: 'Banho, tosa e produtos pet',
-    category: 'services',
-    route: '/petshop',
-    gradient: 'from-violet-900 via-zinc-900 to-zinc-950',
-    accent: 'violet',
-    available: false,
-    preview: {
-      title: 'Pet Love',
-      subtitle: 'Amor em cada patinha',
-      badge: '🐾 Cuidado especial'
-    }
-  },
-];
