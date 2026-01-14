@@ -15,6 +15,7 @@ import { ProspectingCards } from './ProspectingCards';
 import { SearchClientsTab } from './tabs/SearchClientsTab';
 import { CreateProposalTab } from './tabs/CreateProposalTab';
 import { HistoryTab } from './tabs/HistoryTab';
+import { ReadyTemplatesTab } from './tabs/ReadyTemplatesTab';
 import { Prospect, ProspectStatus } from './types';
 import React from 'react';
 
@@ -23,7 +24,7 @@ interface AffiliateProspectingProps {
   onSubHeaderChange?: (header: React.ReactNode | null) => void;
 }
 
-type ToolsTab = 'cards' | 'search' | 'proposal' | 'history' | 'settings';
+type ToolsTab = 'cards' | 'search' | 'proposal' | 'history' | 'settings' | 'templates';
 
 export const AffiliateProspecting = ({ affiliateId, onSubHeaderChange }: AffiliateProspectingProps) => {
   const [activeTab, setActiveTab] = useState<ToolsTab>('cards');
@@ -57,6 +58,7 @@ export const AffiliateProspecting = ({ affiliateId, onSubHeaderChange }: Affilia
       case 'proposal': return 'Criar Proposta';
       case 'history': return 'Histórico de Prospects';
       case 'settings': return 'Configurações de Automação';
+      case 'templates': return 'Modelos Prontos';
       default: return null;
     }
   };
@@ -141,6 +143,10 @@ export const AffiliateProspecting = ({ affiliateId, onSubHeaderChange }: Affilia
             onSave={saveSettings}
             affiliateId={affiliateId}
           />
+        )}
+
+        {activeTab === 'templates' && (
+          <ReadyTemplatesTab affiliateId={affiliateId} />
         )}
       </div>
     );
