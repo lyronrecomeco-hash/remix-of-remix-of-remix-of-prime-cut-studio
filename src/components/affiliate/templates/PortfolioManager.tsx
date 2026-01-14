@@ -108,18 +108,40 @@ export function PortfolioManager({
   return (
     <>
       <div className="space-y-4">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-foreground">Meus Portfólios</h3>
-            <p className="text-sm text-muted-foreground">
-              {configs.length} portfólio{configs.length !== 1 ? 's' : ''} criado{configs.length !== 1 ? 's' : ''}
-            </p>
-          </div>
-          <Button onClick={onCreateNew} size="sm">
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Portfólio
-          </Button>
+        {/* Stats Summary */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-primary">{configs.length}</div>
+              <div className="text-xs text-muted-foreground">Portfólios</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-foreground">
+                {configs.reduce((acc, c) => acc + c.views_count, 0)}
+              </div>
+              <div className="text-xs text-muted-foreground">Visualizações</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-green-500">
+                {configs.filter(c => c.is_active).length}
+              </div>
+              <div className="text-xs text-muted-foreground">Ativos</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-foreground">
+                {configs.length > 0 
+                  ? Math.round(configs.reduce((acc, c) => acc + c.views_count, 0) / configs.length) 
+                  : 0}
+              </div>
+              <div className="text-xs text-muted-foreground">Média/Portfólio</div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Lista */}

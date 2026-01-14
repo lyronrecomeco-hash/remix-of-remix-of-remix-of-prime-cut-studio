@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { LayoutGrid, FolderOpen } from 'lucide-react';
 import { TemplateEditor } from './TemplateEditor';
 import { PortfolioManager } from './PortfolioManager';
@@ -97,12 +98,22 @@ export function TemplatePortfolioSystem({ affiliateId }: TemplatePortfolioSystem
 
   return (
     <div className="space-y-6">
+      {/* Header com título e ação principal */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">Central de Templates</h2>
+          <p className="text-sm text-muted-foreground">
+            Crie portfólios personalizados para seus clientes
+          </p>
+        </div>
+        <Button onClick={() => setActiveTab('templates')} className="gap-2 shrink-0">
+          <LayoutGrid className="w-4 h-4" />
+          Criar Novo Portfólio
+        </Button>
+      </div>
+
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'templates' | 'portfolios')}>
         <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="templates" className="gap-2">
-            <LayoutGrid className="w-4 h-4" />
-            Templates
-          </TabsTrigger>
           <TabsTrigger value="portfolios" className="gap-2">
             <FolderOpen className="w-4 h-4" />
             Meus Portfólios
@@ -112,19 +123,13 @@ export function TemplatePortfolioSystem({ affiliateId }: TemplatePortfolioSystem
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="templates" className="gap-2">
+            <LayoutGrid className="w-4 h-4" />
+            Templates Disponíveis
+          </TabsTrigger>
         </TabsList>
 
         <AnimatePresence mode="wait">
-          <TabsContent value="templates" className="mt-6">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-            >
-              <TemplateSelector onSelect={handleSelectTemplate} />
-            </motion.div>
-          </TabsContent>
-
           <TabsContent value="portfolios" className="mt-6">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -138,6 +143,16 @@ export function TemplatePortfolioSystem({ affiliateId }: TemplatePortfolioSystem
                 onDelete={deleteConfig}
                 onCreateNew={() => setActiveTab('templates')}
               />
+            </motion.div>
+          </TabsContent>
+
+          <TabsContent value="templates" className="mt-6">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+            >
+              <TemplateSelector onSelect={handleSelectTemplate} />
             </motion.div>
           </TabsContent>
         </AnimatePresence>
