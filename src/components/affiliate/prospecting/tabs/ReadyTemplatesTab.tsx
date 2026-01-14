@@ -102,29 +102,29 @@ export const ReadyTemplatesTab = ({ affiliateId }: ReadyTemplatesTabProps) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header with greeting - only for customize step */}
       {currentStep === 'customize' && (
-        <div className="space-y-4">
+        <div className="max-w-4xl mx-auto space-y-6">
           <Button
             variant="ghost"
-            size="sm"
+            size="lg"
             onClick={handleBack}
             className="gap-2 text-muted-foreground hover:text-foreground"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-5 h-5" />
             Voltar
           </Button>
           
-          <div className="text-center space-y-2">
-            <div className="flex items-center justify-center gap-2 text-primary text-sm font-medium">
-              <Sparkles className="w-4 h-4" />
+          <div className="text-center space-y-3">
+            <div className="flex items-center justify-center gap-2 text-primary text-base font-medium">
+              <Sparkles className="w-5 h-5" />
               <span>Materializar SaaS</span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground">
               {getGreeting()}, Criador(a)!
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-lg text-muted-foreground">
               Vamos começar a construir seu próximo grande projeto.
             </p>
           </div>
