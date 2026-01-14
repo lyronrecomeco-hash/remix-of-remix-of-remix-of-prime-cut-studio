@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.prospect-sender]
 verify_jwt = false
+
+[functions.global-message-generator]
+verify_jwt = false
