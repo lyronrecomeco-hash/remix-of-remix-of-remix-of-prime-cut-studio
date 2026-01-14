@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Search, MapPin, Building2, Loader2, Users, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, MapPin, Building2, Loader2, Users, ExternalLink, ChevronLeft, ChevronRight, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { RadiusFilterModal } from './RadiusFilterModal';
 
 interface SearchResult {
   name: string;
@@ -19,6 +20,8 @@ interface SearchResult {
   category?: string;
   opening_hours?: string;
   place_id?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 interface SearchClientsCardProps {
@@ -98,8 +101,11 @@ export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsC
   const [maxResults, setMaxResults] = useState<string>('200');
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [originalResults, setOriginalResults] = useState<SearchResult[]>([]);
   const [addingId, setAddingId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [radiusModalOpen, setRadiusModalOpen] = useState(false);
+  const [isFiltered, setIsFiltered] = useState(false);
 
   // Paginação
   const totalPages = Math.ceil(results.length / ITEMS_PER_PAGE);
@@ -116,7 +122,9 @@ export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsC
 
     setSearching(true);
     setResults([]);
+    setOriginalResults([]);
     setCurrentPage(1);
+    setIsFiltered(false);
 
     try {
       const { data, error } = await supabase.functions.invoke('search-businesses', {
@@ -132,6 +140,7 @@ export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsC
 
       if (data?.results && data.results.length > 0) {
         setResults(data.results);
+        setOriginalResults(data.results);
         toast.success(`${data.results.length} estabelecimentos encontrados!`);
       } else {
         toast.info('Nenhum estabelecimento encontrado. Tente outra busca.');
@@ -141,6 +150,19 @@ export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsC
       toast.error('Erro ao buscar estabelecimentos');
     } finally {
       setSearching(false);
+    }
+  };
+
+  const handleRadiusFilter = (filteredResults: SearchResult[]) => {
+    if (filteredResults.length === originalResults.length) {
+      setResults(originalResults);
+      setIsFiltered(false);
+      toast.info('Filtro removido');
+    } else {
+      setResults(filteredResults);
+      setIsFiltered(true);
+      setCurrentPage(1);
+      toast.success(`${filteredResults.length} estabelecimentos na área selecionada`);
     }
   };
 
@@ -265,14 +287,30 @@ export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsC
         {/* Resultados */}
         {results.length > 0 && (
           <div className="mt-4">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
               <h4 className="font-medium flex items-center gap-2">
                 <Users className="w-4 h-4 text-primary" />
                 Resultados ({results.length})
+                {isFiltered && (
+                  <Badge variant="secondary" className="text-xs">
+                    Filtrado
+                  </Badge>
+                )}
               </h4>
-              <span className="text-xs text-muted-foreground">
-                Página {currentPage} de {totalPages}
-              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setRadiusModalOpen(true)}
+                  className="gap-1.5"
+                >
+                  <Target className="w-4 h-4" />
+                  Filtrar por Bairro
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  Página {currentPage} de {totalPages}
+                </span>
+              </div>
             </div>
             
             <div className="space-y-2">
@@ -382,6 +420,16 @@ export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsC
             )}
           </div>
         )}
+
+        {/* Modal de Filtro por Raio */}
+        <RadiusFilterModal
+          open={radiusModalOpen}
+          onOpenChange={setRadiusModalOpen}
+          results={originalResults}
+          city={city}
+          state={state}
+          onFilterResults={handleRadiusFilter}
+        />
       </CardContent>
     </Card>
   );

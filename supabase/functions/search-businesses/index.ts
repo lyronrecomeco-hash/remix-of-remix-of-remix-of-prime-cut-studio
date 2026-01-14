@@ -21,6 +21,8 @@ interface BusinessResult {
   reviews_count?: number;
   category?: string;
   place_id?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 serve(async (req) => {
@@ -150,6 +152,8 @@ serve(async (req) => {
           reviews_count: place.reviewsCount || place.reviews || undefined,
           category: place.category || niche,
           place_id: placeId || undefined,
+          latitude: place.latitude ?? place.gps_coordinates?.latitude ?? undefined,
+          longitude: place.longitude ?? place.gps_coordinates?.longitude ?? undefined,
         } as BusinessResult;
       })
       .filter((r: BusinessResult | null): r is BusinessResult => !!r);
