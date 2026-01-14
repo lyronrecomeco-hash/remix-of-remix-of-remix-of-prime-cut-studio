@@ -3,9 +3,8 @@ import { useParams, Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import type { TemplateConfig } from '@/components/affiliate/templates/types';
-
-// Importar os templates renderizáveis
-import Index from './Index';
+import { DemoProvider } from '@/contexts/DemoContext';
+import DemoTemplate from '@/components/demo/DemoTemplate';
 
 interface TemplateConfigData {
   id: string;
@@ -30,7 +29,6 @@ export default function DemoPage() {
       }
 
       try {
-        // Buscar a configuração pelo código único
         const { data, error: fetchError } = await supabase
           .from('affiliate_template_configs')
           .select('id, template_slug, template_name, config, views_count')
@@ -45,7 +43,7 @@ export default function DemoPage() {
           return;
         }
 
-        // Incrementar contador de visualizações (fire and forget)
+        // Incrementar contador de visualizações
         supabase
           .from('affiliate_template_configs')
           .update({ views_count: (data.views_count || 0) + 1 })
@@ -79,8 +77,9 @@ export default function DemoPage() {
     return <Navigate to="/404" replace />;
   }
 
-  // Renderizar o template apropriado baseado no template_slug
-  // Por enquanto, renderiza a página Index padrão
-  // As personalizações serão aplicadas via CSS variables no futuro
-  return <Index />;
+  return (
+    <DemoProvider config={configData.config}>
+      <DemoTemplate config={configData.config} templateSlug={configData.template_slug} />
+    </DemoProvider>
+  );
 }
