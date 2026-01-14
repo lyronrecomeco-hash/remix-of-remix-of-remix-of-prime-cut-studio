@@ -117,7 +117,7 @@ export const PromptBuilderFormV2 = ({ state, template, onChange, onGenerate }: P
   const visibleTypography = showMoreTypography ? TYPOGRAPHY_OPTIONS : TYPOGRAPHY_OPTIONS.slice(0, 6);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="w-full space-y-10">
       {/* ============================================ */}
       {/* SECTION 1: APP NAME */}
       {/* ============================================ */}
