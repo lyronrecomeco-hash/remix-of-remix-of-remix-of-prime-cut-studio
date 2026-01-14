@@ -4,7 +4,7 @@ import { Wand2, Sparkles } from 'lucide-react';
 import { WizardProvider, useWizard } from './WizardContext';
 import { WizardProgress } from './WizardProgress';
 import { WizardNavigation } from './WizardNavigation';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 
 // Step components
 import { StepBasicInfo } from './steps/StepBasicInfo';
@@ -55,7 +55,7 @@ const WizardContent: React.FC<WizardContainerProps> = ({ onBack, onComplete }) =
   const currentStepInfo = steps.find(s => s.id === currentStep);
 
   return (
-    <div className="flex flex-col h-full max-h-[75vh]">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between pb-4 border-b border-border shrink-0">
         <div className="flex items-center gap-3">
@@ -107,8 +107,8 @@ const WizardContent: React.FC<WizardContainerProps> = ({ onBack, onComplete }) =
         </p>
       </motion.div>
 
-      {/* Step Content */}
-      <ScrollArea className="flex-1 min-h-0 pr-2">
+      {/* Step Content - área com scroll */}
+      <div className="flex-1 min-h-0 overflow-y-auto pr-2">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={currentStep}
@@ -126,7 +126,7 @@ const WizardContent: React.FC<WizardContainerProps> = ({ onBack, onComplete }) =
             {CurrentStepComponent && <CurrentStepComponent />}
           </motion.div>
         </AnimatePresence>
-      </ScrollArea>
+      </div>
 
       {/* Navigation */}
       <WizardNavigation onComplete={onComplete} onBack={onBack} />
