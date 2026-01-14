@@ -1,12 +1,13 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Wand2 } from 'lucide-react';
+import { X, Wand2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WizardProvider, useWizard } from './WizardContext';
 import { WizardProgress } from './WizardProgress';
 import { WizardNavigation } from './WizardNavigation';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-// Step components (to be implemented in Phase 2 & 3)
+// Step components
 import { StepBasicInfo } from './steps/StepBasicInfo';
 import { StepVisualStyle } from './steps/StepVisualStyle';
 import { StepTypography } from './steps/StepTypography';
@@ -42,7 +43,7 @@ const stepVariants = {
 };
 
 const WizardContent: React.FC<WizardContainerProps> = ({ onBack, onComplete }) => {
-  const { currentStep, steps } = useWizard();
+  const { currentStep, steps, formData } = useWizard();
   const [direction, setDirection] = React.useState(0);
   const prevStep = React.useRef(currentStep);
 
@@ -55,19 +56,28 @@ const WizardContent: React.FC<WizardContainerProps> = ({ onBack, onComplete }) =
   const currentStepInfo = steps.find(s => s.id === currentStep);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full max-h-[75vh]">
       {/* Header */}
-      <div className="flex items-center justify-between pb-6 border-b border-border">
+      <div className="flex items-center justify-between pb-4 border-b border-border shrink-0">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Wand2 className="w-6 h-6 text-primary" />
+          <div className="relative">
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
+              <Wand2 className="w-5 h-5 text-primary" />
+            </div>
+            <motion.div
+              className="absolute -top-1 -right-1"
+              animate={{ rotate: [0, 15, -15, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              <Sparkles className="w-3 h-3 text-amber-500" />
+            </motion.div>
           </div>
           <div>
-            <h2 className="text-xl font-bold text-foreground">
-              Criar Template Personalizado
+            <h2 className="text-lg font-bold text-foreground">
+              Criar Template com IA
             </h2>
-            <p className="text-sm text-muted-foreground">
-              Passo a passo para gerar seu template perfeito
+            <p className="text-xs text-muted-foreground">
+              {formData.businessName ? `Para: ${formData.businessName}` : 'Gere seu site personalizado'}
             </p>
           </div>
         </div>
@@ -76,14 +86,14 @@ const WizardContent: React.FC<WizardContainerProps> = ({ onBack, onComplete }) =
           variant="ghost"
           size="icon"
           onClick={onBack}
-          className="text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground hover:bg-destructive/10 rounded-full"
         >
           <X className="w-5 h-5" />
         </Button>
       </div>
 
       {/* Progress */}
-      <div className="py-6">
+      <div className="py-4 shrink-0">
         <WizardProgress />
       </div>
 
@@ -92,18 +102,23 @@ const WizardContent: React.FC<WizardContainerProps> = ({ onBack, onComplete }) =
         key={`title-${currentStep}`}
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-6"
+        className="mb-4 shrink-0"
       >
-        <h3 className="text-lg font-semibold text-foreground">
-          {currentStepInfo?.title}
-        </h3>
-        <p className="text-sm text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+            Etapa {currentStep}
+          </span>
+          <h3 className="text-base font-semibold text-foreground">
+            {currentStepInfo?.title}
+          </h3>
+        </div>
+        <p className="text-sm text-muted-foreground mt-1">
           {currentStepInfo?.subtitle}
         </p>
       </motion.div>
 
       {/* Step Content */}
-      <div className="flex-1 overflow-y-auto min-h-0">
+      <ScrollArea className="flex-1 min-h-0 pr-2">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={currentStep}
@@ -116,12 +131,12 @@ const WizardContent: React.FC<WizardContainerProps> = ({ onBack, onComplete }) =
               x: { type: 'spring', stiffness: 300, damping: 30 },
               opacity: { duration: 0.2 },
             }}
-            className="h-full"
+            className="pb-4"
           >
             {CurrentStepComponent && <CurrentStepComponent />}
           </motion.div>
         </AnimatePresence>
-      </div>
+      </ScrollArea>
 
       {/* Navigation */}
       <WizardNavigation onComplete={onComplete} onBack={onBack} />

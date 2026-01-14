@@ -10,7 +10,9 @@ import {
   Car,
   Scissors,
   Dumbbell,
-  Camera
+  Camera,
+  Building2,
+  Stethoscope
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,21 +20,23 @@ import { useWizard } from '../WizardContext';
 import { cn } from '@/lib/utils';
 
 const projectTypes = [
-  { id: 'loja', label: 'Loja/E-commerce', icon: Store, color: 'from-blue-500 to-blue-600' },
-  { id: 'restaurante', label: 'Restaurante/Food', icon: Utensils, color: 'from-orange-500 to-orange-600' },
-  { id: 'servicos', label: 'Serviços Profissionais', icon: Briefcase, color: 'from-slate-500 to-slate-600' },
-  { id: 'saude', label: 'Saúde/Wellness', icon: Heart, color: 'from-rose-500 to-rose-600' },
-  { id: 'educacao', label: 'Educação/Cursos', icon: GraduationCap, color: 'from-indigo-500 to-indigo-600' },
-  { id: 'imobiliaria', label: 'Imobiliária', icon: Home, color: 'from-emerald-500 to-emerald-600' },
-  { id: 'automotivo', label: 'Automotivo', icon: Car, color: 'from-zinc-500 to-zinc-600' },
-  { id: 'beleza', label: 'Beleza/Estética', icon: Scissors, color: 'from-pink-500 to-pink-600' },
-  { id: 'fitness', label: 'Fitness/Academia', icon: Dumbbell, color: 'from-green-500 to-green-600' },
-  { id: 'fotografia', label: 'Fotografia/Arte', icon: Camera, color: 'from-purple-500 to-purple-600' },
+  { id: 'loja', label: 'Loja', icon: Store },
+  { id: 'restaurante', label: 'Restaurante', icon: Utensils },
+  { id: 'servicos', label: 'Serviços', icon: Briefcase },
+  { id: 'saude', label: 'Saúde', icon: Stethoscope },
+  { id: 'educacao', label: 'Educação', icon: GraduationCap },
+  { id: 'imobiliaria', label: 'Imobiliária', icon: Home },
+  { id: 'automotivo', label: 'Automotivo', icon: Car },
+  { id: 'beleza', label: 'Beleza', icon: Scissors },
+  { id: 'fitness', label: 'Fitness', icon: Dumbbell },
+  { id: 'fotografia', label: 'Fotografia', icon: Camera },
+  { id: 'corporativo', label: 'Corporativo', icon: Building2 },
+  { id: 'clinica', label: 'Clínica', icon: Heart },
 ];
 
 const languages = [
-  { id: 'pt-BR', label: 'Português (Brasil)', flag: '🇧🇷' },
-  { id: 'en-US', label: 'English (US)', flag: '🇺🇸' },
+  { id: 'pt-BR', label: 'Português', flag: '🇧🇷' },
+  { id: 'en-US', label: 'English', flag: '🇺🇸' },
   { id: 'es-ES', label: 'Español', flag: '🇪🇸' },
   { id: 'fr-FR', label: 'Français', flag: '🇫🇷' },
   { id: 'de-DE', label: 'Deutsch', flag: '🇩🇪' },
@@ -43,30 +47,26 @@ export const StepBasicInfo: React.FC = () => {
   const { formData, updateFormData } = useWizard();
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Business Name */}
-      <div className="space-y-3">
-        <Label htmlFor="businessName" className="text-base font-medium">
-          Nome do Negócio *
+      <div className="space-y-2">
+        <Label htmlFor="businessName" className="text-sm font-semibold flex items-center gap-2">
+          Nome do Negócio
+          <span className="text-xs text-primary bg-primary/10 px-1.5 py-0.5 rounded">obrigatório</span>
         </Label>
         <Input
           id="businessName"
           value={formData.businessName}
           onChange={(e) => updateFormData({ businessName: e.target.value })}
-          placeholder="Ex: Barbearia do João, Clínica Vida..."
-          className="h-12 text-base"
+          placeholder="Ex: Barbearia Premium, Clínica Vida..."
+          className="h-11"
         />
-        <p className="text-xs text-muted-foreground">
-          Este nome será usado em todo o template
-        </p>
       </div>
 
       {/* Project Type */}
-      <div className="space-y-3">
-        <Label className="text-base font-medium">
-          Tipo de Projeto *
-        </Label>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+      <div className="space-y-2">
+        <Label className="text-sm font-semibold">Tipo de Projeto</Label>
+        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
           {projectTypes.map((type, index) => {
             const Icon = type.icon;
             const isSelected = formData.projectType === type.id;
@@ -76,37 +76,29 @@ export const StepBasicInfo: React.FC = () => {
                 key={type.id}
                 type="button"
                 onClick={() => updateFormData({ projectType: type.id })}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.02 }}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
                 className={cn(
-                  "relative p-4 rounded-xl border-2 transition-all duration-300",
-                  "flex flex-col items-center gap-2 text-center",
+                  "relative p-3 rounded-lg border-2 transition-all duration-200",
+                  "flex flex-col items-center gap-1.5",
                   isSelected
-                    ? "border-primary bg-primary/5 shadow-lg shadow-primary/10"
-                    : "border-border hover:border-primary/50 hover:bg-muted/50"
+                    ? "border-primary bg-primary/5 shadow-sm shadow-primary/20"
+                    : "border-border hover:border-primary/40 hover:bg-muted/50"
                 )}
               >
-                <div className={cn(
-                  "p-3 rounded-lg bg-gradient-to-br",
-                  type.color,
-                  "text-white"
+                <Icon className={cn(
+                  "w-5 h-5 transition-colors",
+                  isSelected ? "text-primary" : "text-muted-foreground"
+                )} />
+                <span className={cn(
+                  "text-[10px] font-medium leading-tight text-center",
+                  isSelected ? "text-primary" : "text-muted-foreground"
                 )}>
-                  <Icon className="w-5 h-5" />
-                </div>
-                <span className="text-xs font-medium leading-tight">
                   {type.label}
                 </span>
-                
-                {isSelected && (
-                  <motion.div
-                    layoutId="projectTypeIndicator"
-                    className="absolute inset-0 rounded-xl border-2 border-primary"
-                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  />
-                )}
               </motion.button>
             );
           })}
@@ -114,11 +106,9 @@ export const StepBasicInfo: React.FC = () => {
       </div>
 
       {/* Language */}
-      <div className="space-y-3">
-        <Label className="text-base font-medium">
-          Idioma Principal
-        </Label>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div className="space-y-2">
+        <Label className="text-sm font-semibold">Idioma do Site</Label>
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
           {languages.map((lang, index) => {
             const isSelected = formData.language === lang.id;
             
@@ -127,21 +117,26 @@ export const StepBasicInfo: React.FC = () => {
                 key={lang.id}
                 type="button"
                 onClick={() => updateFormData({ language: lang.id })}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.03 }}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className={cn(
-                  "p-3 rounded-lg border-2 transition-all duration-300",
-                  "flex items-center gap-3",
+                  "p-2.5 rounded-lg border-2 transition-all duration-200",
+                  "flex items-center justify-center gap-2",
                   isSelected
                     ? "border-primary bg-primary/5"
-                    : "border-border hover:border-primary/50"
+                    : "border-border hover:border-primary/40"
                 )}
               >
-                <span className="text-2xl">{lang.flag}</span>
-                <span className="text-sm font-medium">{lang.label}</span>
+                <span className="text-lg">{lang.flag}</span>
+                <span className={cn(
+                  "text-xs font-medium",
+                  isSelected ? "text-primary" : "text-muted-foreground"
+                )}>
+                  {lang.label}
+                </span>
               </motion.button>
             );
           })}
