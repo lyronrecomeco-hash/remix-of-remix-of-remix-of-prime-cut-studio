@@ -67,7 +67,6 @@ export const PromptBuilderFormV2 = ({ state, template, onChange, onGenerate }: P
     onChange({ ...state, ...updates });
   };
 
-  // Array helpers
   const addToArray = (key: keyof PromptBuilderState, value: string, setter: (v: string) => void) => {
     if (value.trim()) {
       const current = state[key] as string[];
@@ -94,7 +93,6 @@ export const PromptBuilderFormV2 = ({ state, template, onChange, onGenerate }: P
     updateState({ colors: { ...state.colors, [key]: value } });
   };
 
-  // Color presets based on design style
   const colorPresets = [
     { name: 'Roxo Premium', primary: '#7c3aed', secondary: '#a855f7', accent: '#c084fc', background: '#0f0f1a' },
     { name: 'Azul Corporate', primary: '#2563eb', secondary: '#3b82f6', accent: '#60a5fa', background: '#0a1628' },
@@ -118,176 +116,138 @@ export const PromptBuilderFormV2 = ({ state, template, onChange, onGenerate }: P
 
   const visibleTypography = showMoreTypography ? TYPOGRAPHY_OPTIONS : TYPOGRAPHY_OPTIONS.slice(0, 6);
 
-  const countFilledFields = () => {
-    let count = 0;
-    if (state.appName) count++;
-    if (state.targetAudience) count++;
-    if (state.mainTask) count++;
-    if (state.mainBenefit) count++;
-    if (state.dailyUsers) count++;
-    if (state.businessModel) count++;
-    if (state.mainProblem) count++;
-    if (state.expectedOutcome) count++;
-    if (state.pages.length > 0) count++;
-    if (state.coreFeatures.length > 0) count++;
-    if (state.integrations.length > 0) count++;
-    if (state.userFlows.length > 0) count++;
-    if (state.colors.primary) count++;
-    if (state.typography) count++;
-    if (state.language) count++;
-    if (state.platform) count++;
-    if (state.authType) count++;
-    if (state.paymentMethods.length > 0) count++;
-    if (state.notificationChannels.length > 0) count++;
-    if (state.designStyle) count++;
-    return count;
-  };
-
-  const totalFields = 20;
-  const filledFields = countFilledFields();
-  const progressPercentage = Math.round((filledFields / totalFields) * 100);
-
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-        {/* ============================================ */}
-        {/* SECTION 1: APP NAME */}
-        {/* ============================================ */}
-        <Card className="border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
-          <CardContent className="p-6">
-            <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground flex items-center gap-2">
-                <MessageSquare className="w-4 h-4" />
-                Qual o nome do seu aplicativo?
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Ex: AgendaFácil, MeuTreino, Pizzaria do Zé
-              </p>
-              <Input
-                value={state.appName}
-                onChange={(e) => updateState({ appName: e.target.value })}
-                placeholder={template.defaultAppName}
-                className="text-lg h-12 border-2 focus:border-primary"
-              />
-            </div>
-          </CardContent>
-        </Card>
+    <div className="space-y-8">
+      {/* APP NAME - Full Width */}
+      <Card className="border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
+        <CardContent className="p-6">
+          <div className="space-y-2">
+            <Label className="text-base text-muted-foreground flex items-center gap-2">
+              <MessageSquare className="w-5 h-5" />
+              Qual o nome do seu aplicativo?
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              Ex: AgendaFácil, MeuTreino, Pizzaria do Zé
+            </p>
+            <Input
+              value={state.appName}
+              onChange={(e) => updateState({ appName: e.target.value })}
+              placeholder={template.defaultAppName}
+              className="text-lg h-14 border-2 focus:border-primary"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* ============================================ */}
-        {/* SECTION 2: VISÃO E CONCEITO */}
-        {/* ============================================ */}
-        <Card className="border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Target className="w-5 h-5 text-primary" />
-              Visão e Conceito Central
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label className="text-sm flex items-center gap-2 mb-1">
+      {/* VISÃO E CONCEITO */}
+      <Card className="border border-border">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl flex items-center gap-2">
+            <Target className="w-6 h-6 text-primary" />
+            Visão e Conceito Central
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label className="text-sm flex items-center gap-2">
                 <Users className="w-4 h-4 text-primary" />
                 Para quem é este aplicativo?
               </Label>
-              <p className="text-xs text-muted-foreground mb-2">
+              <p className="text-xs text-muted-foreground">
                 Descreva o público-alvo detalhadamente
               </p>
               <Textarea
                 value={state.targetAudience}
                 onChange={(e) => updateState({ targetAudience: e.target.value })}
-                className="min-h-[80px] resize-none"
-                placeholder="Ex: Donos de barbearias e salões masculinos que desejam modernizar o atendimento..."
+                className="min-h-[100px] resize-none"
+                placeholder="Ex: Donos de barbearias e salões masculinos..."
               />
-              {state.targetAudience && <p className="text-xs text-green-500 mt-1">✓ preenchido</p>}
             </div>
 
-            <div>
-              <Label className="text-sm flex items-center gap-2 mb-1">
+            <div className="space-y-2">
+              <Label className="text-sm flex items-center gap-2">
                 <Zap className="w-4 h-4 text-primary" />
                 Qual é a principal tarefa do app?
               </Label>
-              <p className="text-xs text-muted-foreground mb-2">
+              <p className="text-xs text-muted-foreground">
                 A função core que resolve o problema principal
               </p>
               <Textarea
                 value={state.mainTask}
                 onChange={(e) => updateState({ mainTask: e.target.value })}
                 className="min-h-[100px] resize-none"
-                placeholder="Ex: Permitir que clientes agendem cortes de cabelo, visualizando horários disponíveis de cada barbeiro..."
+                placeholder="Ex: Permitir que clientes agendem cortes..."
               />
-              {state.mainTask && <p className="text-xs text-green-500 mt-1">✓ preenchido</p>}
             </div>
 
-            <div>
-              <Label className="text-sm flex items-center gap-2 mb-1">
+            <div className="space-y-2">
+              <Label className="text-sm flex items-center gap-2">
                 <Heart className="w-4 h-4 text-primary" />
                 Qual o maior benefício para o usuário?
               </Label>
               <Textarea
                 value={state.mainBenefit}
                 onChange={(e) => updateState({ mainBenefit: e.target.value })}
-                className="min-h-[80px] resize-none"
-                placeholder="Ex: Eliminar agendamentos por telefone, reduzir faltas em até 70%..."
+                className="min-h-[100px] resize-none"
+                placeholder="Ex: Eliminar agendamentos por telefone..."
               />
-              {state.mainBenefit && <p className="text-xs text-green-500 mt-1">✓ preenchido</p>}
             </div>
 
-            <div>
-              <Label className="text-sm flex items-center gap-2 mb-1">
+            <div className="space-y-2">
+              <Label className="text-sm flex items-center gap-2">
                 <Users className="w-4 h-4 text-primary" />
                 Quem utiliza o app no dia a dia?
               </Label>
               <Textarea
                 value={state.dailyUsers}
                 onChange={(e) => updateState({ dailyUsers: e.target.value })}
-                className="min-h-[60px] resize-none"
-                placeholder="Ex: Clientes finais, barbeiros, e administradores..."
+                className="min-h-[100px] resize-none"
+                placeholder="Ex: Clientes finais, barbeiros..."
               />
-              {state.dailyUsers && <p className="text-xs text-green-500 mt-1">✓ preenchido</p>}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* ============================================ */}
-        {/* SECTION 3: MODELO DE NEGÓCIO */}
-        {/* ============================================ */}
-        <Card className="border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Building className="w-5 h-5 text-primary" />
-              Modelo de Negócio
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label className="text-sm flex items-center gap-2 mb-1">
+      {/* MODELO DE NEGÓCIO */}
+      <Card className="border border-border">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl flex items-center gap-2">
+            <Building className="w-6 h-6 text-primary" />
+            Modelo de Negócio
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label className="text-sm flex items-center gap-2">
                 <CreditCard className="w-4 h-4 text-primary" />
                 Como o negócio gera receita?
               </Label>
               <Textarea
                 value={state.businessModel}
                 onChange={(e) => updateState({ businessModel: e.target.value })}
-                className="min-h-[80px] resize-none"
-                placeholder="Ex: Agendamento online com cobrança de sinal (10-30% do valor)..."
+                className="min-h-[100px] resize-none"
+                placeholder="Ex: Agendamento online com cobrança de sinal..."
               />
-              {state.businessModel && <p className="text-xs text-green-500 mt-1">✓ preenchido</p>}
             </div>
 
-            <div>
-              <Label className="text-sm flex items-center gap-2 mb-1">
+            <div className="space-y-2">
+              <Label className="text-sm flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 text-primary" />
                 Qual problema principal o app resolve?
               </Label>
               <Textarea
                 value={state.mainProblem}
                 onChange={(e) => updateState({ mainProblem: e.target.value })}
-                className="min-h-[80px] resize-none"
-                placeholder="Ex: Barbearias perdem até 30% do faturamento com no-shows..."
+                className="min-h-[100px] resize-none"
+                placeholder="Ex: Barbearias perdem até 30% com no-shows..."
               />
-              {state.mainProblem && <p className="text-xs text-green-500 mt-1">✓ preenchido</p>}
             </div>
 
-            <div>
-              <Label className="text-sm flex items-center gap-2 mb-1">
+            <div className="lg:col-span-2 space-y-2">
+              <Label className="text-sm flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-primary" />
                 Qual o resultado esperado do dashboard?
               </Label>
@@ -295,29 +255,25 @@ export const PromptBuilderFormV2 = ({ state, template, onChange, onGenerate }: P
                 value={state.expectedOutcome}
                 onChange={(e) => updateState({ expectedOutcome: e.target.value })}
                 className="min-h-[80px] resize-none"
-                placeholder="Ex: Dashboard mostrando agenda do dia, taxa de ocupação, faturamento..."
+                placeholder="Ex: Dashboard mostrando agenda do dia, taxa de ocupação..."
               />
-              {state.expectedOutcome && <p className="text-xs text-green-500 mt-1">✓ preenchido</p>}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* ============================================ */}
-        {/* SECTION 4: PÁGINAS E NAVEGAÇÃO */}
-        {/* ============================================ */}
+      {/* PÁGINAS E FUNCIONALIDADES - Side by Side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* PÁGINAS */}
         <Card className="border border-border">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg flex items-center gap-2">
               <Layout className="w-5 h-5 text-primary" />
-              Estrutura de Páginas e Navegação
+              Estrutura de Páginas
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-xs text-muted-foreground">
-              Páginas pré-configuradas para o nicho de {template.niche}. Adicione ou remova conforme necessário.
-            </p>
-            
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 min-h-[60px]">
               {state.pages.map((page, index) => (
                 <Badge 
                   key={index} 
@@ -339,101 +295,18 @@ export const PromptBuilderFormV2 = ({ state, template, onChange, onGenerate }: P
               <Input
                 value={newPage}
                 onChange={(e) => setNewPage(e.target.value)}
-                placeholder="Adicionar nova página..."
+                placeholder="Adicionar página..."
                 onKeyDown={(e) => e.key === 'Enter' && addToArray('pages', newPage, setNewPage)}
+                className="text-sm"
               />
               <Button onClick={() => addToArray('pages', newPage, setNewPage)} size="icon" variant="outline">
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
-            
-            <p className="text-xs text-green-500">✓ {state.pages.length} páginas configuradas</p>
           </CardContent>
         </Card>
 
-        {/* ============================================ */}
-        {/* SECTION 5: FUNCIONALIDADES CORE */}
-        {/* ============================================ */}
-        <Card className="border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-primary" />
-              Funcionalidades Core do Sistema
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-2">
-              {state.coreFeatures.map((feature, index) => (
-                <Badge 
-                  key={index} 
-                  variant="default"
-                  className="gap-1 pr-1 py-1.5 bg-primary/20 text-primary border border-primary/30"
-                >
-                  {feature}
-                  <button 
-                    onClick={() => removeFromArray('coreFeatures', index)}
-                    className="ml-1 p-0.5 rounded-full hover:bg-destructive/20 transition-colors"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </Badge>
-              ))}
-            </div>
-            
-            <div className="flex gap-2">
-              <Input
-                value={newFeature}
-                onChange={(e) => setNewFeature(e.target.value)}
-                placeholder="Adicionar funcionalidade..."
-                onKeyDown={(e) => e.key === 'Enter' && addToArray('coreFeatures', newFeature, setNewFeature)}
-              />
-              <Button onClick={() => addToArray('coreFeatures', newFeature, setNewFeature)} size="icon" variant="outline">
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
-
-            {/* Suggested Features from Template */}
-            <div className="pt-4 border-t">
-              <Label className="text-sm mb-2 block">Funcionalidades Sugeridas para {template.niche}</Label>
-              <div className="flex flex-wrap gap-2">
-                {template.suggestedFeatures.map((feature) => {
-                  const isSelected = state.selectedSuggestedFeatures.includes(feature);
-                  return (
-                    <Badge
-                      key={feature}
-                      variant={isSelected ? "default" : "outline"}
-                      className={`cursor-pointer transition-all py-1.5 px-2 text-xs ${
-                        isSelected ? 'bg-primary hover:bg-primary/90' : 'hover:bg-primary/10 hover:border-primary'
-                      }`}
-                      onClick={() => toggleArrayItem('selectedSuggestedFeatures', feature)}
-                    >
-                      {isSelected && <Check className="w-3 h-3 mr-1" />}
-                      {feature}
-                    </Badge>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Additional Features */}
-            <div className="pt-4 border-t">
-              <Label className="text-sm flex items-center gap-2 mb-1">
-                <Lightbulb className="w-4 h-4 text-primary" />
-                Recursos adicionais personalizados
-              </Label>
-              <Textarea
-                value={state.additionalFeatures}
-                onChange={(e) => updateState({ additionalFeatures: e.target.value })}
-                placeholder="Liste outros recursos importantes que não estão nas sugestões..."
-                className="min-h-[60px]"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* ============================================ */}
-        {/* SECTION 6: INTEGRAÇÕES */}
-        {/* ============================================ */}
+        {/* INTEGRAÇÕES */}
         <Card className="border border-border">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -442,7 +315,7 @@ export const PromptBuilderFormV2 = ({ state, template, onChange, onGenerate }: P
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 min-h-[60px]">
               {state.integrations.map((integration, index) => (
                 <Badge 
                   key={index} 
@@ -466,6 +339,7 @@ export const PromptBuilderFormV2 = ({ state, template, onChange, onGenerate }: P
                 onChange={(e) => setNewIntegration(e.target.value)}
                 placeholder="Adicionar integração..."
                 onKeyDown={(e) => e.key === 'Enter' && addToArray('integrations', newIntegration, setNewIntegration)}
+                className="text-sm"
               />
               <Button onClick={() => addToArray('integrations', newIntegration, setNewIntegration)} size="icon" variant="outline">
                 <Plus className="w-4 h-4" />
@@ -473,118 +347,178 @@ export const PromptBuilderFormV2 = ({ state, template, onChange, onGenerate }: P
             </div>
           </CardContent>
         </Card>
+      </div>
 
-        {/* ============================================ */}
-        {/* SECTION 7: FLUXOS DE USUÁRIO */}
-        {/* ============================================ */}
-        <Card className="border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Workflow className="w-5 h-5 text-primary" />
-              Fluxos de Usuário (User Flows)
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-xs text-muted-foreground">
-              Descreva as jornadas principais dos usuários no app
-            </p>
-            
-            <div className="space-y-2">
-              {state.userFlows.map((flow, index) => (
-                <div key={index} className="flex items-start gap-2 p-3 bg-muted/30 rounded-lg">
-                  <span className="text-xs text-muted-foreground min-w-[24px]">{index + 1}.</span>
-                  <p className="text-sm flex-1">{flow}</p>
-                  <button 
-                    onClick={() => removeFromArray('userFlows', index)}
-                    className="p-1 rounded-full hover:bg-destructive/20 transition-colors"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-            
-            <div className="flex gap-2">
-              <Input
-                value={newUserFlow}
-                onChange={(e) => setNewUserFlow(e.target.value)}
-                placeholder="Ex: Cliente abre app → Escolhe serviço → Agenda → Paga → Recebe confirmação"
-                onKeyDown={(e) => e.key === 'Enter' && addToArray('userFlows', newUserFlow, setNewUserFlow)}
-              />
-              <Button onClick={() => addToArray('userFlows', newUserFlow, setNewUserFlow)} size="icon" variant="outline">
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      {/* FUNCIONALIDADES CORE */}
+      <Card className="border border-border">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl flex items-center gap-2">
+            <Sparkles className="w-6 h-6 text-primary" />
+            Funcionalidades Core do Sistema
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            {state.coreFeatures.map((feature, index) => (
+              <Badge 
+                key={index} 
+                variant="default"
+                className="gap-1 pr-1 py-1.5 bg-primary/20 text-primary border border-primary/30"
+              >
+                {feature}
+                <button 
+                  onClick={() => removeFromArray('coreFeatures', index)}
+                  className="ml-1 p-0.5 rounded-full hover:bg-destructive/20 transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </Badge>
+            ))}
+          </div>
+          
+          <div className="flex gap-2">
+            <Input
+              value={newFeature}
+              onChange={(e) => setNewFeature(e.target.value)}
+              placeholder="Adicionar funcionalidade..."
+              onKeyDown={(e) => e.key === 'Enter' && addToArray('coreFeatures', newFeature, setNewFeature)}
+            />
+            <Button onClick={() => addToArray('coreFeatures', newFeature, setNewFeature)} size="icon" variant="outline">
+              <Plus className="w-4 h-4" />
+            </Button>
+          </div>
 
-        {/* ============================================ */}
-        {/* SECTION 8: IDENTIDADE VISUAL */}
-        {/* ============================================ */}
-        <Card className="border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Palette className="w-5 h-5 text-primary" />
-              Identidade Visual
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Color Presets */}
-            <div>
-              <Label className="text-sm mb-3 block">Paletas Sugeridas</Label>
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                {colorPresets.map((preset) => (
-                  <button
-                    key={preset.name}
-                    onClick={() => applyColorPreset(preset)}
-                    className="p-2 rounded-lg border hover:border-primary transition-all text-center"
+          {/* Suggested Features */}
+          <div className="pt-4 border-t">
+            <Label className="text-sm mb-3 block">Funcionalidades Sugeridas para {template.niche}</Label>
+            <div className="flex flex-wrap gap-2">
+              {template.suggestedFeatures.map((feature) => {
+                const isSelected = state.selectedSuggestedFeatures.includes(feature);
+                return (
+                  <Badge
+                    key={feature}
+                    variant={isSelected ? "default" : "outline"}
+                    className={`cursor-pointer transition-all py-1.5 px-3 text-xs ${
+                      isSelected ? 'bg-primary hover:bg-primary/90' : 'hover:bg-primary/10 hover:border-primary'
+                    }`}
+                    onClick={() => toggleArrayItem('selectedSuggestedFeatures', feature)}
                   >
-                    <div className="flex gap-1 justify-center mb-1">
-                      <div className="w-4 h-4 rounded" style={{ backgroundColor: preset.primary }} />
-                      <div className="w-4 h-4 rounded" style={{ backgroundColor: preset.secondary }} />
-                      <div className="w-4 h-4 rounded" style={{ backgroundColor: preset.accent }} />
-                    </div>
-                    <p className="text-[10px] text-muted-foreground">{preset.name}</p>
-                  </button>
-                ))}
+                    {isSelected && <Check className="w-3 h-3 mr-1" />}
+                    {feature}
+                  </Badge>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Additional Features */}
+          <div className="pt-4 border-t">
+            <Label className="text-sm flex items-center gap-2 mb-2">
+              <Lightbulb className="w-4 h-4 text-primary" />
+              Recursos adicionais personalizados
+            </Label>
+            <Textarea
+              value={state.additionalFeatures}
+              onChange={(e) => updateState({ additionalFeatures: e.target.value })}
+              placeholder="Liste outros recursos importantes..."
+              className="min-h-[60px]"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* FLUXOS DE USUÁRIO */}
+      <Card className="border border-border">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl flex items-center gap-2">
+            <Workflow className="w-6 h-6 text-primary" />
+            Fluxos de Usuário (User Flows)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Descreva as jornadas principais dos usuários no app
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {state.userFlows.map((flow, index) => (
+              <div key={index} className="flex items-start gap-2 p-3 bg-muted/30 rounded-xl border">
+                <span className="text-xs text-primary font-bold min-w-[24px]">{index + 1}.</span>
+                <p className="text-sm flex-1">{flow}</p>
+                <button 
+                  onClick={() => removeFromArray('userFlows', index)}
+                  className="p-1 rounded-full hover:bg-destructive/20 transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
               </div>
-            </div>
+            ))}
+          </div>
+          
+          <div className="flex gap-2">
+            <Input
+              value={newUserFlow}
+              onChange={(e) => setNewUserFlow(e.target.value)}
+              placeholder="Ex: Cliente abre app → Escolhe serviço → Agenda → Paga"
+              onKeyDown={(e) => e.key === 'Enter' && addToArray('userFlows', newUserFlow, setNewUserFlow)}
+            />
+            <Button onClick={() => addToArray('userFlows', newUserFlow, setNewUserFlow)} size="icon" variant="outline">
+              <Plus className="w-4 h-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-            {/* Color Grid */}
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { key: 'primary', label: 'Cor Primária', desc: 'CTAs, headers, ícones principais' },
-                { key: 'secondary', label: 'Cor Secundária', desc: 'Cards de destaque, badges' },
-                { key: 'accent', label: 'Cor de Destaque', desc: 'Detalhes, hover states' },
-                { key: 'background', label: 'Cor de Fundo', desc: 'Background da aplicação' },
-                { key: 'text', label: 'Cor do Texto', desc: 'Textos e ícones' },
-              ].map((color) => (
-                <div key={color.key} className="space-y-2">
-                  <Label className="text-sm">{color.label}</Label>
-                  <p className="text-xs text-muted-foreground">{color.desc}</p>
-                  <div className="flex gap-2">
-                    <div 
-                      className="w-10 h-10 rounded-lg border-2 border-border cursor-pointer relative overflow-hidden"
-                      style={{ backgroundColor: state.colors[color.key as keyof typeof state.colors] }}
-                    >
-                      <input
-                        type="color"
-                        value={state.colors[color.key as keyof typeof state.colors]}
-                        onChange={(e) => updateColor(color.key as keyof typeof state.colors, e.target.value)}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                    </div>
-                    <Input
+      {/* IDENTIDADE VISUAL */}
+      <Card className="border border-border">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl flex items-center gap-2">
+            <Palette className="w-6 h-6 text-primary" />
+            Identidade Visual
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Personalize sua paleta de cores e tipografia
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Color Grid - 2x2 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[
+              { key: 'primary', label: '1. Cor Primária', desc: 'A cor de destaque da marca, usada em CTAs e ícones.' },
+              { key: 'secondary', label: '2. Cor Secundária', desc: 'Uma cor de apoio para seções ou cards.' },
+              { key: 'background', label: '3. Cor de Fundo', desc: 'A cor de base para o fundo de toda a aplicação.' },
+              { key: 'text', label: '4. Cor do Texto', desc: 'Cor para todos os textos e ícones.' },
+            ].map((color) => (
+              <div key={color.key} className="p-4 rounded-xl border border-border bg-card/50 space-y-3">
+                <div>
+                  <Label className="text-sm font-medium">{color.label}</Label>
+                  <p className="text-xs text-muted-foreground mt-1">{color.desc}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div 
+                    className="w-12 h-12 rounded-xl border-2 border-border cursor-pointer relative overflow-hidden shadow-inner"
+                    style={{ backgroundColor: state.colors[color.key as keyof typeof state.colors] }}
+                  >
+                    <input
+                      type="color"
                       value={state.colors[color.key as keyof typeof state.colors]}
                       onChange={(e) => updateColor(color.key as keyof typeof state.colors, e.target.value)}
-                      className="font-mono text-xs flex-1"
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     />
                   </div>
+                  <Input
+                    value={state.colors[color.key as keyof typeof state.colors]}
+                    onChange={(e) => updateColor(color.key as keyof typeof state.colors, e.target.value)}
+                    className="font-mono text-sm uppercase"
+                  />
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
+          </div>
 
-            {/* Live Color Preview */}
+          {/* Color Preview */}
+          <div className="space-y-2">
+            <Label className="text-sm">Pré-visualização da Interface</Label>
             <div 
               className="p-4 rounded-xl border"
               style={{ 
@@ -592,267 +526,303 @@ export const PromptBuilderFormV2 = ({ state, template, onChange, onGenerate }: P
                 borderColor: `${state.colors.text}20`,
               }}
             >
-              <p className="text-sm font-semibold mb-2" style={{ color: state.colors.text }}>
-                Preview da Identidade Visual
-              </p>
-              <p className="text-xs opacity-70 mb-3" style={{ color: state.colors.text }}>
-                Este texto demonstra a legibilidade.
-              </p>
-              <div className="flex gap-2">
-                <button 
-                  className="px-4 py-2 rounded-lg text-sm text-white font-medium"
-                  style={{ backgroundColor: state.colors.primary }}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-semibold" style={{ color: state.colors.text }}>
+                    Card de Exemplo
+                  </p>
+                  <p className="text-sm opacity-70" style={{ color: state.colors.text }}>
+                    Este texto demonstra a legibilidade.
+                  </p>
+                </div>
+                <Button 
+                  size="sm"
+                  style={{ backgroundColor: state.colors.primary, color: '#fff' }}
+                >
+                  Novo
+                </Button>
+              </div>
+              <div className="mt-3">
+                <Button 
+                  className="w-full"
+                  style={{ backgroundColor: state.colors.primary, color: '#fff' }}
                 >
                   Ação Principal
-                </button>
-                <Badge style={{ backgroundColor: state.colors.secondary, color: 'white' }}>
-                  Nova
-                </Badge>
-                <Badge style={{ backgroundColor: state.colors.accent, color: 'white' }}>
-                  Destaque
-                </Badge>
+                </Button>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* ============================================ */}
-        {/* SECTION 9: TIPOGRAFIA & DESIGN */}
-        {/* ============================================ */}
+          {/* Color Presets */}
+          <div className="pt-4 border-t">
+            <Label className="text-sm mb-3 block">Paletas Prontas</Label>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+              {colorPresets.map((preset) => (
+                <button
+                  key={preset.name}
+                  onClick={() => applyColorPreset(preset)}
+                  className="p-2 rounded-lg border hover:border-primary transition-all text-center"
+                >
+                  <div className="flex gap-1 justify-center mb-1">
+                    <div className="w-4 h-4 rounded" style={{ backgroundColor: preset.primary }} />
+                    <div className="w-4 h-4 rounded" style={{ backgroundColor: preset.secondary }} />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">{preset.name}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* TIPOGRAFIA E ESTILO - Side by Side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* TIPOGRAFIA */}
         <Card className="border border-border">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg flex items-center gap-2">
               <Type className="w-5 h-5 text-primary" />
-              Tipografia e Estilo de Design
+              Tipografia
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Typography */}
-            <div>
-              <Label className="text-sm mb-3 block">Fonte Principal</Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {visibleTypography.map((font) => (
-                  <button
-                    key={font.id}
-                    onClick={() => updateState({ typography: font.name })}
-                    className={`
-                      p-3 rounded-xl border-2 text-left transition-all
-                      ${state.typography === font.name 
-                        ? 'border-primary bg-primary/10' 
-                        : 'border-border hover:border-primary/50'
-                      }
-                    `}
-                    style={{ fontFamily: font.name }}
-                  >
-                    <p className="font-bold text-sm">{font.name}</p>
-                    <p className="text-xs text-muted-foreground">{font.category}</p>
-                  </button>
-                ))}
-              </div>
-
-              {!showMoreTypography && (
-                <Button 
-                  variant="ghost" 
-                  className="w-full text-muted-foreground mt-2"
-                  onClick={() => setShowMoreTypography(true)}
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-2">
+              {visibleTypography.map((font) => (
+                <button
+                  key={font.id}
+                  onClick={() => updateState({ typography: font.id })}
+                  className={`
+                    p-3 rounded-xl border-2 text-left transition-all
+                    ${state.typography === font.id 
+                      ? 'border-primary bg-primary/10' 
+                      : 'border-border hover:border-primary/50'
+                    }
+                  `}
                 >
-                  Ver mais opções
-                </Button>
-              )}
+                  <p className="font-bold text-sm">{font.name}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    {font.description}
+                  </p>
+                </button>
+              ))}
             </div>
-
-            {/* Design Style */}
-            <div className="pt-4 border-t">
-              <Label className="text-sm mb-3 block flex items-center gap-2">
-                <Brush className="w-4 h-4 text-primary" />
-                Estilo de Design
-              </Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {DESIGN_STYLES.map((style) => (
-                  <button
-                    key={style.id}
-                    onClick={() => updateState({ designStyle: style.id })}
-                    className={`
-                      p-3 rounded-xl border-2 text-left transition-all
-                      ${state.designStyle === style.id 
-                        ? 'border-primary bg-primary/10' 
-                        : 'border-border hover:border-primary/50'
-                      }
-                    `}
-                  >
-                    <p className="font-semibold text-sm">{style.name}</p>
-                    <p className="text-xs text-muted-foreground">{style.description}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Icon Style */}
-            <div className="pt-4 border-t">
-              <Label className="text-sm mb-3 block">Estilo de Ícones</Label>
-              <div className="flex flex-wrap gap-2">
-                {ICON_STYLES.map((icon) => (
-                  <button
-                    key={icon.id}
-                    onClick={() => updateState({ iconStyle: icon.id })}
-                    className={`
-                      px-4 py-2 rounded-lg border-2 transition-all
-                      ${state.iconStyle === icon.id 
-                        ? 'border-primary bg-primary/10' 
-                        : 'border-border hover:border-primary/50'
-                      }
-                    `}
-                  >
-                    <p className="font-medium text-sm">{icon.name}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
+            {TYPOGRAPHY_OPTIONS.length > 6 && (
+              <button
+                onClick={() => setShowMoreTypography(!showMoreTypography)}
+                className="text-xs text-primary hover:underline"
+              >
+                {showMoreTypography ? 'Ver menos' : 'Ver mais opções'}
+              </button>
+            )}
           </CardContent>
         </Card>
 
-        {/* ============================================ */}
-        {/* SECTION 10: CONFIGURAÇÕES TÉCNICAS */}
-        {/* ============================================ */}
+        {/* ESTILO DE DESIGN */}
+        <Card className="border border-border">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Brush className="w-5 h-5 text-primary" />
+              Estilo de Design
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-2">
+              {DESIGN_STYLES.map((style) => (
+                <button
+                  key={style.id}
+                  onClick={() => updateState({ designStyle: style.id })}
+                  className={`
+                    p-3 rounded-xl border-2 text-left transition-all
+                    ${state.designStyle === style.id 
+                      ? 'border-primary bg-primary/10' 
+                      : 'border-border hover:border-primary/50'
+                    }
+                  `}
+                >
+                  <p className="font-bold text-sm">{style.name}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    {style.description}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* AUTENTICAÇÃO E PAGAMENTOS - Side by Side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* AUTENTICAÇÃO */}
         <Card className="border border-border">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg flex items-center gap-2">
               <Lock className="w-5 h-5 text-primary" />
-              Configurações Técnicas
+              Autenticação
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Auth Type */}
-            <div>
-              <Label className="text-sm mb-3 block">Tipo de Autenticação</Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {AUTH_TYPES.map((auth) => (
+          <CardContent>
+            <div className="grid grid-cols-2 gap-2">
+              {AUTH_TYPES.map((auth) => (
+                <button
+                  key={auth.id}
+                  onClick={() => updateState({ authType: auth.id })}
+                  className={`
+                    p-3 rounded-xl border-2 text-left transition-all
+                    ${state.authType === auth.id 
+                      ? 'border-primary bg-primary/10' 
+                      : 'border-border hover:border-primary/50'
+                    }
+                  `}
+                >
+                  <p className="font-bold text-sm">{auth.name}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    {auth.description}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* PAGAMENTOS */}
+        <Card className="border border-border">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-primary" />
+              Métodos de Pagamento
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-2">
+              {PAYMENT_METHODS.map((method) => {
+                const isSelected = state.paymentMethods.includes(method.id);
+                return (
                   <button
-                    key={auth.id}
-                    onClick={() => updateState({ authType: auth.id })}
+                    key={method.id}
+                    onClick={() => toggleArrayItem('paymentMethods', method.id)}
                     className={`
                       p-3 rounded-xl border-2 text-left transition-all
-                      ${state.authType === auth.id 
+                      ${isSelected 
                         ? 'border-primary bg-primary/10' 
                         : 'border-border hover:border-primary/50'
                       }
                     `}
                   >
-                    <p className="font-semibold text-sm">{auth.name}</p>
-                    <p className="text-xs text-muted-foreground">{auth.description}</p>
+                    <div className="flex items-center gap-2">
+                      {isSelected && <Check className="w-4 h-4 text-primary" />}
+                      <p className="font-bold text-sm">{method.name}</p>
+                    </div>
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </div>
+          </CardContent>
+        </Card>
+      </div>
 
-            {/* Payment Methods */}
-            <div className="pt-4 border-t">
-              <Label className="text-sm mb-3 block flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-primary" />
-                Métodos de Pagamento
-              </Label>
-              <div className="flex flex-wrap gap-2">
-                {PAYMENT_METHODS.map((method) => {
-                  const isSelected = state.paymentMethods.includes(method.id);
-                  return (
-                    <Badge
-                      key={method.id}
-                      variant={isSelected ? "default" : "outline"}
-                      className={`cursor-pointer transition-all py-2 px-3 ${
-                        isSelected ? 'bg-primary hover:bg-primary/90' : 'hover:bg-primary/10 hover:border-primary'
-                      }`}
-                      onClick={() => toggleArrayItem('paymentMethods', method.id)}
-                    >
-                      {isSelected && <Check className="w-3 h-3 mr-1" />}
-                      {method.name}
-                    </Badge>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Notification Channels */}
-            <div className="pt-4 border-t">
-              <Label className="text-sm mb-3 block flex items-center gap-2">
-                <Bell className="w-4 h-4 text-primary" />
-                Canais de Notificação
-              </Label>
-              <div className="flex flex-wrap gap-2">
-                {NOTIFICATION_CHANNELS.map((channel) => {
-                  const isSelected = state.notificationChannels.includes(channel.id);
-                  return (
-                    <Badge
-                      key={channel.id}
-                      variant={isSelected ? "default" : "outline"}
-                      className={`cursor-pointer transition-all py-2 px-3 ${
-                        isSelected ? 'bg-primary hover:bg-primary/90' : 'hover:bg-primary/10 hover:border-primary'
-                      }`}
-                      onClick={() => toggleArrayItem('notificationChannels', channel.id)}
-                    >
-                      {isSelected && <Check className="w-3 h-3 mr-1" />}
-                      {channel.name}
-                    </Badge>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Toggles */}
-            <div className="pt-4 border-t space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Smartphone className="w-4 h-4 text-primary" />
-                  <div>
-                    <Label className="text-sm">Mobile First</Label>
-                    <p className="text-xs text-muted-foreground">Priorizar design para dispositivos móveis</p>
-                  </div>
-                </div>
-                <Switch 
-                  checked={state.mobileFirst}
-                  onCheckedChange={(checked) => updateState({ mobileFirst: checked })}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Wifi className="w-4 h-4 text-primary" />
-                  <div>
-                    <Label className="text-sm">PWA Support</Label>
-                    <p className="text-xs text-muted-foreground">Instalar como app no celular</p>
-                  </div>
-                </div>
-                <Switch 
-                  checked={state.pwaSupport}
-                  onCheckedChange={(checked) => updateState({ pwaSupport: checked })}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Moon className="w-4 h-4 text-primary" />
-                  <div>
-                    <Label className="text-sm">Dark Mode</Label>
-                    <p className="text-xs text-muted-foreground">Suporte a modo escuro</p>
-                  </div>
-                </div>
-                <Switch 
-                  checked={state.darkMode}
-                  onCheckedChange={(checked) => updateState({ darkMode: checked })}
-                />
-              </div>
+      {/* NOTIFICAÇÕES E CONFIGURAÇÕES - Side by Side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* NOTIFICAÇÕES */}
+        <Card className="border border-border">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Bell className="w-5 h-5 text-primary" />
+              Canais de Notificação
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-2">
+              {NOTIFICATION_CHANNELS.map((channel) => {
+                const isSelected = state.notificationChannels.includes(channel.id);
+                return (
+                  <button
+                    key={channel.id}
+                    onClick={() => toggleArrayItem('notificationChannels', channel.id)}
+                    className={`
+                      p-3 rounded-xl border-2 text-left transition-all
+                      ${isSelected 
+                        ? 'border-primary bg-primary/10' 
+                        : 'border-border hover:border-primary/50'
+                      }
+                    `}
+                  >
+                    <div className="flex items-center gap-2">
+                      {isSelected && <Check className="w-4 h-4 text-primary" />}
+                      <p className="font-bold text-sm">{channel.name}</p>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
 
-        {/* ============================================ */}
-        {/* SECTION 11: IDIOMA */}
-        {/* ============================================ */}
+        {/* CONFIGURAÇÕES TÉCNICAS */}
+        <Card className="border border-border">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Smartphone className="w-5 h-5 text-primary" />
+              Configurações Técnicas
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl">
+              <div className="flex items-center gap-3">
+                <Smartphone className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="font-medium text-sm">Mobile First</p>
+                  <p className="text-xs text-muted-foreground">Design responsivo</p>
+                </div>
+              </div>
+              <Switch
+                checked={state.mobileFirst}
+                onCheckedChange={(checked) => updateState({ mobileFirst: checked })}
+              />
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl">
+              <div className="flex items-center gap-3">
+                <Moon className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="font-medium text-sm">Dark Mode</p>
+                  <p className="text-xs text-muted-foreground">Tema escuro</p>
+                </div>
+              </div>
+              <Switch
+                checked={state.darkMode}
+                onCheckedChange={(checked) => updateState({ darkMode: checked })}
+              />
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl">
+              <div className="flex items-center gap-3">
+                <Wifi className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="font-medium text-sm">PWA Support</p>
+                  <p className="text-xs text-muted-foreground">Instalar como app</p>
+                </div>
+              </div>
+              <Switch
+                checked={state.pwaSupport}
+                onCheckedChange={(checked) => updateState({ pwaSupport: checked })}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* IDIOMA E PLATAFORMA - Side by Side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* IDIOMA */}
         <Card className="border border-border">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg flex items-center gap-2">
               <Globe className="w-5 h-5 text-primary" />
-              Idioma e Localização
+              Qual será o idioma principal do seu aplicativo?
             </CardTitle>
+            <p className="text-xs text-muted-foreground">
+              A interface e todo o conteúdo serão gerados neste idioma.
+            </p>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
@@ -861,7 +831,7 @@ export const PromptBuilderFormV2 = ({ state, template, onChange, onGenerate }: P
                   key={lang.id}
                   onClick={() => updateState({ language: lang.id })}
                   className={`
-                    flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 transition-all
+                    flex items-center gap-2 px-4 py-3 rounded-xl border-2 transition-all
                     ${state.language === lang.id 
                       ? 'border-primary bg-primary/10' 
                       : 'border-border hover:border-primary/50'
@@ -879,23 +849,20 @@ export const PromptBuilderFormV2 = ({ state, template, onChange, onGenerate }: P
           </CardContent>
         </Card>
 
-        {/* ============================================ */}
-        {/* SECTION 12: PLATAFORMA DE IA */}
-        {/* ============================================ */}
+        {/* PLATAFORMA */}
         <Card className="border border-border">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg flex items-center gap-2">
               <Cpu className="w-5 h-5 text-primary" />
-              Plataforma de Desenvolvimento
+              Por onde será desenvolvido seu app?
             </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
             <p className="text-xs text-muted-foreground">
-              Selecione a plataforma de IA que você planeja usar. Isso otimizará o prompt.
+              Selecione a plataforma de IA que você planeja usar.
             </p>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {AI_PLATFORMS.map((platform) => (
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-2">
+              {AI_PLATFORMS.slice(0, 6).map((platform) => (
                 <button
                   key={platform.id}
                   onClick={() => updateState({ platform: platform.id })}
@@ -907,8 +874,8 @@ export const PromptBuilderFormV2 = ({ state, template, onChange, onGenerate }: P
                     }
                   `}
                 >
-                  <div className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center mb-2">
-                    <Cpu className="w-4 h-4 text-muted-foreground" />
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
+                    <Cpu className="w-4 h-4 text-primary" />
                   </div>
                   <p className="font-bold text-sm">{platform.name}</p>
                   <p className="text-[10px] text-muted-foreground line-clamp-2 mt-1">
@@ -919,16 +886,17 @@ export const PromptBuilderFormV2 = ({ state, template, onChange, onGenerate }: P
             </div>
           </CardContent>
         </Card>
+      </div>
 
-        {/* Generate Button */}
-        <Button 
-          size="lg" 
-          className="w-full gap-2 h-16 text-lg bg-gradient-to-r from-primary to-primary/70 hover:from-primary/90 hover:to-primary/60 shadow-lg shadow-primary/25"
-          onClick={onGenerate}
-        >
-          <Rocket className="w-6 h-6" />
-          Materializar Conceito ({progressPercentage}% completo)
-        </Button>
+      {/* Generate Button */}
+      <Button 
+        size="lg" 
+        className="w-full gap-2 h-16 text-lg bg-gradient-to-r from-primary to-primary/70 hover:from-primary/90 hover:to-primary/60 shadow-lg shadow-primary/25"
+        onClick={onGenerate}
+      >
+        <Rocket className="w-6 h-6" />
+        Materializar Conceito
+      </Button>
     </div>
   );
 };
