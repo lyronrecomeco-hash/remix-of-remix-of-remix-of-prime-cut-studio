@@ -54,6 +54,7 @@ interface SearchResult {
   category?: string;
   latitude?: number;
   longitude?: number;
+  place_id?: string;
 }
 
 interface SearchClientsTabProps {
@@ -130,7 +131,7 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
 
   const handleSearch = async () => {
     if (!city.trim() || !countryCode || !niche) {
-      toast.error('Fill in all fields to search');
+      toast.error('Preencha todos os campos para buscar');
       return;
     }
 
@@ -150,15 +151,15 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
       if (data?.success && data.results && data.results.length > 0) {
         setResults(data.results);
         setOriginalResults(data.results);
-        toast.success(`${data.results.length} businesses found!`);
+        toast.success(`${data.results.length} empresas encontradas!`);
       } else if (data?.error) {
         toast.error(data.error);
       } else {
-        toast.info('No businesses found. Try another search.');
+        toast.info('Nenhuma empresa encontrada. Tente outra busca.');
       }
     } catch (error) {
       console.error('Search error:', error);
-      toast.error('Error searching businesses');
+      toast.error('Erro ao buscar empresas');
     } finally {
       setSearching(false);
     }
@@ -168,12 +169,12 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
     if (filteredResults.length === originalResults.length) {
       setResults(originalResults);
       setIsFiltered(false);
-      toast.info('Filter removed');
+      toast.info('Filtro removido');
     } else {
       setResults(filteredResults);
       setIsFiltered(true);
       setCurrentPage(1);
-      toast.success(`${filteredResults.length} businesses in selected area`);
+      toast.success(`${filteredResults.length} empresas na área selecionada`);
     }
   };
 
@@ -266,11 +267,11 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
             {/* Country Selector - FIRST */}
             <div>
               <Label className="text-sm font-medium flex items-center gap-2 mb-2">
-                🌍 Country
+                🌍 País
               </Label>
               <Select value={countryCode} onValueChange={setCountryCode}>
                 <SelectTrigger className="bg-background/50 border-border focus:border-primary">
-                  <SelectValue placeholder="Select country" />
+                  <SelectValue placeholder="Selecione o país" />
                 </SelectTrigger>
                 <SelectContent>
                   {COUNTRIES.map(country => (
@@ -289,12 +290,12 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
             <div>
               <Label className="text-sm font-medium flex items-center gap-2 mb-2">
                 <MapPin className="w-4 h-4 text-primary" />
-                City
+                Cidade
               </Label>
               <Input
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                placeholder={countryCode === 'BR' ? 'Ex: São Paulo' : 'Ex: New York'}
+                placeholder={countryCode === 'BR' ? 'Ex: São Paulo' : 'Ex: Lisboa'}
                 className="bg-background/50 border-border focus:border-primary"
               />
             </div>
@@ -303,11 +304,11 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
             <div>
               <Label className="text-sm font-medium flex items-center gap-2 mb-2">
                 <Building2 className="w-4 h-4 text-primary" />
-                Niche
+                Nicho
               </Label>
               <Select value={niche} onValueChange={setNiche}>
                 <SelectTrigger className="bg-background/50 border-border focus:border-primary">
-                  <SelectValue placeholder="Select niche" />
+                  <SelectValue placeholder="Selecione o nicho" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px]">
                   {availableNiches.map(n => (
@@ -327,12 +328,12 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
                 {searching ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Searching...
+                    Buscando...
                   </>
                 ) : (
                   <>
                     <Search className="w-4 h-4" />
-                    Search
+                    Buscar
                   </>
                 )}
               </Button>
@@ -343,7 +344,7 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
           {selectedCountry && (
             <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
               <span>{selectedCountry.flag}</span>
-              <span>Searching in {selectedCountry.name} ({selectedCountry.language})</span>
+              <span>Buscando em {selectedCountry.name}</span>
             </div>
           )}
         </CardContent>
@@ -353,8 +354,8 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
       {searching && (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <Loader2 className="w-12 h-12 animate-spin text-primary" />
-          <p className="text-lg text-muted-foreground font-medium">Searching businesses, please wait...</p>
-          <p className="text-sm text-muted-foreground">This may take a few seconds</p>
+          <p className="text-lg text-muted-foreground font-medium">Buscando empresas, aguarde...</p>
+          <p className="text-sm text-muted-foreground">Isso pode levar alguns segundos</p>
         </div>
       )}
 
@@ -364,11 +365,11 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
           <div className="flex items-center justify-between flex-wrap gap-2">
             <h3 className="text-lg font-semibold flex items-center gap-2">
               <Target className="w-5 h-5 text-primary" />
-              {results.length} Businesses Found
+              {results.length} Empresas Encontradas
               {isFiltered && (
                 <Badge variant="secondary" className="text-xs">
                   <Filter className="w-3 h-3 mr-1" />
-                  Filtered by Area
+                  Filtrado por Área
                 </Badge>
               )}
             </h3>
@@ -380,10 +381,10 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
                 className="gap-1.5"
               >
                 <MapPin className="w-4 h-4" />
-                Filter by Area
+                Filtrar por Área
               </Button>
               <span className="text-xs text-muted-foreground">
-                Page {currentPage} of {totalPages}
+                Página {currentPage} de {totalPages}
               </span>
               <Badge className="bg-primary/10 text-primary border-primary/30">
                 {selectedCountry?.flag} {selectedCountry?.code}
@@ -410,7 +411,7 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
                     <div className="absolute top-3 right-3 z-10">
                       <Badge className="bg-green-500 text-white gap-1">
                         <CheckCircle className="w-3 h-3" />
-                        Saved
+                        Salvo
                       </Badge>
                     </div>
                   )}
@@ -468,7 +469,7 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
                         }}
                       >
                         <Sparkles className="w-3 h-3" />
-                        Generate Message
+                        Gerar Mensagem
                       </Button>
 
                       <Button
@@ -486,12 +487,12 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
                         ) : isAdded ? (
                           <>
                             <CheckCircle className="w-3 h-3" />
-                            Added
+                            Salvo
                           </>
                         ) : (
                           <>
                             <Zap className="w-3 h-3" />
-                            Add
+                            Salvar
                           </>
                         )}
                       </Button>
@@ -554,68 +555,85 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
         </div>
       )}
 
-      {/* Business Detail Modal */}
+      {/* Business Detail Modal - Modern Design */}
       <Dialog open={!!selectedResult} onOpenChange={(open) => !open && setSelectedResult(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg p-0 overflow-hidden border-0 shadow-2xl">
           {selectedResult && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Building2 className="w-5 h-5 text-primary" />
+            <div className="relative">
+              {/* Header with gradient */}
+              <div className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 p-6 text-primary-foreground">
+                <div className="flex items-start gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0">
+                    <Building2 className="w-7 h-7" />
                   </div>
-                  <div>
-                    <span className="block">{selectedResult.name}</span>
-                    <span className="text-sm font-normal text-muted-foreground">{niche}</span>
-                  </div>
-                </DialogTitle>
-              </DialogHeader>
-
-              <div className="space-y-4 mt-4">
-                {/* Business Info */}
-                <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <MapPin className="w-4 h-4 text-muted-foreground" />
-                      <span>{selectedResult.address}</span>
-                    </div>
-                    {selectedResult.phone && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Phone className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-mono">{selectedResult.phone}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    {selectedResult.website && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Globe className="w-4 h-4 text-muted-foreground" />
-                        <a 
-                          href={`https://${selectedResult.website}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline flex items-center gap-1"
-                        >
-                          {selectedResult.website}
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      </div>
-                    )}
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-xl font-bold truncate">{selectedResult.name}</h2>
+                    <p className="text-primary-foreground/80 text-sm mt-1">{niche}</p>
                     {selectedResult.rating && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Star className="w-4 h-4 text-amber-500 fill-current" />
-                        <span>{selectedResult.rating} ({selectedResult.reviews_count || 0} reviews)</span>
+                      <div className="flex items-center gap-1 mt-2">
+                        <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                        <span className="font-semibold">{selectedResult.rating}</span>
+                        <span className="text-primary-foreground/70 text-sm">
+                          ({selectedResult.reviews_count || 0} avaliações)
+                        </span>
                       </div>
                     )}
                   </div>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-6 space-y-5">
+                {/* Business Info Cards */}
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-xl">
+                    <MapPin className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                    <span className="text-sm">{selectedResult.address}</span>
+                  </div>
+                  
+                  {selectedResult.phone && (
+                    <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl">
+                      <Phone className="w-5 h-5 text-primary shrink-0" />
+                      <span className="text-sm font-mono">{selectedResult.phone}</span>
+                    </div>
+                  )}
+                  
+                  {selectedResult.website && (
+                    <a 
+                      href={`https://${selectedResult.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl hover:bg-muted transition-colors group"
+                    >
+                      <Globe className="w-5 h-5 text-primary shrink-0" />
+                      <span className="text-sm text-primary group-hover:underline flex-1 truncate">{selectedResult.website}</span>
+                      <ExternalLink className="w-4 h-4 text-muted-foreground" />
+                    </a>
+                  )}
+
+                  {/* Google Maps Link */}
+                  {selectedResult.place_id && (
+                    <a 
+                      href={`https://www.google.com/maps/place/?q=place_id:${selectedResult.place_id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 p-3 bg-blue-500/10 rounded-xl hover:bg-blue-500/20 transition-colors group border border-blue-500/20"
+                    >
+                      <div className="w-5 h-5 shrink-0 flex items-center justify-center">
+                        <span className="text-lg">📍</span>
+                      </div>
+                      <span className="text-sm text-blue-600 dark:text-blue-400 group-hover:underline flex-1">Ver no Google Maps</span>
+                      <ExternalLink className="w-4 h-4 text-blue-500/70" />
+                    </a>
+                  )}
                 </div>
 
                 {/* Message Generation */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <Label className="flex items-center gap-2">
+                    <Label className="flex items-center gap-2 text-base font-semibold">
                       <MessageSquare className="w-4 h-4" />
-                      Outreach Message
+                      Mensagem
                     </Label>
                     <Button
                       size="sm"
@@ -627,12 +645,12 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
                       {generatingProposal ? (
                         <>
                           <Loader2 className="w-3 h-3 animate-spin" />
-                          Generating...
+                          Gerando...
                         </>
                       ) : (
                         <>
                           <Sparkles className="w-3 h-3" />
-                          Generate with AI
+                          Gerar com IA
                         </>
                       )}
                     </Button>
@@ -641,65 +659,34 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
                   <Textarea
                     value={generatedMessage}
                     onChange={(e) => setGeneratedMessage(e.target.value)}
-                    placeholder="Click 'Generate with AI' to create a personalized message..."
-                    className="min-h-[200px] resize-none"
+                    placeholder="Clique em 'Gerar com IA' para criar uma mensagem personalizada..."
+                    className="min-h-[180px] resize-none rounded-xl border-2 focus:border-primary"
                   />
-
-                  {generatedMessage && (
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        className="flex-1 gap-2"
-                        onClick={copyToClipboard}
-                      >
-                        {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                        {copied ? 'Copied!' : 'Copy'}
-                      </Button>
-
-                      {selectedResult.phone && (
-                        <Button
-                          className="flex-1 gap-2 bg-green-600 hover:bg-green-700"
-                          onClick={sendViaWhatsApp}
-                        >
-                          <Send className="w-4 h-4" />
-                          Send via WhatsApp
-                        </Button>
-                      )}
-                    </div>
-                  )}
                 </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-2 pt-4 border-t">
+                {/* Action Buttons - Only Copy and WhatsApp */}
+                <div className="flex items-center gap-3 pt-2">
                   <Button
                     variant="outline"
-                    className="flex-1"
-                    onClick={() => setSelectedResult(null)}
+                    className="flex-1 gap-2 h-12 rounded-xl border-2"
+                    onClick={copyToClipboard}
+                    disabled={!generatedMessage}
                   >
-                    <X className="w-4 h-4 mr-2" />
-                    Close
+                    {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                    {copied ? 'Copiado!' : 'Copiar'}
                   </Button>
-                  
+
                   <Button
-                    className="flex-1 gap-2"
-                    disabled={addedNames.has(selectedResult.name)}
-                    onClick={() => handleAddToProspects(selectedResult)}
+                    className="flex-1 gap-2 h-12 rounded-xl bg-green-600 hover:bg-green-700"
+                    onClick={sendViaWhatsApp}
+                    disabled={!selectedResult.phone || !generatedMessage}
                   >
-                    {addedNames.has(selectedResult.name) ? (
-                      <>
-                        <CheckCircle className="w-4 h-4" />
-                        Already Added
-                      </>
-                    ) : (
-                      <>
-                        <Zap className="w-4 h-4" />
-                        Add to Prospects
-                      </>
-                    )}
+                    <Send className="w-5 h-5" />
+                    Enviar WhatsApp
                   </Button>
                 </div>
               </div>
-            </>
+            </div>
           )}
         </DialogContent>
       </Dialog>
