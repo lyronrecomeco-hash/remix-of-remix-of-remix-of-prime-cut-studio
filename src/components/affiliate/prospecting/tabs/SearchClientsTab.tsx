@@ -140,6 +140,7 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
   const [maxResults, setMaxResults] = useState<string>('200');
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [addingId, setAddingId] = useState<string | null>(null);
 
   const [selectedResult, setSelectedResult] = useState<SearchResult | null>(null);
   const [addedNames, setAddedNames] = useState<Set<string>>(new Set());
