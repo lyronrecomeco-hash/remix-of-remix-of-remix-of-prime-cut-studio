@@ -148,8 +148,9 @@ const iconMap: Record<string, any> = {
 export default function DemoBookingPage() {
   const { code } = useParams<{ code: string }>();
   const [loading, setLoading] = useState(true);
-  const [configData, setConfigData] = useState<{ config: TemplateConfig } | null>(null);
+  const [configData, setConfigData] = useState<{ config: TemplateConfig; affiliateId: string } | null>(null);
   const [error, setError] = useState(false);
+  const [sendingWhatsApp, setSendingWhatsApp] = useState(false);
   
   const phoneMask = usePhoneMask();
   const isMobileOrTablet = useIsMobile();
@@ -177,7 +178,7 @@ export default function DemoBookingPage() {
       try {
         const { data, error: fetchError } = await supabase
           .from('affiliate_template_configs')
-          .select('id, template_slug, template_name, config')
+          .select('id, template_slug, template_name, config, affiliate_id')
           .eq('unique_code', code)
           .eq('is_active', true)
           .single();
@@ -189,7 +190,8 @@ export default function DemoBookingPage() {
         }
 
         setConfigData({
-          config: data.config as unknown as TemplateConfig
+          config: data.config as unknown as TemplateConfig,
+          affiliateId: data.affiliate_id
         });
       } catch (err) {
         console.error('Erro:', err);
@@ -248,18 +250,70 @@ export default function DemoBookingPage() {
 
   const handleConfirmBooking = async () => {
     if (!selectedService || !selectedBarber || !selectedDate || !selectedTime) return;
-    if (isLoading) return;
+    if (isLoading || !configData) return;
 
     setIsLoading(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    const config = configData.config;
+    const businessName = config.business.name || 'Barbearia Demo';
+    const formattedDate = formatDate(selectedDate);
+    
+    // Create confirmation message
+    const confirmationMessage = `✅ *Agendamento Confirmado!*
+
+Olá ${clientName}! Seu agendamento foi confirmado com sucesso.
+
+📋 *Detalhes:*
+• Serviço: ${selectedService.name}
+• Profissional: ${selectedBarber.name}
+• Data: ${formattedDate}
+• Horário: ${selectedTime}
+• Valor: R$ ${selectedService.price.toFixed(2).replace('.', ',')}
+
+📍 *Local:* ${config.business.address || 'Endereço a confirmar'}
+
+⏰ Chegue com 5 minutos de antecedência.
+
+_Agendamento realizado via ${businessName}_`;
+
+    // Send WhatsApp confirmation
+    setSendingWhatsApp(true);
+    try {
+      const { data: sendResult, error: sendError } = await supabase.functions.invoke('send-whatsapp-genesis', {
+        body: {
+          affiliateId: configData.affiliateId,
+          phone: phoneMask.rawValue,
+          message: confirmationMessage,
+          countryCode: 'BR',
+        },
+      });
+
+      if (sendError) {
+        console.error('Erro ao enviar WhatsApp:', sendError);
+        toast.error('Agendamento confirmado', {
+          description: 'Não foi possível enviar a confirmação por WhatsApp, mas seu horário está reservado!'
+        });
+      } else if (sendResult?.success) {
+        toast.success('Agendamento confirmado!', {
+          description: 'Você receberá a confirmação no WhatsApp em instantes.'
+        });
+      } else {
+        console.error('Erro no envio:', sendResult?.error);
+        toast.success('Agendamento confirmado!', {
+          description: sendResult?.error || 'Confirmação enviada!'
+        });
+      }
+    } catch (err) {
+      console.error('Erro ao chamar função:', err);
+      toast.success('Agendamento confirmado!', {
+        description: `${selectedService.name} dia ${formattedDate} às ${selectedTime}`
+      });
+    } finally {
+      setSendingWhatsApp(false);
+    }
     
     setIsConfirmed(true);
     setIsLoading(false);
-    toast.success('Agendamento confirmado!', {
-      description: `${selectedService.name} dia ${formatDate(selectedDate)} às ${selectedTime}`
-    });
   };
 
   const nextStep = () => {
@@ -712,13 +766,13 @@ export default function DemoBookingPage() {
             <Button
               variant="hero"
               onClick={nextStep}
-              disabled={!canProceed() || isLoading}
+              disabled={!canProceed() || isLoading || sendingWhatsApp}
               className="gap-2"
             >
-              {isLoading ? (
+              {isLoading || sendingWhatsApp ? (
                 <>
                   <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                  Confirmando...
+                  {sendingWhatsApp ? 'Enviando...' : 'Confirmando...'}
                 </>
               ) : currentStep === 5 ? (
                 <>
