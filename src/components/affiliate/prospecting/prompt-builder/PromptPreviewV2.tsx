@@ -20,12 +20,7 @@ export const PromptPreviewV2 = ({ prompt, onCopy, copied, onBack }: PromptPrevie
         <p className="text-lg text-muted-foreground">Seu prompt está pronto para uso</p>
       </div>
 
-      <div className="flex items-center justify-between gap-3">
-        <Button variant="ghost" onClick={onBack} className="gap-2">
-          <ArrowLeft className="w-4 h-4" />
-          Voltar
-        </Button>
-
+      <div className="flex items-center justify-end">
         <Button
           variant={copied ? 'default' : 'secondary'}
           onClick={onCopy}
