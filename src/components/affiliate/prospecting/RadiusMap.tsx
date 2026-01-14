@@ -36,7 +36,7 @@ function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lng: number
   return null;
 }
 
-export default function RadiusMap({ center, radius, onMapClick }: RadiusMapProps) {
+function RadiusMap({ center, radius, onMapClick }: RadiusMapProps) {
   return (
     <MapContainer
       center={center}
@@ -53,7 +53,7 @@ export default function RadiusMap({ center, radius, onMapClick }: RadiusMapProps
       <Marker position={center} />
       <Circle
         center={center}
-        radius={radius * 1000} // Convert km to meters
+        radius={radius * 1000}
         pathOptions={{
           color: 'hsl(217, 91%, 60%)',
           fillColor: 'hsl(217, 91%, 60%)',
@@ -64,3 +64,5 @@ export default function RadiusMap({ center, radius, onMapClick }: RadiusMapProps
     </MapContainer>
   );
 }
+
+export default RadiusMap;
