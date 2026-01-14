@@ -20,7 +20,7 @@ interface TemplateSelectorProps {
   onSelect: (template: TemplateInfo) => void;
 }
 
-type Category = 'all' | 'beauty' | 'food' | 'health' | 'services' | 'education';
+type Category = 'all' | 'beauty' | 'food' | 'health' | 'services' | 'education' | 'auto' | 'tech' | 'events' | 'real_estate';
 
 const categories = [
   { id: 'all' as Category, label: 'Todos', icon: LayoutGrid },
@@ -29,9 +29,14 @@ const categories = [
   { id: 'health' as Category, label: 'Fitness & Saúde', icon: Dumbbell },
   { id: 'services' as Category, label: 'Serviços', icon: Scale },
   { id: 'education' as Category, label: 'Educação', icon: GraduationCap },
+  { id: 'auto' as Category, label: 'Automotivo', icon: Scale },
+  { id: 'tech' as Category, label: 'Tecnologia', icon: Scale },
+  { id: 'events' as Category, label: 'Eventos', icon: Scale },
+  { id: 'real_estate' as Category, label: 'Imóveis', icon: Scale },
 ];
 
 const templates: TemplateInfo[] = [
+  // BELEZA & ESTÉTICA
   {
     id: 'barbearia',
     name: 'Barbearia Premium',
@@ -47,6 +52,113 @@ const templates: TemplateInfo[] = [
       badge: '✂️ Experiência Premium'
     }
   },
+  {
+    id: 'salao',
+    name: 'Salão de Beleza',
+    description: 'Salões, nail designers e estéticas',
+    category: 'beauty',
+    route: '/salao',
+    gradient: 'from-pink-900 via-zinc-900 to-zinc-950',
+    accent: 'pink',
+    available: false,
+    preview: {
+      title: 'Belle Studio',
+      subtitle: 'Realce sua beleza',
+      badge: '💅 Beleza & Bem-estar'
+    }
+  },
+  {
+    id: 'spa',
+    name: 'Spa & Massagem',
+    description: 'Spas, massagistas e clínicas de relaxamento',
+    category: 'beauty',
+    route: '/spa',
+    gradient: 'from-teal-900 via-zinc-900 to-zinc-950',
+    accent: 'teal',
+    available: false,
+    preview: {
+      title: 'Zen Spa',
+      subtitle: 'Relaxe e renove',
+      badge: '🧘 Bem-estar total'
+    }
+  },
+  {
+    id: 'makeup',
+    name: 'Maquiagem & Design',
+    description: 'Maquiadoras, designers de sobrancelha',
+    category: 'beauty',
+    route: '/makeup',
+    gradient: 'from-rose-900 via-zinc-900 to-zinc-950',
+    accent: 'rose',
+    available: false,
+    preview: {
+      title: 'Glam Studio',
+      subtitle: 'Beleza que transforma',
+      badge: '💄 Make profissional'
+    }
+  },
+  // ALIMENTAÇÃO
+  {
+    id: 'restaurante',
+    name: 'Restaurante & Delivery',
+    description: 'Cardápio digital e pedidos online',
+    category: 'food',
+    route: '/restaurante',
+    gradient: 'from-orange-900 via-zinc-900 to-zinc-950',
+    accent: 'orange',
+    available: false,
+    preview: {
+      title: 'Sabor & Arte',
+      subtitle: 'Gastronomia de verdade',
+      badge: '🍽️ Cardápio digital'
+    }
+  },
+  {
+    id: 'pizzaria',
+    name: 'Pizzaria',
+    description: 'Pizzarias com delivery e pedidos',
+    category: 'food',
+    route: '/pizzaria',
+    gradient: 'from-red-800 via-zinc-900 to-zinc-950',
+    accent: 'red',
+    available: false,
+    preview: {
+      title: 'Pizza Express',
+      subtitle: 'A melhor pizza da cidade',
+      badge: '🍕 Delivery rápido'
+    }
+  },
+  {
+    id: 'confeitaria',
+    name: 'Confeitaria & Bolos',
+    description: 'Doces, bolos e encomendas',
+    category: 'food',
+    route: '/confeitaria',
+    gradient: 'from-pink-800 via-zinc-900 to-zinc-950',
+    accent: 'pink',
+    available: false,
+    preview: {
+      title: 'Sweet Cake',
+      subtitle: 'Doçura em cada mordida',
+      badge: '🎂 Bolos personalizados'
+    }
+  },
+  {
+    id: 'hamburgueria',
+    name: 'Hamburgueria',
+    description: 'Hamburguerias artesanais',
+    category: 'food',
+    route: '/hamburgueria',
+    gradient: 'from-yellow-900 via-zinc-900 to-zinc-950',
+    accent: 'yellow',
+    available: false,
+    preview: {
+      title: 'Burger House',
+      subtitle: 'Hambúrgueres artesanais',
+      badge: '🍔 Sabor único'
+    }
+  },
+  // SAÚDE & FITNESS
   {
     id: 'academia',
     name: 'Academia Fitness',
@@ -78,50 +190,36 @@ const templates: TemplateInfo[] = [
     }
   },
   {
-    id: 'restaurante',
-    name: 'Restaurante & Delivery',
-    description: 'Cardápio digital e pedidos online',
-    category: 'food',
-    route: '/restaurante',
-    gradient: 'from-orange-900 via-zinc-900 to-zinc-950',
-    accent: 'orange',
+    id: 'dentista',
+    name: 'Consultório Odontológico',
+    description: 'Dentistas e clínicas odontológicas',
+    category: 'health',
+    route: '/dentista',
+    gradient: 'from-cyan-900 via-zinc-900 to-zinc-950',
+    accent: 'cyan',
     available: false,
     preview: {
-      title: 'Sabor & Arte',
-      subtitle: 'Gastronomia de verdade',
-      badge: '🍽️ Cardápio digital'
+      title: 'Sorriso Perfeito',
+      subtitle: 'Seu sorriso em boas mãos',
+      badge: '🦷 Odontologia moderna'
     }
   },
   {
-    id: 'imobiliaria',
-    name: 'Imobiliária',
-    description: 'Catálogo de imóveis e corretores',
-    category: 'services',
-    route: '/imobiliaria',
-    gradient: 'from-emerald-900 via-zinc-900 to-zinc-950',
-    accent: 'emerald',
+    id: 'psicologia',
+    name: 'Psicologia & Terapia',
+    description: 'Psicólogos e terapeutas',
+    category: 'health',
+    route: '/psicologia',
+    gradient: 'from-indigo-900 via-zinc-900 to-zinc-950',
+    accent: 'indigo',
     available: false,
     preview: {
-      title: 'Prime Imóveis',
-      subtitle: 'Seu lar ideal',
-      badge: '🏠 Os melhores imóveis'
+      title: 'Mente Sã',
+      subtitle: 'Cuide da sua mente',
+      badge: '🧠 Saúde mental'
     }
   },
-  {
-    id: 'salao',
-    name: 'Salão de Beleza',
-    description: 'Salões, nail designers e estéticas',
-    category: 'beauty',
-    route: '/salao',
-    gradient: 'from-pink-900 via-zinc-900 to-zinc-950',
-    accent: 'pink',
-    available: false,
-    preview: {
-      title: 'Belle Studio',
-      subtitle: 'Realce sua beleza',
-      badge: '💅 Beleza & Bem-estar'
-    }
-  },
+  // SERVIÇOS
   {
     id: 'petshop',
     name: 'Pet Shop',
@@ -138,6 +236,83 @@ const templates: TemplateInfo[] = [
     }
   },
   {
+    id: 'advocacia',
+    name: 'Escritório de Advocacia',
+    description: 'Advogados e escritórios jurídicos',
+    category: 'services',
+    route: '/advocacia',
+    gradient: 'from-slate-800 via-zinc-900 to-zinc-950',
+    accent: 'slate',
+    available: false,
+    preview: {
+      title: 'Juris & Law',
+      subtitle: 'Seus direitos protegidos',
+      badge: '⚖️ Advocacia de excelência'
+    }
+  },
+  {
+    id: 'contabilidade',
+    name: 'Contabilidade',
+    description: 'Contadores e escritórios contábeis',
+    category: 'services',
+    route: '/contabilidade',
+    gradient: 'from-emerald-900 via-zinc-900 to-zinc-950',
+    accent: 'emerald',
+    available: false,
+    preview: {
+      title: 'Conta Certa',
+      subtitle: 'Sua empresa em ordem',
+      badge: '📊 Gestão financeira'
+    }
+  },
+  // AUTOMOTIVO
+  {
+    id: 'autoescola',
+    name: 'Autoescola',
+    description: 'CFCs e escolas de condução',
+    category: 'auto',
+    route: '/autoescola',
+    gradient: 'from-blue-800 via-zinc-900 to-zinc-950',
+    accent: 'blue',
+    available: false,
+    preview: {
+      title: 'Dirija Bem',
+      subtitle: 'Sua CNH mais perto',
+      badge: '🚗 Primeira habilitação'
+    }
+  },
+  {
+    id: 'lavajato',
+    name: 'Lava-Jato & Estética',
+    description: 'Lava-jatos e estética automotiva',
+    category: 'auto',
+    route: '/lavajato',
+    gradient: 'from-sky-900 via-zinc-900 to-zinc-950',
+    accent: 'sky',
+    available: false,
+    preview: {
+      title: 'Auto Brilho',
+      subtitle: 'Seu carro impecável',
+      badge: '🚿 Lavagem premium'
+    }
+  },
+  {
+    id: 'oficina',
+    name: 'Oficina Mecânica',
+    description: 'Mecânicos e autocenters',
+    category: 'auto',
+    route: '/oficina',
+    gradient: 'from-gray-800 via-zinc-900 to-zinc-950',
+    accent: 'gray',
+    available: false,
+    preview: {
+      title: 'Auto Center',
+      subtitle: 'Cuidamos do seu carro',
+      badge: '🔧 Mecânica especializada'
+    }
+  },
+  // EDUCAÇÃO
+  {
     id: 'escola',
     name: 'Escola & Cursos',
     description: 'Matrículas e cursos online',
@@ -150,6 +325,114 @@ const templates: TemplateInfo[] = [
       title: 'EduTech',
       subtitle: 'Aprenda sem limites',
       badge: '📚 Educação de qualidade'
+    }
+  },
+  {
+    id: 'idiomas',
+    name: 'Escola de Idiomas',
+    description: 'Cursos de inglês, espanhol e mais',
+    category: 'education',
+    route: '/idiomas',
+    gradient: 'from-blue-900 via-zinc-900 to-zinc-950',
+    accent: 'blue',
+    available: false,
+    preview: {
+      title: 'Global Languages',
+      subtitle: 'Fale com o mundo',
+      badge: '🌍 Idiomas sem fronteiras'
+    }
+  },
+  // IMÓVEIS
+  {
+    id: 'imobiliaria',
+    name: 'Imobiliária',
+    description: 'Catálogo de imóveis e corretores',
+    category: 'real_estate',
+    route: '/imobiliaria',
+    gradient: 'from-emerald-900 via-zinc-900 to-zinc-950',
+    accent: 'emerald',
+    available: false,
+    preview: {
+      title: 'Prime Imóveis',
+      subtitle: 'Seu lar ideal',
+      badge: '🏠 Os melhores imóveis'
+    }
+  },
+  {
+    id: 'arquitetura',
+    name: 'Arquitetura & Design',
+    description: 'Arquitetos e designers de interiores',
+    category: 'real_estate',
+    route: '/arquitetura',
+    gradient: 'from-stone-800 via-zinc-900 to-zinc-950',
+    accent: 'stone',
+    available: false,
+    preview: {
+      title: 'Archi Design',
+      subtitle: 'Projetos que inspiram',
+      badge: '🏗️ Arquitetura moderna'
+    }
+  },
+  // EVENTOS
+  {
+    id: 'fotografo',
+    name: 'Fotógrafo',
+    description: 'Fotógrafos e estúdios de foto',
+    category: 'events',
+    route: '/fotografo',
+    gradient: 'from-amber-800 via-zinc-900 to-zinc-950',
+    accent: 'amber',
+    available: false,
+    preview: {
+      title: 'Photo Studio',
+      subtitle: 'Memórias eternas',
+      badge: '📷 Fotografia profissional'
+    }
+  },
+  {
+    id: 'buffet',
+    name: 'Buffet & Eventos',
+    description: 'Buffets, decoração e festas',
+    category: 'events',
+    route: '/buffet',
+    gradient: 'from-fuchsia-900 via-zinc-900 to-zinc-950',
+    accent: 'fuchsia',
+    available: false,
+    preview: {
+      title: 'Festa & Cia',
+      subtitle: 'Eventos inesquecíveis',
+      badge: '🎉 Celebre com a gente'
+    }
+  },
+  // TECNOLOGIA
+  {
+    id: 'assistencia',
+    name: 'Assistência Técnica',
+    description: 'Conserto de celulares e computadores',
+    category: 'tech',
+    route: '/assistencia',
+    gradient: 'from-zinc-800 via-zinc-900 to-zinc-950',
+    accent: 'zinc',
+    available: false,
+    preview: {
+      title: 'Tech Fix',
+      subtitle: 'Consertamos tudo',
+      badge: '📱 Reparo rápido'
+    }
+  },
+  {
+    id: 'software',
+    name: 'Software House',
+    description: 'Desenvolvimento de apps e sistemas',
+    category: 'tech',
+    route: '/software',
+    gradient: 'from-violet-800 via-zinc-900 to-zinc-950',
+    accent: 'violet',
+    available: false,
+    preview: {
+      title: 'Dev Studio',
+      subtitle: 'Soluções digitais',
+      badge: '💻 Desenvolvimento sob medida'
     }
   },
 ];
