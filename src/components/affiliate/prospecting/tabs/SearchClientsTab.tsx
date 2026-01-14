@@ -386,8 +386,17 @@ Se fizer sentido, posso te explicar rapidamente como funciona.`;
         </CardContent>
       </Card>
 
+      {/* Loading State */}
+      {searching && results.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
+          <Loader2 className="w-12 h-12 animate-spin text-primary" />
+          <p className="text-lg text-muted-foreground font-medium">Buscando estabelecimentos, aguarde...</p>
+          <p className="text-sm text-muted-foreground">Isso pode levar alguns segundos</p>
+        </div>
+      )}
+
       {/* Results Grid */}
-      {results.length > 0 && (
+      {results.length > 0 && !searching && (
         <div className="space-y-4">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <h3 className="text-lg font-semibold flex items-center gap-2">
