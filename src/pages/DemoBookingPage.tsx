@@ -290,8 +290,8 @@ _Agendamento realizado via ${businessName}_`;
 
       if (sendError) {
         console.error('Erro ao enviar WhatsApp:', sendError);
-        toast.error('Agendamento confirmado', {
-          description: 'Não foi possível enviar a confirmação por WhatsApp, mas seu horário está reservado!'
+        toast.error('WhatsApp não configurado', {
+          description: 'O afiliado precisa conectar uma instância Genesis para enviar confirmações.'
         });
       } else if (sendResult?.success) {
         toast.success('Agendamento confirmado!', {
@@ -299,14 +299,22 @@ _Agendamento realizado via ${businessName}_`;
         });
       } else {
         console.error('Erro no envio:', sendResult?.error);
-        toast.success('Agendamento confirmado!', {
-          description: sendResult?.error || 'Confirmação enviada!'
-        });
+        // Show specific error message
+        const errorMessage = sendResult?.error || 'Erro desconhecido';
+        if (errorMessage.includes('instância') || errorMessage.includes('Genesis')) {
+          toast.error('WhatsApp não configurado', {
+            description: 'Configure uma instância Genesis em Prospecção > Configurações para enviar confirmações.'
+          });
+        } else {
+          toast.warning('Agendamento confirmado', {
+            description: `WhatsApp: ${errorMessage}`
+          });
+        }
       }
     } catch (err) {
       console.error('Erro ao chamar função:', err);
-      toast.success('Agendamento confirmado!', {
-        description: `${selectedService.name} dia ${formattedDate} às ${selectedTime}`
+      toast.error('Erro ao enviar confirmação', {
+        description: 'Verifique a configuração do WhatsApp Genesis.'
       });
     } finally {
       setSendingWhatsApp(false);
