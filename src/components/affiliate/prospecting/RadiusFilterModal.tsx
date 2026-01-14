@@ -168,15 +168,18 @@ export function RadiusFilterModal({
           </div>
 
           {/* Map */}
-          <div className="h-[400px] rounded-lg overflow-hidden border bg-muted/20">
+          <div className="h-[400px] rounded-lg overflow-hidden border border-border bg-background">
             {showMap ? (
               <RadiusMap
                 center={center}
                 radius={radius}
                 onMapClick={handleMapClick}
+                markers={results
+                  .filter(r => r.latitude && r.longitude)
+                  .map(r => ({ lat: r.latitude!, lng: r.longitude!, name: r.name }))}
               />
             ) : (
-              <div className="h-full flex items-center justify-center">
+              <div className="h-full flex items-center justify-center bg-muted/30">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <span className="ml-2 text-muted-foreground">Carregando mapa...</span>
               </div>
