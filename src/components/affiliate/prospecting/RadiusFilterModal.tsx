@@ -1,21 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { MapPin, Search, Filter, Loader2 } from 'lucide-react';
-import { MapContainer, TileLayer, Circle, Marker, useMap, useMapEvents } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-
-// Fix for default marker icon
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
 
 interface SearchResult {
   name: string;
@@ -50,24 +39,8 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 }
 
-// Component to handle map center updates
-function MapUpdater({ center }: { center: [number, number] }) {
-  const map = useMap();
-  useEffect(() => {
-    map.setView(center, map.getZoom());
-  }, [center, map]);
-  return null;
-}
-
-// Component to handle map clicks
-function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lng: number) => void }) {
-  useMapEvents({
-    click: (e) => {
-      onMapClick(e.latlng.lat, e.latlng.lng);
-    },
-  });
-  return null;
-}
+// Lazy load the map component to avoid SSR issues
+const LazyMapComponent = lazy(() => import('./RadiusMap'));
 
 export function RadiusFilterModal({
   open,
@@ -83,12 +56,16 @@ export function RadiusFilterModal({
   const [searching, setSearching] = useState(false);
   const [filteredCount, setFilteredCount] = useState(0);
   const [initialized, setInitialized] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
 
   // Geocode the city/state on open
   useEffect(() => {
     if (open && city && state && !initialized) {
       geocodeLocation(`${city}, ${state}, Brasil`);
       setInitialized(true);
+      // Delay map render to avoid Dialog issues
+      const timer = setTimeout(() => setMapReady(true), 100);
+      return () => clearTimeout(timer);
     }
   }, [open, city, state, initialized]);
 
@@ -97,6 +74,7 @@ export function RadiusFilterModal({
     if (!open) {
       setInitialized(false);
       setSearchQuery('');
+      setMapReady(false);
     }
   }, [open]);
 
@@ -191,31 +169,26 @@ export function RadiusFilterModal({
           </div>
 
           {/* Map */}
-          <div className="h-[400px] rounded-lg overflow-hidden border">
-            <MapContainer
-              center={center}
-              zoom={13}
-              style={{ height: '100%', width: '100%' }}
-              className="z-0"
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-              />
-              <MapUpdater center={center} />
-              <MapClickHandler onMapClick={handleMapClick} />
-              <Marker position={center} />
-              <Circle
-                center={center}
-                radius={radius * 1000} // Convert km to meters
-                pathOptions={{
-                  color: 'hsl(var(--primary))',
-                  fillColor: 'hsl(var(--primary))',
-                  fillOpacity: 0.15,
-                  weight: 2,
-                }}
-              />
-            </MapContainer>
+          <div className="h-[400px] rounded-lg overflow-hidden border bg-muted/20">
+            {mapReady ? (
+              <Suspense fallback={
+                <div className="h-full flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <span className="ml-2 text-muted-foreground">Carregando mapa...</span>
+                </div>
+              }>
+                <LazyMapComponent
+                  center={center}
+                  radius={radius}
+                  onMapClick={handleMapClick}
+                />
+              </Suspense>
+            ) : (
+              <div className="h-full flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2 text-muted-foreground">Carregando mapa...</span>
+              </div>
+            )}
           </div>
 
           {/* Radius slider */}

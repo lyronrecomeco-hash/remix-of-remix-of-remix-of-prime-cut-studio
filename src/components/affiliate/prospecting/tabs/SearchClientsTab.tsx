@@ -372,7 +372,7 @@ Se fizer sentido, posso te explicar rapidamente como funciona.`;
                 {searching ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Buscando...
+                    Buscando, aguarde...
                   </>
                 ) : (
                   <>
