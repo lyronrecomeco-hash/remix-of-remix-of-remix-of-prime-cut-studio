@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.global-message-generator]
 verify_jwt = false
+
+[functions.send-whatsapp-genesis]
+verify_jwt = false
