@@ -130,31 +130,37 @@ export function TemplatePortfolioSystem({ affiliateId }: TemplatePortfolioSystem
         </TabsList>
 
         <AnimatePresence mode="wait">
-          <TabsContent value="portfolios" className="mt-6">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-            >
-              <PortfolioManager
-                configs={configs}
-                loading={loading}
-                onEdit={handleEditConfig}
-                onDelete={deleteConfig}
-                onCreateNew={() => setActiveTab('templates')}
-              />
-            </motion.div>
-          </TabsContent>
+          {activeTab === 'portfolios' && (
+            <TabsContent value="portfolios" className="mt-6" forceMount>
+              <motion.div
+                key="portfolios-tab"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <PortfolioManager
+                  configs={configs}
+                  loading={loading}
+                  onEdit={handleEditConfig}
+                  onDelete={deleteConfig}
+                  onCreateNew={() => setActiveTab('templates')}
+                />
+              </motion.div>
+            </TabsContent>
+          )}
 
-          <TabsContent value="templates" className="mt-6">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-            >
-              <TemplateSelector onSelect={handleSelectTemplate} />
-            </motion.div>
-          </TabsContent>
+          {activeTab === 'templates' && (
+            <TabsContent value="templates" className="mt-6" forceMount>
+              <motion.div
+                key="templates-tab"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <TemplateSelector onSelect={handleSelectTemplate} />
+              </motion.div>
+            </TabsContent>
+          )}
         </AnimatePresence>
       </Tabs>
     </div>
