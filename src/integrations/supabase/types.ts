@@ -7656,6 +7656,71 @@ export type Database = {
         }
         Relationships: []
       }
+      intent_templates: {
+        Row: {
+          allowed_variables: Json | null
+          base_message: string
+          closing_style: string | null
+          context_id: string
+          created_at: string
+          forbidden_patterns: string[] | null
+          id: string
+          intent: string
+          is_active: boolean
+          max_length: number | null
+          opening_style: string | null
+          required_elements: string[] | null
+          subject_line: string | null
+          tone_guidelines: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          allowed_variables?: Json | null
+          base_message: string
+          closing_style?: string | null
+          context_id: string
+          created_at?: string
+          forbidden_patterns?: string[] | null
+          id?: string
+          intent: string
+          is_active?: boolean
+          max_length?: number | null
+          opening_style?: string | null
+          required_elements?: string[] | null
+          subject_line?: string | null
+          tone_guidelines: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          allowed_variables?: Json | null
+          base_message?: string
+          closing_style?: string | null
+          context_id?: string
+          created_at?: string
+          forbidden_patterns?: string[] | null
+          id?: string
+          intent?: string
+          is_active?: boolean
+          max_length?: number | null
+          opening_style?: string | null
+          required_elements?: string[] | null
+          subject_line?: string | null
+          tone_guidelines?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intent_templates_context_id_fkey"
+            columns: ["context_id"]
+            isOneToOne: false
+            referencedRelation: "global_contexts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       login_attempts: {
         Row: {
           attempted_at: string
