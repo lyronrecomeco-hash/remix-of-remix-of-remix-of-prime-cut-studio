@@ -11,7 +11,6 @@ import { TemplateSelector } from './TemplateSelector';
 
 interface TemplatePortfolioSystemProps {
   affiliateId: string;
-  onEditorStateChange?: (isEditing: boolean) => void;
 }
 
 type ViewState = 
@@ -38,8 +37,8 @@ const TEMPLATES: TemplateInfo[] = [
   },
 ];
 
-export function TemplatePortfolioSystem({ affiliateId, onEditorStateChange }: TemplatePortfolioSystemProps) {
-  const [activeTab, setActiveTab] = useState<'templates' | 'portfolios'>('portfolios');
+export function TemplatePortfolioSystem({ affiliateId }: TemplatePortfolioSystemProps) {
+  const [activeTab, setActiveTab] = useState<'templates' | 'portfolios'>('templates');
   const [viewState, setViewState] = useState<ViewState>({ type: 'list' });
   
   const {
@@ -53,14 +52,12 @@ export function TemplatePortfolioSystem({ affiliateId, onEditorStateChange }: Te
 
   const handleSelectTemplate = (template: TemplateInfo) => {
     setViewState({ type: 'editor', template });
-    onEditorStateChange?.(true);
   };
 
   const handleEditConfig = (config: AffiliateTemplateConfig) => {
     const template = TEMPLATES.find(t => t.id === config.template_slug);
     if (template) {
       setViewState({ type: 'editor', template, existingConfig: config });
-      onEditorStateChange?.(true);
     }
   };
 
@@ -83,7 +80,6 @@ export function TemplatePortfolioSystem({ affiliateId, onEditorStateChange }: Te
 
   const handleBack = () => {
     setViewState({ type: 'list' });
-    onEditorStateChange?.(false);
   };
 
   // Se estiver no editor, mostrar o editor

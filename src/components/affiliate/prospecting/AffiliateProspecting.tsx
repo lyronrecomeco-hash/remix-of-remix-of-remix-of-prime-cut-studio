@@ -29,7 +29,6 @@ type ToolsTab = 'cards' | 'search' | 'proposal' | 'history' | 'settings' | 'temp
 export const AffiliateProspecting = ({ affiliateId, onSubHeaderChange }: AffiliateProspectingProps) => {
   const [activeTab, setActiveTab] = useState<ToolsTab>('cards');
   const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null);
-  const [isTemplateEditorActive, setIsTemplateEditorActive] = useState(false);
   
   const {
     prospects,
@@ -68,12 +67,6 @@ export const AffiliateProspecting = ({ affiliateId, onSubHeaderChange }: Affilia
   useEffect(() => {
     if (!onSubHeaderChange) return;
 
-    // Hide sub-header when template editor is active
-    if (activeTab === 'templates' && isTemplateEditorActive) {
-      onSubHeaderChange(null);
-      return;
-    }
-
     if (activeTab !== 'cards') {
       const subHeader = (
         <div className="flex items-center gap-3">
@@ -98,7 +91,7 @@ export const AffiliateProspecting = ({ affiliateId, onSubHeaderChange }: Affilia
     return () => {
       onSubHeaderChange(null);
     };
-  }, [activeTab, onSubHeaderChange, isTemplateEditorActive]);
+  }, [activeTab, onSubHeaderChange]);
 
   const handleUpdateStatus = async (id: string, status: ProspectStatus) => {
     await updateProspect(id, { status } as Partial<Prospect>);
@@ -153,10 +146,7 @@ export const AffiliateProspecting = ({ affiliateId, onSubHeaderChange }: Affilia
         )}
 
         {activeTab === 'templates' && (
-          <ReadyTemplatesTab 
-            affiliateId={affiliateId} 
-            onEditorStateChange={setIsTemplateEditorActive}
-          />
+          <ReadyTemplatesTab affiliateId={affiliateId} />
         )}
       </div>
     );
@@ -170,11 +160,6 @@ export const AffiliateProspecting = ({ affiliateId, onSubHeaderChange }: Affilia
     }
 
     const isSubTab = activeTab !== 'cards';
-
-    // Hide mobile header when template editor is active (it has its own header)
-    if (activeTab === 'templates' && isTemplateEditorActive) {
-      return null;
-    }
 
     // Sub-tab header: just back button + title (only for mobile or when no parent callback)
     if (isSubTab) {
