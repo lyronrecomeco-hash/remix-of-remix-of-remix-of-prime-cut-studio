@@ -11,7 +11,10 @@ import {
   Building2,
   Target,
   Lightbulb,
-  RefreshCw
+  RefreshCw,
+  Send,
+  Save,
+  ExternalLink
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -46,6 +49,14 @@ const FIXED_QUESTIONS: QuestionStep[] = [
     helperText: 'Digite o nome exato da empresa'
   },
   {
+    id: 'company_phone',
+    question: 'Qual o WhatsApp da empresa?',
+    placeholder: 'Ex: (11) 99999-9999',
+    type: 'text',
+    icon: <MessageSquare className="w-6 h-6" />,
+    helperText: 'Para enviar a proposta diretamente'
+  },
+  {
     id: 'company_niche',
     question: 'Qual o nicho ou segmento dessa empresa?',
     placeholder: 'Ex: Barbearia, Salão de Beleza, Restaurante...',
@@ -73,6 +84,8 @@ export const CreateProposalTab = ({ affiliateId }: CreateProposalTabProps) => {
   const [affiliateName, setAffiliateName] = useState('');
   const [copied, setCopied] = useState(false);
   const [proposalComplete, setProposalComplete] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [sending, setSending] = useState(false);
 
   // Fetch affiliate name
   useEffect(() => {
@@ -198,6 +211,106 @@ Se fizer sentido, posso te explicar rapidamente como funciona.`);
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleSaveToHistory = async () => {
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('affiliate_prospects')
+        .insert({
+          affiliate_id: affiliateId,
+          company_name: answers.company_name,
+          company_phone: answers.company_phone || null,
+          niche: answers.company_niche,
+          notes: answers.main_problem,
+          status: 'proposal_ready',
+          generated_proposal: {
+            headline: `Proposta para ${answers.company_name}`,
+            problema_identificado: answers.main_problem,
+            solucao_proposta: 'Soluções de automação e presença digital',
+            beneficios: ['Mais clientes', 'Menos trabalho manual', 'Atendimento 24h'],
+            mensagem_whatsapp: generatedProposal,
+            raw_content: generatedProposal,
+          },
+          proposal_generated_at: new Date().toISOString(),
+        });
+
+      if (error) throw error;
+      toast.success('Proposta salva no histórico!');
+    } catch (error) {
+      console.error('Erro ao salvar:', error);
+      toast.error('Erro ao salvar proposta');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSendWhatsApp = async () => {
+    if (!answers.company_phone) {
+      toast.error('Telefone não informado');
+      return;
+    }
+
+    setSending(true);
+    try {
+      // First save to history
+      const { data: prospect, error: insertError } = await supabase
+        .from('affiliate_prospects')
+        .insert({
+          affiliate_id: affiliateId,
+          company_name: answers.company_name,
+          company_phone: answers.company_phone,
+          niche: answers.company_niche,
+          notes: answers.main_problem,
+          status: 'proposal_ready',
+          generated_proposal: {
+            headline: `Proposta para ${answers.company_name}`,
+            problema_identificado: answers.main_problem,
+            solucao_proposta: 'Soluções de automação e presença digital',
+            beneficios: ['Mais clientes', 'Menos trabalho manual', 'Atendimento 24h'],
+            mensagem_whatsapp: generatedProposal,
+            raw_content: generatedProposal,
+          },
+          proposal_generated_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      // Then send via WhatsApp
+      const { data, error } = await supabase.functions.invoke('prospect-sender', {
+        body: {
+          action: 'send_single',
+          prospect_id: prospect.id,
+          affiliate_id: affiliateId,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success('Proposta enviada via WhatsApp!');
+      } else {
+        // Fallback: open WhatsApp Web
+        openWhatsAppManual();
+      }
+    } catch (error) {
+      console.error('Erro ao enviar:', error);
+      // Fallback: open WhatsApp Web
+      openWhatsAppManual();
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const openWhatsAppManual = () => {
+    if (!answers.company_phone) return;
+    const phone = answers.company_phone.replace(/\D/g, '');
+    const message = encodeURIComponent(generatedProposal);
+    window.open(`https://wa.me/55${phone}?text=${message}`, '_blank');
+    toast.success('Abrindo WhatsApp...');
+  };
+
   const resetForm = () => {
     setCurrentStep(0);
     setAnswers({});
@@ -210,7 +323,7 @@ Se fizer sentido, posso te explicar rapidamente como funciona.`);
   if (proposalComplete) {
     return (
       <Card className="border border-primary/20 overflow-hidden">
-        <div className="bg-primary/10 p-6 border-b border-primary/20">
+        <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 border-b border-primary/20">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center">
               <Sparkles className="w-7 h-7 text-primary" />
@@ -222,6 +335,13 @@ Se fizer sentido, posso te explicar rapidamente como funciona.`);
               <p className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
                 <Building2 className="w-4 h-4" />
                 {answers.company_name}
+                {answers.company_phone && (
+                  <>
+                    <span className="text-border">•</span>
+                    <MessageSquare className="w-4 h-4" />
+                    {answers.company_phone}
+                  </>
+                )}
               </p>
             </div>
           </div>
@@ -268,18 +388,52 @@ Se fizer sentido, posso te explicar rapidamente como funciona.`);
                 className="min-h-[350px] bg-muted/30 border-border resize-none text-sm leading-relaxed"
               />
 
-              <div className="flex gap-3 pt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4">
                 <Button
-                  onClick={copyToClipboard}
-                  className="flex-1 gap-2 bg-primary hover:bg-primary/90"
+                  onClick={handleSendWhatsApp}
+                  disabled={sending || !answers.company_phone}
+                  className="gap-2 bg-green-600 hover:bg-green-700"
+                  size="lg"
                 >
-                  <Copy className="w-4 h-4" />
-                  Copiar Proposta
+                  {sending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
+                  Enviar WhatsApp
                 </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={openWhatsAppManual}
+                  disabled={!answers.company_phone}
+                  className="gap-2"
+                  size="lg"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Abrir WhatsApp
+                </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={handleSaveToHistory}
+                  disabled={saving}
+                  className="gap-2"
+                  size="lg"
+                >
+                  {saving ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  Salvar Histórico
+                </Button>
+
                 <Button
                   variant="outline"
                   onClick={resetForm}
                   className="gap-2"
+                  size="lg"
                 >
                   <RefreshCw className="w-4 h-4" />
                   Nova Proposta
