@@ -1,0 +1,572 @@
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { 
+  Globe, 
+  Sparkles, 
+  Copy, 
+  Check, 
+  AlertTriangle,
+  Clock,
+  MessageSquare,
+  Mail,
+  Linkedin,
+  Phone,
+  RefreshCw,
+  ChevronDown,
+  Shield,
+  Zap,
+  Languages
+} from 'lucide-react';
+import { useGlobalContexts } from './useGlobalContexts';
+import { useMessageGeneration } from './useMessageGeneration';
+import { 
+  ChannelType, 
+  MessageIntent, 
+  INTENT_LABELS,
+  CHANNEL_LABELS,
+  FORMALITY_LABELS,
+  DIRECTNESS_LABELS,
+  EMOJI_TOLERANCE_LABELS
+} from './types';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+
+// Country flag emoji mapping
+const COUNTRY_FLAGS: Record<string, string> = {
+  BR: '🇧🇷', US: '🇺🇸', DE: '🇩🇪', FR: '🇫🇷', GB: '🇬🇧', ES: '🇪🇸', PT: '🇵🇹',
+  IT: '🇮🇹', NL: '🇳🇱', BE: '🇧🇪', AT: '🇦🇹', CH: '🇨🇭', SE: '🇸🇪', NO: '🇳🇴',
+  DK: '🇩🇰', FI: '🇫🇮', PL: '🇵🇱', CZ: '🇨🇿', IE: '🇮🇪', MX: '🇲🇽', AR: '🇦🇷',
+  CL: '🇨🇱', CO: '🇨🇴', PE: '🇵🇪', JP: '🇯🇵', KR: '🇰🇷', CN: '🇨🇳', IN: '🇮🇳',
+  AU: '🇦🇺', NZ: '🇳🇿', ZA: '🇿🇦', AE: '🇦🇪', IL: '🇮🇱', CA: '🇨🇦',
+};
+
+const CHANNEL_ICONS_JSX: Record<string, React.ReactNode> = {
+  whatsapp: <MessageSquare className="w-4 h-4" />,
+  email: <Mail className="w-4 h-4" />,
+  linkedin: <Linkedin className="w-4 h-4" />,
+  sms: <Phone className="w-4 h-4" />,
+  phone: <Phone className="w-4 h-4" />,
+  kakaotalk: <MessageSquare className="w-4 h-4" />,
+};
+
+// Channels available in UI (subset of all channels)
+type UIChannelType = 'whatsapp' | 'email' | 'linkedin' | 'sms';
+const UI_CHANNELS: UIChannelType[] = ['whatsapp', 'email', 'linkedin', 'sms'];
+
+interface GlobalMessageGeneratorProps {
+  prospect: {
+    id: string;
+    company_name: string;
+    contact_name?: string;
+    niche?: string;
+    company_phone?: string;
+    company_website?: string;
+    pain_points?: string[];
+  };
+  affiliate: {
+    id: string;
+    name: string;
+    company?: string;
+  };
+  onMessageGenerated?: (message: string, subject?: string) => void;
+  onSend?: (message: string, channel: ChannelType) => void;
+  className?: string;
+}
+
+export const GlobalMessageGenerator = ({
+  prospect,
+  affiliate,
+  onMessageGenerated,
+  onSend,
+  className,
+}: GlobalMessageGeneratorProps) => {
+  const {
+    contexts,
+    templates,
+    selectedContext,
+    loading: contextsLoading,
+    fetchContexts,
+    fetchTemplates,
+    selectContext,
+    autoDetectContext,
+    getTemplateByIntent,
+  } = useGlobalContexts();
+
+  const {
+    generating,
+    error,
+    lastGeneration,
+    generateMessage,
+    validateCompliance,
+    checkBusinessHours,
+    logMessage,
+  } = useMessageGeneration();
+
+  const [selectedChannel, setSelectedChannel] = useState<ChannelType>('whatsapp');
+  const [selectedIntent, setSelectedIntent] = useState<MessageIntent>('first_contact');
+  const [customInstructions, setCustomInstructions] = useState('');
+  const [editedMessage, setEditedMessage] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [autoDetected, setAutoDetected] = useState(false);
+
+  // Load contexts on mount
+  useEffect(() => {
+    fetchContexts();
+  }, [fetchContexts]);
+
+  // Auto-detect country from prospect data
+  useEffect(() => {
+    const detectCountry = async () => {
+      if (contexts.length > 0 && !selectedContext) {
+        const detected = await autoDetectContext(
+          prospect.company_phone || undefined,
+          prospect.company_website || undefined
+        );
+        if (detected) {
+          setAutoDetected(true);
+        }
+      }
+    };
+    detectCountry();
+  }, [contexts, prospect, selectedContext, autoDetectContext]);
+
+  // Load templates when context changes
+  useEffect(() => {
+    if (selectedContext) {
+      fetchTemplates(selectedContext.id);
+    }
+  }, [selectedContext, fetchTemplates]);
+
+  // Update edited message when new generation arrives
+  useEffect(() => {
+    if (lastGeneration?.message) {
+      setEditedMessage(lastGeneration.message);
+      onMessageGenerated?.(lastGeneration.message, lastGeneration.subject_line);
+    }
+  }, [lastGeneration, onMessageGenerated]);
+
+  const handleGenerate = async () => {
+    if (!selectedContext) {
+      toast.error('Selecione um país primeiro');
+      return;
+    }
+
+    const template = getTemplateByIntent(selectedContext.id, selectedIntent);
+    if (!template) {
+      toast.error('Template não encontrado para esta intenção');
+      return;
+    }
+
+    const result = await generateMessage(
+      selectedContext,
+      template,
+      {
+        company_name: prospect.company_name,
+        contact_name: prospect.contact_name,
+        niche: prospect.niche,
+        pain_points: prospect.pain_points,
+        website: prospect.company_website,
+      },
+      {
+        name: affiliate.name,
+        company: affiliate.company,
+      },
+      selectedChannel,
+      customInstructions || undefined
+    );
+
+    if (result) {
+      toast.success('Mensagem gerada com sucesso!');
+      
+      // Log the generation
+      await logMessage(
+        affiliate.id,
+        prospect.id,
+        selectedContext,
+        template,
+        selectedIntent,
+        result.message,
+        selectedChannel,
+        autoDetected ? 0.8 : null,
+        !autoDetected
+      );
+    } else if (error) {
+      toast.error(error);
+    }
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(editedMessage);
+    setCopied(true);
+    toast.success('Mensagem copiada!');
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSend = () => {
+    if (editedMessage && onSend) {
+      onSend(editedMessage, selectedChannel);
+    }
+  };
+
+  const isWithinBusinessHours = selectedContext ? checkBusinessHours(selectedContext) : true;
+  const complianceChecks = selectedContext ? validateCompliance(selectedContext, selectedChannel) : [];
+  const hasComplianceWarnings = complianceChecks.some(c => !c.passed);
+
+  return (
+    <Card className={cn("border-primary/20", className)}>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <Globe className="w-5 h-5 text-primary" />
+          Gerador Global de Mensagens
+          {autoDetected && (
+            <Badge variant="secondary" className="ml-2 text-xs">
+              <Zap className="w-3 h-3 mr-1" />
+              Auto-detectado
+            </Badge>
+          )}
+        </CardTitle>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        {/* Country & Channel Selection */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* Country Selector */}
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">País/Cultura</Label>
+            <Select
+              value={selectedContext?.country_code || ''}
+              onValueChange={(code) => {
+                const ctx = contexts.find(c => c.country_code === code);
+                selectContext(ctx || null);
+                setAutoDetected(false);
+              }}
+              disabled={contextsLoading}
+            >
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Selecione o país...">
+                  {selectedContext && (
+                    <span className="flex items-center gap-2">
+                      <span>{COUNTRY_FLAGS[selectedContext.country_code] || '🌍'}</span>
+                      <span>{selectedContext.country_name}</span>
+                    </span>
+                  )}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <ScrollArea className="h-64">
+                  {contexts.map((ctx) => (
+                    <SelectItem key={ctx.id} value={ctx.country_code}>
+                      <span className="flex items-center gap-2">
+                        <span>{COUNTRY_FLAGS[ctx.country_code] || '🌍'}</span>
+                        <span>{ctx.country_name}</span>
+                        <Badge variant="outline" className="ml-1 text-[10px] px-1">
+                          {ctx.region_code}
+                        </Badge>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </ScrollArea>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Channel Selector */}
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Canal</Label>
+            <Select
+              value={selectedChannel}
+              onValueChange={(v) => setSelectedChannel(v as ChannelType)}
+            >
+              <SelectTrigger className="h-9">
+                <SelectValue>
+                  <span className="flex items-center gap-2">
+                    {CHANNEL_ICONS_JSX[selectedChannel]}
+                    <span>{CHANNEL_LABELS[selectedChannel]}</span>
+                  </span>
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {UI_CHANNELS.map((key) => (
+                  <SelectItem key={key} value={key}>
+                    <span className="flex items-center gap-2">
+                      {CHANNEL_ICONS_JSX[key]}
+                      <span>{CHANNEL_LABELS[key]}</span>
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Intent Selector */}
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Intenção da Mensagem</Label>
+          <Select
+            value={selectedIntent}
+            onValueChange={(v) => setSelectedIntent(v as MessageIntent)}
+          >
+            <SelectTrigger className="h-9">
+              <SelectValue>{INTENT_LABELS[selectedIntent]}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(INTENT_LABELS).map(([key, label]) => (
+                <SelectItem key={key} value={key}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Cultural Context Preview */}
+        {selectedContext && (
+          <div className="p-3 rounded-lg bg-muted/50 border border-border space-y-2">
+            <div className="flex items-center gap-2 text-xs font-medium">
+              <Languages className="w-3.5 h-3.5" />
+              Contexto Cultural
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1 px-2 py-1 rounded bg-background">
+                      <span className="text-muted-foreground">Formalidade:</span>
+                      <Badge variant="outline" className="text-[10px] h-4">
+                        {FORMALITY_LABELS[selectedContext.formality_level]}
+                      </Badge>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Nível de formalidade esperado na comunicação
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1 px-2 py-1 rounded bg-background">
+                      <span className="text-muted-foreground">Diretividade:</span>
+                      <Badge variant="outline" className="text-[10px] h-4">
+                        {DIRECTNESS_LABELS[selectedContext.directness_level]}
+                      </Badge>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Quão direto ser na abordagem
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1 px-2 py-1 rounded bg-background">
+                      <span className="text-muted-foreground">Emojis:</span>
+                      <Badge variant="outline" className="text-[10px] h-4">
+                        {EMOJI_TOLERANCE_LABELS[selectedContext.emoji_tolerance]}
+                      </Badge>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Tolerância a emojis na mensagem
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+
+            {/* Compliance & Business Hours */}
+            <div className="flex items-center gap-3 pt-1">
+              {selectedContext.compliance_tags.map(tag => (
+                <Badge key={tag} variant="secondary" className="text-[10px] gap-1">
+                  <Shield className="w-2.5 h-2.5" />
+                  {tag}
+                </Badge>
+              ))}
+              
+              <div className={cn(
+                "flex items-center gap-1 text-[10px] ml-auto",
+                isWithinBusinessHours ? "text-green-600" : "text-amber-600"
+              )}>
+                <Clock className="w-3 h-3" />
+                {isWithinBusinessHours ? 'Horário comercial' : 'Fora do horário'}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Custom Instructions */}
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">
+            Instruções Adicionais (opcional)
+          </Label>
+          <Textarea
+            placeholder="Ex: Mencionar que temos promoção de lançamento..."
+            value={customInstructions}
+            onChange={(e) => setCustomInstructions(e.target.value)}
+            className="h-16 text-sm resize-none"
+          />
+        </div>
+
+        {/* Generate Button */}
+        <Button
+          onClick={handleGenerate}
+          disabled={generating || !selectedContext}
+          className="w-full gap-2"
+        >
+          {generating ? (
+            <>
+              <RefreshCw className="w-4 h-4 animate-spin" />
+              Gerando...
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4" />
+              Gerar Mensagem Culturalmente Adaptada
+            </>
+          )}
+        </Button>
+
+        {/* Compliance Warnings */}
+        {hasComplianceWarnings && (
+          <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-700 text-xs flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+            <div>
+              {complianceChecks.filter(c => !c.passed).map(c => (
+                <p key={c.tag}>{c.message}</p>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Generated Message */}
+        {lastGeneration && (
+          <div className="space-y-3 pt-2 border-t border-border">
+            {/* Subject line for email */}
+            {selectedChannel === 'email' && lastGeneration.subject_line && (
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Assunto do Email</Label>
+                <div className="p-2 rounded bg-muted/50 text-sm font-medium">
+                  {lastGeneration.subject_line}
+                </div>
+              </div>
+            )}
+
+            {/* Message */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs text-muted-foreground">Mensagem Gerada</Label>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleCopy}
+                  className="h-6 px-2 text-xs gap-1"
+                >
+                  {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                  {copied ? 'Copiado!' : 'Copiar'}
+                </Button>
+              </div>
+              <Textarea
+                value={editedMessage}
+                onChange={(e) => setEditedMessage(e.target.value)}
+                className="min-h-32 text-sm"
+              />
+            </div>
+
+            {/* Cultural Adaptations */}
+            {lastGeneration.cultural_adaptations.length > 0 && (
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Adaptações Culturais Aplicadas</Label>
+                <div className="flex flex-wrap gap-1">
+                  {lastGeneration.cultural_adaptations.map((adaptation, i) => (
+                    <Badge key={i} variant="outline" className="text-[10px]">
+                      {adaptation}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Alternative Openings */}
+            {lastGeneration.alternative_openings && lastGeneration.alternative_openings.length > 0 && (
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Aberturas Alternativas</Label>
+                <div className="space-y-1">
+                  {lastGeneration.alternative_openings.map((opening, i) => (
+                    <div
+                      key={i}
+                      className="p-2 rounded bg-muted/30 text-xs cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => {
+                        const newMessage = editedMessage.replace(
+                          /^[^\n]+/,
+                          opening
+                        );
+                        setEditedMessage(newMessage);
+                      }}
+                    >
+                      "{opening}"
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Validation Warnings */}
+            {lastGeneration.validation.warnings.length > 0 && (
+              <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-700 text-xs">
+                <div className="flex items-center gap-1 font-medium mb-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  Avisos de Validação
+                </div>
+                <ul className="list-disc list-inside space-y-0.5">
+                  {lastGeneration.validation.warnings.map((w, i) => (
+                    <li key={i}>{w}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Send Button */}
+            {onSend && (
+              <Button
+                onClick={handleSend}
+                disabled={!editedMessage}
+                className="w-full gap-2"
+                variant="default"
+              >
+                {CHANNEL_ICONS_JSX[selectedChannel]}
+                Enviar via {CHANNEL_LABELS[selectedChannel]}
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* Error Display */}
+        {error && !lastGeneration && (
+          <div className="p-2 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-xs">
+            {error}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
