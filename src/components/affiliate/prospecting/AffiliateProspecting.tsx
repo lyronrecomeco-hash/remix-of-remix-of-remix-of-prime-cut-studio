@@ -67,7 +67,8 @@ export const AffiliateProspecting = ({ affiliateId, onSubHeaderChange }: Affilia
   useEffect(() => {
     if (!onSubHeaderChange) return;
 
-    if (activeTab !== 'cards') {
+    // For templates we want a clean screen (no back/title header)
+    if (activeTab !== 'cards' && activeTab !== 'templates') {
       const subHeader = (
         <div className="flex items-center gap-3">
           <Button
@@ -84,6 +85,9 @@ export const AffiliateProspecting = ({ affiliateId, onSubHeaderChange }: Affilia
         </div>
       );
       onSubHeaderChange(subHeader);
+    } else if (activeTab === 'templates') {
+      // Signal parent to hide the desktop header for a clean templates gallery screen
+      onSubHeaderChange(<div data-hide-desktop-header />);
     } else {
       onSubHeaderChange(null);
     }
