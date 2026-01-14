@@ -274,7 +274,7 @@ export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsC
           {searching ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Buscando...
+              Buscando, aguarde...
             </>
           ) : (
             <>
@@ -284,8 +284,17 @@ export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsC
           )}
         </Button>
 
+        {/* Loading State */}
+        {searching && (
+          <div className="flex flex-col items-center justify-center py-10 gap-3">
+            <Loader2 className="w-10 h-10 animate-spin text-primary" />
+            <p className="text-base text-muted-foreground font-medium">Buscando estabelecimentos, aguarde...</p>
+            <p className="text-sm text-muted-foreground">Isso pode levar alguns segundos</p>
+          </div>
+        )}
+
         {/* Resultados */}
-        {results.length > 0 && (
+        {!searching && results.length > 0 && (
           <div className="mt-4">
             <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
               <h4 className="font-medium flex items-center gap-2">
