@@ -565,6 +565,56 @@ export type Database = {
           },
         ]
       }
+      affiliate_template_configs: {
+        Row: {
+          affiliate_id: string
+          client_name: string | null
+          config: Json
+          created_at: string
+          id: string
+          is_active: boolean
+          template_name: string
+          template_slug: string
+          unique_code: string
+          updated_at: string
+          views_count: number
+        }
+        Insert: {
+          affiliate_id: string
+          client_name?: string | null
+          config?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          template_name: string
+          template_slug: string
+          unique_code: string
+          updated_at?: string
+          views_count?: number
+        }
+        Update: {
+          affiliate_id?: string
+          client_name?: string | null
+          config?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          template_name?: string
+          template_slug?: string
+          unique_code?: string
+          updated_at?: string
+          views_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_template_configs_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       affiliate_verification_codes: {
         Row: {
           attempts: number
