@@ -10,12 +10,14 @@ interface SearchRequest {
   countryCode: string;
   niche: string;
   maxResults?: number;
+  affiliateName?: string;
 }
 
 interface BusinessResult {
   name: string;
   address: string;
   phone?: string;
+  email?: string;
   website?: string;
   rating?: number;
   reviews_count?: number;
@@ -64,7 +66,7 @@ serve(async (req) => {
 
   try {
     const body: SearchRequest = await req.json();
-    const { city, countryCode, niche, maxResults: requestedMax } = body;
+    const { city, countryCode, niche, maxResults: requestedMax, affiliateName } = body;
 
     if (!city || !countryCode || !niche) {
       return new Response(
@@ -175,10 +177,14 @@ serve(async (req) => {
         if (seen.has(key)) return null;
         seen.add(key);
 
+        // Extract email from various sources
+        const email = extractEmail(place);
+
         return {
           name,
           address,
           phone: extractPhone(place.phoneNumber || place.phone || '', config.phonePrefix),
+          email,
           website: extractDomain(place.website || ''),
           rating: place.rating ? parseFloat(place.rating) : undefined,
           reviews_count: place.reviewsCount || place.reviews || undefined,
@@ -206,6 +212,41 @@ serve(async (req) => {
     );
   }
 });
+
+function extractEmail(place: any): string | undefined {
+  // Try to extract email from various possible fields
+  if (place.email) return place.email;
+  
+  // Sometimes email is in the description or additional info
+  const textToSearch = [
+    place.description || '',
+    place.additionalInfo || '',
+    place.snippet || '',
+  ].join(' ');
+  
+  // Email regex
+  const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+  const matches = textToSearch.match(emailRegex);
+  
+  if (matches && matches.length > 0) {
+    return matches[0].toLowerCase();
+  }
+  
+  // If we have a website, try to construct a common email pattern
+  if (place.website) {
+    try {
+      const urlObj = new URL(place.website.startsWith('http') ? place.website : `https://${place.website}`);
+      const domain = urlObj.hostname.replace(/^www\./, '');
+      // Return a placeholder indicating we can derive email from domain
+      // In production, this could be verified with an email verification API
+      return undefined; // Don't fabricate emails
+    } catch {
+      // Ignore URL parsing errors
+    }
+  }
+  
+  return undefined;
+}
 
 function extractPhone(phone: string, prefix: string): string | undefined {
   if (!phone) return undefined;
