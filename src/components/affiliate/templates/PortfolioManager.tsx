@@ -183,11 +183,13 @@ export function PortfolioManager({
       const cleanPhone = testPhone.replace(/\D/g, '');
       const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
       
-      const { data, error } = await supabase.functions.invoke('send-whatsapp-genesis', {
+      // Use prospect-sender with send_test action (bypasses all restrictions)
+      const { data, error } = await supabase.functions.invoke('prospect-sender', {
         body: {
-          to: formattedPhone,
-          message,
-          instanceId: null // Use global instance
+          action: 'send_test',
+          affiliate_id: testingConfig.affiliate_id,
+          phone: formattedPhone,
+          message
         }
       });
 
