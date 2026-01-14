@@ -15,7 +15,6 @@ import { ProspectingCards } from './ProspectingCards';
 import { SearchClientsTab } from './tabs/SearchClientsTab';
 import { CreateProposalTab } from './tabs/CreateProposalTab';
 import { HistoryTab } from './tabs/HistoryTab';
-import { ReadyTemplatesTab } from './tabs/ReadyTemplatesTab';
 import { Prospect, ProspectStatus } from './types';
 import React from 'react';
 
@@ -146,7 +145,9 @@ export const AffiliateProspecting = ({ affiliateId, onSubHeaderChange }: Affilia
         )}
 
         {activeTab === 'templates' && (
-          <ReadyTemplatesTab affiliateId={affiliateId} />
+          <div className="flex items-center justify-center h-64 text-muted-foreground">
+            Em desenvolvimento...
+          </div>
         )}
       </div>
     );
