@@ -8183,6 +8183,107 @@ export type Database = {
           },
         ]
       }
+      prospecting_message_logs: {
+        Row: {
+          affiliate_id: string
+          ai_model_used: string | null
+          auto_detected_country: string | null
+          auto_detected_language: string | null
+          channel_used: string
+          context_id: string | null
+          context_snapshot: Json
+          created_at: string
+          delivered_at: string | null
+          detection_confidence: number | null
+          generated_message: string
+          generation_time_ms: number | null
+          id: string
+          intent: string
+          manual_override: boolean | null
+          opened_at: string | null
+          prospect_id: string | null
+          replied_at: string | null
+          sent_at: string | null
+          template_id: string | null
+          tokens_used: number | null
+        }
+        Insert: {
+          affiliate_id: string
+          ai_model_used?: string | null
+          auto_detected_country?: string | null
+          auto_detected_language?: string | null
+          channel_used: string
+          context_id?: string | null
+          context_snapshot: Json
+          created_at?: string
+          delivered_at?: string | null
+          detection_confidence?: number | null
+          generated_message: string
+          generation_time_ms?: number | null
+          id?: string
+          intent: string
+          manual_override?: boolean | null
+          opened_at?: string | null
+          prospect_id?: string | null
+          replied_at?: string | null
+          sent_at?: string | null
+          template_id?: string | null
+          tokens_used?: number | null
+        }
+        Update: {
+          affiliate_id?: string
+          ai_model_used?: string | null
+          auto_detected_country?: string | null
+          auto_detected_language?: string | null
+          channel_used?: string
+          context_id?: string | null
+          context_snapshot?: Json
+          created_at?: string
+          delivered_at?: string | null
+          detection_confidence?: number | null
+          generated_message?: string
+          generation_time_ms?: number | null
+          id?: string
+          intent?: string
+          manual_override?: boolean | null
+          opened_at?: string | null
+          prospect_id?: string | null
+          replied_at?: string | null
+          sent_at?: string | null
+          template_id?: string | null
+          tokens_used?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospecting_message_logs_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospecting_message_logs_context_id_fkey"
+            columns: ["context_id"]
+            isOneToOne: false
+            referencedRelation: "global_contexts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospecting_message_logs_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospecting_message_logs_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "intent_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       push_subscriptions: {
         Row: {
           auth: string
