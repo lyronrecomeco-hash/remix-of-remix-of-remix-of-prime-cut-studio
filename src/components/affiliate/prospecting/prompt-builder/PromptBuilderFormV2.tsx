@@ -117,293 +117,269 @@ export const PromptBuilderFormV2 = ({ state, template, onChange, onGenerate }: P
   const visibleTypography = showMoreTypography ? TYPOGRAPHY_OPTIONS : TYPOGRAPHY_OPTIONS.slice(0, 6);
 
   return (
-    <div className="space-y-8">
-      {/* APP NAME - Full Width */}
+    <div className="max-w-4xl mx-auto space-y-8">
+      {/* ============================================ */}
+      {/* SECTION 1: APP NAME */}
+      {/* ============================================ */}
       <Card className="border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
-        <CardContent className="p-6">
-          <div className="space-y-2">
-            <Label className="text-base text-muted-foreground flex items-center gap-2">
-              <MessageSquare className="w-5 h-5" />
+        <CardContent className="p-8">
+          <div className="space-y-4">
+            <Label className="text-lg font-medium text-foreground flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                <MessageSquare className="w-5 h-5 text-primary" />
+              </div>
               Qual o nome do seu aplicativo?
             </Label>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               Ex: AgendaFácil, MeuTreino, Pizzaria do Zé
             </p>
             <Input
               value={state.appName}
               onChange={(e) => updateState({ appName: e.target.value })}
               placeholder={template.defaultAppName}
-              className="text-lg h-14 border-2 focus:border-primary"
+              className="text-xl h-16 border-2 focus:border-primary bg-background/50"
             />
           </div>
         </CardContent>
       </Card>
 
-      {/* VISÃO E CONCEITO */}
+      {/* ============================================ */}
+      {/* SECTION 2: VISÃO E CONCEITO */}
+      {/* ============================================ */}
       <Card className="border border-border">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl flex items-center gap-2">
-            <Target className="w-6 h-6 text-primary" />
+        <CardHeader className="p-8 pb-6">
+          <CardTitle className="text-2xl flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+              <Target className="w-6 h-6 text-primary" />
+            </div>
             Visão e Conceito Central
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label className="text-sm flex items-center gap-2">
-                <Users className="w-4 h-4 text-primary" />
-                Para quem é este aplicativo?
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Descreva o público-alvo detalhadamente
-              </p>
-              <Textarea
-                value={state.targetAudience}
-                onChange={(e) => updateState({ targetAudience: e.target.value })}
-                className="min-h-[100px] resize-none"
-                placeholder="Ex: Donos de barbearias e salões masculinos..."
-              />
-            </div>
+        <CardContent className="p-8 pt-0 space-y-8">
+          <div className="space-y-3">
+            <Label className="text-base font-medium flex items-center gap-2">
+              <Users className="w-5 h-5 text-primary" />
+              Para quem é este aplicativo?
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              Descreva o público-alvo detalhadamente
+            </p>
+            <Textarea
+              value={state.targetAudience}
+              onChange={(e) => updateState({ targetAudience: e.target.value })}
+              className="min-h-[120px] text-base resize-none bg-background/50"
+              placeholder="Ex: Donos de barbearias e salões masculinos que desejam modernizar o atendimento..."
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label className="text-sm flex items-center gap-2">
-                <Zap className="w-4 h-4 text-primary" />
-                Qual é a principal tarefa do app?
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                A função core que resolve o problema principal
-              </p>
-              <Textarea
-                value={state.mainTask}
-                onChange={(e) => updateState({ mainTask: e.target.value })}
-                className="min-h-[100px] resize-none"
-                placeholder="Ex: Permitir que clientes agendem cortes..."
-              />
-            </div>
+          <div className="space-y-3">
+            <Label className="text-base font-medium flex items-center gap-2">
+              <Zap className="w-5 h-5 text-primary" />
+              Qual é a principal tarefa do app?
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              A função core que resolve o problema principal
+            </p>
+            <Textarea
+              value={state.mainTask}
+              onChange={(e) => updateState({ mainTask: e.target.value })}
+              className="min-h-[140px] text-base resize-none bg-background/50"
+              placeholder="Ex: Permitir que clientes agendem cortes de cabelo, barba e outros serviços diretamente pelo celular..."
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label className="text-sm flex items-center gap-2">
-                <Heart className="w-4 h-4 text-primary" />
-                Qual o maior benefício para o usuário?
-              </Label>
-              <Textarea
-                value={state.mainBenefit}
-                onChange={(e) => updateState({ mainBenefit: e.target.value })}
-                className="min-h-[100px] resize-none"
-                placeholder="Ex: Eliminar agendamentos por telefone..."
-              />
-            </div>
+          <div className="space-y-3">
+            <Label className="text-base font-medium flex items-center gap-2">
+              <Heart className="w-5 h-5 text-primary" />
+              Qual o maior benefício para o usuário?
+            </Label>
+            <Textarea
+              value={state.mainBenefit}
+              onChange={(e) => updateState({ mainBenefit: e.target.value })}
+              className="min-h-[120px] text-base resize-none bg-background/50"
+              placeholder="Ex: Eliminar agendamentos por telefone, reduzir faltas em até 70%..."
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label className="text-sm flex items-center gap-2">
-                <Users className="w-4 h-4 text-primary" />
-                Quem utiliza o app no dia a dia?
-              </Label>
-              <Textarea
-                value={state.dailyUsers}
-                onChange={(e) => updateState({ dailyUsers: e.target.value })}
-                className="min-h-[100px] resize-none"
-                placeholder="Ex: Clientes finais, barbeiros..."
-              />
-            </div>
+          <div className="space-y-3">
+            <Label className="text-base font-medium flex items-center gap-2">
+              <Users className="w-5 h-5 text-primary" />
+              Quem utiliza o app no dia a dia?
+            </Label>
+            <Textarea
+              value={state.dailyUsers}
+              onChange={(e) => updateState({ dailyUsers: e.target.value })}
+              className="min-h-[100px] text-base resize-none bg-background/50"
+              placeholder="Ex: Clientes finais, barbeiros, e administradores..."
+            />
           </div>
         </CardContent>
       </Card>
 
-      {/* MODELO DE NEGÓCIO */}
+      {/* ============================================ */}
+      {/* SECTION 3: MODELO DE NEGÓCIO */}
+      {/* ============================================ */}
       <Card className="border border-border">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl flex items-center gap-2">
-            <Building className="w-6 h-6 text-primary" />
+        <CardHeader className="p-8 pb-6">
+          <CardTitle className="text-2xl flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+              <Building className="w-6 h-6 text-primary" />
+            </div>
             Modelo de Negócio
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label className="text-sm flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-primary" />
-                Como o negócio gera receita?
-              </Label>
-              <Textarea
-                value={state.businessModel}
-                onChange={(e) => updateState({ businessModel: e.target.value })}
-                className="min-h-[100px] resize-none"
-                placeholder="Ex: Agendamento online com cobrança de sinal..."
-              />
-            </div>
+        <CardContent className="p-8 pt-0 space-y-8">
+          <div className="space-y-3">
+            <Label className="text-base font-medium flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-primary" />
+              Como o negócio gera receita?
+            </Label>
+            <Textarea
+              value={state.businessModel}
+              onChange={(e) => updateState({ businessModel: e.target.value })}
+              className="min-h-[120px] text-base resize-none bg-background/50"
+              placeholder="Ex: Agendamento online com cobrança de sinal (10-30% do valor)..."
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label className="text-sm flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-primary" />
-                Qual problema principal o app resolve?
-              </Label>
-              <Textarea
-                value={state.mainProblem}
-                onChange={(e) => updateState({ mainProblem: e.target.value })}
-                className="min-h-[100px] resize-none"
-                placeholder="Ex: Barbearias perdem até 30% com no-shows..."
-              />
-            </div>
+          <div className="space-y-3">
+            <Label className="text-base font-medium flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-primary" />
+              Qual problema principal o app resolve?
+            </Label>
+            <Textarea
+              value={state.mainProblem}
+              onChange={(e) => updateState({ mainProblem: e.target.value })}
+              className="min-h-[120px] text-base resize-none bg-background/50"
+              placeholder="Ex: Barbearias perdem até 30% do faturamento com no-shows..."
+            />
+          </div>
 
-            <div className="lg:col-span-2 space-y-2">
-              <Label className="text-sm flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-primary" />
-                Qual o resultado esperado do dashboard?
-              </Label>
-              <Textarea
-                value={state.expectedOutcome}
-                onChange={(e) => updateState({ expectedOutcome: e.target.value })}
-                className="min-h-[80px] resize-none"
-                placeholder="Ex: Dashboard mostrando agenda do dia, taxa de ocupação..."
-              />
-            </div>
+          <div className="space-y-3">
+            <Label className="text-base font-medium flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-primary" />
+              Qual o resultado esperado do dashboard?
+            </Label>
+            <Textarea
+              value={state.expectedOutcome}
+              onChange={(e) => updateState({ expectedOutcome: e.target.value })}
+              className="min-h-[120px] text-base resize-none bg-background/50"
+              placeholder="Ex: Dashboard mostrando agenda do dia, taxa de ocupação, faturamento..."
+            />
           </div>
         </CardContent>
       </Card>
 
-      {/* PÁGINAS E FUNCIONALIDADES - Side by Side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* PÁGINAS */}
-        <Card className="border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Layout className="w-5 h-5 text-primary" />
-              Estrutura de Páginas
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-2 min-h-[60px]">
-              {state.pages.map((page, index) => (
-                <Badge 
-                  key={index} 
-                  variant="secondary"
-                  className="gap-1 pr-1 py-1.5 text-xs"
-                >
-                  {page}
-                  <button 
-                    onClick={() => removeFromArray('pages', index)}
-                    className="ml-1 p-0.5 rounded-full hover:bg-destructive/20 transition-colors"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </Badge>
-              ))}
-            </div>
-            
-            <div className="flex gap-2">
-              <Input
-                value={newPage}
-                onChange={(e) => setNewPage(e.target.value)}
-                placeholder="Adicionar página..."
-                onKeyDown={(e) => e.key === 'Enter' && addToArray('pages', newPage, setNewPage)}
-                className="text-sm"
-              />
-              <Button onClick={() => addToArray('pages', newPage, setNewPage)} size="icon" variant="outline">
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* INTEGRAÇÕES */}
-        <Card className="border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Wifi className="w-5 h-5 text-primary" />
-              Integrações e APIs
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-2 min-h-[60px]">
-              {state.integrations.map((integration, index) => (
-                <Badge 
-                  key={index} 
-                  variant="secondary"
-                  className="gap-1 pr-1 py-1.5 text-xs"
-                >
-                  {integration}
-                  <button 
-                    onClick={() => removeFromArray('integrations', index)}
-                    className="ml-1 p-0.5 rounded-full hover:bg-destructive/20 transition-colors"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </Badge>
-              ))}
-            </div>
-            
-            <div className="flex gap-2">
-              <Input
-                value={newIntegration}
-                onChange={(e) => setNewIntegration(e.target.value)}
-                placeholder="Adicionar integração..."
-                onKeyDown={(e) => e.key === 'Enter' && addToArray('integrations', newIntegration, setNewIntegration)}
-                className="text-sm"
-              />
-              <Button onClick={() => addToArray('integrations', newIntegration, setNewIntegration)} size="icon" variant="outline">
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* FUNCIONALIDADES CORE */}
+      {/* ============================================ */}
+      {/* SECTION 4: PÁGINAS E NAVEGAÇÃO */}
+      {/* ============================================ */}
       <Card className="border border-border">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-primary" />
-            Funcionalidades Core do Sistema
+        <CardHeader className="p-8 pb-6">
+          <CardTitle className="text-2xl flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+              <Layout className="w-6 h-6 text-primary" />
+            </div>
+            Estrutura de Páginas e Navegação
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            {state.coreFeatures.map((feature, index) => (
+        <CardContent className="p-8 pt-0 space-y-6">
+          <p className="text-base text-muted-foreground">
+            Páginas pré-configuradas para o nicho de {template.niche}. Adicione ou remova conforme necessário.
+          </p>
+          
+          <div className="flex flex-wrap gap-3 min-h-[80px]">
+            {state.pages.map((page, index) => (
               <Badge 
                 key={index} 
-                variant="default"
-                className="gap-1 pr-1 py-1.5 bg-primary/20 text-primary border border-primary/30"
+                variant="secondary"
+                className="gap-2 pr-2 py-2.5 px-4 text-sm"
               >
-                {feature}
+                {page}
                 <button 
-                  onClick={() => removeFromArray('coreFeatures', index)}
-                  className="ml-1 p-0.5 rounded-full hover:bg-destructive/20 transition-colors"
+                  onClick={() => removeFromArray('pages', index)}
+                  className="ml-1 p-1 rounded-full hover:bg-destructive/20 transition-colors"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="w-4 h-4" />
                 </button>
               </Badge>
             ))}
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex gap-3">
+            <Input
+              value={newPage}
+              onChange={(e) => setNewPage(e.target.value)}
+              placeholder="Adicionar nova página..."
+              onKeyDown={(e) => e.key === 'Enter' && addToArray('pages', newPage, setNewPage)}
+              className="h-14 text-base"
+            />
+            <Button onClick={() => addToArray('pages', newPage, setNewPage)} size="lg" variant="outline" className="h-14 px-6">
+              <Plus className="w-5 h-5" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ============================================ */}
+      {/* SECTION 5: FUNCIONALIDADES CORE */}
+      {/* ============================================ */}
+      <Card className="border border-border">
+        <CardHeader className="p-8 pb-6">
+          <CardTitle className="text-2xl flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+              <Sparkles className="w-6 h-6 text-primary" />
+            </div>
+            Funcionalidades Core do Sistema
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-8 pt-0 space-y-6">
+          <div className="flex flex-wrap gap-3">
+            {state.coreFeatures.map((feature, index) => (
+              <Badge 
+                key={index} 
+                variant="default"
+                className="gap-2 pr-2 py-2.5 px-4 text-sm bg-primary/20 text-primary border border-primary/30"
+              >
+                {feature}
+                <button 
+                  onClick={() => removeFromArray('coreFeatures', index)}
+                  className="ml-1 p-1 rounded-full hover:bg-destructive/20 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </Badge>
+            ))}
+          </div>
+          
+          <div className="flex gap-3">
             <Input
               value={newFeature}
               onChange={(e) => setNewFeature(e.target.value)}
               placeholder="Adicionar funcionalidade..."
               onKeyDown={(e) => e.key === 'Enter' && addToArray('coreFeatures', newFeature, setNewFeature)}
+              className="h-14 text-base"
             />
-            <Button onClick={() => addToArray('coreFeatures', newFeature, setNewFeature)} size="icon" variant="outline">
-              <Plus className="w-4 h-4" />
+            <Button onClick={() => addToArray('coreFeatures', newFeature, setNewFeature)} size="lg" variant="outline" className="h-14 px-6">
+              <Plus className="w-5 h-5" />
             </Button>
           </div>
 
-          {/* Suggested Features */}
-          <div className="pt-4 border-t">
-            <Label className="text-sm mb-3 block">Funcionalidades Sugeridas para {template.niche}</Label>
-            <div className="flex flex-wrap gap-2">
+          {/* Suggested Features from Template */}
+          <div className="pt-6 border-t space-y-4">
+            <Label className="text-base font-medium">Funcionalidades Sugeridas para {template.niche}</Label>
+            <div className="flex flex-wrap gap-3">
               {template.suggestedFeatures.map((feature) => {
                 const isSelected = state.selectedSuggestedFeatures.includes(feature);
                 return (
                   <Badge
                     key={feature}
                     variant={isSelected ? "default" : "outline"}
-                    className={`cursor-pointer transition-all py-1.5 px-3 text-xs ${
+                    className={`cursor-pointer transition-all py-2.5 px-4 text-sm ${
                       isSelected ? 'bg-primary hover:bg-primary/90' : 'hover:bg-primary/10 hover:border-primary'
                     }`}
                     onClick={() => toggleArrayItem('selectedSuggestedFeatures', feature)}
                   >
-                    {isSelected && <Check className="w-3 h-3 mr-1" />}
+                    {isSelected && <Check className="w-4 h-4 mr-2" />}
                     {feature}
                   </Badge>
                 );
@@ -412,91 +388,146 @@ export const PromptBuilderFormV2 = ({ state, template, onChange, onGenerate }: P
           </div>
 
           {/* Additional Features */}
-          <div className="pt-4 border-t">
-            <Label className="text-sm flex items-center gap-2 mb-2">
-              <Lightbulb className="w-4 h-4 text-primary" />
+          <div className="pt-6 border-t space-y-3">
+            <Label className="text-base font-medium flex items-center gap-2">
+              <Lightbulb className="w-5 h-5 text-primary" />
               Recursos adicionais personalizados
             </Label>
             <Textarea
               value={state.additionalFeatures}
               onChange={(e) => updateState({ additionalFeatures: e.target.value })}
-              placeholder="Liste outros recursos importantes..."
-              className="min-h-[60px]"
+              placeholder="Liste outros recursos importantes que não estão nas sugestões..."
+              className="min-h-[100px] text-base bg-background/50"
             />
           </div>
         </CardContent>
       </Card>
 
-      {/* FLUXOS DE USUÁRIO */}
+      {/* ============================================ */}
+      {/* SECTION 6: INTEGRAÇÕES */}
+      {/* ============================================ */}
       <Card className="border border-border">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl flex items-center gap-2">
-            <Workflow className="w-6 h-6 text-primary" />
-            Fluxos de Usuário (User Flows)
+        <CardHeader className="p-8 pb-6">
+          <CardTitle className="text-2xl flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+              <Wifi className="w-6 h-6 text-primary" />
+            </div>
+            Integrações e APIs
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Descreva as jornadas principais dos usuários no app
-          </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {state.userFlows.map((flow, index) => (
-              <div key={index} className="flex items-start gap-2 p-3 bg-muted/30 rounded-xl border">
-                <span className="text-xs text-primary font-bold min-w-[24px]">{index + 1}.</span>
-                <p className="text-sm flex-1">{flow}</p>
+        <CardContent className="p-8 pt-0 space-y-6">
+          <div className="flex flex-wrap gap-3 min-h-[60px]">
+            {state.integrations.map((integration, index) => (
+              <Badge 
+                key={index} 
+                variant="secondary"
+                className="gap-2 pr-2 py-2.5 px-4 text-sm"
+              >
+                {integration}
                 <button 
-                  onClick={() => removeFromArray('userFlows', index)}
-                  className="p-1 rounded-full hover:bg-destructive/20 transition-colors"
+                  onClick={() => removeFromArray('integrations', index)}
+                  className="ml-1 p-1 rounded-full hover:bg-destructive/20 transition-colors"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="w-4 h-4" />
                 </button>
-              </div>
+              </Badge>
             ))}
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <Input
-              value={newUserFlow}
-              onChange={(e) => setNewUserFlow(e.target.value)}
-              placeholder="Ex: Cliente abre app → Escolhe serviço → Agenda → Paga"
-              onKeyDown={(e) => e.key === 'Enter' && addToArray('userFlows', newUserFlow, setNewUserFlow)}
+              value={newIntegration}
+              onChange={(e) => setNewIntegration(e.target.value)}
+              placeholder="Adicionar integração..."
+              onKeyDown={(e) => e.key === 'Enter' && addToArray('integrations', newIntegration, setNewIntegration)}
+              className="h-14 text-base"
             />
-            <Button onClick={() => addToArray('userFlows', newUserFlow, setNewUserFlow)} size="icon" variant="outline">
-              <Plus className="w-4 h-4" />
+            <Button onClick={() => addToArray('integrations', newIntegration, setNewIntegration)} size="lg" variant="outline" className="h-14 px-6">
+              <Plus className="w-5 h-5" />
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* IDENTIDADE VISUAL */}
+      {/* ============================================ */}
+      {/* SECTION 7: FLUXOS DE USUÁRIO */}
+      {/* ============================================ */}
       <Card className="border border-border">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl flex items-center gap-2">
-            <Palette className="w-6 h-6 text-primary" />
+        <CardHeader className="p-8 pb-6">
+          <CardTitle className="text-2xl flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+              <Workflow className="w-6 h-6 text-primary" />
+            </div>
+            Fluxos de Usuário (User Flows)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-8 pt-0 space-y-6">
+          <p className="text-base text-muted-foreground">
+            Descreva as jornadas principais dos usuários no app
+          </p>
+          
+          <div className="space-y-3">
+            {state.userFlows.map((flow, index) => (
+              <div key={index} className="flex items-start gap-4 p-5 bg-muted/30 rounded-2xl border">
+                <span className="text-base text-primary font-bold min-w-[32px]">{index + 1}.</span>
+                <p className="text-base flex-1">{flow}</p>
+                <button 
+                  onClick={() => removeFromArray('userFlows', index)}
+                  className="p-2 rounded-full hover:bg-destructive/20 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+          
+          <div className="flex gap-3">
+            <Input
+              value={newUserFlow}
+              onChange={(e) => setNewUserFlow(e.target.value)}
+              placeholder="Ex: Cliente abre app → Escolhe serviço → Agenda → Paga → Recebe confirmação"
+              onKeyDown={(e) => e.key === 'Enter' && addToArray('userFlows', newUserFlow, setNewUserFlow)}
+              className="h-14 text-base"
+            />
+            <Button onClick={() => addToArray('userFlows', newUserFlow, setNewUserFlow)} size="lg" variant="outline" className="h-14 px-6">
+              <Plus className="w-5 h-5" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ============================================ */}
+      {/* SECTION 8: IDENTIDADE VISUAL */}
+      {/* ============================================ */}
+      <Card className="border border-border">
+        <CardHeader className="p-8 pb-6">
+          <CardTitle className="text-2xl flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+              <Palette className="w-6 h-6 text-primary" />
+            </div>
             Identidade Visual
           </CardTitle>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-base text-muted-foreground mt-2">
             Personalize sua paleta de cores e tipografia
           </p>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Color Grid - 2x2 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <CardContent className="p-8 pt-0 space-y-8">
+          {/* Color Grid */}
+          <div className="space-y-6">
             {[
               { key: 'primary', label: '1. Cor Primária', desc: 'A cor de destaque da marca, usada em CTAs e ícones.' },
               { key: 'secondary', label: '2. Cor Secundária', desc: 'Uma cor de apoio para seções ou cards.' },
               { key: 'background', label: '3. Cor de Fundo', desc: 'A cor de base para o fundo de toda a aplicação.' },
               { key: 'text', label: '4. Cor do Texto', desc: 'Cor para todos os textos e ícones.' },
             ].map((color) => (
-              <div key={color.key} className="p-4 rounded-xl border border-border bg-card/50 space-y-3">
+              <div key={color.key} className="p-6 rounded-2xl border border-border bg-card/50 space-y-4">
                 <div>
-                  <Label className="text-sm font-medium">{color.label}</Label>
-                  <p className="text-xs text-muted-foreground mt-1">{color.desc}</p>
+                  <Label className="text-lg font-medium">{color.label}</Label>
+                  <p className="text-sm text-muted-foreground mt-1">{color.desc}</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   <div 
-                    className="w-12 h-12 rounded-xl border-2 border-border cursor-pointer relative overflow-hidden shadow-inner"
+                    className="w-16 h-16 rounded-2xl border-2 border-border cursor-pointer relative overflow-hidden shadow-inner"
                     style={{ backgroundColor: state.colors[color.key as keyof typeof state.colors] }}
                   >
                     <input
@@ -509,7 +540,7 @@ export const PromptBuilderFormV2 = ({ state, template, onChange, onGenerate }: P
                   <Input
                     value={state.colors[color.key as keyof typeof state.colors]}
                     onChange={(e) => updateColor(color.key as keyof typeof state.colors, e.target.value)}
-                    className="font-mono text-sm uppercase"
+                    className="font-mono text-lg uppercase h-14 flex-1"
                   />
                 </div>
               </div>
@@ -517,57 +548,55 @@ export const PromptBuilderFormV2 = ({ state, template, onChange, onGenerate }: P
           </div>
 
           {/* Color Preview */}
-          <div className="space-y-2">
-            <Label className="text-sm">Pré-visualização da Interface</Label>
+          <div className="space-y-3">
+            <Label className="text-lg font-medium">Pré-visualização da Interface</Label>
             <div 
-              className="p-4 rounded-xl border"
+              className="p-6 rounded-2xl border"
               style={{ 
                 backgroundColor: state.colors.background,
                 borderColor: `${state.colors.text}20`,
               }}
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-4">
                 <div>
-                  <p className="font-semibold" style={{ color: state.colors.text }}>
+                  <p className="text-lg font-semibold" style={{ color: state.colors.text }}>
                     Card de Exemplo
                   </p>
-                  <p className="text-sm opacity-70" style={{ color: state.colors.text }}>
+                  <p className="text-base opacity-70" style={{ color: state.colors.text }}>
                     Este texto demonstra a legibilidade.
                   </p>
                 </div>
                 <Button 
-                  size="sm"
+                  size="lg"
                   style={{ backgroundColor: state.colors.primary, color: '#fff' }}
                 >
                   Novo
                 </Button>
               </div>
-              <div className="mt-3">
-                <Button 
-                  className="w-full"
-                  style={{ backgroundColor: state.colors.primary, color: '#fff' }}
-                >
-                  Ação Principal
-                </Button>
-              </div>
+              <Button 
+                className="w-full h-14 text-base"
+                style={{ backgroundColor: state.colors.primary, color: '#fff' }}
+              >
+                Ação Principal
+              </Button>
             </div>
           </div>
 
           {/* Color Presets */}
-          <div className="pt-4 border-t">
-            <Label className="text-sm mb-3 block">Paletas Prontas</Label>
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          <div className="pt-6 border-t space-y-4">
+            <Label className="text-lg font-medium">Paletas Prontas</Label>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
               {colorPresets.map((preset) => (
                 <button
                   key={preset.name}
                   onClick={() => applyColorPreset(preset)}
-                  className="p-2 rounded-lg border hover:border-primary transition-all text-center"
+                  className="p-4 rounded-xl border-2 hover:border-primary transition-all text-center"
                 >
-                  <div className="flex gap-1 justify-center mb-1">
-                    <div className="w-4 h-4 rounded" style={{ backgroundColor: preset.primary }} />
-                    <div className="w-4 h-4 rounded" style={{ backgroundColor: preset.secondary }} />
+                  <div className="flex gap-1.5 justify-center mb-2">
+                    <div className="w-6 h-6 rounded-lg" style={{ backgroundColor: preset.primary }} />
+                    <div className="w-6 h-6 rounded-lg" style={{ backgroundColor: preset.secondary }} />
                   </div>
-                  <p className="text-[10px] text-muted-foreground">{preset.name}</p>
+                  <p className="text-xs text-muted-foreground">{preset.name}</p>
                 </button>
               ))}
             </div>
@@ -575,326 +604,352 @@ export const PromptBuilderFormV2 = ({ state, template, onChange, onGenerate }: P
         </CardContent>
       </Card>
 
-      {/* TIPOGRAFIA E ESTILO - Side by Side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* TIPOGRAFIA */}
-        <Card className="border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Type className="w-5 h-5 text-primary" />
-              Tipografia
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-2">
-              {visibleTypography.map((font) => (
-                <button
-                  key={font.id}
-                  onClick={() => updateState({ typography: font.id })}
-                  className={`
-                    p-3 rounded-xl border-2 text-left transition-all
-                    ${state.typography === font.id 
-                      ? 'border-primary bg-primary/10' 
-                      : 'border-border hover:border-primary/50'
-                    }
-                  `}
-                >
-                  <p className="font-bold text-sm">{font.name}</p>
-                  <p className="text-[10px] text-muted-foreground mt-1">
-                    {font.description}
-                  </p>
-                </button>
-              ))}
+      {/* ============================================ */}
+      {/* SECTION 9: TIPOGRAFIA */}
+      {/* ============================================ */}
+      <Card className="border border-border">
+        <CardHeader className="p-8 pb-6">
+          <CardTitle className="text-2xl flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+              <Type className="w-6 h-6 text-primary" />
             </div>
-            {TYPOGRAPHY_OPTIONS.length > 6 && (
+            Tipografia
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-8 pt-0 space-y-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {visibleTypography.map((font) => (
               <button
-                onClick={() => setShowMoreTypography(!showMoreTypography)}
-                className="text-xs text-primary hover:underline"
+                key={font.id}
+                onClick={() => updateState({ typography: font.id })}
+                className={`
+                  p-5 rounded-2xl border-2 text-left transition-all
+                  ${state.typography === font.id 
+                    ? 'border-primary bg-primary/10' 
+                    : 'border-border hover:border-primary/50'
+                  }
+                `}
               >
-                {showMoreTypography ? 'Ver menos' : 'Ver mais opções'}
+                <p className="font-bold text-base">{font.name}</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  {font.description}
+                </p>
               </button>
-            )}
-          </CardContent>
-        </Card>
+            ))}
+          </div>
+          {TYPOGRAPHY_OPTIONS.length > 6 && (
+            <button
+              onClick={() => setShowMoreTypography(!showMoreTypography)}
+              className="text-base text-primary hover:underline"
+            >
+              {showMoreTypography ? 'Ver menos' : 'Ver mais opções'}
+            </button>
+          )}
+        </CardContent>
+      </Card>
 
-        {/* ESTILO DE DESIGN */}
-        <Card className="border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Brush className="w-5 h-5 text-primary" />
-              Estilo de Design
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-2">
-              {DESIGN_STYLES.map((style) => (
+      {/* ============================================ */}
+      {/* SECTION 10: ESTILO DE DESIGN */}
+      {/* ============================================ */}
+      <Card className="border border-border">
+        <CardHeader className="p-8 pb-6">
+          <CardTitle className="text-2xl flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+              <Brush className="w-6 h-6 text-primary" />
+            </div>
+            Estilo de Design
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-8 pt-0">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {DESIGN_STYLES.map((style) => (
+              <button
+                key={style.id}
+                onClick={() => updateState({ designStyle: style.id })}
+                className={`
+                  p-5 rounded-2xl border-2 text-left transition-all
+                  ${state.designStyle === style.id 
+                    ? 'border-primary bg-primary/10' 
+                    : 'border-border hover:border-primary/50'
+                  }
+                `}
+              >
+                <p className="font-bold text-base">{style.name}</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  {style.description}
+                </p>
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ============================================ */}
+      {/* SECTION 11: AUTENTICAÇÃO */}
+      {/* ============================================ */}
+      <Card className="border border-border">
+        <CardHeader className="p-8 pb-6">
+          <CardTitle className="text-2xl flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+              <Lock className="w-6 h-6 text-primary" />
+            </div>
+            Autenticação
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-8 pt-0">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {AUTH_TYPES.map((auth) => (
+              <button
+                key={auth.id}
+                onClick={() => updateState({ authType: auth.id })}
+                className={`
+                  p-5 rounded-2xl border-2 text-left transition-all
+                  ${state.authType === auth.id 
+                    ? 'border-primary bg-primary/10' 
+                    : 'border-border hover:border-primary/50'
+                  }
+                `}
+              >
+                <p className="font-bold text-base">{auth.name}</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  {auth.description}
+                </p>
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ============================================ */}
+      {/* SECTION 12: PAGAMENTOS */}
+      {/* ============================================ */}
+      <Card className="border border-border">
+        <CardHeader className="p-8 pb-6">
+          <CardTitle className="text-2xl flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+              <CreditCard className="w-6 h-6 text-primary" />
+            </div>
+            Métodos de Pagamento
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-8 pt-0">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {PAYMENT_METHODS.map((method) => {
+              const isSelected = state.paymentMethods.includes(method.id);
+              return (
                 <button
-                  key={style.id}
-                  onClick={() => updateState({ designStyle: style.id })}
+                  key={method.id}
+                  onClick={() => toggleArrayItem('paymentMethods', method.id)}
                   className={`
-                    p-3 rounded-xl border-2 text-left transition-all
-                    ${state.designStyle === style.id 
+                    p-5 rounded-2xl border-2 text-left transition-all
+                    ${isSelected 
                       ? 'border-primary bg-primary/10' 
                       : 'border-border hover:border-primary/50'
                     }
                   `}
                 >
-                  <p className="font-bold text-sm">{style.name}</p>
-                  <p className="text-[10px] text-muted-foreground mt-1">
-                    {style.description}
-                  </p>
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* AUTENTICAÇÃO E PAGAMENTOS - Side by Side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* AUTENTICAÇÃO */}
-        <Card className="border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Lock className="w-5 h-5 text-primary" />
-              Autenticação
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-2">
-              {AUTH_TYPES.map((auth) => (
-                <button
-                  key={auth.id}
-                  onClick={() => updateState({ authType: auth.id })}
-                  className={`
-                    p-3 rounded-xl border-2 text-left transition-all
-                    ${state.authType === auth.id 
-                      ? 'border-primary bg-primary/10' 
-                      : 'border-border hover:border-primary/50'
-                    }
-                  `}
-                >
-                  <p className="font-bold text-sm">{auth.name}</p>
-                  <p className="text-[10px] text-muted-foreground mt-1">
-                    {auth.description}
-                  </p>
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* PAGAMENTOS */}
-        <Card className="border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-primary" />
-              Métodos de Pagamento
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-2">
-              {PAYMENT_METHODS.map((method) => {
-                const isSelected = state.paymentMethods.includes(method.id);
-                return (
-                  <button
-                    key={method.id}
-                    onClick={() => toggleArrayItem('paymentMethods', method.id)}
-                    className={`
-                      p-3 rounded-xl border-2 text-left transition-all
-                      ${isSelected 
-                        ? 'border-primary bg-primary/10' 
-                        : 'border-border hover:border-primary/50'
-                      }
-                    `}
-                  >
-                    <div className="flex items-center gap-2">
-                      {isSelected && <Check className="w-4 h-4 text-primary" />}
-                      <p className="font-bold text-sm">{method.name}</p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* NOTIFICAÇÕES E CONFIGURAÇÕES - Side by Side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* NOTIFICAÇÕES */}
-        <Card className="border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Bell className="w-5 h-5 text-primary" />
-              Canais de Notificação
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-2">
-              {NOTIFICATION_CHANNELS.map((channel) => {
-                const isSelected = state.notificationChannels.includes(channel.id);
-                return (
-                  <button
-                    key={channel.id}
-                    onClick={() => toggleArrayItem('notificationChannels', channel.id)}
-                    className={`
-                      p-3 rounded-xl border-2 text-left transition-all
-                      ${isSelected 
-                        ? 'border-primary bg-primary/10' 
-                        : 'border-border hover:border-primary/50'
-                      }
-                    `}
-                  >
-                    <div className="flex items-center gap-2">
-                      {isSelected && <Check className="w-4 h-4 text-primary" />}
-                      <p className="font-bold text-sm">{channel.name}</p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* CONFIGURAÇÕES TÉCNICAS */}
-        <Card className="border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Smartphone className="w-5 h-5 text-primary" />
-              Configurações Técnicas
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl">
-              <div className="flex items-center gap-3">
-                <Smartphone className="w-5 h-5 text-primary" />
-                <div>
-                  <p className="font-medium text-sm">Mobile First</p>
-                  <p className="text-xs text-muted-foreground">Design responsivo</p>
-                </div>
-              </div>
-              <Switch
-                checked={state.mobileFirst}
-                onCheckedChange={(checked) => updateState({ mobileFirst: checked })}
-              />
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl">
-              <div className="flex items-center gap-3">
-                <Moon className="w-5 h-5 text-primary" />
-                <div>
-                  <p className="font-medium text-sm">Dark Mode</p>
-                  <p className="text-xs text-muted-foreground">Tema escuro</p>
-                </div>
-              </div>
-              <Switch
-                checked={state.darkMode}
-                onCheckedChange={(checked) => updateState({ darkMode: checked })}
-              />
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl">
-              <div className="flex items-center gap-3">
-                <Wifi className="w-5 h-5 text-primary" />
-                <div>
-                  <p className="font-medium text-sm">PWA Support</p>
-                  <p className="text-xs text-muted-foreground">Instalar como app</p>
-                </div>
-              </div>
-              <Switch
-                checked={state.pwaSupport}
-                onCheckedChange={(checked) => updateState({ pwaSupport: checked })}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* IDIOMA E PLATAFORMA - Side by Side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* IDIOMA */}
-        <Card className="border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Globe className="w-5 h-5 text-primary" />
-              Qual será o idioma principal do seu aplicativo?
-            </CardTitle>
-            <p className="text-xs text-muted-foreground">
-              A interface e todo o conteúdo serão gerados neste idioma.
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {LANGUAGE_OPTIONS.map((lang) => (
-                <button
-                  key={lang.id}
-                  onClick={() => updateState({ language: lang.id })}
-                  className={`
-                    flex items-center gap-2 px-4 py-3 rounded-xl border-2 transition-all
-                    ${state.language === lang.id 
-                      ? 'border-primary bg-primary/10' 
-                      : 'border-border hover:border-primary/50'
-                    }
-                  `}
-                >
-                  <span className="text-lg">{lang.flag}</span>
-                  <span className="font-medium text-sm">{lang.name}</span>
-                  {state.language === lang.id && (
-                    <Check className="w-4 h-4 text-primary" />
-                  )}
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* PLATAFORMA */}
-        <Card className="border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Cpu className="w-5 h-5 text-primary" />
-              Por onde será desenvolvido seu app?
-            </CardTitle>
-            <p className="text-xs text-muted-foreground">
-              Selecione a plataforma de IA que você planeja usar.
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-2">
-              {AI_PLATFORMS.slice(0, 6).map((platform) => (
-                <button
-                  key={platform.id}
-                  onClick={() => updateState({ platform: platform.id })}
-                  className={`
-                    p-3 rounded-xl border-2 text-left transition-all
-                    ${state.platform === platform.id 
-                      ? 'border-primary bg-primary/10' 
-                      : 'border-border hover:border-primary/50'
-                    }
-                  `}
-                >
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
-                    <Cpu className="w-4 h-4 text-primary" />
+                  <div className="flex items-center gap-3">
+                    {isSelected && <Check className="w-5 h-5 text-primary" />}
+                    <p className="font-bold text-base">{method.name}</p>
                   </div>
-                  <p className="font-bold text-sm">{platform.name}</p>
-                  <p className="text-[10px] text-muted-foreground line-clamp-2 mt-1">
-                    {platform.description}
-                  </p>
                 </button>
-              ))}
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ============================================ */}
+      {/* SECTION 13: NOTIFICAÇÕES */}
+      {/* ============================================ */}
+      <Card className="border border-border">
+        <CardHeader className="p-8 pb-6">
+          <CardTitle className="text-2xl flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+              <Bell className="w-6 h-6 text-primary" />
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            Canais de Notificação
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-8 pt-0">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {NOTIFICATION_CHANNELS.map((channel) => {
+              const isSelected = state.notificationChannels.includes(channel.id);
+              return (
+                <button
+                  key={channel.id}
+                  onClick={() => toggleArrayItem('notificationChannels', channel.id)}
+                  className={`
+                    p-5 rounded-2xl border-2 text-left transition-all
+                    ${isSelected 
+                      ? 'border-primary bg-primary/10' 
+                      : 'border-border hover:border-primary/50'
+                    }
+                  `}
+                >
+                  <div className="flex items-center gap-3">
+                    {isSelected && <Check className="w-5 h-5 text-primary" />}
+                    <p className="font-bold text-base">{channel.name}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ============================================ */}
+      {/* SECTION 14: CONFIGURAÇÕES TÉCNICAS */}
+      {/* ============================================ */}
+      <Card className="border border-border">
+        <CardHeader className="p-8 pb-6">
+          <CardTitle className="text-2xl flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+              <Smartphone className="w-6 h-6 text-primary" />
+            </div>
+            Configurações Técnicas
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-8 pt-0 space-y-4">
+          <div className="flex items-center justify-between p-5 bg-muted/30 rounded-2xl border">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+                <Smartphone className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium text-lg">Mobile First</p>
+                <p className="text-sm text-muted-foreground">Design responsivo priorizando mobile</p>
+              </div>
+            </div>
+            <Switch
+              checked={state.mobileFirst}
+              onCheckedChange={(checked) => updateState({ mobileFirst: checked })}
+            />
+          </div>
+
+          <div className="flex items-center justify-between p-5 bg-muted/30 rounded-2xl border">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+                <Moon className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium text-lg">Dark Mode</p>
+                <p className="text-sm text-muted-foreground">Suporte a tema escuro</p>
+              </div>
+            </div>
+            <Switch
+              checked={state.darkMode}
+              onCheckedChange={(checked) => updateState({ darkMode: checked })}
+            />
+          </div>
+
+          <div className="flex items-center justify-between p-5 bg-muted/30 rounded-2xl border">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+                <Wifi className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium text-lg">PWA Support</p>
+                <p className="text-sm text-muted-foreground">Instalar como aplicativo nativo</p>
+              </div>
+            </div>
+            <Switch
+              checked={state.pwaSupport}
+              onCheckedChange={(checked) => updateState({ pwaSupport: checked })}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ============================================ */}
+      {/* SECTION 15: IDIOMA */}
+      {/* ============================================ */}
+      <Card className="border border-border">
+        <CardHeader className="p-8 pb-6">
+          <CardTitle className="text-2xl flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+              <Globe className="w-6 h-6 text-primary" />
+            </div>
+            Qual será o idioma principal do seu aplicativo?
+          </CardTitle>
+          <p className="text-base text-muted-foreground mt-2">
+            A interface e todo o conteúdo serão gerados neste idioma.
+          </p>
+        </CardHeader>
+        <CardContent className="p-8 pt-0">
+          <div className="flex flex-wrap gap-4">
+            {LANGUAGE_OPTIONS.map((lang) => (
+              <button
+                key={lang.id}
+                onClick={() => updateState({ language: lang.id })}
+                className={`
+                  flex items-center gap-3 px-6 py-4 rounded-2xl border-2 transition-all
+                  ${state.language === lang.id 
+                    ? 'border-primary bg-primary/10' 
+                    : 'border-border hover:border-primary/50'
+                  }
+                `}
+              >
+                <span className="text-2xl">{lang.flag}</span>
+                <span className="font-medium text-base">{lang.name}</span>
+                {state.language === lang.id && (
+                  <Check className="w-5 h-5 text-primary" />
+                )}
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ============================================ */}
+      {/* SECTION 16: PLATAFORMA */}
+      {/* ============================================ */}
+      <Card className="border border-border">
+        <CardHeader className="p-8 pb-6">
+          <CardTitle className="text-2xl flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+              <Cpu className="w-6 h-6 text-primary" />
+            </div>
+            Por onde será desenvolvido seu app?
+          </CardTitle>
+          <p className="text-base text-muted-foreground mt-2">
+            Selecione a plataforma de IA que você planeja usar. Isso otimizará o prompt para o melhor resultado.
+          </p>
+        </CardHeader>
+        <CardContent className="p-8 pt-0">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {AI_PLATFORMS.map((platform) => (
+              <button
+                key={platform.id}
+                onClick={() => updateState({ platform: platform.id })}
+                className={`
+                  p-5 rounded-2xl border-2 text-left transition-all
+                  ${state.platform === platform.id 
+                    ? 'border-primary bg-primary/10' 
+                    : 'border-border hover:border-primary/50'
+                  }
+                `}
+              >
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                  <Cpu className="w-6 h-6 text-primary" />
+                </div>
+                <p className="font-bold text-lg">{platform.name}</p>
+                <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                  {platform.description}
+                </p>
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Generate Button */}
       <Button 
         size="lg" 
-        className="w-full gap-2 h-16 text-lg bg-gradient-to-r from-primary to-primary/70 hover:from-primary/90 hover:to-primary/60 shadow-lg shadow-primary/25"
+        className="w-full gap-3 h-20 text-xl bg-gradient-to-r from-primary to-primary/70 hover:from-primary/90 hover:to-primary/60 shadow-xl shadow-primary/25"
         onClick={onGenerate}
       >
-        <Rocket className="w-6 h-6" />
+        <Rocket className="w-7 h-7" />
         Materializar Conceito
       </Button>
     </div>
