@@ -36,7 +36,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { RadiusFilterModal } from '../RadiusFilterModal';
-import { COUNTRIES, getNichesForCountry, getCountryByCode } from '../global/globalSearchData';
+import { COUNTRIES, BRAZILIAN_STATES, getNichesForCountry, getCountryByCode } from '../global/globalSearchData';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -72,6 +72,7 @@ interface SearchClientsTabProps {
 export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: SearchClientsTabProps) => {
   // Search form state
   const [countryCode, setCountryCode] = useState('BR');
+  const [state, setState] = useState('');
   const [city, setCity] = useState('');
   const [niche, setNiche] = useState('');
   
@@ -105,9 +106,10 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
     return getNichesForCountry(countryCode);
   }, [countryCode]);
 
-  // Reset niche when country changes
+  // Reset niche and state when country changes
   useEffect(() => {
     setNiche('');
+    setState('');
   }, [countryCode]);
 
   // Update edited message when selecting a result
@@ -135,7 +137,7 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
   }, [affiliateId, affiliateName]);
 
   const handleSearch = async () => {
-    if (!city.trim() || !countryCode || !niche) {
+    if (!city.trim() || !countryCode || !niche || (countryCode === 'BR' && !state)) {
       toast.error('Preencha todos os campos para buscar');
       return;
     }
@@ -147,9 +149,12 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
     setIsFiltered(false);
 
     try {
+      // Build search query with state for Brazil
+      const searchCity = countryCode === 'BR' && state ? `${city.trim()}, ${state}` : city.trim();
+      
       // Step 1: Search businesses
       const { data: searchData, error: searchError } = await supabase.functions.invoke('search-businesses-global', {
-        body: { city: city.trim(), countryCode, niche, maxResults: 100 },
+        body: { city: searchCity, countryCode, niche, maxResults: 100 },
       });
 
       if (searchError) throw searchError;
@@ -185,13 +190,13 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
       let finalResults = businessResults;
       
       if (!messageError && messageData?.messages) {
-        const messagesArray = messageData.messages as { name: string; message: string }[];
-        const messageMap = new Map<string, string>();
-        messagesArray.forEach((m) => messageMap.set(m.name, m.message));
+        const messagesArray = messageData.messages as Array<{ name: string; message: string }>;
+        const messageRecord: Record<string, string> = {};
+        messagesArray.forEach((m) => { messageRecord[m.name] = m.message; });
         
         finalResults = businessResults.map(result => ({
           ...result,
-          generatedMessage: messageMap.get(result.name) || undefined,
+          generatedMessage: messageRecord[result.name] || undefined,
         }));
         
         toast.success('Mensagens geradas com sucesso!');
@@ -236,7 +241,7 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
         company_website: result.website,
         company_address: result.address,
         company_city: city,
-        company_state: countryCode,
+        company_state: countryCode === 'BR' ? state : countryCode,
         niche,
       });
       
@@ -305,7 +310,7 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
       {/* Search Form */}
       <Card className="border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
         <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* Country Selector */}
             <div>
               <Label className="text-sm font-medium flex items-center gap-2 mb-2">
@@ -327,6 +332,26 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
                 </SelectContent>
               </Select>
             </div>
+
+            {/* State Selector (only for Brazil) */}
+            {countryCode === 'BR' && (
+              <div>
+                <Label className="text-sm font-medium flex items-center gap-2 mb-2">
+                  <MapPin className="w-4 h-4 text-primary" />
+                  Estado
+                </Label>
+                <Select value={state} onValueChange={setState}>
+                  <SelectTrigger className="bg-background/50 border-border focus:border-primary">
+                    <SelectValue placeholder="Selecione o estado" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    {BRAZILIAN_STATES.map(s => (
+                      <SelectItem key={s.code} value={s.code}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* City Input */}
             <div>
@@ -364,7 +389,7 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
             <div className="flex items-end">
               <Button 
                 onClick={handleSearch} 
-                disabled={searching || !city || !countryCode || !niche}
+                disabled={searching || !city || !countryCode || !niche || (countryCode === 'BR' && !state)}
                 className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
               >
                 {searching ? (
@@ -385,7 +410,7 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
           {selectedCountry && (
             <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
               <span>{selectedCountry.flag}</span>
-              <span>Buscando em {selectedCountry.name}</span>
+              <span>Buscando em {selectedCountry.name}{countryCode === 'BR' && state ? ` - ${state}` : ''}</span>
             </div>
           )}
         </CardContent>
