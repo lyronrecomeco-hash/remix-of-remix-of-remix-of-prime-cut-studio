@@ -1,10 +1,12 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { MapPin, Search, Filter, Loader2 } from 'lucide-react';
+import RadiusMap from './RadiusMap';
+import 'leaflet/dist/leaflet.css';
 
 interface SearchResult {
   name: string;
@@ -39,9 +41,6 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 }
 
-// Lazy load the map component to avoid SSR issues
-const LazyMapComponent = lazy(() => import('./RadiusMap'));
-
 export function RadiusFilterModal({
   open,
   onOpenChange,
@@ -56,25 +55,25 @@ export function RadiusFilterModal({
   const [searching, setSearching] = useState(false);
   const [filteredCount, setFilteredCount] = useState(0);
   const [initialized, setInitialized] = useState(false);
-  const [mapReady, setMapReady] = useState(false);
+  const [showMap, setShowMap] = useState(false);
 
   // Geocode the city/state on open
   useEffect(() => {
     if (open && city && state && !initialized) {
       geocodeLocation(`${city}, ${state}, Brasil`);
       setInitialized(true);
-      // Delay map render to avoid Dialog issues
-      const timer = setTimeout(() => setMapReady(true), 100);
-      return () => clearTimeout(timer);
     }
   }, [open, city, state, initialized]);
 
-  // Reset when modal closes
+  // Delay map rendering after dialog opens
   useEffect(() => {
-    if (!open) {
+    if (open) {
+      const timer = setTimeout(() => setShowMap(true), 300);
+      return () => clearTimeout(timer);
+    } else {
+      setShowMap(false);
       setInitialized(false);
       setSearchQuery('');
-      setMapReady(false);
     }
   }, [open]);
 
@@ -170,19 +169,12 @@ export function RadiusFilterModal({
 
           {/* Map */}
           <div className="h-[400px] rounded-lg overflow-hidden border bg-muted/20">
-            {mapReady ? (
-              <Suspense fallback={
-                <div className="h-full flex items-center justify-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <span className="ml-2 text-muted-foreground">Carregando mapa...</span>
-                </div>
-              }>
-                <LazyMapComponent
-                  center={center}
-                  radius={radius}
-                  onMapClick={handleMapClick}
-                />
-              </Suspense>
+            {showMap ? (
+              <RadiusMap
+                center={center}
+                radius={radius}
+                onMapClick={handleMapClick}
+              />
             ) : (
               <div className="h-full flex items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
