@@ -84,11 +84,18 @@ const STATES = [
 ];
 
 const ITEMS_PER_PAGE = 10;
+const MAX_RESULTS_OPTIONS = [
+  { value: '100', label: '100' },
+  { value: '200', label: '200' },
+  { value: '300', label: '300' },
+  { value: '500', label: '500' },
+];
 
 export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsCardProps) => {
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [niche, setNiche] = useState('');
+  const [maxResults, setMaxResults] = useState<string>('200');
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [addingId, setAddingId] = useState<string | null>(null);
@@ -117,6 +124,7 @@ export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsC
           city: city.trim(),
           state,
           niche,
+          maxResults: parseInt(maxResults, 10),
         },
       });
 
@@ -176,7 +184,7 @@ export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsC
       
       <CardContent className="space-y-4">
         {/* Campos de Busca */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div>
             <Label className="text-xs text-muted-foreground flex items-center gap-1 mb-1.5">
               <MapPin className="w-3 h-3" />
@@ -220,6 +228,20 @@ export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsC
               </SelectContent>
             </Select>
           </div>
+
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1.5 block">Limite</Label>
+            <Select value={maxResults} onValueChange={setMaxResults}>
+              <SelectTrigger className="bg-background/50">
+                <SelectValue placeholder="200" />
+              </SelectTrigger>
+              <SelectContent>
+                {MAX_RESULTS_OPTIONS.map(opt => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <Button 
@@ -253,7 +275,7 @@ export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsC
               </span>
             </div>
             
-            <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+            <div className="space-y-2">
               {paginatedResults.map((result, idx) => (
                 <div
                   key={idx}

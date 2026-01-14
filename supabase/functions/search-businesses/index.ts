@@ -9,6 +9,7 @@ interface SearchRequest {
   city: string;
   state: string;
   niche: string;
+  maxResults?: number; // limite desejado no retorno (opcional)
 }
 
 interface BusinessResult {
@@ -28,7 +29,9 @@ serve(async (req) => {
   }
 
   try {
-    const { city, state, niche }: SearchRequest = await req.json();
+    const body: SearchRequest & { max_results?: number } = await req.json();
+    const { city, state, niche } = body;
+    const requestedMaxResults = Number(body.maxResults ?? body.max_results);
 
     if (!city || !state || !niche) {
       return new Response(
@@ -51,12 +54,23 @@ serve(async (req) => {
     // Busca otimizada para Google Maps/Places via Serper
     const searchQuery = `${niche} em ${city} ${state}`;
 
-    const MAX_PER_PAGE = 100;
-    const MAX_PAGES = 5; // até 500 resultados (evita timeout/custo)
+    // A API pode não respeitar "num" alto. Então fazemos paginação progressiva
+    // e paramos quando não vierem novos resultados.
+    const PER_PAGE = 20;
+    const HARD_CAP = 500;
+    const DEFAULT_MAX_RESULTS = 200;
+
+    const maxResults = Number.isFinite(requestedMaxResults)
+      ? Math.min(HARD_CAP, Math.max(20, requestedMaxResults))
+      : DEFAULT_MAX_RESULTS;
+
+    const maxPages = Math.ceil(maxResults / PER_PAGE);
 
     const allPlaces: any[] = [];
+    const rawSeen = new Set<string>();
+    let consecutiveNoNew = 0;
 
-    for (let page = 1; page <= MAX_PAGES; page++) {
+    for (let page = 1; page <= maxPages; page++) {
       const searchResponse = await fetch('https://google.serper.dev/places', {
         method: 'POST',
         headers: {
@@ -67,7 +81,7 @@ serve(async (req) => {
           q: searchQuery,
           gl: 'br',
           hl: 'pt-br',
-          num: MAX_PER_PAGE,
+          num: PER_PAGE,
           page,
         }),
       });
@@ -85,10 +99,33 @@ serve(async (req) => {
       const places = searchData.places || [];
       console.log(`Resultados Serper (page ${page}): ${places.length}`);
 
-      allPlaces.push(...places);
+      if (places.length === 0) break;
 
-      // Se vier menos que o máximo, acabou
-      if (places.length < MAX_PER_PAGE) break;
+      let addedOnPage = 0;
+      for (const place of places) {
+        const placeId = place.placeId || place.cid || '';
+        const name = place.title || place.name || '';
+        const address = place.address || '';
+        const key = `${placeId}::${name}::${address}`.toLowerCase();
+
+        if (!name || name.length < 3) continue;
+        if (rawSeen.has(key)) continue;
+
+        rawSeen.add(key);
+        allPlaces.push(place);
+        addedOnPage++;
+
+        if (allPlaces.length >= maxResults) break;
+      }
+
+      if (allPlaces.length >= maxResults) break;
+
+      if (addedOnPage === 0) {
+        consecutiveNoNew++;
+        if (consecutiveNoNew >= 2) break;
+      } else {
+        consecutiveNoNew = 0;
+      }
     }
 
     // Deduplicar e processar
