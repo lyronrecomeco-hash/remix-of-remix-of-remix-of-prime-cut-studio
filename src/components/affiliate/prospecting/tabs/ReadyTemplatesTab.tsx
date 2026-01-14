@@ -102,10 +102,10 @@ export const ReadyTemplatesTab = ({ affiliateId }: ReadyTemplatesTabProps) => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       {/* Header with greeting - only for customize step */}
       {currentStep === 'customize' && (
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="space-y-6">
           <Button
             variant="ghost"
             size="lg"
@@ -115,9 +115,9 @@ export const ReadyTemplatesTab = ({ affiliateId }: ReadyTemplatesTabProps) => {
             <ArrowLeft className="w-5 h-5" />
             Voltar
           </Button>
-          
-          <div className="text-center space-y-3">
-            <div className="flex items-center justify-center gap-2 text-primary text-base font-medium">
+
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-primary text-base font-medium">
               <Sparkles className="w-5 h-5" />
               <span>Materializar SaaS</span>
             </div>
