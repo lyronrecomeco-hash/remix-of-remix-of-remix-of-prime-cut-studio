@@ -82,12 +82,8 @@ export const DEFAULT_CONFIG: TemplateConfig = {
   },
 };
 
-export const AVAILABLE_LANGUAGES = [
-  { code: 'pt-BR', label: 'Português (Brasil)' },
-  { code: 'pt-PT', label: 'Português (Portugal)' },
-  { code: 'en-US', label: 'English (US)' },
-  { code: 'es-ES', label: 'Español' },
-];
+// Re-export from translations for backwards compatibility
+export { AVAILABLE_LANGUAGES_EXTENDED as AVAILABLE_LANGUAGES } from './translations';
 
 export const AVAILABLE_FONTS = [
   { value: 'Playfair Display', label: 'Playfair Display' },

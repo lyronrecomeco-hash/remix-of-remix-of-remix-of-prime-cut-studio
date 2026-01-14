@@ -17,10 +17,10 @@ import {
   TemplateConfig, 
   TemplateInfo, 
   DEFAULT_CONFIG, 
-  AVAILABLE_LANGUAGES, 
   AVAILABLE_FONTS,
   AffiliateTemplateConfig
 } from './types';
+import { AVAILABLE_LANGUAGES_EXTENDED, getLanguageInfo } from './translations';
 
 interface TemplateEditorProps {
   template: TemplateInfo;
@@ -419,12 +419,17 @@ export function TemplateEditor({
                   onValueChange={(value) => setConfig(prev => ({ ...prev, language: value }))}
                 >
                   <SelectTrigger className="h-11">
-                    <SelectValue />
+                    <SelectValue>
+                      {getLanguageInfo(config.language)?.flag} {getLanguageInfo(config.language)?.label || config.language}
+                    </SelectValue>
                   </SelectTrigger>
-                  <SelectContent>
-                    {AVAILABLE_LANGUAGES.map((lang) => (
+                  <SelectContent className="max-h-[300px]">
+                    {AVAILABLE_LANGUAGES_EXTENDED.map((lang) => (
                       <SelectItem key={lang.code} value={lang.code}>
-                        {lang.label}
+                        <span className="flex items-center gap-2">
+                          <span>{lang.flag}</span>
+                          <span>{lang.label}</span>
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>
