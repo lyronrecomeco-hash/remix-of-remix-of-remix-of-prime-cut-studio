@@ -46,39 +46,7 @@ export const TemplateGallery = ({ templates, onSelect }: TemplateGalleryProps) =
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="text-center space-y-3">
-        <div className="flex items-center justify-center gap-2 text-primary">
-          <Zap className="w-5 h-5" />
-          <span className="text-sm font-semibold uppercase tracking-wider">Modelos Prontos</span>
-        </div>
-        <h2 className="text-3xl md:text-4xl font-bold text-foreground">
-          Escolha seu Template
-        </h2>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
-          Templates profissionais por nicho com 90% já configurado. 
-          Selecione um modelo e personalize apenas o essencial.
-        </p>
-      </div>
-
-      {/* Featured Badge */}
-      <div className="flex items-center justify-center gap-4 text-sm">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Check className="w-4 h-4 text-green-500" />
-          <span>Pré-configurado</span>
-        </div>
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Star className="w-4 h-4 text-yellow-500" />
-          <span>Otimizado para IAs</span>
-        </div>
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Layout className="w-4 h-4 text-primary" />
-          <span>Multi-página</span>
-        </div>
-      </div>
-
-      {/* Templates Grid */}
+    <div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {templates.map((template) => {
           const Icon = ICON_MAP[template.icon] || Sparkles;
