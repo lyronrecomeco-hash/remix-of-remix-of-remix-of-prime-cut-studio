@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -11,7 +11,9 @@ import {
   MoreVertical,
   FolderOpen,
   Plus,
-  Loader2
+  Loader2,
+  TrendingUp,
+  RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +36,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import { AffiliateTemplateConfig } from './types';
 
 interface PortfolioManagerProps {
@@ -45,7 +48,7 @@ interface PortfolioManagerProps {
 }
 
 export function PortfolioManager({ 
-  configs, 
+  configs: initialConfigs, 
   loading, 
   onEdit, 
   onDelete,
@@ -53,6 +56,73 @@ export function PortfolioManager({
 }: PortfolioManagerProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [configs, setConfigs] = useState(initialConfigs);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Update configs when props change
+  useEffect(() => {
+    setConfigs(initialConfigs);
+  }, [initialConfigs]);
+
+  // Real-time subscription for views
+  useEffect(() => {
+    if (configs.length === 0) return;
+
+    const configIds = configs.map(c => c.id);
+    
+    const channel = supabase
+      .channel('portfolio-views')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'affiliate_template_configs',
+          filter: `id=in.(${configIds.join(',')})`,
+        },
+        (payload) => {
+          const updated = payload.new as any;
+          setConfigs(prev => prev.map(c => 
+            c.id === updated.id 
+              ? { ...c, views_count: updated.views_count }
+              : c
+          ));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [configs.length]);
+
+  const refreshViews = async () => {
+    if (configs.length === 0) return;
+    
+    setRefreshing(true);
+    try {
+      const { data, error } = await supabase
+        .from('affiliate_template_configs')
+        .select('id, views_count')
+        .in('id', configs.map(c => c.id));
+
+      if (!error && data) {
+        const viewsMap: Record<string, number> = {};
+        data.forEach(d => { viewsMap[d.id] = d.views_count; });
+        
+        setConfigs(prev => prev.map(c => ({
+          ...c,
+          views_count: viewsMap[c.id] ?? c.views_count
+        })));
+        
+        toast.success('Visualizações atualizadas!');
+      }
+    } catch (error) {
+      console.error('Error refreshing views:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const copyLink = (uniqueCode: string) => {
     const link = `${window.location.origin}/demo/${uniqueCode}`;
@@ -72,6 +142,10 @@ export function PortfolioManager({
     setDeleting(false);
     setDeleteId(null);
   };
+
+  const totalViews = configs.reduce((acc, c) => acc + c.views_count, 0);
+  const activeCount = configs.filter(c => c.is_active).length;
+  const avgViews = configs.length > 0 ? Math.round(totalViews / configs.length) : 0;
 
   if (loading) {
     return (
@@ -108,7 +182,21 @@ export function PortfolioManager({
   return (
     <>
       <div className="space-y-4">
-        {/* Stats Summary */}
+        {/* Stats Summary with Refresh */}
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-medium text-muted-foreground">Estatísticas em Tempo Real</h3>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={refreshViews}
+            disabled={refreshing}
+            className="gap-1.5 text-xs"
+          >
+            <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
+            Atualizar
+          </Button>
+        </div>
+        
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Card className="bg-primary/5 border-primary/20">
             <CardContent className="p-4 text-center">
@@ -116,28 +204,26 @@ export function PortfolioManager({
               <div className="text-xs text-muted-foreground">Portfólios</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 border-blue-500/20">
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-foreground">
-                {configs.reduce((acc, c) => acc + c.views_count, 0)}
+              <div className="flex items-center justify-center gap-1">
+                <Eye className="w-4 h-4 text-blue-500" />
+                <span className="text-2xl font-bold text-foreground">{totalViews}</span>
               </div>
               <div className="text-xs text-muted-foreground">Visualizações</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-green-500">
-                {configs.filter(c => c.is_active).length}
-              </div>
+              <div className="text-2xl font-bold text-green-500">{activeCount}</div>
               <div className="text-xs text-muted-foreground">Ativos</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/20">
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-foreground">
-                {configs.length > 0 
-                  ? Math.round(configs.reduce((acc, c) => acc + c.views_count, 0) / configs.length) 
-                  : 0}
+              <div className="flex items-center justify-center gap-1">
+                <TrendingUp className="w-4 h-4 text-amber-500" />
+                <span className="text-2xl font-bold text-foreground">{avgViews}</span>
               </div>
               <div className="text-xs text-muted-foreground">Média/Portfólio</div>
             </CardContent>
@@ -181,7 +267,10 @@ export function PortfolioManager({
                             /demo/{config.unique_code}
                           </span>
                           <span>•</span>
-                          <span>{config.views_count} visualizações</span>
+                          <span className="flex items-center gap-1 font-medium text-blue-500">
+                            <Eye className="w-3 h-3" />
+                            {config.views_count}
+                          </span>
                           <span>•</span>
                           <span>
                             {format(new Date(config.created_at), "dd 'de' MMM", { locale: ptBR })}
