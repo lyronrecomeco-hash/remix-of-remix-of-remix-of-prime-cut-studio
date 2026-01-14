@@ -7599,6 +7599,63 @@ export type Database = {
         }
         Relationships: []
       }
+      global_contexts: {
+        Row: {
+          business_hours: Json
+          channel_priority: Json
+          compliance_tags: Json
+          country_code: string
+          country_name: string
+          created_at: string
+          decision_speed: string
+          directness_level: number
+          emoji_tolerance: number
+          formality_level: number
+          id: string
+          is_active: boolean
+          language: string
+          region_code: string
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          business_hours?: Json
+          channel_priority?: Json
+          compliance_tags?: Json
+          country_code: string
+          country_name: string
+          created_at?: string
+          decision_speed?: string
+          directness_level?: number
+          emoji_tolerance?: number
+          formality_level?: number
+          id?: string
+          is_active?: boolean
+          language: string
+          region_code: string
+          timezone: string
+          updated_at?: string
+        }
+        Update: {
+          business_hours?: Json
+          channel_priority?: Json
+          compliance_tags?: Json
+          country_code?: string
+          country_name?: string
+          created_at?: string
+          decision_speed?: string
+          directness_level?: number
+          emoji_tolerance?: number
+          formality_level?: number
+          id?: string
+          is_active?: boolean
+          language?: string
+          region_code?: string
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       login_attempts: {
         Row: {
           attempted_at: string
