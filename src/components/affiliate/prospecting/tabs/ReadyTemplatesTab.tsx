@@ -1,47 +1,65 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
-  Layout, 
-  Palette, 
-  Type, 
-  Globe, 
-  Cpu, 
-  Sparkles,
-  ArrowRight,
   ArrowLeft,
   Check,
   Copy,
-  Wand2,
-  Eye,
+  Rocket,
+  Sparkles,
   ChevronRight,
-  Rocket
+  Layout,
+  Palette,
+  Zap
 } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { TemplateSelector } from '../prompt-builder/TemplateSelector';
-import { PromptBuilderForm } from '../prompt-builder/PromptBuilderForm';
-import { PromptPreview } from '../prompt-builder/PromptPreview';
+import { TemplateGallery } from '../prompt-builder/TemplateGallery';
+import { PromptBuilderFormV2 } from '../prompt-builder/PromptBuilderFormV2';
+import { PromptPreviewV2 } from '../prompt-builder/PromptPreviewV2';
 import { NicheTemplate, PromptBuilderState } from '../prompt-builder/types';
 import { NICHE_TEMPLATES } from '../prompt-builder/templates';
-import { generateFinalPrompt } from '../prompt-builder/promptGenerator';
+import { generateMasterPrompt } from '../prompt-builder/masterPromptGenerator';
 import { toast } from 'sonner';
 
 interface ReadyTemplatesTabProps {
   affiliateId: string;
 }
 
-type BuilderStep = 'templates' | 'customize' | 'preview';
+type BuilderStep = 'gallery' | 'customize' | 'preview';
 
 export const ReadyTemplatesTab = ({ affiliateId }: ReadyTemplatesTabProps) => {
-  const [currentStep, setCurrentStep] = useState<BuilderStep>('templates');
+  const [currentStep, setCurrentStep] = useState<BuilderStep>('gallery');
   const [selectedTemplate, setSelectedTemplate] = useState<NicheTemplate | null>(null);
   const [builderState, setBuilderState] = useState<PromptBuilderState | null>(null);
   const [generatedPrompt, setGeneratedPrompt] = useState<string>('');
   const [copied, setCopied] = useState(false);
+  const [fieldsCompleted, setFieldsCompleted] = useState(0);
+  const [totalFields, setTotalFields] = useState(14);
+
+  // Calculate completed fields
+  useEffect(() => {
+    if (!builderState) return;
+    
+    let completed = 0;
+    if (builderState.appName) completed++;
+    if (builderState.targetAudience) completed++;
+    if (builderState.mainTask) completed++;
+    if (builderState.mainBenefit) completed++;
+    if (builderState.dailyUsers) completed++;
+    if (builderState.pages.length > 0) completed++;
+    if (builderState.colors.primary) completed++;
+    if (builderState.colors.secondary) completed++;
+    if (builderState.colors.background) completed++;
+    if (builderState.colors.text) completed++;
+    if (builderState.typography) completed++;
+    if (builderState.language) completed++;
+    if (builderState.platform) completed++;
+    if (builderState.selectedSuggestedFeatures.length > 0) completed++;
+    
+    setFieldsCompleted(completed);
+  }, [builderState]);
 
   const handleSelectTemplate = (template: NicheTemplate) => {
     setSelectedTemplate(template);
-    // Initialize builder state with template defaults
+    // Initialize builder state with template defaults - 90% pre-filled
     setBuilderState({
       appName: template.defaultAppName,
       targetAudience: template.targetAudience,
@@ -53,14 +71,14 @@ export const ReadyTemplatesTab = ({ affiliateId }: ReadyTemplatesTabProps) => {
       colors: {
         primary: template.suggestedColors.primary,
         secondary: template.suggestedColors.secondary,
-        background: '#ffffff',
-        text: '#1a1a1a',
+        background: '#0f0f23',
+        text: '#ffffff',
       },
       typography: 'Poppins',
       language: 'pt-BR',
       platform: 'lovable',
       suggestedFeatures: [...template.suggestedFeatures],
-      selectedSuggestedFeatures: [],
+      selectedSuggestedFeatures: template.suggestedFeatures.slice(0, 4), // Pre-select top 4
     });
     setCurrentStep('customize');
   };
@@ -72,7 +90,7 @@ export const ReadyTemplatesTab = ({ affiliateId }: ReadyTemplatesTabProps) => {
   const handleGeneratePrompt = () => {
     if (!builderState || !selectedTemplate) return;
     
-    const prompt = generateFinalPrompt(builderState, selectedTemplate);
+    const prompt = generateMasterPrompt(builderState, selectedTemplate);
     setGeneratedPrompt(prompt);
     setCurrentStep('preview');
   };
@@ -81,7 +99,7 @@ export const ReadyTemplatesTab = ({ affiliateId }: ReadyTemplatesTabProps) => {
     try {
       await navigator.clipboard.writeText(generatedPrompt);
       setCopied(true);
-      toast.success('Prompt copiado para a área de transferência!');
+      toast.success('Prompt Master copiado!');
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       toast.error('Erro ao copiar prompt');
@@ -90,7 +108,7 @@ export const ReadyTemplatesTab = ({ affiliateId }: ReadyTemplatesTabProps) => {
 
   const handleBack = () => {
     if (currentStep === 'customize') {
-      setCurrentStep('templates');
+      setCurrentStep('gallery');
       setSelectedTemplate(null);
       setBuilderState(null);
     } else if (currentStep === 'preview') {
@@ -98,72 +116,36 @@ export const ReadyTemplatesTab = ({ affiliateId }: ReadyTemplatesTabProps) => {
     }
   };
 
-  const handleStartFromScratch = () => {
-    // Create empty state for custom build
-    setSelectedTemplate({
-      id: 'custom',
-      name: 'Projeto Personalizado',
-      niche: 'Personalizado',
-      icon: 'Wand2',
-      description: 'Crie seu projeto do zero com total liberdade',
-      defaultAppName: 'Meu App',
-      targetAudience: '',
-      mainTask: '',
-      mainBenefit: '',
-      dailyUsers: '',
-      defaultPages: [],
-      suggestedFeatures: [],
-      suggestedColors: {
-        primary: '#6366f1',
-        secondary: '#8b5cf6',
-      },
-    });
-    setBuilderState({
-      appName: 'Meu App',
-      targetAudience: '',
-      mainTask: '',
-      mainBenefit: '',
-      dailyUsers: '',
-      pages: [],
-      additionalFeatures: '',
-      colors: {
-        primary: '#6366f1',
-        secondary: '#8b5cf6',
-        background: '#ffffff',
-        text: '#1a1a1a',
-      },
-      typography: 'Poppins',
-      language: 'pt-BR',
-      platform: 'lovable',
-      suggestedFeatures: [],
-      selectedSuggestedFeatures: [],
-    });
-    setCurrentStep('customize');
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Bom dia';
+    if (hour < 18) return 'Boa tarde';
+    return 'Boa noite';
   };
 
   const renderStepIndicator = () => {
     const steps = [
-      { id: 'templates', label: 'Escolher Modelo', icon: Layout },
-      { id: 'customize', label: 'Personalizar', icon: Palette },
-      { id: 'preview', label: 'Gerar Prompt', icon: Rocket },
+      { id: 'gallery', label: 'Escolher Modelo', icon: Layout, description: 'Selecione um template' },
+      { id: 'customize', label: 'Personalizar', icon: Palette, description: 'Configure seu app' },
+      { id: 'preview', label: 'Materializar', icon: Rocket, description: 'Gere o prompt' },
     ];
 
     return (
-      <div className="flex items-center justify-center gap-2 mb-6">
+      <div className="flex items-center justify-center gap-1 mb-8">
         {steps.map((step, index) => {
           const Icon = step.icon;
           const isActive = step.id === currentStep;
           const isPast = steps.findIndex(s => s.id === currentStep) > index;
           
           return (
-            <div key={step.id} className="flex items-center gap-2">
+            <div key={step.id} className="flex items-center">
               <div className={`
-                flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all
+                flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300
                 ${isActive 
-                  ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25' 
+                  ? 'bg-gradient-to-r from-primary to-primary/70 text-primary-foreground shadow-lg shadow-primary/30' 
                   : isPast 
                     ? 'bg-primary/20 text-primary' 
-                    : 'bg-muted text-muted-foreground'
+                    : 'bg-muted/50 text-muted-foreground'
                 }
               `}>
                 {isPast ? (
@@ -171,10 +153,10 @@ export const ReadyTemplatesTab = ({ affiliateId }: ReadyTemplatesTabProps) => {
                 ) : (
                   <Icon className="w-4 h-4" />
                 )}
-                <span className="hidden sm:inline">{step.label}</span>
+                <span className="text-sm font-medium hidden sm:inline">{step.label}</span>
               </div>
               {index < steps.length - 1 && (
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                <ChevronRight className="w-4 h-4 text-muted-foreground mx-1" />
               )}
             </div>
           );
@@ -185,11 +167,30 @@ export const ReadyTemplatesTab = ({ affiliateId }: ReadyTemplatesTabProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Header with greeting */}
+      {currentStep === 'customize' && (
+        <div className="text-center space-y-2 mb-6">
+          <div className="flex items-center justify-center gap-2 text-primary text-sm font-medium">
+            <Sparkles className="w-4 h-4" />
+            <span>Materializar SaaS</span>
+          </div>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+            {getGreeting()}, Criador(a)!
+          </h1>
+          <p className="text-muted-foreground">
+            Vamos começar a construir seu próximo grande projeto.
+          </p>
+          <p className="text-sm text-primary font-medium">
+            {fieldsCompleted}/{totalFields} campos preenchidos
+          </p>
+        </div>
+      )}
+
       {/* Step Indicator */}
       {renderStepIndicator()}
 
       {/* Back Button */}
-      {currentStep !== 'templates' && (
+      {currentStep !== 'gallery' && (
         <Button
           variant="ghost"
           size="sm"
@@ -202,49 +203,15 @@ export const ReadyTemplatesTab = ({ affiliateId }: ReadyTemplatesTabProps) => {
       )}
 
       {/* Step Content */}
-      {currentStep === 'templates' && (
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl font-bold text-foreground">
-              Modelos Prontos
-            </h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">
-              Escolha um template por nicho para começar rapidamente, ou crie do zero com nosso Prompt Builder profissional
-            </p>
-          </div>
-
-          {/* Start from Scratch Card */}
-          <Card 
-            className="border-dashed border-2 border-primary/30 bg-primary/5 cursor-pointer hover:border-primary hover:bg-primary/10 transition-all group"
-            onClick={handleStartFromScratch}
-          >
-            <CardContent className="p-6 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/30 transition-colors">
-                <Wand2 className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                Criar do Zero
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Use o Prompt Builder para criar um prompt totalmente personalizado
-              </p>
-              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
-                Personalização Total
-              </Badge>
-            </CardContent>
-          </Card>
-
-          {/* Template Selector */}
-          <TemplateSelector 
-            templates={NICHE_TEMPLATES}
-            onSelect={handleSelectTemplate}
-          />
-        </div>
+      {currentStep === 'gallery' && (
+        <TemplateGallery 
+          templates={NICHE_TEMPLATES}
+          onSelect={handleSelectTemplate}
+        />
       )}
 
       {currentStep === 'customize' && builderState && selectedTemplate && (
-        <PromptBuilderForm
+        <PromptBuilderFormV2
           state={builderState}
           template={selectedTemplate}
           onChange={handleCustomize}
@@ -253,7 +220,7 @@ export const ReadyTemplatesTab = ({ affiliateId }: ReadyTemplatesTabProps) => {
       )}
 
       {currentStep === 'preview' && (
-        <PromptPreview
+        <PromptPreviewV2
           prompt={generatedPrompt}
           platform={builderState?.platform || 'lovable'}
           onCopy={handleCopyPrompt}
