@@ -1,4 +1,4 @@
-import { useState, useEffect, isValidElement } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -64,11 +64,6 @@ const AffiliatePanel = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [prospectingSubHeader, setProspectingSubHeader] = useState<React.ReactNode | null>(null);
-
-  const hideProspectingDesktopHeader =
-    activeTab === 'prospecting' &&
-    isValidElement(prospectingSubHeader) &&
-    Boolean((prospectingSubHeader.props as Record<string, unknown>)?.['data-hide-desktop-header']);
 
   useEffect(() => {
     checkAffiliateAuth();
@@ -280,28 +275,26 @@ const AffiliatePanel = () => {
       {/* Main Content */}
       <main className="flex-1 min-h-screen overflow-y-auto pt-14 lg:pt-0">
         {/* Desktop Header */}
-        {!hideProspectingDesktopHeader && (
-          <div className="hidden lg:flex items-center justify-between px-8 py-4 border-b border-border bg-card/50">
-            <div>
-              {activeTab === 'prospecting' && prospectingSubHeader ? (
-                prospectingSubHeader
-              ) : (
-                <h2 className="text-lg font-semibold text-foreground">
-                  {navItems.find(n => n.id === activeTab)?.label ||
-                   (activeTab === 'profile' ? 'Meu Perfil' :
-                    activeTab === 'settings' ? 'Configurações' : 'Dashboard')}
-                </h2>
-              )}
-            </div>
-            {!(activeTab === 'prospecting' && prospectingSubHeader) && affiliate && (
-              <AffiliateProfileMenu
-                affiliateName={affiliate.name}
-                affiliateCode={affiliate.affiliate_code}
-                onNavigate={setActiveTab}
-              />
+        <div className="hidden lg:flex items-center justify-between px-8 py-4 border-b border-border bg-card/50">
+          <div>
+            {activeTab === 'prospecting' && prospectingSubHeader ? (
+              prospectingSubHeader
+            ) : (
+              <h2 className="text-lg font-semibold text-foreground">
+                {navItems.find(n => n.id === activeTab)?.label || 
+                 (activeTab === 'profile' ? 'Meu Perfil' : 
+                  activeTab === 'settings' ? 'Configurações' : 'Dashboard')}
+              </h2>
             )}
           </div>
-        )}
+          {!(activeTab === 'prospecting' && prospectingSubHeader) && affiliate && (
+            <AffiliateProfileMenu
+              affiliateName={affiliate.name}
+              affiliateCode={affiliate.affiliate_code}
+              onNavigate={setActiveTab}
+            />
+          )}
+        </div>
         
         <div className="p-4 lg:p-8">
           <motion.div
