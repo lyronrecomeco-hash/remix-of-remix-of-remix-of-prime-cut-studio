@@ -107,18 +107,13 @@ export function TemplateEditor({
         animate={{ opacity: 1, y: 0 }}
         className="flex items-center justify-between"
       >
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={onBack}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div>
-            <h2 className="text-xl font-bold text-foreground">
-              {existingConfig ? 'Editar Portfólio' : 'Novo Portfólio'}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Template: {template.name}
-            </p>
-          </div>
+        <div>
+          <h2 className="text-xl font-bold text-foreground">
+            {existingConfig ? 'Editar Portfólio' : 'Novo Portfólio'}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Template: {template.name}
+          </p>
         </div>
 
         <div className="flex items-center gap-2">
