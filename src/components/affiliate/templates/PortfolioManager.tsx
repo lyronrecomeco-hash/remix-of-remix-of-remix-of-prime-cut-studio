@@ -13,7 +13,10 @@ import {
   Plus,
   Loader2,
   TrendingUp,
-  RefreshCw
+  RefreshCw,
+  Send,
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -35,6 +38,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { AffiliateTemplateConfig } from './types';
@@ -58,6 +70,13 @@ export function PortfolioManager({
   const [deleting, setDeleting] = useState(false);
   const [configs, setConfigs] = useState(initialConfigs);
   const [refreshing, setRefreshing] = useState(false);
+  
+  // Test automation modal
+  const [testModalOpen, setTestModalOpen] = useState(false);
+  const [testPhone, setTestPhone] = useState('');
+  const [testingConfig, setTestingConfig] = useState<AffiliateTemplateConfig | null>(null);
+  const [sendingTest, setSendingTest] = useState(false);
+  const [testResult, setTestResult] = useState<'success' | 'error' | null>(null);
 
   // Update configs when props change
   useEffect(() => {
@@ -141,6 +160,65 @@ export function PortfolioManager({
     await onDelete(deleteId);
     setDeleting(false);
     setDeleteId(null);
+  };
+
+  const openTestModal = (config: AffiliateTemplateConfig) => {
+    setTestingConfig(config);
+    setTestPhone('');
+    setTestResult(null);
+    setTestModalOpen(true);
+  };
+
+  const handleSendTest = async () => {
+    if (!testingConfig || !testPhone) return;
+    
+    setSendingTest(true);
+    setTestResult(null);
+    
+    try {
+      const demoLink = `${window.location.origin}/demo/${testingConfig.unique_code}`;
+      const message = `🧪 *TESTE DE AUTOMAÇÃO*\n\nOlá! Este é um teste do portfólio "${testingConfig.client_name || testingConfig.template_name}".\n\n🔗 Link da demo: ${demoLink}\n\n✅ Se você recebeu esta mensagem, a automação está funcionando corretamente!`;
+      
+      // Clean phone number
+      const cleanPhone = testPhone.replace(/\D/g, '');
+      const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+      
+      const { data, error } = await supabase.functions.invoke('send-whatsapp-genesis', {
+        body: {
+          to: formattedPhone,
+          message,
+          instanceId: null // Use global instance
+        }
+      });
+
+      if (error) throw error;
+      
+      if (data?.success) {
+        setTestResult('success');
+        toast.success('Teste enviado com sucesso!');
+      } else {
+        // Fallback to WhatsApp Web
+        const waLink = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
+        window.open(waLink, '_blank');
+        setTestResult('success');
+        toast.success('Abrindo WhatsApp Web...');
+      }
+    } catch (error) {
+      console.error('Error sending test:', error);
+      setTestResult('error');
+      
+      // Fallback to WhatsApp Web
+      const cleanPhone = testPhone.replace(/\D/g, '');
+      const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+      const demoLink = `${window.location.origin}/demo/${testingConfig.unique_code}`;
+      const message = `🧪 *TESTE DE AUTOMAÇÃO*\n\nOlá! Este é um teste do portfólio "${testingConfig.client_name || testingConfig.template_name}".\n\n🔗 Link da demo: ${demoLink}`;
+      
+      const waLink = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
+      window.open(waLink, '_blank');
+      toast.info('Abrindo WhatsApp Web como alternativa');
+    } finally {
+      setSendingTest(false);
+    }
   };
 
   const totalViews = configs.reduce((acc, c) => acc + c.views_count, 0);
@@ -300,6 +378,10 @@ export function PortfolioManager({
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openTestModal(config)}>
+                              <Send className="w-4 h-4 mr-2" />
+                              Enviar Teste
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openPreview(config.unique_code)}>
                               <Eye className="w-4 h-4 mr-2" />
                               Visualizar
@@ -356,6 +438,75 @@ export function PortfolioManager({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal de Teste de Automação */}
+      <Dialog open={testModalOpen} onOpenChange={setTestModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="w-5 h-5 text-primary" />
+              Testar Automação
+            </DialogTitle>
+            <DialogDescription>
+              Envie um teste para seu WhatsApp para verificar se a automação está funcionando.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {testingConfig && (
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="text-sm font-medium">{testingConfig.client_name || testingConfig.template_name}</p>
+                <p className="text-xs text-muted-foreground">Template: {testingConfig.template_name}</p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="test-phone">Seu número de WhatsApp</Label>
+              <Input
+                id="test-phone"
+                placeholder="(11) 99999-9999"
+                value={testPhone}
+                onChange={(e) => setTestPhone(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Você receberá uma mensagem de teste com o link do portfólio.
+              </p>
+            </div>
+
+            {testResult === 'success' && (
+              <div className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                <span className="text-sm text-green-600">Teste enviado com sucesso!</span>
+              </div>
+            )}
+
+            {testResult === 'error' && (
+              <div className="flex items-center gap-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                <AlertCircle className="w-5 h-5 text-amber-500" />
+                <span className="text-sm text-amber-600">Abrindo WhatsApp Web como alternativa...</span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-3 justify-end">
+            <Button variant="outline" onClick={() => setTestModalOpen(false)}>
+              Fechar
+            </Button>
+            <Button 
+              onClick={handleSendTest} 
+              disabled={!testPhone || sendingTest}
+              className="gap-2"
+            >
+              {sendingTest ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+              Enviar Teste
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
