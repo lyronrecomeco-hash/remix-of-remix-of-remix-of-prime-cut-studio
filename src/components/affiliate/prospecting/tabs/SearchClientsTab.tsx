@@ -34,6 +34,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 const ITEMS_PER_PAGE = 12;
+const MAX_RESULTS_OPTIONS = [
+  { value: '100', label: '100' },
+  { value: '200', label: '200' },
+  { value: '300', label: '300' },
+  { value: '500', label: '500' },
+];
 
 interface SearchResult {
   name: string;
@@ -131,9 +137,10 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [niche, setNiche] = useState('');
+  const [maxResults, setMaxResults] = useState<string>('200');
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
-  const [addingId, setAddingId] = useState<string | null>(null);
+
   const [selectedResult, setSelectedResult] = useState<SearchResult | null>(null);
   const [addedNames, setAddedNames] = useState<Set<string>>(new Set());
   const [generatingProposal, setGeneratingProposal] = useState(false);
@@ -178,7 +185,7 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
 
     try {
       const { data, error } = await supabase.functions.invoke('search-businesses', {
-        body: { city: city.trim(), state, niche },
+        body: { city: city.trim(), state, niche, maxResults: parseInt(maxResults, 10) },
       });
 
       if (error) throw error;
