@@ -8,7 +8,7 @@ interface CustomTemplateWizardProps {
 
 export function CustomTemplateWizard({ onBack, onComplete }: CustomTemplateWizardProps) {
   return (
-    <div className="h-full min-h-[500px] max-h-[80vh] overflow-hidden flex flex-col bg-background rounded-xl p-6">
+    <div className="h-[80vh] min-h-[550px] overflow-hidden flex flex-col bg-background rounded-xl p-6">
       <WizardContainer onBack={onBack} onComplete={onComplete} />
     </div>
   );
