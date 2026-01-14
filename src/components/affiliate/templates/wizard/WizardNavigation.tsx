@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Sparkles, Copy, Check } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Sparkles, Copy, Check, Rocket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useWizard } from './WizardContext';
 import { toast } from 'sonner';
@@ -18,7 +18,6 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({ onComplete, 
     prevStep, 
     canProceed, 
     generatedPrompt,
-    formData 
   } = useWizard();
 
   const [copied, setCopied] = React.useState(false);
@@ -30,7 +29,7 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({ onComplete, 
     try {
       await navigator.clipboard.writeText(generatedPrompt);
       setCopied(true);
-      toast.success('Prompt copiado!');
+      toast.success('Prompt copiado para a área de transferência!');
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       toast.error('Erro ao copiar');
@@ -50,39 +49,33 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({ onComplete, 
   };
 
   return (
-    <div className="flex items-center justify-between pt-6 border-t border-border">
+    <div className="flex items-center justify-between pt-4 border-t border-border shrink-0">
       {/* Left side - Back button */}
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3 }}
+      <Button
+        variant="ghost"
+        onClick={handleBack}
+        className="gap-2 text-muted-foreground hover:text-foreground"
       >
-        <Button
-          variant="outline"
-          onClick={handleBack}
-          className="gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span className="hidden sm:inline">
-            {isFirstStep ? 'Cancelar' : 'Voltar'}
-          </span>
-        </Button>
-      </motion.div>
+        <ArrowLeft className="w-4 h-4" />
+        <span className="hidden sm:inline">
+          {isFirstStep ? 'Cancelar' : 'Voltar'}
+        </span>
+      </Button>
 
-      {/* Center - Step indicator */}
-      <div className="flex items-center gap-2">
+      {/* Center - Step dots */}
+      <div className="flex items-center gap-1.5">
         {Array.from({ length: totalSteps }).map((_, index) => (
           <motion.div
             key={index}
-            className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+            className={`h-1.5 rounded-full transition-all duration-300 ${
               index + 1 === currentStep 
-                ? 'bg-primary' 
+                ? 'bg-primary w-6' 
                 : index + 1 < currentStep 
-                  ? 'bg-primary/50' 
-                  : 'bg-muted'
+                  ? 'bg-primary/60 w-1.5' 
+                  : 'bg-muted w-1.5'
             }`}
             animate={{
-              scale: index + 1 === currentStep ? 1.2 : 1,
+              scale: index + 1 === currentStep ? 1 : 0.9,
             }}
             transition={{ duration: 0.2 }}
           />
@@ -90,34 +83,31 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({ onComplete, 
       </div>
 
       {/* Right side - Next/Complete button */}
-      <motion.div
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3 }}
-        className="flex items-center gap-2"
-      >
+      <div className="flex items-center gap-2">
         {isLastStep ? (
           <>
             <Button
               variant="outline"
+              size="sm"
               onClick={handleCopyPrompt}
-              className="gap-2"
+              className="gap-1.5"
             >
               {copied ? (
-                <Check className="w-4 h-4 text-green-500" />
+                <Check className="w-3.5 h-3.5 text-green-500" />
               ) : (
-                <Copy className="w-4 h-4" />
+                <Copy className="w-3.5 h-3.5" />
               )}
-              <span className="hidden sm:inline">Copiar</span>
+              <span className="hidden sm:inline">{copied ? 'Copiado!' : 'Copiar'}</span>
             </Button>
             
             <Button
               onClick={handleComplete}
               disabled={!canProceed}
-              className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+              className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/25"
             >
-              <Sparkles className="w-4 h-4" />
-              <span>Gerar com IA</span>
+              <Rocket className="w-4 h-4" />
+              <span className="hidden sm:inline">Gerar</span>
+              <Sparkles className="w-3 h-3" />
             </Button>
           </>
         ) : (
@@ -126,11 +116,11 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({ onComplete, 
             disabled={!canProceed}
             className="gap-2"
           >
-            <span className="hidden sm:inline">Próximo</span>
+            <span>Próximo</span>
             <ArrowRight className="w-4 h-4" />
           </Button>
         )}
-      </motion.div>
+      </div>
     </div>
   );
 };
