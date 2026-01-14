@@ -19,7 +19,8 @@ import {
   TrendingUp,
   ChevronLeft,
   ChevronRight,
-  X
+  X,
+  Filter
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,6 +33,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { RadiusFilterModal } from '../RadiusFilterModal';
 
 const ITEMS_PER_PAGE = 12;
 const MAX_RESULTS_OPTIONS = [
@@ -49,6 +51,8 @@ interface SearchResult {
   rating?: number;
   reviews_count?: number;
   category?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 interface SearchClientsTabProps {
@@ -140,7 +144,10 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
   const [maxResults, setMaxResults] = useState<string>('200');
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [originalResults, setOriginalResults] = useState<SearchResult[]>([]);
   const [addingId, setAddingId] = useState<string | null>(null);
+  const [radiusModalOpen, setRadiusModalOpen] = useState(false);
+  const [isFiltered, setIsFiltered] = useState(false);
 
   const [selectedResult, setSelectedResult] = useState<SearchResult | null>(null);
   const [addedNames, setAddedNames] = useState<Set<string>>(new Set());
@@ -182,7 +189,9 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
 
     setSearching(true);
     setResults([]);
+    setOriginalResults([]);
     setCurrentPage(1);
+    setIsFiltered(false);
 
     try {
       const { data, error } = await supabase.functions.invoke('search-businesses', {
@@ -193,6 +202,7 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
 
       if (data?.success && data.results && data.results.length > 0) {
         setResults(data.results);
+        setOriginalResults(data.results);
         toast.success(`${data.results.length} estabelecimentos encontrados!`);
       } else if (data?.error) {
         toast.error(data.error);
@@ -204,6 +214,19 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
       toast.error('Erro ao buscar estabelecimentos');
     } finally {
       setSearching(false);
+    }
+  };
+
+  const handleRadiusFilter = (filteredResults: SearchResult[]) => {
+    if (filteredResults.length === originalResults.length) {
+      setResults(originalResults);
+      setIsFiltered(false);
+      toast.info('Filtro removido');
+    } else {
+      setResults(filteredResults);
+      setIsFiltered(true);
+      setCurrentPage(1);
+      toast.success(`${filteredResults.length} estabelecimentos na área selecionada`);
     }
   };
 
@@ -366,12 +389,27 @@ Se fizer sentido, posso te explicar rapidamente como funciona.`;
       {/* Results Grid */}
       {results.length > 0 && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <h3 className="text-lg font-semibold flex items-center gap-2">
               <Target className="w-5 h-5 text-primary" />
               {results.length} Estabelecimentos Encontrados
+              {isFiltered && (
+                <Badge variant="secondary" className="text-xs">
+                  <Filter className="w-3 h-3 mr-1" />
+                  Filtrado por Bairro
+                </Badge>
+              )}
             </h3>
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setRadiusModalOpen(true)}
+                className="gap-1.5"
+              >
+                <MapPin className="w-4 h-4" />
+                Filtrar por Bairro
+              </Button>
               <span className="text-xs text-muted-foreground">
                 Página {currentPage} de {totalPages}
               </span>
@@ -777,6 +815,16 @@ Se fizer sentido, posso te explicar rapidamente como funciona.`;
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Filtro por Raio */}
+      <RadiusFilterModal
+        open={radiusModalOpen}
+        onOpenChange={setRadiusModalOpen}
+        results={originalResults}
+        city={city}
+        state={state}
+        onFilterResults={handleRadiusFilter}
+      />
     </div>
   );
 };
