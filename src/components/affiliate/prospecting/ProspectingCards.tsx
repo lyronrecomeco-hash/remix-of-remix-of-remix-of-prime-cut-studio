@@ -5,7 +5,8 @@ import {
   ChevronRight,
   Sparkles,
   Target,
-  Clock
+  Clock,
+  Layout
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,8 +15,8 @@ import { Prospect } from './types';
 interface ProspectingCardsProps {
   affiliateId: string;
   prospects: Prospect[];
-  activeTab: 'cards' | 'search' | 'proposal' | 'history';
-  onTabChange: (tab: 'cards' | 'search' | 'proposal' | 'history') => void;
+  activeTab: 'cards' | 'search' | 'proposal' | 'history' | 'templates';
+  onTabChange: (tab: 'cards' | 'search' | 'proposal' | 'history' | 'templates') => void;
 }
 
 export const ProspectingCards = ({
@@ -41,6 +42,14 @@ export const ProspectingCards = ({
       icon: FileText,
       badge: 'Luna AI',
       badgeClass: 'bg-purple-500/10 text-purple-500 border-purple-500/30',
+    },
+    {
+      id: 'templates' as const,
+      title: 'Modelos Prontos',
+      description: 'Templates profissionais por nicho com Prompt Builder inteligente',
+      icon: Layout,
+      badge: 'Prompt Builder',
+      badgeClass: 'bg-amber-500/10 text-amber-500 border-amber-500/30',
     },
     {
       id: 'history' as const,
