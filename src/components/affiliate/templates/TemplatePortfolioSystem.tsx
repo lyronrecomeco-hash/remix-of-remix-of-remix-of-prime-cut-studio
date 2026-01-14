@@ -114,6 +114,10 @@ export function TemplatePortfolioSystem({ affiliateId }: TemplatePortfolioSystem
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'templates' | 'portfolios')}>
         <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="templates" className="gap-2">
+            <LayoutGrid className="w-4 h-4" />
+            Templates Disponíveis
+          </TabsTrigger>
           <TabsTrigger value="portfolios" className="gap-2">
             <FolderOpen className="w-4 h-4" />
             Meus Portfólios
@@ -122,10 +126,6 @@ export function TemplatePortfolioSystem({ affiliateId }: TemplatePortfolioSystem
                 {configs.length}
               </span>
             )}
-          </TabsTrigger>
-          <TabsTrigger value="templates" className="gap-2">
-            <LayoutGrid className="w-4 h-4" />
-            Templates Disponíveis
           </TabsTrigger>
         </TabsList>
 
