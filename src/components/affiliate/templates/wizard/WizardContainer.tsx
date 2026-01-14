@@ -1,7 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Wand2, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Wand2, Sparkles } from 'lucide-react';
 import { WizardProvider, useWizard } from './WizardContext';
 import { WizardProgress } from './WizardProgress';
 import { WizardNavigation } from './WizardNavigation';
@@ -81,15 +80,6 @@ const WizardContent: React.FC<WizardContainerProps> = ({ onBack, onComplete }) =
             </p>
           </div>
         </div>
-        
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onBack}
-          className="text-muted-foreground hover:text-foreground hover:bg-destructive/10 rounded-full"
-        >
-          <X className="w-5 h-5" />
-        </Button>
       </div>
 
       {/* Progress */}

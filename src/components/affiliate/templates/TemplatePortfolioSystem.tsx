@@ -10,7 +10,8 @@ import { TemplateInfo, AffiliateTemplateConfig, TemplateConfig } from './types';
 import { TemplateSelector } from './TemplateSelector';
 import { TemplateChoiceModal } from './TemplateChoiceModal';
 import { CustomTemplateWizard } from './CustomTemplateWizard';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { toast } from 'sonner';
 
 interface TemplatePortfolioSystemProps {
@@ -198,7 +199,10 @@ export function TemplatePortfolioSystem({ affiliateId }: TemplatePortfolioSystem
 
       {/* Custom Wizard Modal */}
       <Dialog open={wizardOpen} onOpenChange={setWizardOpen}>
-        <DialogContent className="max-w-4xl p-0 max-h-[90vh] overflow-hidden">
+        <DialogContent className="max-w-4xl p-0 max-h-[90vh] overflow-hidden [&>button]:hidden" aria-describedby={undefined}>
+          <VisuallyHidden>
+            <DialogTitle>Criar Template com IA</DialogTitle>
+          </VisuallyHidden>
           <CustomTemplateWizard
             onBack={() => setWizardOpen(false)}
             onComplete={handleWizardComplete}
