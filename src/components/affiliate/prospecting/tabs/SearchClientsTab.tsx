@@ -23,16 +23,18 @@ import {
   Mail,
   Map,
   Clock,
-  AlertCircle
+  AlertCircle,
+  GlobeIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { RadiusFilterModal } from '../RadiusFilterModal';
@@ -53,6 +55,7 @@ interface SearchResult {
   longitude?: number;
   place_id?: string;
   generatedMessage?: string;
+  localTime?: string;
 }
 
 interface SearchClientsTabProps {
@@ -69,12 +72,47 @@ interface SearchClientsTabProps {
   }) => Promise<unknown>;
 }
 
+// Timezone mapping for countries
+const COUNTRY_TIMEZONES: Record<string, string> = {
+  BR: 'America/Sao_Paulo',
+  US: 'America/New_York',
+  PT: 'Europe/Lisbon',
+  ES: 'Europe/Madrid',
+  MX: 'America/Mexico_City',
+  AR: 'America/Buenos_Aires',
+  CO: 'America/Bogota',
+  CL: 'America/Santiago',
+  PE: 'America/Lima',
+  UK: 'Europe/London',
+  DE: 'Europe/Berlin',
+  FR: 'Europe/Paris',
+  IT: 'Europe/Rome',
+  CA: 'America/Toronto',
+  AU: 'Australia/Sydney',
+  JP: 'Asia/Tokyo',
+};
+
+function getLocalTime(countryCode: string): string {
+  const timezone = COUNTRY_TIMEZONES[countryCode] || 'UTC';
+  try {
+    return new Intl.DateTimeFormat('pt-BR', {
+      timeZone: timezone,
+      hour: '2-digit',
+      minute: '2-digit',
+      weekday: 'short',
+    }).format(new Date());
+  } catch {
+    return '';
+  }
+}
+
 export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: SearchClientsTabProps) => {
   // Search form state
   const [countryCode, setCountryCode] = useState('BR');
   const [state, setState] = useState('');
   const [city, setCity] = useState('');
   const [niche, setNiche] = useState('');
+  const [excludeWithWebsite, setExcludeWithWebsite] = useState(false);
   
   // Results state
   const [searching, setSearching] = useState(false);
@@ -90,6 +128,7 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
   const [addedNames, setAddedNames] = useState<Set<string>>(new Set());
   const [editedMessage, setEditedMessage] = useState('');
   const [copied, setCopied] = useState(false);
+  const [phoneCopied, setPhoneCopied] = useState(false);
   const [sending, setSending] = useState(false);
   const [currentAffiliateName, setCurrentAffiliateName] = useState(affiliateName || '');
 
@@ -148,13 +187,15 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
     setCurrentPage(1);
     setIsFiltered(false);
 
+    const localTime = getLocalTime(countryCode);
+
     try {
       // Build search query with state for Brazil
       const searchCity = countryCode === 'BR' && state ? `${city.trim()}, ${state}` : city.trim();
       
-      // Step 1: Search businesses
+      // Step 1: Search businesses (limited for speed)
       const { data: searchData, error: searchError } = await supabase.functions.invoke('search-businesses-global', {
-        body: { city: searchCity, countryCode, niche, maxResults: 100 },
+        body: { city: searchCity, countryCode, niche, maxResults: 50 },
       });
 
       if (searchError) throw searchError;
@@ -165,15 +206,38 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
         return;
       }
 
-      const businessResults: SearchResult[] = searchData.results;
+      let businessResults: SearchResult[] = searchData.results.map((r: SearchResult) => ({
+        ...r,
+        localTime
+      }));
+
+      // Filter out results with website if checkbox is checked
+      if (excludeWithWebsite) {
+        const beforeCount = businessResults.length;
+        businessResults = businessResults.filter(r => !r.website);
+        if (businessResults.length < beforeCount) {
+          toast.info(`${beforeCount - businessResults.length} empresas com site removidas`);
+        }
+      }
+
+      if (businessResults.length === 0) {
+        toast.info('Nenhuma empresa sem site encontrada. Desmarque o filtro.');
+        setSearching(false);
+        return;
+      }
+
       toast.success(`${businessResults.length} empresas encontradas! Gerando mensagens...`);
       
-      // Step 2: Generate messages in bulk
+      // Step 2: Generate messages in bulk (in parallel with UI update)
       setGeneratingMessages(true);
+      
+      // Show results immediately before messages
+      setResults(businessResults);
+      setOriginalResults(businessResults);
       
       const { data: messageData, error: messageError } = await supabase.functions.invoke('generate-bulk-proposals', {
         body: {
-          businesses: businessResults.map(b => ({
+          businesses: businessResults.slice(0, 30).map(b => ({
             name: b.name,
             niche: b.category || niche,
             address: b.address,
@@ -261,6 +325,14 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const copyPhone = async () => {
+    if (!selectedResult?.phone) return;
+    await navigator.clipboard.writeText(selectedResult.phone);
+    setPhoneCopied(true);
+    toast.success('Telefone copiado!');
+    setTimeout(() => setPhoneCopied(false), 2000);
+  };
+
   const sendViaWhatsApp = async () => {
     if (!selectedResult?.phone || !editedMessage) {
       toast.error('Telefone ou mensagem não disponível');
@@ -304,6 +376,7 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
   };
 
   const selectedCountry = getCountryByCode(countryCode);
+  const currentLocalTime = getLocalTime(countryCode);
 
   return (
     <div className="space-y-6">
@@ -395,7 +468,7 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
                 {searching ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    {generatingMessages ? 'Gerando mensagens...' : 'Buscando...'}
+                    {generatingMessages ? 'Gerando...' : 'Buscando...'}
                   </>
                 ) : (
                   <>
@@ -407,23 +480,56 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
             </div>
           </div>
 
-          {selectedCountry && (
-            <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-              <span>{selectedCountry.flag}</span>
-              <span>Buscando em {selectedCountry.name}{countryCode === 'BR' && state ? ` - ${state}` : ''}</span>
+          {/* Filter options */}
+          <div className="mt-4 flex flex-wrap items-center gap-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="excludeWebsite" 
+                checked={excludeWithWebsite}
+                onCheckedChange={(checked) => setExcludeWithWebsite(checked === true)}
+              />
+              <label 
+                htmlFor="excludeWebsite" 
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-1.5"
+              >
+                <GlobeIcon className="w-4 h-4 text-muted-foreground" />
+                Apenas empresas <strong className="text-primary">sem site</strong>
+              </label>
             </div>
-          )}
+
+            {selectedCountry && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground ml-auto">
+                <Clock className="w-4 h-4" />
+                <span>{selectedCountry.flag} {currentLocalTime}</span>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 
       {/* Loading State */}
-      {(searching || generatingMessages) && (
+      {(searching || generatingMessages) && results.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <Loader2 className="w-12 h-12 animate-spin text-primary" />
           <p className="text-lg text-muted-foreground font-medium">
             {generatingMessages ? 'Gerando mensagens com IA...' : 'Buscando empresas...'}
           </p>
-          <p className="text-sm text-muted-foreground">Isso pode levar alguns segundos</p>
+          <p className="text-sm text-muted-foreground">Máximo 5 segundos</p>
+        </div>
+      )}
+
+      {/* Empty State - No search yet */}
+      {results.length === 0 && !searching && (
+        <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
+          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+            <Search className="w-10 h-10 text-primary/50" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">Faça uma busca</h3>
+            <p className="text-muted-foreground max-w-md">
+              Preencha os campos acima e clique em buscar. Os resultados aparecerão aqui com mensagens personalizadas geradas por IA.
+            </p>
+          </div>
         </div>
       )}
 
@@ -451,8 +557,9 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
                 <MapPin className="w-4 h-4" />
                 Filtrar por Área
               </Button>
-              <Badge className="bg-primary/10 text-primary border-primary/30">
-                {selectedCountry?.flag} {selectedCountry?.code}
+              <Badge className="bg-primary/10 text-primary border-primary/30 gap-1">
+                <Clock className="w-3 h-3" />
+                {currentLocalTime}
               </Badge>
             </div>
           </div>
@@ -510,6 +617,13 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
                         </p>
 
                         <div className="flex flex-wrap items-center gap-2 mt-3">
+                          {result.localTime && (
+                            <Badge variant="outline" className="text-xs gap-1">
+                              <Clock className="w-3 h-3" />
+                              {result.localTime}
+                            </Badge>
+                          )}
+
                           {result.rating && (
                             <Badge variant="secondary" className="text-xs gap-1 bg-amber-500/10 text-amber-500 border-amber-500/30">
                               <Star className="w-3 h-3 fill-current" />
@@ -523,9 +637,10 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
                             </Badge>
                           )}
 
-                          {result.email && (
-                            <Badge variant="outline" className="text-xs gap-1 text-blue-500 border-blue-500/30">
-                              <Mail className="w-3 h-3" />
+                          {!result.website && (
+                            <Badge variant="outline" className="text-xs gap-1 text-orange-500 border-orange-500/30">
+                              <Globe className="w-3 h-3" />
+                              Sem site
                             </Badge>
                           )}
 
@@ -625,7 +740,17 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
                   </div>
                   <div className="flex-1 min-w-0">
                     <h2 className="text-2xl font-bold truncate">{selectedResult.name}</h2>
-                    <p className="text-primary-foreground/80 text-sm mt-1">{niche}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge className="bg-white/20 border-0 text-white">
+                        {niche}
+                      </Badge>
+                      {selectedResult.localTime && (
+                        <Badge className="bg-white/20 border-0 text-white gap-1">
+                          <Clock className="w-3 h-3" />
+                          {selectedResult.localTime}
+                        </Badge>
+                      )}
+                    </div>
                     {selectedResult.rating && (
                       <div className="flex items-center gap-2 mt-2">
                         <div className="flex items-center gap-1 bg-white/20 rounded-full px-2 py-0.5">
@@ -664,15 +789,29 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
                     </div>
                   </div>
                   
-                  {/* Phone */}
+                  {/* Phone with Copy */}
                   {selectedResult.phone && (
-                    <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-xl border border-border/50">
+                    <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-xl border border-border/50 group/phone">
                       <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0">
                         <Phone className="w-5 h-5 text-green-500" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Telefone</p>
-                        <p className="text-sm mt-1 font-mono">{selectedResult.phone}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <p className="text-sm font-mono">{selectedResult.phone}</p>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover/phone:opacity-100 transition-opacity"
+                            onClick={copyPhone}
+                          >
+                            {phoneCopied ? (
+                              <Check className="w-3 h-3 text-green-500" />
+                            ) : (
+                              <Copy className="w-3 h-3" />
+                            )}
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -696,7 +835,7 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
                   )}
                   
                   {/* Website */}
-                  {selectedResult.website && (
+                  {selectedResult.website ? (
                     <a 
                       href={`https://${selectedResult.website}`}
                       target="_blank"
@@ -712,6 +851,18 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
                       </div>
                       <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0 mt-3" />
                     </a>
+                  ) : (
+                    <div className="flex items-start gap-3 p-4 bg-orange-500/10 rounded-xl border border-orange-500/20">
+                      <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center shrink-0">
+                        <Globe className="w-5 h-5 text-orange-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-orange-600 font-medium uppercase tracking-wide">Website</p>
+                        <p className="text-sm mt-1 text-orange-700 dark:text-orange-400 font-medium">
+                          ⚡ Sem site - Oportunidade!
+                        </p>
+                      </div>
+                    </div>
                   )}
                 </div>
 

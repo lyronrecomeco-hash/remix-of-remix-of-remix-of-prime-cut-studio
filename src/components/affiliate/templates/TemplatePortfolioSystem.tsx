@@ -8,6 +8,10 @@ import { PortfolioManager } from './PortfolioManager';
 import { useTemplateConfigs } from './useTemplateConfigs';
 import { TemplateInfo, AffiliateTemplateConfig, TemplateConfig } from './types';
 import { TemplateSelector } from './TemplateSelector';
+import { TemplateChoiceModal } from './TemplateChoiceModal';
+import { CustomTemplateWizard } from './CustomTemplateWizard';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
 interface TemplatePortfolioSystemProps {
   affiliateId: string;
@@ -16,6 +20,7 @@ interface TemplatePortfolioSystemProps {
 type ViewState = 
   | { type: 'list' }
   | { type: 'select-template' }
+  | { type: 'custom-wizard' }
   | { type: 'editor'; template: TemplateInfo; existingConfig?: AffiliateTemplateConfig };
 
 // Templates disponíveis
@@ -40,6 +45,8 @@ const TEMPLATES: TemplateInfo[] = [
 export function TemplatePortfolioSystem({ affiliateId }: TemplatePortfolioSystemProps) {
   const [activeTab, setActiveTab] = useState<'templates' | 'portfolios'>('templates');
   const [viewState, setViewState] = useState<ViewState>({ type: 'list' });
+  const [choiceModalOpen, setChoiceModalOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
   
   const {
     configs,
@@ -82,6 +89,23 @@ export function TemplatePortfolioSystem({ affiliateId }: TemplatePortfolioSystem
     setViewState({ type: 'list' });
   };
 
+  const handleCreateNew = () => {
+    setChoiceModalOpen(true);
+  };
+
+  const handleChooseReady = () => {
+    setActiveTab('templates');
+  };
+
+  const handleChooseCustom = () => {
+    setWizardOpen(true);
+  };
+
+  const handleWizardComplete = (prompt: string) => {
+    setWizardOpen(false);
+    toast.success('Prompt gerado! Cole na Lovable para criar seu site personalizado.');
+  };
+
   // Se estiver no editor, mostrar o editor
   if (viewState.type === 'editor') {
     return (
@@ -106,7 +130,7 @@ export function TemplatePortfolioSystem({ affiliateId }: TemplatePortfolioSystem
             Crie portfólios personalizados para seus clientes
           </p>
         </div>
-        <Button onClick={() => setActiveTab('templates')} className="gap-2 shrink-0">
+        <Button onClick={handleCreateNew} className="gap-2 shrink-0">
           <LayoutGrid className="w-4 h-4" />
           Criar Novo Portfólio
         </Button>
@@ -143,7 +167,7 @@ export function TemplatePortfolioSystem({ affiliateId }: TemplatePortfolioSystem
                   loading={loading}
                   onEdit={handleEditConfig}
                   onDelete={deleteConfig}
-                  onCreateNew={() => setActiveTab('templates')}
+                  onCreateNew={handleCreateNew}
                 />
               </motion.div>
             </TabsContent>
@@ -163,6 +187,24 @@ export function TemplatePortfolioSystem({ affiliateId }: TemplatePortfolioSystem
           )}
         </AnimatePresence>
       </Tabs>
+
+      {/* Choice Modal */}
+      <TemplateChoiceModal
+        open={choiceModalOpen}
+        onOpenChange={setChoiceModalOpen}
+        onChooseReady={handleChooseReady}
+        onChooseCustom={handleChooseCustom}
+      />
+
+      {/* Custom Wizard Modal */}
+      <Dialog open={wizardOpen} onOpenChange={setWizardOpen}>
+        <DialogContent className="max-w-xl p-0 max-h-[90vh] overflow-y-auto">
+          <CustomTemplateWizard
+            onBack={() => setWizardOpen(false)}
+            onComplete={handleWizardComplete}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
