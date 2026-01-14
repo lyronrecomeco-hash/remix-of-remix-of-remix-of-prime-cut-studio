@@ -85,7 +85,7 @@ const Booking = () => {
         barber: selectedBarber,
         date: dateStr,
         time: selectedTime,
-        status: 'pending',
+        status: 'confirmed',
         createdAt: new Date().toISOString(),
       });
 

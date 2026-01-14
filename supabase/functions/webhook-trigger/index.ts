@@ -75,9 +75,57 @@ serve(async (req) => {
       .single();
 
     let chatproResult = null;
+    let genesisResult = null;
+
+    // Try Genesis first (priority)
+    const { data: genesisInstance } = await supabase
+      .from('genesis_instances')
+      .select('id, name, status, backend_url, backend_token, phone_number')
+      .eq('status', 'connected')
+      .limit(1)
+      .single();
+
+    if (genesisInstance && payload.client_phone) {
+      try {
+        // Format phone number
+        let phone = payload.client_phone.replace(/\D/g, '');
+        if (!phone.startsWith('55')) {
+          phone = '55' + phone;
+        }
+
+        // Build full message with clickable link if button is configured
+        let fullMessage = message;
+        if (buttonText && buttonUrl) {
+          fullMessage += `\n\n━━━━━━━━━━━━━━━\n🔗 *${buttonText}*\n👉 ${buttonUrl}`;
+        }
+
+        // Send via send-whatsapp-genesis edge function
+        const { data: sendResult, error: sendError } = await supabase.functions.invoke('send-whatsapp-genesis', {
+          body: {
+            to: phone,
+            message: fullMessage,
+            instanceId: genesisInstance.id,
+          },
+        });
+
+        if (sendError) {
+          console.error('Genesis send error:', sendError);
+          genesisResult = { success: false, error: sendError.message };
+        } else {
+          console.log('Genesis send result:', sendResult);
+          genesisResult = { success: true, response: sendResult };
+        }
+      } catch (genesisError) {
+        console.error('Genesis error:', genesisError);
+        genesisResult = {
+          success: false,
+          error: genesisError instanceof Error ? genesisError.message : 'Unknown error',
+        };
+      }
+    }
     
-    // Send via ChatPro if enabled and configured
-    if (chatproConfig?.is_enabled && chatproConfig?.api_token && chatproConfig?.instance_id && payload.client_phone) {
+    // Fallback to ChatPro if Genesis not available and ChatPro is configured
+    if (!genesisResult?.success && chatproConfig?.is_enabled && chatproConfig?.api_token && chatproConfig?.instance_id && payload.client_phone) {
       // Check if this event should send via ChatPro
       const shouldSendChatPro = template?.chatpro_enabled !== false;
       
@@ -228,6 +276,7 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         message: 'Webhook processed',
+        genesis: genesisResult,
         chatpro: chatproResult,
         webhook: webhookResult,
       }),
