@@ -1,52 +1,58 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Check } from 'lucide-react';
+import { Check, Palette } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { useWizard } from '../WizardContext';
 import { cn } from '@/lib/utils';
 
 const visualStyles = [
   {
-    id: 'moderno-minimalista',
-    label: 'Minimalista',
-    description: 'Clean e espaçoso',
+    id: 'moderno',
+    label: 'Moderno',
+    description: 'Clean e minimalista',
     bg: 'bg-gradient-to-br from-slate-50 to-white',
     accent: 'bg-slate-900',
+    preview: { text: 'text-slate-900', button: 'bg-slate-900' }
   },
   {
-    id: 'elegante-luxo',
-    label: 'Luxo',
-    description: 'Sofisticado',
+    id: 'elegante',
+    label: 'Elegante',
+    description: 'Sofisticado e luxuoso',
     bg: 'bg-gradient-to-br from-amber-50 to-stone-100',
     accent: 'bg-amber-600',
+    preview: { text: 'text-amber-900', button: 'bg-amber-600' }
   },
   {
-    id: 'vibrante-colorido',
+    id: 'vibrante',
     label: 'Vibrante',
-    description: 'Cores fortes',
+    description: 'Cores fortes e vivas',
     bg: 'bg-gradient-to-br from-pink-100 via-purple-100 to-indigo-100',
     accent: 'bg-gradient-to-r from-pink-500 to-purple-500',
+    preview: { text: 'text-purple-900', button: 'bg-purple-600' }
   },
   {
     id: 'corporativo',
     label: 'Corporativo',
-    description: 'Profissional',
+    description: 'Profissional e sério',
     bg: 'bg-gradient-to-br from-blue-50 to-slate-50',
     accent: 'bg-blue-600',
+    preview: { text: 'text-blue-900', button: 'bg-blue-600' }
   },
   {
-    id: 'natural-organico',
-    label: 'Natural',
-    description: 'Tons terrosos',
-    bg: 'bg-gradient-to-br from-green-50 to-amber-50',
-    accent: 'bg-green-600',
+    id: 'criativo',
+    label: 'Criativo',
+    description: 'Artístico e único',
+    bg: 'bg-gradient-to-br from-orange-50 via-rose-50 to-violet-50',
+    accent: 'bg-gradient-to-r from-orange-500 to-rose-500',
+    preview: { text: 'text-rose-900', button: 'bg-rose-500' }
   },
   {
-    id: 'tech-futurista',
-    label: 'Tech',
-    description: 'Dark mode',
-    bg: 'bg-gradient-to-br from-slate-900 to-slate-800',
-    accent: 'bg-gradient-to-r from-cyan-400 to-blue-500',
+    id: 'rustico',
+    label: 'Rústico',
+    description: 'Aconchegante e natural',
+    bg: 'bg-gradient-to-br from-amber-100 to-stone-200',
+    accent: 'bg-amber-800',
+    preview: { text: 'text-amber-900', button: 'bg-amber-800' }
   },
 ];
 
@@ -72,10 +78,13 @@ export const StepVisualStyle: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Visual Style */}
-      <div className="space-y-2">
-        <Label className="text-sm font-semibold">Estilo Visual</Label>
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+      {/* Visual Style Selection */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Palette className="w-4 h-4 text-primary" />
+          <Label className="text-sm font-semibold">Estilo Visual</Label>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {visualStyles.map((style, index) => {
             const isSelected = formData.visualStyle === style.id;
             
@@ -86,32 +95,44 @@ export const StepVisualStyle: React.FC = () => {
                 onClick={() => updateFormData({ visualStyle: style.id })}
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.03 }}
-                whileHover={{ scale: 1.02 }}
+                transition={{ delay: index * 0.05 }}
+                whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
                 className={cn(
-                  "relative rounded-lg border-2 overflow-hidden transition-all duration-200",
+                  "relative rounded-xl border-2 overflow-hidden transition-all duration-200",
                   isSelected
-                    ? "border-primary shadow-md shadow-primary/20"
-                    : "border-border hover:border-primary/40"
+                    ? "border-primary shadow-lg shadow-primary/20 ring-2 ring-primary/20"
+                    : "border-border hover:border-primary/40 hover:shadow-md"
                 )}
               >
-                {/* Preview */}
-                <div className={cn("h-12 relative", style.bg)}>
-                  <div className="absolute inset-2 flex flex-col gap-1">
-                    <div className={cn("h-2 w-8 rounded", style.accent)} />
-                    <div className="h-1.5 w-10 rounded bg-current/20" />
-                  </div>
-                  {isSelected && (
-                    <div className="absolute top-1 right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
-                      <Check className="w-2.5 h-2.5 text-white" />
+                {/* Style Preview */}
+                <div className={cn("h-20 relative p-3", style.bg)}>
+                  <div className="h-full flex flex-col justify-between">
+                    <div className="space-y-1">
+                      <div className={cn("h-2 w-16 rounded", style.accent)} />
+                      <div className="h-1.5 w-12 rounded bg-current/20" />
                     </div>
+                    <div className="flex gap-1">
+                      <div className={cn("h-2 w-8 rounded-sm", style.accent, "opacity-80")} />
+                      <div className="h-2 w-6 rounded-sm bg-current/10" />
+                    </div>
+                  </div>
+                  
+                  {isSelected && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center shadow-md"
+                    >
+                      <Check className="w-3 h-3 text-white" />
+                    </motion.div>
                   )}
                 </div>
                 
-                {/* Info */}
-                <div className="p-2 bg-background">
-                  <p className="text-[10px] font-semibold truncate">{style.label}</p>
+                {/* Style Info */}
+                <div className="p-2.5 bg-background border-t border-border/50">
+                  <p className="text-xs font-bold">{style.label}</p>
+                  <p className="text-[10px] text-muted-foreground">{style.description}</p>
                 </div>
               </motion.button>
             );
@@ -120,9 +141,9 @@ export const StepVisualStyle: React.FC = () => {
       </div>
 
       {/* Color Presets */}
-      <div className="space-y-2">
+      <div className="space-y-3">
         <Label className="text-sm font-semibold">Paleta de Cores</Label>
-        <div className="grid grid-cols-6 gap-2">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
           {colorPresets.map((preset, index) => {
             const isSelected = 
               formData.primaryColor === preset.primary &&
@@ -135,31 +156,31 @@ export const StepVisualStyle: React.FC = () => {
                 onClick={() => handleColorPreset(preset)}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.03 }}
+                transition={{ delay: index * 0.05 }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className={cn(
-                  "p-2 rounded-lg border-2 transition-all",
+                  "p-3 rounded-xl border-2 transition-all",
                   isSelected
-                    ? "border-primary shadow-md"
+                    ? "border-primary shadow-md ring-2 ring-primary/20"
                     : "border-border hover:border-primary/40"
                 )}
               >
-                <div className="flex justify-center gap-0.5 mb-1.5">
+                <div className="flex justify-center gap-1 mb-2">
                   <div 
-                    className="w-4 h-4 rounded-full" 
+                    className="w-5 h-5 rounded-full shadow-inner" 
                     style={{ backgroundColor: preset.primary }}
                   />
                   <div 
-                    className="w-4 h-4 rounded-full" 
+                    className="w-5 h-5 rounded-full shadow-inner" 
                     style={{ backgroundColor: preset.secondary }}
                   />
                   <div 
-                    className="w-4 h-4 rounded-full" 
+                    className="w-5 h-5 rounded-full shadow-inner" 
                     style={{ backgroundColor: preset.accent }}
                   />
                 </div>
-                <p className="text-[9px] font-medium text-center">{preset.name}</p>
+                <p className="text-[10px] font-semibold text-center">{preset.name}</p>
               </motion.button>
             );
           })}
@@ -167,60 +188,63 @@ export const StepVisualStyle: React.FC = () => {
       </div>
 
       {/* Custom Colors */}
-      <div className="space-y-2">
-        <Label className="text-sm font-semibold">Personalizar</Label>
+      <div className="space-y-3">
+        <Label className="text-sm font-semibold">Personalizar Cores</Label>
         <div className="grid grid-cols-3 gap-3">
-          <div className="flex items-center gap-2 p-2 rounded-lg border border-border bg-muted/30">
+          <div className="flex items-center gap-2 p-3 rounded-xl border border-border bg-muted/30">
             <input
               type="color"
               value={formData.primaryColor}
               onChange={(e) => updateFormData({ primaryColor: e.target.value })}
-              className="w-8 h-8 rounded cursor-pointer border-0"
+              className="w-10 h-10 rounded-lg cursor-pointer border-0 bg-transparent"
             />
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] text-muted-foreground">Primária</p>
+              <p className="text-[10px] text-muted-foreground font-medium">Primária</p>
               <p className="text-xs font-mono uppercase truncate">{formData.primaryColor}</p>
             </div>
           </div>
           
-          <div className="flex items-center gap-2 p-2 rounded-lg border border-border bg-muted/30">
+          <div className="flex items-center gap-2 p-3 rounded-xl border border-border bg-muted/30">
             <input
               type="color"
               value={formData.secondaryColor}
               onChange={(e) => updateFormData({ secondaryColor: e.target.value })}
-              className="w-8 h-8 rounded cursor-pointer border-0"
+              className="w-10 h-10 rounded-lg cursor-pointer border-0 bg-transparent"
             />
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] text-muted-foreground">Secundária</p>
+              <p className="text-[10px] text-muted-foreground font-medium">Secundária</p>
               <p className="text-xs font-mono uppercase truncate">{formData.secondaryColor}</p>
             </div>
           </div>
           
-          <div className="flex items-center gap-2 p-2 rounded-lg border border-border bg-muted/30">
+          <div className="flex items-center gap-2 p-3 rounded-xl border border-border bg-muted/30">
             <input
               type="color"
               value={formData.accentColor}
               onChange={(e) => updateFormData({ accentColor: e.target.value })}
-              className="w-8 h-8 rounded cursor-pointer border-0"
+              className="w-10 h-10 rounded-lg cursor-pointer border-0 bg-transparent"
             />
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] text-muted-foreground">Destaque</p>
+              <p className="text-[10px] text-muted-foreground font-medium">Destaque</p>
               <p className="text-xs font-mono uppercase truncate">{formData.accentColor}</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Color Preview */}
+      {/* Live Preview */}
       <motion.div 
-        className="p-3 rounded-lg border border-border"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="p-4 rounded-xl border border-border overflow-hidden"
         style={{
-          background: `linear-gradient(135deg, ${formData.primaryColor}08, ${formData.secondaryColor}08)`,
+          background: `linear-gradient(135deg, ${formData.primaryColor}10, ${formData.secondaryColor}10)`,
         }}
       >
+        <p className="text-[10px] text-muted-foreground mb-2 font-medium">Preview</p>
         <div className="flex items-center gap-3">
           <div 
-            className="w-10 h-10 rounded-lg shrink-0"
+            className="w-12 h-12 rounded-xl shrink-0 shadow-lg"
             style={{ backgroundColor: formData.primaryColor }}
           />
           <div className="flex-1 min-w-0">
@@ -228,17 +252,20 @@ export const StepVisualStyle: React.FC = () => {
               className="text-sm font-bold truncate"
               style={{ color: formData.primaryColor }}
             >
-              {formData.businessName || 'Preview do Título'}
+              {formData.businessName || 'Nome do Negócio'}
             </p>
-            <p className="text-xs text-muted-foreground truncate">
-              Exemplo de texto com suas cores
+            <p 
+              className="text-xs truncate"
+              style={{ color: formData.secondaryColor }}
+            >
+              Descrição do seu negócio aqui
             </p>
           </div>
           <button 
-            className="px-3 py-1.5 rounded-md text-white text-xs font-medium shrink-0"
+            className="px-4 py-2 rounded-lg text-white text-xs font-bold shrink-0 shadow-md hover:shadow-lg transition-shadow"
             style={{ backgroundColor: formData.accentColor }}
           >
-            Botão
+            CTA
           </button>
         </div>
       </motion.div>
