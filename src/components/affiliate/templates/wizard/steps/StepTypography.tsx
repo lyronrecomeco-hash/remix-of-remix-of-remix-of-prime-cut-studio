@@ -25,8 +25,9 @@ const bodyFonts = [
 
 const layoutStyles = [
   {
-    id: 'hero-centered',
-    label: 'Centralizado',
+    id: 'single-page',
+    label: 'Single Page',
+    description: 'Uma página fluida',
     preview: (
       <div className="flex flex-col items-center gap-0.5 p-1.5">
         <div className="w-8 h-1.5 bg-primary/60 rounded" />
@@ -36,8 +37,9 @@ const layoutStyles = [
     ),
   },
   {
-    id: 'hero-left',
-    label: 'Esquerda',
+    id: 'multi-section',
+    label: 'Multi-seções',
+    description: 'Navegação por seções',
     preview: (
       <div className="flex gap-1 p-1.5">
         <div className="flex-1 flex flex-col gap-0.5">
@@ -49,28 +51,9 @@ const layoutStyles = [
     ),
   },
   {
-    id: 'split-screen',
-    label: 'Split',
-    preview: (
-      <div className="flex gap-0.5 p-1.5">
-        <div className="flex-1 bg-primary/20 rounded h-8" />
-        <div className="flex-1 bg-muted rounded h-8" />
-      </div>
-    ),
-  },
-  {
-    id: 'full-width',
-    label: 'Full Width',
-    preview: (
-      <div className="flex flex-col gap-0.5 p-1.5">
-        <div className="w-full h-4 bg-primary/30 rounded" />
-        <div className="w-full h-3 bg-muted rounded" />
-      </div>
-    ),
-  },
-  {
-    id: 'card-grid',
+    id: 'card-based',
     label: 'Cards',
+    description: 'Layout em grid',
     preview: (
       <div className="grid grid-cols-3 gap-0.5 p-1.5">
         {[...Array(6)].map((_, i) => (
@@ -80,8 +63,9 @@ const layoutStyles = [
     ),
   },
   {
-    id: 'asymmetric',
-    label: 'Assimétrico',
+    id: 'magazine',
+    label: 'Magazine',
+    description: 'Estilo editorial',
     preview: (
       <div className="flex flex-col gap-0.5 p-1.5">
         <div className="flex gap-0.5">

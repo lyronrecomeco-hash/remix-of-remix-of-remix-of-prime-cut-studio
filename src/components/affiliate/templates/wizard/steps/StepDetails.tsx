@@ -191,36 +191,39 @@ export const StepDetails: React.FC = () => {
       </div>
 
       {/* Summary Preview */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="p-3 rounded-lg border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent"
-      >
-        <h4 className="text-xs font-bold text-primary mb-2 flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5" />
-          Resumo
-        </h4>
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <div>
-            <span className="text-muted-foreground">Negócio:</span>
-            <p className="font-medium truncate">{formData.businessName || '-'}</p>
+      {formData.targetAudience && formData.businessDescription && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="p-3 rounded-lg border border-green-500/20 bg-gradient-to-br from-green-500/5 to-transparent"
+        >
+          <h4 className="text-xs font-bold text-green-600 mb-2 flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5" />
+            ✅ Pronto para gerar!
+          </h4>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <span className="text-muted-foreground">Negócio:</span>
+              <p className="font-medium truncate">{formData.businessName}</p>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Tipo:</span>
+              <p className="font-medium capitalize">{formData.projectType}</p>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Estilo:</span>
+              <p className="font-medium capitalize truncate">{formData.visualStyle}</p>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Features:</span>
+              <p className="font-medium">{formData.features.length} selecionadas</p>
+            </div>
           </div>
-          <div>
-            <span className="text-muted-foreground">Tipo:</span>
-            <p className="font-medium capitalize">{formData.projectType || '-'}</p>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Estilo:</span>
-            <p className="font-medium capitalize truncate">
-              {formData.visualStyle?.split('-')[0] || '-'}
-            </p>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Features:</span>
-            <p className="font-medium">{formData.features.length} selecionadas</p>
-          </div>
-        </div>
-      </motion.div>
+          <p className="text-[10px] text-muted-foreground mt-2">
+            Clique em "Gerar" para criar o prompt completo.
+          </p>
+        </motion.div>
+      )}
     </div>
   );
 };
