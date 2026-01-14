@@ -212,18 +212,19 @@ export default function DemoPage() {
   }
 
   const config = configData.config;
+  const demoCode = code || '';
 
   // Renderizar o template completo com dados personalizados
   return (
     <div className="min-h-screen bg-background">
-      <DemoHeader config={config} />
-      <DemoHero config={config} />
+      <DemoHeader config={config} demoCode={demoCode} />
+      <DemoHero config={config} demoCode={demoCode} />
       <About />
-      {config.features.showPricing && <DemoServices />}
+      {config.features.showPricing && <DemoServices demoCode={demoCode} />}
       {config.features.showGallery && <Gallery />}
       <Testimonials />
       <DemoLocation config={config} />
-      <DemoCTA config={config} />
+      <DemoCTA config={config} demoCode={demoCode} />
       <DemoFooter config={config} />
     </div>
   );
@@ -231,10 +232,9 @@ export default function DemoPage() {
 
 // ========== Componentes Demo Customizados ==========
 
-function DemoHeader({ config }: { config: TemplateConfig }) {
+function DemoHeader({ config, demoCode }: { config: TemplateConfig; demoCode: string }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -284,7 +284,7 @@ function DemoHeader({ config }: { config: TemplateConfig }) {
 
           <div className="flex items-center gap-2">
             <Button asChild variant="hero" size="sm" className="hidden sm:flex">
-              <Link to="/agendamento-direto">
+              <Link to={`/demo/${demoCode}/agendar`}>
                 <Calendar className="w-4 h-4" />
                 Agendar
               </Link>
@@ -320,7 +320,7 @@ function DemoHeader({ config }: { config: TemplateConfig }) {
                 </a>
               ))}
               <Button asChild variant="hero" size="lg" className="mt-2">
-                <Link to="/agendamento-direto" onClick={() => setIsMobileMenuOpen(false)}>
+                <Link to={`/demo/${demoCode}/agendar`} onClick={() => setIsMobileMenuOpen(false)}>
                   <Calendar className="w-4 h-4" />
                   Agendar Agora
                 </Link>
@@ -333,7 +333,7 @@ function DemoHeader({ config }: { config: TemplateConfig }) {
   );
 }
 
-function DemoHero({ config }: { config: TemplateConfig }) {
+function DemoHero({ config, demoCode }: { config: TemplateConfig; demoCode: string }) {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 bg-gradient-dark" />
@@ -388,7 +388,7 @@ function DemoHero({ config }: { config: TemplateConfig }) {
           className="flex flex-col sm:flex-row gap-4 justify-center"
         >
           <Button asChild variant="hero" size="xl">
-            <Link to="/agendamento-direto">
+            <Link to={`/demo/${demoCode}/agendar`}>
               <Calendar className="w-5 h-5" />
               Agendar Horário
             </Link>
@@ -535,7 +535,7 @@ function DemoLocation({ config }: { config: TemplateConfig }) {
   );
 }
 
-function DemoCTA({ config }: { config: TemplateConfig }) {
+function DemoCTA({ config, demoCode }: { config: TemplateConfig; demoCode: string }) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
 
@@ -565,7 +565,7 @@ function DemoCTA({ config }: { config: TemplateConfig }) {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild variant="hero" size="xl">
-              <Link to="/agendamento-direto">
+              <Link to={`/demo/${demoCode}/agendar`}>
                 <Calendar className="w-5 h-5" />
                 Agendar Agora
                 <ArrowRight className="w-5 h-5" />
@@ -655,7 +655,7 @@ function DemoFooter({ config }: { config: TemplateConfig }) {
 }
 
 // ========== Demo Services Component ==========
-function DemoServices() {
+function DemoServices({ demoCode }: { demoCode: string }) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
 
@@ -710,7 +710,7 @@ function DemoServices() {
                     ⏱ {service.duration} min
                   </span>
                   <Button asChild variant="ghost" size="sm" className="text-primary hover:text-primary">
-                    <Link to="/agendamento-direto">Agendar</Link>
+                    <Link to={`/demo/${demoCode}/agendar`}>Agendar</Link>
                   </Button>
                 </div>
               </motion.div>
