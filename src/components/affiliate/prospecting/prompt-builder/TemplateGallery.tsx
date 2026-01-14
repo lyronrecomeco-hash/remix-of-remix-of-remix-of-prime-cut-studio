@@ -1,21 +1,19 @@
 import { useState } from 'react';
-import { 
-  Scissors, 
-  Dumbbell, 
-  Stethoscope, 
-  UtensilsCrossed, 
-  Home, 
+import {
+  Scissors,
+  Dumbbell,
+  Stethoscope,
+  UtensilsCrossed,
+  Home,
   GraduationCap,
   PawPrint,
   Scale,
   Sparkles,
   Wrench,
   Eye,
-  Check,
   ArrowRight,
-  Star,
   Zap,
-  Layout
+  Layout,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
