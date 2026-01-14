@@ -6,6 +6,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// INSTÂNCIA GLOBAL NATIVA - usada para TODOS os afiliados
+const GLOBAL_GENESIS_INSTANCE_ID = 'b2b6cf5a-2e15-4f79-94fb-396385077658';
+
 interface SendRequest {
   affiliateId: string;
   phone: string;
@@ -32,54 +35,16 @@ serve(async (req) => {
       );
     }
 
-    // Get affiliate's user_id
-    const { data: affiliate, error: affError } = await supabase
-      .from('affiliates')
-      .select('user_id')
-      .eq('id', affiliateId)
-      .single();
+    // Não precisamos mais do affiliate, vamos usar a instância global diretamente
+    // Mantemos a validação do affiliateId apenas para logging
 
-    if (affError || !affiliate?.user_id) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Afiliado não encontrado' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // USAR INSTÂNCIA GLOBAL NATIVA
+    // Não depende mais de affiliate_prospect_settings ou instâncias do usuário
+    const instanceId = GLOBAL_GENESIS_INSTANCE_ID;
+    
+    console.log(`[send-whatsapp-genesis] Usando instância global: ${instanceId}`);
 
-    // Get affiliate's prospect settings for genesis_instance_id
-    const { data: settings } = await supabase
-      .from('affiliate_prospect_settings')
-      .select('genesis_instance_id')
-      .eq('affiliate_id', affiliateId)
-      .single();
-
-    let instanceId = settings?.genesis_instance_id;
-
-    // If no instance in settings, get first connected instance for this user
-    if (!instanceId) {
-      const { data: instances } = await supabase
-        .from('genesis_instances')
-        .select('id')
-        .eq('user_id', affiliate.user_id)
-        .eq('status', 'connected')
-        .limit(1);
-
-      if (instances && instances.length > 0) {
-        instanceId = instances[0].id;
-      }
-    }
-
-    if (!instanceId) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Nenhuma instância Genesis conectada. Configure em Prospecção > Configurações.' 
-        }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Get instance details
+    // Get global instance details
     const { data: instance, error: instError } = await supabase
       .from('genesis_instances')
       .select('id, name, backend_url, backend_token, status')
@@ -87,16 +52,18 @@ serve(async (req) => {
       .single();
 
     if (instError || !instance) {
+      console.error('[send-whatsapp-genesis] Instância global não encontrada:', instError);
       return new Response(
-        JSON.stringify({ success: false, error: 'Instância Genesis não encontrada' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: false, error: 'Instância Genesis global não configurada no sistema' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     if (instance.status !== 'connected') {
+      console.error('[send-whatsapp-genesis] Instância global desconectada');
       return new Response(
-        JSON.stringify({ success: false, error: 'Instância Genesis não está conectada' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: false, error: 'Instância Genesis global está desconectada. Contate o suporte.' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -124,10 +91,7 @@ serve(async (req) => {
       }
     }
 
-    // Format for WhatsApp
-    const jid = `${normalizedPhone}@s.whatsapp.net`;
-
-    console.log(`Sending to ${jid} via instance ${instance.name}`);
+    console.log(`[send-whatsapp-genesis] Enviando para ${normalizedPhone} via instância global ${instance.name}`);
 
     // Send via Genesis backend
     const sendUrl = `${instance.backend_url}/message/sendText/${instance.name}`;
@@ -157,7 +121,7 @@ serve(async (req) => {
     const sendResult = await sendResponse.json();
     console.log('Send result:', sendResult);
 
-    // Log the message
+    // Log the message (use affiliateId for tracking)
     await supabase.from('whatsapp_message_logs').insert({
       instance_id: instanceId,
       contact_phone: normalizedPhone,
@@ -165,7 +129,7 @@ serve(async (req) => {
       direction: 'outbound',
       content: message,
       status: 'sent',
-      metadata: { source: 'prospecting', affiliateId },
+      metadata: { source: 'demo_booking', affiliateId, global_instance: true },
     });
 
     return new Response(
