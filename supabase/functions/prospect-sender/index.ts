@@ -20,10 +20,13 @@ const NATIVE_VPS_URL = "http://72.62.108.24:3000";
 const NATIVE_VPS_TOKEN = "genesis-master-token-2024-secure";
 
 interface SendRequest {
-  action: 'send_single' | 'send_batch' | 'check_status';
+  action: 'send_single' | 'send_batch' | 'check_status' | 'send_test';
   prospect_id?: string;
   affiliate_id: string;
   batch_size?: number;
+  // For test mode
+  phone?: string;
+  message?: string;
 }
 
 interface ProspectSettings {
@@ -217,9 +220,55 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const body: SendRequest = await req.json();
-    const { action, prospect_id, affiliate_id, batch_size = 5 } = body;
+    const { action, prospect_id, affiliate_id, batch_size = 5, phone, message } = body;
 
     console.log(`[ProspectSender] Action: ${action}, Affiliate: ${affiliate_id}`);
+
+    // Handle test mode - bypass all restrictions
+    if (action === 'send_test') {
+      if (!phone || !message) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Phone and message required for test' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Get any available Genesis instance for testing
+      const { data: instanceData } = await supabase
+        .from('genesis_instances')
+        .select('*')
+        .eq('status', 'connected')
+        .limit(1)
+        .single();
+
+      const backendUrl = instanceData?.backend_url || NATIVE_VPS_URL;
+      const backendToken = instanceData?.backend_token || NATIVE_VPS_TOKEN;
+      const instanceName = instanceData?.name || 'genesis-global';
+
+      const normalizedPhone = normalizePhone(phone);
+      if (!normalizedPhone) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Invalid phone number' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const result = await sendWhatsAppMessage(
+        instanceName,
+        backendUrl,
+        backendToken,
+        normalizedPhone,
+        message
+      );
+
+      return new Response(
+        JSON.stringify(result),
+        { 
+          status: result.success ? 200 : 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
 
     // Buscar configurações do afiliado
     const { data: settingsData, error: settingsError } = await supabase
