@@ -204,8 +204,8 @@ export const ReadyTemplatesTab = ({ affiliateId }: ReadyTemplatesTabProps) => {
       {/* Step Indicator */}
       {renderStepIndicator()}
 
-      {/* Back Button */}
-      {currentStep !== 'gallery' && (
+      {/* Back Button - only for customize step */}
+      {currentStep === 'customize' && (
         <Button
           variant="ghost"
           size="sm"
@@ -240,7 +240,7 @@ export const ReadyTemplatesTab = ({ affiliateId }: ReadyTemplatesTabProps) => {
           platform={builderState?.platform || 'lovable'}
           onCopy={handleCopyPrompt}
           copied={copied}
-          onRegenerate={() => setCurrentStep('customize')}
+          onBack={() => setCurrentStep('customize')}
         />
       )}
     </div>

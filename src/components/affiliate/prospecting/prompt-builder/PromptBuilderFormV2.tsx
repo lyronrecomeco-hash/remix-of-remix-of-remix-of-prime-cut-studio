@@ -47,7 +47,7 @@ import {
   DESIGN_STYLES,
   ICON_STYLES
 } from './types';
-import { LivePreviewV2 } from './LivePreviewV2';
+
 
 interface PromptBuilderFormV2Props {
   state: PromptBuilderState;
@@ -148,29 +148,7 @@ export const PromptBuilderFormV2 = ({ state, template, onChange, onGenerate }: P
   const progressPercentage = Math.round((filledFields / totalFields) * 100);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Form Column */}
-      <div className="lg:col-span-2 space-y-6">
-        
-        {/* Progress Bar */}
-        <Card className="border border-primary/30 bg-gradient-to-r from-primary/5 to-transparent">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Progresso do Conceito</span>
-              <span className="text-sm text-primary font-bold">{progressPercentage}%</span>
-            </div>
-            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-primary to-primary/60 transition-all duration-500"
-                style={{ width: `${progressPercentage}%` }}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              {filledFields} de {totalFields} seções preenchidas
-            </p>
-          </CardContent>
-        </Card>
-
+    <div className="max-w-4xl mx-auto space-y-6">
         {/* ============================================ */}
         {/* SECTION 1: APP NAME */}
         {/* ============================================ */}
@@ -951,14 +929,6 @@ export const PromptBuilderFormV2 = ({ state, template, onChange, onGenerate }: P
           <Rocket className="w-6 h-6" />
           Materializar Conceito ({progressPercentage}% completo)
         </Button>
-      </div>
-
-      {/* Live Preview Column */}
-      <div className="lg:col-span-1">
-        <div className="sticky top-4">
-          <LivePreviewV2 state={state} template={template} />
-        </div>
-      </div>
     </div>
   );
 };
