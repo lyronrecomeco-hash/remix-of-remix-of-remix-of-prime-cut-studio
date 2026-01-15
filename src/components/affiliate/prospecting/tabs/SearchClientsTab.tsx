@@ -69,7 +69,9 @@ interface SearchClientsTabProps {
     company_city?: string;
     company_state?: string;
     niche?: string;
+    generated_proposal?: { message: string };
   }) => Promise<unknown>;
+  onGoToHistory?: () => void;
 }
 
 // Timezone mapping for countries
@@ -106,7 +108,7 @@ function getLocalTime(countryCode: string): string {
   }
 }
 
-export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: SearchClientsTabProps) => {
+export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect, onGoToHistory }: SearchClientsTabProps) => {
   // Search form state
   const [countryCode, setCountryCode] = useState('BR');
   const [state, setState] = useState('');
@@ -259,7 +261,7 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
     }
   };
 
-  const handleAddToProspects = async (result: SearchResult) => {
+  const handleAddToProspects = async (result: SearchResult, goToHistory = false) => {
     const id = result.name;
     setAddingId(id);
 
@@ -272,10 +274,15 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
         company_city: city,
         company_state: countryCode === 'BR' ? state : countryCode,
         niche,
+        generated_proposal: result.generatedMessage ? { message: result.generatedMessage } : undefined,
       });
       
       setAddedNames(prev => new Set([...prev, result.name]));
-      toast.success(`${result.name} salvo nos prospectos!`);
+      toast.success(`${result.name} salvo com proposta!`);
+      
+      if (goToHistory && onGoToHistory) {
+        onGoToHistory();
+      }
     } catch (error) {
       toast.error('Erro ao salvar prospecto');
     } finally {
@@ -640,11 +647,11 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
                       <Button
                         size="sm"
                         variant={isAdded ? 'secondary' : 'default'}
-                        className="gap-1"
+                        className={`gap-1 ${!isAdded && hasMessage ? 'bg-gradient-to-r from-primary to-purple-600' : ''}`}
                         disabled={isAdded || isAdding}
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleAddToProspects(result);
+                          handleAddToProspects(result, true);
                         }}
                       >
                         {isAdding ? (

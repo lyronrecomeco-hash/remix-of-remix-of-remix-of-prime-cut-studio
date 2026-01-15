@@ -116,6 +116,7 @@ export const AffiliateProspecting = ({ affiliateId, onSubHeaderChange }: Affilia
           <SearchClientsTab
             affiliateId={affiliateId}
             onAddProspect={createProspect}
+            onGoToHistory={() => setActiveTab('history')}
           />
         )}
         
