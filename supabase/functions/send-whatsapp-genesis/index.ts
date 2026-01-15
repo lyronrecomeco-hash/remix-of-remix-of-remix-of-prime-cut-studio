@@ -21,6 +21,20 @@ const safeJsonParse = (text: string) => {
   }
 };
 
+const normalizeQrToDataUrl = (raw: unknown): string | null => {
+  if (typeof raw !== "string") return null;
+  const v = raw.trim();
+  if (!v) return null;
+  if (v.startsWith("data:")) return v;
+
+  // Base64 provável
+  if (/^[A-Za-z0-9+/=]+$/.test(v.slice(0, 80))) {
+    return `data:image/png;base64,${v}`;
+  }
+
+  return null;
+};
+
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const withTimeout = async (
@@ -174,7 +188,7 @@ serve(async (req) => {
 
     if (!backendUrlRaw || !backendToken) {
       return new Response(
-        JSON.stringify({ success: false, error: "Backend do WhatsApp não configurado no sistema" }),
+        JSON.stringify({ success: false, error: "Backend do WhatsApp não configurado no sistema", instance_id: String(instance.id) }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -188,6 +202,7 @@ serve(async (req) => {
       apikey: backendToken,
     };
 
+    // VPS v8 aceita { to, message } (mantemos aliases por compat)
     const payload = {
       to: normalizedPhone,
       phone: normalizedPhone,
@@ -198,6 +213,7 @@ serve(async (req) => {
 
     const sendPath = `/api/instance/${encodeURIComponent(String(instance.id))}/send`;
     const connectPath = `/api/instance/${encodeURIComponent(String(instance.id))}/connect`;
+    const qrcodePath = `/api/instance/${encodeURIComponent(String(instance.id))}/qrcode`;
 
     const attemptSendOnce = async (baseUrl: string) => {
       const targetUrl = `${baseUrl}${sendPath}`;
@@ -217,6 +233,34 @@ serve(async (req) => {
       const text = await res.text();
       const parsed = safeJsonParse(text);
       return { res, text, parsed, targetUrl };
+    };
+
+    const attemptQrCode = async (baseUrl: string) => {
+      const targetUrl = `${baseUrl}${qrcodePath}`;
+      const res = await withTimeout(targetUrl, { method: "GET", headers }, 15000);
+      const text = await res.text();
+      const parsed = safeJsonParse(text);
+      return { res, text, parsed, targetUrl };
+    };
+
+    const getQrCodeDataUrl = async (baseUrl: string): Promise<{ qrCode: string | null; status?: string }> => {
+      for (let i = 0; i < 10; i++) {
+        const qr = await attemptQrCode(baseUrl);
+        const raw =
+          qr.parsed && typeof qr.parsed === "object"
+            ? ((qr.parsed as any).qrcode ?? (qr.parsed as any).qrCode ?? (qr.parsed as any).qr)
+            : null;
+
+        const dataUrl = normalizeQrToDataUrl(raw);
+        if (dataUrl) {
+          return { qrCode: dataUrl, status: (qr.parsed as any)?.status };
+        }
+
+        // Aguardar um pouco para o backend gerar o QR
+        await sleep(1200);
+      }
+
+      return { qrCode: null };
     };
 
     let lastStatus = 0;
@@ -249,12 +293,11 @@ serve(async (req) => {
         }
 
         return new Response(
-          JSON.stringify({ success: true, message: "Mensagem enviada com sucesso!", result: first.parsed }),
+          JSON.stringify({ success: true, message: "Mensagem enviada com sucesso!", result: first.parsed, instance_id: String(instance.id) }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
 
-      // If backend responded with known "not ready" message, try connect + retry once
       const errText =
         (first.parsed && typeof first.parsed === "object" && ((first.parsed as any).error || (first.parsed as any).message))
           ? String((first.parsed as any).error || (first.parsed as any).message)
@@ -262,6 +305,7 @@ serve(async (req) => {
             ? first.text
             : "";
 
+      // Not ready -> trigger connect + return QR (and/or retry send once)
       if (first.res.ok && errText.toLowerCase().includes("não está pronta")) {
         console.log("[send-whatsapp-genesis] Instance not ready, trying connect then retry", {
           instanceId: instance.id,
@@ -269,30 +313,34 @@ serve(async (req) => {
         });
 
         await attemptConnect(baseUrl);
+        const { qrCode } = await getQrCodeDataUrl(baseUrl);
+
+        // Pequena janela para o backend estabilizar
         await sleep(2500);
 
         const second = await attemptSendOnce(baseUrl);
-        lastStatus = second.res.status;
-        lastTarget = second.targetUrl;
-        lastDetails = second.parsed ?? second.text;
 
         if (second.res.ok && second.parsed && typeof second.parsed === "object" && (second.parsed as any).success === true) {
           return new Response(
-            JSON.stringify({ success: true, message: "Mensagem enviada com sucesso!", result: second.parsed }),
+            JSON.stringify({ success: true, message: "Mensagem enviada com sucesso!", result: second.parsed, instance_id: String(instance.id) }),
             { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
           );
         }
 
-        // Return the real error (avoid returning misleading 404)
+        const secondErr =
+          second.parsed && typeof second.parsed === "object" && ((second.parsed as any).error || (second.parsed as any).message)
+            ? String((second.parsed as any).error || (second.parsed as any).message)
+            : `Falha ao enviar WhatsApp (${second.res.status || 0})`;
+
         return new Response(
           JSON.stringify({
             success: false,
-            error:
-              (second.parsed && typeof second.parsed === "object" && ((second.parsed as any).error || (second.parsed as any).message))
-                ? String((second.parsed as any).error || (second.parsed as any).message)
-                : `Falha ao enviar WhatsApp (${second.res.status || 0})`,
-            details: second.parsed ?? second.text,
+            needs_connection: true,
+            error: secondErr,
+            instance_id: String(instance.id),
+            qr_code: qrCode,
             last_target: second.targetUrl,
+            details: second.parsed ?? second.text,
           }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
@@ -309,6 +357,7 @@ serve(async (req) => {
             (first.parsed && typeof first.parsed === "object" && ((first.parsed as any).error || (first.parsed as any).message))
               ? String((first.parsed as any).error || (first.parsed as any).message)
               : `Falha ao enviar WhatsApp (${first.res.status || 0})`,
+          instance_id: String(instance.id),
           details: first.parsed ?? first.text,
           last_target: first.targetUrl,
         }),
@@ -320,6 +369,7 @@ serve(async (req) => {
       JSON.stringify({
         success: false,
         error: `Falha ao enviar WhatsApp (${lastStatus || 0})`,
+        instance_id: String(instance.id),
         details: lastDetails,
         last_target: lastTarget,
       }),

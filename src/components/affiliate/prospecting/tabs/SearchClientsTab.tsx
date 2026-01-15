@@ -134,6 +134,12 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect, on
   const [sending, setSending] = useState(false);
   const [currentAffiliateName, setCurrentAffiliateName] = useState(affiliateName || '');
 
+  // Conexão WhatsApp (QR)
+  const [connectDialogOpen, setConnectDialogOpen] = useState(false);
+  const [connectQrCode, setConnectQrCode] = useState<string | null>(null);
+  const [connectReason, setConnectReason] = useState<string | null>(null);
+  const [connectInstanceId, setConnectInstanceId] = useState<string | null>(null);
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.max(1, Math.ceil(results.length / ITEMS_PER_PAGE));
@@ -335,17 +341,27 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect, on
         toast.success('Mensagem enviada com sucesso via WhatsApp!');
         setAddedNames(prev => new Set([...prev, selectedResult.name]));
         setSelectedResult(null);
-      } else {
-        throw new Error(data?.error || 'Erro ao enviar');
+        return;
       }
+
+      // Quando a instância estiver desconectada/não pronta, mostramos QR para reconectar
+      if (data?.needs_connection) {
+        setConnectReason(data?.error || 'Seu WhatsApp precisa ser reconectado para liberar o envio automático.');
+        setConnectQrCode(data?.qr_code || null);
+        setConnectInstanceId(data?.instance_id || null);
+        setConnectDialogOpen(true);
+        return;
+      }
+
+      throw new Error(data?.error || 'Erro ao enviar');
     } catch (error: any) {
       console.error('Send error:', error);
-      
-      // Fallback: Open WhatsApp Web direto
+
+      // Último fallback: abrir WhatsApp web/app com a mensagem pronta
       const message = encodeURIComponent(editedMessage);
-      window.open(`https://wa.me/${fullPhone}?text=${message}`, '_blank');
-      
-      toast.info('Abrindo WhatsApp Web para envio manual');
+      window.open(`https://wa.me/${fullPhone}?text=${message}`, '_blank', 'noopener,noreferrer');
+
+      toast.info('Abrindo WhatsApp para envio manual');
       setSelectedResult(null);
     } finally {
       setSending(false);
@@ -932,6 +948,58 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect, on
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Conexão do WhatsApp (quando o envio automático não está disponível) */}
+      <Dialog
+        open={connectDialogOpen}
+        onOpenChange={(open) => {
+          setConnectDialogOpen(open);
+          if (!open) {
+            setConnectQrCode(null);
+            setConnectReason(null);
+            setConnectInstanceId(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Conectar WhatsApp para envio automático</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {connectReason || 'Seu WhatsApp precisa ser reconectado para liberar o envio automático.'}
+            </p>
+
+            {connectQrCode ? (
+              <div className="mx-auto w-fit rounded-xl border bg-background p-3">
+                <img
+                  src={connectQrCode}
+                  alt="QR Code para conectar WhatsApp"
+                  className="h-56 w-56"
+                />
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Gerando QR Code...
+              </div>
+            )}
+
+            <p className="text-xs text-muted-foreground">
+              No WhatsApp do celular: <strong>Configurações → Aparelhos conectados → Conectar</strong>.
+            </p>
+
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => window.open('/genesis', '_blank', 'noopener,noreferrer')}
+            >
+              Abrir painel de conexão
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
