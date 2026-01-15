@@ -72,9 +72,9 @@ export function InstancesManager({ onNavigateToAccount }: InstancesManagerProps 
   // Check if user has configured commercial number
   const hasCommercialNumber = !!(genesisUser as any)?.whatsapp_commercial;
 
-  // Liberação especial: permitir mais instâncias apenas para este e-mail
-  const UNLIMITED_INSTANCES_EMAIL = 'da@gmail.com';
-  const isUnlimitedInstancesUser = (genesisUser?.email || '').toLowerCase() === UNLIMITED_INSTANCES_EMAIL;
+  // Liberação especial: permitir mais instâncias apenas para estes e-mails
+  const UNLIMITED_INSTANCES_EMAILS = ['da@gmail.com', 'lyronrp@gmail.com'];
+  const isUnlimitedInstancesUser = UNLIMITED_INSTANCES_EMAILS.includes((genesisUser?.email || '').toLowerCase());
 
   const maxInstances = subscription?.max_instances || 1;
   const effectiveMaxInstances = isUnlimitedInstancesUser ? 999 : maxInstances;
