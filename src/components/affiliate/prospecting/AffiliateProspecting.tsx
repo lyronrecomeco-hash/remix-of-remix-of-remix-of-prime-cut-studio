@@ -129,6 +129,7 @@ export const AffiliateProspecting = ({ affiliateId, onSubHeaderChange }: Affilia
             loading={loading}
             analyzing={analyzing}
             sending={sending}
+            affiliateId={affiliateId}
             onAnalyze={analyzeProspect}
             onSend={sendProposal}
             onView={setSelectedProspect}
