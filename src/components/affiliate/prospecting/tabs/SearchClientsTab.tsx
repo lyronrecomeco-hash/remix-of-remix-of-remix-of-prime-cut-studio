@@ -320,12 +320,12 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect, on
     const fullPhone = cleanPhone.startsWith(prefix) ? cleanPhone : `${prefix}${cleanPhone}`;
 
     try {
-      const { data, error } = await supabase.functions.invoke('send-whatsapp-genesis', {
+      // Envio automático via backend (sem abrir WhatsApp Web)
+      const { data, error } = await supabase.functions.invoke('genesis-backend-proxy', {
         body: {
-          affiliateId,
-          phone: fullPhone,
+          action: 'demo-send',
+          to: fullPhone,
           message: editedMessage,
-          countryCode,
         },
       });
 
@@ -340,10 +340,9 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect, on
       }
     } catch (error: any) {
       console.error('Send error:', error);
-      
-      // Mostrar erro real em vez de abrir WhatsApp Web
       const errorMessage = error?.message || 'Erro ao enviar mensagem';
       toast.error(`Falha no envio: ${errorMessage}`);
+      setSelectedResult(null);
     } finally {
       setSending(false);
     }
