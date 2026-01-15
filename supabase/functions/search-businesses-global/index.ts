@@ -990,8 +990,8 @@ serve(async (req) => {
     const messageTemplate = MESSAGE_TEMPLATES[config.lang] || MESSAGE_TEMPLATES['en'];
     const consultantName = affiliateName || 'Consultor Genesis';
 
-    // Search: limit to 100 results max
-    const maxResults = Math.min(100, Math.max(10, requestedMax || 100));
+    // FAST SEARCH: limit to 30 results max for 5-second response
+    const maxResults = Math.min(30, Math.max(10, requestedMax || 30));
 
     const searchResponse = await fetch('https://google.serper.dev/places', {
       method: 'POST',
