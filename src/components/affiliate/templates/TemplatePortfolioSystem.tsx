@@ -56,6 +56,21 @@ const TEMPLATES: TemplateInfo[] = [
       badge: '💪 Treine com os melhores'
     }
   },
+  {
+    id: 'clinica-estetica',
+    name: 'Clínica de Estética',
+    description: 'Para clínicas de estética e estética avançada',
+    category: 'beauty',
+    route: '/clinica-estetica',
+    gradient: 'from-stone-800 via-stone-900 to-stone-950',
+    accent: 'amber',
+    available: true,
+    preview: {
+      title: 'Essence Estética',
+      subtitle: 'Realce sua beleza natural',
+      badge: '✨ Estética Avançada'
+    }
+  },
 ];
 
 export function TemplatePortfolioSystem({ affiliateId }: TemplatePortfolioSystemProps) {
