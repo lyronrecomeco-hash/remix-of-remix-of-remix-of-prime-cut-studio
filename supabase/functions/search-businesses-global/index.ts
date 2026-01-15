@@ -163,29 +163,88 @@ Veja o demo:
   },
 
   'pt-PT': {
-    base: `Olá, tudo bem?
+    base: `Olá, tudo bem? 👋
 
-Chamo-me {NOME} e ajudo empresas como a sua a melhorar a presença online.
+Me chamo {NOME}.
+Trabalho ajudando negócios locais a transformar visitas em contactos reais,
+através de sites profissionais e automação de atendimento.
 
-Desenvolvemos:
-• Sites profissionais focados em conversão
-• Sistema de agendamento automático  
-• Automação de WhatsApp
+Atualmente implementamos soluções como:
+✨ Site profissional focado em conversão
+📅 Agendamento online automático
+💬 Integração direta com WhatsApp
 
-Veja como funciona:
-🔗 {DEMO_LINK}`,
+Essa estrutura organiza o atendimento, evita a perda de potenciais clientes
+e aumenta a taxa de conversão sem necessidade de ampliar a equipa.
+
+Posso lhe mostrar como funciona na prática.
+🔗 Link: {DEMO_LINK}`,
     variations: [
-      `Olá!
+      `Oi, tudo bem? 👋
 
-Sou {NOME}, trabalho com soluções digitais para negócios.
+Sou {NOME}, especialista em soluções digitais para negócios locais.
 
-Oferecemos:
-• Website profissional
-• Agendamento online 24h
-• Integração WhatsApp
+Atuo ajudando estabelecimentos a captar mais clientes através de:
+✨ Sites otimizados para conversão
+📅 Sistema de agendamento 24h
+💬 Automação de WhatsApp
 
-Confira o sistema:
-🔗 {DEMO_LINK}`,
+Tudo integrado para funcionar automaticamente enquanto foca no seu negócio.
+
+Veja na prática como funciona:
+🔗 Link: {DEMO_LINK}`,
+      `Olá! 👋
+
+Aqui é {NOME}. Trabalho transformando a presença digital de negócios locais.
+
+Nossas soluções incluem:
+✨ Website profissional que converte
+📅 Agendamento online integrado
+💬 Atendimento automático no WhatsApp
+
+Isso elimina perda de clientes e organiza o atendimento.
+
+Confira o sistema funcionando:
+🔗 Link: {DEMO_LINK}`,
+      `Oi, tudo certo? 👋
+
+Me chamo {NOME} e ajudo empresas a ter presença digital profissional.
+
+O que oferecemos:
+✨ Site focado em trazer clientes
+📅 Sistema de agendamento automático
+💬 Integração com WhatsApp
+
+Sem ampliar equipe, atende mais e melhor.
+
+Olha como funciona:
+🔗 Link: {DEMO_LINK}`,
+      `E aí, beleza? 👋
+
+{NOME} aqui! Trabalho com automação comercial para negócios locais.
+
+Entrego:
+✨ Site profissional moderno
+📅 Agendamento online integrado
+💬 WhatsApp automatizado
+
+A sua empresa a atender 24h sem precisar estar lá.
+
+Dê uma olhada:
+🔗 Link: {DEMO_LINK}`,
+      `Bom dia! 👋
+
+Sou {NOME}, especialista em presença digital para negócios.
+
+O meu trabalho é ajudá-lo a:
+✨ Ter um site que realmente converte
+📅 Automatizar agendamentos
+💬 Integrar tudo ao WhatsApp
+
+Menos trabalho manual, mais resultados.
+
+Veja a demo:
+🔗 Link: {DEMO_LINK}`,
     ]
   },
 
