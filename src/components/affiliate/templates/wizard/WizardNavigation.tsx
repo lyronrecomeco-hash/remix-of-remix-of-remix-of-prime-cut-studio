@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Sparkles, Copy, Check, Rocket, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useWizard } from './WizardContext';
 import { PromptPreview } from './PromptPreview';
 import { toast } from 'sonner';
 
