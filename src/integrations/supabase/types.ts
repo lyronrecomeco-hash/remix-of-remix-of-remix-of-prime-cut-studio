@@ -8233,6 +8233,80 @@ export type Database = {
           },
         ]
       }
+      prospect_automation_jobs: {
+        Row: {
+          affiliate_id: string
+          completed_at: string | null
+          config: Json
+          created_at: string
+          current_index: number
+          current_prospect_id: string | null
+          execution_log: Json[] | null
+          failed_count: number
+          genesis_instance_id: string | null
+          id: string
+          last_error: string | null
+          paused_at: string | null
+          prospect_ids: string[]
+          scheduled_at: string | null
+          sent_count: number
+          started_at: string | null
+          status: string
+          total_prospects: number
+          updated_at: string
+        }
+        Insert: {
+          affiliate_id: string
+          completed_at?: string | null
+          config?: Json
+          created_at?: string
+          current_index?: number
+          current_prospect_id?: string | null
+          execution_log?: Json[] | null
+          failed_count?: number
+          genesis_instance_id?: string | null
+          id?: string
+          last_error?: string | null
+          paused_at?: string | null
+          prospect_ids?: string[]
+          scheduled_at?: string | null
+          sent_count?: number
+          started_at?: string | null
+          status?: string
+          total_prospects?: number
+          updated_at?: string
+        }
+        Update: {
+          affiliate_id?: string
+          completed_at?: string | null
+          config?: Json
+          created_at?: string
+          current_index?: number
+          current_prospect_id?: string | null
+          execution_log?: Json[] | null
+          failed_count?: number
+          genesis_instance_id?: string | null
+          id?: string
+          last_error?: string | null
+          paused_at?: string | null
+          prospect_ids?: string[]
+          scheduled_at?: string | null
+          sent_count?: number
+          started_at?: string | null
+          status?: string
+          total_prospects?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_automation_jobs_genesis_instance_id_fkey"
+            columns: ["genesis_instance_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prospecting_message_logs: {
         Row: {
           affiliate_id: string

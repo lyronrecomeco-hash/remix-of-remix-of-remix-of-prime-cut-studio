@@ -21,23 +21,28 @@ import {
   XCircle,
   LayoutGrid,
   List,
-  ExternalLink
+  Zap,
+  CheckSquare,
+  Square
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Prospect, ProspectStatus } from '../types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { AutomationConfigModal, ActiveJobCard, useAutomationJobs, AutomationConfig } from '../automation';
 
 interface HistoryTabProps {
   prospects: Prospect[];
   loading: boolean;
   analyzing: boolean;
   sending: boolean;
+  affiliateId: string;
   onAnalyze: (id: string) => void;
   onSend: (id: string) => void;
   onView: (prospect: Prospect) => void;
@@ -62,6 +67,7 @@ export const HistoryTab = ({
   loading,
   analyzing,
   sending,
+  affiliateId,
   onAnalyze,
   onSend,
   onView,
@@ -70,6 +76,19 @@ export const HistoryTab = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showAutomationModal, setShowAutomationModal] = useState(false);
+
+  const {
+    activeJob,
+    instances,
+    creating,
+    createJob,
+    pauseJob,
+    resumeJob,
+    cancelJob,
+    deleteJob,
+  } = useAutomationJobs(affiliateId);
 
   const filteredProspects = prospects.filter(prospect => {
     const matchesSearch = prospect.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -86,13 +105,43 @@ export const HistoryTab = ({
     return acc;
   }, {} as Record<string, number>);
 
-  // Stats cards data
   const stats = {
     total: prospects.length,
     proposalReady: (statusCounts['proposal_ready'] || 0) + (statusCounts['analyzed'] || 0),
     sent: statusCounts['sent'] || 0,
     converted: statusCounts['converted'] || 0,
     replied: statusCounts['replied'] || 0,
+  };
+
+  // Selectable prospects (only analyzed or proposal_ready)
+  const selectableProspects = filteredProspects.filter(
+    p => p.status === 'analyzed' || p.status === 'proposal_ready'
+  );
+
+  const toggleSelect = (id: string) => {
+    const newSet = new Set(selectedIds);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedIds(newSet);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === selectableProspects.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(selectableProspects.map(p => p.id)));
+    }
+  };
+
+  const selectedProspects = prospects.filter(p => selectedIds.has(p.id));
+
+  const handleStartAutomation = async (config: AutomationConfig) => {
+    await createJob(Array.from(selectedIds), config);
+    setSelectedIds(new Set());
+    setShowAutomationModal(false);
   };
 
   if (loading) {
@@ -126,6 +175,17 @@ export const HistoryTab = ({
 
   return (
     <div className="space-y-4">
+      {/* Active Job Card */}
+      {activeJob && (
+        <ActiveJobCard
+          job={activeJob}
+          onPause={pauseJob}
+          onResume={resumeJob}
+          onCancel={cancelJob}
+          onDelete={deleteJob}
+        />
+      )}
+
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Card className="border-border bg-gradient-to-br from-primary/5 to-transparent">
@@ -199,6 +259,29 @@ export const HistoryTab = ({
         </Card>
       </div>
 
+      {/* Selection Bar */}
+      {selectedIds.size > 0 && (
+        <Card className="border-primary bg-primary/5 sticky top-0 z-10">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Badge variant="default" className="text-sm">
+                {selectedIds.size} selecionado{selectedIds.size > 1 ? 's' : ''}
+              </Badge>
+              <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>
+                Limpar
+              </Button>
+            </div>
+            <Button
+              onClick={() => setShowAutomationModal(true)}
+              className="gap-2 bg-gradient-to-r from-primary to-purple-600"
+            >
+              <Zap className="w-4 h-4" />
+              Automatizar Envio
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Filters Header */}
       <Card className="border-border">
         <CardContent className="p-4">
@@ -214,6 +297,22 @@ export const HistoryTab = ({
             </div>
             
             <div className="flex gap-2">
+              {selectableProspects.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={toggleSelectAll}
+                  className="gap-2"
+                >
+                  {selectedIds.size === selectableProspects.length ? (
+                    <CheckSquare className="w-4 h-4" />
+                  ) : (
+                    <Square className="w-4 h-4" />
+                  )}
+                  {selectedIds.size === selectableProspects.length ? 'Desmarcar' : 'Selecionar'} Todos
+                </Button>
+              )}
+
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full sm:w-[180px] bg-background border-border">
                   <Filter className="w-4 h-4 mr-2 text-muted-foreground" />
@@ -254,7 +353,7 @@ export const HistoryTab = ({
         </CardContent>
       </Card>
 
-      {/* Prospects List/Grid */}
+      {/* Prospects List */}
       <Card className="border-border">
         <CardContent className="p-4">
           <ScrollArea className="h-[500px] pr-4">
@@ -263,86 +362,33 @@ export const HistoryTab = ({
                 <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
                 <p>Nenhum prospect encontrado com os filtros selecionados.</p>
               </div>
-            ) : viewMode === 'grid' ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredProspects.map((prospect) => {
-                  const status = STATUS_CONFIG[prospect.status] || STATUS_CONFIG.pending;
-                  const StatusIcon = status.icon;
-                  
-                  return (
-                    <Card 
-                      key={prospect.id} 
-                      className="border-border hover:border-primary/50 transition-all duration-300 cursor-pointer group"
-                      onClick={() => onView(prospect)}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3 mb-3">
-                          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                            <Building2 className="w-6 h-6 text-primary" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <h4 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
-                              {prospect.company_name}
-                            </h4>
-                            <Badge className={`${status.bg} ${status.color} border mt-1 gap-1`}>
-                              <StatusIcon className={`w-3 h-3 ${prospect.status === 'analyzing' ? 'animate-spin' : ''}`} />
-                              {status.label}
-                            </Badge>
-                          </div>
-                        </div>
-
-                        {prospect.company_phone && (
-                          <p className="text-sm text-muted-foreground flex items-center gap-1.5 mb-1">
-                            <Phone className="w-3.5 h-3.5" />
-                            {prospect.company_phone}
-                          </p>
-                        )}
-
-                        {prospect.niche && (
-                          <Badge variant="secondary" className="text-xs gap-1 mt-2">
-                            <Tag className="w-3 h-3" />
-                            {prospect.niche}
-                          </Badge>
-                        )}
-
-                        <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border">
-                          {(prospect.status === 'analyzed' || prospect.status === 'proposal_ready') && (
-                            <Button
-                              size="sm"
-                              onClick={(e) => { e.stopPropagation(); onSend(prospect.id); }}
-                              disabled={sending}
-                              className="flex-1 gap-1.5 text-xs bg-green-600 hover:bg-green-700"
-                            >
-                              <Send className="w-3.5 h-3.5" />
-                              WhatsApp
-                            </Button>
-                          )}
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={(e) => { e.stopPropagation(); onDelete(prospect.id); }}
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
             ) : (
               <div className="space-y-3">
                 {filteredProspects.map((prospect) => {
                   const status = STATUS_CONFIG[prospect.status] || STATUS_CONFIG.pending;
                   const StatusIcon = status.icon;
+                  const isSelectable = prospect.status === 'analyzed' || prospect.status === 'proposal_ready';
+                  const isSelected = selectedIds.has(prospect.id);
                   
                   return (
                     <div
                       key={prospect.id}
-                      className="bg-background border border-border rounded-xl p-4 hover:border-primary/50 transition-all duration-300 group"
+                      className={`bg-background border rounded-xl p-4 transition-all duration-300 group ${
+                        isSelected 
+                          ? 'border-primary bg-primary/5' 
+                          : 'border-border hover:border-primary/50'
+                      }`}
                     >
                       <div className="flex items-start gap-4">
+                        {/* Checkbox */}
+                        {isSelectable && (
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleSelect(prospect.id)}
+                            className="mt-1"
+                          />
+                        )}
+
                         <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
                           <Building2 className="w-6 h-6 text-primary" />
                         </div>
@@ -427,7 +473,7 @@ export const HistoryTab = ({
                               </Button>
                             )}
                             
-                            {(prospect.status === 'analyzed' || prospect.status === 'proposal_ready') && (
+                            {isSelectable && (
                               <Button
                                 size="sm"
                                 onClick={() => onSend(prospect.id)}
@@ -458,6 +504,16 @@ export const HistoryTab = ({
           </ScrollArea>
         </CardContent>
       </Card>
+
+      {/* Automation Modal */}
+      <AutomationConfigModal
+        open={showAutomationModal}
+        onOpenChange={setShowAutomationModal}
+        selectedProspects={selectedProspects}
+        instances={instances}
+        onStart={handleStartAutomation}
+        creating={creating}
+      />
     </div>
   );
 };
