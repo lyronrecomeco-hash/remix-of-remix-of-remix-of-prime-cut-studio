@@ -60,18 +60,17 @@ const SEARCH_TEMPLATES: Record<string, string> = {
   'ja': '{city} {niche}',
 };
 
-// Links por nicho
-// Links dinâmicos por nicho - com código do afiliado
+// Links por nicho - CADA NICHO TEM SEU LINK ESPECÍFICO
 const NICHE_LINKS: Record<string, string> = {
-  'barbearia': 'https://genesishub.cloud/demo',
-  'academia': 'https://genesishub.cloud/demo',
-  'salao': 'https://genesishub.cloud/demo',
-  'clinica': 'https://genesishub.cloud/demo',
-  'clinica-estetica': 'https://genesishub.cloud/demo',
-  'dentista': 'https://genesishub.cloud/demo',
-  'restaurante': 'https://genesishub.cloud/demo',
-  'petshop': 'https://genesishub.cloud/demo',
-  'default': 'https://genesishub.cloud/demo',
+  'barbearia': 'https://genesishub.cloud/barbearia/ogim2u',
+  'academia': 'https://genesishub.cloud/academia',
+  'salao': 'https://genesishub.cloud/salao',
+  'clinica': 'https://genesishub.cloud/clinica',
+  'clinica-estetica': 'https://genesishub.cloud/clinica-estetica',
+  'dentista': 'https://genesishub.cloud/dentista',
+  'restaurante': 'https://genesishub.cloud/restaurante',
+  'petshop': 'https://genesishub.cloud/petshop',
+  'default': 'https://genesishub.cloud/barbearia/ogim2u',
 };
 
 // Message templates per language/region - ADAPTADAS automaticamente COM variações anti-ban
@@ -249,250 +248,664 @@ Veja a demo:
   },
 
   'es': {
-    base: `Hola, ¿cómo está?
+    base: `¡Hola! 👋
 
-Mi nombre es {NOME} y ayudo a negocios locales a mejorar su presencia online.
+Me llamo {NOME}.
+Trabajo ayudando negocios locales a convertir visitas en contactos reales,
+a través de sitios profesionales y automatización de atención.
 
-Ofrecemos:
-• Sitios web profesionales enfocados en conversión
-• Sistema de citas automático  
-• Automatización de WhatsApp
+Actualmente implementamos soluciones como:
+✨ Sitio web profesional enfocado en conversión
+📅 Citas online automáticas
+💬 Integración directa con WhatsApp
 
-Vea cómo funciona:
-🔗 {DEMO_LINK}`,
+Esta estructura organiza la atención, evita perder clientes potenciales
+y aumenta la tasa de conversión sin necesidad de ampliar el equipo.
+
+Puedo mostrarle cómo funciona en la práctica.
+🔗 Link: {DEMO_LINK}`,
     variations: [
-      `¡Hola!
+      `¡Hola, qué tal! 👋
 
-Soy {NOME}. Trabajo transformando la presencia digital de negocios.
+Soy {NOME}, especialista en soluciones digitales para negocios locales.
 
-Nuestras soluciones:
-• Website profesional
-• Agenda online automática
-• WhatsApp integrado
+Ayudo a establecimientos a captar más clientes mediante:
+✨ Sitios optimizados para conversión
+📅 Sistema de citas 24h
+💬 Automatización de WhatsApp
 
-Mira el demo:
-🔗 {DEMO_LINK}`,
+Todo integrado para funcionar automáticamente mientras te enfocas en tu negocio.
+
+Mira cómo funciona en la práctica:
+🔗 Link: {DEMO_LINK}`,
+      `¡Hola! 👋
+
+Aquí {NOME}. Trabajo transformando la presencia digital de negocios locales.
+
+Nuestras soluciones incluyen:
+✨ Website profesional que convierte
+📅 Citas online integradas
+💬 Atención automática en WhatsApp
+
+Esto elimina la pérdida de clientes y organiza tu atención.
+
+Mira el sistema funcionando:
+🔗 Link: {DEMO_LINK}`,
+      `¡Hola, cómo estás! 👋
+
+Me llamo {NOME} y ayudo a empresas a tener presencia digital profesional.
+
+Lo que ofrecemos:
+✨ Sitio enfocado en atraer clientes
+📅 Sistema de citas automático
+💬 Integración con WhatsApp
+
+Sin ampliar equipo, atiendes más y mejor.
+
+Mira cómo funciona:
+🔗 Link: {DEMO_LINK}`,
+      `¡Buen día! 👋
+
+Soy {NOME}, especialista en presencia digital para negocios.
+
+Mi trabajo es ayudarte a:
+✨ Tener un sitio que realmente convierte
+📅 Automatizar tus citas
+💬 Integrar todo a WhatsApp
+
+Menos trabajo manual, más resultados.
+
+Mira la demo:
+🔗 Link: {DEMO_LINK}`,
     ]
   },
 
   'es-MX': {
-    base: `Hola, ¿cómo estás?
+    base: `¡Hola! 👋
 
-Soy {NOME} y ayudo a negocios como el tuyo a tener mejor presencia en línea.
+Me llamo {NOME}.
+Trabajo ayudando negocios locales a convertir visitas en contactos reales,
+con sitios profesionales y automatización de atención.
 
-Ofrecemos:
-• Sitios web profesionales
-• Sistema de citas automático  
-• Automatización de WhatsApp
+Implementamos soluciones como:
+✨ Sitio web profesional enfocado en conversión
+📅 Citas online automáticas
+💬 Integración directa con WhatsApp
 
-Mira cómo funciona:
-🔗 {DEMO_LINK}`,
+Esta estructura organiza la atención, evita perder clientes potenciales
+y aumenta tu conversión sin ampliar el equipo.
+
+Te puedo mostrar cómo funciona.
+🔗 Link: {DEMO_LINK}`,
     variations: [
-      `¡Qué onda!
+      `¡Qué onda! 👋
 
-{NOME} aquí. Trabajo con soluciones digitales para negocios locales.
+Soy {NOME}, especialista en soluciones digitales para negocios locales.
 
-Te ofrezco:
-• Website profesional
-• Agenda en línea 24/7
-• WhatsApp automatizado
+Ayudo a establecimientos a conseguir más clientes con:
+✨ Sitios optimizados para conversión
+📅 Sistema de citas 24h
+💬 Automatización de WhatsApp
 
-Checa el demo:
-🔗 {DEMO_LINK}`,
+Todo integrado para que funcione solo mientras tú te concentras en tu negocio.
+
+Checa cómo funciona:
+🔗 Link: {DEMO_LINK}`,
+      `¡Hola! 👋
+
+Aquí {NOME}. Trabajo transformando la presencia digital de negocios locales.
+
+Nuestras soluciones incluyen:
+✨ Website profesional que convierte
+📅 Citas en línea integradas
+💬 Atención automática en WhatsApp
+
+Esto elimina la pérdida de clientes y organiza tu atención.
+
+Mira el sistema funcionando:
+🔗 Link: {DEMO_LINK}`,
+      `¡Hola, qué tal! 👋
+
+Me llamo {NOME} y ayudo a empresas a tener presencia digital profesional.
+
+Lo que ofrecemos:
+✨ Sitio enfocado en atraer clientes
+📅 Sistema de citas automático
+💬 Integración con WhatsApp
+
+Sin ampliar equipo, atiendes más y mejor.
+
+Checa cómo funciona:
+🔗 Link: {DEMO_LINK}`,
+      `¡Buen día! 👋
+
+Soy {NOME}, especialista en presencia digital para negocios.
+
+Mi trabajo es ayudarte a:
+✨ Tener un sitio que realmente convierte
+📅 Automatizar tus citas
+💬 Integrar todo a WhatsApp
+
+Menos trabajo manual, más resultados.
+
+Mira la demo:
+🔗 Link: {DEMO_LINK}`,
     ]
   },
 
   'es-AR': {
-    base: `Hola, ¿cómo andás?
+    base: `¡Hola! 👋
 
-Soy {NOME} y laburo ayudando negocios a mejorar su presencia online.
+Me llamo {NOME}.
+Laburo ayudando negocios locales a convertir visitas en contactos reales,
+con sitios profesionales y automatización de atención.
 
-Ofrecemos:
-• Sitios web profesionales
-• Sistema de turnos automático  
-• Automatización de WhatsApp
+Actualmente implementamos soluciones como:
+✨ Sitio web profesional enfocado en conversión
+📅 Turnos online automáticos
+💬 Integración directa con WhatsApp
+
+Esta estructura organiza la atención, evita perder clientes potenciales
+y aumenta tu conversión sin agrandar el equipo.
+
+Te puedo mostrar cómo funciona en la práctica.
+🔗 Link: {DEMO_LINK}`,
+    variations: [
+      `¿Qué tal? 👋
+
+Soy {NOME}, especialista en soluciones digitales para negocios locales.
+
+Ayudo a locales a conseguir más clientes con:
+✨ Sitios optimizados para conversión
+📅 Sistema de turnos 24h
+💬 Automatización de WhatsApp
+
+Todo integrado para que funcione solo mientras vos te enfocás en tu negocio.
 
 Mirá cómo funciona:
-🔗 {DEMO_LINK}`,
-    variations: [
-      `¿Qué tal?
+🔗 Link: {DEMO_LINK}`,
+      `¡Hola! 👋
 
-{NOME} acá. Me dedico a la presencia digital de negocios.
+Acá {NOME}. Laburo transformando la presencia digital de negocios locales.
 
-Ofrezco:
-• Website profesional
-• Turnos online 24h
-• WhatsApp automatizado
+Nuestras soluciones incluyen:
+✨ Website profesional que convierte
+📅 Turnos online integrados
+💬 Atención automática en WhatsApp
 
-Mirá el demo:
-🔗 {DEMO_LINK}`,
+Esto elimina la pérdida de clientes y organiza tu atención.
+
+Mirá el sistema funcionando:
+🔗 Link: {DEMO_LINK}`,
+      `¿Cómo andás? 👋
+
+Me llamo {NOME} y ayudo a empresas a tener presencia digital profesional.
+
+Lo que ofrecemos:
+✨ Sitio enfocado en atraer clientes
+📅 Sistema de turnos automático
+💬 Integración con WhatsApp
+
+Sin agrandar equipo, atendés más y mejor.
+
+Mirá cómo funciona:
+🔗 Link: {DEMO_LINK}`,
+      `¡Buen día! 👋
+
+Soy {NOME}, especialista en presencia digital para negocios.
+
+Mi trabajo es ayudarte a:
+✨ Tener un sitio que realmente convierte
+📅 Automatizar tus turnos
+💬 Integrar todo a WhatsApp
+
+Menos laburo manual, más resultados.
+
+Mirá la demo:
+🔗 Link: {DEMO_LINK}`,
     ]
   },
 
   'en': {
-    base: `Hello!
+    base: `Hello! 👋
 
-My name is {NOME} and I help local businesses improve their online presence.
+My name is {NOME}.
+I help local businesses turn visitors into real contacts
+through professional websites and customer service automation.
 
-We offer:
-• Professional websites focused on conversion
-• Automatic scheduling system  
-• WhatsApp automation
+We currently implement solutions like:
+✨ Professional website focused on conversion
+📅 Automatic online scheduling
+💬 Direct WhatsApp integration
+
+This structure organizes your customer service, prevents losing potential clients
+and increases conversion rate without expanding your team.
+
+I can show you how it works in practice.
+🔗 Link: {DEMO_LINK}`,
+    variations: [
+      `Hi there! 👋
+
+I'm {NOME}, specialist in digital solutions for local businesses.
+
+I help establishments get more customers through:
+✨ Conversion-optimized websites
+📅 24/7 scheduling system
+💬 WhatsApp automation
+
+Everything integrated to work automatically while you focus on your business.
+
+See how it works in practice:
+🔗 Link: {DEMO_LINK}`,
+      `Hello! 👋
+
+This is {NOME}. I work transforming the digital presence of local businesses.
+
+Our solutions include:
+✨ Professional website that converts
+📅 Integrated online scheduling
+💬 Automatic WhatsApp support
+
+This eliminates losing customers and organizes your service.
+
+Check out the system working:
+🔗 Link: {DEMO_LINK}`,
+      `Hi! 👋
+
+My name is {NOME} and I help businesses have a professional digital presence.
+
+What we offer:
+✨ Website focused on bringing customers
+📅 Automatic scheduling system
+💬 WhatsApp integration
+
+Without expanding your team, you serve more and better.
 
 See how it works:
-🔗 {DEMO_LINK}`,
-    variations: [
-      `Hi there!
+🔗 Link: {DEMO_LINK}`,
+      `Good day! 👋
 
-I'm {NOME}, I work with digital solutions for local businesses.
+I'm {NOME}, specialist in digital presence for businesses.
 
-Our services:
-• Professional website
-• 24/7 online booking
-• WhatsApp integration
+My job is to help you:
+✨ Have a website that really converts
+📅 Automate your scheduling
+💬 Integrate everything with WhatsApp
+
+Less manual work, more results.
 
 Check out the demo:
-🔗 {DEMO_LINK}`,
+🔗 Link: {DEMO_LINK}`,
     ]
   },
 
   'en-UK': {
-    base: `Hello!
+    base: `Hello! 👋
 
-I'm {NOME} and I help businesses improve their online presence.
+My name is {NOME}.
+I help local businesses turn visitors into real contacts
+through professional websites and customer service automation.
 
-We offer:
-• Professional websites
-• Automatic booking system  
-• WhatsApp automation
+We currently implement solutions like:
+✨ Professional website focused on conversion
+📅 Automatic online booking
+💬 Direct WhatsApp integration
+
+This structure organises your customer service, prevents losing potential clients
+and increases conversion rate without expanding your team.
+
+I can show you how it works in practice.
+🔗 Link: {DEMO_LINK}`,
+    variations: [
+      `Hi there! 👋
+
+I'm {NOME}, specialist in digital solutions for local businesses.
+
+I help establishments get more customers through:
+✨ Conversion-optimised websites
+📅 24/7 booking system
+💬 WhatsApp automation
+
+Everything integrated to work automatically whilst you focus on your business.
+
+See how it works in practice:
+🔗 Link: {DEMO_LINK}`,
+      `Hello! 👋
+
+This is {NOME}. I work transforming the digital presence of local businesses.
+
+Our solutions include:
+✨ Professional website that converts
+📅 Integrated online booking
+💬 Automatic WhatsApp support
+
+This eliminates losing customers and organises your service.
+
+Check out the system working:
+🔗 Link: {DEMO_LINK}`,
+      `Hi! 👋
+
+My name is {NOME} and I help businesses have a professional digital presence.
+
+What we offer:
+✨ Website focused on bringing customers
+📅 Automatic booking system
+💬 WhatsApp integration
+
+Without expanding your team, you serve more and better.
 
 See how it works:
-🔗 {DEMO_LINK}`,
-    variations: [
-      `Hi!
+🔗 Link: {DEMO_LINK}`,
+      `Good day! 👋
 
-{NOME} here. I work with digital solutions for local businesses.
+I'm {NOME}, specialist in digital presence for businesses.
 
-Our services include:
-• Professional website
-• Online booking 24/7
-• WhatsApp integration
+My job is to help you:
+✨ Have a website that really converts
+📅 Automate your bookings
+💬 Integrate everything with WhatsApp
+
+Less manual work, more results.
 
 Have a look at the demo:
-🔗 {DEMO_LINK}`,
+🔗 Link: {DEMO_LINK}`,
     ]
   },
 
   'de': {
-    base: `Guten Tag!
+    base: `Hallo! 👋
 
-Mein Name ist {NOME}. Ich helfe Unternehmen, ihre Online-Präsenz zu verbessern.
+Mein Name ist {NOME}.
+Ich helfe lokalen Unternehmen, Besucher in echte Kontakte umzuwandeln,
+durch professionelle Websites und Automatisierung des Kundenservice.
 
-Wir bieten:
-• Professionelle Websites
-• Automatisches Terminbuchungssystem  
-• WhatsApp-Automatisierung
+Wir implementieren aktuell Lösungen wie:
+✨ Professionelle Website mit Fokus auf Konversion
+📅 Automatische Online-Terminbuchung
+💬 Direkte WhatsApp-Integration
+
+Diese Struktur organisiert Ihren Kundenservice, verhindert den Verlust potenzieller Kunden
+und erhöht die Konversionsrate ohne Ihr Team zu erweitern.
+
+Ich kann Ihnen zeigen, wie es in der Praxis funktioniert.
+🔗 Link: {DEMO_LINK}`,
+    variations: [
+      `Guten Tag! 👋
+
+Ich bin {NOME}, Spezialist für digitale Lösungen für lokale Unternehmen.
+
+Ich helfe Geschäften, mehr Kunden zu gewinnen durch:
+✨ Für Konversion optimierte Websites
+📅 24/7 Buchungssystem
+💬 WhatsApp-Automatisierung
+
+Alles integriert, um automatisch zu funktionieren, während Sie sich auf Ihr Geschäft konzentrieren.
+
+Sehen Sie, wie es in der Praxis funktioniert:
+🔗 Link: {DEMO_LINK}`,
+      `Hallo! 👋
+
+Hier ist {NOME}. Ich arbeite an der digitalen Transformation lokaler Unternehmen.
+
+Unsere Lösungen umfassen:
+✨ Professionelle Website, die konvertiert
+📅 Integrierte Online-Terminbuchung
+💬 Automatischer WhatsApp-Support
+
+Dies eliminiert Kundenverluste und organisiert Ihren Service.
+
+Sehen Sie das System in Aktion:
+🔗 Link: {DEMO_LINK}`,
+      `Hi! 👋
+
+Mein Name ist {NOME} und ich helfe Unternehmen, eine professionelle digitale Präsenz aufzubauen.
+
+Was wir bieten:
+✨ Website mit Fokus auf Kundengewinnung
+📅 Automatisches Buchungssystem
+💬 WhatsApp-Integration
+
+Ohne Ihr Team zu erweitern, bedienen Sie mehr und besser.
 
 Sehen Sie, wie es funktioniert:
-🔗 {DEMO_LINK}`,
-    variations: [
-      `Hallo!
+🔗 Link: {DEMO_LINK}`,
+      `Guten Tag! 👋
 
-Ich bin {NOME} und arbeite mit digitalen Lösungen für lokale Unternehmen.
+Ich bin {NOME}, Spezialist für digitale Präsenz für Unternehmen.
 
-Unsere Dienstleistungen:
-• Professionelle Website
-• Online-Terminbuchung 24/7
-• WhatsApp-Integration
+Meine Aufgabe ist es, Ihnen zu helfen:
+✨ Eine Website zu haben, die wirklich konvertiert
+📅 Ihre Termine zu automatisieren
+💬 Alles mit WhatsApp zu integrieren
+
+Weniger manuelle Arbeit, mehr Ergebnisse.
 
 Schauen Sie sich die Demo an:
-🔗 {DEMO_LINK}`,
+🔗 Link: {DEMO_LINK}`,
     ]
   },
 
   'fr': {
-    base: `Bonjour !
+    base: `Bonjour ! 👋
 
-Je suis {NOME}. J'accompagne les entreprises pour améliorer leur présence en ligne.
+Je m'appelle {NOME}.
+J'aide les entreprises locales à transformer les visiteurs en contacts réels,
+grâce à des sites professionnels et à l'automatisation du service client.
 
-Nous proposons :
-• Sites web professionnels
-• Système de prise de rendez-vous automatique  
-• Automatisation WhatsApp
+Nous mettons actuellement en œuvre des solutions telles que :
+✨ Site web professionnel axé sur la conversion
+📅 Prise de rendez-vous en ligne automatique
+💬 Intégration directe WhatsApp
 
-Découvrez comment ça fonctionne :
-🔗 {DEMO_LINK}`,
+Cette structure organise votre service client, évite de perdre des clients potentiels
+et augmente le taux de conversion sans agrandir votre équipe.
+
+Je peux vous montrer comment ça fonctionne en pratique.
+🔗 Lien : {DEMO_LINK}`,
     variations: [
-      `Salut !
+      `Salut ! 👋
 
-{NOME} ici. Je travaille avec des solutions digitales pour les entreprises locales.
+Je suis {NOME}, spécialiste en solutions digitales pour les entreprises locales.
 
-Nos services :
-• Site web professionnel
-• Réservation en ligne 24h/24
-• Intégration WhatsApp
+J'aide les établissements à obtenir plus de clients grâce à :
+✨ Sites optimisés pour la conversion
+📅 Système de réservation 24h/24
+💬 Automatisation WhatsApp
+
+Tout est intégré pour fonctionner automatiquement pendant que vous vous concentrez sur votre activité.
+
+Voyez comment ça fonctionne :
+🔗 Lien : {DEMO_LINK}`,
+      `Bonjour ! 👋
+
+Ici {NOME}. Je travaille à transformer la présence digitale des entreprises locales.
+
+Nos solutions incluent :
+✨ Site web professionnel qui convertit
+📅 Réservation en ligne intégrée
+💬 Support WhatsApp automatique
+
+Cela élimine la perte de clients et organise votre service.
+
+Regardez le système en action :
+🔗 Lien : {DEMO_LINK}`,
+      `Coucou ! 👋
+
+Je m'appelle {NOME} et j'aide les entreprises à avoir une présence digitale professionnelle.
+
+Ce que nous offrons :
+✨ Site axé sur l'acquisition de clients
+📅 Système de rendez-vous automatique
+💬 Intégration WhatsApp
+
+Sans agrandir votre équipe, vous servez plus et mieux.
+
+Voyez comment ça marche :
+🔗 Lien : {DEMO_LINK}`,
+      `Bonne journée ! 👋
+
+Je suis {NOME}, spécialiste en présence digitale pour les entreprises.
+
+Mon travail est de vous aider à :
+✨ Avoir un site qui convertit vraiment
+📅 Automatiser vos rendez-vous
+💬 Tout intégrer à WhatsApp
+
+Moins de travail manuel, plus de résultats.
 
 Regardez la démo :
-🔗 {DEMO_LINK}`,
+🔗 Lien : {DEMO_LINK}`,
     ]
   },
 
   'it': {
-    base: `Buongiorno!
+    base: `Ciao! 👋
 
-Mi chiamo {NOME} e aiuto le attività a migliorare la loro presenza online.
+Mi chiamo {NOME}.
+Aiuto le attività locali a trasformare i visitatori in contatti reali,
+attraverso siti professionali e automazione del servizio clienti.
 
-Offriamo:
-• Siti web professionali
-• Sistema di prenotazione automatico  
-• Automazione WhatsApp
+Attualmente implementiamo soluzioni come:
+✨ Sito web professionale focalizzato sulla conversione
+📅 Prenotazioni online automatiche
+💬 Integrazione diretta con WhatsApp
 
-Guardi come funziona:
-🔗 {DEMO_LINK}`,
+Questa struttura organizza il tuo servizio clienti, evita di perdere potenziali clienti
+e aumenta il tasso di conversione senza espandere il team.
+
+Posso mostrarti come funziona nella pratica.
+🔗 Link: {DEMO_LINK}`,
     variations: [
-      `Ciao!
+      `Salve! 👋
 
-Sono {NOME}, lavoro con soluzioni digitali per attività locali.
+Sono {NOME}, specialista in soluzioni digitali per attività locali.
 
-I nostri servizi:
-• Sito web professionale
-• Prenotazioni online 24/7
-• Integrazione WhatsApp
+Aiuto gli esercizi a ottenere più clienti attraverso:
+✨ Siti ottimizzati per la conversione
+📅 Sistema di prenotazione 24/7
+💬 Automazione WhatsApp
+
+Tutto integrato per funzionare automaticamente mentre ti concentri sulla tua attività.
+
+Guarda come funziona nella pratica:
+🔗 Link: {DEMO_LINK}`,
+      `Ciao! 👋
+
+Qui {NOME}. Lavoro trasformando la presenza digitale delle attività locali.
+
+Le nostre soluzioni includono:
+✨ Sito web professionale che converte
+📅 Prenotazioni online integrate
+💬 Supporto WhatsApp automatico
+
+Questo elimina la perdita di clienti e organizza il tuo servizio.
+
+Guarda il sistema in azione:
+🔗 Link: {DEMO_LINK}`,
+      `Ciao! 👋
+
+Mi chiamo {NOME} e aiuto le aziende ad avere una presenza digitale professionale.
+
+Cosa offriamo:
+✨ Sito focalizzato sull'acquisizione clienti
+📅 Sistema di prenotazione automatico
+💬 Integrazione WhatsApp
+
+Senza espandere il team, servi di più e meglio.
+
+Guarda come funziona:
+🔗 Link: {DEMO_LINK}`,
+      `Buongiorno! 👋
+
+Sono {NOME}, specialista in presenza digitale per le aziende.
+
+Il mio lavoro è aiutarti a:
+✨ Avere un sito che converte davvero
+📅 Automatizzare le tue prenotazioni
+💬 Integrare tutto con WhatsApp
+
+Meno lavoro manuale, più risultati.
 
 Guarda la demo:
-🔗 {DEMO_LINK}`,
+🔗 Link: {DEMO_LINK}`,
     ]
   },
 
   'ja': {
-    base: `こんにちは！
+    base: `こんにちは！👋
 
-私は{NOME}と申します。地元企業のオンラインプレゼンス向上をお手伝いしています。
+{NOME}と申します。
+プロフェッショナルなウェブサイトと顧客サービスの自動化を通じて、
+地元企業が訪問者を実際の連絡先に変えるお手伝いをしています。
 
-提供サービス：
-• プロフェッショナルなウェブサイト
-• 自動予約システム
-• WhatsApp自動化
+現在、以下のようなソリューションを実装しています：
+✨ コンバージョン重視のプロフェッショナルなウェブサイト
+📅 自動オンライン予約
+💬 WhatsAppとの直接連携
+
+この仕組みにより、顧客サービスを整理し、潜在顧客の流出を防ぎ、
+チームを拡大することなくコンバージョン率を向上させます。
+
+実際にどのように機能するかお見せできます。
+🔗 リンク: {DEMO_LINK}`,
+    variations: [
+      `はじめまして！👋
+
+{NOME}です。地元ビジネス向けのデジタルソリューションを専門としています。
+
+以下を通じてお客様獲得をサポートします：
+✨ コンバージョン最適化サイト
+📅 24時間予約システム
+💬 WhatsApp自動化
+
+すべてが統合されて自動で動くので、ビジネスに集中できます。
+
+実際の動作をご覧ください：
+🔗 リンク: {DEMO_LINK}`,
+      `こんにちは！👋
+
+{NOME}です。地元ビジネスのデジタルプレゼンスを変革しています。
+
+ソリューション内容：
+✨ コンバージョンするプロサイト
+📅 統合オンライン予約
+💬 WhatsApp自動サポート
+
+顧客の流出を防ぎ、サービスを整理します。
+
+システムの動作をご確認ください：
+🔗 リンク: {DEMO_LINK}`,
+      `こんにちは！👋
+
+{NOME}と申します。企業のプロフェッショナルなデジタルプレゼンスをお手伝いします。
+
+提供内容：
+✨ 集客に特化したサイト
+📅 自動予約システム
+💬 WhatsApp連携
+
+チーム拡大なしで、より多く、より良いサービスを。
+
+動作をご確認ください：
+🔗 リンク: {DEMO_LINK}`,
+      `おはようございます！👋
+
+{NOME}です。企業向けデジタルプレゼンスの専門家です。
+
+お手伝いできること：
+✨ 本当にコンバージョンするサイト
+📅 予約の自動化
+💬 すべてをWhatsAppと統合
+
+手作業を減らし、結果を増やす。
 
 デモをご覧ください：
-🔗 {DEMO_LINK}`,
-    variations: [
-      `こんにちは！
-
-{NOME}です。地域ビジネス向けのデジタルソリューションを提供しています。
-
-サービス内容：
-• プロサイト制作
-• 24時間オンライン予約
-• WhatsApp連携
-
-デモはこちら：
-🔗 {DEMO_LINK}`,
+🔗 リンク: {DEMO_LINK}`,
     ]
   },
 };
 
-const DEFAULT_DEMO_LINK = 'https://genesishub.cloud/demo';
+const DEFAULT_DEMO_LINK = 'https://genesishub.cloud/barbearia/ogim2u';
 
 function getNicheLinkFromCategory(category: string): string {
   // Tenta encontrar o link do nicho baseado na categoria
