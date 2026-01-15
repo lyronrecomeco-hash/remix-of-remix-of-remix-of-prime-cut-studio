@@ -193,9 +193,15 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
       // Build search query with state for Brazil
       const searchCity = countryCode === 'BR' && state ? `${city.trim()}, ${state}` : city.trim();
       
-      // Step 1: Search businesses (limited for speed)
+      // Single fast search - returns businesses WITH messages already adapted (< 5 seconds)
       const { data: searchData, error: searchError } = await supabase.functions.invoke('search-businesses-global', {
-        body: { city: searchCity, countryCode, niche, maxResults: 50 },
+        body: { 
+          city: searchCity, 
+          countryCode, 
+          niche, 
+          maxResults: 30,
+          affiliateName: currentAffiliateName || 'Consultor Genesis'
+        },
       });
 
       if (searchError) throw searchError;
@@ -226,51 +232,10 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
         return;
       }
 
-      toast.success(`${businessResults.length} empresas encontradas! Gerando mensagens...`);
-      
-      // Step 2: Generate messages in bulk (in parallel with UI update)
-      setGeneratingMessages(true);
-      
-      // Show results immediately before messages
+      // Results already come with messages adapted - show immediately
       setResults(businessResults);
       setOriginalResults(businessResults);
-      
-      const { data: messageData, error: messageError } = await supabase.functions.invoke('generate-bulk-proposals', {
-        body: {
-          businesses: businessResults.slice(0, 30).map(b => ({
-            name: b.name,
-            niche: b.category || niche,
-            address: b.address,
-            phone: b.phone,
-            website: b.website,
-            rating: b.rating,
-          })),
-          affiliateName: currentAffiliateName || 'Consultor Genesis',
-          countryCode,
-        },
-      });
-
-      // Merge messages with results
-      let finalResults = businessResults;
-      
-      if (!messageError && messageData?.messages) {
-        const messagesArray = messageData.messages as Array<{ name: string; message: string }>;
-        const messageRecord: Record<string, string> = {};
-        messagesArray.forEach((m) => { messageRecord[m.name] = m.message; });
-        
-        finalResults = businessResults.map(result => ({
-          ...result,
-          generatedMessage: messageRecord[result.name] || undefined,
-        }));
-        
-        toast.success('Mensagens geradas com sucesso!');
-      } else {
-        console.error('Error generating messages:', messageError);
-        toast.warning('Empresas encontradas, mas houve erro ao gerar mensagens.');
-      }
-
-      setResults(finalResults);
-      setOriginalResults(finalResults);
+      toast.success(`${businessResults.length} empresas encontradas com propostas prontas!`);
 
     } catch (error) {
       console.error('Search error:', error);
@@ -508,11 +473,11 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
       </Card>
 
       {/* Loading State */}
-      {(searching || generatingMessages) && results.length === 0 && (
+      {searching && results.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <Loader2 className="w-12 h-12 animate-spin text-primary" />
           <p className="text-lg text-muted-foreground font-medium">
-            {generatingMessages ? 'Gerando mensagens com IA...' : 'Buscando empresas...'}
+            Buscando empresas e preparando propostas...
           </p>
           <p className="text-sm text-muted-foreground">Máximo 5 segundos</p>
         </div>
