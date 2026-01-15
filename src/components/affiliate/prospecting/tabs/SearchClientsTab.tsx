@@ -646,12 +646,12 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect, on
 
                       <Button
                         size="sm"
-                        variant={isAdded ? 'secondary' : 'default'}
-                        className={`gap-1 ${!isAdded && hasMessage ? 'bg-gradient-to-r from-primary to-purple-600' : ''}`}
+                        variant={isAdded ? 'secondary' : 'outline'}
+                        className="gap-1"
                         disabled={isAdded || isAdding}
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleAddToProspects(result, true);
+                          handleAddToProspects(result);
                         }}
                       >
                         {isAdding ? (
