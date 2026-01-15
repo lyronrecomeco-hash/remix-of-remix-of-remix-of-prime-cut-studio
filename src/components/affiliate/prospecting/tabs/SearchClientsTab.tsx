@@ -201,7 +201,7 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect, on
           city: searchCity, 
           countryCode, 
           niche, 
-          maxResults: 30,
+          maxResults: 100,
           affiliateName: currentAffiliateName || 'Consultor Genesis'
         },
       });
