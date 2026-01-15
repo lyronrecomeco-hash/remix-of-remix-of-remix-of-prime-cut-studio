@@ -37,12 +37,12 @@ import { Badge } from '@/components/ui/badge';
 
 // ========== DATA ==========
 const MODALIDADES = [
-  { id: 'musculacao', name: 'Musculação', description: 'Treinamento de força com equipamentos modernos e acompanhamento profissional', icon: Dumbbell, popular: true, color: 'from-slate-600 to-slate-800' },
-  { id: 'crossfit', name: 'CrossFit', description: 'Treinos funcionais de alta intensidade para resultados rápidos', icon: Flame, color: 'from-amber-600 to-amber-800' },
-  { id: 'spinning', name: 'Spinning', description: 'Aulas de bike indoor com música e instrutores motivadores', icon: Zap, color: 'from-emerald-600 to-emerald-800' },
-  { id: 'yoga', name: 'Yoga', description: 'Equilíbrio entre corpo e mente com técnicas milenares', icon: Heart, color: 'from-violet-600 to-violet-800' },
-  { id: 'luta', name: 'Artes Marciais', description: 'Boxe, Muay Thai e Jiu-Jitsu com mestres experientes', icon: Target, color: 'from-red-600 to-red-800' },
-  { id: 'funcional', name: 'Funcional', description: 'Treinos dinâmicos para melhorar seu dia a dia', icon: Trophy, color: 'from-sky-600 to-sky-800' },
+  { id: 'musculacao', name: 'Musculação', description: 'Treinamento de força com equipamentos modernos e acompanhamento profissional', icon: Dumbbell, popular: true, color: 'from-zinc-700 to-zinc-800' },
+  { id: 'crossfit', name: 'CrossFit', description: 'Treinos funcionais de alta intensidade para resultados rápidos', icon: Flame, color: 'from-red-600 to-red-700' },
+  { id: 'spinning', name: 'Spinning', description: 'Aulas de bike indoor com música e instrutores motivadores', icon: Zap, color: 'from-zinc-600 to-zinc-700' },
+  { id: 'yoga', name: 'Yoga', description: 'Equilíbrio entre corpo e mente com técnicas milenares', icon: Heart, color: 'from-zinc-700 to-zinc-800' },
+  { id: 'luta', name: 'Artes Marciais', description: 'Boxe, Muay Thai e Jiu-Jitsu com mestres experientes', icon: Target, color: 'from-red-700 to-red-800' },
+  { id: 'funcional', name: 'Funcional', description: 'Treinos dinâmicos para melhorar seu dia a dia', icon: Trophy, color: 'from-zinc-600 to-zinc-700' },
 ];
 
 const PLANOS = [
@@ -151,7 +151,7 @@ export default function AcademiaPage() {
   const config = DEFAULT_CONFIG;
   
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-zinc-950 text-white">
       <AcademiaHeader config={config} code={code} />
       <AcademiaHero config={config} code={code} />
       <ProvaAutoridade config={config} />
@@ -191,7 +191,7 @@ function AcademiaHeader({ config, code }: { config: typeof DEFAULT_CONFIG; code?
     <>
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         isScrolled 
-          ? 'bg-slate-950/95 backdrop-blur-xl border-b border-white/10 shadow-2xl' 
+          ? 'bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800 shadow-2xl' 
           : 'bg-transparent'
       }`}>
         <div className="container flex items-center justify-between h-16 md:h-20 px-4">
@@ -201,12 +201,12 @@ function AcademiaHeader({ config, code }: { config: typeof DEFAULT_CONFIG; code?
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center shadow-lg shadow-amber-500/20">
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-red-600 flex items-center justify-center shadow-lg shadow-red-600/20">
               <Dumbbell className="w-5 h-5 md:w-6 md:h-6 text-white" />
             </div>
             <div className="hidden sm:block">
               <span className="text-lg font-bold text-white">{config.business.name}</span>
-              <div className="text-[10px] text-amber-500 font-medium tracking-wider uppercase">Academia Premium</div>
+              <div className="text-[10px] text-zinc-400 font-medium tracking-wider uppercase">Academia Premium</div>
             </div>
           </motion.div>
 
@@ -218,10 +218,10 @@ function AcademiaHeader({ config, code }: { config: typeof DEFAULT_CONFIG; code?
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
-                className="relative text-sm font-medium text-slate-300 hover:text-white transition-colors group"
+                className="relative text-sm font-medium text-zinc-400 hover:text-white transition-colors group"
               >
                 {link.label}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-amber-500 to-amber-600 group-hover:w-full transition-all duration-300" />
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-red-600 group-hover:w-full transition-all duration-300" />
               </motion.a>
             ))}
           </nav>
@@ -232,7 +232,7 @@ function AcademiaHeader({ config, code }: { config: typeof DEFAULT_CONFIG; code?
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
             >
-              <Button asChild className="hidden sm:flex bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-semibold shadow-lg shadow-amber-500/25 border-0">
+              <Button asChild className="hidden sm:flex bg-red-600 hover:bg-red-700 text-white font-semibold shadow-lg shadow-red-600/20 border-0">
                 <Link to={code ? `/academia/${code}/matricula` : '/academia/matricula'}>
                   <Sparkles className="w-4 h-4 mr-2" />
                   Pré-matrícula
@@ -242,7 +242,7 @@ function AcademiaHeader({ config, code }: { config: typeof DEFAULT_CONFIG; code?
             
             <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-              className="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 backdrop-blur-sm border border-white/10 hover:bg-white/20 transition-colors"
+              className="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 transition-colors"
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -256,7 +256,7 @@ function AcademiaHeader({ config, code }: { config: typeof DEFAULT_CONFIG; code?
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed inset-x-0 top-16 z-40 bg-slate-950/98 backdrop-blur-xl border-b border-white/10 lg:hidden"
+            className="fixed inset-x-0 top-16 z-40 bg-zinc-950/98 backdrop-blur-xl border-b border-zinc-800 lg:hidden"
           >
             <nav className="container py-6 flex flex-col gap-2 px-4">
               {navLinks.map((link, index) => (
@@ -267,12 +267,12 @@ function AcademiaHeader({ config, code }: { config: typeof DEFAULT_CONFIG; code?
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="text-lg font-medium py-3 px-4 rounded-xl hover:bg-white/5 transition-colors"
+                  className="text-lg font-medium py-3 px-4 rounded-xl hover:bg-zinc-800 transition-colors"
                 >
                   {link.label}
                 </motion.a>
               ))}
-              <Button asChild className="mt-4 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-semibold">
+              <Button asChild className="mt-4 bg-red-600 hover:bg-red-700 text-white font-semibold">
                 <Link to={code ? `/academia/${code}/matricula` : '/academia/matricula'} onClick={() => setIsMobileMenuOpen(false)}>
                   <Sparkles className="w-4 h-4 mr-2" />
                   Pré-matrícula Online
@@ -296,24 +296,21 @@ function AcademiaHero({ config, code }: { config: typeof DEFAULT_CONFIG; code?: 
     <section id="inicio" className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background com parallax */}
       <motion.div className="absolute inset-0" style={{ y }}>
-        <div className="absolute inset-0 bg-slate-950" />
+        <div className="absolute inset-0 bg-zinc-950" />
         <div 
-          className="absolute inset-0 opacity-30"
+          className="absolute inset-0 opacity-40"
           style={{
             backgroundImage: 'url(https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1920&h=1080&fit=crop)',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/40 to-slate-950" />
+        <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/70 via-zinc-950/50 to-zinc-950" />
       </motion.div>
       
-      {/* Elementos decorativos */}
-      <div className="absolute top-1/4 left-0 w-[600px] h-[600px] bg-amber-500/10 rounded-full blur-[200px]" />
-      <div className="absolute bottom-1/4 right-0 w-[500px] h-[500px] bg-slate-600/20 rounded-full blur-[200px]" />
-      
-      {/* Grid pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:60px_60px]" />
+      {/* Elementos decorativos sutis */}
+      <div className="absolute top-1/4 left-0 w-[500px] h-[500px] bg-red-600/5 rounded-full blur-[150px]" />
+      <div className="absolute bottom-1/4 right-0 w-[400px] h-[400px] bg-zinc-500/10 rounded-full blur-[150px]" />
 
       <motion.div 
         className="relative z-10 container text-center px-4 pt-20"
@@ -326,10 +323,10 @@ function AcademiaHero({ config, code }: { config: typeof DEFAULT_CONFIG; code?: 
           transition={{ duration: 0.5 }}
           className="flex justify-center mb-8"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-full backdrop-blur-sm">
-            <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-            <span className="text-sm font-medium text-amber-400">Vagas Limitadas</span>
-            <TrendingUp className="w-4 h-4 text-amber-500" />
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-600/10 border border-red-600/30 rounded-full backdrop-blur-sm">
+            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            <span className="text-sm font-medium text-red-400">Vagas Limitadas</span>
+            <TrendingUp className="w-4 h-4 text-red-500" />
           </div>
         </motion.div>
 
@@ -341,7 +338,7 @@ function AcademiaHero({ config, code }: { config: typeof DEFAULT_CONFIG; code?: 
         >
           Faça sua pré-matrícula
           <br />
-          <span className="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 bg-clip-text text-transparent">
+          <span className="text-red-500">
             100% online
           </span>
         </motion.h1>
@@ -350,7 +347,7 @@ function AcademiaHero({ config, code }: { config: typeof DEFAULT_CONFIG; code?: 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10"
+          className="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto mb-10"
         >
           Sem burocracia, sem filas, atendimento imediato.
           <br className="hidden sm:block" />
@@ -363,13 +360,13 @@ function AcademiaHero({ config, code }: { config: typeof DEFAULT_CONFIG; code?: 
           transition={{ duration: 0.8, delay: 0.3 }}
           className="flex flex-col sm:flex-row gap-4 justify-center mb-12"
         >
-          <Button asChild size="lg" className="text-lg px-8 py-6 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-semibold shadow-xl shadow-amber-500/25 border-0">
+          <Button asChild size="lg" className="text-lg px-8 py-6 bg-red-600 hover:bg-red-700 text-white font-semibold shadow-xl shadow-red-600/20 border-0">
             <Link to={code ? `/academia/${code}/matricula` : '/academia/matricula'}>
               <Calendar className="w-5 h-5 mr-2" />
               Pré-matrícula Grátis
             </Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="text-lg px-8 py-6 border-white/20 bg-white/5 hover:bg-white/10 backdrop-blur-sm">
+          <Button asChild variant="outline" size="lg" className="text-lg px-8 py-6 border-zinc-700 bg-zinc-900/50 hover:bg-zinc-800 text-white">
             <a href="#planos">
               Ver todos os planos
               <ArrowRight className="w-5 h-5 ml-2" />
@@ -382,7 +379,7 @@ function AcademiaHero({ config, code }: { config: typeof DEFAULT_CONFIG; code?: 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="flex flex-wrap justify-center gap-6 text-sm text-slate-500"
+          className="flex flex-wrap justify-center gap-6 text-sm text-zinc-500"
         >
           {[
             { icon: Shield, text: 'Sem cartão de crédito' },
@@ -390,7 +387,7 @@ function AcademiaHero({ config, code }: { config: typeof DEFAULT_CONFIG; code?: 
             { icon: BadgeCheck, text: 'Garantia de satisfação' },
           ].map((item) => (
             <div key={item.text} className="flex items-center gap-2">
-              <item.icon className="w-4 h-4 text-amber-500" />
+              <item.icon className="w-4 h-4 text-red-500" />
               <span>{item.text}</span>
             </div>
           ))}
@@ -408,9 +405,9 @@ function AcademiaHero({ config, code }: { config: typeof DEFAULT_CONFIG; code?: 
           <motion.div 
             animate={{ y: [0, 8, 0] }} 
             transition={{ duration: 1.5, repeat: Infinity }}
-            className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center"
+            className="w-10 h-10 rounded-full border border-zinc-700 flex items-center justify-center"
           >
-            <ChevronDown className="w-5 h-5 text-slate-400" />
+            <ChevronDown className="w-5 h-5 text-zinc-400" />
           </motion.div>
         </a>
       </motion.div>
@@ -431,10 +428,7 @@ function ProvaAutoridade({ config }: { config: typeof DEFAULT_CONFIG }) {
   ];
 
   return (
-    <section id="autoridade" className="py-20 md:py-28 bg-slate-900/50 relative overflow-hidden" ref={ref}>
-      {/* Background elements */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px]" />
-      
+    <section id="autoridade" className="py-20 md:py-28 bg-zinc-900/50 relative overflow-hidden" ref={ref}>
       <div className="container px-4 relative">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
           {stats.map((stat, index) => (
@@ -443,15 +437,15 @@ function ProvaAutoridade({ config }: { config: typeof DEFAULT_CONFIG }) {
               initial={{ opacity: 0, y: 30, scale: 0.95 }}
               animate={isInView ? { opacity: 1, y: 0, scale: 1 } : {}}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="text-center p-6 md:p-8 rounded-2xl bg-slate-800/50 border border-white/5 backdrop-blur-sm hover:border-amber-500/20 transition-all duration-300 group"
+              className="text-center p-6 md:p-8 rounded-2xl bg-zinc-800/50 border border-zinc-700/50 hover:border-red-600/30 transition-all duration-300 group"
             >
-              <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <stat.icon className="w-7 h-7 text-amber-500" />
+              <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-red-600/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <stat.icon className="w-7 h-7 text-red-500" />
               </div>
               <div className="text-3xl md:text-4xl font-bold text-white mb-1">
                 {stat.value}{stat.suffix}
               </div>
-              <div className="text-sm text-slate-400">{stat.label}</div>
+              <div className="text-sm text-zinc-400">{stat.label}</div>
             </motion.div>
           ))}
         </div>
@@ -465,9 +459,9 @@ function ProvaAutoridade({ config }: { config: typeof DEFAULT_CONFIG }) {
           {['Equipamentos Technogym', 'Ar Condicionado Central', 'Estacionamento Grátis', 'Wi-Fi Liberado', 'Vestiários Premium'].map((selo) => (
             <div 
               key={selo} 
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-800/50 border border-white/5 text-sm text-slate-300"
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-800/50 border border-zinc-700/50 text-sm text-zinc-300"
             >
-              <CheckCircle2 className="w-4 h-4 text-amber-500" />
+              <CheckCircle2 className="w-4 h-4 text-red-500" />
               {selo}
             </div>
           ))}
@@ -492,11 +486,11 @@ function Modalidades({ code }: { code?: string }) {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <span className="inline-block px-4 py-1 rounded-full bg-amber-500/10 text-amber-500 text-sm font-medium mb-4">MODALIDADES</span>
+          <span className="inline-block px-4 py-1 rounded-full bg-red-600/10 text-red-500 text-sm font-medium mb-4">MODALIDADES</span>
           <h2 className="text-3xl md:text-5xl font-bold">
-            Escolha sua <span className="text-amber-500">modalidade</span>
+            Escolha sua <span className="text-red-500">modalidade</span>
           </h2>
-          <p className="text-slate-400 mt-4 max-w-2xl mx-auto">
+          <p className="text-zinc-400 mt-4 max-w-2xl mx-auto">
             Diversas opções para você alcançar seus objetivos de forma eficiente e prazerosa
           </p>
         </motion.div>
@@ -510,13 +504,10 @@ function Modalidades({ code }: { code?: string }) {
               transition={{ duration: 0.5, delay: index * 0.1 }}
               onMouseEnter={() => setHoveredId(mod.id)}
               onMouseLeave={() => setHoveredId(null)}
-              className="group relative p-6 rounded-2xl bg-slate-800/30 border border-white/5 hover:border-amber-500/30 transition-all duration-500 overflow-hidden"
+              className="group relative p-6 rounded-2xl bg-zinc-800/30 border border-zinc-700/50 hover:border-red-600/30 transition-all duration-500 overflow-hidden"
             >
-              {/* Gradient background on hover */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${mod.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
-              
               {mod.popular && (
-                <Badge className="absolute top-4 right-4 bg-amber-500 text-slate-950 font-semibold border-0">
+                <Badge className="absolute top-4 right-4 bg-red-600 text-white font-semibold border-0">
                   Popular
                 </Badge>
               )}
@@ -526,12 +517,12 @@ function Modalidades({ code }: { code?: string }) {
               </div>
               
               <h3 className="text-xl font-bold mb-2 text-white">{mod.name}</h3>
-              <p className="text-slate-400 text-sm mb-6 leading-relaxed">{mod.description}</p>
+              <p className="text-zinc-400 text-sm mb-6 leading-relaxed">{mod.description}</p>
               
               <Button 
                 asChild 
                 variant="outline" 
-                className="w-full border-white/10 bg-white/5 hover:bg-amber-500 hover:text-slate-950 hover:border-amber-500 transition-all duration-300"
+                className="w-full border-zinc-700 bg-zinc-800/50 hover:bg-red-600 hover:text-white hover:border-red-600 transition-all duration-300"
               >
                 <Link to={code ? `/academia/${code}/matricula?modalidade=${mod.id}` : `/academia/matricula?modalidade=${mod.id}`}>
                   Selecionar
@@ -552,10 +543,7 @@ function Planos({ code }: { code?: string }) {
   const isInView = useInView(ref, { once: true, margin: '-100px' });
 
   return (
-    <section id="planos" className="py-20 md:py-28 bg-slate-900/50 relative overflow-hidden" ref={ref}>
-      {/* Background elements */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-amber-500/5 rounded-full blur-[200px]" />
-      
+    <section id="planos" className="py-20 md:py-28 bg-zinc-900/50 relative overflow-hidden" ref={ref}>
       <div className="container px-4 relative">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -563,11 +551,11 @@ function Planos({ code }: { code?: string }) {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <span className="inline-block px-4 py-1 rounded-full bg-amber-500/10 text-amber-500 text-sm font-medium mb-4">PLANOS E VALORES</span>
+          <span className="inline-block px-4 py-1 rounded-full bg-red-600/10 text-red-500 text-sm font-medium mb-4">PLANOS E VALORES</span>
           <h2 className="text-3xl md:text-5xl font-bold">
-            Escolha o plano <span className="text-amber-500">ideal</span>
+            Escolha o plano <span className="text-red-500">ideal</span>
           </h2>
-          <p className="text-slate-400 mt-4 max-w-2xl mx-auto">
+          <p className="text-zinc-400 mt-4 max-w-2xl mx-auto">
             Investimento que cabe no seu bolso com resultados que transformam sua vida
           </p>
         </motion.div>
@@ -581,13 +569,13 @@ function Planos({ code }: { code?: string }) {
               transition={{ duration: 0.5, delay: index * 0.1 }}
               className={`relative p-6 rounded-2xl border transition-all duration-500 ${
                 plano.popular 
-                  ? 'bg-gradient-to-b from-amber-500/10 to-slate-800/50 border-amber-500/30 shadow-xl shadow-amber-500/10 scale-105 z-10' 
-                  : 'bg-slate-800/30 border-white/5 hover:border-white/10'
+                  ? 'bg-zinc-800 border-red-600/50 shadow-xl shadow-red-600/10 scale-105 z-10' 
+                  : 'bg-zinc-800/30 border-zinc-700/50 hover:border-zinc-600'
               }`}
             >
               {plano.popular && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-amber-500 text-slate-950 font-semibold border-0 shadow-lg shadow-amber-500/25">
+                  <Badge className="bg-red-600 text-white font-semibold border-0 shadow-lg">
                     <Sparkles className="w-3 h-3 mr-1" />
                     Mais Escolhido
                   </Badge>
@@ -596,7 +584,7 @@ function Planos({ code }: { code?: string }) {
 
               {plano.savings && (
                 <div className="absolute top-4 right-4">
-                  <Badge variant="outline" className="border-emerald-500/30 text-emerald-400 bg-emerald-500/10">
+                  <Badge variant="outline" className="border-green-600/30 text-green-500 bg-green-600/10">
                     -{plano.savings}
                   </Badge>
                 </div>
@@ -604,11 +592,11 @@ function Planos({ code }: { code?: string }) {
               
               <div className="pt-4">
                 <h3 className="text-xl font-bold mb-1">{plano.name}</h3>
-                <p className="text-sm text-slate-500 mb-4">{plano.description}</p>
+                <p className="text-sm text-zinc-500 mb-4">{plano.description}</p>
               </div>
               
               {plano.originalPrice && (
-                <div className="text-sm text-slate-500 line-through">
+                <div className="text-sm text-zinc-500 line-through">
                   R$ {plano.originalPrice.toFixed(2).replace('.', ',')}
                 </div>
               )}
@@ -617,14 +605,14 @@ function Planos({ code }: { code?: string }) {
                 <span className="text-4xl font-bold text-white">
                   R$ {plano.price.toFixed(2).replace('.', ',')}
                 </span>
-                <span className="text-slate-500">{plano.period}</span>
+                <span className="text-zinc-500">{plano.period}</span>
               </div>
               
               <ul className="space-y-3 mb-6">
                 {plano.benefits.map((benefit) => (
                   <li key={benefit} className="flex items-start gap-3 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                    <span className="text-slate-300">{benefit}</span>
+                    <CheckCircle2 className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                    <span className="text-zinc-300">{benefit}</span>
                   </li>
                 ))}
               </ul>
@@ -632,8 +620,8 @@ function Planos({ code }: { code?: string }) {
               <Button 
                 asChild 
                 className={`w-full ${plano.popular 
-                  ? 'bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold' 
-                  : 'bg-white/5 border border-white/10 hover:bg-white/10'}`}
+                  ? 'bg-red-600 hover:bg-red-700 text-white font-semibold' 
+                  : 'bg-zinc-700 border border-zinc-600 hover:bg-zinc-600 text-white'}`}
               >
                 <Link to={code ? `/academia/${code}/matricula?plano=${plano.id}` : `/academia/matricula?plano=${plano.id}`}>
                   Escolher plano
@@ -650,9 +638,9 @@ function Planos({ code }: { code?: string }) {
           transition={{ duration: 0.5, delay: 0.6 }}
           className="mt-12 text-center"
         >
-          <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-slate-800/50 border border-white/5">
-            <Shield className="w-5 h-5 text-amber-500" />
-            <span className="text-sm text-slate-300">
+          <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-zinc-800/50 border border-zinc-700/50">
+            <Shield className="w-5 h-5 text-red-500" />
+            <span className="text-sm text-zinc-300">
               <span className="font-semibold text-white">Garantia de satisfação:</span> 7 dias para experimentar ou seu dinheiro de volta
             </span>
           </div>
@@ -677,11 +665,11 @@ function Estrutura() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <span className="inline-block px-4 py-1 rounded-full bg-amber-500/10 text-amber-500 text-sm font-medium mb-4">ESTRUTURA</span>
+          <span className="inline-block px-4 py-1 rounded-full bg-red-600/10 text-red-500 text-sm font-medium mb-4">ESTRUTURA</span>
           <h2 className="text-3xl md:text-5xl font-bold">
-            Conheça nosso <span className="text-amber-500">espaço</span>
+            Conheça nosso <span className="text-red-500">espaço</span>
           </h2>
-          <p className="text-slate-400 mt-4 max-w-2xl mx-auto">
+          <p className="text-zinc-400 mt-4 max-w-2xl mx-auto">
             Ambiente moderno, equipamentos de última geração e infraestrutura completa
           </p>
         </motion.div>
@@ -701,7 +689,7 @@ function Estrutura() {
                 alt={img.label} 
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
               <div className="absolute bottom-4 left-4 right-4">
                 <span className="text-sm font-medium text-white">{img.label}</span>
               </div>
@@ -718,7 +706,7 @@ function Estrutura() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSelectedImage(null)}
-            className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-zinc-950/95 backdrop-blur-xl flex items-center justify-center p-4"
           >
             <motion.img
               initial={{ scale: 0.9, opacity: 0 }}
@@ -730,7 +718,7 @@ function Estrutura() {
             />
             <button 
               onClick={() => setSelectedImage(null)}
-              className="absolute top-6 right-6 w-12 h-12 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+              className="absolute top-6 right-6 w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center hover:bg-zinc-700 transition-colors"
             >
               <X className="w-6 h-6" />
             </button>
@@ -747,7 +735,7 @@ function Equipe() {
   const isInView = useInView(ref, { once: true, margin: '-100px' });
 
   return (
-    <section className="py-20 md:py-28 bg-slate-900/50 relative" ref={ref}>
+    <section className="py-20 md:py-28 bg-zinc-900/50 relative" ref={ref}>
       <div className="container px-4">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -755,11 +743,11 @@ function Equipe() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <span className="inline-block px-4 py-1 rounded-full bg-amber-500/10 text-amber-500 text-sm font-medium mb-4">NOSSA EQUIPE</span>
+          <span className="inline-block px-4 py-1 rounded-full bg-red-600/10 text-red-500 text-sm font-medium mb-4">NOSSA EQUIPE</span>
           <h2 className="text-3xl md:text-5xl font-bold">
-            Profissionais <span className="text-amber-500">qualificados</span>
+            Profissionais <span className="text-red-500">qualificados</span>
           </h2>
-          <p className="text-slate-400 mt-4 max-w-2xl mx-auto">
+          <p className="text-zinc-400 mt-4 max-w-2xl mx-auto">
             Time de especialistas dedicados ao seu sucesso e transformação
           </p>
         </motion.div>
@@ -771,20 +759,19 @@ function Equipe() {
               initial={{ opacity: 0, y: 30 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="group text-center p-6 rounded-2xl bg-slate-800/30 border border-white/5 hover:border-amber-500/20 transition-all duration-300"
+              className="group text-center p-6 rounded-2xl bg-zinc-800/30 border border-zinc-700/50 hover:border-red-600/30 transition-all duration-300"
             >
               <div className="relative w-28 h-28 mx-auto mb-5">
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-500 to-amber-600 opacity-0 group-hover:opacity-100 transition-opacity blur-xl" />
-                <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-slate-700 group-hover:border-amber-500/50 transition-colors">
+                <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-zinc-700 group-hover:border-red-600/50 transition-colors">
                   <img src={pessoa.image} alt={pessoa.name} className="w-full h-full object-cover" />
                 </div>
               </div>
               <h3 className="font-bold text-lg text-white">{pessoa.name}</h3>
-              <p className="text-amber-500 text-sm font-medium">{pessoa.role}</p>
-              <p className="text-slate-500 text-xs mt-1">{pessoa.specialty}</p>
+              <p className="text-red-500 text-sm font-medium">{pessoa.role}</p>
+              <p className="text-zinc-500 text-xs mt-1">{pessoa.specialty}</p>
               <div className="flex flex-wrap justify-center gap-1 mt-3">
                 {pessoa.certifications.map((cert) => (
-                  <span key={cert} className="px-2 py-0.5 rounded-full bg-slate-700/50 text-[10px] text-slate-400">
+                  <span key={cert} className="px-2 py-0.5 rounded-full bg-zinc-700/50 text-[10px] text-zinc-400">
                     {cert}
                   </span>
                 ))}
@@ -811,9 +798,9 @@ function Depoimentos() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <span className="inline-block px-4 py-1 rounded-full bg-amber-500/10 text-amber-500 text-sm font-medium mb-4">DEPOIMENTOS</span>
+          <span className="inline-block px-4 py-1 rounded-full bg-red-600/10 text-red-500 text-sm font-medium mb-4">DEPOIMENTOS</span>
           <h2 className="text-3xl md:text-5xl font-bold">
-            O que nossos alunos <span className="text-amber-500">dizem</span>
+            O que nossos alunos <span className="text-red-500">dizem</span>
           </h2>
         </motion.div>
 
@@ -824,24 +811,24 @@ function Depoimentos() {
               initial={{ opacity: 0, y: 30 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="relative p-6 rounded-2xl bg-slate-800/30 border border-white/5 hover:border-amber-500/20 transition-all duration-300"
+              className="relative p-6 rounded-2xl bg-zinc-800/30 border border-zinc-700/50 hover:border-red-600/30 transition-all duration-300"
             >
-              <Quote className="absolute top-4 right-4 w-8 h-8 text-amber-500/20" />
+              <Quote className="absolute top-4 right-4 w-8 h-8 text-red-500/20" />
               
               <div className="flex gap-1 mb-4">
                 {Array.from({ length: dep.rating }).map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-amber-500 text-amber-500" />
+                  <Star key={i} className="w-4 h-4 fill-red-500 text-red-500" />
                 ))}
               </div>
               
-              <p className="text-slate-300 mb-6 leading-relaxed">"{dep.text}"</p>
+              <p className="text-zinc-300 mb-6 leading-relaxed">"{dep.text}"</p>
               
-              <div className="flex items-center justify-between pt-4 border-t border-white/5">
+              <div className="flex items-center justify-between pt-4 border-t border-zinc-700/50">
                 <div className="flex items-center gap-3">
                   <img src={dep.avatar} alt={dep.name} className="w-10 h-10 rounded-full object-cover" />
                   <span className="font-semibold text-white">{dep.name}</span>
                 </div>
-                <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                <Badge className="bg-green-600/10 text-green-500 border-green-600/20">
                   {dep.result}
                 </Badge>
               </div>
@@ -860,7 +847,7 @@ function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <section className="py-20 md:py-28 bg-slate-900/50 relative" ref={ref}>
+    <section className="py-20 md:py-28 bg-zinc-900/50 relative" ref={ref}>
       <div className="container px-4 max-w-3xl">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -868,7 +855,7 @@ function FAQSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <span className="inline-block px-4 py-1 rounded-full bg-amber-500/10 text-amber-500 text-sm font-medium mb-4">DÚVIDAS FREQUENTES</span>
+          <span className="inline-block px-4 py-1 rounded-full bg-red-600/10 text-red-500 text-sm font-medium mb-4">DÚVIDAS FREQUENTES</span>
           <h2 className="text-3xl md:text-5xl font-bold">Perguntas frequentes</h2>
         </motion.div>
 
@@ -879,19 +866,19 @@ function FAQSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="rounded-2xl border border-white/5 bg-slate-800/30 overflow-hidden"
+              className="rounded-2xl border border-zinc-700/50 bg-zinc-800/30 overflow-hidden"
             >
               <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="w-full p-5 flex items-center justify-between text-left font-medium hover:bg-white/5 transition-colors"
+                className="w-full p-5 flex items-center justify-between text-left font-medium hover:bg-zinc-800/50 transition-colors"
               >
                 <span className="text-white">{item.q}</span>
                 <motion.div
                   animate={{ rotate: openIndex === index ? 180 : 0 }}
                   transition={{ duration: 0.2 }}
-                  className="w-8 h-8 rounded-full bg-slate-700/50 flex items-center justify-center shrink-0 ml-4"
+                  className="w-8 h-8 rounded-full bg-zinc-700/50 flex items-center justify-center shrink-0 ml-4"
                 >
-                  <ChevronDown className="w-4 h-4 text-amber-500" />
+                  <ChevronDown className="w-4 h-4 text-red-500" />
                 </motion.div>
               </button>
               <AnimatePresence>
@@ -903,7 +890,7 @@ function FAQSection() {
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden"
                   >
-                    <div className="px-5 pb-5 text-slate-400 text-sm leading-relaxed">
+                    <div className="px-5 pb-5 text-zinc-400 text-sm leading-relaxed">
                       {item.a}
                     </div>
                   </motion.div>
@@ -931,9 +918,9 @@ function Localizacao({ config }: { config: typeof DEFAULT_CONFIG }) {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <span className="inline-block px-4 py-1 rounded-full bg-amber-500/10 text-amber-500 text-sm font-medium mb-4">LOCALIZAÇÃO</span>
+          <span className="inline-block px-4 py-1 rounded-full bg-red-600/10 text-red-500 text-sm font-medium mb-4">LOCALIZAÇÃO</span>
           <h2 className="text-3xl md:text-5xl font-bold">
-            Venha nos <span className="text-amber-500">visitar</span>
+            Venha nos <span className="text-red-500">visitar</span>
           </h2>
         </motion.div>
 
@@ -951,12 +938,12 @@ function Localizacao({ config }: { config: typeof DEFAULT_CONFIG }) {
               { icon: Clock, title: 'Sábado', value: config.hours.saturday },
               { icon: Clock, title: 'Domingo', value: config.hours.sunday },
             ].map((item) => (
-              <div key={item.title} className="flex items-center gap-4 p-4 rounded-xl bg-slate-800/30 border border-white/5 hover:border-amber-500/20 transition-colors">
-                <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
-                  <item.icon className="w-5 h-5 text-amber-500" />
+              <div key={item.title} className="flex items-center gap-4 p-4 rounded-xl bg-zinc-800/30 border border-zinc-700/50 hover:border-red-600/30 transition-colors">
+                <div className="w-12 h-12 rounded-xl bg-red-600/10 flex items-center justify-center shrink-0">
+                  <item.icon className="w-5 h-5 text-red-500" />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-500">{item.title}</p>
+                  <p className="text-sm text-zinc-500">{item.title}</p>
                   <p className="font-medium text-white">{item.value}</p>
                 </div>
               </div>
@@ -966,16 +953,16 @@ function Localizacao({ config }: { config: typeof DEFAULT_CONFIG }) {
               href={`https://wa.me/${config.business.whatsapp}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-4 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors group"
+              className="flex items-center gap-4 p-4 rounded-xl bg-green-600/10 border border-green-600/20 hover:bg-green-600/20 transition-colors group"
             >
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                <MessageCircle className="w-5 h-5 text-emerald-400" />
+              <div className="w-12 h-12 rounded-xl bg-green-600/20 flex items-center justify-center">
+                <MessageCircle className="w-5 h-5 text-green-500" />
               </div>
               <div>
-                <p className="text-sm text-emerald-400">WhatsApp</p>
-                <p className="font-medium text-white group-hover:text-emerald-400 transition-colors">Fale conosco agora</p>
+                <p className="text-sm text-green-500">WhatsApp</p>
+                <p className="font-medium text-white group-hover:text-green-500 transition-colors">Fale conosco agora</p>
               </div>
-              <ArrowRight className="w-5 h-5 text-emerald-400 ml-auto group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="w-5 h-5 text-green-500 ml-auto group-hover:translate-x-1 transition-transform" />
             </a>
           </motion.div>
 
@@ -983,7 +970,7 @@ function Localizacao({ config }: { config: typeof DEFAULT_CONFIG }) {
             initial={{ opacity: 0, x: 30 }}
             animate={isInView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="rounded-2xl overflow-hidden h-full min-h-[400px] border border-white/5"
+            className="rounded-2xl overflow-hidden h-full min-h-[400px] border border-zinc-700/50"
           >
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3657.1975577035454!2d-46.65390508502207!3d-23.561414884682697!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce59c8da0aa315%3A0xd59f9431f2c9776a!2sAv.%20Paulista%2C%20S%C3%A3o%20Paulo%20-%20SP!5e0!3m2!1spt-BR!2sbr!4v1640000000000!5m2!1spt-BR!2sbr"
