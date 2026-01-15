@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { 
   Building2, 
   Phone, 
@@ -23,11 +23,12 @@ import {
   List,
   Zap,
   CheckSquare,
-  Square
+  Square,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -62,6 +63,8 @@ const STATUS_CONFIG: Record<ProspectStatus, { label: string; color: string; bg: 
   failed: { label: 'Falhou', color: 'text-gray-600', bg: 'bg-gray-500/10 border-gray-500/30', icon: XCircle },
 };
 
+const ITEMS_PER_PAGE = 10;
+
 export const HistoryTab = ({
   prospects,
   loading,
@@ -78,6 +81,7 @@ export const HistoryTab = ({
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showAutomationModal, setShowAutomationModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const {
     activeJob,
@@ -90,15 +94,29 @@ export const HistoryTab = ({
     deleteJob,
   } = useAutomationJobs(affiliateId);
 
-  const filteredProspects = prospects.filter(prospect => {
-    const matchesSearch = prospect.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      prospect.niche?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      prospect.company_address?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || prospect.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
+  const filteredProspects = useMemo(() => {
+    return prospects.filter(prospect => {
+      const matchesSearch = prospect.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        prospect.niche?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        prospect.company_address?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesStatus = statusFilter === 'all' || prospect.status === statusFilter;
+      
+      return matchesSearch && matchesStatus;
+    });
+  }, [prospects, searchTerm, statusFilter]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredProspects.length / ITEMS_PER_PAGE);
+  const paginatedProspects = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredProspects.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredProspects, currentPage]);
+
+  // Reset page when filters change
+  useMemo(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
 
   const statusCounts = prospects.reduce((acc, p) => {
     acc[p.status] = (acc[p.status] || 0) + 1;
@@ -273,7 +291,7 @@ export const HistoryTab = ({
             </div>
             <Button
               onClick={() => setShowAutomationModal(true)}
-              className="gap-2 bg-gradient-to-r from-primary to-purple-600"
+              className="gap-2"
             >
               <Zap className="w-4 h-4" />
               Automatizar Envio
@@ -356,152 +374,210 @@ export const HistoryTab = ({
       {/* Prospects List */}
       <Card className="border-border">
         <CardContent className="p-4">
-          <ScrollArea className="h-[500px] pr-4">
-            {filteredProspects.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Nenhum prospect encontrado com os filtros selecionados.</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {filteredProspects.map((prospect) => {
-                  const status = STATUS_CONFIG[prospect.status] || STATUS_CONFIG.pending;
-                  const StatusIcon = status.icon;
-                  const isSelectable = prospect.status === 'analyzed' || prospect.status === 'proposal_ready';
-                  const isSelected = selectedIds.has(prospect.id);
-                  
-                  return (
-                    <div
-                      key={prospect.id}
-                      className={`bg-background border rounded-xl p-4 transition-all duration-300 group ${
-                        isSelected 
-                          ? 'border-primary bg-primary/5' 
-                          : 'border-border hover:border-primary/50'
-                      }`}
-                    >
-                      <div className="flex items-start gap-4">
-                        {/* Checkbox */}
-                        {isSelectable && (
-                          <Checkbox
-                            checked={isSelected}
-                            onCheckedChange={() => toggleSelect(prospect.id)}
-                            className="mt-1"
-                          />
-                        )}
+          {filteredProspects.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>Nenhum prospect encontrado com os filtros selecionados.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {paginatedProspects.map((prospect) => {
+                const status = STATUS_CONFIG[prospect.status] || STATUS_CONFIG.pending;
+                const StatusIcon = status.icon;
+                const isSelectable = prospect.status === 'analyzed' || prospect.status === 'proposal_ready';
+                const isSelected = selectedIds.has(prospect.id);
+                
+                return (
+                  <div
+                    key={prospect.id}
+                    className={`bg-background border rounded-xl p-4 transition-all duration-300 group ${
+                      isSelected 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="flex items-start gap-4">
+                      {/* Checkbox */}
+                      {isSelectable && (
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleSelect(prospect.id)}
+                          className="mt-1"
+                        />
+                      )}
 
-                        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                          <Building2 className="w-6 h-6 text-primary" />
+                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                        <Building2 className="w-6 h-6 text-primary" />
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0">
+                            <h4 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                              {prospect.company_name}
+                            </h4>
+                            
+                            {prospect.company_address && (
+                              <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1 truncate">
+                                <MapPin className="w-3.5 h-3.5 shrink-0" />
+                                {prospect.company_address}
+                              </p>
+                            )}
+                          </div>
+                          
+                          <Badge className={`shrink-0 gap-1.5 ${status.bg} ${status.color} border`}>
+                            <StatusIcon className={`w-3 h-3 ${prospect.status === 'analyzing' ? 'animate-spin' : ''}`} />
+                            {status.label}
+                          </Badge>
                         </div>
                         
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="min-w-0">
-                              <h4 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
-                                {prospect.company_name}
-                              </h4>
-                              
-                              {prospect.company_address && (
-                                <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1 truncate">
-                                  <MapPin className="w-3.5 h-3.5 shrink-0" />
-                                  {prospect.company_address}
-                                </p>
-                              )}
-                            </div>
-                            
-                            <Badge className={`shrink-0 gap-1.5 ${status.bg} ${status.color} border`}>
-                              <StatusIcon className={`w-3 h-3 ${prospect.status === 'analyzing' ? 'animate-spin' : ''}`} />
-                              {status.label}
+                        <div className="flex flex-wrap items-center gap-2 mt-3">
+                          {prospect.company_phone && (
+                            <Badge variant="outline" className="text-xs gap-1 font-mono">
+                              <Phone className="w-3 h-3" />
+                              {prospect.company_phone}
                             </Badge>
-                          </div>
+                          )}
                           
-                          <div className="flex flex-wrap items-center gap-2 mt-3">
-                            {prospect.company_phone && (
-                              <Badge variant="outline" className="text-xs gap-1 font-mono">
-                                <Phone className="w-3 h-3" />
-                                {prospect.company_phone}
-                              </Badge>
-                            )}
-                            
-                            {prospect.company_website && (
-                              <Badge variant="outline" className="text-xs gap-1 text-primary border-primary/30">
-                                <Globe className="w-3 h-3" />
-                                Site
-                              </Badge>
-                            )}
-                            
-                            {prospect.niche && (
-                              <Badge variant="secondary" className="text-xs gap-1">
-                                <Tag className="w-3 h-3" />
-                                {prospect.niche}
-                              </Badge>
-                            )}
+                          {prospect.company_website && (
+                            <Badge variant="outline" className="text-xs gap-1 text-primary border-primary/30">
+                              <Globe className="w-3 h-3" />
+                              Site
+                            </Badge>
+                          )}
+                          
+                          {prospect.niche && (
+                            <Badge variant="secondary" className="text-xs gap-1">
+                              <Tag className="w-3 h-3" />
+                              {prospect.niche}
+                            </Badge>
+                          )}
 
-                            {prospect.analysis_score > 0 && (
-                              <Badge variant="secondary" className="text-xs gap-1 bg-amber-500/10 text-amber-600 border-amber-500/30">
-                                <Star className="w-3 h-3" />
-                                Score: {prospect.analysis_score}
-                              </Badge>
-                            )}
-                            
-                            <span className="text-xs text-muted-foreground flex items-center gap-1 ml-auto">
-                              <Calendar className="w-3 h-3" />
-                              {format(new Date(prospect.created_at), "dd/MM/yy", { locale: ptBR })}
-                            </span>
-                          </div>
+                          {prospect.analysis_score > 0 && (
+                            <Badge variant="secondary" className="text-xs gap-1 bg-amber-500/10 text-amber-600 border-amber-500/30">
+                              <Star className="w-3 h-3" />
+                              Score: {prospect.analysis_score}
+                            </Badge>
+                          )}
                           
-                          <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border">
+                          <span className="text-xs text-muted-foreground flex items-center gap-1 ml-auto">
+                            <Calendar className="w-3 h-3" />
+                            {format(new Date(prospect.created_at), "dd/MM/yy", { locale: ptBR })}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => onView(prospect)}
+                            className="gap-1.5 text-xs"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            Detalhes
+                          </Button>
+                          
+                          {(prospect.status === 'pending' || prospect.status === 'analyzed') && (
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => onView(prospect)}
+                              onClick={() => onAnalyze(prospect.id)}
+                              disabled={analyzing}
                               className="gap-1.5 text-xs"
                             >
-                              <Eye className="w-3.5 h-3.5" />
-                              Detalhes
+                              <Sparkles className={`w-3.5 h-3.5 ${analyzing ? 'animate-pulse' : ''}`} />
+                              Analisar
                             </Button>
-                            
-                            {(prospect.status === 'pending' || prospect.status === 'analyzed') && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => onAnalyze(prospect.id)}
-                                disabled={analyzing}
-                                className="gap-1.5 text-xs"
-                              >
-                                <Sparkles className={`w-3.5 h-3.5 ${analyzing ? 'animate-pulse' : ''}`} />
-                                Analisar
-                              </Button>
-                            )}
-                            
-                            {isSelectable && (
-                              <Button
-                                size="sm"
-                                onClick={() => onSend(prospect.id)}
-                                disabled={sending}
-                                className="gap-1.5 text-xs bg-green-600 hover:bg-green-700"
-                              >
-                                <Send className={`w-3.5 h-3.5 ${sending ? 'animate-pulse' : ''}`} />
-                                WhatsApp
-                              </Button>
-                            )}
-                            
+                          )}
+                          
+                          {isSelectable && (
                             <Button
                               size="sm"
-                              variant="ghost"
-                              onClick={() => onDelete(prospect.id)}
-                              className="gap-1.5 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 ml-auto"
+                              onClick={() => onSend(prospect.id)}
+                              disabled={sending}
+                              className="gap-1.5 text-xs bg-green-600 hover:bg-green-700"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <Send className={`w-3.5 h-3.5 ${sending ? 'animate-pulse' : ''}`} />
+                              WhatsApp
                             </Button>
-                          </div>
+                          )}
+                          
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => onDelete(prospect.id)}
+                            className="gap-1.5 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 ml-auto"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
                         </div>
                       </div>
                     </div>
-                  );
-                })}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
+              <p className="text-sm text-muted-foreground">
+                Mostrando {((currentPage - 1) * ITEMS_PER_PAGE) + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredProspects.length)} de {filteredProspects.length}
+              </p>
+              
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="gap-1"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Anterior
+                </Button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum: number;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <Button
+                        key={pageNum}
+                        size="sm"
+                        variant={currentPage === pageNum ? 'default' : 'ghost'}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="gap-1"
+                >
+                  Próximo
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
               </div>
-            )}
-          </ScrollArea>
+            </div>
+          )}
         </CardContent>
       </Card>
 
