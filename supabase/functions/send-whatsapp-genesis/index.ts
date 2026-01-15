@@ -2,256 +2,337 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// INSTÂNCIA GLOBAL NATIVA - usada para TODOS os afiliados
-const GLOBAL_GENESIS_INSTANCE_ID = 'b2b6cf5a-2e15-4f79-94fb-396385077658';
-
-// Native VPS fallback (GenesisPro backend)
-// (mantido aqui para garantir envio mesmo se backend_url/backend_token estiverem vazios na instância)
-const NATIVE_VPS_URL = 'http://72.62.108.24:3000';
-const NATIVE_VPS_TOKEN = 'genesis-master-token-2024-secure';
-
 interface SendRequest {
-  affiliateId?: string; // Opcional - pode vir de templates públicos
+  affiliateId?: string;
   phone: string;
   message: string;
   countryCode?: string;
 }
 
+const safeJsonParse = (text: string) => {
+  try {
+    return text ? JSON.parse(text) : {};
+  } catch {
+    return null;
+  }
+};
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+const withTimeout = async (
+  input: string,
+  init: RequestInit,
+  timeoutMs = 15000,
+): Promise<Response> => {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(t);
+  }
+};
+
+const normalizePhone = (phone: string, countryCode: string) => {
+  let normalized = String(phone).replace(/\D/g, "");
+
+  const countryPrefixes: Record<string, string> = {
+    BR: "55",
+    PT: "351",
+    ES: "34",
+    MX: "52",
+    AR: "54",
+    CO: "57",
+    CL: "56",
+    PE: "51",
+    US: "1",
+    UK: "44",
+    DE: "49",
+    FR: "33",
+    IT: "39",
+    CA: "1",
+    AU: "61",
+    JP: "81",
+  };
+
+  const prefix = countryPrefixes[countryCode] || "55";
+
+  if (countryCode === "BR") {
+    if (normalized.length === 10 || normalized.length === 11) normalized = prefix + normalized;
+  } else {
+    if (!normalized.startsWith(prefix)) normalized = prefix + normalized;
+  }
+
+  return normalized;
+};
+
+const extractBaseHostAndPorts = (backendUrlRaw: string) => {
+  const cleanUrl = String(backendUrlRaw).trim().replace(/\/$/, "");
+  const match = cleanUrl.match(/^(https?:\/\/[^:\/]+)(?::(\d+))?(.*)$/);
+  const baseHost = match ? match[1] : cleanUrl;
+  const configuredPort = match?.[2] || "3000";
+  const portsToTry = configuredPort === "3001" ? ["3001", "3000"] : ["3000", "3001"];
+  return { baseHost, portsToTry };
+};
+
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    const { affiliateId, phone, message, countryCode = 'BR' }: SendRequest = await req.json();
-
-    // affiliateId é opcional, apenas phone e message são obrigatórios
-    if (!phone || !message) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Missing required fields: phone and message are required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Não precisamos mais do affiliate, vamos usar a instância global diretamente
-    // Mantemos a validação do affiliateId apenas para logging
-
-    // USAR INSTÂNCIA GLOBAL NATIVA
-    // Não depende mais de affiliate_prospect_settings ou instâncias do usuário
-    const instanceId = GLOBAL_GENESIS_INSTANCE_ID;
-    
-    console.log(`[send-whatsapp-genesis] Usando instância global: ${instanceId}`);
-
-    // Get global instance details
-    const { data: instance, error: instError } = await supabase
-      .from('genesis_instances')
-      .select('id, name, backend_url, backend_token, status')
-      .eq('id', instanceId)
-      .single();
-
-    if (instError || !instance) {
-      console.error('[send-whatsapp-genesis] Instância global não encontrada:', instError);
-      return new Response(
-        JSON.stringify({ success: false, error: 'Instância Genesis global não configurada no sistema' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (instance.status !== 'connected') {
-      console.error('[send-whatsapp-genesis] Instância global desconectada');
-      return new Response(
-        JSON.stringify({ success: false, error: 'Instância Genesis global está desconectada. Contate o suporte.' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Normalize phone number
-    let normalizedPhone = phone.replace(/\D/g, '');
-    
-    // Add country code prefix if needed
-    const countryPrefixes: Record<string, string> = {
-      BR: '55', PT: '351', ES: '34', MX: '52', AR: '54', CO: '57',
-      CL: '56', PE: '51', US: '1', UK: '44', DE: '49', FR: '33',
-      IT: '39', CA: '1', AU: '61', JP: '81',
-    };
-    
-    const prefix = countryPrefixes[countryCode] || '55';
-    
-    // For Brazil, handle special cases
-    if (countryCode === 'BR') {
-      if (normalizedPhone.length === 10 || normalizedPhone.length === 11) {
-        normalizedPhone = prefix + normalizedPhone;
-      }
-    } else {
-      // For other countries, add prefix if not present
-      if (!normalizedPhone.startsWith(prefix)) {
-        normalizedPhone = prefix + normalizedPhone;
-      }
-    }
-
-    console.log(`[send-whatsapp-genesis] Enviando para ${normalizedPhone} via instância global ${instance.name}`);
-
-    // Send via Genesis backend (multi-compat: GenesisPro/V8/Legacy/Evolution)
-    const backendUrl = (instance.backend_url || NATIVE_VPS_URL).replace(/\/$/, '');
-    const backendToken = instance.backend_token || NATIVE_VPS_TOKEN;
-
-    if (!backendUrl || !backendToken) {
-      console.error('[send-whatsapp-genesis] backend_url/backend_token ausentes');
-      return new Response(
-        JSON.stringify({ success: false, error: 'Backend do WhatsApp não configurado no sistema' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const backendKey = encodeURIComponent(instance.id);
-    const backendName = encodeURIComponent(instance.name);
-
-    // Payload compatível (v8/legacy) + payload evolution
-    const v8Payload = {
-      phone: normalizedPhone,
-      message,
-      to: normalizedPhone,
-      text: message,
-      number: normalizedPhone,
-      instanceId: instance.id,
-      delay: 1500,
-    };
-
-    const evolutionPayload = {
-      number: normalizedPhone,
-      text: message,
-      delay: 1500,
-    };
-
-    const headers = {
-      'Content-Type': 'application/json',
-      // Alguns backends usam Bearer, outros usam apikey
-      'Authorization': `Bearer ${backendToken}`,
-      'apikey': backendToken,
-    };
-
-    const looksLikeMissingRoute = (status: number, bodyText: string) =>
-      status === 404 && (bodyText.includes('Cannot POST') || bodyText.includes('Cannot GET'));
-
-    const tryPost = async (url: string, body: unknown) => {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(body),
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ success: false, error: "Não autorizado" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
-
-      const text = await res.text();
-      let parsed: any = null;
-      try {
-        parsed = JSON.parse(text);
-      } catch {
-        parsed = null;
-      }
-
-      const ok = res.ok && !(parsed && parsed.success === false);
-      return { ok, status: res.status, text, parsed };
-    };
-
-    // Rotas GenesisPro / V8 (multi-instância)
-    const v8Paths = [
-      `/${backendKey}/send-text`,
-      `/api/instance/${backendKey}/send`,
-      `/api/instance/${backendKey}/send-message`,
-      `/api/instance/${backendKey}/sendText`,
-      `/api/instance/${backendKey}/send-text`,
-    ];
-
-    // Fallback legacy (single-instance)
-    const legacyPaths = ['/api/send', '/send'];
-
-    // Fallback Evolution API (quando o backend_url aponta direto para Evolution)
-    const evolutionPaths = [`/message/sendText/${backendKey}`, `/message/sendText/${backendName}`];
-
-    let lastStatus = 0;
-    let lastText = '';
-    let sendResult: any = null;
-
-    for (const p of [...v8Paths, ...legacyPaths]) {
-      const url = `${backendUrl}${p}`;
-      try {
-        const r = await tryPost(url, v8Payload);
-        if (r.ok) {
-          sendResult = r.parsed ?? { raw: r.text };
-          break;
-        }
-        lastStatus = r.status;
-        lastText = r.text;
-        if (looksLikeMissingRoute(r.status, r.text)) continue;
-      } catch (err) {
-        lastText = String(err);
-      }
     }
 
-    if (!sendResult) {
-      for (const p of evolutionPaths) {
-        const url = `${backendUrl}${p}`;
-        try {
-          const r = await tryPost(url, evolutionPayload);
-          if (r.ok) {
-            sendResult = r.parsed ?? { raw: r.text };
-            break;
-          }
-          lastStatus = r.status;
-          lastText = r.text;
-          if (looksLikeMissingRoute(r.status, r.text)) continue;
-        } catch (err) {
-          lastText = String(err);
-        }
-      }
-    }
-
-    if (!sendResult) {
-      const preview = (lastText || '').slice(0, 500);
-      console.error('[send-whatsapp-genesis] Falha ao enviar:', lastStatus, preview);
-      return new Response(
-        JSON.stringify({ success: false, error: `Falha ao enviar WhatsApp (${lastStatus || 0})`, details: preview }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    console.log('Send result:', sendResult);
-
-    // Log the message (use affiliateId for tracking if available)
-    await supabase.from('whatsapp_message_logs').insert({
-      instance_id: instanceId,
-      contact_phone: normalizedPhone,
-      message_type: 'text',
-      direction: 'outbound',
-      content: message,
-      status: 'sent',
-      metadata: { source: affiliateId ? 'demo_booking' : 'public_template', affiliateId: affiliateId || null, global_instance: true },
+    // Validate caller
+    const supabaseAuthed = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+      auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: 'Mensagem enviada com sucesso!',
-        result: sendResult
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    const {
+      data: { user },
+      error: userError,
+    } = await supabaseAuthed.auth.getUser();
 
-  } catch (error) {
-    console.error('Error:', error);
+    if (userError || !user) {
+      return new Response(JSON.stringify({ success: false, error: "Token inválido" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Admin client
+    const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { affiliateId, phone, message, countryCode = "BR" }: SendRequest = await req.json();
+
+    if (!phone || !message) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Missing required fields: phone and message are required",
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // Use the instance linked to the logged-in account (ex: lyronrp@gmail.com)
+    const { data: genesisUser } = await supabaseAdmin
+      .from("genesis_users")
+      .select("id")
+      .eq("auth_user_id", user.id)
+      .maybeSingle();
+
+    if (!genesisUser?.id) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Usuário não possui instância WhatsApp vinculada." }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    const { data: instance } = await supabaseAdmin
+      .from("genesis_instances")
+      .select("id, name, backend_url, backend_token")
+      .eq("user_id", genesisUser.id)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!instance?.id) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Nenhuma instância WhatsApp encontrada para sua conta." }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // Backend config (global preferred)
+    const { data: globalConfig } = await supabaseAdmin
+      .from("whatsapp_backend_config")
+      .select("backend_url, master_token")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const backendUrlRaw = String(globalConfig?.backend_url || instance.backend_url || "").trim();
+    const backendToken = String(globalConfig?.master_token || instance.backend_token || "").trim();
+
+    if (!backendUrlRaw || !backendToken) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Backend do WhatsApp não configurado no sistema" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    const normalizedPhone = normalizePhone(phone, countryCode);
+    const { baseHost, portsToTry } = extractBaseHostAndPorts(backendUrlRaw);
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${backendToken}`,
+      apikey: backendToken,
+    };
+
+    const payload = {
+      to: normalizedPhone,
+      phone: normalizedPhone,
+      number: normalizedPhone,
+      message,
+      text: message,
+    };
+
+    const sendPath = `/api/instance/${encodeURIComponent(String(instance.id))}/send`;
+    const connectPath = `/api/instance/${encodeURIComponent(String(instance.id))}/connect`;
+
+    const attemptSendOnce = async (baseUrl: string) => {
+      const targetUrl = `${baseUrl}${sendPath}`;
+      const res = await withTimeout(
+        targetUrl,
+        { method: "POST", headers, body: JSON.stringify(payload) },
+        15000,
+      );
+      const text = await res.text();
+      const parsed = safeJsonParse(text);
+      return { res, text, parsed, targetUrl };
+    };
+
+    const attemptConnect = async (baseUrl: string) => {
+      const targetUrl = `${baseUrl}${connectPath}`;
+      const res = await withTimeout(targetUrl, { method: "POST", headers, body: "{}" }, 15000);
+      const text = await res.text();
+      const parsed = safeJsonParse(text);
+      return { res, text, parsed, targetUrl };
+    };
+
+    let lastStatus = 0;
+    let lastTarget = "";
+    let lastDetails: unknown = null;
+
+    for (const port of portsToTry) {
+      const baseUrl = `${baseHost}:${port}`;
+
+      // First try send
+      const first = await attemptSendOnce(baseUrl);
+      lastStatus = first.res.status;
+      lastTarget = first.targetUrl;
+      lastDetails = first.parsed ?? first.text;
+
+      if (first.res.ok && first.parsed && typeof first.parsed === "object" && (first.parsed as any).success === true) {
+        // Log (best effort)
+        try {
+          await supabaseAdmin.from("whatsapp_message_logs").insert({
+            instance_id: String(instance.id),
+            contact_phone: normalizedPhone,
+            message_type: "text",
+            direction: "outbound",
+            content: message,
+            status: "sent",
+            metadata: { source: affiliateId ? "affiliate" : "public", affiliateId: affiliateId || null },
+          });
+        } catch {
+          // ignore
+        }
+
+        return new Response(
+          JSON.stringify({ success: true, message: "Mensagem enviada com sucesso!", result: first.parsed }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      // If backend responded with known "not ready" message, try connect + retry once
+      const errText =
+        (first.parsed && typeof first.parsed === "object" && ((first.parsed as any).error || (first.parsed as any).message))
+          ? String((first.parsed as any).error || (first.parsed as any).message)
+          : typeof first.text === "string"
+            ? first.text
+            : "";
+
+      if (first.res.ok && errText.toLowerCase().includes("não está pronta")) {
+        console.log("[send-whatsapp-genesis] Instance not ready, trying connect then retry", {
+          instanceId: instance.id,
+          port,
+        });
+
+        await attemptConnect(baseUrl);
+        await sleep(2500);
+
+        const second = await attemptSendOnce(baseUrl);
+        lastStatus = second.res.status;
+        lastTarget = second.targetUrl;
+        lastDetails = second.parsed ?? second.text;
+
+        if (second.res.ok && second.parsed && typeof second.parsed === "object" && (second.parsed as any).success === true) {
+          return new Response(
+            JSON.stringify({ success: true, message: "Mensagem enviada com sucesso!", result: second.parsed }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
+        // Return the real error (avoid returning misleading 404)
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error:
+              (second.parsed && typeof second.parsed === "object" && ((second.parsed as any).error || (second.parsed as any).message))
+                ? String((second.parsed as any).error || (second.parsed as any).message)
+                : `Falha ao enviar WhatsApp (${second.res.status || 0})`,
+            details: second.parsed ?? second.text,
+            last_target: second.targetUrl,
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      // If it was 404 on this port, try the other port.
+      if (first.res.status === 404) continue;
+
+      // Non-404 (real app error) => return immediately
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error:
+            (first.parsed && typeof first.parsed === "object" && ((first.parsed as any).error || (first.parsed as any).message))
+              ? String((first.parsed as any).error || (first.parsed as any).message)
+              : `Falha ao enviar WhatsApp (${first.res.status || 0})`,
+          details: first.parsed ?? first.text,
+          last_target: first.targetUrl,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Erro interno' 
+      JSON.stringify({
+        success: false,
+        error: `Falha ao enviar WhatsApp (${lastStatus || 0})`,
+        details: lastDetails,
+        last_target: lastTarget,
       }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  } catch (error) {
+    console.error("[send-whatsapp-genesis] Error:", error);
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: error instanceof Error ? error.message : "Erro interno",
+      }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
