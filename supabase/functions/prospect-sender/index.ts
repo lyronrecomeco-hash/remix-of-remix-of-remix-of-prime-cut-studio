@@ -20,13 +20,15 @@ const NATIVE_VPS_URL = "http://72.62.108.24:3000";
 const NATIVE_VPS_TOKEN = "genesis-master-token-2024-secure";
 
 interface SendRequest {
-  action: 'send_single' | 'send_batch' | 'check_status' | 'send_test';
+  action: 'send_single' | 'send_batch' | 'check_status' | 'send_test' | 'send_manual';
   prospect_id?: string;
   affiliate_id: string;
   batch_size?: number;
   // For test mode
   phone?: string;
   message?: string;
+  // Skip restrictions for manual sends
+  skip_restrictions?: boolean;
 }
 
 interface ProspectSettings {
@@ -220,9 +222,9 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const body: SendRequest = await req.json();
-    const { action, prospect_id, affiliate_id, batch_size = 5, phone, message } = body;
+    const { action, prospect_id, affiliate_id, batch_size = 5, phone, message, skip_restrictions } = body;
 
-    console.log(`[ProspectSender] Action: ${action}, Affiliate: ${affiliate_id}`);
+    console.log(`[ProspectSender] Action: ${action}, Affiliate: ${affiliate_id}, Skip: ${skip_restrictions}`);
 
     // Handle test mode - bypass all restrictions
     if (action === 'send_test') {
@@ -288,50 +290,55 @@ Deno.serve(async (req) => {
     }
 
     const settings = settingsData as ProspectSettings;
-
-    // Verificar se auto_send está habilitado
-    if (!settings.auto_send_enabled) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Envio automático está desabilitado.' 
-        }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Verificar horário permitido
-    if (!isWithinAllowedHours(settings.send_start_hour, settings.send_end_hour)) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: `Envio permitido apenas entre ${settings.send_start_hour}h e ${settings.send_end_hour}h.` 
-        }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Verificar dia permitido
-    if (!isAllowedDay(settings.send_days)) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Envio não permitido neste dia da semana.' 
-        }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Verificar limite diário
     const effectiveLimit = getEffectiveLimit(settings);
-    if (settings.total_sent_today >= effectiveLimit) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: `Limite diário atingido (${effectiveLimit}). Aguarde amanhã.` 
-        }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+
+    // Only apply restrictions for batch/automated sends (not manual single sends)
+    const isManualSend = action === 'send_single' || action === 'send_manual' || skip_restrictions;
+    
+    if (!isManualSend) {
+      // Verificar se auto_send está habilitado
+      if (!settings.auto_send_enabled) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Envio automático está desabilitado.' 
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Verificar horário permitido
+      if (!isWithinAllowedHours(settings.send_start_hour, settings.send_end_hour)) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: `Envio permitido apenas entre ${settings.send_start_hour}h e ${settings.send_end_hour}h.` 
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Verificar dia permitido
+      if (!isAllowedDay(settings.send_days)) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Envio não permitido neste dia da semana.' 
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Verificar limite diário
+      if (settings.total_sent_today >= effectiveLimit) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: `Limite diário atingido (${effectiveLimit}). Aguarde amanhã.` 
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     // Buscar instância Genesis
