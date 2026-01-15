@@ -15,7 +15,7 @@ const NATIVE_VPS_URL = 'http://72.62.108.24:3000';
 const NATIVE_VPS_TOKEN = 'genesis-master-token-2024-secure';
 
 interface SendRequest {
-  affiliateId: string;
+  affiliateId?: string; // Opcional - pode vir de templates públicos
   phone: string;
   message: string;
   countryCode?: string;
@@ -33,9 +33,10 @@ serve(async (req) => {
 
     const { affiliateId, phone, message, countryCode = 'BR' }: SendRequest = await req.json();
 
-    if (!affiliateId || !phone || !message) {
+    // affiliateId é opcional, apenas phone e message são obrigatórios
+    if (!phone || !message) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Missing required fields' }),
+        JSON.stringify({ success: false, error: 'Missing required fields: phone and message are required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -223,7 +224,7 @@ serve(async (req) => {
 
     console.log('Send result:', sendResult);
 
-    // Log the message (use affiliateId for tracking)
+    // Log the message (use affiliateId for tracking if available)
     await supabase.from('whatsapp_message_logs').insert({
       instance_id: instanceId,
       contact_phone: normalizedPhone,
@@ -231,7 +232,7 @@ serve(async (req) => {
       direction: 'outbound',
       content: message,
       status: 'sent',
-      metadata: { source: 'demo_booking', affiliateId, global_instance: true },
+      metadata: { source: affiliateId ? 'demo_booking' : 'public_template', affiliateId: affiliateId || null, global_instance: true },
     });
 
     return new Response(
