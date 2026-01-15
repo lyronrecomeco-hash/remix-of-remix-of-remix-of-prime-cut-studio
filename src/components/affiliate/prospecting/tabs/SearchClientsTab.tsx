@@ -340,13 +340,8 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect, on
       }
     } catch (error: any) {
       console.error('Send error:', error);
-      
-      // Fallback: Open WhatsApp Web direto
-      const message = encodeURIComponent(editedMessage);
-      window.open(`https://wa.me/${fullPhone}?text=${message}`, '_blank');
-      
-      toast.info('Abrindo WhatsApp Web para envio manual');
-      setSelectedResult(null);
+      const errorMessage = error?.message || 'Erro ao enviar mensagem';
+      toast.error(`Falha no envio: ${errorMessage}`);
     } finally {
       setSending(false);
     }
