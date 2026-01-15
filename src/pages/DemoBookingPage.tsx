@@ -470,38 +470,38 @@ _Agendamento realizado via ${businessName}_`;
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Scissors className="w-5 h-5 text-primary" />
+        <div className="container mx-auto px-2 sm:px-4 h-14 sm:h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Scissors className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
             </div>
-            <span className="font-bold">{businessName}</span>
+            <span className="font-bold text-sm sm:text-base truncate max-w-[150px] sm:max-w-none">{businessName}</span>
           </div>
-          <span className="text-sm text-muted-foreground hidden sm:block">Agendamento Online</span>
+          <span className="text-xs sm:text-sm text-muted-foreground hidden sm:block">Agendamento Online</span>
         </div>
       </header>
 
-      <div className="pt-24 pb-12 px-4">
+      <div className="pt-18 sm:pt-24 pb-8 sm:pb-12 px-2 sm:px-4">
         <div className="max-w-2xl mx-auto">
-          {/* Step Indicator */}
-          <div className="flex items-center justify-center mb-8">
-            <div className="flex items-center gap-2">
+          {/* Step Indicator - Mobile optimized */}
+          <div className="flex items-center justify-center mb-4 sm:mb-8 px-2">
+            <div className="flex items-center gap-1 sm:gap-2 w-full max-w-xs sm:max-w-none">
               {steps.map((step, index) => (
-                <div key={step.id} className="flex items-center">
+                <div key={step.id} className="flex items-center flex-1 sm:flex-none">
                   <div
-                    className={`w-8 h-2 rounded-full transition-colors ${
+                    className={`h-1.5 sm:h-2 w-full sm:w-8 rounded-full transition-colors ${
                       step.id <= currentStep ? 'bg-primary' : 'bg-secondary'
                     }`}
                   />
                   {index < steps.length - 1 && (
-                    <div className="w-2 h-0.5 bg-secondary" />
+                    <div className="w-1 sm:w-2 h-0.5 bg-secondary hidden sm:block" />
                   )}
                 </div>
               ))}
             </div>
           </div>
 
-          <p className="text-center text-muted-foreground text-sm mb-6">
+          <p className="text-center text-muted-foreground text-xs sm:text-sm mb-4 sm:mb-6">
             Etapa {currentStep} de 5
           </p>
 
@@ -512,37 +512,37 @@ _Agendamento realizado via ${businessName}_`;
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
-              className="glass-card rounded-2xl p-6"
+              transition={{ duration: 0.15 }}
+              className="glass-card rounded-xl sm:rounded-2xl p-3 sm:p-6"
             >
               {/* Step 1: Service Selection */}
               {currentStep === 1 && (
                 <div>
-                  <h2 className="text-xl font-bold mb-2">Escolha o serviço</h2>
-                  <p className="text-muted-foreground text-sm mb-6">Selecione o serviço desejado</p>
+                  <h2 className="text-lg sm:text-xl font-bold mb-1 sm:mb-2">Escolha o serviço</h2>
+                  <p className="text-muted-foreground text-xs sm:text-sm mb-4 sm:mb-6">Selecione o serviço desejado</p>
                   
-                  <div className="grid gap-3">
+                  <div className="grid gap-2 sm:gap-3">
                     {DEMO_SERVICES.map((service) => {
                       const IconComponent = iconMap[service.icon] || Scissors;
                       return (
                         <button
                           key={service.id}
                           onClick={() => setSelectedService(service)}
-                          className={`flex items-center gap-4 p-4 rounded-xl border transition-all text-left ${
+                          className={`flex items-center gap-2 sm:gap-4 p-3 sm:p-4 rounded-lg sm:rounded-xl border transition-all text-left ${
                             selectedService?.id === service.id
                               ? 'border-primary bg-primary/5'
                               : 'border-border hover:border-primary/50'
                           }`}
                         >
-                          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                            <IconComponent className="w-5 h-5 text-primary" />
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                            <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold">{service.name}</h3>
-                            <p className="text-sm text-muted-foreground truncate">{service.description}</p>
+                            <h3 className="font-semibold text-sm sm:text-base">{service.name}</h3>
+                            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1">{service.description}</p>
                           </div>
                           <div className="text-right shrink-0">
-                            <div className="font-bold text-primary">
+                            <div className="font-bold text-primary text-sm sm:text-base">
                               R$ {service.price.toFixed(2).replace('.', ',')}
                             </div>
                             <div className="text-xs text-muted-foreground">{service.duration} min</div>
@@ -557,15 +557,15 @@ _Agendamento realizado via ${businessName}_`;
               {/* Step 2: Barber Selection */}
               {currentStep === 2 && (
                 <div>
-                  <h2 className="text-xl font-bold mb-2">Escolha o profissional</h2>
-                  <p className="text-muted-foreground text-sm mb-6">Selecione o barbeiro de sua preferência</p>
+                  <h2 className="text-lg sm:text-xl font-bold mb-1 sm:mb-2">Escolha o profissional</h2>
+                  <p className="text-muted-foreground text-xs sm:text-sm mb-4 sm:mb-6">Selecione o barbeiro de sua preferência</p>
                   
-                  <div className="grid gap-3">
+                  <div className="grid gap-2 sm:gap-3">
                     {DEMO_BARBERS.map((barber) => (
                       <button
                         key={barber.id}
                         onClick={() => setSelectedBarber(barber)}
-                        className={`flex items-center gap-4 p-4 rounded-xl border transition-all text-left ${
+                        className={`flex items-center gap-2 sm:gap-4 p-3 sm:p-4 rounded-lg sm:rounded-xl border transition-all text-left ${
                           selectedBarber?.id === barber.id
                             ? 'border-primary bg-primary/5'
                             : 'border-border hover:border-primary/50'
@@ -574,18 +574,18 @@ _Agendamento realizado via ${businessName}_`;
                         <img
                           src={barber.photo}
                           alt={barber.name}
-                          className="w-14 h-14 rounded-full object-cover"
+                          className="w-11 h-11 sm:w-14 sm:h-14 rounded-full object-cover"
                         />
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold">{barber.name}</h3>
-                          <p className="text-sm text-muted-foreground">
+                          <h3 className="font-semibold text-sm sm:text-base">{barber.name}</h3>
+                          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1">
                             {barber.specialties.join(' • ')}
                           </p>
                         </div>
                         <div className="text-right shrink-0">
                           <div className="flex items-center gap-1 text-amber-500">
-                            <span className="text-sm">⭐</span>
-                            <span className="font-medium">{barber.rating}</span>
+                            <span className="text-xs sm:text-sm">⭐</span>
+                            <span className="font-medium text-sm sm:text-base">{barber.rating}</span>
                           </div>
                           <div className="text-xs text-muted-foreground">{barber.experience}</div>
                         </div>
@@ -598,43 +598,43 @@ _Agendamento realizado via ${businessName}_`;
               {/* Step 3: Date Selection */}
               {currentStep === 3 && (
                 <div>
-                  <h2 className="text-xl font-bold mb-2">Escolha a data</h2>
-                  <p className="text-muted-foreground text-sm mb-6">Selecione o melhor dia para você</p>
+                  <h2 className="text-lg sm:text-xl font-bold mb-1 sm:mb-2">Escolha a data</h2>
+                  <p className="text-muted-foreground text-xs sm:text-sm mb-4 sm:mb-6">Selecione o melhor dia para você</p>
                   
-                  <div className="bg-secondary/30 rounded-xl p-4">
-                    <div className="flex items-center justify-between mb-4">
+                  <div className="bg-secondary/30 rounded-lg sm:rounded-xl p-2 sm:p-4">
+                    <div className="flex items-center justify-between mb-3 sm:mb-4">
                       <button
                         onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
-                        className="p-2 hover:bg-secondary rounded-lg transition-colors"
+                        className="p-1.5 sm:p-2 hover:bg-secondary rounded-lg transition-colors"
                       >
-                        <ChevronLeft className="w-5 h-5" />
+                        <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                       </button>
-                      <span className="font-semibold capitalize">
+                      <span className="font-semibold capitalize text-sm sm:text-base">
                         {currentMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
                       </span>
                       <button
                         onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
-                        className="p-2 hover:bg-secondary rounded-lg transition-colors"
+                        className="p-1.5 sm:p-2 hover:bg-secondary rounded-lg transition-colors"
                       >
-                        <ChevronRight className="w-5 h-5" />
+                        <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-7 gap-1 text-center text-sm mb-2">
-                      {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
-                        <div key={day} className="py-2 text-muted-foreground font-medium">
+                    <div className="grid grid-cols-7 gap-0.5 sm:gap-1 text-center text-xs sm:text-sm mb-1 sm:mb-2">
+                      {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, i) => (
+                        <div key={i} className="py-1 sm:py-2 text-muted-foreground font-medium">
                           {day}
                         </div>
                       ))}
                     </div>
 
-                    <div className="grid grid-cols-7 gap-1">
+                    <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
                       {getDaysInMonth(currentMonth).map((date, index) => (
                         <button
                           key={index}
                           disabled={!isDateSelectable(date)}
                           onClick={() => date && setSelectedDate(date)}
-                          className={`aspect-square rounded-lg text-sm font-medium transition-colors ${
+                          className={`aspect-square rounded-md sm:rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                             !date
                               ? 'invisible'
                               : !isDateSelectable(date)
@@ -651,7 +651,7 @@ _Agendamento realizado via ${businessName}_`;
                   </div>
 
                   {selectedDate && (
-                    <p className="mt-4 text-center text-sm text-primary">
+                    <p className="mt-3 sm:mt-4 text-center text-xs sm:text-sm text-primary">
                       Selecionado: {formatDate(selectedDate)}
                     </p>
                   )}
@@ -661,18 +661,18 @@ _Agendamento realizado via ${businessName}_`;
               {/* Step 4: Time Selection */}
               {currentStep === 4 && (
                 <div>
-                  <h2 className="text-xl font-bold mb-2">Escolha o horário</h2>
-                  <p className="text-muted-foreground text-sm mb-6">
+                  <h2 className="text-lg sm:text-xl font-bold mb-1 sm:mb-2">Escolha o horário</h2>
+                  <p className="text-muted-foreground text-xs sm:text-sm mb-4 sm:mb-6">
                     Horários disponíveis para {selectedDate && formatDate(selectedDate)}
                   </p>
                   
-                  <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                  <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5 sm:gap-2">
                     {timeSlots.map((slot) => (
                       <button
                         key={slot.time}
                         disabled={!slot.available}
                         onClick={() => setSelectedTime(slot.time)}
-                        className={`py-3 px-2 rounded-lg text-sm font-medium transition-colors ${
+                        className={`py-2.5 sm:py-3 px-1 sm:px-2 rounded-md sm:rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                           !slot.available
                             ? 'bg-secondary/50 text-muted-foreground/50 cursor-not-allowed'
                             : selectedTime === slot.time
@@ -686,7 +686,7 @@ _Agendamento realizado via ${businessName}_`;
                   </div>
 
                   {timeSlots.filter(s => s.available).length === 0 && (
-                    <p className="text-center text-muted-foreground mt-4">
+                    <p className="text-center text-muted-foreground text-sm mt-4">
                       Nenhum horário disponível para esta data
                     </p>
                   )}
@@ -696,28 +696,28 @@ _Agendamento realizado via ${businessName}_`;
               {/* Step 5: Confirmation */}
               {currentStep === 5 && (
                 <div>
-                  <h2 className="text-xl font-bold mb-2">Confirme seus dados</h2>
-                  <p className="text-muted-foreground text-sm mb-6">Revise e preencha suas informações</p>
+                  <h2 className="text-lg sm:text-xl font-bold mb-1 sm:mb-2">Confirme seus dados</h2>
+                  <p className="text-muted-foreground text-xs sm:text-sm mb-4 sm:mb-6">Revise e preencha suas informações</p>
                   
                   {/* Summary */}
-                  <div className="bg-secondary/30 rounded-xl p-4 mb-6 space-y-3">
-                    <div className="flex justify-between text-sm">
+                  <div className="bg-secondary/30 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 space-y-2 sm:space-y-3">
+                    <div className="flex justify-between text-xs sm:text-sm">
                       <span className="text-muted-foreground">Serviço</span>
                       <span className="font-medium">{selectedService?.name}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-xs sm:text-sm">
                       <span className="text-muted-foreground">Profissional</span>
                       <span className="font-medium">{selectedBarber?.name}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-xs sm:text-sm">
                       <span className="text-muted-foreground">Data</span>
-                      <span className="font-medium">{selectedDate && formatDate(selectedDate)}</span>
+                      <span className="font-medium text-right">{selectedDate && formatDate(selectedDate)}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-xs sm:text-sm">
                       <span className="text-muted-foreground">Horário</span>
                       <span className="font-medium">{selectedTime}</span>
                     </div>
-                    <div className="flex justify-between text-sm border-t border-border pt-3 mt-3">
+                    <div className="flex justify-between text-xs sm:text-sm border-t border-border pt-2 sm:pt-3 mt-2 sm:mt-3">
                       <span className="text-muted-foreground">Total</span>
                       <span className="font-bold text-primary">
                         R$ {selectedService?.price.toFixed(2).replace('.', ',')}
@@ -726,25 +726,25 @@ _Agendamento realizado via ${businessName}_`;
                   </div>
 
                   {/* Form */}
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     <div>
-                      <label className="block text-sm font-medium mb-2">Seu nome</label>
+                      <label className="block text-xs sm:text-sm font-medium mb-1.5 sm:mb-2">Seu nome</label>
                       <input
                         type="text"
                         value={clientName}
                         onChange={(e) => setClientName(e.target.value)}
                         placeholder="Digite seu nome completo"
-                        className="w-full px-4 py-3 rounded-xl bg-secondary border border-border focus:border-primary focus:outline-none transition-colors"
+                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-secondary border border-border focus:border-primary focus:outline-none transition-colors text-sm sm:text-base"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-2">WhatsApp</label>
+                      <label className="block text-xs sm:text-sm font-medium mb-1.5 sm:mb-2">WhatsApp</label>
                       <input
                         type="tel"
                         value={phoneMask.value}
                         onChange={(e) => phoneMask.onChange(e)}
                         placeholder="(11) 99999-9999"
-                        className="w-full px-4 py-3 rounded-xl bg-secondary border border-border focus:border-primary focus:outline-none transition-colors"
+                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-secondary border border-border focus:border-primary focus:outline-none transition-colors text-sm sm:text-base"
                       />
                     </div>
                   </div>
@@ -754,37 +754,39 @@ _Agendamento realizado via ${businessName}_`;
           </AnimatePresence>
 
           {/* Navigation */}
-          <div className="flex items-center justify-between mt-6">
+          <div className="flex items-center justify-between mt-4 sm:mt-6 gap-3">
             <Button
               variant="outline"
               onClick={prevStep}
               disabled={currentStep === 1}
-              className="gap-2"
+              className="gap-1.5 sm:gap-2 text-sm sm:text-base px-3 sm:px-4"
+              size="sm"
             >
-              <ArrowLeft className="w-4 h-4" />
-              Voltar
+              <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">Voltar</span>
             </Button>
             
             <Button
               variant="hero"
               onClick={nextStep}
               disabled={!canProceed() || isLoading || sendingWhatsApp}
-              className="gap-2"
+              className="gap-1.5 sm:gap-2 text-sm sm:text-base px-3 sm:px-4 flex-1 sm:flex-none max-w-[200px]"
+              size="sm"
             >
               {isLoading || sendingWhatsApp ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                  {sendingWhatsApp ? 'Enviando...' : 'Confirmando...'}
+                  <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  <span className="text-xs sm:text-sm">{sendingWhatsApp ? 'Enviando...' : 'Confirmando...'}</span>
                 </>
               ) : currentStep === 5 ? (
                 <>
                   Confirmar
-                  <Check className="w-4 h-4" />
+                  <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </>
               ) : (
                 <>
                   Continuar
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </>
               )}
             </Button>

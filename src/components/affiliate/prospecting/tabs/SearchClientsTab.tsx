@@ -306,11 +306,17 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
 
     setSending(true);
 
+    // Limpar telefone para o formato correto
+    const cleanPhone = selectedResult.phone.replace(/\D/g, '');
+    const country = getCountryByCode(countryCode);
+    const prefix = country?.searchParams.gl === 'br' ? '55' : '';
+    const fullPhone = cleanPhone.startsWith(prefix) ? cleanPhone : `${prefix}${cleanPhone}`;
+
     try {
       const { data, error } = await supabase.functions.invoke('send-whatsapp-genesis', {
         body: {
           affiliateId,
-          phone: selectedResult.phone,
+          phone: fullPhone,
           message: editedMessage,
           countryCode,
         },
@@ -320,6 +326,7 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
 
       if (data?.success) {
         toast.success('Mensagem enviada com sucesso via WhatsApp!');
+        setAddedNames(prev => new Set([...prev, selectedResult.name]));
         setSelectedResult(null);
       } else {
         throw new Error(data?.error || 'Erro ao enviar');
@@ -327,14 +334,12 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect }: 
     } catch (error: any) {
       console.error('Send error:', error);
       
-      // Fallback: Open WhatsApp Web
-      const phone = selectedResult.phone.replace(/\D/g, '');
-      const country = getCountryByCode(countryCode);
-      const prefix = country?.searchParams.gl === 'br' ? '55' : '';
+      // Fallback: Open WhatsApp Web direto
       const message = encodeURIComponent(editedMessage);
-      window.open(`https://wa.me/${prefix}${phone}?text=${message}`, '_blank');
+      window.open(`https://wa.me/${fullPhone}?text=${message}`, '_blank');
       
-      toast.info('Abrindo WhatsApp Web (configure uma instância Genesis para envio automático)');
+      toast.info('Abrindo WhatsApp Web para envio manual');
+      setSelectedResult(null);
     } finally {
       setSending(false);
     }

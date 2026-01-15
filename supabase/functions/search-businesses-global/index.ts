@@ -60,53 +60,114 @@ const SEARCH_TEMPLATES: Record<string, string> = {
   'ja': '{city} {niche}',
 };
 
-// Message templates per language/region - ADAPTADAS automaticamente
-const MESSAGE_TEMPLATES: Record<string, string> = {
-  'pt-BR': `Olá, tudo bem? 👋
+// Message templates per language/region - ADAPTADAS automaticamente COM variações anti-ban
+const MESSAGE_TEMPLATES: Record<string, { base: string; variations: string[] }> = {
+  'pt-BR': {
+    base: `Olá, tudo bem?
 
-Me chamo {NOME} e trabalho ajudando negócios como a *{EMPRESA}* a ter mais presença no Google e automatizar agendamentos.
+Me chamo {NOME} e trabalho ajudando serviços de urgência a ter presença no Google e automatizar agendamentos.
 
-Desenvolvemos:
-✅ Sites profissionais
-✅ Sistema de agendamento automático  
+Hoje desenvolvemos:
+
+✅ Sites profissionais (fáceis de encontrar em emergências)
+✅ Sistema de agendamento automático
 ✅ Automação de WhatsApp
 
-Posso te mostrar como funciona?`,
+Acredito que essas soluções podem otimizar a triagem e o atendimento da *{EMPRESA}*.
 
-  'pt-PT': `Olá, tudo bem? 👋
+Dê uma olhadinha e veja o sistema automatizado que pode trabalhar pra você enquanto você trabalha.
+🔗 Link: {DEMO_LINK}`,
+    variations: [
+      `Oi, como vai?
 
-O meu nome é {NOME} e trabalho a ajudar negócios como a *{EMPRESA}* a melhorar a sua presença online.
+Sou {NOME} e ajudo empresas de serviços essenciais a melhorar sua visibilidade online e automatizar processos.
+
+O que oferecemos:
+
+✅ Websites otimizados para buscas
+✅ Agendamento online 24h
+✅ Atendimento automatizado no WhatsApp
+
+Essas ferramentas podem ajudar muito a *{EMPRESA}*.
+
+Confira como funciona na prática:
+🔗 {DEMO_LINK}`,
+      `Olá!
+
+Meu nome é {NOME}. Trabalho com soluções digitais para negócios como a *{EMPRESA}*.
+
+Nossas soluções incluem:
+
+✅ Sites profissionais para maior visibilidade
+✅ Sistema de agendamentos automático
+✅ Automação no WhatsApp
+
+Veja uma demonstração funcionando:
+🔗 {DEMO_LINK}`,
+      `Oi, tudo certo?
+
+Aqui é {NOME}. Trabalho com automação para empresas que precisam de presença digital.
+
+Posso te ajudar com:
+
+✅ Site profissional
+✅ Agendamento automático
+✅ WhatsApp automatizado
+
+Acho que pode fazer sentido pra *{EMPRESA}*.
+
+Olha o demo aqui:
+🔗 {DEMO_LINK}`,
+    ]
+  },
+
+  'pt-PT': {
+    base: `Olá, tudo bem?
+
+Chamo-me {NOME} e ajudo empresas como a *{EMPRESA}* a melhorar a sua presença online.
 
 Desenvolvemos:
 ✅ Websites profissionais
 ✅ Sistema de agendamento automático  
 ✅ Automação de WhatsApp
 
-Se fizer sentido, terei todo o gosto em explicar.`,
+Veja como funciona:
+🔗 {DEMO_LINK}`,
+    variations: []
+  },
 
-  'es': `Hola, ¿cómo está? 👋
+  'es': {
+    base: `Hola, ¿cómo está?
 
-Mi nombre es {NOME} y trabajo ayudando a negocios como *{EMPRESA}* a mejorar su presencia online.
-
-Ofrecemos:
-✅ Sitios web profesionales
-✅ Sistema de citas automático  
-✅ Automatización de WhatsApp
-
-¿Puedo explicarle cómo funciona?`,
-
-  'es-MX': `Hola, ¿cómo está? 👋
-
-Mi nombre es {NOME} y trabajo ayudando a negocios como *{EMPRESA}* a mejorar su presencia en línea.
+Mi nombre es {NOME} y ayudo a negocios como *{EMPRESA}* a mejorar su presencia online.
 
 Ofrecemos:
 ✅ Sitios web profesionales
 ✅ Sistema de citas automático  
 ✅ Automatización de WhatsApp
 
-¿Le gustaría saber más?`,
+Vea cómo funciona:
+🔗 {DEMO_LINK}`,
+    variations: []
+  },
 
-  'es-AR': `Hola, ¿cómo andás? 👋
+  'es-MX': {
+    base: `Hola, ¿cómo está?
+
+Soy {NOME} y ayudo a negocios como *{EMPRESA}* a tener mejor presencia en línea.
+
+Ofrecemos:
+✅ Sitios web profesionales
+✅ Sistema de citas automático  
+✅ Automatización de WhatsApp
+
+Mira cómo funciona:
+🔗 {DEMO_LINK}`,
+    variations: []
+  },
+
+  'es-AR': {
+    base: `Hola, ¿cómo andás?
 
 Soy {NOME} y laburo ayudando a negocios como *{EMPRESA}* a mejorar su presencia online.
 
@@ -115,9 +176,13 @@ Ofrecemos:
 ✅ Sistema de turnos automático  
 ✅ Automatización de WhatsApp
 
-¿Te cuento cómo funciona?`,
+Mirá cómo funciona:
+🔗 {DEMO_LINK}`,
+    variations: []
+  },
 
-  'en': `Hello! 👋
+  'en': {
+    base: `Hello!
 
 My name is {NOME} and I help businesses like *{EMPRESA}* improve their online presence.
 
@@ -126,42 +191,58 @@ We offer:
 ✅ Automatic scheduling system  
 ✅ WhatsApp automation
 
-Would you like to know more?`,
+See how it works:
+🔗 {DEMO_LINK}`,
+    variations: []
+  },
 
-  'en-UK': `Hello! 👋
+  'en-UK': {
+    base: `Hello!
 
-My name is {NOME} and I help businesses like *{EMPRESA}* improve their online presence.
+I'm {NOME} and I help businesses like *{EMPRESA}* improve their online presence.
 
 We offer:
 ✅ Professional websites
 ✅ Automatic booking system  
 ✅ WhatsApp automation
 
-I'd be pleased to explain if you're interested.`,
+See how it works:
+🔗 {DEMO_LINK}`,
+    variations: []
+  },
 
-  'de': `Guten Tag! 👋
+  'de': {
+    base: `Guten Tag!
 
-Mein Name ist {NOME} und ich helfe Unternehmen wie *{EMPRESA}*, ihre Online-Präsenz zu verbessern.
+Mein Name ist {NOME}. Ich helfe Unternehmen wie *{EMPRESA}*, ihre Online-Präsenz zu verbessern.
 
 Wir bieten:
 ✅ Professionelle Websites
 ✅ Automatisches Terminbuchungssystem  
 ✅ WhatsApp-Automatisierung
 
-Darf ich Ihnen mehr erzählen?`,
+Sehen Sie, wie es funktioniert:
+🔗 {DEMO_LINK}`,
+    variations: []
+  },
 
-  'fr': `Bonjour ! 👋
+  'fr': {
+    base: `Bonjour !
 
-Je me présente, {NOME}. J'accompagne des entreprises comme *{EMPRESA}* pour améliorer leur présence en ligne.
+Je suis {NOME}. J'accompagne des entreprises comme *{EMPRESA}* pour améliorer leur présence en ligne.
 
 Nous proposons :
 ✅ Sites web professionnels
 ✅ Système de prise de rendez-vous automatique  
 ✅ Automatisation WhatsApp
 
-Puis-je vous en dire plus ?`,
+Découvrez comment ça fonctionne :
+🔗 {DEMO_LINK}`,
+    variations: []
+  },
 
-  'it': `Buongiorno! 👋
+  'it': {
+    base: `Buongiorno!
 
 Mi chiamo {NOME} e aiuto attività come *{EMPRESA}* a migliorare la loro presenza online.
 
@@ -170,9 +251,13 @@ Offriamo:
 ✅ Sistema di prenotazione automatico  
 ✅ Automazione WhatsApp
 
-Posso spiegarLe come funziona?`,
+Guardi come funziona:
+🔗 {DEMO_LINK}`,
+    variations: []
+  },
 
-  'ja': `こんにちは！👋
+  'ja': {
+    base: `こんにちは！
 
 私の名前は{NOME}です。*{EMPRESA}*のような企業のオンラインプレゼンス向上をお手伝いしています。
 
@@ -181,13 +266,23 @@ Posso spiegarLe come funziona?`,
 ✅ 自動予約システム
 ✅ WhatsApp自動化
 
-詳しくご説明しましょうか？`,
+デモをご覧ください：
+🔗 {DEMO_LINK}`,
+    variations: []
+  },
 };
 
-function adaptMessage(template: string, affiliateName: string, businessName: string): string {
-  return template
+const DEMO_LINK = 'https://www.genesishub.cloud/demo/ogim2u';
+
+function adaptMessage(templateConfig: { base: string; variations: string[] }, affiliateName: string, businessName: string): string {
+  // Escolhe aleatoriamente entre base e variações para evitar ban do WhatsApp
+  const allTemplates = [templateConfig.base, ...templateConfig.variations];
+  const randomTemplate = allTemplates[Math.floor(Math.random() * allTemplates.length)];
+  
+  return randomTemplate
     .replace(/{NOME}/g, affiliateName)
-    .replace(/{EMPRESA}/g, businessName);
+    .replace(/{EMPRESA}/g, businessName)
+    .replace(/{DEMO_LINK}/g, DEMO_LINK);
 }
 
 serve(async (req) => {
