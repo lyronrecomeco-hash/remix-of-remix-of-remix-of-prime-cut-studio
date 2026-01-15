@@ -55,11 +55,24 @@ export function useProspects(affiliateId: string) {
     }
   }, [affiliateId, fetchProspects, fetchSettings]);
 
-  const createProspect = async (data: Partial<Prospect>): Promise<Prospect | null> => {
+  const createProspect = async (data: {
+    company_name: string;
+    company_phone?: string;
+    company_email?: string;
+    company_website?: string;
+    company_address?: string;
+    company_city?: string;
+    company_state?: string;
+    niche?: string;
+    notes?: string;
+    generated_proposal?: { message: string };
+  }): Promise<Prospect | null> => {
     try {
+      const hasProposal = !!data.generated_proposal?.message;
+      
       const { data: newProspect, error } = await supabase
         .from('affiliate_prospects')
-        .insert({
+        .insert([{
           affiliate_id: affiliateId,
           company_name: data.company_name,
           company_phone: data.company_phone || null,
@@ -67,11 +80,14 @@ export function useProspects(affiliateId: string) {
           company_website: data.company_website || null,
           company_city: data.company_city || null,
           company_state: data.company_state || null,
+          company_address: data.company_address || null,
           niche: data.niche || null,
           notes: data.notes || null,
-          source: 'manual',
-          status: 'pending',
-        })
+          source: 'search',
+          status: hasProposal ? 'proposal_ready' : 'pending',
+          generated_proposal: data.generated_proposal || null,
+          proposal_generated_at: hasProposal ? new Date().toISOString() : null,
+        }])
         .select()
         .single();
 
@@ -79,7 +95,6 @@ export function useProspects(affiliateId: string) {
       
       const typedProspect = newProspect as unknown as Prospect;
       setProspects(prev => [typedProspect, ...prev]);
-      toast.success('Prospect adicionado!');
       return typedProspect;
     } catch (error) {
       console.error('Erro ao criar prospect:', error);
