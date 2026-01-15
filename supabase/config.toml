@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.send-whatsapp-genesis]
 verify_jwt = false
+
+[functions.prospect-automation-scheduler]
+verify_jwt = false
