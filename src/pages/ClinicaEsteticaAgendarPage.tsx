@@ -11,7 +11,12 @@ import {
   Phone,
   MessageSquare,
   ChevronRight,
-  CheckCircle2
+  CheckCircle2,
+  ArrowRight,
+  Gem,
+  Heart,
+  Leaf,
+  Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -32,13 +37,13 @@ const CONFIG = {
 
 // Procedimentos
 const PROCEDIMENTOS = [
-  { id: 'limpeza', name: 'Limpeza de Pele', duracao: '1h30' },
-  { id: 'botox', name: 'Toxina Botulínica', duracao: '30min' },
-  { id: 'preenchimento', name: 'Preenchimento Facial', duracao: '45min' },
-  { id: 'peeling', name: 'Peeling Químico', duracao: '45min' },
-  { id: 'microagulhamento', name: 'Microagulhamento', duracao: '1h' },
-  { id: 'drenagem', name: 'Drenagem Linfática', duracao: '1h' },
-  { id: 'avaliacao', name: 'Avaliação Gratuita', duracao: '30min' },
+  { id: 'limpeza', name: 'Limpeza de Pele', duracao: '1h30', icon: Sparkles, color: 'from-rose-500 to-pink-600' },
+  { id: 'botox', name: 'Toxina Botulínica', duracao: '30min', icon: Gem, color: 'from-violet-500 to-purple-600' },
+  { id: 'preenchimento', name: 'Preenchimento Facial', duracao: '45min', icon: Heart, color: 'from-pink-500 to-rose-600' },
+  { id: 'peeling', name: 'Peeling Químico', duracao: '45min', icon: Leaf, color: 'from-emerald-500 to-teal-600' },
+  { id: 'microagulhamento', name: 'Microagulhamento', duracao: '1h', icon: Zap, color: 'from-amber-500 to-orange-600' },
+  { id: 'drenagem', name: 'Drenagem Linfática', duracao: '1h', icon: Heart, color: 'from-cyan-500 to-sky-600' },
+  { id: 'avaliacao', name: 'Avaliação Gratuita', duracao: '30min', icon: Sparkles, color: 'from-rose-500 to-purple-600' },
 ];
 
 // Horários disponíveis
@@ -58,53 +63,59 @@ const formatPhone = (value: string) => {
 
 const getRawPhone = (formatted: string) => formatted.replace(/\D/g, '');
 
-// Step Indicator
+// Step Indicator - Premium design
 const StepIndicator = ({ currentStep }: { currentStep: number }) => {
-  const steps = ['Procedimento', 'Data/Hora', 'Seus Dados'];
+  const steps = [
+    { label: 'Procedimento', icon: Sparkles },
+    { label: 'Data e Hora', icon: Calendar },
+    { label: 'Seus Dados', icon: User },
+  ];
   
   return (
     <div className="mb-10">
-      <div className="flex items-center justify-between relative">
+      <div className="flex items-center justify-between relative max-w-md mx-auto">
         {/* Progress line */}
-        <div className="absolute top-5 left-0 right-0 h-1 bg-gray-200 -z-10 mx-8 sm:mx-16 rounded-full">
+        <div className="absolute top-6 left-8 right-8 h-1 bg-slate-200 -z-10 rounded-full">
           <motion.div 
-            className="h-full bg-gradient-to-r from-sky-400 to-sky-500 rounded-full"
+            className="h-full bg-gradient-to-r from-rose-500 to-purple-600 rounded-full"
             initial={{ width: '0%' }}
             animate={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
-            transition={{ duration: 0.4 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
           />
         </div>
 
-        {steps.map((label, index) => {
+        {steps.map((step, index) => {
           const stepNum = index + 1;
           const isCompleted = currentStep > stepNum;
           const isCurrent = currentStep === stepNum;
+          const Icon = step.icon;
           
           return (
-            <div key={label} className="flex flex-col items-center z-10">
+            <div key={step.label} className="flex flex-col items-center z-10">
               <motion.div
                 initial={false}
                 animate={{
                   scale: isCurrent ? 1.1 : 1,
                 }}
-                className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
+                transition={{ type: 'spring', stiffness: 300 }}
+                className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 ${
                   isCompleted 
-                    ? 'border-sky-500 bg-gradient-to-br from-sky-400 to-sky-500 text-white shadow-lg shadow-sky-500/30' 
+                    ? 'bg-gradient-to-br from-rose-500 to-purple-600 text-white shadow-lg shadow-pink-500/30' 
                     : isCurrent 
-                      ? 'border-sky-500 bg-white text-sky-600 shadow-lg shadow-sky-100' 
-                      : 'border-gray-200 bg-white text-gray-400'
+                      ? 'bg-white text-pink-600 shadow-xl shadow-pink-100 border-2 border-pink-500' 
+                      : 'bg-slate-100 text-slate-400 border-2 border-transparent'
                 }`}
               >
                 {isCompleted ? (
                   <Check className="w-5 h-5" />
                 ) : (
-                  <span className="text-sm font-bold">{stepNum}</span>
+                  <Icon className="w-5 h-5" />
                 )}
               </motion.div>
-              <span className={`text-xs sm:text-sm mt-3 font-semibold ${
-                isCurrent ? 'text-sky-600' : isCompleted ? 'text-sky-500' : 'text-gray-400'
+              <span className={`text-xs mt-3 font-semibold ${
+                isCurrent ? 'text-pink-600' : isCompleted ? 'text-purple-600' : 'text-slate-400'
               }`}>
-                {label}
+                {step.label}
               </span>
             </div>
           );
@@ -230,60 +241,67 @@ Até breve! ✨`;
     }
   };
 
+  // Success screen
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-sky-50/30 flex items-center justify-center px-4 py-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center px-4 py-8 relative overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-rose-500/20 rounded-full blur-[100px]" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-[100px]" />
+        
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="max-w-md w-full text-center"
+          className="max-w-md w-full text-center relative"
         >
-          <div className="bg-white rounded-3xl p-8 sm:p-10 shadow-2xl shadow-sky-100/50 border border-sky-100">
+          <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 sm:p-10 border border-white/20 shadow-2xl">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-              className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-sky-100 to-sky-50 flex items-center justify-center mb-8 shadow-lg shadow-sky-100/50"
+              className="w-24 h-24 mx-auto rounded-3xl bg-gradient-to-br from-rose-500 to-purple-600 flex items-center justify-center mb-8 shadow-2xl shadow-pink-500/40"
             >
-              <CheckCircle2 className="w-12 h-12 text-sky-500" />
+              <CheckCircle2 className="w-12 h-12 text-white" />
             </motion.div>
 
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
-              Agendamento Confirmado!
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">
+              Confirmado!
             </h2>
-            <p className="text-gray-600 mb-8">
-              Você receberá a confirmação no WhatsApp em instantes.
+            <p className="text-white/70 mb-8 text-lg">
+              Você receberá a confirmação no WhatsApp
             </p>
 
-            <div className="bg-gradient-to-br from-sky-50 to-white rounded-2xl p-5 mb-8 text-left border border-sky-100">
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-8 text-left border border-white/10">
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-500 font-medium">Procedimento:</span>
-                  <span className="text-gray-900 font-bold">{PROCEDIMENTOS.find(p => p.id === formData.procedimento)?.name}</span>
+                  <span className="text-white/60 font-medium">Procedimento</span>
+                  <span className="text-white font-bold">{PROCEDIMENTOS.find(p => p.id === formData.procedimento)?.name}</span>
                 </div>
+                <div className="h-px bg-white/10" />
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-500 font-medium">Data:</span>
-                  <span className="text-gray-900 font-bold">
+                  <span className="text-white/60 font-medium">Data</span>
+                  <span className="text-white font-bold">
                     {new Date(formData.data + 'T12:00:00').toLocaleDateString('pt-BR', { 
                       day: 'numeric', 
                       month: 'long' 
                     })}
                   </span>
                 </div>
+                <div className="h-px bg-white/10" />
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-500 font-medium">Horário:</span>
-                  <span className="text-gray-900 font-bold">{formData.horario}</span>
+                  <span className="text-white/60 font-medium">Horário</span>
+                  <span className="text-white font-bold">{formData.horario}</span>
                 </div>
               </div>
             </div>
 
-            <p className="text-gray-500 text-sm mb-8">
-              Em caso de ajuste, entraremos em contato.
+            <p className="text-white/50 text-sm mb-8">
+              Em caso de ajuste, entraremos em contato
             </p>
 
             <Button 
               onClick={() => navigate(code ? `/clinica-estetica/${code}` : '/clinica-estetica')}
-              className="w-full h-14 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white font-bold rounded-xl shadow-lg shadow-sky-500/30"
+              className="w-full h-14 bg-gradient-to-r from-rose-500 to-purple-600 hover:from-rose-600 hover:to-purple-700 text-white font-bold rounded-2xl shadow-xl shadow-pink-500/30"
             >
               Voltar ao Site
             </Button>
@@ -294,25 +312,25 @@ Até breve! ✨`;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-sky-50/30">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-pink-50/30">
       {/* Header */}
-      <div className="bg-white/90 backdrop-blur-lg border-b border-sky-100 sticky top-0 z-50">
+      <div className="bg-white/80 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-50 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-4">
           <Button 
             variant="ghost" 
             size="icon"
             onClick={handleBack}
-            className="text-gray-500 hover:text-sky-600 hover:bg-sky-50 rounded-xl"
+            className="text-slate-500 hover:text-pink-600 hover:bg-pink-50 rounded-xl h-11 w-11"
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-400 to-sky-500 flex items-center justify-center shadow-lg shadow-sky-500/25">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-rose-400 via-pink-500 to-purple-600 flex items-center justify-center shadow-lg shadow-pink-500/30 rotate-3">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-gray-900 font-bold">Agendar Procedimento</h1>
-              <p className="text-gray-500 text-sm">{CONFIG.business.name}</p>
+              <h1 className="text-slate-900 font-bold text-lg">Agendar Procedimento</h1>
+              <p className="text-slate-500 text-sm">{CONFIG.business.name}</p>
             </div>
           </div>
         </div>
@@ -333,43 +351,55 @@ Até breve! ✨`;
               className="space-y-6"
             >
               <div className="mb-8">
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Selecione o procedimento</h2>
-                <p className="text-gray-600">Escolha o tratamento desejado</p>
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
+                  Qual procedimento você deseja?
+                </h2>
+                <p className="text-slate-500">Escolha o tratamento ideal para você</p>
               </div>
 
               <div className="space-y-3">
-                {PROCEDIMENTOS.map((proc) => (
-                  <Card 
-                    key={proc.id}
-                    className={`cursor-pointer transition-all duration-300 ${
-                      formData.procedimento === proc.id 
-                        ? 'bg-gradient-to-r from-sky-50 to-white border-2 border-sky-400 shadow-lg shadow-sky-100/50' 
-                        : 'bg-white border-gray-200 hover:border-sky-300 hover:shadow-md shadow-sm'
-                    }`}
-                    onClick={() => setFormData({ ...formData, procedimento: proc.id })}
-                  >
-                    <CardContent className="p-4 sm:p-5 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                          formData.procedimento === proc.id 
-                            ? 'border-sky-500 bg-gradient-to-br from-sky-400 to-sky-500 shadow-md' 
-                            : 'border-gray-300'
-                        }`}>
-                          {formData.procedimento === proc.id && (
-                            <Check className="w-3.5 h-3.5 text-white" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-gray-900 font-bold">{proc.name}</p>
-                          <p className="text-gray-500 text-sm">Duração: {proc.duracao}</p>
-                        </div>
-                      </div>
-                      <Badge className={`${formData.procedimento === proc.id ? 'bg-sky-100 text-sky-700 border-sky-200' : 'bg-gray-100 text-gray-600 border-0'} font-semibold`}>
-                        {proc.duracao}
-                      </Badge>
-                    </CardContent>
-                  </Card>
-                ))}
+                {PROCEDIMENTOS.map((proc) => {
+                  const Icon = proc.icon;
+                  const isSelected = formData.procedimento === proc.id;
+                  
+                  return (
+                    <motion.div
+                      key={proc.id}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                    >
+                      <Card 
+                        className={`cursor-pointer transition-all duration-300 overflow-hidden ${
+                          isSelected 
+                            ? 'border-2 border-pink-500 shadow-xl shadow-pink-100' 
+                            : 'border border-slate-200 hover:border-pink-300 hover:shadow-lg shadow-sm'
+                        }`}
+                        onClick={() => setFormData({ ...formData, procedimento: proc.id })}
+                      >
+                        <CardContent className="p-4 sm:p-5 flex items-center gap-4">
+                          <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${proc.color} flex items-center justify-center shadow-lg shrink-0 ${
+                            isSelected ? 'shadow-pink-500/30' : ''
+                          }`}>
+                            <Icon className="w-6 h-6 text-white" />
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <p className="text-slate-900 font-bold text-lg">{proc.name}</p>
+                            <p className="text-slate-500 text-sm">Duração: {proc.duracao}</p>
+                          </div>
+                          
+                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
+                            isSelected 
+                              ? 'border-pink-500 bg-gradient-to-br from-rose-500 to-purple-600' 
+                              : 'border-slate-300'
+                          }`}>
+                            {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  );
+                })}
               </div>
             </motion.div>
           )}
@@ -385,38 +415,44 @@ Até breve! ✨`;
               className="space-y-8"
             >
               <div className="mb-8">
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Escolha data e horário</h2>
-                <p className="text-gray-600">Selecione o melhor momento para você</p>
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
+                  Quando você pode vir?
+                </h2>
+                <p className="text-slate-500">Selecione a melhor data e horário</p>
               </div>
 
               {/* Date Selection */}
               <div>
-                <Label className="text-gray-900 mb-4 block font-bold text-lg">
-                  <Calendar className="w-5 h-5 inline mr-2 text-sky-500" />
-                  Data
+                <Label className="text-slate-900 mb-4 flex items-center gap-2 font-bold text-lg">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-rose-100 to-pink-100 flex items-center justify-center">
+                    <Calendar className="w-4 h-4 text-pink-600" />
+                  </div>
+                  Escolha a data
                 </Label>
                 <div className="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3">
                   {availableDates.slice(0, 12).map((date) => {
                     const dateStr = date.toISOString().split('T')[0];
                     const isSelected = formData.data === dateStr;
                     return (
-                      <button
+                      <motion.button
                         key={dateStr}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={() => setFormData({ ...formData, data: dateStr })}
                         className={`p-3 sm:p-4 rounded-2xl text-center transition-all duration-300 ${
                           isSelected 
-                            ? 'bg-gradient-to-br from-sky-400 to-sky-500 text-white shadow-lg shadow-sky-500/30 scale-105' 
-                            : 'bg-white border border-gray-200 text-gray-700 hover:border-sky-300 hover:bg-sky-50 shadow-sm'
+                            ? 'bg-gradient-to-br from-rose-500 to-purple-600 text-white shadow-xl shadow-pink-500/30' 
+                            : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-pink-300 hover:shadow-lg shadow-sm'
                         }`}
                       >
-                        <div className="text-[10px] sm:text-xs uppercase font-bold">
+                        <div className="text-[10px] sm:text-xs uppercase font-bold opacity-80">
                           {date.toLocaleDateString('pt-BR', { weekday: 'short' })}
                         </div>
-                        <div className="text-lg sm:text-xl font-bold">{date.getDate()}</div>
-                        <div className="text-[10px] sm:text-xs font-medium">
+                        <div className="text-xl sm:text-2xl font-bold">{date.getDate()}</div>
+                        <div className="text-[10px] sm:text-xs font-medium opacity-80">
                           {date.toLocaleDateString('pt-BR', { month: 'short' })}
                         </div>
-                      </button>
+                      </motion.button>
                     );
                   })}
                 </div>
@@ -429,37 +465,38 @@ Até breve! ✨`;
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <Label className="text-gray-900 mb-4 block font-bold text-lg">
-                    <Clock className="w-5 h-5 inline mr-2 text-sky-500" />
-                    Horário
+                  <Label className="text-slate-900 mb-4 flex items-center gap-2 font-bold text-lg">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-rose-100 to-pink-100 flex items-center justify-center">
+                      <Clock className="w-4 h-4 text-pink-600" />
+                    </div>
+                    Escolha o horário
                   </Label>
                   <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 sm:gap-3">
                     {HORARIOS.map((horario) => {
                       const isSelected = formData.horario === horario;
                       return (
-                        <button
+                        <motion.button
                           key={horario}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                           onClick={() => setFormData({ ...formData, horario })}
-                          className={`py-3 px-3 sm:px-4 rounded-xl text-sm font-bold transition-all duration-300 ${
+                          className={`py-3 px-4 rounded-xl text-sm font-bold transition-all duration-300 ${
                             isSelected 
-                              ? 'bg-gradient-to-r from-sky-400 to-sky-500 text-white shadow-lg shadow-sky-500/30 scale-105' 
-                              : 'bg-white border border-gray-200 text-gray-700 hover:border-sky-300 hover:bg-sky-50 shadow-sm'
+                              ? 'bg-gradient-to-r from-rose-500 to-purple-600 text-white shadow-lg shadow-pink-500/30' 
+                              : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-pink-300 hover:shadow-md'
                           }`}
                         >
                           {horario}
-                        </button>
+                        </motion.button>
                       );
                     })}
                   </div>
-                  <p className="text-gray-500 text-sm mt-4 bg-sky-50/50 p-3 rounded-xl border border-sky-100">
-                    💡 Caso o horário não esteja disponível, entraremos em contato para ajuste.
-                  </p>
                 </motion.div>
               )}
             </motion.div>
           )}
 
-          {/* Step 3: Dados */}
+          {/* Step 3: Dados Pessoais */}
           {step === 3 && (
             <motion.div
               key="step3"
@@ -470,83 +507,81 @@ Até breve! ✨`;
               className="space-y-6"
             >
               <div className="mb-8">
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Seus dados</h2>
-                <p className="text-gray-600">Preencha para confirmar o agendamento</p>
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
+                  Quase lá! Seus dados
+                </h2>
+                <p className="text-slate-500">Precisamos de algumas informações para confirmar</p>
               </div>
 
-              <div className="space-y-5">
-                <div>
-                  <Label htmlFor="nome" className="text-gray-900 mb-3 block font-bold">
-                    <User className="w-4 h-4 inline mr-2 text-sky-500" />
-                    Nome completo
-                  </Label>
-                  <Input
-                    id="nome"
-                    value={formData.nome}
-                    onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                    placeholder="Seu nome"
-                    className="bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-sky-500 focus:ring-sky-500 h-14 rounded-xl text-base shadow-sm"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="whatsapp" className="text-gray-900 mb-3 block font-bold">
-                    <Phone className="w-4 h-4 inline mr-2 text-sky-500" />
-                    WhatsApp
-                  </Label>
-                  <Input
-                    id="whatsapp"
-                    value={formData.whatsapp}
-                    onChange={(e) => setFormData({ ...formData, whatsapp: formatPhone(e.target.value) })}
-                    placeholder="(11) 99999-9999"
-                    className="bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-sky-500 focus:ring-sky-500 h-14 rounded-xl text-base shadow-sm"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="observacao" className="text-gray-900 mb-3 block font-bold">
-                    <MessageSquare className="w-4 h-4 inline mr-2 text-sky-500" />
-                    Observação (opcional)
-                  </Label>
-                  <Textarea
-                    id="observacao"
-                    value={formData.observacao}
-                    onChange={(e) => setFormData({ ...formData, observacao: e.target.value })}
-                    placeholder="Alguma informação adicional..."
-                    rows={3}
-                    className="bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 resize-none focus:border-sky-500 focus:ring-sky-500 rounded-xl shadow-sm"
-                  />
-                </div>
-              </div>
-
-              {/* Summary */}
-              <Card className="bg-gradient-to-br from-sky-50 to-white border-sky-100 shadow-lg shadow-sky-100/30">
-                <CardContent className="p-5 sm:p-6">
-                  <h3 className="text-gray-900 font-bold mb-4 text-lg">Resumo do Agendamento</h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-500 font-medium">Procedimento:</span>
-                      <span className="text-gray-900 font-bold">
-                        {PROCEDIMENTOS.find(p => p.id === formData.procedimento)?.name}
-                      </span>
+              {/* Summary Card */}
+              <Card className="bg-gradient-to-br from-rose-50 to-purple-50 border-0 shadow-lg overflow-hidden">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500 to-purple-600 flex items-center justify-center shadow-lg shadow-pink-500/30">
+                      <Sparkles className="w-7 h-7 text-white" />
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-500 font-medium">Data:</span>
-                      <span className="text-gray-900 font-bold">
+                    <div className="flex-1">
+                      <p className="text-slate-900 font-bold text-lg">
+                        {PROCEDIMENTOS.find(p => p.id === formData.procedimento)?.name}
+                      </p>
+                      <p className="text-slate-600 text-sm">
                         {new Date(formData.data + 'T12:00:00').toLocaleDateString('pt-BR', { 
                           weekday: 'long',
                           day: 'numeric', 
                           month: 'long' 
-                        })}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-500 font-medium">Horário:</span>
-                      <span className="text-gray-900 font-bold">{formData.horario}</span>
+                        })} às {formData.horario}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Form Fields */}
+              <div className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="nome" className="text-slate-700 font-semibold flex items-center gap-2">
+                    <User className="w-4 h-4 text-pink-500" />
+                    Nome completo
+                  </Label>
+                  <Input
+                    id="nome"
+                    placeholder="Digite seu nome"
+                    value={formData.nome}
+                    onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                    className="h-14 rounded-xl border-2 border-slate-200 focus:border-pink-500 text-lg bg-white shadow-sm"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="whatsapp" className="text-slate-700 font-semibold flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-pink-500" />
+                    WhatsApp
+                  </Label>
+                  <Input
+                    id="whatsapp"
+                    placeholder="(00) 00000-0000"
+                    value={formData.whatsapp}
+                    onChange={(e) => setFormData({ ...formData, whatsapp: formatPhone(e.target.value) })}
+                    className="h-14 rounded-xl border-2 border-slate-200 focus:border-pink-500 text-lg bg-white shadow-sm"
+                    maxLength={15}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="observacao" className="text-slate-700 font-semibold flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-pink-500" />
+                    Observações <span className="text-slate-400 font-normal">(opcional)</span>
+                  </Label>
+                  <Textarea
+                    id="observacao"
+                    placeholder="Alguma informação adicional?"
+                    value={formData.observacao}
+                    onChange={(e) => setFormData({ ...formData, observacao: e.target.value })}
+                    className="rounded-xl border-2 border-slate-200 focus:border-pink-500 min-h-[100px] bg-white shadow-sm resize-none"
+                    rows={3}
+                  />
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -557,8 +592,9 @@ Até breve! ✨`;
             <Button
               variant="outline"
               onClick={handleBack}
-              className="flex-1 h-14 border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-sky-300 rounded-xl font-bold"
+              className="h-14 px-6 rounded-xl border-2 border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold"
             >
+              <ArrowLeft className="w-4 h-4 mr-2" />
               Voltar
             </Button>
           )}
@@ -567,20 +603,20 @@ Até breve! ✨`;
             <Button
               onClick={handleNext}
               disabled={!canProceed()}
-              className="flex-1 h-14 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white disabled:opacity-50 rounded-xl font-bold shadow-lg shadow-sky-500/30"
+              className="flex-1 h-14 rounded-xl bg-gradient-to-r from-rose-500 to-purple-600 hover:from-rose-600 hover:to-purple-700 text-white font-bold shadow-xl shadow-pink-500/30 disabled:opacity-50 disabled:shadow-none"
             >
               Continuar
-              <ChevronRight className="w-5 h-5 ml-2" />
+              <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           ) : (
             <Button
               onClick={handleSubmit}
               disabled={!canProceed() || isSubmitting}
-              className="flex-1 h-14 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white disabled:opacity-50 rounded-xl font-bold shadow-lg shadow-sky-500/30"
+              className="flex-1 h-14 rounded-xl bg-gradient-to-r from-rose-500 to-purple-600 hover:from-rose-600 hover:to-purple-700 text-white font-bold shadow-xl shadow-pink-500/30 disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>
-                  <span className="animate-spin mr-2">⏳</span>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
                   Confirmando...
                 </>
               ) : (
@@ -591,6 +627,18 @@ Até breve! ✨`;
               )}
             </Button>
           )}
+        </div>
+
+        {/* Trust badges */}
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-slate-500 text-sm">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            <span>Confirmação instantânea</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            <span>Sem compromisso</span>
+          </div>
         </div>
       </div>
     </div>
