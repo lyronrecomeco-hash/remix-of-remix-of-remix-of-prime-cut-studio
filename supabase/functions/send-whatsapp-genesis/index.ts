@@ -114,7 +114,7 @@ serve(async (req) => {
     const backendKey = encodeURIComponent(instance.id);
     const backendName = encodeURIComponent(instance.name);
 
-    // Payload compatível (v8/legacy) + payload evolution
+    // Payload para GenesisPro/V8 (formato principal)
     const v8Payload = {
       phone: normalizedPhone,
       message,
@@ -125,15 +125,8 @@ serve(async (req) => {
       delay: 1500,
     };
 
-    const evolutionPayload = {
-      number: normalizedPhone,
-      text: message,
-      delay: 1500,
-    };
-
     const headers = {
       'Content-Type': 'application/json',
-      // Alguns backends usam Bearer, outros usam apikey
       'Authorization': `Bearer ${backendToken}`,
       'apikey': backendToken,
     };
@@ -142,6 +135,7 @@ serve(async (req) => {
       status === 404 && (bodyText.includes('Cannot POST') || bodyText.includes('Cannot GET'));
 
     const tryPost = async (url: string, body: unknown) => {
+      console.log(`[send-whatsapp-genesis] Tentando: ${url}`);
       const res = await fetch(url, {
         method: 'POST',
         headers,
@@ -149,6 +143,8 @@ serve(async (req) => {
       });
 
       const text = await res.text();
+      console.log(`[send-whatsapp-genesis] Response ${res.status}: ${text.slice(0, 200)}`);
+      
       let parsed: any = null;
       try {
         parsed = JSON.parse(text);
@@ -160,56 +156,37 @@ serve(async (req) => {
       return { ok, status: res.status, text, parsed };
     };
 
-    // Rotas GenesisPro / V8 (multi-instância)
+    // Rotas GenesisPro / V8 (multi-instância) - prioridade
     const v8Paths = [
       `/${backendKey}/send-text`,
       `/api/instance/${backendKey}/send`,
       `/api/instance/${backendKey}/send-message`,
       `/api/instance/${backendKey}/sendText`,
       `/api/instance/${backendKey}/send-text`,
+      `/api/send`,
+      `/send`,
+      `/send-text`,
     ];
-
-    // Fallback legacy (single-instance)
-    const legacyPaths = ['/api/send', '/send'];
-
-    // Fallback Evolution API (quando o backend_url aponta direto para Evolution)
-    const evolutionPaths = [`/message/sendText/${backendKey}`, `/message/sendText/${backendName}`];
 
     let lastStatus = 0;
     let lastText = '';
     let sendResult: any = null;
 
-    for (const p of [...v8Paths, ...legacyPaths]) {
+    for (const p of v8Paths) {
       const url = `${backendUrl}${p}`;
       try {
         const r = await tryPost(url, v8Payload);
         if (r.ok) {
           sendResult = r.parsed ?? { raw: r.text };
+          console.log(`[send-whatsapp-genesis] Sucesso com rota: ${p}`);
           break;
         }
         lastStatus = r.status;
         lastText = r.text;
         if (looksLikeMissingRoute(r.status, r.text)) continue;
       } catch (err) {
+        console.error(`[send-whatsapp-genesis] Erro em ${p}:`, err);
         lastText = String(err);
-      }
-    }
-
-    if (!sendResult) {
-      for (const p of evolutionPaths) {
-        const url = `${backendUrl}${p}`;
-        try {
-          const r = await tryPost(url, evolutionPayload);
-          if (r.ok) {
-            sendResult = r.parsed ?? { raw: r.text };
-            break;
-          }
-          lastStatus = r.status;
-          lastText = r.text;
-          if (looksLikeMissingRoute(r.status, r.text)) continue;
-        } catch (err) {
-          lastText = String(err);
-        }
       }
     }
 
