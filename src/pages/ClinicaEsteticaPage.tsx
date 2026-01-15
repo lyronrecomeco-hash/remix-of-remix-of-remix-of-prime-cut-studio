@@ -1,1209 +1,589 @@
-import { useParams, useNavigate } from 'react-router-dom';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion } from "framer-motion";
 import { 
   Phone, 
   MapPin, 
   Clock, 
   Star, 
-  ChevronRight, 
+  ChevronRight,
   Sparkles,
   Heart,
   Shield,
   Award,
   Users,
   Calendar,
+  ArrowRight,
   CheckCircle2,
   Instagram,
-  MessageCircle,
-  ArrowRight,
-  Leaf,
-  Gem,
-  Zap,
-  Menu,
-  X,
-  Play,
-  ArrowUpRight,
-  Quote,
-  BadgeCheck
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { useState, useRef } from 'react';
+  Facebook
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
-// Images
-import heroImage from '@/assets/clinica-hero.jpg';
-import interiorImage from '@/assets/clinica-interior.jpg';
-import clienteImage from '@/assets/clinica-cliente.jpg';
-import procedimentoImage from '@/assets/clinica-procedimento.jpg';
+import clinicaHero from "@/assets/clinica-hero.jpg";
+import clinicaInterior from "@/assets/clinica-interior.jpg";
+import clinicaCliente from "@/assets/clinica-cliente.jpg";
+import clinicaProcedimento from "@/assets/clinica-procedimento.jpg";
 
-// Configuração padrão
-const DEFAULT_CONFIG = {
-  business: {
-    name: 'Essence Estética',
-    phone: '(11) 99999-9999',
-    whatsapp: '5511999999999',
-    address: 'Av. Paulista, 1000 - Bela Vista, São Paulo - SP',
-    slogan: 'Realce sua beleza natural com tratamentos exclusivos',
-  },
-};
-
-// Procedimentos
-const PROCEDIMENTOS = [
-  {
-    id: 'limpeza',
-    name: 'Limpeza de Pele',
-    description: 'Remoção profunda de impurezas para uma pele renovada e radiante.',
-    duracao: '1h30',
-    icon: Sparkles,
-    color: 'from-rose-500 to-pink-600',
-    bgColor: 'bg-rose-50',
-    iconColor: 'text-rose-600',
-  },
-  {
-    id: 'botox',
-    name: 'Toxina Botulínica',
-    description: 'Suavização de linhas de expressão com resultados naturais.',
-    duracao: '30min',
-    icon: Gem,
-    color: 'from-violet-500 to-purple-600',
-    bgColor: 'bg-violet-50',
-    iconColor: 'text-violet-600',
-  },
-  {
-    id: 'preenchimento',
-    name: 'Preenchimento Facial',
-    description: 'Restauração de volume e contornos com ácido hialurônico.',
-    duracao: '45min',
-    icon: Heart,
-    color: 'from-pink-500 to-rose-600',
-    bgColor: 'bg-pink-50',
-    iconColor: 'text-pink-600',
-  },
-  {
-    id: 'peeling',
-    name: 'Peeling Químico',
-    description: 'Renovação celular para tratamento de manchas e textura.',
-    duracao: '45min',
-    icon: Leaf,
-    color: 'from-emerald-500 to-teal-600',
-    bgColor: 'bg-emerald-50',
-    iconColor: 'text-emerald-600',
-  },
-  {
-    id: 'microagulhamento',
-    name: 'Microagulhamento',
-    description: 'Estímulo de colágeno para rejuvenescimento intenso.',
-    duracao: '1h',
-    icon: Zap,
-    color: 'from-amber-500 to-orange-600',
-    bgColor: 'bg-amber-50',
-    iconColor: 'text-amber-600',
-  },
-  {
-    id: 'drenagem',
-    name: 'Drenagem Linfática',
-    description: 'Massagem especializada para redução de inchaço e bem-estar.',
-    duracao: '1h',
-    icon: Heart,
-    color: 'from-cyan-500 to-sky-600',
-    bgColor: 'bg-cyan-50',
-    iconColor: 'text-cyan-600',
-  },
-];
-
-// Programas
-const PROGRAMAS = [
-  {
-    id: 'essencial',
-    name: 'Programa Essencial',
-    sessoes: '4 sessões',
-    descricao: 'Ideal para manutenção da saúde da pele',
-    inclui: ['2x Limpeza de Pele', '2x Hidratação Intensiva'],
-    destaque: false,
-    price: 'R$ 480',
-  },
-  {
-    id: 'premium',
-    name: 'Programa Premium',
-    sessoes: '8 sessões',
-    descricao: 'Tratamento completo de rejuvenescimento',
-    inclui: ['3x Limpeza de Pele', '3x Peeling', '2x Microagulhamento'],
-    destaque: true,
-    price: 'R$ 1.200',
-  },
-  {
-    id: 'noiva',
-    name: 'Programa Noiva',
-    sessoes: '12 sessões',
-    descricao: 'Preparação completa para o grande dia',
-    inclui: ['4x Limpeza', '4x Peeling', '2x Microagulhamento', '2x Drenagem'],
-    destaque: false,
-    price: 'R$ 2.400',
-  },
-];
-
-// Depoimentos
-const DEPOIMENTOS = [
-  {
-    nome: 'Carolina Mendes',
-    texto: 'Fiz o programa premium e os resultados foram incríveis! Minha pele nunca esteve tão bonita e saudável. A equipe é maravilhosa!',
-    procedimento: 'Programa Premium',
-    rating: 5,
-    avatar: 'CM',
-  },
-  {
-    nome: 'Amanda Silva',
-    texto: 'Profissionais muito atenciosos e ambiente super aconchegante. O botox ficou natural, exatamente como eu queria!',
-    procedimento: 'Toxina Botulínica',
-    rating: 5,
-    avatar: 'AS',
-  },
-  {
-    nome: 'Juliana Rocha',
-    texto: 'O preenchimento ficou harmonioso e natural. Recomendo demais para quem busca qualidade e segurança!',
-    procedimento: 'Preenchimento Facial',
-    rating: 5,
-    avatar: 'JR',
-  },
-];
-
-// Header Component
-const ClinicaHeader = ({ config, code }: { config: typeof DEFAULT_CONFIG; code?: string }) => {
+const ClinicaEsteticaPage = () => {
   const navigate = useNavigate();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
 
-  // Handle scroll
-  if (typeof window !== 'undefined') {
-    window.addEventListener('scroll', () => {
-      setScrolled(window.scrollY > 50);
-    });
-  }
-  
-  return (
-    <>
-      <motion.header 
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ type: 'spring', damping: 20 }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          scrolled 
-            ? 'bg-white/95 backdrop-blur-xl shadow-lg shadow-slate-900/5' 
-            : 'bg-transparent'
-        }`}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="flex items-center gap-3"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-400 via-pink-500 to-purple-600 flex items-center justify-center shadow-lg shadow-pink-500/30 rotate-3 hover:rotate-0 transition-transform">
-                <Sparkles className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <span className={`font-bold text-xl tracking-tight transition-colors ${scrolled ? 'text-slate-900' : 'text-white'}`}>
-                  {config.business.name}
-                </span>
-                <p className={`text-xs font-medium transition-colors ${scrolled ? 'text-pink-600' : 'text-pink-200'}`}>
-                  Estética Avançada
-                </p>
-              </div>
-            </motion.div>
-            
-            <nav className="hidden lg:flex items-center gap-1">
-              {['Procedimentos', 'Programas', 'Sobre', 'Depoimentos', 'Contato'].map((item, i) => (
-                <motion.a 
-                  key={item}
-                  href={`#${item.toLowerCase()}`}
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 * i }}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all hover:bg-white/10 ${
-                    scrolled ? 'text-slate-600 hover:text-pink-600 hover:bg-pink-50' : 'text-white/90 hover:text-white'
-                  }`}
-                >
-                  {item}
-                </motion.a>
-              ))}
-            </nav>
+  const procedimentos = [
+    {
+      nome: "Harmonização Facial",
+      descricao: "Realce sua beleza natural com técnicas avançadas e resultados sutis.",
+      duracao: "60 min",
+      icon: Sparkles
+    },
+    {
+      nome: "Bioestimuladores",
+      descricao: "Estimule a produção natural de colágeno para uma pele mais firme.",
+      duracao: "45 min",
+      icon: Heart
+    },
+    {
+      nome: "Skincare Avançado",
+      descricao: "Protocolos personalizados para renovação e vitalidade da pele.",
+      duracao: "90 min",
+      icon: Shield
+    },
+    {
+      nome: "Tratamentos Corporais",
+      descricao: "Tecnologias de ponta para modelagem e definição corporal.",
+      duracao: "60 min",
+      icon: Award
+    }
+  ];
 
-            <div className="flex items-center gap-3">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.5 }}
-              >
-                <Button 
-                  onClick={() => navigate(code ? `/clinica-estetica/${code}/agendar` : '/clinica-estetica/agendar')}
-                  className="hidden sm:flex bg-gradient-to-r from-rose-500 via-pink-500 to-purple-600 hover:from-rose-600 hover:via-pink-600 hover:to-purple-700 text-white shadow-lg shadow-pink-500/30 font-semibold px-6 h-11 rounded-xl"
-                >
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Agendar
-                </Button>
-              </motion.div>
-              
-              <button 
-                className={`lg:hidden p-2.5 rounded-xl transition-all ${
-                  scrolled ? 'text-slate-600 hover:bg-pink-50' : 'text-white hover:bg-white/10'
-                }`}
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              >
-                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-              </button>
-            </div>
-          </div>
-        </div>
-      </motion.header>
-
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-40 lg:hidden"
-        >
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
-          <motion.div 
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 25 }}
-            className="absolute right-0 top-0 bottom-0 w-80 bg-white shadow-2xl"
-          >
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-8">
-                <span className="font-bold text-xl text-slate-900">Menu</span>
-                <button onClick={() => setMobileMenuOpen(false)} className="p-2 hover:bg-slate-100 rounded-xl">
-                  <X className="w-6 h-6 text-slate-600" />
-                </button>
-              </div>
-              <nav className="space-y-2">
-                {['Procedimentos', 'Programas', 'Sobre', 'Depoimentos', 'Contato'].map((item) => (
-                  <a 
-                    key={item}
-                    href={`#${item.toLowerCase()}`}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-4 py-3 text-slate-700 hover:text-pink-600 hover:bg-pink-50 rounded-xl font-medium transition-all"
-                  >
-                    {item}
-                  </a>
-                ))}
-              </nav>
-              <div className="mt-8 pt-8 border-t border-slate-100">
-                <Button 
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    navigate(code ? `/clinica-estetica/${code}/agendar` : '/clinica-estetica/agendar');
-                  }}
-                  className="w-full bg-gradient-to-r from-rose-500 via-pink-500 to-purple-600 text-white h-12 rounded-xl font-semibold shadow-lg shadow-pink-500/30"
-                >
-                  <Calendar className="w-5 h-5 mr-2" />
-                  Agendar Avaliação
-                </Button>
-              </div>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </>
-  );
-};
-
-// Hero Section - Completely redesigned
-const HeroSection = ({ config, code }: { config: typeof DEFAULT_CONFIG; code?: string }) => {
-  const navigate = useNavigate();
-  const ref = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start start", "end start"]
-  });
-  const y = useTransform(scrollYProgress, [0, 1], ['0%', '50%']);
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
-  
-  return (
-    <section ref={ref} className="relative min-h-screen flex items-center overflow-hidden">
-      {/* Background Image with Parallax */}
-      <motion.div style={{ y }} className="absolute inset-0">
-        <img 
-          src={heroImage} 
-          alt="Clínica de estética"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-900/80 to-slate-900/60" />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-60" />
-      </motion.div>
-
-      {/* Decorative elements */}
-      <div className="absolute top-40 left-10 w-72 h-72 bg-pink-500/20 rounded-full blur-[100px]" />
-      <div className="absolute bottom-40 right-10 w-96 h-96 bg-purple-500/20 rounded-full blur-[100px]" />
-
-      <motion.div style={{ opacity }} className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 lg:py-40">
-        <div className="max-w-3xl">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="space-y-8"
-          >
-            {/* Badge */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              <Badge className="bg-white/10 backdrop-blur-sm text-white border-white/20 px-4 py-2 font-medium text-sm">
-                <Sparkles className="w-4 h-4 mr-2 text-pink-400" />
-                Referência em estética avançada
-              </Badge>
-            </motion.div>
-            
-            {/* Headline */}
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white leading-[1.1] tracking-tight">
-              Realce sua
-              <span className="block mt-2 bg-gradient-to-r from-rose-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
-                beleza natural
-              </span>
-            </h1>
-            
-            {/* Description */}
-            <p className="text-xl text-white/70 max-w-xl leading-relaxed">
-              {config.business.slogan}. Tratamentos personalizados com tecnologia de ponta e profissionais especializados.
-            </p>
-
-            {/* CTAs */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Button 
-                size="lg"
-                onClick={() => navigate(code ? `/clinica-estetica/${code}/agendar` : '/clinica-estetica/agendar')}
-                className="bg-gradient-to-r from-rose-500 via-pink-500 to-purple-600 hover:from-rose-600 hover:via-pink-600 hover:to-purple-700 text-white px-8 h-14 text-base font-bold shadow-2xl shadow-pink-500/40 rounded-2xl group"
-              >
-                Agendar Avaliação Gratuita
-                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Button>
-              <Button 
-                size="lg"
-                variant="outline"
-                className="border-2 border-white/20 bg-white/5 backdrop-blur-sm text-white hover:bg-white/10 hover:border-white/40 h-14 rounded-2xl font-semibold"
-                onClick={() => document.getElementById('procedimentos')?.scrollIntoView({ behavior: 'smooth' })}
-              >
-                <Play className="w-5 h-5 mr-2" />
-                Conhecer Tratamentos
-              </Button>
-            </div>
-
-            {/* Stats */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="flex flex-wrap items-center gap-8 pt-8"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex -space-x-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-                <div className="text-white">
-                  <span className="font-bold">4.9</span>
-                  <span className="text-white/60 text-sm ml-1">(200+ avaliações)</span>
-                </div>
-              </div>
-              <div className="h-6 w-px bg-white/20 hidden sm:block" />
-              <div className="flex items-center gap-2 text-white/80">
-                <Users className="w-5 h-5 text-pink-400" />
-                <span className="font-medium">+2.000 clientes satisfeitas</span>
-              </div>
-              <div className="h-6 w-px bg-white/20 hidden sm:block" />
-              <div className="flex items-center gap-2 text-white/80">
-                <Shield className="w-5 h-5 text-pink-400" />
-                <span className="font-medium">5+ anos de experiência</span>
-              </div>
-            </motion.div>
-          </motion.div>
-        </div>
-
-        {/* Floating Card */}
-        <motion.div
-          initial={{ opacity: 0, x: 100, y: 50 }}
-          animate={{ opacity: 1, x: 0, y: 0 }}
-          transition={{ delay: 0.8, type: 'spring' }}
-          className="hidden xl:block absolute right-8 bottom-20"
-        >
-          <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-6 border border-white/20 shadow-2xl">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center shadow-lg">
-                <Award className="w-7 h-7 text-white" />
-              </div>
-              <div className="text-white">
-                <p className="font-bold text-2xl">Top 10</p>
-                <p className="text-white/60 text-sm">Clínicas SP</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              {['Excelência', 'Qualidade', 'Segurança'].map((tag) => (
-                <span key={tag} className="px-3 py-1 bg-white/10 rounded-full text-white/80 text-xs font-medium">
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-      </motion.div>
-
-      {/* Scroll indicator */}
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.2 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2"
-      >
-        <motion.div
-          animate={{ y: [0, 10, 0] }}
-          transition={{ repeat: Infinity, duration: 2 }}
-          className="flex flex-col items-center gap-2"
-        >
-          <span className="text-white/50 text-sm font-medium">Role para explorar</span>
-          <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center pt-2">
-            <motion.div
-              animate={{ y: [0, 12, 0] }}
-              transition={{ repeat: Infinity, duration: 1.5 }}
-              className="w-1.5 h-1.5 bg-white rounded-full"
-            />
-          </div>
-        </motion.div>
-      </motion.div>
-    </section>
-  );
-};
-
-// Diferenciais Section - Redesigned with colorful cards
-const DiferenciaisSection = () => {
   const diferenciais = [
-    { 
-      icon: Award, 
-      title: 'Profissionais Elite', 
-      desc: 'Equipe com especializações internacionais e certificações avançadas',
-      color: 'from-rose-500 to-pink-600',
-      bgGlow: 'bg-rose-500/20'
+    { icon: Award, titulo: "Profissionais Especializados", texto: "Equipe com formação internacional" },
+    { icon: Shield, titulo: "Tecnologia de Ponta", texto: "Equipamentos de última geração" },
+    { icon: Heart, titulo: "Atendimento Humanizado", texto: "Cuidado personalizado para você" },
+    { icon: Users, titulo: "+5.000 Clientes", texto: "Satisfação comprovada" }
+  ];
+
+  const depoimentos = [
+    {
+      nome: "Carolina M.",
+      texto: "Profissionalismo impecável. Os resultados superaram minhas expectativas.",
+      nota: 5
     },
-    { 
-      icon: Shield, 
-      title: 'Segurança Total', 
-      desc: 'Produtos importados e equipamentos com certificação ANVISA',
-      color: 'from-violet-500 to-purple-600',
-      bgGlow: 'bg-violet-500/20'
+    {
+      nome: "Fernanda S.",
+      texto: "Ambiente acolhedor e equipe extremamente qualificada. Recomendo!",
+      nota: 5
     },
-    { 
-      icon: Heart, 
-      title: 'Cuidado Exclusivo', 
-      desc: 'Atendimento individualizado com protocolos personalizados',
-      color: 'from-pink-500 to-rose-600',
-      bgGlow: 'bg-pink-500/20'
-    },
-    { 
-      icon: Sparkles, 
-      title: 'Tecnologia Premium', 
-      desc: 'Equipamentos de última geração para resultados excepcionais',
-      color: 'from-amber-500 to-orange-600',
-      bgGlow: 'bg-amber-500/20'
-    },
+    {
+      nome: "Juliana R.",
+      texto: "Tratamento personalizado que fez toda diferença. Estou muito satisfeita.",
+      nota: 5
+    }
   ];
 
   return (
-    <section className="py-24 bg-slate-50 relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-pink-300 to-transparent" />
-      <div className="absolute -top-40 left-1/4 w-80 h-80 bg-pink-200/30 rounded-full blur-[100px]" />
-      <div className="absolute -bottom-40 right-1/4 w-80 h-80 bg-purple-200/30 rounded-full blur-[100px]" />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
-        >
-          <Badge className="bg-pink-100 text-pink-700 border-pink-200 mb-4 px-4 py-1.5 font-semibold">
-            Nossos Diferenciais
-          </Badge>
-          <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-4">
-            Por que somos a <span className="bg-gradient-to-r from-rose-500 to-purple-600 bg-clip-text text-transparent">escolha certa</span>
-          </h2>
-          <p className="text-slate-600 max-w-2xl mx-auto text-lg">
-            Excelência em cada detalhe para entregar resultados que superam suas expectativas
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {diferenciais.map((item, index) => (
-            <motion.div
-              key={item.title}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              whileHover={{ y: -8, scale: 1.02 }}
-              className="group"
-            >
-              <div className="relative bg-white rounded-3xl p-8 shadow-xl shadow-slate-200/50 border border-slate-100 h-full overflow-hidden">
-                {/* Glow effect */}
-                <div className={`absolute -top-20 -right-20 w-40 h-40 ${item.bgGlow} rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-                
-                <div className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
-                  <item.icon className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-slate-900 font-bold text-xl mb-3">{item.title}</h3>
-                <p className="text-slate-500 leading-relaxed">{item.desc}</p>
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-neutral-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 sm:h-20">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-neutral-900 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
+              <span className="text-lg sm:text-xl font-semibold text-neutral-900 tracking-tight">Estética Avançada</span>
+            </div>
+            
+            <nav className="hidden md:flex items-center gap-8">
+              <a href="#procedimentos" className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors">Procedimentos</a>
+              <a href="#sobre" className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors">Sobre</a>
+              <a href="#depoimentos" className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors">Depoimentos</a>
+              <a href="#contato" className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors">Contato</a>
+            </nav>
 
-// Procedimentos Section - Complete redesign with interactive cards
-const ProcedimentosSection = ({ code }: { code?: string }) => {
-  const navigate = useNavigate();
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
-
-  return (
-    <section id="procedimentos" className="py-24 bg-white relative overflow-hidden">
-      {/* Background decorations */}
-      <div className="absolute top-20 right-0 w-96 h-96 bg-gradient-to-br from-rose-100 to-purple-100 rounded-full blur-[100px] opacity-60" />
-      <div className="absolute bottom-20 left-0 w-80 h-80 bg-gradient-to-br from-pink-100 to-rose-100 rounded-full blur-[100px] opacity-60" />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
-        >
-          <Badge className="bg-gradient-to-r from-rose-100 to-purple-100 text-purple-700 border-purple-200 mb-4 px-4 py-1.5 font-semibold">
-            <Sparkles className="w-4 h-4 mr-2" />
-            Tratamentos Exclusivos
-          </Badge>
-          <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-4">
-            Nossos <span className="bg-gradient-to-r from-rose-500 to-purple-600 bg-clip-text text-transparent">Procedimentos</span>
-          </h2>
-          <p className="text-slate-600 max-w-2xl mx-auto text-lg">
-            Tratamentos avançados realizados por profissionais especializados
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {PROCEDIMENTOS.map((proc, index) => (
-            <motion.div
-              key={proc.id}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.08 }}
-              onMouseEnter={() => setHoveredId(proc.id)}
-              onMouseLeave={() => setHoveredId(null)}
+            <Button 
+              onClick={() => navigate('/clinica-estetica/agendar')}
+              className="bg-neutral-900 hover:bg-neutral-800 text-white text-sm px-4 sm:px-6 h-9 sm:h-10 rounded-full"
             >
-              <Card className={`group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer h-full ${
-                hoveredId === proc.id ? 'scale-[1.02]' : ''
-              }`}>
-                {/* Gradient Background on Hover */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${proc.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-                
-                {/* Content */}
-                <CardContent className="relative p-6 h-full flex flex-col">
-                  <div className={`w-14 h-14 rounded-2xl ${proc.bgColor} group-hover:bg-white/20 flex items-center justify-center mb-5 transition-all duration-300`}>
-                    <proc.icon className={`w-7 h-7 ${proc.iconColor} group-hover:text-white transition-colors`} />
-                  </div>
-                  
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-slate-900 group-hover:text-white mb-2 transition-colors">
-                      {proc.name}
-                    </h3>
-                    <p className="text-slate-500 group-hover:text-white/80 text-sm leading-relaxed mb-4 transition-colors">
-                      {proc.description}
-                    </p>
-                  </div>
-                  
-                  <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-100 group-hover:border-white/20 transition-colors">
-                    <div className="flex items-center gap-2 text-slate-500 group-hover:text-white/80 transition-colors">
-                      <Clock className="w-4 h-4" />
-                      <span className="text-sm font-medium">{proc.duracao}</span>
-                    </div>
-                    <Button 
-                      size="sm"
-                      onClick={() => navigate(code ? `/clinica-estetica/${code}/agendar?procedimento=${proc.id}` : `/clinica-estetica/agendar?procedimento=${proc.id}`)}
-                      className="bg-slate-900 hover:bg-slate-800 group-hover:bg-white group-hover:text-slate-900 text-white font-semibold rounded-xl shadow-none"
-                    >
-                      Agendar
-                      <ArrowRight className="w-4 h-4 ml-1" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
+              <span className="hidden sm:inline">Agendar Consulta</span>
+              <span className="sm:hidden">Agendar</span>
+            </Button>
+          </div>
         </div>
-      </div>
-    </section>
-  );
-};
+      </header>
 
-// Programas Section - Premium cards with better design
-const ProgramasSection = ({ code }: { code?: string }) => {
-  const navigate = useNavigate();
-
-  return (
-    <section id="programas" className="py-24 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
-      {/* Decorative elements */}
-      <div className="absolute inset-0">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-rose-500/10 rounded-full blur-[100px]" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-[100px]" />
-      </div>
-      
-      {/* Grid pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="w-full h-full" style={{
-          backgroundImage: 'linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)',
-          backgroundSize: '60px 60px'
-        }} />
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
-        >
-          <Badge className="bg-white/10 text-white border-white/20 mb-4 px-4 py-1.5 font-semibold backdrop-blur-sm">
-            <Gem className="w-4 h-4 mr-2 text-pink-400" />
-            Programas Exclusivos
-          </Badge>
-          <h2 className="text-4xl sm:text-5xl font-bold text-white mb-4">
-            Pacotes <span className="bg-gradient-to-r from-rose-400 to-purple-400 bg-clip-text text-transparent">Especiais</span>
-          </h2>
-          <p className="text-slate-400 max-w-2xl mx-auto text-lg">
-            Programas completos desenvolvidos para resultados extraordinários
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
-          {PROGRAMAS.map((programa, index) => (
+      {/* Hero Section */}
+      <section className="pt-20 sm:pt-24 lg:pt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center min-h-[calc(100vh-5rem)]">
             <motion.div
-              key={programa.id}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.15 }}
-              className={`relative ${programa.destaque ? 'md:-mt-4 md:mb-4' : ''}`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="py-8 lg:py-0"
             >
-              {programa.destaque && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
-                  <Badge className="bg-gradient-to-r from-rose-500 to-purple-600 text-white border-0 px-4 py-1.5 font-bold shadow-lg shadow-pink-500/30">
-                    ⭐ Mais Popular
-                  </Badge>
-                </div>
-              )}
+              <span className="inline-flex items-center gap-2 text-sm text-neutral-500 mb-4 sm:mb-6">
+                <span className="w-8 h-px bg-neutral-300"></span>
+                Clínica de Estética Premium
+              </span>
               
-              <Card className={`relative overflow-hidden h-full group hover:scale-[1.02] transition-all duration-500 ${
-                programa.destaque 
-                  ? 'bg-gradient-to-br from-rose-500 via-pink-500 to-purple-600 border-0 shadow-2xl shadow-pink-500/30' 
-                  : 'bg-white/5 backdrop-blur-xl border-white/10 hover:bg-white/10 hover:border-white/20'
-              }`}>
-                <CardContent className="p-8">
-                  <div className="mb-6">
-                    <h3 className={`text-2xl font-bold mb-2 ${programa.destaque ? 'text-white' : 'text-white'}`}>
-                      {programa.name}
-                    </h3>
-                    <p className={`text-sm ${programa.destaque ? 'text-white/80' : 'text-slate-400'}`}>
-                      {programa.descricao}
-                    </p>
-                  </div>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-light text-neutral-900 leading-[1.1] mb-4 sm:mb-6">
+                Beleza que
+                <span className="block font-medium">revela você</span>
+              </h1>
+              
+              <p className="text-base sm:text-lg text-neutral-500 leading-relaxed mb-6 sm:mb-8 max-w-lg">
+                Tratamentos estéticos personalizados com tecnologia avançada 
+                e profissionais especializados para realçar sua beleza natural.
+              </p>
 
-                  <div className={`text-4xl font-bold mb-1 ${programa.destaque ? 'text-white' : 'text-white'}`}>
-                    {programa.price}
-                  </div>
-                  <p className={`text-sm mb-6 ${programa.destaque ? 'text-white/60' : 'text-slate-500'}`}>
-                    {programa.sessoes}
-                  </p>
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-8 sm:mb-12">
+                <Button 
+                  onClick={() => navigate('/clinica-estetica/agendar')}
+                  className="bg-neutral-900 hover:bg-neutral-800 text-white h-12 sm:h-14 px-6 sm:px-8 rounded-full text-sm sm:text-base"
+                >
+                  Agendar Avaliação Gratuita
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="border-neutral-200 text-neutral-700 hover:bg-neutral-50 h-12 sm:h-14 px-6 sm:px-8 rounded-full text-sm sm:text-base"
+                >
+                  <Phone className="w-4 h-4 mr-2" />
+                  (11) 99999-9999
+                </Button>
+              </div>
 
-                  <div className="space-y-3 mb-8">
-                    {programa.inclui.map((item, i) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                          programa.destaque ? 'bg-white/20' : 'bg-pink-500/20'
-                        }`}>
-                          <CheckCircle2 className={`w-3.5 h-3.5 ${programa.destaque ? 'text-white' : 'text-pink-400'}`} />
-                        </div>
-                        <span className={`text-sm ${programa.destaque ? 'text-white/90' : 'text-slate-300'}`}>
-                          {item}
-                        </span>
-                      </div>
+              <div className="flex items-center gap-6 sm:gap-8 pt-6 sm:pt-8 border-t border-neutral-100">
+                <div>
+                  <p className="text-2xl sm:text-3xl font-semibold text-neutral-900">+5.000</p>
+                  <p className="text-xs sm:text-sm text-neutral-500">Clientes satisfeitos</p>
+                </div>
+                <div className="w-px h-10 sm:h-12 bg-neutral-200"></div>
+                <div>
+                  <p className="text-2xl sm:text-3xl font-semibold text-neutral-900">12 anos</p>
+                  <p className="text-xs sm:text-sm text-neutral-500">De experiência</p>
+                </div>
+                <div className="w-px h-10 sm:h-12 bg-neutral-200"></div>
+                <div>
+                  <div className="flex items-center gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-3 h-3 sm:w-4 sm:h-4 fill-neutral-900 text-neutral-900" />
                     ))}
                   </div>
-
-                  <Button 
-                    onClick={() => navigate(code ? `/clinica-estetica/${code}/agendar?programa=${programa.id}` : `/clinica-estetica/agendar?programa=${programa.id}`)}
-                    className={`w-full h-12 font-bold rounded-xl ${
-                      programa.destaque 
-                        ? 'bg-white text-pink-600 hover:bg-white/90 shadow-lg' 
-                        : 'bg-gradient-to-r from-rose-500 to-purple-600 text-white hover:from-rose-600 hover:to-purple-700 shadow-lg shadow-pink-500/20'
-                    }`}
-                  >
-                    Quero Este Programa
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </CardContent>
-              </Card>
+                  <p className="text-xs sm:text-sm text-neutral-500">Avaliação 5.0</p>
+                </div>
+              </div>
             </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
 
-// Sobre Section - Modern layout
-const SobreSection = () => {
-  return (
-    <section id="sobre" className="py-24 bg-white relative overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          {/* Images */}
-          <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="relative"
-          >
-            <div className="relative">
-              <div className="aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl shadow-slate-200">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="relative"
+            >
+              <div className="aspect-[4/5] rounded-2xl sm:rounded-3xl overflow-hidden">
                 <img 
-                  src={interiorImage} 
-                  alt="Interior da clínica"
+                  src={clinicaHero}
+                  alt="Clínica de Estética"
                   className="w-full h-full object-cover"
                 />
               </div>
               
-              {/* Overlay card */}
+              {/* Floating Card */}
               <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3 }}
-                className="absolute -bottom-8 -right-8 bg-white rounded-2xl p-6 shadow-xl shadow-slate-200/50 border border-slate-100"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.6 }}
+                className="absolute -left-4 sm:-left-8 bottom-8 sm:bottom-16 bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl border border-neutral-100"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center shadow-lg shadow-pink-500/30">
-                    <Award className="w-7 h-7 text-white" />
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-neutral-100 flex items-center justify-center">
+                    <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-neutral-700" />
                   </div>
                   <div>
-                    <p className="text-3xl font-bold text-slate-900">+5</p>
-                    <p className="text-slate-500 text-sm font-medium">Anos de experiência</p>
+                    <p className="text-xs sm:text-sm text-neutral-500">Próximo horário</p>
+                    <p className="text-sm sm:text-base font-medium text-neutral-900">Hoje, 14:30</p>
                   </div>
                 </div>
               </motion.div>
-            </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
 
-            {/* Decorative element */}
-            <div className="absolute -z-10 -top-8 -left-8 w-full h-full rounded-3xl bg-gradient-to-br from-rose-100 to-purple-100" />
+      {/* Diferenciais */}
+      <section className="py-16 sm:py-24 bg-neutral-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
+            {diferenciais.map((item, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="text-center p-4 sm:p-6"
+              >
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white border border-neutral-200 flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <item.icon className="w-5 h-5 sm:w-6 sm:h-6 text-neutral-700" />
+                </div>
+                <h3 className="text-sm sm:text-base font-medium text-neutral-900 mb-1">{item.titulo}</h3>
+                <p className="text-xs sm:text-sm text-neutral-500">{item.texto}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Procedimentos */}
+      <section id="procedimentos" className="py-16 sm:py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-2xl mb-10 sm:mb-16"
+          >
+            <span className="inline-flex items-center gap-2 text-sm text-neutral-500 mb-3 sm:mb-4">
+              <span className="w-8 h-px bg-neutral-300"></span>
+              Nossos Procedimentos
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-light text-neutral-900 mb-3 sm:mb-4">
+              Tratamentos <span className="font-medium">especializados</span>
+            </h2>
+            <p className="text-neutral-500 text-sm sm:text-base">
+              Protocolos desenvolvidos com as técnicas mais avançadas do mercado.
+            </p>
           </motion.div>
 
-          {/* Content */}
-          <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="space-y-8"
-          >
-            <div>
-              <Badge className="bg-pink-100 text-pink-700 border-pink-200 mb-4 px-4 py-1.5 font-semibold">
-                Sobre Nós
-              </Badge>
-              <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-6">
-                Dedicados à sua <span className="bg-gradient-to-r from-rose-500 to-purple-600 bg-clip-text text-transparent">beleza</span>
-              </h2>
-              <p className="text-slate-600 text-lg leading-relaxed mb-6">
-                A Essence Estética nasceu do sonho de criar um espaço onde a beleza natural é celebrada 
-                e realçada com tratamentos de excelência. Nossa missão é proporcionar experiências 
-                transformadoras que vão além da estética.
-              </p>
-              <p className="text-slate-600 text-lg leading-relaxed">
-                Com uma equipe altamente qualificada e equipamentos de última geração, oferecemos 
-                tratamentos personalizados que respeitam a individualidade de cada cliente.
-              </p>
-            </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {procedimentos.map((proc, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                whileHover={{ y: -4 }}
+                className="group bg-white border border-neutral-200 rounded-2xl p-5 sm:p-6 hover:border-neutral-300 hover:shadow-lg transition-all duration-300 cursor-pointer"
+              >
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-neutral-100 flex items-center justify-center mb-4 sm:mb-5 group-hover:bg-neutral-900 transition-colors duration-300">
+                  <proc.icon className="w-5 h-5 sm:w-6 sm:h-6 text-neutral-600 group-hover:text-white transition-colors duration-300" />
+                </div>
+                
+                <h3 className="text-base sm:text-lg font-medium text-neutral-900 mb-2">{proc.nome}</h3>
+                <p className="text-xs sm:text-sm text-neutral-500 mb-4 leading-relaxed">{proc.descricao}</p>
+                
+                <div className="flex items-center justify-between pt-4 border-t border-neutral-100">
+                  <span className="text-xs text-neutral-400 flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {proc.duracao}
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-neutral-400 group-hover:text-neutral-900 group-hover:translate-x-1 transition-all duration-300" />
+                </div>
+              </motion.div>
+            ))}
+          </div>
 
-            <div className="grid grid-cols-2 gap-6">
-              {[
-                { number: '2.000+', label: 'Clientes satisfeitas' },
-                { number: '15+', label: 'Procedimentos' },
-                { number: '4.9', label: 'Avaliação média' },
-                { number: '98%', label: 'Satisfação' },
-              ].map((stat, i) => (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.1 * i }}
-                  className="bg-slate-50 rounded-2xl p-5"
-                >
-                  <p className="text-3xl font-bold bg-gradient-to-r from-rose-500 to-purple-600 bg-clip-text text-transparent">
-                    {stat.number}
-                  </p>
-                  <p className="text-slate-600 text-sm font-medium">{stat.label}</p>
-                </motion.div>
-              ))}
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center mt-8 sm:mt-12"
+          >
+            <Button 
+              variant="outline"
+              onClick={() => navigate('/clinica-estetica/agendar')}
+              className="border-neutral-200 text-neutral-700 hover:bg-neutral-50 h-11 sm:h-12 px-6 sm:px-8 rounded-full text-sm"
+            >
+              Ver todos os procedimentos
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Sobre */}
+      <section id="sobre" className="py-16 sm:py-24 bg-neutral-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="order-2 lg:order-1"
+            >
+              <span className="inline-flex items-center gap-2 text-sm text-neutral-400 mb-4 sm:mb-6">
+                <span className="w-8 h-px bg-neutral-600"></span>
+                Sobre Nós
+              </span>
+              
+              <h2 className="text-3xl sm:text-4xl font-light text-white mb-4 sm:mb-6">
+                Excelência em <span className="font-medium">estética</span>
+              </h2>
+              
+              <p className="text-neutral-400 mb-6 sm:mb-8 leading-relaxed text-sm sm:text-base">
+                Há mais de 12 anos transformando vidas através de tratamentos estéticos 
+                personalizados. Nossa clínica combina tecnologia de ponta com profissionais 
+                altamente qualificados para entregar resultados naturais e duradouros.
+              </p>
+
+              <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
+                {[
+                  "Equipe com certificação internacional",
+                  "Protocolos exclusivos e personalizados",
+                  "Ambiente moderno e acolhedor",
+                  "Acompanhamento pós-procedimento"
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-white flex-shrink-0" />
+                    <span className="text-neutral-300 text-sm sm:text-base">{item}</span>
+                  </div>
+                ))}
+              </div>
+
+              <Button 
+                onClick={() => navigate('/clinica-estetica/agendar')}
+                className="bg-white text-neutral-900 hover:bg-neutral-100 h-11 sm:h-12 px-6 sm:px-8 rounded-full text-sm"
+              >
+                Conhecer a clínica
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="order-1 lg:order-2"
+            >
+              <div className="aspect-[4/3] rounded-2xl sm:rounded-3xl overflow-hidden">
+                <img 
+                  src={clinicaInterior}
+                  alt="Interior da Clínica"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Galeria */}
+      <section className="py-16 sm:py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center max-w-2xl mx-auto mb-10 sm:mb-16"
+          >
+            <span className="inline-flex items-center gap-2 text-sm text-neutral-500 mb-3 sm:mb-4 justify-center">
+              <span className="w-8 h-px bg-neutral-300"></span>
+              Nossa Estrutura
+              <span className="w-8 h-px bg-neutral-300"></span>
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-light text-neutral-900">
+              Ambiente <span className="font-medium">exclusivo</span>
+            </h2>
+          </motion.div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="col-span-2 lg:col-span-2 row-span-2"
+            >
+              <div className="aspect-[4/3] lg:aspect-[16/10] rounded-xl sm:rounded-2xl overflow-hidden">
+                <img src={clinicaInterior} alt="Clínica" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+              </div>
+            </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+            >
+              <div className="aspect-square rounded-xl sm:rounded-2xl overflow-hidden">
+                <img src={clinicaProcedimento} alt="Procedimento" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+              </div>
+            </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+            >
+              <div className="aspect-square rounded-xl sm:rounded-2xl overflow-hidden">
+                <img src={clinicaCliente} alt="Cliente" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Depoimentos */}
+      <section id="depoimentos" className="py-16 sm:py-24 bg-neutral-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center max-w-2xl mx-auto mb-10 sm:mb-16"
+          >
+            <span className="inline-flex items-center gap-2 text-sm text-neutral-500 mb-3 sm:mb-4 justify-center">
+              <span className="w-8 h-px bg-neutral-300"></span>
+              Depoimentos
+              <span className="w-8 h-px bg-neutral-300"></span>
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-light text-neutral-900">
+              O que dizem <span className="font-medium">nossas clientes</span>
+            </h2>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-4 sm:gap-6">
+            {depoimentos.map((dep, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="bg-white rounded-2xl p-5 sm:p-8 border border-neutral-100"
+              >
+                <div className="flex items-center gap-1 mb-4 sm:mb-6">
+                  {[...Array(dep.nota)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-neutral-900 text-neutral-900" />
+                  ))}
+                </div>
+                
+                <p className="text-neutral-600 mb-4 sm:mb-6 leading-relaxed text-sm sm:text-base">"{dep.texto}"</p>
+                
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-neutral-200 flex items-center justify-center">
+                    <span className="text-xs sm:text-sm font-medium text-neutral-600">{dep.nome.charAt(0)}</span>
+                  </div>
+                  <span className="text-sm font-medium text-neutral-900">{dep.nome}</span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-16 sm:py-24 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-light text-neutral-900 mb-4 sm:mb-6">
+              Pronta para <span className="font-medium">transformar</span> sua beleza?
+            </h2>
+            <p className="text-neutral-500 mb-6 sm:mb-8 max-w-xl mx-auto text-sm sm:text-base">
+              Agende sua avaliação gratuita e descubra o tratamento ideal para você.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+              <Button 
+                onClick={() => navigate('/clinica-estetica/agendar')}
+                className="bg-neutral-900 hover:bg-neutral-800 text-white h-12 sm:h-14 px-6 sm:px-10 rounded-full text-sm sm:text-base"
+              >
+                Agendar Avaliação Gratuita
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+              <Button 
+                variant="outline"
+                className="border-neutral-200 text-neutral-700 hover:bg-neutral-50 h-12 sm:h-14 px-6 sm:px-10 rounded-full text-sm sm:text-base"
+              >
+                <Phone className="w-4 h-4 mr-2" />
+                (11) 99999-9999
+              </Button>
             </div>
           </motion.div>
         </div>
-      </div>
-    </section>
-  );
-};
+      </section>
 
-// Depoimentos Section - Modern testimonials
-const DepoimentosSection = () => {
-  return (
-    <section id="depoimentos" className="py-24 bg-slate-50 relative overflow-hidden">
-      {/* Background */}
-      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-pink-300 to-transparent" />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
-        >
-          <Badge className="bg-pink-100 text-pink-700 border-pink-200 mb-4 px-4 py-1.5 font-semibold">
-            <Star className="w-4 h-4 mr-2 fill-pink-500" />
-            Depoimentos
-          </Badge>
-          <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-4">
-            O que nossas <span className="bg-gradient-to-r from-rose-500 to-purple-600 bg-clip-text text-transparent">clientes dizem</span>
-          </h2>
-          <p className="text-slate-600 max-w-2xl mx-auto text-lg">
-            Histórias reais de transformação e satisfação
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {DEPOIMENTOS.map((dep, index) => (
+      {/* Contato */}
+      <section id="contato" className="py-16 sm:py-24 bg-neutral-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
             <motion.div
-              key={dep.nome}
-              initial={{ opacity: 0, y: 40 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className="group"
+              className="bg-white rounded-2xl p-5 sm:p-8 border border-neutral-100 text-center"
             >
-              <Card className="bg-white border-0 shadow-xl shadow-slate-200/50 h-full hover:shadow-2xl hover:-translate-y-2 transition-all duration-500">
-                <CardContent className="p-8">
-                  {/* Quote icon */}
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-100 to-purple-100 flex items-center justify-center mb-6">
-                    <Quote className="w-6 h-6 text-pink-600" />
-                  </div>
-                  
-                  {/* Stars */}
-                  <div className="flex gap-1 mb-4">
-                    {[...Array(dep.rating)].map((_, i) => (
-                      <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
-                  
-                  {/* Text */}
-                  <p className="text-slate-600 leading-relaxed mb-6 text-lg italic">
-                    "{dep.texto}"
-                  </p>
-                  
-                  {/* Author */}
-                  <div className="flex items-center gap-4 pt-6 border-t border-slate-100">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-rose-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg shadow-pink-500/20">
-                      {dep.avatar}
-                    </div>
-                    <div>
-                      <p className="font-bold text-slate-900">{dep.nome}</p>
-                      <p className="text-sm text-slate-500">{dep.procedimento}</p>
-                    </div>
-                    <BadgeCheck className="w-5 h-5 text-pink-500 ml-auto" />
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-neutral-100 flex items-center justify-center mx-auto mb-4">
+                <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-neutral-700" />
+              </div>
+              <h3 className="text-base sm:text-lg font-medium text-neutral-900 mb-2">Endereço</h3>
+              <p className="text-neutral-500 text-xs sm:text-sm">Av. Paulista, 1000 - Sala 501<br />São Paulo - SP</p>
             </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
 
-// CTA Section
-const CTASection = ({ code }: { code?: string }) => {
-  const navigate = useNavigate();
-
-  return (
-    <section className="py-24 bg-gradient-to-br from-rose-500 via-pink-500 to-purple-600 relative overflow-hidden">
-      {/* Decorative elements */}
-      <div className="absolute inset-0">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-white/10 rounded-full blur-[100px]" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-white/10 rounded-full blur-[100px]" />
-      </div>
-      
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="space-y-8"
-        >
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight">
-            Pronta para transformar sua <span className="underline decoration-white/30 decoration-4 underline-offset-8">autoestima</span>?
-          </h2>
-          <p className="text-xl text-white/80 max-w-2xl mx-auto">
-            Agende sua avaliação gratuita e descubra os tratamentos ideais para você
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-            <Button 
-              size="lg"
-              onClick={() => navigate(code ? `/clinica-estetica/${code}/agendar` : '/clinica-estetica/agendar')}
-              className="bg-white text-pink-600 hover:bg-white/90 px-10 h-14 text-lg font-bold shadow-2xl shadow-pink-900/30 rounded-2xl"
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="bg-white rounded-2xl p-5 sm:p-8 border border-neutral-100 text-center"
             >
-              Agendar Avaliação Gratuita
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-neutral-100 flex items-center justify-center mx-auto mb-4">
+                <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-neutral-700" />
+              </div>
+              <h3 className="text-base sm:text-lg font-medium text-neutral-900 mb-2">Horário</h3>
+              <p className="text-neutral-500 text-xs sm:text-sm">Segunda a Sexta: 9h às 20h<br />Sábado: 9h às 16h</p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="bg-white rounded-2xl p-5 sm:p-8 border border-neutral-100 text-center"
+            >
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-neutral-100 flex items-center justify-center mx-auto mb-4">
+                <Phone className="w-5 h-5 sm:w-6 sm:h-6 text-neutral-700" />
+              </div>
+              <h3 className="text-base sm:text-lg font-medium text-neutral-900 mb-2">Contato</h3>
+              <p className="text-neutral-500 text-xs sm:text-sm">(11) 99999-9999<br />contato@esteticaavancada.com</p>
+            </motion.div>
           </div>
+        </div>
+      </section>
 
-          <div className="flex flex-wrap items-center justify-center gap-6 pt-8 text-white/80">
+      {/* Footer */}
+      <footer className="py-8 sm:py-12 bg-white border-t border-neutral-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-white" />
-              <span className="font-medium">Sem compromisso</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-white" />
-              <span className="font-medium">Atendimento VIP</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-white" />
-              <span className="font-medium">Resultados garantidos</span>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-    </section>
-  );
-};
-
-// Contato Section
-const ContatoSection = ({ config }: { config: typeof DEFAULT_CONFIG }) => {
-  return (
-    <section id="contato" className="py-24 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-16">
-          {/* Info */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="space-y-8"
-          >
-            <div>
-              <Badge className="bg-pink-100 text-pink-700 border-pink-200 mb-4 px-4 py-1.5 font-semibold">
-                Contato
-              </Badge>
-              <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-6">
-                Fale <span className="bg-gradient-to-r from-rose-500 to-purple-600 bg-clip-text text-transparent">conosco</span>
-              </h2>
-              <p className="text-slate-600 text-lg leading-relaxed">
-                Estamos à disposição para atender você. Entre em contato e agende sua visita!
-              </p>
+              <div className="w-8 h-8 rounded-full bg-neutral-900 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-base font-semibold text-neutral-900">Estética Avançada</span>
             </div>
 
-            <div className="space-y-6">
-              <div className="flex items-start gap-5">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-100 to-pink-100 flex items-center justify-center shrink-0">
-                  <Phone className="w-6 h-6 text-pink-600" />
-                </div>
-                <div>
-                  <p className="font-bold text-slate-900 text-lg mb-1">Telefone / WhatsApp</p>
-                  <p className="text-slate-600">{config.business.phone}</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-5">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-100 to-pink-100 flex items-center justify-center shrink-0">
-                  <MapPin className="w-6 h-6 text-pink-600" />
-                </div>
-                <div>
-                  <p className="font-bold text-slate-900 text-lg mb-1">Endereço</p>
-                  <p className="text-slate-600">{config.business.address}</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-5">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-100 to-pink-100 flex items-center justify-center shrink-0">
-                  <Clock className="w-6 h-6 text-pink-600" />
-                </div>
-                <div>
-                  <p className="font-bold text-slate-900 text-lg mb-1">Horário de Atendimento</p>
-                  <p className="text-slate-600">Segunda a Sexta: 9h às 19h</p>
-                  <p className="text-slate-600">Sábado: 9h às 14h</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Social */}
-            <div className="flex gap-3 pt-4">
-              <a 
-                href="#" 
-                className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-white hover:scale-110 transition-transform shadow-lg shadow-pink-500/30"
-              >
-                <Instagram className="w-5 h-5" />
+            <div className="flex items-center gap-4">
+              <a href="#" className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-neutral-100 flex items-center justify-center hover:bg-neutral-200 transition-colors">
+                <Instagram className="w-4 h-4 sm:w-5 sm:h-5 text-neutral-600" />
               </a>
-              <a 
-                href={`https://wa.me/${config.business.whatsapp}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-white hover:scale-110 transition-transform shadow-lg shadow-emerald-500/30"
-              >
-                <MessageCircle className="w-5 h-5" />
+              <a href="#" className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-neutral-100 flex items-center justify-center hover:bg-neutral-200 transition-colors">
+                <Facebook className="w-4 h-4 sm:w-5 sm:h-5 text-neutral-600" />
               </a>
             </div>
-          </motion.div>
 
-          {/* Image/Map */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="relative"
-          >
-            <div className="aspect-square rounded-3xl overflow-hidden shadow-2xl shadow-slate-200">
-              <img 
-                src={clienteImage} 
-                alt="Atendimento"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/50 via-transparent to-transparent" />
-            </div>
-            
-            {/* WhatsApp CTA */}
-            <a
-              href={`https://wa.me/${config.business.whatsapp}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="absolute bottom-6 left-6 right-6 bg-white rounded-2xl p-5 shadow-xl flex items-center justify-between group hover:bg-pink-50 transition-colors"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg">
-                  <MessageCircle className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <p className="font-bold text-slate-900">Fale no WhatsApp</p>
-                  <p className="text-slate-500 text-sm">Resposta rápida</p>
-                </div>
-              </div>
-              <ArrowUpRight className="w-5 h-5 text-slate-400 group-hover:text-pink-600 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
-            </a>
-          </motion.div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-// Footer
-const FooterSection = ({ config }: { config: typeof DEFAULT_CONFIG }) => {
-  return (
-    <footer className="bg-slate-900 text-white py-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-          {/* Logo */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-400 via-pink-500 to-purple-600 flex items-center justify-center shadow-lg">
-                <Sparkles className="w-6 h-6 text-white" />
-              </div>
-              <span className="font-bold text-xl">{config.business.name}</span>
-            </div>
-            <p className="text-slate-400 leading-relaxed">
-              Estética avançada com atendimento personalizado e resultados excepcionais.
+            <p className="text-xs sm:text-sm text-neutral-500">
+              © 2024 Estética Avançada. Todos os direitos reservados.
             </p>
           </div>
-
-          {/* Links */}
-          <div>
-            <h4 className="font-bold text-lg mb-4">Navegação</h4>
-            <ul className="space-y-3">
-              {['Procedimentos', 'Programas', 'Sobre', 'Contato'].map((item) => (
-                <li key={item}>
-                  <a href={`#${item.toLowerCase()}`} className="text-slate-400 hover:text-pink-400 transition-colors">
-                    {item}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Contato */}
-          <div>
-            <h4 className="font-bold text-lg mb-4">Contato</h4>
-            <ul className="space-y-3 text-slate-400">
-              <li>{config.business.phone}</li>
-              <li className="text-sm">{config.business.address}</li>
-            </ul>
-          </div>
-
-          {/* Horário */}
-          <div>
-            <h4 className="font-bold text-lg mb-4">Horário</h4>
-            <ul className="space-y-3 text-slate-400">
-              <li>Segunda a Sexta: 9h às 19h</li>
-              <li>Sábado: 9h às 14h</li>
-            </ul>
-          </div>
         </div>
-
-        <div className="border-t border-slate-800 mt-12 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-slate-500 text-sm">
-            © {new Date().getFullYear()} {config.business.name}. Todos os direitos reservados.
-          </p>
-          <div className="flex items-center gap-2 text-slate-500 text-sm">
-            <span>Desenvolvido por</span>
-            <span className="font-semibold text-pink-400">Genesis</span>
-          </div>
-        </div>
-      </div>
-    </footer>
+      </footer>
+    </div>
   );
 };
 
-// Main Page Component
-export default function ClinicaEsteticaPage() {
-  const { code } = useParams<{ code: string }>();
-  const config = DEFAULT_CONFIG;
-
-  return (
-    <div className="min-h-screen bg-white">
-      <ClinicaHeader config={config} code={code} />
-      <HeroSection config={config} code={code} />
-      <DiferenciaisSection />
-      <ProcedimentosSection code={code} />
-      <ProgramasSection code={code} />
-      <SobreSection />
-      <DepoimentosSection />
-      <CTASection code={code} />
-      <ContatoSection config={config} />
-      <FooterSection config={config} />
-    </div>
-  );
-}
+export default ClinicaEsteticaPage;
