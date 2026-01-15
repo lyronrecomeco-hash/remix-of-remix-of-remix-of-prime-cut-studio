@@ -1,154 +1,50 @@
-import { useState } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
-  ArrowLeft, 
   Calendar, 
   Clock, 
-  Check, 
-  Sparkles,
-  User,
-  Phone,
-  MessageSquare,
+  User, 
+  Phone, 
+  Mail,
+  ChevronLeft,
   ChevronRight,
-  CheckCircle2,
-  ArrowRight,
-  Gem,
-  Heart,
-  Leaf,
-  Zap
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+  Check,
+  Sparkles,
+  ArrowLeft
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useNavigate } from "react-router-dom";
 
-// Configuração
-const CONFIG = {
-  business: {
-    name: 'Essence Estética',
-    address: 'Av. Paulista, 1000 - Bela Vista, São Paulo - SP',
-  },
-};
-
-// Procedimentos
-const PROCEDIMENTOS = [
-  { id: 'limpeza', name: 'Limpeza de Pele', duracao: '1h30', icon: Sparkles, color: 'from-rose-500 to-pink-600' },
-  { id: 'botox', name: 'Toxina Botulínica', duracao: '30min', icon: Gem, color: 'from-violet-500 to-purple-600' },
-  { id: 'preenchimento', name: 'Preenchimento Facial', duracao: '45min', icon: Heart, color: 'from-pink-500 to-rose-600' },
-  { id: 'peeling', name: 'Peeling Químico', duracao: '45min', icon: Leaf, color: 'from-emerald-500 to-teal-600' },
-  { id: 'microagulhamento', name: 'Microagulhamento', duracao: '1h', icon: Zap, color: 'from-amber-500 to-orange-600' },
-  { id: 'drenagem', name: 'Drenagem Linfática', duracao: '1h', icon: Heart, color: 'from-cyan-500 to-sky-600' },
-  { id: 'avaliacao', name: 'Avaliação Gratuita', duracao: '30min', icon: Sparkles, color: 'from-rose-500 to-purple-600' },
-];
-
-// Horários disponíveis
-const HORARIOS = [
-  '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-  '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00'
-];
-
-// Phone mask helper
-const formatPhone = (value: string) => {
-  const numbers = value.replace(/\D/g, '');
-  if (numbers.length <= 2) return numbers;
-  if (numbers.length <= 7) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
-  if (numbers.length <= 11) return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`;
-  return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
-};
-
-const getRawPhone = (formatted: string) => formatted.replace(/\D/g, '');
-
-// Step Indicator - Premium design
-const StepIndicator = ({ currentStep }: { currentStep: number }) => {
-  const steps = [
-    { label: 'Procedimento', icon: Sparkles },
-    { label: 'Data e Hora', icon: Calendar },
-    { label: 'Seus Dados', icon: User },
-  ];
-  
-  return (
-    <div className="mb-10">
-      <div className="flex items-center justify-between relative max-w-md mx-auto">
-        {/* Progress line */}
-        <div className="absolute top-6 left-8 right-8 h-1 bg-slate-200 -z-10 rounded-full">
-          <motion.div 
-            className="h-full bg-gradient-to-r from-rose-500 to-purple-600 rounded-full"
-            initial={{ width: '0%' }}
-            animate={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
-          />
-        </div>
-
-        {steps.map((step, index) => {
-          const stepNum = index + 1;
-          const isCompleted = currentStep > stepNum;
-          const isCurrent = currentStep === stepNum;
-          const Icon = step.icon;
-          
-          return (
-            <div key={step.label} className="flex flex-col items-center z-10">
-              <motion.div
-                initial={false}
-                animate={{
-                  scale: isCurrent ? 1.1 : 1,
-                }}
-                transition={{ type: 'spring', stiffness: 300 }}
-                className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 ${
-                  isCompleted 
-                    ? 'bg-gradient-to-br from-rose-500 to-purple-600 text-white shadow-lg shadow-pink-500/30' 
-                    : isCurrent 
-                      ? 'bg-white text-pink-600 shadow-xl shadow-pink-100 border-2 border-pink-500' 
-                      : 'bg-slate-100 text-slate-400 border-2 border-transparent'
-                }`}
-              >
-                {isCompleted ? (
-                  <Check className="w-5 h-5" />
-                ) : (
-                  <Icon className="w-5 h-5" />
-                )}
-              </motion.div>
-              <span className={`text-xs mt-3 font-semibold ${
-                isCurrent ? 'text-pink-600' : isCompleted ? 'text-purple-600' : 'text-slate-400'
-              }`}>
-                {step.label}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
-export default function ClinicaEsteticaAgendarPage() {
-  const { code } = useParams<{ code: string }>();
-  const [searchParams] = useSearchParams();
+const ClinicaEsteticaAgendarPage = () => {
   const navigate = useNavigate();
-  
   const [step, setStep] = useState(1);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-
-  // Form data
   const [formData, setFormData] = useState({
-    procedimento: searchParams.get('procedimento') || searchParams.get('programa') || '',
-    data: '',
-    horario: '',
-    nome: '',
-    whatsapp: '',
-    observacao: '',
+    procedimento: "",
+    data: "",
+    horario: "",
+    nome: "",
+    telefone: "",
+    email: ""
   });
 
-  // Generate available dates (next 30 days, excluding Sundays)
-  const getAvailableDates = () => {
-    const dates: Date[] = [];
+  const procedimentos = [
+    { id: "harmonizacao", nome: "Harmonização Facial", duracao: "60 min" },
+    { id: "bioestimuladores", nome: "Bioestimuladores", duracao: "45 min" },
+    { id: "skincare", nome: "Skincare Avançado", duracao: "90 min" },
+    { id: "corporal", nome: "Tratamentos Corporais", duracao: "60 min" },
+    { id: "avaliacao", nome: "Avaliação Gratuita", duracao: "30 min" }
+  ];
+
+  const horarios = [
+    "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+    "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00"
+  ];
+
+  const generateDates = () => {
+    const dates = [];
     const today = new Date();
-    for (let i = 1; i <= 30; i++) {
+    for (let i = 1; i <= 14; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
       if (date.getDay() !== 0) {
@@ -158,489 +54,402 @@ export default function ClinicaEsteticaAgendarPage() {
     return dates;
   };
 
-  const availableDates = getAvailableDates();
-
-  const canProceed = () => {
-    switch (step) {
-      case 1:
-        return !!formData.procedimento;
-      case 2:
-        return !!formData.data && !!formData.horario;
-      case 3:
-        return formData.nome.length >= 3 && getRawPhone(formData.whatsapp).length >= 10;
-      default:
-        return false;
-    }
+  const formatDate = (date: Date) => {
+    const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    return {
+      day: date.getDate(),
+      weekday: days[date.getDay()],
+      month: months[date.getMonth()],
+      full: date.toISOString().split('T')[0]
+    };
   };
 
-  const handleNext = () => {
-    if (canProceed() && step < 3) {
-      setStep(step + 1);
-    }
+  const handleSubmit = () => {
+    setStep(4);
   };
 
-  const handleBack = () => {
-    if (step > 1) {
-      setStep(step - 1);
-    } else {
-      navigate(code ? `/clinica-estetica/${code}` : '/clinica-estetica');
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (!canProceed()) return;
-    setIsSubmitting(true);
-
-    const rawPhone = getRawPhone(formData.whatsapp);
-    const phoneWithCountry = rawPhone.startsWith('55') ? rawPhone : `55${rawPhone}`;
-
-    try {
-      const procedimentoName = PROCEDIMENTOS.find(p => p.id === formData.procedimento)?.name || formData.procedimento;
-      const dataFormatted = new Date(formData.data + 'T12:00:00').toLocaleDateString('pt-BR', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long'
-      });
-
-      const message = `✨ *Agendamento realizado* ✨
-
-Olá, ${formData.nome}!
-
-Seu horário foi reservado com sucesso.
-
-📌 *Procedimento:* ${procedimentoName}
-📅 *Data:* ${dataFormatted}
-⏰ *Horário:* ${formData.horario}
-${formData.observacao ? `\n📝 *Observação:* ${formData.observacao}` : ''}
-
-Caso haja qualquer indisponibilidade,
-nossa equipe entrará em contato para ajuste.
-
-_${CONFIG.business.name}_
-Até breve! ✨`;
-
-      const { error } = await supabase.functions.invoke('send-whatsapp-genesis', {
-        body: {
-          phone: phoneWithCountry,
-          message: message,
-          countryCode: 'BR',
-        },
-      });
-
-      if (error) {
-        console.error('Erro ao enviar WhatsApp:', error);
-        toast.error('Erro ao enviar confirmação, mas seu agendamento foi registrado!');
-      }
-
-      setIsSuccess(true);
-    } catch (err) {
-      console.error('Erro:', err);
-      toast.error('Ocorreu um erro. Tente novamente.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Success screen
-  if (isSuccess) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center px-4 py-8 relative overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-rose-500/20 rounded-full blur-[100px]" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-[100px]" />
-        
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="max-w-md w-full text-center relative"
-        >
-          <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 sm:p-10 border border-white/20 shadow-2xl">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-              className="w-24 h-24 mx-auto rounded-3xl bg-gradient-to-br from-rose-500 to-purple-600 flex items-center justify-center mb-8 shadow-2xl shadow-pink-500/40"
-            >
-              <CheckCircle2 className="w-12 h-12 text-white" />
-            </motion.div>
-
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">
-              Confirmado!
-            </h2>
-            <p className="text-white/70 mb-8 text-lg">
-              Você receberá a confirmação no WhatsApp
-            </p>
-
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-8 text-left border border-white/10">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-white/60 font-medium">Procedimento</span>
-                  <span className="text-white font-bold">{PROCEDIMENTOS.find(p => p.id === formData.procedimento)?.name}</span>
-                </div>
-                <div className="h-px bg-white/10" />
-                <div className="flex justify-between items-center">
-                  <span className="text-white/60 font-medium">Data</span>
-                  <span className="text-white font-bold">
-                    {new Date(formData.data + 'T12:00:00').toLocaleDateString('pt-BR', { 
-                      day: 'numeric', 
-                      month: 'long' 
-                    })}
-                  </span>
-                </div>
-                <div className="h-px bg-white/10" />
-                <div className="flex justify-between items-center">
-                  <span className="text-white/60 font-medium">Horário</span>
-                  <span className="text-white font-bold">{formData.horario}</span>
-                </div>
-              </div>
-            </div>
-
-            <p className="text-white/50 text-sm mb-8">
-              Em caso de ajuste, entraremos em contato
-            </p>
-
-            <Button 
-              onClick={() => navigate(code ? `/clinica-estetica/${code}` : '/clinica-estetica')}
-              className="w-full h-14 bg-gradient-to-r from-rose-500 to-purple-600 hover:from-rose-600 hover:to-purple-700 text-white font-bold rounded-2xl shadow-xl shadow-pink-500/30"
-            >
-              Voltar ao Site
-            </Button>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
+  const steps = [
+    { num: 1, label: "Procedimento" },
+    { num: 2, label: "Data e Hora" },
+    { num: 3, label: "Seus Dados" }
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-pink-50/30">
+    <div className="min-h-screen bg-neutral-50">
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-50 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-4">
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={handleBack}
-            className="text-slate-500 hover:text-pink-600 hover:bg-pink-50 rounded-xl h-11 w-11"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-rose-400 via-pink-500 to-purple-600 flex items-center justify-center shadow-lg shadow-pink-500/30 rotate-3">
-              <Sparkles className="w-5 h-5 text-white" />
+      <header className="bg-white border-b border-neutral-100">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
+          <div className="flex items-center justify-between">
+            <button 
+              onClick={() => navigate('/clinica-estetica')}
+              className="flex items-center gap-2 text-neutral-600 hover:text-neutral-900 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="text-sm hidden sm:inline">Voltar</span>
+            </button>
+
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-neutral-900 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-base sm:text-lg font-semibold text-neutral-900">Estética Avançada</span>
             </div>
-            <div>
-              <h1 className="text-slate-900 font-bold text-lg">Agendar Procedimento</h1>
-              <p className="text-slate-500 text-sm">{CONFIG.business.name}</p>
+
+            <div className="w-16"></div>
+          </div>
+        </div>
+      </header>
+
+      {/* Progress Steps */}
+      {step < 4 && (
+        <div className="bg-white border-b border-neutral-100">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+            <div className="flex items-center justify-center gap-2 sm:gap-4">
+              {steps.map((s, index) => (
+                <div key={s.num} className="flex items-center">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <div className={`
+                      w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium transition-all
+                      ${step >= s.num 
+                        ? 'bg-neutral-900 text-white' 
+                        : 'bg-neutral-100 text-neutral-400'
+                      }
+                    `}>
+                      {step > s.num ? <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : s.num}
+                    </div>
+                    <span className={`text-xs sm:text-sm hidden sm:inline ${step >= s.num ? 'text-neutral-900' : 'text-neutral-400'}`}>
+                      {s.label}
+                    </span>
+                  </div>
+                  {index < steps.length - 1 && (
+                    <div className={`w-8 sm:w-16 h-px mx-2 sm:mx-3 ${step > s.num ? 'bg-neutral-900' : 'bg-neutral-200'}`} />
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </div>
-      </div>
+      )}
 
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <StepIndicator currentStep={step} />
-
+      {/* Content */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
         <AnimatePresence mode="wait">
-          {/* Step 1: Procedimento */}
+          {/* Step 1 - Procedimento */}
           {step === 1 && (
             <motion.div
               key="step1"
-              initial={{ opacity: 0, x: 30 }}
+              initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -30 }}
+              exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}
-              className="space-y-6"
             >
-              <div className="mb-8">
-                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
-                  Qual procedimento você deseja?
-                </h2>
-                <p className="text-slate-500">Escolha o tratamento ideal para você</p>
+              <div className="text-center mb-6 sm:mb-8">
+                <h1 className="text-xl sm:text-2xl font-medium text-neutral-900 mb-2">Escolha o procedimento</h1>
+                <p className="text-neutral-500 text-sm">Selecione o tratamento desejado</p>
               </div>
 
-              <div className="space-y-3">
-                {PROCEDIMENTOS.map((proc) => {
-                  const Icon = proc.icon;
-                  const isSelected = formData.procedimento === proc.id;
-                  
-                  return (
-                    <motion.div
-                      key={proc.id}
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
-                    >
-                      <Card 
-                        className={`cursor-pointer transition-all duration-300 overflow-hidden ${
-                          isSelected 
-                            ? 'border-2 border-pink-500 shadow-xl shadow-pink-100' 
-                            : 'border border-slate-200 hover:border-pink-300 hover:shadow-lg shadow-sm'
-                        }`}
-                        onClick={() => setFormData({ ...formData, procedimento: proc.id })}
-                      >
-                        <CardContent className="p-4 sm:p-5 flex items-center gap-4">
-                          <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${proc.color} flex items-center justify-center shadow-lg shrink-0 ${
-                            isSelected ? 'shadow-pink-500/30' : ''
-                          }`}>
-                            <Icon className="w-6 h-6 text-white" />
-                          </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <p className="text-slate-900 font-bold text-lg">{proc.name}</p>
-                            <p className="text-slate-500 text-sm">Duração: {proc.duracao}</p>
-                          </div>
-                          
-                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
-                            isSelected 
-                              ? 'border-pink-500 bg-gradient-to-br from-rose-500 to-purple-600' 
-                              : 'border-slate-300'
-                          }`}>
-                            {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  );
-                })}
+              <div className="grid gap-3">
+                {procedimentos.map((proc) => (
+                  <motion.button
+                    key={proc.id}
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => setFormData({ ...formData, procedimento: proc.id })}
+                    className={`
+                      w-full p-4 sm:p-5 rounded-xl border text-left transition-all
+                      ${formData.procedimento === proc.id 
+                        ? 'border-neutral-900 bg-neutral-900 text-white' 
+                        : 'border-neutral-200 bg-white hover:border-neutral-300'
+                      }
+                    `}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className={`font-medium text-sm sm:text-base ${formData.procedimento === proc.id ? 'text-white' : 'text-neutral-900'}`}>
+                          {proc.nome}
+                        </p>
+                        <p className={`text-xs sm:text-sm mt-0.5 ${formData.procedimento === proc.id ? 'text-neutral-300' : 'text-neutral-500'}`}>
+                          Duração: {proc.duracao}
+                        </p>
+                      </div>
+                      <div className={`
+                        w-5 h-5 rounded-full border-2 flex items-center justify-center
+                        ${formData.procedimento === proc.id 
+                          ? 'border-white bg-white' 
+                          : 'border-neutral-300'
+                        }
+                      `}>
+                        {formData.procedimento === proc.id && (
+                          <Check className="w-3 h-3 text-neutral-900" />
+                        )}
+                      </div>
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+
+              <div className="mt-6 sm:mt-8">
+                <Button
+                  onClick={() => setStep(2)}
+                  disabled={!formData.procedimento}
+                  className="w-full bg-neutral-900 hover:bg-neutral-800 text-white h-11 sm:h-12 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                >
+                  Continuar
+                  <ChevronRight className="w-4 h-4 ml-2" />
+                </Button>
               </div>
             </motion.div>
           )}
 
-          {/* Step 2: Data e Horário */}
+          {/* Step 2 - Data e Hora */}
           {step === 2 && (
             <motion.div
               key="step2"
-              initial={{ opacity: 0, x: 30 }}
+              initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -30 }}
+              exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}
-              className="space-y-8"
             >
-              <div className="mb-8">
-                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
-                  Quando você pode vir?
-                </h2>
-                <p className="text-slate-500">Selecione a melhor data e horário</p>
+              <div className="text-center mb-6 sm:mb-8">
+                <h1 className="text-xl sm:text-2xl font-medium text-neutral-900 mb-2">Escolha a data e horário</h1>
+                <p className="text-neutral-500 text-sm">Selecione o melhor momento para você</p>
               </div>
 
-              {/* Date Selection */}
-              <div>
-                <Label className="text-slate-900 mb-4 flex items-center gap-2 font-bold text-lg">
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-rose-100 to-pink-100 flex items-center justify-center">
-                    <Calendar className="w-4 h-4 text-pink-600" />
-                  </div>
-                  Escolha a data
-                </Label>
-                <div className="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3">
-                  {availableDates.slice(0, 12).map((date) => {
-                    const dateStr = date.toISOString().split('T')[0];
-                    const isSelected = formData.data === dateStr;
+              {/* Datas */}
+              <div className="mb-6 sm:mb-8">
+                <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                  <Calendar className="w-4 h-4 text-neutral-500" />
+                  <span className="text-sm font-medium text-neutral-700">Data</span>
+                </div>
+                <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
+                  {generateDates().map((date) => {
+                    const formatted = formatDate(date);
                     return (
                       <motion.button
-                        key={dateStr}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setFormData({ ...formData, data: dateStr })}
-                        className={`p-3 sm:p-4 rounded-2xl text-center transition-all duration-300 ${
-                          isSelected 
-                            ? 'bg-gradient-to-br from-rose-500 to-purple-600 text-white shadow-xl shadow-pink-500/30' 
-                            : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-pink-300 hover:shadow-lg shadow-sm'
-                        }`}
+                        key={formatted.full}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => setFormData({ ...formData, data: formatted.full })}
+                        className={`
+                          flex-shrink-0 p-3 sm:p-4 rounded-xl border text-center min-w-[70px] sm:min-w-[80px] transition-all
+                          ${formData.data === formatted.full 
+                            ? 'border-neutral-900 bg-neutral-900 text-white' 
+                            : 'border-neutral-200 bg-white hover:border-neutral-300'
+                          }
+                        `}
                       >
-                        <div className="text-[10px] sm:text-xs uppercase font-bold opacity-80">
-                          {date.toLocaleDateString('pt-BR', { weekday: 'short' })}
-                        </div>
-                        <div className="text-xl sm:text-2xl font-bold">{date.getDate()}</div>
-                        <div className="text-[10px] sm:text-xs font-medium opacity-80">
-                          {date.toLocaleDateString('pt-BR', { month: 'short' })}
-                        </div>
+                        <p className={`text-[10px] sm:text-xs ${formData.data === formatted.full ? 'text-neutral-400' : 'text-neutral-500'}`}>
+                          {formatted.weekday}
+                        </p>
+                        <p className={`text-lg sm:text-xl font-semibold ${formData.data === formatted.full ? 'text-white' : 'text-neutral-900'}`}>
+                          {formatted.day}
+                        </p>
+                        <p className={`text-[10px] sm:text-xs ${formData.data === formatted.full ? 'text-neutral-400' : 'text-neutral-500'}`}>
+                          {formatted.month}
+                        </p>
                       </motion.button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Time Selection */}
-              {formData.data && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
+              {/* Horários */}
+              <div className="mb-6 sm:mb-8">
+                <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                  <Clock className="w-4 h-4 text-neutral-500" />
+                  <span className="text-sm font-medium text-neutral-700">Horário</span>
+                </div>
+                <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                  {horarios.map((hora) => (
+                    <motion.button
+                      key={hora}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setFormData({ ...formData, horario: hora })}
+                      className={`
+                        p-2.5 sm:p-3 rounded-lg border text-xs sm:text-sm font-medium transition-all
+                        ${formData.horario === hora 
+                          ? 'border-neutral-900 bg-neutral-900 text-white' 
+                          : 'border-neutral-200 bg-white hover:border-neutral-300 text-neutral-700'
+                        }
+                      `}
+                    >
+                      {hora}
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setStep(1)}
+                  className="flex-1 border-neutral-200 text-neutral-700 h-11 sm:h-12 rounded-xl text-sm"
                 >
-                  <Label className="text-slate-900 mb-4 flex items-center gap-2 font-bold text-lg">
-                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-rose-100 to-pink-100 flex items-center justify-center">
-                      <Clock className="w-4 h-4 text-pink-600" />
-                    </div>
-                    Escolha o horário
-                  </Label>
-                  <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 sm:gap-3">
-                    {HORARIOS.map((horario) => {
-                      const isSelected = formData.horario === horario;
-                      return (
-                        <motion.button
-                          key={horario}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => setFormData({ ...formData, horario })}
-                          className={`py-3 px-4 rounded-xl text-sm font-bold transition-all duration-300 ${
-                            isSelected 
-                              ? 'bg-gradient-to-r from-rose-500 to-purple-600 text-white shadow-lg shadow-pink-500/30' 
-                              : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-pink-300 hover:shadow-md'
-                          }`}
-                        >
-                          {horario}
-                        </motion.button>
-                      );
-                    })}
-                  </div>
-                </motion.div>
-              )}
+                  <ChevronLeft className="w-4 h-4 mr-2" />
+                  Voltar
+                </Button>
+                <Button
+                  onClick={() => setStep(3)}
+                  disabled={!formData.data || !formData.horario}
+                  className="flex-1 bg-neutral-900 hover:bg-neutral-800 text-white h-11 sm:h-12 rounded-xl disabled:opacity-50 text-sm"
+                >
+                  Continuar
+                  <ChevronRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
             </motion.div>
           )}
 
-          {/* Step 3: Dados Pessoais */}
+          {/* Step 3 - Dados Pessoais */}
           {step === 3 && (
             <motion.div
               key="step3"
-              initial={{ opacity: 0, x: 30 }}
+              initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -30 }}
+              exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}
-              className="space-y-6"
             >
-              <div className="mb-8">
-                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
-                  Quase lá! Seus dados
-                </h2>
-                <p className="text-slate-500">Precisamos de algumas informações para confirmar</p>
+              <div className="text-center mb-6 sm:mb-8">
+                <h1 className="text-xl sm:text-2xl font-medium text-neutral-900 mb-2">Seus dados</h1>
+                <p className="text-neutral-500 text-sm">Preencha suas informações de contato</p>
               </div>
 
-              {/* Summary Card */}
-              <Card className="bg-gradient-to-br from-rose-50 to-purple-50 border-0 shadow-lg overflow-hidden">
-                <CardContent className="p-5">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500 to-purple-600 flex items-center justify-center shadow-lg shadow-pink-500/30">
-                      <Sparkles className="w-7 h-7 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-slate-900 font-bold text-lg">
-                        {PROCEDIMENTOS.find(p => p.id === formData.procedimento)?.name}
-                      </p>
-                      <p className="text-slate-600 text-sm">
-                        {new Date(formData.data + 'T12:00:00').toLocaleDateString('pt-BR', { 
-                          weekday: 'long',
-                          day: 'numeric', 
-                          month: 'long' 
-                        })} às {formData.horario}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Form Fields */}
-              <div className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="nome" className="text-slate-700 font-semibold flex items-center gap-2">
-                    <User className="w-4 h-4 text-pink-500" />
+              <div className="space-y-4 bg-white rounded-2xl p-4 sm:p-6 border border-neutral-200">
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 mb-2">
+                    <User className="w-4 h-4" />
                     Nome completo
-                  </Label>
+                  </label>
                   <Input
-                    id="nome"
-                    placeholder="Digite seu nome"
+                    placeholder="Seu nome"
                     value={formData.nome}
                     onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                    className="h-14 rounded-xl border-2 border-slate-200 focus:border-pink-500 text-lg bg-white shadow-sm"
+                    className="h-11 sm:h-12 rounded-lg border-neutral-200 text-sm"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="whatsapp" className="text-slate-700 font-semibold flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-pink-500" />
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 mb-2">
+                    <Phone className="w-4 h-4" />
                     WhatsApp
-                  </Label>
+                  </label>
                   <Input
-                    id="whatsapp"
-                    placeholder="(00) 00000-0000"
-                    value={formData.whatsapp}
-                    onChange={(e) => setFormData({ ...formData, whatsapp: formatPhone(e.target.value) })}
-                    className="h-14 rounded-xl border-2 border-slate-200 focus:border-pink-500 text-lg bg-white shadow-sm"
-                    maxLength={15}
+                    placeholder="(11) 99999-9999"
+                    value={formData.telefone}
+                    onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                    className="h-11 sm:h-12 rounded-lg border-neutral-200 text-sm"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="observacao" className="text-slate-700 font-semibold flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4 text-pink-500" />
-                    Observações <span className="text-slate-400 font-normal">(opcional)</span>
-                  </Label>
-                  <Textarea
-                    id="observacao"
-                    placeholder="Alguma informação adicional?"
-                    value={formData.observacao}
-                    onChange={(e) => setFormData({ ...formData, observacao: e.target.value })}
-                    className="rounded-xl border-2 border-slate-200 focus:border-pink-500 min-h-[100px] bg-white shadow-sm resize-none"
-                    rows={3}
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 mb-2">
+                    <Mail className="w-4 h-4" />
+                    E-mail
+                  </label>
+                  <Input
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="h-11 sm:h-12 rounded-lg border-neutral-200 text-sm"
                   />
                 </div>
+              </div>
+
+              {/* Resumo */}
+              <div className="mt-6 p-4 bg-neutral-100 rounded-xl">
+                <p className="text-xs text-neutral-500 mb-2">Resumo do agendamento</p>
+                <p className="text-sm font-medium text-neutral-900">
+                  {procedimentos.find(p => p.id === formData.procedimento)?.nome}
+                </p>
+                <p className="text-sm text-neutral-600">
+                  {formData.data && new Date(formData.data + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })} às {formData.horario}
+                </p>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setStep(2)}
+                  className="flex-1 border-neutral-200 text-neutral-700 h-11 sm:h-12 rounded-xl text-sm"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-2" />
+                  Voltar
+                </Button>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={!formData.nome || !formData.telefone || !formData.email}
+                  className="flex-1 bg-neutral-900 hover:bg-neutral-800 text-white h-11 sm:h-12 rounded-xl disabled:opacity-50 text-sm"
+                >
+                  Confirmar
+                  <Check className="w-4 h-4 ml-2" />
+                </Button>
               </div>
             </motion.div>
           )}
+
+          {/* Step 4 - Confirmação */}
+          {step === 4 && (
+            <motion.div
+              key="step4"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4 }}
+              className="text-center py-8 sm:py-12"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", duration: 0.5, delay: 0.1 }}
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-neutral-900 flex items-center justify-center mx-auto mb-6"
+              >
+                <Check className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+              </motion.div>
+
+              <h1 className="text-2xl sm:text-3xl font-medium text-neutral-900 mb-3">
+                Agendamento confirmado!
+              </h1>
+              <p className="text-neutral-500 mb-8 max-w-md mx-auto text-sm sm:text-base">
+                Você receberá uma confirmação por WhatsApp em breve.
+              </p>
+
+              <div className="bg-white rounded-2xl p-5 sm:p-6 border border-neutral-200 max-w-sm mx-auto mb-8 text-left">
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs text-neutral-500">Procedimento</p>
+                    <p className="text-sm font-medium text-neutral-900">
+                      {procedimentos.find(p => p.id === formData.procedimento)?.nome}
+                    </p>
+                  </div>
+                  <div className="h-px bg-neutral-100"></div>
+                  <div>
+                    <p className="text-xs text-neutral-500">Data e Horário</p>
+                    <p className="text-sm font-medium text-neutral-900">
+                      {formData.data && new Date(formData.data + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })} às {formData.horario}
+                    </p>
+                  </div>
+                  <div className="h-px bg-neutral-100"></div>
+                  <div>
+                    <p className="text-xs text-neutral-500">Cliente</p>
+                    <p className="text-sm font-medium text-neutral-900">{formData.nome}</p>
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                onClick={() => navigate('/clinica-estetica')}
+                className="bg-neutral-900 hover:bg-neutral-800 text-white h-11 sm:h-12 px-8 rounded-xl text-sm"
+              >
+                Voltar ao início
+              </Button>
+            </motion.div>
+          )}
         </AnimatePresence>
-
-        {/* Navigation Buttons */}
-        <div className="mt-10 flex gap-4">
-          {step > 1 && (
-            <Button
-              variant="outline"
-              onClick={handleBack}
-              className="h-14 px-6 rounded-xl border-2 border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
-            </Button>
-          )}
-          
-          {step < 3 ? (
-            <Button
-              onClick={handleNext}
-              disabled={!canProceed()}
-              className="flex-1 h-14 rounded-xl bg-gradient-to-r from-rose-500 to-purple-600 hover:from-rose-600 hover:to-purple-700 text-white font-bold shadow-xl shadow-pink-500/30 disabled:opacity-50 disabled:shadow-none"
-            >
-              Continuar
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
-          ) : (
-            <Button
-              onClick={handleSubmit}
-              disabled={!canProceed() || isSubmitting}
-              className="flex-1 h-14 rounded-xl bg-gradient-to-r from-rose-500 to-purple-600 hover:from-rose-600 hover:to-purple-700 text-white font-bold shadow-xl shadow-pink-500/30 disabled:opacity-50"
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                  Confirmando...
-                </>
-              ) : (
-                <>
-                  Confirmar Agendamento
-                  <CheckCircle2 className="w-5 h-5 ml-2" />
-                </>
-              )}
-            </Button>
-          )}
-        </div>
-
-        {/* Trust badges */}
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-slate-500 text-sm">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-            <span>Confirmação instantânea</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-            <span>Sem compromisso</span>
-          </div>
-        </div>
       </div>
     </div>
   );
-}
+};
+
+export default ClinicaEsteticaAgendarPage;
