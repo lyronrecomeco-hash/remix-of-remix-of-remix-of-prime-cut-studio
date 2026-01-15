@@ -57,6 +57,8 @@ const DemoPage = lazy(() => import("./pages/DemoPage"));
 const DemoBookingPage = lazy(() => import("./pages/DemoBookingPage"));
 const AcademiaPage = lazy(() => import("./pages/AcademiaPage"));
 const AcademiaMatriculaPage = lazy(() => import("./pages/AcademiaMatriculaPage"));
+const ClinicaEsteticaPage = lazy(() => import("./pages/ClinicaEsteticaPage"));
+const ClinicaEsteticaAgendarPage = lazy(() => import("./pages/ClinicaEsteticaAgendarPage"));
 
 // QueryClient com retry logic e cache otimizado
 const queryClient = new QueryClient({
@@ -253,6 +255,10 @@ const AppContent = () => {
             <Route path="/academia/:code" element={<AcademiaPage />} />
             <Route path="/academia/matricula" element={<AcademiaMatriculaPage />} />
             <Route path="/academia/:code/matricula" element={<AcademiaMatriculaPage />} />
+            <Route path="/clinica-estetica" element={<ClinicaEsteticaPage />} />
+            <Route path="/clinica-estetica/:code" element={<ClinicaEsteticaPage />} />
+            <Route path="/clinica-estetica/agendar" element={<ClinicaEsteticaAgendarPage />} />
+            <Route path="/clinica-estetica/:code/agendar" element={<ClinicaEsteticaAgendarPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

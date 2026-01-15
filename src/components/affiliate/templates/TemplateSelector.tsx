@@ -440,8 +440,8 @@ const templates: TemplateInfo[] = [
 export function TemplateSelector({ onSelect }: TemplateSelectorProps) {
   const [activeCategory, setActiveCategory] = useState<Category>('all');
 
-  const filteredTemplates = activeCategory === 'all' 
-    ? templates 
+const filteredTemplates = activeCategory === 'all' 
+    ? templates.filter(t => t.available) 
     : templates.filter(t => t.category === activeCategory);
 
   return (
