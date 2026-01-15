@@ -341,28 +341,42 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Buscar instância Genesis
-    if (!settings.genesis_instance_id) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Nenhuma instância WhatsApp configurada.' 
-        }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Buscar instância Genesis - primeiro tenta a configurada, se não há, busca qualquer conectada
+    let instanceData = null;
+    
+    if (settings.genesis_instance_id) {
+      const { data: configuredInstance, error: instanceError } = await supabase
+        .from('genesis_instances')
+        .select('*')
+        .eq('id', settings.genesis_instance_id)
+        .single();
+      
+      if (!instanceError && configuredInstance) {
+        instanceData = configuredInstance;
+      }
+    }
+    
+    // Se não encontrou instância configurada, buscar qualquer instância conectada
+    if (!instanceData) {
+      console.log('[ProspectSender] Buscando instância conectada disponível...');
+      const { data: availableInstance } = await supabase
+        .from('genesis_instances')
+        .select('*')
+        .eq('status', 'connected')
+        .limit(1)
+        .single();
+      
+      if (availableInstance) {
+        instanceData = availableInstance;
+        console.log('[ProspectSender] Usando instância:', instanceData.name);
+      }
     }
 
-    const { data: instanceData, error: instanceError } = await supabase
-      .from('genesis_instances')
-      .select('*')
-      .eq('id', settings.genesis_instance_id)
-      .single();
-
-    if (instanceError || !instanceData) {
+    if (!instanceData) {
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: 'Instância WhatsApp não encontrada.' 
+          error: 'Nenhuma instância WhatsApp conectada disponível. Conecte uma instância primeiro.' 
         }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
