@@ -995,13 +995,13 @@ function CTAFinal({ code }: { code?: string }) {
 
   return (
     <section className="py-20 md:py-28 relative overflow-hidden" ref={ref}>
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-amber-600 via-amber-500 to-amber-600" />
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.1)_1px,transparent_1px)] bg-[size:40px_40px]" />
+      {/* Background - Professional dark gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900" />
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px]" />
       
       {/* Decorative elements */}
-      <div className="absolute top-0 left-0 w-[400px] h-[400px] bg-white/10 rounded-full blur-[150px]" />
-      <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-amber-800/30 rounded-full blur-[100px]" />
+      <div className="absolute top-0 left-0 w-[400px] h-[400px] bg-red-600/10 rounded-full blur-[150px]" />
+      <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-red-600/5 rounded-full blur-[100px]" />
 
       <div className="container px-4 text-center relative">
         <motion.div
@@ -1009,23 +1009,24 @@ function CTAFinal({ code }: { code?: string }) {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-3xl md:text-5xl font-bold text-slate-950 mb-6">
-            Comece sua transformação hoje!
+          <span className="inline-block px-4 py-1 rounded-full bg-red-600/10 text-red-500 text-sm font-medium mb-6">COMECE AGORA</span>
+          <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
+            Comece sua transformação <span className="text-red-500">hoje!</span>
           </h2>
-          <p className="text-slate-800 text-lg mb-10 max-w-2xl mx-auto">
+          <p className="text-zinc-400 text-lg mb-10 max-w-2xl mx-auto">
             Faça sua pré-matrícula online agora e garanta sua vaga.
             <br />
-            <span className="font-semibold">Primeira semana por nossa conta!</span>
+            <span className="font-semibold text-white">Primeira semana por nossa conta!</span>
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" className="text-lg px-8 py-6 bg-slate-950 text-white hover:bg-slate-800 shadow-xl">
+            <Button asChild size="lg" className="text-lg px-8 py-6 bg-red-600 text-white hover:bg-red-700 shadow-xl shadow-red-600/20">
               <Link to={code ? `/academia/${code}/matricula` : '/academia/matricula'}>
                 <Calendar className="w-5 h-5 mr-2" />
                 Pré-matrícula Online
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="text-lg px-8 py-6 border-slate-950/30 bg-transparent text-slate-950 hover:bg-slate-950/10">
+            <Button asChild size="lg" variant="outline" className="text-lg px-8 py-6 border-zinc-700 bg-transparent text-white hover:bg-zinc-800">
               <a href={`https://wa.me/${DEFAULT_CONFIG.business.whatsapp}`} target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="w-5 h-5 mr-2" />
                 Falar no WhatsApp
@@ -1041,21 +1042,21 @@ function CTAFinal({ code }: { code?: string }) {
 // ========== FOOTER ==========
 function Footer({ config }: { config: typeof DEFAULT_CONFIG }) {
   return (
-    <footer className="py-16 bg-slate-950 border-t border-white/5">
+    <footer className="py-16 bg-zinc-950 border-t border-zinc-800">
       <div className="container px-4">
         <div className="grid md:grid-cols-4 gap-10 mb-12">
           {/* Logo e descrição */}
           <div className="md:col-span-1">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center">
                 <Dumbbell className="w-5 h-5 text-white" />
               </div>
               <div>
                 <span className="font-bold text-white">{config.business.name}</span>
-                <div className="text-[10px] text-amber-500 font-medium">Academia Premium</div>
+                <div className="text-[10px] text-red-500 font-medium">Academia Premium</div>
               </div>
             </div>
-            <p className="text-slate-500 text-sm leading-relaxed">
+            <p className="text-zinc-500 text-sm leading-relaxed">
               A melhor academia da região com equipamentos de última geração e profissionais altamente qualificados.
             </p>
           </div>
@@ -1065,7 +1066,7 @@ function Footer({ config }: { config: typeof DEFAULT_CONFIG }) {
             <h4 className="font-semibold text-white mb-4">Links Rápidos</h4>
             <nav className="space-y-3 text-sm">
               {['Início', 'Modalidades', 'Planos', 'Estrutura', 'Depoimentos'].map((link) => (
-                <a key={link} href={`#${link.toLowerCase()}`} className="block text-slate-500 hover:text-amber-500 transition-colors">
+                <a key={link} href={`#${link.toLowerCase()}`} className="block text-zinc-500 hover:text-red-500 transition-colors">
                   {link}
                 </a>
               ))}
@@ -1076,16 +1077,16 @@ function Footer({ config }: { config: typeof DEFAULT_CONFIG }) {
           <div>
             <h4 className="font-semibold text-white mb-4">Contato</h4>
             <div className="space-y-3 text-sm">
-              <p className="flex items-center gap-2 text-slate-500">
-                <Phone className="w-4 h-4 text-amber-500" /> 
+              <p className="flex items-center gap-2 text-zinc-500">
+                <Phone className="w-4 h-4 text-red-500" /> 
                 {config.business.phone}
               </p>
-              <p className="flex items-center gap-2 text-slate-500">
-                <Mail className="w-4 h-4 text-amber-500" /> 
+              <p className="flex items-center gap-2 text-zinc-500">
+                <Mail className="w-4 h-4 text-red-500" /> 
                 {config.business.email}
               </p>
-              <p className="flex items-start gap-2 text-slate-500">
-                <MapPin className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" /> 
+              <p className="flex items-start gap-2 text-zinc-500">
+                <MapPin className="w-4 h-4 text-red-500 shrink-0 mt-0.5" /> 
                 {config.business.address}
               </p>
             </div>
@@ -1095,19 +1096,19 @@ function Footer({ config }: { config: typeof DEFAULT_CONFIG }) {
           <div>
             <h4 className="font-semibold text-white mb-4">Redes Sociais</h4>
             <div className="flex gap-3">
-              <a href="#" className="w-10 h-10 rounded-xl bg-slate-800/50 border border-white/5 flex items-center justify-center hover:bg-amber-500/20 hover:border-amber-500/30 transition-all">
-                <Instagram className="w-5 h-5 text-slate-400 hover:text-amber-500" />
+              <a href="#" className="w-10 h-10 rounded-xl bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center hover:bg-red-600/20 hover:border-red-600/30 transition-all group">
+                <Instagram className="w-5 h-5 text-zinc-400 group-hover:text-red-500" />
               </a>
-              <a href="#" className="w-10 h-10 rounded-xl bg-slate-800/50 border border-white/5 flex items-center justify-center hover:bg-amber-500/20 hover:border-amber-500/30 transition-all">
-                <Facebook className="w-5 h-5 text-slate-400 hover:text-amber-500" />
+              <a href="#" className="w-10 h-10 rounded-xl bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center hover:bg-red-600/20 hover:border-red-600/30 transition-all group">
+                <Facebook className="w-5 h-5 text-zinc-400 group-hover:text-red-500" />
               </a>
-              <a href={`https://wa.me/${config.business.whatsapp}`} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-slate-800/50 border border-white/5 flex items-center justify-center hover:bg-emerald-500/20 hover:border-emerald-500/30 transition-all">
-                <MessageCircle className="w-5 h-5 text-slate-400 hover:text-emerald-500" />
+              <a href={`https://wa.me/${config.business.whatsapp}`} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center hover:bg-green-600/20 hover:border-green-600/30 transition-all group">
+                <MessageCircle className="w-5 h-5 text-zinc-400 group-hover:text-green-500" />
               </a>
             </div>
             
-            <div className="mt-6 p-4 rounded-xl bg-slate-800/30 border border-white/5">
-              <p className="text-xs text-slate-500">
+            <div className="mt-6 p-4 rounded-xl bg-zinc-800/30 border border-zinc-700/50">
+              <p className="text-xs text-zinc-500">
                 CNPJ: {config.business.cnpj}
               </p>
             </div>
@@ -1115,14 +1116,14 @@ function Footer({ config }: { config: typeof DEFAULT_CONFIG }) {
         </div>
 
         {/* Linha divisória e copyright */}
-        <div className="pt-8 border-t border-white/5">
+        <div className="pt-8 border-t border-zinc-800">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-slate-600 text-sm">
+            <p className="text-zinc-600 text-sm">
               © {new Date().getFullYear()} {config.business.name}. Todos os direitos reservados.
             </p>
             <div className="flex items-center gap-6 text-sm">
-              <a href="#" className="text-slate-600 hover:text-amber-500 transition-colors">Política de Privacidade</a>
-              <a href="#" className="text-slate-600 hover:text-amber-500 transition-colors">Termos de Uso</a>
+              <a href="#" className="text-zinc-600 hover:text-red-500 transition-colors">Política de Privacidade</a>
+              <a href="#" className="text-zinc-600 hover:text-red-500 transition-colors">Termos de Uso</a>
             </div>
           </div>
         </div>
