@@ -320,12 +320,12 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect, on
     const fullPhone = cleanPhone.startsWith(prefix) ? cleanPhone : `${prefix}${cleanPhone}`;
 
     try {
-      // Envio automático via backend (sem abrir WhatsApp Web)
-      const { data, error } = await supabase.functions.invoke('genesis-backend-proxy', {
+      const { data, error } = await supabase.functions.invoke('send-whatsapp-genesis', {
         body: {
-          action: 'demo-send',
-          to: fullPhone,
+          affiliateId,
+          phone: fullPhone,
           message: editedMessage,
+          countryCode,
         },
       });
 

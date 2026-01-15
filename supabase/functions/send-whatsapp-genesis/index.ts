@@ -58,36 +58,75 @@ serve(async (req) => {
       );
     }
 
-    const instanceId = GLOBAL_GENESIS_INSTANCE_ID;
-    console.log(`[send-whatsapp-genesis] Instância global: ${instanceId}`);
-
-    const { data: instance, error: instError } = await supabase
+    // Selecionar automaticamente a melhor instância disponível (prioriza orchestrated_status=connected)
+    const { data: instances, error: instancesError } = await supabase
       .from("genesis_instances")
-      .select("id, name, backend_url, backend_token, status")
-      .eq("id", instanceId)
-      .single();
+      .select(
+        "id, name, backend_url, backend_token, status, orchestrated_status, effective_status, session_data, updated_at",
+      )
+      .limit(50);
 
-    if (instError || !instance) {
-      console.error("[send-whatsapp-genesis] Instância global não encontrada:", instError);
+    if (instancesError || !instances?.length) {
+      console.error("[send-whatsapp-genesis] Nenhuma instância encontrada:", instancesError);
       return new Response(
         JSON.stringify({
           success: false,
-          error: "Instância global não configurada no sistema",
+          error: "Nenhuma instância do WhatsApp disponível no sistema",
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    if (instance.status !== "connected") {
-      console.error("[send-whatsapp-genesis] Instância global desconectada");
+    const scoreInstance = (i: any) => {
+      const ready = Boolean(i?.session_data?.ready_to_send);
+      let score = ready ? 50 : 0;
+
+      if (i?.orchestrated_status === "connected") score += 300;
+      else if (i?.effective_status === "connected") score += 200;
+      else if (i?.status === "connected") score += 100;
+
+      // precisa de backend para enviar
+      if (!i?.backend_url || !i?.backend_token) score = 0;
+
+      return score;
+    };
+
+    const byUpdatedDesc = (a: any, b: any) => {
+      const ta = a?.updated_at ? new Date(a.updated_at).getTime() : 0;
+      const tb = b?.updated_at ? new Date(b.updated_at).getTime() : 0;
+      return tb - ta;
+    };
+
+    const sorted = [...instances].sort((a: any, b: any) => {
+      const sa = scoreInstance(a);
+      const sb = scoreInstance(b);
+      if (sb !== sa) return sb - sa;
+      return byUpdatedDesc(a, b);
+    });
+
+    const instance = sorted.find((i: any) => scoreInstance(i) > 0);
+
+    if (!instance) {
+      console.error("[send-whatsapp-genesis] Nenhuma instância conectada/pronta para envio");
       return new Response(
         JSON.stringify({
           success: false,
-          error: "WhatsApp global está desconectado. Contate o suporte.",
+          error: "WhatsApp não está pronto para enviar no momento. Conecte/reconecte a instância.",
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+
+    console.log("[send-whatsapp-genesis] Instância selecionada", {
+      id: instance.id,
+      name: instance.name,
+      status: instance.status,
+      orchestrated_status: instance.orchestrated_status,
+      effective_status: instance.effective_status,
+      ready_to_send: Boolean(instance?.session_data?.ready_to_send),
+      updated_at: instance.updated_at,
+    });
+
 
     // Normalize phone
     let normalizedPhone = String(phone).replace(/\D/g, "");
@@ -165,14 +204,14 @@ serve(async (req) => {
       const targetUrl = `${baseUrl}${attempt.path}`;
       console.log("[send-whatsapp-genesis] Tentando", { label: attempt.label, targetUrl });
 
-      const res = await withTimeout(
+       const res = await withTimeout(
         targetUrl,
         {
           method: "POST",
           headers,
           body: JSON.stringify(attempt.body),
         },
-        15000,
+        30000,
       );
 
       const text = await res.text();
@@ -187,7 +226,7 @@ serve(async (req) => {
       return { ok, status: res.status, text, parsed, targetUrl };
     };
 
-    // Tentativas de envio (prioriza a rota /v8/... que já é usada na automação)
+    // Tentativas de envio (prioriza rotas V8 / api/instance)
     const attempts: Attempt[] = [
       {
         label: "v8_instance_messages_send",
@@ -197,74 +236,32 @@ serve(async (req) => {
       {
         label: "api_instance_send",
         path: `/api/instance/${backendKey}/send`,
-        body: {
-          phone: normalizedPhone,
-          message,
-          to: normalizedPhone,
-          text: message,
-          number: normalizedPhone,
-          instanceId: instance.id,
-        },
+        body: { phone: normalizedPhone, message },
       },
       {
         label: "api_instance_send_message",
         path: `/api/instance/${backendKey}/send-message`,
-        body: {
-          phone: normalizedPhone,
-          message,
-          to: normalizedPhone,
-          text: message,
-          number: normalizedPhone,
-          instanceId: instance.id,
-        },
+        body: { phone: normalizedPhone, message },
       },
       {
         label: "api_instance_send_text",
         path: `/api/instance/${backendKey}/send-text`,
-        body: {
-          phone: normalizedPhone,
-          message,
-          to: normalizedPhone,
-          text: message,
-          number: normalizedPhone,
-          instanceId: instance.id,
-        },
+        body: { phone: normalizedPhone, message },
       },
       {
         label: "api_instance_sendText",
         path: `/api/instance/${backendKey}/sendText`,
-        body: {
-          phone: normalizedPhone,
-          message,
-          to: normalizedPhone,
-          text: message,
-          number: normalizedPhone,
-          instanceId: instance.id,
-        },
+        body: { phone: normalizedPhone, message },
       },
       {
         label: "legacy_api_send",
         path: "/api/send",
-        body: {
-          phone: normalizedPhone,
-          message,
-          to: normalizedPhone,
-          text: message,
-          number: normalizedPhone,
-          instanceId: instance.id,
-        },
+        body: { phone: normalizedPhone, message },
       },
       {
         label: "legacy_send",
         path: "/send",
-        body: {
-          phone: normalizedPhone,
-          message,
-          to: normalizedPhone,
-          text: message,
-          number: normalizedPhone,
-          instanceId: instance.id,
-        },
+        body: { phone: normalizedPhone, message },
       },
       // Evolution API (alguns backends usam esse formato)
       {
