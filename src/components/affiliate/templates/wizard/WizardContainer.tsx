@@ -45,10 +45,13 @@ const WizardContent: React.FC<WizardContainerProps> = ({ onBack, onComplete }) =
   const { currentStep, steps, formData } = useWizard();
   const [direction, setDirection] = React.useState(0);
   const prevStep = React.useRef(currentStep);
+  const stepScrollRef = React.useRef<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
     setDirection(currentStep > prevStep.current ? 1 : -1);
     prevStep.current = currentStep;
+    // Sempre volta o scroll pro topo ao trocar de etapa (evita tela "em branco")
+    stepScrollRef.current?.scrollTo({ top: 0 });
   }, [currentStep]);
 
   const CurrentStepComponent = stepComponents[currentStep];
@@ -108,7 +111,7 @@ const WizardContent: React.FC<WizardContainerProps> = ({ onBack, onComplete }) =
       </motion.div>
 
       {/* Step Content - área com scroll */}
-      <div className="flex-1 min-h-0 overflow-y-auto pr-2">
+      <div ref={stepScrollRef} className="flex-1 min-h-0 overflow-y-auto pr-2">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={currentStep}
