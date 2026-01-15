@@ -52,7 +52,24 @@ const isConnected = (i: any) =>
   i?.effective_status === "connected" ||
   i?.status === "connected";
 
-const isBackendFailure = (parsed: any) => {
+// Verifica se a resposta indica SUCESSO real de envio
+const isSuccessResponse = (parsed: any) => {
+  if (!parsed || typeof parsed !== "object") return false;
+  
+  // Casos de sucesso explícito
+  if (parsed.success === true) return true;
+  if (parsed.status === "PENDING" || parsed.status === "sent" || parsed.status === "queued") return true;
+  if (parsed.key?.id) return true; // Evolution API retorna { key: { id: "..." } }
+  if (parsed.messageId || parsed.message_id || parsed.id) return true;
+  
+  // Se não tem error explícito e tem algum campo que indica envio
+  if (!parsed.error && (parsed.sent || parsed.delivered || parsed.queued)) return true;
+  
+  return false;
+};
+
+// Verifica se a resposta indica ERRO explícito
+const isErrorResponse = (parsed: any) => {
   if (!parsed || typeof parsed !== "object") return false;
   if (parsed.success === false) return true;
   if (typeof parsed.error === "string" && parsed.error.trim()) return true;
@@ -201,7 +218,7 @@ serve(async (req) => {
       apikey: backendToken,
     };
 
-    // Payload “compatível” (cobre variações: to/phone/number + message/text)
+    // Payload "compatível" (cobre variações: to/phone/number + message/text)
     const payload = {
       instanceId: String(instance.id),
       to: normalizedPhone,
@@ -258,7 +275,7 @@ serve(async (req) => {
       },
     ];
 
-    const tried: Array<{ label: string; targetUrl: string; status: number }> = [];
+    const tried: Array<{ label: string; targetUrl: string; status: number; responsePreview?: string }> = [];
     let lastStatus = 0;
     let lastText = "";
     let lastTargetUrl = "";
@@ -281,7 +298,15 @@ serve(async (req) => {
       const text = await res.text();
       const parsed = safeJsonParse(text);
 
-      const ok = res.ok && !isBackendFailure(parsed);
+      console.log("[send-whatsapp-genesis] Resposta", {
+        label: attempt.label,
+        status: res.status,
+        bodyPreview: text.slice(0, 300),
+      });
+
+      // Determinar se foi sucesso
+      const ok = res.ok && (isSuccessResponse(parsed) || (!isErrorResponse(parsed) && res.status === 200));
+
       return { ok, status: res.status, text, parsed, targetUrl };
     };
 
@@ -293,7 +318,12 @@ serve(async (req) => {
       for (const attempt of attempts) {
         try {
           const r = await tryPost(baseUrl, attempt);
-          tried.push({ label: attempt.label, targetUrl: r.targetUrl, status: r.status });
+          tried.push({
+            label: attempt.label,
+            targetUrl: r.targetUrl,
+            status: r.status,
+            responsePreview: r.text.slice(0, 200),
+          });
 
           if (r.status > 0) portResponded = true;
 
@@ -307,7 +337,7 @@ serve(async (req) => {
           lastText = r.text;
           lastTargetUrl = r.targetUrl;
 
-          // 404 “Cannot POST/GET” => rota não existe, tenta próxima
+          // 404 "Cannot POST/GET" => rota não existe, tenta próxima
           if (looksLikeMissingRoute(r.status, r.text)) continue;
 
           // erro de aplicação (ex.: success=false / error) => pode haver outra rota compatível, continua na MESMA porta
