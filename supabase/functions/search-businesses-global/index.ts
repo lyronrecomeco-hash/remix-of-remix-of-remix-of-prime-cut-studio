@@ -60,63 +60,107 @@ const SEARCH_TEMPLATES: Record<string, string> = {
   'ja': '{city} {niche}',
 };
 
+// Links por nicho
+const NICHE_LINKS: Record<string, string> = {
+  'barbearia': 'https://genesishub.cloud/barbearia',
+  'academia': 'https://genesishub.cloud/academia',
+  'salao': 'https://genesishub.cloud/salao',
+  'clinica': 'https://genesishub.cloud/clinica',
+  'dentista': 'https://genesishub.cloud/dentista',
+  'restaurante': 'https://genesishub.cloud/restaurante',
+  'petshop': 'https://genesishub.cloud/petshop',
+  'default': 'https://genesishub.cloud/demo',
+};
+
 // Message templates per language/region - ADAPTADAS automaticamente COM variações anti-ban
 const MESSAGE_TEMPLATES: Record<string, { base: string; variations: string[] }> = {
   'pt-BR': {
     base: `Olá, tudo bem?
 
-Me chamo {NOME} e trabalho ajudando serviços de urgência a ter presença no Google e automatizar agendamentos.
+Me chamo {NOME}.
 
-Hoje desenvolvemos:
+Trabalho ajudando negócios locais a transformar visitas em contatos reais, com sites profissionais e automação de atendimento.
 
-✅ Sites profissionais (fáceis de encontrar em emergências)
-✅ Sistema de agendamento automático
-✅ Automação de WhatsApp
+Hoje implementamos:
 
-Acredito que essas soluções podem otimizar a triagem e o atendimento da *{EMPRESA}*.
+• Site profissional focado em conversão
+• Agendamento online automático
+• Integração direta com WhatsApp
 
-Dê uma olhadinha e veja o sistema automatizado que pode trabalhar pra você enquanto você trabalha.
+Isso organiza o atendimento, evita perda de clientes e aumenta a taxa de conversão sem aumentar equipe.
+
+Posso te mostrar como funciona na prática.
 🔗 Link: {DEMO_LINK}`,
     variations: [
       `Oi, como vai?
 
-Sou {NOME} e ajudo empresas de serviços essenciais a melhorar sua visibilidade online e automatizar processos.
+Sou {NOME}, trabalho com soluções digitais para negócios locais.
 
-O que oferecemos:
+Ajudo estabelecimentos a captar mais clientes através de:
 
-✅ Websites otimizados para buscas
-✅ Agendamento online 24h
-✅ Atendimento automatizado no WhatsApp
+• Sites otimizados para conversão
+• Sistema de agendamento 24h
+• Automação de WhatsApp
 
-Essas ferramentas podem ajudar muito a *{EMPRESA}*.
+Tudo integrado para funcionar automaticamente enquanto você foca no seu negócio.
 
-Confira como funciona na prática:
+Veja na prática como funciona:
 🔗 {DEMO_LINK}`,
       `Olá!
 
-Meu nome é {NOME}. Trabalho com soluções digitais para negócios como a *{EMPRESA}*.
+Aqui é {NOME}. Trabalho transformando a presença digital de negócios locais.
 
 Nossas soluções incluem:
 
-✅ Sites profissionais para maior visibilidade
-✅ Sistema de agendamentos automático
-✅ Automação no WhatsApp
+• Website profissional que converte
+• Agendamento online integrado
+• Atendimento automático no WhatsApp
 
-Veja uma demonstração funcionando:
+Isso elimina perda de clientes e organiza seu atendimento.
+
+Confira o sistema funcionando:
 🔗 {DEMO_LINK}`,
       `Oi, tudo certo?
 
-Aqui é {NOME}. Trabalho com automação para empresas que precisam de presença digital.
+Me chamo {NOME} e ajudo empresas a ter presença digital profissional.
 
-Posso te ajudar com:
+O que oferecemos:
 
-✅ Site profissional
-✅ Agendamento automático
-✅ WhatsApp automatizado
+• Site focado em trazer clientes
+• Sistema de agendamento automático
+• Integração com WhatsApp
 
-Acho que pode fazer sentido pra *{EMPRESA}*.
+Sem aumentar equipe, você atende mais e melhor.
 
-Olha o demo aqui:
+Olha como funciona:
+🔗 {DEMO_LINK}`,
+      `E aí, beleza?
+
+{NOME} aqui! Trabalho com automação comercial pra negócios locais.
+
+Entrego:
+
+• Site profissional moderno
+• Agendamento online integrado
+• WhatsApp automatizado
+
+Sua empresa atendendo 24h sem você precisar estar lá.
+
+Dá uma olhada:
+🔗 {DEMO_LINK}`,
+      `Bom dia!
+
+Sou {NOME}, especialista em presença digital para negócios.
+
+Meu trabalho é ajudar você a:
+
+• Ter um site que realmente converte
+• Automatizar seus agendamentos
+• Integrar tudo ao WhatsApp
+
+Menos trabalho manual, mais resultados.
+
+Veja o demo:
 🔗 {DEMO_LINK}`,
     ]
   },
@@ -124,165 +168,317 @@ Olha o demo aqui:
   'pt-PT': {
     base: `Olá, tudo bem?
 
-Chamo-me {NOME} e ajudo empresas como a *{EMPRESA}* a melhorar a sua presença online.
+Chamo-me {NOME} e ajudo empresas como a sua a melhorar a presença online.
 
 Desenvolvemos:
-✅ Websites profissionais
-✅ Sistema de agendamento automático  
-✅ Automação de WhatsApp
+• Sites profissionais focados em conversão
+• Sistema de agendamento automático  
+• Automação de WhatsApp
 
 Veja como funciona:
 🔗 {DEMO_LINK}`,
-    variations: []
+    variations: [
+      `Olá!
+
+Sou {NOME}, trabalho com soluções digitais para negócios.
+
+Oferecemos:
+• Website profissional
+• Agendamento online 24h
+• Integração WhatsApp
+
+Confira o sistema:
+🔗 {DEMO_LINK}`,
+    ]
   },
 
   'es': {
     base: `Hola, ¿cómo está?
 
-Mi nombre es {NOME} y ayudo a negocios como *{EMPRESA}* a mejorar su presencia online.
+Mi nombre es {NOME} y ayudo a negocios locales a mejorar su presencia online.
 
 Ofrecemos:
-✅ Sitios web profesionales
-✅ Sistema de citas automático  
-✅ Automatización de WhatsApp
+• Sitios web profesionales enfocados en conversión
+• Sistema de citas automático  
+• Automatización de WhatsApp
 
 Vea cómo funciona:
 🔗 {DEMO_LINK}`,
-    variations: []
+    variations: [
+      `¡Hola!
+
+Soy {NOME}. Trabajo transformando la presencia digital de negocios.
+
+Nuestras soluciones:
+• Website profesional
+• Agenda online automática
+• WhatsApp integrado
+
+Mira el demo:
+🔗 {DEMO_LINK}`,
+    ]
   },
 
   'es-MX': {
-    base: `Hola, ¿cómo está?
+    base: `Hola, ¿cómo estás?
 
-Soy {NOME} y ayudo a negocios como *{EMPRESA}* a tener mejor presencia en línea.
+Soy {NOME} y ayudo a negocios como el tuyo a tener mejor presencia en línea.
 
 Ofrecemos:
-✅ Sitios web profesionales
-✅ Sistema de citas automático  
-✅ Automatización de WhatsApp
+• Sitios web profesionales
+• Sistema de citas automático  
+• Automatización de WhatsApp
 
 Mira cómo funciona:
 🔗 {DEMO_LINK}`,
-    variations: []
+    variations: [
+      `¡Qué onda!
+
+{NOME} aquí. Trabajo con soluciones digitales para negocios locales.
+
+Te ofrezco:
+• Website profesional
+• Agenda en línea 24/7
+• WhatsApp automatizado
+
+Checa el demo:
+🔗 {DEMO_LINK}`,
+    ]
   },
 
   'es-AR': {
     base: `Hola, ¿cómo andás?
 
-Soy {NOME} y laburo ayudando a negocios como *{EMPRESA}* a mejorar su presencia online.
+Soy {NOME} y laburo ayudando negocios a mejorar su presencia online.
 
 Ofrecemos:
-✅ Sitios web profesionales
-✅ Sistema de turnos automático  
-✅ Automatización de WhatsApp
+• Sitios web profesionales
+• Sistema de turnos automático  
+• Automatización de WhatsApp
 
 Mirá cómo funciona:
 🔗 {DEMO_LINK}`,
-    variations: []
+    variations: [
+      `¿Qué tal?
+
+{NOME} acá. Me dedico a la presencia digital de negocios.
+
+Ofrezco:
+• Website profesional
+• Turnos online 24h
+• WhatsApp automatizado
+
+Mirá el demo:
+🔗 {DEMO_LINK}`,
+    ]
   },
 
   'en': {
     base: `Hello!
 
-My name is {NOME} and I help businesses like *{EMPRESA}* improve their online presence.
+My name is {NOME} and I help local businesses improve their online presence.
 
 We offer:
-✅ Professional websites
-✅ Automatic scheduling system  
-✅ WhatsApp automation
+• Professional websites focused on conversion
+• Automatic scheduling system  
+• WhatsApp automation
 
 See how it works:
 🔗 {DEMO_LINK}`,
-    variations: []
+    variations: [
+      `Hi there!
+
+I'm {NOME}, I work with digital solutions for local businesses.
+
+Our services:
+• Professional website
+• 24/7 online booking
+• WhatsApp integration
+
+Check out the demo:
+🔗 {DEMO_LINK}`,
+    ]
   },
 
   'en-UK': {
     base: `Hello!
 
-I'm {NOME} and I help businesses like *{EMPRESA}* improve their online presence.
+I'm {NOME} and I help businesses improve their online presence.
 
 We offer:
-✅ Professional websites
-✅ Automatic booking system  
-✅ WhatsApp automation
+• Professional websites
+• Automatic booking system  
+• WhatsApp automation
 
 See how it works:
 🔗 {DEMO_LINK}`,
-    variations: []
+    variations: [
+      `Hi!
+
+{NOME} here. I work with digital solutions for local businesses.
+
+Our services include:
+• Professional website
+• Online booking 24/7
+• WhatsApp integration
+
+Have a look at the demo:
+🔗 {DEMO_LINK}`,
+    ]
   },
 
   'de': {
     base: `Guten Tag!
 
-Mein Name ist {NOME}. Ich helfe Unternehmen wie *{EMPRESA}*, ihre Online-Präsenz zu verbessern.
+Mein Name ist {NOME}. Ich helfe Unternehmen, ihre Online-Präsenz zu verbessern.
 
 Wir bieten:
-✅ Professionelle Websites
-✅ Automatisches Terminbuchungssystem  
-✅ WhatsApp-Automatisierung
+• Professionelle Websites
+• Automatisches Terminbuchungssystem  
+• WhatsApp-Automatisierung
 
 Sehen Sie, wie es funktioniert:
 🔗 {DEMO_LINK}`,
-    variations: []
+    variations: [
+      `Hallo!
+
+Ich bin {NOME} und arbeite mit digitalen Lösungen für lokale Unternehmen.
+
+Unsere Dienstleistungen:
+• Professionelle Website
+• Online-Terminbuchung 24/7
+• WhatsApp-Integration
+
+Schauen Sie sich die Demo an:
+🔗 {DEMO_LINK}`,
+    ]
   },
 
   'fr': {
     base: `Bonjour !
 
-Je suis {NOME}. J'accompagne des entreprises comme *{EMPRESA}* pour améliorer leur présence en ligne.
+Je suis {NOME}. J'accompagne les entreprises pour améliorer leur présence en ligne.
 
 Nous proposons :
-✅ Sites web professionnels
-✅ Système de prise de rendez-vous automatique  
-✅ Automatisation WhatsApp
+• Sites web professionnels
+• Système de prise de rendez-vous automatique  
+• Automatisation WhatsApp
 
 Découvrez comment ça fonctionne :
 🔗 {DEMO_LINK}`,
-    variations: []
+    variations: [
+      `Salut !
+
+{NOME} ici. Je travaille avec des solutions digitales pour les entreprises locales.
+
+Nos services :
+• Site web professionnel
+• Réservation en ligne 24h/24
+• Intégration WhatsApp
+
+Regardez la démo :
+🔗 {DEMO_LINK}`,
+    ]
   },
 
   'it': {
     base: `Buongiorno!
 
-Mi chiamo {NOME} e aiuto attività come *{EMPRESA}* a migliorare la loro presenza online.
+Mi chiamo {NOME} e aiuto le attività a migliorare la loro presenza online.
 
 Offriamo:
-✅ Siti web professionali
-✅ Sistema di prenotazione automatico  
-✅ Automazione WhatsApp
+• Siti web professionali
+• Sistema di prenotazione automatico  
+• Automazione WhatsApp
 
 Guardi come funziona:
 🔗 {DEMO_LINK}`,
-    variations: []
+    variations: [
+      `Ciao!
+
+Sono {NOME}, lavoro con soluzioni digitali per attività locali.
+
+I nostri servizi:
+• Sito web professionale
+• Prenotazioni online 24/7
+• Integrazione WhatsApp
+
+Guarda la demo:
+🔗 {DEMO_LINK}`,
+    ]
   },
 
   'ja': {
     base: `こんにちは！
 
-私の名前は{NOME}です。*{EMPRESA}*のような企業のオンラインプレゼンス向上をお手伝いしています。
+私は{NOME}と申します。地元企業のオンラインプレゼンス向上をお手伝いしています。
 
 提供サービス：
-✅ プロフェッショナルなウェブサイト
-✅ 自動予約システム
-✅ WhatsApp自動化
+• プロフェッショナルなウェブサイト
+• 自動予約システム
+• WhatsApp自動化
 
 デモをご覧ください：
 🔗 {DEMO_LINK}`,
-    variations: []
+    variations: [
+      `こんにちは！
+
+{NOME}です。地域ビジネス向けのデジタルソリューションを提供しています。
+
+サービス内容：
+• プロサイト制作
+• 24時間オンライン予約
+• WhatsApp連携
+
+デモはこちら：
+🔗 {DEMO_LINK}`,
+    ]
   },
 };
 
-const DEMO_LINK = 'https://www.genesishub.cloud/demo/ogim2u';
+const DEFAULT_DEMO_LINK = 'https://genesishub.cloud/demo';
 
-function adaptMessage(templateConfig: { base: string; variations: string[] }, affiliateName: string, businessName: string): string {
+function getNicheLinkFromCategory(category: string): string {
+  // Tenta encontrar o link do nicho baseado na categoria
+  const categoryLower = category?.toLowerCase() || '';
+  
+  if (categoryLower.includes('barb') || categoryLower.includes('cabelo') || categoryLower.includes('hair')) {
+    return NICHE_LINKS['barbearia'];
+  }
+  if (categoryLower.includes('acad') || categoryLower.includes('gym') || categoryLower.includes('fitness') || categoryLower.includes('crossfit')) {
+    return NICHE_LINKS['academia'];
+  }
+  if (categoryLower.includes('salão') || categoryLower.includes('salon') || categoryLower.includes('beleza') || categoryLower.includes('beauty')) {
+    return NICHE_LINKS['salao'];
+  }
+  if (categoryLower.includes('clínic') || categoryLower.includes('clinic') || categoryLower.includes('médic') || categoryLower.includes('medic')) {
+    return NICHE_LINKS['clinica'];
+  }
+  if (categoryLower.includes('dent') || categoryLower.includes('odont')) {
+    return NICHE_LINKS['dentista'];
+  }
+  if (categoryLower.includes('restaur') || categoryLower.includes('food') || categoryLower.includes('comida')) {
+    return NICHE_LINKS['restaurante'];
+  }
+  if (categoryLower.includes('pet') || categoryLower.includes('vet') || categoryLower.includes('animal')) {
+    return NICHE_LINKS['petshop'];
+  }
+  
+  return NICHE_LINKS['default'];
+}
+
+function adaptMessage(templateConfig: { base: string; variations: string[] }, affiliateName: string, businessName: string, category?: string): string {
   // Escolhe aleatoriamente entre base e variações para evitar ban do WhatsApp
   const allTemplates = [templateConfig.base, ...templateConfig.variations];
   const randomTemplate = allTemplates[Math.floor(Math.random() * allTemplates.length)];
   
+  // Pega o link apropriado para o nicho
+  const demoLink = getNicheLinkFromCategory(category || '');
+  
   return randomTemplate
     .replace(/{NOME}/g, affiliateName)
     .replace(/{EMPRESA}/g, businessName)
-    .replace(/{DEMO_LINK}/g, DEMO_LINK);
+    .replace(/{DEMO_LINK}/g, demoLink);
 }
 
 serve(async (req) => {
@@ -371,8 +567,9 @@ serve(async (req) => {
         // Extract email from various sources
         const email = extractEmail(place);
 
-        // ADAPT MESSAGE INSTANTLY (no AI call)
-        const generatedMessage = adaptMessage(messageTemplate, consultantName, name);
+        // ADAPT MESSAGE INSTANTLY (no AI call) - passa categoria para link correto
+        const category = place.category || niche;
+        const generatedMessage = adaptMessage(messageTemplate, consultantName, name, category);
 
         return {
           name,

@@ -41,6 +41,21 @@ const TEMPLATES: TemplateInfo[] = [
       badge: '✂️ Experiência Premium'
     }
   },
+  {
+    id: 'academia',
+    name: 'Academia Fitness',
+    description: 'Para academias, personal trainers e crossfit',
+    category: 'health',
+    route: '/academia',
+    gradient: 'from-red-900 via-zinc-900 to-zinc-950',
+    accent: 'red',
+    available: true,
+    preview: {
+      title: 'Power Gym',
+      subtitle: 'Transforme seu corpo',
+      badge: '💪 Treine com os melhores'
+    }
+  },
 ];
 
 export function TemplatePortfolioSystem({ affiliateId }: TemplatePortfolioSystemProps) {

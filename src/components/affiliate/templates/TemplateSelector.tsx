@@ -23,7 +23,7 @@ interface TemplateSelectorProps {
 type Category = 'all' | 'beauty' | 'food' | 'health' | 'services' | 'education' | 'auto' | 'tech' | 'events' | 'real_estate';
 
 const categories = [
-  { id: 'all' as Category, label: 'Todos', icon: LayoutGrid },
+  { id: 'all' as Category, label: 'Disponíveis', icon: LayoutGrid },
   { id: 'beauty' as Category, label: 'Beleza & Estética', icon: Scissors },
   { id: 'food' as Category, label: 'Alimentação & Delivery', icon: UtensilsCrossed },
   { id: 'health' as Category, label: 'Fitness & Saúde', icon: Dumbbell },
@@ -167,7 +167,7 @@ const templates: TemplateInfo[] = [
     route: '/academia',
     gradient: 'from-red-900 via-zinc-900 to-zinc-950',
     accent: 'red',
-    available: false,
+    available: true,
     preview: {
       title: 'Power Gym',
       subtitle: 'Transforme seu corpo',
