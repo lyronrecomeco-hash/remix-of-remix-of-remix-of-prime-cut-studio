@@ -55,38 +55,13 @@ export const useAutomationJobs = (affiliateId: string) => {
 
       if (!affiliate?.user_id) return;
 
-      // First try to get genesis_user by auth_user_id to find the correct user_id for instances
-      const { data: genesisUser } = await supabase
-        .from('genesis_users')
-        .select('id')
-        .eq('auth_user_id', affiliate.user_id)
-        .single();
+      const { data } = await supabase
+        .from('genesis_instances')
+        .select('id, name, phone_number, status')
+        .eq('user_id', affiliate.user_id)
+        .eq('status', 'connected');
 
-      let instances: { id: string; name: string; phone_number: string | null; status: string }[] = [];
-
-      if (genesisUser?.id) {
-        // Fetch instances by genesis_users.id
-        const { data } = await supabase
-          .from('genesis_instances')
-          .select('id, name, phone_number, status')
-          .eq('user_id', genesisUser.id)
-          .eq('status', 'connected');
-        
-        instances = data || [];
-      }
-
-      // If no instances found, also try to find any connected instance (fallback)
-      if (instances.length === 0) {
-        const { data } = await supabase
-          .from('genesis_instances')
-          .select('id, name, phone_number, status')
-          .eq('status', 'connected')
-          .limit(5);
-        
-        instances = data || [];
-      }
-
-      setInstances(instances);
+      setInstances(data || []);
     } catch (error) {
       console.error('Error fetching instances:', error);
     }

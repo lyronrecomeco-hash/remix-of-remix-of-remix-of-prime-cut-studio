@@ -219,30 +219,6 @@ export const AutomationConfigModal = ({
                   </div>
 
                   {config.scheduleType === 'scheduled' && (
-                    <Alert className="bg-primary/10 border-primary/30">
-                      <Clock className="h-4 w-4 text-primary" />
-                      <AlertDescription className="text-sm">
-                        <strong>Início Automático:</strong> A automação iniciará automaticamente
-                        no horário agendado, sem necessidade de ação manual.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Horários de envio - só mostra quando agendar */}
-              {config.scheduleType === 'scheduled' && (
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <Calendar className="w-4 h-4 text-primary" />
-                      Data e Hora do Agendamento
-                    </CardTitle>
-                    <CardDescription>
-                      O envio iniciará automaticamente nesta data/hora
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
                     <div>
                       <Label>Data e Hora de Início</Label>
                       <Input
@@ -250,22 +226,21 @@ export const AutomationConfigModal = ({
                         value={config.scheduledAt || ''}
                         onChange={(e) => setConfig(c => ({ ...c, scheduledAt: e.target.value }))}
                         className="mt-1"
-                        min={new Date().toISOString().slice(0, 16)}
                       />
                     </div>
-                  </CardContent>
-                </Card>
-              )}
+                  )}
+                </CardContent>
+              </Card>
 
-              {/* Janela de horários permitidos */}
+              {/* Horários de envio */}
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-base">
                     <Timer className="w-4 h-4 text-primary" />
-                    Janela de Envio
+                    Horários Permitidos
                   </CardTitle>
                   <CardDescription>
-                    O envio só acontece dentro destes horários (para todos os dias)
+                    O envio só acontece dentro destes horários
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -309,7 +284,7 @@ export const AutomationConfigModal = ({
                   </div>
 
                   <div>
-                    <Label className="mb-2 block">Dias da Semana Permitidos</Label>
+                    <Label className="mb-2 block">Dias da Semana</Label>
                     <div className="flex flex-wrap gap-2">
                       {DAYS.map((day) => (
                         <Badge
