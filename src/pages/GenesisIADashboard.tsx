@@ -49,6 +49,7 @@ import { GenesisSearchClients } from "@/components/genesis-ia/GenesisSearchClien
 import { GlobalRadarTab } from "@/components/genesis-ia/GlobalRadarTab";
 import { GenesisUsersTab } from "@/components/genesis-ia/GenesisUsersTab";
 import { GenesisSettingsTab } from "@/components/genesis-ia/GenesisSettingsTab";
+import { AcceptedLeadsSection } from "@/components/genesis-ia/AcceptedLeadsSection";
 import { WelcomeToast } from "@/components/genesis-ia/WelcomeToast";
 import { FullPageEditor, EditorContextValue, CustomElement } from "@/components/genesis-ia/dashboard-builder/FullPageEditor";
 import { DraggableCard, CardData } from "@/components/genesis-ia/dashboard-builder/components/DraggableCard";
@@ -236,26 +237,26 @@ const GenesisIADashboard = () => {
                   return (
                     <Card
                       key={card.id}
-                      className="group cursor-pointer transition-all hover:scale-[1.02] hover:shadow-xl flex-1 min-w-[200px] max-w-[320px] border border-white/10"
+                      className="group cursor-pointer transition-all hover:scale-[1.02] hover:shadow-xl flex-1 min-w-[280px] max-w-[380px] border border-white/10"
                       style={{
                         backgroundColor: 'hsl(220 20% 14%)',
-                        borderRadius: '12px',
+                        borderRadius: '16px',
                       }}
                       onClick={() => setActiveTab(card.id as ActiveTab)}
                     >
-                      <CardContent className="p-5">
-                        <div className="flex items-center gap-3 mb-3">
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-4 mb-4">
                           <div 
-                            className="w-10 h-10 rounded-lg flex items-center justify-center"
+                            className="w-12 h-12 rounded-xl flex items-center justify-center"
                             style={{ backgroundColor: cardStyles.iconBackgroundColor || 'hsl(270 60% 50% / 0.2)' }}
                           >
                             <IconComponent 
-                              className="w-5 h-5" 
+                              className="w-6 h-6" 
                               style={{ color: cardStyles.iconColor || 'hsl(270 80% 70%)' }} 
                             />
                           </div>
                           <h3 
-                            className="text-base font-semibold text-white"
+                            className="text-lg font-semibold text-white"
                           >
                             {card.title}
                           </h3>
@@ -268,6 +269,13 @@ const GenesisIADashboard = () => {
                   );
                 })}
             </div>
+            
+            {/* Accepted Leads Section */}
+            <AcceptedLeadsSection 
+              affiliateId={userId} 
+              onViewAll={() => setActiveTab('radar')}
+            />
+          </>
           ) : (
             // Free positioning mode for editing
             <div 

@@ -19,12 +19,21 @@ import {
   WifiOff,
   Volume2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  AlertCircle,
+  Star,
+  MessageSquare,
+  Mail,
+  Calendar,
+  Tag,
+  Eye
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
+import { Modal, ModalBody, ModalFooter } from '@/components/ui/modal';
+import { Separator } from '@/components/ui/separator';
 import {
   Select,
   SelectContent,
@@ -84,6 +93,7 @@ const LEVEL_CONFIG: Record<string, { label: string; color: string; bgColor: stri
 
 const AUTO_SCAN_INTERVAL = 2 * 60 * 1000; // 2 minutes
 const ITEMS_PER_PAGE = 12;
+const MAX_LEADS_LIMIT = 200; // Maximum leads before stopping scan
 
 export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
   const [opportunities, setOpportunities] = useState<RadarOpportunity[]>([]);
@@ -99,6 +109,9 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
   const [nextScanIn, setNextScanIn] = useState<number>(0);
   const [scanStats, setScanStats] = useState({ total: 0, today: 0, avgScore: 0 });
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedOpportunity, setSelectedOpportunity] = useState<RadarOpportunity | null>(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [limitReached, setLimitReached] = useState(false);
   const autoScanIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -158,7 +171,7 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
         .eq('affiliate_id', affiliateId)
         .eq('status', 'new')
         .order('opportunity_score', { ascending: false })
-        .limit(100);
+        .limit(MAX_LEADS_LIMIT);
 
       // Filter only without website (high conversion %)
       if (filterNoWebsite) {
@@ -171,6 +184,15 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
       
       setOpportunities(data || []);
       setUnreadCount((data || []).filter(o => !o.is_read).length);
+      
+      // Check if limit reached
+      const reachedLimit = (data?.length || 0) >= MAX_LEADS_LIMIT;
+      setLimitReached(reachedLimit);
+      
+      if (reachedLimit && autoScanEnabled) {
+        setAutoScanEnabled(false);
+        toast.info(`🎯 Limite de ${MAX_LEADS_LIMIT} leads atingido! Auto-scan pausado.`);
+      }
       
       // Calculate stats
       if (data && data.length > 0) {
@@ -188,11 +210,19 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
     } finally {
       setLoading(false);
     }
-  }, [affiliateId, filterNoWebsite]);
+  }, [affiliateId, filterNoWebsite, autoScanEnabled]);
 
   // Run scan
   const runScan = useCallback(async (isAuto = false) => {
     if (scanning || !affiliateId) return;
+    
+    // Don't scan if limit reached
+    if (limitReached) {
+      if (!isAuto) {
+        toast.warning(`Limite de ${MAX_LEADS_LIMIT} leads atingido. Aceite ou rejeite alguns para continuar.`);
+      }
+      return;
+    }
     
     setScanning(true);
     try {
@@ -227,7 +257,7 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
     } finally {
       setScanning(false);
     }
-  }, [affiliateId, scanning, fetchOpportunities, playNotificationSound]);
+  }, [affiliateId, scanning, fetchOpportunities, playNotificationSound, limitReached]);
 
   // Auto scan effect
   useEffect(() => {
@@ -357,6 +387,24 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
       .eq('id', id);
     
     setOpportunities(prev => prev.filter(o => o.id !== id));
+  };
+
+  // Open detail modal
+  const handleOpenDetail = (opp: RadarOpportunity) => {
+    setSelectedOpportunity(opp);
+    setDetailModalOpen(true);
+    
+    // Mark as read
+    if (!opp.is_read) {
+      supabase
+        .from('global_radar_opportunities')
+        .update({ is_read: true })
+        .eq('id', opp.id)
+        .then(() => {
+          setOpportunities(prev => prev.map(o => o.id === opp.id ? { ...o, is_read: true } : o));
+          setUnreadCount(prev => Math.max(0, prev - 1));
+        });
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -497,18 +545,42 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
         </CardContent>
       </Card>
 
+      {/* Limit reached alert */}
+      {limitReached && (
+        <Card className="border-amber-500/50 bg-amber-500/5">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-amber-500">
+                  Limite de {MAX_LEADS_LIMIT} leads atingido
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Aceite ou rejeite alguns leads para liberar espaço e continuar o scan automático.
+                </p>
+              </div>
+              <Badge variant="outline" className="border-amber-500/50 text-amber-500">
+                {opportunities.length}/{MAX_LEADS_LIMIT}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Opportunities Grid */}
       <Card className="border-border/50">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Globe2 className="w-5 h-5 text-primary" />
-            Oportunidades Detectadas
-            {opportunities.length > 0 && (
-              <Badge variant="secondary" className="ml-2">
-                {opportunities.length}
-              </Badge>
-            )}
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Globe2 className="w-5 h-5 text-primary" />
+              Oportunidades Detectadas
+              {opportunities.length > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  {opportunities.length}/{MAX_LEADS_LIMIT}
+                </Badge>
+              )}
+            </CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -662,24 +734,27 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
                             <div className="flex items-center gap-2 pt-3 border-t border-border/50">
                               <Button
                                 size="sm"
-                                onClick={() => handleAccept(opp)}
-                                className="flex-1 h-10 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenDetail(opp);
+                                }}
+                                className="flex-1 h-10"
                               >
-                                <CheckCircle2 className="w-4 h-4 mr-1.5" />
-                                Aceitar Projeto
+                                <Eye className="w-4 h-4 mr-1.5" />
+                                Ver Perfil
                               </Button>
                               
                               <Button
                                 size="sm"
-                                variant="outline"
-                                onClick={() => opp.company_website 
-                                  ? window.open(opp.company_website, '_blank')
-                                  : window.open(`https://www.google.com/search?q=${encodeURIComponent(opp.company_name)}`, '_blank')
-                                }
-                                className="flex-1 h-10"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAccept(opp);
+                                }}
+                                className="flex-1 h-10 bg-emerald-600 hover:bg-emerald-700 text-white"
                               >
-                                <ExternalLink className="w-4 h-4 mr-1.5" />
-                                Pesquisar →
+                                <CheckCircle2 className="w-4 h-4 mr-1.5" />
+                                Aceitar
                               </Button>
                             </div>
                           </CardContent>
@@ -737,6 +812,186 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
           )}
         </CardContent>
       </Card>
+
+      {/* Detail Modal */}
+      <Modal
+        isOpen={detailModalOpen}
+        onClose={() => setDetailModalOpen(false)}
+        title="Perfil do Estabelecimento"
+        size="lg"
+      >
+        {selectedOpportunity && (
+          <>
+            <ModalBody className="space-y-6">
+              {/* Header with score */}
+              <div className="flex items-start gap-4">
+                <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Building2 className="w-8 h-8 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-foreground">{selectedOpportunity.company_name}</h3>
+                  <p className="text-sm text-muted-foreground">{selectedOpportunity.niche || 'Negócio local'}</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Badge className={cn(
+                      selectedOpportunity.opportunity_level === 'advanced' && "bg-emerald-500/20 text-emerald-500 border-emerald-500/30",
+                      selectedOpportunity.opportunity_level === 'intermediate' && "bg-amber-500/20 text-amber-500 border-amber-500/30",
+                      selectedOpportunity.opportunity_level === 'basic' && "bg-muted text-muted-foreground border-border",
+                    )}>
+                      {LEVEL_CONFIG[selectedOpportunity.opportunity_level]?.label || 'Básico'}
+                    </Badge>
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+                      Score: {selectedOpportunity.opportunity_score}%
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Estimated Values */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1">
+                    <TrendingUp className="w-3 h-3" /> Valor Estimado
+                  </p>
+                  <p className="text-sm text-muted-foreground">Min: R$ {selectedOpportunity.estimated_value_min.toLocaleString()}</p>
+                  <p className="text-xl font-bold text-emerald-500">R$ {selectedOpportunity.estimated_value_max.toLocaleString()}</p>
+                </div>
+                <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1">
+                    <Calendar className="w-3 h-3" /> Recorrência Mensal
+                  </p>
+                  <p className="text-xl font-bold text-emerald-400">+R$ {selectedOpportunity.monthly_recurrence?.toLocaleString() || '0'}/mês</p>
+                </div>
+              </div>
+
+              {/* Digital Presence */}
+              <div className={cn(
+                "p-4 rounded-xl flex items-center gap-3",
+                !selectedOpportunity.has_website ? "bg-emerald-500/10 border border-emerald-500/30" : "bg-muted/30 border border-border/50"
+              )}>
+                <Globe2 className={cn("w-5 h-5", !selectedOpportunity.has_website ? "text-emerald-500" : "text-muted-foreground")} />
+                <div>
+                  <p className={cn("text-sm font-medium", !selectedOpportunity.has_website ? "text-emerald-500" : "text-foreground")}>
+                    {selectedOpportunity.digital_presence_status || (selectedOpportunity.has_website ? 'Possui presença digital' : 'Sem presença digital')}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {!selectedOpportunity.has_website 
+                      ? 'Oportunidade máxima - empresa precisa de serviços digitais'
+                      : 'Empresa já possui website'
+                    }
+                  </p>
+                </div>
+              </div>
+
+              {/* AI Description */}
+              {selectedOpportunity.ai_description && (
+                <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Star className="w-4 h-4 text-primary" />
+                    <p className="text-sm font-medium text-primary">Análise da IA</p>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{selectedOpportunity.ai_description}</p>
+                </div>
+              )}
+
+              {/* Contact Info */}
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-foreground">Informações de Contato</p>
+                {selectedOpportunity.company_address && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-muted-foreground">{selectedOpportunity.company_address}</span>
+                  </div>
+                )}
+                {selectedOpportunity.company_city && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <Globe2 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-muted-foreground">{selectedOpportunity.company_city}, {selectedOpportunity.company_country || 'Brasil'}</span>
+                  </div>
+                )}
+                {selectedOpportunity.company_phone && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <Phone className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-muted-foreground">{selectedOpportunity.company_phone}</span>
+                  </div>
+                )}
+                {selectedOpportunity.company_website && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <a 
+                      href={selectedOpportunity.company_website} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      {selectedOpportunity.company_website}
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              {/* Service Tags */}
+              {selectedOpportunity.service_tags && selectedOpportunity.service_tags.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <Tag className="w-4 h-4" /> Serviços Recomendados
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedOpportunity.service_tags.map((tag, i) => (
+                      <Badge key={i} variant="outline" className="text-xs">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Meta Info */}
+              <div className="pt-4 border-t border-border/50 flex items-center gap-4 text-xs text-muted-foreground">
+                <span>🔍 Região: {selectedOpportunity.search_region || 'N/A'}</span>
+                <span>📅 Encontrado: {new Date(selectedOpportunity.found_at).toLocaleDateString('pt-BR')}</span>
+              </div>
+            </ModalBody>
+
+            <ModalFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  window.open(`https://www.google.com/search?q=${encodeURIComponent(selectedOpportunity.company_name)}`, '_blank');
+                }}
+                className="gap-2"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Pesquisar no Google
+              </Button>
+              
+              <Button
+                variant="outline"
+                onClick={() => {
+                  handleReject(selectedOpportunity.id);
+                  setDetailModalOpen(false);
+                }}
+                className="gap-2 text-destructive border-destructive/30 hover:bg-destructive/10"
+              >
+                <X className="w-4 h-4" />
+                Rejeitar
+              </Button>
+              
+              <Button
+                onClick={() => {
+                  handleAccept(selectedOpportunity);
+                  setDetailModalOpen(false);
+                }}
+                className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                Aceitar Projeto
+              </Button>
+            </ModalFooter>
+          </>
+        )}
+      </Modal>
     </div>
   );
 };
