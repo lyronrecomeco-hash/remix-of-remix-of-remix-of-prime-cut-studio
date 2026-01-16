@@ -200,6 +200,10 @@ const GenesisIADashboard = () => {
                 setEditingCard({ ...editingCard, ...updates });
               }}
               onClose={() => setEditingCard(null)}
+              onDelete={() => {
+                deleteCard(editingCard.id);
+                setEditingCard(null);
+              }}
             />
           )}
         </AnimatePresence>
