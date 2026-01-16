@@ -92,6 +92,13 @@ const GenesisIADashboard = () => {
     navigate("/genesis-ia");
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return 'Bom dia';
+    if (hour >= 12 && hour < 18) return 'Boa tarde';
+    return 'Boa noite';
+  };
+
   const getTabTitle = () => {
     switch (activeTab) {
       case 'prospects': return 'Encontrar Clientes';
@@ -101,12 +108,6 @@ const GenesisIADashboard = () => {
     }
   };
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Bom dia';
-    if (hour < 18) return 'Boa tarde';
-    return 'Boa noite';
-  };
 
   const dockItems = [
     { icon: Home, label: 'Início', tabId: 'dashboard' as const },
@@ -502,14 +503,14 @@ const GenesisIADashboard = () => {
             </header>
 
             {/* Content */}
-            <main className={activeTab === 'dashboard' && !isEditMode ? "flex-1 flex flex-col items-center justify-center px-6 py-12 pb-32" : "flex-1 px-4 py-4 pb-32"}>
+            <main className={activeTab === 'dashboard' && !isEditMode ? "flex-1 flex flex-col items-center justify-center px-6 pt-20 pb-32" : "flex-1 px-4 py-4 pb-32"}>
               {/* Hero Section - Centered Title - Only on dashboard */}
               {activeTab === 'dashboard' && !isEditMode && (
-                <div className="text-center mb-10">
-                  <h1 className="text-2xl md:text-3xl font-bold mb-2" style={{ color: config.header.titleColor }}>
-                    Bem-vindo à IA Genesis.
+                <div className="text-center mb-12">
+                  <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: config.header.titleColor }}>
+                    {getGreeting()}, {userName}! 👋
                   </h1>
-                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  <p className="text-base text-muted-foreground max-w-lg mx-auto">
                     Crie, evolua e gerencie suas ideias em um só lugar. Escolha uma ação para começar.
                   </p>
                 </div>
