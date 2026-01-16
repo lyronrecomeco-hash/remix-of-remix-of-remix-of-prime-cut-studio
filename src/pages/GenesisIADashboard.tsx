@@ -271,13 +271,45 @@ const GenesisIADashboard = () => {
                               {card.title}
                             </h3>
                           </div>
-                          <p className="text-sm text-white/50 leading-relaxed line-clamp-2">
+                          <p className="text-sm text-white/50 leading-relaxed min-h-[2.5rem]">
                             {card.description}
                           </p>
                         </CardContent>
                       </Card>
                     );
                   })}
+              </div>
+              
+              {/* Accepted Proposals Card */}
+              <div className="flex justify-center mt-5 px-4">
+                <Card
+                  className="group cursor-pointer transition-all duration-200 hover:scale-[1.01] hover:border-white/20 border border-white/[0.08] w-full max-w-5xl"
+                  style={{
+                    backgroundColor: 'hsl(215 30% 12%)',
+                    borderRadius: '14px',
+                  }}
+                  onClick={() => setActiveTab('radar')}
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-4 mb-3">
+                      <div 
+                        className="w-11 h-11 rounded-xl flex items-center justify-center"
+                        style={{ backgroundColor: 'hsl(145 50% 25% / 0.5)' }}
+                      >
+                        <Target 
+                          className="w-5 h-5" 
+                          style={{ color: 'hsl(145 70% 60%)' }} 
+                        />
+                      </div>
+                      <h3 className="text-base font-semibold text-white">
+                        Propostas Aceitas
+                      </h3>
+                    </div>
+                    <p className="text-sm text-white/50 leading-relaxed min-h-[2.5rem]">
+                      Gerencie as propostas que você aceitou do Radar Global e acompanhe o progresso de cada lead.
+                    </p>
+                  </CardContent>
+                </Card>
               </div>
               
               {/* Accepted Leads Section */}
