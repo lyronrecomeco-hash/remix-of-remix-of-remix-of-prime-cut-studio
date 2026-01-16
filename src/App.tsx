@@ -60,7 +60,6 @@ const AcademiaMatriculaPage = lazy(() => import("./pages/AcademiaMatriculaPage")
 const ClinicaEsteticaPage = lazy(() => import("./pages/ClinicaEsteticaPage"));
 const ClinicaEsteticaAgendarPage = lazy(() => import("./pages/ClinicaEsteticaAgendarPage"));
 const GenesisIALogin = lazy(() => import("./pages/GenesisIALogin"));
-const GenesisIADashboard = lazy(() => import("./pages/GenesisIADashboard"));
 
 // QueryClient com retry logic e cache otimizado
 const queryClient = new QueryClient({
@@ -263,7 +262,6 @@ const AppContent = () => {
             <Route path="/clinica-estetica/:code/agendar" element={<ClinicaEsteticaAgendarPage />} />
             {/* Genesis IA Routes */}
             <Route path="/genesis-ia" element={<GenesisIALogin />} />
-            <Route path="/genesis-ia/dashboard" element={<GenesisIADashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
