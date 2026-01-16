@@ -380,6 +380,7 @@ export const FullPageEditor: React.FC<FullPageEditorProps> = ({ children }) => {
 
   // Card management
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
 
   const updateCard = (id: string, updates: Partial<CardData>) => {
     const newCards = config.dashboardCards.map(card =>
@@ -402,6 +403,8 @@ export const FullPageEditor: React.FC<FullPageEditorProps> = ({ children }) => {
         ...cardToDuplicate,
         id: `${cardToDuplicate.id}-copy-${Date.now()}`,
         title: `${cardToDuplicate.title} (Cópia)`,
+        x: cardToDuplicate.x + 20,
+        y: cardToDuplicate.y + 20,
         order: config.dashboardCards.length,
       };
       updateConfig({ dashboardCards: [...config.dashboardCards, newCard] });
@@ -411,6 +414,7 @@ export const FullPageEditor: React.FC<FullPageEditorProps> = ({ children }) => {
 
   const selectCard = (id: string | null) => {
     setSelectedCardId(id);
+    if (id) setSelectedElementId(null);
   };
 
   const addCard = () => {
@@ -421,10 +425,10 @@ export const FullPageEditor: React.FC<FullPageEditorProps> = ({ children }) => {
       icon: 'Star',
       badge: 'Novo',
       badgeClass: 'bg-primary/10 text-primary border-primary/30',
-      x: 0,
-      y: 0,
-      width: 300,
-      height: 180,
+      x: 20 + config.dashboardCards.length * 30,
+      y: 20 + config.dashboardCards.length * 30,
+      width: 320,
+      height: 190,
       order: config.dashboardCards.length,
       visible: true,
       styles: {},
@@ -438,10 +442,69 @@ export const FullPageEditor: React.FC<FullPageEditorProps> = ({ children }) => {
     updateConfig({ dashboardCards: cards });
   };
 
+  // Custom element management
+  const selectElement = (id: string | null) => {
+    setSelectedElementId(id);
+    if (id) setSelectedCardId(null);
+  };
+
+  const addTextElement = () => {
+    const newElement: CustomElement = {
+      id: `text-${Date.now()}`,
+      type: 'text',
+      content: 'Clique duas vezes para editar',
+      x: 20 + config.customElements.length * 20,
+      y: 250 + config.customElements.length * 20,
+      width: 250,
+      height: 50,
+      styles: {
+        fontSize: 16,
+        fontWeight: 'normal',
+        color: 'hsl(var(--foreground))',
+        backgroundColor: 'transparent',
+        textAlign: 'left',
+        padding: 8,
+        borderRadius: 4,
+      },
+    };
+    updateConfig({ customElements: [...config.customElements, newElement] });
+    setSelectedElementId(newElement.id);
+    toast.success('Texto adicionado!');
+  };
+
+  const updateElement = (id: string, updates: Partial<CustomElement>) => {
+    const newElements = config.customElements.map(el =>
+      el.id === id ? { ...el, ...updates } : el
+    );
+    updateConfig({ customElements: newElements });
+  };
+
+  const deleteElement = (id: string) => {
+    const newElements = config.customElements.filter(el => el.id !== id);
+    updateConfig({ customElements: newElements });
+    setSelectedElementId(null);
+    toast.success('Elemento removido!');
+  };
+
+  const duplicateElement = (id: string) => {
+    const elementToDuplicate = config.customElements.find(el => el.id === id);
+    if (elementToDuplicate) {
+      const newElement: CustomElement = {
+        ...elementToDuplicate,
+        id: `${elementToDuplicate.type}-${Date.now()}`,
+        x: elementToDuplicate.x + 20,
+        y: elementToDuplicate.y + 20,
+      };
+      updateConfig({ customElements: [...config.customElements, newElement] });
+      toast.success('Elemento duplicado!');
+    }
+  };
+
   // Context value for children
   const editorContext: EditorContextValue = {
     config,
     isEditMode,
+    // Cards
     selectedCardId,
     updateCard,
     deleteCard,
@@ -449,6 +512,13 @@ export const FullPageEditor: React.FC<FullPageEditorProps> = ({ children }) => {
     selectCard,
     addCard,
     reorderCards,
+    // Custom elements
+    selectedElementId,
+    selectElement,
+    addTextElement,
+    updateElement,
+    deleteElement,
+    duplicateElement,
   };
 
   // Keyboard shortcuts
