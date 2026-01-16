@@ -539,8 +539,8 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Grid Layout */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Grid Layout - Cards estilo clean */}
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 <AnimatePresence mode="popLayout">
                   {paginatedOpportunities.map((opp, index) => {
                     const levelConfig = LEVEL_CONFIG[opp.opportunity_level] || LEVEL_CONFIG.basic;
@@ -548,95 +548,113 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
                     return (
                       <motion.div
                         key={opp.id}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ delay: index * 0.03 }}
-                        className={cn(
-                          "relative p-4 rounded-xl border transition-all hover:shadow-md",
-                          !opp.is_read && "ring-1 ring-primary/30",
-                          opp.opportunity_level === 'advanced' && "border-emerald-500/30",
-                          opp.opportunity_level === 'intermediate' && "border-amber-500/30",
-                          opp.opportunity_level === 'basic' && "border-border",
-                        )}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ delay: index * 0.02 }}
                       >
-                        {/* Unread indicator */}
-                        {!opp.is_read && (
-                          <div className="absolute top-2 left-2 w-2 h-2 rounded-full bg-primary animate-pulse" />
-                        )}
+                        <Card className={cn(
+                          "relative overflow-hidden transition-all duration-200 hover:shadow-lg",
+                          "bg-card border-border/50",
+                          !opp.is_read && "ring-1 ring-primary/20"
+                        )}>
+                          {/* Color accent bar based on level */}
+                          <div className={cn(
+                            "absolute top-0 left-0 right-0 h-1",
+                            opp.opportunity_level === 'advanced' && "bg-emerald-500",
+                            opp.opportunity_level === 'intermediate' && "bg-amber-500",
+                            opp.opportunity_level === 'basic' && "bg-muted-foreground/30",
+                          )} />
 
-                        {/* Score Badge */}
-                        <div className="absolute top-3 right-3">
-                          <Badge className={cn(
-                            "text-xs font-bold",
-                            opp.opportunity_score >= 80 && "bg-emerald-500 hover:bg-emerald-600",
-                            opp.opportunity_score >= 60 && opp.opportunity_score < 80 && "bg-amber-500 hover:bg-amber-600",
-                            opp.opportunity_score < 60 && "bg-slate-500 hover:bg-slate-600",
-                          )}>
-                            {opp.opportunity_score}%
-                          </Badge>
-                        </div>
+                          <CardContent className="p-5">
+                            {/* Header Row */}
+                            <div className="flex items-start justify-between mb-4">
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                  <Building2 className="w-5 h-5 text-primary" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-semibold text-foreground text-sm leading-tight truncate">
+                                    {opp.company_name}
+                                  </h4>
+                                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                                    <MapPin className="w-3 h-3 flex-shrink-0" />
+                                    <span className="truncate">{opp.company_city || 'Localização não informada'}</span>
+                                  </p>
+                                </div>
+                              </div>
+                              
+                              {/* Score */}
+                              <div className={cn(
+                                "flex items-center justify-center w-10 h-10 rounded-lg text-sm font-bold text-white flex-shrink-0",
+                                opp.opportunity_score >= 80 && "bg-emerald-500",
+                                opp.opportunity_score >= 60 && opp.opportunity_score < 80 && "bg-amber-500",
+                                opp.opportunity_score < 60 && "bg-slate-500",
+                              )}>
+                                {opp.opportunity_score}
+                              </div>
+                            </div>
 
-                        {/* Header */}
-                        <div className="flex items-start gap-3 mb-3 pr-12">
-                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                            <Building2 className="w-5 h-5 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-foreground text-sm truncate">{opp.company_name}</h4>
-                            <p className="text-xs text-muted-foreground flex items-center gap-1 truncate">
-                              <MapPin className="w-3 h-3 flex-shrink-0" />
-                              {opp.company_city}
-                            </p>
-                          </div>
-                        </div>
+                            {/* Info Row */}
+                            <div className="flex items-center gap-2 mb-4 flex-wrap">
+                              <span className={cn(
+                                "inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium",
+                                levelConfig.bgColor, levelConfig.color
+                              )}>
+                                {levelConfig.icon} {levelConfig.label}
+                              </span>
+                              
+                              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-muted text-muted-foreground">
+                                R$ {opp.estimated_value_min.toLocaleString()}
+                              </span>
+                              
+                              {!opp.has_website && (
+                                <span className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-emerald-500/10 text-emerald-500">
+                                  🎯 Alta conversão
+                                </span>
+                              )}
+                            </div>
 
-                        {/* Level & Value */}
-                        <div className="flex items-center gap-2 mb-3 flex-wrap">
-                          <Badge variant="outline" className={cn(levelConfig.bgColor, levelConfig.color, "border-0 text-xs")}>
-                            {levelConfig.icon} {levelConfig.label}
-                          </Badge>
-                          <Badge variant="secondary" className="text-xs">
-                            R$ {opp.estimated_value_min.toLocaleString()}
-                          </Badge>
-                          {!opp.has_website && (
-                            <Badge variant="outline" className="text-xs text-emerald-400 border-emerald-500/30">
-                              🎯 Alta Conv.
-                            </Badge>
-                          )}
-                        </div>
+                            {/* Niche if available */}
+                            {opp.niche && (
+                              <p className="text-xs text-muted-foreground mb-4 truncate">
+                                {opp.niche}
+                              </p>
+                            )}
 
-                        {/* Actions */}
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => handleAccept(opp)}
-                            className="flex-1 gap-1.5 text-xs"
-                          >
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            Aceitar
-                          </Button>
-                          
-                          {opp.company_phone && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => window.open(`https://wa.me/${opp.company_phone?.replace(/\D/g, '')}`, '_blank')}
-                              className="px-2"
-                            >
-                              <Phone className="w-3.5 h-3.5" />
-                            </Button>
-                          )}
-                          
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleReject(opp.id)}
-                            className="text-muted-foreground hover:text-destructive px-2"
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
+                            {/* Actions */}
+                            <div className="flex items-center gap-2 pt-3 border-t border-border/50">
+                              <Button
+                                size="sm"
+                                onClick={() => handleAccept(opp)}
+                                className="flex-1 h-9"
+                              >
+                                <CheckCircle2 className="w-4 h-4 mr-1.5" />
+                                Aceitar Lead
+                              </Button>
+                              
+                              {opp.company_phone && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => window.open(`https://wa.me/${opp.company_phone?.replace(/\D/g, '')}`, '_blank')}
+                                  className="h-9 w-9 p-0"
+                                >
+                                  <Phone className="w-4 h-4" />
+                                </Button>
+                              )}
+                              
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleReject(opp.id)}
+                                className="h-9 w-9 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
                       </motion.div>
                     );
                   })}
