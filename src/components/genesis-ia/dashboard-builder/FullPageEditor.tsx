@@ -120,6 +120,7 @@ export interface CustomElement {
     backgroundColor?: string;
     fontSize?: number;
     fontWeight?: string;
+    textAlign?: 'left' | 'center' | 'right';
     borderRadius?: number;
     padding?: number;
   };
@@ -133,10 +134,10 @@ const DEFAULT_CARDS: CardData[] = [
     icon: 'Search',
     badge: 'Google Places',
     badgeClass: 'bg-primary/10 text-primary border-primary/30',
-    x: 0,
-    y: 0,
-    width: 300,
-    height: 180,
+    x: 20,
+    y: 20,
+    width: 320,
+    height: 190,
     order: 0,
     visible: true,
     styles: {},
@@ -148,10 +149,10 @@ const DEFAULT_CARDS: CardData[] = [
     icon: 'Radar',
     badge: 'IA Ativa',
     badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-    x: 0,
-    y: 0,
-    width: 300,
-    height: 180,
+    x: 360,
+    y: 20,
+    width: 320,
+    height: 190,
     order: 1,
     visible: true,
     styles: {},
@@ -211,6 +212,8 @@ const DEFAULT_CONFIG: PageConfig = {
 export interface EditorContextValue {
   config: PageConfig;
   isEditMode: boolean;
+
+  // Cards
   selectedCardId: string | null;
   updateCard: (id: string, updates: Partial<CardData>) => void;
   deleteCard: (id: string) => void;
@@ -218,6 +221,14 @@ export interface EditorContextValue {
   selectCard: (id: string | null) => void;
   addCard: () => void;
   reorderCards: (cards: CardData[]) => void;
+
+  // Custom elements (Text, etc.)
+  selectedElementId: string | null;
+  selectElement: (id: string | null) => void;
+  addTextElement: () => void;
+  updateElement: (id: string, updates: Partial<CustomElement>) => void;
+  deleteElement: (id: string) => void;
+  duplicateElement: (id: string) => void;
 }
 
 interface FullPageEditorProps {
