@@ -101,6 +101,13 @@ const GenesisIADashboard = () => {
     }
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Bom dia';
+    if (hour < 18) return 'Boa tarde';
+    return 'Boa noite';
+  };
+
   const dockItems = [
     { icon: Home, label: 'Início', tabId: 'dashboard' as const },
     { icon: Grid3X3, label: 'Apps', tabId: 'dashboard' as const },
@@ -205,9 +212,9 @@ const GenesisIADashboard = () => {
           onClick={(e) => e.stopPropagation()}
         >
           {/* Cards - Grid mode when not editing, free mode when editing */}
-          {!isEditMode ? (
+        {!isEditMode ? (
             // Grid mode for normal view
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {[...config.dashboardCards]
                 .filter(card => card.visible)
                 .sort((a, b) => a.order - b.order)
@@ -226,36 +233,32 @@ const GenesisIADashboard = () => {
                       }}
                       onClick={() => setActiveTab(card.id as ActiveTab)}
                     >
-                      <CardContent className="p-5">
-                        <div className="flex items-start justify-between mb-4">
+                      <CardContent className="p-3">
+                        <div className="flex items-center gap-2 mb-2">
                           <div 
-                            className="w-11 h-11 rounded-lg flex items-center justify-center group-hover:opacity-80 transition-colors"
+                            className="w-8 h-8 rounded-lg flex items-center justify-center group-hover:opacity-80 transition-colors flex-shrink-0"
                             style={{ backgroundColor: cardStyles.iconBackgroundColor || config.cards.iconBackgroundColor }}
                           >
                             <IconComponent 
-                              className="w-5 h-5" 
+                              className="w-4 h-4" 
                               style={{ color: cardStyles.iconColor || config.cards.iconColor }} 
                             />
                           </div>
-                          <ChevronRight 
-                            className="w-5 h-5 group-hover:translate-x-1 transition-all" 
-                            style={{ color: cardStyles.descriptionColor || config.cards.descriptionColor }}
-                          />
+                          <h3 
+                            className="text-sm font-semibold truncate"
+                            style={{ color: cardStyles.titleColor || config.cards.titleColor }}
+                          >
+                            {card.title}
+                          </h3>
                         </div>
-                        <h3 
-                          className="text-lg font-semibold mb-1.5"
-                          style={{ color: cardStyles.titleColor || config.cards.titleColor }}
-                        >
-                          {card.title}
-                        </h3>
                         <p 
-                          className="text-sm mb-4"
+                          className="text-xs mb-2 line-clamp-2"
                           style={{ color: cardStyles.descriptionColor || config.cards.descriptionColor }}
                         >
                           {card.description}
                         </p>
-                        <Badge variant="outline" className={`text-xs px-2.5 py-1 ${card.badgeClass}`}>
-                          {card.icon === 'Radar' && <Sparkles className="w-3 h-3 mr-1.5" />}
+                        <Badge variant="outline" className={`text-xs px-2 py-0.5 ${card.badgeClass}`}>
+                          {card.icon === 'Radar' && <Sparkles className="w-3 h-3 mr-1" />}
                           {card.badge}
                         </Badge>
                       </CardContent>
@@ -510,20 +513,14 @@ const GenesisIADashboard = () => {
             </header>
 
             {/* Content */}
-            <main className="px-4 py-4">
-              {activeTab === 'dashboard' && config.ctaButton.visible && !isEditMode && (
-                <Button 
-                  size="sm" 
-                  className="mb-4 h-9 text-sm px-4 gap-2"
-                  style={{
-                    backgroundColor: config.ctaButton.backgroundColor,
-                    color: config.ctaButton.textColor,
-                    borderRadius: config.ctaButton.borderRadius,
-                  }}
-                >
-                  {config.ctaButton.text}
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
+            <main className="px-4 py-6">
+              {/* Greeting */}
+              {activeTab === 'dashboard' && !isEditMode && (
+                <div className="text-center mb-6 mt-2">
+                  <h2 className="text-xl font-semibold" style={{ color: config.header.titleColor }}>
+                    {getGreeting()}, <span className="capitalize" style={{ color: config.dock.activeColor }}>{userName}</span>
+                  </h2>
+                </div>
               )}
               {renderTabContent(ctx)}
             </main>
