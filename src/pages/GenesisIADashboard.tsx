@@ -10,7 +10,6 @@ import {
   Home,
   Grid3X3,
   LayoutDashboard,
-  Bell,
   Radar,
   Sparkles,
   ArrowLeft,
@@ -21,12 +20,14 @@ import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { GenesisSearchClients } from "@/components/genesis-ia/GenesisSearchClients";
 
 type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'settings';
 
 const GenesisIADashboard = () => {
   const navigate = useNavigate();
   const [userName, setUserName] = useState("");
+  const [userId, setUserId] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
 
@@ -41,6 +42,7 @@ const GenesisIADashboard = () => {
       return;
     }
     setUserName(user.email?.split("@")[0] || "Usuário");
+    setUserId(user.id);
     setIsLoading(false);
   };
 
@@ -67,7 +69,6 @@ const GenesisIADashboard = () => {
       icon: Search,
       badge: 'Google Places',
       badgeClass: 'bg-primary/10 text-primary border-primary/30',
-      badgeIcon: null,
     },
     {
       id: 'radar' as const,
@@ -75,9 +76,8 @@ const GenesisIADashboard = () => {
       description: 'Oportunidades encontradas automaticamente pela IA',
       icon: Radar,
       badge: 'IA Ativa',
-      badgeClass: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30',
+      badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
       badgeIcon: Sparkles,
-      notification: 3,
     },
   ];
 
@@ -97,14 +97,14 @@ const GenesisIADashboard = () => {
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
         >
-          <Brain className="w-12 h-12 text-primary" />
+          <Brain className="w-14 h-14 text-primary" />
         </motion.div>
       </div>
     );
   }
 
   const renderDashboard = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {MAIN_CARDS.map((card) => {
         const Icon = card.icon;
         const BadgeIcon = card.badgeIcon;
@@ -114,25 +114,17 @@ const GenesisIADashboard = () => {
             className="group cursor-pointer border-border hover:border-primary/50 transition-all hover:shadow-lg"
             onClick={() => setActiveTab(card.id)}
           >
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between mb-5">
-                <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <Icon className="w-7 h-7 text-primary" />
+            <CardContent className="p-8">
+              <div className="flex items-start justify-between mb-6">
+                <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                  <Icon className="w-8 h-8 text-primary" />
                 </div>
-                <div className="flex items-center gap-2">
-                  {card.notification && (
-                    <Badge variant="secondary" className="text-sm px-2 py-0.5">
-                      <Bell className="w-3.5 h-3.5 mr-1" />
-                      {card.notification}
-                    </Badge>
-                  )}
-                  <ChevronRight className="w-6 h-6 text-muted-foreground group-hover:translate-x-1 group-hover:text-primary transition-all" />
-                </div>
+                <ChevronRight className="w-7 h-7 text-muted-foreground group-hover:translate-x-1 group-hover:text-primary transition-all" />
               </div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">{card.title}</h3>
-              <p className="text-base text-muted-foreground mb-5">{card.description}</p>
-              <Badge variant="outline" className={`text-sm px-3 py-1 ${card.badgeClass}`}>
-                {BadgeIcon && <BadgeIcon className="w-3.5 h-3.5 mr-1.5" />}
+              <h3 className="text-2xl font-semibold text-foreground mb-3">{card.title}</h3>
+              <p className="text-lg text-muted-foreground mb-6">{card.description}</p>
+              <Badge variant="outline" className={`text-base px-4 py-1.5 ${card.badgeClass}`}>
+                {BadgeIcon && <BadgeIcon className="w-4 h-4 mr-2" />}
                 {card.badge}
               </Badge>
             </CardContent>
@@ -144,48 +136,52 @@ const GenesisIADashboard = () => {
 
   const renderTabContent = () => {
     if (activeTab === 'dashboard') return renderDashboard();
+    
+    if (activeTab === 'prospects') {
+      return <GenesisSearchClients userId={userId} />;
+    }
 
     return (
       <div className="flex items-center justify-center h-80">
         <div className="text-center">
-          <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
-            <Sparkles className="w-10 h-10 text-muted-foreground" />
+          <div className="w-24 h-24 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-5">
+            <Sparkles className="w-12 h-12 text-muted-foreground" />
           </div>
-          <h3 className="text-xl font-semibold text-foreground mb-2">{getTabTitle()}</h3>
-          <p className="text-base text-muted-foreground">Em desenvolvimento...</p>
+          <h3 className="text-2xl font-semibold text-foreground mb-3">{getTabTitle()}</h3>
+          <p className="text-lg text-muted-foreground">Em desenvolvimento...</p>
         </div>
       </div>
     );
   };
 
   return (
-    <div className="min-h-screen bg-background pb-32">
+    <div className="min-h-screen bg-background pb-36">
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
-        <div className="px-6 py-5">
+        <div className="px-6 py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-5">
               {activeTab !== 'dashboard' ? (
                 <>
-                  <Button variant="ghost" size="icon" onClick={() => setActiveTab('dashboard')} className="h-11 w-11">
-                    <ArrowLeft className="w-5 h-5" />
+                  <Button variant="ghost" size="icon" onClick={() => setActiveTab('dashboard')} className="h-12 w-12">
+                    <ArrowLeft className="w-6 h-6" />
                   </Button>
-                  <h2 className="text-xl font-semibold">{getTabTitle()}</h2>
+                  <h2 className="text-2xl font-semibold">{getTabTitle()}</h2>
                 </>
               ) : (
                 <>
-                  <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
-                    <Brain className="w-6 h-6 text-primary-foreground" />
+                  <div className="w-14 h-14 rounded-xl bg-primary flex items-center justify-center">
+                    <Brain className="w-7 h-7 text-primary-foreground" />
                   </div>
-                  <h1 className="text-xl font-bold text-foreground">Genesis IA</h1>
+                  <h1 className="text-2xl font-bold text-foreground">Genesis IA</h1>
                 </>
               )}
             </div>
 
             {/* Welcome */}
-            <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-muted/50 border border-border">
-              <span className="text-xl">👋</span>
-              <span className="text-base">
+            <div className="flex items-center gap-4 px-5 py-3 rounded-xl bg-muted/50 border border-border">
+              <span className="text-2xl">👋</span>
+              <span className="text-lg">
                 Olá, <span className="font-semibold text-primary capitalize">{userName}</span>
               </span>
             </div>
@@ -194,23 +190,23 @@ const GenesisIADashboard = () => {
       </header>
 
       {/* Content */}
-      <main className="px-6 py-6">
+      <main className="px-6 py-8">
         {activeTab === 'dashboard' && (
-          <Button size="lg" className="mb-6 text-base gap-2">
+          <Button size="lg" className="mb-8 h-14 text-lg px-8 gap-3">
             Criar meu SaaS agora
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="w-6 h-6" />
           </Button>
         )}
         {renderTabContent()}
       </main>
 
       {/* Dock */}
-      <div className="fixed bottom-8 left-0 right-0 flex justify-center z-50">
+      <div className="fixed bottom-10 left-0 right-0 flex justify-center z-50">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
-          className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-card border border-border shadow-xl"
+          className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-card border border-border shadow-xl"
         >
           {dockItems.map((item, index) => {
             const isActive = !item.onClick && activeTab === item.tabId;
@@ -218,14 +214,14 @@ const GenesisIADashboard = () => {
               <motion.button
                 key={index}
                 onClick={item.onClick || (() => setActiveTab(item.tabId!))}
-                className={`relative w-14 h-14 rounded-xl flex items-center justify-center transition-colors ${
+                className={`relative w-16 h-16 rounded-xl flex items-center justify-center transition-colors ${
                   isActive ? 'bg-primary/15' : 'hover:bg-muted'
                 }`}
-                whileHover={{ scale: 1.2, y: -8 }}
+                whileHover={{ scale: 1.2, y: -10 }}
                 transition={{ type: "spring", stiffness: 400, damping: 17 }}
               >
-                <item.icon className={`w-6 h-6 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
-                {isActive && <div className="absolute bottom-1 w-1.5 h-1.5 rounded-full bg-primary" />}
+                <item.icon className={`w-7 h-7 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
+                {isActive && <div className="absolute bottom-1.5 w-2 h-2 rounded-full bg-primary" />}
               </motion.button>
             );
           })}
