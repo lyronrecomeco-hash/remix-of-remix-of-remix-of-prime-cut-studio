@@ -48,6 +48,8 @@ import {
 
 const ADMIN_EMAIL = 'lyronrp@gmail.com';
 
+import { CardData } from './components/DraggableCard';
+
 export interface PageConfig {
   // Background
   backgroundColor: string;
@@ -99,6 +101,8 @@ export interface PageConfig {
     position: 'bottom' | 'top';
     shadow: string;
   };
+  // Dashboard Cards Data
+  dashboardCards: CardData[];
   // Custom Elements
   customElements: CustomElement[];
 }
@@ -120,6 +124,39 @@ export interface CustomElement {
     padding?: number;
   };
 }
+
+const DEFAULT_CARDS: CardData[] = [
+  {
+    id: 'prospects',
+    title: 'Encontrar Clientes',
+    description: 'Descubra clientes com maior potencial',
+    icon: 'Search',
+    badge: 'Google Places',
+    badgeClass: 'bg-primary/10 text-primary border-primary/30',
+    x: 0,
+    y: 0,
+    width: 300,
+    height: 180,
+    order: 0,
+    visible: true,
+    styles: {},
+  },
+  {
+    id: 'radar',
+    title: 'Radar Global',
+    description: 'Oportunidades automáticas pela IA',
+    icon: 'Radar',
+    badge: 'IA Ativa',
+    badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+    x: 0,
+    y: 0,
+    width: 300,
+    height: 180,
+    order: 1,
+    visible: true,
+    styles: {},
+  },
+];
 
 const DEFAULT_CONFIG: PageConfig = {
   backgroundColor: 'hsl(var(--background))',
@@ -167,11 +204,24 @@ const DEFAULT_CONFIG: PageConfig = {
     position: 'bottom',
     shadow: 'shadow-xl',
   },
+  dashboardCards: DEFAULT_CARDS,
   customElements: [],
 };
 
+export interface EditorContextValue {
+  config: PageConfig;
+  isEditMode: boolean;
+  selectedCardId: string | null;
+  updateCard: (id: string, updates: Partial<CardData>) => void;
+  deleteCard: (id: string) => void;
+  duplicateCard: (id: string) => void;
+  selectCard: (id: string | null) => void;
+  addCard: () => void;
+  reorderCards: (cards: CardData[]) => void;
+}
+
 interface FullPageEditorProps {
-  children: (config: PageConfig, isEditMode: boolean) => React.ReactNode;
+  children: (context: EditorContextValue) => React.ReactNode;
 }
 
 export const FullPageEditor: React.FC<FullPageEditorProps> = ({ children }) => {
@@ -315,6 +365,79 @@ export const FullPageEditor: React.FC<FullPageEditorProps> = ({ children }) => {
   const resetConfig = () => {
     updateConfig(DEFAULT_CONFIG);
     toast.success('Layout resetado!');
+  };
+
+  // Card management
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+
+  const updateCard = (id: string, updates: Partial<CardData>) => {
+    const newCards = config.dashboardCards.map(card =>
+      card.id === id ? { ...card, ...updates } : card
+    );
+    updateConfig({ dashboardCards: newCards });
+  };
+
+  const deleteCard = (id: string) => {
+    const newCards = config.dashboardCards.filter(card => card.id !== id);
+    updateConfig({ dashboardCards: newCards });
+    setSelectedCardId(null);
+    toast.success('Card removido!');
+  };
+
+  const duplicateCard = (id: string) => {
+    const cardToDuplicate = config.dashboardCards.find(card => card.id === id);
+    if (cardToDuplicate) {
+      const newCard: CardData = {
+        ...cardToDuplicate,
+        id: `${cardToDuplicate.id}-copy-${Date.now()}`,
+        title: `${cardToDuplicate.title} (Cópia)`,
+        order: config.dashboardCards.length,
+      };
+      updateConfig({ dashboardCards: [...config.dashboardCards, newCard] });
+      toast.success('Card duplicado!');
+    }
+  };
+
+  const selectCard = (id: string | null) => {
+    setSelectedCardId(id);
+  };
+
+  const addCard = () => {
+    const newCard: CardData = {
+      id: `card-${Date.now()}`,
+      title: 'Novo Card',
+      description: 'Descrição do card',
+      icon: 'Star',
+      badge: 'Novo',
+      badgeClass: 'bg-primary/10 text-primary border-primary/30',
+      x: 0,
+      y: 0,
+      width: 300,
+      height: 180,
+      order: config.dashboardCards.length,
+      visible: true,
+      styles: {},
+    };
+    updateConfig({ dashboardCards: [...config.dashboardCards, newCard] });
+    setSelectedCardId(newCard.id);
+    toast.success('Card adicionado!');
+  };
+
+  const reorderCards = (cards: CardData[]) => {
+    updateConfig({ dashboardCards: cards });
+  };
+
+  // Context value for children
+  const editorContext: EditorContextValue = {
+    config,
+    isEditMode,
+    selectedCardId,
+    updateCard,
+    deleteCard,
+    duplicateCard,
+    selectCard,
+    addCard,
+    reorderCards,
   };
 
   // Keyboard shortcuts
@@ -959,9 +1082,9 @@ export const FullPageEditor: React.FC<FullPageEditorProps> = ({ children }) => {
         </SheetContent>
       </Sheet>
 
-      {/* Render Children with Config */}
+      {/* Render Children with Context */}
       <div style={{ marginTop: isEditMode ? '48px' : 0 }}>
-        {children(config, isEditMode)}
+        {children(editorContext)}
       </div>
     </>
   );
