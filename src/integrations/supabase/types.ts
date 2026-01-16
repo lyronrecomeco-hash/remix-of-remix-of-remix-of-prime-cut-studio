@@ -7706,6 +7706,184 @@ export type Database = {
         }
         Relationships: []
       }
+      global_radar_opportunities: {
+        Row: {
+          accepted_at: string | null
+          affiliate_id: string
+          ai_description: string | null
+          company_address: string | null
+          company_city: string | null
+          company_country: string | null
+          company_email: string | null
+          company_name: string
+          company_phone: string | null
+          company_state: string | null
+          company_website: string | null
+          created_at: string
+          digital_presence_status: string | null
+          estimated_value_max: number | null
+          estimated_value_min: number | null
+          found_at: string | null
+          generated_proposal: Json | null
+          has_chatbot: boolean | null
+          has_online_scheduling: boolean | null
+          has_website: boolean | null
+          has_whatsapp: boolean | null
+          id: string
+          is_read: boolean | null
+          missing_features: string[] | null
+          monthly_recurrence: number | null
+          niche: string | null
+          opportunity_level: string | null
+          opportunity_score: number | null
+          pain_points: string[] | null
+          proposal_generated_at: string | null
+          search_region: string | null
+          service_tags: string[] | null
+          source: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          affiliate_id: string
+          ai_description?: string | null
+          company_address?: string | null
+          company_city?: string | null
+          company_country?: string | null
+          company_email?: string | null
+          company_name: string
+          company_phone?: string | null
+          company_state?: string | null
+          company_website?: string | null
+          created_at?: string
+          digital_presence_status?: string | null
+          estimated_value_max?: number | null
+          estimated_value_min?: number | null
+          found_at?: string | null
+          generated_proposal?: Json | null
+          has_chatbot?: boolean | null
+          has_online_scheduling?: boolean | null
+          has_website?: boolean | null
+          has_whatsapp?: boolean | null
+          id?: string
+          is_read?: boolean | null
+          missing_features?: string[] | null
+          monthly_recurrence?: number | null
+          niche?: string | null
+          opportunity_level?: string | null
+          opportunity_score?: number | null
+          pain_points?: string[] | null
+          proposal_generated_at?: string | null
+          search_region?: string | null
+          service_tags?: string[] | null
+          source?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          affiliate_id?: string
+          ai_description?: string | null
+          company_address?: string | null
+          company_city?: string | null
+          company_country?: string | null
+          company_email?: string | null
+          company_name?: string
+          company_phone?: string | null
+          company_state?: string | null
+          company_website?: string | null
+          created_at?: string
+          digital_presence_status?: string | null
+          estimated_value_max?: number | null
+          estimated_value_min?: number | null
+          found_at?: string | null
+          generated_proposal?: Json | null
+          has_chatbot?: boolean | null
+          has_online_scheduling?: boolean | null
+          has_website?: boolean | null
+          has_whatsapp?: boolean | null
+          id?: string
+          is_read?: boolean | null
+          missing_features?: string[] | null
+          monthly_recurrence?: number | null
+          niche?: string | null
+          opportunity_level?: string | null
+          opportunity_score?: number | null
+          pain_points?: string[] | null
+          proposal_generated_at?: string | null
+          search_region?: string | null
+          service_tags?: string[] | null
+          source?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "global_radar_opportunities_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      global_radar_settings: {
+        Row: {
+          affiliate_id: string
+          created_at: string
+          exclude_with_website: boolean | null
+          id: string
+          is_enabled: boolean | null
+          last_scan_at: string | null
+          max_opportunities_per_day: number | null
+          min_opportunity_score: number | null
+          next_scan_at: string | null
+          opportunities_found_today: number | null
+          search_regions: string[] | null
+          target_niches: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          affiliate_id: string
+          created_at?: string
+          exclude_with_website?: boolean | null
+          id?: string
+          is_enabled?: boolean | null
+          last_scan_at?: string | null
+          max_opportunities_per_day?: number | null
+          min_opportunity_score?: number | null
+          next_scan_at?: string | null
+          opportunities_found_today?: number | null
+          search_regions?: string[] | null
+          target_niches?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          affiliate_id?: string
+          created_at?: string
+          exclude_with_website?: boolean | null
+          id?: string
+          is_enabled?: boolean | null
+          last_scan_at?: string | null
+          max_opportunities_per_day?: number | null
+          min_opportunity_score?: number | null
+          next_scan_at?: string | null
+          opportunities_found_today?: number | null
+          search_regions?: string[] | null
+          target_niches?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "global_radar_settings_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: true
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       intent_templates: {
         Row: {
           allowed_variables: Json | null

@@ -17,3 +17,9 @@ verify_jwt = false
 
 [functions.send-whatsapp-genesis]
 verify_jwt = false
+
+[functions.enrich-prospect]
+verify_jwt = false
+
+[functions.global-radar]
+verify_jwt = false
