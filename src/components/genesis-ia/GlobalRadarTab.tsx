@@ -85,6 +85,7 @@ const AUTO_SCAN_INTERVAL = 2 * 60 * 1000; // 2 minutes
 
 export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
   const [opportunities, setOpportunities] = useState<RadarOpportunity[]>([]);
+  const [affiliateId, setAffiliateId] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState(false);
@@ -97,6 +98,29 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
   const [scanStats, setScanStats] = useState({ total: 0, today: 0, avgScore: 0 });
   const autoScanIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Fetch affiliate ID from user_id
+  useEffect(() => {
+    const fetchAffiliateId = async () => {
+      if (!userId) return;
+      
+      const { data, error } = await supabase
+        .from('affiliates')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+      
+      if (data && !error) {
+        setAffiliateId(data.id);
+      } else {
+        console.log('User is not an affiliate, using userId as fallback');
+        // Se não for afiliado, pode-se criar um ou apenas não usar o radar
+        setAffiliateId(null);
+      }
+    };
+    
+    fetchAffiliateId();
+  }, [userId]);
 
   // Play notification sound
   const playNotificationSound = useCallback(() => {
@@ -112,11 +136,16 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
 
   // Fetch opportunities
   const fetchOpportunities = useCallback(async () => {
+    if (!affiliateId) {
+      setLoading(false);
+      return;
+    }
+    
     try {
       let query = supabase
         .from('global_radar_opportunities')
         .select('*')
-        .eq('affiliate_id', userId)
+        .eq('affiliate_id', affiliateId)
         .eq('status', 'new')
         .order('opportunity_score', { ascending: false })
         .limit(100);
@@ -149,16 +178,16 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
     } finally {
       setLoading(false);
     }
-  }, [userId, filterNoWebsite]);
+  }, [affiliateId, filterNoWebsite]);
 
   // Run scan
   const runScan = useCallback(async (isAuto = false) => {
-    if (scanning) return;
+    if (scanning || !affiliateId) return;
     
     setScanning(true);
     try {
       const { data, error } = await supabase.functions.invoke('global-radar', {
-        body: { affiliateId: userId },
+        body: { affiliateId },
       });
 
       if (error) throw error;
@@ -166,23 +195,19 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
       setLastScanTime(new Date());
 
       if (data?.success && data.opportunities?.length > 0) {
-        // Only count high-conversion opportunities (without website)
         const highConversion = data.opportunities.filter((o: any) => !o.has_website);
         
         if (highConversion.length > 0) {
           playNotificationSound();
-          
           toast.success(`🌍 ${highConversion.length} oportunidades de alta conversão!`, {
-            description: `${data.scanned?.region} • ${data.scanned?.city} • Score médio: ${Math.round(highConversion.reduce((a: number, o: any) => a + o.opportunity_score, 0) / highConversion.length)}%`,
+            description: `${data.scanned?.region} • ${data.scanned?.city}`,
             duration: 5000,
           });
         }
         
         fetchOpportunities();
       } else if (!isAuto) {
-        toast.info('Nenhuma nova oportunidade encontrada neste scan', {
-          description: 'Tente novamente em alguns minutos',
-        });
+        toast.info('Nenhuma nova oportunidade encontrada neste scan');
       }
     } catch (error) {
       console.error('Radar scan error:', error);
@@ -192,24 +217,21 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
     } finally {
       setScanning(false);
     }
-  }, [userId, scanning, fetchOpportunities, playNotificationSound]);
+  }, [affiliateId, scanning, fetchOpportunities, playNotificationSound]);
 
   // Auto scan effect
   useEffect(() => {
-    if (!userId) return;
+    if (!affiliateId) return;
 
     fetchOpportunities();
 
     if (autoScanEnabled) {
-      // Initial scan after 10 seconds
       const initialScan = setTimeout(() => runScan(true), 10000);
       
-      // Set up interval for every 2 minutes
       autoScanIntervalRef.current = setInterval(() => {
         runScan(true);
       }, AUTO_SCAN_INTERVAL);
 
-      // Countdown timer
       setNextScanIn(AUTO_SCAN_INTERVAL / 1000);
       countdownRef.current = setInterval(() => {
         setNextScanIn(prev => prev > 0 ? prev - 1 : AUTO_SCAN_INTERVAL / 1000);
@@ -226,11 +248,11 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
       if (autoScanIntervalRef.current) clearInterval(autoScanIntervalRef.current);
       if (countdownRef.current) clearInterval(countdownRef.current);
     };
-  }, [userId, autoScanEnabled, fetchOpportunities, runScan]);
+  }, [affiliateId, autoScanEnabled, fetchOpportunities, runScan]);
 
   // Realtime subscription
   useEffect(() => {
-    if (!userId) return;
+    if (!affiliateId) return;
 
     const channel = supabase
       .channel('genesis-radar')
@@ -240,21 +262,15 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
           event: 'INSERT',
           schema: 'public',
           table: 'global_radar_opportunities',
-          filter: `affiliate_id=eq.${userId}`,
+          filter: `affiliate_id=eq.${affiliateId}`,
         },
         (payload) => {
           const newOpp = payload.new as RadarOpportunity;
-          
-          // Only notify for high conversion (no website)
           if (!newOpp.has_website && newOpp.opportunity_score >= 70) {
             playNotificationSound();
-            
             setOpportunities(prev => [newOpp, ...prev]);
             setUnreadCount(prev => prev + 1);
-            
-            toast.success(`🎯 Nova oportunidade: ${newOpp.company_name}`, {
-              description: `${newOpp.opportunity_score}% conversão • ${newOpp.company_city}`,
-            });
+            toast.success(`🎯 Nova oportunidade: ${newOpp.company_name}`);
           }
         }
       )
@@ -263,7 +279,7 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId, playNotificationSound]);
+  }, [affiliateId, playNotificationSound]);
 
   // Mark as read
   const markAllAsRead = async () => {
@@ -282,12 +298,12 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
 
   // Accept opportunity
   const handleAccept = async (opportunity: RadarOpportunity) => {
+    if (!affiliateId) return;
     try {
-      // Create prospect from opportunity
       const { error: insertError } = await supabase
         .from('affiliate_prospects')
         .insert({
-          affiliate_id: userId,
+          affiliate_id: affiliateId,
           company_name: opportunity.company_name,
           company_phone: opportunity.company_phone,
           company_website: opportunity.company_website,
@@ -592,7 +608,6 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
                         {opp.digital_presence_status && (
                           <p className="text-sm text-muted-foreground mb-2 flex items-center gap-1.5">
                             <Globe2 className="w-3.5 h-3.5" />
-                            {opp.digital_presence_status}
                             {opp.digital_presence_status}
                           </p>
                         )}
