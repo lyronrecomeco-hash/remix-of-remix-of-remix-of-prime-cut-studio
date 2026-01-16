@@ -226,41 +226,49 @@ const GenesisIADashboard = () => {
         {!isEditMode ? (
             <>
               {/* Horizontal cards layout like reference image */}
-              <div className="flex flex-wrap justify-center gap-6">
+              <div className="flex flex-col md:flex-row justify-center gap-4 max-w-4xl mx-auto">
                 {[...config.dashboardCards]
                   .filter(card => card.visible)
                   .sort((a, b) => a.order - b.order)
                   .slice(0, 3) // Show max 3 cards in main view
-                  .map((card) => {
+                  .map((card, index) => {
                     const IconComponent = ICON_MAP[card.icon] || Star;
                     const cardStyles = card.styles;
+                    
+                    // Different icon colors for each card
+                    const iconColors = [
+                      { bg: 'hsl(280 60% 25% / 0.4)', color: 'hsl(280 80% 70%)' }, // Purple
+                      { bg: 'hsl(200 60% 25% / 0.4)', color: 'hsl(200 80% 65%)' }, // Blue  
+                      { bg: 'hsl(220 40% 25% / 0.4)', color: 'hsl(220 60% 70%)' }, // Gray-blue
+                    ];
+                    const colorScheme = iconColors[index % iconColors.length];
                     
                     return (
                       <Card
                         key={card.id}
-                        className="group cursor-pointer transition-all hover:scale-[1.02] hover:shadow-xl border border-white/20 w-[280px] md:w-[320px]"
+                        className="group cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:border-white/30 border border-white/10 flex-1 min-w-[240px] max-w-[280px]"
                         style={{
-                          backgroundColor: 'hsl(220 20% 12%)',
-                          borderRadius: '16px',
+                          backgroundColor: 'hsl(220 25% 11%)',
+                          borderRadius: '12px',
                         }}
                         onClick={() => setActiveTab(card.id as ActiveTab)}
                       >
-                        <CardContent className="p-6">
-                          <div className="flex items-center gap-4 mb-3">
+                        <CardContent className="p-5">
+                          <div className="flex items-center gap-3 mb-3">
                             <div 
-                              className="w-11 h-11 rounded-xl flex items-center justify-center"
-                              style={{ backgroundColor: cardStyles.iconBackgroundColor || 'hsl(220 60% 30% / 0.5)' }}
+                              className="w-10 h-10 rounded-lg flex items-center justify-center"
+                              style={{ backgroundColor: cardStyles.iconBackgroundColor || colorScheme.bg }}
                             >
                               <IconComponent 
                                 className="w-5 h-5" 
-                                style={{ color: cardStyles.iconColor || 'hsl(210 80% 60%)' }} 
+                                style={{ color: cardStyles.iconColor || colorScheme.color }} 
                               />
                             </div>
-                            <h3 className="text-base font-semibold text-white">
+                            <h3 className="text-[15px] font-semibold text-white">
                               {card.title}
                             </h3>
                           </div>
-                          <p className="text-sm text-white/50 leading-relaxed">
+                          <p className="text-[13px] text-white/45 leading-relaxed">
                             {card.description}
                           </p>
                         </CardContent>
