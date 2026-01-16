@@ -818,7 +818,7 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
         isOpen={detailModalOpen}
         onClose={() => setDetailModalOpen(false)}
         title="Perfil do Estabelecimento"
-        size="lg"
+        size="4xl"
       >
         {selectedOpportunity && (
           <>

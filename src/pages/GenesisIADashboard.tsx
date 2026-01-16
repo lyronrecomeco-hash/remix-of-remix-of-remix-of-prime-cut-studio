@@ -226,7 +226,7 @@ const GenesisIADashboard = () => {
         {!isEditMode ? (
             <>
               {/* Horizontal cards layout like reference image */}
-              <div className="flex flex-col md:flex-row gap-4 justify-center max-w-5xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
                 {[...config.dashboardCards]
                   .filter(card => card.visible)
                   .sort((a, b) => a.order - b.order)
@@ -238,7 +238,7 @@ const GenesisIADashboard = () => {
                     return (
                       <Card
                         key={card.id}
-                        className="group cursor-pointer transition-all hover:scale-[1.02] hover:shadow-xl flex-1 min-w-[280px] max-w-[380px] border border-white/10"
+                        className="group cursor-pointer transition-all hover:scale-[1.02] hover:shadow-xl border border-white/10"
                         style={{
                           backgroundColor: 'hsl(220 20% 14%)',
                           borderRadius: '16px',
