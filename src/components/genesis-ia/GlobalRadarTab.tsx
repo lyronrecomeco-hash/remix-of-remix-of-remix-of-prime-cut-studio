@@ -539,7 +539,7 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Grid Layout - Cards estilo clean */}
+              {/* Grid Layout - Cards profissionais */}
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 <AnimatePresence mode="popLayout">
                   {paginatedOpportunities.map((opp, index) => {
@@ -554,7 +554,7 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
                         transition={{ delay: index * 0.02 }}
                       >
                         <Card className={cn(
-                          "relative overflow-hidden transition-all duration-200 hover:shadow-lg",
+                          "relative overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-primary/30",
                           "bg-card border-border/50",
                           !opp.is_read && "ring-1 ring-primary/20"
                         )}>
@@ -566,60 +566,96 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
                             opp.opportunity_level === 'basic' && "bg-muted-foreground/30",
                           )} />
 
-                          <CardContent className="p-5">
+                          <CardContent className="p-5 pt-6">
                             {/* Header Row */}
-                            <div className="flex items-start justify-between mb-4">
-                              <div className="flex items-center gap-3 flex-1 min-w-0">
-                                <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                  <Building2 className="w-5 h-5 text-primary" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <h4 className="font-semibold text-foreground text-sm leading-tight truncate">
-                                    {opp.company_name}
-                                  </h4>
-                                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                                    <MapPin className="w-3 h-3 flex-shrink-0" />
-                                    <span className="truncate">{opp.company_city || 'Localização não informada'}</span>
-                                  </p>
-                                </div>
+                            <div className="flex items-start gap-3 mb-4">
+                              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                <Building2 className="w-5 h-5 text-primary" />
                               </div>
-                              
-                              {/* Score */}
-                              <div className={cn(
-                                "flex items-center justify-center w-10 h-10 rounded-lg text-sm font-bold text-white flex-shrink-0",
-                                opp.opportunity_score >= 80 && "bg-emerald-500",
-                                opp.opportunity_score >= 60 && opp.opportunity_score < 80 && "bg-amber-500",
-                                opp.opportunity_score < 60 && "bg-slate-500",
-                              )}>
-                                {opp.opportunity_score}
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold text-foreground leading-tight line-clamp-1">
+                                  {opp.company_name}
+                                </h4>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-xs text-muted-foreground">{opp.niche || 'Negócio local'}</span>
+                                  <Badge variant="outline" className={cn(
+                                    "text-[10px] px-1.5 py-0 h-5",
+                                    opp.opportunity_level === 'advanced' && "border-emerald-500/50 text-emerald-500",
+                                    opp.opportunity_level === 'intermediate' && "border-amber-500/50 text-amber-500",
+                                    opp.opportunity_level === 'basic' && "border-muted-foreground/50 text-muted-foreground",
+                                  )}>
+                                    {levelConfig.label}
+                                  </Badge>
+                                </div>
                               </div>
                             </div>
 
-                            {/* Info Row */}
-                            <div className="flex items-center gap-2 mb-4 flex-wrap">
-                              <span className={cn(
-                                "inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium",
-                                levelConfig.bgColor, levelConfig.color
-                              )}>
-                                {levelConfig.icon} {levelConfig.label}
-                              </span>
-                              
-                              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-muted text-muted-foreground">
-                                R$ {opp.estimated_value_min.toLocaleString()}
-                              </span>
-                              
-                              {!opp.has_website && (
-                                <span className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-emerald-500/10 text-emerald-500">
-                                  🎯 Alta conversão
-                                </span>
+                            {/* Value Section */}
+                            <div className="grid grid-cols-2 gap-4 mb-4 p-3 bg-muted/30 rounded-lg">
+                              <div>
+                                <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                                  <TrendingUp className="w-3 h-3" /> Valor Estimado
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  R$ {opp.estimated_value_min.toLocaleString()} (mín)
+                                </p>
+                                <p className="text-base font-bold text-emerald-500">
+                                  R$ {opp.estimated_value_max.toLocaleString()}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                                  📅 Recorrência
+                                </p>
+                                <p className="text-sm font-semibold text-emerald-400 mt-1">
+                                  +R$ {opp.monthly_recurrence?.toLocaleString() || '0'}/mês
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Description */}
+                            {opp.ai_description && (
+                              <p className="text-xs text-muted-foreground mb-3 line-clamp-2 leading-relaxed">
+                                ✨ {opp.ai_description}
+                              </p>
+                            )}
+
+                            {/* Location & Phone */}
+                            <div className="space-y-1.5 mb-3">
+                              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                <MapPin className="w-3 h-3 flex-shrink-0 text-muted-foreground/70" />
+                                <span className="truncate">{opp.company_address || opp.company_city || 'Localização não informada'}</span>
+                              </p>
+                              {opp.company_phone && (
+                                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                  <Phone className="w-3 h-3 flex-shrink-0 text-muted-foreground/70" />
+                                  <span>{opp.company_phone}</span>
+                                </p>
                               )}
                             </div>
 
-                            {/* Niche if available */}
-                            {opp.niche && (
-                              <p className="text-xs text-muted-foreground mb-4 truncate">
-                                {opp.niche}
-                              </p>
+                            {/* Digital Presence Status */}
+                            {!opp.has_website && (
+                              <div className="flex items-center gap-2 p-2.5 bg-emerald-500/10 rounded-lg mb-4">
+                                <Globe2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                                <span className="text-xs text-emerald-500 font-medium">
+                                  Sem presença digital — oportunidade máxima
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Service Tags */}
+                            {opp.service_tags && opp.service_tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mb-4">
+                                {opp.service_tags.slice(0, 3).map((tag, i) => (
+                                  <span
+                                    key={i}
+                                    className="inline-flex items-center px-2 py-1 bg-muted/50 border border-border/50 rounded text-[10px] text-muted-foreground"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
                             )}
 
                             {/* Actions */}
@@ -627,30 +663,23 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
                               <Button
                                 size="sm"
                                 onClick={() => handleAccept(opp)}
-                                className="flex-1 h-9"
+                                className="flex-1 h-10 bg-emerald-600 hover:bg-emerald-700 text-white"
                               >
                                 <CheckCircle2 className="w-4 h-4 mr-1.5" />
-                                Aceitar Lead
+                                Aceitar Projeto
                               </Button>
-                              
-                              {opp.company_phone && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => window.open(`https://wa.me/${opp.company_phone?.replace(/\D/g, '')}`, '_blank')}
-                                  className="h-9 w-9 p-0"
-                                >
-                                  <Phone className="w-4 h-4" />
-                                </Button>
-                              )}
                               
                               <Button
                                 size="sm"
-                                variant="ghost"
-                                onClick={() => handleReject(opp.id)}
-                                className="h-9 w-9 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                variant="outline"
+                                onClick={() => opp.company_website 
+                                  ? window.open(opp.company_website, '_blank')
+                                  : window.open(`https://www.google.com/search?q=${encodeURIComponent(opp.company_name)}`, '_blank')
+                                }
+                                className="flex-1 h-10"
                               >
-                                <X className="w-4 h-4" />
+                                <ExternalLink className="w-4 h-4 mr-1.5" />
+                                Pesquisar →
                               </Button>
                             </div>
                           </CardContent>
