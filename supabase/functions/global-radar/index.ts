@@ -35,43 +35,46 @@ const SEARCH_REGIONS: Record<string, { cities: string[]; countryCode: string; la
   },
 };
 
-// Nichos para busca
+// Nichos para busca - foco em negócios locais que geralmente não têm presença digital
 const SEARCH_NICHES: Record<string, Record<string, string>> = {
   'en': {
-    'barbershop': 'barbershop',
-    'salon': 'hair salon',
-    'clinic': 'medical clinic',
-    'dentist': 'dental clinic',
-    'restaurant': 'restaurant',
-    'gym': 'gym fitness',
-    'petshop': 'pet shop grooming',
+    'barbershop': 'barbershop near me',
+    'salon': 'hair salon local',
+    'mechanic': 'auto mechanic shop',
+    'plumber': 'plumber services',
+    'bakery': 'local bakery',
+    'tailor': 'tailor alterations',
+    'florist': 'flower shop',
+    'cleaning': 'cleaning services',
   },
   'pt-BR': {
-    'barbearia': 'barbearia',
-    'salao': 'salão de beleza',
-    'clinica': 'clínica médica',
-    'dentista': 'dentista',
-    'restaurante': 'restaurante',
-    'academia': 'academia',
-    'petshop': 'pet shop',
+    'barbearia': 'barbearia perto de mim',
+    'salao': 'salão de beleza bairro',
+    'mecanica': 'oficina mecânica',
+    'pizzaria': 'pizzaria delivery',
+    'padaria': 'padaria perto',
+    'lanchonete': 'lanchonete',
+    'petshop': 'pet shop banho tosa',
+    'manicure': 'manicure pedicure',
+    'costureira': 'costureira consertos',
+    'borracharia': 'borracharia',
   },
   'pt-PT': {
-    'barbearia': 'barbearia',
-    'salao': 'cabeleireiro',
-    'clinica': 'clínica médica',
-    'dentista': 'dentista',
-    'restaurante': 'restaurante',
-    'ginásio': 'ginásio',
-    'petshop': 'pet shop',
+    'barbearia': 'barbearia perto',
+    'cabeleireiro': 'cabeleireiro local',
+    'mecanico': 'oficina automóvel',
+    'padaria': 'padaria pastelaria',
+    'florista': 'florista',
+    'limpezas': 'empresa limpezas',
   },
   'es': {
-    'barberia': 'barbería',
-    'salon': 'salón de belleza',
-    'clinica': 'clínica médica',
-    'dentista': 'dentista',
-    'restaurante': 'restaurante',
-    'gimnasio': 'gimnasio',
-    'petshop': 'tienda de mascotas',
+    'barberia': 'barbería cerca',
+    'peluqueria': 'peluquería barrio',
+    'taller': 'taller mecánico',
+    'panaderia': 'panadería local',
+    'floristeria': 'floristería',
+    'plomero': 'plomero servicios',
+    'lavanderia': 'lavandería',
   },
 };
 
@@ -82,16 +85,30 @@ const NICHE_VALUES: Record<string, { min: number; max: number; recurrence: numbe
   'barberia': { min: 600, max: 900, recurrence: 120 },
   'salon': { min: 700, max: 1100, recurrence: 150 },
   'salao': { min: 700, max: 1100, recurrence: 150 },
-  'clinic': { min: 1200, max: 2000, recurrence: 200 },
-  'clinica': { min: 1200, max: 2000, recurrence: 200 },
-  'dentist': { min: 1500, max: 2500, recurrence: 250 },
-  'dentista': { min: 1500, max: 2500, recurrence: 250 },
-  'restaurant': { min: 800, max: 1400, recurrence: 180 },
-  'restaurante': { min: 800, max: 1400, recurrence: 180 },
-  'gym': { min: 900, max: 1500, recurrence: 180 },
-  'academia': { min: 900, max: 1500, recurrence: 180 },
-  'gimnasio': { min: 900, max: 1500, recurrence: 180 },
+  'cabeleireiro': { min: 700, max: 1100, recurrence: 150 },
+  'peluqueria': { min: 700, max: 1100, recurrence: 150 },
+  'mechanic': { min: 800, max: 1300, recurrence: 160 },
+  'mecanica': { min: 800, max: 1300, recurrence: 160 },
+  'mecanico': { min: 800, max: 1300, recurrence: 160 },
+  'taller': { min: 800, max: 1300, recurrence: 160 },
+  'pizzaria': { min: 600, max: 1000, recurrence: 140 },
+  'padaria': { min: 500, max: 900, recurrence: 120 },
+  'panaderia': { min: 500, max: 900, recurrence: 120 },
+  'bakery': { min: 500, max: 900, recurrence: 120 },
+  'lanchonete': { min: 500, max: 800, recurrence: 110 },
   'petshop': { min: 600, max: 1000, recurrence: 130 },
+  'manicure': { min: 400, max: 700, recurrence: 90 },
+  'costureira': { min: 400, max: 700, recurrence: 90 },
+  'tailor': { min: 400, max: 700, recurrence: 90 },
+  'florist': { min: 500, max: 800, recurrence: 100 },
+  'florista': { min: 500, max: 800, recurrence: 100 },
+  'floristeria': { min: 500, max: 800, recurrence: 100 },
+  'cleaning': { min: 600, max: 1000, recurrence: 140 },
+  'limpezas': { min: 600, max: 1000, recurrence: 140 },
+  'plumber': { min: 700, max: 1200, recurrence: 150 },
+  'plomero': { min: 700, max: 1200, recurrence: 150 },
+  'borracharia': { min: 500, max: 800, recurrence: 100 },
+  'lavanderia': { min: 500, max: 900, recurrence: 110 },
   'default': { min: 500, max: 800, recurrence: 100 },
 };
 
@@ -103,16 +120,23 @@ interface RadarRequest {
 }
 
 function calculateOpportunityScore(business: any): number {
-  let score = 50;
+  let score = 60; // Base score mais alto
   
-  if (!business.website) score += 40;
-  else score -= 10;
+  // Sem website = grande oportunidade
+  if (!business.website) score += 30;
+  else score -= 5; // Ainda pode melhorar o site
   
+  // Telefone disponível = mais fácil contato
   if (business.phone) score += 5;
-  if (!business.rating || business.rating < 4) score += 10;
+  
+  // Avaliação baixa ou inexistente = precisa de ajuda
+  if (!business.rating || business.rating < 3) score += 10;
+  else if (business.rating < 4) score += 5;
   else if (business.rating >= 4.5) score -= 5;
   
-  if (!business.reviews_count || business.reviews_count < 50) score += 5;
+  // Poucas reviews = menos visibilidade
+  if (!business.reviews_count || business.reviews_count < 20) score += 10;
+  else if (business.reviews_count < 50) score += 5;
   
   return Math.min(100, Math.max(0, score));
 }
@@ -214,6 +238,7 @@ serve(async (req) => {
     }
 
     const searchData = await searchResponse.json();
+    console.log('Serper response sample:', JSON.stringify(searchData).substring(0, 500));
     const places = searchData.places || [];
 
     if (places.length === 0) {
@@ -225,6 +250,7 @@ serve(async (req) => {
 
     // Filtrar e enriquecer resultados
     const opportunities = [];
+    const debugInfo = [];
     
     for (const place of places) {
       // Pular se já existe
@@ -235,7 +261,10 @@ serve(async (req) => {
         .eq('company_name', place.title || place.name)
         .single();
       
-      if (existing) continue;
+      if (existing) {
+        debugInfo.push({ name: place.title || place.name, status: 'already_exists' });
+        continue;
+      }
 
       const hasWebsite = !!place.website;
       const score = calculateOpportunityScore({
@@ -245,8 +274,13 @@ serve(async (req) => {
         reviews_count: place.reviewsCount,
       });
       
-      // Só adicionar se score >= 60
-      if (score < 60) continue;
+      console.log(`Business: ${place.title || place.name} | Website: ${hasWebsite} | Rating: ${place.rating} | Reviews: ${place.reviewsCount} | Score: ${score}`);
+
+      // Aceitar todos os negócios com score mínimo de 50
+      if (score < 50) {
+        debugInfo.push({ name: place.title || place.name, score, status: 'low_score' });
+        continue;
+      }
 
       const level = getOpportunityLevel(score);
       const values = NICHE_VALUES[selectedNiche] || NICHE_VALUES['default'];
@@ -286,11 +320,16 @@ serve(async (req) => {
       };
 
       // Inserir no banco
-      const { error: insertError } = await supabase
+      const { data: insertedData, error: insertError } = await supabase
         .from('global_radar_opportunities')
-        .insert(opportunity);
+        .insert(opportunity)
+        .select()
+        .single();
 
-      if (!insertError) {
+      if (insertError) {
+        console.error(`Insert error for ${opportunity.company_name}:`, insertError.message);
+      } else {
+        console.log(`Inserted: ${opportunity.company_name} with score ${score}`);
         opportunities.push(opportunity);
       }
     }
