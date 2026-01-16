@@ -213,11 +213,12 @@ const GenesisIADashboard = () => {
         >
           {/* Cards - Grid mode when not editing, free mode when editing */}
         {!isEditMode ? (
-            // Grid mode for normal view
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            // Horizontal cards layout like reference image
+            <div className="flex flex-col md:flex-row gap-4 justify-center max-w-5xl mx-auto">
               {[...config.dashboardCards]
                 .filter(card => card.visible)
                 .sort((a, b) => a.order - b.order)
+                .slice(0, 3) // Show max 3 cards in main view
                 .map((card) => {
                   const IconComponent = ICON_MAP[card.icon] || Star;
                   const cardStyles = card.styles;
@@ -225,42 +226,33 @@ const GenesisIADashboard = () => {
                   return (
                     <Card
                       key={card.id}
-                      className={`group cursor-pointer transition-all hover:shadow-md ${config.cards.shadow}`}
+                      className="group cursor-pointer transition-all hover:scale-[1.02] hover:shadow-xl flex-1 min-w-[200px] max-w-[320px] border border-white/10"
                       style={{
-                        backgroundColor: cardStyles.backgroundColor || config.cards.backgroundColor,
-                        borderColor: cardStyles.borderColor || config.cards.borderColor,
-                        borderRadius: cardStyles.borderRadius || config.cards.borderRadius,
+                        backgroundColor: 'hsl(220 20% 14%)',
+                        borderRadius: '12px',
                       }}
                       onClick={() => setActiveTab(card.id as ActiveTab)}
                     >
-                      <CardContent className="p-3">
-                        <div className="flex items-center gap-2 mb-2">
+                      <CardContent className="p-5">
+                        <div className="flex items-center gap-3 mb-3">
                           <div 
-                            className="w-8 h-8 rounded-lg flex items-center justify-center group-hover:opacity-80 transition-colors flex-shrink-0"
-                            style={{ backgroundColor: cardStyles.iconBackgroundColor || config.cards.iconBackgroundColor }}
+                            className="w-10 h-10 rounded-lg flex items-center justify-center"
+                            style={{ backgroundColor: cardStyles.iconBackgroundColor || 'hsl(270 60% 50% / 0.2)' }}
                           >
                             <IconComponent 
-                              className="w-4 h-4" 
-                              style={{ color: cardStyles.iconColor || config.cards.iconColor }} 
+                              className="w-5 h-5" 
+                              style={{ color: cardStyles.iconColor || 'hsl(270 80% 70%)' }} 
                             />
                           </div>
                           <h3 
-                            className="text-sm font-semibold truncate"
-                            style={{ color: cardStyles.titleColor || config.cards.titleColor }}
+                            className="text-base font-semibold text-white"
                           >
                             {card.title}
                           </h3>
                         </div>
-                        <p 
-                          className="text-xs mb-2 line-clamp-2"
-                          style={{ color: cardStyles.descriptionColor || config.cards.descriptionColor }}
-                        >
+                        <p className="text-sm text-white/60 leading-relaxed">
                           {card.description}
                         </p>
-                        <Badge variant="outline" className={`text-xs px-2 py-0.5 ${card.badgeClass}`}>
-                          {card.icon === 'Radar' && <Sparkles className="w-3 h-3 mr-1" />}
-                          {card.badge}
-                        </Badge>
                       </CardContent>
                     </Card>
                   );
@@ -447,12 +439,9 @@ const GenesisIADashboard = () => {
         
         return (
           <div 
-            className="min-h-screen pb-24"
+            className="min-h-screen flex flex-col"
             style={{
-              backgroundColor: config.backgroundGradient.enabled ? undefined : config.backgroundColor,
-              backgroundImage: config.backgroundGradient.enabled
-                ? `linear-gradient(${config.backgroundGradient.direction}, ${config.backgroundGradient.from}, ${config.backgroundGradient.to})`
-                : undefined,
+              background: 'linear-gradient(180deg, hsl(220 25% 10%) 0%, hsl(230 30% 12%) 50%, hsl(220 25% 10%) 100%)',
             }}
           >
             {/* Header */}
@@ -513,66 +502,71 @@ const GenesisIADashboard = () => {
             </header>
 
             {/* Content */}
-            <main className="px-4 py-6">
-              {/* Greeting */}
+            <main className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+              {/* Hero Section - Centered Title */}
               {activeTab === 'dashboard' && !isEditMode && (
-                <div className="text-center mb-6 mt-2">
-                  <h2 className="text-xl font-semibold" style={{ color: config.header.titleColor }}>
-                    {getGreeting()}, <span className="capitalize" style={{ color: config.dock.activeColor }}>{userName}</span>
-                  </h2>
+                <div className="text-center mb-12">
+                  <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: config.header.titleColor }}>
+                    Bem-vindo à IA Genesis.
+                  </h1>
+                  <p className="text-base text-muted-foreground max-w-lg mx-auto">
+                    Crie, evolua e gerencie suas ideias em um só lugar. Escolha uma ação para começar.
+                  </p>
                 </div>
               )}
               {renderTabContent(ctx)}
             </main>
 
-            {/* Dock */}
-            <div className="fixed bottom-8 left-0 right-0 flex justify-center z-50">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
-                className={`flex items-center ${config.dock.shadow}`}
-                style={{
-                  gap: config.dock.gap,
-                  padding: '12px 16px',
-                  borderRadius: config.dock.borderRadius,
-                  backgroundColor: config.dock.backgroundColor,
-                  border: `1px solid ${config.dock.borderColor}`,
-                }}
-              >
-                {dockItems.map((item, index) => {
-                  const isActive = !item.onClick && activeTab === item.tabId;
-                  return (
-                    <motion.button
-                      key={index}
-                      onClick={item.onClick || (() => setActiveTab(item.tabId!))}
-                      className="relative rounded-xl flex items-center justify-center transition-colors"
-                      style={{
-                        width: config.dock.buttonSize,
-                        height: config.dock.buttonSize,
-                        backgroundColor: isActive ? `${config.dock.activeColor}20` : 'transparent',
-                      }}
-                      whileHover={{ scale: 1.15, y: -8 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                    >
-                      <item.icon 
-                        style={{ 
-                          width: config.dock.iconSize, 
-                          height: config.dock.iconSize,
-                          color: isActive ? config.dock.activeColor : config.dock.inactiveColor,
-                        }} 
-                      />
-                      {isActive && (
-                        <div 
-                          className="absolute bottom-1.5 w-2 h-2 rounded-full"
-                          style={{ backgroundColor: config.dock.activeColor }}
+            {/* Dock - Hidden on dashboard, shown on other tabs */}
+            {activeTab !== 'dashboard' && (
+              <div className="fixed bottom-8 left-0 right-0 flex justify-center z-50">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
+                  className={`flex items-center ${config.dock.shadow}`}
+                  style={{
+                    gap: config.dock.gap,
+                    padding: '12px 16px',
+                    borderRadius: config.dock.borderRadius,
+                    backgroundColor: config.dock.backgroundColor,
+                    border: `1px solid ${config.dock.borderColor}`,
+                  }}
+                >
+                  {dockItems.map((item, index) => {
+                    const isActive = !item.onClick && activeTab === item.tabId;
+                    return (
+                      <motion.button
+                        key={index}
+                        onClick={item.onClick || (() => setActiveTab(item.tabId!))}
+                        className="relative rounded-xl flex items-center justify-center transition-colors"
+                        style={{
+                          width: config.dock.buttonSize,
+                          height: config.dock.buttonSize,
+                          backgroundColor: isActive ? `${config.dock.activeColor}20` : 'transparent',
+                        }}
+                        whileHover={{ scale: 1.15, y: -8 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                      >
+                        <item.icon 
+                          style={{ 
+                            width: config.dock.iconSize, 
+                            height: config.dock.iconSize,
+                            color: isActive ? config.dock.activeColor : config.dock.inactiveColor,
+                          }} 
                         />
-                      )}
-                    </motion.button>
-                  );
-                })}
-              </motion.div>
-            </div>
+                        {isActive && (
+                          <div 
+                            className="absolute bottom-1.5 w-2 h-2 rounded-full"
+                            style={{ backgroundColor: config.dock.activeColor }}
+                          />
+                        )}
+                      </motion.button>
+                    );
+                  })}
+                </motion.div>
+              </div>
+            )}
 
             {/* Edit Mode Indicator */}
             {isEditMode && (
