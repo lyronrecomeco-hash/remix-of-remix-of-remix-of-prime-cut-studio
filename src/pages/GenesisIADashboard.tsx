@@ -72,6 +72,7 @@ const GenesisIADashboard = () => {
   const navigate = useNavigate();
   const [userName, setUserName] = useState("");
   const [userId, setUserId] = useState("");
+  const [affiliateId, setAffiliateId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [editingCard, setEditingCard] = useState<CardData | null>(null);
@@ -88,10 +89,20 @@ const GenesisIADashboard = () => {
       navigate("/genesis-ia");
       return;
     }
+
     setUserName(user.email?.split("@")[0] || "Usuário");
     setUserId(user.id);
+
+    const { data: affiliate } = await supabase
+      .from('affiliates')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    setAffiliateId(affiliate?.id ?? null);
+
     setIsLoading(false);
-    
+
     // Show welcome toast after login
     setShowWelcome(true);
   };
@@ -228,23 +239,39 @@ const GenesisIADashboard = () => {
         {!isEditMode ? (
             <>
               {/* Horizontal cards layout like reference image */}
-              <div className="flex flex-col md:flex-row justify-center gap-5 max-w-5xl mx-auto px-4">
-                {[...config.dashboardCards]
-                  .filter(card => card.visible)
-                  .sort((a, b) => a.order - b.order)
-                  .slice(0, 3) // Show max 3 cards in main view
-                  .map((card, index) => {
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-6xl mx-auto px-4">
+                {(() => {
+                  const visibleCards = [...config.dashboardCards]
+                    .filter((card) => card.visible)
+                    .sort((a, b) => a.order - b.order)
+                    .slice(0, 2);
+
+                  const cardsWithAccepted = [
+                    ...visibleCards,
+                    {
+                      id: 'accepted_proposals',
+                      title: 'Propostas Aceitas',
+                      description: 'Gerencie as propostas aceitas do Radar Global e acompanhe o progresso.',
+                      icon: 'Target',
+                      styles: {
+                        iconBackgroundColor: 'hsl(145 50% 25% / 0.5)',
+                        iconColor: 'hsl(145 70% 60%)',
+                      },
+                    } as unknown as CardData,
+                  ];
+
+                  return cardsWithAccepted.map((card, index) => {
                     const IconComponent = ICON_MAP[card.icon] || Star;
                     const cardStyles = card.styles;
-                    
-                    // Different icon colors for each card
+
+                    // Different icon colors for each card (fallback)
                     const iconColors = [
                       { bg: 'hsl(260 50% 30% / 0.5)', color: 'hsl(260 70% 70%)' }, // Purple
-                      { bg: 'hsl(200 50% 30% / 0.5)', color: 'hsl(200 70% 65%)' }, // Blue  
+                      { bg: 'hsl(200 50% 30% / 0.5)', color: 'hsl(200 70% 65%)' }, // Blue
                       { bg: 'hsl(180 40% 25% / 0.5)', color: 'hsl(180 60% 60%)' }, // Teal
                     ];
                     const colorScheme = iconColors[index % iconColors.length];
-                    
+
                     return (
                       <Card
                         key={card.id}
@@ -252,26 +279,22 @@ const GenesisIADashboard = () => {
                         style={{
                           backgroundColor: 'hsl(215 30% 12%)',
                           borderRadius: '14px',
-                          minWidth: '360px',
-                          maxWidth: '440px',
-                          flex: '1 1 360px',
+                          minWidth: '320px',
                         }}
                         onClick={() => setActiveTab(card.id as ActiveTab)}
                       >
                         <CardContent className="p-6">
                           <div className="flex items-center gap-4 mb-3">
-                            <div 
+                            <div
                               className="w-11 h-11 rounded-xl flex items-center justify-center"
                               style={{ backgroundColor: cardStyles.iconBackgroundColor || colorScheme.bg }}
                             >
-                              <IconComponent 
-                                className="w-5 h-5" 
-                                style={{ color: cardStyles.iconColor || colorScheme.color }} 
+                              <IconComponent
+                                className="w-5 h-5"
+                                style={{ color: cardStyles.iconColor || colorScheme.color }}
                               />
                             </div>
-                            <h3 className="text-base font-semibold text-white">
-                              {card.title}
-                            </h3>
+                            <h3 className="text-base font-semibold text-white">{card.title}</h3>
                           </div>
                           <p className="text-sm text-white/50 leading-relaxed min-h-[2.5rem]">
                             {card.description}
@@ -279,49 +302,17 @@ const GenesisIADashboard = () => {
                         </CardContent>
                       </Card>
                     );
-                  })}
+                  });
+                })()}
               </div>
-              
-              {/* Second row with Accepted Proposals Card */}
-              <div className="flex flex-col md:flex-row justify-center gap-5 max-w-5xl mx-auto px-4 mt-5">
-                <Card
-                  className="group cursor-pointer transition-all duration-200 hover:scale-[1.01] hover:border-white/20 border border-white/[0.08]"
-                  style={{
-                    backgroundColor: 'hsl(215 30% 12%)',
-                    borderRadius: '14px',
-                    minWidth: '360px',
-                    maxWidth: '440px',
-                    flex: '1 1 360px',
-                  }}
-                  onClick={() => setActiveTab('accepted_proposals')}
-                >
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-4 mb-3">
-                      <div 
-                        className="w-11 h-11 rounded-xl flex items-center justify-center"
-                        style={{ backgroundColor: 'hsl(145 50% 25% / 0.5)' }}
-                      >
-                        <Target 
-                          className="w-5 h-5" 
-                          style={{ color: 'hsl(145 70% 60%)' }} 
-                        />
-                      </div>
-                      <h3 className="text-base font-semibold text-white">
-                        Propostas Aceitas
-                      </h3>
-                    </div>
-                    <p className="text-sm text-white/50 leading-relaxed min-h-[2.5rem]">
-                      Gerencie as propostas aceitas do Radar Global e acompanhe o progresso.
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-              
+
               {/* Accepted Leads Section */}
-              <AcceptedLeadsSection 
-                affiliateId={userId} 
-                onViewAll={() => setActiveTab('accepted_proposals')}
-              />
+              {affiliateId && (
+                <AcceptedLeadsSection
+                  affiliateId={affiliateId}
+                  onViewAll={() => setActiveTab('accepted_proposals')}
+                />
+              )}
             </>
           ) : (
             // Free positioning mode for editing
@@ -485,11 +476,18 @@ const GenesisIADashboard = () => {
     }
 
     if (activeTab === 'radar') {
-      return <GlobalRadarTab userId={userId} />;
+      return (
+        <GlobalRadarTab
+          userId={userId}
+          affiliateId={affiliateId}
+          onAccepted={() => setActiveTab('accepted_proposals')}
+        />
+      );
     }
 
     if (activeTab === 'accepted_proposals') {
-      return <AcceptedProposalsTab userId={userId} />;
+      if (!affiliateId) return null;
+      return <AcceptedProposalsTab affiliateId={affiliateId} />;
     }
 
     if (activeTab === 'users') {

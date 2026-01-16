@@ -36,23 +36,23 @@ interface AcceptedProposal {
 }
 
 interface AcceptedProposalsTabProps {
-  userId: string;
+  affiliateId: string;
 }
 
-export const AcceptedProposalsTab = ({ userId }: AcceptedProposalsTabProps) => {
+export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps) => {
   const [proposals, setProposals] = useState<AcceptedProposal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
   const fetchProposals = async () => {
-    if (!userId) return;
-    
+    if (!affiliateId) return;
+
     setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from('affiliate_prospects')
         .select('*')
-        .eq('affiliate_id', userId)
+        .eq('affiliate_id', affiliateId)
         .eq('source', 'radar_global')
         .order('created_at', { ascending: false });
 
@@ -78,12 +78,12 @@ export const AcceptedProposalsTab = ({ userId }: AcceptedProposalsTabProps) => {
           event: 'INSERT',
           schema: 'public',
           table: 'affiliate_prospects',
-          filter: `affiliate_id=eq.${userId}`,
+          filter: `affiliate_id=eq.${affiliateId}`,
         },
         (payload) => {
           const newProposal = payload.new as AcceptedProposal;
           if (newProposal.source === 'radar_global') {
-            setProposals(prev => [newProposal, ...prev]);
+            setProposals((prev) => [newProposal, ...prev]);
             toast.success(`Nova proposta aceita: ${newProposal.company_name}`);
           }
         }
@@ -93,7 +93,7 @@ export const AcceptedProposalsTab = ({ userId }: AcceptedProposalsTabProps) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId]);
+  }, [affiliateId]);
 
   const filteredProposals = proposals.filter(p => 
     p.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||

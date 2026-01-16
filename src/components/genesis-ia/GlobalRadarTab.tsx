@@ -71,6 +71,8 @@ interface RadarOpportunity {
 
 interface GlobalRadarTabProps {
   userId: string;
+  affiliateId?: string | null;
+  onAccepted?: () => void;
 }
 
 // Countries for scanning
@@ -95,9 +97,9 @@ const AUTO_SCAN_INTERVAL = 2 * 60 * 1000; // 2 minutes
 const ITEMS_PER_PAGE = 12;
 const MAX_LEADS_LIMIT = 200; // Maximum leads before stopping scan
 
-export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
+export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepted }: GlobalRadarTabProps) => {
   const [opportunities, setOpportunities] = useState<RadarOpportunity[]>([]);
-  const [affiliateId, setAffiliateId] = useState<string | null>(null);
+  const [affiliateId, setAffiliateId] = useState<string | null>(affiliateIdProp ?? null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState(false);
@@ -122,17 +124,26 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
     currentPage * ITEMS_PER_PAGE
   );
 
+  // If affiliateId is provided by parent, keep state in sync
+  useEffect(() => {
+    if (typeof affiliateIdProp !== 'undefined') {
+      setAffiliateId(affiliateIdProp ?? null);
+    }
+  }, [affiliateIdProp]);
+
   // Fetch affiliate ID from user_id
   useEffect(() => {
+    if (typeof affiliateIdProp !== 'undefined') return;
+
     const fetchAffiliateId = async () => {
       if (!userId) return;
-      
+
       const { data, error } = await supabase
         .from('affiliates')
         .select('id')
         .eq('user_id', userId)
         .single();
-      
+
       if (data && !error) {
         setAffiliateId(data.id);
       } else {
@@ -141,9 +152,9 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
         setAffiliateId(null);
       }
     };
-    
+
     fetchAffiliateId();
-  }, [userId]);
+  }, [userId, affiliateIdProp]);
 
   // Play notification sound
   const playNotificationSound = useCallback(() => {
@@ -338,7 +349,11 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
 
   // Accept opportunity
   const handleAccept = async (opportunity: RadarOpportunity) => {
-    if (!affiliateId) return;
+    if (!affiliateId) {
+      toast.error('Não foi possível identificar seu afiliado. Recarregue a página.');
+      return;
+    }
+
     try {
       const { error: insertError } = await supabase
         .from('affiliate_prospects')
@@ -363,19 +378,21 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
         });
 
       if (insertError) throw insertError;
-      
+
       // Update opportunity status
       await supabase
         .from('global_radar_opportunities')
         .update({ status: 'accepted', accepted_at: new Date().toISOString() })
         .eq('id', opportunity.id);
-      
-      setOpportunities(prev => prev.filter(o => o.id !== opportunity.id));
-      
-      toast.success(`✅ ${opportunity.company_name} adicionado aos prospectos!`);
+
+      setOpportunities((prev) => prev.filter((o) => o.id !== opportunity.id));
+
+      toast.success(`✅ ${opportunity.company_name} aceito e enviado para Propostas Aceitas!`);
+      onAccepted?.();
     } catch (error) {
       console.error('Error accepting opportunity:', error);
-      toast.error('Erro ao aceitar oportunidade');
+      const msg = (error as { message?: string })?.message;
+      toast.error(msg || 'Erro ao aceitar oportunidade');
     }
   };
 
