@@ -224,58 +224,59 @@ const GenesisIADashboard = () => {
         >
           {/* Cards - Grid mode when not editing, free mode when editing */}
         {!isEditMode ? (
-            // Horizontal cards layout like reference image
-            <div className="flex flex-col md:flex-row gap-4 justify-center max-w-5xl mx-auto">
-              {[...config.dashboardCards]
-                .filter(card => card.visible)
-                .sort((a, b) => a.order - b.order)
-                .slice(0, 3) // Show max 3 cards in main view
-                .map((card) => {
-                  const IconComponent = ICON_MAP[card.icon] || Star;
-                  const cardStyles = card.styles;
-                  
-                  return (
-                    <Card
-                      key={card.id}
-                      className="group cursor-pointer transition-all hover:scale-[1.02] hover:shadow-xl flex-1 min-w-[280px] max-w-[380px] border border-white/10"
-                      style={{
-                        backgroundColor: 'hsl(220 20% 14%)',
-                        borderRadius: '16px',
-                      }}
-                      onClick={() => setActiveTab(card.id as ActiveTab)}
-                    >
-                      <CardContent className="p-6">
-                        <div className="flex items-center gap-4 mb-4">
-                          <div 
-                            className="w-12 h-12 rounded-xl flex items-center justify-center"
-                            style={{ backgroundColor: cardStyles.iconBackgroundColor || 'hsl(270 60% 50% / 0.2)' }}
-                          >
-                            <IconComponent 
-                              className="w-6 h-6" 
-                              style={{ color: cardStyles.iconColor || 'hsl(270 80% 70%)' }} 
-                            />
+            <>
+              {/* Horizontal cards layout like reference image */}
+              <div className="flex flex-col md:flex-row gap-4 justify-center max-w-5xl mx-auto">
+                {[...config.dashboardCards]
+                  .filter(card => card.visible)
+                  .sort((a, b) => a.order - b.order)
+                  .slice(0, 3) // Show max 3 cards in main view
+                  .map((card) => {
+                    const IconComponent = ICON_MAP[card.icon] || Star;
+                    const cardStyles = card.styles;
+                    
+                    return (
+                      <Card
+                        key={card.id}
+                        className="group cursor-pointer transition-all hover:scale-[1.02] hover:shadow-xl flex-1 min-w-[280px] max-w-[380px] border border-white/10"
+                        style={{
+                          backgroundColor: 'hsl(220 20% 14%)',
+                          borderRadius: '16px',
+                        }}
+                        onClick={() => setActiveTab(card.id as ActiveTab)}
+                      >
+                        <CardContent className="p-6">
+                          <div className="flex items-center gap-4 mb-4">
+                            <div 
+                              className="w-12 h-12 rounded-xl flex items-center justify-center"
+                              style={{ backgroundColor: cardStyles.iconBackgroundColor || 'hsl(270 60% 50% / 0.2)' }}
+                            >
+                              <IconComponent 
+                                className="w-6 h-6" 
+                                style={{ color: cardStyles.iconColor || 'hsl(270 80% 70%)' }} 
+                              />
+                            </div>
+                            <h3 
+                              className="text-lg font-semibold text-white"
+                            >
+                              {card.title}
+                            </h3>
                           </div>
-                          <h3 
-                            className="text-lg font-semibold text-white"
-                          >
-                            {card.title}
-                          </h3>
-                        </div>
-                        <p className="text-sm text-white/60 leading-relaxed">
-                          {card.description}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-            </div>
-            
-            {/* Accepted Leads Section */}
-            <AcceptedLeadsSection 
-              affiliateId={userId} 
-              onViewAll={() => setActiveTab('radar')}
-            />
-          </>
+                          <p className="text-sm text-white/60 leading-relaxed">
+                            {card.description}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+              </div>
+              
+              {/* Accepted Leads Section */}
+              <AcceptedLeadsSection 
+                affiliateId={userId} 
+                onViewAll={() => setActiveTab('radar')}
+              />
+            </>
           ) : (
             // Free positioning mode for editing
             <div 
