@@ -50,6 +50,7 @@ import { GlobalRadarTab } from "@/components/genesis-ia/GlobalRadarTab";
 import { GenesisUsersTab } from "@/components/genesis-ia/GenesisUsersTab";
 import { GenesisSettingsTab } from "@/components/genesis-ia/GenesisSettingsTab";
 import { AcceptedLeadsSection } from "@/components/genesis-ia/AcceptedLeadsSection";
+import { AcceptedProposalsTab } from "@/components/genesis-ia/AcceptedProposalsTab";
 import { WelcomeToast } from "@/components/genesis-ia/WelcomeToast";
 import { FullPageEditor, EditorContextValue, CustomElement } from "@/components/genesis-ia/dashboard-builder/FullPageEditor";
 import { DraggableCard, CardData } from "@/components/genesis-ia/dashboard-builder/components/DraggableCard";
@@ -57,7 +58,7 @@ import { CardSettingsPanel } from "@/components/genesis-ia/dashboard-builder/com
 import { TextElement, TextElementData } from "@/components/genesis-ia/dashboard-builder/components/TextElement";
 import { TextSettingsPanel } from "@/components/genesis-ia/dashboard-builder/components/TextSettingsPanel";
 
-type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'users' | 'settings';
+type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings';
 
 // Icon mapping for dynamic rendering
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -112,6 +113,7 @@ const GenesisIADashboard = () => {
     switch (activeTab) {
       case 'prospects': return 'Encontrar Clientes';
       case 'radar': return 'Radar Global';
+      case 'accepted_proposals': return 'Propostas Aceitas';
       case 'users': return 'Usuários';
       case 'settings': return 'Configurações';
       default: return null;
@@ -280,15 +282,18 @@ const GenesisIADashboard = () => {
                   })}
               </div>
               
-              {/* Accepted Proposals Card */}
-              <div className="flex justify-center mt-5 px-4">
+              {/* Second row with Accepted Proposals Card */}
+              <div className="flex flex-col md:flex-row justify-center gap-5 max-w-5xl mx-auto px-4 mt-5">
                 <Card
-                  className="group cursor-pointer transition-all duration-200 hover:scale-[1.01] hover:border-white/20 border border-white/[0.08] w-full max-w-5xl"
+                  className="group cursor-pointer transition-all duration-200 hover:scale-[1.01] hover:border-white/20 border border-white/[0.08]"
                   style={{
                     backgroundColor: 'hsl(215 30% 12%)',
                     borderRadius: '14px',
+                    minWidth: '360px',
+                    maxWidth: '440px',
+                    flex: '1 1 360px',
                   }}
-                  onClick={() => setActiveTab('radar')}
+                  onClick={() => setActiveTab('accepted_proposals')}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-center gap-4 mb-3">
@@ -306,7 +311,7 @@ const GenesisIADashboard = () => {
                       </h3>
                     </div>
                     <p className="text-sm text-white/50 leading-relaxed min-h-[2.5rem]">
-                      Gerencie as propostas que você aceitou do Radar Global e acompanhe o progresso de cada lead.
+                      Gerencie as propostas aceitas do Radar Global e acompanhe o progresso.
                     </p>
                   </CardContent>
                 </Card>
@@ -315,7 +320,7 @@ const GenesisIADashboard = () => {
               {/* Accepted Leads Section */}
               <AcceptedLeadsSection 
                 affiliateId={userId} 
-                onViewAll={() => setActiveTab('radar')}
+                onViewAll={() => setActiveTab('accepted_proposals')}
               />
             </>
           ) : (
@@ -481,6 +486,10 @@ const GenesisIADashboard = () => {
 
     if (activeTab === 'radar') {
       return <GlobalRadarTab userId={userId} />;
+    }
+
+    if (activeTab === 'accepted_proposals') {
+      return <AcceptedProposalsTab userId={userId} />;
     }
 
     if (activeTab === 'users') {
