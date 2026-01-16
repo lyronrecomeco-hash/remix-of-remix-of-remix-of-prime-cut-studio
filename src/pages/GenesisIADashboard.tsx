@@ -65,7 +65,7 @@ const GenesisIADashboard = () => {
     {
       id: 'prospects' as const,
       title: 'Encontrar Clientes',
-      description: 'Descubra clientes com maior potencial de compra',
+      description: 'Descubra clientes com maior potencial',
       icon: Search,
       badge: 'Google Places',
       badgeClass: 'bg-primary/10 text-primary border-primary/30',
@@ -73,7 +73,7 @@ const GenesisIADashboard = () => {
     {
       id: 'radar' as const,
       title: 'Radar Global',
-      description: 'Oportunidades encontradas automaticamente pela IA',
+      description: 'Oportunidades automáticas pela IA',
       icon: Radar,
       badge: 'IA Ativa',
       badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
@@ -104,27 +104,27 @@ const GenesisIADashboard = () => {
   }
 
   const renderDashboard = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {MAIN_CARDS.map((card) => {
         const Icon = card.icon;
         const BadgeIcon = card.badgeIcon;
         return (
           <Card
             key={card.id}
-            className="group cursor-pointer border-border hover:border-primary/50 transition-all hover:shadow-lg"
+            className="group cursor-pointer border-border hover:border-primary/50 transition-all hover:shadow-md"
             onClick={() => setActiveTab(card.id)}
           >
-            <CardContent className="p-8">
-              <div className="flex items-start justify-between mb-6">
-                <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <Icon className="w-8 h-8 text-primary" />
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between mb-4">
+                <div className="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                  <Icon className="w-5 h-5 text-primary" />
                 </div>
-                <ChevronRight className="w-7 h-7 text-muted-foreground group-hover:translate-x-1 group-hover:text-primary transition-all" />
+                <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 group-hover:text-primary transition-all" />
               </div>
-              <h3 className="text-2xl font-semibold text-foreground mb-3">{card.title}</h3>
-              <p className="text-lg text-muted-foreground mb-6">{card.description}</p>
-              <Badge variant="outline" className={`text-base px-4 py-1.5 ${card.badgeClass}`}>
-                {BadgeIcon && <BadgeIcon className="w-4 h-4 mr-2" />}
+              <h3 className="text-lg font-semibold text-foreground mb-1.5">{card.title}</h3>
+              <p className="text-sm text-muted-foreground mb-4">{card.description}</p>
+              <Badge variant="outline" className={`text-xs px-2.5 py-1 ${card.badgeClass}`}>
+                {BadgeIcon && <BadgeIcon className="w-3 h-3 mr-1.5" />}
                 {card.badge}
               </Badge>
             </CardContent>
@@ -155,33 +155,33 @@ const GenesisIADashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-36">
+    <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
-        <div className="px-6 py-6">
+        <div className="px-4 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-5">
+            <div className="flex items-center gap-3">
               {activeTab !== 'dashboard' ? (
                 <>
-                  <Button variant="ghost" size="icon" onClick={() => setActiveTab('dashboard')} className="h-12 w-12">
-                    <ArrowLeft className="w-6 h-6" />
+                  <Button variant="ghost" size="icon" onClick={() => setActiveTab('dashboard')} className="h-8 w-8">
+                    <ArrowLeft className="w-4 h-4" />
                   </Button>
-                  <h2 className="text-2xl font-semibold">{getTabTitle()}</h2>
+                  <h2 className="text-base font-semibold">{getTabTitle()}</h2>
                 </>
               ) : (
                 <>
-                  <div className="w-14 h-14 rounded-xl bg-primary flex items-center justify-center">
-                    <Brain className="w-7 h-7 text-primary-foreground" />
+                  <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
+                    <Brain className="w-5 h-5 text-primary-foreground" />
                   </div>
-                  <h1 className="text-2xl font-bold text-foreground">Genesis IA</h1>
+                  <h1 className="text-base font-bold text-foreground">Genesis IA</h1>
                 </>
               )}
             </div>
 
             {/* Welcome */}
-            <div className="flex items-center gap-4 px-5 py-3 rounded-xl bg-muted/50 border border-border">
-              <span className="text-2xl">👋</span>
-              <span className="text-lg">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border">
+              <span className="text-base">👋</span>
+              <span className="text-sm">
                 Olá, <span className="font-semibold text-primary capitalize">{userName}</span>
               </span>
             </div>
@@ -190,23 +190,23 @@ const GenesisIADashboard = () => {
       </header>
 
       {/* Content */}
-      <main className="px-6 py-8">
+      <main className="px-4 py-4">
         {activeTab === 'dashboard' && (
-          <Button size="lg" className="mb-8 h-14 text-lg px-8 gap-3">
+          <Button size="sm" className="mb-4 h-9 text-sm px-4 gap-2">
             Criar meu SaaS agora
-            <ChevronRight className="w-6 h-6" />
+            <ChevronRight className="w-4 h-4" />
           </Button>
         )}
         {renderTabContent()}
       </main>
 
-      {/* Dock */}
-      <div className="fixed bottom-10 left-0 right-0 flex justify-center z-50">
+      {/* Dock - Smaller and higher */}
+      <div className="fixed bottom-6 left-0 right-0 flex justify-center z-50">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
-          className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-card border border-border shadow-xl"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-card border border-border shadow-lg"
         >
           {dockItems.map((item, index) => {
             const isActive = !item.onClick && activeTab === item.tabId;
@@ -214,14 +214,14 @@ const GenesisIADashboard = () => {
               <motion.button
                 key={index}
                 onClick={item.onClick || (() => setActiveTab(item.tabId!))}
-                className={`relative w-16 h-16 rounded-xl flex items-center justify-center transition-colors ${
+                className={`relative w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
                   isActive ? 'bg-primary/15' : 'hover:bg-muted'
                 }`}
-                whileHover={{ scale: 1.2, y: -10 }}
+                whileHover={{ scale: 1.15, y: -6 }}
                 transition={{ type: "spring", stiffness: 400, damping: 17 }}
               >
-                <item.icon className={`w-7 h-7 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
-                {isActive && <div className="absolute bottom-1.5 w-2 h-2 rounded-full bg-primary" />}
+                <item.icon className={`w-4 h-4 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
+                {isActive && <div className="absolute bottom-1 w-1.5 h-1.5 rounded-full bg-primary" />}
               </motion.button>
             );
           })}
