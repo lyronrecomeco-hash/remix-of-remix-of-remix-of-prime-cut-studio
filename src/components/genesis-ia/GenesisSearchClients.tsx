@@ -17,7 +17,14 @@ import {
   Clock,
   GlobeIcon,
   Filter,
-  Map
+  Map,
+  Calendar,
+  FileText,
+  Users,
+  ShoppingBag,
+  MessageSquare,
+  CheckCircle2,
+  XCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,8 +37,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { COUNTRIES, BRAZILIAN_STATES, getNichesForCountry, getCountryByCode } from '@/components/affiliate/prospecting/global/globalSearchData';
+import { RadiusFilterModal } from '@/components/affiliate/prospecting/RadiusFilterModal';
 
-const ITEMS_PER_PAGE = 12;
+const ITEMS_PER_PAGE = 9;
 
 interface SearchResult {
   name: string;
@@ -43,12 +51,18 @@ interface SearchResult {
   category?: string;
   niche?: string;
   localTime?: string;
+  latitude?: number;
+  longitude?: number;
   opportunityLevel?: 'basic' | 'intermediate' | 'advanced';
   estimatedValueMin?: number;
   estimatedValueMax?: number;
   monthlyRecurrence?: number;
-  digitalPresenceStatus?: string;
-  serviceTags?: string[];
+  needsWebsite?: boolean;
+  needsScheduling?: boolean;
+  needsCRM?: boolean;
+  needsMarketing?: boolean;
+  needsEcommerce?: boolean;
+  needsChatbot?: boolean;
   aiDescription?: string;
 }
 
@@ -56,7 +70,6 @@ interface GenesisSearchClientsProps {
   userId: string;
 }
 
-// Timezone mapping for countries
 const COUNTRY_TIMEZONES: Record<string, string> = {
   BR: 'America/Sao_Paulo',
   US: 'America/New_York',
@@ -120,23 +133,24 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
   const [city, setCity] = useState('');
   const [niche, setNiche] = useState('');
   const [excludeWithWebsite, setExcludeWithWebsite] = useState(false);
+  const [radiusFilterOpen, setRadiusFilterOpen] = useState(false);
   
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [filteredResults, setFilteredResults] = useState<SearchResult[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   
-  const totalPages = Math.max(1, Math.ceil(results.length / ITEMS_PER_PAGE));
+  const displayResults = filteredResults.length > 0 ? filteredResults : results;
+  const totalPages = Math.max(1, Math.ceil(displayResults.length / ITEMS_PER_PAGE));
   const paginatedResults = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return results.slice(start, start + ITEMS_PER_PAGE);
-  }, [results, currentPage]);
+    return displayResults.slice(start, start + ITEMS_PER_PAGE);
+  }, [displayResults, currentPage]);
 
-  // Get niches for selected country
   const availableNiches = useMemo(() => {
     return getNichesForCountry(countryCode);
   }, [countryCode]);
 
-  // Reset niche and state when country changes
   useEffect(() => {
     setNiche('');
     setState('');
@@ -153,6 +167,7 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
 
     setSearching(true);
     setResults([]);
+    setFilteredResults([]);
     setCurrentPage(1);
 
     const localTime = getLocalTime(countryCode);
@@ -178,18 +193,29 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
         return;
       }
 
-      let businessResults: SearchResult[] = searchData.results.map((r: any) => ({
-        ...r,
-        niche,
-        localTime,
-        opportunityLevel: Math.random() > 0.5 ? 'basic' : Math.random() > 0.5 ? 'intermediate' : 'advanced',
-        estimatedValueMin: Math.floor(Math.random() * 300) + 200,
-        estimatedValueMax: Math.floor(Math.random() * 400) + 400,
-        monthlyRecurrence: Math.floor(Math.random() * 50) + 50,
-        digitalPresenceStatus: !r.website ? 'Sem presença digital — oportunidade máxima' : 'Presença básica',
-        serviceTags: ['orçamentos', 'gestão'],
-        aiDescription: `${niche} precisa de sistema de orçamentos e controle de serviços.`,
-      }));
+      let businessResults: SearchResult[] = searchData.results.map((r: any) => {
+        const hasWebsite = !!r.website;
+        const opportunityLevel = !hasWebsite ? 'advanced' : Math.random() > 0.5 ? 'basic' : 'intermediate';
+        
+        return {
+          ...r,
+          niche,
+          localTime,
+          opportunityLevel,
+          estimatedValueMin: opportunityLevel === 'advanced' ? 800 : opportunityLevel === 'intermediate' ? 500 : 300,
+          estimatedValueMax: opportunityLevel === 'advanced' ? 2500 : opportunityLevel === 'intermediate' ? 1200 : 600,
+          monthlyRecurrence: opportunityLevel === 'advanced' ? 150 : opportunityLevel === 'intermediate' ? 100 : 50,
+          needsWebsite: !hasWebsite,
+          needsScheduling: Math.random() > 0.3,
+          needsCRM: Math.random() > 0.5,
+          needsMarketing: Math.random() > 0.4,
+          needsEcommerce: Math.random() > 0.7,
+          needsChatbot: Math.random() > 0.6,
+          aiDescription: !hasWebsite 
+            ? `Sem presença digital - alta oportunidade para site + sistema completo`
+            : `Pode se beneficiar de automação e sistemas de gestão`,
+        };
+      });
 
       if (excludeWithWebsite) {
         const beforeCount = businessResults.length;
@@ -200,7 +226,7 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
       }
 
       if (businessResults.length === 0) {
-        toast.info('Nenhuma empresa sem site encontrada. Desmarque o filtro.');
+        toast.info('Nenhuma empresa encontrada com os filtros aplicados.');
         setSearching(false);
         return;
       }
@@ -215,21 +241,27 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
     }
   };
 
+  const handleFilterByRadius = (filtered: any[]) => {
+    setFilteredResults(filtered);
+    setCurrentPage(1);
+    toast.success(`${filtered.length} empresas na área selecionada`);
+  };
+
   const handleAcceptProject = (result: SearchResult) => {
     toast.success(`Projeto ${result.name} aceito!`);
   };
 
   return (
-    <div className="space-y-4">
-      {/* Search Form - Compact */}
-      <Card className="border-primary/20 bg-primary/5">
-        <CardContent className="p-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+    <div className="space-y-5">
+      {/* Search Form */}
+      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+        <CardContent className="p-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* Country */}
             <div>
-              <Label className="text-xs font-medium mb-1 block">🌍 País</Label>
+              <Label className="text-sm font-medium mb-2 block">🌍 País</Label>
               <Select value={countryCode} onValueChange={setCountryCode}>
-                <SelectTrigger className="h-9 text-sm bg-background/50">
+                <SelectTrigger className="h-10 bg-background/80">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="max-h-[280px]">
@@ -245,11 +277,11 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
             {/* State (Brazil only) */}
             {countryCode === 'BR' && (
               <div>
-                <Label className="text-xs font-medium mb-1 flex items-center gap-1">
-                  <MapPin className="w-3 h-3 text-primary" /> Estado
+                <Label className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4 text-primary" /> Estado
                 </Label>
                 <Select value={state} onValueChange={setState}>
-                  <SelectTrigger className="h-9 text-sm bg-background/50">
+                  <SelectTrigger className="h-10 bg-background/80">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent className="max-h-[280px]">
@@ -263,24 +295,24 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
 
             {/* City */}
             <div>
-              <Label className="text-xs font-medium mb-1 flex items-center gap-1">
-                <MapPin className="w-3 h-3 text-primary" /> Cidade
+              <Label className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <MapPin className="w-4 h-4 text-primary" /> Cidade
               </Label>
               <Input
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 placeholder={countryCode === 'BR' ? 'Ex: São Paulo' : 'Ex: New York'}
-                className="h-9 text-sm bg-background/50"
+                className="h-10 bg-background/80"
               />
             </div>
 
             {/* Niche */}
             <div>
-              <Label className="text-xs font-medium mb-1 flex items-center gap-1">
-                <Building2 className="w-3 h-3 text-primary" /> Nicho
+              <Label className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <Building2 className="w-4 h-4 text-primary" /> Nicho
               </Label>
               <Select value={niche} onValueChange={setNiche}>
-                <SelectTrigger className="h-9 text-sm bg-background/50">
+                <SelectTrigger className="h-10 bg-background/80">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[280px]">
@@ -296,7 +328,7 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
               <Button 
                 onClick={handleSearch}
                 disabled={searching || !city || !niche || (countryCode === 'BR' && !state)}
-                className="w-full h-9 text-sm gap-1.5"
+                className="w-full h-10 gap-2"
               >
                 {searching ? (
                   <><Loader2 className="w-4 h-4 animate-spin" /> Buscando...</>
@@ -307,23 +339,47 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
             </div>
           </div>
 
-          {/* Filter Row */}
-          <div className="mt-3 flex flex-wrap items-center gap-4">
+          {/* Filters Row */}
+          <div className="mt-4 flex flex-wrap items-center gap-4 pt-4 border-t border-border/50">
             <div className="flex items-center gap-2">
               <Checkbox 
                 id="excludeWebsite" 
                 checked={excludeWithWebsite}
                 onCheckedChange={(c) => setExcludeWithWebsite(c === true)}
               />
-              <label htmlFor="excludeWebsite" className="text-xs cursor-pointer flex items-center gap-1">
-                <GlobeIcon className="w-3 h-3 text-muted-foreground" />
+              <label htmlFor="excludeWebsite" className="text-sm cursor-pointer flex items-center gap-1.5">
+                <GlobeIcon className="w-4 h-4 text-muted-foreground" />
                 Apenas empresas <strong className="text-primary">sem site</strong>
               </label>
             </div>
 
+            {results.length > 0 && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-2 h-9"
+                onClick={() => setRadiusFilterOpen(true)}
+              >
+                <Map className="w-4 h-4" />
+                Filtrar por Área
+              </Button>
+            )}
+
+            {filteredResults.length > 0 && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="gap-2 h-9 text-muted-foreground"
+                onClick={() => setFilteredResults([])}
+              >
+                <XCircle className="w-4 h-4" />
+                Limpar filtro
+              </Button>
+            )}
+
             {selectedCountry && (
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground ml-auto">
-                <Clock className="w-3 h-3" />
+              <div className="flex items-center gap-2 text-sm text-muted-foreground ml-auto">
+                <Clock className="w-4 h-4" />
                 <span>{selectedCountry.flag} {currentLocalTime}</span>
               </div>
             )}
@@ -333,57 +389,57 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
 
       {/* Loading */}
       {searching && (
-        <div className="flex flex-col items-center justify-center py-12 gap-3">
-          <Loader2 className="w-10 h-10 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Buscando empresas...</p>
+        <div className="flex flex-col items-center justify-center py-16 gap-4">
+          <Loader2 className="w-12 h-12 animate-spin text-primary" />
+          <p className="text-muted-foreground">Buscando empresas...</p>
         </div>
       )}
 
       {/* Empty State */}
-      {results.length === 0 && !searching && (
-        <div className="flex flex-col items-center justify-center py-12 gap-3">
-          <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-            <Search className="w-7 h-7 text-primary/50" />
+      {displayResults.length === 0 && !searching && (
+        <div className="flex flex-col items-center justify-center py-16 gap-4">
+          <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <Search className="w-10 h-10 text-primary/50" />
           </div>
-          <h3 className="text-base font-semibold">Faça uma busca</h3>
-          <p className="text-xs text-muted-foreground text-center max-w-sm">
-            Preencha os campos acima e clique em buscar para encontrar oportunidades.
+          <h3 className="text-xl font-semibold">Faça uma busca</h3>
+          <p className="text-muted-foreground text-center max-w-md">
+            Preencha os campos acima e clique em buscar para encontrar oportunidades de negócio.
           </p>
         </div>
       )}
 
       {/* Results */}
-      {results.length > 0 && !searching && (
-        <div className="space-y-3">
+      {displayResults.length > 0 && !searching && (
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-primary" />
-              {results.length} Empresas Encontradas
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              {displayResults.length} Oportunidades Encontradas
             </h3>
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className="text-sm px-3 py-1">
               Página {currentPage} de {totalPages}
             </Badge>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {paginatedResults.map((result, idx) => {
               const levelConfig = result.opportunityLevel ? LEVEL_CONFIG[result.opportunityLevel] : null;
               const nicheIcon = getNicheIcon(result.niche);
 
               return (
-                <Card key={idx} className="overflow-hidden border-border hover:border-primary/50 transition-all">
-                  <CardContent className="p-3">
+                <Card key={idx} className="overflow-hidden border-border hover:border-primary/50 transition-all hover:shadow-lg group">
+                  <CardContent className="p-4">
                     {/* Header */}
-                    <div className="flex items-start gap-2.5 mb-2">
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-lg shrink-0">
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-2xl shrink-0">
                         {nicheIcon}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-semibold text-foreground truncate">{result.name}</h4>
-                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                          <span className="text-xs text-muted-foreground">{result.niche}</span>
+                        <h4 className="font-semibold text-foreground truncate">{result.name}</h4>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <span className="text-sm text-muted-foreground">{result.niche}</span>
                           {levelConfig && (
-                            <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", levelConfig.color)}>
+                            <Badge variant="outline" className={cn("text-xs px-2 py-0.5", levelConfig.color)}>
                               {levelConfig.label}
                             </Badge>
                           )}
@@ -391,68 +447,114 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
                       </div>
                     </div>
 
-                    {/* Value & Recurrence - Compact */}
-                    <div className="grid grid-cols-2 gap-2 mb-2 p-2 rounded-lg bg-muted/30">
+                    {/* Value Box */}
+                    <div className="grid grid-cols-2 gap-3 mb-3 p-3 rounded-xl bg-gradient-to-r from-primary/5 to-emerald-500/5 border border-border/50">
                       <div>
-                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-0.5">
-                          <DollarSign className="w-3 h-3" /> VALOR
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                          <DollarSign className="w-3.5 h-3.5" /> VALOR ESTIMADO
                         </div>
-                        <div className="text-xs font-bold text-primary">
+                        <div className="text-lg font-bold text-primary">
                           R$ {result.estimatedValueMin} - {result.estimatedValueMax}
                         </div>
                       </div>
                       <div>
-                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-0.5">
-                          <TrendingUp className="w-3 h-3" /> RECORRÊNCIA
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                          <TrendingUp className="w-3.5 h-3.5" /> RECORRÊNCIA
                         </div>
-                        <div className="text-xs font-bold text-emerald-500">
+                        <div className="text-lg font-bold text-emerald-500">
                           +R$ {result.monthlyRecurrence}/mês
                         </div>
                       </div>
                     </div>
 
+                    {/* Services Needed */}
+                    <div className="mb-3">
+                      <p className="text-xs text-muted-foreground mb-2">O que você pode oferecer:</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {result.needsWebsite && (
+                          <Badge variant="secondary" className="text-xs gap-1 bg-orange-500/10 text-orange-500 border-orange-500/20">
+                            <Globe className="w-3 h-3" /> Site
+                          </Badge>
+                        )}
+                        {result.needsScheduling && (
+                          <Badge variant="secondary" className="text-xs gap-1 bg-blue-500/10 text-blue-500 border-blue-500/20">
+                            <Calendar className="w-3 h-3" /> Agendamentos
+                          </Badge>
+                        )}
+                        {result.needsCRM && (
+                          <Badge variant="secondary" className="text-xs gap-1 bg-purple-500/10 text-purple-500 border-purple-500/20">
+                            <Users className="w-3 h-3" /> CRM
+                          </Badge>
+                        )}
+                        {result.needsMarketing && (
+                          <Badge variant="secondary" className="text-xs gap-1 bg-pink-500/10 text-pink-500 border-pink-500/20">
+                            <FileText className="w-3 h-3" /> Marketing
+                          </Badge>
+                        )}
+                        {result.needsEcommerce && (
+                          <Badge variant="secondary" className="text-xs gap-1 bg-green-500/10 text-green-500 border-green-500/20">
+                            <ShoppingBag className="w-3 h-3" /> E-commerce
+                          </Badge>
+                        )}
+                        {result.needsChatbot && (
+                          <Badge variant="secondary" className="text-xs gap-1 bg-cyan-500/10 text-cyan-500 border-cyan-500/20">
+                            <MessageSquare className="w-3 h-3" /> Chatbot
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+
                     {/* AI Description */}
                     {result.aiDescription && (
-                      <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
-                        <Sparkles className="w-3 h-3 inline mr-1 text-primary" />
+                      <p className="text-sm text-muted-foreground mb-3 flex items-start gap-2">
+                        <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                         {result.aiDescription}
                       </p>
                     )}
 
                     {/* Address & Phone */}
-                    <div className="text-xs text-muted-foreground space-y-0.5 mb-2">
-                      <p className="flex items-center gap-1 truncate">
-                        <MapPin className="w-3 h-3 shrink-0" /> {result.address}
+                    <div className="text-sm text-muted-foreground space-y-1 mb-3">
+                      <p className="flex items-center gap-2 truncate">
+                        <MapPin className="w-4 h-4 shrink-0" /> {result.address}
                       </p>
                       {result.phone && (
-                        <p className="flex items-center gap-1">
-                          <Phone className="w-3 h-3" /> {result.phone}
+                        <p className="flex items-center gap-2">
+                          <Phone className="w-4 h-4" /> {result.phone}
                         </p>
                       )}
                     </div>
 
-                    {/* Digital Presence */}
-                    {result.digitalPresenceStatus && (
-                      <div className={cn(
-                        "text-[10px] px-2 py-1 rounded mb-2",
-                        result.digitalPresenceStatus.includes('máxima') ? "bg-orange-500/10 text-orange-400" : "bg-muted text-muted-foreground"
-                      )}>
-                        <Globe className="w-3 h-3 inline mr-1" />
-                        {result.digitalPresenceStatus}
-                      </div>
-                    )}
+                    {/* Digital Status */}
+                    <div className={cn(
+                      "text-sm px-3 py-2 rounded-lg mb-3 flex items-center gap-2",
+                      result.needsWebsite 
+                        ? "bg-orange-500/10 text-orange-400 border border-orange-500/20" 
+                        : "bg-muted text-muted-foreground"
+                    )}>
+                      {result.needsWebsite ? (
+                        <>
+                          <XCircle className="w-4 h-4" />
+                          Sem site — Oportunidade máxima
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-4 h-4" />
+                          Possui site — Pode melhorar
+                        </>
+                      )}
+                    </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-2 pt-2 border-t border-border">
+                    <div className="flex items-center gap-2 pt-3 border-t border-border">
                       <Button 
                         onClick={() => handleAcceptProject(result)}
                         size="sm"
-                        className="flex-1 h-7 text-xs gap-1"
+                        className="flex-1 gap-2"
                       >
-                        <Zap className="w-3 h-3" /> Aceitar
+                        <Zap className="w-4 h-4" /> Aceitar Projeto
                       </Button>
-                      <Button variant="outline" size="sm" className="h-7 text-xs gap-1">
-                        <Search className="w-3 h-3" /> Ver mais
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <Search className="w-4 h-4" /> Detalhes
                       </Button>
                     </div>
                   </CardContent>
@@ -463,17 +565,17 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-2">
+            <div className="flex items-center justify-center gap-2 pt-4">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="h-7 text-xs gap-1"
+                className="gap-1"
               >
-                <ChevronLeft className="w-3 h-3" /> Anterior
+                <ChevronLeft className="w-4 h-4" /> Anterior
               </Button>
-              <span className="text-xs text-muted-foreground px-2">
+              <span className="px-4 text-sm text-muted-foreground">
                 {currentPage} / {totalPages}
               </span>
               <Button
@@ -481,14 +583,24 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
                 size="sm"
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="h-7 text-xs gap-1"
+                className="gap-1"
               >
-                Próximo <ChevronRight className="w-3 h-3" />
+                Próximo <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
           )}
         </div>
       )}
+
+      {/* Radius Filter Modal */}
+      <RadiusFilterModal
+        open={radiusFilterOpen}
+        onOpenChange={setRadiusFilterOpen}
+        results={results}
+        city={city}
+        state={state}
+        onFilterResults={handleFilterByRadius}
+      />
     </div>
   );
 };

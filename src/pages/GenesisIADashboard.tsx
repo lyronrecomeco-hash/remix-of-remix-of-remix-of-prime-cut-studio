@@ -90,6 +90,9 @@ const GenesisIADashboard = () => {
     { icon: LogOut, label: 'Sair', onClick: handleLogout },
   ];
 
+  // Dock size and position config
+  const dockSize = { button: 'w-12 h-12', icon: 'w-5 h-5', gap: 'gap-2', padding: 'px-4 py-3' };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -200,13 +203,13 @@ const GenesisIADashboard = () => {
         {renderTabContent()}
       </main>
 
-      {/* Dock - Smaller and higher */}
-      <div className="fixed bottom-6 left-0 right-0 flex justify-center z-50">
+      {/* Dock - Bigger */}
+      <div className="fixed bottom-8 left-0 right-0 flex justify-center z-50">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-card border border-border shadow-lg"
+          className={`flex items-center ${dockSize.gap} ${dockSize.padding} rounded-2xl bg-card border border-border shadow-xl`}
         >
           {dockItems.map((item, index) => {
             const isActive = !item.onClick && activeTab === item.tabId;
@@ -214,14 +217,14 @@ const GenesisIADashboard = () => {
               <motion.button
                 key={index}
                 onClick={item.onClick || (() => setActiveTab(item.tabId!))}
-                className={`relative w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
+                className={`relative ${dockSize.button} rounded-xl flex items-center justify-center transition-colors ${
                   isActive ? 'bg-primary/15' : 'hover:bg-muted'
                 }`}
-                whileHover={{ scale: 1.15, y: -6 }}
+                whileHover={{ scale: 1.15, y: -8 }}
                 transition={{ type: "spring", stiffness: 400, damping: 17 }}
               >
-                <item.icon className={`w-4 h-4 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
-                {isActive && <div className="absolute bottom-1 w-1.5 h-1.5 rounded-full bg-primary" />}
+                <item.icon className={`${dockSize.icon} ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
+                {isActive && <div className="absolute bottom-1.5 w-2 h-2 rounded-full bg-primary" />}
               </motion.button>
             );
           })}
