@@ -46,6 +46,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { GenesisSearchClients } from "@/components/genesis-ia/GenesisSearchClients";
+import { GlobalRadarTab } from "@/components/genesis-ia/GlobalRadarTab";
+import { WelcomeToast } from "@/components/genesis-ia/WelcomeToast";
 import { FullPageEditor, EditorContextValue, CustomElement } from "@/components/genesis-ia/dashboard-builder/FullPageEditor";
 import { DraggableCard, CardData } from "@/components/genesis-ia/dashboard-builder/components/DraggableCard";
 import { CardSettingsPanel } from "@/components/genesis-ia/dashboard-builder/components/CardSettingsPanel";
@@ -70,6 +72,7 @@ const GenesisIADashboard = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [editingCard, setEditingCard] = useState<CardData | null>(null);
   const [editingText, setEditingText] = useState<TextElementData | null>(null);
+  const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -84,6 +87,9 @@ const GenesisIADashboard = () => {
     setUserName(user.email?.split("@")[0] || "Usuário");
     setUserId(user.id);
     setIsLoading(false);
+    
+    // Show welcome toast after login
+    setShowWelcome(true);
   };
 
   const handleLogout = async () => {
@@ -420,6 +426,10 @@ const GenesisIADashboard = () => {
       return <GenesisSearchClients userId={userId} />;
     }
 
+    if (activeTab === 'radar') {
+      return <GlobalRadarTab userId={userId} />;
+    }
+
     return (
       <div className="flex items-center justify-center h-80">
         <div className="text-center">
@@ -502,15 +512,23 @@ const GenesisIADashboard = () => {
               </div>
             </header>
 
+            {/* Welcome Toast */}
+            {showWelcome && (
+              <WelcomeToast 
+                userName={userName} 
+                onClose={() => setShowWelcome(false)} 
+              />
+            )}
+
             {/* Content */}
-            <main className={activeTab === 'dashboard' && !isEditMode ? "flex-1 flex flex-col items-center justify-center px-6 pt-20 pb-32" : "flex-1 px-4 py-4 pb-32"}>
+            <main className={activeTab === 'dashboard' && !isEditMode ? "flex-1 flex flex-col items-center justify-center px-6 pt-28 pb-32" : "flex-1 px-4 py-4 pb-32"}>
               {/* Hero Section - Centered Title - Only on dashboard */}
               {activeTab === 'dashboard' && !isEditMode && (
-                <div className="text-center mb-12">
-                  <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: config.header.titleColor }}>
+                <div className="text-center mb-14">
+                  <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: config.header.titleColor }}>
                     {getGreeting()}, {userName}! 👋
                   </h1>
-                  <p className="text-base text-muted-foreground max-w-lg mx-auto">
+                  <p className="text-lg text-muted-foreground max-w-xl mx-auto">
                     Crie, evolua e gerencie suas ideias em um só lugar. Escolha uma ação para começar.
                   </p>
                 </div>
