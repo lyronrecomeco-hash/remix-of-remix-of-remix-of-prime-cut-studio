@@ -5,7 +5,6 @@ import {
   Globe2, 
   Loader2, 
   Bell,
-  Zap,
   TrendingUp,
   MapPin,
   CheckCircle2,
@@ -14,7 +13,6 @@ import {
   Building2,
   Phone,
   ExternalLink,
-  MessageCircle,
   Filter,
   Clock,
   Wifi,
@@ -26,6 +24,13 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -58,25 +63,22 @@ interface GlobalRadarTabProps {
   userId: string;
 }
 
+// Countries for scanning
+const COUNTRIES = [
+  { code: 'BR', name: 'Brasil', flag: '🇧🇷' },
+  { code: 'PT', name: 'Portugal', flag: '🇵🇹' },
+  { code: 'US', name: 'Estados Unidos', flag: '🇺🇸' },
+  { code: 'ES', name: 'Espanha', flag: '🇪🇸' },
+  { code: 'MX', name: 'México', flag: '🇲🇽' },
+  { code: 'AR', name: 'Argentina', flag: '🇦🇷' },
+  { code: 'CO', name: 'Colômbia', flag: '🇨🇴' },
+  { code: 'CL', name: 'Chile', flag: '🇨🇱' },
+];
+
 const LEVEL_CONFIG: Record<string, { label: string; color: string; bgColor: string; icon: string }> = {
-  basic: {
-    label: 'Básico',
-    color: 'text-slate-400',
-    bgColor: 'bg-slate-500/10',
-    icon: '🔵',
-  },
-  intermediate: {
-    label: 'Intermediário',
-    color: 'text-amber-400',
-    bgColor: 'bg-amber-500/10',
-    icon: '🟡',
-  },
-  advanced: {
-    label: 'Avançado',
-    color: 'text-emerald-400',
-    bgColor: 'bg-emerald-500/10',
-    icon: '🟢',
-  },
+  basic: { label: 'Básico', color: 'text-muted-foreground', bgColor: 'bg-muted', icon: '⚪' },
+  intermediate: { label: 'Intermediário', color: 'text-amber-500', bgColor: 'bg-amber-500/10', icon: '🟡' },
+  advanced: { label: 'Avançado', color: 'text-emerald-500', bgColor: 'bg-emerald-500/10', icon: '🟢' },
 };
 
 const AUTO_SCAN_INTERVAL = 2 * 60 * 1000; // 2 minutes
@@ -89,6 +91,7 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
   const [autoScanEnabled, setAutoScanEnabled] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [filterNoWebsite, setFilterNoWebsite] = useState(true);
+  const [selectedCountry, setSelectedCountry] = useState('BR');
   const [lastScanTime, setLastScanTime] = useState<Date | null>(null);
   const [nextScanIn, setNextScanIn] = useState<number>(0);
   const [scanStats, setScanStats] = useState({ total: 0, today: 0, avgScore: 0 });
@@ -100,7 +103,7 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
     if (!soundEnabled) return;
     try {
       const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleQYLj9LU6ZNdECOI07vdmnoQL4HGs9eraDc1da2xxLN/STBmqrOupH5TO2Cjrq6gflNEWp6qqqKeU0xUl6WqpZpWUVGPn6Ogl1lTToual5+YWVRPiJWXmJVdVE+EkJWVk1tUT4COlJSRWVVPfoqSkZBYVlB8iJCPj1dWUnqGjo6NV1dUeISMi4xXV1Z2gYqKildZWHR/iImIV1pZc36Hh4dYW1pyfoaGhVhcW3F9hYSEWFxbcH2EhINYXVxvfIODgllcXG59goKBWV1dbn2BgYBZXl5tfYCAgFleXm19gICAWV9fb36AgIBaX19ufoCAgFpfX25+gICAWmBgbn6AgIBaYGBufoCAgFpgYG5+gICAWmBgbn6AgIBaYGBufoCAgFpgYG5+gICAWmBgbn6AgIBaYGBufoCAgFpgYG4=');
-      audio.volume = 0.5;
+      audio.volume = 0.3;
       audio.play().catch(() => {});
     } catch (e) {
       console.log('Sound not available');
@@ -340,11 +343,11 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
     <div className="space-y-6">
       {/* Header Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="border-purple-500/20 bg-purple-500/5">
+        <Card className="border-border/50">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
-                <Radar className="w-5 h-5 text-purple-400" />
+              <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+                <Radar className="w-5 h-5 text-foreground" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Total</p>
@@ -354,11 +357,11 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
           </CardContent>
         </Card>
 
-        <Card className="border-emerald-500/20 bg-emerald-500/5">
+        <Card className="border-border/50">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                <Zap className="w-5 h-5 text-emerald-400" />
+              <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-foreground" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Hoje</p>
@@ -368,11 +371,11 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
           </CardContent>
         </Card>
 
-        <Card className="border-amber-500/20 bg-amber-500/5">
+        <Card className="border-border/50">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-amber-400" />
+              <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-foreground" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Score Médio</p>
@@ -382,11 +385,11 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
           </CardContent>
         </Card>
 
-        <Card className="border-blue-500/20 bg-blue-500/5">
+        <Card className="border-border/50">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                <Bell className="w-5 h-5 text-blue-400" />
+              <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+                <Bell className="w-5 h-5 text-foreground" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Não Lidos</p>
@@ -406,7 +409,7 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
               <Button
                 onClick={() => runScan(false)}
                 disabled={scanning}
-                className="gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                className="gap-2"
               >
                 {scanning ? (
                   <>
@@ -586,10 +589,10 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
                           )}
                         </div>
 
-                        {/* Digital status */}
                         {opp.digital_presence_status && (
-                          <p className="text-sm text-amber-400 mb-2 flex items-center gap-1.5">
-                            <Zap className="w-3.5 h-3.5" />
+                          <p className="text-sm text-muted-foreground mb-2 flex items-center gap-1.5">
+                            <Globe2 className="w-3.5 h-3.5" />
+                            {opp.digital_presence_status}
                             {opp.digital_presence_status}
                           </p>
                         )}
@@ -627,7 +630,7 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
                               onClick={() => window.open(`https://wa.me/${opp.company_phone?.replace(/\D/g, '')}`, '_blank')}
                               className="gap-1.5"
                             >
-                              <MessageCircle className="w-3.5 h-3.5" />
+                              <Phone className="w-3.5 h-3.5" />
                               WhatsApp
                             </Button>
                           )}

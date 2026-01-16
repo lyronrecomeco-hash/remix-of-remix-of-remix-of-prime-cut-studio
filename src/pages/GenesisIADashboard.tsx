@@ -47,6 +47,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { GenesisSearchClients } from "@/components/genesis-ia/GenesisSearchClients";
 import { GlobalRadarTab } from "@/components/genesis-ia/GlobalRadarTab";
+import { GenesisUsersTab } from "@/components/genesis-ia/GenesisUsersTab";
 import { WelcomeToast } from "@/components/genesis-ia/WelcomeToast";
 import { FullPageEditor, EditorContextValue, CustomElement } from "@/components/genesis-ia/dashboard-builder/FullPageEditor";
 import { DraggableCard, CardData } from "@/components/genesis-ia/dashboard-builder/components/DraggableCard";
@@ -54,7 +55,7 @@ import { CardSettingsPanel } from "@/components/genesis-ia/dashboard-builder/com
 import { TextElement, TextElementData } from "@/components/genesis-ia/dashboard-builder/components/TextElement";
 import { TextSettingsPanel } from "@/components/genesis-ia/dashboard-builder/components/TextSettingsPanel";
 
-type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'settings';
+type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'users' | 'settings';
 
 // Icon mapping for dynamic rendering
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -109,6 +110,7 @@ const GenesisIADashboard = () => {
     switch (activeTab) {
       case 'prospects': return 'Encontrar Clientes';
       case 'radar': return 'Radar Global';
+      case 'users': return 'Usuários';
       case 'settings': return 'Configurações';
       default: return null;
     }
@@ -117,7 +119,7 @@ const GenesisIADashboard = () => {
 
   const dockItems = [
     { icon: Home, label: 'Início', tabId: 'dashboard' as const },
-    { icon: Grid3X3, label: 'Apps', tabId: 'dashboard' as const },
+    { icon: Users, label: 'Usuários', tabId: 'users' as const },
     { icon: LayoutDashboard, label: 'Projetos', tabId: 'dashboard' as const },
     { icon: RefreshCw, label: 'Sync', tabId: 'dashboard' as const },
     { icon: Settings, label: 'Config', tabId: 'settings' as const },
@@ -428,6 +430,10 @@ const GenesisIADashboard = () => {
 
     if (activeTab === 'radar') {
       return <GlobalRadarTab userId={userId} />;
+    }
+
+    if (activeTab === 'users') {
+      return <GenesisUsersTab userId={userId} />;
     }
 
     return (
