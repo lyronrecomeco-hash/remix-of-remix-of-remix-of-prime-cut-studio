@@ -502,14 +502,14 @@ const GenesisIADashboard = () => {
             </header>
 
             {/* Content */}
-            <main className="flex-1 flex flex-col items-center justify-center px-6 py-12">
-              {/* Hero Section - Centered Title */}
+            <main className={activeTab === 'dashboard' && !isEditMode ? "flex-1 flex flex-col items-center justify-center px-6 py-12 pb-32" : "flex-1 px-4 py-4 pb-32"}>
+              {/* Hero Section - Centered Title - Only on dashboard */}
               {activeTab === 'dashboard' && !isEditMode && (
-                <div className="text-center mb-12">
-                  <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: config.header.titleColor }}>
+                <div className="text-center mb-10">
+                  <h1 className="text-2xl md:text-3xl font-bold mb-2" style={{ color: config.header.titleColor }}>
                     Bem-vindo à IA Genesis.
                   </h1>
-                  <p className="text-base text-muted-foreground max-w-lg mx-auto">
+                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
                     Crie, evolua e gerencie suas ideias em um só lugar. Escolha uma ação para começar.
                   </p>
                 </div>
@@ -517,56 +517,54 @@ const GenesisIADashboard = () => {
               {renderTabContent(ctx)}
             </main>
 
-            {/* Dock - Hidden on dashboard, shown on other tabs */}
-            {activeTab !== 'dashboard' && (
-              <div className="fixed bottom-8 left-0 right-0 flex justify-center z-50">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
-                  className={`flex items-center ${config.dock.shadow}`}
-                  style={{
-                    gap: config.dock.gap,
-                    padding: '12px 16px',
-                    borderRadius: config.dock.borderRadius,
-                    backgroundColor: config.dock.backgroundColor,
-                    border: `1px solid ${config.dock.borderColor}`,
-                  }}
-                >
-                  {dockItems.map((item, index) => {
-                    const isActive = !item.onClick && activeTab === item.tabId;
-                    return (
-                      <motion.button
-                        key={index}
-                        onClick={item.onClick || (() => setActiveTab(item.tabId!))}
-                        className="relative rounded-xl flex items-center justify-center transition-colors"
-                        style={{
-                          width: config.dock.buttonSize,
-                          height: config.dock.buttonSize,
-                          backgroundColor: isActive ? `${config.dock.activeColor}20` : 'transparent',
-                        }}
-                        whileHover={{ scale: 1.15, y: -8 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                      >
-                        <item.icon 
-                          style={{ 
-                            width: config.dock.iconSize, 
-                            height: config.dock.iconSize,
-                            color: isActive ? config.dock.activeColor : config.dock.inactiveColor,
-                          }} 
+            {/* Dock - Always visible */}
+            <div className="fixed bottom-8 left-0 right-0 flex justify-center z-50">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
+                className={`flex items-center ${config.dock.shadow}`}
+                style={{
+                  gap: config.dock.gap,
+                  padding: '12px 16px',
+                  borderRadius: config.dock.borderRadius,
+                  backgroundColor: config.dock.backgroundColor,
+                  border: `1px solid ${config.dock.borderColor}`,
+                }}
+              >
+                {dockItems.map((item, index) => {
+                  const isActive = !item.onClick && activeTab === item.tabId;
+                  return (
+                    <motion.button
+                      key={index}
+                      onClick={item.onClick || (() => setActiveTab(item.tabId!))}
+                      className="relative rounded-xl flex items-center justify-center transition-colors"
+                      style={{
+                        width: config.dock.buttonSize,
+                        height: config.dock.buttonSize,
+                        backgroundColor: isActive ? `${config.dock.activeColor}20` : 'transparent',
+                      }}
+                      whileHover={{ scale: 1.15, y: -8 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                    >
+                      <item.icon 
+                        style={{ 
+                          width: config.dock.iconSize, 
+                          height: config.dock.iconSize,
+                          color: isActive ? config.dock.activeColor : config.dock.inactiveColor,
+                        }} 
+                      />
+                      {isActive && (
+                        <div 
+                          className="absolute bottom-1.5 w-2 h-2 rounded-full"
+                          style={{ backgroundColor: config.dock.activeColor }}
                         />
-                        {isActive && (
-                          <div 
-                            className="absolute bottom-1.5 w-2 h-2 rounded-full"
-                            style={{ backgroundColor: config.dock.activeColor }}
-                          />
-                        )}
-                      </motion.button>
-                    );
-                  })}
-                </motion.div>
-              </div>
-            )}
+                      )}
+                    </motion.button>
+                  );
+                })}
+              </motion.div>
+            </div>
 
             {/* Edit Mode Indicator */}
             {isEditMode && (
