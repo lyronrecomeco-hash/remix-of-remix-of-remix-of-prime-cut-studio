@@ -250,9 +250,9 @@ const GenesisIADashboard = () => {
                         style={{
                           backgroundColor: 'hsl(215 30% 12%)',
                           borderRadius: '14px',
-                          minWidth: '320px',
-                          maxWidth: '380px',
-                          flex: '1 1 320px',
+                          minWidth: '360px',
+                          maxWidth: '440px',
+                          flex: '1 1 360px',
                         }}
                         onClick={() => setActiveTab(card.id as ActiveTab)}
                       >
@@ -271,7 +271,7 @@ const GenesisIADashboard = () => {
                               {card.title}
                             </h3>
                           </div>
-                          <p className="text-sm text-white/50 leading-relaxed">
+                          <p className="text-sm text-white/50 leading-relaxed line-clamp-2">
                             {card.description}
                           </p>
                         </CardContent>
