@@ -17,12 +17,13 @@ import {
   Clock,
   Wifi,
   WifiOff,
-  Volume2
+  Volume2,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 import {
   Select,
@@ -82,6 +83,7 @@ const LEVEL_CONFIG: Record<string, { label: string; color: string; bgColor: stri
 };
 
 const AUTO_SCAN_INTERVAL = 2 * 60 * 1000; // 2 minutes
+const ITEMS_PER_PAGE = 12;
 
 export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
   const [opportunities, setOpportunities] = useState<RadarOpportunity[]>([]);
@@ -96,8 +98,16 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
   const [lastScanTime, setLastScanTime] = useState<Date | null>(null);
   const [nextScanIn, setNextScanIn] = useState<number>(0);
   const [scanStats, setScanStats] = useState({ total: 0, today: 0, avgScore: 0 });
+  const [currentPage, setCurrentPage] = useState(1);
   const autoScanIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Pagination
+  const totalPages = Math.ceil(opportunities.length / ITEMS_PER_PAGE);
+  const paginatedOpportunities = opportunities.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   // Fetch affiliate ID from user_id
   useEffect(() => {
@@ -487,11 +497,11 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
         </CardContent>
       </Card>
 
-      {/* Opportunities List */}
+      {/* Opportunities Grid */}
       <Card className="border-border/50">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
-            <Globe2 className="w-5 h-5 text-purple-500" />
+            <Globe2 className="w-5 h-5 text-primary" />
             Oportunidades Detectadas
             {opportunities.length > 0 && (
               <Badge variant="secondary" className="ml-2">
@@ -503,13 +513,13 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
         <CardContent>
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12 gap-3">
-              <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
               <p className="text-sm text-muted-foreground">Carregando oportunidades...</p>
             </div>
           ) : opportunities.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-purple-500/10 flex items-center justify-center">
-                <Radar className="w-8 h-8 text-purple-500/50" />
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                <Radar className="w-8 h-8 text-primary/50" />
               </div>
               <div>
                 <p className="text-lg font-medium text-foreground mb-1">Radar ativo</p>
@@ -528,114 +538,83 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
               )}
             </div>
           ) : (
-            <ScrollArea className="h-[500px] pr-4">
-              <div className="space-y-3">
+            <div className="space-y-6">
+              {/* Grid Layout */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <AnimatePresence mode="popLayout">
-                  {opportunities.map((opp, index) => {
+                  {paginatedOpportunities.map((opp, index) => {
                     const levelConfig = LEVEL_CONFIG[opp.opportunity_level] || LEVEL_CONFIG.basic;
                     
                     return (
                       <motion.div
                         key={opp.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
-                        transition={{ delay: index * 0.05 }}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ delay: index * 0.03 }}
                         className={cn(
-                          "relative p-4 rounded-xl border-2 transition-all",
-                          !opp.is_read && "ring-2 ring-purple-500/30",
-                          opp.opportunity_level === 'advanced' && "border-emerald-500/50 bg-gradient-to-r from-emerald-500/5 to-transparent",
-                          opp.opportunity_level === 'intermediate' && "border-amber-500/50 bg-gradient-to-r from-amber-500/5 to-transparent",
+                          "relative p-4 rounded-xl border transition-all hover:shadow-md",
+                          !opp.is_read && "ring-1 ring-primary/30",
+                          opp.opportunity_level === 'advanced' && "border-emerald-500/30",
+                          opp.opportunity_level === 'intermediate' && "border-amber-500/30",
                           opp.opportunity_level === 'basic' && "border-border",
                         )}
                       >
                         {/* Unread indicator */}
                         {!opp.is_read && (
-                          <div className="absolute top-2 left-2 w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+                          <div className="absolute top-2 left-2 w-2 h-2 rounded-full bg-primary animate-pulse" />
                         )}
 
                         {/* Score Badge */}
-                        <div className="absolute top-3 right-3 flex items-center gap-2">
+                        <div className="absolute top-3 right-3">
                           <Badge className={cn(
                             "text-xs font-bold",
                             opp.opportunity_score >= 80 && "bg-emerald-500 hover:bg-emerald-600",
                             opp.opportunity_score >= 60 && opp.opportunity_score < 80 && "bg-amber-500 hover:bg-amber-600",
                             opp.opportunity_score < 60 && "bg-slate-500 hover:bg-slate-600",
                           )}>
-                            <TrendingUp className="w-3 h-3 mr-1" />
                             {opp.opportunity_score}%
                           </Badge>
                         </div>
 
                         {/* Header */}
-                        <div className="flex items-start gap-3 mb-3 pr-20">
-                          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                            <Building2 className="w-6 h-6 text-primary" />
+                        <div className="flex items-start gap-3 mb-3 pr-12">
+                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <Building2 className="w-5 h-5 text-primary" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-foreground truncate">{opp.company_name}</h4>
-                            <p className="text-xs text-muted-foreground flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              {opp.company_city}, {opp.search_region || opp.company_country}
+                            <h4 className="font-semibold text-foreground text-sm truncate">{opp.company_name}</h4>
+                            <p className="text-xs text-muted-foreground flex items-center gap-1 truncate">
+                              <MapPin className="w-3 h-3 flex-shrink-0" />
+                              {opp.company_city}
                             </p>
-                            {opp.company_phone && (
-                              <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                                <Phone className="w-3 h-3" />
-                                {opp.company_phone}
-                              </p>
-                            )}
                           </div>
                         </div>
 
-                        {/* Level & Values */}
+                        {/* Level & Value */}
                         <div className="flex items-center gap-2 mb-3 flex-wrap">
-                          <Badge variant="outline" className={cn(levelConfig.bgColor, levelConfig.color, "border-0")}>
+                          <Badge variant="outline" className={cn(levelConfig.bgColor, levelConfig.color, "border-0 text-xs")}>
                             {levelConfig.icon} {levelConfig.label}
                           </Badge>
                           <Badge variant="secondary" className="text-xs">
-                            R$ {opp.estimated_value_min.toLocaleString()}~{opp.estimated_value_max.toLocaleString()}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs text-blue-400 border-blue-500/30">
-                            +R$ {opp.monthly_recurrence}/mês
+                            R$ {opp.estimated_value_min.toLocaleString()}
                           </Badge>
                           {!opp.has_website && (
-                            <Badge variant="outline" className="text-xs text-emerald-400 border-emerald-500/30 bg-emerald-500/10">
-                              🎯 Sem presença digital
+                            <Badge variant="outline" className="text-xs text-emerald-400 border-emerald-500/30">
+                              🎯 Alta Conv.
                             </Badge>
                           )}
                         </div>
-
-                        {opp.digital_presence_status && (
-                          <p className="text-sm text-muted-foreground mb-2 flex items-center gap-1.5">
-                            <Globe2 className="w-3.5 h-3.5" />
-                            {opp.digital_presence_status}
-                          </p>
-                        )}
-
-                        {/* Tags */}
-                        {opp.service_tags && opp.service_tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 mb-4">
-                            {opp.service_tags.map((tag, idx) => (
-                              <Badge key={idx} variant="outline" className="text-xs">
-                                {tag}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
 
                         {/* Actions */}
                         <div className="flex items-center gap-2">
                           <Button
                             size="sm"
                             onClick={() => handleAccept(opp)}
-                            className={cn(
-                              "flex-1 gap-1.5",
-                              opp.opportunity_level === 'advanced' && "bg-emerald-600 hover:bg-emerald-700",
-                              opp.opportunity_level === 'intermediate' && "bg-amber-600 hover:bg-amber-700",
-                            )}
+                            className="flex-1 gap-1.5 text-xs"
                           >
                             <CheckCircle2 className="w-3.5 h-3.5" />
-                            Aceitar Lead
+                            Aceitar
                           </Button>
                           
                           {opp.company_phone && (
@@ -643,20 +622,9 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
                               size="sm"
                               variant="outline"
                               onClick={() => window.open(`https://wa.me/${opp.company_phone?.replace(/\D/g, '')}`, '_blank')}
-                              className="gap-1.5"
+                              className="px-2"
                             >
                               <Phone className="w-3.5 h-3.5" />
-                              WhatsApp
-                            </Button>
-                          )}
-                          
-                          {opp.company_website && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => window.open(opp.company_website!, '_blank')}
-                            >
-                              <ExternalLink className="w-4 h-4" />
                             </Button>
                           )}
                           
@@ -664,7 +632,7 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
                             size="sm"
                             variant="ghost"
                             onClick={() => handleReject(opp.id)}
-                            className="text-muted-foreground hover:text-destructive"
+                            className="text-muted-foreground hover:text-destructive px-2"
                           >
                             <X className="w-4 h-4" />
                           </Button>
@@ -674,7 +642,51 @@ export const GlobalRadarTab = ({ userId }: GlobalRadarTabProps) => {
                   })}
                 </AnimatePresence>
               </div>
-            </ScrollArea>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 pt-4 border-t border-border/50">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="gap-1"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    Anterior
+                  </Button>
+                  
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).slice(
+                      Math.max(0, currentPage - 3),
+                      Math.min(totalPages, currentPage + 2)
+                    ).map(page => (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(page)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {page}
+                      </Button>
+                    ))}
+                  </div>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="gap-1"
+                  >
+                    Próximo
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
           )}
         </CardContent>
       </Card>

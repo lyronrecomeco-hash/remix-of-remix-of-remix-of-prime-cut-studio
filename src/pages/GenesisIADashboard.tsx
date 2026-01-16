@@ -48,6 +48,7 @@ import { Button } from "@/components/ui/button";
 import { GenesisSearchClients } from "@/components/genesis-ia/GenesisSearchClients";
 import { GlobalRadarTab } from "@/components/genesis-ia/GlobalRadarTab";
 import { GenesisUsersTab } from "@/components/genesis-ia/GenesisUsersTab";
+import { GenesisSettingsTab } from "@/components/genesis-ia/GenesisSettingsTab";
 import { WelcomeToast } from "@/components/genesis-ia/WelcomeToast";
 import { FullPageEditor, EditorContextValue, CustomElement } from "@/components/genesis-ia/dashboard-builder/FullPageEditor";
 import { DraggableCard, CardData } from "@/components/genesis-ia/dashboard-builder/components/DraggableCard";
@@ -436,17 +437,11 @@ const GenesisIADashboard = () => {
       return <GenesisUsersTab userId={userId} />;
     }
 
-    return (
-      <div className="flex items-center justify-center h-80">
-        <div className="text-center">
-          <div className="w-24 h-24 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-5">
-            <Sparkles className="w-12 h-12 text-muted-foreground" />
-          </div>
-          <h3 className="text-2xl font-semibold text-foreground mb-3">{getTabTitle()}</h3>
-          <p className="text-lg text-muted-foreground">Em desenvolvimento...</p>
-        </div>
-      </div>
-    );
+    if (activeTab === 'settings') {
+      return <GenesisSettingsTab userId={userId} />;
+    }
+
+    return null;
   };
 
   return (
