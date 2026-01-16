@@ -374,7 +374,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
             monthly_recurrence: opportunity.monthly_recurrence,
           },
           source: 'radar_global',
-          status: 'new',
+          status: 'pending',
         });
 
       if (insertError) throw insertError;
