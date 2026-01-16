@@ -21,6 +21,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { GenesisSearchClients } from "@/components/genesis-ia/GenesisSearchClients";
+import { DashboardBuilder } from "@/components/genesis-ia/dashboard-builder";
 
 type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'settings';
 
@@ -106,7 +107,7 @@ const GenesisIADashboard = () => {
     );
   }
 
-  const renderDashboard = () => (
+  const renderDefaultDashboard = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {MAIN_CARDS.map((card) => {
         const Icon = card.icon;
@@ -135,6 +136,12 @@ const GenesisIADashboard = () => {
         );
       })}
     </div>
+  );
+
+  const renderDashboard = () => (
+    <DashboardBuilder fallbackContent={renderDefaultDashboard()}>
+      {renderDefaultDashboard()}
+    </DashboardBuilder>
   );
 
   const renderTabContent = () => {
