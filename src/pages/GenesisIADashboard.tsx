@@ -226,7 +226,7 @@ const GenesisIADashboard = () => {
         {!isEditMode ? (
             <>
               {/* Horizontal cards layout like reference image */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+              <div className="flex flex-wrap justify-center gap-6">
                 {[...config.dashboardCards]
                   .filter(card => card.visible)
                   .sort((a, b) => a.order - b.order)
@@ -238,31 +238,29 @@ const GenesisIADashboard = () => {
                     return (
                       <Card
                         key={card.id}
-                        className="group cursor-pointer transition-all hover:scale-[1.02] hover:shadow-xl border border-white/10"
+                        className="group cursor-pointer transition-all hover:scale-[1.02] hover:shadow-xl border border-white/20 w-[280px] md:w-[320px]"
                         style={{
-                          backgroundColor: 'hsl(220 20% 14%)',
+                          backgroundColor: 'hsl(220 20% 12%)',
                           borderRadius: '16px',
                         }}
                         onClick={() => setActiveTab(card.id as ActiveTab)}
                       >
                         <CardContent className="p-6">
-                          <div className="flex items-center gap-4 mb-4">
+                          <div className="flex items-center gap-4 mb-3">
                             <div 
-                              className="w-12 h-12 rounded-xl flex items-center justify-center"
-                              style={{ backgroundColor: cardStyles.iconBackgroundColor || 'hsl(270 60% 50% / 0.2)' }}
+                              className="w-11 h-11 rounded-xl flex items-center justify-center"
+                              style={{ backgroundColor: cardStyles.iconBackgroundColor || 'hsl(220 60% 30% / 0.5)' }}
                             >
                               <IconComponent 
-                                className="w-6 h-6" 
-                                style={{ color: cardStyles.iconColor || 'hsl(270 80% 70%)' }} 
+                                className="w-5 h-5" 
+                                style={{ color: cardStyles.iconColor || 'hsl(210 80% 60%)' }} 
                               />
                             </div>
-                            <h3 
-                              className="text-lg font-semibold text-white"
-                            >
+                            <h3 className="text-base font-semibold text-white">
                               {card.title}
                             </h3>
                           </div>
-                          <p className="text-sm text-white/60 leading-relaxed">
+                          <p className="text-sm text-white/50 leading-relaxed">
                             {card.description}
                           </p>
                         </CardContent>
