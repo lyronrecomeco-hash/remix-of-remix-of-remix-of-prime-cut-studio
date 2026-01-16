@@ -6,25 +6,45 @@ import {
   Sparkles,
   Target,
   Clock,
-  Layout
+  Layout,
+  Radar
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Prospect } from './types';
+import { GlobalRadarCard } from './GlobalRadarCard';
 
 interface ProspectingCardsProps {
   affiliateId: string;
   prospects: Prospect[];
-  activeTab: 'cards' | 'search' | 'proposal' | 'history' | 'templates';
-  onTabChange: (tab: 'cards' | 'search' | 'proposal' | 'history' | 'templates') => void;
+  activeTab: 'cards' | 'search' | 'proposal' | 'history' | 'templates' | 'radar';
+  onTabChange: (tab: 'cards' | 'search' | 'proposal' | 'history' | 'templates' | 'radar') => void;
+  onAddProspect?: (data: any) => Promise<unknown>;
 }
 
 export const ProspectingCards = ({
+  affiliateId,
   prospects,
   onTabChange,
+  onAddProspect,
 }: ProspectingCardsProps) => {
   const pendingCount = prospects.filter(p => p.status === 'pending').length;
   const proposalReadyCount = prospects.filter(p => p.status === 'proposal_ready' || p.status === 'analyzed').length;
+
+  const handleAcceptRadarOpportunity = async (opportunity: any) => {
+    if (!onAddProspect) return;
+    
+    await onAddProspect({
+      company_name: opportunity.company_name,
+      company_phone: opportunity.company_phone,
+      company_website: opportunity.company_website,
+      company_address: opportunity.company_address,
+      company_city: opportunity.company_city,
+      niche: opportunity.niche,
+      source: 'radar',
+      analysis_score: opportunity.opportunity_score,
+    });
+  };
 
   const CARDS = [
     {
@@ -63,46 +83,55 @@ export const ProspectingCards = ({
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {CARDS.map((card) => {
-        const Icon = card.icon;
-        
-        return (
-          <Card
-            key={card.id}
-            className="group relative overflow-hidden border border-border bg-card cursor-pointer transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5"
-            onClick={() => onTabChange(card.id)}
-          >
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <Icon className="w-6 h-6 text-primary" />
+    <div className="space-y-4">
+      {/* Card especial do Radar Global */}
+      <GlobalRadarCard 
+        affiliateId={affiliateId} 
+        onAcceptOpportunity={handleAcceptRadarOpportunity}
+      />
+      
+      {/* Cards normais */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {CARDS.map((card) => {
+          const Icon = card.icon;
+          
+          return (
+            <Card
+              key={card.id}
+              className="group relative overflow-hidden border border-border bg-card cursor-pointer transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5"
+              onClick={() => onTabChange(card.id)}
+            >
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                    <Icon className="w-6 h-6 text-primary" />
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 group-hover:text-primary transition-all duration-300" />
                 </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 group-hover:text-primary transition-all duration-300" />
-              </div>
-              
-              <h3 className="text-lg font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
-                {card.title}
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                {card.description}
-              </p>
-              
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className={`text-xs ${card.badgeClass}`}>
-                  {card.badge}
-                </Badge>
-                {card.extraInfo && (
-                  <Badge variant="secondary" className="text-xs gap-1">
-                    <Clock className="w-3 h-3" />
-                    {card.extraInfo}
+                
+                <h3 className="text-lg font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
+                  {card.title}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                  {card.description}
+                </p>
+                
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className={`text-xs ${card.badgeClass}`}>
+                    {card.badge}
                   </Badge>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })}
+                  {card.extraInfo && (
+                    <Badge variant="secondary" className="text-xs gap-1">
+                      <Clock className="w-3 h-3" />
+                      {card.extraInfo}
+                    </Badge>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 };

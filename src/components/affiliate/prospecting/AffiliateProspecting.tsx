@@ -24,7 +24,7 @@ interface AffiliateProspectingProps {
   onSubHeaderChange?: (header: React.ReactNode | null) => void;
 }
 
-type ToolsTab = 'cards' | 'search' | 'proposal' | 'history' | 'settings' | 'templates';
+type ToolsTab = 'cards' | 'search' | 'proposal' | 'history' | 'settings' | 'templates' | 'radar';
 
 export const AffiliateProspecting = ({ affiliateId, onSubHeaderChange }: AffiliateProspectingProps) => {
   const [activeTab, setActiveTab] = useState<ToolsTab>('cards');
