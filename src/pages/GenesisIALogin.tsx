@@ -231,30 +231,6 @@ const GenesisIALogin = () => {
           </motion.div>
         </div>
 
-        {/* Mac-style Dock */}
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
-        >
-          <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-[#0f1d32]/80 backdrop-blur-xl border border-blue-500/20 shadow-2xl">
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600/30 to-cyan-500/30 flex items-center justify-center cursor-pointer border border-blue-500/20"
-                whileHover={{ 
-                  scale: 1.3, 
-                  y: -10,
-                  boxShadow: "0 10px 30px rgba(59, 130, 246, 0.4)"
-                }}
-                transition={{ type: "spring", stiffness: 400 }}
-              >
-                <feature.icon className="w-6 h-6 text-blue-400" />
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
       </div>
 
       {/* Right Side - Login Form */}
