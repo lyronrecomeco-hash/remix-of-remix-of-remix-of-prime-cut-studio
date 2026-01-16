@@ -226,7 +226,7 @@ const GenesisIADashboard = () => {
         {!isEditMode ? (
             <>
               {/* Horizontal cards layout like reference image */}
-              <div className="flex flex-col md:flex-row justify-center gap-4 max-w-4xl mx-auto">
+              <div className="flex flex-col md:flex-row justify-center gap-5 max-w-5xl mx-auto px-4">
                 {[...config.dashboardCards]
                   .filter(card => card.visible)
                   .sort((a, b) => a.order - b.order)
@@ -237,26 +237,29 @@ const GenesisIADashboard = () => {
                     
                     // Different icon colors for each card
                     const iconColors = [
-                      { bg: 'hsl(280 60% 25% / 0.4)', color: 'hsl(280 80% 70%)' }, // Purple
-                      { bg: 'hsl(200 60% 25% / 0.4)', color: 'hsl(200 80% 65%)' }, // Blue  
-                      { bg: 'hsl(220 40% 25% / 0.4)', color: 'hsl(220 60% 70%)' }, // Gray-blue
+                      { bg: 'hsl(260 50% 30% / 0.5)', color: 'hsl(260 70% 70%)' }, // Purple
+                      { bg: 'hsl(200 50% 30% / 0.5)', color: 'hsl(200 70% 65%)' }, // Blue  
+                      { bg: 'hsl(180 40% 25% / 0.5)', color: 'hsl(180 60% 60%)' }, // Teal
                     ];
                     const colorScheme = iconColors[index % iconColors.length];
                     
                     return (
                       <Card
                         key={card.id}
-                        className="group cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:border-white/30 border border-white/10 flex-1 min-w-[240px] max-w-[280px]"
+                        className="group cursor-pointer transition-all duration-200 hover:scale-[1.01] hover:border-white/20 border border-white/[0.08]"
                         style={{
-                          backgroundColor: 'hsl(220 25% 11%)',
-                          borderRadius: '12px',
+                          backgroundColor: 'hsl(215 30% 12%)',
+                          borderRadius: '14px',
+                          minWidth: '320px',
+                          maxWidth: '380px',
+                          flex: '1 1 320px',
                         }}
                         onClick={() => setActiveTab(card.id as ActiveTab)}
                       >
-                        <CardContent className="p-5">
-                          <div className="flex items-center gap-3 mb-3">
+                        <CardContent className="p-6">
+                          <div className="flex items-center gap-4 mb-3">
                             <div 
-                              className="w-10 h-10 rounded-lg flex items-center justify-center"
+                              className="w-11 h-11 rounded-xl flex items-center justify-center"
                               style={{ backgroundColor: cardStyles.iconBackgroundColor || colorScheme.bg }}
                             >
                               <IconComponent 
@@ -264,11 +267,11 @@ const GenesisIADashboard = () => {
                                 style={{ color: cardStyles.iconColor || colorScheme.color }} 
                               />
                             </div>
-                            <h3 className="text-[15px] font-semibold text-white">
+                            <h3 className="text-base font-semibold text-white">
                               {card.title}
                             </h3>
                           </div>
-                          <p className="text-[13px] text-white/45 leading-relaxed">
+                          <p className="text-sm text-white/50 leading-relaxed">
                             {card.description}
                           </p>
                         </CardContent>
