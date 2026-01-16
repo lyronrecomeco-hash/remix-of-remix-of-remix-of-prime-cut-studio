@@ -8,14 +8,16 @@ import {
   Bell,
   Shield,
   Palette,
-  Clock,
-  FileText
+  FileText,
+  Edit3,
+  X,
+  Copy,
+  Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -27,29 +29,23 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Modal, ModalBody, ModalFooter } from '@/components/ui/modal';
 
 interface GenesisSettingsTabProps {
   userId: string;
 }
 
 interface GenesisSettings {
-  // Mensagem base / Proposta
   baseMessage: string;
   proposalTemplate: string;
   includeCompanyName: boolean;
   includeContactName: boolean;
-  
-  // Notificações
   notificationsEnabled: boolean;
   soundEnabled: boolean;
   emailNotifications: boolean;
-  
-  // Radar
   radarAutoScan: boolean;
   radarInterval: number;
   radarCountries: string[];
-  
-  // Aparência
   theme: 'dark' | 'light' | 'system';
   compactMode: boolean;
 }
@@ -96,19 +92,18 @@ Equipe Genesis IA`,
   compactMode: false,
 };
 
-const COUNTRIES = [
-  { code: 'BR', name: 'Brasil' },
-  { code: 'PT', name: 'Portugal' },
-  { code: 'US', name: 'Estados Unidos' },
-  { code: 'ES', name: 'Espanha' },
-  { code: 'MX', name: 'México' },
-  { code: 'AR', name: 'Argentina' },
-];
+const VARIABLES_MESSAGE = ['{nome_contato}', '{nome_empresa}', '{niche}'];
+const VARIABLES_PROPOSAL = ['{nome_empresa}', '{valor_proposta}', '{pontos_analise}', '{descricao_solucao}'];
 
 export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
   const [settings, setSettings] = useState<GenesisSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [messageModalOpen, setMessageModalOpen] = useState(false);
+  const [proposalModalOpen, setProposalModalOpen] = useState(false);
+  const [tempMessage, setTempMessage] = useState('');
+  const [tempProposal, setTempProposal] = useState('');
+  const [copiedVar, setCopiedVar] = useState<string | null>(null);
 
   useEffect(() => {
     loadSettings();
@@ -136,7 +131,6 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
   const saveSettings = async () => {
     setSaving(true);
     try {
-      // Check if settings exist
       const { data: existing } = await supabase
         .from('admin_settings')
         .select('id')
@@ -145,7 +139,6 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
         .maybeSingle();
 
       if (existing) {
-        // Update existing
         const { error } = await supabase
           .from('admin_settings')
           .update({
@@ -155,7 +148,6 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
           .eq('id', existing.id);
         if (error) throw error;
       } else {
-        // Insert new
         const { error } = await supabase
           .from('admin_settings')
           .insert([{
@@ -179,6 +171,34 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
+  const openMessageModal = () => {
+    setTempMessage(settings.baseMessage);
+    setMessageModalOpen(true);
+  };
+
+  const openProposalModal = () => {
+    setTempProposal(settings.proposalTemplate);
+    setProposalModalOpen(true);
+  };
+
+  const saveMessageTemplate = () => {
+    updateSetting('baseMessage', tempMessage);
+    setMessageModalOpen(false);
+    toast.success('Mensagem base atualizada!');
+  };
+
+  const saveProposalTemplate = () => {
+    updateSetting('proposalTemplate', tempProposal);
+    setProposalModalOpen(false);
+    toast.success('Template de proposta atualizado!');
+  };
+
+  const copyVariable = (variable: string) => {
+    navigator.clipboard.writeText(variable);
+    setCopiedVar(variable);
+    setTimeout(() => setCopiedVar(null), 2000);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -188,223 +208,327 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pb-4 border-b border-border/50">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Settings className="w-5 h-5 text-primary" />
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+            <Settings className="w-6 h-6 text-primary" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-foreground">Configurações</h2>
+            <h2 className="text-2xl font-bold text-foreground">Configurações</h2>
             <p className="text-sm text-muted-foreground">Personalize sua experiência no Genesis IA</p>
           </div>
         </div>
-        <Button onClick={saveSettings} disabled={saving} className="gap-2">
+        <Button onClick={saveSettings} disabled={saving} size="lg" className="gap-2">
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           Salvar Alterações
         </Button>
       </div>
 
-      {/* Mensagem Base */}
-      <Card className="border-border/50">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <MessageSquare className="w-5 h-5 text-primary" />
-            <div>
-              <CardTitle className="text-base">Mensagem Base</CardTitle>
-              <CardDescription>Template padrão para primeiro contato com leads</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label className="text-sm text-muted-foreground mb-2 block">
-              Variáveis disponíveis: {'{nome_contato}'}, {'{nome_empresa}'}, {'{niche}'}
-            </Label>
-            <Textarea
-              value={settings.baseMessage}
-              onChange={(e) => updateSetting('baseMessage', e.target.value)}
-              placeholder="Escreva sua mensagem base..."
-              className="min-h-[200px] font-mono text-sm"
-            />
-          </div>
-          
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={settings.includeCompanyName}
-                onCheckedChange={(v) => updateSetting('includeCompanyName', v)}
-              />
-              <Label className="text-sm">Incluir nome da empresa</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={settings.includeContactName}
-                onCheckedChange={(v) => updateSetting('includeContactName', v)}
-              />
-              <Label className="text-sm">Incluir nome do contato</Label>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Templates Section */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Templates</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Mensagem Base Card */}
+          <Card className="bg-card/50 border-border/50 hover:border-primary/30 transition-colors cursor-pointer group" onClick={openMessageModal}>
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                    <MessageSquare className="w-5 h-5 text-blue-500" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-foreground">Mensagem Base</h4>
+                    <p className="text-xs text-muted-foreground mt-0.5">Template para primeiro contato</p>
+                  </div>
+                </div>
+                <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Edit3 className="w-4 h-4" />
+                </Button>
+              </div>
+              <div className="mt-4 p-3 bg-muted/30 rounded-lg">
+                <p className="text-xs text-muted-foreground line-clamp-3 font-mono">
+                  {settings.baseMessage.slice(0, 120)}...
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
-      {/* Template de Proposta */}
-      <Card className="border-border/50">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <FileText className="w-5 h-5 text-primary" />
-            <div>
-              <CardTitle className="text-base">Template de Proposta</CardTitle>
-              <CardDescription>Modelo para propostas comerciais geradas automaticamente</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div>
-            <Label className="text-sm text-muted-foreground mb-2 block">
-              Suporta Markdown. Variáveis: {'{nome_empresa}'}, {'{valor_proposta}'}, {'{pontos_analise}'}, {'{descricao_solucao}'}
-            </Label>
-            <Textarea
-              value={settings.proposalTemplate}
-              onChange={(e) => updateSetting('proposalTemplate', e.target.value)}
-              placeholder="Escreva o template da proposta..."
-              className="min-h-[250px] font-mono text-sm"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Grid de Configurações Menores */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Notificações */}
-        <Card className="border-border/50">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <Bell className="w-5 h-5 text-primary" />
-              <CardTitle className="text-base">Notificações</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm">Notificações ativas</Label>
-              <Switch
-                checked={settings.notificationsEnabled}
-                onCheckedChange={(v) => updateSetting('notificationsEnabled', v)}
-              />
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <Label className="text-sm">Sons de alerta</Label>
-              <Switch
-                checked={settings.soundEnabled}
-                onCheckedChange={(v) => updateSetting('soundEnabled', v)}
-              />
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <Label className="text-sm">Notificações por e-mail</Label>
-              <Switch
-                checked={settings.emailNotifications}
-                onCheckedChange={(v) => updateSetting('emailNotifications', v)}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Radar Global */}
-        <Card className="border-border/50">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <Globe className="w-5 h-5 text-primary" />
-              <CardTitle className="text-base">Radar Global</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm">Scan automático</Label>
-              <Switch
-                checked={settings.radarAutoScan}
-                onCheckedChange={(v) => updateSetting('radarAutoScan', v)}
-              />
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between gap-4">
-              <Label className="text-sm">Intervalo (minutos)</Label>
-              <Select
-                value={String(settings.radarInterval)}
-                onValueChange={(v) => updateSetting('radarInterval', Number(v))}
-              >
-                <SelectTrigger className="w-24">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">1 min</SelectItem>
-                  <SelectItem value="2">2 min</SelectItem>
-                  <SelectItem value="5">5 min</SelectItem>
-                  <SelectItem value="10">10 min</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Aparência */}
-        <Card className="border-border/50">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <Palette className="w-5 h-5 text-primary" />
-              <CardTitle className="text-base">Aparência</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between gap-4">
-              <Label className="text-sm">Tema</Label>
-              <Select
-                value={settings.theme}
-                onValueChange={(v) => updateSetting('theme', v as 'dark' | 'light' | 'system')}
-              >
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="dark">Escuro</SelectItem>
-                  <SelectItem value="light">Claro</SelectItem>
-                  <SelectItem value="system">Sistema</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <Label className="text-sm">Modo compacto</Label>
-              <Switch
-                checked={settings.compactMode}
-                onCheckedChange={(v) => updateSetting('compactMode', v)}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Segurança */}
-        <Card className="border-border/50">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <Shield className="w-5 h-5 text-primary" />
-              <CardTitle className="text-base">Segurança</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-sm text-muted-foreground">
-              <p>Sessão ativa desde: {new Date().toLocaleDateString('pt-BR')}</p>
-              <p className="mt-2">ID do usuário: {userId.slice(0, 8)}...</p>
-            </div>
-            <Separator />
-            <Button variant="outline" size="sm" className="w-full">
-              Alterar Senha
-            </Button>
-          </CardContent>
-        </Card>
+          {/* Template Proposta Card */}
+          <Card className="bg-card/50 border-border/50 hover:border-primary/30 transition-colors cursor-pointer group" onClick={openProposalModal}>
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-emerald-500" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-foreground">Template de Proposta</h4>
+                    <p className="text-xs text-muted-foreground mt-0.5">Modelo para propostas comerciais</p>
+                  </div>
+                </div>
+                <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Edit3 className="w-4 h-4" />
+                </Button>
+              </div>
+              <div className="mt-4 p-3 bg-muted/30 rounded-lg">
+                <p className="text-xs text-muted-foreground line-clamp-3 font-mono">
+                  {settings.proposalTemplate.slice(0, 120)}...
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
+
+      {/* Settings Grid */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Preferências</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Notificações */}
+          <Card className="bg-card/50 border-border/50">
+            <CardContent className="p-5 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                  <Bell className="w-4 h-4 text-amber-500" />
+                </div>
+                <h4 className="font-semibold text-foreground text-sm">Notificações</h4>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-muted-foreground">Ativar notificações</Label>
+                  <Switch
+                    checked={settings.notificationsEnabled}
+                    onCheckedChange={(v) => updateSetting('notificationsEnabled', v)}
+                  />
+                </div>
+                <Separator className="opacity-50" />
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-muted-foreground">Sons</Label>
+                  <Switch
+                    checked={settings.soundEnabled}
+                    onCheckedChange={(v) => updateSetting('soundEnabled', v)}
+                  />
+                </div>
+                <Separator className="opacity-50" />
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-muted-foreground">E-mail</Label>
+                  <Switch
+                    checked={settings.emailNotifications}
+                    onCheckedChange={(v) => updateSetting('emailNotifications', v)}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Radar Global */}
+          <Card className="bg-card/50 border-border/50">
+            <CardContent className="p-5 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-cyan-500/10 flex items-center justify-center">
+                  <Globe className="w-4 h-4 text-cyan-500" />
+                </div>
+                <h4 className="font-semibold text-foreground text-sm">Radar Global</h4>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-muted-foreground">Scan automático</Label>
+                  <Switch
+                    checked={settings.radarAutoScan}
+                    onCheckedChange={(v) => updateSetting('radarAutoScan', v)}
+                  />
+                </div>
+                <Separator className="opacity-50" />
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Intervalo</Label>
+                  <Select
+                    value={String(settings.radarInterval)}
+                    onValueChange={(v) => updateSetting('radarInterval', Number(v))}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 minuto</SelectItem>
+                      <SelectItem value="2">2 minutos</SelectItem>
+                      <SelectItem value="5">5 minutos</SelectItem>
+                      <SelectItem value="10">10 minutos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Aparência */}
+          <Card className="bg-card/50 border-border/50">
+            <CardContent className="p-5 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                  <Palette className="w-4 h-4 text-purple-500" />
+                </div>
+                <h4 className="font-semibold text-foreground text-sm">Aparência</h4>
+              </div>
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Tema</Label>
+                  <Select
+                    value={settings.theme}
+                    onValueChange={(v) => updateSetting('theme', v as 'dark' | 'light' | 'system')}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="dark">Escuro</SelectItem>
+                      <SelectItem value="light">Claro</SelectItem>
+                      <SelectItem value="system">Sistema</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Separator className="opacity-50" />
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-muted-foreground">Modo compacto</Label>
+                  <Switch
+                    checked={settings.compactMode}
+                    onCheckedChange={(v) => updateSetting('compactMode', v)}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Segurança */}
+          <Card className="bg-card/50 border-border/50">
+            <CardContent className="p-5 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-rose-500/10 flex items-center justify-center">
+                  <Shield className="w-4 h-4 text-rose-500" />
+                </div>
+                <h4 className="font-semibold text-foreground text-sm">Segurança</h4>
+              </div>
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Sessão ativa</Label>
+                  <p className="text-xs font-medium text-foreground">
+                    {new Date().toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+                <Separator className="opacity-50" />
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">ID do usuário</Label>
+                  <p className="text-xs font-mono text-foreground">
+                    {userId.slice(0, 12)}...
+                  </p>
+                </div>
+                <Button variant="outline" size="sm" className="w-full h-8 text-xs mt-2">
+                  Alterar Senha
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Message Template Modal */}
+      <Modal isOpen={messageModalOpen} onClose={() => setMessageModalOpen(false)} title="Editar Mensagem Base" size="lg">
+        <ModalBody>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-sm font-medium text-foreground">Variáveis Disponíveis</Label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {VARIABLES_MESSAGE.map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => copyVariable(v)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 hover:bg-primary/20 text-primary text-xs rounded-md transition-colors font-mono"
+                  >
+                    {copiedVar === v ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                    {v}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-foreground">Mensagem</Label>
+              <Textarea
+                value={tempMessage}
+                onChange={(e) => setTempMessage(e.target.value)}
+                placeholder="Escreva sua mensagem base..."
+                className="min-h-[300px] font-mono text-sm"
+              />
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={settings.includeCompanyName}
+                  onCheckedChange={(v) => updateSetting('includeCompanyName', v)}
+                />
+                <Label className="text-sm">Incluir nome da empresa</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={settings.includeContactName}
+                  onCheckedChange={(v) => updateSetting('includeContactName', v)}
+                />
+                <Label className="text-sm">Incluir nome do contato</Label>
+              </div>
+            </div>
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="ghost" onClick={() => setMessageModalOpen(false)}>
+            Cancelar
+          </Button>
+          <Button onClick={saveMessageTemplate} className="gap-2">
+            <Save className="w-4 h-4" />
+            Salvar Template
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* Proposal Template Modal */}
+      <Modal isOpen={proposalModalOpen} onClose={() => setProposalModalOpen(false)} title="Editar Template de Proposta" size="lg">
+        <ModalBody>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-sm font-medium text-foreground">Variáveis Disponíveis</Label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {VARIABLES_PROPOSAL.map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => copyVariable(v)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 hover:bg-primary/20 text-primary text-xs rounded-md transition-colors font-mono"
+                  >
+                    {copiedVar === v ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                    {v}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-foreground">Template (Suporta Markdown)</Label>
+              <Textarea
+                value={tempProposal}
+                onChange={(e) => setTempProposal(e.target.value)}
+                placeholder="Escreva o template da proposta..."
+                className="min-h-[350px] font-mono text-sm"
+              />
+            </div>
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="ghost" onClick={() => setProposalModalOpen(false)}>
+            Cancelar
+          </Button>
+          <Button onClick={saveProposalTemplate} className="gap-2">
+            <Save className="w-4 h-4" />
+            Salvar Template
+          </Button>
+        </ModalFooter>
+      </Modal>
     </div>
   );
 };
