@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Radar, 
@@ -26,7 +26,8 @@ import {
   Mail,
   Calendar,
   Tag,
-  Eye
+  Eye,
+  Search
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +35,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Modal, ModalBody, ModalFooter } from '@/components/ui/modal';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -114,15 +116,32 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
   const [selectedOpportunity, setSelectedOpportunity] = useState<RadarOpportunity | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [limitReached, setLimitReached] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const autoScanIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Pagination
-  const totalPages = Math.ceil(opportunities.length / ITEMS_PER_PAGE);
-  const paginatedOpportunities = opportunities.slice(
+  // Filter and Pagination with search
+  const filteredOpportunities = useMemo(() => {
+    if (!searchQuery.trim()) return opportunities;
+    const query = searchQuery.toLowerCase().trim();
+    return opportunities.filter(opp => 
+      opp.company_name?.toLowerCase().includes(query) ||
+      opp.niche?.toLowerCase().includes(query) ||
+      opp.company_city?.toLowerCase().includes(query) ||
+      opp.company_address?.toLowerCase().includes(query)
+    );
+  }, [opportunities, searchQuery]);
+
+  const totalPages = Math.ceil(filteredOpportunities.length / ITEMS_PER_PAGE);
+  const paginatedOpportunities = filteredOpportunities.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
+
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   // If affiliateId is provided by parent, keep state in sync
   useEffect(() => {
@@ -587,16 +606,38 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
       {/* Opportunities Grid */}
       <Card className="border-border/50">
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <CardTitle className="text-lg flex items-center gap-2">
               <Globe2 className="w-5 h-5 text-primary" />
               Oportunidades Detectadas
               {opportunities.length > 0 && (
                 <Badge variant="secondary" className="ml-2">
-                  {opportunities.length}/{MAX_LEADS_LIMIT}
+                  {filteredOpportunities.length !== opportunities.length 
+                    ? `${filteredOpportunities.length}/${opportunities.length}`
+                    : `${opportunities.length}/${MAX_LEADS_LIMIT}`
+                  }
                 </Badge>
               )}
             </CardTitle>
+            {/* Search Input */}
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Pesquisar empresa, nicho, cidade..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -604,6 +645,21 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
             <div className="flex flex-col items-center justify-center py-12 gap-3">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
               <p className="text-sm text-muted-foreground">Carregando oportunidades...</p>
+            </div>
+          ) : filteredOpportunities.length === 0 && searchQuery ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
+                <Search className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <div>
+                <p className="text-lg font-medium text-foreground mb-1">Nenhum resultado</p>
+                <p className="text-sm text-muted-foreground max-w-sm">
+                  Não encontramos oportunidades para "{searchQuery}". Tente outro termo.
+                </p>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => setSearchQuery('')}>
+                Limpar pesquisa
+              </Button>
             </div>
           ) : opportunities.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
