@@ -65,6 +65,12 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        petshop: {
+          orange: "#F97316",
+          dark: "#1a1a2e",
+          cream: "#FFF8F0",
+          gray: "#6B7280",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
