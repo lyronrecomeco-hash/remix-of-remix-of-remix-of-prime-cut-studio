@@ -58,13 +58,13 @@ const PetshopHeader = ({ onScheduleClick, onMyAppointmentsClick }: PetshopHeader
               <span className="hidden xs:inline">(81) 99840-9073</span>
               <span className="xs:hidden">WhatsApp</span>
             </a>
-            <div className="hidden sm:flex items-center gap-2 text-white/90">
+          <div className="hidden sm:flex items-center gap-2 text-white/90">
               <Clock className="w-4 h-4" />
-              <span>Seg a Sáb: 8h às 19h</span>
+              <span>Seg à Sex 7h às 19h, Sáb 7h às 17h</span>
             </div>
             <div className="flex items-center gap-1.5 text-white/90 sm:hidden">
               <Clock className="w-3.5 h-3.5" />
-              <span>8h-19h</span>
+              <span>7h-19h</span>
             </div>
           </div>
         </div>

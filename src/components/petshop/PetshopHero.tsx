@@ -75,7 +75,7 @@ const PetshopHero = ({ onScheduleClick }: PetshopHeroProps) => {
               >
                 🐾
               </motion.span>
-              <span className="hidden sm:inline">Bem-vindo ao</span> Seu Xodó Petshop
+              Creche • Hotelzinho • Banho e Tosa • Veterinário
             </motion.span>
 
             {/* Main heading */}
