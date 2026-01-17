@@ -403,6 +403,18 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
               </label>
             </div>
 
+            {/* Global 3D Map Button */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-2 h-9 bg-gradient-to-r from-primary/10 to-blue-500/10 border-primary/30 hover:border-primary/50 hover:from-primary/20 hover:to-blue-500/20"
+              onClick={() => setGlobalMapIntroOpen(true)}
+            >
+              <Globe2 className="w-4 h-4 text-primary" />
+              <span className="hidden sm:inline">Mapa 3D Global</span>
+              <span className="sm:hidden">3D</span>
+            </Button>
+
             {results.length > 0 && (
               <Button 
                 variant="outline" 
@@ -663,6 +675,22 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
         onOpenChange={setDetailModalOpen}
         business={selectedBusiness}
         onAcceptProject={() => selectedBusiness && handleAcceptProject(selectedBusiness)}
+      />
+
+      {/* Global Map Intro Modal */}
+      <GlobalMapIntro
+        open={globalMapIntroOpen}
+        onOpenChange={setGlobalMapIntroOpen}
+        onStart={() => {
+          setGlobalMapIntroOpen(false);
+          setGlobalMapOpen(true);
+        }}
+      />
+
+      {/* Global 3D Map Modal */}
+      <GlobalMapModal
+        open={globalMapOpen}
+        onOpenChange={setGlobalMapOpen}
       />
     </div>
   );
