@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Menu, X, Phone, MapPin, Clock, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getAppointments } from './PetshopMyAppointments';
 
 interface PetshopHeaderProps {
   onScheduleClick: () => void;
@@ -9,6 +10,28 @@ interface PetshopHeaderProps {
 }
 
 const PetshopHeader = ({ onScheduleClick, onMyAppointmentsClick }: PetshopHeaderProps) => {
+  const [hasAppointments, setHasAppointments] = useState(false);
+
+  useEffect(() => {
+    const checkAppointments = () => {
+      const appointments = getAppointments();
+      setHasAppointments(appointments.length > 0);
+    };
+
+    checkAppointments();
+    
+    // Listen for storage changes (when appointments are added/removed)
+    const handleStorage = () => checkAppointments();
+    window.addEventListener('storage', handleStorage);
+    
+    // Also check periodically in case localStorage changes in same tab
+    const interval = setInterval(checkAppointments, 1000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      clearInterval(interval);
+    };
+  }, []);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navLinks = [
@@ -75,14 +98,16 @@ const PetshopHeader = ({ onScheduleClick, onMyAppointmentsClick }: PetshopHeader
 
             {/* CTA Buttons */}
             <div className="hidden md:flex items-center gap-3">
-              <Button
-                variant="outline"
-                onClick={onMyAppointmentsClick}
-                className="border-petshop-orange text-petshop-orange hover:bg-petshop-orange hover:text-white"
-              >
-                <Calendar className="w-4 h-4 mr-2" />
-                Meus Agendamentos
-              </Button>
+              {hasAppointments && (
+                <Button
+                  variant="outline"
+                  onClick={onMyAppointmentsClick}
+                  className="border-petshop-orange text-petshop-orange hover:bg-petshop-orange hover:text-white"
+                >
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Meus Agendamentos
+                </Button>
+              )}
               <Button
                 onClick={onScheduleClick}
                 className="bg-petshop-orange hover:bg-petshop-orange/90 text-white font-semibold px-6"
@@ -121,17 +146,19 @@ const PetshopHeader = ({ onScheduleClick, onMyAppointmentsClick }: PetshopHeader
                     {link.label}
                   </a>
                 ))}
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    onMyAppointmentsClick?.();
-                  }}
-                  className="border-petshop-orange text-petshop-orange hover:bg-petshop-orange hover:text-white w-full"
-                >
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Meus Agendamentos
-                </Button>
+                {hasAppointments && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      onMyAppointmentsClick?.();
+                    }}
+                    className="border-petshop-orange text-petshop-orange hover:bg-petshop-orange hover:text-white w-full"
+                  >
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Meus Agendamentos
+                  </Button>
+                )}
                 <Button
                   onClick={() => {
                     setIsMenuOpen(false);
