@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronRight, ChevronLeft, Check, Calendar, Clock, User, Phone, Sparkles, Loader2, CheckCircle2, Scissors, Stethoscope, Home, Navigation } from 'lucide-react';
+import { X, ChevronRight, ChevronLeft, Check, Calendar, Clock, User, Phone, Sparkles, Loader2, CheckCircle2, Scissors, Stethoscope, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -85,10 +85,7 @@ const PetshopSchedule = ({ isOpen, onClose }: PetshopScheduleProps) => {
     }, 300);
   };
 
-  const openGPS = () => {
-    const address = encodeURIComponent('Estr. de Belém, 1273 - Campo Grande, Recife - PE, 52040-000');
-    window.open(`https://www.google.com/maps/search/?api=1&query=${address}`, '_blank');
-  };
+  // GPS fica disponível apenas em "Meus Agendamentos"
 
   const handleSubmit = async () => {
     if (!formData.ownerName || !formData.phone) {
@@ -222,22 +219,12 @@ Aguardo a confirmação! Obrigado(a)! 😊`;
                 </div>
               </div>
               
-              <div className="flex gap-3">
-                <Button
-                  onClick={openGPS}
-                  variant="outline"
-                  className="flex-1 h-12 text-base font-semibold border-petshop-orange text-petshop-orange hover:bg-petshop-orange hover:text-white rounded-xl"
-                >
-                  <Navigation className="w-4 h-4 mr-2" />
-                  Abrir GPS
-                </Button>
-                <Button
-                  onClick={handleClose}
-                  className="flex-1 h-12 text-base font-semibold bg-petshop-orange hover:bg-petshop-orange/90 text-white rounded-xl"
-                >
-                  Fechar
-                </Button>
-              </div>
+              <Button
+                onClick={handleClose}
+                className="w-full h-12 text-base font-semibold bg-petshop-orange hover:bg-petshop-orange/90 text-white rounded-xl"
+              >
+                Fechar
+              </Button>
             </motion.div>
           ) : (
             <>
