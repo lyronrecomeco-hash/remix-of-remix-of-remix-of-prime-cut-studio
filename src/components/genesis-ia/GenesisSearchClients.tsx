@@ -26,7 +26,7 @@ import {
   CheckCircle2,
   XCircle,
   Eye,
-  Globe2
+  
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,7 +41,7 @@ import { cn } from '@/lib/utils';
 import { COUNTRIES, BRAZILIAN_STATES, getNichesForCountry, getCountryByCode } from '@/components/affiliate/prospecting/global/globalSearchData';
 import { RadiusFilterModal } from '@/components/affiliate/prospecting/RadiusFilterModal';
 import { GenesisBusinessDetailModal } from './GenesisBusinessDetailModal';
-import { GlobalMapModal, GlobalMapIntro } from './global-map';
+
 
 const ITEMS_PER_PAGE = 9;
 
@@ -141,8 +141,6 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
   const [radiusFilterOpen, setRadiusFilterOpen] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedBusiness, setSelectedBusiness] = useState<SearchResult | null>(null);
-  const [globalMapIntroOpen, setGlobalMapIntroOpen] = useState(false);
-  const [globalMapOpen, setGlobalMapOpen] = useState(false);
   
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -403,17 +401,6 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
               </label>
             </div>
 
-            {/* Global 3D Map Button */}
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="gap-2 h-9 bg-gradient-to-r from-primary/10 to-blue-500/10 border-primary/30 hover:border-primary/50 hover:from-primary/20 hover:to-blue-500/20"
-              onClick={() => setGlobalMapIntroOpen(true)}
-            >
-              <Globe2 className="w-4 h-4 text-primary" />
-              <span className="hidden sm:inline">Mapa 3D Global</span>
-              <span className="sm:hidden">3D</span>
-            </Button>
 
             {results.length > 0 && (
               <Button 
@@ -677,21 +664,6 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
         onAcceptProject={() => selectedBusiness && handleAcceptProject(selectedBusiness)}
       />
 
-      {/* Global Map Intro Modal */}
-      <GlobalMapIntro
-        open={globalMapIntroOpen}
-        onOpenChange={setGlobalMapIntroOpen}
-        onStart={() => {
-          setGlobalMapIntroOpen(false);
-          setGlobalMapOpen(true);
-        }}
-      />
-
-      {/* Global 3D Map Modal */}
-      <GlobalMapModal
-        open={globalMapOpen}
-        onOpenChange={setGlobalMapOpen}
-      />
     </div>
   );
 };
