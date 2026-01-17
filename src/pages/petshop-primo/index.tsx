@@ -1,15 +1,14 @@
 import { useState } from 'react';
-import PetshopHeader from '@/components/petshop/PetshopHeader';
-import PetshopHero from '@/components/petshop/PetshopHero';
-import PetshopAbout from '@/components/petshop/PetshopAbout';
-import PetshopServices from '@/components/petshop/PetshopServices';
+import PrimoHeader from '@/components/petshop-primo/PrimoHeader';
+import PrimoHero from '@/components/petshop-primo/PrimoHero';
+import PrimoAbout from '@/components/petshop-primo/PrimoAbout';
+import PrimoServices from '@/components/petshop-primo/PrimoServices';
 import PetshopGallery from '@/components/petshop/PetshopGallery';
 import PetshopTestimonials from '@/components/petshop/PetshopTestimonials';
 import PetshopSchedule from '@/components/petshop/PetshopSchedule';
-import PetshopContact from '@/components/petshop/PetshopContact';
-import PetshopFooter from '@/components/petshop/PetshopFooter';
+import PrimoContact from '@/components/petshop-primo/PrimoContact';
+import PrimoFooter from '@/components/petshop-primo/PrimoFooter';
 import PetshopMyAppointments from '@/components/petshop/PetshopMyAppointments';
-import PetshopDemoModal from '@/components/petshop/PetshopDemoModal';
 
 const PetshopPrimoPage = () => {
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
@@ -17,17 +16,17 @@ const PetshopPrimoPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <PetshopHeader 
+      <PrimoHeader 
         onScheduleClick={() => setIsScheduleOpen(true)} 
         onMyAppointmentsClick={() => setIsMyAppointmentsOpen(true)}
       />
-      <PetshopHero onScheduleClick={() => setIsScheduleOpen(true)} />
-      <PetshopAbout />
-      <PetshopServices onScheduleClick={() => setIsScheduleOpen(true)} />
+      <PrimoHero onScheduleClick={() => setIsScheduleOpen(true)} />
+      <PrimoAbout />
+      <PrimoServices onScheduleClick={() => setIsScheduleOpen(true)} />
       <PetshopGallery />
       <PetshopTestimonials />
-      <PetshopContact onScheduleClick={() => setIsScheduleOpen(true)} />
-      <PetshopFooter />
+      <PrimoContact onScheduleClick={() => setIsScheduleOpen(true)} />
+      <PrimoFooter />
       
       <PetshopSchedule 
         isOpen={isScheduleOpen} 
@@ -38,8 +37,6 @@ const PetshopPrimoPage = () => {
         isOpen={isMyAppointmentsOpen}
         onClose={() => setIsMyAppointmentsOpen(false)}
       />
-      
-      <PetshopDemoModal />
     </div>
   );
 };
