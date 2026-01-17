@@ -3,7 +3,7 @@ import MonHeader from '@/components/petshop-mon/MonHeader';
 import MonHero from '@/components/petshop-mon/MonHero';
 import MonAbout from '@/components/petshop-mon/MonAbout';
 import MonServices from '@/components/petshop-mon/MonServices';
-import PetshopGallery from '@/components/petshop/PetshopGallery';
+import MonGallery from '@/components/petshop-mon/MonGallery';
 import PetshopTestimonials from '@/components/petshop/PetshopTestimonials';
 import MonSchedule from '@/components/petshop-mon/MonSchedule';
 import MonContact from '@/components/petshop-mon/MonContact';
@@ -44,7 +44,7 @@ const PetshopMonPage = () => {
       <MonHero onScheduleClick={() => setIsScheduleOpen(true)} />
       <MonAbout />
       <MonServices onScheduleClick={() => setIsScheduleOpen(true)} />
-      <PetshopGallery />
+      <MonGallery />
       <PetshopTestimonials />
       <MonContact onScheduleClick={() => setIsScheduleOpen(true)} />
       <MonFooter />
