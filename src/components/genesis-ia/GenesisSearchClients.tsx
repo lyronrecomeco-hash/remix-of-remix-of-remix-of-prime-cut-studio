@@ -24,7 +24,8 @@ import {
   ShoppingBag,
   MessageSquare,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Eye
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,6 +39,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { COUNTRIES, BRAZILIAN_STATES, getNichesForCountry, getCountryByCode } from '@/components/affiliate/prospecting/global/globalSearchData';
 import { RadiusFilterModal } from '@/components/affiliate/prospecting/RadiusFilterModal';
+import { GenesisBusinessDetailModal } from './GenesisBusinessDetailModal';
 
 const ITEMS_PER_PAGE = 9;
 
@@ -133,7 +135,10 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
   const [city, setCity] = useState('');
   const [niche, setNiche] = useState('');
   const [excludeWithWebsite, setExcludeWithWebsite] = useState(false);
+  const [onlyOpenNow, setOnlyOpenNow] = useState(false);
   const [radiusFilterOpen, setRadiusFilterOpen] = useState(false);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedBusiness, setSelectedBusiness] = useState<SearchResult | null>(null);
   
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -251,6 +256,33 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
     toast.success(`Projeto ${result.name} aceito!`);
   };
 
+  const openBusinessDetail = (result: SearchResult) => {
+    setSelectedBusiness(result);
+    setDetailModalOpen(true);
+  };
+
+  // Check if business is likely open based on local time
+  const isLikelyOpen = (): boolean => {
+    const now = new Date();
+    const timezone = COUNTRY_TIMEZONES[countryCode] || 'UTC';
+    try {
+      const localHour = parseInt(new Intl.DateTimeFormat('en-US', {
+        timeZone: timezone,
+        hour: 'numeric',
+        hour12: false,
+      }).format(now));
+      const dayOfWeek = new Date().toLocaleDateString('en-US', { timeZone: timezone, weekday: 'short' });
+      // Consider open if between 8am-6pm on weekdays, 9am-1pm on Saturday
+      if (['Sun'].includes(dayOfWeek)) return false;
+      if (['Sat'].includes(dayOfWeek)) return localHour >= 9 && localHour < 13;
+      return localHour >= 8 && localHour < 18;
+    } catch {
+      return true;
+    }
+  };
+
+  const businessesOpenNow = isLikelyOpen();
+
   return (
     <div className="space-y-5">
       {/* Search Form */}
@@ -350,6 +382,20 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
               <label htmlFor="excludeWebsite" className="text-sm cursor-pointer flex items-center gap-1.5">
                 <GlobeIcon className="w-4 h-4 text-muted-foreground" />
                 Apenas empresas <strong className="text-primary">sem site</strong>
+              </label>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Checkbox 
+                id="onlyOpenNow" 
+                checked={onlyOpenNow}
+                onCheckedChange={(c) => setOnlyOpenNow(c === true)}
+              />
+              <label htmlFor="onlyOpenNow" className="text-sm cursor-pointer flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                Abertas <strong className={businessesOpenNow ? "text-green-500" : "text-orange-500"}>
+                  {businessesOpenNow ? 'agora' : 'fora de expediente'}
+                </strong>
               </label>
             </div>
 
@@ -553,8 +599,13 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
                       >
                         <Zap className="w-4 h-4" /> Aceitar Projeto
                       </Button>
-                      <Button variant="outline" size="sm" className="gap-2">
-                        <Search className="w-4 h-4" /> Detalhes
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="gap-2"
+                        onClick={() => openBusinessDetail(result)}
+                      >
+                        <Eye className="w-4 h-4" /> Detalhes
                       </Button>
                     </div>
                   </CardContent>
@@ -600,6 +651,14 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
         city={city}
         state={state}
         onFilterResults={handleFilterByRadius}
+      />
+
+      {/* Business Detail Modal */}
+      <GenesisBusinessDetailModal
+        open={detailModalOpen}
+        onOpenChange={setDetailModalOpen}
+        business={selectedBusiness}
+        onAcceptProject={() => selectedBusiness && handleAcceptProject(selectedBusiness)}
       />
     </div>
   );
