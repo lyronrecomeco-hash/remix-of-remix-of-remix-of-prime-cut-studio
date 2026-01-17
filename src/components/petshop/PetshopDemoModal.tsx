@@ -33,125 +33,92 @@ const PetshopDemoModal = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm overflow-y-auto"
           onClick={handleClose}
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            initial={{ opacity: 0, y: 100 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 100 }}
+            transition={{ type: 'spring', damping: 30, stiffness: 400 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-lg bg-gradient-to-br from-white via-white to-orange-50 rounded-3xl shadow-2xl overflow-hidden"
+            className="relative w-full sm:max-w-md m-0 sm:m-4 bg-gradient-to-br from-white via-white to-orange-50 rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[90vh] sm:max-h-[85vh] overflow-y-auto overscroll-contain"
           >
-            {/* Decorative elements */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-400/20 to-pink-400/20 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-blue-400/20 to-purple-400/20 rounded-full blur-3xl" />
+            {/* Drag indicator for mobile */}
+            <div className="sticky top-0 pt-3 pb-2 bg-gradient-to-br from-white via-white to-orange-50 sm:hidden z-10">
+              <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto" />
+            </div>
             
             {/* Close button */}
             <button
               onClick={handleClose}
-              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors active:scale-95"
             >
               <X className="w-5 h-5 text-gray-600" />
             </button>
 
             {/* Content */}
-            <div className="relative p-6 sm:p-8">
+            <div className="relative px-5 pb-6 pt-2 sm:p-6">
               {/* Badge */}
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="flex justify-center mb-4"
-              >
-                <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white text-sm font-semibold rounded-full shadow-lg">
-                  <Sparkles className="w-4 h-4" />
+              <div className="flex justify-center mb-3 sm:mb-4">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-orange-500 to-pink-500 text-white text-xs font-semibold rounded-full shadow-lg">
+                  <Sparkles className="w-3.5 h-3.5" />
                   DEMONSTRAÇÃO EXCLUSIVA
                 </span>
-              </motion.div>
+              </div>
 
               {/* Title */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="text-center mb-6"
-              >
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+              <div className="text-center mb-4 sm:mb-5">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1.5">
                   Petshop <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-pink-500">Seu Xodó</span>
                 </h2>
-                <p className="text-gray-600 text-sm sm:text-base">
-                  Esta é uma demo interativa do sistema completo de gestão para petshops
+                <p className="text-gray-600 text-xs sm:text-sm leading-relaxed px-2">
+                  Demo interativa do sistema completo de gestão para petshops
                 </p>
-              </motion.div>
+              </div>
 
-              {/* Features */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6"
-              >
+              {/* Features - 2 columns on mobile */}
+              <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-4 sm:mb-5">
                 {features.map((feature, index) => (
-                  <motion.div
+                  <div
                     key={index}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.5 + index * 0.1 }}
-                    className="flex items-center gap-3 p-3 bg-white/80 rounded-xl border border-gray-100 shadow-sm"
+                    className="flex items-center gap-2 p-2.5 sm:p-3 bg-white/80 rounded-xl border border-gray-100 shadow-sm"
                   >
-                    <div className={`p-2 rounded-lg bg-gray-50 ${feature.color}`}>
-                      <feature.icon className="w-5 h-5" />
+                    <div className={`p-1.5 sm:p-2 rounded-lg bg-gray-50 ${feature.color} flex-shrink-0`}>
+                      <feature.icon className="w-4 h-4" />
                     </div>
-                    <span className="text-sm font-medium text-gray-700">{feature.text}</span>
-                  </motion.div>
+                    <span className="text-[11px] sm:text-sm font-medium text-gray-700 leading-tight">{feature.text}</span>
+                  </div>
                 ))}
-              </motion.div>
+              </div>
 
               {/* Highlight box */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8 }}
-                className="bg-gradient-to-r from-orange-50 to-pink-50 rounded-2xl p-4 mb-6 border border-orange-100"
-              >
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-6 h-6 text-green-500 flex-shrink-0 mt-0.5" />
+              <div className="bg-gradient-to-r from-orange-50 to-pink-50 rounded-xl p-3 sm:p-4 mb-4 sm:mb-5 border border-orange-100">
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-semibold text-gray-900 text-sm sm:text-base">
+                    <p className="font-semibold text-gray-900 text-sm">
                       Sistema completo pronto para usar!
                     </p>
-                    <p className="text-gray-600 text-xs sm:text-sm mt-1">
+                    <p className="text-gray-600 text-xs mt-0.5 leading-relaxed">
                       Agende serviços, receba confirmações no WhatsApp e gerencie tudo em um só lugar.
                     </p>
                   </div>
                 </div>
-              </motion.div>
+              </div>
 
               {/* CTA Button */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.9 }}
+              <Button
+                onClick={handleClose}
+                className="w-full py-5 sm:py-6 text-sm sm:text-base font-bold bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white rounded-xl sm:rounded-2xl shadow-xl shadow-orange-500/25 transition-all duration-300 active:scale-[0.98]"
               >
-                <Button
-                  onClick={handleClose}
-                  className="w-full py-6 text-base font-bold bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white rounded-2xl shadow-xl shadow-orange-500/25 transition-all duration-300 hover:shadow-2xl hover:shadow-orange-500/30 hover:-translate-y-0.5"
-                >
-                  Explorar a Demo
-                </Button>
-              </motion.div>
+                Explorar a Demo
+              </Button>
 
               {/* Footer note */}
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1 }}
-                className="text-center text-xs text-gray-400 mt-4"
-              >
+              <p className="text-center text-[10px] sm:text-xs text-gray-400 mt-3">
                 Desenvolvido por Genesis IA • Automação Inteligente
-              </motion.p>
+              </p>
             </div>
           </motion.div>
         </motion.div>
