@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { useInView } from 'framer-motion';
 import { useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Scissors, Stethoscope, Home, ShoppingBag, Dog, Sparkles } from 'lucide-react';
+import { ArrowRight, Scissors, Stethoscope, Home, ShoppingBag, Check, Clock, Award } from 'lucide-react';
 
 import serviceGrooming from '@/assets/petshop/service-grooming.jpg';
 import serviceVet from '@/assets/petshop/service-vet.jpg';
@@ -21,103 +21,140 @@ const PetshopServices = ({ onScheduleClick }: PetshopServicesProps) => {
     {
       icon: Scissors,
       title: 'Banho & Tosa',
-      description: 'Banho completo com produtos premium, tosa higiênica ou estética, hidratação e perfume especial.',
+      description: 'Banho completo com produtos premium, tosa higiênica ou estética, hidratação e perfume especial para deixar seu pet lindo e cheiroso.',
       image: serviceGrooming,
-      price: 'A partir de R$ 60',
-      features: ['Banho completo', 'Tosa higiênica', 'Corte de unhas', 'Limpeza de ouvidos'],
+      price: 'R$ 60',
+      priceLabel: 'a partir de',
+      duration: '1h - 2h',
+      highlight: 'Mais Popular',
+      features: ['Banho completo', 'Tosa higiênica/estética', 'Corte de unhas', 'Limpeza de ouvidos', 'Hidratação', 'Perfume especial'],
     },
     {
       icon: Stethoscope,
       title: 'Veterinária',
-      description: 'Consultas, vacinas, exames e tratamentos com veterinários experientes e carinhosos.',
+      description: 'Consultas, vacinas, exames e tratamentos com veterinários experientes e carinhosos que tratam seu pet como família.',
       image: serviceVet,
-      price: 'Consulta R$ 150',
-      features: ['Consultas gerais', 'Vacinação', 'Exames laboratoriais', 'Cirurgias'],
+      price: 'R$ 150',
+      priceLabel: 'consulta',
+      duration: '30min - 1h',
+      highlight: null,
+      features: ['Consultas gerais', 'Vacinação completa', 'Exames laboratoriais', 'Cirurgias', 'Emergências', 'Retorno gratuito'],
     },
     {
       icon: Home,
       title: 'Hotel & Creche',
-      description: 'Hospedagem confortável e creche diária com atividades, brincadeiras e muito carinho.',
+      description: 'Hospedagem confortável e creche diária com atividades, brincadeiras, socialização e muito carinho para seu amiguinho.',
       image: serviceDaycare,
-      price: 'Diária R$ 80',
-      features: ['Hospedagem 24h', 'Creche diária', 'Área de recreação', 'Acompanhamento'],
+      price: 'R$ 80',
+      priceLabel: 'diária',
+      duration: '24h',
+      highlight: 'Webcam 24h',
+      features: ['Hospedagem 24h', 'Creche diária', 'Área de recreação', 'Alimentação inclusa', 'Câmeras online', 'Relatório diário'],
     },
     {
       icon: ShoppingBag,
       title: 'Pet Shop',
-      description: 'Rações, petiscos, acessórios, brinquedos e tudo que seu pet precisa das melhores marcas.',
+      description: 'Rações, petiscos, acessórios, brinquedos e tudo que seu pet precisa das melhores marcas nacionais e importadas.',
       image: serviceShop,
-      price: 'Diversos produtos',
-      features: ['Rações premium', 'Acessórios', 'Brinquedos', 'Medicamentos'],
+      price: 'Diversos',
+      priceLabel: 'produtos',
+      duration: null,
+      highlight: 'Delivery Grátis',
+      features: ['Rações premium', 'Acessórios exclusivos', 'Brinquedos interativos', 'Medicamentos', 'Higiene', 'Delivery grátis*'],
     },
   ];
 
-  const additionalServices = [
-    { icon: Dog, name: 'Adestramento' },
-    { icon: Sparkles, name: 'Spa Pet' },
-  ];
-
   return (
-    <section id="servicos" className="py-20 bg-white" ref={ref}>
+    <section id="servicos" className="py-24 bg-gradient-to-b from-white to-petshop-cream/30" ref={ref}>
       <div className="container mx-auto px-4">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="text-center max-w-2xl mx-auto mb-16"
+          className="text-center max-w-3xl mx-auto mb-16"
         >
-          <span className="inline-block bg-petshop-orange/10 text-petshop-orange px-4 py-2 rounded-full text-sm font-medium mb-4">
+          <span className="inline-flex items-center gap-2 bg-petshop-orange/10 text-petshop-orange px-5 py-2.5 rounded-full text-sm font-semibold mb-6">
+            <Award className="w-4 h-4" />
             Nossos Serviços
           </span>
-          <h2 className="text-3xl md:text-4xl font-bold text-petshop-dark mb-4">
-            Tudo que seu pet precisa em um{' '}
-            <span className="text-petshop-orange">só lugar</span>
+          <h2 className="text-4xl md:text-5xl font-bold text-petshop-dark mb-6 leading-tight">
+            Tudo que seu pet precisa em{' '}
+            <span className="text-petshop-orange relative">
+              um só lugar
+              <svg className="absolute -bottom-2 left-0 w-full" height="8" viewBox="0 0 200 8" fill="none">
+                <path d="M2 6C50 2 150 2 198 6" stroke="#F97316" strokeWidth="3" strokeLinecap="round"/>
+              </svg>
+            </span>
           </h2>
-          <p className="text-petshop-gray text-lg">
-            Oferecemos uma gama completa de serviços para garantir o bem-estar 
-            e a felicidade do seu melhor amigo.
+          <p className="text-petshop-gray text-lg md:text-xl leading-relaxed">
+            Oferecemos uma gama completa de serviços para garantir o bem-estar, 
+            saúde e felicidade do seu melhor amigo.
           </p>
         </motion.div>
 
         {/* Services Grid */}
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
+        <div className="grid lg:grid-cols-2 gap-8">
           {services.map((service, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 40 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="group bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100"
+              transition={{ duration: 0.6, delay: index * 0.15 }}
+              className="group relative bg-white rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500"
             >
-              <div className="relative h-48 overflow-hidden">
+              {/* Image Section */}
+              <div className="relative h-56 md:h-64 overflow-hidden">
                 <img
                   src={service.image}
                   alt={service.title}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-petshop-dark/60 to-transparent" />
-                <div className="absolute bottom-4 left-4">
-                  <span className="bg-petshop-orange text-white px-3 py-1 rounded-full text-sm font-medium">
-                    {service.price}
-                  </span>
+                <div className="absolute inset-0 bg-gradient-to-t from-petshop-dark via-petshop-dark/20 to-transparent" />
+                
+                {/* Highlight Badge */}
+                {service.highlight && (
+                  <div className="absolute top-4 left-4">
+                    <span className="bg-petshop-orange text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-lg">
+                      {service.highlight}
+                    </span>
+                  </div>
+                )}
+
+                {/* Price Badge */}
+                <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
+                  <div className="bg-white/95 backdrop-blur-sm px-5 py-3 rounded-2xl shadow-lg">
+                    <p className="text-xs text-petshop-gray uppercase tracking-wide">{service.priceLabel}</p>
+                    <p className="text-2xl font-bold text-petshop-orange">{service.price}</p>
+                  </div>
+                  
+                  {service.duration && (
+                    <div className="flex items-center gap-2 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-xl">
+                      <Clock className="w-4 h-4 text-petshop-gray" />
+                      <span className="text-sm font-medium text-petshop-dark">{service.duration}</span>
+                    </div>
+                  )}
                 </div>
               </div>
               
-              <div className="p-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-12 h-12 bg-petshop-orange/10 rounded-xl flex items-center justify-center">
-                    <service.icon className="w-6 h-6 text-petshop-orange" />
+              {/* Content Section */}
+              <div className="p-6 md:p-8">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-14 h-14 bg-gradient-to-br from-petshop-orange to-orange-400 rounded-2xl flex items-center justify-center shadow-lg shadow-petshop-orange/30">
+                    <service.icon className="w-7 h-7 text-white" />
                   </div>
-                  <h3 className="text-xl font-bold text-petshop-dark">{service.title}</h3>
+                  <h3 className="text-2xl font-bold text-petshop-dark">{service.title}</h3>
                 </div>
                 
-                <p className="text-petshop-gray mb-4">{service.description}</p>
+                <p className="text-petshop-gray mb-6 leading-relaxed">{service.description}</p>
                 
-                <div className="grid grid-cols-2 gap-2 mb-4">
+                {/* Features Grid */}
+                <div className="grid grid-cols-2 gap-3 mb-6">
                   {service.features.map((feature, i) => (
-                    <span key={i} className="text-sm text-petshop-dark flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 bg-petshop-orange rounded-full" />
+                    <span key={i} className="text-sm text-petshop-dark flex items-center gap-2">
+                      <span className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <Check className="w-3 h-3 text-green-600" />
+                      </span>
                       {feature}
                     </span>
                   ))}
@@ -125,35 +162,15 @@ const PetshopServices = ({ onScheduleClick }: PetshopServicesProps) => {
                 
                 <Button
                   onClick={onScheduleClick}
-                  variant="outline"
-                  className="w-full border-petshop-orange text-petshop-orange hover:bg-petshop-orange hover:text-white group/btn"
+                  className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-petshop-orange to-orange-500 hover:from-orange-500 hover:to-petshop-orange text-white rounded-2xl shadow-lg shadow-petshop-orange/30 transition-all duration-300 group/btn"
                 >
-                  Agendar
-                  <ArrowRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
+                  Agendar Agora
+                  <ArrowRight className="w-5 h-5 ml-2 group-hover/btn:translate-x-1 transition-transform" />
                 </Button>
               </div>
             </motion.div>
           ))}
         </div>
-
-        {/* Additional Services */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.5, delay: 0.5 }}
-          className="flex flex-wrap justify-center gap-4"
-        >
-          <span className="text-petshop-gray font-medium">Também oferecemos:</span>
-          {additionalServices.map((service, index) => (
-            <span
-              key={index}
-              className="inline-flex items-center gap-2 bg-petshop-cream px-4 py-2 rounded-full text-petshop-dark font-medium"
-            >
-              <service.icon className="w-4 h-4 text-petshop-orange" />
-              {service.name}
-            </span>
-          ))}
-        </motion.div>
       </div>
     </section>
   );
