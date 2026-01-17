@@ -40,8 +40,8 @@ const PetshopContact = ({ onScheduleClick }: PetshopContactProps) => {
     {
       icon: Clock,
       title: 'Horário',
-      value: 'Seg a Sáb: 8h às 19h',
-      subtitle: 'Dom: 9h às 14h',
+      value: 'Seg à Sex: 7h às 19h',
+      subtitle: 'Sáb: 7h às 17h',
       href: null,
       color: 'from-amber-500 to-orange-500',
     },

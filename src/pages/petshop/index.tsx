@@ -9,6 +9,7 @@ import PetshopSchedule from '@/components/petshop/PetshopSchedule';
 import PetshopContact from '@/components/petshop/PetshopContact';
 import PetshopFooter from '@/components/petshop/PetshopFooter';
 import PetshopMyAppointments from '@/components/petshop/PetshopMyAppointments';
+import PetshopDemoModal from '@/components/petshop/PetshopDemoModal';
 
 const PetshopPage = () => {
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
@@ -37,6 +38,8 @@ const PetshopPage = () => {
         isOpen={isMyAppointmentsOpen}
         onClose={() => setIsMyAppointmentsOpen(false)}
       />
+      
+      <PetshopDemoModal />
     </div>
   );
 };
