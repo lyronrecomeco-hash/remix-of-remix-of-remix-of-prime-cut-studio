@@ -1,6 +1,6 @@
-import { useRef, useMemo, useState, useEffect } from 'react';
-import { Canvas, useFrame, useLoader } from '@react-three/fiber';
-import { OrbitControls, Stars, Html, useTexture } from '@react-three/drei';
+import { useRef, useMemo, useState, useEffect, Suspense } from 'react';
+import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
+import { OrbitControls, Stars, Html, useTexture, Environment } from '@react-three/drei';
 import * as THREE from 'three';
 import { BusinessMarker } from './types';
 
@@ -33,6 +33,59 @@ const getStatusColor = (status: BusinessMarker['status']): string => {
   }
 };
 
+// Fresnel shader for realistic atmosphere glow
+const atmosphereVertexShader = `
+  varying vec3 vNormal;
+  varying vec3 vPosition;
+  
+  void main() {
+    vNormal = normalize(normalMatrix * normal);
+    vPosition = (modelViewMatrix * vec4(position, 1.0)).xyz;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const atmosphereFragmentShader = `
+  uniform vec3 glowColor;
+  uniform float intensity;
+  uniform float power;
+  
+  varying vec3 vNormal;
+  varying vec3 vPosition;
+  
+  void main() {
+    vec3 viewDirection = normalize(-vPosition);
+    float fresnel = pow(1.0 - abs(dot(viewDirection, vNormal)), power);
+    
+    vec3 atmosphereColor = glowColor;
+    float alpha = fresnel * intensity;
+    
+    // Add subtle gradient from edge
+    alpha *= smoothstep(0.0, 0.5, fresnel);
+    
+    gl_FragColor = vec4(atmosphereColor, alpha);
+  }
+`;
+
+// Inner atmosphere glow shader
+const innerAtmosphereFragmentShader = `
+  uniform vec3 glowColor;
+  uniform float intensity;
+  
+  varying vec3 vNormal;
+  varying vec3 vPosition;
+  
+  void main() {
+    vec3 viewDirection = normalize(-vPosition);
+    float fresnel = pow(1.0 - abs(dot(viewDirection, vNormal)), 3.0);
+    
+    vec3 innerColor = mix(glowColor, vec3(0.6, 0.8, 1.0), 0.3);
+    float alpha = fresnel * intensity * 0.6;
+    
+    gl_FragColor = vec4(innerColor, alpha);
+  }
+`;
+
 // Individual marker component
 const MarkerPoint = ({ 
   marker, 
@@ -57,7 +110,6 @@ const MarkerPoint = ({
   
   useFrame((state) => {
     if (meshRef.current) {
-      // Subtle pulse animation for critical markers
       if (marker.status === 'critical') {
         const pulse = Math.sin(state.clock.elapsedTime * 2.5) * 0.15 + 1;
         meshRef.current.scale.setScalar(baseScale * pulse);
@@ -147,163 +199,53 @@ const MarkerPoint = ({
   );
 };
 
-// Realistic Earth globe with procedural texture
-const EarthGlobe = ({ autoRotate }: { autoRotate: boolean }) => {
+// Realistic Earth with NASA textures
+const RealisticEarth = ({ autoRotate }: { autoRotate: boolean }) => {
   const globeRef = useRef<THREE.Group>(null);
   const earthRef = useRef<THREE.Mesh>(null);
   const cloudsRef = useRef<THREE.Mesh>(null);
   
-  useFrame(() => {
-    if (autoRotate) {
-      if (globeRef.current) {
-        globeRef.current.rotation.y += 0.0008;
-      }
-      if (cloudsRef.current) {
-        cloudsRef.current.rotation.y += 0.0003;
-      }
-    }
-  });
+  // Load real NASA textures
+  const [dayMap, nightMap, cloudsMap] = useTexture([
+    '/textures/earth_daymap.jpg',
+    '/textures/earth_nightmap.jpg',
+    '/textures/earth_clouds.jpg',
+  ]);
   
-  // Create realistic Earth texture
-  const earthTexture = useMemo(() => {
+  // Configure textures
+  useEffect(() => {
+    [dayMap, nightMap, cloudsMap].forEach(texture => {
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.ClampToEdgeWrapping;
+      texture.anisotropy = 16;
+    });
+  }, [dayMap, nightMap, cloudsMap]);
+  
+  // Create procedural bump map for terrain relief
+  const bumpMap = useMemo(() => {
+    const size = 1024;
     const canvas = document.createElement('canvas');
-    canvas.width = 2048;
-    canvas.height = 1024;
+    canvas.width = size * 2;
+    canvas.height = size;
     const ctx = canvas.getContext('2d')!;
     
-    // Deep ocean gradient
-    const oceanGradient = ctx.createLinearGradient(0, 0, 0, 1024);
-    oceanGradient.addColorStop(0, '#0a1628');
-    oceanGradient.addColorStop(0.2, '#0d2847');
-    oceanGradient.addColorStop(0.4, '#0f3460');
-    oceanGradient.addColorStop(0.5, '#1a4d7c');
-    oceanGradient.addColorStop(0.6, '#0f3460');
-    oceanGradient.addColorStop(0.8, '#0d2847');
-    oceanGradient.addColorStop(1, '#0a1628');
-    ctx.fillStyle = oceanGradient;
-    ctx.fillRect(0, 0, 2048, 1024);
+    // Base dark
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, size * 2, size);
     
-    // Add ocean depth variation
-    for (let i = 0; i < 15000; i++) {
-      const x = Math.random() * 2048;
-      const y = Math.random() * 1024;
-      const alpha = Math.random() * 0.08;
-      const size = Math.random() * 3 + 1;
-      ctx.fillStyle = `rgba(30, 80, 140, ${alpha})`;
-      ctx.beginPath();
-      ctx.arc(x, y, size, 0, Math.PI * 2);
-      ctx.fill();
+    // Add terrain noise
+    const imageData = ctx.getImageData(0, 0, size * 2, size);
+    const data = imageData.data;
+    
+    for (let i = 0; i < data.length; i += 4) {
+      const noise = Math.random() * 40 + Math.sin(i * 0.001) * 20;
+      data[i] = noise;
+      data[i + 1] = noise;
+      data[i + 2] = noise;
+      data[i + 3] = 255;
     }
     
-    // Land color function
-    const drawLand = (path: Path2D, baseColor: string, highlightColor: string) => {
-      // Main land
-      const gradient = ctx.createRadialGradient(1024, 512, 0, 1024, 512, 1024);
-      gradient.addColorStop(0, highlightColor);
-      gradient.addColorStop(1, baseColor);
-      ctx.fillStyle = gradient;
-      ctx.fill(path);
-      
-      // Add terrain texture
-      ctx.save();
-      ctx.clip(path);
-      for (let i = 0; i < 3000; i++) {
-        const x = Math.random() * 2048;
-        const y = Math.random() * 1024;
-        const alpha = Math.random() * 0.15;
-        ctx.fillStyle = `rgba(60, 100, 60, ${alpha})`;
-        ctx.fillRect(x, y, Math.random() * 4 + 1, Math.random() * 4 + 1);
-      }
-      ctx.restore();
-    };
-    
-    // North America
-    const northAmerica = new Path2D();
-    northAmerica.moveTo(180, 180);
-    northAmerica.bezierCurveTo(280, 120, 380, 150, 420, 200);
-    northAmerica.bezierCurveTo(450, 280, 420, 350, 380, 420);
-    northAmerica.bezierCurveTo(350, 460, 300, 480, 280, 470);
-    northAmerica.bezierCurveTo(220, 450, 180, 400, 160, 340);
-    northAmerica.bezierCurveTo(140, 280, 120, 220, 180, 180);
-    drawLand(northAmerica, '#1a3d2e', '#2d5a45');
-    
-    // South America
-    const southAmerica = new Path2D();
-    southAmerica.moveTo(340, 500);
-    southAmerica.bezierCurveTo(380, 520, 400, 580, 390, 660);
-    southAmerica.bezierCurveTo(380, 740, 350, 820, 320, 850);
-    southAmerica.bezierCurveTo(290, 870, 270, 840, 280, 780);
-    southAmerica.bezierCurveTo(290, 700, 300, 620, 310, 540);
-    southAmerica.bezierCurveTo(320, 510, 330, 495, 340, 500);
-    drawLand(southAmerica, '#1a3d2e', '#2d5a45');
-    
-    // Europe
-    const europe = new Path2D();
-    europe.moveTo(920, 200);
-    europe.bezierCurveTo(980, 180, 1050, 200, 1100, 240);
-    europe.bezierCurveTo(1120, 280, 1100, 340, 1050, 360);
-    europe.bezierCurveTo(1000, 380, 940, 360, 900, 320);
-    europe.bezierCurveTo(870, 280, 880, 230, 920, 200);
-    drawLand(europe, '#1f4035', '#2d5a45');
-    
-    // Africa
-    const africa = new Path2D();
-    africa.moveTo(920, 380);
-    africa.bezierCurveTo(1000, 360, 1080, 400, 1120, 480);
-    africa.bezierCurveTo(1150, 560, 1130, 660, 1080, 720);
-    africa.bezierCurveTo(1020, 780, 940, 760, 900, 700);
-    africa.bezierCurveTo(860, 640, 850, 560, 870, 480);
-    africa.bezierCurveTo(890, 420, 880, 390, 920, 380);
-    drawLand(africa, '#3d5c3a', '#4a7048');
-    
-    // Asia
-    const asia = new Path2D();
-    asia.moveTo(1120, 180);
-    asia.bezierCurveTo(1280, 140, 1480, 180, 1600, 260);
-    asia.bezierCurveTo(1700, 320, 1720, 420, 1680, 500);
-    asia.bezierCurveTo(1620, 580, 1500, 560, 1400, 520);
-    asia.bezierCurveTo(1300, 480, 1200, 440, 1160, 380);
-    asia.bezierCurveTo(1120, 320, 1100, 240, 1120, 180);
-    drawLand(asia, '#1a3d2e', '#2d5a45');
-    
-    // Australia
-    const australia = new Path2D();
-    australia.moveTo(1560, 640);
-    australia.bezierCurveTo(1640, 620, 1720, 660, 1760, 720);
-    australia.bezierCurveTo(1780, 780, 1740, 840, 1680, 860);
-    australia.bezierCurveTo(1600, 880, 1520, 840, 1500, 780);
-    australia.bezierCurveTo(1480, 720, 1500, 660, 1560, 640);
-    drawLand(australia, '#5c4a32', '#7a6242');
-    
-    // Add ice caps
-    ctx.fillStyle = 'rgba(230, 240, 250, 0.9)';
-    ctx.beginPath();
-    ctx.ellipse(1024, 60, 800, 80, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(1024, 970, 600, 70, 0, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Add subtle city lights (glowing dots)
-    const cities = [
-      [300, 350], [350, 280], [280, 400], // NA
-      [330, 550], [320, 620], // SA
-      [950, 280], [980, 320], [1020, 290], // EU
-      [980, 500], [1020, 560], // AF
-      [1300, 320], [1450, 380], [1520, 300], [1600, 350], // Asia
-      [1620, 720], [1680, 750], // AU
-    ];
-    
-    cities.forEach(([x, y]) => {
-      const grd = ctx.createRadialGradient(x, y, 0, x, y, 15);
-      grd.addColorStop(0, 'rgba(255, 200, 100, 0.6)');
-      grd.addColorStop(0.5, 'rgba(255, 150, 50, 0.2)');
-      grd.addColorStop(1, 'rgba(255, 100, 0, 0)');
-      ctx.fillStyle = grd;
-      ctx.beginPath();
-      ctx.arc(x, y, 15, 0, Math.PI * 2);
-      ctx.fill();
-    });
+    ctx.putImageData(imageData, 0, 0);
     
     const texture = new THREE.CanvasTexture(canvas);
     texture.wrapS = THREE.RepeatWrapping;
@@ -311,118 +253,130 @@ const EarthGlobe = ({ autoRotate }: { autoRotate: boolean }) => {
     return texture;
   }, []);
   
-  // Create bump map for terrain relief
-  const bumpTexture = useMemo(() => {
+  // Create specular map for ocean reflections
+  const specularMap = useMemo(() => {
+    const size = 1024;
     const canvas = document.createElement('canvas');
-    canvas.width = 1024;
-    canvas.height = 512;
+    canvas.width = size * 2;
+    canvas.height = size;
     const ctx = canvas.getContext('2d')!;
     
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, 1024, 512);
-    
-    // Add noise for terrain
-    for (let i = 0; i < 20000; i++) {
-      const x = Math.random() * 1024;
-      const y = Math.random() * 512;
-      const brightness = Math.floor(Math.random() * 60);
-      ctx.fillStyle = `rgb(${brightness}, ${brightness}, ${brightness})`;
-      ctx.fillRect(x, y, 2, 2);
-    }
-    
-    const texture = new THREE.CanvasTexture(canvas);
-    return texture;
-  }, []);
-  
-  // Clouds texture
-  const cloudsTexture = useMemo(() => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 2048;
-    canvas.height = 1024;
-    const ctx = canvas.getContext('2d')!;
-    
-    ctx.fillStyle = 'transparent';
-    ctx.clearRect(0, 0, 2048, 1024);
-    
-    // Draw cloud formations
-    for (let i = 0; i < 200; i++) {
-      const x = Math.random() * 2048;
-      const y = Math.random() * 1024;
-      const radius = Math.random() * 80 + 20;
-      const opacity = Math.random() * 0.3 + 0.1;
-      
-      const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
-      gradient.addColorStop(0, `rgba(255, 255, 255, ${opacity})`);
-      gradient.addColorStop(0.5, `rgba(255, 255, 255, ${opacity * 0.5})`);
-      gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-      
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    // Draw based on day texture - oceans bright, land dark
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, size * 2, size);
     
     const texture = new THREE.CanvasTexture(canvas);
     texture.wrapS = THREE.RepeatWrapping;
     return texture;
   }, []);
+  
+  useFrame((state) => {
+    if (autoRotate) {
+      if (globeRef.current) {
+        globeRef.current.rotation.y += 0.0005;
+      }
+    }
+    if (cloudsRef.current) {
+      cloudsRef.current.rotation.y += 0.0002;
+    }
+  });
 
   return (
     <group ref={globeRef}>
-      {/* Earth sphere */}
-      <mesh ref={earthRef}>
+      {/* Main Earth sphere with realistic materials */}
+      <mesh ref={earthRef} castShadow receiveShadow>
         <sphereGeometry args={[2, 128, 128]} />
-        <meshStandardMaterial 
-          map={earthTexture}
-          bumpMap={bumpTexture}
-          bumpScale={0.02}
-          roughness={0.8}
-          metalness={0.1}
+        <meshPhongMaterial
+          map={dayMap}
+          bumpMap={bumpMap}
+          bumpScale={0.015}
+          specularMap={specularMap}
+          specular={new THREE.Color(0x333333)}
+          shininess={15}
         />
       </mesh>
       
-      {/* Clouds layer */}
-      <mesh ref={cloudsRef}>
-        <sphereGeometry args={[2.025, 64, 64]} />
-        <meshStandardMaterial 
-          map={cloudsTexture}
+      {/* Night lights layer - subtle visibility on dark side */}
+      <mesh>
+        <sphereGeometry args={[2.001, 128, 128]} />
+        <meshBasicMaterial
+          map={nightMap}
           transparent
-          opacity={0.35}
+          opacity={0.4}
+          blending={THREE.AdditiveBlending}
           depthWrite={false}
         />
       </mesh>
       
-      {/* Atmosphere rim */}
+      {/* Clouds layer with rotation */}
+      <mesh ref={cloudsRef}>
+        <sphereGeometry args={[2.015, 64, 64]} />
+        <meshPhongMaterial
+          map={cloudsMap}
+          transparent
+          opacity={0.45}
+          depthWrite={false}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      
+      {/* Inner atmosphere glow */}
       <mesh>
-        <sphereGeometry args={[2.08, 64, 64]} />
+        <sphereGeometry args={[2.04, 64, 64]} />
         <shaderMaterial
           transparent
+          depthWrite={false}
           side={THREE.BackSide}
+          blending={THREE.AdditiveBlending}
           uniforms={{
-            glowColor: { value: new THREE.Color('#4a9eff') }
+            glowColor: { value: new THREE.Color('#93c5fd') },
+            intensity: { value: 0.6 }
           }}
-          vertexShader={`
-            varying vec3 vNormal;
-            void main() {
-              vNormal = normalize(normalMatrix * normal);
-              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            }
-          `}
-          fragmentShader={`
-            uniform vec3 glowColor;
-            varying vec3 vNormal;
-            void main() {
-              float intensity = pow(0.7 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
-              gl_FragColor = vec4(glowColor, intensity * 0.4);
-            }
-          `}
+          vertexShader={atmosphereVertexShader}
+          fragmentShader={innerAtmosphereFragmentShader}
+        />
+      </mesh>
+      
+      {/* Outer atmosphere glow - Fresnel effect */}
+      <mesh scale={1.08}>
+        <sphereGeometry args={[2, 64, 64]} />
+        <shaderMaterial
+          transparent
+          depthWrite={false}
+          side={THREE.BackSide}
+          blending={THREE.AdditiveBlending}
+          uniforms={{
+            glowColor: { value: new THREE.Color('#60a5fa') },
+            intensity: { value: 1.2 },
+            power: { value: 4.0 }
+          }}
+          vertexShader={atmosphereVertexShader}
+          fragmentShader={atmosphereFragmentShader}
+        />
+      </mesh>
+      
+      {/* Subtle outer halo */}
+      <mesh scale={1.15}>
+        <sphereGeometry args={[2, 32, 32]} />
+        <shaderMaterial
+          transparent
+          depthWrite={false}
+          side={THREE.BackSide}
+          blending={THREE.AdditiveBlending}
+          uniforms={{
+            glowColor: { value: new THREE.Color('#3b82f6') },
+            intensity: { value: 0.3 },
+            power: { value: 6.0 }
+          }}
+          vertexShader={atmosphereVertexShader}
+          fragmentShader={atmosphereFragmentShader}
         />
       </mesh>
     </group>
   );
 };
 
-// Camera controller
+// Camera controller with smooth controls
 const CameraController = ({ autoRotate }: { autoRotate: boolean }) => {
   return (
     <OrbitControls
@@ -432,15 +386,55 @@ const CameraController = ({ autoRotate }: { autoRotate: boolean }) => {
       autoRotate={false}
       minDistance={2.8}
       maxDistance={8}
-      dampingFactor={0.08}
+      dampingFactor={0.05}
       enableDamping={true}
-      rotateSpeed={0.5}
-      zoomSpeed={0.8}
+      rotateSpeed={0.4}
+      zoomSpeed={0.6}
     />
   );
 };
 
-// Main scene
+// Cinematic lighting setup
+const CinematicLighting = () => {
+  return (
+    <>
+      {/* Main sun light */}
+      <directionalLight 
+        position={[10, 5, 8]} 
+        intensity={2.5} 
+        color="#fff8f0"
+        castShadow
+        shadow-mapSize={[2048, 2048]}
+      />
+      
+      {/* Rim light for depth */}
+      <directionalLight 
+        position={[-8, 3, -5]} 
+        intensity={0.4} 
+        color="#a5b4fc"
+      />
+      
+      {/* Ambient fill */}
+      <ambientLight intensity={0.12} color="#e0e7ff" />
+      
+      {/* Top accent */}
+      <pointLight 
+        position={[0, 8, 0]} 
+        intensity={0.3} 
+        color="#ffffff" 
+      />
+      
+      {/* Bottom fill - space reflection */}
+      <pointLight 
+        position={[0, -5, 0]} 
+        intensity={0.1} 
+        color="#1e3a5f" 
+      />
+    </>
+  );
+};
+
+// Main scene with everything
 const GlobeScene = ({ 
   markers, 
   onMarkerClick, 
@@ -450,33 +444,35 @@ const GlobeScene = ({
 }: Globe3DProps & { selectedMarkerId: string | null }) => {
   return (
     <>
-      {/* Lighting setup for realistic look */}
-      <ambientLight intensity={0.15} />
-      <directionalLight 
-        position={[5, 3, 5]} 
-        intensity={1.8} 
-        color="#fff5e6"
-        castShadow
-      />
-      <directionalLight 
-        position={[-5, -2, -5]} 
-        intensity={0.3} 
-        color="#4a9eff"
-      />
-      <pointLight position={[0, 10, 0]} intensity={0.2} color="#fff" />
+      <CinematicLighting />
       
-      {/* Subtle star background */}
+      {/* Deep space background */}
+      <color attach="background" args={['#030712']} />
+      
+      {/* Subtle stars */}
       <Stars 
-        radius={300} 
-        depth={100} 
-        count={3000} 
+        radius={400} 
+        depth={60} 
+        count={4000} 
         factor={3} 
-        saturation={0} 
+        saturation={0.1} 
         fade 
-        speed={0.3}
+        speed={0.2}
       />
       
-      <EarthGlobe autoRotate={autoRotate} />
+      {/* Nebula-like background glow */}
+      <mesh position={[0, 0, -50]}>
+        <planeGeometry args={[200, 200]} />
+        <meshBasicMaterial 
+          color="#0a1628" 
+          transparent 
+          opacity={0.3}
+        />
+      </mesh>
+      
+      <Suspense fallback={null}>
+        <RealisticEarth autoRotate={autoRotate} />
+      </Suspense>
       
       {markers.map((marker) => (
         <MarkerPoint
@@ -492,33 +488,60 @@ const GlobeScene = ({
   );
 };
 
+// Loading component
+const GlobeLoading = () => (
+  <div className="absolute inset-0 flex items-center justify-center">
+    <div className="text-center">
+      <div className="w-16 h-16 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto" />
+      <p className="text-white/60 text-sm mt-4">Carregando globo...</p>
+    </div>
+  </div>
+);
+
 export const Globe3D = ({ markers, onMarkerClick, autoRotate, showAtmosphere }: Globe3DProps) => {
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
   
   const handleMarkerClick = (marker: BusinessMarker) => {
     setSelectedMarkerId(marker.id);
     onMarkerClick(marker);
   };
   
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoaded(true), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <div className="w-full h-full rounded-xl overflow-hidden" style={{ background: 'radial-gradient(ellipse at center, #0f1729 0%, #030712 100%)' }}>
+    <div className="w-full h-full relative bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+      {!isLoaded && <GlobeLoading />}
       <Canvas
-        camera={{ position: [0, 0, 5], fov: 45 }}
-        dpr={[1, 2]}
-        gl={{ 
-          antialias: true, 
-          alpha: false,
-          powerPreference: 'high-performance'
+        camera={{ 
+          position: [0, 0, 5], 
+          fov: 45,
+          near: 0.1,
+          far: 1000
         }}
+        gl={{ 
+          antialias: true,
+          alpha: true,
+          powerPreference: 'high-performance',
+          toneMapping: THREE.ACESFilmicToneMapping,
+          toneMappingExposure: 1.1
+        }}
+        shadows
+        dpr={[1, 2]}
+        onCreated={() => setIsLoaded(true)}
       >
-        <color attach="background" args={['#030712']} />
-        <GlobeScene
-          markers={markers}
-          onMarkerClick={handleMarkerClick}
-          autoRotate={autoRotate}
-          showAtmosphere={showAtmosphere}
-          selectedMarkerId={selectedMarkerId}
-        />
+        <Suspense fallback={null}>
+          <GlobeScene
+            markers={markers}
+            onMarkerClick={handleMarkerClick}
+            autoRotate={autoRotate}
+            showAtmosphere={showAtmosphere}
+            selectedMarkerId={selectedMarkerId}
+          />
+        </Suspense>
       </Canvas>
     </div>
   );
