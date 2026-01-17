@@ -25,7 +25,8 @@ import {
   MessageSquare,
   CheckCircle2,
   XCircle,
-  Eye
+  Eye,
+  Globe2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,6 +41,7 @@ import { cn } from '@/lib/utils';
 import { COUNTRIES, BRAZILIAN_STATES, getNichesForCountry, getCountryByCode } from '@/components/affiliate/prospecting/global/globalSearchData';
 import { RadiusFilterModal } from '@/components/affiliate/prospecting/RadiusFilterModal';
 import { GenesisBusinessDetailModal } from './GenesisBusinessDetailModal';
+import { GlobalMapModal, GlobalMapIntro } from './global-map';
 
 const ITEMS_PER_PAGE = 9;
 
@@ -139,6 +141,8 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
   const [radiusFilterOpen, setRadiusFilterOpen] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedBusiness, setSelectedBusiness] = useState<SearchResult | null>(null);
+  const [globalMapIntroOpen, setGlobalMapIntroOpen] = useState(false);
+  const [globalMapOpen, setGlobalMapOpen] = useState(false);
   
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
