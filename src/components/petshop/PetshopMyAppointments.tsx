@@ -112,18 +112,35 @@ const PetshopMyAppointments = ({ isOpen, onClose }: PetshopMyAppointmentsProps) 
 
     setCancellingId(apt.id);
 
-    const message = `Olá! Gostaria de cancelar meu agendamento. ❌\n\n*Agendamento:*\n• Serviço: ${apt.serviceName}\n• Pet: ${apt.petName} ${apt.petType === 'dog' ? '🐕' : '🐱'}\n• Data/Hora: ${formatDate(apt.date)} às ${apt.time}\n\n*Meus dados:*\n• Nome: ${apt.ownerName}\n• WhatsApp: ${apt.phone}\n\nObrigado(a)!`;
+    const petshopPhone = '5581998409073';
+
+    const cancelToPetshop = `Olá! Gostaria de cancelar meu agendamento. ❌\n\n*Agendamento:*\n• Serviço: ${apt.serviceName}\n• Pet: ${apt.petName} ${apt.petType === 'dog' ? '🐕' : '🐱'}\n• Data/Hora: ${formatDate(apt.date)} às ${apt.time}\n\n*Meus dados:*\n• Nome: ${apt.ownerName}\n• WhatsApp: ${apt.phone}\n\nObrigado(a)!`;
+
+    const cancelToClient = `❌ *Cancelamento confirmado!*\n\nOlá, ${apt.ownerName}! Seu cancelamento no *Seu Xodó Petshop* foi registrado.\n\n• Serviço: ${apt.serviceName}\n• Pet: ${apt.petName} ${apt.petType === 'dog' ? '🐕' : '🐱'}\n• Data/Hora: ${formatDate(apt.date)} às ${apt.time}\n\nSe quiser remarcar, é só fazer um novo agendamento por aqui.`;
 
     try {
+      // 1) Avisar o Petshop
       const { data, error } = await supabase.functions.invoke('send-petshop-whatsapp', {
         body: {
-          phone: '5581998409073',
-          message,
+          phone: petshopPhone,
+          message: cancelToPetshop,
         },
       });
 
       if (error || !data?.success) {
         throw new Error((data as any)?.error || 'Falha ao enviar cancelamento');
+      }
+
+      // 2) Confirmar para o cliente
+      try {
+        await supabase.functions.invoke('send-petshop-whatsapp', {
+          body: {
+            phone: apt.phone,
+            message: cancelToClient,
+          },
+        });
+      } catch {
+        // best effort
       }
 
       const next: Appointment[] = getAppointments().map((a) =>
@@ -133,11 +150,11 @@ const PetshopMyAppointments = ({ isOpen, onClose }: PetshopMyAppointmentsProps) 
       );
       persistAppointments(next);
       setAppointments(next);
-      toast.success('Cancelamento enviado no WhatsApp!');
+      toast.success('Cancelamento enviado e confirmado no seu WhatsApp!');
     } catch (e) {
       console.error(e);
-      // fallback manual
-      window.open(`https://wa.me/5581998409073?text=${encodeURIComponent(message)}`, '_blank');
+      // fallback manual para avisar o petshop
+      window.open(`https://wa.me/${petshopPhone}?text=${encodeURIComponent(cancelToPetshop)}`, '_blank');
 
       const next: Appointment[] = getAppointments().map((a) =>
         a.id === apt.id

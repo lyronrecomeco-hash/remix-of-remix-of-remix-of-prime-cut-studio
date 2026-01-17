@@ -119,25 +119,47 @@ const PetshopSchedule = ({ isOpen, onClose }: PetshopScheduleProps) => {
 Aguardo a confirmação! Obrigado(a)! 😊`;
 
     try {
-      // Enviar via edge function pública do petshop
+      const petshopPhone = '5581998409073';
+      const clientPhone = formData.phone;
+
+      // 1) Envia o pedido de agendamento para o WhatsApp do Petshop (mensagem do CLIENTE)
       const { data, error } = await supabase.functions.invoke('send-petshop-whatsapp', {
         body: {
-          phone: '5581998409073',
-          message: message,
+          phone: petshopPhone,
+          message,
         },
       });
 
-      console.log('[PetshopSchedule] Resposta:', data, error);
+      console.log('[PetshopSchedule] Resposta (petshop):', data, error);
 
       if (error) {
-        console.error('Erro ao enviar WhatsApp:', error);
-        // Fallback para WhatsApp Web
-        window.open(`https://wa.me/5581998409073?text=${encodeURIComponent(message)}`, '_blank');
+        console.error('Erro ao enviar WhatsApp (petshop):', error);
+        // Fallback para WhatsApp Web (petshop)
+        window.open(`https://wa.me/${petshopPhone}?text=${encodeURIComponent(message)}`, '_blank');
       } else if (data?.success) {
-        console.log('✅ Mensagem enviada via Genesis!');
+        console.log('✅ Mensagem enviada via Genesis (petshop)');
       } else {
-        // Fallback para WhatsApp Web
-        window.open(`https://wa.me/5581998409073?text=${encodeURIComponent(message)}`, '_blank');
+        window.open(`https://wa.me/${petshopPhone}?text=${encodeURIComponent(message)}`, '_blank');
+      }
+
+      // 2) Envia confirmação automática para o número do cliente (mensagem do PETSHOP)
+      const confirmationMessage = `✅ *Agendamento confirmado!*\n\nOlá, ${formData.ownerName}! Seu agendamento no *Seu Xodó Petshop* foi confirmado.\n\n• Serviço: ${selectedService?.name}\n• Pet: ${formData.petName} ${formData.petType === 'dog' ? '🐕' : '🐱'}\n• Data/Hora: ${formatDate(formData.date)} às ${formData.time}\n\n📍 Endereço: Estr. de Belém, 1273 - Campo Grande, Recife - PE\n\nSe precisar alterar ou cancelar, fale com a gente por aqui.`;
+
+      try {
+        const { data: confirmData, error: confirmError } = await supabase.functions.invoke('send-petshop-whatsapp', {
+          body: {
+            phone: clientPhone,
+            message: confirmationMessage,
+          },
+        });
+
+        console.log('[PetshopSchedule] Resposta (cliente):', confirmData, confirmError);
+
+        if (confirmError || !confirmData?.success) {
+          console.warn('Não foi possível enviar a confirmação automática para o cliente.');
+        }
+      } catch (e) {
+        console.warn('Falha ao enviar confirmação automática para o cliente:', e);
       }
 
       // Salvar agendamento localmente
