@@ -4,9 +4,9 @@ import { X, ChevronRight, ChevronLeft, Check, Calendar, Clock, User, Phone, Spar
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { saveAppointment } from './PetshopMyAppointments';
+import { openWhatsAppLink, sendPetshopWhatsAppWithRetry } from '@/lib/petshopWhatsApp';
 
 interface PetshopScheduleProps {
   isOpen: boolean;
@@ -123,43 +123,31 @@ Aguardo a confirmação! Obrigado(a)! 😊`;
       const clientPhone = formData.phone;
 
       // 1) Envia o pedido de agendamento para o WhatsApp do Petshop (mensagem do CLIENTE)
-      const { data, error } = await supabase.functions.invoke('send-petshop-whatsapp', {
-        body: {
+      try {
+        await sendPetshopWhatsAppWithRetry({
           phone: petshopPhone,
           message,
-        },
-      });
-
-      console.log('[PetshopSchedule] Resposta (petshop):', data, error);
-
-      if (error) {
-        console.error('Erro ao enviar WhatsApp (petshop):', error);
-        // Fallback para WhatsApp Web (petshop)
-        window.open(`https://wa.me/${petshopPhone}?text=${encodeURIComponent(message)}`, '_blank');
-      } else if (data?.success) {
-        console.log('✅ Mensagem enviada via Genesis (petshop)');
-      } else {
-        window.open(`https://wa.me/${petshopPhone}?text=${encodeURIComponent(message)}`, '_blank');
+        });
+        console.log('✅ Mensagem enviada via backend (petshop)');
+      } catch (e) {
+        console.error('Erro ao enviar WhatsApp (petshop):', e);
+        // Fallback confiável (principalmente no mobile)
+        openWhatsAppLink(petshopPhone, message);
       }
 
       // 2) Envia confirmação automática para o número do cliente (mensagem do PETSHOP)
       const confirmationMessage = `✅ *Agendamento confirmado!*\n\nOlá, ${formData.ownerName}! Seu agendamento no *Seu Xodó Petshop* foi confirmado.\n\n• Serviço: ${selectedService?.name}\n• Pet: ${formData.petName} ${formData.petType === 'dog' ? '🐕' : '🐱'}\n• Data/Hora: ${formatDate(formData.date)} às ${formData.time}\n\n📍 Endereço: Estr. de Belém, 1273 - Campo Grande, Recife - PE\n\nSe precisar alterar ou cancelar, fale com a gente por aqui.`;
 
       try {
-        const { data: confirmData, error: confirmError } = await supabase.functions.invoke('send-petshop-whatsapp', {
-          body: {
-            phone: clientPhone,
-            message: confirmationMessage,
-          },
+        await sendPetshopWhatsAppWithRetry({
+          phone: clientPhone,
+          message: confirmationMessage,
         });
-
-        console.log('[PetshopSchedule] Resposta (cliente):', confirmData, confirmError);
-
-        if (confirmError || !confirmData?.success) {
-          console.warn('Não foi possível enviar a confirmação automática para o cliente.');
-        }
+        console.log('✅ Confirmação automática enviada para o cliente');
       } catch (e) {
-        console.warn('Falha ao enviar confirmação automática para o cliente:', e);
+        console.warn('Não foi possível enviar a confirmação automática para o cliente:', e);
+        // Não existe fallback perfeito aqui (é o petshop que precisa enviar).
+        toast.message('Aviso: não consegui enviar a confirmação automática agora.');
       }
 
       // Salvar agendamento localmente
@@ -178,8 +166,8 @@ Aguardo a confirmação! Obrigado(a)! 😊`;
       toast.success('Agendamento confirmado!');
     } catch (err) {
       console.error('Erro:', err);
-      // Fallback para WhatsApp Web
-      window.open(`https://wa.me/5581998409073?text=${encodeURIComponent(message)}`, '_blank');
+      // Fallback confiável para WhatsApp (mobile e desktop)
+      openWhatsAppLink('5581998409073', message);
       
       // Salvar mesmo assim
       saveAppointment({

@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Calendar, Clock, Navigation, Scissors, Stethoscope, Home, XCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { openWhatsAppLink, sendPetshopWhatsAppWithRetry } from '@/lib/petshopWhatsApp';
 
 interface Appointment {
   id: string;
@@ -120,27 +120,20 @@ const PetshopMyAppointments = ({ isOpen, onClose }: PetshopMyAppointmentsProps) 
 
     try {
       // 1) Avisar o Petshop
-      const { data, error } = await supabase.functions.invoke('send-petshop-whatsapp', {
-        body: {
-          phone: petshopPhone,
-          message: cancelToPetshop,
-        },
+      await sendPetshopWhatsAppWithRetry({
+        phone: petshopPhone,
+        message: cancelToPetshop,
       });
 
-      if (error || !data?.success) {
-        throw new Error((data as any)?.error || 'Falha ao enviar cancelamento');
-      }
-
-      // 2) Confirmar para o cliente
+      // 2) Confirmar para o cliente (best effort)
       try {
-        await supabase.functions.invoke('send-petshop-whatsapp', {
-          body: {
-            phone: apt.phone,
-            message: cancelToClient,
-          },
+        await sendPetshopWhatsAppWithRetry({
+          phone: apt.phone,
+          message: cancelToClient,
         });
-      } catch {
-        // best effort
+      } catch (e) {
+        console.warn('Falha ao enviar confirmação de cancelamento para o cliente:', e);
+        toast.message('Aviso: não consegui enviar a confirmação automática agora.');
       }
 
       const next: Appointment[] = getAppointments().map((a) =>
@@ -153,8 +146,8 @@ const PetshopMyAppointments = ({ isOpen, onClose }: PetshopMyAppointmentsProps) 
       toast.success('Cancelamento enviado e confirmado no seu WhatsApp!');
     } catch (e) {
       console.error(e);
-      // fallback manual para avisar o petshop
-      window.open(`https://wa.me/${petshopPhone}?text=${encodeURIComponent(cancelToPetshop)}`, '_blank');
+      // fallback manual para avisar o petshop (mobile-safe)
+      openWhatsAppLink(petshopPhone, cancelToPetshop);
 
       const next: Appointment[] = getAppointments().map((a) =>
         a.id === apt.id
