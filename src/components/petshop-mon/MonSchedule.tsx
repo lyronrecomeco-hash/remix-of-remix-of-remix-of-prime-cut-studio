@@ -140,19 +140,9 @@ const MonSchedule = ({ isOpen, onClose }: MonScheduleProps) => {
 Aguardo a confirmação! Obrigado(a)! 😊`;
 
     try {
-      const petshopPhone = '5527997717391';
+      // DEMO: Não envia para o petshop real, apenas salva localmente
       const clientPhone = formData.phone;
-
-      try {
-        await sendPetshopWhatsAppWithRetry({
-          phone: petshopPhone,
-          message,
-        });
-        console.log('✅ Mensagem enviada via backend (Mon Petit)');
-      } catch (e) {
-        console.error('Erro ao enviar WhatsApp (Mon Petit):', e);
-        openWhatsAppLink(petshopPhone, message);
-      }
+      console.log('📋 [DEMO] Agendamento registrado (sem envio para petshop)');
 
       const confirmationMessage = `✅ *Agendamento confirmado!*\n\nOlá, ${formData.ownerName}! Seu agendamento no *Mon Petit Aracruz* foi confirmado.\n\n• Serviço: ${selectedService?.name}\n• Pet: ${formData.petName} ${formData.petType === 'dog' ? '🐕' : '🐱'}\n• Data/Hora: ${formatDate(formData.date)} às ${formData.time}\n\n📍 Endereço: Cohab 2 - Aracruz, ES\n\nO banho e tosa mais cheiroso da cidade! 🐾`;
 
@@ -182,7 +172,7 @@ Aguardo a confirmação! Obrigado(a)! 😊`;
       toast.success('Agendamento confirmado!');
     } catch (err) {
       console.error('Erro:', err);
-      openWhatsAppLink('5527997717391', message);
+      // DEMO: Não abre WhatsApp para o petshop real
       
       saveMonAppointment({
         service: formData.service,
