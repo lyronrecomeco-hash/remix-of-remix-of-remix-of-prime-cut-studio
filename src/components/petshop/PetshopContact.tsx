@@ -16,7 +16,7 @@ const PetshopContact = ({ onScheduleClick }: PetshopContactProps) => {
     {
       icon: Phone,
       title: 'Telefone',
-      value: '(11) 99999-9999',
+      value: '(81) 99840-9073',
       subtitle: 'WhatsApp disponível',
     },
     {
@@ -28,8 +28,8 @@ const PetshopContact = ({ onScheduleClick }: PetshopContactProps) => {
     {
       icon: MapPin,
       title: 'Endereço',
-      value: 'Rua das Patinhas, 123',
-      subtitle: 'Vila Nova - São Paulo/SP',
+      value: 'Estr. de Belém, 1273',
+      subtitle: 'Campo Grande, Recife - PE',
     },
     {
       icon: Clock,
@@ -98,7 +98,7 @@ const PetshopContact = ({ onScheduleClick }: PetshopContactProps) => {
                 className="border-white text-white hover:bg-white hover:text-petshop-dark"
               >
                 <a
-                  href="https://wa.me/5511999999999"
+                  href="https://wa.me/5581998409073"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -118,7 +118,7 @@ const PetshopContact = ({ onScheduleClick }: PetshopContactProps) => {
           >
             <div className="bg-white rounded-3xl overflow-hidden shadow-2xl">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3657.1975941847897!2d-46.65512892467371!3d-23.561684578799747!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce59c8da0aa315%3A0xd59f9431f2c9776a!2sAv.%20Paulista%2C%20S%C3%A3o%20Paulo%20-%20SP!5e0!3m2!1spt-BR!2sbr!4v1705000000000!5m2!1spt-BR!2sbr"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3949.9!2d-34.94!3d-8.08!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zOCwwOCdTIDM0wrA1Nic!5e0!3m2!1spt-BR!2sbr!4v1705000000000!5m2!1spt-BR!2sbr"
                 width="100%"
                 height="350"
                 style={{ border: 0 }}
@@ -132,11 +132,11 @@ const PetshopContact = ({ onScheduleClick }: PetshopContactProps) => {
                   Seu Xodó Petshop
                 </h3>
                 <p className="text-petshop-gray text-sm mb-4">
-                  Rua das Patinhas, 123 - Vila Nova<br />
-                  São Paulo - SP, 01310-100
+                  Estr. de Belém, 1273 - Campo Grande<br />
+                  Recife - PE, 52040-000
                 </p>
                 <a
-                  href="https://www.google.com/maps/dir/?api=1&destination=-23.5616849,-46.6551289"
+                  href="https://www.google.com/maps/dir/?api=1&destination=Estr.+de+Belém,+1273+-+Campo+Grande,+Recife+-+PE"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-petshop-orange font-medium text-sm hover:underline"

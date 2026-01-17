@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import PetshopHeader from '@/components/petshop/PetshopHeader';
 import PetshopHero from '@/components/petshop/PetshopHero';
 import PetshopAbout from '@/components/petshop/PetshopAbout';
@@ -12,9 +13,16 @@ import PetshopFooter from '@/components/petshop/PetshopFooter';
 const PetshopPage = () => {
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
 
+  const handleMyAppointments = () => {
+    toast.info('Em breve você poderá consultar seus agendamentos aqui!');
+  };
+
   return (
     <div className="min-h-screen bg-white">
-      <PetshopHeader onScheduleClick={() => setIsScheduleOpen(true)} />
+      <PetshopHeader 
+        onScheduleClick={() => setIsScheduleOpen(true)} 
+        onMyAppointmentsClick={handleMyAppointments}
+      />
       <PetshopHero onScheduleClick={() => setIsScheduleOpen(true)} />
       <PetshopAbout />
       <PetshopServices onScheduleClick={() => setIsScheduleOpen(true)} />
