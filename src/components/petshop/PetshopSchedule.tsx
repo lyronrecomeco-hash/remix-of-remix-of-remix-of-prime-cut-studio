@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronRight, ChevronLeft, Check, Calendar, Clock, User, Phone, Sparkles, Loader2, CheckCircle2, Scissors, Stethoscope, Home, ShoppingBag } from 'lucide-react';
+import { X, ChevronRight, ChevronLeft, Check, Calendar, Clock, User, Phone, Sparkles, Loader2, CheckCircle2, Scissors, Stethoscope, Home, Navigation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { saveAppointment } from './PetshopMyAppointments';
 
 interface PetshopScheduleProps {
   isOpen: boolean;
@@ -84,6 +85,11 @@ const PetshopSchedule = ({ isOpen, onClose }: PetshopScheduleProps) => {
     }, 300);
   };
 
+  const openGPS = () => {
+    const address = encodeURIComponent('Estr. de Belém, 1273 - Campo Grande, Recife - PE, 52040-000');
+    window.open(`https://www.google.com/maps/search/?api=1&query=${address}`, '_blank');
+  };
+
   const handleSubmit = async () => {
     if (!formData.ownerName || !formData.phone) {
       toast.error('Preencha todos os campos');
@@ -95,7 +101,7 @@ const PetshopSchedule = ({ isOpen, onClose }: PetshopScheduleProps) => {
     const selectedService = services.find(s => s.id === formData.service);
     const petTypeLabel = formData.petType === 'dog' ? 'Cachorro 🐕' : 'Gato 🐱';
     
-    // Mensagem do ponto de vista do CLIENTE
+    // Mensagem como se fosse o CLIENTE enviando
     const message = `Olá! 🐾 Gostaria de agendar um serviço para meu pet.
 
 *Serviço desejado:* ${selectedService?.name}
@@ -116,29 +122,58 @@ const PetshopSchedule = ({ isOpen, onClose }: PetshopScheduleProps) => {
 Aguardo a confirmação! Obrigado(a)! 😊`;
 
     try {
-      // Tentar enviar via Genesis WhatsApp
-      const { data, error } = await supabase.functions.invoke('send-whatsapp-genesis', {
+      // Enviar via edge function pública do petshop
+      const { data, error } = await supabase.functions.invoke('send-petshop-whatsapp', {
         body: {
           phone: '5581998409073',
           message: message,
-          countryCode: 'BR',
         },
       });
 
+      console.log('[PetshopSchedule] Resposta:', data, error);
+
       if (error) {
         console.error('Erro ao enviar WhatsApp:', error);
+        // Fallback para WhatsApp Web
         window.open(`https://wa.me/5581998409073?text=${encodeURIComponent(message)}`, '_blank');
       } else if (data?.success) {
-        console.log('Mensagem enviada via Genesis:', data);
+        console.log('✅ Mensagem enviada via Genesis!');
       } else {
+        // Fallback para WhatsApp Web
         window.open(`https://wa.me/5581998409073?text=${encodeURIComponent(message)}`, '_blank');
       }
 
+      // Salvar agendamento localmente
+      saveAppointment({
+        service: formData.service,
+        serviceName: selectedService?.name || '',
+        petName: formData.petName,
+        petType: formData.petType,
+        date: formData.date,
+        time: formData.time,
+        ownerName: formData.ownerName,
+        phone: formData.phone,
+      });
+
       setIsSuccess(true);
-      toast.success('Agendamento enviado com sucesso!');
+      toast.success('Agendamento confirmado!');
     } catch (err) {
       console.error('Erro:', err);
+      // Fallback para WhatsApp Web
       window.open(`https://wa.me/5581998409073?text=${encodeURIComponent(message)}`, '_blank');
+      
+      // Salvar mesmo assim
+      saveAppointment({
+        service: formData.service,
+        serviceName: selectedService?.name || '',
+        petName: formData.petName,
+        petType: formData.petType,
+        date: formData.date,
+        time: formData.time,
+        ownerName: formData.ownerName,
+        phone: formData.phone,
+      });
+      
       setIsSuccess(true);
     } finally {
       setIsSubmitting(false);
@@ -167,9 +202,9 @@ Aguardo a confirmação! Obrigado(a)! 😊`;
               <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <CheckCircle2 className="w-12 h-12 text-green-600" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-3">Agendamento Enviado!</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">Agendamento Confirmado!</h2>
               <p className="text-gray-600 mb-6">
-                Seu pedido foi enviado para o Seu Xodó Petshop. Aguarde a confirmação no seu WhatsApp!
+                Seu agendamento foi registrado. Você receberá a confirmação no seu WhatsApp em breve!
               </p>
               <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 mb-6 text-left">
                 <div className="flex items-center gap-3">
@@ -186,12 +221,23 @@ Aguardo a confirmação! Obrigado(a)! 😊`;
                   </div>
                 </div>
               </div>
-              <Button
-                onClick={handleClose}
-                className="w-full h-12 text-base font-semibold bg-petshop-orange hover:bg-petshop-orange/90 text-white rounded-xl"
-              >
-                Fechar
-              </Button>
+              
+              <div className="flex gap-3">
+                <Button
+                  onClick={openGPS}
+                  variant="outline"
+                  className="flex-1 h-12 text-base font-semibold border-petshop-orange text-petshop-orange hover:bg-petshop-orange hover:text-white rounded-xl"
+                >
+                  <Navigation className="w-4 h-4 mr-2" />
+                  Abrir GPS
+                </Button>
+                <Button
+                  onClick={handleClose}
+                  className="flex-1 h-12 text-base font-semibold bg-petshop-orange hover:bg-petshop-orange/90 text-white rounded-xl"
+                >
+                  Fechar
+                </Button>
+              </div>
             </motion.div>
           ) : (
             <>
@@ -406,25 +452,25 @@ Aguardo a confirmação! Obrigado(a)! 😊`;
                         />
                       </div>
 
-                      {/* Resumo */}
-                      <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                        <h4 className="font-bold text-gray-900 mb-3">Resumo do agendamento</h4>
+                      {/* Summary */}
+                      <div className="bg-gray-50 rounded-xl p-4 mt-4">
+                        <h4 className="font-semibold text-gray-900 mb-3">Resumo do agendamento</h4>
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between">
-                            <span className="text-gray-600">Serviço:</span>
+                            <span className="text-gray-500">Serviço:</span>
                             <span className="font-medium text-gray-900">{services.find(s => s.id === formData.service)?.name}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-gray-600">Pet:</span>
-                            <span className="font-medium text-gray-900">{formData.petName} ({formData.petType === 'dog' ? 'Cachorro' : 'Gato'})</span>
+                            <span className="text-gray-500">Pet:</span>
+                            <span className="font-medium text-gray-900">{formData.petName} {formData.petType === 'dog' ? '🐕' : '🐱'}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-gray-600">Data/Hora:</span>
+                            <span className="text-gray-500">Data/Hora:</span>
                             <span className="font-medium text-gray-900">{formatDate(formData.date)} às {formData.time}</span>
                           </div>
                           <div className="flex justify-between pt-2 border-t border-gray-200">
-                            <span className="text-gray-600">Valor:</span>
-                            <span className="font-bold text-petshop-orange text-base">{services.find(s => s.id === formData.service)?.price}</span>
+                            <span className="text-gray-500">Valor:</span>
+                            <span className="font-bold text-petshop-orange">{services.find(s => s.id === formData.service)?.price}</span>
                           </div>
                         </div>
                       </div>
@@ -434,14 +480,14 @@ Aguardo a confirmação! Obrigado(a)! 😊`;
               </div>
 
               {/* Footer */}
-              <div className="p-5 border-t border-gray-100 bg-white flex gap-3">
+              <div className="p-5 border-t border-gray-100 bg-gray-50 flex gap-3">
                 {step > 1 && (
                   <Button
-                    variant="outline"
                     onClick={handlePrev}
-                    className="flex-1 h-12 rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50"
+                    variant="outline"
+                    className="flex-1 h-12 text-base font-semibold border-gray-300 text-gray-700 rounded-xl"
                   >
-                    <ChevronLeft className="w-4 h-4 mr-1" />
+                    <ChevronLeft className="w-5 h-5 mr-1" />
                     Voltar
                   </Button>
                 )}
@@ -449,25 +495,25 @@ Aguardo a confirmação! Obrigado(a)! 😊`;
                 {step < 4 ? (
                   <Button
                     onClick={handleNext}
-                    className="flex-1 h-12 rounded-xl bg-petshop-orange hover:bg-petshop-orange/90 text-white font-semibold"
+                    className="flex-1 h-12 text-base font-semibold bg-petshop-orange hover:bg-petshop-orange/90 text-white rounded-xl"
                   >
                     Próximo
-                    <ChevronRight className="w-4 h-4 ml-1" />
+                    <ChevronRight className="w-5 h-5 ml-1" />
                   </Button>
                 ) : (
                   <Button
                     onClick={handleSubmit}
                     disabled={isSubmitting}
-                    className="flex-1 h-12 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold"
+                    className="flex-1 h-12 text-base font-semibold bg-green-600 hover:bg-green-700 text-white rounded-xl"
                   >
                     {isSubmitting ? (
                       <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Enviando...
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Confirmando...
                       </>
                     ) : (
                       <>
-                        <Check className="w-4 h-4 mr-2" />
+                        <Check className="w-5 h-5 mr-2" />
                         Confirmar Agendamento
                       </>
                     )}

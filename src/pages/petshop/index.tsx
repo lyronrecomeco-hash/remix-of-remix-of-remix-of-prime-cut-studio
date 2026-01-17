@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { toast } from 'sonner';
 import PetshopHeader from '@/components/petshop/PetshopHeader';
 import PetshopHero from '@/components/petshop/PetshopHero';
 import PetshopAbout from '@/components/petshop/PetshopAbout';
@@ -9,19 +8,17 @@ import PetshopTestimonials from '@/components/petshop/PetshopTestimonials';
 import PetshopSchedule from '@/components/petshop/PetshopSchedule';
 import PetshopContact from '@/components/petshop/PetshopContact';
 import PetshopFooter from '@/components/petshop/PetshopFooter';
+import PetshopMyAppointments from '@/components/petshop/PetshopMyAppointments';
 
 const PetshopPage = () => {
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
-
-  const handleMyAppointments = () => {
-    toast.info('Em breve você poderá consultar seus agendamentos aqui!');
-  };
+  const [isMyAppointmentsOpen, setIsMyAppointmentsOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-white">
       <PetshopHeader 
         onScheduleClick={() => setIsScheduleOpen(true)} 
-        onMyAppointmentsClick={handleMyAppointments}
+        onMyAppointmentsClick={() => setIsMyAppointmentsOpen(true)}
       />
       <PetshopHero onScheduleClick={() => setIsScheduleOpen(true)} />
       <PetshopAbout />
@@ -34,6 +31,11 @@ const PetshopPage = () => {
       <PetshopSchedule 
         isOpen={isScheduleOpen} 
         onClose={() => setIsScheduleOpen(false)} 
+      />
+      
+      <PetshopMyAppointments
+        isOpen={isMyAppointmentsOpen}
+        onClose={() => setIsMyAppointmentsOpen(false)}
       />
     </div>
   );
