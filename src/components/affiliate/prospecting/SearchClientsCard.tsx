@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Search, MapPin, Building2, Loader2, Users, ExternalLink, ChevronLeft, ChevronRight, Target } from 'lucide-react';
+import { Search, MapPin, Building2, Loader2, Users, ExternalLink, ChevronLeft, ChevronRight, Target, Globe, Star, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { RadiusFilterModal } from './RadiusFilterModal';
+import { BusinessDetailModal } from './BusinessDetailModal';
 
 interface SearchResult {
   name: string;
@@ -94,11 +95,18 @@ const MAX_RESULTS_OPTIONS = [
   { value: '500', label: '500' },
 ];
 
+const SEARCH_FILTER_OPTIONS = [
+  { value: 'all', label: 'Todos' },
+  { value: 'no_website', label: 'Sem Site' },
+  { value: 'with_website', label: 'Com Site/Online' },
+];
+
 export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsCardProps) => {
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [niche, setNiche] = useState('');
   const [maxResults, setMaxResults] = useState<string>('200');
+  const [searchFilter, setSearchFilter] = useState<string>('all');
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [originalResults, setOriginalResults] = useState<SearchResult[]>([]);
@@ -106,13 +114,34 @@ export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsC
   const [currentPage, setCurrentPage] = useState(1);
   const [radiusModalOpen, setRadiusModalOpen] = useState(false);
   const [isFiltered, setIsFiltered] = useState(false);
+  const [selectedBusiness, setSelectedBusiness] = useState<SearchResult | null>(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+
+  // Filtrar resultados baseado no filtro de presença online
+  const filteredResults = useMemo(() => {
+    if (searchFilter === 'all') return results;
+    if (searchFilter === 'no_website') {
+      return results.filter(r => !r.website);
+    }
+    if (searchFilter === 'with_website') {
+      return results.filter(r => !!r.website);
+    }
+    return results;
+  }, [results, searchFilter]);
+
+  // Contagens
+  const counts = useMemo(() => {
+    const withSite = results.filter(r => !!r.website).length;
+    const withoutSite = results.filter(r => !r.website).length;
+    return { withSite, withoutSite, total: results.length };
+  }, [results]);
 
   // Paginação
-  const totalPages = Math.ceil(results.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredResults.length / ITEMS_PER_PAGE);
   const paginatedResults = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return results.slice(start, start + ITEMS_PER_PAGE);
-  }, [results, currentPage]);
+    return filteredResults.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredResults, currentPage]);
 
   const handleSearch = async () => {
     if (!city.trim() || !state || !niche) {
@@ -141,7 +170,9 @@ export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsC
       if (data?.results && data.results.length > 0) {
         setResults(data.results);
         setOriginalResults(data.results);
-        toast.success(`${data.results.length} estabelecimentos encontrados!`);
+        const withSite = data.results.filter((r: SearchResult) => !!r.website).length;
+        const withoutSite = data.results.length - withSite;
+        toast.success(`${data.results.length} estabelecimentos encontrados! (${withSite} online, ${withoutSite} sem site)`);
       } else {
         toast.info('Nenhum estabelecimento encontrado. Tente outra busca.');
       }
@@ -183,9 +214,15 @@ export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsC
       
       // Remove from results
       setResults(prev => prev.filter(r => (r.name + r.address) !== id));
+      setDetailModalOpen(false);
     } finally {
       setAddingId(null);
     }
+  };
+
+  const openBusinessDetail = (business: SearchResult) => {
+    setSelectedBusiness(business);
+    setDetailModalOpen(true);
   };
 
   return (
@@ -198,7 +235,7 @@ export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsC
           <div>
             <CardTitle className="text-xl">Buscar Clientes</CardTitle>
             <CardDescription>
-              Encontre estabelecimentos por cidade e nicho
+              Encontre estabelecimentos por cidade e nicho (online e sem site)
             </CardDescription>
           </div>
         </div>
@@ -296,17 +333,39 @@ export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsC
         {/* Resultados */}
         {!searching && results.length > 0 && (
           <div className="mt-4">
+            {/* Header com estatísticas */}
             <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-              <h4 className="font-medium flex items-center gap-2">
-                <Users className="w-4 h-4 text-primary" />
-                Resultados ({results.length})
+              <div className="flex items-center gap-2 flex-wrap">
+                <h4 className="font-medium flex items-center gap-2">
+                  <Users className="w-4 h-4 text-primary" />
+                  Resultados ({filteredResults.length})
+                </h4>
+                <div className="flex gap-1.5">
+                  <Badge variant="secondary" className="text-xs gap-1">
+                    <Globe className="w-3 h-3" />
+                    {counts.withSite} online
+                  </Badge>
+                  <Badge variant="outline" className="text-xs gap-1">
+                    {counts.withoutSite} sem site
+                  </Badge>
+                </div>
                 {isFiltered && (
-                  <Badge variant="secondary" className="text-xs">
-                    Filtrado
+                  <Badge variant="secondary" className="text-xs bg-orange-500/10 text-orange-600">
+                    Filtrado por área
                   </Badge>
                 )}
-              </h4>
+              </div>
               <div className="flex items-center gap-2">
+                <Select value={searchFilter} onValueChange={(v) => { setSearchFilter(v); setCurrentPage(1); }}>
+                  <SelectTrigger className="h-8 w-32 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SEARCH_FILTER_OPTIONS.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Button
                   variant="outline"
                   size="sm"
@@ -316,66 +375,103 @@ export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsC
                   <Target className="w-4 h-4" />
                   Filtrar por Bairro
                 </Button>
-                <span className="text-xs text-muted-foreground">
-                  Página {currentPage} de {totalPages}
-                </span>
               </div>
+            </div>
+
+            <div className="text-xs text-muted-foreground mb-2">
+              Página {currentPage} de {totalPages}
             </div>
             
             <div className="space-y-2">
-              {paginatedResults.map((result, idx) => (
-                <div
-                  key={idx}
-                  className="bg-background/80 border border-border rounded-lg p-3 hover:border-primary/50 transition-colors"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <h5 className="font-medium text-foreground truncate">
-                        {result.name}
-                      </h5>
-                      <p className="text-xs text-muted-foreground truncate mt-0.5">
-                        📍 {result.address}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-2 mt-2">
-                        {result.phone && (
-                          <Badge variant="outline" className="text-xs">
-                            📞 {result.phone}
-                          </Badge>
-                        )}
-                        {result.rating && (
-                          <Badge variant="secondary" className="text-xs">
-                            ⭐ {result.rating}
-                          </Badge>
-                        )}
-                        {result.website && (
-                          <a 
-                            href={result.website.startsWith('http') ? result.website : `https://${result.website}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-primary hover:underline flex items-center gap-1"
-                          >
-                            <ExternalLink className="w-3 h-3" />
-                            Site
-                          </a>
-                        )}
+              {paginatedResults.map((result, idx) => {
+                const hasWebsite = !!result.website;
+                return (
+                  <div
+                    key={idx}
+                    className="bg-background/80 border border-border rounded-lg p-3 hover:border-primary/50 transition-colors cursor-pointer"
+                    onClick={() => openBusinessDetail(result)}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h5 className="font-medium text-foreground truncate">
+                            {result.name}
+                          </h5>
+                          {hasWebsite ? (
+                            <Badge className="bg-green-500/10 text-green-600 border-green-500/30 text-xs shrink-0">
+                              <Globe className="w-3 h-3 mr-1" />
+                              Online
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/30 text-xs shrink-0">
+                              Sem Site
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate">
+                          📍 {result.address}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                          {result.phone && (
+                            <Badge variant="outline" className="text-xs">
+                              📞 {result.phone}
+                            </Badge>
+                          )}
+                          {result.rating && (
+                            <Badge variant="secondary" className="text-xs gap-1">
+                              <Star className="w-3 h-3 text-yellow-500" />
+                              {result.rating}
+                              {result.reviews_count && (
+                                <span className="text-muted-foreground">({result.reviews_count})</span>
+                              )}
+                            </Badge>
+                          )}
+                          {result.website && (
+                            <a 
+                              href={result.website.startsWith('http') ? result.website : `https://${result.website}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-primary hover:underline flex items-center gap-1"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                              {result.website.length > 25 ? result.website.substring(0, 25) + '...' : result.website}
+                            </a>
+                          )}
+                          {result.category && (
+                            <Badge variant="outline" className="text-xs">
+                              {result.category}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2 shrink-0">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => { e.stopPropagation(); openBusinessDetail(result); }}
+                          className="gap-1"
+                        >
+                          <Eye className="w-4 h-4" />
+                          Ver
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={(e) => { e.stopPropagation(); handleAddToProspects(result); }}
+                          disabled={addingId === (result.name + result.address)}
+                        >
+                          {addingId === (result.name + result.address) ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            '+ Adicionar'
+                          )}
+                        </Button>
                       </div>
                     </div>
-                    
-                    <Button
-                      size="sm"
-                      onClick={() => handleAddToProspects(result)}
-                      disabled={addingId === (result.name + result.address)}
-                      className="shrink-0"
-                    >
-                      {addingId === (result.name + result.address) ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        '+ Adicionar'
-                      )}
-                    </Button>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Paginação */}
@@ -438,6 +534,15 @@ export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsC
           city={city}
           state={state}
           onFilterResults={handleRadiusFilter}
+        />
+
+        {/* Modal de Detalhes do Negócio */}
+        <BusinessDetailModal
+          open={detailModalOpen}
+          onOpenChange={setDetailModalOpen}
+          business={selectedBusiness}
+          onAddProspect={() => selectedBusiness && handleAddToProspects(selectedBusiness)}
+          isAdding={!!addingId}
         />
       </CardContent>
     </Card>
