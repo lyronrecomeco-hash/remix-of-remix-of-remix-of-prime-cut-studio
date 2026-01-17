@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { useInView } from 'framer-motion';
 import { useRef, useState } from 'react';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Heart, Camera } from 'lucide-react';
 
 import gallery1 from '@/assets/petshop/gallery-1.jpg';
 import gallery2 from '@/assets/petshop/gallery-2.jpg';
@@ -16,16 +16,17 @@ const PetshopGallery = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
+  const [likedImages, setLikedImages] = useState<Set<number>>(new Set());
 
   const images = [
-    { src: gallery1, alt: 'Shih Tzu após tosa' },
-    { src: gallery2, alt: 'Gatinho no veterinário' },
-    { src: gallery3, alt: 'Bulldog francês fofo' },
-    { src: gallery4, alt: 'Yorkshire no banho' },
-    { src: serviceGrooming, alt: 'Serviço de tosa' },
-    { src: serviceVet, alt: 'Consulta veterinária' },
-    { src: serviceDaycare, alt: 'Creche para pets' },
-    { src: heroBg, alt: 'Banho em golden retriever' },
+    { src: gallery1, alt: 'Shih Tzu após tosa', caption: 'Luna - Shih Tzu' },
+    { src: gallery2, alt: 'Gatinho no veterinário', caption: 'Mimi - Persa' },
+    { src: gallery3, alt: 'Bulldog francês fofo', caption: 'Thor - Bulldog' },
+    { src: gallery4, alt: 'Yorkshire no banho', caption: 'Mel - Yorkshire' },
+    { src: serviceGrooming, alt: 'Serviço de tosa', caption: 'Bob - Golden' },
+    { src: serviceVet, alt: 'Consulta veterinária', caption: 'Nina - Poodle' },
+    { src: serviceDaycare, alt: 'Creche para pets', caption: 'Rex - Labrador' },
+    { src: heroBg, alt: 'Banho em golden retriever', caption: 'Max - Golden' },
   ];
 
   const handlePrev = () => {
@@ -40,109 +41,155 @@ const PetshopGallery = () => {
     }
   };
 
+  const toggleLike = (index: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newLiked = new Set(likedImages);
+    if (newLiked.has(index)) {
+      newLiked.delete(index);
+    } else {
+      newLiked.add(index);
+    }
+    setLikedImages(newLiked);
+  };
+
   return (
-    <section id="galeria" className="py-20 bg-petshop-cream" ref={ref}>
+    <section id="galeria" className="py-24 bg-petshop-cream" ref={ref}>
       <div className="container mx-auto px-4">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="text-center max-w-2xl mx-auto mb-12"
+          className="text-center max-w-3xl mx-auto mb-14"
         >
-          <span className="inline-block bg-petshop-orange/10 text-petshop-orange px-4 py-2 rounded-full text-sm font-medium mb-4">
+          <span className="inline-flex items-center gap-2 bg-petshop-orange/10 text-petshop-orange px-5 py-2.5 rounded-full text-sm font-semibold mb-6">
+            <Camera className="w-4 h-4" />
             Galeria
           </span>
-          <h2 className="text-3xl md:text-4xl font-bold text-petshop-dark mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold text-petshop-dark mb-6 leading-tight">
             Nossos <span className="text-petshop-orange">xodós</span> em ação
           </h2>
-          <p className="text-petshop-gray text-lg">
+          <p className="text-petshop-gray text-lg md:text-xl leading-relaxed">
             Veja alguns dos pets que passaram pelo nosso cuidado e saíram ainda mais lindos e felizes!
           </p>
         </motion.div>
 
-        {/* Gallery Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {images.map((image, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={isInView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
-              onClick={() => setSelectedImage(index)}
-              className={`relative cursor-pointer group overflow-hidden rounded-2xl ${
-                index === 0 || index === 7 ? 'row-span-2' : ''
-              }`}
-            >
-              <img
-                src={image.src}
-                alt={image.alt}
-                className="w-full h-full object-cover aspect-square group-hover:scale-110 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-petshop-dark/0 group-hover:bg-petshop-dark/40 transition-colors duration-300 flex items-center justify-center">
-                <span className="text-white font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  Ver mais
-                </span>
-              </div>
-            </motion.div>
-          ))}
+        {/* Gallery Grid - Masonry Style */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          {images.map((image, index) => {
+            const isLarge = index === 0 || index === 5;
+            return (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={isInView ? { opacity: 1, scale: 1 } : {}}
+                transition={{ duration: 0.5, delay: index * 0.08 }}
+                onClick={() => setSelectedImage(index)}
+                className={`relative cursor-pointer group overflow-hidden rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 ${
+                  isLarge ? 'md:col-span-2 md:row-span-2' : ''
+                }`}
+              >
+                <div className={`relative ${isLarge ? 'aspect-square' : 'aspect-square'}`}>
+                  <img
+                    src={image.src}
+                    alt={image.alt}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                  />
+                  
+                  {/* Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-petshop-dark/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300" />
+                  
+                  {/* Like Button */}
+                  <button
+                    onClick={(e) => toggleLike(index, e)}
+                    className={`absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                      likedImages.has(index) 
+                        ? 'bg-red-500 text-white scale-100' 
+                        : 'bg-white/90 text-petshop-gray opacity-0 group-hover:opacity-100 hover:bg-red-500 hover:text-white'
+                    }`}
+                  >
+                    <Heart className={`w-5 h-5 ${likedImages.has(index) ? 'fill-current' : ''}`} />
+                  </button>
+                  
+                  {/* Caption */}
+                  <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                    <p className="text-white font-semibold text-lg">{image.caption}</p>
+                    <p className="text-white/80 text-sm">Clique para ampliar</p>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
 
-        {/* Instagram CTA */}
+        {/* Stats */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5, delay: 0.6 }}
-          className="text-center mt-10"
+          className="mt-14 flex flex-wrap justify-center gap-8 md:gap-16"
         >
-          <a
-            href="https://instagram.com/seuxodo"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 text-white px-6 py-3 rounded-full font-semibold hover:shadow-lg transition-shadow"
-          >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-            </svg>
-            Siga-nos no Instagram
-          </a>
+          <div className="text-center">
+            <p className="text-4xl md:text-5xl font-bold text-petshop-orange">5.000+</p>
+            <p className="text-petshop-gray mt-1">Pets atendidos</p>
+          </div>
+          <div className="text-center">
+            <p className="text-4xl md:text-5xl font-bold text-petshop-orange">8 anos</p>
+            <p className="text-petshop-gray mt-1">De experiência</p>
+          </div>
+          <div className="text-center">
+            <p className="text-4xl md:text-5xl font-bold text-petshop-orange">4.9★</p>
+            <p className="text-petshop-gray mt-1">No Google</p>
+          </div>
         </motion.div>
       </div>
 
       {/* Lightbox */}
       {selectedImage !== null && (
-        <div
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
           onClick={() => setSelectedImage(null)}
         >
           <button
             onClick={(e) => { e.stopPropagation(); handlePrev(); }}
-            className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors"
+            className="absolute left-2 md:left-8 top-1/2 -translate-y-1/2 w-14 h-14 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors backdrop-blur-sm"
           >
-            <ChevronLeft className="w-6 h-6" />
+            <ChevronLeft className="w-8 h-8" />
           </button>
           
-          <img
+          <motion.img
+            key={selectedImage}
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.3 }}
             src={images[selectedImage].src}
             alt={images[selectedImage].alt}
-            className="max-w-full max-h-[85vh] object-contain rounded-lg"
+            className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           />
           
           <button
             onClick={(e) => { e.stopPropagation(); handleNext(); }}
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors"
+            className="absolute right-2 md:right-8 top-1/2 -translate-y-1/2 w-14 h-14 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors backdrop-blur-sm"
           >
-            <ChevronRight className="w-6 h-6" />
+            <ChevronRight className="w-8 h-8" />
           </button>
           
           <button
             onClick={() => setSelectedImage(null)}
-            className="absolute top-4 right-4 w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors"
+            className="absolute top-4 right-4 w-14 h-14 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors backdrop-blur-sm"
           >
-            <X className="w-6 h-6" />
+            <X className="w-8 h-8" />
           </button>
-        </div>
+
+          {/* Image Info */}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white/10 backdrop-blur-md px-6 py-3 rounded-full">
+            <p className="text-white font-medium">{images[selectedImage].caption}</p>
+          </div>
+        </motion.div>
       )}
     </section>
   );
