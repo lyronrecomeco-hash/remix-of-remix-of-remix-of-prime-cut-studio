@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion';
 import { useInView } from 'framer-motion';
 import { useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Scissors, Stethoscope, Home, ShoppingBag, Check, Clock, Award, Sparkles } from 'lucide-react';
-
 import serviceGrooming from '@/assets/petshop/service-grooming.jpg';
 import serviceVet from '@/assets/petshop/service-vet.jpg';
 import serviceDaycare from '@/assets/petshop/service-daycare.jpg';
@@ -16,7 +16,7 @@ interface PetshopServicesProps {
 const PetshopServices = ({ onScheduleClick }: PetshopServicesProps) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-50px' });
-
+  const navigate = useNavigate();
   const services = [
     {
       icon: Scissors,
@@ -66,9 +66,10 @@ const PetshopServices = ({ onScheduleClick }: PetshopServicesProps) => {
       price: 'Diversos',
       priceLabel: 'produtos',
       duration: null,
-      highlight: 'Delivery',
+      highlight: 'Loja Online',
       highlightColor: 'from-blue-500 to-indigo-500',
       features: ['Rações premium', 'Acessórios', 'Brinquedos', 'Delivery'],
+      isStore: true,
     },
   ];
 
@@ -174,11 +175,30 @@ const PetshopServices = ({ onScheduleClick }: PetshopServicesProps) => {
                 </div>
                 
                 <Button
-                  onClick={onScheduleClick}
-                  className="w-full h-11 sm:h-14 text-sm sm:text-lg font-bold bg-gradient-to-r from-petshop-orange to-orange-500 hover:from-orange-500 hover:to-petshop-orange text-white rounded-xl sm:rounded-2xl shadow-lg shadow-petshop-orange/30 hover:shadow-xl hover:shadow-petshop-orange/40 transition-all duration-300 group/btn"
+                  onClick={() => {
+                    if ((service as any).isStore) {
+                      navigate('/petshop/loja');
+                    } else {
+                      onScheduleClick();
+                    }
+                  }}
+                  className={`w-full h-11 sm:h-14 text-sm sm:text-lg font-bold text-white rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 group/btn ${
+                    (service as any).isStore 
+                      ? 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-indigo-500 hover:to-blue-500 shadow-blue-500/30 hover:shadow-blue-500/40'
+                      : 'bg-gradient-to-r from-petshop-orange to-orange-500 hover:from-orange-500 hover:to-petshop-orange shadow-petshop-orange/30 hover:shadow-petshop-orange/40'
+                  }`}
                 >
-                  <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
-                  Agendar Agora
+                  {(service as any).isStore ? (
+                    <>
+                      <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
+                      Ver Produtos
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
+                      Agendar Agora
+                    </>
+                  )}
                   <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-1.5 sm:ml-2 group-hover/btn:translate-x-1 transition-transform" />
                 </Button>
               </div>
