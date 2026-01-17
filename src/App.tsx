@@ -62,6 +62,7 @@ const ClinicaEsteticaAgendarPage = lazy(() => import("./pages/ClinicaEsteticaAge
 const GenesisIALogin = lazy(() => import("./pages/GenesisIALogin"));
 const GenesisIADashboard = lazy(() => import("./pages/GenesisIADashboard"));
 const PetshopPage = lazy(() => import("./pages/petshop"));
+const PetshopStorePage = lazy(() => import("./pages/petshop/loja"));
 
 // QueryClient com retry logic e cache otimizado
 const queryClient = new QueryClient({
@@ -267,6 +268,7 @@ const AppContent = () => {
             <Route path="/genesis-ia/dashboard" element={<GenesisIADashboard />} />
             {/* Petshop Demo */}
             <Route path="/petshop" element={<PetshopPage />} />
+            <Route path="/petshop/loja" element={<PetshopStorePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
