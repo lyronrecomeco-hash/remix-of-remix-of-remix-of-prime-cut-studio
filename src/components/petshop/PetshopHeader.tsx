@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { Menu, X, Phone, MapPin, Clock } from 'lucide-react';
+import { Menu, X, Phone, MapPin, Clock, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface PetshopHeaderProps {
   onScheduleClick: () => void;
+  onMyAppointmentsClick?: () => void;
 }
 
-const PetshopHeader = ({ onScheduleClick }: PetshopHeaderProps) => {
+const PetshopHeader = ({ onScheduleClick, onMyAppointmentsClick }: PetshopHeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navLinks = [
@@ -24,13 +25,13 @@ const PetshopHeader = ({ onScheduleClick }: PetshopHeaderProps) => {
       <div className="bg-petshop-orange text-white py-2 text-sm hidden md:block">
         <div className="container mx-auto px-4 flex justify-between items-center">
           <div className="flex items-center gap-6">
-            <span className="flex items-center gap-2">
+            <a href="https://wa.me/5581998409073" className="flex items-center gap-2 hover:underline">
               <Phone className="w-4 h-4" />
-              (11) 99999-9999
-            </span>
+              (81) 99840-9073
+            </a>
             <span className="flex items-center gap-2">
               <MapPin className="w-4 h-4" />
-              Rua das Patinhas, 123 - São Paulo
+              Estr. de Belém, 1273 - Campo Grande, Recife
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -72,8 +73,16 @@ const PetshopHeader = ({ onScheduleClick }: PetshopHeaderProps) => {
               ))}
             </nav>
 
-            {/* CTA Button */}
-            <div className="hidden md:block">
+            {/* CTA Buttons */}
+            <div className="hidden md:flex items-center gap-3">
+              <Button
+                variant="outline"
+                onClick={onMyAppointmentsClick}
+                className="border-petshop-orange text-petshop-orange hover:bg-petshop-orange hover:text-white"
+              >
+                <Calendar className="w-4 h-4 mr-2" />
+                Meus Agendamentos
+              </Button>
               <Button
                 onClick={onScheduleClick}
                 className="bg-petshop-orange hover:bg-petshop-orange/90 text-white font-semibold px-6"
@@ -113,11 +122,22 @@ const PetshopHeader = ({ onScheduleClick }: PetshopHeaderProps) => {
                   </a>
                 ))}
                 <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onMyAppointmentsClick?.();
+                  }}
+                  className="border-petshop-orange text-petshop-orange hover:bg-petshop-orange hover:text-white w-full"
+                >
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Meus Agendamentos
+                </Button>
+                <Button
                   onClick={() => {
                     setIsMenuOpen(false);
                     onScheduleClick();
                   }}
-                  className="bg-petshop-orange hover:bg-petshop-orange/90 text-white font-semibold w-full mt-2"
+                  className="bg-petshop-orange hover:bg-petshop-orange/90 text-white font-semibold w-full"
                 >
                   Agendar Agora
                 </Button>
