@@ -12,16 +12,16 @@ const PageLoader = () => (
   </div>
 );
 
-const PetshopDemo = () => {
+function PetshopDemo() {
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
-        <Route path="/" element={<PetshopHome />} />
-        <Route path="/agendar" element={<PetshopAgendar />} />
-        <Route path="/meus-agendamentos" element={<PetshopMeusAgendamentos />} />
+        <Route index element={<PetshopHome />} />
+        <Route path="agendar" element={<PetshopAgendar />} />
+        <Route path="meus-agendamentos" element={<PetshopMeusAgendamentos />} />
       </Routes>
     </Suspense>
   );
-};
+}
 
 export default PetshopDemo;
