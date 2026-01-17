@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { useInView } from 'framer-motion';
 import { useRef, useState } from 'react';
-import { X, ChevronLeft, ChevronRight, Camera } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Camera, Heart } from 'lucide-react';
 
 import gallery1 from '@/assets/petshop/gallery-1.jpg';
 import gallery2 from '@/assets/petshop/gallery-2.jpg';
@@ -10,7 +10,7 @@ import gallery4 from '@/assets/petshop/gallery-4.jpg';
 
 const PetshopGallery = () => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: '-100px' });
+  const isInView = useInView(ref, { once: true, margin: '-50px' });
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
 
   const images = [
@@ -33,29 +33,29 @@ const PetshopGallery = () => {
   };
 
   return (
-    <section id="galeria" className="py-20 bg-white" ref={ref}>
+    <section id="galeria" className="py-12 sm:py-20 bg-white" ref={ref}>
       <div className="container mx-auto px-4">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="text-center max-w-2xl mx-auto mb-12"
+          className="text-center max-w-2xl mx-auto mb-8 sm:mb-12"
         >
-          <span className="inline-flex items-center gap-2 bg-petshop-orange/10 text-petshop-orange px-4 py-2 rounded-full text-sm font-semibold mb-4">
-            <Camera className="w-4 h-4" />
+          <span className="inline-flex items-center gap-2 bg-gradient-to-r from-petshop-orange/10 to-amber-500/10 text-petshop-orange px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold mb-3 sm:mb-4 border border-petshop-orange/20">
+            <Camera className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             Galeria
           </span>
-          <h2 className="text-3xl md:text-4xl font-bold text-petshop-dark mb-4">
-            Nossos <span className="text-petshop-orange">xodós</span>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-petshop-dark mb-3 sm:mb-4">
+            Nossos <span className="text-transparent bg-clip-text bg-gradient-to-r from-petshop-orange to-amber-500">xodós</span>
           </h2>
-          <p className="text-petshop-gray text-lg">
-            Veja alguns dos pets que passaram pelo nosso cuidado
+          <p className="text-petshop-gray text-sm sm:text-lg px-4">
+            Veja alguns dos pets que passaram pelo nosso cuidado 🐾
           </p>
         </motion.div>
 
-        {/* Gallery Grid - Clean 2x2 */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+        {/* Gallery Grid */}
+        <div className="grid grid-cols-2 gap-2 sm:gap-4 max-w-4xl mx-auto">
           {images.map((image, index) => (
             <motion.div
               key={index}
@@ -63,20 +63,19 @@ const PetshopGallery = () => {
               animate={isInView ? { opacity: 1, scale: 1 } : {}}
               transition={{ duration: 0.5, delay: index * 0.1 }}
               onClick={() => setSelectedImage(index)}
-              className="relative cursor-pointer group overflow-hidden rounded-2xl aspect-square shadow-md hover:shadow-xl transition-all duration-300"
+              className="relative cursor-pointer group overflow-hidden rounded-xl sm:rounded-2xl aspect-square shadow-lg hover:shadow-2xl transition-all duration-300"
             >
               <img
                 src={image.src}
                 alt={image.alt}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
               />
-              
-              {/* Overlay on hover */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              
-              {/* Caption */}
-              <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                <p className="text-white font-medium text-sm">{image.caption}</p>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                <p className="text-white font-semibold text-xs sm:text-sm flex items-center gap-1">
+                  <Heart className="w-3 h-3 sm:w-4 sm:h-4 text-rose-400" />
+                  {image.caption}
+                </p>
               </div>
             </motion.div>
           ))}
@@ -87,20 +86,18 @@ const PetshopGallery = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5, delay: 0.4 }}
-          className="mt-12 flex flex-wrap justify-center gap-8 md:gap-12"
+          className="mt-8 sm:mt-12 grid grid-cols-3 gap-4 sm:gap-8 max-w-md mx-auto"
         >
-          <div className="text-center">
-            <p className="text-3xl md:text-4xl font-bold text-petshop-orange">5.000+</p>
-            <p className="text-petshop-gray text-sm mt-1">Pets atendidos</p>
-          </div>
-          <div className="text-center">
-            <p className="text-3xl md:text-4xl font-bold text-petshop-orange">8 anos</p>
-            <p className="text-petshop-gray text-sm mt-1">De experiência</p>
-          </div>
-          <div className="text-center">
-            <p className="text-3xl md:text-4xl font-bold text-petshop-orange">4.9★</p>
-            <p className="text-petshop-gray text-sm mt-1">No Google</p>
-          </div>
+          {[
+            { value: '5.000+', label: 'Pets atendidos' },
+            { value: '10 anos', label: 'Experiência' },
+            { value: '4.9★', label: 'No Google' },
+          ].map((stat, i) => (
+            <div key={i} className="text-center">
+              <p className="text-xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-petshop-orange to-amber-500">{stat.value}</p>
+              <p className="text-petshop-gray text-[10px] sm:text-sm mt-0.5 sm:mt-1">{stat.label}</p>
+            </div>
+          ))}
         </motion.div>
       </div>
 
@@ -109,45 +106,21 @@ const PetshopGallery = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
           onClick={() => setSelectedImage(null)}
         >
-          <button
-            onClick={(e) => { e.stopPropagation(); handlePrev(); }}
-            className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
-          >
-            <ChevronLeft className="w-6 h-6" />
+          <button onClick={(e) => { e.stopPropagation(); handlePrev(); }} className="absolute left-2 sm:left-8 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white">
+            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
-          
-          <motion.img
-            key={selectedImage}
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.2 }}
-            src={images[selectedImage].src}
-            alt={images[selectedImage].alt}
-            className="max-w-full max-h-[80vh] object-contain rounded-xl"
-            onClick={(e) => e.stopPropagation()}
-          />
-          
-          <button
-            onClick={(e) => { e.stopPropagation(); handleNext(); }}
-            className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
-          >
-            <ChevronRight className="w-6 h-6" />
+          <img src={images[selectedImage].src} alt={images[selectedImage].alt} className="max-w-full max-h-[80vh] object-contain rounded-xl" onClick={(e) => e.stopPropagation()} />
+          <button onClick={(e) => { e.stopPropagation(); handleNext(); }} className="absolute right-2 sm:right-8 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white">
+            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
-          
-          <button
-            onClick={() => setSelectedImage(null)}
-            className="absolute top-4 right-4 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
-          >
-            <X className="w-6 h-6" />
+          <button onClick={() => setSelectedImage(null)} className="absolute top-4 right-4 w-10 h-10 sm:w-12 sm:h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white">
+            <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
-
-          {/* Image Caption */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white/10 backdrop-blur-sm px-5 py-2 rounded-full">
-            <p className="text-white font-medium">{images[selectedImage].caption}</p>
+          <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+            <p className="text-white font-medium text-sm">{images[selectedImage].caption}</p>
           </div>
         </motion.div>
       )}
