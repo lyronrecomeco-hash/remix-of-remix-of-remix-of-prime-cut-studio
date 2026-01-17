@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Menu, X, Phone, MapPin, Clock, Calendar, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getAppointments } from '@/components/petshop/PetshopMyAppointments';
+import { getPrimoAppointments } from '@/components/petshop-primo/PrimoMyAppointments';
 
 interface PrimoHeaderProps {
   onScheduleClick: () => void;
@@ -16,7 +16,7 @@ const PrimoHeader = ({ onScheduleClick, onMyAppointmentsClick }: PrimoHeaderProp
 
   useEffect(() => {
     const checkAppointments = () => {
-      const appointments = getAppointments();
+      const appointments = getPrimoAppointments();
       setHasAppointments(appointments.length > 0);
     };
 
