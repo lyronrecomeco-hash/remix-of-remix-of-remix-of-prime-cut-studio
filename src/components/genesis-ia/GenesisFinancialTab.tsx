@@ -9,6 +9,8 @@ import {
   Calendar,
   BarChart3,
   PieChart as PieChartIcon,
+  Users,
+  Target,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -26,8 +28,6 @@ import {
 import {
   AreaChart,
   Area,
-  BarChart,
-  Bar,
   PieChart,
   Pie,
   Cell,
@@ -52,16 +52,6 @@ const revenueData = [
   { month: "Jul", receita: 72000, lucro: 30000 },
 ];
 
-const weeklyData = [
-  { day: "Seg", valor: 12500 },
-  { day: "Ter", valor: 15800 },
-  { day: "Qua", valor: 11200 },
-  { day: "Qui", valor: 18900 },
-  { day: "Sex", valor: 22100 },
-  { day: "Sáb", valor: 8500 },
-  { day: "Dom", valor: 5200 },
-];
-
 const categoryData = [
   { name: "Assinaturas", value: 45, color: "hsl(217 91% 60%)" },
   { name: "Serviços", value: 25, color: "hsl(145 70% 50%)" },
@@ -72,7 +62,6 @@ const categoryData = [
 const chartConfig = {
   receita: { label: "Receita", color: "hsl(217 91% 60%)" },
   lucro: { label: "Lucro", color: "hsl(145 70% 50%)" },
-  valor: { label: "Valor", color: "hsl(217 91% 60%)" },
 };
 
 export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
@@ -83,6 +72,8 @@ export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
     thisMonth: 72000,
     lastMonth: 67000,
     growth: 7.5,
+    clients: 1250,
+    conversionRate: 8.4,
   }), []);
 
   const formatCurrency = (value: number) => {
@@ -97,7 +88,7 @@ export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: { staggerChildren: 0.06 }
+      transition: { staggerChildren: 0.08 }
     }
   };
 
@@ -108,7 +99,7 @@ export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
 
   return (
     <motion.div 
-      className="w-full space-y-4"
+      className="w-full space-y-6"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
@@ -116,12 +107,12 @@ export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
       {/* Header */}
       <motion.div variants={itemVariants} className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-foreground">Financeiro</h2>
-          <p className="text-xs text-muted-foreground">Acompanhe suas métricas</p>
+          <h2 className="text-2xl font-bold text-foreground">Financeiro</h2>
+          <p className="text-sm text-muted-foreground">Acompanhe suas métricas em tempo real</p>
         </div>
         <Select value={period} onValueChange={setPeriod}>
-          <SelectTrigger className="w-24 h-8 bg-card border-border text-xs">
-            <Calendar className="w-3 h-3 mr-1 text-muted-foreground" />
+          <SelectTrigger className="w-28 h-10 bg-card border-border">
+            <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -133,121 +124,131 @@ export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
       </motion.div>
 
       {/* Main Stats - 3 Cards */}
-      <motion.div variants={itemVariants} className="grid grid-cols-3 gap-3">
+      <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Faturamento Total */}
         <Card className="bg-card border-border">
-          <CardContent className="p-3">
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center">
-                <DollarSign className="w-4 h-4 text-primary" />
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-primary" />
               </div>
-              <div className="flex items-center gap-0.5 text-[10px] font-medium text-emerald-400">
-                <ArrowUpRight className="w-3 h-3" />
+              <div className="flex items-center gap-1 text-sm font-medium text-emerald-400">
+                <ArrowUpRight className="w-4 h-4" />
                 +12%
               </div>
             </div>
-            <p className="text-lg font-bold text-foreground">{formatCurrency(stats.totalRevenue)}</p>
-            <p className="text-xs text-muted-foreground">Faturamento Total</p>
+            <p className="text-3xl font-bold text-foreground">{formatCurrency(stats.totalRevenue)}</p>
+            <p className="text-sm text-muted-foreground mt-1">Faturamento Total</p>
           </CardContent>
         </Card>
 
         {/* Este Mês */}
         <Card className="bg-card border-border">
-          <CardContent className="p-3">
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 text-emerald-400" />
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-12 h-12 rounded-xl bg-emerald-500/15 flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-emerald-400" />
               </div>
-              <div className="flex items-center gap-0.5 text-[10px] font-medium text-emerald-400">
-                <ArrowUpRight className="w-3 h-3" />
+              <div className="flex items-center gap-1 text-sm font-medium text-emerald-400">
+                <ArrowUpRight className="w-4 h-4" />
                 +{stats.growth}%
               </div>
             </div>
-            <p className="text-lg font-bold text-foreground">{formatCurrency(stats.thisMonth)}</p>
-            <p className="text-xs text-muted-foreground">Neste Mês</p>
+            <p className="text-3xl font-bold text-foreground">{formatCurrency(stats.thisMonth)}</p>
+            <p className="text-sm text-muted-foreground mt-1">Neste Mês</p>
           </CardContent>
         </Card>
 
         {/* Mês Passado */}
         <Card className="bg-card border-border">
-          <CardContent className="p-3">
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center">
-                <TrendingDown className="w-4 h-4 text-amber-400" />
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/15 flex items-center justify-center">
+                <TrendingDown className="w-6 h-6 text-amber-400" />
               </div>
-              <div className="flex items-center gap-0.5 text-[10px] font-medium text-muted-foreground">
-                <ArrowDownRight className="w-3 h-3" />
-                Ref.
+              <div className="flex items-center gap-1 text-sm font-medium text-muted-foreground">
+                <ArrowDownRight className="w-4 h-4" />
+                Referência
               </div>
             </div>
-            <p className="text-lg font-bold text-foreground">{formatCurrency(stats.lastMonth)}</p>
-            <p className="text-xs text-muted-foreground">Mês Passado</p>
+            <p className="text-3xl font-bold text-foreground">{formatCurrency(stats.lastMonth)}</p>
+            <p className="text-sm text-muted-foreground mt-1">Mês Passado</p>
           </CardContent>
         </Card>
       </motion.div>
 
       {/* Charts Row */}
-      <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-5 gap-3">
+      <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Main Chart - Evolução */}
-        <Card className="bg-card border-border lg:col-span-3">
-          <CardHeader className="pb-1 px-3 pt-3">
-            <CardTitle className="text-xs font-semibold flex items-center gap-1.5">
-              <BarChart3 className="w-3.5 h-3.5 text-primary" />
+        <Card className="bg-card border-border lg:col-span-2">
+          <CardHeader className="pb-2 px-5 pt-5">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-primary" />
               Evolução do Faturamento
             </CardTitle>
           </CardHeader>
-          <CardContent className="px-3 pb-3">
-            <ChartContainer config={chartConfig} className="h-[200px] w-full">
-              <AreaChart data={revenueData} margin={{ top: 8, right: 4, left: -24, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorReceita" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(217 91% 60%)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="hsl(217 91% 60%)" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="colorLucro" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(145 70% 50%)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="hsl(145 70% 50%)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 40% 16%)" vertical={false} />
-                <XAxis dataKey="month" stroke="hsl(210 20% 40%)" fontSize={10} tickLine={false} axisLine={false} />
-                <YAxis stroke="hsl(210 20% 40%)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => `${v/1000}k`} />
-                <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />} />
-                <Area type="monotone" dataKey="receita" stroke="hsl(217 91% 60%)" strokeWidth={2} fill="url(#colorReceita)" />
-                <Area type="monotone" dataKey="lucro" stroke="hsl(145 70% 50%)" strokeWidth={2} fill="url(#colorLucro)" />
-              </AreaChart>
-            </ChartContainer>
-            <div className="flex items-center justify-center gap-4 mt-2">
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 rounded-full bg-primary" />
-                <span className="text-[10px] text-muted-foreground">Receita</span>
+          <CardContent className="px-5 pb-5">
+            <div className="h-[280px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorReceita" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(217 91% 60%)" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="hsl(217 91% 60%)" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="colorLucro" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(145 70% 50%)" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="hsl(145 70% 50%)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 40% 18%)" vertical={false} />
+                  <XAxis dataKey="month" stroke="hsl(210 20% 50%)" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="hsl(210 20% 50%)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `${v/1000}k`} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(222 47% 11%)",
+                      border: "1px solid hsl(217 40% 20%)",
+                      borderRadius: "8px",
+                      fontSize: "13px",
+                    }}
+                    formatter={(value: number) => [formatCurrency(value), ""]}
+                  />
+                  <Area type="monotone" dataKey="receita" stroke="hsl(217 91% 60%)" strokeWidth={2.5} fill="url(#colorReceita)" />
+                  <Area type="monotone" dataKey="lucro" stroke="hsl(145 70% 50%)" strokeWidth={2.5} fill="url(#colorLucro)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex items-center justify-center gap-6 mt-4">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-primary" />
+                <span className="text-sm text-muted-foreground">Receita</span>
               </div>
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                <span className="text-[10px] text-muted-foreground">Lucro</span>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                <span className="text-sm text-muted-foreground">Lucro</span>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Pie Chart */}
-        <Card className="bg-card border-border lg:col-span-2">
-          <CardHeader className="pb-1 px-3 pt-3">
-            <CardTitle className="text-xs font-semibold flex items-center gap-1.5">
-              <PieChartIcon className="w-3.5 h-3.5 text-primary" />
-              Por Categoria
+        <Card className="bg-card border-border">
+          <CardHeader className="pb-2 px-5 pt-5">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <PieChartIcon className="w-5 h-5 text-primary" />
+              Receita por Categoria
             </CardTitle>
           </CardHeader>
-          <CardContent className="px-3 pb-3">
-            <div className="h-[130px] w-full">
+          <CardContent className="px-5 pb-5">
+            <div className="h-[200px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={categoryData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={35}
-                    outerRadius={55}
+                    innerRadius={55}
+                    outerRadius={85}
                     paddingAngle={3}
                     dataKey="value"
                   >
@@ -259,20 +260,22 @@ export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
                     contentStyle={{
                       backgroundColor: "hsl(222 47% 11%)",
                       border: "1px solid hsl(217 40% 20%)",
-                      borderRadius: "6px",
-                      fontSize: "11px",
+                      borderRadius: "8px",
+                      fontSize: "13px",
                     }}
                     formatter={(value: number) => [`${value}%`, ""]}
                   />
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <div className="grid grid-cols-2 gap-x-2 gap-y-1 mt-2">
+            <div className="space-y-2 mt-4">
               {categoryData.map((item, index) => (
-                <div key={index} className="flex items-center gap-1">
-                  <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
-                  <span className="text-[10px] text-muted-foreground truncate">{item.name}</span>
-                  <span className="text-[10px] font-medium text-foreground ml-auto">{item.value}%</span>
+                <div key={index} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                    <span className="text-sm text-muted-foreground">{item.name}</span>
+                  </div>
+                  <span className="text-sm font-semibold text-foreground">{item.value}%</span>
                 </div>
               ))}
             </div>
@@ -280,25 +283,43 @@ export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
         </Card>
       </motion.div>
 
-      {/* Weekly Chart */}
-      <motion.div variants={itemVariants}>
+      {/* Bottom Stats */}
+      <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Clientes Ativos */}
         <Card className="bg-card border-border">
-          <CardHeader className="pb-1 px-3 pt-3">
-            <CardTitle className="text-xs font-semibold flex items-center gap-1.5">
-              <BarChart3 className="w-3.5 h-3.5 text-primary" />
-              Performance Semanal
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-3 pb-3">
-            <ChartContainer config={chartConfig} className="h-[160px] w-full">
-              <BarChart data={weeklyData} margin={{ top: 8, right: 4, left: -24, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 40% 16%)" vertical={false} />
-                <XAxis dataKey="day" stroke="hsl(210 20% 40%)" fontSize={10} tickLine={false} axisLine={false} />
-                <YAxis stroke="hsl(210 20% 40%)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => `${v/1000}k`} />
-                <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />} />
-                <Bar dataKey="valor" fill="hsl(217 91% 60%)" radius={[3, 3, 0, 0]} />
-              </BarChart>
-            </ChartContainer>
+          <CardContent className="p-5">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-xl bg-primary/15 flex items-center justify-center">
+                <Users className="w-7 h-7 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="text-2xl font-bold text-foreground">{stats.clients.toLocaleString()}</p>
+                <p className="text-sm text-muted-foreground">Clientes Ativos</p>
+              </div>
+              <div className="flex items-center gap-1 text-sm font-medium text-emerald-400">
+                <ArrowUpRight className="w-4 h-4" />
+                +5.3%
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Taxa de Conversão */}
+        <Card className="bg-card border-border">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-xl bg-emerald-500/15 flex items-center justify-center">
+                <Target className="w-7 h-7 text-emerald-400" />
+              </div>
+              <div className="flex-1">
+                <p className="text-2xl font-bold text-foreground">{stats.conversionRate}%</p>
+                <p className="text-sm text-muted-foreground">Taxa de Conversão</p>
+              </div>
+              <div className="flex items-center gap-1 text-sm font-medium text-emerald-400">
+                <ArrowUpRight className="w-4 h-4" />
+                +1.2%
+              </div>
+            </div>
           </CardContent>
         </Card>
       </motion.div>
