@@ -607,15 +607,22 @@ const GenesisIADashboard = () => {
 
             {/* Content */}
             <main className={activeTab === 'dashboard' && !isEditMode ? "flex-1 flex flex-col items-center justify-center px-6 pt-28 pb-32" : "flex-1 px-4 py-4 pb-32"}>
-              {/* Hero Section - Centered Title - Only on dashboard */}
+              {/* Hero Section - Welcome Toast Style - Only on dashboard */}
               {activeTab === 'dashboard' && !isEditMode && (
-                <div className="text-center mb-14">
-                  <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: config.header.titleColor }}>
-                    {getGreeting()}, {userName}! 👋
-                  </h1>
-                  <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-                    Crie, evolua e gerencie suas ideias em um só lugar. Escolha uma ação para começar.
-                  </p>
+                <div className="w-full max-w-2xl mx-auto mb-10">
+                  <div className="flex items-start gap-4 p-5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 backdrop-blur-sm">
+                    <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                      <span className="text-xl">👋</span>
+                    </div>
+                    <div className="flex-1">
+                      <h2 className="text-lg font-semibold text-foreground">
+                        Bem vindo de volta, <span className="capitalize">{userName}</span>
+                      </h2>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        A forma mais simples de transformar sua ideia em SaaS cria-e em minutos, gere páginas e textos de vendas e conquiste seus primeiros clientes com IA.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
               {renderTabContent(ctx)}

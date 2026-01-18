@@ -557,23 +557,7 @@ export const FullPageEditor: React.FC<FullPageEditorProps> = ({ children }) => {
 
   return (
     <>
-      {/* Edit Mode Toggle Button - Only for Admin */}
-      {isAdmin && !isEditMode && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="fixed top-20 right-4 z-[100]"
-        >
-          <Button
-            onClick={() => setIsEditMode(true)}
-            size="sm"
-            className="gap-2 shadow-lg"
-          >
-            <Pencil className="w-4 h-4" />
-            Editar Painel
-          </Button>
-        </motion.div>
-      )}
+      {/* Edit Mode Toggle Button - Removed as requested */}
 
       {/* Edit Mode Toolbar */}
       <AnimatePresence>
