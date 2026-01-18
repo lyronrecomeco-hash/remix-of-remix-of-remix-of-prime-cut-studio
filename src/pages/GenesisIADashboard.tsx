@@ -253,7 +253,7 @@ const GenesisIADashboard = () => {
         {!isEditMode ? (
             <>
               {/* Horizontal cards layout like reference image */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-6xl mx-auto px-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-5 max-w-6xl mx-auto px-2 sm:px-4">
                 {(() => {
                   const visibleCards = [...config.dashboardCards]
                     .filter((card) => card.visible)
@@ -293,24 +293,23 @@ const GenesisIADashboard = () => {
                         style={{
                           backgroundColor: 'hsl(215 30% 12%)',
                           borderRadius: '14px',
-                          minWidth: '320px',
                         }}
                         onClick={() => setActiveTab(card.id as ActiveTab)}
                       >
-                        <CardContent className="p-6">
-                          <div className="flex items-center gap-4 mb-3">
+                        <CardContent className="p-4 sm:p-5 lg:p-6">
+                          <div className="flex items-center gap-3 sm:gap-4 mb-2 sm:mb-3">
                             <div
-                              className="w-11 h-11 rounded-xl flex items-center justify-center"
+                              className="w-9 h-9 sm:w-10 sm:h-10 lg:w-11 lg:h-11 rounded-lg sm:rounded-xl flex items-center justify-center"
                               style={{ backgroundColor: cardStyles.iconBackgroundColor || colorScheme.bg }}
                             >
                               <IconComponent
-                                className="w-5 h-5"
+                                className="w-4 h-4 sm:w-5 sm:h-5"
                                 style={{ color: cardStyles.iconColor || colorScheme.color }}
                               />
                             </div>
-                            <h3 className="text-base font-semibold text-white">{card.title}</h3>
+                            <h3 className="text-sm sm:text-base font-semibold text-white">{card.title}</h3>
                           </div>
-                          <p className="text-sm text-white/50 leading-relaxed min-h-[2.5rem]">
+                          <p className="text-xs sm:text-sm text-white/50 leading-relaxed line-clamp-2">
                             {card.description}
                           </p>
                         </CardContent>
@@ -587,29 +586,29 @@ const GenesisIADashboard = () => {
             {/* WelcomeToast removed - using hero section instead */}
 
             {/* Content */}
-            {/* Welcome Popup - Fixed top left */}
+            {/* Welcome Popup - Fixed top right */}
             {activeTab === 'dashboard' && !isEditMode && (
               <motion.div 
-                initial={{ opacity: 0, x: -20, y: -10 }}
+                initial={{ opacity: 0, x: 20, y: -10 }}
                 animate={{ opacity: 1, x: 0, y: 0 }}
                 transition={{ delay: 0.3, type: "spring", stiffness: 300 }}
-                className="fixed top-20 left-4 z-50 max-w-xs sm:max-w-sm"
+                className="fixed top-16 sm:top-20 right-2 sm:right-4 z-50 w-[calc(100%-1rem)] sm:w-auto sm:max-w-sm"
               >
                 <div 
-                  className="flex items-start gap-3 p-4 rounded-xl border backdrop-blur-md shadow-xl"
+                  className="flex items-start gap-3 p-3 sm:p-4 rounded-xl border backdrop-blur-md shadow-xl"
                   style={{
                     backgroundColor: 'hsl(var(--card))',
                     borderColor: 'hsl(var(--border))',
                   }}
                 >
-                  <div className="w-9 h-9 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-                    <span className="text-lg">👋</span>
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-base sm:text-lg">👋</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h2 className="text-sm font-semibold text-foreground truncate">
+                    <h2 className="text-xs sm:text-sm font-semibold text-foreground">
                       Bem vindo de volta, <span className="capitalize">{userName}</span>
                     </h2>
-                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 line-clamp-2">
                       A forma mais simples de transformar sua ideia em SaaS em minutos com IA.
                     </p>
                   </div>
