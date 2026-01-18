@@ -587,38 +587,50 @@ const GenesisIADashboard = () => {
             {/* WelcomeToast removed - using hero section instead */}
 
             {/* Content */}
-            <main className={activeTab === 'dashboard' && !isEditMode ? "flex-1 flex flex-col items-center justify-center px-6 pt-28 pb-32" : "flex-1 px-4 py-4 pb-32"}>
-              {/* Hero Section - Welcome Toast Style - Only on dashboard */}
-              {activeTab === 'dashboard' && !isEditMode && (
-                <div className="w-full max-w-2xl mx-auto mb-10">
-                  <div className="flex items-start gap-4 p-5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 backdrop-blur-sm">
-                    <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-                      <span className="text-xl">👋</span>
-                    </div>
-                    <div className="flex-1">
-                      <h2 className="text-lg font-semibold text-foreground">
-                        Bem vindo de volta, <span className="capitalize">{userName}</span>
-                      </h2>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        A forma mais simples de transformar sua ideia em SaaS cria-e em minutos, gere páginas e textos de vendas e conquiste seus primeiros clientes com IA.
-                      </p>
-                    </div>
+            {/* Welcome Popup - Fixed top left */}
+            {activeTab === 'dashboard' && !isEditMode && (
+              <motion.div 
+                initial={{ opacity: 0, x: -20, y: -10 }}
+                animate={{ opacity: 1, x: 0, y: 0 }}
+                transition={{ delay: 0.3, type: "spring", stiffness: 300 }}
+                className="fixed top-20 left-4 z-50 max-w-xs sm:max-w-sm"
+              >
+                <div 
+                  className="flex items-start gap-3 p-4 rounded-xl border backdrop-blur-md shadow-xl"
+                  style={{
+                    backgroundColor: 'hsl(var(--card))',
+                    borderColor: 'hsl(var(--border))',
+                  }}
+                >
+                  <div className="w-9 h-9 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-lg">👋</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-sm font-semibold text-foreground truncate">
+                      Bem vindo de volta, <span className="capitalize">{userName}</span>
+                    </h2>
+                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                      A forma mais simples de transformar sua ideia em SaaS em minutos com IA.
+                    </p>
                   </div>
                 </div>
-              )}
+              </motion.div>
+            )}
+
+            <main className={activeTab === 'dashboard' && !isEditMode ? "flex-1 flex flex-col items-center justify-center px-4 sm:px-6 pt-24 sm:pt-28 pb-28 sm:pb-32" : "flex-1 px-3 sm:px-4 py-4 pb-28 sm:pb-32"}>
               {renderTabContent(ctx)}
             </main>
 
             {/* Dock - Always visible */}
-            <div className="fixed bottom-8 left-0 right-0 flex justify-center z-50">
+            <div className="fixed bottom-4 sm:bottom-8 left-0 right-0 flex justify-center z-50 px-4">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
-                className={`flex items-center ${config.dock.shadow}`}
+                className={`flex items-center ${config.dock.shadow} w-auto max-w-full overflow-x-auto`}
                 style={{
-                  gap: config.dock.gap,
-                  padding: '12px 16px',
+                  gap: 'clamp(8px, 2vw, 16px)',
+                  padding: 'clamp(8px, 2vw, 12px) clamp(12px, 3vw, 16px)',
                   borderRadius: config.dock.borderRadius,
                   backgroundColor: config.dock.backgroundColor,
                   border: `1px solid ${config.dock.borderColor}`,
@@ -630,25 +642,25 @@ const GenesisIADashboard = () => {
                     <motion.button
                       key={index}
                       onClick={item.onClick || (() => setActiveTab(item.tabId!))}
-                      className="relative rounded-xl flex items-center justify-center transition-colors"
+                      className="relative rounded-xl flex items-center justify-center transition-colors flex-shrink-0"
                       style={{
-                        width: config.dock.buttonSize,
-                        height: config.dock.buttonSize,
+                        width: 'clamp(36px, 8vw, 48px)',
+                        height: 'clamp(36px, 8vw, 48px)',
                         backgroundColor: isActive ? `${config.dock.activeColor}20` : 'transparent',
                       }}
                       whileHover={{ scale: 1.15, y: -8 }}
+                      whileTap={{ scale: 0.95 }}
                       transition={{ type: "spring", stiffness: 400, damping: 17 }}
                     >
                       <item.icon 
+                        className="w-5 h-5 sm:w-6 sm:h-6"
                         style={{ 
-                          width: config.dock.iconSize, 
-                          height: config.dock.iconSize,
                           color: isActive ? config.dock.activeColor : config.dock.inactiveColor,
                         }} 
                       />
                       {isActive && (
                         <div 
-                          className="absolute bottom-1.5 w-2 h-2 rounded-full"
+                          className="absolute bottom-1 sm:bottom-1.5 w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full"
                           style={{ backgroundColor: config.dock.activeColor }}
                         />
                       )}
