@@ -83,12 +83,14 @@ export const GenesisCarousel = ({ onNavigate }: GenesisCarouselProps) => {
 
     let animationFrameId: number;
     let scrollPosition = scrollContainer.scrollLeft || 0;
-    const scrollSpeed = 0.8;
+    const scrollSpeed = 0.6;
 
     const animate = () => {
       scrollPosition += scrollSpeed;
       
-      const itemWidth = 260 + 20;
+      // Calculate item width based on screen size
+      const isMobile = window.innerWidth < 640;
+      const itemWidth = isMobile ? (160 + 10) : (260 + 20);
       const resetPoint = itemWidth * carouselItems.length;
       
       if (scrollPosition >= resetPoint) {
@@ -122,15 +124,15 @@ export const GenesisCarousel = ({ onNavigate }: GenesisCarouselProps) => {
         onTouchStart={() => setIsPaused(true)}
         onTouchEnd={() => setIsPaused(false)}
       >
-        {/* Gradient masks - hidden on mobile for full visibility */}
-        <div className="hidden sm:block absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-background via-background/80 to-transparent z-10 pointer-events-none" />
-        <div className="hidden sm:block absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-background via-background/80 to-transparent z-10 pointer-events-none" />
+        {/* Gradient masks */}
+        <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-20 bg-gradient-to-r from-background via-background/80 to-transparent z-10 pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-8 sm:w-20 bg-gradient-to-l from-background via-background/80 to-transparent z-10 pointer-events-none" />
 
-        {/* Scrolling container */}
+        {/* Scrolling container - auto-scroll on all devices */}
         <div
           ref={scrollRef}
-          className="flex gap-2.5 sm:gap-5 overflow-x-auto sm:overflow-x-hidden py-2 px-2 sm:px-2 scrollbar-hide snap-x snap-mandatory sm:snap-none"
-          style={{ scrollBehavior: 'auto', WebkitOverflowScrolling: 'touch' }}
+          className="flex gap-2.5 sm:gap-5 overflow-x-hidden py-2 px-2 scrollbar-hide"
+          style={{ scrollBehavior: 'auto' }}
         >
           {duplicatedItems.map((item, index) => {
             const IconComponent = item.icon;

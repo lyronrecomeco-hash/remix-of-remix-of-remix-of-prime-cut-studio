@@ -252,6 +252,16 @@ const GenesisIADashboard = () => {
           {/* Cards - Grid mode when not editing, free mode when editing */}
         {!isEditMode ? (
             <>
+              {/* Greeting Title */}
+              <div className="text-center mb-6 sm:mb-10">
+                <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-foreground">
+                  {getGreeting()}, {userName}! 👋
+                </h1>
+                <p className="text-sm sm:text-lg text-muted-foreground mt-2 max-w-xl mx-auto px-4">
+                  Crie, evolua e gerencie suas ideias em um só lugar.
+                </p>
+              </div>
+
               {/* Horizontal cards layout - responsive grid */}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 lg:gap-5 max-w-6xl mx-auto">
                 {(() => {
