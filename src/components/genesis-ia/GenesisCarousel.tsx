@@ -115,14 +115,14 @@ export const GenesisCarousel = () => {
             return (
               <motion.div
                 key={`${item.id}-${index}`}
-                whileHover={{ scale: 1.03, y: -6 }}
+                whileHover={{ scale: 1.02, y: -4 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                 className="flex-shrink-0 cursor-pointer"
               >
-                <div className="w-[260px] h-[140px] rounded-2xl bg-zinc-900/80 border border-zinc-800/60 hover:border-emerald-500/40 transition-all duration-300 p-5 flex flex-col justify-between group backdrop-blur-sm">
+                <div className="w-[260px] h-[140px] rounded-2xl bg-zinc-900/90 border border-emerald-500/30 hover:border-emerald-400/60 transition-all duration-300 p-5 flex flex-col justify-between group backdrop-blur-sm shadow-lg shadow-emerald-500/5 hover:shadow-emerald-500/15">
                   {/* Icon */}
-                  <div className="w-12 h-12 rounded-xl bg-emerald-500/15 flex items-center justify-center group-hover:bg-emerald-500/25 transition-all duration-300 group-hover:scale-105">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/35 transition-all duration-300 group-hover:scale-105">
                     <IconComponent className="w-6 h-6 text-emerald-400 group-hover:text-emerald-300 transition-colors" />
                   </div>
 
@@ -131,7 +131,7 @@ export const GenesisCarousel = () => {
                     <h3 className="font-semibold text-white text-base leading-tight group-hover:text-emerald-50 transition-colors">
                       {item.title}
                     </h3>
-                    <p className="text-sm text-zinc-500 group-hover:text-zinc-400 transition-colors line-clamp-1">
+                    <p className="text-sm text-zinc-400 group-hover:text-zinc-300 transition-colors line-clamp-1">
                       {item.description}
                     </p>
                   </div>
