@@ -89,8 +89,8 @@ export const GenesisCarousel = () => {
     <div className="w-full max-w-6xl mx-auto mt-10">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <Sparkles className="w-6 h-6 text-emerald-400" />
-        <h2 className="text-xl font-bold text-white tracking-tight">Acesse também</h2>
+        <Sparkles className="w-6 h-6 text-primary" />
+        <h2 className="text-xl font-bold text-foreground tracking-tight">Acesse também</h2>
       </div>
 
       {/* Carousel Container */}
@@ -120,18 +120,18 @@ export const GenesisCarousel = () => {
                 transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                 className="flex-shrink-0 cursor-pointer"
               >
-                <div className="w-[260px] h-[140px] rounded-2xl bg-zinc-900/90 border border-emerald-500/30 hover:border-emerald-400/60 transition-all duration-300 p-5 flex flex-col justify-between group backdrop-blur-sm shadow-lg shadow-emerald-500/5 hover:shadow-emerald-500/15">
+                <div className="w-[260px] h-[140px] rounded-2xl bg-card border border-primary/30 hover:border-primary/60 transition-all duration-300 p-5 flex flex-col justify-between group backdrop-blur-sm shadow-lg shadow-primary/5 hover:shadow-primary/15">
                   {/* Icon */}
-                  <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/35 transition-all duration-300 group-hover:scale-105">
-                    <IconComponent className="w-6 h-6 text-emerald-400 group-hover:text-emerald-300 transition-colors" />
+                  <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center group-hover:bg-primary/35 transition-all duration-300 group-hover:scale-105">
+                    <IconComponent className="w-6 h-6 text-primary group-hover:text-primary/80 transition-colors" />
                   </div>
 
                   {/* Text */}
                   <div className="space-y-1">
-                    <h3 className="font-semibold text-white text-base leading-tight group-hover:text-emerald-50 transition-colors">
+                    <h3 className="font-semibold text-foreground text-base leading-tight group-hover:text-primary transition-colors">
                       {item.title}
                     </h3>
-                    <p className="text-sm text-zinc-400 group-hover:text-zinc-300 transition-colors line-clamp-1">
+                    <p className="text-sm text-muted-foreground group-hover:text-foreground/70 transition-colors line-clamp-1">
                       {item.description}
                     </p>
                   </div>
