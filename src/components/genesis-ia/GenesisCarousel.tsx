@@ -5,9 +5,9 @@ import {
   Smartphone,
   FileText,
   PenTool,
-  Sparkles
+  Sparkles,
+  Rocket
 } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
 
 interface CarouselItem {
   id: string;
@@ -21,7 +21,7 @@ const carouselItems: CarouselItem[] = [
     id: '1',
     icon: GraduationCap,
     title: 'Academia Genesis',
-    description: 'Aprimore suas habilidades com IA'
+    description: 'Aprimore suas habilidades'
   },
   {
     id: '2',
@@ -43,9 +43,9 @@ const carouselItems: CarouselItem[] = [
   },
   {
     id: '5',
-    icon: Sparkles,
-    title: 'Automações IA',
-    description: 'Automatize processos com inteligência'
+    icon: Rocket,
+    title: 'Redator Automatizado',
+    description: 'Automatize sua produção de conteúdo'
   }
 ];
 
@@ -61,14 +61,13 @@ export const GenesisCarousel = () => {
     if (!scrollContainer || isPaused) return;
 
     let animationFrameId: number;
-    let scrollPosition = 0;
-    const scrollSpeed = 0.5; // pixels per frame
+    let scrollPosition = scrollContainer.scrollLeft || 0;
+    const scrollSpeed = 0.8;
 
     const animate = () => {
       scrollPosition += scrollSpeed;
       
-      // Reset scroll when reaching the middle set
-      const itemWidth = 280 + 16; // card width + gap
+      const itemWidth = 260 + 20;
       const resetPoint = itemWidth * carouselItems.length;
       
       if (scrollPosition >= resetPoint) {
@@ -87,24 +86,27 @@ export const GenesisCarousel = () => {
   }, [isPaused]);
 
   return (
-    <div className="w-full max-w-6xl mx-auto mt-8">
-      <div className="flex items-center gap-2 mb-4">
-        <Sparkles className="w-5 h-5 text-emerald-500" />
-        <h2 className="text-lg font-semibold text-foreground">Acesse também</h2>
+    <div className="w-full max-w-6xl mx-auto mt-10">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-6">
+        <Sparkles className="w-6 h-6 text-emerald-400" />
+        <h2 className="text-xl font-bold text-white tracking-tight">Acesse também</h2>
       </div>
 
+      {/* Carousel Container */}
       <div 
-        className="relative overflow-hidden"
+        className="relative overflow-hidden rounded-2xl"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
-        {/* Gradient masks for fade effect */}
-        <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+        {/* Gradient masks */}
+        <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-background via-background/80 to-transparent z-10 pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-background via-background/80 to-transparent z-10 pointer-events-none" />
 
+        {/* Scrolling container */}
         <div
           ref={scrollRef}
-          className="flex gap-4 overflow-x-hidden scroll-smooth py-2"
+          className="flex gap-5 overflow-x-hidden py-3 px-2"
           style={{ scrollBehavior: 'auto' }}
         >
           {duplicatedItems.map((item, index) => {
@@ -113,29 +115,27 @@ export const GenesisCarousel = () => {
             return (
               <motion.div
                 key={`${item.id}-${index}`}
-                whileHover={{ scale: 1.02, y: -4 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                className="flex-shrink-0"
+                whileHover={{ scale: 1.03, y: -6 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                className="flex-shrink-0 cursor-pointer"
               >
-                <Card 
-                  className="w-[280px] h-[120px] bg-gradient-to-br from-zinc-900/90 to-zinc-800/80 border-zinc-700/50 hover:border-emerald-500/50 transition-all duration-300 cursor-pointer group"
-                >
-                  <CardContent className="p-4 h-full flex flex-col justify-between">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-500/30 transition-colors">
-                        <IconComponent className="w-5 h-5 text-emerald-500" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-white text-sm leading-tight">
-                          {item.title}
-                        </h3>
-                        <p className="text-xs text-zinc-400 mt-1 line-clamp-2">
-                          {item.description}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="w-[260px] h-[140px] rounded-2xl bg-zinc-900/80 border border-zinc-800/60 hover:border-emerald-500/40 transition-all duration-300 p-5 flex flex-col justify-between group backdrop-blur-sm">
+                  {/* Icon */}
+                  <div className="w-12 h-12 rounded-xl bg-emerald-500/15 flex items-center justify-center group-hover:bg-emerald-500/25 transition-all duration-300 group-hover:scale-105">
+                    <IconComponent className="w-6 h-6 text-emerald-400 group-hover:text-emerald-300 transition-colors" />
+                  </div>
+
+                  {/* Text */}
+                  <div className="space-y-1">
+                    <h3 className="font-semibold text-white text-base leading-tight group-hover:text-emerald-50 transition-colors">
+                      {item.title}
+                    </h3>
+                    <p className="text-sm text-zinc-500 group-hover:text-zinc-400 transition-colors line-clamp-1">
+                      {item.description}
+                    </p>
+                  </div>
+                </div>
               </motion.div>
             );
           })}
