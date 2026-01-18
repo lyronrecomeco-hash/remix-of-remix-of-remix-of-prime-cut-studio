@@ -252,8 +252,8 @@ const GenesisIADashboard = () => {
           {/* Cards - Grid mode when not editing, free mode when editing */}
         {!isEditMode ? (
             <>
-              {/* Horizontal cards layout like reference image */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-5 max-w-6xl mx-auto px-2 sm:px-4">
+              {/* Horizontal cards layout - responsive grid */}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 lg:gap-5 max-w-6xl mx-auto">
                 {(() => {
                   const visibleCards = [...config.dashboardCards]
                     .filter((card) => card.visible)
@@ -586,37 +586,62 @@ const GenesisIADashboard = () => {
             {/* WelcomeToast removed - using hero section instead */}
 
             {/* Content */}
-            {/* Welcome Popup - Fixed top right */}
+            {/* Welcome Popup - Inline on mobile, fixed on desktop */}
             {activeTab === 'dashboard' && !isEditMode && (
-              <motion.div 
-                initial={{ opacity: 0, x: 20, y: -10 }}
-                animate={{ opacity: 1, x: 0, y: 0 }}
-                transition={{ delay: 0.3, type: "spring", stiffness: 300 }}
-                className="fixed top-16 sm:top-20 right-2 sm:right-4 z-50 w-[calc(100%-1rem)] sm:w-auto sm:max-w-sm"
-              >
-                <div 
-                  className="flex items-start gap-3 p-3 sm:p-4 rounded-xl border backdrop-blur-md shadow-xl"
-                  style={{
-                    backgroundColor: 'hsl(var(--card))',
-                    borderColor: 'hsl(var(--border))',
-                  }}
-                >
-                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-                    <span className="text-base sm:text-lg">👋</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h2 className="text-xs sm:text-sm font-semibold text-foreground">
-                      Bem vindo de volta, <span className="capitalize">{userName}</span>
-                    </h2>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                      A forma mais simples de transformar sua ideia em SaaS em minutos com IA.
-                    </p>
+              <div className="px-3 sm:px-0 pt-3 sm:pt-0">
+                {/* Mobile: inline flow */}
+                <div className="block sm:hidden">
+                  <div 
+                    className="flex items-start gap-3 p-3 rounded-xl border backdrop-blur-md shadow-lg"
+                    style={{
+                      backgroundColor: 'hsl(var(--card))',
+                      borderColor: 'hsl(var(--border))',
+                    }}
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                      <span className="text-base">👋</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-xs font-semibold text-foreground">
+                        Bem vindo de volta, <span className="capitalize">{userName}</span>
+                      </h2>
+                      <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">
+                        A forma mais simples de transformar sua ideia em SaaS em minutos com IA.
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </motion.div>
+                {/* Desktop: fixed position */}
+                <motion.div 
+                  initial={{ opacity: 0, x: 20, y: -10 }}
+                  animate={{ opacity: 1, x: 0, y: 0 }}
+                  transition={{ delay: 0.3, type: "spring", stiffness: 300 }}
+                  className="hidden sm:block fixed top-20 right-4 z-50 max-w-sm"
+                >
+                  <div 
+                    className="flex items-start gap-3 p-4 rounded-xl border backdrop-blur-md shadow-xl"
+                    style={{
+                      backgroundColor: 'hsl(var(--card))',
+                      borderColor: 'hsl(var(--border))',
+                    }}
+                  >
+                    <div className="w-9 h-9 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                      <span className="text-lg">👋</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-sm font-semibold text-foreground">
+                        Bem vindo de volta, <span className="capitalize">{userName}</span>
+                      </h2>
+                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                        A forma mais simples de transformar sua ideia em SaaS em minutos com IA.
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
             )}
 
-            <main className={activeTab === 'dashboard' && !isEditMode ? "flex-1 flex flex-col items-center justify-center px-4 sm:px-6 pt-24 sm:pt-28 pb-28 sm:pb-32" : "flex-1 px-3 sm:px-4 py-4 pb-28 sm:pb-32"}>
+            <main className={activeTab === 'dashboard' && !isEditMode ? "flex-1 flex flex-col px-2 sm:px-6 pt-4 sm:pt-8 pb-24 sm:pb-32" : "flex-1 px-3 sm:px-4 py-4 pb-24 sm:pb-32"}>
               {renderTabContent(ctx)}
             </main>
 

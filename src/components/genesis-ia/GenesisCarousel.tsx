@@ -107,29 +107,29 @@ export const GenesisCarousel = ({ onNavigate }: GenesisCarouselProps) => {
   }, [isPaused]);
 
   return (
-    <div className="w-full max-w-6xl mx-auto mt-6 sm:mt-10 px-2 sm:px-0">
+    <div className="w-full max-w-6xl mx-auto mt-5 sm:mt-10">
       {/* Header */}
-      <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-        <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-        <h2 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">Acesse também</h2>
+      <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-6">
+        <Sparkles className="w-4 h-4 sm:w-6 sm:h-6 text-primary" />
+        <h2 className="text-base sm:text-xl font-bold text-foreground tracking-tight">Acesse também</h2>
       </div>
 
       {/* Carousel Container */}
       <div 
-        className="relative overflow-hidden rounded-xl sm:rounded-2xl"
+        className="relative overflow-hidden rounded-lg sm:rounded-2xl -mx-2 sm:mx-0"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
         onTouchStart={() => setIsPaused(true)}
         onTouchEnd={() => setIsPaused(false)}
       >
-        {/* Gradient masks */}
-        <div className="absolute left-0 top-0 bottom-0 w-12 sm:w-20 bg-gradient-to-r from-background via-background/80 to-transparent z-10 pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-12 sm:w-20 bg-gradient-to-l from-background via-background/80 to-transparent z-10 pointer-events-none" />
+        {/* Gradient masks - hidden on mobile for full visibility */}
+        <div className="hidden sm:block absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-background via-background/80 to-transparent z-10 pointer-events-none" />
+        <div className="hidden sm:block absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-background via-background/80 to-transparent z-10 pointer-events-none" />
 
         {/* Scrolling container */}
         <div
           ref={scrollRef}
-          className="flex gap-3 sm:gap-5 overflow-x-auto sm:overflow-x-hidden py-2 sm:py-3 px-1 sm:px-2 scrollbar-hide"
+          className="flex gap-2.5 sm:gap-5 overflow-x-auto sm:overflow-x-hidden py-2 px-2 sm:px-2 scrollbar-hide snap-x snap-mandatory sm:snap-none"
           style={{ scrollBehavior: 'auto', WebkitOverflowScrolling: 'touch' }}
         >
           {duplicatedItems.map((item, index) => {
@@ -141,21 +141,21 @@ export const GenesisCarousel = ({ onNavigate }: GenesisCarouselProps) => {
                 whileHover={{ scale: 1.02, y: -4 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                className="flex-shrink-0 cursor-pointer"
+                className="flex-shrink-0 cursor-pointer snap-start"
                 onClick={() => item.tabId && onNavigate?.(item.tabId)}
               >
-                <div className="w-[200px] sm:w-[260px] h-[120px] sm:h-[140px] rounded-xl sm:rounded-2xl bg-card border border-primary/30 hover:border-primary/60 transition-all duration-300 p-4 sm:p-5 flex flex-col justify-between group backdrop-blur-sm shadow-lg shadow-primary/5 hover:shadow-primary/15">
+                <div className="w-[160px] sm:w-[260px] h-[100px] sm:h-[140px] rounded-lg sm:rounded-2xl bg-card border border-primary/30 hover:border-primary/60 transition-all duration-300 p-3 sm:p-5 flex flex-col justify-between group backdrop-blur-sm shadow-lg shadow-primary/5 hover:shadow-primary/15">
                   {/* Icon */}
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-primary/20 flex items-center justify-center group-hover:bg-primary/35 transition-all duration-300 group-hover:scale-105">
-                    <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 text-primary group-hover:text-primary/80 transition-colors" />
+                  <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-primary/20 flex items-center justify-center group-hover:bg-primary/35 transition-all duration-300 group-hover:scale-105">
+                    <IconComponent className="w-4 h-4 sm:w-6 sm:h-6 text-primary group-hover:text-primary/80 transition-colors" />
                   </div>
 
                   {/* Text */}
-                  <div className="space-y-0.5 sm:space-y-1">
-                    <h3 className="font-semibold text-foreground text-sm sm:text-base leading-tight group-hover:text-primary transition-colors">
+                  <div className="space-y-0">
+                    <h3 className="font-semibold text-foreground text-xs sm:text-base leading-tight group-hover:text-primary transition-colors line-clamp-1">
                       {item.title}
                     </h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground group-hover:text-foreground/70 transition-colors line-clamp-1">
+                    <p className="text-[10px] sm:text-sm text-muted-foreground group-hover:text-foreground/70 transition-colors line-clamp-1">
                       {item.description}
                     </p>
                   </div>
