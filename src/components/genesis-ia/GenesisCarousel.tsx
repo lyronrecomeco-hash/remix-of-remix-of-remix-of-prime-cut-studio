@@ -6,7 +6,8 @@ import {
   FileText,
   PenTool,
   Sparkles,
-  Rocket
+  Rocket,
+  DollarSign
 } from 'lucide-react';
 
 interface CarouselItem {
@@ -14,9 +15,21 @@ interface CarouselItem {
   icon: React.ElementType;
   title: string;
   description: string;
+  tabId?: string;
+}
+
+interface GenesisCarouselProps {
+  onNavigate?: (tabId: string) => void;
 }
 
 const carouselItems: CarouselItem[] = [
+  {
+    id: 'financial',
+    icon: DollarSign,
+    title: 'Financeiro',
+    description: 'Acompanhe métricas e receitas',
+    tabId: 'financial'
+  },
   {
     id: '1',
     icon: GraduationCap,
@@ -49,7 +62,7 @@ const carouselItems: CarouselItem[] = [
   }
 ];
 
-export const GenesisCarousel = () => {
+export const GenesisCarousel = ({ onNavigate }: GenesisCarouselProps) => {
   const [isPaused, setIsPaused] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -119,6 +132,7 @@ export const GenesisCarousel = () => {
                 whileTap={{ scale: 0.98 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                 className="flex-shrink-0 cursor-pointer"
+                onClick={() => item.tabId && onNavigate?.(item.tabId)}
               >
                 <div className="w-[260px] h-[140px] rounded-2xl bg-card border border-primary/30 hover:border-primary/60 transition-all duration-300 p-5 flex flex-col justify-between group backdrop-blur-sm shadow-lg shadow-primary/5 hover:shadow-primary/15">
                   {/* Icon */}

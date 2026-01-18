@@ -52,6 +52,7 @@ import { GenesisSettingsTab } from "@/components/genesis-ia/GenesisSettingsTab";
 import { AcceptedLeadsSection } from "@/components/genesis-ia/AcceptedLeadsSection";
 import { GenesisCarousel } from "@/components/genesis-ia/GenesisCarousel";
 import { AcceptedProposalsTab } from "@/components/genesis-ia/AcceptedProposalsTab";
+import { GenesisFinancialTab } from "@/components/genesis-ia/GenesisFinancialTab";
 import { WelcomeToast } from "@/components/genesis-ia/WelcomeToast";
 import { FullPageEditor, EditorContextValue, CustomElement } from "@/components/genesis-ia/dashboard-builder/FullPageEditor";
 import { DraggableCard, CardData } from "@/components/genesis-ia/dashboard-builder/components/DraggableCard";
@@ -59,7 +60,7 @@ import { CardSettingsPanel } from "@/components/genesis-ia/dashboard-builder/com
 import { TextElement, TextElementData } from "@/components/genesis-ia/dashboard-builder/components/TextElement";
 import { TextSettingsPanel } from "@/components/genesis-ia/dashboard-builder/components/TextSettingsPanel";
 
-type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings';
+type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial';
 
 // Icon mapping for dynamic rendering
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -128,6 +129,7 @@ const GenesisIADashboard = () => {
       case 'accepted_proposals': return 'Propostas Aceitas';
       case 'users': return 'Usuários';
       case 'settings': return 'Configurações';
+      case 'financial': return 'Financeiro';
       default: return null;
     }
   };
@@ -308,7 +310,7 @@ const GenesisIADashboard = () => {
               </div>
 
               {/* Genesis Carousel - Acesse também */}
-              <GenesisCarousel />
+              <GenesisCarousel onNavigate={(tabId) => setActiveTab(tabId as ActiveTab)} />
             </>
           ) : (
             // Free positioning mode for editing
@@ -492,6 +494,10 @@ const GenesisIADashboard = () => {
 
     if (activeTab === 'settings') {
       return <GenesisSettingsTab userId={userId} />;
+    }
+
+    if (activeTab === 'financial') {
+      return <GenesisFinancialTab userId={userId} />;
     }
 
     return null;
