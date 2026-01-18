@@ -41,18 +41,18 @@ export const StepQuality: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-8">
-        <h3 className="text-xl font-semibold text-foreground mb-2">
+    <div className="space-y-8">
+      <div className="text-center mb-10">
+        <h3 className="text-2xl lg:text-3xl font-bold text-foreground mb-3">
           Qualidade e Regras
         </h3>
-        <p className="text-muted-foreground">
+        <p className="text-base lg:text-lg text-muted-foreground max-w-xl mx-auto">
           Padrões técnicos para seu projeto
         </p>
       </div>
 
-      <div className="max-w-2xl mx-auto">
-        <div className="space-y-3">
+      <div className="max-w-3xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {QUALITY_OPTIONS.map((option, index) => {
             const isSelected = formData[option.key] === true;
             const Icon = option.icon;
@@ -65,22 +65,22 @@ export const StepQuality: React.FC = () => {
                 transition={{ delay: index * 0.1 }}
                 onClick={() => toggleOption(option.key)}
                 className={`
-                  w-full flex items-center gap-4 p-5 rounded-xl border-2 transition-all text-left
+                  w-full flex items-center gap-5 p-6 rounded-xl border-2 transition-all text-left
                   ${isSelected 
-                    ? 'border-primary bg-primary/10' 
-                    : 'border-border bg-card hover:border-primary/50'
+                    ? 'border-primary bg-primary/10 shadow-md shadow-primary/10' 
+                    : 'border-border bg-background hover:border-primary/50 hover:shadow-md'
                   }
                 `}
               >
                 <div className={`
-                  w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0
+                  w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0
                   ${isSelected ? 'bg-primary/20' : 'bg-muted'}
                 `}>
-                  <Icon className={`w-6 h-6 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
+                  <Icon className={`w-7 h-7 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <h4 className={`font-semibold ${isSelected ? 'text-primary' : 'text-foreground'}`}>
+                  <h4 className={`text-lg font-semibold mb-1 ${isSelected ? 'text-primary' : 'text-foreground'}`}>
                     {option.title}
                   </h4>
                   <p className="text-sm text-muted-foreground">
@@ -89,7 +89,7 @@ export const StepQuality: React.FC = () => {
                 </div>
 
                 <div className={`
-                  w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0
+                  w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0
                   ${isSelected ? 'bg-primary' : 'border-2 border-muted-foreground/30'}
                 `}>
                   {isSelected && <Check className="w-4 h-4 text-primary-foreground" />}
@@ -99,8 +99,8 @@ export const StepQuality: React.FC = () => {
           })}
         </div>
 
-        <div className="mt-8 p-4 rounded-xl bg-primary/5 border border-primary/20">
-          <p className="text-sm text-muted-foreground text-center">
+        <div className="mt-10 p-5 rounded-xl bg-primary/5 border border-primary/20">
+          <p className="text-base text-muted-foreground text-center">
             💡 Recomendamos manter todas as opções ativas para um projeto profissional
           </p>
         </div>

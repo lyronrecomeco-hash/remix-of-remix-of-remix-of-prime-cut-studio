@@ -57,19 +57,19 @@ export const StepStructure: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-8">
-        <h3 className="text-xl font-semibold text-foreground mb-2">
+    <div className="space-y-8">
+      <div className="text-center mb-10">
+        <h3 className="text-2xl lg:text-3xl font-bold text-foreground mb-3">
           Estrutura do Site
         </h3>
-        <p className="text-muted-foreground">
+        <p className="text-base lg:text-lg text-muted-foreground max-w-xl mx-auto">
           Selecione as páginas que seu site terá
         </p>
       </div>
 
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         {/* Suggested Pages */}
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div className="flex flex-wrap gap-3 mb-8 justify-center">
           {allPages.map((page, index) => {
             const isSelected = formData.selectedPages.includes(page);
             const isSuggested = selectedTemplate?.suggestedPages.includes(page);
@@ -82,17 +82,17 @@ export const StepStructure: React.FC = () => {
                 transition={{ delay: index * 0.03 }}
                 onClick={() => togglePage(page)}
                 className={`
-                  flex items-center gap-2 px-4 py-2 rounded-full border-2 transition-all text-sm
+                  flex items-center gap-2 px-5 py-3 rounded-xl border-2 transition-all text-base
                   ${isSelected 
-                    ? 'border-primary bg-primary/10 text-primary' 
-                    : 'border-border bg-card hover:border-primary/50 text-foreground'
+                    ? 'border-primary bg-primary/10 text-primary font-medium shadow-md shadow-primary/10' 
+                    : 'border-border bg-background hover:border-primary/50 text-foreground hover:shadow-md'
                   }
                   ${isSuggested && !isSelected ? 'border-dashed' : ''}
                 `}
               >
-                {isSelected && <Check className="w-3 h-3" />}
+                {isSelected && <Check className="w-4 h-4" />}
                 {page}
-                {isSuggested && <span className="text-xs opacity-60">✨</span>}
+                {isSuggested && <span className="text-sm opacity-60">✨</span>}
               </motion.button>
             );
           })}
@@ -100,18 +100,18 @@ export const StepStructure: React.FC = () => {
 
         {/* Custom Pages */}
         {formData.customPages.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-6">
+          <div className="flex flex-wrap gap-3 mb-8 justify-center">
             {formData.customPages.map((page) => (
               <div
                 key={page}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm"
+                className="flex items-center gap-2 px-5 py-3 rounded-xl bg-primary/20 text-primary text-base font-medium"
               >
                 {page}
                 <button
                   onClick={() => removeCustomPage(page)}
-                  className="w-4 h-4 rounded-full hover:bg-primary/30 flex items-center justify-center"
+                  className="w-5 h-5 rounded-full hover:bg-primary/30 flex items-center justify-center"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             ))}
@@ -119,19 +119,20 @@ export const StepStructure: React.FC = () => {
         )}
 
         {/* Add Custom Page */}
-        <div className="flex gap-2">
+        <div className="flex gap-3 max-w-xl mx-auto">
           <Input
             placeholder="Adicionar página personalizada..."
             value={customInput}
             onChange={(e) => setCustomInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addCustomPage()}
+            className="h-12 text-base"
           />
-          <Button onClick={addCustomPage} variant="outline" size="icon">
-            <Plus className="w-4 h-4" />
+          <Button onClick={addCustomPage} variant="outline" size="icon" className="h-12 w-12">
+            <Plus className="w-5 h-5" />
           </Button>
         </div>
 
-        <p className="text-xs text-muted-foreground mt-4">
+        <p className="text-sm text-muted-foreground mt-6 text-center">
           ✨ Páginas sugeridas para {selectedTemplate?.name}
         </p>
       </div>

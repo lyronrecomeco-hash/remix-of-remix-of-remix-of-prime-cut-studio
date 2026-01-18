@@ -42,17 +42,17 @@ export const StepTargetAI: React.FC = () => {
   const { formData, updateFormData } = useProjectBuilder();
 
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-8">
-        <h3 className="text-xl font-semibold text-foreground mb-2">
+    <div className="space-y-8">
+      <div className="text-center mb-10">
+        <h3 className="text-2xl lg:text-3xl font-bold text-foreground mb-3">
           Qual IA você vai usar?
         </h3>
-        <p className="text-muted-foreground">
+        <p className="text-base lg:text-lg text-muted-foreground max-w-xl mx-auto">
           Isso ajuda a otimizar o prompt para a plataforma escolhida
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 lg:gap-5 max-w-5xl mx-auto">
         {AI_OPTIONS.map((option, index) => {
           const isSelected = formData.targetAI === option.id;
 
@@ -64,10 +64,10 @@ export const StepTargetAI: React.FC = () => {
               transition={{ delay: index * 0.05 }}
               onClick={() => updateFormData('targetAI', option.id)}
               className={`
-                relative p-5 rounded-xl border-2 transition-all duration-200 text-left
+                relative p-6 lg:p-8 rounded-xl border-2 transition-all duration-200 text-center group
                 ${isSelected 
-                  ? 'border-primary bg-primary/10' 
-                  : 'border-border bg-card hover:border-primary/50'
+                  ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20' 
+                  : 'border-border bg-background hover:border-primary/50 hover:shadow-md'
                 }
               `}
             >
@@ -75,14 +75,14 @@ export const StepTargetAI: React.FC = () => {
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="absolute top-3 right-3 w-6 h-6 rounded-full bg-primary flex items-center justify-center"
+                  className="absolute top-3 right-3 w-7 h-7 rounded-full bg-primary flex items-center justify-center"
                 >
                   <Check className="w-4 h-4 text-primary-foreground" />
                 </motion.div>
               )}
 
-              <span className="text-3xl mb-3 block">{option.icon}</span>
-              <h4 className={`font-semibold mb-1 ${isSelected ? 'text-primary' : 'text-foreground'}`}>
+              <span className="text-4xl lg:text-5xl mb-4 block">{option.icon}</span>
+              <h4 className={`text-lg font-semibold mb-2 ${isSelected ? 'text-primary' : 'text-foreground'}`}>
                 {option.name}
               </h4>
               <p className="text-sm text-muted-foreground">{option.description}</p>
@@ -95,13 +95,13 @@ export const StepTargetAI: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          className="pt-4"
+          className="pt-6 max-w-md mx-auto"
         >
           <Input
             placeholder="Nome da IA que você vai usar..."
             value={formData.otherAI || ''}
             onChange={(e) => updateFormData('otherAI', e.target.value)}
-            className="max-w-md"
+            className="h-12 text-base"
           />
         </motion.div>
       )}
