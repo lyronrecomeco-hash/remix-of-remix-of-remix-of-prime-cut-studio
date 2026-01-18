@@ -28,18 +28,18 @@ export const StepObjectives: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-8">
-        <h3 className="text-xl font-semibold text-foreground mb-2">
+    <div className="space-y-8">
+      <div className="text-center mb-10">
+        <h3 className="text-2xl lg:text-3xl font-bold text-foreground mb-3">
           Objetivos do Site
         </h3>
-        <p className="text-muted-foreground">
+        <p className="text-base lg:text-lg text-muted-foreground max-w-xl mx-auto">
           O que seu {selectedTemplate?.name} precisa alcançar?
         </p>
       </div>
 
-      <div className="max-w-2xl mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+      <div className="max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           {objectives.map((objective, index) => {
             const isSelected = formData.selectedObjectives.includes(objective);
 
@@ -51,20 +51,20 @@ export const StepObjectives: React.FC = () => {
                 transition={{ delay: index * 0.05 }}
                 onClick={() => toggleObjective(objective)}
                 className={`
-                  flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left
+                  flex items-center gap-4 p-5 rounded-xl border-2 transition-all text-left
                   ${isSelected 
-                    ? 'border-primary bg-primary/10' 
-                    : 'border-border bg-card hover:border-primary/50'
+                    ? 'border-primary bg-primary/10 shadow-md shadow-primary/10' 
+                    : 'border-border bg-background hover:border-primary/50 hover:shadow-md'
                   }
                 `}
               >
                 <div className={`
-                  w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0
+                  w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0
                   ${isSelected ? 'bg-primary' : 'border-2 border-muted-foreground/30'}
                 `}>
                   {isSelected && <Check className="w-4 h-4 text-primary-foreground" />}
                 </div>
-                <span className={`text-sm ${isSelected ? 'text-primary font-medium' : 'text-foreground'}`}>
+                <span className={`text-base ${isSelected ? 'text-primary font-medium' : 'text-foreground'}`}>
                   {objective}
                 </span>
               </motion.button>
@@ -73,21 +73,22 @@ export const StepObjectives: React.FC = () => {
         </div>
 
         {/* Custom Objective */}
-        <div className="flex gap-2">
+        <div className="flex gap-3 max-w-xl mx-auto">
           <Input
             placeholder="Adicionar objetivo personalizado..."
             value={customInput}
             onChange={(e) => setCustomInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addCustomObjective()}
+            className="h-12 text-base"
           />
-          <Button onClick={addCustomObjective} variant="outline" size="icon">
-            <Plus className="w-4 h-4" />
+          <Button onClick={addCustomObjective} variant="outline" size="icon" className="h-12 w-12">
+            <Plus className="w-5 h-5" />
           </Button>
         </div>
 
         {formData.customObjective && (
-          <div className="mt-4 p-3 rounded-lg bg-primary/10 border border-primary/30">
-            <span className="text-sm text-primary">+ {formData.customObjective}</span>
+          <div className="mt-6 p-4 rounded-xl bg-primary/10 border border-primary/30 max-w-xl mx-auto">
+            <span className="text-base text-primary font-medium">+ {formData.customObjective}</span>
           </div>
         )}
       </div>
