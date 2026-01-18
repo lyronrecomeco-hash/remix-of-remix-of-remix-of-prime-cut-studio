@@ -568,21 +568,7 @@ const GenesisIADashboard = () => {
                     )}
                   </div>
 
-                  {/* Welcome */}
-                  {config.header.showWelcome && (
-                    <div 
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg border"
-                      style={{ 
-                        backgroundColor: config.header.welcomeBackgroundColor,
-                        borderColor: config.cards.borderColor,
-                      }}
-                    >
-                      <span className="text-base">👋</span>
-                      <span className="text-sm" style={{ color: config.header.titleColor }}>
-                        Olá, <span className="font-semibold capitalize" style={{ color: config.dock.activeColor }}>{userName}</span>
-                      </span>
-                    </div>
-                  )}
+                  {/* Welcome badge removed - using hero section instead */}
                 </div>
               </div>
             </header>
@@ -598,12 +584,7 @@ const GenesisIADashboard = () => {
               }}
             />
 
-            {showWelcome && (
-              <WelcomeToast 
-                userName={userName} 
-                onClose={() => setShowWelcome(false)} 
-              />
-            )}
+            {/* WelcomeToast removed - using hero section instead */}
 
             {/* Content */}
             <main className={activeTab === 'dashboard' && !isEditMode ? "flex-1 flex flex-col items-center justify-center px-6 pt-28 pb-32" : "flex-1 px-4 py-4 pb-32"}>
