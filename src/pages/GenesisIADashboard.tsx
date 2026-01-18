@@ -59,8 +59,9 @@ import { DraggableCard, CardData } from "@/components/genesis-ia/dashboard-build
 import { CardSettingsPanel } from "@/components/genesis-ia/dashboard-builder/components/CardSettingsPanel";
 import { TextElement, TextElementData } from "@/components/genesis-ia/dashboard-builder/components/TextElement";
 import { TextSettingsPanel } from "@/components/genesis-ia/dashboard-builder/components/TextSettingsPanel";
+import { ProjectBuilderModal, ProjectBuilderWizard } from "@/components/genesis-ia/project-builder";
 
-type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial';
+type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'project-builder';
 
 // Icon mapping for dynamic rendering
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -80,6 +81,7 @@ const GenesisIADashboard = () => {
   const [editingCard, setEditingCard] = useState<CardData | null>(null);
   const [editingText, setEditingText] = useState<TextElementData | null>(null);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [showProjectBuilderModal, setShowProjectBuilderModal] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -130,7 +132,16 @@ const GenesisIADashboard = () => {
       case 'users': return 'Usuários';
       case 'settings': return 'Configurações';
       case 'financial': return 'Financeiro';
+      case 'project-builder': return 'Project Prompt Builder';
       default: return null;
+    }
+  };
+
+  const handleCarouselNavigate = (tabId: string) => {
+    if (tabId === 'project-builder') {
+      setShowProjectBuilderModal(true);
+    } else {
+      setActiveTab(tabId as ActiveTab);
     }
   };
 
@@ -310,7 +321,7 @@ const GenesisIADashboard = () => {
               </div>
 
               {/* Genesis Carousel - Acesse também */}
-              <GenesisCarousel onNavigate={(tabId) => setActiveTab(tabId as ActiveTab)} />
+              <GenesisCarousel onNavigate={handleCarouselNavigate} />
             </>
           ) : (
             // Free positioning mode for editing
@@ -500,6 +511,10 @@ const GenesisIADashboard = () => {
       return <GenesisFinancialTab userId={userId} />;
     }
 
+    if (activeTab === 'project-builder') {
+      return <ProjectBuilderWizard onBack={() => setActiveTab('dashboard')} />;
+    }
+
     return null;
   };
 
@@ -573,6 +588,16 @@ const GenesisIADashboard = () => {
             </header>
 
             {/* Welcome Toast */}
+            {/* Project Builder Modal */}
+            <ProjectBuilderModal
+              isOpen={showProjectBuilderModal}
+              onClose={() => setShowProjectBuilderModal(false)}
+              onContinue={() => {
+                setShowProjectBuilderModal(false);
+                setActiveTab('project-builder');
+              }}
+            />
+
             {showWelcome && (
               <WelcomeToast 
                 userName={userName} 
