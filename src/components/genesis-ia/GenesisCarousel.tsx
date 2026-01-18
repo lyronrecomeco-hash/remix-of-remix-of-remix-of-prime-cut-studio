@@ -7,7 +7,8 @@ import {
   PenTool,
   Sparkles,
   Rocket,
-  DollarSign
+  DollarSign,
+  Layers
 } from 'lucide-react';
 
 interface CarouselItem {
@@ -23,6 +24,13 @@ interface GenesisCarouselProps {
 }
 
 const carouselItems: CarouselItem[] = [
+  {
+    id: 'project-builder',
+    icon: Layers,
+    title: 'Project Prompt Builder',
+    description: 'Crie prompts completos para gerar projetos com IA',
+    tabId: 'project-builder'
+  },
   {
     id: 'financial',
     icon: DollarSign,
