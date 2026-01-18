@@ -50,6 +50,7 @@ import { GlobalRadarTab } from "@/components/genesis-ia/GlobalRadarTab";
 import { GenesisUsersTab } from "@/components/genesis-ia/GenesisUsersTab";
 import { GenesisSettingsTab } from "@/components/genesis-ia/GenesisSettingsTab";
 import { AcceptedLeadsSection } from "@/components/genesis-ia/AcceptedLeadsSection";
+import { GenesisCarousel } from "@/components/genesis-ia/GenesisCarousel";
 import { AcceptedProposalsTab } from "@/components/genesis-ia/AcceptedProposalsTab";
 import { WelcomeToast } from "@/components/genesis-ia/WelcomeToast";
 import { FullPageEditor, EditorContextValue, CustomElement } from "@/components/genesis-ia/dashboard-builder/FullPageEditor";
@@ -306,13 +307,8 @@ const GenesisIADashboard = () => {
                 })()}
               </div>
 
-              {/* Accepted Leads Section */}
-              {affiliateId && (
-                <AcceptedLeadsSection
-                  affiliateId={affiliateId}
-                  onViewAll={() => setActiveTab('accepted_proposals')}
-                />
-              )}
+              {/* Genesis Carousel - Acesse também */}
+              <GenesisCarousel />
             </>
           ) : (
             // Free positioning mode for editing
