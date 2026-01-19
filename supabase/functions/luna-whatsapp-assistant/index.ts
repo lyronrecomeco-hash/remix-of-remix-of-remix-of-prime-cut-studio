@@ -358,6 +358,15 @@ _"Genesis, buscar clientes no Brasil, São Paulo, nicho petshop, sem site."_`;
 // ENVIAR MENSAGEM VIA WHATSAPP
 // =====================================================
 
+function extractBaseHostAndPorts(backendUrlRaw: string) {
+  const cleanUrl = String(backendUrlRaw).trim().replace(/\/$/, "");
+  const match = cleanUrl.match(/^(https?:\/\/[^:\/]+)(?::(\d+))?(.*)$/);
+  const baseHost = match ? match[1] : cleanUrl;
+  const configuredPort = match?.[2] || "3000";
+  const portsToTry = configuredPort === "3001" ? ["3001", "3000"] : ["3000", "3001"];
+  return { baseHost, portsToTry };
+}
+
 async function sendWhatsAppMessage(
   supabase: any,
   instanceId: string,
@@ -382,19 +391,12 @@ async function sendWhatsAppMessage(
       .eq('id', instanceId)
       .maybeSingle();
 
-    const backendUrl = globalConfig?.backend_url || instance?.backend_url || 'http://72.62.108.24:3000';
+    const backendUrlRaw = globalConfig?.backend_url || instance?.backend_url || 'http://72.62.108.24:3000';
     const backendToken = globalConfig?.master_token || instance?.backend_token || 'genesis-master-token-2024-secure';
     const instanceName = instance?.name || 'Genesis';
 
-    const cleanBackendUrl = String(backendUrl).replace(/\/$/, '');
-    console.log(`[Luna] Backend: ${cleanBackendUrl}, Instance: ${instanceName}`);
-
-    // Evolution API endpoints (formato correto)
-    const endpoints = [
-      { path: `/api/instance/${encodeURIComponent(instanceId)}/send`, payload: { to, phone: to, number: to, message, text: message } },
-      { path: `/api/instance/${encodeURIComponent(instanceId)}/sendText`, payload: { to, phone: to, number: to, message, text: message } },
-      { path: `/api/instance/${encodeURIComponent(instanceName)}/send`, payload: { to, phone: to, number: to, message, text: message } },
-    ];
+    const { baseHost, portsToTry } = extractBaseHostAndPorts(backendUrlRaw);
+    console.log(`[Luna] Backend: ${baseHost}, Instance: ${instanceName}, Token: ${backendToken.substring(0,10)}...`);
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -402,11 +404,25 @@ async function sendWhatsAppMessage(
       'apikey': backendToken,
     };
 
-    for (const { path, payload } of endpoints) {
-      try {
-        const url = `${cleanBackendUrl}${path}`;
-        console.log(`[Luna] Tentando: ${url}`);
+    const payload = {
+      to,
+      phone: to,
+      number: to,
+      message,
+      text: message,
+    };
 
+    // Usar nome da instância ao invés do UUID
+    const sendPath = `/api/instance/${encodeURIComponent(instanceName)}/send`;
+
+    // Tentar cada porta
+    for (const port of portsToTry) {
+      const baseUrl = `${baseHost}:${port}`;
+      const url = `${baseUrl}${sendPath}`;
+      
+      console.log(`[Luna] Tentando: ${url}`);
+
+      try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
 
@@ -425,12 +441,12 @@ async function sendWhatsAppMessage(
         if (resp.ok) {
           try {
             const result = JSON.parse(responseText);
-            if (result.key || result.messageId || result.status === 'PENDING' || result.status === 'sent') {
+            if (result.key || result.messageId || result.status === 'PENDING' || result.status === 'sent' || result.success) {
               console.log('[Luna] Mensagem enviada com sucesso!');
               return { success: true };
             }
           } catch {
-            // Se não conseguiu parsear, mas status é 200, considerar sucesso
+            // Se não conseguiu parsear, mas status é 200/201, considerar sucesso
             if (resp.status === 200 || resp.status === 201) {
               console.log('[Luna] Mensagem enviada (resposta não-JSON)');
               return { success: true };
@@ -438,18 +454,16 @@ async function sendWhatsAppMessage(
           }
         }
 
-        // Se não for 404, loggar e continuar
-        if (resp.status !== 404) {
-          console.warn(`[Luna] Endpoint retornou ${resp.status}: ${responseText.substring(0, 100)}`);
-        }
+        // Log do erro mas continua tentando próxima porta
+        console.warn(`[Luna] Porta ${port} retornou ${resp.status}`);
       } catch (e: any) {
-        console.warn(`[Luna] Endpoint failed: ${path}`, e.message);
+        console.warn(`[Luna] Porta ${port} falhou: ${e.message}`);
         continue;
       }
     }
 
-    console.error('[Luna] Todos os endpoints falharam');
-    return { success: false, error: 'Nenhum endpoint funcionou' };
+    console.error('[Luna] Todas as portas falharam');
+    return { success: false, error: 'Nenhuma porta respondeu' };
   } catch (error: any) {
     console.error('[Luna] Send message error:', error);
     return { success: false, error: error.message };
