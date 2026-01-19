@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, Clock, MapPin, Stethoscope, Heart, Star, Loader2 } from 'lucide-react';
+import { X, Calendar, Clock, MapPin, Stethoscope, Heart, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import starpetshopLogo from '@/assets/starpetshop/logo.png';
 
 const STORAGE_KEY = 'starpetshop_appointments';
 
@@ -95,8 +96,8 @@ const StarpetshopMyAppointments = ({ isOpen, onClose }: StarpetshopMyAppointment
                 {activeAppointments.map((apt) => (
                   <div key={apt.id} className="bg-red-50 border border-red-100 rounded-xl p-4">
                     <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 bg-red-500 rounded-xl flex items-center justify-center">
-                        <Star className="w-5 h-5 text-white" fill="white" />
+                      <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center overflow-hidden">
+                        <img src={starpetshopLogo} alt="Star Petshop" className="w-8 h-8 object-contain" />
                       </div>
                       <div className="flex-1">
                         <p className="font-bold text-gray-900">{apt.serviceName}</p>
