@@ -532,11 +532,13 @@ const GenesisIADashboard = () => {
         
         return (
           <div 
-            className="min-h-screen flex flex-col"
+            className="min-h-screen flex flex-col relative"
             style={{
               background: 'linear-gradient(180deg, hsl(220 25% 10%) 0%, hsl(230 30% 12%) 50%, hsl(220 25% 10%) 100%)',
             }}
           >
+            {/* Animated Background */}
+            <GenesisBackground />
             {/* Header */}
             <header 
               className="sticky top-0 z-40 border-b border-border backdrop-blur"
