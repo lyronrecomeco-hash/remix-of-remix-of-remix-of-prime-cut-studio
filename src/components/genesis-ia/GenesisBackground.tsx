@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef } from 'react';
 
 /**
- * Genesis IA Interactive Background - Modern animated particles with connections
+ * Genesis IA Interactive Background - Enhanced animated particles with mesh network effect
  */
 const GenesisBackground = memo(() => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -22,6 +22,16 @@ const GenesisBackground = memo(() => {
       radius: number;
       opacity: number;
       pulsePhase: number;
+      hue: number;
+    }> = [];
+
+    let floatingOrbs: Array<{
+      x: number;
+      y: number;
+      radius: number;
+      speed: number;
+      angle: number;
+      opacity: number;
     }> = [];
 
     const resizeCanvas = () => {
@@ -31,65 +41,143 @@ const GenesisBackground = memo(() => {
 
     const createParticles = () => {
       particles = [];
-      const particleCount = Math.floor((canvas.width * canvas.height) / 20000);
+      floatingOrbs = [];
+      
+      // More particles for denser effect
+      const particleCount = Math.floor((canvas.width * canvas.height) / 12000);
 
       for (let i = 0; i < particleCount; i++) {
         particles.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          vx: (Math.random() - 0.5) * 0.4,
-          vy: (Math.random() - 0.5) * 0.4,
-          radius: Math.random() * 2.5 + 1,
-          opacity: Math.random() * 0.4 + 0.15,
+          vx: (Math.random() - 0.5) * 0.6,
+          vy: (Math.random() - 0.5) * 0.6,
+          radius: Math.random() * 2.5 + 0.8,
+          opacity: Math.random() * 0.5 + 0.2,
           pulsePhase: Math.random() * Math.PI * 2,
+          hue: Math.random() * 40 - 20, // Slight color variation
+        });
+      }
+
+      // Add floating orbs for ambient effect
+      for (let i = 0; i < 5; i++) {
+        floatingOrbs.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          radius: Math.random() * 200 + 150,
+          speed: Math.random() * 0.0005 + 0.0002,
+          angle: Math.random() * Math.PI * 2,
+          opacity: Math.random() * 0.04 + 0.02,
         });
       }
     };
 
     let time = 0;
+    let mouseX = canvas.width / 2;
+    let mouseY = canvas.height / 2;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    };
 
     const drawParticles = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      time += 0.008;
+      time += 0.01;
 
       // Get primary color from CSS
       const primary = getComputedStyle(document.documentElement)
         .getPropertyValue('--primary')
         .trim();
 
-      // Draw ambient glow orbs
-      const gradient1 = ctx.createRadialGradient(
-        canvas.width * 0.2,
-        canvas.height * 0.3,
-        0,
-        canvas.width * 0.2,
-        canvas.height * 0.3,
-        canvas.width * 0.4
-      );
-      gradient1.addColorStop(0, `hsl(${primary} / 0.06)`);
-      gradient1.addColorStop(0.5, `hsl(${primary} / 0.02)`);
-      gradient1.addColorStop(1, 'transparent');
-      ctx.fillStyle = gradient1;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Draw floating orbs with smooth movement
+      floatingOrbs.forEach((orb) => {
+        orb.angle += orb.speed;
+        const offsetX = Math.sin(orb.angle) * 100;
+        const offsetY = Math.cos(orb.angle * 0.7) * 80;
 
-      const gradient2 = ctx.createRadialGradient(
-        canvas.width * 0.8,
-        canvas.height * 0.7,
-        0,
-        canvas.width * 0.8,
-        canvas.height * 0.7,
-        canvas.width * 0.5
-      );
-      gradient2.addColorStop(0, `hsl(${primary} / 0.04)`);
-      gradient2.addColorStop(0.5, `hsl(${primary} / 0.015)`);
-      gradient2.addColorStop(1, 'transparent');
-      ctx.fillStyle = gradient2;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const gradient = ctx.createRadialGradient(
+          orb.x + offsetX,
+          orb.y + offsetY,
+          0,
+          orb.x + offsetX,
+          orb.y + offsetY,
+          orb.radius
+        );
+        gradient.addColorStop(0, `hsl(${primary} / ${orb.opacity * 1.5})`);
+        gradient.addColorStop(0.4, `hsl(${primary} / ${orb.opacity * 0.5})`);
+        gradient.addColorStop(1, 'transparent');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      });
 
+      // Draw subtle grid lines
+      ctx.strokeStyle = `hsl(${primary} / 0.03)`;
+      ctx.lineWidth = 0.5;
+      const gridSize = 80;
+      for (let x = 0; x < canvas.width; x += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < canvas.height; y += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+
+      // Draw connections first (behind particles)
       particles.forEach((particle, i) => {
-        // Update position
+        particles.slice(i + 1).forEach((otherParticle) => {
+          const dx = particle.x - otherParticle.x;
+          const dy = particle.y - otherParticle.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < 150) {
+            ctx.beginPath();
+            ctx.moveTo(particle.x, particle.y);
+            ctx.lineTo(otherParticle.x, otherParticle.y);
+            const alpha = 0.12 * (1 - distance / 150);
+            ctx.strokeStyle = `hsl(${primary} / ${alpha})`;
+            ctx.lineWidth = 0.6;
+            ctx.stroke();
+          }
+        });
+
+        // Mouse interaction - draw lines to nearby particles
+        const dxMouse = particle.x - mouseX;
+        const dyMouse = particle.y - mouseY;
+        const distMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
+        if (distMouse < 200) {
+          ctx.beginPath();
+          ctx.moveTo(particle.x, particle.y);
+          ctx.lineTo(mouseX, mouseY);
+          const alpha = 0.15 * (1 - distMouse / 200);
+          ctx.strokeStyle = `hsl(${primary} / ${alpha})`;
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+        }
+      });
+
+      // Draw and update particles
+      particles.forEach((particle) => {
+        // Update position with slight drift toward mouse
+        const dxMouse = mouseX - particle.x;
+        const dyMouse = mouseY - particle.y;
+        const distMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
+        
+        if (distMouse < 300) {
+          particle.vx += (dxMouse / distMouse) * 0.01;
+          particle.vy += (dyMouse / distMouse) * 0.01;
+        }
+
+        // Apply velocity with damping
         particle.x += particle.vx;
         particle.y += particle.vy;
+        particle.vx *= 0.99;
+        particle.vy *= 0.99;
 
         // Wrap around edges
         if (particle.x < 0) particle.x = canvas.width;
@@ -98,7 +186,7 @@ const GenesisBackground = memo(() => {
         if (particle.y > canvas.height) particle.y = 0;
 
         // Pulsing opacity
-        const pulse = Math.sin(time + particle.pulsePhase) * 0.15 + 0.85;
+        const pulse = Math.sin(time * 2 + particle.pulsePhase) * 0.2 + 0.8;
         const currentOpacity = particle.opacity * pulse;
 
         // Draw particle with glow
@@ -107,31 +195,29 @@ const GenesisBackground = memo(() => {
         ctx.fillStyle = `hsl(${primary} / ${currentOpacity})`;
         ctx.fill();
 
-        // Add subtle glow to larger particles
-        if (particle.radius > 2) {
+        // Add glow to larger particles
+        if (particle.radius > 1.8) {
           ctx.beginPath();
-          ctx.arc(particle.x, particle.y, particle.radius * 2, 0, Math.PI * 2);
-          ctx.fillStyle = `hsl(${primary} / ${currentOpacity * 0.15})`;
+          ctx.arc(particle.x, particle.y, particle.radius * 3, 0, Math.PI * 2);
+          ctx.fillStyle = `hsl(${primary} / ${currentOpacity * 0.1})`;
           ctx.fill();
         }
-
-        // Draw connections
-        particles.slice(i + 1).forEach((otherParticle) => {
-          const dx = particle.x - otherParticle.x;
-          const dy = particle.y - otherParticle.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          if (distance < 120) {
-            ctx.beginPath();
-            ctx.moveTo(particle.x, particle.y);
-            ctx.lineTo(otherParticle.x, otherParticle.y);
-            const alpha = 0.08 * (1 - distance / 120);
-            ctx.strokeStyle = `hsl(${primary} / ${alpha})`;
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-          }
-        });
       });
+
+      // Draw central glow effect
+      const centerGradient = ctx.createRadialGradient(
+        canvas.width * 0.5,
+        canvas.height * 0.3,
+        0,
+        canvas.width * 0.5,
+        canvas.height * 0.3,
+        canvas.width * 0.6
+      );
+      centerGradient.addColorStop(0, `hsl(${primary} / 0.05)`);
+      centerGradient.addColorStop(0.5, `hsl(${primary} / 0.02)`);
+      centerGradient.addColorStop(1, 'transparent');
+      ctx.fillStyle = centerGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       animationFrameId = requestAnimationFrame(drawParticles);
     };
@@ -146,10 +232,12 @@ const GenesisBackground = memo(() => {
     };
 
     window.addEventListener('resize', handleResize);
+    window.addEventListener('mousemove', handleMouseMove);
 
     return () => {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('mousemove', handleMouseMove);
     };
   }, []);
 
@@ -157,7 +245,7 @@ const GenesisBackground = memo(() => {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 pointer-events-none z-0"
-      style={{ opacity: 0.6 }}
+      style={{ opacity: 0.7 }}
     />
   );
 });

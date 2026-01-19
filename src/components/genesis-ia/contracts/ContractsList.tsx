@@ -107,17 +107,6 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
     return matchesSearch && matchesStatus;
   });
 
-  const getStatusBadge = (status: string) => {
-    const config = statusConfig[status] || statusConfig.draft;
-    const Icon = config.icon;
-    return (
-      <Badge variant="outline" className={`${config.color} gap-1 text-[10px]`}>
-        <Icon className="w-3 h-3" />
-        <span className="hidden sm:inline">{config.label}</span>
-      </Badge>
-    );
-  };
-
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -239,69 +228,141 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
           )}
         </motion.div>
       ) : (
-        <div className="rounded-xl border border-border/50 bg-card/30 overflow-hidden shadow-sm">
-          {/* Table Header */}
-          <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] gap-3 px-4 py-3 bg-card/60 border-b border-border/40 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            <span>Nome</span>
-            <span>Tipo</span>
-            <span>Recorrência</span>
-            <span>Valor</span>
-            <span>Status</span>
-            <span className="w-8"></span>
+        <>
+          {/* Desktop Table */}
+          <div className="hidden md:block rounded-xl border border-border/50 bg-card/30 overflow-hidden shadow-sm">
+            {/* Table Header */}
+            <div className="grid grid-cols-[2fr_1.5fr_1fr_1fr_1.2fr_auto] gap-4 px-4 py-3 bg-card/60 border-b border-border/40">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Nome</span>
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tipo</span>
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Recorrência</span>
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Valor</span>
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</span>
+              <span className="w-8"></span>
+            </div>
+            
+            {/* Table Body */}
+            <div className="divide-y divide-border/20">
+              {filteredContracts.map((contract) => {
+                const config = statusConfig[contract.status] || statusConfig.draft;
+                return (
+                  <div 
+                    key={contract.id}
+                    className="grid grid-cols-[2fr_1.5fr_1fr_1fr_1.2fr_auto] gap-4 px-4 py-3.5 hover:bg-card/50 cursor-pointer transition-colors group items-center"
+                    onClick={() => onViewContract(contract.id)}
+                  >
+                    {/* Nome */}
+                    <div className="min-w-0">
+                      <span className="text-sm font-medium text-foreground truncate block group-hover:text-blue-400 transition-colors">
+                        {contract.contractor_name}
+                      </span>
+                    </div>
+                    
+                    {/* Tipo */}
+                    <div className="min-w-0">
+                      <span className="text-sm text-muted-foreground truncate block">
+                        {contract.service_type}
+                      </span>
+                    </div>
+                    
+                    {/* Recorrência */}
+                    <div>
+                      <span className={`text-sm whitespace-nowrap ${contract.service_modality === 'recorrente' ? 'text-emerald-400 font-medium' : 'text-muted-foreground'}`}>
+                        {contract.service_modality === 'recorrente' 
+                          ? `${formatCurrency(contract.total_value)}/mês` 
+                          : 'Pontual'}
+                      </span>
+                    </div>
+                    
+                    {/* Valor */}
+                    <div>
+                      <span className="text-sm font-semibold text-foreground whitespace-nowrap">
+                        {formatCurrency(contract.total_value)}
+                      </span>
+                    </div>
+                    
+                    {/* Status */}
+                    <div>
+                      <Badge variant="outline" className={`${config.color} text-xs py-0.5 px-2 whitespace-nowrap`}>
+                        {config.label}
+                      </Badge>
+                    </div>
+                    
+                    {/* Actions */}
+                    <div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onViewContract(contract.id); }}>
+                            <Eye className="w-4 h-4 mr-2" />
+                            Visualizar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => handleDownloadPDF(contract, e)}>
+                            <Download className="w-4 h-4 mr-2" />
+                            Download PDF
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-          
-          {/* Table Body */}
-          <div className="divide-y divide-border/20">
+
+          {/* Mobile Cards */}
+          <div className="md:hidden space-y-3">
             {filteredContracts.map((contract) => {
               const config = statusConfig[contract.status] || statusConfig.draft;
               return (
-                <div 
+                <motion.div
                   key={contract.id}
-                  className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] gap-3 px-4 py-3.5 hover:bg-card/50 cursor-pointer transition-colors group"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-card/40 border border-border/50 rounded-xl p-4 cursor-pointer active:bg-card/60 transition-colors"
                   onClick={() => onViewContract(contract.id)}
                 >
-                  {/* Nome */}
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-sm font-medium text-foreground truncate group-hover:text-blue-400 transition-colors">
-                      {contract.contractor_name}
-                    </span>
-                  </div>
-                  
-                  {/* Tipo */}
-                  <div className="flex items-center min-w-0">
-                    <span className="text-sm text-muted-foreground truncate">
-                      {contract.service_type}
-                    </span>
-                  </div>
-                  
-                  {/* Recorrência */}
-                  <div className="flex items-center">
-                    <span className={`text-sm ${contract.service_modality === 'recorrente' ? 'text-emerald-400 font-medium' : 'text-muted-foreground'}`}>
-                      {contract.service_modality === 'recorrente' 
-                        ? `${formatCurrency(contract.total_value)}/mês` 
-                        : 'Pontual'}
-                    </span>
-                  </div>
-                  
-                  {/* Valor */}
-                  <div className="flex items-center">
-                    <span className="text-sm font-semibold text-foreground">
-                      {formatCurrency(contract.total_value)}
-                    </span>
-                  </div>
-                  
-                  {/* Status */}
-                  <div className="flex items-center">
-                    <Badge variant="outline" className={`${config.color} text-[10px] sm:text-xs py-0.5 px-2`}>
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-medium text-foreground text-sm truncate">
+                        {contract.contractor_name}
+                      </h4>
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">
+                        {contract.service_type}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className={`${config.color} text-[10px] py-0.5 px-2 flex-shrink-0`}>
                       {config.label}
                     </Badge>
                   </div>
                   
-                  {/* Actions */}
-                  <div className="flex items-center">
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-4">
+                      <div>
+                        <span className="text-muted-foreground">Valor: </span>
+                        <span className="font-semibold text-foreground">{formatCurrency(contract.total_value)}</span>
+                      </div>
+                      <div>
+                        <span className={`${contract.service_modality === 'recorrente' ? 'text-emerald-400 font-medium' : 'text-muted-foreground'}`}>
+                          {contract.service_modality === 'recorrente' ? 'Recorrente' : 'Pontual'}
+                        </span>
+                      </div>
+                    </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="icon" className="h-7 w-7">
                           <MoreVertical className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -325,11 +386,11 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                </div>
+                </motion.div>
               );
             })}
           </div>
-        </div>
+        </>
       )}
 
       {/* Legal Notice */}
