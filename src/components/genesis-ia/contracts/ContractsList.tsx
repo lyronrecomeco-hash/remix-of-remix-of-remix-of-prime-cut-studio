@@ -216,20 +216,21 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
       {/* Summary Table Header */}
       {filteredContracts.length > 0 && (
         <div className="rounded-lg border border-border/50 bg-card/30 overflow-hidden">
-          <div className="grid grid-cols-4 gap-2 px-4 py-2.5 bg-card/50 border-b border-border/30 text-[11px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          <div className="grid grid-cols-5 gap-2 px-4 py-2.5 bg-card/50 border-b border-border/30 text-[11px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <span>Nome</span>
             <span>Tipo</span>
-            <span>Valor</span>
             <span>Recorrência</span>
+            <span>Valor</span>
             <span>Status</span>
           </div>
           {filteredContracts.map((contract) => (
             <div 
               key={`summary-${contract.id}`}
-              className="grid grid-cols-4 gap-2 px-4 py-2.5 border-b border-border/20 last:border-b-0 text-xs sm:text-sm hover:bg-card/40 cursor-pointer transition-colors"
+              className="grid grid-cols-5 gap-2 px-4 py-2.5 border-b border-border/20 last:border-b-0 text-xs sm:text-sm hover:bg-card/40 cursor-pointer transition-colors"
               onClick={() => onViewContract(contract.id)}
             >
+              <span className="text-foreground truncate font-medium">{contract.contractor_name}</span>
               <span className="text-foreground truncate">{contract.service_type}</span>
-              <span className="text-foreground font-medium">{formatCurrency(contract.total_value)}</span>
               <span className={contract.service_modality === 'recorrente' ? 'text-emerald-400' : 'text-muted-foreground'}>
                 {contract.service_modality === 'recorrente' 
                   ? `+${formatCurrency(contract.total_value)}/mês` 
@@ -237,6 +238,7 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
                     ? 'Pontual' 
                     : 'Por Demanda'}
               </span>
+              <span className="text-foreground font-medium">{formatCurrency(contract.total_value)}</span>
               <span>
                 {(() => {
                   const config = statusConfig[contract.status] || statusConfig.draft;
