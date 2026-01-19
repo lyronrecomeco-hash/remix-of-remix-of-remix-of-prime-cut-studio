@@ -1,0 +1,1 @@
+export { PromocionalTab } from './PromocionalTab';

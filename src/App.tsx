@@ -66,6 +66,7 @@ const PetshopPrimoPage = lazy(() => import("./pages/petshop-primo"));
 const PetshopMonPage = lazy(() => import("./pages/petshop-mon"));
 const PortfolioPage = lazy(() => import("./pages/portfolio/[slug]"));
 const ContractSignature = lazy(() => import("./pages/ContractSignature"));
+const PromoPage = lazy(() => import("./pages/PromoPage"));
 
 // QueryClient com retry logic e cache otimizado
 const queryClient = new QueryClient({
@@ -277,6 +278,8 @@ const AppContent = () => {
             <Route path="/p/:slug" element={<PortfolioPage />} />
             {/* Contract Signature */}
             <Route path="/contratos/assinar/:hash" element={<ContractSignature />} />
+            {/* Promo Page */}
+            <Route path="/promo/:codigo" element={<PromoPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
