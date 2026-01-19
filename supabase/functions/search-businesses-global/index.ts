@@ -978,20 +978,26 @@ serve(async (req) => {
     // Get country config, default to US
     const config = COUNTRY_CONFIG[countryCode] || COUNTRY_CONFIG['US'];
     
-    // Build search query based on language
+    // Extract state abbreviation from city (e.g., "Senador Pompeu, CE" -> "CE")
+    const cityParts = city.split(',').map((p: string) => p.trim());
+    const cityName = cityParts[0];
+    const stateAbbr = cityParts[1] || ''; // Estado (sigla)
+    
+    // Build search query based on language - include state for precision
     const template = SEARCH_TEMPLATES[config.hl] || SEARCH_TEMPLATES['en'];
+    const searchLocation = stateAbbr ? `${cityName}, ${stateAbbr}` : cityName;
     const searchQuery = template
       .replace('{niche}', niche)
-      .replace('{city}', city);
+      .replace('{city}', searchLocation);
 
-    console.log(`Global search: "${searchQuery}" in ${countryCode} (${config.gl}/${config.hl})`);
+    console.log(`Global search: "${searchQuery}" in ${countryCode} (${config.gl}/${config.hl}), state filter: "${stateAbbr}"`);
 
     // Get message template for this country
     const messageTemplate = MESSAGE_TEMPLATES[config.lang] || MESSAGE_TEMPLATES['en'];
     const consultantName = affiliateName || 'Consultor Genesis';
 
-    // FAST SEARCH: limit to 30 results max for 5-second response
-    const maxResults = Math.min(30, Math.max(10, requestedMax || 30));
+    // FAST SEARCH: limit to 50 results to filter by state
+    const maxResults = Math.min(50, Math.max(10, requestedMax || 50));
 
     const searchResponse = await fetch('https://google.serper.dev/places', {
       method: 'POST',
@@ -1018,9 +1024,83 @@ serve(async (req) => {
 
     const searchData = await searchResponse.json();
     const places = searchData.places || [];
-    console.log(`Found ${places.length} results`);
+    console.log(`Found ${places.length} raw results`);
 
-    // Deduplicate and process results WITH messages adapted
+    // State abbreviation mappings for Brazil (for validation)
+    const BRAZILIAN_STATE_ABBRS: Record<string, string[]> = {
+      'CE': ['ce', 'ceará', 'ceara', 'fortaleza'],
+      'SP': ['sp', 'são paulo', 'sao paulo'],
+      'RJ': ['rj', 'rio de janeiro'],
+      'MG': ['mg', 'minas gerais', 'belo horizonte'],
+      'BA': ['ba', 'bahia', 'salvador'],
+      'RS': ['rs', 'rio grande do sul', 'porto alegre'],
+      'PR': ['pr', 'paraná', 'parana', 'curitiba'],
+      'SC': ['sc', 'santa catarina', 'florianópolis'],
+      'PE': ['pe', 'pernambuco', 'recife'],
+      'GO': ['go', 'goiás', 'goias', 'goiânia'],
+      'PA': ['pa', 'pará', 'para', 'belém'],
+      'MA': ['ma', 'maranhão', 'maranhao', 'são luís'],
+      'AM': ['am', 'amazonas', 'manaus'],
+      'ES': ['es', 'espírito santo', 'espirito santo', 'vitória'],
+      'PB': ['pb', 'paraíba', 'paraiba', 'joão pessoa'],
+      'RN': ['rn', 'rio grande do norte', 'natal'],
+      'AL': ['al', 'alagoas', 'maceió'],
+      'PI': ['pi', 'piauí', 'piaui', 'teresina'],
+      'MT': ['mt', 'mato grosso', 'cuiabá'],
+      'MS': ['ms', 'mato grosso do sul', 'campo grande'],
+      'DF': ['df', 'distrito federal', 'brasília', 'brasilia'],
+      'SE': ['se', 'sergipe', 'aracaju'],
+      'RO': ['ro', 'rondônia', 'rondonia', 'porto velho'],
+      'TO': ['to', 'tocantins', 'palmas'],
+      'AC': ['ac', 'acre', 'rio branco'],
+      'AP': ['ap', 'amapá', 'amapa', 'macapá'],
+      'RR': ['rr', 'roraima', 'boa vista'],
+    };
+
+    // Function to check if address matches the requested state
+    function addressMatchesState(address: string, requestedState: string): boolean {
+      if (!requestedState || countryCode !== 'BR') return true; // Only filter for Brazil
+      
+      const addrLower = address.toLowerCase();
+      const stateUpper = requestedState.toUpperCase();
+      
+      // Direct match with state abbreviation
+      if (addrLower.includes(` - ${stateUpper.toLowerCase()}`) ||
+          addrLower.includes(`, ${stateUpper.toLowerCase()}`) ||
+          addrLower.includes(` ${stateUpper.toLowerCase()},`) ||
+          addrLower.endsWith(` ${stateUpper.toLowerCase()}`) ||
+          addrLower.endsWith(`, ${stateUpper.toLowerCase()}`)) {
+        return true;
+      }
+      
+      // Check using state keywords
+      const stateKeywords = BRAZILIAN_STATE_ABBRS[stateUpper];
+      if (stateKeywords) {
+        for (const keyword of stateKeywords) {
+          if (addrLower.includes(keyword)) {
+            return true;
+          }
+        }
+      }
+      
+      // Check if address contains a DIFFERENT state (reject if so)
+      for (const [abbr, keywords] of Object.entries(BRAZILIAN_STATE_ABBRS)) {
+        if (abbr === stateUpper) continue; // Skip the requested state
+        
+        // Check if address ends with or contains another state abbreviation clearly
+        const abbrLower = abbr.toLowerCase();
+        if (addrLower.includes(` - ${abbrLower}`) ||
+            addrLower.endsWith(`, ${abbrLower}`) ||
+            addrLower.endsWith(` ${abbrLower}`)) {
+          console.log(`Rejected: "${address}" - matches different state ${abbr}`);
+          return false;
+        }
+      }
+      
+      return true; // If uncertain, include it
+    }
+
+    // Deduplicate, FILTER BY STATE, and process results WITH messages adapted
     const seen = new Set<string>();
     const results: BusinessResult[] = places
       .map((place: any) => {
@@ -1031,6 +1111,12 @@ serve(async (req) => {
 
         if (!name || name.length < 3) return null;
         if (seen.has(key)) return null;
+        
+        // CRITICAL: Filter by state to ensure precision
+        if (!addressMatchesState(address, stateAbbr)) {
+          return null;
+        }
+        
         seen.add(key);
 
         // Extract email from various sources
