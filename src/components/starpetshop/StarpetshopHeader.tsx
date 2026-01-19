@@ -86,13 +86,13 @@ const StarpetshopHeader = ({ onScheduleClick, onMyAppointmentsClick }: Starpetsh
           <div className="flex items-center justify-between h-16 sm:h-20">
             {/* Logo */}
             <a href="#inicio" className="flex items-center gap-2 sm:gap-3 group">
-              <motion.div 
-                className="w-10 h-10 sm:w-12 sm:h-12 bg-black rounded-2xl flex items-center justify-center shadow-lg shadow-red-500/30 group-hover:scale-105 transition-transform overflow-hidden"
+              <motion.img 
+                src={starpetshopLogo} 
+                alt="Star Petshop" 
+                className="h-14 sm:h-16 w-auto object-contain group-hover:scale-105 transition-transform"
                 whileHover={{ rotate: [0, -5, 5, 0] }}
                 transition={{ duration: 0.5 }}
-              >
-                <img src={starpetshopLogo} alt="Star Petshop" className="w-9 h-9 sm:w-11 sm:h-11 object-contain" />
-              </motion.div>
+              />
               <div>
                 <h1 className="text-lg sm:text-xl font-bold text-gray-900 leading-tight tracking-tight">
                   Star Petshop
