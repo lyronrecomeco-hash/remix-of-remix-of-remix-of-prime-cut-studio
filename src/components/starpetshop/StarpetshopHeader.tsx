@@ -89,7 +89,7 @@ const StarpetshopHeader = ({ onScheduleClick, onMyAppointmentsClick }: Starpetsh
               <motion.img 
                 src={starpetshopLogo} 
                 alt="Star Petshop" 
-                className="h-14 w-14 sm:h-16 sm:w-16 object-cover rounded-full group-hover:scale-105 transition-transform"
+                className="h-16 w-16 sm:h-20 sm:w-20 object-cover rounded-full group-hover:scale-105 transition-transform"
                 whileHover={{ rotate: [0, -5, 5, 0] }}
                 transition={{ duration: 0.5 }}
               />

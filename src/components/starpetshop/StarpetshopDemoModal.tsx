@@ -72,8 +72,8 @@ const StarpetshopDemoModal = () => {
               <div className="flex justify-center mb-4">
                 <img 
                   src={starpetshopLogo} 
-                  alt="Starpetshop" 
-                  className="h-44 w-44 sm:h-56 sm:w-56 object-cover rounded-full" 
+                  alt="Star Petshop" 
+                  className="h-52 w-52 sm:h-64 sm:w-64 object-cover rounded-full" 
                 />
               </div>
 
