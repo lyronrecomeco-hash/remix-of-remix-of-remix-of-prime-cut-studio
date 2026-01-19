@@ -144,9 +144,9 @@ const GenesisIADashboard = () => {
 
   const dockItems = [
     { icon: Home, label: 'Início', tabId: 'dashboard' as const },
+    { icon: Layers, label: 'Projetos', tabId: 'criar-projetos' as const },
     { icon: Users, label: 'Usuários', tabId: 'users' as const },
     { icon: LayoutDashboard, label: 'Financeiro', tabId: 'financial' as const },
-    { icon: RefreshCw, label: 'Sync', tabId: 'dashboard' as const },
     { icon: Settings, label: 'Config', tabId: 'settings' as const },
     { icon: LogOut, label: 'Sair', onClick: handleLogout },
   ];
