@@ -7,8 +7,8 @@ import StarpetshopGallery from '@/components/starpetshop/StarpetshopGallery';
 import StarpetshopTestimonials from '@/components/starpetshop/StarpetshopTestimonials';
 import StarpetshopContact from '@/components/starpetshop/StarpetshopContact';
 import StarpetshopFooter from '@/components/starpetshop/StarpetshopFooter';
-import StarpetshopSchedule, { getStarpetshopAppointments } from '@/components/starpetshop/StarpetshopSchedule';
-import StarpetshopMyAppointments from '@/components/starpetshop/StarpetshopMyAppointments';
+import StarpetshopSchedule from '@/components/starpetshop/StarpetshopSchedule';
+import StarpetshopMyAppointments, { getStarpetshopAppointments } from '@/components/starpetshop/StarpetshopMyAppointments';
 import StarpetshopDemoModal from '@/components/starpetshop/StarpetshopDemoModal';
 
 const StarpetshopPage = () => {
@@ -23,10 +23,8 @@ const StarpetshopPage = () => {
     };
 
     checkAppointments();
-    
     const handleStorage = () => checkAppointments();
     window.addEventListener('storage', handleStorage);
-    
     const interval = setInterval(checkAppointments, 1000);
 
     return () => {
