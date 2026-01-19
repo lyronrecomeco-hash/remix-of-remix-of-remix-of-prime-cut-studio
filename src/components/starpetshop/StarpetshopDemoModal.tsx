@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles, MessageCircle, BarChart3, Calendar, Bot, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import starpetshopLogo from '@/assets/starpetshop/logo-transparent-2.png';
+import starpetshopLogo from '@/assets/starpetshop/logo-official.png';
 
 const StarpetshopDemoModal = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -73,7 +73,7 @@ const StarpetshopDemoModal = () => {
                 <img 
                   src={starpetshopLogo} 
                   alt="Star Petshop" 
-                  className="h-28 sm:h-36 w-auto object-contain" 
+                  className="h-40 sm:h-48 w-auto object-contain" 
                 />
               </div>
 

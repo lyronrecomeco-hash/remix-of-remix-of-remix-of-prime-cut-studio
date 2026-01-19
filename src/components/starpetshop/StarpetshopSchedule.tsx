@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { openWhatsAppLink, sendPetshopWhatsAppWithRetry } from '@/lib/petshopWhatsApp';
-import starpetshopLogo from '@/assets/starpetshop/logo-transparent-2.png';
+import starpetshopLogo from '@/assets/starpetshop/logo-official.png';
 
 interface StarpetshopScheduleProps {
   isOpen: boolean;
