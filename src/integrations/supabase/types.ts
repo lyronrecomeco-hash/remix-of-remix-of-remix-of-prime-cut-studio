@@ -1788,6 +1788,270 @@ export type Database = {
         }
         Relationships: []
       }
+      contract_audit_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_name: string | null
+          actor_type: string | null
+          contract_id: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_name?: string | null
+          actor_type?: string | null
+          contract_id: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_name?: string | null
+          actor_type?: string | null
+          contract_id?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_audit_logs_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_signatures: {
+        Row: {
+          contract_id: string
+          created_at: string
+          geolocation: string | null
+          id: string
+          ip_address: string | null
+          signature_image: string | null
+          signature_method: string | null
+          signed_at: string | null
+          signer_document: string
+          signer_email: string | null
+          signer_name: string
+          signer_phone: string | null
+          signer_type: string
+          user_agent: string | null
+          verification_code: string | null
+          verified_at: string | null
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          geolocation?: string | null
+          id?: string
+          ip_address?: string | null
+          signature_image?: string | null
+          signature_method?: string | null
+          signed_at?: string | null
+          signer_document: string
+          signer_email?: string | null
+          signer_name: string
+          signer_phone?: string | null
+          signer_type: string
+          user_agent?: string | null
+          verification_code?: string | null
+          verified_at?: string | null
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          geolocation?: string | null
+          id?: string
+          ip_address?: string | null
+          signature_image?: string | null
+          signature_method?: string | null
+          signed_at?: string | null
+          signer_document?: string
+          signer_email?: string | null
+          signer_name?: string
+          signer_phone?: string | null
+          signer_type?: string
+          user_agent?: string | null
+          verification_code?: string | null
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_signatures_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contracts: {
+        Row: {
+          affiliate_id: string
+          allows_early_termination: boolean | null
+          allows_extension: boolean | null
+          contract_number: string
+          contracted_address: string
+          contracted_document: string
+          contracted_document_type: string
+          contracted_email: string | null
+          contracted_name: string
+          contracted_phone: string | null
+          contractor_address: string
+          contractor_document: string
+          contractor_document_type: string
+          contractor_email: string | null
+          contractor_name: string
+          contractor_phone: string | null
+          created_at: string
+          delivery_in_stages: boolean | null
+          delivery_type: string | null
+          end_date: string | null
+          generated_content: string | null
+          has_warranty: boolean | null
+          id: string
+          installments: number | null
+          jurisdiction_city: string
+          jurisdiction_state: string
+          late_fee_percentage: number | null
+          liability_limit: string | null
+          not_included: string | null
+          notice_period_days: number | null
+          payment_method: string
+          pdf_url: string | null
+          questionnaire_answers: Json | null
+          service_description: string
+          service_modality: string
+          service_type: string
+          signature_expires_at: string | null
+          signature_hash: string
+          start_date: string
+          status: string
+          termination_penalty_percentage: number | null
+          title: string
+          total_value: number
+          updated_at: string
+          warranty_period: string | null
+        }
+        Insert: {
+          affiliate_id: string
+          allows_early_termination?: boolean | null
+          allows_extension?: boolean | null
+          contract_number: string
+          contracted_address: string
+          contracted_document: string
+          contracted_document_type?: string
+          contracted_email?: string | null
+          contracted_name: string
+          contracted_phone?: string | null
+          contractor_address: string
+          contractor_document: string
+          contractor_document_type?: string
+          contractor_email?: string | null
+          contractor_name: string
+          contractor_phone?: string | null
+          created_at?: string
+          delivery_in_stages?: boolean | null
+          delivery_type?: string | null
+          end_date?: string | null
+          generated_content?: string | null
+          has_warranty?: boolean | null
+          id?: string
+          installments?: number | null
+          jurisdiction_city: string
+          jurisdiction_state: string
+          late_fee_percentage?: number | null
+          liability_limit?: string | null
+          not_included?: string | null
+          notice_period_days?: number | null
+          payment_method: string
+          pdf_url?: string | null
+          questionnaire_answers?: Json | null
+          service_description: string
+          service_modality?: string
+          service_type: string
+          signature_expires_at?: string | null
+          signature_hash: string
+          start_date: string
+          status?: string
+          termination_penalty_percentage?: number | null
+          title: string
+          total_value: number
+          updated_at?: string
+          warranty_period?: string | null
+        }
+        Update: {
+          affiliate_id?: string
+          allows_early_termination?: boolean | null
+          allows_extension?: boolean | null
+          contract_number?: string
+          contracted_address?: string
+          contracted_document?: string
+          contracted_document_type?: string
+          contracted_email?: string | null
+          contracted_name?: string
+          contracted_phone?: string | null
+          contractor_address?: string
+          contractor_document?: string
+          contractor_document_type?: string
+          contractor_email?: string | null
+          contractor_name?: string
+          contractor_phone?: string | null
+          created_at?: string
+          delivery_in_stages?: boolean | null
+          delivery_type?: string | null
+          end_date?: string | null
+          generated_content?: string | null
+          has_warranty?: boolean | null
+          id?: string
+          installments?: number | null
+          jurisdiction_city?: string
+          jurisdiction_state?: string
+          late_fee_percentage?: number | null
+          liability_limit?: string | null
+          not_included?: string | null
+          notice_period_days?: number | null
+          payment_method?: string
+          pdf_url?: string | null
+          questionnaire_answers?: Json | null
+          service_description?: string
+          service_modality?: string
+          service_type?: string
+          signature_expires_at?: string | null
+          signature_hash?: string
+          start_date?: string
+          status?: string
+          termination_penalty_percentage?: number | null
+          title?: string
+          total_value?: number
+          updated_at?: string
+          warranty_period?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crm_audit_logs: {
         Row: {
           action: string

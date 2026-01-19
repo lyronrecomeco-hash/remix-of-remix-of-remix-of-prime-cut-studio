@@ -14,7 +14,8 @@ import {
   RefreshCw,
   Link2,
   ExternalLink,
-  TrendingUp
+  LayoutTemplate,
+  Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -150,6 +151,21 @@ export function CriarProjetosManager({
     setDeleteId(null);
   };
 
+  const getTemplateIcon = (slug: string) => {
+    switch (slug) {
+      case 'barbearia':
+        return '💈';
+      case 'academia':
+        return '🏋️';
+      case 'restaurante':
+        return '🍽️';
+      case 'ecommerce':
+        return '🛒';
+      default:
+        return '📦';
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -163,9 +179,13 @@ export function CriarProjetosManager({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 sm:gap-3">
-          <FolderOpen className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-          <h2 className="text-base sm:text-xl font-bold text-foreground">Meus Projetos</h2>
-          <Badge variant="secondary" className="text-xs">{configs.length}</Badge>
+          <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+            <LayoutTemplate className="w-4 h-4 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-base sm:text-lg font-bold text-foreground">Meus Projetos</h2>
+            <p className="text-xs text-muted-foreground">{configs.length} projeto{configs.length !== 1 ? 's' : ''} criado{configs.length !== 1 ? 's' : ''}</p>
+          </div>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
           <Button 
@@ -177,9 +197,9 @@ export function CriarProjetosManager({
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           </Button>
-          <Button onClick={onCreateNew} size="sm" className="gap-1.5">
+          <Button onClick={onCreateNew} size="sm" className="gap-1.5 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
             <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Novo</span>
+            <span>Novo template</span>
           </Button>
         </div>
       </div>
@@ -189,22 +209,24 @@ export function CriarProjetosManager({
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center py-12 sm:py-16 border-2 border-dashed border-border rounded-xl"
+          className="text-center py-12 sm:py-16 border-2 border-dashed border-border rounded-xl bg-card/30"
         >
-          <FolderOpen className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 text-muted-foreground/50" />
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary/20 to-purple-600/20 flex items-center justify-center">
+            <FolderOpen className="w-8 h-8 text-primary" />
+          </div>
           <h3 className="text-base sm:text-lg font-semibold text-foreground mb-2">
             Nenhum projeto criado
           </h3>
-          <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6 px-4">
-            Crie seu primeiro projeto personalizado
+          <p className="text-xs sm:text-sm text-muted-foreground mb-6 px-4 max-w-sm mx-auto">
+            Crie seu primeiro projeto personalizado usando nossos templates profissionais
           </p>
-          <Button onClick={onCreateNew} className="gap-2">
+          <Button onClick={onCreateNew} className="gap-2 bg-gradient-to-r from-primary to-purple-600">
             <Plus className="w-4 h-4" />
             Criar Projeto
           </Button>
         </motion.div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
           <AnimatePresence mode="popLayout">
             {configs.map((config, index) => (
               <motion.div
@@ -216,35 +238,88 @@ export function CriarProjetosManager({
                 transition={{ delay: index * 0.05 }}
                 className="group"
               >
-                <div className="relative p-3 sm:p-4 rounded-xl border bg-card hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
-                  {/* Header */}
-                  <div className="flex items-start justify-between gap-2 mb-2 sm:mb-3">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm sm:text-base font-semibold text-foreground truncate group-hover:text-primary transition-colors">
-                        {config.client_name || config.template_name}
-                      </h3>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground">
-                        {config.template_name}
-                      </p>
+                <div className="relative rounded-xl border bg-gradient-to-br from-card to-card/80 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 overflow-hidden">
+                  {/* Template Badge */}
+                  <div className="absolute top-3 right-3 z-10">
+                    <Badge 
+                      variant={config.is_active ? "default" : "secondary"} 
+                      className="text-[10px] px-2 py-0.5 backdrop-blur-sm"
+                    >
+                      {config.is_active ? '🟢 Ativo' : '⚪ Inativo'}
+                    </Badge>
+                  </div>
+
+                  {/* Card Header with Icon */}
+                  <div className="p-4 pb-2">
+                    <div className="flex items-start gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-purple-600/20 flex items-center justify-center text-2xl flex-shrink-0">
+                        {getTemplateIcon(config.template_slug)}
+                      </div>
+                      <div className="flex-1 min-w-0 pt-1">
+                        <h3 className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                          {config.client_name || config.template_name}
+                        </h3>
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          {config.template_name}
+                        </p>
+                      </div>
                     </div>
+                  </div>
+
+                  {/* URL Section */}
+                  <div className="px-4 pb-3">
+                    <button 
+                      onClick={() => copyLink(config)}
+                      className="w-full flex items-center gap-2 p-2 rounded-lg bg-muted/40 hover:bg-muted/70 transition-colors group/url"
+                    >
+                      <Globe className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                      <span className="text-[10px] text-muted-foreground truncate font-mono flex-1 text-left">
+                        /p/{getProjectRoute(config)}
+                      </span>
+                      <Copy className="w-3 h-3 text-muted-foreground/50 group-hover/url:text-primary transition-colors flex-shrink-0" />
+                    </button>
+                  </div>
+
+                  {/* Stats Row */}
+                  <div className="px-4 pb-3 flex items-center justify-between text-[10px] text-muted-foreground">
+                    <div className="flex items-center gap-1.5">
+                      <Eye className="w-3 h-3" />
+                      <span>{config.views_count} visualizações</span>
+                    </div>
+                    <span>
+                      {format(new Date(config.created_at), "dd MMM yyyy", { locale: ptBR })}
+                    </span>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="px-4 pb-4 flex items-center gap-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      className="flex-1 h-8 text-xs"
+                      onClick={() => openPreview(config)}
+                    >
+                      <ExternalLink className="w-3 h-3 mr-1" />
+                      Ver
+                    </Button>
+                    <Button 
+                      size="sm"
+                      className="flex-1 h-8 text-xs bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                      onClick={() => onEdit(config)}
+                    >
+                      <Pencil className="w-3 h-3 mr-1" />
+                      Editar
+                    </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
                           <MoreVertical className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => openPreview(config)}>
-                          <Eye className="w-4 h-4 mr-2" />
-                          Visualizar
-                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => copyLink(config)}>
                           <Copy className="w-4 h-4 mr-2" />
                           Copiar Link
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onEdit(config)}>
-                          <Pencil className="w-4 h-4 mr-2" />
-                          Editar
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem 
@@ -256,55 +331,6 @@ export function CriarProjetosManager({
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  </div>
-
-                  {/* URL */}
-                  <button 
-                    onClick={() => copyLink(config)}
-                    className="w-full flex items-center gap-2 p-2 sm:p-2.5 rounded-lg bg-muted/50 hover:bg-muted transition-colors mb-2 sm:mb-3"
-                  >
-                    <Link2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-muted-foreground flex-shrink-0" />
-                    <span className="text-[10px] sm:text-xs text-muted-foreground truncate font-mono">
-                      /p/{getProjectRoute(config)}
-                    </span>
-                    <Copy className="w-3 h-3 text-muted-foreground/50 ml-auto flex-shrink-0" />
-                  </button>
-
-                  {/* Stats Row */}
-                  <div className="flex items-center justify-between text-[10px] sm:text-xs">
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                        <span>{config.views_count}</span>
-                      </div>
-                      <Badge variant={config.is_active ? "default" : "secondary"} className="text-[9px] sm:text-[10px] px-1.5">
-                        {config.is_active ? 'Ativo' : 'Inativo'}
-                      </Badge>
-                    </div>
-                    <span className="text-muted-foreground">
-                      {format(new Date(config.created_at), "dd/MM/yy", { locale: ptBR })}
-                    </span>
-                  </div>
-
-                  {/* Quick Actions - visible on hover */}
-                  <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-2 group-hover:translate-y-0">
-                    <Button 
-                      size="sm" 
-                      variant="secondary"
-                      className="h-7 text-[10px] sm:text-xs shadow-lg"
-                      onClick={() => openPreview(config)}
-                    >
-                      <ExternalLink className="w-3 h-3 mr-1" />
-                      Ver
-                    </Button>
-                    <Button 
-                      size="sm"
-                      className="h-7 text-[10px] sm:text-xs shadow-lg"
-                      onClick={() => onEdit(config)}
-                    >
-                      <Pencil className="w-3 h-3 mr-1" />
-                      Editar
-                    </Button>
                   </div>
                 </div>
               </motion.div>
