@@ -213,48 +213,7 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
         </Select>
       </div>
 
-      {/* Summary Table Header */}
-      {filteredContracts.length > 0 && (
-        <div className="rounded-lg border border-border/50 bg-card/30 overflow-hidden">
-          <div className="grid grid-cols-5 gap-2 px-4 py-2.5 bg-card/50 border-b border-border/30 text-[11px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            <span>Nome</span>
-            <span>Tipo</span>
-            <span>Recorrência</span>
-            <span>Valor</span>
-            <span>Status</span>
-          </div>
-          {filteredContracts.map((contract) => (
-            <div 
-              key={`summary-${contract.id}`}
-              className="grid grid-cols-5 gap-2 px-4 py-2.5 border-b border-border/20 last:border-b-0 text-xs sm:text-sm hover:bg-card/40 cursor-pointer transition-colors"
-              onClick={() => onViewContract(contract.id)}
-            >
-              <span className="text-foreground truncate font-medium">{contract.contractor_name}</span>
-              <span className="text-foreground truncate">{contract.service_type}</span>
-              <span className={contract.service_modality === 'recorrente' ? 'text-emerald-400' : 'text-muted-foreground'}>
-                {contract.service_modality === 'recorrente' 
-                  ? `+${formatCurrency(contract.total_value)}/mês` 
-                  : contract.service_modality === 'pontual' 
-                    ? 'Pontual' 
-                    : 'Por Demanda'}
-              </span>
-              <span className="text-foreground font-medium">{formatCurrency(contract.total_value)}</span>
-              <span>
-                {(() => {
-                  const config = statusConfig[contract.status] || statusConfig.draft;
-                  return (
-                    <Badge variant="outline" className={`${config.color} text-[10px] py-0.5`}>
-                      {config.label}
-                    </Badge>
-                  );
-                })()}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Contracts Grid */}
+      {/* Contracts Table */}
       {filteredContracts.length === 0 ? (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -280,77 +239,96 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
           )}
         </motion.div>
       ) : (
-        <div className="grid gap-3 sm:gap-4">
-          <AnimatePresence mode="popLayout">
-            {filteredContracts.map((contract, index) => (
-              <motion.div
-                key={contract.id}
-                layout
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ delay: index * 0.03 }}
-              >
+        <div className="rounded-xl border border-border/50 bg-card/30 overflow-hidden shadow-sm">
+          {/* Table Header */}
+          <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] gap-3 px-4 py-3 bg-card/60 border-b border-border/40 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <span>Nome</span>
+            <span>Tipo</span>
+            <span>Recorrência</span>
+            <span>Valor</span>
+            <span>Status</span>
+            <span className="w-8"></span>
+          </div>
+          
+          {/* Table Body */}
+          <div className="divide-y divide-border/20">
+            {filteredContracts.map((contract) => {
+              const config = statusConfig[contract.status] || statusConfig.draft;
+              return (
                 <div 
-                  className="group p-3 sm:p-4 rounded-lg border bg-gradient-to-br from-card to-card/80 hover:border-blue-500/40 hover:shadow-md transition-all duration-300 cursor-pointer"
+                  key={contract.id}
+                  className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] gap-3 px-4 py-3.5 hover:bg-card/50 cursor-pointer transition-colors group"
                   onClick={() => onViewContract(contract.id)}
                 >
-                  {/* Conteúdo Principal - Mais Compacto */}
-                  <div className="flex items-center gap-3">
-                    {/* Icon */}
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500/10 to-indigo-600/10 flex items-center justify-center flex-shrink-0">
-                      <FileText className="w-5 h-5 text-blue-400" />
-                    </div>
-                    
-                    {/* Info */}
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-semibold text-foreground truncate group-hover:text-blue-400 transition-colors">
-                        {contract.contractor_name}
-                      </h3>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {contract.title} • {format(new Date(contract.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                      </p>
-                    </div>
-
-                    {/* Valor e Status */}
-                    <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-                      <p className="text-sm font-bold text-foreground hidden sm:block">
-                        {formatCurrency(contract.total_value)}
-                      </p>
-                      
-                      {getStatusBadge(contract.status)}
-                      
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onViewContract(contract.id); }}>
-                            <Eye className="w-4 h-4 mr-2" />
-                            Visualizar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => handleDownloadPDF(contract, e)}>
-                            <Download className="w-4 h-4 mr-2" />
-                            Download PDF
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-destructive"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Excluir
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+                  {/* Nome */}
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-sm font-medium text-foreground truncate group-hover:text-blue-400 transition-colors">
+                      {contract.contractor_name}
+                    </span>
+                  </div>
+                  
+                  {/* Tipo */}
+                  <div className="flex items-center min-w-0">
+                    <span className="text-sm text-muted-foreground truncate">
+                      {contract.service_type}
+                    </span>
+                  </div>
+                  
+                  {/* Recorrência */}
+                  <div className="flex items-center">
+                    <span className={`text-sm ${contract.service_modality === 'recorrente' ? 'text-emerald-400 font-medium' : 'text-muted-foreground'}`}>
+                      {contract.service_modality === 'recorrente' 
+                        ? `${formatCurrency(contract.total_value)}/mês` 
+                        : 'Pontual'}
+                    </span>
+                  </div>
+                  
+                  {/* Valor */}
+                  <div className="flex items-center">
+                    <span className="text-sm font-semibold text-foreground">
+                      {formatCurrency(contract.total_value)}
+                    </span>
+                  </div>
+                  
+                  {/* Status */}
+                  <div className="flex items-center">
+                    <Badge variant="outline" className={`${config.color} text-[10px] sm:text-xs py-0.5 px-2`}>
+                      {config.label}
+                    </Badge>
+                  </div>
+                  
+                  {/* Actions */}
+                  <div className="flex items-center">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onViewContract(contract.id); }}>
+                          <Eye className="w-4 h-4 mr-2" />
+                          Visualizar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => handleDownloadPDF(contract, e)}>
+                          <Download className="w-4 h-4 mr-2" />
+                          Download PDF
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Excluir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
+              );
+            })}
+          </div>
         </div>
       )}
 
