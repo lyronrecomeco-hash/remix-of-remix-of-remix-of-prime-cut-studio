@@ -3,7 +3,7 @@ import { Menu, X, Phone, MapPin, Clock, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getStarpetshopAppointments } from '@/components/starpetshop/StarpetshopMyAppointments';
-import starpetshopLogo from '@/assets/starpetshop/logo.png';
+import starpetshopLogo from '@/assets/starpetshop/logo-transparent-2.png';
 
 interface StarpetshopHeaderProps {
   onScheduleClick: () => void;

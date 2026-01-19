@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { openWhatsAppLink, sendPetshopWhatsAppWithRetry } from '@/lib/petshopWhatsApp';
-import starpetshopLogo from '@/assets/starpetshop/logo.png';
+import starpetshopLogo from '@/assets/starpetshop/logo-transparent-2.png';
 
 interface StarpetshopScheduleProps {
   isOpen: boolean;
@@ -247,9 +247,11 @@ Se precisar alterar ou cancelar, fale com a gente por aqui.`;
               </p>
               <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-6 text-left">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center overflow-hidden">
-                    <img src={starpetshopLogo} alt="Star Petshop" className="w-10 h-10 object-contain" />
-                  </div>
+                  <img
+                    src={starpetshopLogo}
+                    alt="Star Petshop"
+                    className="h-12 w-auto object-contain flex-shrink-0"
+                  />
                   <div>
                     <p className="font-bold text-gray-900">{services.find(s => s.id === formData.service)?.name}</p>
                     <p className="text-sm text-gray-600">{formData.petName} • {formatDate(formData.date)} às {formData.time}</p>
