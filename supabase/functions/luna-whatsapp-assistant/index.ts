@@ -836,14 +836,9 @@ serve(async (req) => {
       );
     }
 
-    // Verificar se é do grupo Genesis Hub
-    if (!isGenesisHubGroup(body)) {
-      console.log('[Luna] Not Genesis Hub group, ignoring');
-      return new Response(
-        JSON.stringify({ success: true, action: 'ignored', reason: 'wrong_group' }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // Luna agora funciona em QUALQUER grupo onde o número esteja
+    const groupName = getGroupName(body);
+    console.log(`[Luna] Grupo detectado: ${groupName || 'Nome não identificado'}`);
 
     // Verificar se é mensagem de ativação
     if (!isActivationMessage(messageText)) {
