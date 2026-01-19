@@ -393,10 +393,11 @@ async function sendWhatsAppMessage(
 
     const backendUrlRaw = globalConfig?.backend_url || instance?.backend_url || 'http://72.62.108.24:3000';
     const backendToken = globalConfig?.master_token || instance?.backend_token || 'genesis-master-token-2024-secure';
-    const instanceName = instance?.name || 'Genesis';
+    // IMPORTANTE: Usar o UUID da instância (igual send-whatsapp-genesis que funciona)
+    const instanceUuid = instance?.id || instanceId;
 
     const { baseHost, portsToTry } = extractBaseHostAndPorts(backendUrlRaw);
-    console.log(`[Luna] Backend: ${baseHost}, Instance: ${instanceName}, Token: ${backendToken.substring(0,10)}...`);
+    console.log(`[Luna] Backend: ${baseHost}, InstanceUUID: ${instanceUuid}, Token: ${backendToken.substring(0,10)}...`);
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -412,8 +413,8 @@ async function sendWhatsAppMessage(
       text: message,
     };
 
-    // Usar nome da instância ao invés do UUID
-    const sendPath = `/api/instance/${encodeURIComponent(instanceName)}/send`;
+    // Usar UUID da instância (igual send-whatsapp-genesis)
+    const sendPath = `/api/instance/${encodeURIComponent(String(instanceUuid))}/send`;
 
     // Tentar cada porta
     for (const port of portsToTry) {
