@@ -1,143 +1,140 @@
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, Clock, Trash2, Star, Phone } from 'lucide-react';
+import { X, Calendar, Clock, MapPin, Stethoscope, Heart, Star, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { getStarpetshopAppointments } from './StarpetshopSchedule';
+
+const STORAGE_KEY = 'starpetshop_appointments';
+
+interface Appointment {
+  id: string;
+  service: string;
+  serviceName: string;
+  petName: string;
+  petType: string;
+  date: string;
+  time: string;
+  ownerName: string;
+  phone: string;
+  createdAt: string;
+  status: 'confirmed' | 'cancelled';
+}
+
+export function getStarpetshopAppointments(): Appointment[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
 
 interface StarpetshopMyAppointmentsProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const STORAGE_KEY = 'starpetshop_appointments';
-
 const StarpetshopMyAppointments = ({ isOpen, onClose }: StarpetshopMyAppointmentsProps) => {
-  const appointments = getStarpetshopAppointments();
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
 
-  const handleCancel = (protocol: string) => {
-    const updated = appointments.filter((a: any) => a.protocol !== protocol);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    toast.success('Agendamento cancelado');
-    onClose();
-  };
+  useEffect(() => {
+    if (isOpen) {
+      setAppointments(getStarpetshopAppointments());
+    }
+  }, [isOpen]);
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr + 'T12:00:00').toLocaleDateString('pt-BR', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-    });
+    if (!dateStr) return '';
+    const [year, month, day] = dateStr.split('-');
+    return `${day}/${month}/${year}`;
   };
+
+  const handleCancel = (id: string) => {
+    const updated = appointments.map(a => 
+      a.id === id ? { ...a, status: 'cancelled' as const } : a
+    );
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    setAppointments(updated);
+    toast.success('Agendamento cancelado');
+  };
+
+  if (!isOpen) return null;
+
+  const activeAppointments = appointments.filter(a => a.status !== 'cancelled');
 
   return (
     <AnimatePresence>
-      {isOpen && (
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm">
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={onClose}
+          initial={{ opacity: 0, y: 100 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 100 }}
+          className="bg-white rounded-t-3xl sm:rounded-3xl w-full sm:max-w-lg max-h-[90vh] overflow-hidden shadow-2xl sm:m-4"
         >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="bg-gradient-to-r from-red-600 to-red-700 p-6 relative">
-              <button
-                onClick={onClose}
-                className="absolute top-4 right-4 text-white/80 hover:text-white"
-              >
-                <X className="w-6 h-6" />
-              </button>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                  <Calendar className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-white">Meus Agendamentos</h2>
-                  <p className="text-red-100 text-sm">Star Petshop</p>
-                </div>
-              </div>
+          <div className="bg-gradient-to-r from-red-500 to-rose-500 p-4 sm:p-5 text-white relative">
+            <button onClick={onClose} className="absolute top-3 right-3 p-2 hover:bg-white/20 rounded-full">
+              <X className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-2 mb-1">
+              <Calendar className="w-4 h-4" />
+              <span className="text-sm font-medium">Star Petshop Araxá</span>
             </div>
+            <h2 className="text-lg sm:text-xl font-bold">Meus Agendamentos</h2>
+          </div>
 
-            <div className="p-6">
-              {appointments.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Calendar className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Nenhum agendamento</h3>
-                  <p className="text-gray-500 text-sm">Você ainda não possui consultas agendadas.</p>
+          <div className="p-4 sm:p-5 overflow-y-auto max-h-[60vh]">
+            {activeAppointments.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Calendar className="w-7 h-7 text-red-500" />
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {appointments.map((appointment: any) => (
-                    <div
-                      key={appointment.protocol}
-                      className="bg-gray-50 rounded-xl p-4 border border-gray-100"
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                            <Star className="w-5 h-5 text-red-600" fill="currentColor" />
-                          </div>
-                          <div>
-                            <p className="font-semibold text-gray-900">{appointment.petName}</p>
-                            <p className="text-sm text-gray-500">{appointment.serviceName}</p>
-                          </div>
-                        </div>
-                        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
-                          Confirmado
-                        </span>
+                <p className="text-gray-600">Você ainda não tem agendamentos</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {activeAppointments.map((apt) => (
+                  <div key={apt.id} className="bg-red-50 border border-red-100 rounded-xl p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 bg-red-500 rounded-xl flex items-center justify-center">
+                        <Star className="w-5 h-5 text-white" fill="white" />
                       </div>
-
-                      <div className="grid grid-cols-2 gap-3 mb-4">
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Calendar className="w-4 h-4 text-red-500" />
-                          {formatDate(appointment.date)}
+                      <div className="flex-1">
+                        <p className="font-bold text-gray-900">{apt.serviceName}</p>
+                        <p className="text-sm text-gray-600">{apt.petName}</p>
+                        <div className="flex gap-3 mt-2 text-sm text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5" />
+                            {formatDate(apt.date)}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5" />
+                            {apt.time}
+                          </span>
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Clock className="w-4 h-4 text-red-500" />
-                          {appointment.time}
-                        </div>
-                      </div>
-
-                      <div className="text-xs text-gray-400 mb-3">
-                        Protocolo: {appointment.protocol}
-                      </div>
-
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
-                          onClick={() => handleCancel(appointment.protocol)}
-                        >
-                          <Trash2 className="w-4 h-4 mr-1" />
-                          Cancelar
-                        </Button>
-                        <Button
-                          size="sm"
-                          className="flex-1 bg-green-600 hover:bg-green-700"
-                          onClick={() => window.open('https://wa.me/553436623787', '_blank')}
-                        >
-                          <Phone className="w-4 h-4 mr-1" />
-                          WhatsApp
-                        </Button>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </motion.div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleCancel(apt.id)}
+                      className="w-full mt-3 border-red-300 text-red-600 hover:bg-red-50"
+                    >
+                      <X className="w-4 h-4 mr-1" />
+                      Cancelar
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="p-4 border-t">
+            <Button onClick={onClose} className="w-full bg-red-500 hover:bg-red-600 text-white rounded-xl">
+              Fechar
+            </Button>
+          </div>
         </motion.div>
-      )}
+      </div>
     </AnimatePresence>
   );
 };

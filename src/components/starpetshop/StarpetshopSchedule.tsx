@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, Clock, User, Phone, Star, Stethoscope, Heart, CheckCircle2 } from 'lucide-react';
+import { X, ChevronRight, Check, Calendar, Clock, Sparkles, Loader2, CheckCircle2, Stethoscope, Heart, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,306 +13,173 @@ interface StarpetshopScheduleProps {
 
 const STORAGE_KEY = 'starpetshop_appointments';
 
-export const getStarpetshopAppointments = () => {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  return stored ? JSON.parse(stored) : [];
-};
-
 const StarpetshopSchedule = ({ isOpen, onClose }: StarpetshopScheduleProps) => {
   const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [formData, setFormData] = useState({
-    service: '',
-    date: '',
-    time: '',
-    petName: '',
-    petType: '',
-    ownerName: '',
-    phone: '',
+    service: '', petType: '', petName: '', petBreed: '', date: '', time: '', ownerName: '', phone: '',
   });
 
   const services = [
-    { id: 'consulta', name: 'Consulta Veterinária', icon: Stethoscope, duration: '30min', price: 'A partir de R$ 120' },
-    { id: 'avaliacao-dental', name: 'Avaliação Odontológica', icon: Star, duration: '45min', price: 'A partir de R$ 150' },
-    { id: 'limpeza-dental', name: 'Limpeza Dental', icon: Heart, duration: '1h', price: 'A partir de R$ 300' },
+    { id: 'consulta', name: 'Consulta Veterinária', price: 'R$ 120', duration: '30min', icon: Stethoscope, color: 'bg-red-500' },
+    { id: 'avaliacao', name: 'Avaliação Odontológica', price: 'R$ 150', duration: '45min', icon: Heart, color: 'bg-rose-500' },
+    { id: 'limpeza', name: 'Limpeza Dental', price: 'R$ 300', duration: '1h', icon: Star, color: 'bg-red-600' },
   ];
 
   const times = ['08:00', '09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00'];
 
-  const generateProtocol = () => {
-    const date = new Date();
-    return `STAR${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}${String(date.getHours()).padStart(2, '0')}${String(date.getMinutes()).padStart(2, '0')}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+  const handleClose = () => {
+    onClose();
+    setTimeout(() => {
+      setStep(1);
+      setIsSuccess(false);
+      setFormData({ service: '', petType: '', petName: '', petBreed: '', date: '', time: '', ownerName: '', phone: '' });
+    }, 300);
   };
 
   const handleSubmit = () => {
-    const protocol = generateProtocol();
+    if (!formData.ownerName || !formData.phone) {
+      toast.error('Preencha todos os campos');
+      return;
+    }
+    setIsSubmitting(true);
+    
+    const selectedService = services.find(s => s.id === formData.service);
     const appointment = {
+      id: crypto.randomUUID(),
       ...formData,
-      protocol,
-      serviceName: services.find(s => s.id === formData.service)?.name,
+      serviceName: selectedService?.name || '',
       createdAt: new Date().toISOString(),
       status: 'confirmed',
     };
 
-    const existing = getStarpetshopAppointments();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([...existing, appointment]));
-
-    toast.success('Consulta agendada com sucesso!', {
-      description: `Protocolo: ${protocol}`,
-    });
-
-    setStep(4);
+    const current = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...current, appointment]));
+    
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setIsSuccess(true);
+      toast.success('Consulta agendada com sucesso!');
+    }, 500);
   };
 
-  const resetAndClose = () => {
-    setStep(1);
-    setFormData({
-      service: '',
-      date: '',
-      time: '',
-      petName: '',
-      petType: '',
-      ownerName: '',
-      phone: '',
-    });
-    onClose();
-  };
+  if (!isOpen) return null;
 
   return (
     <AnimatePresence>
-      {isOpen && (
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm">
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={resetAndClose}
+          initial={{ opacity: 0, y: 100 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 100 }}
+          className="bg-white rounded-t-3xl sm:rounded-3xl w-full sm:max-w-lg max-h-[95vh] overflow-hidden shadow-2xl sm:m-4"
         >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="bg-gradient-to-r from-red-600 to-red-700 p-6 relative">
-              <button
-                onClick={resetAndClose}
-                className="absolute top-4 right-4 text-white/80 hover:text-white"
-              >
-                <X className="w-6 h-6" />
-              </button>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                  <Star className="w-6 h-6 text-white" fill="white" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-white">Agendar Consulta</h2>
-                  <p className="text-red-100 text-sm">Star Petshop</p>
-                </div>
+          {isSuccess ? (
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 className="w-10 h-10 text-green-600" />
               </div>
-              
-              {/* Progress */}
-              {step < 4 && (
-                <div className="flex gap-2 mt-6">
-                  {[1, 2, 3].map((s) => (
-                    <div
-                      key={s}
-                      className={`h-1.5 flex-1 rounded-full transition-colors ${
-                        s <= step ? 'bg-white' : 'bg-white/30'
-                      }`}
-                    />
+              <h2 className="text-xl font-bold mb-2">Consulta Agendada!</h2>
+              <p className="text-gray-600 mb-4">{formData.petName} está confirmado(a).</p>
+              <Button onClick={handleClose} className="w-full bg-red-500 hover:bg-red-600">Fechar</Button>
+            </div>
+          ) : (
+            <>
+              <div className="bg-gradient-to-r from-red-500 to-rose-500 p-4 text-white relative">
+                <button onClick={handleClose} className="absolute top-3 right-3 p-2 hover:bg-white/20 rounded-full">
+                  <X className="w-5 h-5" />
+                </button>
+                <h2 className="text-lg font-bold">Agendar Consulta</h2>
+                <p className="text-white/80 text-sm">Passo {step} de 4</p>
+                <div className="flex gap-2 mt-3">
+                  {[1,2,3,4].map(i => (
+                    <div key={i} className={`h-1 flex-1 rounded-full ${i <= step ? 'bg-white' : 'bg-white/30'}`} />
                   ))}
                 </div>
-              )}
-            </div>
+              </div>
 
-            <div className="p-6">
-              {/* Step 1: Service */}
-              {step === 1 && (
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                >
-                  <h3 className="font-semibold text-gray-900 mb-4">Selecione o serviço</h3>
-                  <div className="space-y-3">
+              <div className="p-4 overflow-y-auto max-h-[50vh]">
+                {step === 1 && (
+                  <div className="space-y-2">
+                    <h3 className="font-bold mb-3">Qual serviço você precisa?</h3>
                     {services.map((service) => (
                       <button
                         key={service.id}
-                        onClick={() => {
-                          setFormData({ ...formData, service: service.id });
-                          setStep(2);
-                        }}
-                        className={`w-full p-4 rounded-xl border-2 text-left transition-all hover:border-red-500 hover:bg-red-50 ${
-                          formData.service === service.id ? 'border-red-500 bg-red-50' : 'border-gray-200'
-                        }`}
+                        onClick={() => { setFormData({...formData, service: service.id}); setStep(2); }}
+                        className={`w-full p-3 rounded-xl border-2 flex items-center gap-3 ${formData.service === service.id ? 'border-red-500 bg-red-50' : 'border-gray-200'}`}
                       >
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                            <service.icon className="w-6 h-6 text-red-600" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-semibold text-gray-900">{service.name}</p>
-                            <p className="text-sm text-gray-500">{service.duration} • {service.price}</p>
-                          </div>
+                        <div className={`w-10 h-10 ${service.color} rounded-xl flex items-center justify-center`}>
+                          <service.icon className="w-5 h-5 text-white" />
                         </div>
+                        <div className="flex-1 text-left">
+                          <p className="font-bold text-sm">{service.name}</p>
+                          <p className="text-xs text-gray-500">{service.duration}</p>
+                        </div>
+                        <p className="font-bold text-red-600">{service.price}</p>
                       </button>
                     ))}
                   </div>
-                </motion.div>
-              )}
+                )}
 
-              {/* Step 2: Date & Time */}
-              {step === 2 && (
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                >
-                  <h3 className="font-semibold text-gray-900 mb-4">Data e horário</h3>
-                  
-                  <div className="mb-6">
-                    <Label className="mb-2 block">Data</Label>
-                    <Input
-                      type="date"
-                      value={formData.date}
-                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                      min={new Date().toISOString().split('T')[0]}
-                      className="w-full"
-                    />
+                {step === 2 && (
+                  <div className="space-y-4">
+                    <h3 className="font-bold">Dados do pet</h3>
+                    <div className="flex gap-3">
+                      {[{ id: 'dog', label: 'Cachorro', emoji: '🐕' }, { id: 'cat', label: 'Gato', emoji: '🐱' }].map((pet) => (
+                        <button key={pet.id} onClick={() => setFormData({...formData, petType: pet.id})}
+                          className={`flex-1 p-3 rounded-xl border-2 flex flex-col items-center ${formData.petType === pet.id ? 'border-red-500 bg-red-50' : 'border-gray-200'}`}>
+                          <span className="text-3xl">{pet.emoji}</span>
+                          <span className="font-semibold">{pet.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                    <div><Label>Nome do pet *</Label><Input value={formData.petName} onChange={e => setFormData({...formData, petName: e.target.value})} placeholder="Nome do pet" /></div>
+                    <div><Label>Raça (opcional)</Label><Input value={formData.petBreed} onChange={e => setFormData({...formData, petBreed: e.target.value})} placeholder="Raça" /></div>
                   </div>
+                )}
 
-                  {formData.date && (
-                    <div>
-                      <Label className="mb-2 block">Horário disponível</Label>
+                {step === 3 && (
+                  <div className="space-y-4">
+                    <h3 className="font-bold">Data e horário</h3>
+                    <div><Label>Data</Label><Input type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} min={new Date().toISOString().split('T')[0]} /></div>
+                    {formData.date && (
                       <div className="grid grid-cols-4 gap-2">
-                        {times.map((time) => (
-                          <button
-                            key={time}
-                            onClick={() => setFormData({ ...formData, time })}
-                            className={`py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${
-                              formData.time === time
-                                ? 'bg-red-600 text-white border-red-600'
-                                : 'border-gray-200 hover:border-red-500 hover:bg-red-50'
-                            }`}
-                          >
+                        {times.map(time => (
+                          <button key={time} onClick={() => setFormData({...formData, time})}
+                            className={`py-2 rounded-lg border text-sm font-medium ${formData.time === time ? 'bg-red-500 text-white border-red-500' : 'border-gray-200'}`}>
                             {time}
                           </button>
                         ))}
                       </div>
-                    </div>
-                  )}
-
-                  <div className="flex gap-3 mt-6">
-                    <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
-                      Voltar
-                    </Button>
-                    <Button
-                      onClick={() => setStep(3)}
-                      disabled={!formData.date || !formData.time}
-                      className="flex-1 bg-red-600 hover:bg-red-700"
-                    >
-                      Continuar
-                    </Button>
+                    )}
                   </div>
-                </motion.div>
-              )}
+                )}
 
-              {/* Step 3: Contact */}
-              {step === 3 && (
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                >
-                  <h3 className="font-semibold text-gray-900 mb-4">Dados do pet e contato</h3>
-                  
+                {step === 4 && (
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label className="mb-2 block">Nome do pet</Label>
-                        <Input
-                          value={formData.petName}
-                          onChange={(e) => setFormData({ ...formData, petName: e.target.value })}
-                          placeholder="Ex: Rex"
-                        />
-                      </div>
-                      <div>
-                        <Label className="mb-2 block">Tipo</Label>
-                        <select
-                          value={formData.petType}
-                          onChange={(e) => setFormData({ ...formData, petType: e.target.value })}
-                          className="w-full h-10 rounded-md border border-input bg-background px-3"
-                        >
-                          <option value="">Selecione</option>
-                          <option value="cao">Cão</option>
-                          <option value="gato">Gato</option>
-                          <option value="outro">Outro</option>
-                        </select>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <Label className="mb-2 block">Seu nome</Label>
-                      <Input
-                        value={formData.ownerName}
-                        onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
-                        placeholder="Nome completo"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label className="mb-2 block">WhatsApp</Label>
-                      <Input
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        placeholder="(00) 00000-0000"
-                      />
-                    </div>
+                    <h3 className="font-bold">Seus dados</h3>
+                    <div><Label>Nome completo *</Label><Input value={formData.ownerName} onChange={e => setFormData({...formData, ownerName: e.target.value})} /></div>
+                    <div><Label>WhatsApp *</Label><Input value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="(00) 00000-0000" /></div>
                   </div>
+                )}
+              </div>
 
-                  <div className="flex gap-3 mt-6">
-                    <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
-                      Voltar
-                    </Button>
-                    <Button
-                      onClick={handleSubmit}
-                      disabled={!formData.petName || !formData.ownerName || !formData.phone}
-                      className="flex-1 bg-red-600 hover:bg-red-700"
-                    >
-                      Confirmar
-                    </Button>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Step 4: Success */}
-              {step === 4 && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="text-center py-6"
-                >
-                  <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <CheckCircle2 className="w-10 h-10 text-green-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Consulta Agendada!</h3>
-                  <p className="text-gray-600 mb-4">
-                    {formData.petName} está confirmado(a) para {new Date(formData.date + 'T12:00:00').toLocaleDateString('pt-BR')} às {formData.time}
-                  </p>
-                  <div className="bg-gray-50 rounded-xl p-4 mb-6">
-                    <p className="text-sm text-gray-500">Serviço</p>
-                    <p className="font-semibold text-gray-900">
-                      {services.find(s => s.id === formData.service)?.name}
-                    </p>
-                  </div>
-                  <Button onClick={resetAndClose} className="w-full bg-red-600 hover:bg-red-700">
-                    Fechar
+              <div className="p-4 border-t flex gap-3">
+                {step > 1 && <Button variant="outline" onClick={() => setStep(s => s - 1)} className="flex-1">Voltar</Button>}
+                {step < 4 ? (
+                  <Button onClick={() => setStep(s => s + 1)} disabled={step === 1 && !formData.service || step === 2 && (!formData.petType || !formData.petName) || step === 3 && (!formData.date || !formData.time)}
+                    className="flex-1 bg-red-500 hover:bg-red-600">Continuar</Button>
+                ) : (
+                  <Button onClick={handleSubmit} disabled={isSubmitting} className="flex-1 bg-red-500 hover:bg-red-600">
+                    {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirmar'}
                   </Button>
-                </motion.div>
-              )}
-            </div>
-          </motion.div>
+                )}
+              </div>
+            </>
+          )}
         </motion.div>
-      )}
+      </div>
     </AnimatePresence>
   );
 };

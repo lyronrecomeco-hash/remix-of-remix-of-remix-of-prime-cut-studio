@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Menu, X, Phone, Clock, Calendar, Star, Instagram, MapPin } from 'lucide-react';
+import { Menu, X, Phone, MapPin, Clock, Calendar, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getStarpetshopAppointments } from '@/components/starpetshop/StarpetshopMyAppointments';
 
 interface StarpetshopHeaderProps {
   onScheduleClick: () => void;
@@ -15,185 +16,202 @@ const StarpetshopHeader = ({ onScheduleClick, onMyAppointmentsClick }: Starpetsh
 
   useEffect(() => {
     const checkAppointments = () => {
-      const stored = localStorage.getItem('starpetshop_appointments');
-      if (stored) {
-        const appointments = JSON.parse(stored);
-        setHasAppointments(appointments.length > 0);
-      }
+      const appointments = getStarpetshopAppointments();
+      setHasAppointments(appointments.length > 0);
+    };
+
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
     };
 
     checkAppointments();
-    const interval = setInterval(checkAppointments, 1000);
-    
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
-
     window.addEventListener('scroll', handleScroll);
     
+    const handleStorage = () => checkAppointments();
+    window.addEventListener('storage', handleStorage);
+    
+    const interval = setInterval(checkAppointments, 1000);
+
     return () => {
-      clearInterval(interval);
       window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('storage', handleStorage);
+      clearInterval(interval);
     };
   }, []);
 
   const navLinks = [
-    { name: 'Início', href: '#inicio' },
-    { name: 'Sobre', href: '#sobre' },
-    { name: 'Serviços', href: '#servicos' },
-    { name: 'Galeria', href: '#galeria' },
-    { name: 'Contato', href: '#contato' },
+    { href: '#inicio', label: 'Início' },
+    { href: '#sobre', label: 'Sobre' },
+    { href: '#servicos', label: 'Serviços' },
+    { href: '#galeria', label: 'Galeria' },
+    { href: '#contato', label: 'Contato' },
   ];
 
   return (
     <>
-      {/* Top bar */}
-      <div className="bg-red-700 text-white py-2 text-sm hidden md:block">
-        <div className="container mx-auto px-4 flex justify-between items-center">
-          <div className="flex items-center gap-6">
-            <a href="tel:03436623787" className="flex items-center gap-2 hover:text-red-200 transition-colors">
-              <Phone className="w-4 h-4" />
-              <span>(034) 3662-3787</span>
+      {/* Top Bar */}
+      <div className="bg-gradient-to-r from-red-600 via-red-500 to-red-600 text-white py-2 text-xs sm:text-sm">
+        <div className="container mx-auto px-3 sm:px-4">
+          <div className="flex justify-between items-center">
+            <a href="tel:03436623787" className="flex items-center gap-1.5 sm:gap-2 hover:underline font-medium">
+              <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">(034) 3662-3787</span>
+              <span className="xs:hidden">Ligar</span>
             </a>
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4" />
-              <span>R. Calimério Guimarães, 811 - Centro, Araxá - MG</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2 text-white/90">
               <Clock className="w-4 h-4" />
               <span>Seg-Sex: 8h às 18h | Sáb: 8h às 13h</span>
             </div>
-            <a 
-              href="https://www.instagram.com/starpetshoparaxa/" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="hover:text-red-200 transition-colors"
-            >
-              <Instagram className="w-4 h-4" />
-            </a>
+            <div className="flex items-center gap-1.5 text-white/90 sm:hidden">
+              <Clock className="w-3.5 h-3.5" />
+              <span>8h-18h</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Main header */}
-      <header className={`sticky top-0 z-50 transition-all duration-300 ${
-        isScrolled 
-          ? 'bg-white/95 backdrop-blur-md shadow-lg' 
-          : 'bg-white shadow-md'
-      }`}>
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-20">
+      {/* Main Header */}
+      <motion.header 
+        className={`sticky top-0 z-50 transition-all duration-300 ${
+          isScrolled 
+            ? 'bg-white/95 backdrop-blur-lg shadow-lg shadow-black/5' 
+            : 'bg-white'
+        }`}
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <div className="container mx-auto px-3 sm:px-4">
+          <div className="flex items-center justify-between h-16 sm:h-20">
             {/* Logo */}
-            <a href="#inicio" className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-red-600 to-red-700 rounded-full flex items-center justify-center shadow-lg">
-                <Star className="w-7 h-7 text-white" fill="white" />
-              </div>
+            <a href="#inicio" className="flex items-center gap-2 sm:gap-3 group">
+              <motion.div 
+                className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg shadow-red-500/30 group-hover:scale-105 transition-transform"
+                whileHover={{ rotate: [0, -5, 5, 0] }}
+                transition={{ duration: 0.5 }}
+              >
+                <Star className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="white" />
+              </motion.div>
               <div>
-                <span className="text-2xl font-bold text-red-600">Star</span>
-                <span className="text-2xl font-bold text-gray-800"> Petshop</span>
-                <p className="text-xs text-gray-500 -mt-1">Especialista em saúde animal</p>
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900 leading-tight tracking-tight">
+                  Star Petshop
+                </h1>
+                <p className="text-[10px] sm:text-xs text-red-600 font-semibold -mt-0.5 tracking-wide">
+                  ARAXÁ
+                </p>
               </div>
             </a>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-8">
+            <nav className="hidden lg:flex items-center gap-1">
               {navLinks.map((link) => (
                 <a
-                  key={link.name}
+                  key={link.href}
                   href={link.href}
-                  className="text-gray-700 hover:text-red-600 transition-colors font-medium relative group"
+                  className="relative px-4 py-2 text-gray-900 font-medium hover:text-red-600 transition-colors group"
                 >
-                  {link.name}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-red-600 transition-all group-hover:w-full" />
+                  {link.label}
+                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-red-500 rounded-full group-hover:w-1/2 transition-all duration-300" />
                 </a>
               ))}
             </nav>
 
             {/* CTA Buttons */}
-            <div className="hidden lg:flex items-center gap-3">
-              {hasAppointments && onMyAppointmentsClick && (
+            <div className="hidden md:flex items-center gap-2 lg:gap-3">
+              {hasAppointments && (
                 <Button
                   variant="outline"
                   onClick={onMyAppointmentsClick}
-                  className="border-red-600 text-red-600 hover:bg-red-50"
+                  size="sm"
+                  className="border-2 border-red-500 text-red-600 hover:bg-red-500 hover:text-white font-semibold rounded-xl transition-all duration-300"
                 >
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Meus Agendamentos
+                  <Calendar className="w-4 h-4 mr-1.5" />
+                  Agendamentos
                 </Button>
               )}
               <Button
                 onClick={onScheduleClick}
-                className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg"
+                size="sm"
+                className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-500 text-white font-bold rounded-xl shadow-lg shadow-red-500/30 hover:shadow-xl hover:shadow-red-500/40 transition-all duration-300 hover:scale-105"
               >
-                <Calendar className="w-4 h-4 mr-2" />
-                Agendar Consulta
+                <Star className="w-4 h-4 mr-1.5" />
+                Agendar
               </Button>
             </div>
 
-            {/* Mobile menu button */}
+            {/* Mobile Menu Button */}
             <button
-              className="lg:hidden p-2 text-gray-700"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="lg:hidden p-2 text-gray-900 hover:bg-red-500/10 rounded-xl transition-colors"
             >
-              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              <motion.div
+                animate={{ rotate: isMenuOpen ? 90 : 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </motion.div>
             </button>
           </div>
         </div>
 
-        {/* Mobile menu */}
+        {/* Mobile Menu */}
         <AnimatePresence>
           {isMenuOpen && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="lg:hidden bg-white border-t"
+              transition={{ duration: 0.3 }}
+              className="lg:hidden bg-white border-t border-gray-100 overflow-hidden"
             >
-              <div className="container mx-auto px-4 py-4">
-                <nav className="flex flex-col gap-4">
-                  {navLinks.map((link) => (
-                    <a
-                      key={link.name}
-                      href={link.href}
-                      className="text-gray-700 hover:text-red-600 transition-colors font-medium py-2"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      {link.name}
-                    </a>
-                  ))}
-                  <div className="flex flex-col gap-2 pt-4 border-t">
-                    {hasAppointments && onMyAppointmentsClick && (
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          onMyAppointmentsClick();
-                          setIsMenuOpen(false);
-                        }}
-                        className="border-red-600 text-red-600 w-full"
-                      >
-                        <Calendar className="w-4 h-4 mr-2" />
-                        Meus Agendamentos
-                      </Button>
-                    )}
+              <nav className="container mx-auto px-4 py-4 flex flex-col gap-1">
+                {navLinks.map((link, index) => (
+                  <motion.a
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setIsMenuOpen(false)}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="flex items-center gap-3 text-gray-900 font-medium py-3 px-4 rounded-xl hover:bg-red-500/10 hover:text-red-600 transition-all"
+                  >
+                    <span className="w-2 h-2 bg-red-500/30 rounded-full" />
+                    {link.label}
+                  </motion.a>
+                ))}
+                
+                <div className="h-px bg-gray-100 my-3" />
+                
+                <div className="flex flex-col gap-2">
+                  {hasAppointments && (
                     <Button
+                      variant="outline"
                       onClick={() => {
-                        onScheduleClick();
                         setIsMenuOpen(false);
+                        onMyAppointmentsClick?.();
                       }}
-                      className="bg-gradient-to-r from-red-600 to-red-700 text-white w-full"
+                      className="border-2 border-red-500 text-red-600 hover:bg-red-500 hover:text-white w-full h-12 font-semibold rounded-xl"
                     >
                       <Calendar className="w-4 h-4 mr-2" />
-                      Agendar Consulta
+                      Meus Agendamentos
                     </Button>
-                  </div>
-                </nav>
-              </div>
+                  )}
+                  <Button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      onScheduleClick();
+                    }}
+                    className="bg-gradient-to-r from-red-500 to-red-600 text-white font-bold w-full h-14 text-base rounded-xl shadow-lg shadow-red-500/30"
+                  >
+                    <Star className="w-5 h-5 mr-2" />
+                    Agendar Agora
+                  </Button>
+                </div>
+              </nav>
             </motion.div>
           )}
         </AnimatePresence>
-      </header>
+      </motion.header>
     </>
   );
 };
