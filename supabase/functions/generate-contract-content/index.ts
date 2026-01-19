@@ -228,7 +228,7 @@ IMPORTANTE:
 
     const userPrompt = `Gere o contrato completo com os seguintes dados:
 
-CONTRATO Nº: ${contract.contract_number}
+IMPORTANTE: O título do contrato deve ser apenas "**CONTRATO DE PRESTAÇÃO DE SERVIÇOS**" (sem número ao lado). O número do contrato (${contract.contract_number}) deve aparecer apenas no corpo do documento, após o preâmbulo, como referência interna.
 
 === CONTRATANTE ===
 Nome: ${contract.contractor_name}
