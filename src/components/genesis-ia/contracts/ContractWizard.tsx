@@ -209,7 +209,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
         jurisdiction_city: formData.jurisdiction_city,
         jurisdiction_state: formData.jurisdiction_state,
         signature_hash: signatureHash,
-        questionnaire_answers: formData as unknown as Record<string, unknown>,
+        questionnaire_answers: JSON.parse(JSON.stringify(formData)),
       };
 
       const { error } = await supabase
