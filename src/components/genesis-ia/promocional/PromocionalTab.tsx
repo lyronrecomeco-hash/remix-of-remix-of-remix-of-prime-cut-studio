@@ -5,13 +5,11 @@ import {
   Check, 
   Gift, 
   Users, 
-  Link2, 
-  Sparkles,
+  Link2,
   Crown,
-  Zap,
-  MessageSquare
+  Zap
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,17 +32,12 @@ interface PromocionalTabProps {
 
 export function PromocionalTab({ userId }: PromocionalTabProps) {
   const [promoCode, setPromoCode] = useState<string>('');
+  const [promoLinkId, setPromoLinkId] = useState<string>('');
   const [referrals, setReferrals] = useState<PromoReferral[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [copiedLink, setCopiedLink] = useState(false);
-  const [copiedText, setCopiedText] = useState(false);
 
   const promoLink = `https://genesishub.cloud/promo/${promoCode}`;
-  
-  const divulgationText = `Pessoal, eles liberaram esse link aqui com acesso ao painel por um valor menor.
-Não aparece no site e não sei até quando vai ficar disponível.
-
-${promoLink}`;
 
   useEffect(() => {
     loadPromoData();
@@ -52,15 +45,13 @@ ${promoLink}`;
 
   const loadPromoData = async () => {
     try {
-      // Buscar ou criar link promocional do usuário
-      let { data: promoLink, error } = await supabase
+      let { data: promoLinkData } = await supabase
         .from('promo_links')
         .select('*')
         .eq('user_id', userId)
         .maybeSingle();
 
-      if (!promoLink) {
-        // Gerar código único
+      if (!promoLinkData) {
         const code = generatePromoCode();
         const { data: newLink, error: createError } = await supabase
           .from('promo_links')
@@ -69,16 +60,16 @@ ${promoLink}`;
           .single();
 
         if (createError) throw createError;
-        promoLink = newLink;
+        promoLinkData = newLink;
       }
 
-      setPromoCode(promoLink.promo_code);
+      setPromoCode(promoLinkData.promo_code);
+      setPromoLinkId(promoLinkData.id);
 
-      // Buscar referrals
       const { data: referralData } = await supabase
         .from('promo_referrals')
         .select('*')
-        .eq('promo_link_id', promoLink.id)
+        .eq('promo_link_id', promoLinkData.id)
         .order('created_at', { ascending: false });
 
       setReferrals(referralData || []);
@@ -99,24 +90,19 @@ ${promoLink}`;
     return code;
   };
 
-  const copyToClipboard = async (text: string, type: 'link' | 'text') => {
+  const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      if (type === 'link') {
-        setCopiedLink(true);
-        setTimeout(() => setCopiedLink(false), 2000);
-      } else {
-        setCopiedText(true);
-        setTimeout(() => setCopiedText(false), 2000);
-      }
-      toast.success('Copiado!');
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+      toast.success('Link copiado!');
     } catch {
       toast.error('Erro ao copiar');
     }
   };
 
   const getPlanLabel = (planType: string) => {
-    return planType === 'monthly_promo' ? 'Mensal Promo' : 'Anual Promo';
+    return planType === 'monthly_promo' ? 'Mensal' : 'Anual';
   };
 
   const formatCurrency = (value: number) => {
@@ -124,10 +110,6 @@ ${promoLink}`;
       style: 'currency',
       currency: 'BRL'
     }).format(value);
-  };
-
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('pt-BR');
   };
 
   if (isLoading) {
@@ -144,216 +126,148 @@ ${promoLink}`;
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
-          <Gift className="w-4 h-4 text-primary" />
-          <span className="text-sm font-medium text-primary">Área Exclusiva</span>
-        </div>
-        <h1 className="text-2xl font-bold text-foreground">Promocional</h1>
-        <p className="text-muted-foreground mt-2">
-          Compartilhe seu link exclusivo e acompanhe suas indicações
-        </p>
-      </div>
-
-      {/* Bloco 1 - Link Promocional */}
-      <Card className="border border-white/10 bg-card/50 backdrop-blur">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Link2 className="w-5 h-5 text-primary" />
-            Seu Link Promocional
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Este link concede acesso a planos promocionais não exibidos no site oficial.
-          </p>
-          <div className="flex items-center gap-2">
-            <div className="flex-1 px-4 py-3 rounded-lg bg-muted/50 border border-border font-mono text-sm truncate">
+    <div className="space-y-6 max-w-5xl mx-auto">
+      {/* Link Promocional */}
+      <Card className="border border-white/[0.08] bg-[hsl(215_30%_12%)]" style={{ borderRadius: '14px' }}>
+        <CardContent className="p-5">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+              <Link2 className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-white">Seu Link Exclusivo</h3>
+              <p className="text-sm text-white/50">Compartilhe para indicar novos usuários</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex-1 px-4 py-3 rounded-lg bg-white/5 border border-white/10 font-mono text-sm text-white/80 truncate">
               {promoLink}
             </div>
             <Button 
-              onClick={() => copyToClipboard(promoLink, 'link')}
+              onClick={() => copyToClipboard(promoLink)}
               variant="outline"
-              size="icon"
-              className="flex-shrink-0"
+              size="sm"
+              className="flex-shrink-0 gap-2"
             >
-              {copiedLink ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+              {copiedLink ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+              {copiedLink ? 'Copiado' : 'Copiar'}
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Bloco 2 - Planos Promocionais */}
+      {/* Planos Promocionais */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Plano Mensal */}
-        <Card className="border border-white/10 bg-card/50 backdrop-blur relative overflow-hidden">
-          <div className="absolute top-3 right-3">
-            <Badge variant="secondary" className="bg-orange-500/20 text-orange-400 border-orange-500/30">
-              <Zap className="w-3 h-3 mr-1" />
-              Promocional
-            </Badge>
-          </div>
-          <CardContent className="pt-8 pb-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-orange-400" />
+        <Card className="border border-white/[0.08] bg-[hsl(215_30%_12%)] hover:border-white/20 transition-colors" style={{ borderRadius: '14px' }}>
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-orange-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-white">Mensal</h3>
+                  <p className="text-xs text-white/50">Acesso completo</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold text-foreground">Plano Mensal</h3>
-                <p className="text-xs text-muted-foreground">Acesso completo</p>
-              </div>
+              <Badge variant="secondary" className="bg-orange-500/20 text-orange-400 border-0 text-xs">
+                Promo
+              </Badge>
             </div>
-            <div className="mb-4">
-              <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-bold text-foreground">R$ 197</span>
-                <span className="text-muted-foreground">/mês</span>
-              </div>
-              <p className="text-xs text-green-400 mt-1">
-                Economia em relação ao site comercial
-              </p>
+            <div className="flex items-baseline gap-1">
+              <span className="text-2xl font-bold text-white">R$ 197</span>
+              <span className="text-white/50 text-sm">/mês</span>
             </div>
           </CardContent>
         </Card>
 
         {/* Plano Anual */}
-        <Card className="border border-primary/30 bg-card/50 backdrop-blur relative overflow-hidden">
-          <div className="absolute top-3 right-3">
-            <Badge className="bg-primary/20 text-primary border-primary/30">
-              <Crown className="w-3 h-3 mr-1" />
-              Melhor Custo-Benefício
-            </Badge>
-          </div>
-          <CardContent className="pt-8 pb-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
-                <Crown className="w-6 h-6 text-primary" />
+        <Card className="border border-primary/30 bg-[hsl(215_30%_12%)] hover:border-primary/50 transition-colors" style={{ borderRadius: '14px' }}>
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                  <Crown className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-white">Anual</h3>
+                  <p className="text-xs text-white/50">12 meses de acesso</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold text-foreground">Plano Anual</h3>
-                <p className="text-xs text-muted-foreground">Acesso completo por 12 meses</p>
-              </div>
+              <Badge className="bg-primary/20 text-primary border-0 text-xs">
+                Melhor valor
+              </Badge>
             </div>
-            <div className="mb-4">
-              <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-bold text-foreground">R$ 697</span>
-                <span className="text-muted-foreground">/ano</span>
-              </div>
-              <p className="text-xs text-green-400 mt-1">
-                Equivale a R$ 58/mês • Economia máxima
-              </p>
+            <div className="flex items-baseline gap-1">
+              <span className="text-2xl font-bold text-white">R$ 697</span>
+              <span className="text-white/50 text-sm">/ano</span>
             </div>
+            <p className="text-xs text-green-400 mt-2">≈ R$ 58/mês</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Bloco 3 - Texto para Divulgação */}
-      <Card className="border border-white/10 bg-card/50 backdrop-blur">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <MessageSquare className="w-5 h-5 text-primary" />
-            Texto para Divulgação
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Copie e cole este texto pronto para suas lives e grupos.
-          </p>
-          <div className="p-4 rounded-lg bg-muted/50 border border-border">
-            <p className="text-sm text-foreground whitespace-pre-wrap">
-              {divulgationText}
-            </p>
-          </div>
-          <Button 
-            onClick={() => copyToClipboard(divulgationText, 'text')}
-            variant="outline"
-            className="w-full"
-          >
-            {copiedText ? (
-              <>
-                <Check className="w-4 h-4 mr-2 text-green-500" />
-                Copiado!
-              </>
-            ) : (
-              <>
-                <Copy className="w-4 h-4 mr-2" />
-                Copiar Texto
-              </>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Bloco 4 - Lista de Indicados */}
-      <Card className="border border-white/10 bg-card/50 backdrop-blur">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Users className="w-5 h-5 text-primary" />
-            Usuários que Usaram seu Link
-            {referrals.length > 0 && (
-              <Badge variant="secondary" className="ml-2">
-                {referrals.length}
-              </Badge>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {referrals.length === 0 ? (
-            <div className="text-center py-8">
-              <Users className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
-              <p className="text-muted-foreground">
-                Nenhum usuário utilizou seu link ainda.
+      {/* Lista de Indicados */}
+      <Card className="border border-white/[0.08] bg-[hsl(215_30%_12%)]" style={{ borderRadius: '14px' }}>
+        <CardContent className="p-5">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 rounded-xl bg-[hsl(260_50%_30%_/_0.5)] flex items-center justify-center">
+              <Users className="w-5 h-5 text-[hsl(260_70%_70%)]" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-white">Indicações</h3>
+              <p className="text-sm text-white/50">
+                {referrals.length === 0 ? 'Nenhuma indicação ainda' : `${referrals.length} usuário${referrals.length > 1 ? 's' : ''}`}
               </p>
-              <p className="text-sm text-muted-foreground/70 mt-1">
-                Compartilhe seu link e acompanhe suas indicações aqui.
+            </div>
+          </div>
+
+          {referrals.length === 0 ? (
+            <div className="text-center py-8 border border-dashed border-white/10 rounded-xl">
+              <Users className="w-10 h-10 text-white/20 mx-auto mb-3" />
+              <p className="text-white/40 text-sm">
+                As indicações aparecerão aqui
               </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left py-3 px-2 text-sm font-medium text-muted-foreground">Nome</th>
-                    <th className="text-left py-3 px-2 text-sm font-medium text-muted-foreground">Plano</th>
-                    <th className="text-left py-3 px-2 text-sm font-medium text-muted-foreground">Status</th>
-                    <th className="text-right py-3 px-2 text-sm font-medium text-muted-foreground">Valor</th>
+                  <tr className="border-b border-white/10">
+                    <th className="text-left py-3 px-2 text-sm font-medium text-white/50">Nome</th>
+                    <th className="text-left py-3 px-2 text-sm font-medium text-white/50">Plano</th>
+                    <th className="text-left py-3 px-2 text-sm font-medium text-white/50">Status</th>
+                    <th className="text-right py-3 px-2 text-sm font-medium text-white/50">Valor</th>
                   </tr>
                 </thead>
                 <tbody>
                   {referrals.map((referral) => (
-                    <tr key={referral.id} className="border-b border-border/50">
+                    <tr key={referral.id} className="border-b border-white/5">
                       <td className="py-3 px-2">
-                        <div>
-                          <p className="font-medium text-foreground">
-                            {referral.referred_name || 'Usuário'}
-                          </p>
-                          {referral.referred_email && (
-                            <p className="text-xs text-muted-foreground">
-                              {referral.referred_email}
-                            </p>
-                          )}
-                        </div>
+                        <p className="font-medium text-white text-sm">
+                          {referral.referred_name || 'Usuário'}
+                        </p>
                       </td>
                       <td className="py-3 px-2">
-                        <Badge variant="outline" className="text-xs">
+                        <span className="text-sm text-white/70">
                           {getPlanLabel(referral.plan_type)}
-                        </Badge>
+                        </span>
                       </td>
                       <td className="py-3 px-2">
                         <Badge 
                           variant="secondary"
-                          className={
+                          className={`text-xs border-0 ${
                             referral.status === 'active' 
-                              ? 'bg-green-500/20 text-green-400 border-green-500/30' 
-                              : 'bg-red-500/20 text-red-400 border-red-500/30'
-                          }
+                              ? 'bg-green-500/20 text-green-400' 
+                              : 'bg-red-500/20 text-red-400'
+                          }`}
                         >
                           {referral.status === 'active' ? 'Ativo' : 'Inativo'}
                         </Badge>
                       </td>
                       <td className="py-3 px-2 text-right">
-                        <span className="font-medium text-foreground">
+                        <span className="font-medium text-white text-sm">
                           {formatCurrency(referral.plan_value)}
                         </span>
                       </td>
