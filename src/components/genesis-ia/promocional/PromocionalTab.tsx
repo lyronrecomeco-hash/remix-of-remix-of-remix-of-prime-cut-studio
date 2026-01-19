@@ -330,16 +330,16 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
         </div>
       </div>
 
-      {/* Dicas de Divulgação */}
+      {/* Boas Práticas */}
       <Card className="border border-white/[0.08] bg-[hsl(215_30%_12%)]" style={{ borderRadius: '14px' }}>
         <CardContent className="p-5">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-yellow-500/20 flex items-center justify-center">
-              <Megaphone className="w-5 h-5 text-yellow-400" />
+            <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
+              <Megaphone className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <h3 className="font-semibold text-white">Dicas para Divulgação</h3>
-              <p className="text-sm text-white/50">Maximize suas indicações</p>
+              <h3 className="font-semibold text-white">Boas Práticas</h3>
+              <p className="text-sm text-white/50">Como apresentar a Genesis IA</p>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -347,8 +347,8 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
               <div className="flex items-start gap-3">
                 <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-white">Lives e Webinars</p>
-                  <p className="text-xs text-white/50">Compartilhe durante transmissões ao vivo</p>
+                  <p className="text-sm font-medium text-white">Seja Autêntico</p>
+                  <p className="text-xs text-white/50">Compartilhe sua experiência real com a plataforma</p>
                 </div>
               </div>
             </div>
@@ -356,8 +356,8 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
               <div className="flex items-start gap-3">
                 <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-white">Grupos de WhatsApp</p>
-                  <p className="text-xs text-white/50">Ideal para comunidades de negócios</p>
+                  <p className="text-sm font-medium text-white">Mostre Resultados</p>
+                  <p className="text-xs text-white/50">Demonstre como a Genesis IA ajudou seu negócio</p>
                 </div>
               </div>
             </div>
@@ -365,8 +365,8 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
               <div className="flex items-start gap-3">
                 <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-white">Redes Sociais</p>
-                  <p className="text-xs text-white/50">Stories, posts e bio do Instagram</p>
+                  <p className="text-sm font-medium text-white">Transparência</p>
+                  <p className="text-xs text-white/50">Informe que é um link de parceiro</p>
                 </div>
               </div>
             </div>
@@ -374,8 +374,8 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
               <div className="flex items-start gap-3">
                 <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-white">Indicação Direta</p>
-                  <p className="text-xs text-white/50">Envie para colegas e empresários</p>
+                  <p className="text-sm font-medium text-white">Foco no Valor</p>
+                  <p className="text-xs text-white/50">Destaque os benefícios reais da ferramenta</p>
                 </div>
               </div>
             </div>
@@ -412,7 +412,7 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
                 Nenhuma indicação ainda
               </p>
               <p className="text-white/40 text-sm max-w-sm mx-auto">
-                Compartilhe seu link em lives, grupos de WhatsApp ou redes sociais. 
+                Apresente a Genesis IA para pessoas que podem se beneficiar da ferramenta. 
                 Quando alguém assinar, aparecerá aqui automaticamente.
               </p>
             </div>
