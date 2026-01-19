@@ -60,6 +60,7 @@ interface CriarProjetosManagerProps {
   onEdit: (config: ProjectConfig) => void;
   onDelete: (id: string) => Promise<boolean>;
   onCreateNew: () => void;
+  onBack: () => void;
 }
 
 export function CriarProjetosManager({ 
@@ -67,7 +68,8 @@ export function CriarProjetosManager({
   loading, 
   onEdit, 
   onDelete,
-  onCreateNew 
+  onCreateNew,
+  onBack
 }: CriarProjetosManagerProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
