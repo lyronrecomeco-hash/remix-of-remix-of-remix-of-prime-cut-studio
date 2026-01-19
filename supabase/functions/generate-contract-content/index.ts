@@ -77,7 +77,15 @@ Sua tarefa é gerar um CONTRATO JURÍDICO COMPLETO, PROFISSIONAL E VÁLIDO NO BR
 
 O contrato DEVE COMEÇAR com um PREÂMBULO JURÍDICO FORMAL, seguindo este modelo:
 
-"De um lado, [NOME COMPLETO], [nacionalidade brasileira], [profissão conforme serviço], inscrito(a) no [CPF/CNPJ] sob o nº [documento], residente e domiciliado(a) à [endereço completo], doravante denominado(a) CONTRATANTE; e, de outro lado, [NOME COMPLETO], [nacionalidade brasileira], [profissão conforme serviço], inscrito(a) no [CPF/CNPJ] sob o nº [documento], com endereço profissional à [endereço completo], doravante denominado(a) CONTRATADO(a); têm entre si, justo e acordado, o presente CONTRATO DE PRESTAÇÃO DE SERVIÇOS, que se regerá pelas cláusulas e condições a seguir."
+"De um lado, **[NOME COMPLETO]**, [nacionalidade brasileira], [profissão conforme serviço], inscrito(a) no **[CPF/CNPJ]** sob o nº **[documento]**, residente e domiciliado(a) à **[endereço completo]**, doravante denominado(a) **CONTRATANTE**; e, de outro lado, **[NOME COMPLETO]**, [nacionalidade brasileira], [profissão conforme serviço], inscrito(a) no **[CPF/CNPJ]** sob o nº **[documento]**, com endereço profissional à **[endereço completo]**, doravante denominado(a) **CONTRATADO(a)**; têm entre si, justo e acordado, o presente CONTRATO DE PRESTAÇÃO DE SERVIÇOS, que se regerá pelas cláusulas e condições a seguir."
+
+⚠️ REGRA DE FORMATAÇÃO CRÍTICA:
+- Todos os NOMES de pessoas/empresas devem estar em **negrito**
+- Todos os DOCUMENTOS (CPF, CNPJ) devem estar em **negrito**
+- Todos os VALORES MONETÁRIOS devem estar em **negrito**
+- Todas as DATAS importantes devem estar em **negrito**
+- Os ENDEREÇOS completos devem estar em **negrito**
+- Use ** para envolver o texto que deve ficar em negrito
 
 📑 ESTRUTURA OBRIGATÓRIA - TODAS AS CLÁUSULAS DEVEM ESTAR PRESENTES:
 
@@ -106,9 +114,9 @@ CLÁUSULA QUARTA – DO PRAZO E CRONOGRAMA
 - Entregas parciais (se houver)
 
 CLÁUSULA QUINTA – DO VALOR E DA FORMA DE PAGAMENTO
-- Valor total
+- Valor total em **negrito**
 - Forma de pagamento
-- Parcelamento (se aplicável)
+- Parcelamento (se aplicável) com valores em **negrito**
 - Multa por atraso (se aplicável)
 - Juros e correção monetária
 
@@ -165,8 +173,8 @@ CLÁUSULA DÉCIMA QUINTA – DAS DISPOSIÇÕES FINAIS
 ✍️ ENCERRAMENTO
 
 Finalizar com:
-- Local e data
-- Campos de assinatura (CONTRATANTE e CONTRATADO)
+- Local e data em **negrito**
+- Campos de assinatura (**CONTRATANTE** e **CONTRATADO**)
 - Campos para 2 testemunhas
 - Observação sobre assinatura eletrônica válida nos termos da MP 2.200-2/2001
 
@@ -174,7 +182,7 @@ IMPORTANTE:
 - Linguagem jurídica formal e precisa
 - Texto claro, sem ambiguidades
 - Todas as cláusulas numeradas corretamente
-- NÃO usar markdown, apenas texto puro com formatação simples
+- Use **negrito** (com **) para destacar nomes, valores, datas e documentos
 - NÃO incluir explicações, apenas o contrato`;
 
     const modalidadeMap: Record<string, string> = {
@@ -238,6 +246,8 @@ Aviso prévio: ${contract.notice_period_days} dias
 === FORO ===
 Cidade: ${contract.jurisdiction_city}
 Estado: ${contract.jurisdiction_state}
+
+LEMBRE-SE: Use **negrito** para destacar nomes, valores monetários, datas e documentos importantes.
 
 Gere o contrato completo agora, sem explicações, apenas o texto do contrato.`;
 

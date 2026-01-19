@@ -11,7 +11,6 @@ import {
   Eye,
   Download,
   Trash2,
-  Send,
   Loader2,
   CheckCircle2,
   Clock,
@@ -38,6 +37,7 @@ import {
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import jsPDF from 'jspdf';
 
 interface Contract {
   id: string;
@@ -49,6 +49,7 @@ interface Contract {
   total_value: number;
   created_at: string;
   service_type: string;
+  generated_content: string | null;
 }
 
 interface ContractsListProps {
@@ -80,7 +81,7 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
     try {
       const { data, error } = await supabase
         .from('contracts')
-        .select('id, contract_number, title, status, contractor_name, contracted_name, total_value, created_at, service_type')
+        .select('id, contract_number, title, status, contractor_name, contracted_name, total_value, created_at, service_type, generated_content')
         .eq('affiliate_id', affiliateId)
         .order('created_at', { ascending: false });
 
@@ -111,7 +112,7 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
     return (
       <Badge variant="outline" className={`${config.color} gap-1 text-[10px]`}>
         <Icon className="w-3 h-3" />
-        {config.label}
+        <span className="hidden sm:inline">{config.label}</span>
       </Badge>
     );
   };
@@ -123,6 +124,41 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
     }).format(value);
   };
 
+  const handleDownloadPDF = (contract: Contract, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!contract.generated_content) {
+      toast.error('Gere o contrato primeiro');
+      return;
+    }
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 20;
+    const maxWidth = pageWidth - (margin * 2);
+    
+    const cleanContent = contract.generated_content.replace(/\*\*/g, '');
+    
+    doc.setFontSize(12);
+    const lines = doc.splitTextToSize(cleanContent, maxWidth);
+    
+    let y = margin;
+    const lineHeight = 6;
+    const pageHeight = doc.internal.pageSize.getHeight();
+    
+    lines.forEach((line: string) => {
+      if (y + lineHeight > pageHeight - margin) {
+        doc.addPage();
+        y = margin;
+      }
+      doc.text(line, margin, y);
+      y += lineHeight;
+    });
+
+    doc.save(`contrato-${contract.contract_number}.pdf`);
+    toast.success('PDF baixado!');
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -132,43 +168,43 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-600/20 flex items-center justify-center">
-            <FileText className="w-5 h-5 text-blue-400" />
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-600/20 flex items-center justify-center flex-shrink-0">
+            <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-foreground">Contratos</h2>
-            <p className="text-xs text-muted-foreground">{contracts.length} contrato{contracts.length !== 1 ? 's' : ''}</p>
+            <h2 className="text-base sm:text-lg font-bold text-foreground">Contratos</h2>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">{contracts.length} contrato{contracts.length !== 1 ? 's' : ''}</p>
           </div>
         </div>
         
-        <Button onClick={onCreateNew} className="gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700">
+        <Button onClick={onCreateNew} className="gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 w-full sm:w-auto text-sm">
           <Plus className="w-4 h-4" />
           Criar novo contrato
         </Button>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por título, contratante ou número..."
+            placeholder="Buscar..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-card/50 border-border/50"
+            className="pl-10 bg-card/50 border-border/50 text-sm"
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[200px] bg-card/50 border-border/50">
-            <Filter className="w-4 h-4 mr-2" />
-            <SelectValue placeholder="Filtrar por status" />
+          <SelectTrigger className="w-full sm:w-[180px] bg-card/50 border-border/50 text-xs sm:text-sm">
+            <Filter className="w-4 h-4 mr-2 flex-shrink-0" />
+            <SelectValue placeholder="Filtrar" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos os status</SelectItem>
+            <SelectItem value="all">Todos</SelectItem>
             {Object.entries(statusConfig).map(([value, { label }]) => (
               <SelectItem key={value} value={value}>{label}</SelectItem>
             ))}
@@ -181,18 +217,18 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center py-16 border-2 border-dashed border-border rounded-xl bg-card/30"
+          className="text-center py-12 sm:py-16 border-2 border-dashed border-border rounded-xl bg-card/30"
         >
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-600/20 flex items-center justify-center">
-            <FileText className="w-8 h-8 text-blue-400" />
+          <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-600/20 flex items-center justify-center">
+            <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-blue-400" />
           </div>
-          <h3 className="text-lg font-semibold text-foreground mb-2">
+          <h3 className="text-base sm:text-lg font-semibold text-foreground mb-2">
             {searchQuery || statusFilter !== 'all' ? 'Nenhum contrato encontrado' : 'Nenhum contrato criado'}
           </h3>
-          <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
+          <p className="text-xs sm:text-sm text-muted-foreground mb-6 max-w-sm mx-auto px-4">
             {searchQuery || statusFilter !== 'all' 
-              ? 'Tente ajustar os filtros de busca'
-              : 'Crie seu primeiro contrato jurídico profissional com assinatura digital'}
+              ? 'Tente ajustar os filtros'
+              : 'Crie seu primeiro contrato'}
           </p>
           {!searchQuery && statusFilter === 'all' && (
             <Button onClick={onCreateNew} className="gap-2 bg-gradient-to-r from-blue-500 to-indigo-600">
@@ -202,7 +238,7 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
           )}
         </motion.div>
       ) : (
-        <div className="grid gap-3">
+        <div className="grid gap-2 sm:gap-3">
           <AnimatePresence mode="popLayout">
             {filteredContracts.map((contract, index) => (
               <motion.div
@@ -214,29 +250,29 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
                 transition={{ delay: index * 0.03 }}
               >
                 <div 
-                  className="group p-4 rounded-xl border bg-gradient-to-br from-card to-card/80 hover:border-blue-500/40 hover:shadow-lg transition-all duration-300 cursor-pointer"
+                  className="group p-3 sm:p-4 rounded-xl border bg-gradient-to-br from-card to-card/80 hover:border-blue-500/40 hover:shadow-lg transition-all duration-300 cursor-pointer"
                   onClick={() => onViewContract(contract.id)}
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                     {/* Icon & Title */}
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500/10 to-indigo-600/10 flex items-center justify-center flex-shrink-0">
-                        <FileText className="w-5 h-5 text-blue-400" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-blue-500/10 to-indigo-600/10 flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
                       </div>
-                      <div className="min-w-0">
-                        <h3 className="text-sm font-semibold text-foreground truncate group-hover:text-blue-400 transition-colors">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-xs sm:text-sm font-semibold text-foreground truncate group-hover:text-blue-400 transition-colors">
                           {contract.title}
                         </h3>
-                        <p className="text-xs text-muted-foreground truncate">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                           {contract.contractor_name} • {contract.service_type}
                         </p>
                       </div>
                     </div>
 
                     {/* Status & Value */}
-                    <div className="flex items-center gap-4 flex-shrink-0">
-                      <div className="text-right hidden sm:block">
-                        <p className="text-sm font-semibold text-foreground">
+                    <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4 flex-shrink-0">
+                      <div className="text-left sm:text-right">
+                        <p className="text-xs sm:text-sm font-semibold text-foreground">
                           {formatCurrency(contract.total_value)}
                         </p>
                         <p className="text-[10px] text-muted-foreground">
@@ -257,16 +293,10 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
                             <Eye className="w-4 h-4 mr-2" />
                             Visualizar
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenuItem onClick={(e) => handleDownloadPDF(contract, e)}>
                             <Download className="w-4 h-4 mr-2" />
                             Download PDF
                           </DropdownMenuItem>
-                          {contract.status !== 'signed' && (
-                            <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                              <Send className="w-4 h-4 mr-2" />
-                              Enviar para assinatura
-                            </DropdownMenuItem>
-                          )}
                           <DropdownMenuSeparator />
                           <DropdownMenuItem 
                             onClick={(e) => e.stopPropagation()}
@@ -279,16 +309,6 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
                       </DropdownMenu>
                     </div>
                   </div>
-
-                  {/* Mobile Stats */}
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50 sm:hidden">
-                    <p className="text-sm font-semibold text-foreground">
-                      {formatCurrency(contract.total_value)}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground">
-                      {format(new Date(contract.created_at), "dd MMM yyyy", { locale: ptBR })}
-                    </p>
-                  </div>
                 </div>
               </motion.div>
             ))}
@@ -298,7 +318,7 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
 
       {/* Legal Notice */}
       <p className="text-[10px] text-center text-muted-foreground/70 italic">
-        ⚠️ Este sistema de contratos não substitui a consultoria de um advogado.
+        ⚠️ Este sistema não substitui a consultoria de um advogado.
       </p>
     </div>
   );
