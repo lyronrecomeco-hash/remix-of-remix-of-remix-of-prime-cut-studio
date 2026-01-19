@@ -11,8 +11,6 @@ const corsHeaders = {
 // Configura automaticamente o webhook para a Luna no Evolution API
 // =====================================================
 
-const ADMIN_EMAIL = "lyronrp@gmail.com";
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -25,28 +23,28 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Buscar configuração do backend
-    const { data: globalConfig } = await supabase
-      .from('whatsapp_backend_config')
-      .select('backend_url, master_token')
-      .order('created_at', { ascending: false })
+    // Buscar instância conectada
+    const { data: connectedInstance } = await supabase
+      .from('genesis_instances')
+      .select('id, name, backend_url, backend_token')
+      .eq('status', 'connected')
+      .order('updated_at', { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    // Buscar verificação config como fallback
-    const { data: verificationConfig } = await supabase
-      .from('verification_config')
-      .select('config_value')
-      .eq('config_type', 'phone_verification')
-      .maybeSingle();
+    if (!connectedInstance) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Nenhuma instância conectada encontrada' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    const configValue = verificationConfig?.config_value as any;
-    
-    const backendUrl = globalConfig?.backend_url || configValue?.backend_url || 'http://72.62.108.24:3000';
-    const backendToken = globalConfig?.master_token || configValue?.backend_token || 'genesis-master-token-2024-secure';
-    const instanceId = configValue?.instance_id || '05d8dc41-85f6-4fbb-bb12-7d82534e10cf';
+    const instanceId = connectedInstance.id;
+    const instanceName = connectedInstance.name || 'Genesis';
+    const backendUrl = connectedInstance.backend_url || 'http://72.62.108.24:3000';
+    const backendToken = connectedInstance.backend_token || 'genesis-master-token-2024-secure';
 
-    console.log('[Luna Setup] Config found:', { backendUrl, instanceId: instanceId?.substring(0, 8) + '...' });
+    console.log('[Luna Setup] Connected instance:', { instanceId, instanceName, backendUrl });
 
     const cleanBackendUrl = String(backendUrl).replace(/\/$/, '');
     const lunaWebhookUrl = `${supabaseUrl}/functions/v1/luna-whatsapp-assistant`;
@@ -66,27 +64,37 @@ serve(async (req) => {
     };
 
     console.log('[Luna Setup] Webhook URL:', lunaWebhookUrl);
-    console.log('[Luna Setup] Configuring webhook for instance:', instanceId);
 
-    // Tentar configurar webhook em diferentes endpoints Evolution API
+    // Tentar configurar webhook em TODOS os endpoints possíveis da Evolution API
     const endpoints = [
-      // Evolution API v2
+      // Evolution API v2 - com nome da instância
+      `/webhook/set/${instanceName}`,
+      `/instance/setWebhook/${instanceName}`,
+      `/webhook/${instanceName}/set`,
+      // Evolution API v2 - com ID
       `/webhook/set/${instanceId}`,
       `/instance/setWebhook/${instanceId}`,
       // Evolution API v1
+      `/instance/${instanceName}/webhook`,
       `/instance/${instanceId}/webhook`,
       `/webhook/${instanceId}`,
+      `/webhook/${instanceName}`,
+      // Outros formatos
+      `/${instanceName}/webhook/set`,
+      `/${instanceId}/webhook/set`,
     ];
 
     let webhookConfigured = false;
     let lastError = '';
+    let successEndpoint = '';
 
+    // Tentar POST primeiro
     for (const endpoint of endpoints) {
       try {
-        console.log(`[Luna Setup] Trying endpoint: ${endpoint}`);
+        console.log(`[Luna Setup] POST ${endpoint}`);
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
 
         const response = await fetch(`${cleanBackendUrl}${endpoint}`, {
           method: 'POST',
@@ -102,32 +110,32 @@ serve(async (req) => {
         clearTimeout(timeoutId);
 
         const responseText = await response.text();
-        console.log(`[Luna Setup] Response from ${endpoint}: ${response.status} - ${responseText.substring(0, 200)}`);
+        console.log(`[Luna Setup] Response: ${response.status}`);
 
         if (response.ok || response.status === 201) {
           webhookConfigured = true;
-          console.log('[Luna Setup] ✅ Webhook configured successfully!');
+          successEndpoint = endpoint;
+          console.log('[Luna Setup] ✅ Webhook configured!');
           break;
         }
 
-        if (response.status !== 404) {
-          lastError = `${response.status}: ${responseText.substring(0, 200)}`;
+        if (response.status !== 404 && response.status !== 405) {
+          lastError = `${response.status}: ${responseText.substring(0, 100)}`;
         }
       } catch (e: any) {
-        console.warn(`[Luna Setup] Endpoint ${endpoint} failed:`, e.message);
-        lastError = e.message;
+        if (e.name !== 'AbortError') {
+          console.warn(`[Luna Setup] ${endpoint} failed:`, e.message);
+        }
         continue;
       }
     }
 
-    // Também tentar configurar via PUT
+    // Se POST não funcionou, tentar PUT
     if (!webhookConfigured) {
       for (const endpoint of endpoints) {
         try {
-          console.log(`[Luna Setup] Trying PUT on: ${endpoint}`);
-
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 15000);
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
 
           const response = await fetch(`${cleanBackendUrl}${endpoint}`, {
             method: 'PUT',
@@ -144,10 +152,10 @@ serve(async (req) => {
 
           if (response.ok) {
             webhookConfigured = true;
-            console.log('[Luna Setup] ✅ Webhook configured via PUT!');
+            successEndpoint = endpoint;
             break;
           }
-        } catch (e: any) {
+        } catch {
           continue;
         }
       }
@@ -159,8 +167,10 @@ serve(async (req) => {
       setting_value: {
         webhook_url: lunaWebhookUrl,
         instance_id: instanceId,
+        instance_name: instanceName,
         backend_url: backendUrl,
         configured_at: new Date().toISOString(),
+        success_endpoint: successEndpoint || null,
         status: webhookConfigured ? 'active' : 'pending_manual',
       },
       description: 'Configuração do webhook da Luna para WhatsApp'
@@ -173,30 +183,29 @@ serve(async (req) => {
       severity: webhookConfigured ? 'info' : 'warning',
       message: webhookConfigured 
         ? '✅ Webhook da Luna configurado automaticamente'
-        : '⚠️ Webhook da Luna precisa de configuração manual',
+        : '⚠️ Configuração manual necessária - servidor Evolution pode estar offline',
       details: {
         webhook_url: lunaWebhookUrl,
         backend_url: backendUrl,
+        instance_name: instanceName,
+        success_endpoint: successEndpoint || null,
         status: webhookConfigured ? 'configured' : 'manual_required',
         error: lastError || null
       }
     });
 
-    // Se não conseguiu automaticamente, dar instruções
-    if (!webhookConfigured) {
+    // Resposta
+    if (webhookConfigured) {
       return new Response(
         JSON.stringify({
-          success: false,
-          status: 'manual_required',
-          message: 'Configuração automática não disponível. Configure manualmente.',
-          instructions: {
-            step1: 'Acesse o painel do Evolution API',
-            step2: `Configure o webhook para: ${lunaWebhookUrl}`,
-            step3: 'Habilite os eventos: messages.upsert, messages.update',
-            webhook_url: lunaWebhookUrl,
-            instance_id: instanceId,
-          },
-          error: lastError
+          success: true,
+          status: 'configured',
+          message: '✅ Webhook da Luna configurado com sucesso!',
+          webhook_url: lunaWebhookUrl,
+          instance_id: instanceId,
+          instance_name: instanceName,
+          endpoint_used: successEndpoint,
+          events: webhookConfig.events
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -204,12 +213,19 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        success: true,
-        status: 'configured',
-        message: '✅ Webhook da Luna configurado com sucesso!',
+        success: false,
+        status: 'manual_required',
+        message: 'Servidor Evolution não respondeu. Configure manualmente:',
+        instructions: {
+          step1: `Acesse: ${backendUrl}`,
+          step2: `Instância: ${instanceName}`,
+          step3: `Configure webhook URL: ${lunaWebhookUrl}`,
+          step4: 'Eventos: messages.upsert, messages.update, groups.upsert',
+        },
         webhook_url: lunaWebhookUrl,
         instance_id: instanceId,
-        events: webhookConfig.events
+        instance_name: instanceName,
+        error: lastError || 'Servidor não respondeu'
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
