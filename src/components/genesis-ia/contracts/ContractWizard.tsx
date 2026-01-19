@@ -118,14 +118,14 @@ const initialFormData: FormData = {
 };
 
 const steps = [
-  { id: 'contractor', title: 'Contratante', icon: User, description: 'Dados de quem contrata' },
-  { id: 'contracted', title: 'Contratado', icon: Briefcase, description: 'Dados do prestador' },
-  { id: 'object', title: 'Objeto', icon: FileX, description: 'Descrição do serviço' },
-  { id: 'deadline', title: 'Prazo', icon: Calendar, description: 'Datas e prazos' },
-  { id: 'payment', title: 'Pagamento', icon: DollarSign, description: 'Valores e forma' },
-  { id: 'warranty', title: 'Garantias', icon: Shield, description: 'Responsabilidades' },
-  { id: 'termination', title: 'Rescisão', icon: FileX, description: 'Condições de término' },
-  { id: 'jurisdiction', title: 'Foro', icon: MapPin, description: 'Jurisdição legal' },
+  { id: 'contractor', title: 'Contratante', icon: User, description: 'Dados de quem contrata', requiredFields: ['contractor_name', 'contractor_document', 'contractor_address'] },
+  { id: 'contracted', title: 'Contratado', icon: Briefcase, description: 'Dados do prestador', requiredFields: ['contracted_name', 'contracted_document', 'contracted_address'] },
+  { id: 'object', title: 'Objeto', icon: FileX, description: 'Descrição do serviço', requiredFields: ['service_type', 'service_description'] },
+  { id: 'deadline', title: 'Prazo', icon: Calendar, description: 'Datas e prazos', requiredFields: ['start_date'] },
+  { id: 'payment', title: 'Pagamento', icon: DollarSign, description: 'Valores e forma', requiredFields: ['total_value', 'payment_method'] },
+  { id: 'warranty', title: 'Garantias', icon: Shield, description: 'Responsabilidades', requiredFields: [] },
+  { id: 'termination', title: 'Rescisão', icon: FileX, description: 'Condições de término', requiredFields: [] },
+  { id: 'jurisdiction', title: 'Foro', icon: MapPin, description: 'Jurisdição legal', requiredFields: ['jurisdiction_city', 'jurisdiction_state'] },
 ];
 
 export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWizardProps) {
@@ -139,7 +139,23 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const validateCurrentStep = (): boolean => {
+    const currentStepData = steps[currentStep];
+    const requiredFields = currentStepData.requiredFields;
+    
+    for (const field of requiredFields) {
+      const value = formData[field as keyof FormData];
+      if (!value || (typeof value === 'string' && value.trim() === '')) {
+        toast.error('Preencha todos os campos obrigatórios antes de continuar.');
+        return false;
+      }
+    }
+    return true;
+  };
+
   const handleNext = () => {
+    if (!validateCurrentStep()) return;
+    
     if (currentStep < steps.length - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
@@ -164,6 +180,8 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
   };
 
   const handleSubmit = async () => {
+    if (!validateCurrentStep()) return;
+    
     setGenerating(true);
     
     try {
@@ -212,15 +230,43 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
         questionnaire_answers: JSON.parse(JSON.stringify(formData)),
       };
 
-      const { error } = await supabase
+      const { data: insertedContract, error } = await supabase
         .from('contracts')
-        .insert([contractData]);
+        .insert([contractData])
+        .select()
+        .single();
 
       if (error) throw error;
 
-      toast.success('Contrato criado com sucesso!', {
-        description: `Número: ${contractNumber}`
-      });
+      // Enviar contrato via WhatsApp automaticamente se tiver telefone
+      if (formData.contractor_phone) {
+        const signatureUrl = `${window.location.origin}/contratos/assinar/${signatureHash}`;
+        
+        try {
+          await supabase.functions.invoke('send-contract-whatsapp', {
+            body: {
+              phone: formData.contractor_phone,
+              contractorName: formData.contractor_name,
+              contractNumber: contractNumber,
+              signatureUrl: signatureUrl,
+              serviceName: formData.service_type,
+              totalValue: parseFloat(formData.total_value.replace(/[^\d.,]/g, '').replace(',', '.'))
+            }
+          });
+          toast.success('Contrato criado e enviado via WhatsApp!', {
+            description: `Número: ${contractNumber}`
+          });
+        } catch (whatsappError) {
+          console.error('Error sending WhatsApp:', whatsappError);
+          toast.success('Contrato criado com sucesso!', {
+            description: `Número: ${contractNumber}`
+          });
+        }
+      } else {
+        toast.success('Contrato criado com sucesso!', {
+          description: `Número: ${contractNumber}`
+        });
+      }
       
       onComplete();
     } catch (error) {
@@ -294,13 +340,14 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                 />
               </div>
               <div className="space-y-2">
-                <Label>Telefone</Label>
+                <Label>Telefone/WhatsApp *</Label>
                 <Input
                   value={formData.contractor_phone}
                   onChange={(e) => updateField('contractor_phone', e.target.value)}
                   placeholder="(00) 00000-0000"
                   className="bg-card/50"
                 />
+                <p className="text-[10px] text-muted-foreground">O contrato será enviado automaticamente para este número</p>
               </div>
             </div>
           </div>
@@ -456,7 +503,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                 />
               </div>
               <div className="space-y-2">
-                <Label>Data de término/entrega</Label>
+                <Label>Data de término (opcional)</Label>
                 <Input
                   type="date"
                   value={formData.end_date}
@@ -468,7 +515,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
             <div className="flex items-center justify-between p-4 rounded-lg border bg-card/50">
               <div>
                 <Label>Entrega em etapas?</Label>
-                <p className="text-xs text-muted-foreground">O serviço será entregue em fases/milestones</p>
+                <p className="text-xs text-muted-foreground">O serviço será entregue em partes</p>
               </div>
               <Switch
                 checked={formData.delivery_in_stages}
@@ -478,7 +525,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
             <div className="flex items-center justify-between p-4 rounded-lg border bg-card/50">
               <div>
                 <Label>Permite prorrogação?</Label>
-                <p className="text-xs text-muted-foreground">O prazo pode ser estendido mediante acordo</p>
+                <p className="text-xs text-muted-foreground">O prazo pode ser estendido</p>
               </div>
               <Switch
                 checked={formData.allows_extension}
@@ -493,7 +540,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Valor total *</Label>
+                <Label>Valor total do serviço *</Label>
                 <Input
                   value={formData.total_value}
                   onChange={(e) => updateField('total_value', e.target.value)}
@@ -506,7 +553,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                 <Input
                   value={formData.payment_method}
                   onChange={(e) => updateField('payment_method', e.target.value)}
-                  placeholder="Ex: PIX, Transferência, Boleto..."
+                  placeholder="Ex: Pix, Transferência, Boleto..."
                   className="bg-card/50"
                 />
               </div>
@@ -515,6 +562,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                 <Input
                   type="number"
                   min={1}
+                  max={24}
                   value={formData.installments}
                   onChange={(e) => updateField('installments', parseInt(e.target.value) || 1)}
                   className="bg-card/50"
@@ -538,8 +586,8 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 rounded-lg border bg-card/50">
               <div>
-                <Label>Existe garantia?</Label>
-                <p className="text-xs text-muted-foreground">O serviço possui período de garantia</p>
+                <Label>O serviço possui garantia?</Label>
+                <p className="text-xs text-muted-foreground">Período de garantia após entrega</p>
               </div>
               <Switch
                 checked={formData.has_warranty}
@@ -548,17 +596,17 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
             </div>
             {formData.has_warranty && (
               <div className="space-y-2">
-                <Label>Período da garantia</Label>
+                <Label>Período de garantia</Label>
                 <Input
                   value={formData.warranty_period}
                   onChange={(e) => updateField('warranty_period', e.target.value)}
-                  placeholder="Ex: 30 dias, 3 meses..."
+                  placeholder="Ex: 90 dias, 6 meses, 1 ano..."
                   className="bg-card/50"
                 />
               </div>
             )}
             <div className="space-y-2">
-              <Label>Limite de responsabilidade</Label>
+              <Label>Limite de responsabilidade (opcional)</Label>
               <Input
                 value={formData.liability_limit}
                 onChange={(e) => updateField('liability_limit', e.target.value)}
@@ -567,11 +615,11 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
               />
             </div>
             <div className="space-y-2">
-              <Label>O que NÃO está incluso</Label>
+              <Label>O que NÃO está incluso (opcional)</Label>
               <Textarea
                 value={formData.not_included}
                 onChange={(e) => updateField('not_included', e.target.value)}
-                placeholder="Liste o que não faz parte do escopo deste contrato..."
+                placeholder="Liste itens que não fazem parte do escopo..."
                 className="bg-card/50 min-h-[80px]"
               />
             </div>
@@ -584,7 +632,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
             <div className="flex items-center justify-between p-4 rounded-lg border bg-card/50">
               <div>
                 <Label>Permite rescisão antecipada?</Label>
-                <p className="text-xs text-muted-foreground">O contrato pode ser encerrado antes do prazo</p>
+                <p className="text-xs text-muted-foreground">Qualquer parte pode cancelar antes do prazo</p>
               </div>
               <Switch
                 checked={formData.allows_early_termination}
@@ -594,7 +642,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
             {formData.allows_early_termination && (
               <>
                 <div className="space-y-2">
-                  <Label>Multa por quebra contratual (%)</Label>
+                  <Label>Multa por rescisão (%)</Label>
                   <Input
                     value={formData.termination_penalty_percentage}
                     onChange={(e) => updateField('termination_penalty_percentage', e.target.value)}
@@ -655,18 +703,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
   const Icon = currentStepData.icon;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={handleBack} className="h-8 w-8">
-          <ArrowLeft className="w-4 h-4" />
-        </Button>
-        <div>
-          <h2 className="text-lg font-bold text-foreground">Criar Novo Contrato</h2>
-          <p className="text-xs text-muted-foreground">Preencha o questionário para gerar seu contrato</p>
-        </div>
-      </div>
-
+    <div className="space-y-4 sm:space-y-6">
       {/* Progress */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs">
@@ -676,8 +713,8 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
         <Progress value={progress} className="h-2" />
       </div>
 
-      {/* Steps indicator */}
-      <div className="flex gap-1 overflow-x-auto pb-2">
+      {/* Steps indicator - scrollable on mobile */}
+      <div className="flex gap-1 overflow-x-auto pb-2 -mx-2 px-2 sm:mx-0 sm:px-0">
         {steps.map((step, index) => {
           const StepIcon = step.icon;
           const isActive = index === currentStep;
@@ -686,7 +723,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
           return (
             <div
               key={step.id}
-              className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs whitespace-nowrap transition-all ${
+              className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs whitespace-nowrap transition-all flex-shrink-0 ${
                 isActive
                   ? 'bg-primary/20 text-primary border border-primary/30'
                   : isCompleted
@@ -706,14 +743,14 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
       </div>
 
       {/* Current Step Content */}
-      <div className="p-6 rounded-xl border bg-gradient-to-br from-card to-card/80">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-600/20 flex items-center justify-center">
-            <Icon className="w-5 h-5 text-blue-400" />
+      <div className="p-4 sm:p-6 rounded-xl border bg-gradient-to-br from-card to-card/80">
+        <div className="flex items-center gap-3 mb-4 sm:mb-6">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-600/20 flex items-center justify-center flex-shrink-0">
+            <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
           </div>
-          <div>
-            <h3 className="font-semibold text-foreground">{currentStepData.title}</h3>
-            <p className="text-xs text-muted-foreground">{currentStepData.description}</p>
+          <div className="min-w-0">
+            <h3 className="font-semibold text-foreground text-sm sm:text-base">{currentStepData.title}</h3>
+            <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{currentStepData.description}</p>
           </div>
         </div>
 
@@ -731,30 +768,32 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
       </div>
 
       {/* Navigation */}
-      <div className="flex items-center justify-between">
-        <Button variant="outline" onClick={handleBack} className="gap-2">
+      <div className="flex items-center justify-between gap-3">
+        <Button variant="outline" onClick={handleBack} className="gap-2 flex-1 sm:flex-none">
           <ArrowLeft className="w-4 h-4" />
-          {currentStep === 0 ? 'Cancelar' : 'Voltar'}
+          <span className="hidden sm:inline">{currentStep === 0 ? 'Cancelar' : 'Voltar'}</span>
         </Button>
         
         <Button 
           onClick={handleNext} 
           disabled={generating}
-          className="gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+          className="gap-2 flex-1 sm:flex-none bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
         >
           {generating ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Gerando contrato...
+              <span className="hidden sm:inline">Gerando...</span>
             </>
           ) : currentStep === steps.length - 1 ? (
             <>
               <Sparkles className="w-4 h-4" />
-              Gerar Contrato
+              <span className="hidden sm:inline">Gerar Contrato</span>
+              <span className="sm:hidden">Gerar</span>
             </>
           ) : (
             <>
-              Próximo
+              <span className="hidden sm:inline">Próximo</span>
+              <span className="sm:hidden">Avançar</span>
               <ArrowRight className="w-4 h-4" />
             </>
           )}
