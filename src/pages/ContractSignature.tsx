@@ -16,14 +16,13 @@ import {
   Briefcase,
   Eraser,
   Copy,
-  ExternalLink
+  Lock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
@@ -50,6 +49,8 @@ interface ExistingSignature {
   id: string;
   signer_type: string;
   signer_name: string;
+  signer_document?: string;
+  signature_image?: string | null;
   signed_at: string | null;
 }
 
@@ -64,13 +65,25 @@ export default function ContractSignature() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [signing, setSigning] = useState(false);
   const [signed, setSigned] = useState(false);
-  const [signatureMethod, setSignatureMethod] = useState<'draw' | 'govbr'>('draw');
-  const [govBrLoading, setGovBrLoading] = useState(false);
   
   // Canvas para assinatura
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
+
+  // Mask CPF function - shows only last 3 digits
+  const maskDocument = (doc: string) => {
+    if (!doc) return '';
+    const cleaned = doc.replace(/\D/g, '');
+    if (cleaned.length === 11) {
+      // CPF: ***.***.XXX-XX
+      return `***.***.*${cleaned.slice(7, 9)}-${cleaned.slice(9, 11)}`;
+    } else if (cleaned.length === 14) {
+      // CNPJ: **.***.***/**XX-XX
+      return `**.***.***/${cleaned.slice(8, 12)}-${cleaned.slice(12, 14)}`;
+    }
+    return doc.slice(0, -3).replace(/./g, '*') + doc.slice(-3);
+  };
 
   useEffect(() => {
     if (hash) {
@@ -144,7 +157,7 @@ export default function ContractSignature() {
 
     const { data } = await supabase
       .from('contract_signatures')
-      .select('id, signer_type, signer_name, signed_at')
+      .select('id, signer_type, signer_name, signer_document, signature_image, signed_at')
       .eq('contract_id', id);
 
     setExistingSignatures(data || []);
@@ -186,10 +199,8 @@ export default function ContractSignature() {
   };
 
   useEffect(() => {
-    if (signatureMethod === 'draw') {
-      setTimeout(initCanvas, 100);
-    }
-  }, [signatureMethod]);
+    setTimeout(initCanvas, 100);
+  }, []);
 
   const getCanvasCoordinates = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -270,34 +281,13 @@ export default function ContractSignature() {
     }).format(value);
   };
 
-  const handleGovBrSign = async () => {
-    setGovBrLoading(true);
-    
-    // Simulated GOV.BR integration
-    // In a real implementation, this would redirect to GOV.BR OAuth
-    toast.info('Integração GOV.BR', {
-      description: 'Redirecionando para autenticação GOV.BR...'
-    });
-    
-    // Simulate GOV.BR redirect delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // For now, we'll simulate a successful GOV.BR authentication
-    // In production, this would handle the OAuth callback
-    try {
-      await handleSignContract('govbr');
-    } finally {
-      setGovBrLoading(false);
-    }
-  };
-
-  const handleSignContract = async (method: 'draw' | 'govbr') => {
+  const handleSignContract = async () => {
     if (!contract || !signerName || !signerDocument || !acceptedTerms) {
       toast.error('Preencha todos os campos obrigatórios.');
       return;
     }
 
-    if (method === 'draw' && !hasSignature) {
+    if (!hasSignature) {
       toast.error('Desenhe sua assinatura antes de continuar.');
       return;
     }
@@ -305,7 +295,7 @@ export default function ContractSignature() {
     setSigning(true);
 
     try {
-      const signatureImage = method === 'draw' ? getSignatureImage() : null;
+      const signatureImage = getSignatureImage();
 
       // Registrar assinatura como contratante
       const { error: signError } = await supabase
@@ -316,7 +306,7 @@ export default function ContractSignature() {
           signer_name: signerName,
           signer_document: signerDocument,
           signature_image: signatureImage,
-          signature_method: method,
+          signature_method: 'draw',
           signed_at: new Date().toISOString(),
           ip_address: null,
           user_agent: navigator.userAgent,
@@ -334,7 +324,7 @@ export default function ContractSignature() {
           actor_name: signerName,
           details: {
             signer_document: signerDocument,
-            signature_method: method
+            signature_method: 'draw'
           },
           user_agent: navigator.userAgent
         });
@@ -355,6 +345,10 @@ export default function ContractSignature() {
         .from('contracts')
         .update({ status: newStatus })
         .eq('id', contract.id);
+
+      // Refresh signatures to get the latest
+      await fetchSignatures();
+      await fetchContractStatus();
 
       setSigned(true);
       toast.success('Contrato assinado com sucesso!');
@@ -412,23 +406,86 @@ export default function ContractSignature() {
     toast.success('Contrato copiado para a área de transferência!');
   };
 
-  // Convert markdown bold to HTML
+  // Convert markdown bold to HTML and add signature section
   const renderContractContent = (content: string) => {
     const parts = content.split(/(\*\*[^*]+\*\*)/g);
-    return parts.map((part, index) => {
+    const renderedContent = parts.map((part, index) => {
       if (part.startsWith('**') && part.endsWith('**')) {
         return <strong key={index} className="font-bold text-black">{part.slice(2, -2)}</strong>;
       }
       return <span key={index}>{part}</span>;
     });
+
+    // Get contractor signature if exists
+    const contractorSignature = existingSignatures.find(s => s.signer_type === 'contractor' && s.signed_at);
+    const contractedSignature = existingSignatures.find(s => s.signer_type === 'contracted' && s.signed_at);
+
+    return (
+      <>
+        {renderedContent}
+        
+        {/* Signature Section in Contract */}
+        <div className="mt-8 pt-6 border-t-2 border-gray-300">
+          <h4 className="text-center font-bold mb-8">ASSINATURAS</h4>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Contratante */}
+            <div className="text-center">
+              <p className="font-bold mb-4">CONTRATANTE</p>
+              {contractorSignature?.signature_image ? (
+                <div className="mb-2">
+                  <img 
+                    src={contractorSignature.signature_image} 
+                    alt="Assinatura do Contratante"
+                    className="mx-auto h-16 object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="h-16 border-b-2 border-gray-400 mb-2" />
+              )}
+              <p className="text-sm">{contract?.contractor_name}</p>
+              <p className="text-xs text-gray-600">{maskDocument(contract?.contractor_document || '')}</p>
+              {contractorSignature?.signed_at && (
+                <p className="text-xs text-emerald-600 mt-1">
+                  Assinado em {format(new Date(contractorSignature.signed_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                </p>
+              )}
+            </div>
+            
+            {/* Contratado */}
+            <div className="text-center">
+              <p className="font-bold mb-4">CONTRATADO</p>
+              {contractedSignature?.signature_image ? (
+                <div className="mb-2">
+                  <img 
+                    src={contractedSignature.signature_image} 
+                    alt="Assinatura do Contratado"
+                    className="mx-auto h-16 object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="h-16 border-b-2 border-gray-400 mb-2" />
+              )}
+              <p className="text-sm">{contract?.contracted_name}</p>
+              <p className="text-xs text-gray-600">{maskDocument(contract?.contracted_document || '')}</p>
+              {contractedSignature?.signed_at && (
+                <p className="text-xs text-emerald-600 mt-1">
+                  Assinado em {format(new Date(contractedSignature.signed_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </>
+    );
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
         <div className="text-center">
-          <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Carregando contrato...</p>
+          <Loader2 className="w-8 h-8 sm:w-10 sm:h-10 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground text-sm">Carregando contrato...</p>
         </div>
       </div>
     );
@@ -442,9 +499,9 @@ export default function ContractSignature() {
           animate={{ opacity: 1, scale: 1 }}
           className="max-w-md w-full bg-card border rounded-2xl p-6 sm:p-8 text-center"
         >
-          <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-foreground mb-2">Link Inválido</h1>
-          <p className="text-muted-foreground">{error || 'Contrato não encontrado.'}</p>
+          <AlertCircle className="w-12 h-12 sm:w-16 sm:h-16 text-red-400 mx-auto mb-4" />
+          <h1 className="text-lg sm:text-xl font-bold text-foreground mb-2">Link Inválido</h1>
+          <p className="text-sm text-muted-foreground">{error || 'Contrato não encontrado.'}</p>
         </motion.div>
       </div>
     );
@@ -458,16 +515,16 @@ export default function ContractSignature() {
           animate={{ opacity: 1, scale: 1 }}
           className="max-w-md w-full bg-card border rounded-2xl p-6 sm:p-8 text-center"
         >
-          <div className="w-20 h-20 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 className="w-10 h-10 text-emerald-400" />
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-6">
+            <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-400" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground mb-2">Contrato Assinado!</h1>
-          <p className="text-muted-foreground mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground mb-2">Contrato Assinado!</h1>
+          <p className="text-sm text-muted-foreground mb-6">
             Sua assinatura foi registrada com sucesso.
           </p>
           <div className="p-4 rounded-xl bg-muted/30 text-left mb-4">
-            <p className="text-sm text-muted-foreground mb-1">Contrato</p>
-            <p className="font-medium text-foreground">{contract.title}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mb-1">Contrato</p>
+            <p className="font-medium text-sm sm:text-base text-foreground">{contract.title}</p>
             <p className="text-xs text-muted-foreground mt-1">#{contract.contract_number}</p>
           </div>
           <Button onClick={handleDownloadPDF} className="w-full gap-2">
@@ -483,73 +540,72 @@ export default function ContractSignature() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Header */}
       <header className="bg-card/80 backdrop-blur-xl border-b sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-4 py-3 sm:py-4 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-3 sm:px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center flex-shrink-0">
               <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
             </div>
-            <div>
-              <h1 className="font-bold text-foreground text-sm sm:text-base">Assinatura Digital</h1>
+            <div className="min-w-0">
+              <h1 className="font-bold text-foreground text-sm sm:text-base truncate">Assinatura Digital</h1>
               <p className="text-[10px] sm:text-xs text-muted-foreground">Genesis Hub - Contratos</p>
             </div>
           </div>
-          <div className="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground">
-            <Shield className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-400" />
+          <div className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground">
+            <Shield className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-400 flex-shrink-0" />
             <span className="hidden sm:inline">Conexão Segura</span>
           </div>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-4 sm:py-8 space-y-4 sm:space-y-6">
+      <main className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-6">
         {/* Contract Info */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-card border rounded-xl sm:rounded-2xl p-4 sm:p-6"
         >
-          <h2 className="text-base sm:text-lg font-bold text-foreground mb-4">{contract.title}</h2>
+          <h2 className="text-sm sm:text-lg font-bold text-foreground mb-4 line-clamp-2">{contract.title}</h2>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
-            <div className="p-3 sm:p-4 rounded-xl bg-muted/30">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="p-3 rounded-xl bg-muted/30">
               <div className="flex items-center gap-2 mb-2">
-                <User className="w-4 h-4 text-blue-400" />
+                <User className="w-4 h-4 text-blue-400 flex-shrink-0" />
                 <span className="text-xs sm:text-sm font-medium text-foreground">Contratante</span>
               </div>
-              <p className="text-xs sm:text-sm text-muted-foreground">{contract.contractor_name}</p>
-              <p className="text-[10px] sm:text-xs text-muted-foreground">{contract.contractor_document}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">{contract.contractor_name}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">{maskDocument(contract.contractor_document)}</p>
             </div>
             
-            <div className="p-3 sm:p-4 rounded-xl bg-muted/30">
+            <div className="p-3 rounded-xl bg-muted/30">
               <div className="flex items-center gap-2 mb-2">
-                <Briefcase className="w-4 h-4 text-indigo-400" />
+                <Briefcase className="w-4 h-4 text-indigo-400 flex-shrink-0" />
                 <span className="text-xs sm:text-sm font-medium text-foreground">Contratado</span>
               </div>
-              <p className="text-xs sm:text-sm text-muted-foreground">{contract.contracted_name}</p>
-              <p className="text-[10px] sm:text-xs text-muted-foreground">{contract.contracted_document}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">{contract.contracted_name}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">{maskDocument(contract.contracted_document)}</p>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3 sm:gap-4 text-xs sm:text-sm">
+          <div className="flex flex-wrap gap-3 sm:gap-4 text-xs sm:text-sm mt-4">
             <div>
               <span className="text-muted-foreground">Valor:</span>
               <span className="ml-2 font-bold text-emerald-400">{formatCurrency(contract.total_value)}</span>
             </div>
             <div>
-              <span className="text-muted-foreground">Contrato nº:</span>
-              <span className="ml-2 font-medium text-foreground">{contract.contract_number}</span>
+              <span className="text-muted-foreground">Nº:</span>
+              <span className="ml-1 font-medium text-foreground">{contract.contract_number}</span>
             </div>
           </div>
 
           {/* Action buttons */}
           <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-border/50">
-            <Button variant="outline" size="sm" onClick={handleDownloadPDF} className="gap-2 flex-1 sm:flex-none">
+            <Button variant="outline" size="sm" onClick={handleDownloadPDF} className="gap-2 flex-1 sm:flex-none text-xs sm:text-sm">
               <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">Baixar PDF</span>
-              <span className="sm:hidden">PDF</span>
+              <span className="hidden xs:inline">Baixar</span> PDF
             </Button>
-            <Button variant="outline" size="sm" onClick={handleCopyContract} className="gap-2 flex-1 sm:flex-none">
+            <Button variant="outline" size="sm" onClick={handleCopyContract} className="gap-2 flex-1 sm:flex-none text-xs sm:text-sm">
               <Copy className="w-4 h-4" />
-              <span className="hidden sm:inline">Copiar</span>
+              Copiar
             </Button>
           </div>
         </motion.div>
@@ -560,7 +616,7 @@ export default function ContractSignature() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white text-black rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 max-h-[400px] sm:max-h-[500px] overflow-y-auto"
+            className="bg-white text-black rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 max-h-[350px] sm:max-h-[450px] overflow-y-auto"
           >
             <div className="prose prose-sm max-w-none whitespace-pre-wrap font-serif text-xs sm:text-sm leading-relaxed">
               {renderContractContent(contract.generated_content)}
@@ -577,100 +633,62 @@ export default function ContractSignature() {
         >
           <h3 className="font-bold text-foreground text-sm sm:text-base">Assinar como Contratante</h3>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          {/* Read-only signer info */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label className="text-xs sm:text-sm">Nome Completo</Label>
-              <Input
-                value={signerName}
-                onChange={(e) => setSignerName(e.target.value)}
-                placeholder="Seu nome completo"
-                className="text-sm"
-              />
+              <Label className="text-xs sm:text-sm flex items-center gap-2">
+                <Lock className="w-3 h-3 text-muted-foreground" />
+                Nome Completo
+              </Label>
+              <div className="px-3 py-2 rounded-md bg-muted/50 border border-border/50 text-sm text-foreground">
+                {signerName}
+              </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-xs sm:text-sm">CPF/CNPJ</Label>
-              <Input
-                value={signerDocument}
-                onChange={(e) => setSignerDocument(e.target.value)}
-                placeholder="Seu documento"
-                className="text-sm"
-              />
+              <Label className="text-xs sm:text-sm flex items-center gap-2">
+                <Lock className="w-3 h-3 text-muted-foreground" />
+                CPF/CNPJ
+              </Label>
+              <div className="px-3 py-2 rounded-md bg-muted/50 border border-border/50 text-sm text-foreground">
+                {maskDocument(signerDocument)}
+              </div>
             </div>
           </div>
 
           <Separator />
 
-          {/* Signature Method Tabs */}
-          <Tabs value={signatureMethod} onValueChange={(v) => setSignatureMethod(v as 'draw' | 'govbr')}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="draw" className="text-xs sm:text-sm">Desenhar Assinatura</TabsTrigger>
-              <TabsTrigger value="govbr" className="text-xs sm:text-sm">Assinar via GOV.BR</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="draw" className="space-y-3 mt-4">
-              <div className="flex items-center justify-between">
-                <Label className="flex items-center gap-2 text-xs sm:text-sm">
-                  <PenLine className="w-4 h-4" />
-                  Desenhe sua assinatura
-                </Label>
-                <Button variant="ghost" size="sm" onClick={clearSignature} className="gap-1.5 text-xs">
-                  <Eraser className="w-4 h-4" />
-                  Limpar
-                </Button>
-              </div>
-              
-              <div className="border-2 border-dashed border-muted-foreground/30 rounded-xl p-2 bg-white">
-                <canvas
-                  ref={canvasRef}
-                  width={600}
-                  height={150}
-                  className="w-full h-24 sm:h-32 cursor-crosshair touch-none"
-                  onMouseDown={startDrawing}
-                  onMouseMove={draw}
-                  onMouseUp={stopDrawing}
-                  onMouseLeave={stopDrawing}
-                  onTouchStart={startDrawing}
-                  onTouchMove={draw}
-                  onTouchEnd={stopDrawing}
-                />
-              </div>
-              <p className="text-[10px] sm:text-xs text-muted-foreground text-center">
-                Use o mouse ou toque para desenhar sua assinatura
-              </p>
-            </TabsContent>
-
-            <TabsContent value="govbr" className="space-y-4 mt-4">
-              <div className="p-4 sm:p-6 rounded-xl bg-gradient-to-br from-blue-500/10 to-indigo-600/10 border border-blue-500/20 text-center">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-4">
-                  <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-blue-400" />
-                </div>
-                <h4 className="font-bold text-foreground mb-2 text-sm sm:text-base">Assinatura via GOV.BR</h4>
-                <p className="text-xs sm:text-sm text-muted-foreground mb-4">
-                  Utilize sua conta GOV.BR para assinar digitalmente com validade jurídica certificada pelo governo.
-                </p>
-                <Button 
-                  onClick={handleGovBrSign}
-                  disabled={govBrLoading || !acceptedTerms}
-                  className="gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-                >
-                  {govBrLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Conectando...
-                    </>
-                  ) : (
-                    <>
-                      <ExternalLink className="w-4 h-4" />
-                      Entrar com GOV.BR
-                    </>
-                  )}
-                </Button>
-              </div>
-              <p className="text-[10px] text-muted-foreground text-center">
-                Você será redirecionado para o portal GOV.BR para autenticação
-              </p>
-            </TabsContent>
-          </Tabs>
+          {/* Signature Drawing */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <Label className="flex items-center gap-2 text-xs sm:text-sm">
+                <PenLine className="w-4 h-4" />
+                Desenhe sua assinatura
+              </Label>
+              <Button variant="ghost" size="sm" onClick={clearSignature} className="gap-1.5 text-xs h-8">
+                <Eraser className="w-4 h-4" />
+                Limpar
+              </Button>
+            </div>
+            
+            <div className="border-2 border-dashed border-muted-foreground/30 rounded-xl p-2 bg-white">
+              <canvas
+                ref={canvasRef}
+                width={600}
+                height={150}
+                className="w-full h-20 sm:h-28 md:h-32 cursor-crosshair touch-none"
+                onMouseDown={startDrawing}
+                onMouseMove={draw}
+                onMouseUp={stopDrawing}
+                onMouseLeave={stopDrawing}
+                onTouchStart={startDrawing}
+                onTouchMove={draw}
+                onTouchEnd={stopDrawing}
+              />
+            </div>
+            <p className="text-[10px] sm:text-xs text-muted-foreground text-center">
+              Use o dedo ou mouse para desenhar sua assinatura
+            </p>
+          </div>
 
           <Separator />
 
@@ -680,45 +698,44 @@ export default function ContractSignature() {
               id="terms"
               checked={acceptedTerms}
               onCheckedChange={(checked) => setAcceptedTerms(checked as boolean)}
+              className="mt-0.5"
             />
-            <label htmlFor="terms" className="text-xs sm:text-sm text-muted-foreground cursor-pointer">
+            <label htmlFor="terms" className="text-[10px] sm:text-xs text-muted-foreground cursor-pointer leading-relaxed">
               Li e concordo com todos os termos deste contrato. Confirmo que sou a pessoa indicada e que esta assinatura é válida nos termos da Medida Provisória 2.200-2/2001.
             </label>
           </div>
 
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 sm:p-4 flex items-start gap-3">
-            <Info className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 shrink-0 mt-0.5" />
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-start gap-2 sm:gap-3">
+            <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
             <p className="text-[10px] sm:text-xs text-muted-foreground">
               Este contrato não substitui a consultoria de um advogado. Ao assinar, você concorda legalmente com todos os termos apresentados.
             </p>
           </div>
 
-          {signatureMethod === 'draw' && (
-            <Button
-              onClick={() => handleSignContract('draw')}
-              disabled={!acceptedTerms || !hasSignature || signing}
-              className="w-full gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
-              size="lg"
-            >
-              {signing ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Assinando...
-                </>
-              ) : (
-                <>
-                  <PenLine className="w-5 h-5" />
-                  Assinar Contrato
-                </>
-              )}
-            </Button>
-          )}
+          <Button
+            onClick={handleSignContract}
+            disabled={!acceptedTerms || !hasSignature || signing}
+            className="w-full gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-sm sm:text-base"
+            size="lg"
+          >
+            {signing ? (
+              <>
+                <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                Assinando...
+              </>
+            ) : (
+              <>
+                <PenLine className="w-4 h-4 sm:w-5 sm:h-5" />
+                Assinar Contrato
+              </>
+            )}
+          </Button>
         </motion.div>
       </main>
 
       {/* Footer */}
       <footer className="border-t bg-card/50 mt-8 sm:mt-12">
-        <div className="max-w-4xl mx-auto px-4 py-4 sm:py-6 text-center text-[10px] sm:text-xs text-muted-foreground">
+        <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6 text-center text-[10px] sm:text-xs text-muted-foreground">
           <p>© {new Date().getFullYear()} Genesis Hub. Todos os direitos reservados.</p>
           <p className="mt-1">Assinatura eletrônica válida nos termos da MP 2.200-2/2001</p>
         </div>
