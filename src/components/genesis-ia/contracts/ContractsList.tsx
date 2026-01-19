@@ -239,7 +239,7 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
           )}
         </motion.div>
       ) : (
-        <div className="grid gap-2 sm:gap-3">
+        <div className="grid gap-3 sm:gap-4">
           <AnimatePresence mode="popLayout">
             {filteredContracts.map((contract, index) => (
               <motion.div
@@ -251,43 +251,56 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
                 transition={{ delay: index * 0.03 }}
               >
                 <div 
-                  className="group p-3 sm:p-4 rounded-xl border bg-gradient-to-br from-card to-card/80 hover:border-blue-500/40 hover:shadow-lg transition-all duration-300 cursor-pointer"
+                  className="group p-4 sm:p-5 rounded-xl border bg-gradient-to-br from-card to-card/80 hover:border-blue-500/40 hover:shadow-lg transition-all duration-300 cursor-pointer"
                   onClick={() => onViewContract(contract.id)}
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                    {/* Icon & Title */}
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-blue-500/10 to-indigo-600/10 flex items-center justify-center flex-shrink-0">
-                        <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
+                  {/* Categoria / Tipo de Serviço - Linha Superior */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <Badge variant="outline" className="text-[10px] sm:text-xs px-2 py-0.5 bg-indigo-500/10 text-indigo-400 border-indigo-500/30">
+                      {contract.service_type}
+                    </Badge>
+                    {contract.service_modality === 'recorrente' && (
+                      <Badge variant="outline" className="text-[10px] sm:text-xs px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                        Mensal: {formatCurrency(contract.total_value)}
+                      </Badge>
+                    )}
+                    {contract.service_modality === 'pontual' && (
+                      <Badge variant="outline" className="text-[10px] sm:text-xs px-2 py-0.5 bg-blue-500/10 text-blue-400 border-blue-500/30">
+                        Pontual
+                      </Badge>
+                    )}
+                    {contract.service_modality === 'demanda' && (
+                      <Badge variant="outline" className="text-[10px] sm:text-xs px-2 py-0.5 bg-purple-500/10 text-purple-400 border-purple-500/30">
+                        Por Demanda
+                      </Badge>
+                    )}
+                  </div>
+
+                  {/* Conteúdo Principal */}
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                    {/* Icon & Info */}
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-blue-500/10 to-indigo-600/10 flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="text-xs sm:text-sm font-semibold text-foreground truncate group-hover:text-blue-400 transition-colors">
-                            {contract.contractor_name}
-                          </h3>
-                          <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-indigo-500/10 text-indigo-400 border-indigo-500/30">
-                            {contract.service_type}
-                          </Badge>
-                          {contract.service_modality === 'recorrente' && (
-                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
-                              Mensal: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(contract.total_value)}
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
-                          {contract.title} • {contract.service_modality === 'recorrente' ? 'Recorrente' : contract.service_modality === 'pontual' ? 'Pontual' : 'Por Demanda'}
+                        <h3 className="text-sm sm:text-base font-bold text-foreground truncate group-hover:text-blue-400 transition-colors">
+                          {contract.contractor_name}
+                        </h3>
+                        <p className="text-xs sm:text-sm text-muted-foreground truncate mt-0.5">
+                          {contract.title}
+                        </p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground/70 mt-1">
+                          {format(new Date(contract.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                         </p>
                       </div>
                     </div>
 
-                    {/* Status & Value */}
-                    <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4 flex-shrink-0">
+                    {/* Valor, Status e Ações */}
+                    <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-5 flex-shrink-0 pl-16 sm:pl-0">
                       <div className="text-left sm:text-right">
-                        <p className="text-xs sm:text-sm font-semibold text-foreground">
+                        <p className="text-base sm:text-lg font-bold text-foreground">
                           {formatCurrency(contract.total_value)}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground">
-                          {format(new Date(contract.created_at), "dd MMM yyyy", { locale: ptBR })}
                         </p>
                       </div>
                       
@@ -295,8 +308,8 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
                       
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreVertical className="w-4 h-4" />
+                          <Button variant="ghost" size="icon" className="h-9 w-9">
+                            <MoreVertical className="w-5 h-5" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
