@@ -14,7 +14,9 @@ const corsHeaders = {
 
 // Configuração do grupo e conta
 const GENESIS_HUB_GROUP_NAME = "Genesis Hub";
+const GENESIS_HUB_GROUP_JID = "120363381019922166@g.us"; // JID do grupo Genesis Hub
 const ADMIN_EMAIL = "lyronrp@gmail.com";
+const GENESIS_INSTANCE_ID = "b2b6cf5a-2e15-4f79-94fb-396385077658";
 
 // Palavras-chave de ativação
 const ACTIVATION_KEYWORDS = [
@@ -363,6 +365,8 @@ async function sendWhatsAppMessage(
   message: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    console.log(`[Luna] Preparando envio: instanceId=${instanceId}, to=${to}`);
+
     // Buscar configuração do backend
     const { data: globalConfig } = await supabase
       .from('whatsapp_backend_config')
@@ -371,7 +375,7 @@ async function sendWhatsAppMessage(
       .limit(1)
       .maybeSingle();
 
-    // Buscar instância
+    // Buscar instância para pegar o nome
     const { data: instance } = await supabase
       .from('genesis_instances')
       .select('id, name, backend_url, backend_token')
@@ -380,58 +384,72 @@ async function sendWhatsAppMessage(
 
     const backendUrl = globalConfig?.backend_url || instance?.backend_url || 'http://72.62.108.24:3000';
     const backendToken = globalConfig?.master_token || instance?.backend_token || 'genesis-master-token-2024-secure';
+    const instanceName = instance?.name || 'Genesis';
 
     const cleanBackendUrl = String(backendUrl).replace(/\/$/, '');
+    console.log(`[Luna] Backend: ${cleanBackendUrl}, Instance: ${instanceName}`);
 
-    // Tentar endpoints V8
-    const v8Endpoints = [
-      `/api/instance/${instanceId}/send`,
-      `/api/instance/${instanceId}/send-message`,
-      `/api/instance/${instanceId}/sendText`,
+    // Evolution API endpoints (formato correto)
+    const endpoints = [
+      { path: `/api/instance/${encodeURIComponent(instanceId)}/send`, payload: { to, phone: to, number: to, message, text: message } },
+      { path: `/api/instance/${encodeURIComponent(instanceId)}/sendText`, payload: { to, phone: to, number: to, message, text: message } },
+      { path: `/api/instance/${encodeURIComponent(instanceName)}/send`, payload: { to, phone: to, number: to, message, text: message } },
     ];
 
-    const payload = {
-      instanceId,
-      to,
-      phone: to,
-      number: to,
-      message,
-      text: message,
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${backendToken}`,
+      'apikey': backendToken,
     };
 
-    for (const endpoint of v8Endpoints) {
+    for (const { path, payload } of endpoints) {
       try {
+        const url = `${cleanBackendUrl}${path}`;
+        console.log(`[Luna] Tentando: ${url}`);
+
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-        const resp = await fetch(`${cleanBackendUrl}${endpoint}`, {
+        const resp = await fetch(url, {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${backendToken}`,
-            'Content-Type': 'application/json',
-          },
+          headers,
           body: JSON.stringify(payload),
           signal: controller.signal,
         });
 
         clearTimeout(timeoutId);
 
+        const responseText = await resp.text();
+        console.log(`[Luna] Response ${resp.status}: ${responseText.substring(0, 200)}`);
+
         if (resp.ok) {
-          const result = await resp.json().catch(() => ({}));
-          if (result.success !== false) {
-            return { success: true };
+          try {
+            const result = JSON.parse(responseText);
+            if (result.key || result.messageId || result.status === 'PENDING' || result.status === 'sent') {
+              console.log('[Luna] Mensagem enviada com sucesso!');
+              return { success: true };
+            }
+          } catch {
+            // Se não conseguiu parsear, mas status é 200, considerar sucesso
+            if (resp.status === 200 || resp.status === 201) {
+              console.log('[Luna] Mensagem enviada (resposta não-JSON)');
+              return { success: true };
+            }
           }
         }
 
-        // Se não for 404, parar de tentar
-        if (resp.status !== 404) break;
+        // Se não for 404, loggar e continuar
+        if (resp.status !== 404) {
+          console.warn(`[Luna] Endpoint retornou ${resp.status}: ${responseText.substring(0, 100)}`);
+        }
       } catch (e: any) {
-        console.warn(`[Luna] Endpoint failed: ${endpoint}`, e.message);
+        console.warn(`[Luna] Endpoint failed: ${path}`, e.message);
         continue;
       }
     }
 
-    return { success: false, error: 'Falha ao enviar mensagem' };
+    console.error('[Luna] Todos os endpoints falharam');
+    return { success: false, error: 'Nenhum endpoint funcionou' };
   } catch (error: any) {
     console.error('[Luna] Send message error:', error);
     return { success: false, error: error.message };
@@ -646,6 +664,65 @@ Para buscar clientes, preciso de:
 }
 
 // =====================================================
+// ENVIAR MENSAGEM DIÁRIA AUTOMATICAMENTE
+// =====================================================
+
+async function sendDailyMessageToGroup(): Promise<void> {
+  try {
+    console.log('[Luna] Iniciando envio automático da mensagem diária...');
+    
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Verificar se já enviou mensagem hoje
+    const today = new Date().toISOString().split('T')[0];
+    const { data: existingLog } = await supabase
+      .from('genesis_event_logs')
+      .select('id')
+      .eq('event_type', 'luna_daily_message')
+      .gte('created_at', `${today}T00:00:00Z`)
+      .lte('created_at', `${today}T23:59:59Z`)
+      .limit(1)
+      .maybeSingle();
+
+    if (existingLog) {
+      console.log('[Luna] Mensagem diária já enviada hoje, pulando...');
+      return;
+    }
+
+    const dailyMessage = getDailyMessage();
+
+    // Enviar para o grupo Genesis Hub
+    const sendResult = await sendWhatsAppMessage(
+      supabase,
+      GENESIS_INSTANCE_ID,
+      GENESIS_HUB_GROUP_JID,
+      dailyMessage
+    );
+
+    // Logar o evento
+    await supabase.from('genesis_event_logs').insert({
+      instance_id: GENESIS_INSTANCE_ID,
+      event_type: 'luna_daily_message',
+      severity: sendResult.success ? 'info' : 'error',
+      message: sendResult.success 
+        ? 'Luna enviou mensagem diária automaticamente' 
+        : `Falha ao enviar mensagem diária: ${sendResult.error}`,
+      details: {
+        group_jid: GENESIS_HUB_GROUP_JID,
+        message_preview: dailyMessage.substring(0, 100),
+        sent_at: new Date().toISOString()
+      }
+    });
+
+    console.log('[Luna] Mensagem diária:', sendResult.success ? 'ENVIADA!' : `ERRO: ${sendResult.error}`);
+  } catch (error: any) {
+    console.error('[Luna] Erro ao enviar mensagem diária:', error);
+  }
+}
+
+// =====================================================
 // HANDLER PRINCIPAL
 // =====================================================
 
@@ -666,47 +743,55 @@ serve(async (req) => {
 
     // Verificar ação especial: mensagem diária
     if (body.action === 'send_daily_message') {
-      console.log('[Luna] Sending daily message');
+      console.log('[Luna] Enviando mensagem diária para o grupo...');
 
-      // Buscar instância do admin
-      const { data: genesisUser } = await supabase
-        .from('genesis_users')
-        .select('id')
-        .eq('email', ADMIN_EMAIL)
-        .maybeSingle();
-
-      if (!genesisUser?.id) {
-        return new Response(
-          JSON.stringify({ success: false, error: 'Admin user not found' }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      const { data: instance } = await supabase
-        .from('genesis_instances')
-        .select('id')
-        .eq('user_id', genesisUser.id)
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (!instance?.id) {
-        return new Response(
-          JSON.stringify({ success: false, error: 'No instance found' }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Nota: Para enviar ao grupo, precisaríamos do JID do grupo
-      // Por enquanto, retornamos a mensagem para ser enviada manualmente
       const dailyMessage = getDailyMessage();
+
+      // Enviar para o grupo Genesis Hub diretamente
+      const sendResult = await sendWhatsAppMessage(
+        supabase,
+        GENESIS_INSTANCE_ID,
+        GENESIS_HUB_GROUP_JID,
+        dailyMessage
+      );
+
+      // Logar o evento
+      await supabase.from('genesis_event_logs').insert({
+        instance_id: GENESIS_INSTANCE_ID,
+        event_type: 'luna_daily_message',
+        severity: sendResult.success ? 'info' : 'error',
+        message: sendResult.success 
+          ? 'Luna enviou mensagem diária' 
+          : `Falha ao enviar: ${sendResult.error}`,
+        details: {
+          group_jid: GENESIS_HUB_GROUP_JID,
+          triggered_by: 'api_call'
+        }
+      });
+
+      return new Response(
+        JSON.stringify({ 
+          success: sendResult.success, 
+          message: sendResult.success ? 'Mensagem enviada!' : sendResult.error,
+          action: 'daily_message_sent',
+          group_jid: GENESIS_HUB_GROUP_JID
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Verificar ação de startup automático
+    if (body.action === 'startup' || body.action === 'auto_send_daily') {
+      console.log('[Luna] Trigger de startup recebido, iniciando envio automático...');
+      
+      // Executar em background sem bloquear
+      sendDailyMessageToGroup().catch(e => console.error('[Luna] Erro background:', e));
 
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: dailyMessage,
-          action: 'daily_message_generated',
-          note: 'Configure o JID do grupo Genesis Hub para envio automático'
+          action: 'startup_triggered',
+          message: 'Mensagem diária será enviada em background'
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
