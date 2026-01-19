@@ -25,11 +25,11 @@ interface GenesisCarouselProps {
 
 const carouselItems: CarouselItem[] = [
   {
-    id: 'project-builder',
+    id: 'criar-projetos',
     icon: Layers,
-    title: 'Project Prompt Builder',
-    description: 'Crie prompts completos para gerar projetos com IA',
-    tabId: 'project-builder'
+    title: 'Criar Projetos',
+    description: 'Crie sites personalizados para seus clientes',
+    tabId: 'criar-projetos'
   },
   {
     id: 'financial',
