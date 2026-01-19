@@ -73,13 +73,6 @@ const GenesisBackground = memo(() => {
     };
 
     let time = 0;
-    let mouseX = canvas.width / 2;
-    let mouseY = canvas.height / 2;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-    };
 
     const drawParticles = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -128,7 +121,7 @@ const GenesisBackground = memo(() => {
         ctx.stroke();
       }
 
-      // Draw connections first (behind particles)
+      // Draw connections between particles (no mouse interaction)
       particles.forEach((particle, i) => {
         particles.slice(i + 1).forEach((otherParticle) => {
           const dx = particle.x - otherParticle.x;
@@ -145,39 +138,13 @@ const GenesisBackground = memo(() => {
             ctx.stroke();
           }
         });
-
-        // Mouse interaction - draw lines to nearby particles
-        const dxMouse = particle.x - mouseX;
-        const dyMouse = particle.y - mouseY;
-        const distMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
-        if (distMouse < 200) {
-          ctx.beginPath();
-          ctx.moveTo(particle.x, particle.y);
-          ctx.lineTo(mouseX, mouseY);
-          const alpha = 0.15 * (1 - distMouse / 200);
-          ctx.strokeStyle = `hsl(${primary} / ${alpha})`;
-          ctx.lineWidth = 0.8;
-          ctx.stroke();
-        }
       });
 
       // Draw and update particles
       particles.forEach((particle) => {
-        // Update position with slight drift toward mouse
-        const dxMouse = mouseX - particle.x;
-        const dyMouse = mouseY - particle.y;
-        const distMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
-        
-        if (distMouse < 300) {
-          particle.vx += (dxMouse / distMouse) * 0.01;
-          particle.vy += (dyMouse / distMouse) * 0.01;
-        }
-
-        // Apply velocity with damping
+        // Apply velocity with damping (no mouse interaction)
         particle.x += particle.vx;
         particle.y += particle.vy;
-        particle.vx *= 0.99;
-        particle.vy *= 0.99;
 
         // Wrap around edges
         if (particle.x < 0) particle.x = canvas.width;
@@ -232,12 +199,10 @@ const GenesisBackground = memo(() => {
     };
 
     window.addEventListener('resize', handleResize);
-    window.addEventListener('mousemove', handleMouseMove);
 
     return () => {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', handleResize);
-      window.removeEventListener('mousemove', handleMouseMove);
     };
   }, []);
 
