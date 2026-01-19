@@ -65,6 +65,7 @@ const PetshopPage = lazy(() => import("./pages/petshop"));
 const PetshopPrimoPage = lazy(() => import("./pages/petshop-primo"));
 const PetshopMonPage = lazy(() => import("./pages/petshop-mon"));
 const CasapetPage = lazy(() => import("./pages/casapet"));
+const StarpetshopPage = lazy(() => import("./pages/starpetshop"));
 const PortfolioPage = lazy(() => import("./pages/portfolio/[slug]"));
 const ContractSignature = lazy(() => import("./pages/ContractSignature"));
 const PromoPage = lazy(() => import("./pages/PromoPage"));
@@ -276,6 +277,7 @@ const AppContent = () => {
             <Route path="/petshop-primo" element={<PetshopPrimoPage />} />
             <Route path="/petshop-mon" element={<PetshopMonPage />} />
             <Route path="/casapet" element={<CasapetPage />} />
+            <Route path="/starpetshop" element={<StarpetshopPage />} />
             {/* Dynamic Portfolio Routes */}
             <Route path="/p/:slug" element={<PortfolioPage />} />
             {/* Contract Signature */}
