@@ -8861,6 +8861,88 @@ export type Database = {
         }
         Relationships: []
       }
+      promo_links: {
+        Row: {
+          affiliate_id: string | null
+          created_at: string
+          id: string
+          promo_code: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          affiliate_id?: string | null
+          created_at?: string
+          id?: string
+          promo_code: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          affiliate_id?: string | null
+          created_at?: string
+          id?: string
+          promo_code?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_links_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promo_referrals: {
+        Row: {
+          created_at: string
+          id: string
+          plan_type: string
+          plan_value: number
+          promo_link_id: string
+          referred_email: string | null
+          referred_name: string | null
+          referred_user_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          plan_type: string
+          plan_value: number
+          promo_link_id: string
+          referred_email?: string | null
+          referred_name?: string | null
+          referred_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          plan_type?: string
+          plan_value?: number
+          promo_link_id?: string
+          referred_email?: string | null
+          referred_name?: string | null
+          referred_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_referrals_promo_link_id_fkey"
+            columns: ["promo_link_id"]
+            isOneToOne: false
+            referencedRelation: "promo_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proposal_questionnaire_history: {
         Row: {
           ai_follow_up: string | null

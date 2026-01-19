@@ -61,10 +61,11 @@ import { TextElement, TextElementData } from "@/components/genesis-ia/dashboard-
 import { TextSettingsPanel } from "@/components/genesis-ia/dashboard-builder/components/TextSettingsPanel";
 import { CriarProjetosTab } from "@/components/genesis-ia/criar-projetos";
 import { ContractsTab } from "@/components/genesis-ia/contracts";
+import { PromocionalTab } from "@/components/genesis-ia/promocional";
 import GenesisBackground from "@/components/genesis-ia/GenesisBackground";
-import { FileText } from "lucide-react";
+import { FileText, Gift } from "lucide-react";
 
-type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts';
+type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional';
 
 // Icon mapping for dynamic rendering
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -138,6 +139,7 @@ const GenesisIADashboard = () => {
       case 'financial': return 'Financeiro';
       case 'criar-projetos': return 'Criar Projetos';
       case 'contracts': return 'Contratos';
+      case 'promocional': return 'Promocional';
       default: return null;
     }
   };
@@ -151,6 +153,7 @@ const GenesisIADashboard = () => {
     { icon: Home, label: 'Início', tabId: 'dashboard' as const },
     { icon: Layers, label: 'Projetos', tabId: 'criar-projetos' as const },
     { icon: FileText, label: 'Contratos', tabId: 'contracts' as const },
+    { icon: Gift, label: 'Promo', tabId: 'promocional' as const },
     { icon: Users, label: 'Usuários', tabId: 'users' as const },
     { icon: LayoutDashboard, label: 'Financeiro', tabId: 'financial' as const },
     { icon: Settings, label: 'Config', tabId: 'settings' as const },
@@ -528,6 +531,10 @@ const GenesisIADashboard = () => {
 
     if (activeTab === 'contracts') {
       return <ContractsTab affiliateId={affiliateId} onBack={() => setActiveTab('dashboard')} />;
+    }
+
+    if (activeTab === 'promocional') {
+      return <PromocionalTab userId={userId} onBack={() => setActiveTab('dashboard')} />;
     }
 
     return null;
