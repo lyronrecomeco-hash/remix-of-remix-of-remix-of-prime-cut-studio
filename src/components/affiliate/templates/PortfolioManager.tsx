@@ -143,25 +143,25 @@ export function PortfolioManager({
     }
   };
 
-  const getTemplateRoute = (templateSlug: string, uniqueCode: string): string => {
-    // Define a rota correta baseada no template
-    const routes: Record<string, string> = {
-      'barbearia': `/barbearia/${uniqueCode}`,
-      'academia': `/academia/${uniqueCode}`,
-      'clinica-estetica': `/clinica-estetica/${uniqueCode}`,
-    };
-    return routes[templateSlug] || `/demo/${uniqueCode}`;
+  const getTemplateRoute = (config: AffiliateTemplateConfig): string => {
+    // Use custom_slug if available, otherwise unique_code
+    const slug = config.custom_slug || config.unique_code;
+    return `/p/${slug}`;
   };
 
-  const copyLink = (templateSlug: string, uniqueCode: string) => {
-    const route = getTemplateRoute(templateSlug, uniqueCode);
-    const link = `https://genesishub.cloud${route}`;
+  const getFullUrl = (config: AffiliateTemplateConfig): string => {
+    const route = getTemplateRoute(config);
+    return `https://genesishub.cloud${route}`;
+  };
+
+  const copyLink = (config: AffiliateTemplateConfig) => {
+    const link = getFullUrl(config);
     navigator.clipboard.writeText(link);
     toast.success('Link copiado!');
   };
 
-  const openPreview = (templateSlug: string, uniqueCode: string) => {
-    const route = getTemplateRoute(templateSlug, uniqueCode);
+  const openPreview = (config: AffiliateTemplateConfig) => {
+    const route = getTemplateRoute(config);
     window.open(route, '_blank');
   };
 
@@ -188,8 +188,7 @@ export function PortfolioManager({
     setTestResult(null);
     
     try {
-      const route = getTemplateRoute(testingConfig.template_slug, testingConfig.unique_code);
-      const demoLink = `https://genesishub.cloud${route}`;
+      const demoLink = getFullUrl(testingConfig);
       const message = `🧪 *TESTE DE AUTOMAÇÃO*\n\nOlá! Este é um teste do portfólio "${testingConfig.client_name || testingConfig.template_name}".\n\n🔗 Link da demo: ${demoLink}\n\n✅ Se você recebeu esta mensagem, a automação está funcionando corretamente!`;
       
       // Clean phone number
@@ -225,8 +224,7 @@ export function PortfolioManager({
       // Fallback to WhatsApp Web
       const cleanPhone = testPhone.replace(/\D/g, '');
       const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
-      const fallbackRoute = getTemplateRoute(testingConfig.template_slug, testingConfig.unique_code);
-      const demoLink = `https://genesishub.cloud${fallbackRoute}`;
+      const demoLink = getFullUrl(testingConfig);
       const message = `🧪 *TESTE DE AUTOMAÇÃO*\n\nOlá! Este é um teste do portfólio "${testingConfig.client_name || testingConfig.template_name}".\n\n🔗 Link da demo: ${demoLink}`;
       
       const waLink = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
@@ -357,8 +355,8 @@ export function PortfolioManager({
                           Template: {config.template_name}
                         </p>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span className="font-mono bg-muted px-2 py-0.5 rounded">
-                            {getTemplateRoute(config.template_slug, config.unique_code).replace('/', '')}
+                          <span className="font-mono bg-muted px-2 py-0.5 rounded truncate max-w-[180px]">
+                            {config.custom_slug || config.unique_code}
                           </span>
                           <span>•</span>
                           <span className="flex items-center gap-1 font-medium text-blue-500">
@@ -376,14 +374,14 @@ export function PortfolioManager({
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => copyLink(config.template_slug, config.unique_code)}
+                          onClick={() => copyLink(config)}
                         >
                           <Copy className="w-4 h-4" />
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => openPreview(config.template_slug, config.unique_code)}
+                          onClick={() => openPreview(config)}
                         >
                           <ExternalLink className="w-4 h-4" />
                         </Button>
@@ -398,11 +396,11 @@ export function PortfolioManager({
                               <Send className="w-4 h-4 mr-2" />
                               Enviar Teste
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => openPreview(config.template_slug, config.unique_code)}>
+                            <DropdownMenuItem onClick={() => openPreview(config)}>
                               <Eye className="w-4 h-4 mr-2" />
                               Visualizar
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => copyLink(config.template_slug, config.unique_code)}>
+                            <DropdownMenuItem onClick={() => copyLink(config)}>
                               <Copy className="w-4 h-4 mr-2" />
                               Copiar Link
                             </DropdownMenuItem>

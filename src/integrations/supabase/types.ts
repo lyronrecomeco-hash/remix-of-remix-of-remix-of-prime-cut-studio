@@ -571,6 +571,7 @@ export type Database = {
           client_name: string | null
           config: Json
           created_at: string
+          custom_slug: string | null
           id: string
           is_active: boolean
           template_name: string
@@ -584,6 +585,7 @@ export type Database = {
           client_name?: string | null
           config?: Json
           created_at?: string
+          custom_slug?: string | null
           id?: string
           is_active?: boolean
           template_name: string
@@ -597,6 +599,7 @@ export type Database = {
           client_name?: string | null
           config?: Json
           created_at?: string
+          custom_slug?: string | null
           id?: string
           is_active?: boolean
           template_name?: string
@@ -12184,6 +12187,10 @@ export type Database = {
       }
       increment_campaign_contacts: {
         Args: { p_campaign_id: string }
+        Returns: undefined
+      }
+      increment_template_views: {
+        Args: { p_unique_code: string }
         Returns: undefined
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }

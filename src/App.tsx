@@ -64,6 +64,7 @@ const GenesisIADashboard = lazy(() => import("./pages/GenesisIADashboard"));
 const PetshopPage = lazy(() => import("./pages/petshop"));
 const PetshopPrimoPage = lazy(() => import("./pages/petshop-primo"));
 const PetshopMonPage = lazy(() => import("./pages/petshop-mon"));
+const PortfolioPage = lazy(() => import("./pages/portfolio/[slug]"));
 
 // QueryClient com retry logic e cache otimizado
 const queryClient = new QueryClient({
@@ -271,6 +272,8 @@ const AppContent = () => {
             <Route path="/petshop" element={<PetshopPage />} />
             <Route path="/petshop-primo" element={<PetshopPrimoPage />} />
             <Route path="/petshop-mon" element={<PetshopMonPage />} />
+            {/* Dynamic Portfolio Routes */}
+            <Route path="/p/:slug" element={<PortfolioPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

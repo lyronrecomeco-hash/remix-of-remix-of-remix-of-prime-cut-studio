@@ -32,12 +32,31 @@ export interface AffiliateTemplateConfig {
   template_slug: string;
   template_name: string;
   unique_code: string;
+  custom_slug: string | null;
   client_name: string | null;
   config: TemplateConfig;
   views_count: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
+}
+
+// Extended config for petshop with scheduling feature
+export interface PetshopTemplateConfig extends TemplateConfig {
+  features: TemplateConfig['features'] & {
+    showScheduling: boolean;
+    showGallery: boolean;
+    showTestimonials: boolean;
+  };
+  social?: {
+    instagram?: string;
+    facebook?: string;
+  };
+  hours?: {
+    weekdays: string;
+    saturday: string;
+    sunday?: string;
+  };
 }
 
 export interface TemplateInfo {

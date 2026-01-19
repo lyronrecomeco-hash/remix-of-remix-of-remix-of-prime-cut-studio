@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TemplateInfo } from './types';
+import petshopPreview from '@/assets/petshop/hero-dog-bath.jpg';
 
 interface TemplateSelectorProps {
   onSelect: (template: TemplateInfo) => void;
@@ -226,13 +227,13 @@ const templates: TemplateInfo[] = [
     description: 'Banho, tosa e produtos pet',
     category: 'services',
     route: '/petshop',
-    gradient: 'from-violet-900 via-zinc-900 to-zinc-950',
-    accent: 'violet',
-    available: false,
+    gradient: 'from-orange-600 via-amber-700 to-orange-800',
+    accent: 'orange',
+    available: true,
     preview: {
-      title: 'Pet Love',
-      subtitle: 'Amor em cada patinha',
-      badge: '🐾 Cuidado especial'
+      title: 'Seu Xodó',
+      subtitle: 'Cuidando com amor',
+      badge: '🐾 Sistema Completo'
     }
   },
   {
@@ -499,53 +500,72 @@ const filteredTemplates = activeCategory === 'all'
             onClick={() => template.available && onSelect(template)}
           >
             {/* Preview Area */}
-            <div className={`relative h-48 bg-gradient-to-br ${template.gradient} overflow-hidden`}>
-              {/* Mock Phone/Screen Preview */}
-              <div className="absolute inset-0 flex items-center justify-center p-4">
-                <div className="relative w-28 h-44 bg-black/40 rounded-2xl border border-white/10 backdrop-blur-sm overflow-hidden shadow-2xl transform group-hover:scale-105 transition-transform duration-300">
-                  {/* Phone Screen Content */}
-                  <div className="absolute inset-1 rounded-xl bg-gradient-to-b from-white/10 to-transparent overflow-hidden">
-                    <div className="p-3 space-y-2 text-center">
-                      {/* Mini Badge */}
-                      <div className={`inline-block px-2 py-0.5 text-[8px] bg-${template.accent}-500/20 text-${template.accent}-300 rounded-full border border-${template.accent}-500/30`}>
-                        {template.preview.badge}
-                      </div>
-                      {/* Title */}
-                      <div className="text-[10px] font-bold text-white leading-tight">
-                        {template.preview.title}
-                      </div>
-                      <div className="text-[7px] text-white/60">
-                        {template.preview.subtitle}
-                      </div>
-                      {/* Mock Buttons */}
-                      <div className="pt-2 space-y-1">
-                        <div className={`h-4 rounded bg-${template.accent}-500/60`} />
-                        <div className="h-4 rounded border border-white/20" />
-                      </div>
-                      {/* Mock Stats */}
-                      <div className="flex justify-center gap-2 pt-2">
-                        <div className="text-center">
-                          <div className="text-[8px] font-bold text-white">10+</div>
-                          <div className="text-[5px] text-white/40">Anos</div>
+            <div className={`relative h-48 overflow-hidden ${template.id === 'petshop' ? '' : `bg-gradient-to-br ${template.gradient}`}`}>
+              {/* Real Preview for Petshop */}
+              {template.id === 'petshop' ? (
+                <>
+                  <img 
+                    src={petshopPreview} 
+                    alt="Pet Shop Preview" 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                  <div className="absolute bottom-4 left-4 right-4 text-white">
+                    <div className="text-xs font-medium text-orange-400 mb-1">🐾 Sistema Completo</div>
+                    <div className="text-lg font-bold">Pet Shop Seu Xodó</div>
+                    <div className="text-xs text-white/70">Agendamento • Gestão • CRM</div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Mock Phone/Screen Preview */}
+                  <div className="absolute inset-0 flex items-center justify-center p-4">
+                    <div className="relative w-28 h-44 bg-black/40 rounded-2xl border border-white/10 backdrop-blur-sm overflow-hidden shadow-2xl transform group-hover:scale-105 transition-transform duration-300">
+                      {/* Phone Screen Content */}
+                      <div className="absolute inset-1 rounded-xl bg-gradient-to-b from-white/10 to-transparent overflow-hidden">
+                        <div className="p-3 space-y-2 text-center">
+                          {/* Mini Badge */}
+                          <div className={`inline-block px-2 py-0.5 text-[8px] bg-${template.accent}-500/20 text-${template.accent}-300 rounded-full border border-${template.accent}-500/30`}>
+                            {template.preview.badge}
+                          </div>
+                          {/* Title */}
+                          <div className="text-[10px] font-bold text-white leading-tight">
+                            {template.preview.title}
+                          </div>
+                          <div className="text-[7px] text-white/60">
+                            {template.preview.subtitle}
+                          </div>
+                          {/* Mock Buttons */}
+                          <div className="pt-2 space-y-1">
+                            <div className={`h-4 rounded bg-${template.accent}-500/60`} />
+                            <div className="h-4 rounded border border-white/20" />
+                          </div>
+                          {/* Mock Stats */}
+                          <div className="flex justify-center gap-2 pt-2">
+                            <div className="text-center">
+                              <div className="text-[8px] font-bold text-white">10+</div>
+                              <div className="text-[5px] text-white/40">Anos</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-[8px] font-bold text-white">5k+</div>
+                              <div className="text-[5px] text-white/40">Clientes</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-[8px] font-bold text-white">4.9</div>
+                              <div className="text-[5px] text-white/40">Nota</div>
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-center">
-                          <div className="text-[8px] font-bold text-white">5k+</div>
-                          <div className="text-[5px] text-white/40">Clientes</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-[8px] font-bold text-white">4.9</div>
-                          <div className="text-[5px] text-white/40">Nota</div>
-                        </div>
                       </div>
+                      {/* Phone Notch */}
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-3 bg-black rounded-b-xl" />
                     </div>
                   </div>
-                  {/* Phone Notch */}
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-3 bg-black rounded-b-xl" />
-                </div>
-              </div>
 
-              {/* Glow Effect */}
-              <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-${template.accent}-500/20 rounded-full blur-3xl pointer-events-none`} />
+                  {/* Glow Effect */}
+                  <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-${template.accent}-500/20 rounded-full blur-3xl pointer-events-none`} />
+                </>
+              )}
 
               {/* Status Badge */}
               <div className="absolute top-3 right-3">
