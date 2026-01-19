@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import DynamicPetshop from '@/components/portfolio/DynamicPetshop';
+import DynamicBarbearia from '@/components/portfolio/DynamicBarbearia';
+import DynamicAcademia from '@/components/portfolio/DynamicAcademia';
 import NotFound from '@/pages/NotFound';
 
 interface TemplateConfig {
@@ -59,7 +61,6 @@ export default function PortfolioPage() {
       }
 
       try {
-        // Try to find by custom_slug first, then unique_code
         const { data, error: fetchError } = await supabase
           .from('affiliate_template_configs')
           .select('id, template_slug, config, client_name')
@@ -107,6 +108,10 @@ export default function PortfolioPage() {
   switch (portfolio.template_slug) {
     case 'petshop':
       return <DynamicPetshop config={portfolio.config} />;
+    case 'barbearia':
+      return <DynamicBarbearia config={portfolio.config} />;
+    case 'academia':
+      return <DynamicAcademia config={portfolio.config} />;
     default:
       return <NotFound />;
   }

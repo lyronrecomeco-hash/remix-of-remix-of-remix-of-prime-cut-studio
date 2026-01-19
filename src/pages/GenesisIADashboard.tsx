@@ -60,6 +60,7 @@ import { CardSettingsPanel } from "@/components/genesis-ia/dashboard-builder/com
 import { TextElement, TextElementData } from "@/components/genesis-ia/dashboard-builder/components/TextElement";
 import { TextSettingsPanel } from "@/components/genesis-ia/dashboard-builder/components/TextSettingsPanel";
 import { CriarProjetosTab } from "@/components/genesis-ia/criar-projetos";
+import GenesisBackground from "@/components/genesis-ia/GenesisBackground";
 
 type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos';
 
@@ -107,8 +108,9 @@ const GenesisIADashboard = () => {
 
     setIsLoading(false);
 
-    // Show welcome toast after login
+    // Show welcome popup after login, auto-dismiss after 15 seconds
     setShowWelcome(true);
+    setTimeout(() => setShowWelcome(false), 15000);
   };
 
   const handleLogout = async () => {
@@ -583,8 +585,8 @@ const GenesisIADashboard = () => {
             {/* WelcomeToast removed - using hero section instead */}
 
             {/* Content */}
-            {/* Welcome Popup - Inline on mobile, fixed on desktop */}
-            {activeTab === 'dashboard' && !isEditMode && (
+            {/* Welcome Popup - Auto-dismiss after 15s */}
+            {activeTab === 'dashboard' && !isEditMode && showWelcome && (
               <div className="px-3 sm:px-0 pt-3 sm:pt-0">
                 {/* Mobile: inline flow */}
                 <div className="block sm:hidden">
@@ -612,6 +614,7 @@ const GenesisIADashboard = () => {
                 <motion.div 
                   initial={{ opacity: 0, x: 20, y: -10 }}
                   animate={{ opacity: 1, x: 0, y: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
                   transition={{ delay: 0.3, type: "spring", stiffness: 300 }}
                   className="hidden sm:block fixed top-20 right-4 z-50 max-w-sm"
                 >
