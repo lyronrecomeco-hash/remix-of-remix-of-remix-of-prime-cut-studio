@@ -10,7 +10,13 @@ import {
   Zap,
   Handshake,
   TrendingUp,
-  Shield
+  Shield,
+  HelpCircle,
+  Target,
+  Megaphone,
+  Star,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -115,6 +121,11 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
     }).format(value);
   };
 
+  // Estatísticas
+  const totalIndicados = referrals.length;
+  const indicadosAtivos = referrals.filter(r => r.status === 'active').length;
+  const valorTotal = referrals.filter(r => r.status === 'active').reduce((acc, r) => acc + r.plan_value, 0);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -145,12 +156,51 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
         </p>
       </div>
 
+      {/* Estatísticas Resumidas */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <Card className="border border-white/[0.08] bg-[hsl(215_30%_12%)]" style={{ borderRadius: '14px' }}>
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+              <Users className="w-6 h-6 text-blue-400" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-white">{totalIndicados}</p>
+              <p className="text-xs text-white/50">Total de Indicações</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-white/[0.08] bg-[hsl(215_30%_12%)]" style={{ borderRadius: '14px' }}>
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center flex-shrink-0">
+              <CheckCircle2 className="w-6 h-6 text-green-400" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-white">{indicadosAtivos}</p>
+              <p className="text-xs text-white/50">Indicações Ativas</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-white/[0.08] bg-[hsl(215_30%_12%)]" style={{ borderRadius: '14px' }}>
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+              <TrendingUp className="w-6 h-6 text-primary" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-white">{formatCurrency(valorTotal)}</p>
+              <p className="text-xs text-white/50">Valor Gerado</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Cards de Benefícios */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <Card className="border border-white/[0.08] bg-[hsl(215_30%_12%)]" style={{ borderRadius: '14px' }}>
           <CardContent className="p-4 flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center flex-shrink-0">
-              <TrendingUp className="w-5 h-5 text-green-400" />
+              <Star className="w-5 h-5 text-green-400" />
             </div>
             <div>
               <p className="font-medium text-white text-sm">Valores Exclusivos</p>
@@ -162,7 +212,7 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
         <Card className="border border-white/[0.08] bg-[hsl(215_30%_12%)]" style={{ borderRadius: '14px' }}>
           <CardContent className="p-4 flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-              <Users className="w-5 h-5 text-blue-400" />
+              <Target className="w-5 h-5 text-blue-400" />
             </div>
             <div>
               <p className="font-medium text-white text-sm">Acompanhamento</p>
@@ -185,7 +235,7 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
       </div>
 
       {/* Link Promocional */}
-      <Card className="border border-white/[0.08] bg-[hsl(215_30%_12%)]" style={{ borderRadius: '14px' }}>
+      <Card className="border border-primary/30 bg-gradient-to-br from-primary/5 to-transparent" style={{ borderRadius: '14px' }}>
         <CardContent className="p-5">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
@@ -280,6 +330,59 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
         </div>
       </div>
 
+      {/* Dicas de Divulgação */}
+      <Card className="border border-white/[0.08] bg-[hsl(215_30%_12%)]" style={{ borderRadius: '14px' }}>
+        <CardContent className="p-5">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-yellow-500/20 flex items-center justify-center">
+              <Megaphone className="w-5 h-5 text-yellow-400" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-white">Dicas para Divulgação</h3>
+              <p className="text-sm text-white/50">Maximize suas indicações</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-white">Lives e Webinars</p>
+                  <p className="text-xs text-white/50">Compartilhe durante transmissões ao vivo</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-white">Grupos de WhatsApp</p>
+                  <p className="text-xs text-white/50">Ideal para comunidades de negócios</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-white">Redes Sociais</p>
+                  <p className="text-xs text-white/50">Stories, posts e bio do Instagram</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-white">Indicação Direta</p>
+                  <p className="text-xs text-white/50">Envie para colegas e empresários</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Lista de Indicados */}
       <Card className="border border-white/[0.08] bg-[hsl(215_30%_12%)]" style={{ borderRadius: '14px' }}>
         <CardContent className="p-5">
@@ -360,6 +463,58 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
               </table>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* FAQ / Regras */}
+      <Card className="border border-white/[0.08] bg-[hsl(215_30%_12%)]" style={{ borderRadius: '14px' }}>
+        <CardContent className="p-5">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
+              <HelpCircle className="w-5 h-5 text-blue-400" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-white">Como Funciona</h3>
+              <p className="text-sm text-white/50">Regras do programa de parceiros</p>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+              <div className="flex items-start gap-3">
+                <span className="w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0">1</span>
+                <div>
+                  <p className="text-sm font-medium text-white">Copie seu link exclusivo</p>
+                  <p className="text-xs text-white/50">O link é único e vinculado à sua conta</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+              <div className="flex items-start gap-3">
+                <span className="w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0">2</span>
+                <div>
+                  <p className="text-sm font-medium text-white">Compartilhe com interessados</p>
+                  <p className="text-xs text-white/50">Pessoas que querem automatizar o atendimento via WhatsApp</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+              <div className="flex items-start gap-3">
+                <span className="w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0">3</span>
+                <div>
+                  <p className="text-sm font-medium text-white">Acompanhe suas indicações</p>
+                  <p className="text-xs text-white/50">Veja em tempo real quem assinou pelo seu link</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-yellow-400/90">
+                Os valores promocionais são exclusivos para indicações e não estão disponíveis publicamente no site.
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
