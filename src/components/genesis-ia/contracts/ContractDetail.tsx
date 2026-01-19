@@ -20,7 +20,9 @@ import {
   Loader2,
   Link2,
   FileSignature,
-  Shield
+  Shield,
+  Sparkles,
+  RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -100,6 +102,7 @@ export function ContractDetail({ contractId, onBack }: ContractDetailProps) {
   const [contract, setContract] = useState<Contract | null>(null);
   const [signatures, setSignatures] = useState<Signature[]>([]);
   const [loading, setLoading] = useState(true);
+  const [generatingContent, setGeneratingContent] = useState(false);
 
   useEffect(() => {
     fetchContract();
@@ -116,6 +119,11 @@ export function ContractDetail({ contractId, onBack }: ContractDetailProps) {
       if (contractError) throw contractError;
       setContract(contractData);
 
+      // Se não tem conteúdo gerado, gerar automaticamente
+      if (!contractData.generated_content) {
+        generateContractContent(contractData);
+      }
+
       const { data: signaturesData } = await supabase
         .from('contract_signatures')
         .select('*')
@@ -129,6 +137,44 @@ export function ContractDetail({ contractId, onBack }: ContractDetailProps) {
       onBack();
     } finally {
       setLoading(false);
+    }
+  };
+
+  const generateContractContent = async (contractData: Contract) => {
+    setGeneratingContent(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-contract-content', {
+        body: contractData
+      });
+
+      if (error) throw error;
+
+      if (data?.success && data?.content) {
+        // Salvar conteúdo no banco
+        await supabase
+          .from('contracts')
+          .update({ 
+            generated_content: data.content,
+            status: 'pending_signature'
+          })
+          .eq('id', contractData.id);
+
+        setContract(prev => prev ? { ...prev, generated_content: data.content, status: 'pending_signature' } : null);
+        toast.success('Contrato gerado com sucesso!');
+      } else {
+        throw new Error(data?.error || 'Erro ao gerar contrato');
+      }
+    } catch (error) {
+      console.error('Error generating contract:', error);
+      toast.error('Erro ao gerar contrato. Tente novamente.');
+    } finally {
+      setGeneratingContent(false);
+    }
+  };
+
+  const regenerateContent = () => {
+    if (contract) {
+      generateContractContent(contract);
     }
   };
 
@@ -437,57 +483,56 @@ export function ContractDetail({ contractId, onBack }: ContractDetailProps) {
         </TabsContent>
 
         <TabsContent value="preview" className="mt-4">
-          <div className="p-6 rounded-xl border bg-white text-black min-h-[600px]">
-            <div className="max-w-3xl mx-auto space-y-6">
-              <div className="text-center border-b pb-6">
-                <h1 className="text-xl font-bold mb-2">CONTRATO DE PRESTAÇÃO DE SERVIÇOS</h1>
-                <p className="text-sm text-gray-600">Contrato nº {contract.contract_number}</p>
-              </div>
-
-              <div className="space-y-4 text-sm leading-relaxed">
-                <p>
-                  <strong>CONTRATANTE:</strong> {contract.contractor_name}, inscrito no {contract.contractor_document_type.toUpperCase()} sob o nº {contract.contractor_document}, com endereço em {contract.contractor_address}.
+          {generatingContent ? (
+            <div className="p-12 rounded-xl border bg-card text-center">
+              <div className="max-w-md mx-auto">
+                <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
+                  <Sparkles className="w-8 h-8 text-primary animate-pulse" />
+                </div>
+                <h3 className="font-bold text-lg text-foreground mb-2">Gerando Contrato Jurídico</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Nossa IA está criando um contrato completo e profissional com base nas informações fornecidas...
                 </p>
-                
-                <p>
-                  <strong>CONTRATADO:</strong> {contract.contracted_name}, inscrito no {contract.contracted_document_type.toUpperCase()} sob o nº {contract.contracted_document}, com endereço em {contract.contracted_address}.
-                </p>
-
-                <p className="font-semibold mt-6">CLÁUSULA PRIMEIRA - DO OBJETO</p>
-                <p>O presente contrato tem por objeto a prestação de serviços de {contract.service_type}, conforme descrito: {contract.service_description}</p>
-
-                <p className="font-semibold mt-6">CLÁUSULA SEGUNDA - DO PRAZO</p>
-                <p>O presente contrato terá início em {format(new Date(contract.start_date), "dd/MM/yyyy")} {contract.end_date ? `e término em ${format(new Date(contract.end_date), "dd/MM/yyyy")}` : ''}.</p>
-
-                <p className="font-semibold mt-6">CLÁUSULA TERCEIRA - DO VALOR E PAGAMENTO</p>
-                <p>O valor total do presente contrato é de {formatCurrency(contract.total_value)}, a ser pago via {contract.payment_method} {contract.installments > 1 ? `em ${contract.installments} parcelas` : 'à vista'}.</p>
-
-                <p className="font-semibold mt-6">CLÁUSULA QUARTA - DO FORO</p>
-                <p>As partes elegem o foro da comarca de {contract.jurisdiction_city}/{contract.jurisdiction_state} para dirimir quaisquer dúvidas oriundas do presente contrato.</p>
-
-                <div className="mt-12 pt-6 border-t">
-                  <p className="text-center text-gray-500 mb-8">
-                    {contract.jurisdiction_city}/{contract.jurisdiction_state}, {format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                  </p>
-                  
-                  <div className="grid grid-cols-2 gap-12 mt-12">
-                    <div className="text-center">
-                      <div className="border-t border-black pt-2">
-                        <p className="font-medium">{contract.contractor_name}</p>
-                        <p className="text-xs text-gray-600">CONTRATANTE</p>
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <div className="border-t border-black pt-2">
-                        <p className="font-medium">{contract.contracted_name}</p>
-                        <p className="text-xs text-gray-600">CONTRATADO</p>
-                      </div>
-                    </div>
-                  </div>
+                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Isso pode levar alguns segundos
                 </div>
               </div>
             </div>
-          </div>
+          ) : contract.generated_content ? (
+            <div className="space-y-4">
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={regenerateContent}
+                  className="gap-2"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Regenerar Contrato
+                </Button>
+              </div>
+              <div className="p-8 rounded-xl border bg-white text-black min-h-[600px] max-h-[800px] overflow-y-auto">
+                <div className="max-w-3xl mx-auto prose prose-sm prose-slate whitespace-pre-wrap font-serif leading-relaxed">
+                  {contract.generated_content}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="p-12 rounded-xl border bg-card text-center">
+              <div className="max-w-md mx-auto">
+                <FileText className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+                <h3 className="font-bold text-lg text-foreground mb-2">Contrato não gerado</h3>
+                <p className="text-sm text-muted-foreground mb-6">
+                  O contrato jurídico ainda não foi gerado. Clique no botão abaixo para gerar.
+                </p>
+                <Button onClick={regenerateContent} className="gap-2">
+                  <Sparkles className="w-4 h-4" />
+                  Gerar Contrato com IA
+                </Button>
+              </div>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>
