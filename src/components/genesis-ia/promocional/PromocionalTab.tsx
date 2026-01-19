@@ -7,7 +7,10 @@ import {
   Users, 
   Link2,
   Crown,
-  Zap
+  Zap,
+  Handshake,
+  TrendingUp,
+  Shield
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -127,18 +130,76 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
+      {/* Header do Programa */}
+      <div className="text-center mb-8 pt-4">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
+          <Handshake className="w-4 h-4 text-primary" />
+          <span className="text-sm font-medium text-primary">Programa de Parceiros</span>
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-3">
+          Indique e Cresça Conosco
+        </h1>
+        <p className="text-white/60 max-w-2xl mx-auto">
+          Como parceiro Genesis Hub, você tem acesso a condições exclusivas para indicar novos usuários. 
+          Compartilhe seu link e acompanhe suas indicações em tempo real.
+        </p>
+      </div>
+
+      {/* Cards de Benefícios */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <Card className="border border-white/[0.08] bg-[hsl(215_30%_12%)]" style={{ borderRadius: '14px' }}>
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center flex-shrink-0">
+              <TrendingUp className="w-5 h-5 text-green-400" />
+            </div>
+            <div>
+              <p className="font-medium text-white text-sm">Valores Exclusivos</p>
+              <p className="text-xs text-white/50">Preços não disponíveis no site</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-white/[0.08] bg-[hsl(215_30%_12%)]" style={{ borderRadius: '14px' }}>
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+              <Users className="w-5 h-5 text-blue-400" />
+            </div>
+            <div>
+              <p className="font-medium text-white text-sm">Acompanhamento</p>
+              <p className="text-xs text-white/50">Veja todas as suas indicações</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-white/[0.08] bg-[hsl(215_30%_12%)]" style={{ borderRadius: '14px' }}>
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+              <Shield className="w-5 h-5 text-purple-400" />
+            </div>
+            <div>
+              <p className="font-medium text-white text-sm">Link Permanente</p>
+              <p className="text-xs text-white/50">Seu código exclusivo não expira</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Link Promocional */}
       <Card className="border border-white/[0.08] bg-[hsl(215_30%_12%)]" style={{ borderRadius: '14px' }}>
         <CardContent className="p-5">
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
               <Link2 className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-white">Seu Link Exclusivo</h3>
-              <p className="text-sm text-white/50">Compartilhe para indicar novos usuários</p>
+              <h3 className="font-semibold text-white">Seu Link de Parceiro</h3>
+              <p className="text-sm text-white/50">Compartilhe em lives, grupos e redes sociais</p>
             </div>
           </div>
+          <p className="text-sm text-white/60 mb-4 pl-[52px]">
+            Quando alguém acessar este link, terá acesso aos planos promocionais abaixo. 
+            Todas as assinaturas feitas através do seu link serão registradas automaticamente.
+          </p>
           <div className="flex items-center gap-3">
             <div className="flex-1 px-4 py-3 rounded-lg bg-white/5 border border-white/10 font-mono text-sm text-white/80 truncate">
               {promoLink}
@@ -157,77 +218,99 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
       </Card>
 
       {/* Planos Promocionais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Plano Mensal */}
-        <Card className="border border-white/[0.08] bg-[hsl(215_30%_12%)] hover:border-white/20 transition-colors" style={{ borderRadius: '14px' }}>
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
-                  <Zap className="w-5 h-5 text-orange-400" />
+      <div>
+        <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+          <Gift className="w-5 h-5 text-primary" />
+          Planos Disponíveis para Indicados
+        </h2>
+        <p className="text-sm text-white/50 mb-4">
+          Estes são os planos que seus indicados terão acesso ao clicar no seu link. 
+          Valores promocionais exclusivos para parceiros.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Plano Mensal */}
+          <Card className="border border-white/[0.08] bg-[hsl(215_30%_12%)] hover:border-white/20 transition-colors" style={{ borderRadius: '14px' }}>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
+                    <Zap className="w-5 h-5 text-orange-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white">Plano Mensal</h3>
+                    <p className="text-xs text-white/50">Acesso completo por 30 dias</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-white">Mensal</h3>
-                  <p className="text-xs text-white/50">Acesso completo</p>
-                </div>
+                <Badge variant="secondary" className="bg-orange-500/20 text-orange-400 border-0 text-xs">
+                  Promocional
+                </Badge>
               </div>
-              <Badge variant="secondary" className="bg-orange-500/20 text-orange-400 border-0 text-xs">
-                Promo
-              </Badge>
-            </div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-bold text-white">R$ 197</span>
-              <span className="text-white/50 text-sm">/mês</span>
-            </div>
-          </CardContent>
-        </Card>
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-bold text-white">R$ 197</span>
+                <span className="text-white/50 text-sm">/mês</span>
+              </div>
+              <p className="text-xs text-white/40 mt-2">Renovação automática • Cancele quando quiser</p>
+            </CardContent>
+          </Card>
 
-        {/* Plano Anual */}
-        <Card className="border border-primary/30 bg-[hsl(215_30%_12%)] hover:border-primary/50 transition-colors" style={{ borderRadius: '14px' }}>
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                  <Crown className="w-5 h-5 text-primary" />
+          {/* Plano Anual */}
+          <Card className="border border-primary/30 bg-[hsl(215_30%_12%)] hover:border-primary/50 transition-colors" style={{ borderRadius: '14px' }}>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                    <Crown className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white">Plano Anual</h3>
+                    <p className="text-xs text-white/50">12 meses de acesso completo</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-white">Anual</h3>
-                  <p className="text-xs text-white/50">12 meses de acesso</p>
-                </div>
+                <Badge className="bg-primary/20 text-primary border-0 text-xs">
+                  Melhor valor
+                </Badge>
               </div>
-              <Badge className="bg-primary/20 text-primary border-0 text-xs">
-                Melhor valor
-              </Badge>
-            </div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-bold text-white">R$ 697</span>
-              <span className="text-white/50 text-sm">/ano</span>
-            </div>
-            <p className="text-xs text-green-400 mt-2">≈ R$ 58/mês</p>
-          </CardContent>
-        </Card>
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-bold text-white">R$ 697</span>
+                <span className="text-white/50 text-sm">/ano</span>
+              </div>
+              <p className="text-xs text-green-400 mt-2">Equivale a R$ 58/mês • Economia de 70%</p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Lista de Indicados */}
       <Card className="border border-white/[0.08] bg-[hsl(215_30%_12%)]" style={{ borderRadius: '14px' }}>
         <CardContent className="p-5">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-10 h-10 rounded-xl bg-[hsl(260_50%_30%_/_0.5)] flex items-center justify-center">
-              <Users className="w-5 h-5 text-[hsl(260_70%_70%)]" />
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[hsl(260_50%_30%_/_0.5)] flex items-center justify-center">
+                <Users className="w-5 h-5 text-[hsl(260_70%_70%)]" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-white">Suas Indicações</h3>
+                <p className="text-sm text-white/50">
+                  Usuários que assinaram através do seu link
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-semibold text-white">Indicações</h3>
-              <p className="text-sm text-white/50">
-                {referrals.length === 0 ? 'Nenhuma indicação ainda' : `${referrals.length} usuário${referrals.length > 1 ? 's' : ''}`}
-              </p>
-            </div>
+            {referrals.length > 0 && (
+              <Badge variant="secondary" className="bg-white/10 text-white border-0">
+                {referrals.length} {referrals.length === 1 ? 'indicação' : 'indicações'}
+              </Badge>
+            )}
           </div>
 
           {referrals.length === 0 ? (
-            <div className="text-center py-8 border border-dashed border-white/10 rounded-xl">
-              <Users className="w-10 h-10 text-white/20 mx-auto mb-3" />
-              <p className="text-white/40 text-sm">
-                As indicações aparecerão aqui
+            <div className="text-center py-10 border border-dashed border-white/10 rounded-xl">
+              <Users className="w-12 h-12 text-white/20 mx-auto mb-4" />
+              <p className="text-white/60 font-medium mb-2">
+                Nenhuma indicação ainda
+              </p>
+              <p className="text-white/40 text-sm max-w-sm mx-auto">
+                Compartilhe seu link em lives, grupos de WhatsApp ou redes sociais. 
+                Quando alguém assinar, aparecerá aqui automaticamente.
               </p>
             </div>
           ) : (
