@@ -49,6 +49,7 @@ interface Contract {
   total_value: number;
   created_at: string;
   service_type: string;
+  service_modality: string;
   generated_content: string | null;
 }
 
@@ -81,7 +82,7 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
     try {
       const { data, error } = await supabase
         .from('contracts')
-        .select('id, contract_number, title, status, contractor_name, contracted_name, total_value, created_at, service_type, generated_content')
+        .select('id, contract_number, title, status, contractor_name, contracted_name, total_value, created_at, service_type, service_modality, generated_content')
         .eq('affiliate_id', affiliateId)
         .order('created_at', { ascending: false });
 
@@ -260,11 +261,21 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
                         <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h3 className="text-xs sm:text-sm font-semibold text-foreground truncate group-hover:text-blue-400 transition-colors">
-                          {contract.title}
-                        </h3>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-xs sm:text-sm font-semibold text-foreground truncate group-hover:text-blue-400 transition-colors">
+                            {contract.contractor_name}
+                          </h3>
+                          <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-indigo-500/10 text-indigo-400 border-indigo-500/30">
+                            {contract.service_type}
+                          </Badge>
+                          {contract.service_modality === 'recorrente' && (
+                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                              Mensal: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(contract.total_value)}
+                            </Badge>
+                          )}
+                        </div>
                         <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
-                          {contract.contractor_name} • {contract.service_type}
+                          {contract.title} • {contract.service_modality === 'recorrente' ? 'Recorrente' : contract.service_modality === 'pontual' ? 'Pontual' : 'Por Demanda'}
                         </p>
                       </div>
                     </div>
