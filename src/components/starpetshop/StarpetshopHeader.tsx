@@ -3,7 +3,7 @@ import { Menu, X, Phone, MapPin, Clock, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getStarpetshopAppointments } from '@/components/starpetshop/StarpetshopMyAppointments';
-import starpetshopLogo from '@/assets/starpetshop/logo-official.png';
+import starpetshopLogo from '@/assets/starpetshop/logo-official-alpha.png';
 
 interface StarpetshopHeaderProps {
   onScheduleClick: () => void;
@@ -89,7 +89,7 @@ const StarpetshopHeader = ({ onScheduleClick, onMyAppointmentsClick }: Starpetsh
               <motion.img 
                 src={starpetshopLogo} 
                 alt="Star Petshop" 
-                className="h-14 sm:h-16 w-auto object-contain group-hover:scale-105 transition-transform"
+                className="h-14 w-14 sm:h-16 sm:w-16 object-cover rounded-full group-hover:scale-105 transition-transform"
                 whileHover={{ rotate: [0, -5, 5, 0] }}
                 transition={{ duration: 0.5 }}
               />
