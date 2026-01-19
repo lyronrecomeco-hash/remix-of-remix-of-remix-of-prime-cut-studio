@@ -470,13 +470,13 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
             </Badge>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 justify-items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {paginatedResults.map((result, idx) => {
               const levelConfig = result.opportunityLevel ? LEVEL_CONFIG[result.opportunityLevel] : null;
               const nicheIcon = getNicheIcon(result.niche);
 
               return (
-                <Card key={idx} className="overflow-hidden border-border hover:border-primary/50 transition-all hover:shadow-lg group w-full max-w-[420px]">
+                <Card key={idx} className="overflow-hidden border-border hover:border-primary/50 transition-all hover:shadow-lg group h-fit">
                   <CardContent className="p-4">
                     {/* Header */}
                     <div className="flex items-start gap-3 mb-3">
