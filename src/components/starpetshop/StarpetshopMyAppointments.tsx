@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Calendar, Clock, MapPin, Stethoscope, Heart, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import starpetshopLogo from '@/assets/starpetshop/logo-transparent-2.png';
+import starpetshopLogo from '@/assets/starpetshop/logo-official.png';
 
 const STORAGE_KEY = 'starpetshop_appointments';
 
