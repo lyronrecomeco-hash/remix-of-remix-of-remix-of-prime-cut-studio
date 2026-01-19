@@ -70,8 +70,8 @@ const StarpetshopDemoModal = () => {
 
               {/* Logo */}
               <div className="flex justify-center mb-4">
-                <div className="w-24 h-24 rounded-2xl overflow-hidden bg-black flex items-center justify-center shadow-xl">
-                  <img src={starpetshopLogo} alt="Star Petshop" className="w-20 h-20 object-contain" />
+                <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden bg-black flex items-center justify-center shadow-xl">
+                  <img src={starpetshopLogo} alt="Star Petshop" className="w-full h-full object-contain p-1" />
                 </div>
               </div>
 

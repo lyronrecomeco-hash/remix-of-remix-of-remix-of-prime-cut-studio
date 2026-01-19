@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Menu, X, Phone, MapPin, Clock, Calendar, Star } from 'lucide-react';
+import { Menu, X, Phone, MapPin, Clock, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getStarpetshopAppointments } from '@/components/starpetshop/StarpetshopMyAppointments';
+import starpetshopLogo from '@/assets/starpetshop/logo.png';
 
 interface StarpetshopHeaderProps {
   onScheduleClick: () => void;
@@ -86,11 +87,11 @@ const StarpetshopHeader = ({ onScheduleClick, onMyAppointmentsClick }: Starpetsh
             {/* Logo */}
             <a href="#inicio" className="flex items-center gap-2 sm:gap-3 group">
               <motion.div 
-                className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg shadow-red-500/30 group-hover:scale-105 transition-transform"
+                className="w-10 h-10 sm:w-12 sm:h-12 bg-black rounded-2xl flex items-center justify-center shadow-lg shadow-red-500/30 group-hover:scale-105 transition-transform overflow-hidden"
                 whileHover={{ rotate: [0, -5, 5, 0] }}
                 transition={{ duration: 0.5 }}
               >
-                <Star className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="white" />
+                <img src={starpetshopLogo} alt="Star Petshop" className="w-9 h-9 sm:w-11 sm:h-11 object-contain" />
               </motion.div>
               <div>
                 <h1 className="text-lg sm:text-xl font-bold text-gray-900 leading-tight tracking-tight">
@@ -134,7 +135,6 @@ const StarpetshopHeader = ({ onScheduleClick, onMyAppointmentsClick }: Starpetsh
                 size="sm"
                 className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-500 text-white font-bold rounded-xl shadow-lg shadow-red-500/30 hover:shadow-xl hover:shadow-red-500/40 transition-all duration-300 hover:scale-105"
               >
-                <Star className="w-4 h-4 mr-1.5" />
                 Agendar
               </Button>
             </div>
@@ -203,7 +203,6 @@ const StarpetshopHeader = ({ onScheduleClick, onMyAppointmentsClick }: Starpetsh
                     }}
                     className="bg-gradient-to-r from-red-500 to-red-600 text-white font-bold w-full h-14 text-base rounded-xl shadow-lg shadow-red-500/30"
                   >
-                    <Star className="w-5 h-5 mr-2" />
                     Agendar Agora
                   </Button>
                 </div>
