@@ -10,11 +10,14 @@ import {
   Sparkles,
   Lock,
   LayoutGrid,
-  PawPrint
+  PawPrint,
+  ArrowLeft
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import petshopPreview from '@/assets/petshop/hero-dog-bath.jpg';
+import barbeariaPreview from '@/assets/templates/barbearia-preview.png';
+import academiaPreview from '@/assets/templates/academia-preview.png';
 
 export interface TemplateInfo {
   id: string;
@@ -30,10 +33,12 @@ export interface TemplateInfo {
     subtitle: string;
     badge: string;
   };
+  previewImage?: string;
 }
 
 interface CriarProjetosSelectorProps {
   onSelect: (template: TemplateInfo) => void;
+  onBack: () => void;
 }
 
 type Category = 'all' | 'beauty' | 'food' | 'health' | 'services' | 'education' | 'pets';
@@ -63,9 +68,10 @@ const templates: TemplateInfo[] = [
       title: 'Seu Xodó Pet',
       subtitle: 'Cuidado Premium',
       badge: '🐾 Sistema Completo'
-    }
+    },
+    previewImage: petshopPreview
   },
-  // BARBEARIA
+  // BARBEARIA - DISPONÍVEL
   {
     id: 'barbearia',
     name: 'Barbearia Premium',
@@ -79,7 +85,25 @@ const templates: TemplateInfo[] = [
       title: 'Barber Studio',
       subtitle: 'Tradição e Estilo',
       badge: '✂️ Experiência Premium'
-    }
+    },
+    previewImage: barbeariaPreview
+  },
+  // ACADEMIA - DISPONÍVEL
+  {
+    id: 'academia',
+    name: 'Academia & Fitness',
+    description: 'Academias e personal trainers',
+    category: 'health',
+    route: '/academia',
+    gradient: 'from-red-900 via-zinc-900 to-zinc-950',
+    accent: 'red',
+    available: true,
+    preview: {
+      title: 'FitPower',
+      subtitle: 'Transforme seu corpo',
+      badge: '💪 Treino personalizado'
+    },
+    previewImage: academiaPreview
   },
   // EM BREVE
   {
@@ -112,24 +136,9 @@ const templates: TemplateInfo[] = [
       badge: '🍕 Pedidos Online'
     }
   },
-  {
-    id: 'academia',
-    name: 'Academia & Fitness',
-    description: 'Academias e personal trainers',
-    category: 'health',
-    route: '/academia',
-    gradient: 'from-emerald-900 via-zinc-900 to-zinc-950',
-    accent: 'emerald',
-    available: false,
-    preview: {
-      title: 'Fit Studio',
-      subtitle: 'Transforme seu corpo',
-      badge: '💪 Treino personalizado'
-    }
-  },
 ];
 
-export function CriarProjetosSelector({ onSelect }: CriarProjetosSelectorProps) {
+export function CriarProjetosSelector({ onSelect, onBack }: CriarProjetosSelectorProps) {
   const [activeCategory, setActiveCategory] = useState<Category>('all');
 
   const filteredTemplates = activeCategory === 'all' 
@@ -144,13 +153,20 @@ export function CriarProjetosSelector({ onSelect }: CriarProjetosSelectorProps) 
         animate={{ opacity: 1, y: 0 }}
         className="space-y-1"
       >
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-primary" />
-          <h2 className="text-xl font-bold text-foreground">Escolha um Template</h2>
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8">
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <div>
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              <h2 className="text-xl font-bold text-foreground">Escolha um Template</h2>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Selecione um modelo e personalize para seu cliente.
+            </p>
+          </div>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Selecione um modelo e personalize para seu cliente.
-        </p>
       </motion.div>
 
       {/* Category Filters */}
@@ -178,8 +194,8 @@ export function CriarProjetosSelector({ onSelect }: CriarProjetosSelectorProps) 
         })}
       </motion.div>
 
-      {/* Templates Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+      {/* Templates Grid - Fixed width cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-4xl">
         {filteredTemplates.map((template, index) => (
           <motion.div
             key={template.id}
@@ -192,21 +208,22 @@ export function CriarProjetosSelector({ onSelect }: CriarProjetosSelectorProps) 
                 : 'opacity-70'
             }`}
             onClick={() => template.available && onSelect(template)}
+            style={{ maxWidth: '320px' }}
           >
             {/* Preview Area */}
-            <div className={`relative h-48 overflow-hidden ${template.id === 'petshop' ? '' : `bg-gradient-to-br ${template.gradient}`}`}>
-              {/* Real Preview for Petshop */}
-              {template.id === 'petshop' ? (
+            <div className={`relative h-44 overflow-hidden ${template.previewImage ? '' : `bg-gradient-to-br ${template.gradient}`}`}>
+              {/* Real Preview with image */}
+              {template.previewImage ? (
                 <>
                   <img 
-                    src={petshopPreview} 
-                    alt="Pet Shop Preview" 
+                    src={template.previewImage} 
+                    alt={`${template.name} Preview`} 
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-                  <div className="absolute bottom-4 left-4 right-4 text-white">
-                    <div className="text-xs font-medium text-orange-400 mb-1">{template.preview.badge}</div>
-                    <div className="text-lg font-bold">{template.preview.title}</div>
+                  <div className="absolute bottom-3 left-3 right-3 text-white">
+                    <div className="text-xs font-medium text-primary mb-1">{template.preview.badge}</div>
+                    <div className="text-base font-bold">{template.preview.title}</div>
                     <div className="text-xs text-white/70">{template.preview.subtitle}</div>
                   </div>
                 </>
@@ -214,7 +231,7 @@ export function CriarProjetosSelector({ onSelect }: CriarProjetosSelectorProps) 
                 <>
                   {/* Mock Phone/Screen Preview */}
                   <div className="absolute inset-0 flex items-center justify-center p-4">
-                    <div className="relative w-28 h-44 bg-black/40 rounded-2xl border border-white/10 backdrop-blur-sm overflow-hidden shadow-2xl transform group-hover:scale-105 transition-transform duration-300">
+                    <div className="relative w-24 h-40 bg-black/40 rounded-2xl border border-white/10 backdrop-blur-sm overflow-hidden shadow-2xl transform group-hover:scale-105 transition-transform duration-300">
                       <div className="absolute inset-1 rounded-xl bg-gradient-to-b from-white/10 to-transparent overflow-hidden">
                         <div className="p-3 space-y-2 text-center">
                           <div className="inline-block px-2 py-0.5 text-[8px] bg-white/20 text-white rounded-full">
@@ -245,8 +262,8 @@ export function CriarProjetosSelector({ onSelect }: CriarProjetosSelectorProps) 
             </div>
 
             {/* Card Footer */}
-            <div className="p-4 space-y-2">
-              <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+            <div className="p-3 space-y-1">
+              <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm">
                 {template.name}
               </h3>
               <p className="text-xs text-muted-foreground line-clamp-2">
