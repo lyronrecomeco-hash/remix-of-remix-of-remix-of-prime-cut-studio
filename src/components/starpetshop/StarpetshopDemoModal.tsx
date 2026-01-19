@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles, MessageCircle, BarChart3, Calendar, Bot, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import starpetshopLogo from '@/assets/starpetshop/logo.png';
+import starpetshopLogo from '@/assets/starpetshop/logo-transparent-2.png';
 
 const StarpetshopDemoModal = () => {
   const [isOpen, setIsOpen] = useState(false);
