@@ -74,12 +74,14 @@ serve(async (req) => {
 Sua tarefa é gerar um CONTRATO JURÍDICO COMPLETO, PROFISSIONAL E VÁLIDO NO BRASIL.
 
 📌 INSTRUÇÕES OBRIGATÓRIAS:
+- O TÍTULO do contrato DEVE SER APENAS: **CONTRATO DE PRESTAÇÃO DE SERVIÇOS** (SEM número, SEM código, SEM nada mais)
 - Corrigir toda a numeração das cláusulas, eliminando duplicidades
 - Manter estrutura clássica de contrato brasileiro
-- NÃO incluir seção de TESTEMUNHAS - o contrato NÃO deve conter campo para testemunhas
+- NÃO incluir seção de TESTEMUNHAS - o contrato NÃO deve conter campo para testemunhas em NENHUM lugar
 - NÃO mencionar assinatura via GOV.BR - NÃO permitir esse método
 - Manter apenas assinatura eletrônica simples (desenho/caneta virtual/digital)
 - Modalidade: PRESTAÇÃO DE SERVIÇO PONTUAL (prazo definido, valor fechado)
+- REMOVER COMPLETAMENTE qualquer menção a testemunhas no documento inteiro
 
 🧾 FORMATO OBRIGATÓRIO DO CONTRATO
 
@@ -192,19 +194,28 @@ O contrato DEVE COMEÇAR com um PREÂMBULO JURÍDICO FORMAL:
 - Alterações somente por aditivo escrito
 - Nulidade parcial não afeta demais cláusulas
 
-✍️ ENCERRAMENTO (SEM TESTEMUNHAS)
+✍️ ENCERRAMENTO
 
-Finalizar com:
+Finalizar APENAS com:
 "E, por estarem assim justos e contratados, firmam o presente instrumento por meio eletrônico, nos termos da Medida Provisória 2.200-2/2001, que regulamenta a validade jurídica de documentos eletrônicos."
 
-- Local e data
-- Campo de assinatura do **CONTRATANTE** com nome e documento
-- Campo de assinatura do **CONTRATADO** com nome e documento
+Local e data: ${new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}
 
-NÃO INCLUIR:
-- Campo para testemunhas
-- Menção a GOV.BR
-- Menção a qualquer outro método de assinatura que não seja eletrônico simples
+_______________________________
+**CONTRATANTE**
+Nome: [nome do contratante]
+Documento: [documento do contratante]
+
+_______________________________
+**CONTRATADO**
+Nome: [nome do contratado]
+Documento: [documento do contratado]
+
+⛔ PROIBIDO INCLUIR:
+- NÃO INCLUIR campos para testemunhas
+- NÃO INCLUIR menção a testemunhas
+- NÃO INCLUIR GOV.BR
+- NÃO INCLUIR número no título (o título é APENAS "CONTRATO DE PRESTAÇÃO DE SERVIÇOS")
 
 IMPORTANTE:
 - Linguagem jurídica formal e precisa
@@ -212,7 +223,8 @@ IMPORTANTE:
 - Todas as cláusulas numeradas corretamente SEM duplicidades
 - Use **negrito** de forma profissional e moderada
 - NÃO incluir explicações, apenas o contrato
-- Contrato pronto para exibição em tela, geração de PDF e assinatura eletrônica simples`;
+- Contrato pronto para exibição em tela, geração de PDF e assinatura eletrônica simples
+- TÍTULO: **CONTRATO DE PRESTAÇÃO DE SERVIÇOS** (sem número, sem código)`;
 
     const modalidadeMap: Record<string, string> = {
       'pontual': 'pontual (projeto único)',
