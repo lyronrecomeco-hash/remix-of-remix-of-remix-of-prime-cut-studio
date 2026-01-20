@@ -18,6 +18,7 @@ import { InstallmentSelector } from '@/components/checkout/InstallmentSelector';
 import { OrderSummary } from '@/components/checkout/OrderSummary';
 
 import { createPayment } from '@/lib/checkout/api';
+import { calculateCheckoutPricing } from '@/lib/checkout/pricing';
 import { checkoutFormSchema, type CheckoutFormValues } from '@/lib/checkout/validators';
 import { cn } from '@/lib/utils';
 
