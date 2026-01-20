@@ -171,15 +171,20 @@ serve(async (req) => {
     // Calculate expiration (10 minutes from now)
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
+    // Generate unique payment code using AbacatePay billing ID or fallback
+    const billingId = abacateData.data?.id || '';
+    const paymentCode = billingId || `PAY-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
     // Create payment record
     const { data: payment, error: paymentError } = await supabase
       .from('checkout_payments')
       .insert({
+        payment_code: paymentCode,
         customer_id: customerId,
         amount_cents: priceCents,
         description: body.description,
         payment_method: body.paymentMethod,
-        abacatepay_billing_id: abacateData.data?.id,
+        abacatepay_billing_id: billingId,
         abacatepay_url: abacateData.data?.url,
         pix_br_code: abacateData.data?.pix?.brCode,
         pix_qr_code_base64: abacateData.data?.pix?.qrCodeBase64,
