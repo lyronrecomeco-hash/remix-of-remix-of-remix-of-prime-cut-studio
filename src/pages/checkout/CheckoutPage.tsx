@@ -114,22 +114,38 @@ export default function CheckoutPage() {
 
   return (
     <CheckoutLayout>
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-5 gap-8">
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        {/* Mobile-first Alert */}
+        <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+              <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
+            </div>
+            <div>
+              <h3 className="text-sm sm:text-base font-semibold text-emerald-300">Pagamento 100% Seguro</h3>
+              <p className="text-xs sm:text-sm text-white/60 mt-0.5">
+                Ambiente criptografado • PIX instantâneo • Garantia de satisfação
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid lg:grid-cols-5 gap-4 sm:gap-8">
           {/* Form Column */}
-          <div className="lg:col-span-3">
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="lg:col-span-3 order-2 lg:order-1">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               {/* Personal Info */}
-              <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-                <h2 className="text-lg font-semibold text-white mb-4">
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4 sm:p-5">
+                <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-xs font-bold text-emerald-400">1</div>
                   Informações Pessoais
                 </h2>
                 
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     {/* First Name */}
                     <div>
-                      <label className="block text-sm font-medium text-white/80 mb-1.5">
+                      <label className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-1.5">
                         Nome <span className="text-red-400">*</span>
                       </label>
                       <input
@@ -139,20 +155,23 @@ export default function CheckoutPage() {
                         disabled={isLoading}
                         placeholder="Seu nome"
                         className={cn(
-                          "w-full h-12 px-4 rounded-xl border border-white/10",
-                          "bg-white/5 text-white placeholder:text-white/30",
+                          "w-full h-11 sm:h-12 px-3 sm:px-4 rounded-xl border border-white/10",
+                          "bg-white/5 text-white placeholder:text-white/30 text-sm sm:text-base",
                           "focus:outline-none focus:ring-2 focus:ring-emerald-500/50",
-                          errors.firstName && "border-red-500/50"
+                          "transition-all duration-200",
+                          errors.firstName && "border-red-500/50 ring-1 ring-red-500/30"
                         )}
                       />
                       {errors.firstName && (
-                        <p className="mt-1 text-xs text-red-400">{errors.firstName}</p>
+                        <p className="mt-1 text-[10px] sm:text-xs text-red-400 flex items-center gap-1">
+                          <span>⚠</span> {errors.firstName}
+                        </p>
                       )}
                     </div>
 
                     {/* Last Name */}
                     <div>
-                      <label className="block text-sm font-medium text-white/80 mb-1.5">
+                      <label className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-1.5">
                         Sobrenome <span className="text-red-400">*</span>
                       </label>
                       <input
@@ -162,14 +181,17 @@ export default function CheckoutPage() {
                         disabled={isLoading}
                         placeholder="Seu sobrenome"
                         className={cn(
-                          "w-full h-12 px-4 rounded-xl border border-white/10",
-                          "bg-white/5 text-white placeholder:text-white/30",
+                          "w-full h-11 sm:h-12 px-3 sm:px-4 rounded-xl border border-white/10",
+                          "bg-white/5 text-white placeholder:text-white/30 text-sm sm:text-base",
                           "focus:outline-none focus:ring-2 focus:ring-emerald-500/50",
-                          errors.lastName && "border-red-500/50"
+                          "transition-all duration-200",
+                          errors.lastName && "border-red-500/50 ring-1 ring-red-500/30"
                         )}
                       />
                       {errors.lastName && (
-                        <p className="mt-1 text-xs text-red-400">{errors.lastName}</p>
+                        <p className="mt-1 text-[10px] sm:text-xs text-red-400 flex items-center gap-1">
+                          <span>⚠</span> {errors.lastName}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -196,8 +218,8 @@ export default function CheckoutPage() {
 
                   {/* Email (optional) */}
                   <div>
-                    <label className="block text-sm font-medium text-white/80 mb-1.5">
-                      Email <span className="text-white/40">(opcional)</span>
+                    <label className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-1.5">
+                      Email <span className="text-white/40 text-[10px] sm:text-xs">(opcional - para recibo)</span>
                     </label>
                     <input
                       type="email"
@@ -206,31 +228,52 @@ export default function CheckoutPage() {
                       disabled={isLoading}
                       placeholder="seu@email.com"
                       className={cn(
-                        "w-full h-12 px-4 rounded-xl border border-white/10",
-                        "bg-white/5 text-white placeholder:text-white/30",
+                        "w-full h-11 sm:h-12 px-3 sm:px-4 rounded-xl border border-white/10",
+                        "bg-white/5 text-white placeholder:text-white/30 text-sm sm:text-base",
                         "focus:outline-none focus:ring-2 focus:ring-emerald-500/50",
-                        errors.email && "border-red-500/50"
+                        "transition-all duration-200",
+                        errors.email && "border-red-500/50 ring-1 ring-red-500/30"
                       )}
                     />
                     {errors.email && (
-                      <p className="mt-1 text-xs text-red-400">{errors.email}</p>
+                      <p className="mt-1 text-[10px] sm:text-xs text-red-400 flex items-center gap-1">
+                        <span>⚠</span> {errors.email}
+                      </p>
                     )}
                   </div>
                 </div>
               </div>
 
               {/* Payment Method */}
-              <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-                <h2 className="text-lg font-semibold text-white mb-4">
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4 sm:p-5">
+                <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-xs font-bold text-emerald-400">2</div>
                   Forma de Pagamento
                 </h2>
                 
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   <PaymentMethodSelector
                     value={formData.paymentMethod || 'PIX'}
                     onChange={(method) => updateField('paymentMethod', method)}
                     disabled={isLoading}
                   />
+
+                  {/* PIX Info */}
+                  {formData.paymentMethod === 'PIX' && (
+                    <div className="p-3 sm:p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                          <ArrowRight className="w-4 h-4 text-emerald-400" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-semibold text-emerald-300">PIX - Aprovação Instantânea</h4>
+                          <p className="text-xs text-white/60 mt-0.5">
+                            Pague com QR Code ou copie o código. Confirmação em segundos!
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Card Form */}
                   {formData.paymentMethod === 'CARD' && (
@@ -261,44 +304,59 @@ export default function CheckoutPage() {
                 type="submit"
                 disabled={isLoading}
                 className={cn(
-                  "w-full h-14 rounded-xl font-semibold text-white",
+                  "w-full h-12 sm:h-14 rounded-xl font-semibold text-white text-sm sm:text-base",
                   "bg-gradient-to-r from-emerald-500 to-emerald-600",
                   "hover:from-emerald-600 hover:to-emerald-700",
                   "focus:outline-none focus:ring-2 focus:ring-emerald-500/50",
                   "transition-all flex items-center justify-center gap-2",
-                  "disabled:opacity-50 disabled:cursor-not-allowed"
+                  "disabled:opacity-50 disabled:cursor-not-allowed",
+                  "shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30"
                 )}
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
                     Processando...
                   </>
                 ) : (
                   <>
                     Continuar para pagamento
-                    <ArrowRight className="w-5 h-5" />
+                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
                   </>
                 )}
               </button>
 
               {/* Security Notice */}
-              <div className="flex items-center justify-center gap-2 text-white/40 text-sm">
-                <Shield className="w-4 h-4" />
-                <span>Seus dados estão protegidos</span>
+              <div className="flex items-center justify-center gap-2 text-white/40 text-xs sm:text-sm">
+                <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span>Seus dados estão protegidos com criptografia SSL</span>
               </div>
             </form>
           </div>
 
-          {/* Summary Column */}
-          <div className="lg:col-span-2">
-            <div className="lg:sticky lg:top-8">
+          {/* Summary Column - Shows first on mobile */}
+          <div className="lg:col-span-2 order-1 lg:order-2">
+            <div className="lg:sticky lg:top-24">
               <OrderSummary
                 description={description}
                 amountCents={amountCents}
                 installments={formData.installments}
                 paymentMethod={formData.paymentMethod}
               />
+              
+              {/* Trust badges for mobile */}
+              <div className="mt-4 lg:hidden">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10">
+                    <Shield className="w-4 h-4 text-emerald-500" />
+                    <span className="text-[10px] text-white/70">Compra Segura</span>
+                  </div>
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10">
+                    <Loader2 className="w-4 h-4 text-emerald-500" />
+                    <span className="text-[10px] text-white/70">PIX Instantâneo</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

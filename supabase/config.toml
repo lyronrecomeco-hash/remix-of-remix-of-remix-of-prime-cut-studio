@@ -32,3 +32,15 @@ verify_jwt = false
 
 [functions.luna-setup-webhook]
 verify_jwt = false
+
+[functions.checkout-create-payment]
+verify_jwt = false
+
+[functions.checkout-check-status]
+verify_jwt = false
+
+[functions.checkout-webhook]
+verify_jwt = false
+
+[functions.checkout-regenerate]
+verify_jwt = false
