@@ -83,6 +83,12 @@ export default function CheckoutPage() {
     setIsLoading(true);
 
     try {
+      const pricing = calculateCheckoutPricing({
+        baseAmountCents: amountCents,
+        paymentMethod: result.data.paymentMethod,
+        installments: result.data.installments,
+      });
+
       const response = await createPayment({
         customer: {
           firstName: result.data.firstName,
@@ -92,10 +98,10 @@ export default function CheckoutPage() {
           phoneCountryCode: result.data.phoneCountryCode,
           email: result.data.email || undefined,
         },
-        amountCents,
+        amountCents: pricing.finalAmountCents,
         description,
         paymentMethod: result.data.paymentMethod,
-        installments: result.data.installments,
+        installments: pricing.installments,
         metadata: {
           cardNumber: result.data.cardNumber ? '****' + result.data.cardNumber.slice(-4) : undefined,
         },

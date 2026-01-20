@@ -70,7 +70,7 @@ export function PhoneInput({
                 className="fixed inset-0 z-10"
                 onClick={() => setIsOpen(false)}
               />
-              <div className="absolute top-full left-0 mt-1 w-64 max-h-60 overflow-y-auto z-20 rounded-xl border border-white/10 bg-slate-800 shadow-xl">
+              <div className="absolute top-full left-0 mt-1 w-[min(16rem,calc(100vw-2rem))] max-h-60 overflow-y-auto z-20 rounded-xl border border-white/10 bg-slate-800 shadow-xl">
                 {COUNTRY_CODES.map((country) => (
                   <button
                     key={country.code}

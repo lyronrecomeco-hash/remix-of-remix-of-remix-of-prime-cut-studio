@@ -122,6 +122,10 @@ serve(async (req) => {
       );
     }
 
+    const origin = req.headers.get('origin') || 'https://shave-style-pro.lovable.app';
+    const returnUrl = `${origin}/checkout/pending`;
+    const completionUrl = `${origin}/checkout/success`;
+
     const abacatePayload = {
       frequency: 'ONE_TIME',
       methods: [body.paymentMethod],
@@ -137,7 +141,8 @@ serve(async (req) => {
         cellphone: `${body.customer.phoneCountryCode}${cleanPhone}`,
         taxId: cleanCpf,
       },
-      completionUrl: `${req.headers.get('origin') || 'https://shave-style-pro.lovable.app'}/checkout/success`,
+      returnUrl,
+      completionUrl,
     };
 
     console.log('Calling AbacatePay API...');
