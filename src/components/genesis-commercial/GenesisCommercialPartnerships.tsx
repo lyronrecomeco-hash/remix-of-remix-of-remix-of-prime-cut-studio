@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
-import { CheckCircle2, Sparkles, Rocket, Cpu, Cloud, Zap, Shield } from 'lucide-react';
+import { CheckCircle2, Sparkles, Shield, Cpu, Cloud, Zap } from 'lucide-react';
 import lovableLogo from '@/assets/partners/lovable-logo.png';
 import googleLogo from '@/assets/partners/google-logo.png';
 
@@ -18,9 +18,6 @@ const partnerships = [
       'Hospedagem profissional incluída',
       'Atualizações em tempo real',
     ],
-    gradient: 'from-pink-500 to-rose-600',
-    borderColor: 'border-pink-500/20 hover:border-pink-500/40',
-    bgGlow: 'from-pink-500/10 to-rose-600/5',
   },
   {
     name: 'Google',
@@ -35,9 +32,6 @@ const partnerships = [
       'Infraestrutura cloud confiável',
       'Escalabilidade garantida',
     ],
-    gradient: 'from-blue-500 to-cyan-600',
-    borderColor: 'border-blue-500/20 hover:border-blue-500/40',
-    bgGlow: 'from-blue-500/10 to-cyan-600/5',
   },
 ];
 
@@ -46,10 +40,10 @@ const GenesisCommercialPartnerships = () => {
   const isInView = useInView(ref, { once: true, margin: '-100px' });
 
   return (
-    <section id="parcerias" ref={ref} className="py-24 md:py-32 bg-slate-950 relative overflow-hidden">
+    <section id="parcerias" ref={ref} className="py-24 md:py-32 bg-background relative overflow-hidden">
       {/* Background Effects */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(139,92,246,0.08),transparent_70%)]" />
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(6,182,212,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(6,182,212,0.02)_1px,transparent_1px)] bg-[size:60px_60px]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,hsl(217_91%_60%/0.06),transparent_70%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(hsl(217_91%_60%/0.02)_1px,transparent_1px),linear-gradient(90deg,hsl(217_91%_60%/0.02)_1px,transparent_1px)] bg-[size:60px_60px]" />
       
       <div className="container px-4 relative z-10 max-w-7xl mx-auto">
         {/* Header */}
@@ -62,23 +56,20 @@ const GenesisCommercialPartnerships = () => {
           <motion.div 
             initial={{ scale: 0.9, opacity: 0 }}
             animate={isInView ? { scale: 1, opacity: 1 } : {}}
-            className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-sm font-semibold rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400"
+            className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-sm font-semibold rounded-full bg-primary/10 border border-primary/20 text-primary"
           >
-            <Rocket className="w-4 h-4" />
+            <Sparkles className="w-4 h-4" />
             Nossas Parcerias
           </motion.div>
           
-          <h2 className="text-3xl md:text-5xl lg:text-6xl font-black mb-6 text-white">
-            Conectados com as
-            <br />
-            <span className="bg-gradient-to-r from-purple-400 via-pink-500 to-rose-500 bg-clip-text text-transparent">
-              melhores tecnologias
-            </span>
+          <h2 className="text-3xl md:text-5xl font-black mb-6 text-foreground">
+            Conectados com as{' '}
+            <span className="text-gold-shine">melhores tecnologias</span>
           </h2>
           
-          <p className="text-lg text-slate-400 max-w-2xl mx-auto">
-            Parcerias estratégicas que garantem 
-            <span className="text-purple-400 font-semibold"> qualidade, performance e inovação</span> contínua.
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Parcerias estratégicas que garantem{' '}
+            <span className="text-primary font-semibold">qualidade, performance e inovação</span> contínua.
           </p>
         </motion.div>
 
@@ -93,44 +84,44 @@ const GenesisCommercialPartnerships = () => {
               className="group relative"
             >
               {/* Card */}
-              <div className={`relative h-full p-8 rounded-3xl bg-slate-900/70 backdrop-blur-sm border ${partner.borderColor} transition-all duration-500 overflow-hidden`}>
-                {/* Background Glow */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${partner.bgGlow} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+              <div className="relative h-full p-8 rounded-2xl bg-card backdrop-blur-sm border border-border hover:border-primary/30 transition-all duration-300 overflow-hidden">
+                {/* Background Glow on Hover */}
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 
                 {/* Logo */}
                 <motion.div 
-                  whileHover={{ scale: 1.05 }}
+                  whileHover={{ scale: 1.02 }}
                   className="relative mb-6"
                 >
-                  <div className={`absolute inset-0 bg-gradient-to-r ${partner.gradient} rounded-2xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity`} />
-                  <div className="relative bg-white/10 backdrop-blur rounded-2xl p-4 w-fit">
+                  <div className="absolute inset-0 bg-primary/20 rounded-xl blur-xl opacity-0 group-hover:opacity-50 transition-opacity" />
+                  <div className="relative bg-muted/50 backdrop-blur rounded-xl p-4 w-fit border border-border">
                     <img 
                       src={partner.logo} 
                       alt={partner.name} 
-                      className="h-10 w-auto object-contain"
+                      className="h-8 w-auto object-contain"
                     />
                   </div>
                 </motion.div>
 
                 {/* Title */}
-                <h3 className="text-2xl font-bold text-white mb-2">
+                <h3 className="text-xl font-bold text-foreground mb-2">
                   {partner.title}
                 </h3>
-                <p className={`text-sm font-semibold mb-4 bg-gradient-to-r ${partner.gradient} bg-clip-text text-transparent`}>
+                <p className="text-sm font-semibold mb-4 text-primary">
                   {partner.subtitle}
                 </p>
 
                 {/* Description */}
-                <p className="text-slate-400 mb-6 leading-relaxed">
+                <p className="text-muted-foreground mb-6 leading-relaxed text-sm">
                   {partner.description}
                 </p>
 
                 {/* Badge */}
-                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r ${partner.gradient} mb-6`}>
-                  <Sparkles className="w-4 h-4 text-white" />
-                  <span className="text-sm font-bold text-white">{partner.badge}</span>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-bold text-primary">{partner.badge}</span>
                 </div>
-                <p className="text-xs text-slate-500 mb-6">{partner.badgeDesc}</p>
+                <p className="text-xs text-muted-foreground mb-6">{partner.badgeDesc}</p>
 
                 {/* Benefits */}
                 <ul className="space-y-3">
@@ -142,16 +133,16 @@ const GenesisCommercialPartnerships = () => {
                       transition={{ delay: 0.4 + i * 0.1 }}
                       className="flex items-center gap-3"
                     >
-                      <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${partner.gradient} flex items-center justify-center`}>
-                        <CheckCircle2 className="w-3 h-3 text-white" />
+                      <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                        <CheckCircle2 className="w-3 h-3 text-primary-foreground" />
                       </div>
-                      <span className="text-slate-300 text-sm">{benefit}</span>
+                      <span className="text-muted-foreground text-sm">{benefit}</span>
                     </motion.li>
                   ))}
                 </ul>
 
                 {/* Decorative */}
-                <div className={`absolute -top-24 -right-24 w-48 h-48 bg-gradient-to-br ${partner.gradient} opacity-10 blur-3xl rounded-full group-hover:opacity-20 transition-opacity`} />
+                <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary/5 blur-3xl rounded-full group-hover:bg-primary/10 transition-colors" />
               </div>
             </motion.div>
           ))}
@@ -170,8 +161,8 @@ const GenesisCommercialPartnerships = () => {
             { icon: Cloud, text: 'Cloud Enterprise' },
             { icon: Zap, text: '99.9% Uptime' },
           ].map((item, i) => (
-            <div key={i} className="flex items-center gap-2 text-slate-500">
-              <item.icon className="w-5 h-5 text-purple-400" />
+            <div key={i} className="flex items-center gap-2 text-muted-foreground">
+              <item.icon className="w-5 h-5 text-primary" />
               <span className="text-sm font-medium">{item.text}</span>
             </div>
           ))}
