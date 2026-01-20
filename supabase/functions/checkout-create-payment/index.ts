@@ -109,8 +109,7 @@ serve(async (req) => {
       customerId = newCustomer.id;
     }
 
-    // Create AbacatePay billing
-    // AbacatePay expects product price in CENTAVOS and requires minimum of 100 centavos (R$1.00)
+    // AbacatePay expects amount in CENTAVOS and requires minimum of 100 centavos (R$1.00)
     const priceCents = Math.round(body.amountCents);
 
     // Validate minimum amount
@@ -122,58 +121,112 @@ serve(async (req) => {
       );
     }
 
-    const origin = req.headers.get('origin') || 'https://shave-style-pro.lovable.app';
-    const returnUrl = `${origin}/checkout/pending`;
-    const completionUrl = `${origin}/checkout/success`;
+    const origin = req.headers.get('origin') || 'https://www.genesishub.cloud';
 
-    const abacatePayload = {
-      frequency: 'ONE_TIME',
-      methods: [body.paymentMethod],
-      products: [{
-        externalId: `checkout-${Date.now()}`,
-        name: body.description || 'Pagamento',
-        quantity: 1,
-        price: priceCents,
-      }],
-      customer: {
-        name: `${body.customer.firstName} ${body.customer.lastName}`,
-        email: body.customer.email || `${cleanCpf}@checkout.local`,
-        cellphone: `${body.customer.phoneCountryCode}${cleanPhone}`,
-        taxId: cleanCpf,
-      },
-      returnUrl,
-      completionUrl,
-    };
+    let pixBrCode: string | null = null;
+    let pixQrCodeBase64: string | null = null;
+    let abacatepayBillingId: string | null = null;
+    let abacatepayUrl: string | null = null;
 
-    console.log('Calling AbacatePay API...');
-    
-    const abacateResponse = await fetch('https://api.abacatepay.com/v1/billing/create', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${ABACATEPAY_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(abacatePayload),
-    });
+    if (body.paymentMethod === 'PIX') {
+      // For PIX, use the dedicated pixQrCode/create endpoint
+      console.log('Creating PIX QR Code via pixQrCode/create...');
+      
+      const pixPayload = {
+        amount: priceCents, // Amount in centavos
+        expiresIn: 600, // 10 minutes in seconds
+        description: body.description || 'Pagamento PIX',
+        customer: {
+          name: `${body.customer.firstName} ${body.customer.lastName}`,
+          email: body.customer.email || `${cleanCpf}@checkout.local`,
+          cellphone: `${body.customer.phoneCountryCode}${cleanPhone}`,
+          taxId: cleanCpf,
+        },
+      };
 
-    const abacateData = await abacateResponse.json();
-    console.log('AbacatePay response:', { status: abacateResponse.status, data: abacateData });
+      const pixResponse = await fetch('https://api.abacatepay.com/v1/pixQrCode/create', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${ABACATEPAY_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(pixPayload),
+      });
 
-    if (!abacateResponse.ok) {
-      console.error('AbacatePay error:', abacateData);
-      const status = abacateResponse.status >= 400 && abacateResponse.status < 500 ? 400 : 502;
-      return new Response(
-        JSON.stringify({ error: abacateData.error || 'Payment gateway error' }),
-        { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      const pixData = await pixResponse.json();
+      console.log('AbacatePay PIX response:', { status: pixResponse.status, data: pixData });
+
+      if (!pixResponse.ok) {
+        console.error('AbacatePay PIX error:', pixData);
+        return new Response(
+          JSON.stringify({ error: pixData.error || 'Erro ao gerar QR Code PIX' }),
+          { status: pixResponse.status >= 400 && pixResponse.status < 500 ? 400 : 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      abacatepayBillingId = pixData.data?.id || null;
+      pixBrCode = pixData.data?.brCode || null;
+      // Handle both brCodeBase64 and qrCodeBase64 field names
+      const rawBase64 = pixData.data?.brCodeBase64 || pixData.data?.qrCodeBase64 || null;
+      // Remove data:image prefix if present, keep only base64 string
+      if (rawBase64 && rawBase64.startsWith('data:image')) {
+        pixQrCodeBase64 = rawBase64.split(',')[1] || rawBase64;
+      } else {
+        pixQrCodeBase64 = rawBase64;
+      }
+      
+    } else {
+      // For CARD, use the billing/create endpoint
+      console.log('Creating billing for CARD payment...');
+      
+      const billingPayload = {
+        frequency: 'ONE_TIME',
+        methods: ['CARD'],
+        products: [{
+          externalId: `checkout-${Date.now()}`,
+          name: body.description || 'Pagamento',
+          quantity: 1,
+          price: priceCents,
+        }],
+        customer: {
+          name: `${body.customer.firstName} ${body.customer.lastName}`,
+          email: body.customer.email || `${cleanCpf}@checkout.local`,
+          cellphone: `${body.customer.phoneCountryCode}${cleanPhone}`,
+          taxId: cleanCpf,
+        },
+        returnUrl: `${origin}/checkout/pending`,
+        completionUrl: `${origin}/checkout/success`,
+      };
+
+      const billingResponse = await fetch('https://api.abacatepay.com/v1/billing/create', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${ABACATEPAY_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(billingPayload),
+      });
+
+      const billingData = await billingResponse.json();
+      console.log('AbacatePay billing response:', { status: billingResponse.status, data: billingData });
+
+      if (!billingResponse.ok) {
+        console.error('AbacatePay billing error:', billingData);
+        return new Response(
+          JSON.stringify({ error: billingData.error || 'Erro ao criar cobrança' }),
+          { status: billingResponse.status >= 400 && billingResponse.status < 500 ? 400 : 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      abacatepayBillingId = billingData.data?.id || null;
+      abacatepayUrl = billingData.data?.url || null;
     }
 
     // Calculate expiration (10 minutes from now)
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
-    // Generate unique payment code using AbacatePay billing ID or fallback
-    const billingId = abacateData.data?.id || '';
-    const paymentCode = billingId || `PAY-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    // Generate unique payment code
+    const paymentCode = abacatepayBillingId || `PAY-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
     // Create payment record
     const { data: payment, error: paymentError } = await supabase
@@ -184,16 +237,16 @@ serve(async (req) => {
         amount_cents: priceCents,
         description: body.description,
         payment_method: body.paymentMethod,
-        abacatepay_billing_id: billingId,
-        abacatepay_url: abacateData.data?.url,
-        pix_br_code: abacateData.data?.pix?.brCode,
-        pix_qr_code_base64: abacateData.data?.pix?.qrCodeBase64,
+        abacatepay_billing_id: abacatepayBillingId,
+        abacatepay_url: abacatepayUrl,
+        pix_br_code: pixBrCode,
+        pix_qr_code_base64: pixQrCodeBase64,
         status: 'pending',
         expires_at: expiresAt,
         metadata: body.metadata,
         installments: body.installments,
       })
-      .select('payment_code, pix_br_code, pix_qr_code_base64, expires_at, abacatepay_url')
+      .select('id, payment_code, pix_br_code, pix_qr_code_base64, expires_at, abacatepay_url')
       .single();
 
     if (paymentError || !payment) {
@@ -206,13 +259,13 @@ serve(async (req) => {
 
     // Log payment creation event
     await supabase.from('checkout_payment_events').insert({
-      payment_id: (await supabase.from('checkout_payments').select('id').eq('payment_code', payment.payment_code).single()).data?.id,
+      payment_id: payment.id,
       event_type: 'payment_created',
       event_data: { paymentMethod: body.paymentMethod, amountCents: body.amountCents },
       source: 'api',
     });
 
-    console.log('Payment created successfully:', payment.payment_code);
+    console.log('Payment created successfully:', payment.payment_code, { pixBrCode: !!pixBrCode, pixQrCode: !!pixQrCodeBase64 });
 
     return new Response(
       JSON.stringify({

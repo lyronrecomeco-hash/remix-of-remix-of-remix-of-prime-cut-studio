@@ -108,7 +108,7 @@ export default function CheckoutPage() {
       });
 
       if (response.success && response.paymentCode) {
-        navigate(`/checkout/payment-code/${response.paymentCode}`);
+        navigate(`/checkout/${response.paymentCode}`);
       } else {
         toast.error(response.error || 'Erro ao processar pagamento');
       }

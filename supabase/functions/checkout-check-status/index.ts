@@ -32,7 +32,7 @@ serve(async (req) => {
     // Get payment from database
     const { data: payment, error: paymentError } = await supabase
       .from('checkout_payments')
-      .select('id, status, paid_at, expires_at, abacatepay_billing_id')
+      .select('id, status, paid_at, expires_at, abacatepay_billing_id, payment_method')
       .eq('payment_code', paymentCode)
       .single();
 
@@ -76,29 +76,47 @@ serve(async (req) => {
       );
     }
 
-    // Check with AbacatePay API
+    // Check with AbacatePay API using the correct endpoint for PIX
     const ABACATEPAY_API_KEY = Deno.env.get('ABACATEPAY_API_KEY');
     if (ABACATEPAY_API_KEY && payment.abacatepay_billing_id) {
       try {
-        console.log('Checking AbacatePay status for billing:', payment.abacatepay_billing_id);
+        console.log('Checking AbacatePay status for:', payment.abacatepay_billing_id);
         
-        const abacateResponse = await fetch(
-          `https://api.abacatepay.com/v1/billing/${payment.abacatepay_billing_id}`,
-          {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${ABACATEPAY_API_KEY}`,
-              'Content-Type': 'application/json',
-            },
-          }
-        );
+        // Use pixQrCode/check endpoint for PIX payments
+        let checkUrl = '';
+        if (payment.payment_method === 'PIX') {
+          checkUrl = `https://api.abacatepay.com/v1/pixQrCode/check?id=${payment.abacatepay_billing_id}`;
+        } else {
+          // For billing-based payments, try list endpoint to find status
+          checkUrl = `https://api.abacatepay.com/v1/billing/list`;
+        }
+        
+        const abacateResponse = await fetch(checkUrl, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${ABACATEPAY_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+        });
 
         if (abacateResponse.ok) {
           const abacateData = await abacateResponse.json();
           console.log('AbacatePay status response:', abacateData);
 
-          // Check if paid
-          if (abacateData.data?.status === 'PAID' || abacateData.data?.status === 'COMPLETED') {
+          // Check if paid - handle both direct check response and list response
+          let isPaid = false;
+          
+          if (payment.payment_method === 'PIX') {
+            // PIX check response
+            isPaid = abacateData.data?.status === 'PAID' || abacateData.data?.status === 'COMPLETED';
+          } else {
+            // For billing list, find the matching billing
+            const billings = abacateData.data || [];
+            const matchingBilling = billings.find((b: any) => b.id === payment.abacatepay_billing_id);
+            isPaid = matchingBilling?.status === 'PAID' || matchingBilling?.status === 'COMPLETED';
+          }
+
+          if (isPaid) {
             const paidAt = new Date().toISOString();
             
             await supabase
@@ -112,7 +130,7 @@ serve(async (req) => {
             await supabase.from('checkout_payment_events').insert({
               payment_id: payment.id,
               event_type: 'payment_confirmed',
-              event_data: { source: 'polling', abacateStatus: abacateData.data?.status },
+              event_data: { source: 'polling' },
               source: 'api',
             });
 
@@ -122,6 +140,9 @@ serve(async (req) => {
               { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
           }
+        } else {
+          const errorData = await abacateResponse.json();
+          console.log('AbacatePay check failed:', errorData);
         }
       } catch (abacateError) {
         console.error('Error checking AbacatePay:', abacateError);
