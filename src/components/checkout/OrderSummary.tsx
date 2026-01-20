@@ -1,11 +1,7 @@
-/**
- * CHECKOUT SYSTEM - Order Summary Component
- * Resumo do pedido com valor total
- */
-
 import React from 'react';
 import { ShoppingBag, Tag, Shield } from 'lucide-react';
 import { formatCurrency } from '@/lib/checkout/validators';
+import { calculateCheckoutPricing } from '@/lib/checkout/pricing';
 import { cn } from '@/lib/utils';
 
 interface OrderSummaryProps {
@@ -23,17 +19,11 @@ export function OrderSummary({
   paymentMethod = 'PIX',
   className,
 }: OrderSummaryProps) {
-  // Calcular valores com juros para cartão
-  const hasInterest = paymentMethod === 'CARD' && installments > 3;
-  const interestRate = hasInterest ? 0.0199 : 0;
-  const totalWithInterest = hasInterest
-    ? Math.ceil(amountCents * Math.pow(1 + interestRate, installments))
-    : amountCents;
-  const installmentValue = Math.ceil(totalWithInterest / installments);
-
-  // Desconto PIX (exemplo: 5%)
-  const pixDiscount = paymentMethod === 'PIX' ? Math.ceil(amountCents * 0.05) : 0;
-  const finalAmount = paymentMethod === 'PIX' ? amountCents - pixDiscount : totalWithInterest;
+  const pricing = calculateCheckoutPricing({
+    baseAmountCents: amountCents,
+    paymentMethod,
+    installments,
+  });
 
   return (
     <div className={cn(

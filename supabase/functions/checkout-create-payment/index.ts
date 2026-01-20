@@ -110,19 +110,18 @@ serve(async (req) => {
     }
 
     // Create AbacatePay billing
-    // AbacatePay requires minimum of 100 centavos (R$1.00) 
-    // The price field expects the value in REAIS (not centavos)
-    const priceInReais = body.amountCents / 100;
-    
+    // AbacatePay expects product price in CENTAVOS and requires minimum of 100 centavos (R$1.00)
+    const priceCents = Math.round(body.amountCents);
+
     // Validate minimum amount
-    if (priceInReais < 1) {
-      console.error('Amount too low:', priceInReais);
+    if (!Number.isFinite(priceCents) || priceCents < 100) {
+      console.error('Amount too low:', body.amountCents);
       return new Response(
         JSON.stringify({ error: 'Valor mínimo é R$ 1,00' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    
+
     const abacatePayload = {
       frequency: 'ONE_TIME',
       methods: [body.paymentMethod],
@@ -130,7 +129,7 @@ serve(async (req) => {
         externalId: `checkout-${Date.now()}`,
         name: body.description || 'Pagamento',
         quantity: 1,
-        price: priceInReais,
+        price: priceCents,
       }],
       customer: {
         name: `${body.customer.firstName} ${body.customer.lastName}`,
@@ -157,9 +156,10 @@ serve(async (req) => {
 
     if (!abacateResponse.ok) {
       console.error('AbacatePay error:', abacateData);
+      const status = abacateResponse.status >= 400 && abacateResponse.status < 500 ? 400 : 502;
       return new Response(
         JSON.stringify({ error: abacateData.error || 'Payment gateway error' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -171,7 +171,7 @@ serve(async (req) => {
       .from('checkout_payments')
       .insert({
         customer_id: customerId,
-        amount_cents: body.amountCents,
+        amount_cents: priceCents,
         description: body.description,
         payment_method: body.paymentMethod,
         abacatepay_billing_id: abacateData.data?.id,
