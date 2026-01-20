@@ -67,11 +67,9 @@ export function InstallmentSelector({
             disabled && "opacity-50 cursor-not-allowed"
           )}
         >
-          <span>
-            {selectedOption.installments}x de{' '}
-            <span className="font-semibold">
-              {formatCurrency(selectedOption.installmentValue)}
-            </span>{' '}
+          <span className="flex flex-wrap items-center gap-x-1 gap-y-0.5 pr-2">
+            <span>{selectedOption.installments}x de</span>
+            <span className="font-semibold">{formatCurrency(selectedOption.installmentValue)}</span>
             <span className="text-white/50">{selectedOption.interestLabel}</span>
           </span>
           <ChevronDown
@@ -134,7 +132,7 @@ export function InstallmentSelector({
                       </span>
                     </div>
                   </div>
-                  <span className="text-sm text-white/50">
+                  <span className="text-sm text-white/50 hidden sm:block">
                     Total: {formatCurrency(option.total)}
                   </span>
                 </button>
