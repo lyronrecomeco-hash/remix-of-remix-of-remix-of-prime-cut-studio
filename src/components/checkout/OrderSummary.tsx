@@ -48,21 +48,21 @@ export function OrderSummary({
         </div>
 
         {/* Desconto PIX */}
-        {pixDiscount > 0 && (
+        {pricing.pixDiscountCents > 0 && (
           <div className="flex items-center justify-between text-emerald-400">
             <span className="flex items-center gap-2">
               <Tag className="w-4 h-4" />
               Desconto PIX (5%)
             </span>
-            <span>- {formatCurrency(pixDiscount)}</span>
+            <span>- {formatCurrency(pricing.pixDiscountCents)}</span>
           </div>
         )}
 
         {/* Juros cartão */}
-        {hasInterest && (
+        {pricing.hasInterest && (
           <div className="flex items-center justify-between text-yellow-400">
             <span>Juros ({installments}x)</span>
-            <span>+ {formatCurrency(totalWithInterest - amountCents)}</span>
+            <span>+ {formatCurrency(pricing.totalWithInterestCents - amountCents)}</span>
           </div>
         )}
       </div>
@@ -73,21 +73,21 @@ export function OrderSummary({
           <span className="text-lg font-semibold text-white">Total</span>
           <div className="text-right">
             <span className="text-2xl font-bold text-emerald-400">
-              {formatCurrency(finalAmount)}
+              {formatCurrency(pricing.finalAmountCents)}
             </span>
             {paymentMethod === 'CARD' && installments > 1 && (
               <p className="text-xs text-white/50">
-                ou {installments}x de {formatCurrency(installmentValue)}
+                ou {installments}x de {formatCurrency(pricing.installmentValueCents)}
               </p>
             )}
           </div>
         </div>
 
-        {paymentMethod === 'PIX' && (
+        {paymentMethod === 'PIX' && pricing.pixDiscountCents > 0 && (
           <div className="flex items-center gap-2 mt-3 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
             <Tag className="w-4 h-4 text-emerald-400" />
             <span className="text-xs text-emerald-400">
-              Você está economizando {formatCurrency(pixDiscount)} pagando com PIX!
+              Você está economizando {formatCurrency(pricing.pixDiscountCents)} pagando com PIX!
             </span>
           </div>
         )}
