@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Menu, X, Bot, ArrowRight } from 'lucide-react';
+import { Menu, X, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -70,40 +70,15 @@ const GenesisCommercialHeader = () => {
             ))}
           </nav>
 
-          {/* Separator */}
-          <div className="w-px h-6 bg-border mx-1 hidden md:block" />
-
-          {/* CTA Buttons */}
-          <div className="flex items-center gap-2 pl-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="hidden sm:inline-flex text-muted-foreground hover:text-foreground text-sm px-3"
-              asChild
-            >
-              <Link to="/genesis/login">Entrar</Link>
-            </Button>
-            <Button 
-              size="sm" 
-              className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md shadow-primary/20 px-4 text-sm font-semibold rounded-full"
-              asChild
-            >
-              <Link to="/genesis" className="flex items-center gap-1.5">
-                <span>Assinar</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </Button>
-
-            {/* Mobile Menu Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden text-foreground w-8 h-8"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-            </Button>
-          </div>
+          {/* Mobile Menu Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden text-foreground w-8 h-8 ml-2"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          </Button>
         </div>
       </motion.header>
 
@@ -126,14 +101,6 @@ const GenesisCommercialHeader = () => {
                   {link.label}
                 </button>
               ))}
-              <div className="pt-3 border-t border-border mt-2">
-                <Button asChild className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl">
-                  <Link to="/genesis" className="flex items-center justify-center gap-2">
-                    Assinar Agora
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </Button>
-              </div>
             </nav>
           </motion.div>
         )}
