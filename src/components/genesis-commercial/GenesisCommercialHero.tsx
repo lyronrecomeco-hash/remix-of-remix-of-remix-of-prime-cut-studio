@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { 
-  ArrowRight, Sparkles, Layers, FileText, 
-  BarChart3, Users, DollarSign, CheckCircle2, Gift, Home, Star
-} from 'lucide-react';
+import { ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import dashboardPreview from '@/assets/genesis-dashboard-preview.png';
 
 const GenesisCommercialHero = () => {
   const [typedText, setTypedText] = useState('');
@@ -26,23 +24,16 @@ const GenesisCommercialHero = () => {
 
   return (
     <section id="inicio" className="relative min-h-screen flex flex-col overflow-hidden bg-background">
-      {/* Animated Background - Genesis Identity */}
+      {/* Animated Background */}
       <div className="absolute inset-0">
-        {/* Primary Blue Glow */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.12),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,hsl(var(--primary)/0.06),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.08),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,hsl(var(--primary)/0.04),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(hsl(var(--primary)/0.015)_1px,transparent_1px),linear-gradient(90deg,hsl(var(--primary)/0.015)_1px,transparent_1px)] bg-[size:60px_60px]" />
         
-        {/* Subtle Grid Pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(hsl(var(--primary)/0.02)_1px,transparent_1px),linear-gradient(90deg,hsl(var(--primary)/0.02)_1px,transparent_1px)] bg-[size:60px_60px]" />
-        
-        {/* Floating Orbs - Blue Theme */}
         <motion.div 
-          animate={{ 
-            y: [0, -20, 0],
-            scale: [1, 1.05, 1],
-          }}
+          animate={{ y: [0, -20, 0], scale: [1, 1.05, 1] }}
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-32 right-1/4 w-[500px] h-[500px] bg-gradient-to-br from-primary/10 to-primary/5 rounded-full blur-[100px]" 
+          className="absolute top-32 right-1/4 w-[500px] h-[500px] bg-gradient-to-br from-primary/8 to-primary/3 rounded-full blur-[100px]" 
         />
       </div>
 
@@ -66,12 +57,12 @@ const GenesisCommercialHero = () => {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
             </span>
-            <span className="text-muted-foreground">Assine para desbloquear todos os recursos e começar a fechar negócios</span>
+            <span className="text-muted-foreground">Assine e comece a fechar negócios hoje</span>
           </motion.div>
 
           {/* Main Headline */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-5 leading-[1.1] tracking-tight">
-            <span className="text-foreground">Seu Hub de Negócios Inteligente</span>
+            <span className="text-foreground">Seu Hub de Negócios</span>
             <br />
             <span className="text-primary">
               {typedText}
@@ -145,7 +136,7 @@ const GenesisCommercialHero = () => {
           </motion.div>
         </motion.div>
 
-        {/* Integrated Panel Preview - Genesis-IA Dashboard */}
+        {/* Real Dashboard Preview Image */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -153,114 +144,20 @@ const GenesisCommercialHero = () => {
           className="relative max-w-5xl mx-auto w-full"
         >
           {/* Glow Effect */}
-          <div className="absolute -inset-4 bg-gradient-to-r from-primary/15 via-primary/5 to-primary/15 rounded-3xl blur-2xl" />
+          <div className="absolute -inset-4 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-3xl blur-2xl" />
           
-          {/* Panel */}
-          <div className="relative bg-card/95 backdrop-blur-xl rounded-2xl border border-border shadow-2xl overflow-hidden">
-            {/* Header Bar */}
-            <div className="flex items-center gap-3 px-4 py-3 bg-muted/50 border-b border-border">
-              <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                <div className="w-3 h-3 rounded-full bg-green-500/80" />
-              </div>
-              <div className="flex-1 flex justify-center">
-                <span className="text-xs text-muted-foreground font-medium">Genesis-IA — Hub de Negócios</span>
-              </div>
-            </div>
-
-            <div className="p-6">
-              {/* Greeting */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                className="text-center mb-6"
-              >
-                <h2 className="text-2xl font-bold text-foreground mb-1">Bom dia, Usuário! 👋</h2>
-                <p className="text-sm text-muted-foreground">Crie, evolua e gerencie suas ideias em um só lugar.</p>
-              </motion.div>
-
-              {/* Tool Cards Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
-                {[
-                  { icon: FileText, title: 'Propostas', description: 'Gere propostas personalizadas com IA', color: 'from-blue-500/20 to-blue-600/10' },
-                  { icon: Layers, title: 'Criar Projetos', description: 'Crie sites para seus clientes', color: 'from-purple-500/20 to-purple-600/10' },
-                  { icon: Star, title: 'Propostas Aceitas', description: 'Acompanhe o progresso', color: 'from-emerald-500/20 to-emerald-600/10' },
-                ].map((tool, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.7 + i * 0.1 }}
-                    className={`bg-gradient-to-br ${tool.color} rounded-xl p-4 border border-border/50 hover:border-primary/30 transition-all cursor-pointer group`}
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
-                      <tool.icon className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="font-semibold text-foreground text-sm">{tool.title}</div>
-                    <div className="text-xs text-muted-foreground mt-1">{tool.description}</div>
-                  </motion.div>
-                ))}
-              </div>
-
-              {/* Bottom Carousel Preview */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.0 }}
-                className="flex gap-3 overflow-hidden"
-              >
-                {[
-                  { icon: Layers, title: 'Criar Projetos' },
-                  { icon: DollarSign, title: 'Financeiro' },
-                  { icon: Gift, title: 'Promo' },
-                  { icon: FileText, title: 'Contratos' },
-                  { icon: Users, title: 'Usuários' },
-                ].map((item, i) => (
-                  <div
-                    key={i}
-                    className="flex-shrink-0 bg-muted/40 rounded-xl px-4 py-3 border border-border flex items-center gap-3 hover:border-primary/30 transition-colors"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <item.icon className="w-4 h-4 text-primary" />
-                    </div>
-                    <span className="text-sm font-medium text-foreground">{item.title}</span>
-                  </div>
-                ))}
-              </motion.div>
-            </div>
-
-            {/* Bottom Dock */}
-            <div className="flex items-center justify-center gap-2 px-6 py-4 bg-muted/30 border-t border-border">
-              {[
-                { icon: Home, active: true },
-                { icon: Layers },
-                { icon: FileText },
-                { icon: Gift },
-                { icon: Users },
-                { icon: BarChart3 },
-              ].map((item, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.1 + i * 0.05 }}
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                    item.active 
-                      ? 'bg-primary text-primary-foreground shadow-md shadow-primary/30' 
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                  }`}
-                >
-                  <item.icon className="w-5 h-5" />
-                </motion.div>
-              ))}
-            </div>
+          {/* Dashboard Image */}
+          <div className="relative rounded-2xl border border-border shadow-2xl overflow-hidden">
+            <img 
+              src={dashboardPreview} 
+              alt="Genesis-IA Dashboard" 
+              className="w-full h-auto"
+            />
           </div>
         </motion.div>
       </div>
 
-      {/* Stats Row at Bottom */}
+      {/* Stats Row */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

@@ -1,5 +1,6 @@
 import GenesisCommercialHeader from '@/components/genesis-commercial/GenesisCommercialHeader';
 import GenesisCommercialHero from '@/components/genesis-commercial/GenesisCommercialHero';
+import GenesisCommercialRadar from '@/components/genesis-commercial/GenesisCommercialRadar';
 import GenesisCommercialFeatures from '@/components/genesis-commercial/GenesisCommercialFeatures';
 import GenesisCommercialPartnerships from '@/components/genesis-commercial/GenesisCommercialPartnerships';
 import GenesisCommercialPricing from '@/components/genesis-commercial/GenesisCommercialPricing';
@@ -11,6 +12,7 @@ const GenesisCommercial = () => {
     <div className="min-h-screen bg-background overflow-x-hidden">
       <GenesisCommercialHeader />
       <GenesisCommercialHero />
+      <GenesisCommercialRadar />
       <GenesisCommercialFeatures />
       <GenesisCommercialPartnerships />
       <GenesisCommercialPricing />

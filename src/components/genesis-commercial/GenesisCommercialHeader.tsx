@@ -37,22 +37,17 @@ const GenesisCommercialHeader = () => {
       <motion.header
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        className={cn(
-          "fixed top-4 left-1/2 -translate-x-1/2 z-50 transition-all duration-500",
-          "w-auto max-w-3xl"
-        )}
+        className="fixed top-4 left-0 right-0 z-50 flex justify-center px-4"
       >
-        {/* Mac-style floating menu */}
+        {/* Mac-style floating menu - Centered */}
         <div className={cn(
-          "flex items-center justify-center gap-1 px-2 py-2 rounded-full transition-all duration-300",
+          "flex items-center gap-1 px-2 py-2 rounded-full transition-all duration-300",
           "bg-card/80 backdrop-blur-xl border border-border/50 shadow-lg shadow-black/20"
         )}>
-          {/* Logo - compact */}
+          {/* Logo */}
           <Link to="/" className="flex items-center gap-2 px-3 group">
-            <div className="relative">
-              <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                <Bot className="w-4 h-4 text-primary" />
-              </div>
+            <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+              <Bot className="w-4 h-4 text-primary" />
             </div>
             <span className="text-sm font-bold text-foreground hidden sm:block">
               Genesis
@@ -62,7 +57,7 @@ const GenesisCommercialHeader = () => {
           {/* Separator */}
           <div className="w-px h-6 bg-border mx-1 hidden md:block" />
 
-          {/* Nav Links - Mac style */}
+          {/* Nav Links */}
           <nav className="hidden md:flex items-center">
             {navLinks.map((link) => (
               <button
