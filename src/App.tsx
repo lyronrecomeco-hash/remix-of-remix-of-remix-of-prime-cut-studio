@@ -69,6 +69,12 @@ const StarpetshopPage = lazy(() => import("./pages/starpetshop"));
 const PortfolioPage = lazy(() => import("./pages/portfolio/[slug]"));
 const ContractSignature = lazy(() => import("./pages/ContractSignature"));
 const PromoPage = lazy(() => import("./pages/PromoPage"));
+// Checkout Pages
+const CheckoutPage = lazy(() => import("./pages/checkout/CheckoutPage"));
+const PaymentCodePage = lazy(() => import("./pages/checkout/PaymentCodePage"));
+const CheckoutSuccessPage = lazy(() => import("./pages/checkout/SuccessPage"));
+const CheckoutPendingPage = lazy(() => import("./pages/checkout/PendingPage"));
+const CheckoutErrorPage = lazy(() => import("./pages/checkout/ErrorPage"));
 
 // QueryClient com retry logic e cache otimizado
 const queryClient = new QueryClient({
@@ -284,6 +290,12 @@ const AppContent = () => {
             <Route path="/contratos/assinar/:hash" element={<ContractSignature />} />
             {/* Promo Page */}
             <Route path="/promo/:codigo" element={<PromoPage />} />
+            {/* Checkout Routes */}
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/checkout/:code" element={<PaymentCodePage />} />
+            <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
+            <Route path="/checkout/pending" element={<CheckoutPendingPage />} />
+            <Route path="/checkout/error" element={<CheckoutErrorPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
