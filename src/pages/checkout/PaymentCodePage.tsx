@@ -1,17 +1,16 @@
 /**
  * CHECKOUT SYSTEM - Payment Code Page
- * Página de pagamento PIX com QR Code e timer
+ * Página de pagamento PIX - Layout single-column profissional
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Loader2, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Loader2, CheckCircle2, RefreshCw, Shield, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { CheckoutLayout } from '@/components/checkout/CheckoutLayout';
 import { PixDisplay } from '@/components/checkout/PixDisplay';
 import { PixTimer } from '@/components/checkout/PixTimer';
-import { OrderSummary } from '@/components/checkout/OrderSummary';
 
 import { getPaymentByCode, checkPaymentStatus, regeneratePayment } from '@/lib/checkout/api';
 import { formatCurrency } from '@/lib/checkout/validators';
@@ -76,7 +75,7 @@ export default function PaymentCodePage() {
       } else if (status.status === 'expired') {
         setIsExpired(true);
       }
-    }, 5000); // Check every 5 seconds
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [code, isPaid, isExpired, payment, navigate]);
@@ -145,106 +144,107 @@ export default function PaymentCodePage() {
 
   return (
     <CheckoutLayout>
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-5 gap-8">
-          {/* PIX Display Column */}
-          <div className="lg:col-span-3">
-            <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-              {/* Header */}
-              <div className="text-center mb-6">
-                <h1 className="text-xl font-bold text-white mb-2">
-                  Pagamento via PIX
-                </h1>
-                <p className="text-white/60">
-                  Escaneie o QR Code ou copie o código para pagar
+      <div className="max-w-lg mx-auto px-4 py-6">
+        {/* Single column layout */}
+        <div className="space-y-5">
+          {/* Header Card with Amount */}
+          <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/10 to-white/5 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                  <CreditCard className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-xs text-white/50 uppercase tracking-wide">Pagamento PIX</p>
+                  <p className="text-sm text-white/80 font-medium">
+                    {payment.description || 'Pagamento'}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-white/50">Total</p>
+                <p className="text-xl font-bold text-emerald-400">
+                  {formatCurrency(payment.amountCents)}
                 </p>
               </div>
-
-              {/* Timer */}
-              {payment.expiresAt && !isExpired && (
-                <div className="mb-6">
-                  <PixTimer
-                    expiresAt={payment.expiresAt}
-                    onExpire={handleExpire}
-                  />
-                </div>
-              )}
-
-              {/* Expired state */}
-              {isExpired ? (
-                <div className="text-center py-8">
-                  <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
-                    <RefreshCw className="w-8 h-8 text-red-400" />
-                  </div>
-                  <h2 className="text-lg font-semibold text-white mb-2">
-                    PIX Expirado
-                  </h2>
-                  <p className="text-white/60 mb-6">
-                    O tempo para pagamento terminou. Gere um novo código para continuar.
-                  </p>
-                  <button
-                    onClick={handleRegenerate}
-                    disabled={isRegenerating}
-                    className={cn(
-                      "px-6 py-3 rounded-xl font-semibold text-white",
-                      "bg-gradient-to-r from-emerald-500 to-emerald-600",
-                      "hover:from-emerald-600 hover:to-emerald-700",
-                      "transition-all flex items-center gap-2 mx-auto",
-                      "disabled:opacity-50"
-                    )}
-                  >
-                    {isRegenerating ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        Gerando...
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw className="w-5 h-5" />
-                        Gerar Novo PIX
-                      </>
-                    )}
-                  </button>
-                </div>
-              ) : (
-                /* PIX QR Code and code */
-                payment.pixBrCode && (
-                  <PixDisplay
-                    brCode={payment.pixBrCode}
-                    qrCodeBase64={payment.pixQrCodeBase64 || undefined}
-                  />
-                )
-              )}
-
-              {/* Payment status indicator */}
-              {!isExpired && (
-                <div className="mt-6 pt-6 border-t border-white/10">
-                  <div className="flex items-center justify-center gap-3 text-white/60">
-                    <Loader2 className="w-4 h-4 animate-spin text-emerald-500" />
-                    <span className="text-sm">Aguardando confirmação do pagamento...</span>
-                  </div>
-                </div>
-              )}
             </div>
+
+            {/* Timer integrated in header */}
+            {payment.expiresAt && !isExpired && (
+              <PixTimer
+                expiresAt={payment.expiresAt}
+                onExpire={handleExpire}
+              />
+            )}
           </div>
 
-          {/* Summary Column */}
-          <div className="lg:col-span-2">
-            <div className="lg:sticky lg:top-8 space-y-4">
-              <OrderSummary
-                description={payment.description || 'Pagamento'}
-                amountCents={payment.amountCents}
-                paymentMethod="PIX"
-              />
-
-              {/* Payment Code */}
-              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/60">Código do pedido</span>
-                  <span className="font-mono text-sm text-white">{payment.paymentCode}</span>
+          {/* PIX Content */}
+          <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+            {isExpired ? (
+              /* Expired state */
+              <div className="text-center py-6">
+                <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+                  <RefreshCw className="w-8 h-8 text-red-400" />
                 </div>
+                <h2 className="text-lg font-semibold text-white mb-2">
+                  PIX Expirado
+                </h2>
+                <p className="text-white/60 mb-6 text-sm">
+                  O tempo para pagamento terminou. Gere um novo código para continuar.
+                </p>
+                <button
+                  onClick={handleRegenerate}
+                  disabled={isRegenerating}
+                  className={cn(
+                    "px-6 py-3 rounded-xl font-semibold text-white w-full",
+                    "bg-gradient-to-r from-emerald-500 to-emerald-600",
+                    "hover:from-emerald-600 hover:to-emerald-700",
+                    "transition-all flex items-center justify-center gap-2",
+                    "disabled:opacity-50"
+                  )}
+                >
+                  {isRegenerating ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Gerando...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-5 h-5" />
+                      Gerar Novo PIX
+                    </>
+                  )}
+                </button>
               </div>
+            ) : (
+              /* PIX QR Code and code */
+              payment.pixBrCode && (
+                <PixDisplay
+                  brCode={payment.pixBrCode}
+                  qrCodeBase64={payment.pixQrCodeBase64 || undefined}
+                />
+              )
+            )}
+          </div>
+
+          {/* Payment status indicator */}
+          {!isExpired && (
+            <div className="flex items-center justify-center gap-3 py-3">
+              <div className="relative">
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping absolute" />
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+              </div>
+              <span className="text-sm text-white/60">Aguardando pagamento...</span>
             </div>
+          )}
+
+          {/* Order code footer */}
+          <div className="flex items-center justify-between text-xs text-white/40 px-1">
+            <div className="flex items-center gap-1.5">
+              <Shield className="w-3.5 h-3.5 text-emerald-500" />
+              <span>Transação segura</span>
+            </div>
+            <span className="font-mono">{payment.paymentCode}</span>
           </div>
         </div>
       </div>
