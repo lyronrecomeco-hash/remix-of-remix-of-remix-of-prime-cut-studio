@@ -9,6 +9,7 @@ import { Loader2, ArrowRight, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { CheckoutLayout } from '@/components/checkout/CheckoutLayout';
+import { CheckoutCountdownBar } from '@/components/checkout/CheckoutCountdownBar';
 import { PhoneInput } from '@/components/checkout/PhoneInput';
 import { CPFInput } from '@/components/checkout/CPFInput';
 import { PaymentMethodSelector } from '@/components/checkout/PaymentMethodSelector';
@@ -114,7 +115,15 @@ export default function CheckoutPage() {
 
   return (
     <CheckoutLayout>
-      <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+      {/* Countdown Bar - Fixed at top */}
+      <CheckoutCountdownBar 
+        defaultMinutes={10} 
+        onExpire={() => {
+          toast.error('O tempo da oferta expirou!');
+        }}
+      />
+      
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-8 pt-14 sm:pt-16">
         {/* Mobile-first Alert */}
         <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20">
           <div className="flex items-start gap-3">

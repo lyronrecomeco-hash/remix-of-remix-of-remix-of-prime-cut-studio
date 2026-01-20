@@ -110,6 +110,19 @@ serve(async (req) => {
     }
 
     // Create AbacatePay billing
+    // AbacatePay requires minimum of 100 centavos (R$1.00) 
+    // The price field expects the value in REAIS (not centavos)
+    const priceInReais = body.amountCents / 100;
+    
+    // Validate minimum amount
+    if (priceInReais < 1) {
+      console.error('Amount too low:', priceInReais);
+      return new Response(
+        JSON.stringify({ error: 'Valor mínimo é R$ 1,00' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     const abacatePayload = {
       frequency: 'ONE_TIME',
       methods: [body.paymentMethod],
@@ -117,7 +130,7 @@ serve(async (req) => {
         externalId: `checkout-${Date.now()}`,
         name: body.description || 'Pagamento',
         quantity: 1,
-        price: body.amountCents / 100, // AbacatePay uses reais, not cents
+        price: priceInReais,
       }],
       customer: {
         name: `${body.customer.firstName} ${body.customer.lastName}`,
