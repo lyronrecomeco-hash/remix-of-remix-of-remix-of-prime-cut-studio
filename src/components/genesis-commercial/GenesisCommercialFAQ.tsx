@@ -4,28 +4,32 @@ import { ChevronDown, HelpCircle } from 'lucide-react';
 
 const faqs = [
   {
-    question: 'O que é um SaaS e como a Genesis IA funciona?',
-    answer: 'A Genesis IA é uma plataforma completa de automação para WhatsApp. Com ela, você pode criar chatbots inteligentes, automações de vendas e atendimento 24/7 usando nossa IA avançada chamada Luna. Tudo funciona na nuvem, sem necessidade de instalação.',
+    question: 'O que é a Genesis-IA?',
+    answer: 'A Genesis-IA é um hub completo de negócios que permite criar sites personalizados, gerar propostas com IA, gerenciar contratos e acompanhar suas finanças — tudo em uma única plataforma intuitiva.',
   },
   {
-    question: 'Por que a Genesis IA é diferente?',
-    answer: 'Diferente de outras plataformas, a Genesis IA oferece uma IA conversacional real (Luna) que entende contexto, aprende com as conversas e converte leads de forma natural. Além disso, temos integração nativa com as maiores plataformas do mercado e suporte 24h.',
+    question: 'Para quem é a Genesis-IA?',
+    answer: 'Para freelancers, agências, consultores e empreendedores que desejam profissionalizar seus serviços, criar projetos rapidamente e escalar suas operações sem complicação técnica.',
   },
   {
     question: 'Preciso saber programar?',
-    answer: 'Não! A Genesis IA foi desenvolvida para ser simples e intuitiva. Nosso Flow Builder visual permite criar automações complexas apenas arrastando e soltando elementos. Se precisar de ajuda, nosso suporte e treinamentos estão inclusos em todos os planos.',
+    answer: 'Não! A Genesis-IA foi desenvolvida para ser simples e intuitiva. Você cria sites, propostas e contratos apenas clicando e personalizando templates prontos. Se precisar de ajuda, nosso suporte está incluído.',
   },
   {
-    question: 'Tenho apenas um celular, consigo começar?',
-    answer: 'Sim! A Genesis IA funciona 100% na nuvem e pode ser acessada de qualquer dispositivo com internet. Você pode gerenciar suas automações pelo celular, tablet ou computador. Basta ter um número de WhatsApp para conectar.',
+    question: 'Como funciona o Criador de Projetos?',
+    answer: 'Você escolhe um nicho (petshop, barbearia, academia, etc.), seleciona um template profissional e personaliza com os dados do seu cliente. O projeto fica pronto em minutos, com hospedagem inclusa.',
+  },
+  {
+    question: 'Posso gerar propostas comerciais?',
+    answer: 'Sim! Nosso gerador de propostas usa IA para criar documentos profissionais personalizados para cada prospect. Basta preencher algumas informações e a IA faz o resto.',
   },
   {
     question: 'Como funciona a garantia de 7 dias?',
-    answer: 'Oferecemos garantia incondicional de 7 dias. Se por qualquer motivo você não ficar satisfeito, basta solicitar o reembolso pelo suporte e devolvemos 100% do seu investimento, sem perguntas.',
+    answer: 'Oferecemos garantia incondicional de 7 dias. Se não ficar satisfeito por qualquer motivo, basta solicitar o reembolso e devolvemos 100% do seu investimento, sem perguntas.',
   },
   {
     question: 'Posso cancelar a qualquer momento?',
-    answer: 'Sim! Não temos fidelidade ou multa. Você pode cancelar sua assinatura a qualquer momento diretamente pelo painel, sem burocracia. Seu acesso permanece ativo até o final do período já pago.',
+    answer: 'Sim! Não temos fidelidade ou multa. Você pode cancelar sua assinatura quando quiser diretamente pelo painel. Seu acesso permanece ativo até o final do período já pago.',
   },
 ];
 
@@ -69,7 +73,7 @@ const GenesisCommercialFAQ = () => {
   return (
     <section id="faq" ref={ref} className="py-24 md:py-32 bg-background relative overflow-hidden">
       {/* Background Effects */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(217_91%_60%/0.05),transparent_70%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.03),transparent_70%)]" />
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
       <div className="container px-4 relative z-10 max-w-4xl mx-auto">
@@ -91,11 +95,11 @@ const GenesisCommercialFAQ = () => {
           
           <h2 className="text-3xl md:text-5xl font-black mb-6 text-foreground">
             Perguntas{' '}
-            <span className="text-gold-shine">Frequentes</span>
+            <span className="text-primary">Frequentes</span>
           </h2>
           
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Tire suas dúvidas sobre a Genesis IA e comece a automatizar hoje.
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Tire suas dúvidas sobre a Genesis-IA.
           </p>
         </motion.div>
 
