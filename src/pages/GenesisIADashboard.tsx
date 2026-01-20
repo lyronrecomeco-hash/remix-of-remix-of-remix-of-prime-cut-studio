@@ -79,6 +79,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
 const GenesisIADashboard = () => {
   const navigate = useNavigate();
   const [userName, setUserName] = useState("");
+  const [userEmail, setUserEmail] = useState("");
   const [userId, setUserId] = useState("");
   const [affiliateId, setAffiliateId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -86,6 +87,8 @@ const GenesisIADashboard = () => {
   const [editingCard, setEditingCard] = useState<CardData | null>(null);
   const [editingText, setEditingText] = useState<TextElementData | null>(null);
   const [showWelcome, setShowWelcome] = useState(false);
+
+  const isAdminUser = userEmail === 'lyronrp@gmail.com';
   
 
   useEffect(() => {
@@ -100,6 +103,7 @@ const GenesisIADashboard = () => {
     }
 
     setUserName(user.email?.split("@")[0] || "Usuário");
+    setUserEmail(user.email || "");
     setUserId(user.id);
 
     const { data: affiliate } = await supabase
@@ -141,6 +145,7 @@ const GenesisIADashboard = () => {
       case 'criar-projetos': return 'Criar Projetos';
       case 'contracts': return 'Contratos';
       case 'promocional': return 'Promocional';
+      case 'payments': return 'Pagamentos';
       default: return null;
     }
   };
@@ -150,14 +155,27 @@ const GenesisIADashboard = () => {
   };
 
 
-  const dockItems = [
-    { icon: Home, label: 'Início', tabId: 'dashboard' as const },
-    { icon: Layers, label: 'Projetos', tabId: 'criar-projetos' as const },
-    { icon: FileText, label: 'Contratos', tabId: 'contracts' as const },
-    { icon: Gift, label: 'Promo', tabId: 'promocional' as const },
-    { icon: Users, label: 'Usuários', tabId: 'users' as const },
-    { icon: LayoutDashboard, label: 'Financeiro', tabId: 'financial' as const },
-    { icon: Settings, label: 'Config', tabId: 'settings' as const },
+  type DockItem = 
+    | { icon: React.ElementType; label: string; tabId: ActiveTab; onClick?: never }
+    | { icon: React.ElementType; label: string; onClick: () => void; tabId?: never };
+
+  const baseDockItems: DockItem[] = [
+    { icon: Home, label: 'Início', tabId: 'dashboard' },
+    { icon: Layers, label: 'Projetos', tabId: 'criar-projetos' },
+    { icon: FileText, label: 'Contratos', tabId: 'contracts' },
+    { icon: Gift, label: 'Promo', tabId: 'promocional' },
+    { icon: Users, label: 'Usuários', tabId: 'users' },
+    { icon: LayoutDashboard, label: 'Financeiro', tabId: 'financial' },
+  ];
+
+  const adminDockItems: DockItem[] = isAdminUser ? [
+    { icon: CreditCard, label: 'Pagamentos', tabId: 'payments' },
+  ] : [];
+
+  const dockItems: DockItem[] = [
+    ...baseDockItems,
+    ...adminDockItems,
+    { icon: Settings, label: 'Config', tabId: 'settings' },
     { icon: LogOut, label: 'Sair', onClick: handleLogout },
   ];
 
@@ -536,6 +554,10 @@ const GenesisIADashboard = () => {
 
     if (activeTab === 'promocional') {
       return <PromocionalTab userId={userId} onBack={() => setActiveTab('dashboard')} />;
+    }
+
+    if (activeTab === 'payments' && isAdminUser) {
+      return <GenesisPaymentsTab />;
     }
 
     return null;

@@ -41,7 +41,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface GenesisPaymentsTabProps {
-  userId: string;
+  userId?: string;
   onBack?: () => void;
 }
 
