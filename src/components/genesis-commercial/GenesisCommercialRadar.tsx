@@ -1,18 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, Building2, MapPin, Phone, ArrowRight, Lock, TrendingUp, DollarSign, Globe } from 'lucide-react';
+import { Sparkles, MapPin, Phone, ArrowRight, Lock, TrendingUp, DollarSign, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 
 interface RealLead {
+  id: string;
   company_name: string;
   niche: string | null;
   company_city: string | null;
   company_state: string | null;
   company_phone: string | null;
   analysis_score: number | null;
+  source: string | null;
 }
 
 const maskLocation = (city: string | null, state: string | null) => {
@@ -23,8 +25,7 @@ const maskLocation = (city: string | null, state: string | null) => {
 
 const maskPhone = (phone: string | null) => {
   if (!phone) return '(••) •••••-••••';
-  // Show only first 4 digits masked
-  return phone.replace(/\d(?=\d{4})/g, '•');
+  return '(••) •••••-••••';
 };
 
 const getScoreColor = (score: number) => {
@@ -53,7 +54,6 @@ const getNicheIcon = (niche: string | null) => {
   return nicheIcons[niche || ''] || '🏢';
 };
 
-// Estimated monthly values based on niche
 const getEstimatedValue = (niche: string | null): { min: number; max: number; recurrence: number } => {
   const values: Record<string, { min: number; max: number; recurrence: number }> = {
     'Barbearia': { min: 300, max: 600, recurrence: 50 },
@@ -73,21 +73,44 @@ const GenesisCommercialRadar = () => {
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Fetch real leads from database
+  // Fetch real leads from database - from lyronrp@gmail.com account
   useEffect(() => {
     const fetchLeads = async () => {
-      const { data, error } = await supabase
-        .from('affiliate_prospects')
-        .select('company_name, niche, company_city, company_state, company_phone, analysis_score')
-        .limit(30);
+      // Fetch leads from the affiliate with email lyronrp@gmail.com
+      const { data: affiliateData } = await supabase
+        .from('affiliates')
+        .select('id')
+        .eq('email', 'lyronrp@gmail.com')
+        .single();
       
-      if (!error && data) {
-        // Add random scores where missing for visual appeal
-        const enrichedData = data.map(lead => ({
-          ...lead,
-          analysis_score: lead.analysis_score || Math.floor(Math.random() * 40) + 50, // 50-90
-        }));
-        setLeads(enrichedData);
+      if (affiliateData) {
+        const { data, error } = await supabase
+          .from('affiliate_prospects')
+          .select('id, company_name, niche, company_city, company_state, company_phone, analysis_score, source')
+          .eq('affiliate_id', affiliateData.id)
+          .limit(35);
+        
+        if (!error && data) {
+          const enrichedData = data.map(lead => ({
+            ...lead,
+            analysis_score: lead.analysis_score || Math.floor(Math.random() * 40) + 50,
+          }));
+          setLeads(enrichedData);
+        }
+      } else {
+        // Fallback to global prospects
+        const { data, error } = await supabase
+          .from('affiliate_prospects')
+          .select('id, company_name, niche, company_city, company_state, company_phone, analysis_score, source')
+          .limit(35);
+        
+        if (!error && data) {
+          const enrichedData = data.map(lead => ({
+            ...lead,
+            analysis_score: lead.analysis_score || Math.floor(Math.random() * 40) + 50,
+          }));
+          setLeads(enrichedData);
+        }
       }
       setLoading(false);
     };
@@ -101,24 +124,20 @@ const GenesisCommercialRadar = () => {
 
     let animationId: number;
     let scrollPosition = 0;
-    const speed = 0.5; // pixels per frame
+    const speed = 0.5;
 
     const animate = () => {
       scrollPosition += speed;
-      
-      // Reset when we've scrolled through half the content (since we duplicate it)
       const halfWidth = scrollContainer.scrollWidth / 2;
       if (scrollPosition >= halfWidth) {
         scrollPosition = 0;
       }
-      
       scrollContainer.scrollLeft = scrollPosition;
       animationId = requestAnimationFrame(animate);
     };
 
     animationId = requestAnimationFrame(animate);
 
-    // Pause on hover
     const handleMouseEnter = () => cancelAnimationFrame(animationId);
     const handleMouseLeave = () => { animationId = requestAnimationFrame(animate); };
     
@@ -136,7 +155,7 @@ const GenesisCommercialRadar = () => {
   const displayLeads = [...leads, ...leads];
 
   return (
-    <section className="relative py-20 overflow-hidden">
+    <section id="oportunidades" className="relative py-20 overflow-hidden">
       {/* Premium Background */}
       <div className="absolute inset-0 bg-background">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.06),transparent_50%)]" />
@@ -176,9 +195,8 @@ const GenesisCommercialRadar = () => {
             style={{ scrollBehavior: 'auto' }}
           >
             {loading ? (
-              // Loading skeletons
               Array(6).fill(0).map((_, i) => (
-                <div key={i} className="flex-shrink-0 w-[300px] h-[200px] bg-card border border-border rounded-xl animate-pulse" />
+                <div key={i} className="flex-shrink-0 w-[300px] h-[220px] bg-card border border-border rounded-xl animate-pulse" />
               ))
             ) : (
               displayLeads.map((lead, index) => {
@@ -187,7 +205,7 @@ const GenesisCommercialRadar = () => {
                 
                 return (
                   <motion.div
-                    key={`${lead.company_name}-${index}`}
+                    key={`${lead.id}-${index}`}
                     className="flex-shrink-0 w-[300px] bg-card/80 backdrop-blur-sm border border-border rounded-xl p-4 hover:border-primary/40 transition-all hover:shadow-lg hover:shadow-primary/5"
                   >
                     {/* Header */}

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Sparkles, CheckCircle2, TrendingUp, Users, FileText, DollarSign, Layers, Home, Gift, BarChart3 } from 'lucide-react';
+import { ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import genesisLoginPreview from '@/assets/genesis-dashboard-real.png';
 
 const GenesisCommercialHero = () => {
   const [typedText, setTypedText] = useState('');
@@ -145,20 +146,20 @@ const GenesisCommercialHero = () => {
           </motion.div>
         </motion.div>
 
-        {/* MacBook Mockup with Dashboard */}
+        {/* MacBook Mockup with Real Screenshot - Screen Only */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
           className="relative max-w-5xl mx-auto w-full"
         >
-          {/* Glow behind MacBook */}
+          {/* Glow behind screen */}
           <div className="absolute -inset-10 bg-gradient-to-r from-primary/20 via-cyan-500/10 to-primary/20 rounded-[50px] blur-3xl opacity-60" />
           
-          {/* MacBook Frame */}
+          {/* Screen Only - No base */}
           <div className="relative">
-            {/* Screen */}
-            <div className="relative bg-[#1a1a2e] rounded-t-xl border border-[#333] overflow-hidden shadow-2xl">
+            {/* Screen Frame */}
+            <div className="relative bg-[#1a1a2e] rounded-xl border-[3px] border-[#333] overflow-hidden shadow-2xl">
               {/* Menu Bar */}
               <div className="flex items-center gap-2 px-4 py-2.5 bg-[#0d0d14] border-b border-[#222]">
                 <div className="flex gap-1.5">
@@ -173,96 +174,16 @@ const GenesisCommercialHero = () => {
                 </div>
               </div>
 
-              {/* Dashboard Content */}
-              <div className="p-6 min-h-[400px]">
-                {/* Welcome Header */}
-                <div className="text-center mb-6">
-                  <h2 className="text-xl font-bold text-foreground mb-1">Bom dia, Usuário! 👋</h2>
-                  <p className="text-sm text-muted-foreground">Crie, evolua e gerencie suas ideias em um só lugar.</p>
-                </div>
-
-                {/* Stats Cards */}
-                <div className="grid grid-cols-4 gap-3 mb-6">
-                  {[
-                    { icon: Layers, label: 'Projetos', value: '12', color: 'from-blue-500/20 to-blue-600/10' },
-                    { icon: FileText, label: 'Propostas', value: '48', color: 'from-purple-500/20 to-purple-600/10' },
-                    { icon: Users, label: 'Leads', value: '156', color: 'from-emerald-500/20 to-emerald-600/10' },
-                    { icon: DollarSign, label: 'Receita', value: 'R$8.5k', color: 'from-amber-500/20 to-amber-600/10' },
-                  ].map((stat, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.8 + i * 0.1 }}
-                      className={`bg-gradient-to-br ${stat.color} rounded-xl p-3 border border-border/30`}
-                    >
-                      <stat.icon className="w-5 h-5 text-primary mb-2" />
-                      <div className="text-lg font-bold text-foreground">{stat.value}</div>
-                      <div className="text-xs text-muted-foreground">{stat.label}</div>
-                    </motion.div>
-                  ))}
-                </div>
-
-                {/* Quick Actions */}
-                <div className="grid grid-cols-3 gap-3 mb-5">
-                  {[
-                    { icon: FileText, title: 'Gerar Proposta', desc: 'IA personalizada' },
-                    { icon: Layers, title: 'Novo Projeto', desc: 'Sites em minutos' },
-                    { icon: TrendingUp, title: 'Radar Global', desc: '156 leads disponíveis' },
-                  ].map((action, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 1 + i * 0.1 }}
-                      className="bg-card/50 rounded-xl p-4 border border-border/30 hover:border-primary/30 transition-colors cursor-pointer group"
-                    >
-                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
-                        <action.icon className="w-5 h-5 text-primary" />
-                      </div>
-                      <div className="text-sm font-semibold text-foreground">{action.title}</div>
-                      <div className="text-xs text-muted-foreground">{action.desc}</div>
-                    </motion.div>
-                  ))}
-                </div>
-
-                {/* Bottom Dock */}
-                <div className="flex items-center justify-center gap-2">
-                  {[
-                    { icon: Home, active: true },
-                    { icon: Layers },
-                    { icon: FileText },
-                    { icon: Gift },
-                    { icon: Users },
-                    { icon: BarChart3 },
-                  ].map((item, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 1.2 + i * 0.05 }}
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                        item.active 
-                          ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30' 
-                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                      }`}
-                    >
-                      <item.icon className="w-5 h-5" />
-                    </motion.div>
-                  ))}
-                </div>
+              {/* Real Dashboard Screenshot */}
+              <div className="relative">
+                <img 
+                  src={genesisLoginPreview} 
+                  alt="Genesis IA Dashboard" 
+                  className="w-full h-auto object-cover"
+                />
+                {/* Subtle overlay for better integration */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a2e]/20 to-transparent pointer-events-none" />
               </div>
-            </div>
-
-            {/* MacBook Bottom/Notch */}
-            <div className="relative h-4 bg-gradient-to-b from-[#2a2a3a] to-[#1a1a25] rounded-b-xl border-x border-b border-[#333]">
-              <div className="absolute inset-x-0 top-0 h-[2px] bg-[#444]" />
-              <div className="absolute left-1/2 -translate-x-1/2 top-1 w-16 h-1 bg-[#333] rounded-full" />
-            </div>
-
-            {/* MacBook Base */}
-            <div className="relative h-3 bg-gradient-to-b from-[#c0c0c5] to-[#a0a0a5] rounded-b-lg mx-12 border border-[#888]/30">
-              <div className="absolute inset-x-0 top-0 h-[1px] bg-[#d5d5d8]" />
             </div>
           </div>
         </motion.div>
