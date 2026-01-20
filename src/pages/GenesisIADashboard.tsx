@@ -62,10 +62,11 @@ import { TextSettingsPanel } from "@/components/genesis-ia/dashboard-builder/com
 import { CriarProjetosTab } from "@/components/genesis-ia/criar-projetos";
 import { ContractsTab } from "@/components/genesis-ia/contracts";
 import { PromocionalTab } from "@/components/genesis-ia/promocional";
+import { GenesisPaymentsTab } from "@/components/genesis-ia/payments/GenesisPaymentsTab";
 import GenesisBackground from "@/components/genesis-ia/GenesisBackground";
-import { FileText, Gift } from "lucide-react";
+import { FileText, Gift, CreditCard } from "lucide-react";
 
-type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional';
+type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional' | 'payments';
 
 // Icon mapping for dynamic rendering
 const ICON_MAP: Record<string, React.ElementType> = {
