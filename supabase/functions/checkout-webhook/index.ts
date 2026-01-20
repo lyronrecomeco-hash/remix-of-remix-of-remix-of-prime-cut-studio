@@ -22,21 +22,29 @@ serve(async (req) => {
     const url = new URL(req.url);
     const querySecret = url.searchParams.get('secret');
     const receivedSecret = webhookSecret || querySecret;
+    
+    // Also check environment variable for secret
+    const envSecret = Deno.env.get('ABACATEPAY_WEBHOOK_SECRET');
 
-    // Validate webhook secret
+    // Validate webhook secret - check both database config and env variable
     const { data: webhookConfig } = await supabase
       .from('checkout_webhook_config')
       .select('webhook_secret, is_active')
       .eq('is_active', true)
       .single();
 
-    if (webhookConfig && receivedSecret !== webhookConfig.webhook_secret) {
-      console.error('Invalid webhook secret');
+    const validSecret = webhookConfig?.webhook_secret || envSecret;
+    
+    // Only validate if a secret is configured
+    if (validSecret && receivedSecret !== validSecret) {
+      console.error('Invalid webhook secret. Received:', receivedSecret?.substring(0, 5) + '...');
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    
+    console.log('Webhook secret validated successfully');
 
     const body = await req.json();
     console.log('Webhook received:', JSON.stringify(body, null, 2));
