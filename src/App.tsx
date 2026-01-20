@@ -22,6 +22,7 @@ import { toast as notify } from "sonner";
 // Lazy loading de páginas para code splitting
 const Index = lazy(() => import("./pages/Index"));
 const GenesisLanding = lazy(() => import("./pages/GenesisLanding"));
+const GenesisCommercial = lazy(() => import("./pages/GenesisCommercial"));
 const Booking = lazy(() => import("./pages/Booking"));
 const BookingDirect = lazy(() => import("./pages/BookingDirect"));
 const MyAppointments = lazy(() => import("./pages/MyAppointments"));
@@ -228,7 +229,7 @@ const AppContent = () => {
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>
-            <Route path="/" element={<GenesisLanding />} />
+            <Route path="/" element={<GenesisCommercial />} />
             <Route path="/barbearia" element={<Index />} />
             <Route path="/agendar" element={<Booking />} />
             <Route path="/agendamento-direto" element={<BookingDirect />} />
