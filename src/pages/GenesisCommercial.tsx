@@ -1,0 +1,21 @@
+import GenesisCommercialHeader from '@/components/genesis-commercial/GenesisCommercialHeader';
+import GenesisCommercialHero from '@/components/genesis-commercial/GenesisCommercialHero';
+import GenesisCommercialFeatures from '@/components/genesis-commercial/GenesisCommercialFeatures';
+import GenesisCommercialPartnerships from '@/components/genesis-commercial/GenesisCommercialPartnerships';
+import GenesisCommercialPricing from '@/components/genesis-commercial/GenesisCommercialPricing';
+import GenesisCommercialFooter from '@/components/genesis-commercial/GenesisCommercialFooter';
+
+const GenesisCommercial = () => {
+  return (
+    <div className="min-h-screen bg-slate-950 overflow-x-hidden">
+      <GenesisCommercialHeader />
+      <GenesisCommercialHero />
+      <GenesisCommercialFeatures />
+      <GenesisCommercialPartnerships />
+      <GenesisCommercialPricing />
+      <GenesisCommercialFooter />
+    </div>
+  );
+};
+
+export default GenesisCommercial;
