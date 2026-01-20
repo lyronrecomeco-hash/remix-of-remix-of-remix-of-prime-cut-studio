@@ -1,13 +1,28 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, Sparkles, CheckCircle2, Search, Globe, CheckCircle, PenTool, Layers, DollarSign, GraduationCap, Home, FileText, Users, Grid3X3, CreditCard, Settings, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import genesisLoginPreview from '@/assets/genesis-dashboard-real.png';
 
 const GenesisCommercialHero = () => {
   const [typedText, setTypedText] = useState('');
+  const [carouselIndex, setCarouselIndex] = useState(0);
   const fullText = 'Crie, Gerencie e Escale';
+  
+  const quickActions = [
+    { icon: Search, title: 'Encontrar Clientes', desc: 'Descubra clientes com maior potencial', color: 'bg-blue-500/20 text-blue-400' },
+    { icon: Globe, title: 'Radar Global', desc: 'Oportunidades automáticas pela IA', color: 'bg-cyan-500/20 text-cyan-400' },
+    { icon: CheckCircle, title: 'Propostas Aceitas', desc: 'Gerencie propostas aceitas', color: 'bg-green-500/20 text-green-400' },
+  ];
+
+  const accessAlso = [
+    { icon: PenTool, title: 'Redator Automatizado', desc: 'Automatize sua produção de...' },
+    { icon: Layers, title: 'Criar Projetos', desc: 'Crie sites personalizados para se...' },
+    { icon: DollarSign, title: 'Financeiro', desc: 'Acompanhe métricas e receitas' },
+    { icon: GraduationCap, title: 'Academia Genesis', desc: 'Aprimore suas habilidades' },
+  ];
+
+  const dockIcons = [Home, Layers, FileText, Grid3X3, Users, Grid3X3, CreditCard, Settings, LogOut];
   
   useEffect(() => {
     let index = 0;
@@ -19,6 +34,14 @@ const GenesisCommercialHero = () => {
         clearInterval(timer);
       }
     }, 50);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Carousel auto-scroll
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCarouselIndex((prev) => (prev + 1) % accessAlso.length);
+    }, 2000);
     return () => clearInterval(timer);
   }, []);
 
@@ -146,7 +169,7 @@ const GenesisCommercialHero = () => {
           </motion.div>
         </motion.div>
 
-        {/* MacBook Mockup with Real Screenshot - Screen Only */}
+        {/* MacBook Mockup with Simulated Dashboard - Zoomed */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
@@ -156,33 +179,114 @@ const GenesisCommercialHero = () => {
           {/* Glow behind screen */}
           <div className="absolute -inset-10 bg-gradient-to-r from-primary/20 via-cyan-500/10 to-primary/20 rounded-[50px] blur-3xl opacity-60" />
           
-          {/* Screen Only - No base */}
-          <div className="relative">
+          {/* Screen Only - No base, with zoom */}
+          <div className="relative transform scale-105">
             {/* Screen Frame */}
-            <div className="relative bg-[#1a1a2e] rounded-xl border-[3px] border-[#333] overflow-hidden shadow-2xl">
+            <div className="relative bg-[#0a0a12] rounded-2xl border-[4px] border-[#2a2a3a] overflow-hidden shadow-2xl">
               {/* Menu Bar */}
-              <div className="flex items-center gap-2 px-4 py-2.5 bg-[#0d0d14] border-b border-[#222]">
+              <div className="flex items-center gap-2 px-4 py-2.5 bg-[#0d0d14] border-b border-[#1a1a2a]">
                 <div className="flex gap-1.5">
                   <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
                   <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
                   <div className="w-3 h-3 rounded-full bg-[#28c840]" />
                 </div>
                 <div className="flex-1 flex justify-center">
-                  <div className="px-4 py-1 bg-[#1a1a2e] rounded-md text-xs text-muted-foreground">
-                    genesis-ia.app
+                  <div className="px-4 py-1 bg-[#1a1a2e] rounded-md text-xs text-gray-400">
+                    genesis-ia.app/dashboard
                   </div>
                 </div>
               </div>
 
-              {/* Real Dashboard Screenshot */}
-              <div className="relative">
-                <img 
-                  src={genesisLoginPreview} 
-                  alt="Genesis IA Dashboard" 
-                  className="w-full h-auto object-cover"
-                />
-                {/* Subtle overlay for better integration */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a2e]/20 to-transparent pointer-events-none" />
+              {/* Simulated Dashboard Content */}
+              <div className="relative bg-gradient-to-b from-[#0a0a14] to-[#0d0d18] p-6 min-h-[400px]">
+                {/* Stars background */}
+                <div className="absolute inset-0 overflow-hidden">
+                  {[...Array(30)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      className="absolute w-0.5 h-0.5 bg-white/30 rounded-full"
+                      style={{
+                        left: `${Math.random() * 100}%`,
+                        top: `${Math.random() * 100}%`,
+                      }}
+                      animate={{ opacity: [0.2, 0.8, 0.2] }}
+                      transition={{ duration: 2 + Math.random() * 2, repeat: Infinity, delay: Math.random() * 2 }}
+                    />
+                  ))}
+                </div>
+
+                {/* Welcome Header */}
+                <div className="text-center mb-6 relative z-10">
+                  <h2 className="text-2xl md:text-3xl font-bold text-white flex items-center justify-center gap-2">
+                    Bom dia, ADM! <span className="text-2xl">👋</span>
+                  </h2>
+                  <p className="text-gray-400 text-sm mt-1">Crie, evolua e gerencie suas ideias em um só lugar.</p>
+                </div>
+
+                {/* Quick Action Cards */}
+                <div className="grid grid-cols-3 gap-3 mb-6 relative z-10">
+                  {quickActions.map((action, i) => (
+                    <motion.div
+                      key={i}
+                      whileHover={{ scale: 1.02 }}
+                      className="bg-[#12121c]/80 backdrop-blur-sm rounded-xl border border-[#1f1f2f] p-4 cursor-pointer hover:border-[#2a2a4a] transition-colors"
+                    >
+                      <div className={`w-10 h-10 rounded-lg ${action.color} flex items-center justify-center mb-3`}>
+                        <action.icon className="w-5 h-5" />
+                      </div>
+                      <h3 className="text-white font-semibold text-sm mb-1">{action.title}</h3>
+                      <p className="text-gray-500 text-xs leading-relaxed">{action.desc}</p>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Acesse também - Auto Carousel */}
+                <div className="relative z-10">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Sparkles className="w-4 h-4 text-cyan-400" />
+                    <span className="text-white font-semibold text-sm">Acesse também</span>
+                  </div>
+                  
+                  <div className="bg-[#0f1525]/60 rounded-xl p-4 border border-[#1a2540] overflow-hidden">
+                    <div className="flex gap-3">
+                      <AnimatePresence mode="wait">
+                        {accessAlso.map((item, i) => (
+                          <motion.div
+                            key={i}
+                            initial={{ x: 0 }}
+                            animate={{ 
+                              x: -carouselIndex * 25 + '%',
+                              opacity: 1 
+                            }}
+                            transition={{ duration: 0.5, ease: "easeInOut" }}
+                            className="flex-shrink-0 w-[23%] bg-[#0d1020] rounded-lg border border-[#1a2540] p-3 hover:border-cyan-500/30 transition-colors cursor-pointer"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center mb-2">
+                              <item.icon className="w-4 h-4 text-cyan-400" />
+                            </div>
+                            <h4 className="text-white font-medium text-xs mb-0.5">{item.title}</h4>
+                            <p className="text-gray-500 text-[10px] truncate">{item.desc}</p>
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dock at bottom */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
+                  <div className="flex items-center gap-1 px-4 py-2.5 bg-[#12121c]/90 backdrop-blur-md rounded-2xl border border-[#2a2a3a]">
+                    {dockIcons.map((Icon, i) => (
+                      <motion.div
+                        key={i}
+                        whileHover={{ scale: 1.15, y: -2 }}
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors ${i === 0 ? 'bg-primary/20 text-primary' : 'text-gray-400 hover:bg-white/5'}`}
+                      >
+                        <Icon className="w-4 h-4" />
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
