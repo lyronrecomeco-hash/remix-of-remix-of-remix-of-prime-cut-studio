@@ -1740,6 +1740,187 @@ export type Database = {
         }
         Relationships: []
       }
+      checkout_customers: {
+        Row: {
+          cpf: string
+          created_at: string
+          email: string | null
+          first_name: string
+          id: string
+          last_name: string
+          phone: string
+          phone_country_code: string
+          updated_at: string
+        }
+        Insert: {
+          cpf: string
+          created_at?: string
+          email?: string | null
+          first_name: string
+          id?: string
+          last_name: string
+          phone: string
+          phone_country_code?: string
+          updated_at?: string
+        }
+        Update: {
+          cpf?: string
+          created_at?: string
+          email?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          phone?: string
+          phone_country_code?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      checkout_payment_events: {
+        Row: {
+          created_at: string
+          event_data: Json | null
+          event_type: string
+          id: string
+          payment_id: string
+          source: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          payment_id: string
+          source?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          payment_id?: string
+          source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkout_payment_events_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "checkout_payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checkout_payments: {
+        Row: {
+          abacatepay_billing_id: string | null
+          abacatepay_url: string | null
+          amount_cents: number
+          card_brand: string | null
+          card_last_four: string | null
+          created_at: string
+          currency: string
+          customer_id: string | null
+          description: string | null
+          expires_at: string | null
+          id: string
+          installments: number | null
+          ip_address: string | null
+          metadata: Json | null
+          paid_at: string | null
+          payment_code: string
+          payment_method: string | null
+          pix_br_code: string | null
+          pix_qr_code_base64: string | null
+          status: string
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          abacatepay_billing_id?: string | null
+          abacatepay_url?: string | null
+          amount_cents: number
+          card_brand?: string | null
+          card_last_four?: string | null
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          installments?: number | null
+          ip_address?: string | null
+          metadata?: Json | null
+          paid_at?: string | null
+          payment_code: string
+          payment_method?: string | null
+          pix_br_code?: string | null
+          pix_qr_code_base64?: string | null
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          abacatepay_billing_id?: string | null
+          abacatepay_url?: string | null
+          amount_cents?: number
+          card_brand?: string | null
+          card_last_four?: string | null
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          installments?: number | null
+          ip_address?: string | null
+          metadata?: Json | null
+          paid_at?: string | null
+          payment_code?: string
+          payment_method?: string | null
+          pix_br_code?: string | null
+          pix_qr_code_base64?: string | null
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkout_payments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "checkout_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checkout_webhook_config: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          last_received_at: string | null
+          updated_at: string
+          webhook_secret: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_received_at?: string | null
+          updated_at?: string
+          webhook_secret: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_received_at?: string | null
+          updated_at?: string
+          webhook_secret?: string
+        }
+        Relationships: []
+      }
       contact_leads: {
         Row: {
           contacted_at: string | null
@@ -12367,6 +12548,7 @@ export type Database = {
         Args: { p_amount: number; p_user_id: string }
         Returns: boolean
       }
+      generate_payment_code: { Args: never; Returns: string }
       genesis_calculate_health_score: {
         Args: { p_instance_id: string }
         Returns: number
