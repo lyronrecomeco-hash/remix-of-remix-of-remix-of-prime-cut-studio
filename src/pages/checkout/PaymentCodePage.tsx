@@ -96,7 +96,7 @@ export default function PaymentCodePage() {
     
     if (result.success && result.paymentCode) {
       toast.success('Novo código PIX gerado!');
-      navigate(`/checkout/payment-code/${result.paymentCode}`);
+      navigate(`/checkout/${result.paymentCode}`);
     } else {
       toast.error(result.error || 'Erro ao gerar novo pagamento');
     }
