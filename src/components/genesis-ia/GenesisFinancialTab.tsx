@@ -106,13 +106,18 @@ export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
     >
       {/* Header */}
       <motion.div variants={itemVariants} className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Financeiro</h2>
-          <p className="text-sm text-muted-foreground">Acompanhe suas métricas em tempo real</p>
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+            <DollarSign className="w-6 h-6 text-emerald-400" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-white">Financeiro</h2>
+            <p className="text-sm text-white/50">Acompanhe suas métricas em tempo real</p>
+          </div>
         </div>
         <Select value={period} onValueChange={setPeriod}>
-          <SelectTrigger className="w-28 h-10 bg-card border-border">
-            <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
+          <SelectTrigger className="w-28 h-10 bg-white/5 border-white/10" style={{ borderRadius: '10px' }}>
+            <Calendar className="w-4 h-4 mr-2 text-white/50" />
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -126,27 +131,27 @@ export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
       {/* Main Stats - 3 Cards */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Faturamento Total */}
-        <Card className="bg-card border-border">
+        <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-primary" />
+              <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-blue-400" />
               </div>
               <div className="flex items-center gap-1 text-sm font-medium text-emerald-400">
                 <ArrowUpRight className="w-4 h-4" />
                 +12%
               </div>
             </div>
-            <p className="text-3xl font-bold text-foreground">{formatCurrency(stats.totalRevenue)}</p>
-            <p className="text-sm text-muted-foreground mt-1">Faturamento Total</p>
+            <p className="text-3xl font-bold text-white">{formatCurrency(stats.totalRevenue)}</p>
+            <p className="text-sm text-white/50 mt-1">Faturamento Total</p>
           </CardContent>
         </Card>
 
         {/* Este Mês */}
-        <Card className="bg-card border-border">
+        <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/15 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-emerald-400" />
               </div>
               <div className="flex items-center gap-1 text-sm font-medium text-emerald-400">
@@ -154,25 +159,25 @@ export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
                 +{stats.growth}%
               </div>
             </div>
-            <p className="text-3xl font-bold text-foreground">{formatCurrency(stats.thisMonth)}</p>
-            <p className="text-sm text-muted-foreground mt-1">Neste Mês</p>
+            <p className="text-3xl font-bold text-white">{formatCurrency(stats.thisMonth)}</p>
+            <p className="text-sm text-white/50 mt-1">Neste Mês</p>
           </CardContent>
         </Card>
 
         {/* Mês Passado */}
-        <Card className="bg-card border-border">
+        <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 rounded-xl bg-amber-500/15 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center">
                 <TrendingDown className="w-6 h-6 text-amber-400" />
               </div>
-              <div className="flex items-center gap-1 text-sm font-medium text-muted-foreground">
+              <div className="flex items-center gap-1 text-sm font-medium text-white/50">
                 <ArrowDownRight className="w-4 h-4" />
                 Referência
               </div>
             </div>
-            <p className="text-3xl font-bold text-foreground">{formatCurrency(stats.lastMonth)}</p>
-            <p className="text-sm text-muted-foreground mt-1">Mês Passado</p>
+            <p className="text-3xl font-bold text-white">{formatCurrency(stats.lastMonth)}</p>
+            <p className="text-sm text-white/50 mt-1">Mês Passado</p>
           </CardContent>
         </Card>
       </motion.div>
@@ -180,10 +185,10 @@ export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
       {/* Charts Row */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Main Chart - Evolução */}
-        <Card className="bg-card border-border lg:col-span-2">
+        <Card className="bg-white/5 border-white/10 lg:col-span-2" style={{ borderRadius: '14px' }}>
           <CardHeader className="pb-2 px-5 pt-5">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-primary" />
+            <CardTitle className="text-base font-semibold flex items-center gap-2 text-white">
+              <BarChart3 className="w-5 h-5 text-blue-400" />
               Evolução do Faturamento
             </CardTitle>
           </CardHeader>
@@ -220,22 +225,22 @@ export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
             </div>
             <div className="flex items-center justify-center gap-6 mt-4">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-primary" />
-                <span className="text-sm text-muted-foreground">Receita</span>
+                <div className="w-3 h-3 rounded-full bg-blue-500" />
+                <span className="text-sm text-white/50">Receita</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                <span className="text-sm text-muted-foreground">Lucro</span>
+                <span className="text-sm text-white/50">Lucro</span>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Pie Chart */}
-        <Card className="bg-card border-border">
+        <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
           <CardHeader className="pb-2 px-5 pt-5">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <PieChartIcon className="w-5 h-5 text-primary" />
+            <CardTitle className="text-base font-semibold flex items-center gap-2 text-white">
+              <PieChartIcon className="w-5 h-5 text-purple-400" />
               Receita por Categoria
             </CardTitle>
           </CardHeader>
@@ -273,9 +278,9 @@ export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
                 <div key={index} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                    <span className="text-sm text-muted-foreground">{item.name}</span>
+                    <span className="text-sm text-white/50">{item.name}</span>
                   </div>
-                  <span className="text-sm font-semibold text-foreground">{item.value}%</span>
+                  <span className="text-sm font-semibold text-white">{item.value}%</span>
                 </div>
               ))}
             </div>
@@ -286,15 +291,15 @@ export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
       {/* Bottom Stats */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Clientes Ativos */}
-        <Card className="bg-card border-border">
+        <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
           <CardContent className="p-5">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-xl bg-primary/15 flex items-center justify-center">
-                <Users className="w-7 h-7 text-primary" />
+              <div className="w-14 h-14 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                <Users className="w-7 h-7 text-purple-400" />
               </div>
               <div className="flex-1">
-                <p className="text-2xl font-bold text-foreground">{stats.clients.toLocaleString()}</p>
-                <p className="text-sm text-muted-foreground">Clientes Ativos</p>
+                <p className="text-2xl font-bold text-white">{stats.clients.toLocaleString()}</p>
+                <p className="text-sm text-white/50">Clientes Ativos</p>
               </div>
               <div className="flex items-center gap-1 text-sm font-medium text-emerald-400">
                 <ArrowUpRight className="w-4 h-4" />
@@ -305,15 +310,15 @@ export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
         </Card>
 
         {/* Taxa de Conversão */}
-        <Card className="bg-card border-border">
+        <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
           <CardContent className="p-5">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-xl bg-emerald-500/15 flex items-center justify-center">
-                <Target className="w-7 h-7 text-emerald-400" />
+              <div className="w-14 h-14 rounded-xl bg-cyan-500/20 flex items-center justify-center">
+                <Target className="w-7 h-7 text-cyan-400" />
               </div>
               <div className="flex-1">
-                <p className="text-2xl font-bold text-foreground">{stats.conversionRate}%</p>
-                <p className="text-sm text-muted-foreground">Taxa de Conversão</p>
+                <p className="text-2xl font-bold text-white">{stats.conversionRate}%</p>
+                <p className="text-sm text-white/50">Taxa de Conversão</p>
               </div>
               <div className="flex items-center gap-1 text-sm font-medium text-emerald-400">
                 <ArrowUpRight className="w-4 h-4" />

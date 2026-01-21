@@ -194,49 +194,56 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-semibold text-foreground">Gerenciar Usuários</h2>
-          <p className="text-sm text-muted-foreground">{users.length} usuário(s)</p>
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+            <Users className="w-6 h-6 text-blue-400" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-white">Gerenciar Usuários</h2>
+            <p className="text-sm text-white/50">{users.length} usuário(s)</p>
+          </div>
         </div>
         <Button onClick={openCreateModal} className="gap-2"><Plus className="w-4 h-4" />Novo Usuário</Button>
       </div>
 
       <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input placeholder="Buscar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
+        <Input placeholder="Buscar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 bg-white/5 border-white/10" style={{ borderRadius: '10px' }} />
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" /></div>
+        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-white/50" /></div>
       ) : filteredUsers.length === 0 ? (
-        <Card className="border-dashed">
+        <Card className="border-dashed bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
           <CardContent className="flex flex-col items-center py-12">
-            <Users className="w-12 h-12 text-muted-foreground/50 mb-4" />
-            <p className="text-muted-foreground">{searchTerm ? 'Nenhum encontrado' : 'Nenhum usuário'}</p>
+            <div className="w-16 h-16 rounded-xl bg-white/10 flex items-center justify-center mb-4">
+              <Users className="w-8 h-8 text-white/30" />
+            </div>
+            <p className="text-white/50">{searchTerm ? 'Nenhum encontrado' : 'Nenhum usuário'}</p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-3">
           {filteredUsers.map((user) => (
-            <Card key={user.id} className={!user.is_active ? 'opacity-60' : ''}>
+            <Card key={user.id} className={`bg-white/5 border-white/10 ${!user.is_active ? 'opacity-60' : ''}`} style={{ borderRadius: '14px' }}>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                      <span className="text-sm font-medium">{user.name.charAt(0).toUpperCase()}</span>
+                    <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                      <span className="text-sm font-medium text-white">{user.name.charAt(0).toUpperCase()}</span>
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <p className="font-medium truncate">{user.name}</p>
-                        {!user.is_active && <Badge variant="secondary" className="text-xs">Inativo</Badge>}
+                        <p className="font-medium truncate text-white">{user.name}</p>
+                        {!user.is_active && <Badge variant="secondary" className="text-xs bg-white/10 text-white/50">Inativo</Badge>}
                       </div>
-                      <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+                      <p className="text-sm text-white/50 truncate">{user.email}</p>
                     </div>
                   </div>
-                  <div className="hidden md:block text-sm text-muted-foreground">{formatDate(user.created_at)}</div>
+                  <div className="hidden md:block text-sm text-white/40">{formatDate(user.created_at)}</div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-white/50 hover:text-white hover:bg-white/10"><MoreVertical className="w-4 h-4" /></Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => openEditModal(user)}><Pencil className="w-4 h-4 mr-2" />Editar</DropdownMenuItem>
