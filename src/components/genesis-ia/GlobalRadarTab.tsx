@@ -453,57 +453,57 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
     <div className="space-y-6">
       {/* Header Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="border-border/50">
+        <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
-                <Radar className="w-5 h-5 text-foreground" />
+              <div className="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center">
+                <Radar className="w-5 h-5 text-cyan-400" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Total</p>
-                <p className="text-xl font-bold text-foreground">{scanStats.total}</p>
+                <p className="text-xs text-white/50">Total</p>
+                <p className="text-xl font-bold text-white">{scanStats.total}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-border/50">
+        <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-foreground" />
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-emerald-400" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Hoje</p>
-                <p className="text-xl font-bold text-foreground">{scanStats.today}</p>
+                <p className="text-xs text-white/50">Hoje</p>
+                <p className="text-xl font-bold text-white">{scanStats.today}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-border/50">
+        <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-foreground" />
+              <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                <Star className="w-5 h-5 text-purple-400" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Score Médio</p>
-                <p className="text-xl font-bold text-foreground">{scanStats.avgScore}%</p>
+                <p className="text-xs text-white/50">Score Médio</p>
+                <p className="text-xl font-bold text-white">{scanStats.avgScore}%</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-border/50">
+        <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
-                <Bell className="w-5 h-5 text-foreground" />
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                <Bell className="w-5 h-5 text-amber-400" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Não Lidos</p>
-                <p className="text-xl font-bold text-foreground">{unreadCount}</p>
+                <p className="text-xs text-white/50">Não Lidos</p>
+                <p className="text-xl font-bold text-white">{unreadCount}</p>
               </div>
             </div>
           </CardContent>
@@ -511,7 +511,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
       </div>
 
       {/* Controls */}
-      <Card className="border-border/50">
+      <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
         <CardContent className="p-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             {/* Left - Scan controls */}
@@ -535,7 +535,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
               </Button>
 
               {autoScanEnabled && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2 text-sm text-white/50">
                   <Clock className="w-4 h-4" />
                   <span>Próximo: {formatTime(nextScanIn)}</span>
                 </div>
@@ -545,8 +545,8 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
             {/* Right - Toggles */}
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
-                {autoScanEnabled ? <Wifi className="w-4 h-4 text-emerald-400" /> : <WifiOff className="w-4 h-4 text-muted-foreground" />}
-                <span className="text-sm text-muted-foreground">Auto-Scan</span>
+                {autoScanEnabled ? <Wifi className="w-4 h-4 text-emerald-400" /> : <WifiOff className="w-4 h-4 text-white/30" />}
+                <span className="text-sm text-white/50">Auto-Scan</span>
                 <Switch
                   checked={autoScanEnabled}
                   onCheckedChange={setAutoScanEnabled}
@@ -554,8 +554,8 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
               </div>
 
               <div className="flex items-center gap-2">
-                <Volume2 className={cn("w-4 h-4", soundEnabled ? "text-blue-400" : "text-muted-foreground")} />
-                <span className="text-sm text-muted-foreground">Som</span>
+                <Volume2 className={cn("w-4 h-4", soundEnabled ? "text-blue-400" : "text-white/30")} />
+                <span className="text-sm text-white/50">Som</span>
                 <Switch
                   checked={soundEnabled}
                   onCheckedChange={setSoundEnabled}
@@ -563,8 +563,8 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
               </div>
 
               <div className="flex items-center gap-2">
-                <Filter className={cn("w-4 h-4", filterNoWebsite ? "text-amber-400" : "text-muted-foreground")} />
-                <span className="text-sm text-muted-foreground">Alta Conversão</span>
+                <Filter className={cn("w-4 h-4", filterNoWebsite ? "text-amber-400" : "text-white/30")} />
+                <span className="text-sm text-white/50">Alta Conversão</span>
                 <Switch
                   checked={filterNoWebsite}
                   onCheckedChange={setFilterNoWebsite}
@@ -572,7 +572,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
               </div>
 
               {unreadCount > 0 && (
-                <Button variant="outline" size="sm" onClick={markAllAsRead}>
+                <Button variant="outline" size="sm" onClick={markAllAsRead} className="border-white/20 text-white/70 hover:text-white hover:bg-white/10">
                   Marcar lidos
                 </Button>
               )}
@@ -583,19 +583,19 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
 
       {/* Limit reached alert */}
       {limitReached && (
-        <Card className="border-amber-500/50 bg-amber-500/5">
+        <Card className="border-amber-500/30 bg-amber-500/10" style={{ borderRadius: '14px' }}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
+              <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-amber-500">
+                <p className="text-sm font-medium text-amber-400">
                   Limite de {MAX_LEADS_LIMIT} leads atingido
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-white/50">
                   Aceite ou rejeite alguns leads para liberar espaço e continuar o scan automático.
                 </p>
               </div>
-              <Badge variant="outline" className="border-amber-500/50 text-amber-500">
+              <Badge variant="outline" className="border-amber-500/50 text-amber-400">
                 {opportunities.length}/{MAX_LEADS_LIMIT}
               </Badge>
             </div>
@@ -604,14 +604,14 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
       )}
 
       {/* Opportunities Grid */}
-      <Card className="border-border/50">
+      <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
         <CardHeader className="pb-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Globe2 className="w-5 h-5 text-primary" />
+            <CardTitle className="text-lg flex items-center gap-2 text-white">
+              <Globe2 className="w-5 h-5 text-cyan-400" />
               Oportunidades Detectadas
               {opportunities.length > 0 && (
-                <Badge variant="secondary" className="ml-2">
+                <Badge variant="secondary" className="ml-2 bg-white/10 text-white/70">
                   {filteredOpportunities.length !== opportunities.length 
                     ? `${filteredOpportunities.length}/${opportunities.length}`
                     : `${opportunities.length}/${MAX_LEADS_LIMIT}`
@@ -621,18 +621,19 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
             </CardTitle>
             {/* Search Input */}
             <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
               <Input
                 type="text"
                 placeholder="Pesquisar empresa, nicho, cidade..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9"
+                className="pl-9 h-9 bg-white/5 border-white/10"
+                style={{ borderRadius: '10px' }}
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -643,32 +644,32 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
         <CardContent>
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12 gap-3">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">Carregando oportunidades...</p>
+              <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
+              <p className="text-sm text-white/50">Carregando oportunidades...</p>
             </div>
           ) : filteredOpportunities.length === 0 && searchQuery ? (
             <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
-                <Search className="w-8 h-8 text-muted-foreground" />
+              <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center">
+                <Search className="w-8 h-8 text-white/30" />
               </div>
               <div>
-                <p className="text-lg font-medium text-foreground mb-1">Nenhum resultado</p>
-                <p className="text-sm text-muted-foreground max-w-sm">
+                <p className="text-lg font-medium text-white mb-1">Nenhum resultado</p>
+                <p className="text-sm text-white/50 max-w-sm">
                   Não encontramos oportunidades para "{searchQuery}". Tente outro termo.
                 </p>
               </div>
-              <Button variant="outline" size="sm" onClick={() => setSearchQuery('')}>
+              <Button variant="outline" size="sm" onClick={() => setSearchQuery('')} className="border-white/20 text-white/70 hover:text-white hover:bg-white/10">
                 Limpar pesquisa
               </Button>
             </div>
           ) : opportunities.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                <Radar className="w-8 h-8 text-primary/50" />
+              <div className="w-16 h-16 rounded-2xl bg-cyan-500/20 flex items-center justify-center">
+                <Radar className="w-8 h-8 text-cyan-400/50" />
               </div>
               <div>
-                <p className="text-lg font-medium text-foreground mb-1">Radar ativo</p>
-                <p className="text-sm text-muted-foreground max-w-sm">
+                <p className="text-lg font-medium text-white mb-1">Radar ativo</p>
+                <p className="text-sm text-white/50 max-w-sm">
                   {autoScanEnabled 
                     ? 'O radar está escaneando automaticamente. Novas oportunidades aparecerão aqui.'
                     : 'Ative o auto-scan ou clique em "Scan Agora" para encontrar oportunidades.'
@@ -699,10 +700,10 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                         transition={{ delay: index * 0.02 }}
                       >
                         <Card className={cn(
-                          "relative overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-primary/30",
-                          "bg-card border-border/50",
-                          !opp.is_read && "ring-1 ring-primary/20"
-                        )}>
+                          "relative overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-white/20",
+                          "bg-white/5 border-white/10",
+                          !opp.is_read && "ring-1 ring-cyan-500/30"
+                        )} style={{ borderRadius: '14px' }}>
                           {/* Color accent bar based on level */}
                           <div className={cn(
                             "absolute top-0 left-0 right-0 h-1",
@@ -714,15 +715,15 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                           <CardContent className="p-5 pt-6">
                             {/* Header Row */}
                             <div className="flex items-start gap-3 mb-4">
-                              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                <Building2 className="w-5 h-5 text-primary" />
+                              <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                                <Building2 className="w-5 h-5 text-blue-400" />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold text-foreground leading-tight line-clamp-1">
+                                <h4 className="font-semibold text-white leading-tight line-clamp-1">
                                   {opp.company_name}
                                 </h4>
                                 <div className="flex items-center gap-2 mt-1">
-                                  <span className="text-xs text-muted-foreground">{opp.niche || 'Negócio local'}</span>
+                                  <span className="text-xs text-white/50">{opp.niche || 'Negócio local'}</span>
                                   <Badge variant="outline" className={cn(
                                     "text-[10px] px-1.5 py-0 h-5",
                                     opp.opportunity_level === 'advanced' && "border-emerald-500/50 text-emerald-500",
@@ -736,20 +737,20 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                             </div>
 
                             {/* Value Section */}
-                            <div className="grid grid-cols-2 gap-4 mb-4 p-3 bg-muted/30 rounded-lg">
+                            <div className="grid grid-cols-2 gap-4 mb-4 p-3 bg-white/5 rounded-lg border border-white/5">
                               <div>
-                                <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                                <p className="text-[10px] uppercase tracking-wider text-white/40 flex items-center gap-1">
                                   <TrendingUp className="w-3 h-3" /> Valor Estimado
                                 </p>
-                                <p className="text-xs text-muted-foreground mt-1">
+                                <p className="text-xs text-white/50 mt-1">
                                   R$ {opp.estimated_value_min.toLocaleString()} (mín)
                                 </p>
-                                <p className="text-base font-bold text-emerald-500">
+                                <p className="text-base font-bold text-emerald-400">
                                   R$ {opp.estimated_value_max.toLocaleString()}
                                 </p>
                               </div>
                               <div>
-                                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                                <p className="text-[10px] uppercase tracking-wider text-white/40">
                                   📅 Recorrência
                                 </p>
                                 <p className="text-sm font-semibold text-emerald-400 mt-1">
@@ -760,20 +761,20 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
 
                             {/* Description */}
                             {opp.ai_description && (
-                              <p className="text-xs text-muted-foreground mb-3 line-clamp-2 leading-relaxed">
+                              <p className="text-xs text-white/50 mb-3 line-clamp-2 leading-relaxed">
                                 ✨ {opp.ai_description}
                               </p>
                             )}
 
                             {/* Location & Phone */}
                             <div className="space-y-1.5 mb-3">
-                              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                                <MapPin className="w-3 h-3 flex-shrink-0 text-muted-foreground/70" />
+                              <p className="text-xs text-white/50 flex items-center gap-1.5">
+                                <MapPin className="w-3 h-3 flex-shrink-0 text-white/30" />
                                 <span className="truncate">{opp.company_address || opp.company_city || 'Localização não informada'}</span>
                               </p>
                               {opp.company_phone && (
-                                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                                  <Phone className="w-3 h-3 flex-shrink-0 text-muted-foreground/70" />
+                                <p className="text-xs text-white/50 flex items-center gap-1.5">
+                                  <Phone className="w-3 h-3 flex-shrink-0 text-white/30" />
                                   <span>{opp.company_phone}</span>
                                 </p>
                               )}
@@ -795,7 +796,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                                 {opp.service_tags.slice(0, 3).map((tag, i) => (
                                   <span
                                     key={i}
-                                    className="inline-flex items-center px-2 py-1 bg-muted/50 border border-border/50 rounded text-[10px] text-muted-foreground"
+                                    className="inline-flex items-center px-2 py-1 bg-white/5 border border-white/10 rounded text-[10px] text-white/50"
                                   >
                                     {tag}
                                   </span>
@@ -804,7 +805,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                             )}
 
                             {/* Actions */}
-                            <div className="flex items-center gap-2 pt-3 border-t border-border/50">
+                            <div className="flex items-center gap-2 pt-3 border-t border-white/10">
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -812,7 +813,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                                   e.stopPropagation();
                                   handleOpenDetail(opp);
                                 }}
-                                className="flex-1 h-10"
+                                className="flex-1 h-10 border-white/20 text-white/70 hover:text-white hover:bg-white/10"
                               >
                                 <Eye className="w-4 h-4 mr-1.5" />
                                 Ver Perfil

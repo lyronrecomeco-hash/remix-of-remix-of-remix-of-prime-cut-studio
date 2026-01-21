@@ -210,14 +210,14 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between pb-4 border-b border-border/50">
+      <div className="flex items-center justify-between pb-4 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-            <Settings className="w-6 h-6 text-primary" />
+          <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
+            <Settings className="w-6 h-6 text-purple-400" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-foreground">Configurações</h2>
-            <p className="text-sm text-muted-foreground">Personalize sua experiência no Genesis IA</p>
+            <h2 className="text-2xl font-bold text-white">Configurações</h2>
+            <p className="text-sm text-white/50">Personalize sua experiência no Genesis IA</p>
           </div>
         </div>
         <Button onClick={saveSettings} disabled={saving} size="lg" className="gap-2">
@@ -228,27 +228,27 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
 
       {/* Templates Section */}
       <div className="space-y-3">
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Templates</h3>
+        <h3 className="text-sm font-medium text-white/50 uppercase tracking-wider">Templates</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Mensagem Base Card */}
-          <Card className="bg-card/50 border-border/50 hover:border-primary/30 transition-colors cursor-pointer group" onClick={openMessageModal}>
+          <Card className="bg-white/5 border-white/10 hover:border-blue-500/30 transition-colors cursor-pointer group" style={{ borderRadius: '14px' }} onClick={openMessageModal}>
             <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                    <MessageSquare className="w-5 h-5 text-blue-500" />
+                  <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                    <MessageSquare className="w-5 h-5 text-blue-400" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-foreground">Mensagem Base</h4>
-                    <p className="text-xs text-muted-foreground mt-0.5">Template para primeiro contato</p>
+                    <h4 className="font-semibold text-white">Mensagem Base</h4>
+                    <p className="text-xs text-white/50 mt-0.5">Template para primeiro contato</p>
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity text-white/50 hover:text-white hover:bg-white/10">
                   <Edit3 className="w-4 h-4" />
                 </Button>
               </div>
-              <div className="mt-4 p-3 bg-muted/30 rounded-lg">
-                <p className="text-xs text-muted-foreground line-clamp-3 font-mono">
+              <div className="mt-4 p-3 bg-white/5 rounded-lg border border-white/5">
+                <p className="text-xs text-white/50 line-clamp-3 font-mono">
                   {settings.baseMessage.slice(0, 120)}...
                 </p>
               </div>
@@ -256,24 +256,24 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
           </Card>
 
           {/* Template Proposta Card */}
-          <Card className="bg-card/50 border-border/50 hover:border-primary/30 transition-colors cursor-pointer group" onClick={openProposalModal}>
+          <Card className="bg-white/5 border-white/10 hover:border-emerald-500/30 transition-colors cursor-pointer group" style={{ borderRadius: '14px' }} onClick={openProposalModal}>
             <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-emerald-500" />
+                  <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-emerald-400" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-foreground">Template de Proposta</h4>
-                    <p className="text-xs text-muted-foreground mt-0.5">Modelo para propostas comerciais</p>
+                    <h4 className="font-semibold text-white">Template de Proposta</h4>
+                    <p className="text-xs text-white/50 mt-0.5">Modelo para propostas comerciais</p>
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity text-white/50 hover:text-white hover:bg-white/10">
                   <Edit3 className="w-4 h-4" />
                 </Button>
               </div>
-              <div className="mt-4 p-3 bg-muted/30 rounded-lg">
-                <p className="text-xs text-muted-foreground line-clamp-3 font-mono">
+              <div className="mt-4 p-3 bg-white/5 rounded-lg border border-white/5">
+                <p className="text-xs text-white/50 line-clamp-3 font-mono">
                   {settings.proposalTemplate.slice(0, 120)}...
                 </p>
               </div>
@@ -284,36 +284,36 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
 
       {/* Settings Grid */}
       <div className="space-y-3">
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Preferências</h3>
+        <h3 className="text-sm font-medium text-white/50 uppercase tracking-wider">Preferências</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Notificações */}
-          <Card className="bg-card/50 border-border/50">
+          <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
             <CardContent className="p-5 space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                  <Bell className="w-4 h-4 text-amber-500" />
+                <div className="w-9 h-9 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                  <Bell className="w-4 h-4 text-amber-400" />
                 </div>
-                <h4 className="font-semibold text-foreground text-sm">Notificações</h4>
+                <h4 className="font-semibold text-white text-sm">Notificações</h4>
               </div>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label className="text-xs text-muted-foreground">Ativar notificações</Label>
+                  <Label className="text-xs text-white/50">Ativar notificações</Label>
                   <Switch
                     checked={settings.notificationsEnabled}
                     onCheckedChange={(v) => updateSetting('notificationsEnabled', v)}
                   />
                 </div>
-                <Separator className="opacity-50" />
+                <Separator className="bg-white/10" />
                 <div className="flex items-center justify-between">
-                  <Label className="text-xs text-muted-foreground">Sons</Label>
+                  <Label className="text-xs text-white/50">Sons</Label>
                   <Switch
                     checked={settings.soundEnabled}
                     onCheckedChange={(v) => updateSetting('soundEnabled', v)}
                   />
                 </div>
-                <Separator className="opacity-50" />
+                <Separator className="bg-white/10" />
                 <div className="flex items-center justify-between">
-                  <Label className="text-xs text-muted-foreground">E-mail</Label>
+                  <Label className="text-xs text-white/50">E-mail</Label>
                   <Switch
                     checked={settings.emailNotifications}
                     onCheckedChange={(v) => updateSetting('emailNotifications', v)}
@@ -324,30 +324,30 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
           </Card>
 
           {/* Radar Global */}
-          <Card className="bg-card/50 border-border/50">
+          <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
             <CardContent className="p-5 space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-cyan-500/10 flex items-center justify-center">
-                  <Globe className="w-4 h-4 text-cyan-500" />
+                <div className="w-9 h-9 rounded-lg bg-cyan-500/20 flex items-center justify-center">
+                  <Globe className="w-4 h-4 text-cyan-400" />
                 </div>
-                <h4 className="font-semibold text-foreground text-sm">Radar Global</h4>
+                <h4 className="font-semibold text-white text-sm">Radar Global</h4>
               </div>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label className="text-xs text-muted-foreground">Scan automático</Label>
+                  <Label className="text-xs text-white/50">Scan automático</Label>
                   <Switch
                     checked={settings.radarAutoScan}
                     onCheckedChange={(v) => updateSetting('radarAutoScan', v)}
                   />
                 </div>
-                <Separator className="opacity-50" />
+                <Separator className="bg-white/10" />
                 <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">Intervalo</Label>
+                  <Label className="text-xs text-white/50">Intervalo</Label>
                   <Select
                     value={String(settings.radarInterval)}
                     onValueChange={(v) => updateSetting('radarInterval', Number(v))}
                   >
-                    <SelectTrigger className="h-8 text-xs">
+                    <SelectTrigger className="h-8 text-xs bg-white/5 border-white/10">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -363,22 +363,22 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
           </Card>
 
           {/* Aparência */}
-          <Card className="bg-card/50 border-border/50">
+          <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
             <CardContent className="p-5 space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                  <Palette className="w-4 h-4 text-purple-500" />
+                <div className="w-9 h-9 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                  <Palette className="w-4 h-4 text-purple-400" />
                 </div>
-                <h4 className="font-semibold text-foreground text-sm">Aparência</h4>
+                <h4 className="font-semibold text-white text-sm">Aparência</h4>
               </div>
               <div className="space-y-3">
                 <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">Tema</Label>
+                  <Label className="text-xs text-white/50">Tema</Label>
                   <Select
                     value={settings.theme}
                     onValueChange={(v) => updateSetting('theme', v as 'dark' | 'light' | 'system')}
                   >
-                    <SelectTrigger className="h-8 text-xs">
+                    <SelectTrigger className="h-8 text-xs bg-white/5 border-white/10">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -388,9 +388,9 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
                     </SelectContent>
                   </Select>
                 </div>
-                <Separator className="opacity-50" />
+                <Separator className="bg-white/10" />
                 <div className="flex items-center justify-between">
-                  <Label className="text-xs text-muted-foreground">Modo compacto</Label>
+                  <Label className="text-xs text-white/50">Modo compacto</Label>
                   <Switch
                     checked={settings.compactMode}
                     onCheckedChange={(v) => updateSetting('compactMode', v)}
@@ -401,29 +401,29 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
           </Card>
 
           {/* Segurança */}
-          <Card className="bg-card/50 border-border/50">
+          <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
             <CardContent className="p-5 space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-rose-500/10 flex items-center justify-center">
-                  <Shield className="w-4 h-4 text-rose-500" />
+                <div className="w-9 h-9 rounded-lg bg-rose-500/20 flex items-center justify-center">
+                  <Shield className="w-4 h-4 text-rose-400" />
                 </div>
-                <h4 className="font-semibold text-foreground text-sm">Segurança</h4>
+                <h4 className="font-semibold text-white text-sm">Segurança</h4>
               </div>
               <div className="space-y-3">
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Sessão ativa</Label>
-                  <p className="text-xs font-medium text-foreground">
+                  <Label className="text-xs text-white/50">Sessão ativa</Label>
+                  <p className="text-xs font-medium text-white">
                     {new Date().toLocaleDateString('pt-BR')}
                   </p>
                 </div>
-                <Separator className="opacity-50" />
+                <Separator className="bg-white/10" />
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">ID do usuário</Label>
-                  <p className="text-xs font-mono text-foreground">
+                  <Label className="text-xs text-white/50">ID do usuário</Label>
+                  <p className="text-xs font-mono text-white/70">
                     {userId.slice(0, 12)}...
                   </p>
                 </div>
-                <Button variant="outline" size="sm" className="w-full h-8 text-xs mt-2">
+                <Button variant="outline" size="sm" className="w-full h-8 text-xs mt-2 border-white/20 text-white/70 hover:text-white hover:bg-white/10">
                   Alterar Senha
                 </Button>
               </div>
