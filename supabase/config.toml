@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.checkout-regenerate]
 verify_jwt = false
+
+[functions.checkout-save-gateway-key]
+verify_jwt = false

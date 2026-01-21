@@ -7,7 +7,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -29,10 +28,9 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get payment from database
     const { data: payment, error: paymentError } = await supabase
       .from('checkout_payments')
-      .select('id, status, paid_at, expires_at, abacatepay_billing_id, payment_method')
+      .select('id, status, paid_at, expires_at, abacatepay_billing_id, asaas_payment_id, payment_method, gateway')
       .eq('payment_code', paymentCode)
       .single();
 
@@ -44,26 +42,17 @@ serve(async (req) => {
       );
     }
 
-    // If already paid or expired, return current status
     if (payment.status === 'paid' || payment.status === 'expired') {
       console.log('Payment already finalized:', payment.status);
       return new Response(
-        JSON.stringify({ 
-          status: payment.status, 
-          paidAt: payment.paid_at 
-        }),
+        JSON.stringify({ status: payment.status, paidAt: payment.paid_at }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Check if expired
     if (payment.expires_at && new Date(payment.expires_at) < new Date()) {
       console.log('Payment expired, updating status');
-      await supabase
-        .from('checkout_payments')
-        .update({ status: 'expired' })
-        .eq('id', payment.id);
-
+      await supabase.from('checkout_payments').update({ status: 'expired' }).eq('id', payment.id);
       await supabase.from('checkout_payment_events').insert({
         payment_id: payment.id,
         event_type: 'payment_expired',
@@ -76,86 +65,104 @@ serve(async (req) => {
       );
     }
 
-    // Check with AbacatePay API using the correct endpoint for PIX
-    const ABACATEPAY_API_KEY = Deno.env.get('ABACATEPAY_API_KEY');
-    if (ABACATEPAY_API_KEY && payment.abacatepay_billing_id) {
-      try {
-        console.log('Checking AbacatePay status for:', payment.abacatepay_billing_id);
-        
-        // Use pixQrCode/check endpoint for PIX payments
-        let checkUrl = '';
-        if (payment.payment_method === 'PIX') {
-          checkUrl = `https://api.abacatepay.com/v1/pixQrCode/check?id=${payment.abacatepay_billing_id}`;
-        } else {
-          // For billing-based payments, try list endpoint to find status
-          checkUrl = `https://api.abacatepay.com/v1/billing/list`;
-        }
-        
-        const abacateResponse = await fetch(checkUrl, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${ABACATEPAY_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-        });
+    // Check with appropriate gateway
+    const gateway = payment.gateway || 'abacatepay';
+    let isPaid = false;
 
-        if (abacateResponse.ok) {
-          const abacateData = await abacateResponse.json();
-          console.log('AbacatePay status response:', abacateData);
+    if (gateway === 'asaas' && payment.asaas_payment_id) {
+      const ASAAS_API_KEY = Deno.env.get('ASAAS_API_KEY');
+      const ASAAS_SANDBOX = Deno.env.get('ASAAS_SANDBOX') === 'true';
+      
+      if (ASAAS_API_KEY) {
+        try {
+          const baseUrl = ASAAS_SANDBOX 
+            ? 'https://sandbox.asaas.com/api/v3' 
+            : 'https://api.asaas.com/v3';
 
-          // Check if paid - handle both direct check response and list response
-          let isPaid = false;
+          console.log('[Asaas] Checking payment status:', payment.asaas_payment_id);
           
-          if (payment.payment_method === 'PIX') {
-            // PIX check response
-            isPaid = abacateData.data?.status === 'PAID' || abacateData.data?.status === 'COMPLETED';
-          } else {
-            // For billing list, find the matching billing
-            const billings = abacateData.data || [];
-            const matchingBilling = billings.find((b: any) => b.id === payment.abacatepay_billing_id);
-            isPaid = matchingBilling?.status === 'PAID' || matchingBilling?.status === 'COMPLETED';
+          const asaasResponse = await fetch(`${baseUrl}/payments/${payment.asaas_payment_id}`, {
+            headers: {
+              'access_token': ASAAS_API_KEY,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (asaasResponse.ok) {
+            const asaasData = await asaasResponse.json();
+            console.log('[Asaas] Status response:', asaasData.status);
+
+            // Asaas statuses: PENDING, RECEIVED, CONFIRMED, OVERDUE, REFUNDED, RECEIVED_IN_CASH, etc.
+            isPaid = ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'].includes(asaasData.status);
           }
-
-          if (isPaid) {
-            const paidAt = new Date().toISOString();
-            
-            await supabase
-              .from('checkout_payments')
-              .update({ 
-                status: 'paid', 
-                paid_at: paidAt 
-              })
-              .eq('id', payment.id);
-
-            await supabase.from('checkout_payment_events').insert({
-              payment_id: payment.id,
-              event_type: 'payment_confirmed',
-              event_data: { source: 'polling' },
-              source: 'api',
-            });
-
-            console.log('Payment confirmed via polling');
-            return new Response(
-              JSON.stringify({ status: 'paid', paidAt }),
-              { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
-          }
-        } else {
-          const errorData = await abacateResponse.json();
-          console.log('AbacatePay check failed:', errorData);
+        } catch (asaasError) {
+          console.error('[Asaas] Error checking status:', asaasError);
         }
-      } catch (abacateError) {
-        console.error('Error checking AbacatePay:', abacateError);
-        // Continue with current status if API check fails
+      }
+    } else if (gateway === 'abacatepay' && payment.abacatepay_billing_id) {
+      const ABACATEPAY_API_KEY = Deno.env.get('ABACATEPAY_API_KEY');
+      
+      if (ABACATEPAY_API_KEY) {
+        try {
+          console.log('[AbacatePay] Checking status:', payment.abacatepay_billing_id);
+          
+          let checkUrl = '';
+          if (payment.payment_method === 'PIX') {
+            checkUrl = `https://api.abacatepay.com/v1/pixQrCode/check?id=${payment.abacatepay_billing_id}`;
+          } else {
+            checkUrl = `https://api.abacatepay.com/v1/billing/list`;
+          }
+          
+          const abacateResponse = await fetch(checkUrl, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${ABACATEPAY_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (abacateResponse.ok) {
+            const abacateData = await abacateResponse.json();
+            console.log('[AbacatePay] Status response:', abacateData);
+
+            if (payment.payment_method === 'PIX') {
+              isPaid = abacateData.data?.status === 'PAID' || abacateData.data?.status === 'COMPLETED';
+            } else {
+              const billings = abacateData.data || [];
+              const matchingBilling = billings.find((b: any) => b.id === payment.abacatepay_billing_id);
+              isPaid = matchingBilling?.status === 'PAID' || matchingBilling?.status === 'COMPLETED';
+            }
+          }
+        } catch (abacateError) {
+          console.error('[AbacatePay] Error checking status:', abacateError);
+        }
       }
     }
 
-    // Return current status
+    if (isPaid) {
+      const paidAt = new Date().toISOString();
+      
+      await supabase
+        .from('checkout_payments')
+        .update({ status: 'paid', paid_at: paidAt })
+        .eq('id', payment.id);
+
+      await supabase.from('checkout_payment_events').insert({
+        payment_id: payment.id,
+        event_type: 'payment_confirmed',
+        event_data: { source: 'polling', gateway },
+        source: 'api',
+      });
+
+      console.log('Payment confirmed via polling');
+      return new Response(
+        JSON.stringify({ status: 'paid', paidAt }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     return new Response(
-      JSON.stringify({ 
-        status: payment.status,
-        paidAt: payment.paid_at
-      }),
+      JSON.stringify({ status: payment.status, paidAt: payment.paid_at }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
