@@ -24,7 +24,16 @@ serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const paymentCode = url.searchParams.get('code');
+    // Support both GET (?code=...) and POST ({ code })
+    let paymentCode = url.searchParams.get('code');
+    if (!paymentCode) {
+      try {
+        const body = await req.json().catch(() => null) as { code?: string } | null;
+        if (body?.code) paymentCode = body.code;
+      } catch {
+        // ignore
+      }
+    }
 
     if (!paymentCode) {
       return new Response(
@@ -208,7 +217,7 @@ serve(async (req) => {
         payment_id: payment.id,
         event_type: 'payment_confirmed',
         event_data: { source: 'polling', gateway },
-        source: 'api',
+        source: 'polling',
       });
 
       console.log('Payment confirmed via polling');
