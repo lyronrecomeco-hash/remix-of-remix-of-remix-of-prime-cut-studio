@@ -112,21 +112,24 @@ export const GenesisCarousel = ({ onNavigate }: GenesisCarouselProps) => {
     <div className="w-full max-w-6xl mx-auto mt-5 sm:mt-10">
       {/* Header */}
       <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-6">
-        <Sparkles className="w-4 h-4 sm:w-6 sm:h-6 text-primary" />
-        <h2 className="text-base sm:text-xl font-bold text-foreground tracking-tight">Acesse também</h2>
+        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
+          <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
+        </div>
+        <h2 className="text-base sm:text-xl font-bold text-white tracking-tight">Acesse também</h2>
       </div>
 
       {/* Carousel Container */}
       <div 
-        className="relative overflow-hidden rounded-lg sm:rounded-2xl -mx-2 sm:mx-0"
+        className="relative overflow-hidden -mx-2 sm:mx-0"
+        style={{ borderRadius: '14px' }}
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
         onTouchStart={() => setIsPaused(true)}
         onTouchEnd={() => setIsPaused(false)}
       >
         {/* Gradient masks */}
-        <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-20 bg-gradient-to-r from-background via-background/80 to-transparent z-10 pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-8 sm:w-20 bg-gradient-to-l from-background via-background/80 to-transparent z-10 pointer-events-none" />
+        <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-20 bg-gradient-to-r from-[hsl(220_25%_10%)] via-[hsl(220_25%_10%/0.8)] to-transparent z-10 pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-8 sm:w-20 bg-gradient-to-l from-[hsl(220_25%_10%)] via-[hsl(220_25%_10%/0.8)] to-transparent z-10 pointer-events-none" />
 
         {/* Scrolling container - auto-scroll on all devices */}
         <div
@@ -137,6 +140,18 @@ export const GenesisCarousel = ({ onNavigate }: GenesisCarouselProps) => {
           {duplicatedItems.map((item, index) => {
             const IconComponent = item.icon;
             
+            // Different icon colors for variety
+            const iconColors = [
+              { bg: 'bg-blue-500/20', color: 'text-blue-400' },
+              { bg: 'bg-emerald-500/20', color: 'text-emerald-400' },
+              { bg: 'bg-purple-500/20', color: 'text-purple-400' },
+              { bg: 'bg-amber-500/20', color: 'text-amber-400' },
+              { bg: 'bg-cyan-500/20', color: 'text-cyan-400' },
+              { bg: 'bg-rose-500/20', color: 'text-rose-400' },
+              { bg: 'bg-indigo-500/20', color: 'text-indigo-400' },
+            ];
+            const colorScheme = iconColors[index % iconColors.length];
+            
             return (
               <motion.div
                 key={`${item.id}-${index}`}
@@ -146,18 +161,21 @@ export const GenesisCarousel = ({ onNavigate }: GenesisCarouselProps) => {
                 className="flex-shrink-0 cursor-pointer snap-start"
                 onClick={() => item.tabId && onNavigate?.(item.tabId)}
               >
-                <div className="w-[160px] sm:w-[260px] h-[100px] sm:h-[140px] rounded-lg sm:rounded-2xl bg-card border border-primary/30 hover:border-primary/60 transition-all duration-300 p-3 sm:p-5 flex flex-col justify-between group backdrop-blur-sm shadow-lg shadow-primary/5 hover:shadow-primary/15">
+                <div 
+                  className="w-[160px] sm:w-[260px] h-[100px] sm:h-[140px] bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/[0.08] transition-all duration-300 p-3 sm:p-5 flex flex-col justify-between group backdrop-blur-sm"
+                  style={{ borderRadius: '14px' }}
+                >
                   {/* Icon */}
-                  <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-primary/20 flex items-center justify-center group-hover:bg-primary/35 transition-all duration-300 group-hover:scale-105">
-                    <IconComponent className="w-4 h-4 sm:w-6 sm:h-6 text-primary group-hover:text-primary/80 transition-colors" />
+                  <div className={`w-8 h-8 sm:w-11 sm:h-11 rounded-xl ${colorScheme.bg} flex items-center justify-center group-hover:scale-105 transition-transform`}>
+                    <IconComponent className={`w-4 h-4 sm:w-5 sm:h-5 ${colorScheme.color}`} />
                   </div>
 
                   {/* Text */}
                   <div className="space-y-0">
-                    <h3 className="font-semibold text-foreground text-xs sm:text-base leading-tight group-hover:text-primary transition-colors line-clamp-1">
+                    <h3 className="font-semibold text-white text-xs sm:text-base leading-tight group-hover:text-white/90 transition-colors line-clamp-1">
                       {item.title}
                     </h3>
-                    <p className="text-[10px] sm:text-sm text-muted-foreground group-hover:text-foreground/70 transition-colors line-clamp-1">
+                    <p className="text-[10px] sm:text-sm text-white/50 group-hover:text-white/60 transition-colors line-clamp-1">
                       {item.description}
                     </p>
                   </div>

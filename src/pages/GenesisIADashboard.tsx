@@ -276,17 +276,17 @@ const GenesisIADashboard = () => {
           {/* Cards - Grid mode when not editing, free mode when editing */}
         {!isEditMode ? (
             <>
-              {/* Greeting Title - more centered with padding top */}
+              {/* Greeting Title - glassmorphism style */}
               <div className="text-center mb-8 sm:mb-12 pt-8 sm:pt-16">
-                <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-foreground">
+                <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white">
                   {getGreeting()}, {userName}! 👋
                 </h1>
-                <p className="text-sm sm:text-lg text-muted-foreground mt-3 max-w-xl mx-auto px-4">
+                <p className="text-sm sm:text-lg text-white/50 mt-3 max-w-xl mx-auto px-4">
                   Crie, evolua e gerencie suas ideias em um só lugar.
                 </p>
               </div>
 
-              {/* Horizontal cards layout - responsive grid */}
+              {/* Horizontal cards layout - glassmorphism style */}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 lg:gap-5 max-w-6xl mx-auto">
                 {(() => {
                   const visibleCards = [...config.dashboardCards]
@@ -314,40 +314,48 @@ const GenesisIADashboard = () => {
 
                     // Different icon colors for each card (fallback)
                     const iconColors = [
-                      { bg: 'hsl(260 50% 30% / 0.5)', color: 'hsl(260 70% 70%)' }, // Purple
-                      { bg: 'hsl(200 50% 30% / 0.5)', color: 'hsl(200 70% 65%)' }, // Blue
-                      { bg: 'hsl(180 40% 25% / 0.5)', color: 'hsl(180 60% 60%)' }, // Teal
+                      { bg: 'bg-purple-500/20', color: 'text-purple-400' },
+                      { bg: 'bg-blue-500/20', color: 'text-blue-400' },
+                      { bg: 'bg-emerald-500/20', color: 'text-emerald-400' },
                     ];
                     const colorScheme = iconColors[index % iconColors.length];
 
                     return (
-                      <Card
+                      <motion.div
                         key={card.id}
-                        className="group cursor-pointer transition-all duration-200 hover:scale-[1.01] hover:border-white/20 border border-white/[0.08]"
-                        style={{
-                          backgroundColor: 'hsl(215 30% 12%)',
-                          borderRadius: '14px',
-                        }}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        whileHover={{ scale: 1.02, y: -4 }}
+                        className="group cursor-pointer"
                         onClick={() => setActiveTab(card.id as ActiveTab)}
                       >
-                        <CardContent className="p-4 sm:p-5 lg:p-6">
-                          <div className="flex items-center gap-3 sm:gap-4 mb-2 sm:mb-3">
-                            <div
-                              className="w-9 h-9 sm:w-10 sm:h-10 lg:w-11 lg:h-11 rounded-lg sm:rounded-xl flex items-center justify-center"
-                              style={{ backgroundColor: cardStyles.iconBackgroundColor || colorScheme.bg }}
-                            >
-                              <IconComponent
-                                className="w-4 h-4 sm:w-5 sm:h-5"
-                                style={{ color: cardStyles.iconColor || colorScheme.color }}
-                              />
+                        <div 
+                          className="relative overflow-hidden bg-white/5 border border-white/10 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.08]"
+                          style={{ borderRadius: '14px' }}
+                        >
+                          {/* Gradient overlay on hover */}
+                          <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                          
+                          <div className="relative z-10">
+                            <div className="flex items-center gap-3 sm:gap-4 mb-2 sm:mb-3">
+                              <div
+                                className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center ${colorScheme.bg}`}
+                                style={cardStyles.iconBackgroundColor ? { backgroundColor: cardStyles.iconBackgroundColor } : undefined}
+                              >
+                                <IconComponent
+                                  className={`w-5 h-5 ${colorScheme.color}`}
+                                  style={cardStyles.iconColor ? { color: cardStyles.iconColor } : undefined}
+                                />
+                              </div>
+                              <h3 className="text-sm sm:text-base font-semibold text-white">{card.title}</h3>
                             </div>
-                            <h3 className="text-sm sm:text-base font-semibold text-white">{card.title}</h3>
+                            <p className="text-xs sm:text-sm text-white/50 leading-relaxed line-clamp-2">
+                              {card.description}
+                            </p>
                           </div>
-                          <p className="text-xs sm:text-sm text-white/50 leading-relaxed line-clamp-2">
-                            {card.description}
-                          </p>
-                        </CardContent>
-                      </Card>
+                        </div>
+                      </motion.div>
                     );
                   });
                 })()}
@@ -631,20 +639,17 @@ const GenesisIADashboard = () => {
                 {/* Mobile: inline flow */}
                 <div className="block sm:hidden">
                   <div 
-                    className="flex items-start gap-3 p-3 rounded-xl border backdrop-blur-md shadow-lg"
-                    style={{
-                      backgroundColor: 'hsl(var(--card))',
-                      borderColor: 'hsl(var(--border))',
-                    }}
+                    className="flex items-start gap-3 p-3 bg-white/5 border border-white/10 backdrop-blur-md shadow-lg"
+                    style={{ borderRadius: '14px' }}
                   >
                     <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
                       <span className="text-base">👋</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h2 className="text-xs font-semibold text-foreground">
+                      <h2 className="text-xs font-semibold text-white">
                         Bem vindo de volta, <span className="capitalize">{userName}</span>
                       </h2>
-                      <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">
+                      <p className="text-[10px] text-white/50 mt-0.5 line-clamp-2">
                         A forma mais simples de transformar sua ideia em SaaS em minutos com IA.
                       </p>
                     </div>
@@ -659,20 +664,17 @@ const GenesisIADashboard = () => {
                   className="hidden sm:block fixed top-20 right-4 z-50 max-w-sm"
                 >
                   <div 
-                    className="flex items-start gap-3 p-4 rounded-xl border backdrop-blur-md shadow-xl"
-                    style={{
-                      backgroundColor: 'hsl(var(--card))',
-                      borderColor: 'hsl(var(--border))',
-                    }}
+                    className="flex items-start gap-3 p-4 bg-white/5 border border-white/10 backdrop-blur-md shadow-xl"
+                    style={{ borderRadius: '14px' }}
                   >
                     <div className="w-9 h-9 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
                       <span className="text-lg">👋</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h2 className="text-sm font-semibold text-foreground">
+                      <h2 className="text-sm font-semibold text-white">
                         Bem vindo de volta, <span className="capitalize">{userName}</span>
                       </h2>
-                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                      <p className="text-xs text-white/50 mt-0.5 line-clamp-2">
                         A forma mais simples de transformar sua ideia em SaaS em minutos com IA.
                       </p>
                     </div>
