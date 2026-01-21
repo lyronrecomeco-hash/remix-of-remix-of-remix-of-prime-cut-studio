@@ -4,15 +4,27 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
-import type { 
-  CreatePaymentRequest, 
-  CreatePaymentResponse, 
+import type {
+  CreatePaymentRequest,
+  CreatePaymentResponse,
   PaymentStatusResponse,
   CheckoutPayment,
-  PaymentEvent 
+  PaymentEvent,
 } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+function getInvokeErrorMessage(err: unknown): string {
+  if (!err) return 'Erro inesperado';
+  if (typeof err === 'string') return err;
+
+  const maybeObj = err as { message?: string; context?: { status?: number; statusText?: string } };
+  if (maybeObj?.message) return maybeObj.message;
+
+  const status = maybeObj?.context?.status;
+  const statusText = maybeObj?.context?.statusText;
+  if (status) return `Erro ${status}${statusText ? `: ${statusText}` : ''}`;
+
+  return 'Erro inesperado';
+}
 
 /**
  * Cria um novo pagamento
@@ -21,30 +33,24 @@ export async function createPayment(
   request: CreatePaymentRequest
 ): Promise<CreatePaymentResponse> {
   try {
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/checkout-create-payment`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(request),
+    const { data, error } = await supabase.functions.invoke('checkout-create-payment', {
+      body: request,
     });
 
-    const data = await response.json();
-    
-    if (!response.ok) {
+    if (error) {
       return {
         success: false,
-        error: data.error || 'Erro ao criar pagamento',
+        error: getInvokeErrorMessage(error),
       };
     }
 
     return {
       success: true,
-      paymentCode: data.paymentCode,
-      pixBrCode: data.pixBrCode,
-      pixQrCodeBase64: data.pixQrCodeBase64,
-      abacatepayUrl: data.abacatepayUrl,
-      expiresAt: data.expiresAt,
+      paymentCode: data?.paymentCode,
+      pixBrCode: data?.pixBrCode,
+      pixQrCodeBase64: data?.pixQrCodeBase64,
+      abacatepayUrl: data?.abacatepayUrl,
+      expiresAt: data?.expiresAt,
     };
   } catch (error) {
     console.error('Erro ao criar pagamento:', error);
@@ -62,28 +68,20 @@ export async function checkPaymentStatus(
   paymentCode: string
 ): Promise<PaymentStatusResponse> {
   try {
-    const response = await fetch(
-      `${SUPABASE_URL}/functions/v1/checkout-check-status?code=${encodeURIComponent(paymentCode)}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    const { data, error } = await supabase.functions.invoke('checkout-check-status', {
+      body: { code: paymentCode },
+    });
 
-    const data = await response.json();
-    
-    if (!response.ok) {
+    if (error) {
       return {
         status: 'pending',
-        error: data.error || 'Erro ao verificar status',
+        error: getInvokeErrorMessage(error),
       };
     }
 
     return {
-      status: data.status,
-      paidAt: data.paidAt,
+      status: data?.status,
+      paidAt: data?.paidAt,
     };
   } catch (error) {
     console.error('Erro ao verificar status:', error);
@@ -201,29 +199,23 @@ export async function regeneratePayment(
   paymentCode: string
 ): Promise<CreatePaymentResponse> {
   try {
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/checkout-regenerate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ paymentCode }),
+    const { data, error } = await supabase.functions.invoke('checkout-regenerate', {
+      body: { paymentCode },
     });
 
-    const data = await response.json();
-    
-    if (!response.ok) {
+    if (error) {
       return {
         success: false,
-        error: data.error || 'Erro ao regenerar pagamento',
+        error: getInvokeErrorMessage(error),
       };
     }
 
     return {
       success: true,
-      paymentCode: data.paymentCode,
-      pixBrCode: data.pixBrCode,
-      pixQrCodeBase64: data.pixQrCodeBase64,
-      expiresAt: data.expiresAt,
+      paymentCode: data?.paymentCode,
+      pixBrCode: data?.pixBrCode,
+      pixQrCodeBase64: data?.pixQrCodeBase64,
+      expiresAt: data?.expiresAt,
     };
   } catch (error) {
     console.error('Erro ao regenerar pagamento:', error);
