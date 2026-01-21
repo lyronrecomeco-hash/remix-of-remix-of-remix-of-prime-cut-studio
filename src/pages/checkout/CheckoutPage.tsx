@@ -121,7 +121,7 @@ export default function CheckoutPage() {
   };
 
   return (
-    <CheckoutLayout>
+    <CheckoutLayout hasCountdownBar>
       {/* Countdown Bar - Fixed at top */}
       <CheckoutCountdownBar 
         defaultMinutes={10} 

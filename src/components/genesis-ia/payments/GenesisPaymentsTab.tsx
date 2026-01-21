@@ -40,6 +40,14 @@ import { formatCurrency } from '@/lib/checkout/validators';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { GatewayConfigSection } from './GatewayConfigSection';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 
 interface GenesisPaymentsTabProps {
   userId?: string;
@@ -102,6 +110,8 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [activeTab, setActiveTab] = useState('payments');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   useEffect(() => {
     loadData();
@@ -251,10 +261,23 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
   const filteredPayments = payments.filter(payment => {
     const matchesSearch = 
       payment.payment_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      payment.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      payment.customer_name?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || payment.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredPayments.length / ITEMS_PER_PAGE);
+  const paginatedPayments = filteredPayments.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
 
   const webhookUrl = 'https://genesishub.cloud/functions/v1/checkout-webhook';
 
@@ -392,13 +415,13 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
           <Card className="bg-white/5 border-white/10">
             <ScrollArea className="h-[400px]">
               <div className="p-4 space-y-3">
-                {filteredPayments.length === 0 ? (
+                {paginatedPayments.length === 0 ? (
                   <div className="text-center py-8 text-white/40">
                     <CreditCard className="w-12 h-12 mx-auto mb-3 opacity-50" />
                     <p>Nenhum pagamento encontrado</p>
                   </div>
                 ) : (
-                  filteredPayments.map((payment) => (
+                  paginatedPayments.map((payment) => (
                     <motion.div
                       key={payment.id}
                       initial={{ opacity: 0, y: 10 }}
@@ -437,6 +460,66 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
               </div>
             </ScrollArea>
           </Card>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-2">
+              <p className="text-xs text-white/50">
+                Mostrando {(currentPage - 1) * ITEMS_PER_PAGE + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredPayments.length)} de {filteredPayments.length}
+              </p>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (currentPage > 1) setCurrentPage(currentPage - 1);
+                      }}
+                      className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                    let pageNum: number;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    return (
+                      <PaginationItem key={pageNum}>
+                        <PaginationLink
+                          href="#"
+                          isActive={currentPage === pageNum}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setCurrentPage(pageNum);
+                          }}
+                          className="cursor-pointer"
+                        >
+                          {pageNum}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  })}
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                      }}
+                      className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </TabsContent>
 
         {/* Webhook Tab */}
