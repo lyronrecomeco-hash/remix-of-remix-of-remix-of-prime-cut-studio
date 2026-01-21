@@ -16,16 +16,6 @@ function encryptApiKey(apiKey: string, userId: string): string {
   return btoa(result);
 }
 
-function decryptApiKey(encrypted: string, userId: string): string {
-  const secret = `${userId}-genesis-gateway-2024`;
-  const decoded = atob(encrypted);
-  let result = '';
-  for (let i = 0; i < decoded.length; i++) {
-    result += String.fromCharCode(decoded.charCodeAt(i) ^ secret.charCodeAt(i % secret.length));
-  }
-  return result;
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -64,28 +54,64 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { gateway, apiKey, sandboxMode } = body;
+    const { gateway, apiKey, sandboxMode, clientId, clientSecret } = body;
 
-    if (!gateway || !apiKey) {
+    if (!gateway) {
       return new Response(
-        JSON.stringify({ error: 'Gateway e API Key são obrigatórios' }),
+        JSON.stringify({ error: 'Gateway é obrigatório' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    if (!['abacatepay', 'asaas'].includes(gateway)) {
+    if (!['abacatepay', 'asaas', 'misticpay'].includes(gateway)) {
       return new Response(
         JSON.stringify({ error: 'Gateway inválido' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Saving ${gateway} API key for user:`, user.id);
+    // Validate required fields based on gateway
+    if (gateway === 'misticpay') {
+      if (!clientId || !clientSecret) {
+        return new Response(
+          JSON.stringify({ error: 'Client ID e Client Secret são obrigatórios para MisticPay' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } else {
+      if (!apiKey) {
+        return new Response(
+          JSON.stringify({ error: 'API Key é obrigatória' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
 
-    // Test the API key first
+    console.log(`Saving ${gateway} credentials for user:`, user.id);
+
+    // Test the API key/credentials first
     let isValid = false;
 
-    if (gateway === 'asaas') {
+    if (gateway === 'misticpay') {
+      try {
+        // Test MisticPay credentials by checking balance
+        const testResponse = await fetch('https://api.misticpay.com/api/users/balance', {
+          headers: {
+            'ci': clientId,
+            'cs': clientSecret,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        isValid = testResponse.ok;
+        if (!isValid) {
+          const errorData = await testResponse.json();
+          console.log('MisticPay API test failed:', errorData);
+        }
+      } catch (e) {
+        console.error('MisticPay API test error:', e);
+      }
+    } else if (gateway === 'asaas') {
       const baseUrl = sandboxMode 
         ? 'https://api-sandbox.asaas.com/v3' 
         : 'https://api.asaas.com/v3';
@@ -127,27 +153,36 @@ serve(async (req) => {
 
     if (!isValid) {
       return new Response(
-        JSON.stringify({ error: 'API Key inválida ou não autorizada' }),
+        JSON.stringify({ error: 'Credenciais inválidas ou não autorizadas' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`${gateway} API key validated successfully`);
+    console.log(`${gateway} credentials validated successfully`);
 
-    // Encrypt the API key for storage
-    const encryptedKey = encryptApiKey(apiKey, user.id);
+    // Prepare upsert data based on gateway
+    const upsertData: Record<string, unknown> = {
+      user_id: user.id,
+      gateway,
+      api_key_configured: true,
+      sandbox_mode: sandboxMode ?? false,
+      updated_at: new Date().toISOString(),
+    };
 
-    // Upsert the gateway config with encrypted API key
+    if (gateway === 'misticpay') {
+      upsertData.misticpay_client_id_hash = encryptApiKey(clientId, user.id);
+      upsertData.misticpay_client_secret_hash = encryptApiKey(clientSecret, user.id);
+      upsertData.asaas_access_token_hash = null;
+    } else {
+      upsertData.asaas_access_token_hash = encryptApiKey(apiKey, user.id);
+      upsertData.misticpay_client_id_hash = null;
+      upsertData.misticpay_client_secret_hash = null;
+    }
+
+    // Upsert the gateway config
     const { error: upsertError } = await supabase
       .from('checkout_gateway_config')
-      .upsert({
-        user_id: user.id,
-        gateway,
-        api_key_configured: true,
-        sandbox_mode: sandboxMode ?? false,
-        asaas_access_token_hash: encryptedKey, // Store encrypted key here
-        updated_at: new Date().toISOString(),
-      }, {
+      .upsert(upsertData, {
         onConflict: 'user_id,gateway',
       });
 

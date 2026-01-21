@@ -1785,6 +1785,8 @@ export type Database = {
           gateway: string
           id: string
           is_active: boolean
+          misticpay_client_id_hash: string | null
+          misticpay_client_secret_hash: string | null
           sandbox_mode: boolean
           updated_at: string
           user_id: string
@@ -1798,6 +1800,8 @@ export type Database = {
           gateway: string
           id?: string
           is_active?: boolean
+          misticpay_client_id_hash?: string | null
+          misticpay_client_secret_hash?: string | null
           sandbox_mode?: boolean
           updated_at?: string
           user_id: string
@@ -1811,6 +1815,8 @@ export type Database = {
           gateway?: string
           id?: string
           is_active?: boolean
+          misticpay_client_id_hash?: string | null
+          misticpay_client_secret_hash?: string | null
           sandbox_mode?: boolean
           updated_at?: string
           user_id?: string
@@ -1871,6 +1877,7 @@ export type Database = {
           installments: number | null
           ip_address: string | null
           metadata: Json | null
+          misticpay_transaction_id: string | null
           paid_at: string | null
           payment_code: string
           payment_method: string | null
@@ -1897,6 +1904,7 @@ export type Database = {
           installments?: number | null
           ip_address?: string | null
           metadata?: Json | null
+          misticpay_transaction_id?: string | null
           paid_at?: string | null
           payment_code: string
           payment_method?: string | null
@@ -1923,6 +1931,7 @@ export type Database = {
           installments?: number | null
           ip_address?: string | null
           metadata?: Json | null
+          misticpay_transaction_id?: string | null
           paid_at?: string | null
           payment_code?: string
           payment_method?: string | null

@@ -40,44 +40,54 @@ serve(async (req) => {
     const validAbacateSecret = webhookConfig?.webhook_secret || Deno.env.get('ABACATEPAY_WEBHOOK_SECRET');
     const validAsaasToken = gatewayConfig?.webhook_secret || Deno.env.get('ASAAS_WEBHOOK_TOKEN');
 
-    // Detect if this is an Asaas webhook
     const body = await req.json();
-    const isAsaasWebhook = !!(body.event && body.payment);
-
-    // Validate webhook authentication
-    if (!isAsaasWebhook && validAbacateSecret && receivedSecret !== validAbacateSecret) {
-      console.error('Invalid AbacatePay webhook secret');
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (isAsaasWebhook && validAsaasToken && asaasToken && asaasToken !== validAsaasToken) {
-      console.error('Invalid Asaas webhook token');
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     console.log('Webhook received:', JSON.stringify(body, null, 2));
 
     // Detect webhook source and extract payment info
-    let gateway: 'abacatepay' | 'asaas' = 'abacatepay';
+    let gateway: 'abacatepay' | 'asaas' | 'misticpay' = 'abacatepay';
     let paymentId: string | null = null;
     let eventType: string = '';
     let newStatus: string = 'pending';
 
-    // Check if this is an Asaas webhook
-    if (isAsaasWebhook) {
+    // Check if this is a MisticPay webhook (has transactionId, transactionType, and transactionMethod)
+    if (body.transactionId && body.transactionType && body.transactionMethod === 'PIX') {
+      gateway = 'misticpay';
+      paymentId = String(body.transactionId);
+      const misticStatus = body.status;
+
+      console.log('[MisticPay Webhook] Status:', misticStatus, 'TransactionId:', paymentId);
+
+      switch (misticStatus) {
+        case 'COMPLETO':
+          newStatus = 'paid';
+          eventType = 'payment_confirmed';
+          break;
+        case 'FALHA':
+          newStatus = 'failed';
+          eventType = 'payment_failed';
+          break;
+        case 'PENDENTE':
+        default:
+          eventType = 'payment_pending';
+      }
+    }
+    // Check if this is an Asaas webhook (has event and payment object)
+    else if (body.event && body.payment) {
       gateway = 'asaas';
       paymentId = body.payment.id;
       const asaasEvent = body.event;
 
+      // Validate Asaas token if configured
+      if (validAsaasToken && asaasToken && asaasToken !== validAsaasToken) {
+        console.error('Invalid Asaas webhook token');
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       console.log('[Asaas Webhook] Event:', asaasEvent, 'Payment:', paymentId);
 
-      // Map Asaas events to our status
       switch (asaasEvent) {
         case 'PAYMENT_RECEIVED':
         case 'PAYMENT_CONFIRMED':
@@ -96,7 +106,6 @@ serve(async (req) => {
         case 'PAYMENT_ANTICIPATED':
         case 'PAYMENT_CREATED':
         case 'PAYMENT_UPDATED':
-          // Just log, no status change
           eventType = asaasEvent.toLowerCase();
           break;
         default:
@@ -108,6 +117,15 @@ serve(async (req) => {
       const { event, data } = body;
       gateway = 'abacatepay';
       paymentId = data?.id || data?.billingId;
+
+      // Validate AbacatePay secret if configured
+      if (validAbacateSecret && receivedSecret !== validAbacateSecret) {
+        console.error('Invalid AbacatePay webhook secret');
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
 
       if (!event || !data) {
         console.log('Invalid webhook payload');
@@ -160,7 +178,16 @@ serve(async (req) => {
 
     // Find payment by gateway-specific ID
     let payment;
-    if (gateway === 'asaas') {
+    if (gateway === 'misticpay') {
+      // MisticPay uses transactionId - search by misticpay_transaction_id or payment_code containing the ID
+      const { data, error } = await supabase
+        .from('checkout_payments')
+        .select('id, status, payment_code')
+        .or(`misticpay_transaction_id.eq.${paymentId},payment_code.ilike.%${paymentId}%`)
+        .single();
+      payment = data;
+      if (error) console.log('Payment lookup error:', error);
+    } else if (gateway === 'asaas') {
       const { data, error } = await supabase
         .from('checkout_payments')
         .select('id, status, payment_code')
