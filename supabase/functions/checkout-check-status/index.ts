@@ -41,7 +41,7 @@ serve(async (req) => {
 
     const { data: payment, error: paymentError } = await supabase
       .from('checkout_payments')
-      .select('id, status, paid_at, expires_at, abacatepay_billing_id, asaas_payment_id, payment_method, gateway')
+      .select('id, status, paid_at, expires_at, abacatepay_billing_id, asaas_payment_id, misticpay_transaction_id, payment_method, gateway')
       .eq('payment_code', paymentCode)
       .single();
 
@@ -86,10 +86,19 @@ serve(async (req) => {
 
     let apiKey: string | null = null;
     let sandboxMode = false;
+    let misticClientId: string | null = null;
+    let misticClientSecret: string | null = null;
 
-    if (activeConfig && activeConfig.asaas_access_token_hash) {
-      apiKey = decryptApiKey(activeConfig.asaas_access_token_hash, activeConfig.user_id);
+    if (activeConfig) {
       sandboxMode = activeConfig.sandbox_mode || false;
+      if (activeConfig.gateway === 'misticpay') {
+        if (activeConfig.misticpay_client_id_hash && activeConfig.misticpay_client_secret_hash) {
+          misticClientId = decryptApiKey(activeConfig.misticpay_client_id_hash, activeConfig.user_id);
+          misticClientSecret = decryptApiKey(activeConfig.misticpay_client_secret_hash, activeConfig.user_id);
+        }
+      } else if (activeConfig.asaas_access_token_hash) {
+        apiKey = decryptApiKey(activeConfig.asaas_access_token_hash, activeConfig.user_id);
+      }
     } else {
       // Fallback to env variables
       const gateway = payment.gateway || 'abacatepay';
@@ -105,7 +114,30 @@ serve(async (req) => {
     const gateway = payment.gateway || 'abacatepay';
     let isPaid = false;
 
-    if (gateway === 'asaas' && payment.asaas_payment_id && apiKey) {
+    if (gateway === 'misticpay' && payment.misticpay_transaction_id && misticClientId && misticClientSecret) {
+      try {
+        console.log('[MisticPay] Checking payment status:', payment.misticpay_transaction_id);
+        
+        const misticResponse = await fetch('https://api.misticpay.com/api/transactions/check', {
+          method: 'POST',
+          headers: {
+            'ci': misticClientId,
+            'cs': misticClientSecret,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ transactionId: payment.misticpay_transaction_id }),
+        });
+
+        if (misticResponse.ok) {
+          const misticData = await misticResponse.json();
+          console.log('[MisticPay] Status response:', misticData);
+          // MisticPay statuses: PENDENTE, COMPLETO, FALHA
+          isPaid = misticData.data?.status === 'COMPLETO' || misticData.data?.transactionState === 'COMPLETO';
+        }
+      } catch (misticError) {
+        console.error('[MisticPay] Error checking status:', misticError);
+      }
+    } else if (gateway === 'asaas' && payment.asaas_payment_id && apiKey) {
       try {
         const baseUrl = sandboxMode 
           ? 'https://api-sandbox.asaas.com/v3' 
@@ -123,8 +155,6 @@ serve(async (req) => {
         if (asaasResponse.ok) {
           const asaasData = await asaasResponse.json();
           console.log('[Asaas] Status response:', asaasData.status);
-
-          // Asaas statuses: PENDING, RECEIVED, CONFIRMED, OVERDUE, REFUNDED, RECEIVED_IN_CASH, etc.
           isPaid = ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'].includes(asaasData.status);
         }
       } catch (asaasError) {

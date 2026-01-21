@@ -1,23 +1,22 @@
 /**
  * Gateway Configuration Section
- * Permite configurar AbacatePay ou Asaas como gateway de pagamento
+ * Permite configurar AbacatePay, Asaas ou MisticPay como gateway de pagamento
  * Visível apenas para lyronrp@gmail.com
  */
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import {
   CreditCard,
   Settings,
   Check,
-  X,
   RefreshCw,
   Eye,
   EyeOff,
   Save,
   AlertTriangle,
   Link as LinkIcon,
-  ExternalLink
+  ExternalLink,
+  Sparkles
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -31,7 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface GatewayConfig {
   id?: string;
-  gateway: 'abacatepay' | 'asaas';
+  gateway: 'abacatepay' | 'asaas' | 'misticpay';
   is_active: boolean;
   api_key_configured: boolean;
   sandbox_mode: boolean;
@@ -41,14 +40,17 @@ export function GatewayConfigSection() {
   const [configs, setConfigs] = useState<GatewayConfig[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeGateway, setActiveGateway] = useState<'abacatepay' | 'asaas'>('abacatepay');
+  const [activeGateway, setActiveGateway] = useState<'abacatepay' | 'asaas' | 'misticpay'>('abacatepay');
   
   // Form states
   const [abacateKey, setAbacateKey] = useState('');
   const [asaasKey, setAsaasKey] = useState('');
   const [asaasSandbox, setAsaasSandbox] = useState(true);
+  const [misticClientId, setMisticClientId] = useState('');
+  const [misticClientSecret, setMisticClientSecret] = useState('');
   const [showAbacateKey, setShowAbacateKey] = useState(false);
   const [showAsaasKey, setShowAsaasKey] = useState(false);
+  const [showMisticSecret, setShowMisticSecret] = useState(false);
 
   useEffect(() => {
     loadConfigs();
@@ -71,10 +73,9 @@ export function GatewayConfigSection() {
         setConfigs(data as GatewayConfig[]);
         const active = data.find(c => c.is_active);
         if (active) {
-          setActiveGateway(active.gateway as 'abacatepay' | 'asaas');
+          setActiveGateway(active.gateway as 'abacatepay' | 'asaas' | 'misticpay');
         }
         
-        // Set sandbox mode from config
         const asaasConfig = data.find(c => c.gateway === 'asaas');
         if (asaasConfig) {
           setAsaasSandbox(asaasConfig.sandbox_mode);
@@ -86,7 +87,13 @@ export function GatewayConfigSection() {
     setIsLoading(false);
   };
 
-  const saveGatewayConfig = async (gateway: 'abacatepay' | 'asaas', apiKey: string, sandboxMode?: boolean) => {
+  const saveGatewayConfig = async (
+    gateway: 'abacatepay' | 'asaas' | 'misticpay', 
+    apiKey?: string, 
+    sandboxMode?: boolean,
+    clientId?: string,
+    clientSecret?: string
+  ) => {
     setIsSaving(true);
     try {
       const { data: user } = await supabase.auth.getUser();
@@ -95,18 +102,25 @@ export function GatewayConfigSection() {
         return;
       }
 
-      // First, call edge function to securely store the API key
+      const body: Record<string, unknown> = {
+        gateway,
+        sandboxMode: sandboxMode ?? (gateway === 'asaas' ? asaasSandbox : false),
+      };
+
+      if (gateway === 'misticpay') {
+        body.clientId = clientId;
+        body.clientSecret = clientSecret;
+      } else {
+        body.apiKey = apiKey;
+      }
+
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/checkout-save-gateway-key`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
         },
-        body: JSON.stringify({
-          gateway,
-          apiKey,
-          sandboxMode: sandboxMode ?? (gateway === 'asaas' ? asaasSandbox : false),
-        }),
+        body: JSON.stringify(body),
       });
 
       const result = await response.json();
@@ -115,13 +129,16 @@ export function GatewayConfigSection() {
         throw new Error(result.error || 'Erro ao salvar configuração');
       }
 
-      toast.success(`Gateway ${gateway === 'asaas' ? 'Asaas' : 'AbacatePay'} configurado com sucesso!`);
+      toast.success(`Gateway ${gateway === 'asaas' ? 'Asaas' : gateway === 'misticpay' ? 'MisticPay' : 'AbacatePay'} configurado com sucesso!`);
       
-      // Clear input
+      // Clear inputs
       if (gateway === 'abacatepay') {
         setAbacateKey('');
-      } else {
+      } else if (gateway === 'asaas') {
         setAsaasKey('');
+      } else {
+        setMisticClientId('');
+        setMisticClientSecret('');
       }
 
       await loadConfigs();
@@ -132,7 +149,7 @@ export function GatewayConfigSection() {
     setIsSaving(false);
   };
 
-  const activateGateway = async (gateway: 'abacatepay' | 'asaas') => {
+  const activateGateway = async (gateway: 'abacatepay' | 'asaas' | 'misticpay') => {
     try {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) return;
@@ -151,7 +168,7 @@ export function GatewayConfigSection() {
         .eq('gateway', gateway);
 
       setActiveGateway(gateway);
-      toast.success(`${gateway === 'asaas' ? 'Asaas' : 'AbacatePay'} ativado como gateway principal!`);
+      toast.success(`${gateway === 'asaas' ? 'Asaas' : gateway === 'misticpay' ? 'MisticPay' : 'AbacatePay'} ativado como gateway principal!`);
       await loadConfigs();
     } catch (error) {
       console.error('Error activating gateway:', error);
@@ -159,7 +176,7 @@ export function GatewayConfigSection() {
     }
   };
 
-  const getConfigForGateway = (gateway: 'abacatepay' | 'asaas'): GatewayConfig | undefined => {
+  const getConfigForGateway = (gateway: 'abacatepay' | 'asaas' | 'misticpay'): GatewayConfig | undefined => {
     return configs.find(c => c.gateway === gateway);
   };
 
@@ -173,6 +190,7 @@ export function GatewayConfigSection() {
 
   const abacateConfig = getConfigForGateway('abacatepay');
   const asaasConfig = getConfigForGateway('asaas');
+  const misticConfig = getConfigForGateway('misticpay');
 
   return (
     <Card className="bg-white/5 border-white/10">
@@ -187,19 +205,26 @@ export function GatewayConfigSection() {
       </CardHeader>
       <CardContent className="space-y-6">
         <Tabs defaultValue="abacatepay" className="w-full">
-          <TabsList className="grid grid-cols-2 w-full max-w-sm">
-            <TabsTrigger value="abacatepay" className="flex items-center gap-2">
-              <CreditCard className="w-4 h-4" />
+          <TabsList className="grid grid-cols-3 w-full max-w-md">
+            <TabsTrigger value="abacatepay" className="flex items-center gap-1 text-xs">
+              <CreditCard className="w-3 h-3" />
               AbacatePay
               {abacateConfig?.is_active && (
-                <Badge variant="default" className="ml-1 bg-emerald-500 text-xs">Ativo</Badge>
+                <Badge variant="default" className="ml-1 bg-emerald-500 text-[10px] px-1">Ativo</Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="asaas" className="flex items-center gap-2">
-              <CreditCard className="w-4 h-4" />
+            <TabsTrigger value="asaas" className="flex items-center gap-1 text-xs">
+              <CreditCard className="w-3 h-3" />
               Asaas
               {asaasConfig?.is_active && (
-                <Badge variant="default" className="ml-1 bg-emerald-500 text-xs">Ativo</Badge>
+                <Badge variant="default" className="ml-1 bg-emerald-500 text-[10px] px-1">Ativo</Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="misticpay" className="flex items-center gap-1 text-xs">
+              <Sparkles className="w-3 h-3" />
+              MisticPay
+              {misticConfig?.is_active && (
+                <Badge variant="default" className="ml-1 bg-emerald-500 text-[10px] px-1">Ativo</Badge>
               )}
             </TabsTrigger>
           </TabsList>
@@ -369,13 +394,13 @@ export function GatewayConfigSection() {
                 </p>
                 <div className="flex items-center gap-2">
                   <code className="flex-1 text-xs bg-white/5 p-2 rounded font-mono text-white/80 break-all">
-                    https://xeloigymjjeejvicadar.supabase.co/functions/v1/checkout-webhook
+                    {import.meta.env.VITE_SUPABASE_URL}/functions/v1/checkout-webhook
                   </code>
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={() => {
-                      navigator.clipboard.writeText('https://xeloigymjjeejvicadar.supabase.co/functions/v1/checkout-webhook');
+                      navigator.clipboard.writeText(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/checkout-webhook`);
                       toast.success('URL copiada!');
                     }}
                   >
@@ -406,6 +431,126 @@ export function GatewayConfigSection() {
               </div>
             </div>
           </TabsContent>
+
+          {/* MisticPay Tab */}
+          <TabsContent value="misticpay" className="space-y-4 mt-4">
+            <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 text-purple-400" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white">MisticPay</h4>
+                    <p className="text-xs text-white/50">PIX apenas (taxas baixas)</p>
+                  </div>
+                </div>
+                {misticConfig?.api_key_configured ? (
+                  <Badge variant="outline" className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                    <Check className="w-3 h-3 mr-1" />
+                    Configurado
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="bg-amber-500/20 text-amber-400 border-amber-500/30">
+                    <AlertTriangle className="w-3 h-3 mr-1" />
+                    Não configurado
+                  </Badge>
+                )}
+              </div>
+
+              <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                <p className="text-xs text-white/60">
+                  <strong className="text-purple-400">Nota:</strong> MisticPay suporta apenas pagamentos via PIX. 
+                  Para cartão de crédito, use AbacatePay ou Asaas.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-white/70">Client ID</Label>
+                <Input
+                  type="text"
+                  value={misticClientId}
+                  onChange={(e) => setMisticClientId(e.target.value)}
+                  placeholder={misticConfig?.api_key_configured ? '••••••••••••••••' : 'Cole seu Client ID aqui'}
+                  className="bg-white/5 border-white/10"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-white/70">Client Secret</Label>
+                <div className="relative">
+                  <Input
+                    type={showMisticSecret ? 'text' : 'password'}
+                    value={misticClientSecret}
+                    onChange={(e) => setMisticClientSecret(e.target.value)}
+                    placeholder={misticConfig?.api_key_configured ? '••••••••••••••••' : 'Cole seu Client Secret aqui'}
+                    className="bg-white/5 border-white/10 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowMisticSecret(!showMisticSecret)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70"
+                  >
+                    {showMisticSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <p className="text-xs text-white/40">
+                  Encontre em: MisticPay Dashboard → Configurações → API
+                </p>
+              </div>
+
+              <Button
+                onClick={() => saveGatewayConfig('misticpay', undefined, false, misticClientId, misticClientSecret)}
+                disabled={!misticClientId || !misticClientSecret || isSaving}
+                className="w-full"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                Salvar Credenciais
+              </Button>
+
+              {misticConfig?.api_key_configured && !misticConfig.is_active && (
+                <Button
+                  onClick={() => activateGateway('misticpay')}
+                  variant="outline"
+                  className="w-full"
+                >
+                  Ativar MisticPay
+                </Button>
+              )}
+
+              <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                <h5 className="text-sm font-medium text-purple-400 mb-2">Configurar Webhook</h5>
+                <p className="text-xs text-white/60 mb-2">
+                  Use este URL ao criar transações (projectWebhook):
+                </p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 text-xs bg-white/5 p-2 rounded font-mono text-white/80 break-all">
+                    {import.meta.env.VITE_SUPABASE_URL}/functions/v1/checkout-webhook
+                  </code>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/checkout-webhook`);
+                      toast.success('URL copiada!');
+                    }}
+                  >
+                    <LinkIcon className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <a
+                href="https://docs.misticpay.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-xs text-purple-400 hover:underline"
+              >
+                <ExternalLink className="w-3 h-3" />
+                Documentação MisticPay
+              </a>
+            </div>
+          </TabsContent>
         </Tabs>
 
         {/* Active Gateway Info */}
@@ -415,7 +560,7 @@ export function GatewayConfigSection() {
             <span className="text-sm font-medium text-emerald-400">Gateway Ativo</span>
           </div>
           <p className="text-white text-lg font-bold">
-            {activeGateway === 'asaas' ? 'Asaas' : 'AbacatePay'}
+            {activeGateway === 'asaas' ? 'Asaas' : activeGateway === 'misticpay' ? 'MisticPay' : 'AbacatePay'}
           </p>
           <p className="text-xs text-white/50 mt-1">
             Todos os novos pagamentos serão processados por este gateway.

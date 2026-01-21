@@ -21,7 +21,83 @@ interface CreatePaymentRequest {
   metadata?: Record<string, unknown>;
   cardToken?: string;
   installments?: number;
-  gateway?: 'abacatepay' | 'asaas';
+  gateway?: 'abacatepay' | 'asaas' | 'misticpay';
+}
+
+// Helper to decrypt API key
+function decryptApiKey(encrypted: string, userId: string): string {
+  const secret = `${userId}-genesis-gateway-2024`;
+  const decoded = atob(encrypted);
+  let result = '';
+  for (let i = 0; i < decoded.length; i++) {
+    result += String.fromCharCode(decoded.charCodeAt(i) ^ secret.charCodeAt(i % secret.length));
+  }
+  return result;
+}
+
+// ============= MISTICPAY INTEGRATION =============
+async function createMisticPayPayment(
+  body: CreatePaymentRequest,
+  cleanCpf: string,
+  priceCents: number,
+  clientId: string,
+  clientSecret: string,
+  webhookUrl: string
+) {
+  console.log('[MisticPay] Creating PIX payment...');
+  
+  // MisticPay only supports PIX
+  if (body.paymentMethod !== 'PIX') {
+    throw new Error('MisticPay suporta apenas PIX. Para cartão, use outro gateway.');
+  }
+
+  const transactionId = `genesis-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+  const customerName = `${body.customer.firstName} ${body.customer.lastName}`;
+  const amountReais = priceCents / 100; // MisticPay uses reais, not centavos
+
+  const payload = {
+    amount: amountReais,
+    payerName: customerName,
+    payerDocument: cleanCpf,
+    transactionId: transactionId,
+    description: body.description || 'Pagamento PIX',
+    projectWebhook: webhookUrl,
+  };
+
+  console.log('[MisticPay] Request payload:', JSON.stringify(payload));
+
+  const response = await fetch('https://api.misticpay.com/api/transactions/create', {
+    method: 'POST',
+    headers: {
+      'ci': clientId,
+      'cs': clientSecret,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json();
+  console.log('[MisticPay] Response:', JSON.stringify(data));
+
+  if (!response.ok) {
+    throw new Error(data.message || data.error || 'Erro ao criar pagamento MisticPay');
+  }
+
+  const transactionData = data.data;
+  
+  // Extract base64 from response (may include data:image prefix)
+  let pixQrCodeBase64 = transactionData.qrCodeBase64 || null;
+  if (pixQrCodeBase64 && pixQrCodeBase64.startsWith('data:image')) {
+    pixQrCodeBase64 = pixQrCodeBase64.split(',')[1] || pixQrCodeBase64;
+  }
+
+  return {
+    gatewayPaymentId: transactionData.transactionId || transactionId,
+    pixBrCode: transactionData.copyPaste || null,
+    pixQrCodeBase64: pixQrCodeBase64,
+    abacatepayUrl: null,
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+  };
 }
 
 // ============= ASAAS INTEGRATION =============
@@ -41,11 +117,9 @@ async function createAsaasPayment(
 
   console.log(`[Asaas] Creating payment via ${sandboxMode ? 'SANDBOX' : 'PRODUCTION'}...`);
 
-  // Step 1: Create or find customer
   const customerName = `${body.customer.firstName} ${body.customer.lastName}`;
   const customerEmail = body.customer.email || `${cleanCpf}@checkout.local`;
   
-  // Check if customer exists
   const findCustomerResponse = await fetch(`${baseUrl}/customers?cpfCnpj=${cleanCpf}`, {
     headers: {
       'access_token': ASAAS_API_KEY,
@@ -55,13 +129,10 @@ async function createAsaasPayment(
   
   let asaasCustomerId: string;
   const findCustomerData = await findCustomerResponse.json();
-  console.log('[Asaas] Find customer response:', findCustomerData);
 
   if (findCustomerData.data && findCustomerData.data.length > 0) {
     asaasCustomerId = findCustomerData.data[0].id;
-    console.log('[Asaas] Using existing customer:', asaasCustomerId);
   } else {
-    // Create new customer
     const createCustomerResponse = await fetch(`${baseUrl}/customers`, {
       method: 'POST',
       headers: {
@@ -78,28 +149,24 @@ async function createAsaasPayment(
     });
 
     const createCustomerData = await createCustomerResponse.json();
-    console.log('[Asaas] Create customer response:', createCustomerData);
-
     if (!createCustomerResponse.ok) {
       throw new Error(createCustomerData.errors?.[0]?.description || 'Erro ao criar cliente no Asaas');
     }
     asaasCustomerId = createCustomerData.id;
   }
 
-  // Step 2: Create payment
   const dueDate = new Date();
-  dueDate.setDate(dueDate.getDate() + 1); // Due tomorrow for more flexibility
+  dueDate.setDate(dueDate.getDate() + 1);
 
   const paymentPayload: Record<string, unknown> = {
     customer: asaasCustomerId,
     billingType: body.paymentMethod === 'PIX' ? 'PIX' : 'CREDIT_CARD',
-    value: priceCents / 100, // Asaas uses reais, not centavos
+    value: priceCents / 100,
     dueDate: dueDate.toISOString().split('T')[0],
     description: body.description || 'Pagamento',
     externalReference: `checkout-${Date.now()}`,
   };
 
-  // Add installments for credit card
   if (body.paymentMethod === 'CARD' && body.installments && body.installments > 1) {
     paymentPayload.installmentCount = body.installments;
     paymentPayload.installmentValue = (priceCents / 100) / body.installments;
@@ -115,8 +182,6 @@ async function createAsaasPayment(
   });
 
   const paymentData = await paymentResponse.json();
-  console.log('[Asaas] Payment response:', paymentData);
-
   if (!paymentResponse.ok) {
     throw new Error(paymentData.errors?.[0]?.description || 'Erro ao criar pagamento no Asaas');
   }
@@ -126,9 +191,7 @@ async function createAsaasPayment(
   let asaasPaymentId = paymentData.id;
   let abacatepayUrl: string | null = null;
 
-  // Step 3: Get PIX QR Code if payment method is PIX
   if (body.paymentMethod === 'PIX') {
-    // Wait a moment for Asaas to generate the PIX
     await new Promise(resolve => setTimeout(resolve, 500));
 
     const pixResponse = await fetch(`${baseUrl}/payments/${asaasPaymentId}/pixQrCode`, {
@@ -139,14 +202,11 @@ async function createAsaasPayment(
     });
 
     const pixData = await pixResponse.json();
-    console.log('[Asaas] PIX QR Code response:', pixData);
-
     if (pixResponse.ok) {
       pixBrCode = pixData.payload || null;
       pixQrCodeBase64 = pixData.encodedImage || null;
     }
   } else {
-    // For credit card, get the payment link
     abacatepayUrl = paymentData.invoiceUrl || null;
   }
 
@@ -198,8 +258,6 @@ async function createAbacatePayment(
     });
 
     const pixData = await pixResponse.json();
-    console.log('[AbacatePay] PIX response:', { status: pixResponse.status });
-
     if (!pixResponse.ok) {
       throw new Error(pixData.error || 'Erro ao gerar QR Code PIX');
     }
@@ -244,8 +302,6 @@ async function createAbacatePayment(
     });
 
     const billingData = await billingResponse.json();
-    console.log('[AbacatePay] Billing response:', { status: billingResponse.status });
-
     if (!billingResponse.ok) {
       throw new Error(billingData.error || 'Erro ao criar cobrança');
     }
@@ -261,17 +317,6 @@ async function createAbacatePayment(
     abacatepayUrl,
     expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
   };
-}
-
-// Helper to decrypt API key
-function decryptApiKey(encrypted: string, userId: string): string {
-  const secret = `${userId}-genesis-gateway-2024`;
-  const decoded = atob(encrypted);
-  let result = '';
-  for (let i = 0; i < decoded.length; i++) {
-    result += String.fromCharCode(decoded.charCodeAt(i) ^ secret.charCodeAt(i % secret.length));
-  }
-  return result;
 }
 
 serve(async (req) => {
@@ -320,15 +365,26 @@ serve(async (req) => {
     let selectedGateway = body.gateway || activeConfig?.gateway;
     let apiKey: string | null = null;
     let sandboxMode = false;
+    let misticClientId: string | null = null;
+    let misticClientSecret: string | null = null;
 
-    if (activeConfig && activeConfig.asaas_access_token_hash) {
-      // Decrypt API key from database
-      apiKey = decryptApiKey(activeConfig.asaas_access_token_hash, activeConfig.user_id);
-      sandboxMode = activeConfig.sandbox_mode || false;
+    if (activeConfig) {
       selectedGateway = activeConfig.gateway;
+      sandboxMode = activeConfig.sandbox_mode || false;
+      
+      if (activeConfig.gateway === 'misticpay') {
+        if (activeConfig.misticpay_client_id_hash && activeConfig.misticpay_client_secret_hash) {
+          misticClientId = decryptApiKey(activeConfig.misticpay_client_id_hash, activeConfig.user_id);
+          misticClientSecret = decryptApiKey(activeConfig.misticpay_client_secret_hash, activeConfig.user_id);
+        }
+      } else if (activeConfig.asaas_access_token_hash) {
+        apiKey = decryptApiKey(activeConfig.asaas_access_token_hash, activeConfig.user_id);
+      }
       console.log('Using gateway from config:', selectedGateway, 'sandbox:', sandboxMode);
-    } else {
-      // Fallback to environment variables (for backwards compatibility)
+    }
+
+    // Fallback to env variables
+    if (!apiKey && !misticClientId) {
       const ABACATEPAY_API_KEY = Deno.env.get('ABACATEPAY_API_KEY');
       const ASAAS_API_KEY = Deno.env.get('ASAAS_API_KEY');
       const ASAAS_SANDBOX = Deno.env.get('ASAAS_SANDBOX') === 'true';
@@ -350,7 +406,7 @@ serve(async (req) => {
 
     console.log('Selected gateway:', selectedGateway);
 
-    if (!selectedGateway || !apiKey) {
+    if (!selectedGateway || (!apiKey && !misticClientId)) {
       return new Response(
         JSON.stringify({ error: 'Nenhum gateway de pagamento configurado. Configure em Pagamentos > Gateway.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -403,17 +459,22 @@ serve(async (req) => {
     }
 
     const origin = req.headers.get('origin') || 'https://www.genesishub.cloud';
+    const webhookUrl = `${supabaseUrl}/functions/v1/checkout-webhook`;
 
     let paymentResult;
 
     try {
-      if (selectedGateway === 'asaas') {
+      if (selectedGateway === 'misticpay') {
+        paymentResult = await createMisticPayPayment(
+          body, cleanCpf, priceCents, misticClientId!, misticClientSecret!, webhookUrl
+        );
+      } else if (selectedGateway === 'asaas') {
         paymentResult = await createAsaasPayment(
-          body, supabase, origin, cleanCpf, cleanPhone, priceCents, apiKey, sandboxMode
+          body, supabase, origin, cleanCpf, cleanPhone, priceCents, apiKey!, sandboxMode
         );
       } else {
         paymentResult = await createAbacatePayment(
-          body, origin, cleanCpf, cleanPhone, priceCents, apiKey
+          body, origin, cleanCpf, cleanPhone, priceCents, apiKey!
         );
       }
     } catch (gatewayError) {
@@ -440,6 +501,7 @@ serve(async (req) => {
         gateway: selectedGateway,
         abacatepay_billing_id: selectedGateway === 'abacatepay' ? paymentResult.gatewayPaymentId : null,
         asaas_payment_id: selectedGateway === 'asaas' ? paymentResult.gatewayPaymentId : null,
+        misticpay_transaction_id: selectedGateway === 'misticpay' ? paymentResult.gatewayPaymentId : null,
         abacatepay_url: paymentResult.abacatepayUrl,
         pix_br_code: paymentResult.pixBrCode,
         pix_qr_code_base64: paymentResult.pixQrCodeBase64,
