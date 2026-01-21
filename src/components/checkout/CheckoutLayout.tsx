@@ -7,10 +7,13 @@ import React, { useEffect, useState } from 'react';
 import { Shield, Lock, CreditCard, CheckCircle, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { AllPaymentIcons } from './PaymentIcons';
+import { cn } from '@/lib/utils';
 
 interface CheckoutLayoutProps {
   children: React.ReactNode;
   showSecurityBadges?: boolean;
+  /** True only on pages that render the fixed red countdown bar (h-[44px]) */
+  hasCountdownBar?: boolean;
 }
 
 // Gateway display names
@@ -20,7 +23,7 @@ const GATEWAY_NAMES: Record<string, string> = {
   misticpay: 'MisticPay',
 };
 
-export function CheckoutLayout({ children, showSecurityBadges = true }: CheckoutLayoutProps) {
+export function CheckoutLayout({ children, showSecurityBadges = true, hasCountdownBar = false }: CheckoutLayoutProps) {
   const [activeGateway, setActiveGateway] = useState<string>('');
 
   // Fetch active gateway
@@ -51,7 +54,12 @@ export function CheckoutLayout({ children, showSecurityBadges = true }: Checkout
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-x-hidden">
       {/* Header - Mobile Optimized */}
       {/* Header positioned below the fixed countdown bar (h-[44px]) */}
-      <header className="sticky top-[44px] z-40 border-b border-white/10 bg-slate-900/95 backdrop-blur-xl safe-area-inset-top">
+      <header
+        className={cn(
+          'sticky z-40 border-b border-white/10 bg-slate-900/95 backdrop-blur-xl safe-area-inset-top',
+          hasCountdownBar ? 'top-[44px]' : 'top-0',
+        )}
+      >
         <div className="max-w-4xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
