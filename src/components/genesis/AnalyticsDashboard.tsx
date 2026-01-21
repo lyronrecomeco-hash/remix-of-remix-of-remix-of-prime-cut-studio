@@ -31,6 +31,9 @@ interface StatCardProps {
 }
 
 function StatCard({ title, value, subtitle, icon: Icon, delay = 0, color = 'text-primary' }: StatCardProps) {
+  // Extract color name from text-{color}-500 format
+  const colorName = color.replace('text-', '').replace('-500', '');
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: 20, scale: 0.9 }}
@@ -38,29 +41,37 @@ function StatCard({ title, value, subtitle, icon: Icon, delay = 0, color = 'text
       transition={{ delay: delay / 1000, type: 'spring' }}
       whileHover={{ scale: 1.02, y: -2 }}
     >
-      <Card className="relative overflow-hidden group">
+      <div 
+        className="relative overflow-hidden group bg-white/5 border border-white/10 p-6"
+        style={{ borderRadius: '14px' }}
+      >
         <motion.div
-          className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"
         />
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">{title}</p>
-              <p className="text-3xl font-bold mt-1">{value}</p>
-              {subtitle && (
-                <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
-              )}
-            </div>
-            <motion.div
-              className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center"
-              whileHover={{ rotate: 360 }}
-              transition={{ duration: 0.5 }}
-            >
-              <Icon className={cn("w-7 h-7", color)} />
-            </motion.div>
+        <div className="flex items-center justify-between relative z-10">
+          <div>
+            <p className="text-sm text-white/50">{title}</p>
+            <p className="text-3xl font-bold mt-1 text-white">{value}</p>
+            {subtitle && (
+              <p className="text-sm text-white/50 mt-1">{subtitle}</p>
+            )}
           </div>
-        </CardContent>
-      </Card>
+          <motion.div
+            className={cn(
+              "w-12 h-12 rounded-xl flex items-center justify-center",
+              colorName === 'green' && "bg-emerald-500/20",
+              colorName === 'blue' && "bg-blue-500/20",
+              colorName === 'purple' && "bg-purple-500/20",
+              colorName === 'amber' && "bg-amber-500/20",
+              !['green', 'blue', 'purple', 'amber'].includes(colorName) && "bg-primary/20"
+            )}
+            whileHover={{ rotate: 360 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Icon className={cn("w-6 h-6", color)} />
+          </motion.div>
+        </div>
+      </div>
     </motion.div>
   );
 }
@@ -106,12 +117,14 @@ export function AnalyticsDashboard() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 w-48 bg-muted/50 rounded animate-pulse" />
+        <div className="h-8 w-48 bg-white/10 rounded animate-pulse" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="h-32" />
-            </Card>
+            <div 
+              key={i} 
+              className="animate-pulse bg-white/5 border border-white/10 h-32"
+              style={{ borderRadius: '14px' }}
+            />
           ))}
         </div>
       </div>
@@ -157,26 +170,31 @@ export function AnalyticsDashboard() {
         animate={{ opacity: 1, y: 0 }}
         className="flex items-center justify-between"
       >
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-3">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center">
             <motion.div
               animate={{ 
                 scale: [1, 1.2, 1],
               }}
               transition={{ duration: 2, repeat: Infinity }}
             >
-              <BarChart3 className="w-7 h-7 text-primary" />
+              <BarChart3 className="w-6 h-6 text-cyan-400" />
             </motion.div>
-            Analytics
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Métricas e insights do seu negócio
-          </p>
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-white">Analytics</h1>
+            <p className="text-white/50 text-sm">
+              Métricas e insights do seu negócio
+            </p>
+          </div>
         </div>
-        <Badge variant="secondary" className="gap-1">
-          <Activity className="w-3 h-3" />
-          Tempo real
-        </Badge>
+        <div 
+          className="px-3 py-1.5 bg-emerald-500/20 border border-emerald-500/30 flex items-center gap-2"
+          style={{ borderRadius: '10px' }}
+        >
+          <Activity className="w-3 h-3 text-emerald-400" />
+          <span className="text-xs text-emerald-400 font-medium">Tempo real</span>
+        </div>
       </motion.div>
 
       {/* Stats Grid */}
@@ -196,22 +214,23 @@ export function AnalyticsDashboard() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
       >
-        <Card className="border-dashed">
-          <CardContent className="py-12 text-center">
-            <motion.div
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-muted/50 flex items-center justify-center"
-            >
-              <AlertCircle className="w-8 h-8 text-muted-foreground" />
-            </motion.div>
-            <h3 className="font-semibold text-lg mb-2">Gráficos detalhados em breve</h3>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              Estamos trabalhando em métricas avançadas com gráficos de desempenho, 
-              taxa de resposta e análise de conversas.
-            </p>
-          </CardContent>
-        </Card>
+        <div 
+          className="bg-white/5 border border-dashed border-white/20 py-12 text-center"
+          style={{ borderRadius: '14px' }}
+        >
+          <motion.div
+            animate={{ y: [0, -10, 0] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="w-16 h-16 mx-auto mb-4 rounded-xl bg-purple-500/20 flex items-center justify-center"
+          >
+            <AlertCircle className="w-8 h-8 text-purple-400" />
+          </motion.div>
+          <h3 className="font-semibold text-lg mb-2 text-white">Gráficos detalhados em breve</h3>
+          <p className="text-white/50 max-w-md mx-auto">
+            Estamos trabalhando em métricas avançadas com gráficos de desempenho, 
+            taxa de resposta e análise de conversas.
+          </p>
+        </div>
       </motion.div>
     </div>
   );
