@@ -6,6 +6,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper to decrypt API key
+function decryptApiKey(encrypted: string, userId: string): string {
+  const secret = `${userId}-genesis-gateway-2024`;
+  const decoded = atob(encrypted);
+  let result = '';
+  for (let i = 0; i < decoded.length; i++) {
+    result += String.fromCharCode(decoded.charCodeAt(i) ^ secret.charCodeAt(i % secret.length));
+  }
+  return result;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -56,11 +67,38 @@ serve(async (req) => {
       );
     }
 
-    // Determine gateway
-    const gateway = oldPayment.gateway || 'abacatepay';
-    const ABACATEPAY_API_KEY = Deno.env.get('ABACATEPAY_API_KEY');
-    const ASAAS_API_KEY = Deno.env.get('ASAAS_API_KEY');
-    const ASAAS_SANDBOX = Deno.env.get('ASAAS_SANDBOX') === 'true';
+    // Get active gateway config from database
+    const { data: activeConfig } = await supabase
+      .from('checkout_gateway_config')
+      .select('*')
+      .eq('is_active', true)
+      .eq('api_key_configured', true)
+      .single();
+
+    let apiKey: string | null = null;
+    let sandboxMode = false;
+    let gateway = oldPayment.gateway || 'abacatepay';
+
+    if (activeConfig && activeConfig.asaas_access_token_hash) {
+      apiKey = decryptApiKey(activeConfig.asaas_access_token_hash, activeConfig.user_id);
+      sandboxMode = activeConfig.sandbox_mode || false;
+      gateway = activeConfig.gateway;
+    } else {
+      // Fallback to env variables
+      if (gateway === 'asaas') {
+        apiKey = Deno.env.get('ASAAS_API_KEY') || null;
+        sandboxMode = Deno.env.get('ASAAS_SANDBOX') === 'true';
+      } else {
+        apiKey = Deno.env.get('ABACATEPAY_API_KEY') || null;
+      }
+    }
+
+    if (!apiKey) {
+      return new Response(
+        JSON.stringify({ error: 'Payment gateway not configured. Configure em Pagamentos > Gateway.' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     let pixBrCode: string | null = null;
     let pixQrCodeBase64: string | null = null;
@@ -68,9 +106,9 @@ serve(async (req) => {
     let asaasPaymentId: string | null = null;
 
     if (oldPayment.payment_method === 'PIX') {
-      if (gateway === 'asaas' && ASAAS_API_KEY) {
+      if (gateway === 'asaas') {
         // Regenerate via Asaas
-        const baseUrl = ASAAS_SANDBOX 
+        const baseUrl = sandboxMode 
           ? 'https://api-sandbox.asaas.com/v3' 
           : 'https://api.asaas.com/v3';
 
@@ -79,7 +117,7 @@ serve(async (req) => {
         // Find or get customer
         const findCustomerResponse = await fetch(`${baseUrl}/customers?cpfCnpj=${customer.cpf}`, {
           headers: {
-            'access_token': ASAAS_API_KEY,
+            'access_token': apiKey,
             'Content-Type': 'application/json',
           },
         });
@@ -93,7 +131,7 @@ serve(async (req) => {
           const createCustomerResponse = await fetch(`${baseUrl}/customers`, {
             method: 'POST',
             headers: {
-              'access_token': ASAAS_API_KEY,
+              'access_token': apiKey,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
@@ -115,7 +153,7 @@ serve(async (req) => {
         const paymentResponse = await fetch(`${baseUrl}/payments`, {
           method: 'POST',
           headers: {
-            'access_token': ASAAS_API_KEY,
+            'access_token': apiKey,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -141,7 +179,7 @@ serve(async (req) => {
         
         const pixResponse = await fetch(`${baseUrl}/payments/${asaasPaymentId}/pixQrCode`, {
           headers: {
-            'access_token': ASAAS_API_KEY,
+            'access_token': apiKey,
             'Content-Type': 'application/json',
           },
         });
@@ -152,7 +190,7 @@ serve(async (req) => {
           pixQrCodeBase64 = pixData.encodedImage || null;
         }
 
-      } else if (ABACATEPAY_API_KEY) {
+      } else {
         // Regenerate via AbacatePay
         console.log('[AbacatePay] Regenerating PIX...');
         
@@ -171,7 +209,7 @@ serve(async (req) => {
         const pixResponse = await fetch('https://api.abacatepay.com/v1/pixQrCode/create', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${ABACATEPAY_API_KEY}`,
+            'Authorization': `Bearer ${apiKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(pixPayload),
@@ -194,11 +232,6 @@ serve(async (req) => {
         } else {
           pixQrCodeBase64 = rawBase64;
         }
-      } else {
-        return new Response(
-          JSON.stringify({ error: 'Payment gateway not configured' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
       }
     }
 

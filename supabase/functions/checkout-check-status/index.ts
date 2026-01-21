@@ -6,6 +6,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper to decrypt API key
+function decryptApiKey(encrypted: string, userId: string): string {
+  const secret = `${userId}-genesis-gateway-2024`;
+  const decoded = atob(encrypted);
+  let result = '';
+  for (let i = 0; i < decoded.length; i++) {
+    result += String.fromCharCode(decoded.charCodeAt(i) ^ secret.charCodeAt(i % secret.length));
+  }
+  return result;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -65,77 +76,93 @@ serve(async (req) => {
       );
     }
 
+    // Get active gateway config from database
+    const { data: activeConfig } = await supabase
+      .from('checkout_gateway_config')
+      .select('*')
+      .eq('is_active', true)
+      .eq('api_key_configured', true)
+      .single();
+
+    let apiKey: string | null = null;
+    let sandboxMode = false;
+
+    if (activeConfig && activeConfig.asaas_access_token_hash) {
+      apiKey = decryptApiKey(activeConfig.asaas_access_token_hash, activeConfig.user_id);
+      sandboxMode = activeConfig.sandbox_mode || false;
+    } else {
+      // Fallback to env variables
+      const gateway = payment.gateway || 'abacatepay';
+      if (gateway === 'asaas') {
+        apiKey = Deno.env.get('ASAAS_API_KEY') || null;
+        sandboxMode = Deno.env.get('ASAAS_SANDBOX') === 'true';
+      } else {
+        apiKey = Deno.env.get('ABACATEPAY_API_KEY') || null;
+      }
+    }
+
     // Check with appropriate gateway
     const gateway = payment.gateway || 'abacatepay';
     let isPaid = false;
 
-    if (gateway === 'asaas' && payment.asaas_payment_id) {
-      const ASAAS_API_KEY = Deno.env.get('ASAAS_API_KEY');
-      const ASAAS_SANDBOX = Deno.env.get('ASAAS_SANDBOX') === 'true';
-      
-      if (ASAAS_API_KEY) {
-        try {
-          const baseUrl = ASAAS_SANDBOX 
-            ? 'https://api-sandbox.asaas.com/v3' 
-            : 'https://api.asaas.com/v3';
+    if (gateway === 'asaas' && payment.asaas_payment_id && apiKey) {
+      try {
+        const baseUrl = sandboxMode 
+          ? 'https://api-sandbox.asaas.com/v3' 
+          : 'https://api.asaas.com/v3';
 
-          console.log('[Asaas] Checking payment status:', payment.asaas_payment_id);
-          
-          const asaasResponse = await fetch(`${baseUrl}/payments/${payment.asaas_payment_id}`, {
-            headers: {
-              'access_token': ASAAS_API_KEY,
-              'Content-Type': 'application/json',
-            },
-          });
+        console.log('[Asaas] Checking payment status:', payment.asaas_payment_id);
+        
+        const asaasResponse = await fetch(`${baseUrl}/payments/${payment.asaas_payment_id}`, {
+          headers: {
+            'access_token': apiKey,
+            'Content-Type': 'application/json',
+          },
+        });
 
-          if (asaasResponse.ok) {
-            const asaasData = await asaasResponse.json();
-            console.log('[Asaas] Status response:', asaasData.status);
+        if (asaasResponse.ok) {
+          const asaasData = await asaasResponse.json();
+          console.log('[Asaas] Status response:', asaasData.status);
 
-            // Asaas statuses: PENDING, RECEIVED, CONFIRMED, OVERDUE, REFUNDED, RECEIVED_IN_CASH, etc.
-            isPaid = ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'].includes(asaasData.status);
-          }
-        } catch (asaasError) {
-          console.error('[Asaas] Error checking status:', asaasError);
+          // Asaas statuses: PENDING, RECEIVED, CONFIRMED, OVERDUE, REFUNDED, RECEIVED_IN_CASH, etc.
+          isPaid = ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'].includes(asaasData.status);
         }
+      } catch (asaasError) {
+        console.error('[Asaas] Error checking status:', asaasError);
       }
-    } else if (gateway === 'abacatepay' && payment.abacatepay_billing_id) {
-      const ABACATEPAY_API_KEY = Deno.env.get('ABACATEPAY_API_KEY');
-      
-      if (ABACATEPAY_API_KEY) {
-        try {
-          console.log('[AbacatePay] Checking status:', payment.abacatepay_billing_id);
-          
-          let checkUrl = '';
-          if (payment.payment_method === 'PIX') {
-            checkUrl = `https://api.abacatepay.com/v1/pixQrCode/check?id=${payment.abacatepay_billing_id}`;
-          } else {
-            checkUrl = `https://api.abacatepay.com/v1/billing/list`;
-          }
-          
-          const abacateResponse = await fetch(checkUrl, {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${ABACATEPAY_API_KEY}`,
-              'Content-Type': 'application/json',
-            },
-          });
-
-          if (abacateResponse.ok) {
-            const abacateData = await abacateResponse.json();
-            console.log('[AbacatePay] Status response:', abacateData);
-
-            if (payment.payment_method === 'PIX') {
-              isPaid = abacateData.data?.status === 'PAID' || abacateData.data?.status === 'COMPLETED';
-            } else {
-              const billings = abacateData.data || [];
-              const matchingBilling = billings.find((b: any) => b.id === payment.abacatepay_billing_id);
-              isPaid = matchingBilling?.status === 'PAID' || matchingBilling?.status === 'COMPLETED';
-            }
-          }
-        } catch (abacateError) {
-          console.error('[AbacatePay] Error checking status:', abacateError);
+    } else if (gateway === 'abacatepay' && payment.abacatepay_billing_id && apiKey) {
+      try {
+        console.log('[AbacatePay] Checking status:', payment.abacatepay_billing_id);
+        
+        let checkUrl = '';
+        if (payment.payment_method === 'PIX') {
+          checkUrl = `https://api.abacatepay.com/v1/pixQrCode/check?id=${payment.abacatepay_billing_id}`;
+        } else {
+          checkUrl = `https://api.abacatepay.com/v1/billing/list`;
         }
+        
+        const abacateResponse = await fetch(checkUrl, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (abacateResponse.ok) {
+          const abacateData = await abacateResponse.json();
+          console.log('[AbacatePay] Status response:', abacateData);
+
+          if (payment.payment_method === 'PIX') {
+            isPaid = abacateData.data?.status === 'PAID' || abacateData.data?.status === 'COMPLETED';
+          } else {
+            const billings = abacateData.data || [];
+            const matchingBilling = billings.find((b: any) => b.id === payment.abacatepay_billing_id);
+            isPaid = matchingBilling?.status === 'PAID' || matchingBilling?.status === 'COMPLETED';
+          }
+        }
+      } catch (abacateError) {
+        console.error('[AbacatePay] Error checking status:', abacateError);
       }
     }
 

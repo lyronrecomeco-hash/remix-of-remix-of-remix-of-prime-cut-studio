@@ -6,6 +6,26 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Simple encryption for API keys (XOR with a secret key)
+function encryptApiKey(apiKey: string, userId: string): string {
+  const secret = `${userId}-genesis-gateway-2024`;
+  let result = '';
+  for (let i = 0; i < apiKey.length; i++) {
+    result += String.fromCharCode(apiKey.charCodeAt(i) ^ secret.charCodeAt(i % secret.length));
+  }
+  return btoa(result);
+}
+
+function decryptApiKey(encrypted: string, userId: string): string {
+  const secret = `${userId}-genesis-gateway-2024`;
+  const decoded = atob(encrypted);
+  let result = '';
+  for (let i = 0; i < decoded.length; i++) {
+    result += String.fromCharCode(decoded.charCodeAt(i) ^ secret.charCodeAt(i % secret.length));
+  }
+  return result;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -114,14 +134,10 @@ serve(async (req) => {
 
     console.log(`${gateway} API key validated successfully`);
 
-    // Hash the API key for storage (we don't store the actual key in the database)
-    const encoder = new TextEncoder();
-    const data = encoder.encode(apiKey);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    // Encrypt the API key for storage
+    const encryptedKey = encryptApiKey(apiKey, user.id);
 
-    // Upsert the gateway config
+    // Upsert the gateway config with encrypted API key
     const { error: upsertError } = await supabase
       .from('checkout_gateway_config')
       .upsert({
@@ -129,7 +145,7 @@ serve(async (req) => {
         gateway,
         api_key_configured: true,
         sandbox_mode: sandboxMode ?? false,
-        asaas_access_token_hash: gateway === 'asaas' ? hashHex : null,
+        asaas_access_token_hash: encryptedKey, // Store encrypted key here
         updated_at: new Date().toISOString(),
       }, {
         onConflict: 'user_id,gateway',
@@ -143,20 +159,12 @@ serve(async (req) => {
       );
     }
 
-    // Store the actual API key in Supabase secrets/vault
-    // For now, we'll use environment variables (need to be set via Supabase dashboard)
-    // In production, this should use Supabase Vault
-    console.log(`API key for ${gateway} should be set as environment variable:`);
-    console.log(`${gateway === 'asaas' ? 'ASAAS_API_KEY' : 'ABACATEPAY_API_KEY'}`);
-    if (gateway === 'asaas') {
-      console.log(`ASAAS_SANDBOX=${sandboxMode ? 'true' : 'false'}`);
-    }
+    console.log(`${gateway} configuration saved successfully`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'Configuração salva. Configure a variável de ambiente no painel do Supabase.',
-        envVar: gateway === 'asaas' ? 'ASAAS_API_KEY' : 'ABACATEPAY_API_KEY',
+        message: 'Configuração salva com sucesso!',
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

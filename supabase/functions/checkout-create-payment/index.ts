@@ -263,6 +263,17 @@ async function createAbacatePayment(
   };
 }
 
+// Helper to decrypt API key
+function decryptApiKey(encrypted: string, userId: string): string {
+  const secret = `${userId}-genesis-gateway-2024`;
+  const decoded = atob(encrypted);
+  let result = '';
+  for (let i = 0; i < decoded.length; i++) {
+    result += String.fromCharCode(decoded.charCodeAt(i) ^ secret.charCodeAt(i % secret.length));
+  }
+  return result;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -298,57 +309,50 @@ serve(async (req) => {
       );
     }
 
-    // Determine which gateway to use
-    const ABACATEPAY_API_KEY = Deno.env.get('ABACATEPAY_API_KEY');
-    const ASAAS_API_KEY = Deno.env.get('ASAAS_API_KEY');
-    const ASAAS_SANDBOX = Deno.env.get('ASAAS_SANDBOX') === 'true';
+    // Get active gateway config from database
+    const { data: activeConfig } = await supabase
+      .from('checkout_gateway_config')
+      .select('*')
+      .eq('is_active', true)
+      .eq('api_key_configured', true)
+      .single();
 
-    let selectedGateway = body.gateway;
+    let selectedGateway = body.gateway || activeConfig?.gateway;
+    let apiKey: string | null = null;
+    let sandboxMode = false;
 
-    // If no gateway specified, check active config from database
-    if (!selectedGateway) {
-      const { data: activeConfig } = await supabase
-        .from('checkout_gateway_config')
-        .select('gateway, sandbox_mode')
-        .eq('is_active', true)
-        .eq('api_key_configured', true)
-        .single();
+    if (activeConfig && activeConfig.asaas_access_token_hash) {
+      // Decrypt API key from database
+      apiKey = decryptApiKey(activeConfig.asaas_access_token_hash, activeConfig.user_id);
+      sandboxMode = activeConfig.sandbox_mode || false;
+      selectedGateway = activeConfig.gateway;
+      console.log('Using gateway from config:', selectedGateway, 'sandbox:', sandboxMode);
+    } else {
+      // Fallback to environment variables (for backwards compatibility)
+      const ABACATEPAY_API_KEY = Deno.env.get('ABACATEPAY_API_KEY');
+      const ASAAS_API_KEY = Deno.env.get('ASAAS_API_KEY');
+      const ASAAS_SANDBOX = Deno.env.get('ASAAS_SANDBOX') === 'true';
 
-      if (activeConfig) {
-        selectedGateway = activeConfig.gateway;
-        console.log('Using gateway from config:', selectedGateway);
-      } else {
-        // Fallback: use whichever API key is available
-        if (ASAAS_API_KEY) {
-          selectedGateway = 'asaas';
-        } else if (ABACATEPAY_API_KEY) {
-          selectedGateway = 'abacatepay';
-        }
+      if (selectedGateway === 'asaas' && ASAAS_API_KEY) {
+        apiKey = ASAAS_API_KEY;
+        sandboxMode = ASAAS_SANDBOX;
+      } else if (selectedGateway === 'abacatepay' && ABACATEPAY_API_KEY) {
+        apiKey = ABACATEPAY_API_KEY;
+      } else if (ASAAS_API_KEY) {
+        selectedGateway = 'asaas';
+        apiKey = ASAAS_API_KEY;
+        sandboxMode = ASAAS_SANDBOX;
+      } else if (ABACATEPAY_API_KEY) {
+        selectedGateway = 'abacatepay';
+        apiKey = ABACATEPAY_API_KEY;
       }
     }
 
     console.log('Selected gateway:', selectedGateway);
 
-    // Check if we have the required API key
-    if (selectedGateway === 'asaas' && !ASAAS_API_KEY) {
-      console.error('ASAAS_API_KEY not configured');
+    if (!selectedGateway || !apiKey) {
       return new Response(
-        JSON.stringify({ error: 'Gateway Asaas não configurado' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (selectedGateway === 'abacatepay' && !ABACATEPAY_API_KEY) {
-      console.error('ABACATEPAY_API_KEY not configured');
-      return new Response(
-        JSON.stringify({ error: 'Gateway AbacatePay não configurado' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (!selectedGateway) {
-      return new Response(
-        JSON.stringify({ error: 'Nenhum gateway de pagamento configurado' }),
+        JSON.stringify({ error: 'Nenhum gateway de pagamento configurado. Configure em Pagamentos > Gateway.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -405,11 +409,11 @@ serve(async (req) => {
     try {
       if (selectedGateway === 'asaas') {
         paymentResult = await createAsaasPayment(
-          body, supabase, origin, cleanCpf, cleanPhone, priceCents, ASAAS_API_KEY!, ASAAS_SANDBOX
+          body, supabase, origin, cleanCpf, cleanPhone, priceCents, apiKey, sandboxMode
         );
       } else {
         paymentResult = await createAbacatePayment(
-          body, origin, cleanCpf, cleanPhone, priceCents, ABACATEPAY_API_KEY!
+          body, origin, cleanCpf, cleanPhone, priceCents, apiKey
         );
       }
     } catch (gatewayError) {

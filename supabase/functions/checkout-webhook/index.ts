@@ -16,36 +16,44 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get webhook secrets
+    // Get webhook secrets from headers and query
     const webhookSecret = req.headers.get('x-webhook-secret');
     const asaasToken = req.headers.get('asaas-access-token');
     const url = new URL(req.url);
     const querySecret = url.searchParams.get('secret');
     const receivedSecret = webhookSecret || querySecret;
     
-    const envSecret = Deno.env.get('ABACATEPAY_WEBHOOK_SECRET');
-    const asaasWebhookToken = Deno.env.get('ASAAS_WEBHOOK_TOKEN');
-
+    // Get webhook config from database
     const { data: webhookConfig } = await supabase
       .from('checkout_webhook_config')
       .select('webhook_secret, is_active')
       .eq('is_active', true)
       .single();
 
-    const validSecret = webhookConfig?.webhook_secret || envSecret;
+    // Get gateway config for webhook token validation
+    const { data: gatewayConfig } = await supabase
+      .from('checkout_gateway_config')
+      .select('webhook_secret, gateway')
+      .eq('is_active', true)
+      .single();
 
-    // Validate webhook - check both AbacatePay and Asaas tokens
-    const isAsaasWebhook = asaasToken || (url.pathname.includes('asaas'));
-    
-    if (!isAsaasWebhook && validSecret && receivedSecret !== validSecret) {
-      console.error('Invalid webhook secret');
+    const validAbacateSecret = webhookConfig?.webhook_secret || Deno.env.get('ABACATEPAY_WEBHOOK_SECRET');
+    const validAsaasToken = gatewayConfig?.webhook_secret || Deno.env.get('ASAAS_WEBHOOK_TOKEN');
+
+    // Detect if this is an Asaas webhook
+    const body = await req.json();
+    const isAsaasWebhook = !!(body.event && body.payment);
+
+    // Validate webhook authentication
+    if (!isAsaasWebhook && validAbacateSecret && receivedSecret !== validAbacateSecret) {
+      console.error('Invalid AbacatePay webhook secret');
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    if (isAsaasWebhook && asaasWebhookToken && asaasToken !== asaasWebhookToken) {
+    if (isAsaasWebhook && validAsaasToken && asaasToken && asaasToken !== validAsaasToken) {
       console.error('Invalid Asaas webhook token');
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
@@ -53,9 +61,6 @@ serve(async (req) => {
       );
     }
 
-    console.log('Webhook secret validated successfully');
-
-    const body = await req.json();
     console.log('Webhook received:', JSON.stringify(body, null, 2));
 
     // Detect webhook source and extract payment info
@@ -65,7 +70,7 @@ serve(async (req) => {
     let newStatus: string = 'pending';
 
     // Check if this is an Asaas webhook
-    if (body.event && body.payment) {
+    if (isAsaasWebhook) {
       gateway = 'asaas';
       paymentId = body.payment.id;
       const asaasEvent = body.event;
