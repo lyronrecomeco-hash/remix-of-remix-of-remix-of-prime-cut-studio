@@ -143,8 +143,8 @@ export default function PaymentCodePage() {
   }
 
   return (
-    <CheckoutLayout>
-      <div className="max-w-lg mx-auto px-4 py-6">
+    <CheckoutLayout hasCountdownBar={false}>
+      <div className="max-w-lg mx-auto px-4 py-4 sm:py-6">
         {/* Single column layout */}
         <div className="space-y-5">
           {/* Header Card with Amount */}
