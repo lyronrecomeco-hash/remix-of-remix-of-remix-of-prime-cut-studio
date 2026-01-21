@@ -1,17 +1,52 @@
 /**
  * CHECKOUT SYSTEM - Layout Component
- * Layout base mobile-first com trust badges e segurança
+ * Layout base mobile-first com footer dinâmico
  */
 
-import React from 'react';
-import { Shield, Lock, CreditCard, CheckCircle, AlertTriangle, Clock } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Shield, Lock, CreditCard, CheckCircle, Clock } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { AllPaymentIcons } from './PaymentIcons';
 
 interface CheckoutLayoutProps {
   children: React.ReactNode;
   showSecurityBadges?: boolean;
 }
 
+// Gateway display names
+const GATEWAY_NAMES: Record<string, string> = {
+  abacatepay: 'AbacatePay',
+  asaas: 'Asaas',
+  misticpay: 'MisticPay',
+};
+
 export function CheckoutLayout({ children, showSecurityBadges = true }: CheckoutLayoutProps) {
+  const [activeGateway, setActiveGateway] = useState<string>('');
+
+  // Fetch active gateway
+  useEffect(() => {
+    const fetchGateway = async () => {
+      try {
+        const { data } = await supabase
+          .from('checkout_gateway_config')
+          .select('gateway')
+          .eq('is_active', true)
+          .limit(1)
+          .maybeSingle();
+        
+        if (data?.gateway) {
+          setActiveGateway(data.gateway);
+        }
+      } catch (error) {
+        console.error('Error fetching gateway:', error);
+      }
+    };
+
+    fetchGateway();
+  }, []);
+
+  const gatewayDisplayName = GATEWAY_NAMES[activeGateway] || 'Gateway Seguro';
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-x-hidden">
       {/* Header - Mobile Optimized */}
@@ -42,26 +77,6 @@ export function CheckoutLayout({ children, showSecurityBadges = true }: Checkout
               </div>
             </div>
           )}
-        </div>
-        
-        {/* Trust Bar */}
-        <div className="bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 py-1.5">
-          <div className="max-w-4xl mx-auto px-3 sm:px-4 flex items-center justify-center gap-2 sm:gap-4 text-[10px] sm:text-xs text-white font-medium">
-            <span className="flex items-center gap-1">
-              <Shield className="w-3 h-3" />
-              Compra 100% Segura
-            </span>
-            <span className="hidden sm:flex items-center gap-1">•</span>
-            <span className="flex items-center gap-1">
-              <Lock className="w-3 h-3" />
-              Dados Criptografados
-            </span>
-            <span className="hidden sm:flex items-center gap-1">•</span>
-            <span className="hidden md:flex items-center gap-1">
-              <CheckCircle className="w-3 h-3" />
-              Pagamento Instantâneo
-            </span>
-          </div>
         </div>
       </header>
 
@@ -108,31 +123,16 @@ export function CheckoutLayout({ children, showSecurityBadges = true }: Checkout
             </div>
           </div>
           
-          {/* Payment Methods */}
+          {/* Payment Methods - Real Icons */}
           <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-4 p-3 rounded-xl bg-white/5 border border-white/10">
             <span className="text-[10px] sm:text-xs text-white/50 mr-2">Formas de pagamento:</span>
-            <img 
-              src="https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo%E2%80%94pix_powered_by_Banco_Central_%28Brazil%2C_2020%29.svg" 
-              alt="PIX" 
-              className="h-4 sm:h-5 opacity-70 max-w-[72px] w-auto"
-            />
-            <div className="flex gap-1">
-              <div className="w-8 h-5 sm:w-10 sm:h-6 rounded bg-gradient-to-r from-blue-600 to-blue-800 flex items-center justify-center">
-                <span className="text-[7px] sm:text-[8px] text-white font-bold">VISA</span>
-              </div>
-              <div className="w-8 h-5 sm:w-10 sm:h-6 rounded bg-gradient-to-r from-red-500 to-orange-500 flex items-center justify-center">
-                <span className="text-[7px] sm:text-[8px] text-white font-bold">MC</span>
-              </div>
-              <div className="w-8 h-5 sm:w-10 sm:h-6 rounded bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center">
-                <span className="text-[7px] sm:text-[8px] text-white font-bold">ELO</span>
-              </div>
-            </div>
+            <AllPaymentIcons />
           </div>
 
           {/* Copyright & Links */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
             <div className="text-[10px] sm:text-xs text-white/40">
-              Processado por <span className="text-emerald-400 font-medium">AbacatePay</span> • Ambiente 100% Seguro
+              Processado por <span className="text-emerald-400 font-medium">{gatewayDisplayName}</span> • Ambiente 100% Seguro
             </div>
             <div className="flex items-center gap-3 text-[10px] sm:text-xs">
               <a href="/termos-de-uso" className="text-white/40 hover:text-white/60 transition">Termos</a>

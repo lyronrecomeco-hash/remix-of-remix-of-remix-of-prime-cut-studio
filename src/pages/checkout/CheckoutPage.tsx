@@ -131,18 +131,14 @@ export default function CheckoutPage() {
       />
       
       <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-8 pt-14 sm:pt-16">
-        {/* Mobile-first Alert */}
-        <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-              <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
-            </div>
-            <div>
-              <h3 className="text-sm sm:text-base font-semibold text-emerald-300">Pagamento 100% Seguro</h3>
-              <p className="text-xs sm:text-sm text-white/60 mt-0.5">
-                Ambiente criptografado • PIX instantâneo • Garantia de satisfação
-              </p>
-            </div>
+        {/* Security Alert - Compact */}
+        <div className="mb-4 sm:mb-6 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+          <div className="flex items-center gap-2">
+            <Shield className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+            <p className="text-xs sm:text-sm text-white/80">
+              <span className="font-semibold text-emerald-300">Pagamento 100% Seguro</span>
+              <span className="text-white/50 ml-1">• Ambiente criptografado • PIX instantâneo • Garantia de satisfação</span>
+            </p>
           </div>
         </div>
 
