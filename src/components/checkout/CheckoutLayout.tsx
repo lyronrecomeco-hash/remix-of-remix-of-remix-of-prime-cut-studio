@@ -50,7 +50,8 @@ export function CheckoutLayout({ children, showSecurityBadges = true }: Checkout
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-x-hidden">
       {/* Header - Mobile Optimized */}
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-900/95 backdrop-blur-xl safe-area-inset-top">
+      {/* Header positioned below the fixed countdown bar (h-[44px]) */}
+      <header className="sticky top-[44px] z-40 border-b border-white/10 bg-slate-900/95 backdrop-blur-xl safe-area-inset-top">
         <div className="max-w-4xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
