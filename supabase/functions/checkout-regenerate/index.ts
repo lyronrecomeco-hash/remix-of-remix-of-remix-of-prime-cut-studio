@@ -71,7 +71,7 @@ serve(async (req) => {
       if (gateway === 'asaas' && ASAAS_API_KEY) {
         // Regenerate via Asaas
         const baseUrl = ASAAS_SANDBOX 
-          ? 'https://sandbox.asaas.com/api/v3' 
+          ? 'https://api-sandbox.asaas.com/v3' 
           : 'https://api.asaas.com/v3';
 
         console.log('[Asaas] Regenerating PIX payment...');

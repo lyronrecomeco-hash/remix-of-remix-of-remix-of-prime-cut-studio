@@ -36,7 +36,7 @@ async function createAsaasPayment(
   sandboxMode: boolean
 ) {
   const baseUrl = sandboxMode 
-    ? 'https://sandbox.asaas.com/api/v3' 
+    ? 'https://api-sandbox.asaas.com/v3' 
     : 'https://api.asaas.com/v3';
 
   console.log(`[Asaas] Creating payment via ${sandboxMode ? 'SANDBOX' : 'PRODUCTION'}...`);

@@ -76,7 +76,7 @@ serve(async (req) => {
       if (ASAAS_API_KEY) {
         try {
           const baseUrl = ASAAS_SANDBOX 
-            ? 'https://sandbox.asaas.com/api/v3' 
+            ? 'https://api-sandbox.asaas.com/v3' 
             : 'https://api.asaas.com/v3';
 
           console.log('[Asaas] Checking payment status:', payment.asaas_payment_id);
