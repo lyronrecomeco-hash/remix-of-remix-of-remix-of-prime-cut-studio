@@ -151,7 +151,7 @@ async function createAsaasPayment(
   }
 
   return {
-    asaasPaymentId,
+    gatewayPaymentId: asaasPaymentId,
     pixBrCode,
     pixQrCodeBase64,
     abacatepayUrl,
@@ -255,7 +255,7 @@ async function createAbacatePayment(
   }
 
   return {
-    abacatepayBillingId,
+    gatewayPaymentId: abacatepayBillingId,
     pixBrCode,
     pixQrCodeBase64,
     abacatepayUrl,
@@ -421,7 +421,7 @@ serve(async (req) => {
     }
 
     // Generate payment code
-    const paymentCode = paymentResult.abacatepayBillingId || paymentResult.asaasPaymentId || 
+    const paymentCode = paymentResult.gatewayPaymentId || 
       `PAY-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
     // Create payment record
@@ -434,8 +434,8 @@ serve(async (req) => {
         description: body.description,
         payment_method: body.paymentMethod,
         gateway: selectedGateway,
-        abacatepay_billing_id: selectedGateway === 'abacatepay' ? paymentResult.abacatepayBillingId : null,
-        asaas_payment_id: selectedGateway === 'asaas' ? paymentResult.asaasPaymentId : null,
+        abacatepay_billing_id: selectedGateway === 'abacatepay' ? paymentResult.gatewayPaymentId : null,
+        asaas_payment_id: selectedGateway === 'asaas' ? paymentResult.gatewayPaymentId : null,
         abacatepay_url: paymentResult.abacatepayUrl,
         pix_br_code: paymentResult.pixBrCode,
         pix_qr_code_base64: paymentResult.pixQrCodeBase64,

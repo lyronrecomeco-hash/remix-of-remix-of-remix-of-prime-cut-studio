@@ -39,6 +39,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatCurrency } from '@/lib/checkout/validators';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { GatewayConfigSection } from './GatewayConfigSection';
 
 interface GenesisPaymentsTabProps {
   userId?: string;
@@ -332,8 +333,9 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-3 w-full max-w-md">
+        <TabsList className="grid grid-cols-4 w-full max-w-lg">
           <TabsTrigger value="payments">Pagamentos</TabsTrigger>
+          <TabsTrigger value="gateway">Gateway</TabsTrigger>
           <TabsTrigger value="webhook">Webhook</TabsTrigger>
           <TabsTrigger value="test">Teste PIX</TabsTrigger>
         </TabsList>
@@ -416,6 +418,11 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
         </TabsContent>
 
         {/* Webhook Tab */}
+        {/* Gateway Config Tab */}
+        <TabsContent value="gateway" className="space-y-4">
+          <GatewayConfigSection />
+        </TabsContent>
+
         <TabsContent value="webhook" className="space-y-4">
           <Card className="bg-white/5 border-white/10">
             <CardHeader>
