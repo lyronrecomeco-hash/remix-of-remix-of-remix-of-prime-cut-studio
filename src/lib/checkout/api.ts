@@ -95,7 +95,7 @@ export async function checkPaymentStatus(
 }
 
 /**
- * Busca dados de um pagamento pelo código
+ * Busca dados de um pagamento pelo código (com dados do cliente)
  */
 export async function getPaymentByCode(
   paymentCode: string
@@ -103,7 +103,13 @@ export async function getPaymentByCode(
   try {
     const { data, error } = await supabase
       .from('checkout_payments')
-      .select('*')
+      .select(`
+        *,
+        checkout_customers (
+          first_name,
+          last_name
+        )
+      `)
       .eq('payment_code', paymentCode)
       .single();
 
@@ -112,10 +118,26 @@ export async function getPaymentByCode(
       return null;
     }
 
+    // Check if payment is expired locally (frontend safety check)
+    let status = data.status;
+    if (status === 'pending' && data.expires_at) {
+      const expiresAt = new Date(data.expires_at);
+      if (expiresAt < new Date()) {
+        status = 'expired';
+      }
+    }
+
+    // Build customer name from related table
+    const customer = data.checkout_customers as { first_name: string; last_name: string } | null;
+    const customerName = customer 
+      ? `${customer.first_name} ${customer.last_name}`.trim()
+      : undefined;
+
     return {
       id: data.id,
       paymentCode: data.payment_code,
       customerId: data.customer_id,
+      customerName,
       amountCents: data.amount_cents,
       currency: data.currency,
       description: data.description,
@@ -127,7 +149,7 @@ export async function getPaymentByCode(
       cardBrand: data.card_brand,
       installments: data.installments,
       paymentMethod: data.payment_method as 'PIX' | 'CARD',
-      status: data.status as any,
+      status: status as any,
       expiresAt: data.expires_at,
       paidAt: data.paid_at,
       createdAt: data.created_at,

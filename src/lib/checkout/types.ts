@@ -17,6 +17,7 @@ export interface CheckoutPayment {
   id: string;
   paymentCode: string;
   customerId?: string;
+  customerName?: string;
   amountCents: number;
   currency: string;
   description?: string;

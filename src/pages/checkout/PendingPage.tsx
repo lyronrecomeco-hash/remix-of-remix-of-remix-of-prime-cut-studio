@@ -32,6 +32,11 @@ export default function PendingPage() {
           return;
         }
         
+        if (data?.status === 'expired') {
+          navigate(`/checkout/error?code=expired`);
+          return;
+        }
+        
         setPayment(data);
       }
       setIsLoading(false);
@@ -94,8 +99,8 @@ export default function PendingPage() {
             <div className="rounded-xl border border-white/10 bg-white/5 p-5 mb-8 text-left">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-white/60">Código</span>
-                  <span className="font-mono text-white">{payment.paymentCode}</span>
+                  <span className="text-white/60">Cliente</span>
+                  <span className="font-semibold text-white">{payment.customerName || 'N/A'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-white/60">Valor</span>
