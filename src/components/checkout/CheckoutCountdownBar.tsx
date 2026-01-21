@@ -1,10 +1,10 @@
 /**
  * CHECKOUT SYSTEM - Countdown Bar Component
- * Barra de contagem regressiva fixa no topo - Estilo profissional
+ * Barra de contagem regressiva fixa no topo - SEMPRE VERMELHO
  */
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Clock, AlertTriangle, Timer } from 'lucide-react';
+import { AlertTriangle, Timer } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface CheckoutCountdownBarProps {
@@ -65,7 +65,6 @@ export function CheckoutCountdownBar({
   const seconds = timeLeft % 60;
 
   const isCritical = timeLeft < 60;
-  const isWarning = timeLeft < 180 && timeLeft >= 60;
 
   if (isExpired) {
     return (
@@ -80,14 +79,7 @@ export function CheckoutCountdownBar({
 
   return (
     <div
-      className={cn(
-        "fixed top-0 left-0 right-0 z-50 py-2.5 px-4 transition-all duration-500",
-        isCritical 
-          ? "bg-red-600 text-white" 
-          : isWarning
-          ? "bg-amber-500 text-white"
-          : "bg-emerald-500 text-white"
-      )}
+      className="fixed top-0 left-0 right-0 z-50 py-2.5 px-4 bg-red-600 text-white"
       role="status"
       aria-live="polite"
     >
