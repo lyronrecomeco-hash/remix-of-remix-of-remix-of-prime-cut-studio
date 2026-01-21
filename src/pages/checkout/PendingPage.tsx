@@ -146,7 +146,7 @@ export default function PendingPage() {
             
             {payment?.paymentMethod === 'PIX' && payment.paymentCode && (
               <Link
-                to={`/checkout/payment-code/${payment.paymentCode}`}
+                to={`/checkout/${payment.paymentCode}`}
                 className={cn(
                   "w-full h-12 rounded-xl font-semibold text-white/80",
                   "border border-white/10 bg-white/5",
