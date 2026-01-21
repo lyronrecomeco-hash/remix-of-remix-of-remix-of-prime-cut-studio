@@ -394,13 +394,13 @@ export function GatewayConfigSection() {
                 </p>
                 <div className="flex items-center gap-2">
                   <code className="flex-1 text-xs bg-white/5 p-2 rounded font-mono text-white/80 break-all">
-                    {import.meta.env.VITE_SUPABASE_URL}/functions/v1/checkout-webhook
+                    https://genesishub.cloud/functions/v1/checkout-webhook
                   </code>
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={() => {
-                      navigator.clipboard.writeText(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/checkout-webhook`);
+                      navigator.clipboard.writeText('https://genesishub.cloud/functions/v1/checkout-webhook');
                       toast.success('URL copiada!');
                     }}
                   >
@@ -456,6 +456,13 @@ export function GatewayConfigSection() {
                     Não configurado
                   </Badge>
                 )}
+              </div>
+
+              <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <p className="text-xs text-white/60">
+                  <strong className="text-amber-400">⚠️ Importante:</strong> A MisticPay requer whitelist de IP. 
+                  Adicione o IP do servidor nas configurações da sua conta MisticPay para que os pagamentos funcionem.
+                </p>
               </div>
 
               <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
@@ -525,13 +532,13 @@ export function GatewayConfigSection() {
                 </p>
                 <div className="flex items-center gap-2">
                   <code className="flex-1 text-xs bg-white/5 p-2 rounded font-mono text-white/80 break-all">
-                    {import.meta.env.VITE_SUPABASE_URL}/functions/v1/checkout-webhook
+                    https://genesishub.cloud/functions/v1/checkout-webhook
                   </code>
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={() => {
-                      navigator.clipboard.writeText(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/checkout-webhook`);
+                      navigator.clipboard.writeText('https://genesishub.cloud/functions/v1/checkout-webhook');
                       toast.success('URL copiada!');
                     }}
                   >
