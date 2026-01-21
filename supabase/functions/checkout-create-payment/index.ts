@@ -19,27 +19,256 @@ interface CreatePaymentRequest {
   description: string;
   paymentMethod: 'PIX' | 'CARD';
   metadata?: Record<string, unknown>;
-  // Card specific
   cardToken?: string;
   installments?: number;
+  gateway?: 'abacatepay' | 'asaas';
+}
+
+// ============= ASAAS INTEGRATION =============
+async function createAsaasPayment(
+  body: CreatePaymentRequest,
+  supabase: any,
+  origin: string,
+  cleanCpf: string,
+  cleanPhone: string,
+  priceCents: number,
+  ASAAS_API_KEY: string,
+  sandboxMode: boolean
+) {
+  const baseUrl = sandboxMode 
+    ? 'https://sandbox.asaas.com/api/v3' 
+    : 'https://api.asaas.com/v3';
+
+  console.log(`[Asaas] Creating payment via ${sandboxMode ? 'SANDBOX' : 'PRODUCTION'}...`);
+
+  // Step 1: Create or find customer
+  const customerName = `${body.customer.firstName} ${body.customer.lastName}`;
+  const customerEmail = body.customer.email || `${cleanCpf}@checkout.local`;
+  
+  // Check if customer exists
+  const findCustomerResponse = await fetch(`${baseUrl}/customers?cpfCnpj=${cleanCpf}`, {
+    headers: {
+      'access_token': ASAAS_API_KEY,
+      'Content-Type': 'application/json',
+    },
+  });
+  
+  let asaasCustomerId: string;
+  const findCustomerData = await findCustomerResponse.json();
+  console.log('[Asaas] Find customer response:', findCustomerData);
+
+  if (findCustomerData.data && findCustomerData.data.length > 0) {
+    asaasCustomerId = findCustomerData.data[0].id;
+    console.log('[Asaas] Using existing customer:', asaasCustomerId);
+  } else {
+    // Create new customer
+    const createCustomerResponse = await fetch(`${baseUrl}/customers`, {
+      method: 'POST',
+      headers: {
+        'access_token': ASAAS_API_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: customerName,
+        email: customerEmail,
+        phone: `${body.customer.phoneCountryCode}${cleanPhone}`,
+        cpfCnpj: cleanCpf,
+        notificationDisabled: true,
+      }),
+    });
+
+    const createCustomerData = await createCustomerResponse.json();
+    console.log('[Asaas] Create customer response:', createCustomerData);
+
+    if (!createCustomerResponse.ok) {
+      throw new Error(createCustomerData.errors?.[0]?.description || 'Erro ao criar cliente no Asaas');
+    }
+    asaasCustomerId = createCustomerData.id;
+  }
+
+  // Step 2: Create payment
+  const dueDate = new Date();
+  dueDate.setDate(dueDate.getDate() + 1); // Due tomorrow for more flexibility
+
+  const paymentPayload: Record<string, unknown> = {
+    customer: asaasCustomerId,
+    billingType: body.paymentMethod === 'PIX' ? 'PIX' : 'CREDIT_CARD',
+    value: priceCents / 100, // Asaas uses reais, not centavos
+    dueDate: dueDate.toISOString().split('T')[0],
+    description: body.description || 'Pagamento',
+    externalReference: `checkout-${Date.now()}`,
+  };
+
+  // Add installments for credit card
+  if (body.paymentMethod === 'CARD' && body.installments && body.installments > 1) {
+    paymentPayload.installmentCount = body.installments;
+    paymentPayload.installmentValue = (priceCents / 100) / body.installments;
+  }
+
+  const paymentResponse = await fetch(`${baseUrl}/payments`, {
+    method: 'POST',
+    headers: {
+      'access_token': ASAAS_API_KEY,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(paymentPayload),
+  });
+
+  const paymentData = await paymentResponse.json();
+  console.log('[Asaas] Payment response:', paymentData);
+
+  if (!paymentResponse.ok) {
+    throw new Error(paymentData.errors?.[0]?.description || 'Erro ao criar pagamento no Asaas');
+  }
+
+  let pixBrCode: string | null = null;
+  let pixQrCodeBase64: string | null = null;
+  let asaasPaymentId = paymentData.id;
+  let abacatepayUrl: string | null = null;
+
+  // Step 3: Get PIX QR Code if payment method is PIX
+  if (body.paymentMethod === 'PIX') {
+    // Wait a moment for Asaas to generate the PIX
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    const pixResponse = await fetch(`${baseUrl}/payments/${asaasPaymentId}/pixQrCode`, {
+      headers: {
+        'access_token': ASAAS_API_KEY,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const pixData = await pixResponse.json();
+    console.log('[Asaas] PIX QR Code response:', pixData);
+
+    if (pixResponse.ok) {
+      pixBrCode = pixData.payload || null;
+      pixQrCodeBase64 = pixData.encodedImage || null;
+    }
+  } else {
+    // For credit card, get the payment link
+    abacatepayUrl = paymentData.invoiceUrl || null;
+  }
+
+  return {
+    asaasPaymentId,
+    pixBrCode,
+    pixQrCodeBase64,
+    abacatepayUrl,
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+  };
+}
+
+// ============= ABACATEPAY INTEGRATION =============
+async function createAbacatePayment(
+  body: CreatePaymentRequest,
+  origin: string,
+  cleanCpf: string,
+  cleanPhone: string,
+  priceCents: number,
+  ABACATEPAY_API_KEY: string
+) {
+  let pixBrCode: string | null = null;
+  let pixQrCodeBase64: string | null = null;
+  let abacatepayBillingId: string | null = null;
+  let abacatepayUrl: string | null = null;
+
+  if (body.paymentMethod === 'PIX') {
+    console.log('[AbacatePay] Creating PIX QR Code...');
+    
+    const pixPayload = {
+      amount: priceCents,
+      expiresIn: 600,
+      description: body.description || 'Pagamento PIX',
+      customer: {
+        name: `${body.customer.firstName} ${body.customer.lastName}`,
+        email: body.customer.email || `${cleanCpf}@checkout.local`,
+        cellphone: `${body.customer.phoneCountryCode}${cleanPhone}`,
+        taxId: cleanCpf,
+      },
+    };
+
+    const pixResponse = await fetch('https://api.abacatepay.com/v1/pixQrCode/create', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${ABACATEPAY_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(pixPayload),
+    });
+
+    const pixData = await pixResponse.json();
+    console.log('[AbacatePay] PIX response:', { status: pixResponse.status });
+
+    if (!pixResponse.ok) {
+      throw new Error(pixData.error || 'Erro ao gerar QR Code PIX');
+    }
+
+    abacatepayBillingId = pixData.data?.id || null;
+    pixBrCode = pixData.data?.brCode || null;
+    const rawBase64 = pixData.data?.brCodeBase64 || pixData.data?.qrCodeBase64 || null;
+    if (rawBase64 && rawBase64.startsWith('data:image')) {
+      pixQrCodeBase64 = rawBase64.split(',')[1] || rawBase64;
+    } else {
+      pixQrCodeBase64 = rawBase64;
+    }
+  } else {
+    console.log('[AbacatePay] Creating billing for CARD...');
+    
+    const billingPayload = {
+      frequency: 'ONE_TIME',
+      methods: ['CARD'],
+      products: [{
+        externalId: `checkout-${Date.now()}`,
+        name: body.description || 'Pagamento',
+        quantity: 1,
+        price: priceCents,
+      }],
+      customer: {
+        name: `${body.customer.firstName} ${body.customer.lastName}`,
+        email: body.customer.email || `${cleanCpf}@checkout.local`,
+        cellphone: `${body.customer.phoneCountryCode}${cleanPhone}`,
+        taxId: cleanCpf,
+      },
+      returnUrl: `${origin}/checkout/pending`,
+      completionUrl: `${origin}/checkout/success`,
+    };
+
+    const billingResponse = await fetch('https://api.abacatepay.com/v1/billing/create', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${ABACATEPAY_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(billingPayload),
+    });
+
+    const billingData = await billingResponse.json();
+    console.log('[AbacatePay] Billing response:', { status: billingResponse.status });
+
+    if (!billingResponse.ok) {
+      throw new Error(billingData.error || 'Erro ao criar cobrança');
+    }
+
+    abacatepayBillingId = billingData.data?.id || null;
+    abacatepayUrl = billingData.data?.url || null;
+  }
+
+  return {
+    abacatepayBillingId,
+    pixBrCode,
+    pixQrCodeBase64,
+    abacatepayUrl,
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+  };
 }
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const ABACATEPAY_API_KEY = Deno.env.get('ABACATEPAY_API_KEY');
-    if (!ABACATEPAY_API_KEY) {
-      console.error('ABACATEPAY_API_KEY not configured');
-      return new Response(
-        JSON.stringify({ error: 'Payment gateway not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -48,10 +277,9 @@ serve(async (req) => {
     console.log('Creating payment:', { 
       paymentMethod: body.paymentMethod, 
       amountCents: body.amountCents,
-      customer: { ...body.customer, cpf: '***' }
+      gateway: body.gateway || 'auto-detect'
     });
 
-    // Validate required fields
     if (!body.customer || !body.amountCents || !body.paymentMethod) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields' }),
@@ -59,9 +287,71 @@ serve(async (req) => {
       );
     }
 
-    // Clean CPF (remove formatting)
     const cleanCpf = body.customer.cpf.replace(/\D/g, '');
     const cleanPhone = body.customer.phone.replace(/\D/g, '');
+    const priceCents = Math.round(body.amountCents);
+
+    if (!Number.isFinite(priceCents) || priceCents < 100) {
+      return new Response(
+        JSON.stringify({ error: 'Valor mínimo é R$ 1,00' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Determine which gateway to use
+    const ABACATEPAY_API_KEY = Deno.env.get('ABACATEPAY_API_KEY');
+    const ASAAS_API_KEY = Deno.env.get('ASAAS_API_KEY');
+    const ASAAS_SANDBOX = Deno.env.get('ASAAS_SANDBOX') === 'true';
+
+    let selectedGateway = body.gateway;
+
+    // If no gateway specified, check active config from database
+    if (!selectedGateway) {
+      const { data: activeConfig } = await supabase
+        .from('checkout_gateway_config')
+        .select('gateway, sandbox_mode')
+        .eq('is_active', true)
+        .eq('api_key_configured', true)
+        .single();
+
+      if (activeConfig) {
+        selectedGateway = activeConfig.gateway;
+        console.log('Using gateway from config:', selectedGateway);
+      } else {
+        // Fallback: use whichever API key is available
+        if (ASAAS_API_KEY) {
+          selectedGateway = 'asaas';
+        } else if (ABACATEPAY_API_KEY) {
+          selectedGateway = 'abacatepay';
+        }
+      }
+    }
+
+    console.log('Selected gateway:', selectedGateway);
+
+    // Check if we have the required API key
+    if (selectedGateway === 'asaas' && !ASAAS_API_KEY) {
+      console.error('ASAAS_API_KEY not configured');
+      return new Response(
+        JSON.stringify({ error: 'Gateway Asaas não configurado' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (selectedGateway === 'abacatepay' && !ABACATEPAY_API_KEY) {
+      console.error('ABACATEPAY_API_KEY not configured');
+      return new Response(
+        JSON.stringify({ error: 'Gateway AbacatePay não configurado' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!selectedGateway) {
+      return new Response(
+        JSON.stringify({ error: 'Nenhum gateway de pagamento configurado' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Create or find customer
     const { data: existingCustomer } = await supabase
@@ -74,7 +364,6 @@ serve(async (req) => {
 
     if (existingCustomer) {
       customerId = existingCustomer.id;
-      // Update customer info
       await supabase
         .from('checkout_customers')
         .update({
@@ -109,124 +398,31 @@ serve(async (req) => {
       customerId = newCustomer.id;
     }
 
-    // AbacatePay expects amount in CENTAVOS and requires minimum of 100 centavos (R$1.00)
-    const priceCents = Math.round(body.amountCents);
+    const origin = req.headers.get('origin') || 'https://www.genesishub.cloud';
 
-    // Validate minimum amount
-    if (!Number.isFinite(priceCents) || priceCents < 100) {
-      console.error('Amount too low:', body.amountCents);
+    let paymentResult;
+
+    try {
+      if (selectedGateway === 'asaas') {
+        paymentResult = await createAsaasPayment(
+          body, supabase, origin, cleanCpf, cleanPhone, priceCents, ASAAS_API_KEY!, ASAAS_SANDBOX
+        );
+      } else {
+        paymentResult = await createAbacatePayment(
+          body, origin, cleanCpf, cleanPhone, priceCents, ABACATEPAY_API_KEY!
+        );
+      }
+    } catch (gatewayError) {
+      console.error('Gateway error:', gatewayError);
       return new Response(
-        JSON.stringify({ error: 'Valor mínimo é R$ 1,00' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: (gatewayError as Error).message }),
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const origin = req.headers.get('origin') || 'https://www.genesishub.cloud';
-
-    let pixBrCode: string | null = null;
-    let pixQrCodeBase64: string | null = null;
-    let abacatepayBillingId: string | null = null;
-    let abacatepayUrl: string | null = null;
-
-    if (body.paymentMethod === 'PIX') {
-      // For PIX, use the dedicated pixQrCode/create endpoint
-      console.log('Creating PIX QR Code via pixQrCode/create...');
-      
-      const pixPayload = {
-        amount: priceCents, // Amount in centavos
-        expiresIn: 600, // 10 minutes in seconds
-        description: body.description || 'Pagamento PIX',
-        customer: {
-          name: `${body.customer.firstName} ${body.customer.lastName}`,
-          email: body.customer.email || `${cleanCpf}@checkout.local`,
-          cellphone: `${body.customer.phoneCountryCode}${cleanPhone}`,
-          taxId: cleanCpf,
-        },
-      };
-
-      const pixResponse = await fetch('https://api.abacatepay.com/v1/pixQrCode/create', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${ABACATEPAY_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(pixPayload),
-      });
-
-      const pixData = await pixResponse.json();
-      console.log('AbacatePay PIX response:', { status: pixResponse.status, data: pixData });
-
-      if (!pixResponse.ok) {
-        console.error('AbacatePay PIX error:', pixData);
-        return new Response(
-          JSON.stringify({ error: pixData.error || 'Erro ao gerar QR Code PIX' }),
-          { status: pixResponse.status >= 400 && pixResponse.status < 500 ? 400 : 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      abacatepayBillingId = pixData.data?.id || null;
-      pixBrCode = pixData.data?.brCode || null;
-      // Handle both brCodeBase64 and qrCodeBase64 field names
-      const rawBase64 = pixData.data?.brCodeBase64 || pixData.data?.qrCodeBase64 || null;
-      // Remove data:image prefix if present, keep only base64 string
-      if (rawBase64 && rawBase64.startsWith('data:image')) {
-        pixQrCodeBase64 = rawBase64.split(',')[1] || rawBase64;
-      } else {
-        pixQrCodeBase64 = rawBase64;
-      }
-      
-    } else {
-      // For CARD, use the billing/create endpoint
-      console.log('Creating billing for CARD payment...');
-      
-      const billingPayload = {
-        frequency: 'ONE_TIME',
-        methods: ['CARD'],
-        products: [{
-          externalId: `checkout-${Date.now()}`,
-          name: body.description || 'Pagamento',
-          quantity: 1,
-          price: priceCents,
-        }],
-        customer: {
-          name: `${body.customer.firstName} ${body.customer.lastName}`,
-          email: body.customer.email || `${cleanCpf}@checkout.local`,
-          cellphone: `${body.customer.phoneCountryCode}${cleanPhone}`,
-          taxId: cleanCpf,
-        },
-        returnUrl: `${origin}/checkout/pending`,
-        completionUrl: `${origin}/checkout/success`,
-      };
-
-      const billingResponse = await fetch('https://api.abacatepay.com/v1/billing/create', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${ABACATEPAY_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(billingPayload),
-      });
-
-      const billingData = await billingResponse.json();
-      console.log('AbacatePay billing response:', { status: billingResponse.status, data: billingData });
-
-      if (!billingResponse.ok) {
-        console.error('AbacatePay billing error:', billingData);
-        return new Response(
-          JSON.stringify({ error: billingData.error || 'Erro ao criar cobrança' }),
-          { status: billingResponse.status >= 400 && billingResponse.status < 500 ? 400 : 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      abacatepayBillingId = billingData.data?.id || null;
-      abacatepayUrl = billingData.data?.url || null;
-    }
-
-    // Calculate expiration (10 minutes from now)
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-
-    // Generate unique payment code
-    const paymentCode = abacatepayBillingId || `PAY-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    // Generate payment code
+    const paymentCode = paymentResult.abacatepayBillingId || paymentResult.asaasPaymentId || 
+      `PAY-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
     // Create payment record
     const { data: payment, error: paymentError } = await supabase
@@ -237,12 +433,14 @@ serve(async (req) => {
         amount_cents: priceCents,
         description: body.description,
         payment_method: body.paymentMethod,
-        abacatepay_billing_id: abacatepayBillingId,
-        abacatepay_url: abacatepayUrl,
-        pix_br_code: pixBrCode,
-        pix_qr_code_base64: pixQrCodeBase64,
+        gateway: selectedGateway,
+        abacatepay_billing_id: selectedGateway === 'abacatepay' ? paymentResult.abacatepayBillingId : null,
+        asaas_payment_id: selectedGateway === 'asaas' ? paymentResult.asaasPaymentId : null,
+        abacatepay_url: paymentResult.abacatepayUrl,
+        pix_br_code: paymentResult.pixBrCode,
+        pix_qr_code_base64: paymentResult.pixQrCodeBase64,
         status: 'pending',
-        expires_at: expiresAt,
+        expires_at: paymentResult.expiresAt,
         metadata: body.metadata,
         installments: body.installments,
       })
@@ -257,15 +455,14 @@ serve(async (req) => {
       );
     }
 
-    // Log payment creation event
     await supabase.from('checkout_payment_events').insert({
       payment_id: payment.id,
       event_type: 'payment_created',
-      event_data: { paymentMethod: body.paymentMethod, amountCents: body.amountCents },
+      event_data: { paymentMethod: body.paymentMethod, amountCents: body.amountCents, gateway: selectedGateway },
       source: 'api',
     });
 
-    console.log('Payment created successfully:', payment.payment_code, { pixBrCode: !!pixBrCode, pixQrCode: !!pixQrCodeBase64 });
+    console.log('Payment created successfully:', payment.payment_code, { gateway: selectedGateway });
 
     return new Response(
       JSON.stringify({
@@ -275,6 +472,7 @@ serve(async (req) => {
         pixQrCodeBase64: payment.pix_qr_code_base64,
         abacatepayUrl: payment.abacatepay_url,
         expiresAt: payment.expires_at,
+        gateway: selectedGateway,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

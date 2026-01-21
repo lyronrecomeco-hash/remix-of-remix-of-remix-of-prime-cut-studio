@@ -1776,6 +1776,48 @@ export type Database = {
         }
         Relationships: []
       }
+      checkout_gateway_config: {
+        Row: {
+          api_key_configured: boolean
+          asaas_access_token_hash: string | null
+          asaas_wallet_id: string | null
+          created_at: string
+          gateway: string
+          id: string
+          is_active: boolean
+          sandbox_mode: boolean
+          updated_at: string
+          user_id: string
+          webhook_secret: string | null
+        }
+        Insert: {
+          api_key_configured?: boolean
+          asaas_access_token_hash?: string | null
+          asaas_wallet_id?: string | null
+          created_at?: string
+          gateway: string
+          id?: string
+          is_active?: boolean
+          sandbox_mode?: boolean
+          updated_at?: string
+          user_id: string
+          webhook_secret?: string | null
+        }
+        Update: {
+          api_key_configured?: boolean
+          asaas_access_token_hash?: string | null
+          asaas_wallet_id?: string | null
+          created_at?: string
+          gateway?: string
+          id?: string
+          is_active?: boolean
+          sandbox_mode?: boolean
+          updated_at?: string
+          user_id?: string
+          webhook_secret?: string | null
+        }
+        Relationships: []
+      }
       checkout_payment_events: {
         Row: {
           created_at: string
@@ -1816,6 +1858,7 @@ export type Database = {
           abacatepay_billing_id: string | null
           abacatepay_url: string | null
           amount_cents: number
+          asaas_payment_id: string | null
           card_brand: string | null
           card_last_four: string | null
           created_at: string
@@ -1823,6 +1866,7 @@ export type Database = {
           customer_id: string | null
           description: string | null
           expires_at: string | null
+          gateway: string | null
           id: string
           installments: number | null
           ip_address: string | null
@@ -1840,6 +1884,7 @@ export type Database = {
           abacatepay_billing_id?: string | null
           abacatepay_url?: string | null
           amount_cents: number
+          asaas_payment_id?: string | null
           card_brand?: string | null
           card_last_four?: string | null
           created_at?: string
@@ -1847,6 +1892,7 @@ export type Database = {
           customer_id?: string | null
           description?: string | null
           expires_at?: string | null
+          gateway?: string | null
           id?: string
           installments?: number | null
           ip_address?: string | null
@@ -1864,6 +1910,7 @@ export type Database = {
           abacatepay_billing_id?: string | null
           abacatepay_url?: string | null
           amount_cents?: number
+          asaas_payment_id?: string | null
           card_brand?: string | null
           card_last_four?: string | null
           created_at?: string
@@ -1871,6 +1918,7 @@ export type Database = {
           customer_id?: string | null
           description?: string | null
           expires_at?: string | null
+          gateway?: string | null
           id?: string
           installments?: number | null
           ip_address?: string | null

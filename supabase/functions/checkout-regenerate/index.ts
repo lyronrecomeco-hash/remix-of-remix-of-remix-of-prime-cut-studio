@@ -7,21 +7,11 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const ABACATEPAY_API_KEY = Deno.env.get('ABACATEPAY_API_KEY');
-    if (!ABACATEPAY_API_KEY) {
-      console.error('ABACATEPAY_API_KEY not configured');
-      return new Response(
-        JSON.stringify({ error: 'Payment gateway not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -37,13 +27,9 @@ serve(async (req) => {
 
     console.log('Regenerating payment for:', paymentCode);
 
-    // Get expired payment
     const { data: oldPayment, error: paymentError } = await supabase
       .from('checkout_payments')
-      .select(`
-        *,
-        customer:checkout_customers(*)
-      `)
+      .select(`*, customer:checkout_customers(*)`)
       .eq('payment_code', paymentCode)
       .single();
 
@@ -55,7 +41,6 @@ serve(async (req) => {
       );
     }
 
-    // Only allow regeneration for expired payments
     if (oldPayment.status !== 'expired') {
       return new Response(
         JSON.stringify({ error: 'Only expired payments can be regenerated' }),
@@ -71,65 +56,156 @@ serve(async (req) => {
       );
     }
 
+    // Determine gateway
+    const gateway = oldPayment.gateway || 'abacatepay';
+    const ABACATEPAY_API_KEY = Deno.env.get('ABACATEPAY_API_KEY');
+    const ASAAS_API_KEY = Deno.env.get('ASAAS_API_KEY');
+    const ASAAS_SANDBOX = Deno.env.get('ASAAS_SANDBOX') === 'true';
+
     let pixBrCode: string | null = null;
     let pixQrCodeBase64: string | null = null;
     let abacatepayBillingId: string | null = null;
+    let asaasPaymentId: string | null = null;
 
-    // For PIX regeneration, use the dedicated pixQrCode/create endpoint
     if (oldPayment.payment_method === 'PIX') {
-      console.log('Creating new PIX QR Code via pixQrCode/create...');
-      
-      const pixPayload = {
-        amount: oldPayment.amount_cents, // Amount in centavos
-        expiresIn: 600, // 10 minutes in seconds
-        description: oldPayment.description || 'Pagamento PIX',
-        customer: {
-          name: `${customer.first_name} ${customer.last_name}`,
-          email: customer.email || `${customer.cpf}@checkout.local`,
-          cellphone: `${customer.phone_country_code}${customer.phone}`,
-          taxId: customer.cpf,
-        },
-      };
+      if (gateway === 'asaas' && ASAAS_API_KEY) {
+        // Regenerate via Asaas
+        const baseUrl = ASAAS_SANDBOX 
+          ? 'https://sandbox.asaas.com/api/v3' 
+          : 'https://api.asaas.com/v3';
 
-      const pixResponse = await fetch('https://api.abacatepay.com/v1/pixQrCode/create', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${ABACATEPAY_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(pixPayload),
-      });
+        console.log('[Asaas] Regenerating PIX payment...');
 
-      const pixData = await pixResponse.json();
-      console.log('AbacatePay PIX response:', { status: pixResponse.status });
+        // Find or get customer
+        const findCustomerResponse = await fetch(`${baseUrl}/customers?cpfCnpj=${customer.cpf}`, {
+          headers: {
+            'access_token': ASAAS_API_KEY,
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        const findCustomerData = await findCustomerResponse.json();
+        let asaasCustomerId: string;
 
-      if (!pixResponse.ok) {
-        console.error('AbacatePay PIX error:', pixData);
+        if (findCustomerData.data && findCustomerData.data.length > 0) {
+          asaasCustomerId = findCustomerData.data[0].id;
+        } else {
+          const createCustomerResponse = await fetch(`${baseUrl}/customers`, {
+            method: 'POST',
+            headers: {
+              'access_token': ASAAS_API_KEY,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              name: `${customer.first_name} ${customer.last_name}`,
+              email: customer.email || `${customer.cpf}@checkout.local`,
+              phone: `${customer.phone_country_code}${customer.phone}`,
+              cpfCnpj: customer.cpf,
+              notificationDisabled: true,
+            }),
+          });
+          const createCustomerData = await createCustomerResponse.json();
+          asaasCustomerId = createCustomerData.id;
+        }
+
+        // Create new payment
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 1);
+
+        const paymentResponse = await fetch(`${baseUrl}/payments`, {
+          method: 'POST',
+          headers: {
+            'access_token': ASAAS_API_KEY,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            customer: asaasCustomerId,
+            billingType: 'PIX',
+            value: oldPayment.amount_cents / 100,
+            dueDate: dueDate.toISOString().split('T')[0],
+            description: oldPayment.description || 'Pagamento',
+            externalReference: `checkout-regen-${Date.now()}`,
+          }),
+        });
+
+        const paymentData = await paymentResponse.json();
+        
+        if (!paymentResponse.ok) {
+          throw new Error(paymentData.errors?.[0]?.description || 'Erro ao regenerar pagamento');
+        }
+
+        asaasPaymentId = paymentData.id;
+
+        // Get PIX QR Code
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const pixResponse = await fetch(`${baseUrl}/payments/${asaasPaymentId}/pixQrCode`, {
+          headers: {
+            'access_token': ASAAS_API_KEY,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (pixResponse.ok) {
+          const pixData = await pixResponse.json();
+          pixBrCode = pixData.payload || null;
+          pixQrCodeBase64 = pixData.encodedImage || null;
+        }
+
+      } else if (ABACATEPAY_API_KEY) {
+        // Regenerate via AbacatePay
+        console.log('[AbacatePay] Regenerating PIX...');
+        
+        const pixPayload = {
+          amount: oldPayment.amount_cents,
+          expiresIn: 600,
+          description: oldPayment.description || 'Pagamento PIX',
+          customer: {
+            name: `${customer.first_name} ${customer.last_name}`,
+            email: customer.email || `${customer.cpf}@checkout.local`,
+            cellphone: `${customer.phone_country_code}${customer.phone}`,
+            taxId: customer.cpf,
+          },
+        };
+
+        const pixResponse = await fetch('https://api.abacatepay.com/v1/pixQrCode/create', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${ABACATEPAY_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(pixPayload),
+        });
+
+        const pixData = await pixResponse.json();
+
+        if (!pixResponse.ok) {
+          return new Response(
+            JSON.stringify({ error: pixData.error || 'Erro ao gerar QR Code PIX' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        abacatepayBillingId = pixData.data?.id || null;
+        pixBrCode = pixData.data?.brCode || null;
+        const rawBase64 = pixData.data?.brCodeBase64 || pixData.data?.qrCodeBase64 || null;
+        if (rawBase64 && rawBase64.startsWith('data:image')) {
+          pixQrCodeBase64 = rawBase64.split(',')[1] || rawBase64;
+        } else {
+          pixQrCodeBase64 = rawBase64;
+        }
+      } else {
         return new Response(
-          JSON.stringify({ error: pixData.error || 'Erro ao gerar QR Code PIX' }),
+          JSON.stringify({ error: 'Payment gateway not configured' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-
-      abacatepayBillingId = pixData.data?.id || null;
-      pixBrCode = pixData.data?.brCode || null;
-      // Handle both brCodeBase64 and qrCodeBase64 field names
-      const rawBase64 = pixData.data?.brCodeBase64 || pixData.data?.qrCodeBase64 || null;
-      // Remove data:image prefix if present, keep only base64 string
-      if (rawBase64 && rawBase64.startsWith('data:image')) {
-        pixQrCodeBase64 = rawBase64.split(',')[1] || rawBase64;
-      } else {
-        pixQrCodeBase64 = rawBase64;
-      }
     }
 
-    // Calculate new expiration (10 minutes from now)
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    const newPaymentCode = abacatepayBillingId || asaasPaymentId || 
+      `PAY-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
-    // Generate new payment code
-    const newPaymentCode = abacatepayBillingId || `PAY-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-
-    // Create new payment record
     const { data: newPayment, error: newPaymentError } = await supabase
       .from('checkout_payments')
       .insert({
@@ -138,7 +214,9 @@ serve(async (req) => {
         amount_cents: oldPayment.amount_cents,
         description: oldPayment.description,
         payment_method: oldPayment.payment_method,
+        gateway: gateway,
         abacatepay_billing_id: abacatepayBillingId,
+        asaas_payment_id: asaasPaymentId,
         pix_br_code: pixBrCode,
         pix_qr_code_base64: pixQrCodeBase64,
         status: 'pending',
@@ -159,15 +237,14 @@ serve(async (req) => {
       );
     }
 
-    // Log regeneration event on old payment
     await supabase.from('checkout_payment_events').insert({
       payment_id: oldPayment.id,
       event_type: 'payment_regenerated',
-      event_data: { new_payment_code: newPayment.payment_code },
+      event_data: { new_payment_code: newPayment.payment_code, gateway },
       source: 'api',
     });
 
-    console.log('Payment regenerated successfully:', newPayment.payment_code, { pixBrCode: !!pixBrCode, pixQrCode: !!pixQrCodeBase64 });
+    console.log('Payment regenerated successfully:', newPayment.payment_code);
 
     return new Response(
       JSON.stringify({
