@@ -525,7 +525,7 @@ serve(async (req) => {
       payment_id: payment.id,
       event_type: 'payment_created',
       event_data: { paymentMethod: body.paymentMethod, amountCents: body.amountCents, gateway: selectedGateway },
-      source: 'api',
+      source: 'system',
     });
 
     console.log('Payment created successfully:', payment.payment_code, { gateway: selectedGateway });

@@ -40,7 +40,7 @@ export function PhoneInput({
 
   return (
     <div className="relative">
-      <label className="block text-sm font-medium text-white/80 mb-1.5">
+      <label className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-1.5">
         Telefone <span className="text-red-400">*</span>
       </label>
       
@@ -52,15 +52,15 @@ export function PhoneInput({
             onClick={() => !disabled && setIsOpen(!isOpen)}
             disabled={disabled}
             className={cn(
-              "flex items-center gap-1.5 h-12 px-3 rounded-l-xl border border-r-0 border-white/10",
+              "flex items-center gap-1 sm:gap-1.5 h-11 sm:h-12 px-2 sm:px-3 rounded-l-xl border border-r-0 border-white/10",
               "bg-white/5 text-white transition-all",
               "hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/50",
               disabled && "opacity-50 cursor-not-allowed"
             )}
           >
-            <span className="text-lg">{selectedCountry.flag}</span>
-            <span className="text-sm text-white/60">{selectedCountry.dialCode}</span>
-            <ChevronDown className="w-4 h-4 text-white/40" />
+            <span className="text-base sm:text-lg">{selectedCountry.flag}</span>
+            <span className="text-xs sm:text-sm text-white/60">{selectedCountry.dialCode}</span>
+            <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4 text-white/40" />
           </button>
 
           {/* Dropdown */}
@@ -95,15 +95,16 @@ export function PhoneInput({
         {/* Phone Input */}
         <input
           type="tel"
+          inputMode="tel"
           value={value}
           onChange={handlePhoneChange}
           disabled={disabled}
           placeholder="(11) 99999-9999"
           className={cn(
-            "flex-1 h-12 px-4 rounded-r-xl border border-white/10",
-            "bg-white/5 text-white placeholder:text-white/30",
+            "flex-1 h-11 sm:h-12 px-3 sm:px-4 rounded-r-xl border border-white/10",
+            "bg-white/5 text-white placeholder:text-white/30 text-sm sm:text-base",
             "focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50",
-            "transition-all",
+            "transition-all min-w-0",
             error && "border-red-500/50 focus:ring-red-500/50",
             disabled && "opacity-50 cursor-not-allowed"
           )}
@@ -111,7 +112,9 @@ export function PhoneInput({
       </div>
 
       {error && (
-        <p className="mt-1 text-xs text-red-400">{error}</p>
+        <p className="mt-1 text-[10px] sm:text-xs text-red-400 flex items-center gap-1">
+          <span>⚠</span> {error}
+        </p>
       )}
     </div>
   );
