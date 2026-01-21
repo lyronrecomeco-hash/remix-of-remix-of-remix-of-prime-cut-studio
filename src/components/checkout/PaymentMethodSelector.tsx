@@ -1,12 +1,12 @@
 /**
  * CHECKOUT SYSTEM - Payment Method Selector
- * Seletor de método de pagamento - Layout igual à referência Cakto
+ * Seletor de método de pagamento - Layout limpo
  */
 
 import React from 'react';
 import { Check, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { PixIcon, CardBrandsRow } from './PaymentIcons';
+import { PixIcon } from './PaymentIcons';
 
 interface PaymentMethodSelectorProps {
   value: 'PIX' | 'CARD';
@@ -32,7 +32,7 @@ export function PaymentMethodSelector({
           onClick={() => !disabled && onChange('PIX')}
           disabled={disabled}
           className={cn(
-            "relative flex flex-col items-center p-4 rounded-xl border-2 transition-all",
+            "relative flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all min-h-[100px]",
             value === 'PIX'
               ? "border-emerald-500 bg-emerald-500/10"
               : "border-white/10 bg-white/5 hover:border-white/20",
@@ -57,19 +57,14 @@ export function PaymentMethodSelector({
           </div>
 
           {/* Icon */}
-          <PixIcon className="w-10 h-6 sm:w-12 sm:h-7 mb-2 mt-1" />
+          <PixIcon className="w-12 h-7 sm:w-14 sm:h-8" />
 
           {/* Name */}
           <span className={cn(
-            "font-medium text-sm",
+            "font-medium text-sm mt-2",
             value === 'PIX' ? "text-white" : "text-white/70"
           )}>
             PIX
-          </span>
-
-          {/* Description */}
-          <span className="text-[10px] text-white/50 text-center mt-0.5">
-            Aprovação instantânea • 5% desconto
           </span>
         </button>
 
@@ -79,7 +74,7 @@ export function PaymentMethodSelector({
           onClick={() => !disabled && onChange('CARD')}
           disabled={disabled}
           className={cn(
-            "relative flex flex-col items-center p-4 rounded-xl border-2 transition-all",
+            "relative flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all min-h-[100px]",
             value === 'CARD'
               ? "border-emerald-500 bg-emerald-500/10"
               : "border-white/10 bg-white/5 hover:border-white/20",
@@ -100,26 +95,16 @@ export function PaymentMethodSelector({
 
           {/* Icon - Simple credit card icon */}
           <CreditCard className={cn(
-            "w-8 h-8 sm:w-10 sm:h-10 mb-2 mt-1",
+            "w-10 h-10 sm:w-12 sm:h-12",
             value === 'CARD' ? "text-emerald-400" : "text-white/50"
           )} />
 
           {/* Name */}
           <span className={cn(
-            "font-medium text-sm",
+            "font-medium text-sm mt-2",
             value === 'CARD' ? "text-white" : "text-white/70"
           )}>
             Cartão de Crédito
-          </span>
-
-          {/* Card brands - Show only here */}
-          <div className="mt-1.5">
-            <CardBrandsRow className="opacity-70" />
-          </div>
-
-          {/* Description */}
-          <span className="text-[10px] text-white/50 text-center mt-0.5">
-            Parcele em até 12x
           </span>
         </button>
       </div>
