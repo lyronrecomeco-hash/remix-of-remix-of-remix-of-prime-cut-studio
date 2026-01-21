@@ -93,24 +93,10 @@ serve(async (req) => {
     let isValid = false;
 
     if (gateway === 'misticpay') {
-      try {
-        // Test MisticPay credentials by checking balance
-        const testResponse = await fetch('https://api.misticpay.com/api/users/balance', {
-          headers: {
-            'ci': clientId,
-            'cs': clientSecret,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        isValid = testResponse.ok;
-        if (!isValid) {
-          const errorData = await testResponse.json();
-          console.log('MisticPay API test failed:', errorData);
-        }
-      } catch (e) {
-        console.error('MisticPay API test error:', e);
-      }
+      // MisticPay requires IP whitelisting, so we skip API validation
+      // and trust the user's credentials. They will be tested on first payment.
+      console.log('MisticPay credentials saved without API validation (IP whitelisting required)');
+      isValid = true;
     } else if (gateway === 'asaas') {
       const baseUrl = sandboxMode 
         ? 'https://api-sandbox.asaas.com/v3' 
