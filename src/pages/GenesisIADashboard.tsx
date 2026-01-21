@@ -286,7 +286,7 @@ const GenesisIADashboard = () => {
                 </p>
               </div>
 
-              {/* Horizontal cards layout - glassmorphism style */}
+              {/* Horizontal cards layout - glassmorphism style - uniform height */}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 lg:gap-5 max-w-6xl mx-auto">
                 {(() => {
                   const visibleCards = [...config.dashboardCards]
@@ -327,20 +327,20 @@ const GenesisIADashboard = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
                         whileHover={{ scale: 1.02, y: -4 }}
-                        className="group cursor-pointer"
+                        className="group cursor-pointer h-full"
                         onClick={() => setActiveTab(card.id as ActiveTab)}
                       >
                         <div 
-                          className="relative overflow-hidden bg-white/5 border border-white/10 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.08]"
+                          className="relative overflow-hidden bg-white/5 border border-white/10 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.08] h-[120px] sm:h-[130px] flex flex-col justify-between"
                           style={{ borderRadius: '14px' }}
                         >
                           {/* Gradient overlay on hover */}
                           <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                           
-                          <div className="relative z-10">
+                          <div className="relative z-10 flex flex-col h-full">
                             <div className="flex items-center gap-3 sm:gap-4 mb-2 sm:mb-3">
                               <div
-                                className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center ${colorScheme.bg}`}
+                                className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${colorScheme.bg}`}
                                 style={cardStyles.iconBackgroundColor ? { backgroundColor: cardStyles.iconBackgroundColor } : undefined}
                               >
                                 <IconComponent
@@ -350,7 +350,7 @@ const GenesisIADashboard = () => {
                               </div>
                               <h3 className="text-sm sm:text-base font-semibold text-white">{card.title}</h3>
                             </div>
-                            <p className="text-xs sm:text-sm text-white/50 leading-relaxed line-clamp-2">
+                            <p className="text-xs sm:text-sm text-white/50 leading-relaxed line-clamp-2 flex-1">
                               {card.description}
                             </p>
                           </div>

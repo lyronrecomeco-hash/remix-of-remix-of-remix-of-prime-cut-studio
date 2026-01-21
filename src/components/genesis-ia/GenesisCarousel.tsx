@@ -140,18 +140,6 @@ export const GenesisCarousel = ({ onNavigate }: GenesisCarouselProps) => {
           {duplicatedItems.map((item, index) => {
             const IconComponent = item.icon;
             
-            // Different icon colors for variety
-            const iconColors = [
-              { bg: 'bg-blue-500/20', color: 'text-blue-400' },
-              { bg: 'bg-emerald-500/20', color: 'text-emerald-400' },
-              { bg: 'bg-purple-500/20', color: 'text-purple-400' },
-              { bg: 'bg-amber-500/20', color: 'text-amber-400' },
-              { bg: 'bg-cyan-500/20', color: 'text-cyan-400' },
-              { bg: 'bg-rose-500/20', color: 'text-rose-400' },
-              { bg: 'bg-indigo-500/20', color: 'text-indigo-400' },
-            ];
-            const colorScheme = iconColors[index % iconColors.length];
-            
             return (
               <motion.div
                 key={`${item.id}-${index}`}
@@ -162,12 +150,12 @@ export const GenesisCarousel = ({ onNavigate }: GenesisCarouselProps) => {
                 onClick={() => item.tabId && onNavigate?.(item.tabId)}
               >
                 <div 
-                  className="w-[160px] sm:w-[260px] h-[100px] sm:h-[140px] bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/[0.08] transition-all duration-300 p-3 sm:p-5 flex flex-col justify-between group backdrop-blur-sm"
+                  className="w-[160px] sm:w-[260px] h-[100px] sm:h-[140px] bg-[hsl(200_50%_15%/0.6)] border border-emerald-500/20 hover:border-emerald-500/40 hover:bg-[hsl(200_50%_18%/0.7)] transition-all duration-300 p-3 sm:p-5 flex flex-col justify-between group backdrop-blur-sm"
                   style={{ borderRadius: '14px' }}
                 >
                   {/* Icon */}
-                  <div className={`w-8 h-8 sm:w-11 sm:h-11 rounded-xl ${colorScheme.bg} flex items-center justify-center group-hover:scale-105 transition-transform`}>
-                    <IconComponent className={`w-4 h-4 sm:w-5 sm:h-5 ${colorScheme.color}`} />
+                  <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl bg-emerald-500/20 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
                   </div>
 
                   {/* Text */}
