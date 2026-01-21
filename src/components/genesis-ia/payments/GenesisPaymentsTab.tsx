@@ -59,6 +59,11 @@ interface Payment {
   customer_id: string | null;
   pix_br_code: string | null;
   abacatepay_billing_id: string | null;
+  customer_name?: string;
+  checkout_customers?: {
+    first_name: string;
+    last_name: string;
+  } | null;
 }
 
 interface PaymentEvent {
@@ -120,12 +125,27 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
   const loadPayments = async () => {
     const { data, error } = await supabase
       .from('checkout_payments')
-      .select('*')
+      .select(`
+        *,
+        checkout_customers (
+          first_name,
+          last_name
+        )
+      `)
       .order('created_at', { ascending: false })
       .limit(100);
 
     if (error) throw error;
-    setPayments(data || []);
+    
+    // Map customer name to each payment
+    const paymentsWithName = (data || []).map((p: Payment) => ({
+      ...p,
+      customer_name: p.checkout_customers 
+        ? `${p.checkout_customers.first_name} ${p.checkout_customers.last_name}`.trim()
+        : null
+    }));
+    
+    setPayments(paymentsWithName);
   };
 
   const loadWebhookConfig = async () => {
@@ -396,7 +416,9 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-mono text-sm text-white">{payment.payment_code}</span>
+                              <span className="font-semibold text-sm text-white">
+                                {payment.customer_name || 'Cliente não identificado'}
+                              </span>
                               {getStatusBadge(payment.status)}
                             </div>
                             <p className="text-xs text-white/50">
@@ -575,8 +597,12 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
 
                 <div className="space-y-3">
                   <div className="flex justify-between">
+                    <span className="text-white/50">Cliente</span>
+                    <span className="font-semibold text-white">{selectedPayment.customer_name || 'Não identificado'}</span>
+                  </div>
+                  <div className="flex justify-between">
                     <span className="text-white/50">Código</span>
-                    <span className="font-mono text-white">{selectedPayment.payment_code}</span>
+                    <span className="font-mono text-xs text-white/70">{selectedPayment.payment_code}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-white/50">Valor</span>

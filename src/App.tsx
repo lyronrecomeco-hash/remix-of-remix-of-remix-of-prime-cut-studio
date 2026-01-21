@@ -291,12 +291,12 @@ const AppContent = () => {
             <Route path="/contratos/assinar/:hash" element={<ContractSignature />} />
             {/* Promo Page */}
             <Route path="/promo/:codigo" element={<PromoPage />} />
-            {/* Checkout Routes */}
+            {/* Checkout Routes - Static routes first, dynamic last */}
             <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/checkout/:code" element={<PaymentCodePage />} />
             <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
             <Route path="/checkout/pending" element={<CheckoutPendingPage />} />
             <Route path="/checkout/error" element={<CheckoutErrorPage />} />
+            <Route path="/checkout/:code" element={<PaymentCodePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
