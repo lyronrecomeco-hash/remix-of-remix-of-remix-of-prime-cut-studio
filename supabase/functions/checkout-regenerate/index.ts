@@ -274,7 +274,7 @@ serve(async (req) => {
       payment_id: oldPayment.id,
       event_type: 'payment_regenerated',
       event_data: { new_payment_code: newPayment.payment_code, gateway },
-      source: 'api',
+      source: 'manual',
     });
 
     console.log('Payment regenerated successfully:', newPayment.payment_code);
