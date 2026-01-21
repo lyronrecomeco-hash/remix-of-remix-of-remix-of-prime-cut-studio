@@ -68,9 +68,13 @@ interface Payment {
   pix_br_code: string | null;
   abacatepay_billing_id: string | null;
   customer_name?: string;
+  customer_email?: string | null;
+  customer_phone?: string | null;
   checkout_customers?: {
     first_name: string;
     last_name: string;
+    email: string | null;
+    phone: string | null;
   } | null;
 }
 
@@ -139,7 +143,9 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
         *,
         checkout_customers (
           first_name,
-          last_name
+          last_name,
+          email,
+          phone
         )
       `)
       .order('created_at', { ascending: false })
@@ -147,15 +153,25 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
 
     if (error) throw error;
     
-    // Map customer name to each payment
-    const paymentsWithName = (data || []).map((p: Payment) => ({
-      ...p,
-      customer_name: p.checkout_customers 
-        ? `${p.checkout_customers.first_name} ${p.checkout_customers.last_name}`.trim()
-        : null
-    }));
+    const now = new Date();
     
-    setPayments(paymentsWithName);
+    // Map customer data and check expiration locally
+    const paymentsWithData = (data || []).map((p: Payment) => {
+      // Check if payment is expired locally (pending + past expires_at)
+      const isLocallyExpired = p.status === 'pending' && p.expires_at && new Date(p.expires_at) < now;
+      
+      return {
+        ...p,
+        status: isLocallyExpired ? 'expired' : p.status,
+        customer_name: p.checkout_customers 
+          ? `${p.checkout_customers.first_name} ${p.checkout_customers.last_name}`.trim()
+          : null,
+        customer_email: p.checkout_customers?.email || null,
+        customer_phone: p.checkout_customers?.phone || null,
+      };
+    });
+    
+    setPayments(paymentsWithData);
   };
 
   const loadWebhookConfig = async () => {
@@ -170,24 +186,31 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
 
   const loadStats = async () => {
     const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
     
     const { data: allPayments } = await supabase
       .from('checkout_payments')
-      .select('status, amount_cents, created_at, paid_at');
+      .select('status, amount_cents, created_at, paid_at, expires_at');
 
     if (allPayments) {
-      const todayPayments = allPayments.filter(p => 
+      // Apply local expiration check to stats too
+      const processedPayments = allPayments.map(p => ({
+        ...p,
+        status: (p.status === 'pending' && p.expires_at && new Date(p.expires_at) < now) ? 'expired' : p.status
+      }));
+      
+      const todayPayments = processedPayments.filter(p => 
         p.created_at.startsWith(today)
       );
       
-      const paidPayments = allPayments.filter(p => p.status === 'paid');
+      const paidPayments = processedPayments.filter(p => p.status === 'paid');
       const todayPaid = paidPayments.filter(p => p.paid_at?.startsWith(today));
 
       setStats({
-        totalPayments: allPayments.length,
+        totalPayments: processedPayments.length,
         totalPaid: paidPayments.length,
-        totalPending: allPayments.filter(p => p.status === 'pending').length,
-        totalExpired: allPayments.filter(p => p.status === 'expired').length,
+        totalPending: processedPayments.filter(p => p.status === 'pending').length,
+        totalExpired: processedPayments.filter(p => p.status === 'expired').length,
         totalRevenue: paidPayments.reduce((acc, p) => acc + p.amount_cents, 0),
         todayPayments: todayPayments.length,
         todayRevenue: todayPaid.reduce((acc, p) => acc + p.amount_cents, 0),
@@ -413,52 +436,50 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
 
           {/* Payments List */}
           <Card className="bg-white/5 border-white/10">
-            <ScrollArea className="h-[400px]">
-              <div className="p-4 space-y-3">
-                {paginatedPayments.length === 0 ? (
-                  <div className="text-center py-8 text-white/40">
-                    <CreditCard className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p>Nenhum pagamento encontrado</p>
-                  </div>
-                ) : (
-                  paginatedPayments.map((payment) => (
-                    <motion.div
-                      key={payment.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition cursor-pointer"
-                      onClick={() => {
-                        setSelectedPayment(payment);
-                        loadPaymentEvents(payment.id);
-                      }}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                            <CreditCard className="w-5 h-5 text-emerald-400" />
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-sm text-white">
-                                {payment.customer_name || 'Cliente não identificado'}
-                              </span>
-                              {getStatusBadge(payment.status)}
-                            </div>
-                            <p className="text-xs text-white/50">
-                              {payment.description || 'Pagamento'} • {format(new Date(payment.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-                            </p>
-                          </div>
+            <div className="p-4 space-y-3">
+              {paginatedPayments.length === 0 ? (
+                <div className="text-center py-8 text-white/40">
+                  <CreditCard className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>Nenhum pagamento encontrado</p>
+                </div>
+              ) : (
+                paginatedPayments.map((payment) => (
+                  <motion.div
+                    key={payment.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition cursor-pointer"
+                    onClick={() => {
+                      setSelectedPayment(payment);
+                      loadPaymentEvents(payment.id);
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                          <CreditCard className="w-5 h-5 text-emerald-400" />
                         </div>
-                        <div className="text-right">
-                          <p className="font-bold text-emerald-400">{formatCurrency(payment.amount_cents)}</p>
-                          <p className="text-xs text-white/50">{payment.payment_method || 'PIX'}</p>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-sm text-white">
+                              {payment.customer_name || 'Cliente não identificado'}
+                            </span>
+                            {getStatusBadge(payment.status)}
+                          </div>
+                          <p className="text-xs text-white/50">
+                            {payment.description || 'Pagamento'} • {format(new Date(payment.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                          </p>
                         </div>
                       </div>
-                    </motion.div>
-                  ))
-                )}
-              </div>
-            </ScrollArea>
+                      <div className="text-right">
+                        <p className="font-bold text-emerald-400">{formatCurrency(payment.amount_cents)}</p>
+                        <p className="text-xs text-white/50">{payment.payment_method || 'PIX'}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              )}
+            </div>
           </Card>
 
           {/* Pagination */}
@@ -683,6 +704,18 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
                     <span className="text-white/50">Cliente</span>
                     <span className="font-semibold text-white">{selectedPayment.customer_name || 'Não identificado'}</span>
                   </div>
+                  {selectedPayment.customer_email && (
+                    <div className="flex justify-between">
+                      <span className="text-white/50">E-mail</span>
+                      <span className="text-white text-sm">{selectedPayment.customer_email}</span>
+                    </div>
+                  )}
+                  {selectedPayment.customer_phone && (
+                    <div className="flex justify-between">
+                      <span className="text-white/50">Telefone</span>
+                      <span className="text-white text-sm">{selectedPayment.customer_phone}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-white/50">Código</span>
                     <span className="font-mono text-xs text-white/70">{selectedPayment.payment_code}</span>
