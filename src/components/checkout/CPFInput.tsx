@@ -32,21 +32,22 @@ export function CPFInput({
 
   return (
     <div>
-      <label className="block text-sm font-medium text-white/80 mb-1.5">
+      <label className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-1.5">
         CPF <span className="text-red-400">*</span>
       </label>
       
       <div className="relative">
         <input
           type="text"
+          inputMode="numeric"
           value={value}
           onChange={handleChange}
           disabled={disabled}
           placeholder="000.000.000-00"
           maxLength={14}
           className={cn(
-            "w-full h-12 px-4 pr-12 rounded-xl border border-white/10",
-            "bg-white/5 text-white placeholder:text-white/30",
+            "w-full h-11 sm:h-12 px-3 sm:px-4 pr-12 rounded-xl border border-white/10",
+            "bg-white/5 text-white placeholder:text-white/30 text-sm sm:text-base",
             "focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50",
             "transition-all",
             error && "border-red-500/50 focus:ring-red-500/50",
@@ -73,11 +74,15 @@ export function CPFInput({
       </div>
 
       {error && (
-        <p className="mt-1 text-xs text-red-400">{error}</p>
+        <p className="mt-1 text-[10px] sm:text-xs text-red-400 flex items-center gap-1">
+          <span>⚠</span> {error}
+        </p>
       )}
       
       {isComplete && !isValid && !error && (
-        <p className="mt-1 text-xs text-red-400">CPF inválido</p>
+        <p className="mt-1 text-[10px] sm:text-xs text-red-400 flex items-center gap-1">
+          <span>⚠</span> CPF inválido
+        </p>
       )}
     </div>
   );
