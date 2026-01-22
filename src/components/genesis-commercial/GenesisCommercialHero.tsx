@@ -289,29 +289,29 @@ const GenesisCommercialHero = () => {
                   ))}
                 </div>
 
-                {/* Acesse também - GRANDE */}
+                {/* Acesse também - EXATO como o original */}
                 <div className="relative z-10">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                      <Sparkles className="w-4 h-4 text-purple-400" />
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                      <Sparkles className="w-5 h-5 text-purple-400" />
                     </div>
-                    <span className="text-white font-bold text-sm">Acesse também</span>
+                    <span className="text-white font-bold text-base">Acesse também</span>
                   </div>
                   
-                  {/* Carousel - GRANDE */}
+                  {/* Carousel - Cards GRANDES como original */}
                   <div 
                     className="relative overflow-hidden"
-                    style={{ borderRadius: '16px' }}
+                    style={{ borderRadius: '18px' }}
                     onMouseEnter={() => setIsPaused(true)}
                     onMouseLeave={() => setIsPaused(false)}
                   >
                     {/* Gradient masks */}
-                    <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-[hsl(220_25%_10%)] via-[hsl(220_25%_10%/0.8)] to-transparent z-10 pointer-events-none" />
-                    <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-[hsl(220_25%_10%)] via-[hsl(220_25%_10%/0.8)] to-transparent z-10 pointer-events-none" />
+                    <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-[hsl(220_25%_10%)] via-[hsl(220_25%_10%/0.8)] to-transparent z-10 pointer-events-none" />
+                    <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-[hsl(220_25%_10%)] via-[hsl(220_25%_10%/0.8)] to-transparent z-10 pointer-events-none" />
                     
                     <div 
                       ref={scrollRef}
-                      className="flex gap-3 py-2 overflow-x-hidden scrollbar-hide"
+                      className="flex gap-4 py-2 overflow-x-hidden scrollbar-hide"
                       style={{ scrollBehavior: 'auto' }}
                     >
                       {duplicatedItems.map((item, index) => {
@@ -324,22 +324,22 @@ const GenesisCommercialHero = () => {
                             transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                             className="flex-shrink-0 cursor-pointer"
                           >
-                            {/* Card GRANDE */}
+                            {/* Card EXATO do original - bem grande */}
                             <div
-                              className="w-[140px] h-[100px] bg-[hsl(200_50%_15%/0.6)] border border-primary/20 hover:border-primary/40 hover:bg-[hsl(200_50%_18%/0.7)] transition-all duration-300 p-3 flex flex-col justify-between group backdrop-blur-sm"
-                              style={{ borderRadius: '14px' }}
+                              className="w-[160px] h-[130px] bg-[hsl(200_50%_15%/0.6)] border border-primary/20 hover:border-primary/40 hover:bg-[hsl(200_50%_18%/0.7)] transition-all duration-300 p-4 flex flex-col justify-between group backdrop-blur-sm"
+                              style={{ borderRadius: '16px' }}
                             >
-                              {/* Icon - top left */}
-                              <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center group-hover:scale-105 transition-transform">
-                                <Icon className="w-4 h-4 text-primary" />
+                              {/* Icon - top left - GRANDE */}
+                              <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center group-hover:scale-105 transition-transform">
+                                <Icon className="w-6 h-6 text-primary" />
                               </div>
 
                               {/* Text - bottom */}
                               <div>
-                                <h3 className="font-semibold text-white text-xs leading-tight mb-1">
+                                <h3 className="font-bold text-white text-sm leading-tight mb-1">
                                   {item.title}
                                 </h3>
-                                <p className="text-[10px] text-white/50 leading-tight truncate">
+                                <p className="text-xs text-white/50 leading-tight line-clamp-2">
                                   {item.desc}
                                 </p>
                               </div>
