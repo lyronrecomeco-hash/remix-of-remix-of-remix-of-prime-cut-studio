@@ -11,9 +11,10 @@ const GenesisCommercialHero = () => {
   const fullText = 'Crie, Gerencie e Escale';
   
   const quickActions = [
-    { icon: Search, title: 'Encontrar Clientes', desc: 'Descubra clientes com maior potencial', color: 'bg-blue-500/20 text-blue-400' },
-    { icon: Globe, title: 'Radar Global', desc: 'Oportunidades automáticas pela IA', color: 'bg-cyan-500/20 text-cyan-400' },
-    { icon: CheckCircle, title: 'Propostas Aceitas', desc: 'Gerencie propostas aceitas', color: 'bg-emerald-500/20 text-emerald-400' },
+    // Clonado (sem verde): mesma identidade azul do app (primary)
+    { icon: Search, title: 'Encontrar Clientes', desc: 'Descubra clientes com maior potencial' },
+    { icon: Globe, title: 'Radar Global', desc: 'Oportunidades automáticas pela IA' },
+    { icon: CheckCircle, title: 'Propostas Aceitas', desc: 'Gerencie as propostas aceitas do Radar Global e...' },
   ];
 
   // Carousel items matching the real GenesisCarousel
@@ -268,13 +269,9 @@ const GenesisCommercialHero = () => {
                   <p className="text-white/50 text-xs mt-1">Crie, evolua e gerencie suas ideias em um só lugar.</p>
                 </div>
 
-                {/* Quick Action Cards - EXACT layout from screenshot */}
+                {/* Quick Action Cards */}
                 <div className="grid grid-cols-3 gap-2.5 mb-4 relative z-10">
-                  {[
-                    { icon: Search, title: 'Encontrar Clientes', desc: 'Descubra clientes com maior potencial', bg: 'bg-purple-500/20', color: 'text-purple-400' },
-                    { icon: Globe, title: 'Radar Global', desc: 'Oportunidades automáticas pela IA', bg: 'bg-cyan-500/20', color: 'text-cyan-400' },
-                    { icon: CheckCircle, title: 'Propostas Aceitas', desc: 'Gerencie as propostas aceitas do Radar Global e...', bg: 'bg-emerald-500/20', color: 'text-emerald-400' },
-                  ].map((action, i) => (
+                  {quickActions.map((action, i) => (
                     <motion.div
                       key={i}
                       whileHover={{ scale: 1.02, y: -2 }}
@@ -282,8 +279,8 @@ const GenesisCommercialHero = () => {
                       style={{ borderRadius: '14px' }}
                     >
                       <div className="flex items-center gap-2.5 mb-2">
-                        <div className={`w-7 h-7 rounded-xl ${action.bg} flex items-center justify-center shrink-0`}>
-                          <action.icon className={`w-3.5 h-3.5 ${action.color}`} />
+                        <div className="w-7 h-7 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+                          <action.icon className="w-3.5 h-3.5 text-primary" />
                         </div>
                         <h3 className="text-white font-semibold text-[11px]">{action.title}</h3>
                       </div>
@@ -328,13 +325,13 @@ const GenesisCommercialHero = () => {
                             className="flex-shrink-0 cursor-pointer"
                           >
                             {/* EXACT card from screenshot - tall cards with icon top-left */}
-                            <div 
-                              className="w-[130px] h-[85px] bg-[hsl(200_50%_15%/0.6)] border border-emerald-500/20 hover:border-emerald-500/40 hover:bg-[hsl(200_50%_18%/0.7)] transition-all duration-300 p-2.5 flex flex-col justify-between group backdrop-blur-sm"
+                            <div
+                              className="w-[130px] h-[85px] bg-[hsl(200_50%_15%/0.6)] border border-primary/20 hover:border-primary/40 hover:bg-[hsl(200_50%_18%/0.7)] transition-all duration-300 p-2.5 flex flex-col justify-between group backdrop-blur-sm"
                               style={{ borderRadius: '14px' }}
                             >
                               {/* Icon - top left */}
-                              <div className="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center group-hover:scale-105 transition-transform">
-                                <Icon className="w-3 h-3 text-emerald-400" />
+                              <div className="w-6 h-6 rounded-lg bg-primary/20 flex items-center justify-center group-hover:scale-105 transition-transform">
+                                <Icon className="w-3 h-3 text-primary" />
                               </div>
 
                               {/* Text - bottom */}
