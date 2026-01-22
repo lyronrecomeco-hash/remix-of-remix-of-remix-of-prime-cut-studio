@@ -2,6 +2,7 @@ import {
   SandpackProvider, 
   SandpackPreview
 } from '@codesandbox/sandpack-react';
+import { memo } from 'react';
 
 interface PageBuilderPreviewProps {
   code: string;
@@ -74,7 +75,7 @@ const dependencies = {
   'lucide-react': '^0.292.0',
 };
 
-export const PageBuilderPreview = ({ code }: PageBuilderPreviewProps) => {
+const PageBuilderPreviewComponent = ({ code }: PageBuilderPreviewProps) => {
   return (
     <div className="h-full w-full">
       <SandpackProvider
@@ -106,3 +107,5 @@ export const PageBuilderPreview = ({ code }: PageBuilderPreviewProps) => {
     </div>
   );
 };
+
+export const PageBuilderPreview = memo(PageBuilderPreviewComponent);
