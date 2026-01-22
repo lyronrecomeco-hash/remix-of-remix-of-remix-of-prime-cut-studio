@@ -63,10 +63,11 @@ import { CriarProjetosTab } from "@/components/genesis-ia/criar-projetos";
 import { ContractsTab } from "@/components/genesis-ia/contracts";
 import { PromocionalTab } from "@/components/genesis-ia/promocional";
 import { GenesisPaymentsTab } from "@/components/genesis-ia/payments/GenesisPaymentsTab";
+import { PageBuilderTab } from "@/components/genesis-ia/page-builder";
 import GenesisBackground from "@/components/genesis-ia/GenesisBackground";
-import { FileText, Gift, CreditCard } from "lucide-react";
+import { FileText, Gift, CreditCard, Code2 } from "lucide-react";
 
-type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional' | 'payments';
+type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional' | 'payments' | 'page-builder';
 
 // Icon mapping for dynamic rendering
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -146,6 +147,7 @@ const GenesisIADashboard = () => {
       case 'contracts': return 'Contratos';
       case 'promocional': return 'Promocional';
       case 'payments': return 'Pagamentos';
+      case 'page-builder': return 'Construir Página';
       default: return null;
     }
   };
@@ -566,6 +568,10 @@ const GenesisIADashboard = () => {
 
     if (activeTab === 'payments' && isAdminUser) {
       return <GenesisPaymentsTab />;
+    }
+
+    if (activeTab === 'page-builder') {
+      return <PageBuilderTab onBack={() => setActiveTab('dashboard')} />;
     }
 
     return null;

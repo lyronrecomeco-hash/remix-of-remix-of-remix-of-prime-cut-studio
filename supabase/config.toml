@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.checkout-save-gateway-key]
 verify_jwt = false
+
+[functions.page-ai-builder]
+verify_jwt = false
