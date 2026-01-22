@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   ArrowUp, 
   Code2, 
@@ -7,11 +7,13 @@ import {
   RefreshCw, 
   Sparkles,
   Eye,
-  FileCode,
   Copy,
   Check,
   Loader2,
-  ArrowLeft
+  ArrowLeft,
+  Maximize2,
+  Minimize2,
+  ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -24,10 +26,10 @@ interface PageBuilderTabProps {
 
 const promptSuggestions = [
   'Clone do Spotify',
-  'Criar um painel administrativo',
-  'Criar uma página de loja',
-  'Criar um quadro kanban',
-  'Landing page moderna',
+  'Painel administrativo',
+  'Página de loja',
+  'Quadro kanban',
+  'Landing SaaS',
 ];
 
 type ViewState = 'input' | 'generating' | 'result';
@@ -39,6 +41,7 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
   const [showCode, setShowCode] = useState(false);
   const [copied, setCopied] = useState(false);
   const [viewState, setViewState] = useState<ViewState>('input');
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const handleGenerate = async () => {
@@ -113,7 +116,15 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
     inputRef.current?.focus();
   };
 
-  // Initial Input View - Like Lasy AI
+  const openInNewTab = () => {
+    if (!generatedCode) return;
+    const html = generateHtmlPreview(generatedCode);
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  };
+
+  // Initial Input View - Clean and Professional
   if (viewState === 'input') {
     return (
       <div className="h-full flex flex-col items-center justify-center px-4">
@@ -153,7 +164,7 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
             transition={{ delay: 0.3 }}
             className="text-base md:text-lg text-white/50 mb-8 max-w-md mx-auto"
           >
-            Crie páginas completas e funcionais em minutos, apenas descrevendo o que deseja.
+            Crie páginas completas em minutos, apenas descrevendo o que deseja.
           </motion.p>
 
           {/* Input Box */}
@@ -161,7 +172,7 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="relative bg-[#0f1629] border border-white/10 rounded-2xl overflow-hidden shadow-2xl"
+            className="relative bg-slate-900/80 border border-white/10 rounded-2xl overflow-hidden shadow-2xl"
           >
             <textarea
               ref={inputRef}
@@ -244,167 +255,157 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
 
   // Result View - Split Layout
   return (
-    <div className="h-full flex flex-col lg:flex-row gap-4">
-      {/* Left Panel - Controls */}
+    <div className={`h-full flex flex-col ${isFullscreen ? 'fixed inset-0 z-50 bg-slate-950' : ''}`}>
+      {/* Top Toolbar */}
       <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        className="w-full lg:w-[320px] flex-shrink-0 flex flex-col"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between px-4 py-3 bg-slate-900/50 border-b border-white/10"
       >
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3">
           <Button
             onClick={handleNewPage}
             variant="ghost"
-            size="icon"
-            className="h-10 w-10 text-white/60 hover:text-white hover:bg-white/10 rounded-xl"
+            size="sm"
+            className="gap-2 text-white/60 hover:text-white hover:bg-white/10"
           >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div>
-            <h1 className="text-lg font-bold text-white">Página Gerada</h1>
-            <p className="text-xs text-white/50">React + Tailwind + Framer Motion</p>
-          </div>
-        </div>
-
-        {/* Info Card */}
-        <div 
-          className="bg-white/5 border border-white/10 p-4 mb-4"
-          style={{ borderRadius: '14px' }}
-        >
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="w-4 h-4 text-emerald-400" />
-            <span className="text-sm font-medium text-white">Sucesso!</span>
-          </div>
-          <p className="text-xs text-white/50 line-clamp-2">"{prompt}"</p>
-        </div>
-
-        {/* Actions */}
-        <div 
-          className="bg-white/5 border border-white/10 p-4 flex-1 flex flex-col gap-3"
-          style={{ borderRadius: '14px' }}
-        >
-          <Button
-            onClick={() => setShowCode(!showCode)}
-            variant="outline"
-            className="w-full gap-2 border-white/10 hover:bg-white/5 text-white justify-start rounded-xl"
-          >
-            {showCode ? <Eye className="w-4 h-4" /> : <FileCode className="w-4 h-4" />}
-            {showCode ? 'Ver Preview' : 'Ver Código'}
+            <ArrowLeft className="w-4 h-4" />
+            Voltar
           </Button>
           
+          <div className="h-4 w-px bg-white/20" />
+          
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-emerald-400" />
+            <span className="text-sm font-medium text-white">Página Gerada</span>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {/* Toggle View */}
+          <Button
+            onClick={() => setShowCode(!showCode)}
+            variant="ghost"
+            size="sm"
+            className={`gap-2 ${showCode ? 'bg-white/10 text-white' : 'text-white/60 hover:text-white'}`}
+          >
+            {showCode ? <Eye className="w-4 h-4" /> : <Code2 className="w-4 h-4" />}
+            {showCode ? 'Preview' : 'Código'}
+          </Button>
+          
+          {/* Copy */}
           <Button
             onClick={handleCopyCode}
-            variant="outline"
-            className="w-full gap-2 border-white/10 hover:bg-white/5 text-white justify-start rounded-xl"
+            variant="ghost"
+            size="sm"
+            className="gap-2 text-white/60 hover:text-white"
           >
-            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-            {copied ? 'Copiado!' : 'Copiar Código'}
+            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
           </Button>
-
+          
+          {/* Open in New Tab */}
+          <Button
+            onClick={openInNewTab}
+            variant="ghost"
+            size="sm"
+            className="gap-2 text-white/60 hover:text-white"
+          >
+            <ExternalLink className="w-4 h-4" />
+          </Button>
+          
+          {/* Fullscreen Toggle */}
+          <Button
+            onClick={() => setIsFullscreen(!isFullscreen)}
+            variant="ghost"
+            size="sm"
+            className="gap-2 text-white/60 hover:text-white"
+          >
+            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </Button>
+          
+          <div className="h-4 w-px bg-white/20" />
+          
+          {/* Export */}
           <Button
             onClick={handleExport}
-            className="w-full gap-2 bg-emerald-600 hover:bg-emerald-500 text-white justify-start rounded-xl"
+            size="sm"
+            className="gap-2 bg-emerald-600 hover:bg-emerald-500 text-white"
           >
             <Download className="w-4 h-4" />
-            Exportar Projeto (.zip)
+            Exportar
           </Button>
-
-          <div className="flex-1" />
-
+          
+          {/* New Page */}
           <Button
             onClick={handleNewPage}
-            variant="ghost"
-            className="w-full gap-2 text-white/60 hover:text-white hover:bg-white/5 justify-start rounded-xl"
+            variant="outline"
+            size="sm"
+            className="gap-2 border-white/20 text-white/80 hover:bg-white/10"
           >
             <RefreshCw className="w-4 h-4" />
-            Criar Nova Página
+            Nova
           </Button>
         </div>
       </motion.div>
 
-      {/* Right Panel - Preview */}
-      <motion.div
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.1 }}
-        className="flex-1 min-h-[400px] lg:min-h-0"
-      >
-        <div 
-          className="h-full bg-white/5 border border-white/10 overflow-hidden flex flex-col"
-          style={{ borderRadius: '14px' }}
-        >
-          {/* Browser Header */}
-          <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-white/5">
-            <div className="flex items-center gap-2">
-              <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                <div className="w-3 h-3 rounded-full bg-green-500/80" />
-              </div>
-              <span className="text-xs text-white/40 ml-2">
-                {showCode ? 'Código TSX' : 'Preview'}
-              </span>
-            </div>
-            <Button
-              onClick={() => setShowCode(!showCode)}
-              variant="ghost"
-              size="sm"
-              className="h-7 text-xs text-white/60 hover:text-white gap-1"
-            >
-              {showCode ? <Eye className="w-3 h-3" /> : <Code2 className="w-3 h-3" />}
-              {showCode ? 'Preview' : 'Código'}
-            </Button>
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-hidden">
+        {showCode ? (
+          <div className="h-full overflow-auto bg-slate-950 p-4">
+            <pre className="text-sm text-white/80 font-mono whitespace-pre-wrap leading-relaxed">
+              {generatedCode}
+            </pre>
           </div>
-
-          {/* Content */}
-          <div className="flex-1 overflow-auto">
-            {showCode ? (
-              <pre className="p-4 text-xs text-white/80 font-mono whitespace-pre-wrap">
-                {generatedCode}
-              </pre>
-            ) : (
-              <iframe
-                srcDoc={generateHtmlPreview(generatedCode || '')}
-                className="w-full h-full border-0 bg-white"
-                sandbox="allow-scripts"
-                title="Page Preview"
-              />
-            )}
+        ) : (
+          <div className="h-full w-full bg-white">
+            <iframe
+              srcDoc={generateHtmlPreview(generatedCode || '')}
+              className="w-full h-full border-0"
+              sandbox="allow-scripts allow-same-origin"
+              title="Page Preview"
+            />
           </div>
-        </div>
-      </motion.div>
+        )}
+      </div>
     </div>
   );
 };
 
-// Generate full HTML for iframe preview
+// Generate full HTML for iframe preview - FIXED VERSION
 function generateHtmlPreview(code: string): string {
-  return `
-<!DOCTYPE html>
+  // Clean the code
+  const cleanedCode = code
+    .replace(/import\s*\{[^}]*\}\s*from\s*['"]framer-motion['"];?/g, '')
+    .replace(/import\s*\{[^}]*\}\s*from\s*['"]lucide-react['"];?/g, '')
+    .replace(/import\s*\{[^}]*\}\s*from\s*['"]react['"];?/g, '')
+    .replace(/export\s+default\s+function\s+(\w+)/g, 'function PageComponent')
+    .replace(/export\s+default\s+/g, 'const PageComponent = ')
+    .replace(/function\s+Page\s*\(/g, 'function PageComponent(');
+
+  return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Preview</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script type="importmap">
-    {
-      "imports": {
-        "framer-motion": "https://esm.sh/framer-motion@10.16.4?bundle",
-        "lucide-react": "https://esm.sh/lucide-react@0.292.0?bundle"
-      }
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
     }
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', sans-serif; }
+    html, body { font-family: 'Inter', system-ui, sans-serif; }
     ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-track { background: #0f172a; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
@@ -412,25 +413,199 @@ function generateHtmlPreview(code: string): string {
 </head>
 <body>
   <div id="root"></div>
-  <script type="text/babel" data-type="module">
-    const { motion } = await import('framer-motion');
-    const LucideIcons = await import('lucide-react');
-    
-    // Make icons available globally
-    Object.keys(LucideIcons).forEach(key => {
-      window[key] = LucideIcons[key];
+  
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  
+  <script type="text/babel">
+    // Mock framer-motion
+    const motion = new Proxy({}, {
+      get: (target, prop) => {
+        return React.forwardRef((props, ref) => {
+          const { initial, animate, whileHover, whileTap, whileInView, transition, variants, ...rest } = props;
+          return React.createElement(prop, { ...rest, ref });
+        });
+      }
     });
-    window.motion = motion;
     
-    ${code.replace(/import\s*{[^}]*}\s*from\s*['"]framer-motion['"];?/g, '')
-         .replace(/import\s*{[^}]*}\s*from\s*['"]lucide-react['"];?/g, '')
-         .replace(/import\s*{[^}]*}\s*from\s*['"]react['"];?/g, '')
-         .replace(/export\s+default\s+/g, 'const PageComponent = ')}
+    // Mock lucide-react icons
+    const createIcon = (name) => {
+      return (props) => {
+        const { className = '', size = 24 } = props;
+        const el = document.createElement('i');
+        el.setAttribute('data-lucide', name.toLowerCase().replace(/([A-Z])/g, '-$1').toLowerCase().slice(1));
+        return React.createElement('span', { 
+          className: className + ' inline-block',
+          style: { width: size, height: size },
+          dangerouslySetInnerHTML: { __html: '' },
+          ref: (node) => {
+            if (node && typeof lucide !== 'undefined') {
+              const iconName = name.replace(/([A-Z])/g, '-$1').toLowerCase().slice(1) || name.toLowerCase();
+              const icon = lucide.icons[iconName] || lucide.icons[name.toLowerCase()];
+              if (icon) {
+                node.innerHTML = icon.toSvg({ class: className, width: size, height: size });
+              }
+            }
+          }
+        });
+      };
+    };
     
+    // Common icons
+    const Sparkles = createIcon('sparkles');
+    const Rocket = createIcon('rocket');
+    const Star = createIcon('star');
+    const Heart = createIcon('heart');
+    const Check = createIcon('check');
+    const CheckCircle = createIcon('check-circle');
+    const ArrowRight = createIcon('arrow-right');
+    const ArrowUpRight = createIcon('arrow-up-right');
+    const Play = createIcon('play');
+    const Shield = createIcon('shield');
+    const ShieldCheck = createIcon('shield-check');
+    const Zap = createIcon('zap');
+    const Crown = createIcon('crown');
+    const Trophy = createIcon('trophy');
+    const Target = createIcon('target');
+    const Users = createIcon('users');
+    const Globe = createIcon('globe');
+    const Mail = createIcon('mail');
+    const Phone = createIcon('phone');
+    const MapPin = createIcon('map-pin');
+    const Calendar = createIcon('calendar');
+    const Clock = createIcon('clock');
+    const ChevronRight = createIcon('chevron-right');
+    const ChevronDown = createIcon('chevron-down');
+    const Menu = createIcon('menu');
+    const X = createIcon('x');
+    const Instagram = createIcon('instagram');
+    const Twitter = createIcon('twitter');
+    const Facebook = createIcon('facebook');
+    const Linkedin = createIcon('linkedin');
+    const Github = createIcon('github');
+    const Youtube = createIcon('youtube');
+    const CreditCard = createIcon('credit-card');
+    const Wallet = createIcon('wallet');
+    const BarChart = createIcon('bar-chart');
+    const TrendingUp = createIcon('trending-up');
+    const Award = createIcon('award');
+    const Headphones = createIcon('headphones');
+    const MessageCircle = createIcon('message-circle');
+    const Send = createIcon('send');
+    const Image = createIcon('image');
+    const Camera = createIcon('camera');
+    const Video = createIcon('video');
+    const Music = createIcon('music');
+    const Mic = createIcon('mic');
+    const Code = createIcon('code');
+    const Terminal = createIcon('terminal');
+    const Laptop = createIcon('laptop');
+    const Smartphone = createIcon('smartphone');
+    const Monitor = createIcon('monitor');
+    const Wifi = createIcon('wifi');
+    const Cloud = createIcon('cloud');
+    const Lock = createIcon('lock');
+    const Key = createIcon('key');
+    const Eye = createIcon('eye');
+    const Settings = createIcon('settings');
+    const Bell = createIcon('bell');
+    const Search = createIcon('search');
+    const Scissors = createIcon('scissors');
+    const Brush = createIcon('brush');
+    const Palette = createIcon('palette');
+    const Layers = createIcon('layers');
+    const Grid = createIcon('grid');
+    const Layout = createIcon('layout');
+    const Box = createIcon('box');
+    const Package = createIcon('package');
+    const ShoppingCart = createIcon('shopping-cart');
+    const ShoppingBag = createIcon('shopping-bag');
+    const Store = createIcon('store');
+    const Home = createIcon('home');
+    const Building = createIcon('building');
+    const MapPinned = createIcon('map-pinned');
+    const Navigation = createIcon('navigation');
+    const Compass = createIcon('compass');
+    const Car = createIcon('car');
+    const Plane = createIcon('plane');
+    const Train = createIcon('train');
+    const Bus = createIcon('bus');
+    const Bike = createIcon('bike');
+    const Utensils = createIcon('utensils');
+    const Coffee = createIcon('coffee');
+    const Wine = createIcon('wine');
+    const Beer = createIcon('beer');
+    const Pizza = createIcon('pizza');
+    const Cake = createIcon('cake');
+    const Apple = createIcon('apple');
+    const Leaf = createIcon('leaf');
+    const Sun = createIcon('sun');
+    const Moon = createIcon('moon');
+    const CloudSun = createIcon('cloud-sun');
+    const Umbrella = createIcon('umbrella');
+    const Droplet = createIcon('droplet');
+    const Flame = createIcon('flame');
+    const Snowflake = createIcon('snowflake');
+    const Wind = createIcon('wind');
+    const ThumbsUp = createIcon('thumbs-up');
+    const ThumbsDown = createIcon('thumbs-down');
+    const MessageSquare = createIcon('message-square');
+    const Share = createIcon('share');
+    const Share2 = createIcon('share-2');
+    const Link = createIcon('link');
+    const ExternalLink = createIcon('external-link');
+    const Download = createIcon('download');
+    const Upload = createIcon('upload');
+    const File = createIcon('file');
+    const FileText = createIcon('file-text');
+    const Folder = createIcon('folder');
+    const Archive = createIcon('archive');
+    const Trash = createIcon('trash');
+    const Edit = createIcon('edit');
+    const Pencil = createIcon('pencil');
+    const Plus = createIcon('plus');
+    const Minus = createIcon('minus');
+    const ChevronLeft = createIcon('chevron-left');
+    const ChevronUp = createIcon('chevron-up');
+    const ArrowLeft = createIcon('arrow-left');
+    const ArrowUp = createIcon('arrow-up');
+    const ArrowDown = createIcon('arrow-down');
+    const RefreshCw = createIcon('refresh-cw');
+    const RotateCw = createIcon('rotate-cw');
+    const RotateCcw = createIcon('rotate-ccw');
+    const Loader = createIcon('loader');
+    const AlertCircle = createIcon('alert-circle');
+    const AlertTriangle = createIcon('alert-triangle');
+    const Info = createIcon('info');
+    const HelpCircle = createIcon('help-circle');
+    const XCircle = createIcon('x-circle');
+    const CheckCircle2 = createIcon('check-circle-2');
+    const CircleDot = createIcon('circle-dot');
+    const Circle = createIcon('circle');
+    const Square = createIcon('square');
+    const Triangle = createIcon('triangle');
+    const Hexagon = createIcon('hexagon');
+    const Octagon = createIcon('octagon');
+    const Pentagon = createIcon('pentagon');
+    const Diamond = createIcon('diamond');
+    const Gem = createIcon('gem');
+    const Sparkle = createIcon('sparkle');
+    const Wand = createIcon('wand');
+    const Wand2 = createIcon('wand-2');
+    const Magic = createIcon('wand-2');
+
+    // React hooks
+    const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+    // Generated component
+    ${cleanedCode}
+
+    // Render
     const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(React.createElement(PageComponent || Page));
+    root.render(React.createElement(PageComponent));
   </script>
 </body>
-</html>
-  `.trim();
+</html>`;
 }
