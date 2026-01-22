@@ -24,7 +24,12 @@ import {
   BarChart3,
   Building2,
   UtensilsCrossed,
-  Palette
+  Palette,
+  Code,
+  Cpu,
+  Layers,
+  Zap,
+  Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -52,6 +57,221 @@ const promptSuggestions = [
   { icon: UtensilsCrossed, text: 'Delivery app cardápio', color: 'rose' },
   { icon: Palette, text: 'Portfolio designer', color: 'cyan' },
 ];
+
+// Loading Animation Component - Genesis Theme
+const GeneratingAnimation = () => {
+  const steps = [
+    { icon: Code, text: 'Analisando prompt...', delay: 0 },
+    { icon: Cpu, text: 'Processando com IA...', delay: 1.5 },
+    { icon: Layers, text: 'Estruturando componentes...', delay: 3 },
+    { icon: Zap, text: 'Aplicando estilos...', delay: 4.5 },
+    { icon: Globe, text: 'Finalizando página...', delay: 6 },
+  ];
+
+  const [currentStep, setCurrentStep] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentStep(prev => (prev + 1) % steps.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="h-full flex items-center justify-center relative overflow-hidden">
+      {/* Background Grid */}
+      <div className="absolute inset-0 opacity-20">
+        <div 
+          className="absolute inset-0" 
+          style={{
+            backgroundImage: `linear-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 1px), 
+                              linear-gradient(90deg, rgba(16, 185, 129, 0.1) 1px, transparent 1px)`,
+            backgroundSize: '60px 60px'
+          }}
+        />
+      </div>
+
+      {/* Animated Orbs */}
+      <motion.div
+        className="absolute w-[400px] h-[400px] rounded-full bg-gradient-to-r from-purple-500/10 to-blue-500/10 blur-3xl"
+        animate={{
+          x: [0, 50, 0, -50, 0],
+          y: [0, -30, 0, 30, 0],
+          scale: [1, 1.1, 1, 0.9, 1],
+        }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute w-[300px] h-[300px] rounded-full bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 blur-3xl"
+        animate={{
+          x: [0, -40, 0, 40, 0],
+          y: [0, 40, 0, -40, 0],
+          scale: [1, 0.9, 1, 1.1, 1],
+        }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+      />
+
+      {/* Floating Particles */}
+      {[...Array(12)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute w-1 h-1 bg-emerald-400/50 rounded-full"
+          initial={{
+            x: Math.random() * 400 - 200,
+            y: Math.random() * 400 - 200,
+            opacity: 0.3,
+          }}
+          animate={{
+            y: [null, Math.random() * -100 - 50],
+            opacity: [0.3, 0.8, 0],
+          }}
+          transition={{
+            duration: 3 + Math.random() * 2,
+            repeat: Infinity,
+            delay: i * 0.3,
+          }}
+        />
+      ))}
+
+      {/* Main Content */}
+      <div className="relative z-10 text-center">
+        {/* Animated Icon */}
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+          className="relative w-24 h-24 mx-auto mb-8"
+        >
+          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-purple-500/30" />
+          <div className="absolute inset-2 rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Wand2 className="w-10 h-10 text-purple-400" />
+          </div>
+          
+          {/* Orbiting dots */}
+          {[0, 1, 2, 3].map((i) => (
+            <motion.div
+              key={i}
+              className="absolute w-2 h-2 rounded-full bg-emerald-400"
+              style={{
+                top: '50%',
+                left: '50%',
+                marginTop: -4,
+                marginLeft: -4,
+              }}
+              animate={{
+                x: [0, Math.cos(i * Math.PI / 2) * 50],
+                y: [0, Math.sin(i * Math.PI / 2) * 50],
+                opacity: [1, 0.5, 1],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                delay: i * 0.5,
+              }}
+            />
+          ))}
+        </motion.div>
+
+        {/* Title */}
+        <motion.h2
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-xl font-bold text-white mb-2"
+        >
+          Construindo sua página
+        </motion.h2>
+
+        {/* Step Indicator */}
+        <div className="flex items-center justify-center gap-2 mb-6">
+          {steps.map((step, idx) => {
+            const StepIcon = step.icon;
+            const isActive = idx === currentStep;
+            const isPast = idx < currentStep;
+            
+            return (
+              <motion.div
+                key={idx}
+                animate={{
+                  scale: isActive ? 1.2 : 1,
+                  opacity: isActive ? 1 : isPast ? 0.6 : 0.3,
+                }}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                  isActive 
+                    ? 'bg-emerald-500/30 border border-emerald-500/50' 
+                    : 'bg-white/5 border border-white/10'
+                }`}
+              >
+                <StepIcon className={`w-4 h-4 ${isActive ? 'text-emerald-400' : 'text-white/40'}`} />
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* Current Step Text */}
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={currentStep}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="text-sm text-emerald-400 font-medium"
+          >
+            {steps[currentStep].text}
+          </motion.p>
+        </AnimatePresence>
+
+        {/* Progress Bar */}
+        <div className="mt-6 w-64 mx-auto">
+          <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-gradient-to-r from-purple-500 to-emerald-500"
+              initial={{ width: '0%' }}
+              animate={{ width: '100%' }}
+              transition={{ duration: 15, ease: "linear" }}
+            />
+          </div>
+        </div>
+
+        <p className="text-xs text-white/40 mt-4">
+          Isso pode levar até 30 segundos...
+        </p>
+      </div>
+    </div>
+  );
+};
+
+// Empty Preview State
+const EmptyPreviewState = () => (
+  <div className="h-full flex items-center justify-center relative overflow-hidden">
+    {/* Subtle Grid */}
+    <div className="absolute inset-0 opacity-10">
+      <div 
+        className="absolute inset-0" 
+        style={{
+          backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), 
+                            linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px)`,
+          backgroundSize: '40px 40px'
+        }}
+      />
+    </div>
+
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="text-center"
+    >
+      <motion.div
+        animate={{ y: [0, -5, 0] }}
+        transition={{ duration: 2, repeat: Infinity }}
+        className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center"
+      >
+        <Eye className="w-7 h-7 text-white/20" />
+      </motion.div>
+      <p className="text-sm text-white/40 mb-1">Área de Preview</p>
+      <p className="text-xs text-white/25">Envie uma mensagem para gerar sua página</p>
+    </motion.div>
+  </div>
+);
 
 export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
   const [prompt, setPrompt] = useState('');
@@ -164,7 +384,7 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
     window.open(URL.createObjectURL(blob), '_blank');
   };
 
-  // Empty State - Padronizado com Genesis-IA
+  // Empty State
   if (messages.length === 0 && !currentCode) {
     return (
       <div className="h-full flex flex-col items-center justify-center px-4 py-8">
@@ -173,7 +393,6 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-2xl"
         >
-          {/* Icon */}
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -185,7 +404,6 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
             </div>
           </motion.div>
           
-          {/* Title */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -203,14 +421,13 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
             </p>
           </motion.div>
 
-          {/* Input Box - Glassmorphism */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
             className="mb-6"
           >
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden">
+            <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden">
               <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/5">
                 <MessageSquare className="w-4 h-4 text-emerald-400" />
                 <span className="text-xs font-medium text-white/50">Descreva sua página</span>
@@ -240,7 +457,6 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
             </div>
           </motion.div>
 
-          {/* Suggestions - Cards padronizados */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -279,7 +495,7 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
   // Main Builder Interface
   return (
     <div className={`h-full flex flex-col ${isFullscreen ? 'fixed inset-0 z-50 bg-slate-950' : ''}`}>
-      {/* Top Toolbar - Glassmorphism */}
+      {/* Top Toolbar */}
       <div className="flex items-center justify-between px-3 py-2 bg-white/5 backdrop-blur-sm border-b border-white/10 shrink-0">
         <div className="flex items-center gap-2">
           <Button
@@ -296,7 +512,9 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
           
           <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-md">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[10px] font-medium text-emerald-400">Ativo</span>
+            <span className="text-[10px] font-medium text-emerald-400">
+              {isGenerating ? 'Gerando...' : 'Ativo'}
+            </span>
           </div>
         </div>
         
@@ -306,6 +524,7 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
             variant="ghost"
             size="sm"
             className={`h-8 gap-1.5 text-xs ${showCode ? 'bg-white/10 text-white' : 'text-white/60 hover:text-white'}`}
+            disabled={!currentCode}
           >
             {showCode ? <Eye className="w-3.5 h-3.5" /> : <Code2 className="w-3.5 h-3.5" />}
             <span className="hidden sm:inline">{showCode ? 'Preview' : 'Código'}</span>
@@ -378,16 +597,39 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
                       </motion.div>
                     ))}
                     
+                    {/* Enhanced Loading State in Chat */}
                     {isGenerating && (
                       <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="flex items-center gap-2 px-3 py-2 bg-white/5 rounded-xl border border-white/10"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-gradient-to-r from-purple-500/10 to-emerald-500/10 rounded-xl p-3 border border-purple-500/20"
                       >
-                        <Loader2 className="w-4 h-4 text-purple-400 animate-spin" />
-                        <div>
-                          <p className="text-xs text-white/80">Gerando...</p>
-                          <p className="text-[10px] text-white/40">Aguarde alguns segundos</p>
+                        <div className="flex items-start gap-3">
+                          <div className="relative">
+                            <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                              <Wand2 className="w-4 h-4 text-purple-400" />
+                            </div>
+                            <motion.div
+                              className="absolute -inset-1 rounded-lg bg-purple-500/20"
+                              animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0, 0.5] }}
+                              transition={{ duration: 1.5, repeat: Infinity }}
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-xs font-medium text-white mb-1">Gerando sua página...</p>
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
+                                <motion.div
+                                  className="h-full bg-gradient-to-r from-purple-500 to-emerald-500"
+                                  initial={{ width: '0%' }}
+                                  animate={{ width: '100%' }}
+                                  transition={{ duration: 20, ease: "linear" }}
+                                />
+                              </div>
+                              <Loader2 className="w-3 h-3 text-emerald-400 animate-spin" />
+                            </div>
+                            <p className="text-[10px] text-white/40 mt-1">A IA está criando código React + Tailwind</p>
+                          </div>
                         </div>
                       </motion.div>
                     )}
@@ -428,7 +670,9 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
           {/* Preview Panel */}
           <ResizablePanel defaultSize={isChatOpen ? 72 : 100}>
             <div className="h-full flex flex-col">
-              {currentCode ? (
+              {isGenerating ? (
+                <GeneratingAnimation />
+              ) : currentCode ? (
                 showCode ? (
                   <div className="h-full overflow-auto p-3">
                     <pre className="text-xs text-white/80 font-mono whitespace-pre-wrap leading-relaxed bg-white/5 p-3 rounded-lg border border-white/10">
@@ -448,14 +692,7 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
                   </div>
                 )
               ) : (
-                <div className="h-full flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                      <Eye className="w-6 h-6 text-white/20" />
-                    </div>
-                    <p className="text-xs text-white/40">Envie uma mensagem para gerar</p>
-                  </div>
-                </div>
+                <EmptyPreviewState />
               )}
             </div>
           </ResizablePanel>
@@ -465,46 +702,124 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
   );
 };
 
-// HTML Preview Generator
+// HTML Preview Generator - Fixed version
 function generateHtmlPreview(code: string): string {
-  const cleanedCode = code
-    .replace(/import\s*\{[^}]*\}\s*from\s*['"]framer-motion['"];?/g, '')
-    .replace(/import\s*\{[^}]*\}\s*from\s*['"]lucide-react['"];?/g, '')
-    .replace(/import\s*\{[^}]*\}\s*from\s*['"]react['"];?/g, '')
+  // Clean imports and exports
+  let cleanedCode = code
+    .replace(/import\s+\{[^}]*\}\s+from\s+['"]framer-motion['"];?\n?/g, '')
+    .replace(/import\s+\{[^}]*\}\s+from\s+['"]lucide-react['"];?\n?/g, '')
+    .replace(/import\s+\{[^}]*\}\s+from\s+['"]react['"];?\n?/g, '')
+    .replace(/import\s+React\s+from\s+['"]react['"];?\n?/g, '');
+
+  // Fix export default
+  cleanedCode = cleanedCode
     .replace(/export\s+default\s+function\s+(\w+)/g, 'function PageComponent')
-    .replace(/export\s+default\s+/g, 'const PageComponent = ')
-    .replace(/function\s+Page\s*\(/g, 'function PageComponent(');
+    .replace(/export\s+default\s+(\w+);?\s*$/gm, '')
+    .replace(/export\s+default\s+/g, 'const PageComponent = ');
+
+  // Ensure we have PageComponent
+  if (!cleanedCode.includes('PageComponent') && cleanedCode.includes('function Page')) {
+    cleanedCode = cleanedCode.replace(/function\s+Page\s*\(/g, 'function PageComponent(');
+  }
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Preview</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','system-ui','sans-serif']}}}}</script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <style>*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}body{font-family:'Inter',system-ui,sans-serif}::-webkit-scrollbar{width:8px}::-webkit-scrollbar-track{background:#0f172a}::-webkit-scrollbar-thumb{background:#334155;border-radius:4px}</style>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+  </style>
 </head>
 <body>
   <div id="root"></div>
+  
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-  <script type="text/babel">
-    const motion=new Proxy({},{get:(_,prop)=>React.forwardRef((props,ref)=>{const{initial,animate,whileHover,whileTap,whileInView,transition,variants,exit,...rest}=props;return React.createElement(prop,{...rest,ref})})});
-    const AnimatePresence=({children})=>children;
-    const useInView=()=>[null,true];
-    const createIcon=(name)=>(props)=>{const{className='',size=24}=props;const kebab=name.replace(/([A-Z])/g,'-$1').toLowerCase().replace(/^-/,'');return React.createElement('span',{className:className+' inline-flex items-center justify-center',style:{width:size,height:size},ref:(node)=>{if(node&&typeof lucide!=='undefined'){const icon=lucide.icons[kebab]||lucide.icons[name.toLowerCase()];if(icon)node.innerHTML=icon.toSvg({class:className,width:size,height:size})}}})};
-    const icons=['Sparkles','Rocket','Star','Heart','Check','CheckCircle','ArrowRight','ArrowUpRight','Play','Shield','ShieldCheck','Zap','Crown','Trophy','Target','Users','Globe','Mail','Phone','MapPin','Calendar','Clock','ChevronRight','ChevronDown','ChevronLeft','ChevronUp','Menu','X','Instagram','Twitter','Facebook','Linkedin','Github','Youtube','CreditCard','Wallet','BarChart','TrendingUp','Award','Headphones','MessageCircle','Send','Image','Camera','Video','Music','Mic','Code','Terminal','Laptop','Smartphone','Monitor','Wifi','Cloud','Lock','Key','Eye','Settings','Bell','Search','Scissors','Brush','Palette','Layers','Grid','Layout','Box','Package','ShoppingCart','ShoppingBag','Store','Home','Building','MapPinned','Navigation','Compass','Car','Plane','Train','Bus','Bike','Utensils','Coffee','Wine','Beer','Pizza','Cake','Apple','Leaf','Sun','Moon','CloudSun','Umbrella','Droplet','Flame','Snowflake','Wind','ThumbsUp','ThumbsDown','MessageSquare','Share','Share2','Link','ExternalLink','Download','Upload','File','FileText','Folder','Archive','Trash','Edit','Pencil','Plus','Minus','ArrowLeft','ArrowUp','ArrowDown','RefreshCw','RotateCw','RotateCcw','Loader','AlertCircle','AlertTriangle','Info','HelpCircle','XCircle','CheckCircle2','CircleDot','Circle','Square','Triangle','Hexagon','Octagon','Pentagon','Diamond','Gem','Sparkle','Wand','Wand2','Briefcase','GraduationCap','BookOpen','Bookmark','Tag','Tags','Hash','AtSign','DollarSign','Euro','PoundSterling','Percent','Activity','PieChart','LineChart','Database','Server','HardDrive','Cpu','Bot','Brain','Lightbulb','Megaphone','Gift','PartyPopper','Confetti','BadgeCheck','Verified','Medal','Fire'];
-    icons.forEach(name=>{window[name]=createIcon(name)});
-    const{useState,useEffect,useRef,useCallback,useMemo}=React;
+  
+  <script type="text/babel" data-presets="react">
+    // Framer motion mock
+    const motion = new Proxy({}, {
+      get: function(target, prop) {
+        return React.forwardRef(function(props, ref) {
+          const { initial, animate, whileHover, whileTap, whileInView, transition, variants, exit, viewport, ...rest } = props;
+          return React.createElement(prop, Object.assign({}, rest, { ref: ref }));
+        });
+      }
+    });
+    
+    const AnimatePresence = function(props) { return props.children; };
+    const useInView = function() { return [null, true]; };
+    const useAnimation = function() { return {}; };
+    
+    // Lucide icons helper
+    function createLucideIcon(name) {
+      return function(props) {
+        var className = props.className || '';
+        var size = props.size || 24;
+        var kebabName = name.replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^-/, '');
+        
+        return React.createElement('span', {
+          className: className + ' inline-flex items-center justify-center',
+          style: { width: size, height: size },
+          ref: function(node) {
+            if (node && typeof lucide !== 'undefined') {
+              var iconData = lucide.icons[kebabName] || lucide.icons[name.toLowerCase()];
+              if (iconData) {
+                node.innerHTML = iconData.toSvg({ class: className, width: size, height: size });
+              }
+            }
+          }
+        });
+      };
+    }
+    
+    // Define all icons
+    var iconNames = ['Sparkles','Rocket','Star','Heart','Check','CheckCircle','ArrowRight','ArrowUpRight','Play','Shield','ShieldCheck','Zap','Crown','Trophy','Target','Users','Globe','Mail','Phone','MapPin','Calendar','Clock','ChevronRight','ChevronDown','ChevronLeft','ChevronUp','Menu','X','Instagram','Twitter','Facebook','Linkedin','Github','Youtube','CreditCard','Wallet','BarChart','TrendingUp','Award','Headphones','MessageCircle','Send','Image','Camera','Video','Music','Mic','Code','Terminal','Laptop','Smartphone','Monitor','Wifi','Cloud','Lock','Key','Eye','Settings','Bell','Search','Home','Building','Store','ShoppingCart','ShoppingBag','Package','Box','Layers','Grid','Layout','Palette','Brush','Scissors','Coffee','Utensils','Wine','Beer','Pizza','Cake','Apple','Leaf','Sun','Moon','Umbrella','Droplet','Flame','Wind','ThumbsUp','ThumbsDown','MessageSquare','Share','Link','ExternalLink','Download','Upload','File','FileText','Folder','Trash','Edit','Pencil','Plus','Minus','ArrowLeft','ArrowUp','ArrowDown','RefreshCw','Loader','AlertCircle','AlertTriangle','Info','HelpCircle','XCircle','Circle','Square','Diamond','Gem','Wand','Wand2','Briefcase','GraduationCap','BookOpen','Bookmark','Tag','DollarSign','Percent','Activity','PieChart','LineChart','Database','Server','Cpu','Bot','Brain','Lightbulb','Megaphone','Gift','BadgeCheck','Medal','Fire','Verified'];
+    
+    iconNames.forEach(function(name) {
+      window[name] = createLucideIcon(name);
+    });
+    
+    // React hooks
+    var useState = React.useState;
+    var useEffect = React.useEffect;
+    var useRef = React.useRef;
+    var useCallback = React.useCallback;
+    var useMemo = React.useMemo;
+
+    // Generated component code
     ${cleanedCode}
-    const root=ReactDOM.createRoot(document.getElementById('root'));
-    root.render(React.createElement(PageComponent));
+
+    // Render
+    try {
+      var root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(React.createElement(PageComponent));
+    } catch (e) {
+      console.error('Render error:', e);
+      document.getElementById('root').innerHTML = '<div style="padding: 20px; color: red;">Erro ao renderizar: ' + e.message + '</div>';
+    }
   </script>
 </body>
 </html>`;
