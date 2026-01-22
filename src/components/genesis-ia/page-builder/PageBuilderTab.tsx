@@ -53,7 +53,7 @@ const promptSuggestions = [
   { icon: Palette, text: 'Portfolio designer' },
 ];
 
-// Professional Loading Animation - Genesis Theme
+// Professional Loading Animation - Genesis Blue Theme
 const GeneratingAnimation = ({ progress }: { progress: number }) => {
   const steps = ['Analisando', 'Processando', 'Estruturando', 'Estilizando', 'Finalizando'];
   const currentStepIndex = Math.min(Math.floor(progress / 20), steps.length - 1);
@@ -65,8 +65,8 @@ const GeneratingAnimation = ({ progress }: { progress: number }) => {
         <div 
           className="absolute inset-0" 
           style={{
-            backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px), 
-                              linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)`,
+            backgroundImage: `linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px), 
+                              linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px)`,
             backgroundSize: '80px 80px'
           }}
         />
@@ -74,45 +74,45 @@ const GeneratingAnimation = ({ progress }: { progress: number }) => {
 
       <div className="relative z-10 text-center max-w-md px-8">
         {/* Minimal Icon */}
-        <div className="w-20 h-20 mx-auto mb-8 relative">
-          <div className="absolute inset-0 rounded-2xl bg-white/5 border border-white/10" />
+        <div className="w-24 h-24 mx-auto mb-8 relative">
+          <div className="absolute inset-0 rounded-2xl bg-blue-500/5 border border-blue-500/20" />
           <div className="absolute inset-0 flex items-center justify-center">
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
             >
-              <Loader2 className="w-8 h-8 text-emerald-400" />
+              <Loader2 className="w-10 h-10 text-blue-400" />
             </motion.div>
           </div>
           {/* Pulse ring */}
           <motion.div
-            className="absolute -inset-2 rounded-3xl border border-emerald-500/20"
+            className="absolute -inset-2 rounded-3xl border border-blue-500/20"
             animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.1, 0.3] }}
             transition={{ duration: 2, repeat: Infinity }}
           />
         </div>
 
         {/* Title */}
-        <h2 className="text-lg font-semibold text-white mb-2">Construindo sua página</h2>
-        <p className="text-sm text-white/40 mb-8">A IA está gerando código React + Tailwind</p>
+        <h2 className="text-xl font-semibold text-white mb-3">Construindo sua página</h2>
+        <p className="text-base text-white/50 mb-10">A IA está gerando código React + Tailwind</p>
 
         {/* Progress Steps */}
         <div className="flex items-center justify-center gap-3 mb-6">
           {steps.map((step, idx) => (
             <div key={idx} className="flex items-center gap-3">
               <motion.div
-                className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+                className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${
                   idx < currentStepIndex 
-                    ? 'bg-emerald-400' 
+                    ? 'bg-blue-400' 
                     : idx === currentStepIndex 
-                      ? 'bg-emerald-400' 
+                      ? 'bg-blue-400' 
                       : 'bg-white/10'
                 }`}
                 animate={idx === currentStepIndex ? { scale: [1, 1.3, 1] } : {}}
                 transition={{ duration: 1, repeat: Infinity }}
               />
               {idx < steps.length - 1 && (
-                <div className={`w-8 h-px ${idx < currentStepIndex ? 'bg-emerald-400/50' : 'bg-white/10'}`} />
+                <div className={`w-8 h-px ${idx < currentStepIndex ? 'bg-blue-400/50' : 'bg-white/10'}`} />
               )}
             </div>
           ))}
@@ -123,21 +123,21 @@ const GeneratingAnimation = ({ progress }: { progress: number }) => {
           key={currentStepIndex}
           initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-xs text-emerald-400 font-medium mb-6"
+          className="text-sm text-blue-400 font-medium mb-8"
         >
           {steps[currentStepIndex]}...
         </motion.p>
 
         {/* Progress Bar */}
-        <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+        <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
           <motion.div
-            className="h-full bg-emerald-500"
+            className="h-full bg-gradient-to-r from-blue-500 to-blue-400"
             style={{ width: `${progress}%` }}
             transition={{ duration: 0.3 }}
           />
         </div>
 
-        <p className="text-[10px] text-white/30 mt-4">Isso pode levar até 30 segundos</p>
+        <p className="text-xs text-white/30 mt-6">Isso pode levar até 30 segundos</p>
       </div>
     </div>
   );
@@ -150,8 +150,8 @@ const EmptyPreviewState = () => (
       <div 
         className="absolute inset-0" 
         style={{
-          backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px), 
-                            linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)`,
+          backgroundImage: `linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px), 
+                            linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px)`,
           backgroundSize: '60px 60px'
         }}
       />
@@ -162,11 +162,11 @@ const EmptyPreviewState = () => (
       animate={{ opacity: 1, scale: 1 }}
       className="text-center"
     >
-      <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-        <Eye className="w-6 h-6 text-white/20" />
+      <div className="w-16 h-16 mx-auto mb-5 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+        <Eye className="w-7 h-7 text-blue-400/50" />
       </div>
-      <p className="text-sm text-white/40 mb-1">Área de Preview</p>
-      <p className="text-xs text-white/20">Envie uma mensagem para gerar sua página</p>
+      <p className="text-base text-white/50 mb-2">Área de Preview</p>
+      <p className="text-sm text-white/30">Envie uma mensagem para gerar sua página</p>
     </motion.div>
   </div>
 );
@@ -178,7 +178,7 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showCode, setShowCode] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(true); // Default to fullscreen
+  const [isFullscreen, setIsFullscreen] = useState(true);
   const [isChatOpen, setIsChatOpen] = useState(true);
   const [generatingProgress, setGeneratingProgress] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -308,8 +308,8 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
           <div 
             className="absolute inset-0" 
             style={{
-              backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px), 
-                                linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)`,
+              backgroundImage: `linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px), 
+                                linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px)`,
               backgroundSize: '80px 80px'
             }}
           />
@@ -325,10 +325,10 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', delay: 0.1 }}
-            className="flex justify-center mb-6"
+            className="flex justify-center mb-8"
           >
-            <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-              <Wand2 className="w-7 h-7 text-emerald-400" />
+            <div className="w-20 h-20 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+              <Wand2 className="w-9 h-9 text-blue-400" />
             </div>
           </motion.div>
           
@@ -337,12 +337,12 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-center mb-8"
+            className="text-center mb-10"
           >
-            <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
-              O que vamos <span className="text-emerald-400">construir hoje?</span>
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">
+              O que vamos <span className="text-blue-400">construir hoje?</span>
             </h1>
-            <p className="text-sm text-white/40">
+            <p className="text-base text-white/50">
               Descreva sua página e a IA criará código React + Tailwind
             </p>
           </motion.div>
@@ -352,12 +352,12 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="mb-6"
+            className="mb-8"
           >
             <div className="relative bg-white/5 border border-white/10 rounded-xl overflow-hidden">
-              <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/5">
-                <MessageSquare className="w-4 h-4 text-emerald-400" />
-                <span className="text-xs font-medium text-white/40">Descreva sua página</span>
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5">
+                <MessageSquare className="w-5 h-5 text-blue-400" />
+                <span className="text-sm font-medium text-white/50">Descreva sua página</span>
               </div>
               
               <textarea
@@ -366,18 +366,18 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
                 onChange={(e) => setPrompt(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ex: Landing page para startup de IA com hero, features, pricing..."
-                className="w-full bg-transparent text-white placeholder:text-white/20 resize-none text-sm p-4 pb-14 focus:outline-none min-h-[120px]"
+                className="w-full bg-transparent text-white placeholder:text-white/30 resize-none text-base p-5 pb-16 focus:outline-none min-h-[140px]"
               />
               
-              <div className="absolute bottom-3 right-3 flex items-center gap-2">
-                <span className="text-xs text-white/20">{prompt.length}</span>
+              <div className="absolute bottom-4 right-4 flex items-center gap-3">
+                <span className="text-sm text-white/30">{prompt.length}</span>
                 <Button
                   onClick={handleGenerate}
                   disabled={!prompt.trim() || prompt.length < 5}
                   size="sm"
-                  className="h-8 px-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-30 rounded-lg text-xs font-medium gap-1.5"
+                  className="h-10 px-5 bg-blue-600 hover:bg-blue-500 disabled:opacity-30 rounded-lg text-sm font-medium gap-2"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
+                  <Sparkles className="w-4 h-4" />
                   Gerar
                 </Button>
               </div>
@@ -390,11 +390,11 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
           >
-            <div className="flex items-center gap-2 mb-3">
-              <Lightbulb className="w-3.5 h-3.5 text-emerald-400/60" />
-              <span className="text-xs font-medium text-white/30">Sugestões</span>
+            <div className="flex items-center gap-2 mb-4">
+              <Lightbulb className="w-4 h-4 text-blue-400/60" />
+              <span className="text-sm font-medium text-white/40">Sugestões</span>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {promptSuggestions.map((suggestion, idx) => {
                 const Icon = suggestion.icon;
                 return (
@@ -403,13 +403,13 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => handleSuggestionClick(suggestion.text)}
-                    className="flex items-center gap-2.5 px-3 py-2.5 bg-white/5 hover:bg-white/8 border border-white/10 hover:border-emerald-500/30 rounded-lg text-left transition-all group"
+                    className="flex items-center gap-3 px-4 py-3 bg-white/5 hover:bg-white/8 border border-white/10 hover:border-blue-500/30 rounded-xl text-left transition-all group"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-                      <Icon className="w-4 h-4 text-emerald-400/70" />
+                    <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                      <Icon className="w-5 h-5 text-blue-400/70" />
                     </div>
-                    <span className="text-xs text-white/50 group-hover:text-white/70 line-clamp-2">{suggestion.text}</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-white/10 group-hover:text-emerald-400/50 ml-auto shrink-0" />
+                    <span className="text-sm text-white/60 group-hover:text-white/80 line-clamp-2">{suggestion.text}</span>
+                    <ChevronRight className="w-4 h-4 text-white/10 group-hover:text-blue-400/50 ml-auto shrink-0" />
                   </motion.button>
                 );
               })}
@@ -424,61 +424,61 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
   return (
     <div className="fixed inset-0 z-50 bg-[hsl(220_25%_8%)] flex flex-col">
       {/* Top Toolbar */}
-      <div className="flex items-center justify-between px-3 py-2 bg-white/[0.02] border-b border-white/5 shrink-0">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between px-4 py-3 bg-white/[0.02] border-b border-white/5 shrink-0">
+        <div className="flex items-center gap-3">
           <Button
             onClick={() => setIsChatOpen(!isChatOpen)}
             variant="ghost"
             size="sm"
-            className="h-8 gap-1.5 text-white/40 hover:text-white hover:bg-white/5 text-xs"
+            className="h-9 gap-2 text-white/50 hover:text-white hover:bg-white/5 text-sm"
           >
-            {isChatOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
+            {isChatOpen ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeft className="w-5 h-5" />}
             <span className="hidden sm:inline">{isChatOpen ? 'Fechar' : 'Chat'}</span>
           </Button>
           
-          <div className="h-4 w-px bg-white/5" />
+          <div className="h-5 w-px bg-white/10" />
           
-          <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-md">
-            <div className={`w-1.5 h-1.5 rounded-full ${isGenerating ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}`} />
-            <span className="text-[10px] font-medium text-emerald-400">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+            <div className={`w-2 h-2 rounded-full ${isGenerating ? 'bg-amber-400 animate-pulse' : 'bg-blue-400'}`} />
+            <span className="text-sm font-medium text-blue-400">
               {isGenerating ? 'Gerando...' : 'Ativo'}
             </span>
           </div>
         </div>
         
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <Button
             onClick={() => setShowCode(!showCode)}
             variant="ghost"
             size="sm"
-            className={`h-8 gap-1.5 text-xs ${showCode ? 'bg-white/5 text-white' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
+            className={`h-9 gap-2 text-sm ${showCode ? 'bg-white/5 text-white' : 'text-white/50 hover:text-white hover:bg-white/5'}`}
             disabled={!currentCode}
           >
-            {showCode ? <Eye className="w-3.5 h-3.5" /> : <Code2 className="w-3.5 h-3.5" />}
+            {showCode ? <Eye className="w-4 h-4" /> : <Code2 className="w-4 h-4" />}
             <span className="hidden sm:inline">{showCode ? 'Preview' : 'Código'}</span>
           </Button>
           
-          <Button onClick={handleCopyCode} variant="ghost" size="sm" className="h-8 w-8 p-0 text-white/40 hover:text-white hover:bg-white/5" disabled={!currentCode}>
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+          <Button onClick={handleCopyCode} variant="ghost" size="sm" className="h-9 w-9 p-0 text-white/50 hover:text-white hover:bg-white/5" disabled={!currentCode}>
+            {copied ? <Check className="w-4 h-4 text-blue-400" /> : <Copy className="w-4 h-4" />}
           </Button>
           
-          <Button onClick={openInNewTab} variant="ghost" size="sm" className="h-8 w-8 p-0 text-white/40 hover:text-white hover:bg-white/5" disabled={!currentCode}>
-            <ExternalLink className="w-3.5 h-3.5" />
+          <Button onClick={openInNewTab} variant="ghost" size="sm" className="h-9 w-9 p-0 text-white/50 hover:text-white hover:bg-white/5" disabled={!currentCode}>
+            <ExternalLink className="w-4 h-4" />
           </Button>
           
-          <Button onClick={() => setIsFullscreen(!isFullscreen)} variant="ghost" size="sm" className="h-8 w-8 p-0 text-white/40 hover:text-white hover:bg-white/5">
-            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+          <Button onClick={() => setIsFullscreen(!isFullscreen)} variant="ghost" size="sm" className="h-9 w-9 p-0 text-white/50 hover:text-white hover:bg-white/5">
+            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </Button>
           
-          <div className="h-4 w-px bg-white/5 mx-1" />
+          <div className="h-5 w-px bg-white/10 mx-1" />
           
-          <Button onClick={handleExport} size="sm" className="h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-xs" disabled={!currentCode}>
-            <Download className="w-3.5 h-3.5" />
+          <Button onClick={handleExport} size="sm" className="h-9 gap-2 bg-blue-600 hover:bg-blue-500 text-sm" disabled={!currentCode}>
+            <Download className="w-4 h-4" />
             <span className="hidden sm:inline">Exportar</span>
           </Button>
           
-          <Button onClick={handleNewChat} variant="ghost" size="sm" className="h-8 gap-1.5 text-white/40 hover:text-white hover:bg-white/5 text-xs">
-            <RefreshCw className="w-3.5 h-3.5" />
+          <Button onClick={handleNewChat} variant="ghost" size="sm" className="h-9 gap-2 text-white/50 hover:text-white hover:bg-white/5 text-sm">
+            <RefreshCw className="w-4 h-4" />
             <span className="hidden sm:inline">Nova</span>
           </Button>
         </div>
@@ -498,7 +498,7 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
                   className="h-full flex flex-col"
                 >
                   {/* Messages */}
-                  <div className="flex-1 overflow-y-auto p-3 space-y-3">
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
                     {messages.map((msg) => (
                       <motion.div
                         key={msg.id}
@@ -506,18 +506,18 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
                         animate={{ opacity: 1, y: 0 }}
                         className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                       >
-                        <div className={`max-w-[90%] rounded-xl px-3 py-2 ${
+                        <div className={`max-w-[90%] rounded-xl px-4 py-3 ${
                           msg.role === 'user' 
-                            ? 'bg-emerald-600 text-white' 
-                            : 'bg-white/5 text-white/80 border border-white/5'
+                            ? 'bg-blue-600 text-white' 
+                            : 'bg-white/5 text-white/90 border border-white/5'
                         }`}>
-                          <p className="text-xs whitespace-pre-wrap">{msg.content}</p>
+                          <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                           {msg.code && (
                             <button
                               onClick={() => setCurrentCode(msg.code!)}
-                              className="mt-1.5 text-[10px] text-emerald-300 hover:text-emerald-200 flex items-center gap-1"
+                              className="mt-2 text-xs text-blue-300 hover:text-blue-200 flex items-center gap-1.5"
                             >
-                              <Eye className="w-3 h-3" />
+                              <Eye className="w-3.5 h-3.5" />
                               Ver versão
                             </button>
                           )}
@@ -530,17 +530,17 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
                       <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-white/5 rounded-xl p-3 border border-white/5"
+                        className="bg-white/5 rounded-xl p-4 border border-white/5"
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                            <Loader2 className="w-4 h-4 text-emerald-400 animate-spin" />
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                            <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
                           </div>
                           <div className="flex-1">
-                            <p className="text-xs font-medium text-white/80 mb-1">Gerando...</p>
-                            <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                            <p className="text-sm font-medium text-white/90 mb-2">Gerando...</p>
+                            <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
                               <motion.div
-                                className="h-full bg-emerald-500"
+                                className="h-full bg-gradient-to-r from-blue-500 to-blue-400"
                                 style={{ width: `${generatingProgress}%` }}
                               />
                             </div>
@@ -553,8 +553,8 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
                   </div>
 
                   {/* Input */}
-                  <div className="p-3 border-t border-white/5">
-                    <div className="relative">
+                  <div className="p-4 border-t border-white/5">
+                    <div className="relative bg-white/5 border border-white/10 rounded-xl overflow-hidden">
                       <textarea
                         ref={inputRef}
                         value={prompt}
@@ -562,16 +562,16 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
                         onKeyDown={handleKeyDown}
                         placeholder="Descreva alterações..."
                         disabled={isGenerating}
-                        className="w-full bg-white/5 border border-white/5 rounded-lg text-white placeholder:text-white/20 resize-none text-xs p-2.5 pr-10 focus:outline-none focus:border-emerald-500/30 min-h-[60px] disabled:opacity-50"
-                        rows={2}
+                        className="w-full bg-transparent text-white placeholder:text-white/30 resize-none text-sm p-4 pr-14 focus:outline-none min-h-[80px] disabled:opacity-50"
+                        rows={3}
                       />
                       <Button
                         onClick={handleGenerate}
                         disabled={!prompt.trim() || isGenerating}
                         size="icon"
-                        className="absolute bottom-2 right-2 h-7 w-7 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-30 rounded-md"
+                        className="absolute bottom-3 right-3 h-9 w-9 bg-blue-600 hover:bg-blue-500 disabled:opacity-30 rounded-lg"
                       >
-                        {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowUp className="w-3.5 h-3.5" />}
+                        {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUp className="w-4 h-4" />}
                       </Button>
                     </div>
                   </div>
@@ -580,7 +580,7 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
             )}
           </AnimatePresence>
 
-          {isChatOpen && <ResizableHandle withHandle className="bg-white/[0.02] hover:bg-emerald-500/20 transition-colors w-1" />}
+          {isChatOpen && <ResizableHandle withHandle className="bg-white/[0.02] hover:bg-blue-500/20 transition-colors w-1" />}
 
           {/* Preview Panel */}
           <ResizablePanel defaultSize={isChatOpen ? 72 : 100}>
@@ -589,14 +589,14 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
                 <GeneratingAnimation progress={generatingProgress} />
               ) : currentCode ? (
                 showCode ? (
-                  <div className="h-full overflow-auto p-4">
-                    <pre className="text-xs text-white/70 font-mono whitespace-pre-wrap leading-relaxed bg-white/[0.02] p-4 rounded-lg border border-white/5">
+                  <div className="h-full overflow-auto p-5">
+                    <pre className="text-sm text-white/80 font-mono whitespace-pre-wrap leading-relaxed bg-white/[0.02] p-5 rounded-xl border border-white/5">
                       {currentCode}
                     </pre>
                   </div>
                 ) : (
-                  <div className="h-full w-full p-3">
-                    <div className="h-full w-full bg-white rounded-lg overflow-hidden">
+                  <div className="h-full w-full p-4">
+                    <div className="h-full w-full bg-white rounded-xl overflow-hidden shadow-2xl">
                       <iframe
                         srcDoc={generateHtmlPreview(currentCode)}
                         className="w-full h-full border-0"
@@ -617,40 +617,50 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
   );
 };
 
-// HTML Preview Generator - Fixed version with better error handling
+// HTML Preview Generator - Improved version with better component extraction
 function generateHtmlPreview(code: string): string {
   if (!code || typeof code !== 'string') {
     return `<!DOCTYPE html><html><body><div style="padding:40px;color:#666;">Código inválido</div></body></html>`;
   }
 
-  // Clean imports and exports more robustly
-  let cleanedCode = code
-    // Remove all imports
-    .replace(/import\s+.*?from\s+['"][^'"]+['"];?\s*\n?/g, '')
-    .replace(/import\s+['"][^'"]+['"];?\s*\n?/g, '')
-    // Handle export default function Name
-    .replace(/export\s+default\s+function\s+(\w+)/g, 'function PageComponent')
-    // Handle export default Name
-    .replace(/export\s+default\s+(\w+);?\s*$/gm, '')
-    // Handle export default at start of expression
-    .replace(/export\s+default\s+/g, 'const PageComponent = ')
-    // Handle export { X }
-    .replace(/export\s+\{[^}]*\};?\s*\n?/g, '');
+  // Extract the actual component code more robustly
+  let cleanedCode = code;
+  
+  // Remove all import statements
+  cleanedCode = cleanedCode.replace(/import\s+[\s\S]*?from\s+['"][^'"]+['"];?\s*\n?/g, '');
+  cleanedCode = cleanedCode.replace(/import\s+['"][^'"]+['"];?\s*\n?/g, '');
+  
+  // Handle different export patterns
+  // Pattern 1: export default function ComponentName
+  cleanedCode = cleanedCode.replace(/export\s+default\s+function\s+(\w+)\s*\(/g, 'function PageComponent(');
+  
+  // Pattern 2: const ComponentName = ... then export default ComponentName
+  cleanedCode = cleanedCode.replace(/export\s+default\s+(\w+);?\s*$/gm, '');
+  
+  // Pattern 3: export default () => or export default function (
+  cleanedCode = cleanedCode.replace(/export\s+default\s+(function\s*)?\(/g, 'function PageComponent(');
+  
+  // Pattern 4: export default memo/forwardRef
+  cleanedCode = cleanedCode.replace(/export\s+default\s+(?:memo|forwardRef)\s*\(\s*function\s+(\w+)/g, 'function PageComponent');
+  cleanedCode = cleanedCode.replace(/export\s+default\s+(?:memo|forwardRef)\s*\(\s*(\w+)\s*\)/g, '');
+  
+  // Clean up remaining exports
+  cleanedCode = cleanedCode.replace(/export\s+\{[^}]*\};?\s*\n?/g, '');
+  cleanedCode = cleanedCode.replace(/export\s+default\s+/g, 'const PageComponent = ');
 
   // Ensure we have PageComponent
   if (!cleanedCode.includes('PageComponent')) {
-    // Try to find the main function and rename it
+    // Try to find the main function/component and rename it
     cleanedCode = cleanedCode.replace(/function\s+Page\s*\(/g, 'function PageComponent(');
+    cleanedCode = cleanedCode.replace(/const\s+Page\s*=\s*\(\)\s*=>/g, 'const PageComponent = () =>');
     
-    // If still no PageComponent, wrap in one
+    // If still no PageComponent, try to find any component
     if (!cleanedCode.includes('PageComponent')) {
-      // Find first function declaration
-      const funcMatch = cleanedCode.match(/function\s+(\w+)\s*\(/);
+      const funcMatch = cleanedCode.match(/(?:function|const)\s+([A-Z]\w*)\s*(?:=\s*\(\)\s*=>|\()/);
       if (funcMatch) {
-        cleanedCode = cleanedCode.replace(
-          new RegExp(`function\\s+${funcMatch[1]}\\s*\\(`), 
-          'function PageComponent('
-        );
+        const compName = funcMatch[1];
+        // Add alias at the end
+        cleanedCode += `\nconst PageComponent = ${compName};`;
       }
     }
   }
@@ -673,14 +683,15 @@ function generateHtmlPreview(code: string): string {
   <\/script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
-    body { font-family: 'Inter', system-ui, sans-serif; background: #0f172a; }
+    body { font-family: 'Inter', system-ui, sans-serif; }
     ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: #0f172a; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; }
+    ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #a1a1a1; }
   </style>
 </head>
 <body>
@@ -692,7 +703,7 @@ function generateHtmlPreview(code: string): string {
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"><\/script>
   
   <script type="text/babel" data-presets="react">
-    // Framer motion mock - handles all animation props gracefully
+    // Framer motion mock
     const motion = new Proxy({}, {
       get: function(target, prop) {
         return React.forwardRef(function MotionComponent(props, ref) {
@@ -715,7 +726,7 @@ function generateHtmlPreview(code: string): string {
     const useSpring = function(val) { return val; };
     const useMotionValue = function(val) { return { get: function() { return val; }, set: function(){} }; };
     
-    // Lucide icons helper with better icon support
+    // Lucide icons helper
     function createLucideIcon(name) {
       return function IconComponent(props) {
         const { className = '', size = 24, strokeWidth = 2, color, ...rest } = props || {};
@@ -798,19 +809,19 @@ function generateHtmlPreview(code: string): string {
     var createContext = React.createContext;
     var Fragment = React.Fragment;
 
-    // Generated component code
-    ${cleanedCode}
-
-    // Render with error boundary
     try {
+      // Generated component code
+      ${cleanedCode}
+
+      // Render
       if (typeof PageComponent === 'undefined') {
-        throw new Error('PageComponent não foi encontrado no código gerado');
+        throw new Error('PageComponent não foi encontrado');
       }
       var root = ReactDOM.createRoot(document.getElementById('root'));
       root.render(React.createElement(PageComponent));
     } catch (e) {
       console.error('Render error:', e);
-      document.getElementById('root').innerHTML = '<div style="padding: 40px; color: #ef4444; background: #0f172a; min-height: 100vh;"><h2 style="margin-bottom: 16px; font-size: 18px;">Erro ao renderizar</h2><pre style="background: #1e293b; padding: 16px; border-radius: 8px; overflow: auto; font-size: 12px; color: #f87171;">' + e.message + '</pre><p style="margin-top: 16px; color: #94a3b8; font-size: 14px;">Tente gerar novamente ou simplifique o prompt.</p></div>';
+      document.getElementById('root').innerHTML = '<div style="padding: 60px; max-width: 600px; margin: 0 auto;"><div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 24px;"><h2 style="color: #dc2626; font-size: 18px; margin-bottom: 12px; font-weight: 600;">Erro ao renderizar</h2><pre style="background: #1f2937; color: #f87171; padding: 16px; border-radius: 8px; overflow: auto; font-size: 13px; white-space: pre-wrap;">' + e.message + '</pre><p style="margin-top: 16px; color: #6b7280; font-size: 14px;">Tente gerar novamente ou simplifique o prompt.</p></div></div>';
     }
   <\/script>
 </body>
