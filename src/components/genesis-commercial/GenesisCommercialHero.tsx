@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Sparkles, CheckCircle2, Search, Globe, CheckCircle, PenTool, Layers, DollarSign, GraduationCap, Home, FileText, Users, Grid3X3, CreditCard, Settings, LogOut } from 'lucide-react';
+import { ArrowRight, Sparkles, CheckCircle2, Search, Globe, CheckCircle, DollarSign, GraduationCap, Home, Layers, FileText, Users, Grid3X3, CreditCard, Settings, LogOut, Smartphone, PenTool, Rocket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const GenesisCommercialHero = () => {
@@ -12,14 +12,18 @@ const GenesisCommercialHero = () => {
   const quickActions = [
     { icon: Search, title: 'Encontrar Clientes', desc: 'Descubra clientes com maior potencial', color: 'bg-blue-500/20 text-blue-400' },
     { icon: Globe, title: 'Radar Global', desc: 'Oportunidades automáticas pela IA', color: 'bg-cyan-500/20 text-cyan-400' },
-    { icon: CheckCircle, title: 'Propostas Aceitas', desc: 'Gerencie propostas aceitas', color: 'bg-green-500/20 text-green-400' },
+    { icon: CheckCircle, title: 'Propostas Aceitas', desc: 'Gerencie propostas aceitas', color: 'bg-emerald-500/20 text-emerald-400' },
   ];
 
+  // Carousel items matching the real GenesisCarousel
   const accessAlso = [
-    { icon: PenTool, title: 'Redator Automatizado', desc: 'Automatize sua produção de...' },
     { icon: Layers, title: 'Criar Projetos', desc: 'Crie sites personalizados para se...' },
     { icon: DollarSign, title: 'Financeiro', desc: 'Acompanhe métricas e receitas' },
     { icon: GraduationCap, title: 'Academia Genesis', desc: 'Aprimore suas habilidades' },
+    { icon: Smartphone, title: 'Apps Virais', desc: 'Exemplos de aplicativos de sucesso' },
+    { icon: FileText, title: 'Propostas Personalizadas', desc: 'Crie propostas únicas com IA' },
+    { icon: PenTool, title: 'Copy de Vendas', desc: 'Crie copy de vendas com IA' },
+    { icon: Rocket, title: 'Redator Automatizado', desc: 'Automatize sua produção de...' },
   ];
 
   const dockIcons = [Home, Layers, FileText, Grid3X3, Users, Grid3X3, CreditCard, Settings, LogOut];
@@ -37,11 +41,11 @@ const GenesisCommercialHero = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Carousel auto-scroll
+  // Carousel auto-scroll - smoother transition
   useEffect(() => {
     const timer = setInterval(() => {
       setCarouselIndex((prev) => (prev + 1) % accessAlso.length);
-    }, 2000);
+    }, 2500);
     return () => clearInterval(timer);
   }, []);
 
@@ -198,7 +202,7 @@ const GenesisCommercialHero = () => {
               </div>
 
               {/* Simulated Dashboard Content */}
-              <div className="relative bg-gradient-to-b from-[#0a0a14] to-[#0d0d18] p-6 min-h-[400px]">
+              <div className="relative bg-gradient-to-b from-[#0a0a14] to-[#0d0d18] p-6 min-h-[420px]">
                 {/* Stars background */}
                 <div className="absolute inset-0 overflow-hidden">
                   {[...Array(30)].map((_, i) => (
@@ -240,40 +244,55 @@ const GenesisCommercialHero = () => {
                   ))}
                 </div>
 
-                {/* Acesse também - Auto Carousel */}
+                {/* Acesse também - Real Carousel Style */}
                 <div className="relative z-10">
                   <div className="flex items-center gap-2 mb-3">
-                    <Sparkles className="w-4 h-4 text-cyan-400" />
+                    <div className="w-8 h-8 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                      <Sparkles className="w-4 h-4 text-purple-400" />
+                    </div>
                     <span className="text-white font-semibold text-sm">Acesse também</span>
                   </div>
                   
-                  <div className="bg-[#0f1525]/60 rounded-xl p-4 border border-[#1a2540] overflow-hidden">
-                    <div className="flex gap-3">
-                      <AnimatePresence mode="wait">
-                        {accessAlso.map((item, i) => (
-                          <motion.div
-                            key={i}
-                            initial={{ x: 0 }}
-                            animate={{ 
-                              x: -carouselIndex * 25 + '%',
-                              opacity: 1 
-                            }}
-                            transition={{ duration: 0.5, ease: "easeInOut" }}
-                            className="flex-shrink-0 w-[23%] bg-[#0d1020] rounded-lg border border-[#1a2540] p-3 hover:border-cyan-500/30 transition-colors cursor-pointer"
-                          >
-                            <div className="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center mb-2">
-                              <item.icon className="w-4 h-4 text-cyan-400" />
-                            </div>
-                            <h4 className="text-white font-medium text-xs mb-0.5">{item.title}</h4>
-                            <p className="text-gray-500 text-[10px] truncate">{item.desc}</p>
-                          </motion.div>
-                        ))}
+                  {/* Carousel matching real GenesisCarousel style */}
+                  <div className="relative overflow-hidden rounded-xl">
+                    {/* Gradient masks */}
+                    <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-[#0a0a14] to-transparent z-10 pointer-events-none" />
+                    <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[#0a0a14] to-transparent z-10 pointer-events-none" />
+                    
+                    <div className="flex gap-3 py-1">
+                      <AnimatePresence mode="sync">
+                        {accessAlso.slice(0, 4).map((item, i) => {
+                          const Icon = item.icon;
+                          return (
+                            <motion.div
+                              key={i}
+                              initial={{ x: 0 }}
+                              animate={{ 
+                                x: -carouselIndex * 28 + '%',
+                                opacity: 1 
+                              }}
+                              transition={{ duration: 0.5, ease: "easeInOut" }}
+                              className="flex-shrink-0 w-[24%]"
+                            >
+                              {/* Card matching real GenesisCarousel style */}
+                              <div className="bg-[hsl(200_50%_15%/0.6)] rounded-[14px] border border-emerald-500/20 hover:border-emerald-500/40 p-3 cursor-pointer transition-colors h-[90px] flex flex-col justify-between">
+                                <div className="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                                  <Icon className="w-3.5 h-3.5 text-emerald-400" />
+                                </div>
+                                <div>
+                                  <h4 className="text-white font-medium text-xs mb-0.5 truncate">{item.title}</h4>
+                                  <p className="text-white/50 text-[10px] truncate">{item.desc}</p>
+                                </div>
+                              </div>
+                            </motion.div>
+                          );
+                        })}
                       </AnimatePresence>
                     </div>
                   </div>
                 </div>
 
-                {/* Dock at bottom */}
+                {/* Dock at bottom - matching real style */}
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
                   <div className="flex items-center gap-1 px-4 py-2.5 bg-[#12121c]/90 backdrop-blur-md rounded-2xl border border-[#2a2a3a]">
                     {dockIcons.map((Icon, i) => (
