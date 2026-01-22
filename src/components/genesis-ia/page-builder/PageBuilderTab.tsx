@@ -32,6 +32,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { exportToZip } from './PageBuilderExport';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+import { PageBuilderPreview } from './PageBuilderPreview';
 
 interface PageBuilderTabProps {
   onBack?: () => void;
@@ -530,7 +531,11 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
                                 setCurrentCode(msg.code!);
                                 setPreviewError(null);
                               }}
-                              className="mt-2 text-xs text-primary-foreground/80 hover:text-primary-foreground flex items-center gap-1.5 underline-offset-2 hover:underline"
+                               className={`mt-2 text-xs flex items-center gap-1.5 underline-offset-2 hover:underline ${
+                                 msg.role === 'user'
+                                   ? 'text-primary-foreground/80 hover:text-primary-foreground'
+                                   : 'text-primary/80 hover:text-primary'
+                               }`}
                             >
                               <Eye className="w-3.5 h-3.5" />
                               Ver versão
@@ -566,32 +571,34 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
                     <div ref={chatEndRef} />
                   </div>
 
-                  {/* Input */}
-                  <div className="p-4 border-t border-border">
-                    <div className="relative bg-accent border border-border rounded-xl overflow-hidden">
-                      <textarea
-                        ref={inputRef}
-                        value={prompt}
-                        onChange={(e) => setPrompt(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder="Descreva alterações..."
-                        disabled={isGenerating}
-                        className="w-full bg-transparent text-foreground placeholder:text-muted-foreground/50 resize-none text-sm p-4 focus:outline-none min-h-[100px] disabled:opacity-50"
-                        rows={3}
-                      />
-                      <div className="flex justify-end p-2 pt-0">
-                        <Button
-                          onClick={handleGenerate}
-                          disabled={!prompt.trim() || isGenerating}
-                          size="sm"
-                          className="h-9 px-4 bg-primary hover:bg-primary/90 disabled:opacity-30 rounded-lg gap-2"
-                        >
-                          {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUp className="w-4 h-4" />}
-                          <span className="text-sm">Enviar</span>
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+                   {/* Input */}
+                   <div className="p-4 border-t border-border">
+                     <div className="relative bg-card/40 border border-border rounded-xl overflow-hidden">
+                       <textarea
+                         ref={inputRef}
+                         value={prompt}
+                         onChange={(e) => setPrompt(e.target.value)}
+                         onKeyDown={handleKeyDown}
+                         placeholder="Descreva alterações..."
+                         disabled={isGenerating}
+                         className="w-full bg-transparent text-foreground placeholder:text-muted-foreground/60 resize-none text-sm p-4 pr-28 pb-12 focus:outline-none min-h-[56px] max-h-[160px] overflow-y-auto disabled:opacity-50"
+                         rows={3}
+                       />
+
+                       <div className="absolute bottom-3 right-3 flex items-center gap-2">
+                         <span className="text-xs text-muted-foreground tabular-nums">{prompt.length}</span>
+                         <Button
+                           onClick={handleGenerate}
+                           disabled={!prompt.trim() || isGenerating}
+                           size="sm"
+                           className="h-9 px-4 bg-primary hover:bg-primary/90 disabled:opacity-30 rounded-lg gap-2"
+                         >
+                           {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUp className="w-4 h-4" />}
+                           <span className="text-sm">Enviar</span>
+                         </Button>
+                       </div>
+                     </div>
+                   </div>
                 </motion.div>
               </ResizablePanel>
             )}
@@ -604,7 +611,7 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
             <div className="h-full flex flex-col bg-background">
               {isGenerating ? (
                 <GeneratingAnimation progress={generatingProgress} />
-              ) : currentCode ? (
+               ) : currentCode ? (
                 showCode ? (
                   <div className="h-full overflow-auto p-5">
                     <pre className="text-sm text-foreground/80 font-mono whitespace-pre-wrap leading-relaxed bg-card p-5 rounded-xl border border-border">
@@ -615,28 +622,8 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
                   <PreviewErrorState error={previewError} />
                 ) : (
                   <div className="h-full w-full p-4">
-                    <div className="h-full w-full bg-white rounded-xl overflow-hidden shadow-2xl border border-border">
-                      <iframe
-                        srcDoc={generateHtmlPreview(currentCode)}
-                        className="w-full h-full border-0"
-                        sandbox="allow-scripts allow-same-origin"
-                        title="Preview"
-                        onLoad={(e) => {
-                          // Check for errors in iframe
-                          try {
-                            const iframe = e.target as HTMLIFrameElement;
-                            const doc = iframe.contentDocument;
-                            if (doc) {
-                              const errorEl = doc.querySelector('[data-preview-error]');
-                              if (errorEl) {
-                                setPreviewError(errorEl.textContent || 'Erro desconhecido');
-                              }
-                            }
-                          } catch {
-                            // Cross-origin, ignore
-                          }
-                        }}
-                      />
+                     <div className="h-full w-full rounded-xl overflow-hidden shadow-2xl border border-border bg-background">
+                       <PageBuilderPreview code={currentCode} />
                     </div>
                   </div>
                 )
