@@ -1,7 +1,10 @@
 import { 
   SandpackProvider, 
-  SandpackPreview
+  SandpackPreview,
+  SandpackErrorOverlay,
+  SandpackStack
 } from '@codesandbox/sandpack-react';
+import '@codesandbox/sandpack-react/dist/index.css';
 import { memo } from 'react';
 
 interface PageBuilderPreviewProps {
@@ -71,14 +74,16 @@ img {
 
 // Dependencies for Sandpack
 const dependencies = {
-  'framer-motion': '^10.16.4',
-  'lucide-react': '^0.292.0',
+  // Keep aligned with the main app to avoid missing icons/APIs in generated code
+  'framer-motion': '^12.23.26',
+  'lucide-react': '^0.462.0',
 };
 
 const PageBuilderPreviewComponent = ({ code }: PageBuilderPreviewProps) => {
   return (
     <div className="h-full w-full">
       <SandpackProvider
+        key={code}
         template="react-ts"
         theme="dark"
         files={getFiles(code)}
@@ -89,6 +94,9 @@ const PageBuilderPreviewComponent = ({ code }: PageBuilderPreviewProps) => {
           externalResources: [
             'https://cdn.tailwindcss.com',
           ],
+          autorun: true,
+          recompileMode: 'immediate',
+          recompileDelay: 200,
           classes: {
             'sp-wrapper': 'h-full',
             'sp-layout': 'h-full',
@@ -96,13 +104,14 @@ const PageBuilderPreviewComponent = ({ code }: PageBuilderPreviewProps) => {
           },
         }}
       >
-        <div className="h-full">
+        <SandpackStack className="h-full">
           <SandpackPreview
             showOpenInCodeSandbox={false}
             showRefreshButton={true}
             style={{ height: '100%' }}
           />
-        </div>
+          <SandpackErrorOverlay style={{ height: '100%' }} />
+        </SandpackStack>
       </SandpackProvider>
     </div>
   );
