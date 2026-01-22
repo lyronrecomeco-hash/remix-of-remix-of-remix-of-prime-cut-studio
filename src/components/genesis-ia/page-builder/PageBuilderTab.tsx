@@ -1,18 +1,17 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Wand2, 
+  ArrowUp, 
   Code2, 
   Download, 
   RefreshCw, 
   Sparkles,
-  Send,
   Eye,
   FileCode,
-  Rocket,
   Copy,
   Check,
-  Loader2
+  Loader2,
+  ArrowLeft
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -24,11 +23,14 @@ interface PageBuilderTabProps {
 }
 
 const promptSuggestions = [
-  'Landing page para SaaS de gestão financeira',
-  'Site de barbearia moderna com agendamento',
-  'Portfolio de fotógrafo minimalista',
-  'App de delivery com features e download',
+  'Clone do Spotify',
+  'Criar um painel administrativo',
+  'Criar uma página de loja',
+  'Criar um quadro kanban',
+  'Landing page moderna',
 ];
+
+type ViewState = 'input' | 'generating' | 'result';
 
 export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
   const [prompt, setPrompt] = useState('');
@@ -36,14 +38,16 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showCode, setShowCode] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [viewState, setViewState] = useState<ViewState>('input');
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const handleGenerate = async () => {
-    if (!prompt.trim() || prompt.length < 10) {
-      toast.error('Descreva melhor sua página (mínimo 10 caracteres)');
+    if (!prompt.trim() || prompt.length < 5) {
+      toast.error('Descreva melhor sua página');
       return;
     }
 
+    setViewState('generating');
     setIsGenerating(true);
     setGeneratedCode(null);
 
@@ -59,10 +63,12 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
       }
 
       setGeneratedCode(data.code);
+      setViewState('result');
       toast.success('Página gerada com sucesso!');
     } catch (error) {
       console.error('Error generating page:', error);
       toast.error(error instanceof Error ? error.message : 'Erro ao gerar página');
+      setViewState('input');
     } finally {
       setIsGenerating(false);
     }
@@ -95,173 +101,225 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleNewPage = () => {
+    setGeneratedCode(null);
+    setPrompt('');
+    setShowCode(false);
+    setViewState('input');
+  };
+
   const handleSuggestionClick = (suggestion: string) => {
     setPrompt(suggestion);
     inputRef.current?.focus();
   };
 
-  return (
-    <div className="h-full flex flex-col lg:flex-row gap-4">
-      {/* Left Panel - Chat/Input */}
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        className="w-full lg:w-[380px] flex-shrink-0 flex flex-col"
-      >
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-purple-500/30 flex items-center justify-center">
-            <Code2 className="w-5 h-5 text-purple-400" />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold text-white">Construir Página</h1>
-            <p className="text-xs text-white/50">IA gera React + Tailwind real</p>
-          </div>
-        </div>
-
-        {/* Chat Area */}
-        <div 
-          className="flex-1 bg-white/5 border border-white/10 p-4 flex flex-col overflow-hidden"
-          style={{ borderRadius: '14px' }}
+  // Initial Input View - Like Lasy AI
+  if (viewState === 'input') {
+    return (
+      <div className="h-full flex flex-col items-center justify-center px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-2xl text-center"
         >
-          {/* Suggestions */}
-          {!generatedCode && !isGenerating && (
-            <div className="mb-4">
-              <span className="text-xs text-white/40 mb-2 block">Sugestões rápidas:</span>
-              <div className="flex flex-wrap gap-2">
-                {promptSuggestions.map((suggestion, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleSuggestionClick(suggestion)}
-                    className="text-xs px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white/80 transition-colors"
-                    style={{ borderRadius: '8px' }}
-                  >
-                    {suggestion}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Badge */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.1 }}
+            className="inline-flex items-center gap-2 px-4 py-2 mb-6 bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/30 rounded-full"
+          >
+            <Sparkles className="w-4 h-4 text-purple-400" />
+            <span className="text-sm font-medium text-purple-300">Genesis Page Builder</span>
+          </motion.div>
 
-          {/* Generation Status */}
-          {isGenerating && (
-            <div className="flex-1 flex flex-col items-center justify-center text-center">
-              <div className="relative">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-purple-500/30 flex items-center justify-center mb-4">
-                  <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
-                </div>
-                <motion.div
-                  className="absolute -inset-2 rounded-3xl bg-purple-500/20"
-                  animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.2, 0.5] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
-              </div>
-              <h3 className="text-base font-semibold text-white mb-1">Gerando sua página...</h3>
-              <p className="text-xs text-white/50">Isso pode levar alguns segundos</p>
-            </div>
-          )}
+          {/* Title */}
+          <motion.h1
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4"
+          >
+            Dê vida às suas{' '}
+            <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+              ideias com IA
+            </span>
+          </motion.h1>
 
-          {/* Generated Actions */}
-          {generatedCode && !isGenerating && (
-            <div className="flex-1 flex flex-col">
-              <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="w-4 h-4 text-emerald-400" />
-                <span className="text-sm font-medium text-white">Página gerada!</span>
-              </div>
+          {/* Subtitle */}
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="text-base md:text-lg text-white/50 mb-8 max-w-md mx-auto"
+          >
+            Crie páginas completas e funcionais em minutos, apenas descrevendo o que deseja.
+          </motion.p>
 
-              <div className="flex flex-col gap-2 mt-auto">
-                <Button
-                  onClick={() => setShowCode(!showCode)}
-                  variant="outline"
-                  size="sm"
-                  className="w-full gap-2 border-white/10 hover:bg-white/5 text-white"
-                  style={{ borderRadius: '10px' }}
-                >
-                  {showCode ? <Eye className="w-4 h-4" /> : <FileCode className="w-4 h-4" />}
-                  {showCode ? 'Ver Preview' : 'Ver Código'}
-                </Button>
-                
-                <Button
-                  onClick={handleCopyCode}
-                  variant="outline"
-                  size="sm"
-                  className="w-full gap-2 border-white/10 hover:bg-white/5 text-white"
-                  style={{ borderRadius: '10px' }}
-                >
-                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  {copied ? 'Copiado!' : 'Copiar Código'}
-                </Button>
-
-                <Button
-                  onClick={handleExport}
-                  size="sm"
-                  className="w-full gap-2 bg-emerald-600 hover:bg-emerald-500 text-white"
-                  style={{ borderRadius: '10px' }}
-                >
-                  <Download className="w-4 h-4" />
-                  Exportar Projeto (.zip)
-                </Button>
-
-                <Button
-                  onClick={() => {
-                    setGeneratedCode(null);
-                    setPrompt('');
-                  }}
-                  variant="ghost"
-                  size="sm"
-                  className="w-full gap-2 text-white/60 hover:text-white hover:bg-white/5"
-                  style={{ borderRadius: '10px' }}
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  Nova Página
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Empty State */}
-          {!generatedCode && !isGenerating && (
-            <div className="flex-1 flex flex-col items-center justify-center text-center">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-purple-500/30 flex items-center justify-center mb-3">
-                <Wand2 className="w-6 h-6 text-purple-400" />
-              </div>
-              <p className="text-sm text-white/50 max-w-[200px]">
-                Descreva a página que deseja criar e pressione Enter
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Input Area */}
-        <div 
-          className="mt-3 bg-white/5 border border-white/10 p-3"
-          style={{ borderRadius: '14px' }}
-        >
-          <div className="flex items-end gap-2">
+          {/* Input Box */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="relative bg-[#0f1629] border border-white/10 rounded-2xl overflow-hidden shadow-2xl"
+          >
             <textarea
               ref={inputRef}
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Descreva sua landing page..."
-              disabled={isGenerating}
-              className="flex-1 bg-transparent border-0 text-white placeholder:text-white/30 resize-none text-sm focus:outline-none min-h-[40px] max-h-[120px]"
-              rows={1}
+              placeholder="Crie uma landing page para..."
+              className="w-full bg-transparent text-white placeholder:text-white/30 resize-none text-base p-5 pb-16 focus:outline-none min-h-[140px]"
+              rows={4}
             />
-            <Button
-              onClick={handleGenerate}
-              disabled={isGenerating || !prompt.trim()}
-              size="icon"
-              className="h-10 w-10 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 flex-shrink-0"
-              style={{ borderRadius: '10px' }}
-            >
-              {isGenerating ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <Send className="w-5 h-5" />
-              )}
-            </Button>
+            
+            {/* Send Button */}
+            <div className="absolute bottom-4 right-4">
+              <Button
+                onClick={handleGenerate}
+                disabled={!prompt.trim()}
+                size="icon"
+                className="h-10 w-10 bg-blue-600 hover:bg-blue-500 disabled:opacity-30 disabled:cursor-not-allowed rounded-xl"
+              >
+                <ArrowUp className="w-5 h-5" />
+              </Button>
+            </div>
+          </motion.div>
+
+          {/* Suggestions */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="mt-6"
+          >
+            <p className="text-sm text-white/40 mb-3">Sem ideias? Tente uma destas opções:</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {promptSuggestions.map((suggestion, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleSuggestionClick(suggestion)}
+                  className="text-sm px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white/60 hover:text-white/80 transition-all rounded-lg"
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // Generating View
+  if (viewState === 'generating') {
+    return (
+      <div className="h-full flex flex-col items-center justify-center px-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <div className="relative inline-flex">
+            <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-purple-500/30 flex items-center justify-center">
+              <Loader2 className="w-12 h-12 text-purple-400 animate-spin" />
+            </div>
+            <motion.div
+              className="absolute -inset-4 rounded-[2rem] bg-purple-500/20"
+              animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0.1, 0.5] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
           </div>
+          
+          <h2 className="text-2xl font-bold text-white mt-8 mb-2">Gerando sua página...</h2>
+          <p className="text-white/50 mb-6">A IA está criando código React + Tailwind</p>
+          
+          <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 max-w-md mx-auto">
+            <p className="text-sm text-white/60 italic">"{prompt}"</p>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // Result View - Split Layout
+  return (
+    <div className="h-full flex flex-col lg:flex-row gap-4">
+      {/* Left Panel - Controls */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="w-full lg:w-[320px] flex-shrink-0 flex flex-col"
+      >
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-4">
+          <Button
+            onClick={handleNewPage}
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 text-white/60 hover:text-white hover:bg-white/10 rounded-xl"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div>
+            <h1 className="text-lg font-bold text-white">Página Gerada</h1>
+            <p className="text-xs text-white/50">React + Tailwind + Framer Motion</p>
+          </div>
+        </div>
+
+        {/* Info Card */}
+        <div 
+          className="bg-white/5 border border-white/10 p-4 mb-4"
+          style={{ borderRadius: '14px' }}
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="w-4 h-4 text-emerald-400" />
+            <span className="text-sm font-medium text-white">Sucesso!</span>
+          </div>
+          <p className="text-xs text-white/50 line-clamp-2">"{prompt}"</p>
+        </div>
+
+        {/* Actions */}
+        <div 
+          className="bg-white/5 border border-white/10 p-4 flex-1 flex flex-col gap-3"
+          style={{ borderRadius: '14px' }}
+        >
+          <Button
+            onClick={() => setShowCode(!showCode)}
+            variant="outline"
+            className="w-full gap-2 border-white/10 hover:bg-white/5 text-white justify-start rounded-xl"
+          >
+            {showCode ? <Eye className="w-4 h-4" /> : <FileCode className="w-4 h-4" />}
+            {showCode ? 'Ver Preview' : 'Ver Código'}
+          </Button>
+          
+          <Button
+            onClick={handleCopyCode}
+            variant="outline"
+            className="w-full gap-2 border-white/10 hover:bg-white/5 text-white justify-start rounded-xl"
+          >
+            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+            {copied ? 'Copiado!' : 'Copiar Código'}
+          </Button>
+
+          <Button
+            onClick={handleExport}
+            className="w-full gap-2 bg-emerald-600 hover:bg-emerald-500 text-white justify-start rounded-xl"
+          >
+            <Download className="w-4 h-4" />
+            Exportar Projeto (.zip)
+          </Button>
+
+          <div className="flex-1" />
+
+          <Button
+            onClick={handleNewPage}
+            variant="ghost"
+            className="w-full gap-2 text-white/60 hover:text-white hover:bg-white/5 justify-start rounded-xl"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Criar Nova Página
+          </Button>
         </div>
       </motion.div>
 
@@ -276,7 +334,7 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
           className="h-full bg-white/5 border border-white/10 overflow-hidden flex flex-col"
           style={{ borderRadius: '14px' }}
         >
-          {/* Preview Header */}
+          {/* Browser Header */}
           <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-white/5">
             <div className="flex items-center gap-2">
               <div className="flex gap-1.5">
@@ -284,49 +342,34 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
                 <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
                 <div className="w-3 h-3 rounded-full bg-green-500/80" />
               </div>
-              <span className="text-xs text-white/40 ml-2">Preview</span>
+              <span className="text-xs text-white/40 ml-2">
+                {showCode ? 'Código TSX' : 'Preview'}
+              </span>
             </div>
-            {generatedCode && (
-              <div className="flex items-center gap-1">
-                <Button
-                  onClick={() => setShowCode(!showCode)}
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 text-xs text-white/60 hover:text-white"
-                >
-                  {showCode ? 'Preview' : 'Código'}
-                </Button>
-              </div>
-            )}
+            <Button
+              onClick={() => setShowCode(!showCode)}
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs text-white/60 hover:text-white gap-1"
+            >
+              {showCode ? <Eye className="w-3 h-3" /> : <Code2 className="w-3 h-3" />}
+              {showCode ? 'Preview' : 'Código'}
+            </Button>
           </div>
 
-          {/* Preview Content */}
+          {/* Content */}
           <div className="flex-1 overflow-auto">
-            {generatedCode ? (
-              showCode ? (
-                <pre className="p-4 text-xs text-white/80 font-mono whitespace-pre-wrap">
-                  {generatedCode}
-                </pre>
-              ) : (
-                <iframe
-                  srcDoc={generateHtmlPreview(generatedCode)}
-                  className="w-full h-full border-0"
-                  sandbox="allow-scripts"
-                  title="Page Preview"
-                />
-              )
+            {showCode ? (
+              <pre className="p-4 text-xs text-white/80 font-mono whitespace-pre-wrap">
+                {generatedCode}
+              </pre>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center text-center p-6">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500/10 to-blue-500/10 border border-purple-500/20 flex items-center justify-center mb-4">
-                  <Rocket className="w-10 h-10 text-purple-400/60" />
-                </div>
-                <h3 className="text-lg font-semibold text-white/80 mb-2">
-                  Sua página aparecerá aqui
-                </h3>
-                <p className="text-sm text-white/40 max-w-sm">
-                  Digite uma descrição da landing page que deseja criar e clique em enviar ou pressione Enter.
-                </p>
-              </div>
+              <iframe
+                srcDoc={generateHtmlPreview(generatedCode || '')}
+                className="w-full h-full border-0 bg-white"
+                sandbox="allow-scripts"
+                title="Page Preview"
+              />
             )}
           </div>
         </div>
