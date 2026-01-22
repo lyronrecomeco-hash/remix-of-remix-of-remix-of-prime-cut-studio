@@ -260,7 +260,6 @@ const GenesisCommercialHero = () => {
                     />
                   ))}
                 </div>
-
                 {/* Welcome Header - exact match */}
                 <div className="text-center mb-5 relative z-10">
                   <h2 className="text-xl md:text-2xl font-bold text-white flex items-center justify-center gap-2">
@@ -269,53 +268,53 @@ const GenesisCommercialHero = () => {
                   <p className="text-white/50 text-xs mt-1">Crie, evolua e gerencie suas ideias em um só lugar.</p>
                 </div>
 
-                {/* Quick Action Cards - EXACT glassmorphism style from real dashboard */}
-                <div className="grid grid-cols-3 gap-3 mb-5 relative z-10">
+                {/* Quick Action Cards - EXACT layout from screenshot */}
+                <div className="grid grid-cols-3 gap-2.5 mb-4 relative z-10">
                   {[
-                    { icon: Search, title: 'Encontrar Clientes', desc: 'Descubra clientes potenciais', bg: 'bg-purple-500/20', color: 'text-purple-400' },
-                    { icon: Globe, title: 'Radar Global', desc: 'Oportunidades automáticas', bg: 'bg-blue-500/20', color: 'text-blue-400' },
-                    { icon: CheckCircle, title: 'Propostas Aceitas', desc: 'Gerencie propostas aceitas', bg: 'bg-emerald-500/20', color: 'text-emerald-400' },
+                    { icon: Search, title: 'Encontrar Clientes', desc: 'Descubra clientes com maior potencial', bg: 'bg-purple-500/20', color: 'text-purple-400' },
+                    { icon: Globe, title: 'Radar Global', desc: 'Oportunidades automáticas pela IA', bg: 'bg-cyan-500/20', color: 'text-cyan-400' },
+                    { icon: CheckCircle, title: 'Propostas Aceitas', desc: 'Gerencie as propostas aceitas do Radar Global e...', bg: 'bg-emerald-500/20', color: 'text-emerald-400' },
                   ].map((action, i) => (
                     <motion.div
                       key={i}
                       whileHover={{ scale: 1.02, y: -2 }}
-                      className="bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/[0.08] transition-all duration-300 cursor-pointer h-[100px] flex flex-col justify-between p-3"
+                      className="bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/[0.08] transition-all duration-300 cursor-pointer p-3"
                       style={{ borderRadius: '14px' }}
                     >
-                      <div className="flex items-center gap-2">
-                        <div className={`w-8 h-8 rounded-xl ${action.bg} flex items-center justify-center`}>
-                          <action.icon className={`w-4 h-4 ${action.color}`} />
+                      <div className="flex items-center gap-2.5 mb-2">
+                        <div className={`w-7 h-7 rounded-xl ${action.bg} flex items-center justify-center shrink-0`}>
+                          <action.icon className={`w-3.5 h-3.5 ${action.color}`} />
                         </div>
-                        <h3 className="text-white font-semibold text-xs">{action.title}</h3>
+                        <h3 className="text-white font-semibold text-[11px]">{action.title}</h3>
                       </div>
-                      <p className="text-white/50 text-[10px] leading-relaxed line-clamp-2">{action.desc}</p>
+                      <p className="text-white/50 text-[9px] leading-relaxed">{action.desc}</p>
                     </motion.div>
                   ))}
                 </div>
 
-                {/* Acesse também - EXACT CLONE from GenesisCarousel */}
+                {/* Acesse também - EXACT CLONE from screenshot */}
                 <div className="relative z-10">
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-2.5">
                     <div className="w-6 h-6 rounded-lg bg-purple-500/20 flex items-center justify-center">
                       <Sparkles className="w-3 h-3 text-purple-400" />
                     </div>
-                    <span className="text-white font-bold text-[11px] tracking-tight">Acesse também</span>
+                    <span className="text-white font-bold text-[11px]">Acesse também</span>
                   </div>
                   
-                  {/* Carousel - EXACT style from original */}
+                  {/* Carousel - EXACT style from screenshot */}
                   <div 
                     className="relative overflow-hidden"
                     style={{ borderRadius: '14px' }}
                     onMouseEnter={() => setIsPaused(true)}
                     onMouseLeave={() => setIsPaused(false)}
                   >
-                    {/* Gradient masks - exact from original */}
-                    <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[hsl(220_25%_10%)] via-[hsl(220_25%_10%/0.8)] to-transparent z-10 pointer-events-none" />
-                    <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[hsl(220_25%_10%)] via-[hsl(220_25%_10%/0.8)] to-transparent z-10 pointer-events-none" />
+                    {/* Gradient masks */}
+                    <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-[hsl(220_25%_10%)] via-[hsl(220_25%_10%/0.8)] to-transparent z-10 pointer-events-none" />
+                    <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[hsl(220_25%_10%)] via-[hsl(220_25%_10%/0.8)] to-transparent z-10 pointer-events-none" />
                     
                     <div 
                       ref={scrollRef}
-                      className="flex gap-2 py-1 overflow-x-hidden scrollbar-hide"
+                      className="flex gap-2.5 py-1 overflow-x-hidden scrollbar-hide"
                       style={{ scrollBehavior: 'auto' }}
                     >
                       {duplicatedItems.map((item, index) => {
@@ -323,27 +322,27 @@ const GenesisCommercialHero = () => {
                         return (
                           <motion.div
                             key={`${item.title}-${index}`}
-                            whileHover={{ scale: 1.02, y: -2 }}
+                            whileHover={{ scale: 1.02, y: -3 }}
                             whileTap={{ scale: 0.98 }}
                             transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                             className="flex-shrink-0 cursor-pointer"
                           >
-                            {/* EXACT card from GenesisCarousel.tsx */}
+                            {/* EXACT card from screenshot - tall cards with icon top-left */}
                             <div 
-                              className="w-[100px] h-[65px] bg-[hsl(200_50%_15%/0.6)] border border-emerald-500/20 hover:border-emerald-500/40 hover:bg-[hsl(200_50%_18%/0.7)] transition-all duration-300 p-2 flex flex-col justify-between group backdrop-blur-sm"
+                              className="w-[130px] h-[85px] bg-[hsl(200_50%_15%/0.6)] border border-emerald-500/20 hover:border-emerald-500/40 hover:bg-[hsl(200_50%_18%/0.7)] transition-all duration-300 p-2.5 flex flex-col justify-between group backdrop-blur-sm"
                               style={{ borderRadius: '14px' }}
                             >
-                              {/* Icon - exact style */}
-                              <div className="w-5 h-5 rounded-lg bg-emerald-500/20 flex items-center justify-center group-hover:scale-105 transition-transform">
-                                <Icon className="w-2.5 h-2.5 text-emerald-400" />
+                              {/* Icon - top left */}
+                              <div className="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center group-hover:scale-105 transition-transform">
+                                <Icon className="w-3 h-3 text-emerald-400" />
                               </div>
 
-                              {/* Text - exact style */}
-                              <div className="space-y-0">
-                                <h3 className="font-semibold text-white text-[8px] leading-tight group-hover:text-white/90 transition-colors truncate">
+                              {/* Text - bottom */}
+                              <div>
+                                <h3 className="font-semibold text-white text-[10px] leading-tight mb-0.5">
                                   {item.title}
                                 </h3>
-                                <p className="text-[6px] text-white/50 group-hover:text-white/60 transition-colors truncate">
+                                <p className="text-[8px] text-white/50 leading-tight truncate">
                                   {item.desc}
                                 </p>
                               </div>
@@ -355,16 +354,16 @@ const GenesisCommercialHero = () => {
                   </div>
                 </div>
 
-                {/* Dock at bottom - matching real style */}
+                {/* Dock at bottom - EXACT from screenshot */}
                 <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20">
-                  <div className="flex items-center gap-0.5 px-3 py-2 bg-white/5 backdrop-blur-md border border-white/10" style={{ borderRadius: '16px' }}>
+                  <div className="flex items-center gap-1.5 px-4 py-2 bg-white/5 backdrop-blur-md border border-white/10" style={{ borderRadius: '16px' }}>
                     {dockIcons.map((Icon, i) => (
                       <motion.div
                         key={i}
-                        whileHover={{ scale: 1.15, y: -2 }}
-                        className={`w-6 h-6 rounded-lg flex items-center justify-center cursor-pointer transition-colors ${i === 0 ? 'bg-primary/20 text-primary' : 'text-white/40 hover:bg-white/5'}`}
+                        whileHover={{ scale: 1.2, y: -3 }}
+                        className={`w-6 h-6 rounded-lg flex items-center justify-center cursor-pointer transition-colors ${i === 0 ? 'bg-primary/20 text-primary' : 'text-white/40 hover:text-white/60'}`}
                       >
-                        <Icon className="w-3 h-3" />
+                        <Icon className="w-3.5 h-3.5" />
                       </motion.div>
                     ))}
                   </div>
