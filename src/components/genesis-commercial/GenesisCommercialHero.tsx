@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Sparkles, CheckCircle2, Search, Globe, CheckCircle, DollarSign, GraduationCap, Home, Layers, FileText, Users, Grid3X3, CreditCard, Settings, LogOut, Smartphone, PenTool, Rocket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const GenesisCommercialHero = () => {
   const [typedText, setTypedText] = useState('');
-  const [carouselIndex, setCarouselIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const fullText = 'Crie, Gerencie e Escale';
   
   const quickActions = [
@@ -26,6 +27,9 @@ const GenesisCommercialHero = () => {
     { icon: Rocket, title: 'Redator Automatizado', desc: 'Automatize sua produção de...' },
   ];
 
+  // Duplicate items for infinite scroll
+  const duplicatedItems = [...accessAlso, ...accessAlso, ...accessAlso];
+
   const dockIcons = [Home, Layers, FileText, Grid3X3, Users, Grid3X3, CreditCard, Settings, LogOut];
   
   useEffect(() => {
@@ -41,13 +45,35 @@ const GenesisCommercialHero = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Carousel auto-scroll - smoother transition
+  // Infinite auto-scroll carousel - matching real GenesisCarousel
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCarouselIndex((prev) => (prev + 1) % accessAlso.length);
-    }, 2500);
-    return () => clearInterval(timer);
-  }, []);
+    const scrollContainer = scrollRef.current;
+    if (!scrollContainer || isPaused) return;
+
+    let animationFrameId: number;
+    let scrollPosition = scrollContainer.scrollLeft || 0;
+    const scrollSpeed = 0.5;
+
+    const animate = () => {
+      scrollPosition += scrollSpeed;
+      
+      const itemWidth = 130 + 12; // card width + gap
+      const resetPoint = itemWidth * accessAlso.length;
+      
+      if (scrollPosition >= resetPoint) {
+        scrollPosition = 0;
+      }
+      
+      scrollContainer.scrollLeft = scrollPosition;
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animationFrameId = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [isPaused, accessAlso.length]);
 
   return (
     <section id="inicio" className="relative min-h-screen flex flex-col overflow-hidden bg-background">
@@ -244,7 +270,7 @@ const GenesisCommercialHero = () => {
                   ))}
                 </div>
 
-                {/* Acesse também - Real Carousel Style */}
+                {/* Acesse também - Real Infinite Carousel */}
                 <div className="relative z-10">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-8 h-8 rounded-xl bg-purple-500/20 flex items-center justify-center">
@@ -253,41 +279,42 @@ const GenesisCommercialHero = () => {
                     <span className="text-white font-semibold text-sm">Acesse também</span>
                   </div>
                   
-                  {/* Carousel matching real GenesisCarousel style */}
-                  <div className="relative overflow-hidden rounded-xl">
-                    {/* Gradient masks */}
-                    <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-[#0a0a14] to-transparent z-10 pointer-events-none" />
-                    <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[#0a0a14] to-transparent z-10 pointer-events-none" />
+                  {/* Carousel matching real GenesisCarousel - Infinite scroll */}
+                  <div 
+                    className="relative overflow-hidden rounded-xl"
+                    onMouseEnter={() => setIsPaused(true)}
+                    onMouseLeave={() => setIsPaused(false)}
+                  >
+                    {/* Gradient masks - matching original */}
+                    <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-[#0a0a14] via-[#0a0a14]/80 to-transparent z-10 pointer-events-none" />
+                    <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[#0a0a14] via-[#0a0a14]/80 to-transparent z-10 pointer-events-none" />
                     
-                    <div className="flex gap-3 py-1">
-                      <AnimatePresence mode="sync">
-                        {accessAlso.slice(0, 4).map((item, i) => {
-                          const Icon = item.icon;
-                          return (
-                            <motion.div
-                              key={i}
-                              initial={{ x: 0 }}
-                              animate={{ 
-                                x: -carouselIndex * 28 + '%',
-                                opacity: 1 
-                              }}
-                              transition={{ duration: 0.5, ease: "easeInOut" }}
-                              className="flex-shrink-0 w-[24%]"
-                            >
-                              {/* Card matching real GenesisCarousel style */}
-                              <div className="bg-[hsl(200_50%_15%/0.6)] rounded-[14px] border border-emerald-500/20 hover:border-emerald-500/40 p-3 cursor-pointer transition-colors h-[90px] flex flex-col justify-between">
-                                <div className="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                                  <Icon className="w-3.5 h-3.5 text-emerald-400" />
-                                </div>
-                                <div>
-                                  <h4 className="text-white font-medium text-xs mb-0.5 truncate">{item.title}</h4>
-                                  <p className="text-white/50 text-[10px] truncate">{item.desc}</p>
-                                </div>
+                    <div 
+                      ref={scrollRef}
+                      className="flex gap-3 py-1 overflow-x-hidden scrollbar-hide"
+                      style={{ scrollBehavior: 'auto' }}
+                    >
+                      {duplicatedItems.map((item, index) => {
+                        const Icon = item.icon;
+                        return (
+                          <motion.div
+                            key={`${item.title}-${index}`}
+                            whileHover={{ scale: 1.02, y: -2 }}
+                            className="flex-shrink-0 cursor-pointer"
+                          >
+                            {/* Card matching real GenesisCarousel style */}
+                            <div className="w-[130px] h-[80px] bg-[hsl(200_50%_15%/0.6)] rounded-[14px] border border-emerald-500/20 hover:border-emerald-500/40 hover:bg-[hsl(200_50%_18%/0.7)] p-2.5 transition-all duration-300 flex flex-col justify-between">
+                              <div className="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                                <Icon className="w-3 h-3 text-emerald-400" />
                               </div>
-                            </motion.div>
-                          );
-                        })}
-                      </AnimatePresence>
+                              <div>
+                                <h4 className="text-white font-medium text-[10px] mb-0 truncate">{item.title}</h4>
+                                <p className="text-white/50 text-[8px] truncate">{item.desc}</p>
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>

@@ -145,43 +145,61 @@ const GenesisCommercialRadar = () => {
     return indices;
   }, []);
 
-  // Fetch real leads from database - from lyronrp@gmail.com account
+  // Fetch real leads from database - diversified niches
   useEffect(() => {
     const fetchLeads = async () => {
-      // Fetch leads from the affiliate with email lyronrp@gmail.com
-      const { data: affiliateData } = await supabase
-        .from('affiliates')
-        .select('id')
-        .eq('email', 'lyronrp@gmail.com')
-        .single();
+      // Fetch from multiple affiliates to get diverse niches
+      const { data, error } = await supabase
+        .from('affiliate_prospects')
+        .select('id, company_name, niche, company_city, company_state, company_phone, analysis_score, source')
+        .not('niche', 'is', null)
+        .limit(50);
       
-      if (affiliateData) {
-        const { data, error } = await supabase
-          .from('affiliate_prospects')
-          .select('id, company_name, niche, company_city, company_state, company_phone, analysis_score, source')
-          .eq('affiliate_id', affiliateData.id)
-          .limit(35);
+      if (!error && data && data.length > 0) {
+        // Diversify niches - shuffle and ensure variety
+        const nicheGroups: Record<string, RealLead[]> = {};
+        data.forEach(lead => {
+          const niche = lead.niche || 'Outros';
+          if (!nicheGroups[niche]) nicheGroups[niche] = [];
+          nicheGroups[niche].push(lead);
+        });
         
-        if (!error && data) {
-          const enrichedData = data.map(lead => ({
-            ...lead,
-            analysis_score: lead.analysis_score || Math.floor(Math.random() * 40) + 50,
-          }));
-          setLeads(enrichedData);
+        // Take leads from different niches to ensure diversity
+        const diversifiedLeads: RealLead[] = [];
+        const niches = Object.keys(nicheGroups);
+        let index = 0;
+        while (diversifiedLeads.length < 35 && index < 100) {
+          const niche = niches[index % niches.length];
+          const nicheLeads = nicheGroups[niche];
+          const leadIndex = Math.floor(index / niches.length);
+          if (nicheLeads && nicheLeads[leadIndex]) {
+            diversifiedLeads.push({
+              ...nicheLeads[leadIndex],
+              analysis_score: nicheLeads[leadIndex].analysis_score || Math.floor(Math.random() * 40) + 50,
+            });
+          }
+          index++;
         }
+        
+        // Shuffle final result
+        for (let i = diversifiedLeads.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [diversifiedLeads[i], diversifiedLeads[j]] = [diversifiedLeads[j], diversifiedLeads[i]];
+        }
+        
+        setLeads(diversifiedLeads);
       } else {
-        // Fallback to global prospects
-        const { data, error } = await supabase
+        // Fallback - fetch any leads
+        const { data: fallbackData } = await supabase
           .from('affiliate_prospects')
           .select('id, company_name, niche, company_city, company_state, company_phone, analysis_score, source')
           .limit(35);
         
-        if (!error && data) {
-          const enrichedData = data.map(lead => ({
+        if (fallbackData) {
+          setLeads(fallbackData.map(lead => ({
             ...lead,
             analysis_score: lead.analysis_score || Math.floor(Math.random() * 40) + 50,
-          }));
-          setLeads(enrichedData);
+          })));
         }
       }
       setLoading(false);
