@@ -2,7 +2,6 @@ import {
   SandpackProvider, 
   SandpackPreview
 } from '@codesandbox/sandpack-react';
-import '@codesandbox/sandpack-react/dist/index.css';
 import { memo } from 'react';
 
 interface PageBuilderPreviewProps {
