@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, MapPin, Phone, ArrowRight, Lock, TrendingUp, DollarSign, Globe } from 'lucide-react';
+import { Sparkles, MapPin, Phone, ArrowRight, Lock, TrendingUp, DollarSign, Globe, Search, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
@@ -17,16 +17,45 @@ interface RealLead {
   source: string | null;
 }
 
-const maskLocation = (city: string | null, state: string | null) => {
-  if (!city) return '••••••, ••';
-  const masked = city.length > 4 ? `${city.substring(0, 4)}•••••` : `${city}•••`;
-  return `${masked}, ${state || '••'}`;
+// Brazilian cities for random locations
+const BRAZILIAN_CITIES = [
+  { city: 'São Paulo', state: 'SP' },
+  { city: 'Rio de Janeiro', state: 'RJ' },
+  { city: 'Belo Horizonte', state: 'MG' },
+  { city: 'Curitiba', state: 'PR' },
+  { city: 'Porto Alegre', state: 'RS' },
+  { city: 'Salvador', state: 'BA' },
+  { city: 'Fortaleza', state: 'CE' },
+  { city: 'Recife', state: 'PE' },
+  { city: 'Brasília', state: 'DF' },
+  { city: 'Goiânia', state: 'GO' },
+  { city: 'Manaus', state: 'AM' },
+  { city: 'Campinas', state: 'SP' },
+  { city: 'Florianópolis', state: 'SC' },
+  { city: 'Vitória', state: 'ES' },
+  { city: 'Natal', state: 'RN' },
+  { city: 'Campo Grande', state: 'MS' },
+  { city: 'João Pessoa', state: 'PB' },
+  { city: 'Maceió', state: 'AL' },
+  { city: 'Aracaju', state: 'SE' },
+  { city: 'Cuiabá', state: 'MT' },
+  { city: 'Uberlândia', state: 'MG' },
+  { city: 'Ribeirão Preto', state: 'SP' },
+  { city: 'Sorocaba', state: 'SP' },
+  { city: 'Joinville', state: 'SC' },
+  { city: 'Londrina', state: 'PR' },
+];
+
+// Generate random masked location
+const getRandomMaskedLocation = (index: number) => {
+  const location = BRAZILIAN_CITIES[index % BRAZILIAN_CITIES.length];
+  const maskedCity = location.city.length > 5 
+    ? `${location.city.substring(0, 5)}•••••` 
+    : `${location.city}•••`;
+  return `${maskedCity}, ${location.state}`;
 };
 
-const maskPhone = (phone: string | null) => {
-  if (!phone) return '(••) •••••-••••';
-  return '(••) •••••-••••';
-};
+const maskPhone = () => '(••) •••••-••••';
 
 const getScoreColor = (score: number) => {
   if (score >= 80) return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
@@ -50,6 +79,7 @@ const getNicheIcon = (niche: string | null) => {
     'Salão': '💇',
     'Pet Shop': '🐾',
     'Oficina': '🔧',
+    'Fitness': '🏋️',
   };
   return nicheIcons[niche || ''] || '🏢';
 };
@@ -59,7 +89,8 @@ const getEstimatedValue = (niche: string | null): { min: number; max: number; re
     'Barbearia': { min: 300, max: 600, recurrence: 50 },
     'Restaurante': { min: 500, max: 1200, recurrence: 80 },
     'Loja': { min: 400, max: 800, recurrence: 60 },
-    'Academia': { min: 600, max: 1500, recurrence: 100 },
+    'Academia': { min: 550, max: 800, recurrence: 90 },
+    'Fitness': { min: 550, max: 800, recurrence: 90 },
     'Clínica': { min: 800, max: 2000, recurrence: 150 },
     'Salão': { min: 350, max: 700, recurrence: 55 },
     'Pet Shop': { min: 400, max: 900, recurrence: 70 },
@@ -68,10 +99,51 @@ const getEstimatedValue = (niche: string | null): { min: number; max: number; re
   return values[niche || ''] || { min: 300, max: 800, recurrence: 50 };
 };
 
+// Generate tags based on niche
+const getNicheTags = (niche: string | null): string[] => {
+  const tagMap: Record<string, string[]> = {
+    'Barbearia': ['agendamento', 'fidelidade'],
+    'Restaurante': ['delivery', 'cardápio'],
+    'Loja': ['e-commerce', 'catálogo'],
+    'Academia': ['app', 'agendamento'],
+    'Fitness': ['app', 'agendamento'],
+    'Clínica': ['prontuário', 'agendamento'],
+    'Salão': ['agendamento', 'catálogo'],
+    'Pet Shop': ['agendamento', 'delivery'],
+    'Oficina': ['orçamento', 'gestão'],
+  };
+  return tagMap[niche || ''] || ['site', 'presença digital'];
+};
+
+// Get AI description based on niche
+const getAiDescription = (niche: string | null, companyName: string): string => {
+  const descriptions: Record<string, string> = {
+    'Academia': `${niche || 'Negócio'} precisa de app para agendamento de aulas e controle de alunos.`,
+    'Fitness': `${niche || 'Negócio'} precisa de app para agendamento de aulas e controle de alunos.`,
+    'Barbearia': `${niche || 'Negócio'} precisa de sistema de agendamento online e fidelidade.`,
+    'Restaurante': `${niche || 'Negócio'} precisa de cardápio digital e sistema de delivery.`,
+    'Clínica': `${niche || 'Negócio'} precisa de prontuário eletrônico e agendamento.`,
+    'Pet Shop': `${niche || 'Negócio'} precisa de agendamento para banho/tosa e e-commerce.`,
+    'Salão': `${niche || 'Negócio'} precisa de agendamento online e catálogo de serviços.`,
+  };
+  return descriptions[niche || ''] || `${niche || 'Negócio'} precisa de sistema de agendamento e presença digital.`;
+};
+
 const GenesisCommercialRadar = () => {
   const [leads, setLeads] = useState<RealLead[]>([]);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Shuffle locations on mount
+  const shuffledLocationIndices = useMemo(() => {
+    const indices = Array.from({ length: 50 }, (_, i) => i);
+    // Fisher-Yates shuffle
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    return indices;
+  }, []);
 
   // Fetch real leads from database - from lyronrp@gmail.com account
   useEffect(() => {
@@ -196,69 +268,118 @@ const GenesisCommercialRadar = () => {
           >
             {loading ? (
               Array(6).fill(0).map((_, i) => (
-                <div key={i} className="flex-shrink-0 w-[300px] h-[220px] bg-card border border-border rounded-xl animate-pulse" />
+                <div key={i} className="flex-shrink-0 w-[340px] h-[320px] bg-card border border-border rounded-xl animate-pulse" />
               ))
             ) : (
               displayLeads.map((lead, index) => {
                 const estimated = getEstimatedValue(lead.niche);
                 const score = lead.analysis_score || 70;
+                const tags = getNicheTags(lead.niche);
+                const locationIndex = shuffledLocationIndices[index % shuffledLocationIndices.length];
                 
                 return (
                   <motion.div
                     key={`${lead.id}-${index}`}
-                    className="flex-shrink-0 w-[300px] bg-card/80 backdrop-blur-sm border border-border rounded-xl p-4 hover:border-primary/40 transition-all hover:shadow-lg hover:shadow-primary/5"
+                    className="flex-shrink-0 w-[340px] bg-card/90 backdrop-blur-sm border border-border rounded-xl p-5 hover:border-primary/40 transition-all hover:shadow-lg hover:shadow-primary/5"
                   >
                     {/* Header */}
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-lg">
+                        <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-xl">
                           {getNicheIcon(lead.niche)}
                         </div>
                         <div className="min-w-0">
-                          <h3 className="font-semibold text-foreground text-sm truncate max-w-[160px]">
+                          <h3 className="font-bold text-foreground text-base truncate max-w-[180px]">
                             {lead.company_name}
                           </h3>
-                          <span className="text-xs text-muted-foreground">{lead.niche || 'Negócio'}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">{lead.niche || 'Negócio'}</span>
+                            <Badge className={`text-[10px] px-1.5 py-0 ${getScoreColor(score)}`}>
+                              {getScoreLabel(score)}
+                            </Badge>
+                          </div>
                         </div>
                       </div>
-                      <Badge className={`text-xs shrink-0 ${getScoreColor(score)}`}>
-                        {getScoreLabel(score)}
-                      </Badge>
                     </div>
 
-                    {/* Estimated Values */}
-                    <div className="flex gap-2 mb-3 flex-wrap">
-                      <Badge variant="secondary" className="gap-1 text-xs">
-                        <DollarSign className="w-3 h-3" />
-                        R$ {estimated.min}~{estimated.max}
-                      </Badge>
-                      <Badge variant="outline" className="gap-1 text-xs bg-emerald-500/10 text-emerald-500 border-emerald-500/30">
-                        <TrendingUp className="w-3 h-3" />
-                        +R$ {estimated.recurrence}/mês
-                      </Badge>
+                    {/* Estimated Values - With Labels */}
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      <div>
+                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-1">
+                          <DollarSign className="w-3 h-3 text-amber-500" />
+                          <span>VALOR ESTIMADO</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground">R$ {estimated.min} (mín)</div>
+                        <div className="text-base font-bold text-foreground">R$ {estimated.max}</div>
+                        <div className="text-[10px] text-muted-foreground">(máx)</div>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-1">
+                          <TrendingUp className="w-3 h-3 text-emerald-500" />
+                          <span>RECORRÊNCIA</span>
+                        </div>
+                        <div className="text-base font-bold text-emerald-500">+R$ {estimated.recurrence}/mês</div>
+                      </div>
                     </div>
 
                     {/* AI Description */}
-                    <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
-                      {lead.niche ? `${lead.niche} precisa de sistema de agendamento e presença digital.` : 'Negócio com potencial para digitalização completa.'}
-                    </p>
+                    <div className="flex items-start gap-2 mb-3 p-2 bg-primary/5 rounded-lg border border-primary/10">
+                      <Sparkles className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        {getAiDescription(lead.niche, lead.company_name)}
+                      </p>
+                    </div>
 
-                    {/* Info with masks */}
+                    {/* Info with masks - Randomized locations */}
                     <div className="space-y-1.5 mb-3">
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <MapPin className="w-3 h-3 shrink-0" />
-                        <span>{maskLocation(lead.company_city, lead.company_state)}</span>
+                        <MapPin className="w-3.5 h-3.5 shrink-0" />
+                        <span>{getRandomMaskedLocation(locationIndex)}</span>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Phone className="w-3 h-3 shrink-0" />
-                        <span>{maskPhone(lead.company_phone)}</span>
+                        <Phone className="w-3.5 h-3.5 shrink-0" />
+                        <span>{maskPhone()}</span>
                       </div>
                     </div>
 
                     {/* Digital presence indicator */}
-                    <div className="flex items-center gap-2 pt-2 border-t border-border">
-                      <Globe className="w-3 h-3 text-amber-500" />
+                    <div className="flex items-center gap-2 py-2 border-t border-border mb-4">
+                      <Globe className="w-3.5 h-3.5 text-amber-500" />
                       <span className="text-xs text-muted-foreground">Sem presença digital — oportunidade máxima</span>
+                    </div>
+
+                    {/* Tags */}
+                    <div className="flex flex-wrap gap-1.5 mb-4">
+                      {tags.map((tag, i) => (
+                        <span key={i} className="px-2 py-0.5 text-[10px] bg-muted/50 text-muted-foreground rounded-md">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Action Buttons - Blurred for non-subscribers */}
+                    <div className="flex gap-2 relative">
+                      <Button 
+                        size="sm" 
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs gap-1.5 blur-[2px] pointer-events-none"
+                        disabled
+                      >
+                        <CheckCircle className="w-3.5 h-3.5" />
+                        Aceitar Projeto
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex-1 text-xs gap-1.5 blur-[2px] pointer-events-none"
+                        disabled
+                      >
+                        <Search className="w-3.5 h-3.5" />
+                        Pesquisar →
+                      </Button>
+                      {/* Lock overlay */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Lock className="w-4 h-4 text-muted-foreground" />
+                      </div>
                     </div>
                   </motion.div>
                 );
