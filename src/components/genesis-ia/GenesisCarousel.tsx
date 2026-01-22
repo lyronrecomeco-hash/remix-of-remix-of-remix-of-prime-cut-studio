@@ -5,7 +5,8 @@ import {
   Smartphone,
   FileText,
   Sparkles,
-  Rocket
+  Rocket,
+  Code2
 } from 'lucide-react';
 
 interface CarouselItem {
@@ -23,24 +24,31 @@ interface GenesisCarouselProps {
 const carouselItems: CarouselItem[] = [
   {
     id: '1',
+    icon: Code2,
+    title: 'Construir Página',
+    description: 'Crie páginas modernas com IA',
+    tabId: 'page-builder'
+  },
+  {
+    id: '2',
     icon: Smartphone,
     title: 'Apps Virais',
     description: 'Exemplos de aplicativos de sucesso'
   },
   {
-    id: '2',
+    id: '3',
     icon: FileText,
     title: 'Propostas Personalizadas',
     description: 'Crie propostas únicas com IA'
   },
   {
-    id: '3',
+    id: '4',
     icon: GraduationCap,
     title: 'Academia Genesis',
     description: 'Aprimore suas habilidades'
   },
   {
-    id: '4',
+    id: '5',
     icon: Rocket,
     title: 'Redator Automatizado',
     description: 'Automatize sua produção de conteúdo'
