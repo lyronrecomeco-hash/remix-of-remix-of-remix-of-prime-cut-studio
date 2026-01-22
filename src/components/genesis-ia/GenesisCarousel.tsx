@@ -4,11 +4,8 @@ import {
   GraduationCap,
   Smartphone,
   FileText,
-  PenTool,
   Sparkles,
-  Rocket,
-  DollarSign,
-  Layers
+  Rocket
 } from 'lucide-react';
 
 interface CarouselItem {
@@ -25,45 +22,25 @@ interface GenesisCarouselProps {
 
 const carouselItems: CarouselItem[] = [
   {
-    id: 'criar-projetos',
-    icon: Layers,
-    title: 'Criar Projetos',
-    description: 'Crie sites personalizados para seus clientes',
-    tabId: 'criar-projetos'
-  },
-  {
-    id: 'financial',
-    icon: DollarSign,
-    title: 'Financeiro',
-    description: 'Acompanhe métricas e receitas',
-    tabId: 'financial'
-  },
-  {
     id: '1',
-    icon: GraduationCap,
-    title: 'Academia Genesis',
-    description: 'Aprimore suas habilidades'
-  },
-  {
-    id: '2',
     icon: Smartphone,
     title: 'Apps Virais',
     description: 'Exemplos de aplicativos de sucesso'
   },
   {
-    id: '3',
+    id: '2',
     icon: FileText,
     title: 'Propostas Personalizadas',
     description: 'Crie propostas únicas com IA'
   },
   {
-    id: '4',
-    icon: PenTool,
-    title: 'Copy de Vendas',
-    description: 'Crie copy de vendas personalizada com IA'
+    id: '3',
+    icon: GraduationCap,
+    title: 'Academia Genesis',
+    description: 'Aprimore suas habilidades'
   },
   {
-    id: '5',
+    id: '4',
     icon: Rocket,
     title: 'Redator Automatizado',
     description: 'Automatize sua produção de conteúdo'
@@ -150,12 +127,12 @@ export const GenesisCarousel = ({ onNavigate }: GenesisCarouselProps) => {
                 onClick={() => item.tabId && onNavigate?.(item.tabId)}
               >
                 <div 
-                  className="w-[160px] sm:w-[260px] h-[100px] sm:h-[140px] bg-[hsl(200_50%_15%/0.6)] border border-emerald-500/20 hover:border-emerald-500/40 hover:bg-[hsl(200_50%_18%/0.7)] transition-all duration-300 p-3 sm:p-5 flex flex-col justify-between group backdrop-blur-sm"
+                  className="w-[160px] sm:w-[260px] h-[100px] sm:h-[140px] bg-[hsl(210_60%_12%/0.7)] border border-blue-500/20 hover:border-blue-500/40 hover:bg-[hsl(210_60%_15%/0.8)] transition-all duration-300 p-3 sm:p-5 flex flex-col justify-between group backdrop-blur-sm"
                   style={{ borderRadius: '14px' }}
                 >
                   {/* Icon */}
-                  <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl bg-emerald-500/20 flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
+                  <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl bg-blue-500/20 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
                   </div>
 
                   {/* Text */}
