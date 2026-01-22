@@ -354,47 +354,71 @@ serve(async (req) => {
       );
     }
 
-    // Get active gateway config from database
-    const { data: activeConfig } = await supabase
+    // ============= HYBRID GATEWAY LOGIC =============
+    // PIX → MisticPay | CARD → Asaas
+    // Fetch ALL configured gateways to enable hybrid routing
+    const { data: gatewayConfigs } = await supabase
       .from('checkout_gateway_config')
       .select('*')
-      .eq('is_active', true)
-      .eq('api_key_configured', true)
-      .single();
+      .eq('api_key_configured', true);
 
-    let selectedGateway = body.gateway || activeConfig?.gateway;
+    let selectedGateway: string | null = null;
     let apiKey: string | null = null;
     let sandboxMode = false;
     let misticClientId: string | null = null;
     let misticClientSecret: string | null = null;
 
-    if (activeConfig) {
-      selectedGateway = activeConfig.gateway;
-      sandboxMode = activeConfig.sandbox_mode || false;
-      
-      if (activeConfig.gateway === 'misticpay') {
-        if (activeConfig.misticpay_client_id_hash && activeConfig.misticpay_client_secret_hash) {
-          misticClientId = decryptApiKey(activeConfig.misticpay_client_id_hash, activeConfig.user_id);
-          misticClientSecret = decryptApiKey(activeConfig.misticpay_client_secret_hash, activeConfig.user_id);
-        }
-      } else if (activeConfig.asaas_access_token_hash) {
-        apiKey = decryptApiKey(activeConfig.asaas_access_token_hash, activeConfig.user_id);
+    // Find MisticPay config (for PIX)
+    const misticConfig = gatewayConfigs?.find(c => c.gateway === 'misticpay');
+    // Find Asaas config (for CARD)
+    const asaasConfig = gatewayConfigs?.find(c => c.gateway === 'asaas');
+    // Fallback: AbacatePay
+    const abacateConfig = gatewayConfigs?.find(c => c.gateway === 'abacatepay');
+
+    // Hybrid routing based on payment method
+    if (body.paymentMethod === 'PIX') {
+      // PIX: Prefer MisticPay, fallback to Asaas, then AbacatePay
+      if (misticConfig && misticConfig.misticpay_client_id_hash && misticConfig.misticpay_client_secret_hash) {
+        selectedGateway = 'misticpay';
+        misticClientId = decryptApiKey(misticConfig.misticpay_client_id_hash, misticConfig.user_id);
+        misticClientSecret = decryptApiKey(misticConfig.misticpay_client_secret_hash, misticConfig.user_id);
+        sandboxMode = misticConfig.sandbox_mode || false;
+        console.log('[Hybrid] PIX → MisticPay');
+      } else if (asaasConfig && asaasConfig.asaas_access_token_hash) {
+        selectedGateway = 'asaas';
+        apiKey = decryptApiKey(asaasConfig.asaas_access_token_hash, asaasConfig.user_id);
+        sandboxMode = asaasConfig.sandbox_mode || false;
+        console.log('[Hybrid] PIX → Asaas (fallback)');
+      } else if (abacateConfig) {
+        selectedGateway = 'abacatepay';
+        apiKey = Deno.env.get('ABACATEPAY_API_KEY') || null;
+        console.log('[Hybrid] PIX → AbacatePay (fallback)');
       }
-      console.log('Using gateway from config:', selectedGateway, 'sandbox:', sandboxMode);
+    } else if (body.paymentMethod === 'CARD') {
+      // CARD: Prefer Asaas, fallback to AbacatePay
+      if (asaasConfig && asaasConfig.asaas_access_token_hash) {
+        selectedGateway = 'asaas';
+        apiKey = decryptApiKey(asaasConfig.asaas_access_token_hash, asaasConfig.user_id);
+        sandboxMode = asaasConfig.sandbox_mode || false;
+        console.log('[Hybrid] CARD → Asaas');
+      } else if (abacateConfig) {
+        selectedGateway = 'abacatepay';
+        apiKey = Deno.env.get('ABACATEPAY_API_KEY') || null;
+        console.log('[Hybrid] CARD → AbacatePay (fallback)');
+      }
     }
 
-    // Fallback to env variables
-    if (!apiKey && !misticClientId) {
+    // Fallback to env variables if no DB config
+    if (!selectedGateway || (!apiKey && !misticClientId)) {
       const ABACATEPAY_API_KEY = Deno.env.get('ABACATEPAY_API_KEY');
       const ASAAS_API_KEY = Deno.env.get('ASAAS_API_KEY');
       const ASAAS_SANDBOX = Deno.env.get('ASAAS_SANDBOX') === 'true';
 
-      if (selectedGateway === 'asaas' && ASAAS_API_KEY) {
+      if (body.paymentMethod === 'PIX' && ASAAS_API_KEY) {
+        selectedGateway = 'asaas';
         apiKey = ASAAS_API_KEY;
         sandboxMode = ASAAS_SANDBOX;
-      } else if (selectedGateway === 'abacatepay' && ABACATEPAY_API_KEY) {
-        apiKey = ABACATEPAY_API_KEY;
-      } else if (ASAAS_API_KEY) {
+      } else if (body.paymentMethod === 'CARD' && ASAAS_API_KEY) {
         selectedGateway = 'asaas';
         apiKey = ASAAS_API_KEY;
         sandboxMode = ASAAS_SANDBOX;
@@ -404,11 +428,11 @@ serve(async (req) => {
       }
     }
 
-    console.log('Selected gateway:', selectedGateway);
+    console.log('Selected gateway:', selectedGateway, '| Method:', body.paymentMethod, '| Sandbox:', sandboxMode);
 
     if (!selectedGateway || (!apiKey && !misticClientId)) {
       return new Response(
-        JSON.stringify({ error: 'Nenhum gateway de pagamento configurado. Configure em Pagamentos > Gateway.' }),
+        JSON.stringify({ error: 'Nenhum gateway configurado para este método de pagamento. Configure MisticPay (PIX) e/ou Asaas (Cartão) em Pagamentos > Gateway.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

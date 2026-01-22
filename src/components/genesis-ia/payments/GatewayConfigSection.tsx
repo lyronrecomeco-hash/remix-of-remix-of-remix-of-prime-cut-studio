@@ -198,33 +198,77 @@ export function GatewayConfigSection() {
         <CardTitle className="flex items-center gap-2 text-white">
           <Settings className="w-5 h-5 text-emerald-400" />
           Configuração de Gateways
+          <Badge variant="outline" className="ml-2 bg-blue-500/20 text-blue-400 border-blue-500/30 text-[10px]">
+            <Sparkles className="w-3 h-3 mr-1" />
+            HÍBRIDO
+          </Badge>
         </CardTitle>
         <CardDescription className="text-white/60">
-          Configure suas integrações de pagamento. Apenas um gateway pode estar ativo por vez.
+          Sistema híbrido: <span className="text-emerald-400 font-medium">PIX → MisticPay</span> | <span className="text-blue-400 font-medium">Cartão → Asaas</span>
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <Tabs defaultValue="abacatepay" className="w-full">
+        {/* Hybrid Gateway Status */}
+        <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-500/10 to-blue-500/10 border border-white/10">
+          <h4 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-yellow-400" />
+            Roteamento Automático por Método
+          </h4>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="p-3 rounded-lg bg-white/5 border border-emerald-500/30">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="text-xs font-medium text-white">PIX</span>
+              </div>
+              <p className="text-[10px] text-white/50">
+                {misticConfig?.api_key_configured ? (
+                  <span className="text-emerald-400">✓ MisticPay configurado</span>
+                ) : asaasConfig?.api_key_configured ? (
+                  <span className="text-yellow-400">⚠ Usando Asaas (fallback)</span>
+                ) : (
+                  <span className="text-red-400">✗ Nenhum gateway configurado</span>
+                )}
+              </p>
+            </div>
+            <div className="p-3 rounded-lg bg-white/5 border border-blue-500/30">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-2 h-2 rounded-full bg-blue-500" />
+                <span className="text-xs font-medium text-white">Cartão</span>
+              </div>
+              <p className="text-[10px] text-white/50">
+                {asaasConfig?.api_key_configured ? (
+                  <span className="text-blue-400">✓ Asaas configurado</span>
+                ) : abacateConfig?.api_key_configured ? (
+                  <span className="text-yellow-400">⚠ Usando AbacatePay (fallback)</span>
+                ) : (
+                  <span className="text-red-400">✗ Nenhum gateway configurado</span>
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <Tabs defaultValue="misticpay" className="w-full">
           <TabsList className="grid grid-cols-3 w-full max-w-md">
-            <TabsTrigger value="abacatepay" className="flex items-center gap-1 text-xs">
-              <CreditCard className="w-3 h-3" />
-              AbacatePay
-              {abacateConfig?.is_active && (
-                <Badge variant="default" className="ml-1 bg-emerald-500 text-[10px] px-1">Ativo</Badge>
+            <TabsTrigger value="misticpay" className="flex items-center gap-1 text-xs">
+              <Sparkles className="w-3 h-3" />
+              MisticPay
+              {misticConfig?.api_key_configured && (
+                <Badge variant="default" className="ml-1 bg-emerald-500 text-[10px] px-1">PIX</Badge>
               )}
             </TabsTrigger>
             <TabsTrigger value="asaas" className="flex items-center gap-1 text-xs">
               <CreditCard className="w-3 h-3" />
               Asaas
-              {asaasConfig?.is_active && (
-                <Badge variant="default" className="ml-1 bg-emerald-500 text-[10px] px-1">Ativo</Badge>
+              {asaasConfig?.api_key_configured && (
+                <Badge variant="default" className="ml-1 bg-blue-500 text-[10px] px-1">CARD</Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="misticpay" className="flex items-center gap-1 text-xs">
-              <Sparkles className="w-3 h-3" />
-              MisticPay
-              {misticConfig?.is_active && (
-                <Badge variant="default" className="ml-1 bg-emerald-500 text-[10px] px-1">Ativo</Badge>
+            <TabsTrigger value="abacatepay" className="flex items-center gap-1 text-xs">
+              <CreditCard className="w-3 h-3" />
+              AbacatePay
+              {abacateConfig?.api_key_configured && !misticConfig?.api_key_configured && !asaasConfig?.api_key_configured && (
+                <Badge variant="default" className="ml-1 bg-gray-500 text-[10px] px-1">Fallback</Badge>
               )}
             </TabsTrigger>
           </TabsList>
