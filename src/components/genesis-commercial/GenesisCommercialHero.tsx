@@ -200,36 +200,36 @@ const GenesisCommercialHero = () => {
           </motion.div>
         </motion.div>
 
-        {/* MacBook Mockup with Simulated Dashboard - Zoomed */}
+        {/* MacBook Mockup with Simulated Dashboard - GRANDE */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="relative max-w-5xl mx-auto w-full"
+          className="relative max-w-6xl mx-auto w-full"
         >
           {/* Glow behind screen */}
-          <div className="absolute -inset-10 bg-gradient-to-r from-primary/20 via-cyan-500/10 to-primary/20 rounded-[50px] blur-3xl opacity-60" />
+          <div className="absolute -inset-16 bg-gradient-to-r from-primary/20 via-cyan-500/10 to-primary/20 rounded-[50px] blur-3xl opacity-60" />
           
-          {/* Screen Only - No base, with zoom */}
-          <div className="relative transform scale-105">
+          {/* Screen Only - No base, BIGGER */}
+          <div className="relative">
             {/* Screen Frame */}
-            <div className="relative bg-[#0a0a12] rounded-2xl border-[4px] border-[#2a2a3a] overflow-hidden shadow-2xl">
+            <div className="relative bg-[#0a0a12] rounded-2xl border-[6px] border-[#2a2a3a] overflow-hidden shadow-2xl">
               {/* Menu Bar */}
-              <div className="flex items-center gap-2 px-4 py-2.5 bg-[#0d0d14] border-b border-[#1a1a2a]">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-                  <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
-                  <div className="w-3 h-3 rounded-full bg-[#28c840]" />
+              <div className="flex items-center gap-2 px-5 py-3 bg-[#0d0d14] border-b border-[#1a1a2a]">
+                <div className="flex gap-2">
+                  <div className="w-3.5 h-3.5 rounded-full bg-[#ff5f57]" />
+                  <div className="w-3.5 h-3.5 rounded-full bg-[#febc2e]" />
+                  <div className="w-3.5 h-3.5 rounded-full bg-[#28c840]" />
                 </div>
                 <div className="flex-1 flex justify-center">
-                  <div className="px-4 py-1 bg-[#1a1a2e] rounded-md text-xs text-gray-400">
+                  <div className="px-6 py-1.5 bg-[#1a1a2e] rounded-lg text-sm text-gray-400">
                     genesis-ia.app/dashboard
                   </div>
                 </div>
               </div>
 
-              {/* Simulated Dashboard Content - Matching real GenesisIADashboard */}
-              <div className="relative bg-[hsl(220_25%_10%)] p-5 min-h-[420px]">
+              {/* Simulated Dashboard Content - GRANDE */}
+              <div className="relative bg-[hsl(220_25%_10%)] p-8 min-h-[520px]">
                 {/* Canvas-like background with particles simulation */}
                 <div className="absolute inset-0 overflow-hidden">
                   {/* Grid pattern */}
@@ -261,57 +261,57 @@ const GenesisCommercialHero = () => {
                     />
                   ))}
                 </div>
-                {/* Welcome Header - exact match */}
-                <div className="text-center mb-5 relative z-10">
-                  <h2 className="text-xl md:text-2xl font-bold text-white flex items-center justify-center gap-2">
-                    Bom dia, ADM! <span className="text-xl">👋</span>
+                {/* Welcome Header - GRANDE */}
+                <div className="text-center mb-8 relative z-10">
+                  <h2 className="text-2xl md:text-3xl font-bold text-white flex items-center justify-center gap-3">
+                    Bom dia, ADM! <span className="text-2xl">👋</span>
                   </h2>
-                  <p className="text-white/50 text-xs mt-1">Crie, evolua e gerencie suas ideias em um só lugar.</p>
+                  <p className="text-white/50 text-sm mt-2">Crie, evolua e gerencie suas ideias em um só lugar.</p>
                 </div>
 
-                {/* Quick Action Cards */}
-                <div className="grid grid-cols-3 gap-2.5 mb-4 relative z-10">
+                {/* Quick Action Cards - GRANDE */}
+                <div className="grid grid-cols-3 gap-4 mb-6 relative z-10">
                   {quickActions.map((action, i) => (
                     <motion.div
                       key={i}
                       whileHover={{ scale: 1.02, y: -2 }}
-                      className="bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/[0.08] transition-all duration-300 cursor-pointer p-3"
-                      style={{ borderRadius: '14px' }}
+                      className="bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/[0.08] transition-all duration-300 cursor-pointer p-4"
+                      style={{ borderRadius: '16px' }}
                     >
-                      <div className="flex items-center gap-2.5 mb-2">
-                        <div className="w-7 h-7 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
-                          <action.icon className="w-3.5 h-3.5 text-primary" />
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+                          <action.icon className="w-5 h-5 text-primary" />
                         </div>
-                        <h3 className="text-white font-semibold text-[11px]">{action.title}</h3>
+                        <h3 className="text-white font-semibold text-sm">{action.title}</h3>
                       </div>
-                      <p className="text-white/50 text-[9px] leading-relaxed">{action.desc}</p>
+                      <p className="text-white/50 text-xs leading-relaxed">{action.desc}</p>
                     </motion.div>
                   ))}
                 </div>
 
-                {/* Acesse também - EXACT CLONE from screenshot */}
+                {/* Acesse também - GRANDE */}
                 <div className="relative z-10">
-                  <div className="flex items-center gap-2 mb-2.5">
-                    <div className="w-6 h-6 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                      <Sparkles className="w-3 h-3 text-purple-400" />
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                      <Sparkles className="w-4 h-4 text-purple-400" />
                     </div>
-                    <span className="text-white font-bold text-[11px]">Acesse também</span>
+                    <span className="text-white font-bold text-sm">Acesse também</span>
                   </div>
                   
-                  {/* Carousel - EXACT style from screenshot */}
+                  {/* Carousel - GRANDE */}
                   <div 
                     className="relative overflow-hidden"
-                    style={{ borderRadius: '14px' }}
+                    style={{ borderRadius: '16px' }}
                     onMouseEnter={() => setIsPaused(true)}
                     onMouseLeave={() => setIsPaused(false)}
                   >
                     {/* Gradient masks */}
-                    <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-[hsl(220_25%_10%)] via-[hsl(220_25%_10%/0.8)] to-transparent z-10 pointer-events-none" />
-                    <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[hsl(220_25%_10%)] via-[hsl(220_25%_10%/0.8)] to-transparent z-10 pointer-events-none" />
+                    <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-[hsl(220_25%_10%)] via-[hsl(220_25%_10%/0.8)] to-transparent z-10 pointer-events-none" />
+                    <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-[hsl(220_25%_10%)] via-[hsl(220_25%_10%/0.8)] to-transparent z-10 pointer-events-none" />
                     
                     <div 
                       ref={scrollRef}
-                      className="flex gap-2.5 py-1 overflow-x-hidden scrollbar-hide"
+                      className="flex gap-3 py-2 overflow-x-hidden scrollbar-hide"
                       style={{ scrollBehavior: 'auto' }}
                     >
                       {duplicatedItems.map((item, index) => {
@@ -324,22 +324,22 @@ const GenesisCommercialHero = () => {
                             transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                             className="flex-shrink-0 cursor-pointer"
                           >
-                            {/* EXACT card from screenshot - tall cards with icon top-left */}
+                            {/* Card GRANDE */}
                             <div
-                              className="w-[130px] h-[85px] bg-[hsl(200_50%_15%/0.6)] border border-primary/20 hover:border-primary/40 hover:bg-[hsl(200_50%_18%/0.7)] transition-all duration-300 p-2.5 flex flex-col justify-between group backdrop-blur-sm"
+                              className="w-[140px] h-[100px] bg-[hsl(200_50%_15%/0.6)] border border-primary/20 hover:border-primary/40 hover:bg-[hsl(200_50%_18%/0.7)] transition-all duration-300 p-3 flex flex-col justify-between group backdrop-blur-sm"
                               style={{ borderRadius: '14px' }}
                             >
                               {/* Icon - top left */}
-                              <div className="w-6 h-6 rounded-lg bg-primary/20 flex items-center justify-center group-hover:scale-105 transition-transform">
-                                <Icon className="w-3 h-3 text-primary" />
+                              <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center group-hover:scale-105 transition-transform">
+                                <Icon className="w-4 h-4 text-primary" />
                               </div>
 
                               {/* Text - bottom */}
                               <div>
-                                <h3 className="font-semibold text-white text-[10px] leading-tight mb-0.5">
+                                <h3 className="font-semibold text-white text-xs leading-tight mb-1">
                                   {item.title}
                                 </h3>
-                                <p className="text-[8px] text-white/50 leading-tight truncate">
+                                <p className="text-[10px] text-white/50 leading-tight truncate">
                                   {item.desc}
                                 </p>
                               </div>
@@ -351,16 +351,16 @@ const GenesisCommercialHero = () => {
                   </div>
                 </div>
 
-                {/* Dock at bottom - EXACT from screenshot */}
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20">
-                  <div className="flex items-center gap-1.5 px-4 py-2 bg-white/5 backdrop-blur-md border border-white/10" style={{ borderRadius: '16px' }}>
+                {/* Dock at bottom - GRANDE */}
+                <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20">
+                  <div className="flex items-center gap-2 px-5 py-2.5 bg-white/5 backdrop-blur-md border border-white/10" style={{ borderRadius: '20px' }}>
                     {dockIcons.map((Icon, i) => (
                       <motion.div
                         key={i}
                         whileHover={{ scale: 1.2, y: -3 }}
-                        className={`w-6 h-6 rounded-lg flex items-center justify-center cursor-pointer transition-colors ${i === 0 ? 'bg-primary/20 text-primary' : 'text-white/40 hover:text-white/60'}`}
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors ${i === 0 ? 'bg-primary/20 text-primary' : 'text-white/40 hover:text-white/60'}`}
                       >
-                        <Icon className="w-3.5 h-3.5" />
+                        <Icon className="w-4 h-4" />
                       </motion.div>
                     ))}
                   </div>
