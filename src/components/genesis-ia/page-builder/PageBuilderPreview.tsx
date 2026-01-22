@@ -1,8 +1,6 @@
 import { 
   SandpackProvider, 
-  SandpackPreview,
-  SandpackErrorOverlay,
-  SandpackStack
+  SandpackPreview
 } from '@codesandbox/sandpack-react';
 import '@codesandbox/sandpack-react/dist/index.css';
 import { memo } from 'react';
@@ -104,14 +102,11 @@ const PageBuilderPreviewComponent = ({ code }: PageBuilderPreviewProps) => {
           },
         }}
       >
-        <SandpackStack className="h-full">
-          <SandpackPreview
-            showOpenInCodeSandbox={false}
-            showRefreshButton={true}
-            style={{ height: '100%' }}
-          />
-          <SandpackErrorOverlay style={{ height: '100%' }} />
-        </SandpackStack>
+        <SandpackPreview
+          showOpenInCodeSandbox={false}
+          showRefreshButton={true}
+          style={{ height: '100%' }}
+        />
       </SandpackProvider>
     </div>
   );
