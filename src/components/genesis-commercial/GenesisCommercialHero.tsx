@@ -293,25 +293,25 @@ const GenesisCommercialHero = () => {
                   ))}
                 </div>
 
-                {/* Acesse também - Real Infinite Carousel */}
+                {/* Acesse também - EXACT CLONE from GenesisCarousel */}
                 <div className="relative z-10">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-7 h-7 rounded-xl bg-purple-500/20 flex items-center justify-center">
-                      <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-6 h-6 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                      <Sparkles className="w-3 h-3 text-purple-400" />
                     </div>
-                    <span className="text-white font-semibold text-xs">Acesse também</span>
+                    <span className="text-white font-bold text-[11px] tracking-tight">Acesse também</span>
                   </div>
                   
-                  {/* Carousel matching real GenesisCarousel - Infinite scroll */}
+                  {/* Carousel - EXACT style from original */}
                   <div 
                     className="relative overflow-hidden"
                     style={{ borderRadius: '14px' }}
                     onMouseEnter={() => setIsPaused(true)}
                     onMouseLeave={() => setIsPaused(false)}
                   >
-                    {/* Gradient masks - matching original */}
-                    <div className="absolute left-0 top-0 bottom-0 w-10 bg-gradient-to-r from-[hsl(220_25%_10%)] via-[hsl(220_25%_10%/0.8)] to-transparent z-10 pointer-events-none" />
-                    <div className="absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-[hsl(220_25%_10%)] via-[hsl(220_25%_10%/0.8)] to-transparent z-10 pointer-events-none" />
+                    {/* Gradient masks - exact from original */}
+                    <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[hsl(220_25%_10%)] via-[hsl(220_25%_10%/0.8)] to-transparent z-10 pointer-events-none" />
+                    <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[hsl(220_25%_10%)] via-[hsl(220_25%_10%/0.8)] to-transparent z-10 pointer-events-none" />
                     
                     <div 
                       ref={scrollRef}
@@ -324,19 +324,28 @@ const GenesisCommercialHero = () => {
                           <motion.div
                             key={`${item.title}-${index}`}
                             whileHover={{ scale: 1.02, y: -2 }}
+                            whileTap={{ scale: 0.98 }}
+                            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                             className="flex-shrink-0 cursor-pointer"
                           >
-                            {/* Card matching real GenesisCarousel style */}
+                            {/* EXACT card from GenesisCarousel.tsx */}
                             <div 
-                              className="w-[110px] h-[70px] bg-[hsl(200_50%_15%/0.6)] border border-emerald-500/20 hover:border-emerald-500/40 hover:bg-[hsl(200_50%_18%/0.7)] p-2 transition-all duration-300 flex flex-col justify-between"
+                              className="w-[100px] h-[65px] bg-[hsl(200_50%_15%/0.6)] border border-emerald-500/20 hover:border-emerald-500/40 hover:bg-[hsl(200_50%_18%/0.7)] transition-all duration-300 p-2 flex flex-col justify-between group backdrop-blur-sm"
                               style={{ borderRadius: '14px' }}
                             >
-                              <div className="w-5 h-5 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                              {/* Icon - exact style */}
+                              <div className="w-5 h-5 rounded-lg bg-emerald-500/20 flex items-center justify-center group-hover:scale-105 transition-transform">
                                 <Icon className="w-2.5 h-2.5 text-emerald-400" />
                               </div>
-                              <div>
-                                <h4 className="text-white font-medium text-[9px] mb-0 truncate">{item.title}</h4>
-                                <p className="text-white/50 text-[7px] truncate">{item.desc}</p>
+
+                              {/* Text - exact style */}
+                              <div className="space-y-0">
+                                <h3 className="font-semibold text-white text-[8px] leading-tight group-hover:text-white/90 transition-colors truncate">
+                                  {item.title}
+                                </h3>
+                                <p className="text-[6px] text-white/50 group-hover:text-white/60 transition-colors truncate">
+                                  {item.desc}
+                                </p>
                               </div>
                             </div>
                           </motion.div>
