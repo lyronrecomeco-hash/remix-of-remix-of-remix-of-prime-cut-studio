@@ -30,26 +30,26 @@ export function StepNicheSelect() {
   }, [searchQuery, selectedCategory]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Search and Categories */}
-      <div className="flex flex-col gap-3">
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+      <div className="flex flex-col gap-2">
+        <div className="relative max-w-xs">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Buscar nicho..."
-            className="pl-9 bg-white/5 border-white/10 h-9"
+            className="pl-8 bg-white/5 border-white/10 h-8 text-xs"
           />
         </div>
         
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1">
           <button
             onClick={() => setSelectedCategory(null)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+            className={`px-2 py-1 rounded-full text-[10px] font-medium transition-all ${
               !selectedCategory 
-                ? 'bg-primary text-primary-foreground shadow-sm' 
-                : 'bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground'
+                ? 'bg-primary text-primary-foreground' 
+                : 'bg-white/5 text-muted-foreground hover:bg-white/10'
             }`}
           >
             Todos
@@ -58,10 +58,10 @@ export function StepNicheSelect() {
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+              className={`px-2 py-1 rounded-full text-[10px] font-medium transition-all ${
                 selectedCategory === cat.id 
-                  ? 'bg-primary text-primary-foreground shadow-sm' 
-                  : 'bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground'
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'bg-white/5 text-muted-foreground hover:bg-white/10'
               }`}
             >
               {cat.emoji} {cat.name}
@@ -70,9 +70,9 @@ export function StepNicheSelect() {
         </div>
       </div>
 
-      {/* Niches Grid - Compact Icon-based */}
-      <ScrollArea className="h-[280px] pr-2">
-        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2">
+      {/* Niches Grid */}
+      <ScrollArea className="h-[200px]">
+        <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-1.5 pr-2">
           {filteredNiches.map((niche, index) => {
             const isSelected = formData.nicheId === niche.id;
             
@@ -83,31 +83,23 @@ export function StepNicheSelect() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: index * 0.01 }}
                 onClick={() => updateFormData('nicheId', niche.id)}
-                className={`group relative flex flex-col items-center justify-center p-3 rounded-xl border transition-all hover:scale-[1.02] ${
+                className={`relative flex flex-col items-center justify-center p-2 rounded-lg border transition-all ${
                   isSelected
-                    ? 'border-primary bg-primary/10 shadow-md shadow-primary/20'
-                    : 'border-white/10 bg-white/5 hover:border-primary/40 hover:bg-white/10'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-white/10 bg-white/5 hover:border-white/20'
                 }`}
               >
-                {/* Emoji Icon */}
-                <span className="text-2xl mb-1.5">{niche.emoji}</span>
-                
-                {/* Name */}
-                <span className={`text-[10px] font-medium text-center leading-tight line-clamp-2 ${
+                <span className="text-lg mb-0.5">{niche.emoji}</span>
+                <span className={`text-[8px] font-medium text-center leading-tight line-clamp-2 ${
                   isSelected ? 'text-primary' : 'text-foreground/80'
                 }`}>
                   {niche.name}
                 </span>
                 
-                {/* Selected Indicator */}
                 {isSelected && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center shadow-lg"
-                  >
-                    <Check className="w-3 h-3 text-primary-foreground" />
-                  </motion.div>
+                  <div className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-primary flex items-center justify-center">
+                    <Check className="w-2 h-2 text-primary-foreground" />
+                  </div>
                 )}
               </motion.button>
             );
@@ -119,27 +111,23 @@ export function StepNicheSelect() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: filteredNiches.length * 0.01 }}
             onClick={() => updateFormData('nicheId', 'outro')}
-            className={`group relative flex flex-col items-center justify-center p-3 rounded-xl border transition-all hover:scale-[1.02] ${
+            className={`relative flex flex-col items-center justify-center p-2 rounded-lg border transition-all ${
               formData.nicheId === 'outro'
-                ? 'border-primary bg-primary/10 shadow-md shadow-primary/20'
-                : 'border-white/10 bg-white/5 hover:border-primary/40 hover:bg-white/10'
+                ? 'border-primary bg-primary/10'
+                : 'border-white/10 bg-white/5 hover:border-white/20'
             }`}
           >
-            <Sparkles className="w-6 h-6 mb-1.5 text-yellow-500" />
-            <span className={`text-[10px] font-medium text-center leading-tight ${
+            <Sparkles className="w-4 h-4 mb-0.5 text-yellow-500" />
+            <span className={`text-[8px] font-medium text-center ${
               formData.nicheId === 'outro' ? 'text-primary' : 'text-foreground/80'
             }`}>
-              Outro Nicho
+              Outro
             </span>
             
             {formData.nicheId === 'outro' && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center shadow-lg"
-              >
-                <Check className="w-3 h-3 text-primary-foreground" />
-              </motion.div>
+              <div className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-primary flex items-center justify-center">
+                <Check className="w-2 h-2 text-primary-foreground" />
+              </div>
             )}
           </motion.button>
         </div>
@@ -150,14 +138,14 @@ export function StepNicheSelect() {
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20"
+          className="flex items-center gap-2 p-2 rounded-lg bg-primary/5 border border-primary/20"
         >
-          <Sparkles className="w-4 h-4 text-primary shrink-0" />
+          <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
           <Input
             value={formData.customNiche || ''}
             onChange={(e) => updateFormData('customNiche', e.target.value)}
             placeholder="Digite o nicho do seu negócio..."
-            className="bg-white/5 border-white/10 h-9 flex-1"
+            className="bg-white/5 border-white/10 h-7 text-xs flex-1"
             autoFocus
           />
         </motion.div>
