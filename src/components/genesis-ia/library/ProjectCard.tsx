@@ -3,18 +3,15 @@ import { motion } from 'framer-motion';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
-  Eye,
   Copy,
   Trash2,
-  Pencil,
-  MoreVertical,
+  MoreHorizontal,
   ExternalLink,
-  Globe,
-  Rocket,
+  Calendar,
+  Clock,
   Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -91,14 +88,13 @@ export function ProjectCard({ project, index, onEdit, onEvolve, onDelete }: Proj
   };
 
   const platformInfo = getPlatformInfo();
-  const evolutionCount = Array.isArray(project.evolution_history)
-    ? project.evolution_history.length
-    : 0;
 
   const relativeUpdatedAt = formatDistanceToNow(new Date(project.updated_at), {
-    addSuffix: true,
+    addSuffix: false,
     locale: ptBR,
   });
+
+  const createdDate = format(new Date(project.created_at), "dd 'de' MMM. 'de' yyyy", { locale: ptBR });
 
   return (
     <motion.div
@@ -106,130 +102,92 @@ export function ProjectCard({ project, index, onEdit, onEvolve, onDelete }: Proj
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ delay: index * 0.04 }}
+      transition={{ delay: (index + 1) * 0.05 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className="group relative"
     >
       <div
         className={cn(
-          'relative rounded-xl border bg-gradient-to-br from-card to-card/80 overflow-hidden transition-all duration-300',
+          'relative rounded-xl border bg-white/5 overflow-hidden transition-all duration-300 min-h-[200px] flex flex-col',
           isHovered
-            ? 'border-primary/40 shadow-xl shadow-primary/5 scale-[1.01]'
-            : 'border-border'
+            ? 'border-blue-500/40 shadow-xl shadow-blue-500/5 bg-white/10'
+            : 'border-white/10'
         )}
       >
-        {/* Status Badge */}
-        <div className="absolute top-3 right-3 z-10">
-          <Badge
-            variant={project.is_active ? 'default' : 'secondary'}
-            className="text-[10px] px-2 py-0.5 backdrop-blur-sm"
-          >
-            {project.is_active ? '🟢 Ativo' : '⚪ Inativo'}
-          </Badge>
-        </div>
-
-        {/* Card Header */}
-        <div className="p-4 pb-2">
-          <div className="flex items-start gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-purple-600/20 flex items-center justify-center text-2xl flex-shrink-0">
-              {getTemplateIcon(project.template_slug)}
-            </div>
-            <div className="flex-1 min-w-0 pt-1">
-              <h3 className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
-                {project.client_name || project.template_name}
-              </h3>
-              <p className="text-[11px] text-muted-foreground truncate">
-                {project.template_name}
-              </p>
-            </div>
+        {/* Header with Icon */}
+        <div className="p-4 pb-3 flex items-start gap-3">
+          <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-xl flex-shrink-0">
+            {getTemplateIcon(project.template_slug)}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-semibold text-foreground truncate">
+              {project.client_name || project.template_name}
+            </h3>
+            <p className="text-[11px] text-muted-foreground truncate">
+              Arquitetura e estratégia de nicho...
+            </p>
           </div>
         </div>
 
-        {/* Platform & Dates */}
-        <div className="px-4 pb-2">
-          <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <span className={cn('w-5 h-5 rounded flex items-center justify-center bg-gradient-to-r text-white text-[10px]', platformInfo.color)}>
-                {platformInfo.icon}
-              </span>
-              <span>{platformInfo.label}</span>
-            </div>
-            <span>Atualizado {relativeUpdatedAt}</span>
-          </div>
-        </div>
-
-        {/* URL Section */}
-        <div className="px-4 pb-3">
-          <button
-            onClick={copyLink}
-            className="w-full flex items-center gap-2 p-2 rounded-lg bg-muted/40 hover:bg-muted/70 transition-colors group/url"
-          >
-            <Globe className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-            <span className="text-[10px] text-muted-foreground truncate font-mono flex-1 text-left">
-              /p/{getProjectRoute()}
+        {/* Metadata */}
+        <div className="px-4 pb-3 space-y-2 flex-1">
+          {/* Platform */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Plataforma</span>
+            <span className={cn(
+              'px-2 py-0.5 rounded text-[10px] font-medium',
+              'bg-amber-500/20 text-amber-300'
+            )}>
+              {platformInfo.label}
             </span>
-            <Copy className="w-3 h-3 text-muted-foreground/50 group-hover/url:text-primary transition-colors flex-shrink-0" />
-          </button>
-        </div>
-
-        {/* Stats Row */}
-        <div className="px-4 pb-3 flex items-center justify-between text-[10px] text-muted-foreground">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1">
-              <Eye className="w-3 h-3" />
-              <span>{project.views_count}</span>
-            </div>
-            {evolutionCount > 0 && (
-              <div className="flex items-center gap-1">
-                <Rocket className="w-3 h-3" />
-                <span>{evolutionCount} evoluções</span>
-              </div>
-            )}
           </div>
-          <span>{format(new Date(project.created_at), 'dd MMM yyyy', { locale: ptBR })}</span>
+
+          {/* Created At */}
+          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+            <Calendar className="w-3 h-3" />
+            <span className="uppercase tracking-wider">Criado em</span>
+            <span className="text-foreground/80 ml-auto">{createdDate}</span>
+          </div>
+
+          {/* Updated At */}
+          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+            <Clock className="w-3 h-3" />
+            <span className="uppercase tracking-wider">Atualizado</span>
+            <span className="text-foreground/80 ml-auto">há {relativeUpdatedAt}</span>
+          </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="px-4 pb-4 flex items-center gap-2">
+        <div className="px-4 pb-4 pt-2 border-t border-white/5 flex items-center gap-2">
           <Button
             size="sm"
-            variant="outline"
-            className="flex-1 h-8 text-xs"
             onClick={openPreview}
+            className="flex-1 h-8 text-xs bg-amber-500/90 hover:bg-amber-500 text-black font-medium"
           >
-            <ExternalLink className="w-3 h-3 mr-1" />
-            Ver
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="flex-1 h-8 text-xs border-purple-500/30 text-purple-400 hover:bg-purple-500/10 hover:text-purple-300"
-            onClick={() => onEvolve(project)}
-          >
-            <Sparkles className="w-3 h-3 mr-1" />
-            Evoluir
-          </Button>
-          <Button
-            size="sm"
-            className="flex-1 h-8 text-xs bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
-            onClick={() => onEdit(project)}
-          >
-            <Pencil className="w-3 h-3 mr-1" />
-            Editar
+            ABRIR
+            <ExternalLink className="w-3 h-3 ml-1" />
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-                <MoreVertical className="w-4 h-4" />
+              <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/5 hover:bg-white/10">
+                <MoreHorizontal className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="bg-card border-white/10">
+              <DropdownMenuItem onClick={() => onEdit(project)}>
+                <Sparkles className="w-4 h-4 mr-2" />
+                Editar
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onEvolve(project)}>
+                <Sparkles className="w-4 h-4 mr-2 text-purple-400" />
+                Evoluir
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={copyLink}>
                 <Copy className="w-4 h-4 mr-2" />
                 Copiar Link
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
+              <DropdownMenuSeparator className="bg-white/10" />
               <DropdownMenuItem
                 onClick={() => onDelete(project.id)}
                 className="text-destructive focus:text-destructive"

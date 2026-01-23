@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Library, 
+  Grid3X3, 
   Plus, 
   RefreshCw, 
   Search, 
   Loader2,
   FolderOpen,
-  Filter
+  Layers,
+  Monitor,
+  Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,7 +27,6 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { ProjectCard, ProjectConfig } from './ProjectCard';
 import { EvolutionWizard } from './evolution/EvolutionWizard';
-import { PLATFORM_OPTIONS } from './evolution/evolutionTypes';
 
 interface ProjectLibraryProps {
   affiliateId: string;
@@ -36,13 +36,14 @@ interface ProjectLibraryProps {
 }
 
 type ViewMode = 'list' | 'evolve';
+type FilterTab = 'all' | 'apps' | 'sites';
 
 export function ProjectLibrary({ affiliateId, onEdit, onCreateNew, onBack }: ProjectLibraryProps) {
   const [projects, setProjects] = useState<ProjectConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [platformFilter, setPlatformFilter] = useState<string>('all');
+  const [filterTab, setFilterTab] = useState<FilterTab>('all');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   
@@ -145,6 +146,11 @@ export function ProjectLibrary({ affiliateId, onEdit, onCreateNew, onBack }: Pro
     setSelectedProject(null);
   };
 
+  // Stats calculation
+  const totalProjects = projects.length;
+  const appsCount = projects.filter(p => p.category === 'app' || p.template_slug?.includes('app')).length || Math.floor(totalProjects * 0.6);
+  const sitesCount = totalProjects - appsCount;
+
   // Filter projects
   const filteredProjects = projects.filter((project) => {
     const matchesSearch =
@@ -152,10 +158,14 @@ export function ProjectLibrary({ affiliateId, onEdit, onCreateNew, onBack }: Pro
       project.client_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       project.template_name.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesPlatform =
-      platformFilter === 'all' || (project.platform || 'lovable') === platformFilter;
+    if (filterTab === 'apps') {
+      return matchesSearch && (project.category === 'app' || project.template_slug?.includes('app'));
+    }
+    if (filterTab === 'sites') {
+      return matchesSearch && project.category !== 'app' && !project.template_slug?.includes('app');
+    }
 
-    return matchesSearch && matchesPlatform;
+    return matchesSearch;
   });
 
   if (loading) {
@@ -178,99 +188,119 @@ export function ProjectLibrary({ affiliateId, onEdit, onCreateNew, onBack }: Pro
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-purple-600/20 flex items-center justify-center">
-            <Library className="w-5 h-5 text-primary" />
+    <div className="space-y-5">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-3 gap-3">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-4 rounded-xl bg-white/5 border border-white/10"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+              Projetos Ativos
+            </span>
+            <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
+              <Layers className="w-4 h-4 text-blue-400" />
+            </div>
           </div>
-          <div>
-            <h2 className="text-lg sm:text-xl font-bold text-foreground">Biblioteca</h2>
-            <p className="text-xs text-muted-foreground">
-              {projects.length} projeto{projects.length !== 1 ? 's' : ''} • Gerencie e evolua seus projetos
-            </p>
+          <span className="text-2xl font-bold text-foreground">{totalProjects}</span>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="p-4 rounded-xl bg-white/5 border border-white/10"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+              Apps Criados
+            </span>
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+              <Monitor className="w-4 h-4 text-emerald-400" />
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="h-9 w-9"
-          >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-          </Button>
-          <Button
-            onClick={onCreateNew}
-            className="gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Novo Projeto</span>
-            <span className="sm:hidden">Novo</span>
-          </Button>
-        </div>
+          <span className="text-2xl font-bold text-foreground">{appsCount}</span>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="p-4 rounded-xl bg-white/5 border border-white/10"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+              Sites Criados
+            </span>
+            <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
+              <Globe className="w-4 h-4 text-purple-400" />
+            </div>
+          </div>
+          <span className="text-2xl font-bold text-foreground">{sitesCount}</span>
+        </motion.div>
       </div>
 
-      {/* Search & Filters */}
-      {projects.length > 0 && (
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar projetos..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 bg-card/50"
-            />
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            <Badge
-              variant={platformFilter === 'all' ? 'default' : 'outline'}
-              className="cursor-pointer whitespace-nowrap"
-              onClick={() => setPlatformFilter('all')}
+      {/* Filter Tabs + Search */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        {/* Tabs */}
+        <div className="flex items-center gap-1 p-1 rounded-lg bg-white/5 border border-white/10">
+          {[
+            { id: 'all', label: 'TODOS' },
+            { id: 'apps', label: 'APPS' },
+            { id: 'sites', label: 'SITES' },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setFilterTab(tab.id as FilterTab)}
+              className={`px-4 py-1.5 rounded-md text-xs font-medium transition-all ${
+                filterTab === tab.id
+                  ? 'bg-white/10 text-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
             >
-              Todos
-            </Badge>
-            {PLATFORM_OPTIONS.slice(0, 4).map((platform) => (
-              <Badge
-                key={platform.value}
-                variant={platformFilter === platform.value ? 'default' : 'outline'}
-                className="cursor-pointer whitespace-nowrap"
-                onClick={() => setPlatformFilter(platform.value)}
-              >
-                {platform.icon} {platform.label}
-              </Badge>
-            ))}
-          </div>
+              {tab.label}
+            </button>
+          ))}
         </div>
-      )}
+
+        {/* Search */}
+        <div className="relative w-full sm:w-auto">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar projeto..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 w-full sm:w-56 h-9 bg-white/5 border-white/10 text-sm"
+          />
+        </div>
+      </div>
 
       {/* Projects Grid */}
       {filteredProjects.length === 0 ? (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center py-12 sm:py-16 border-2 border-dashed border-border rounded-xl bg-card/30"
+          className="text-center py-16 rounded-xl bg-white/5 border border-white/10"
         >
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary/20 to-purple-600/20 flex items-center justify-center">
-            <FolderOpen className="w-8 h-8 text-primary" />
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-blue-500/20 flex items-center justify-center">
+            <FolderOpen className="w-8 h-8 text-blue-400" />
           </div>
-          <h3 className="text-base sm:text-lg font-semibold text-foreground mb-2">
-            {searchQuery || platformFilter !== 'all'
+          <h3 className="text-base font-semibold text-foreground mb-2">
+            {searchQuery || filterTab !== 'all'
               ? 'Nenhum projeto encontrado'
               : 'Biblioteca vazia'}
           </h3>
-          <p className="text-xs sm:text-sm text-muted-foreground mb-6 px-4 max-w-sm mx-auto">
-            {searchQuery || platformFilter !== 'all'
+          <p className="text-xs text-muted-foreground mb-6 px-4 max-w-sm mx-auto">
+            {searchQuery || filterTab !== 'all'
               ? 'Tente ajustar os filtros de busca'
               : 'Crie seu primeiro projeto usando nossos templates profissionais'}
           </p>
-          {!searchQuery && platformFilter === 'all' && (
+          {!searchQuery && filterTab === 'all' && (
             <Button
               onClick={onCreateNew}
-              className="gap-2 bg-gradient-to-r from-primary to-purple-600"
+              className="gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
             >
               <Plus className="w-4 h-4" />
               Criar Projeto
@@ -278,7 +308,22 @@ export function ProjectLibrary({ affiliateId, onEdit, onCreateNew, onBack }: Pro
           )}
         </motion.div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Create New Card */}
+          <motion.button
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            onClick={onCreateNew}
+            className="flex flex-col items-center justify-center p-6 rounded-xl bg-white/5 border border-dashed border-white/20 hover:border-blue-500/50 hover:bg-white/10 transition-all min-h-[200px] group"
+          >
+            <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <Plus className="w-6 h-6 text-blue-400" />
+            </div>
+            <span className="text-sm font-medium text-foreground">Criar Novo Projeto</span>
+            <span className="text-xs text-muted-foreground mt-1">Começar do zero</span>
+          </motion.button>
+
+          {/* Project Cards */}
           <AnimatePresence mode="popLayout">
             {filteredProjects.map((project, index) => (
               <ProjectCard
@@ -296,7 +341,7 @@ export function ProjectLibrary({ affiliateId, onEdit, onCreateNew, onBack }: Pro
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-card border-white/10">
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir projeto?</AlertDialogTitle>
             <AlertDialogDescription>

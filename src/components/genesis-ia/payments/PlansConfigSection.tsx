@@ -1,13 +1,12 @@
 /**
- * Seção de Configuração de Planos
- * Permite admin configurar valores dos planos
+ * Seção de Configuração de Planos - Design Padronizado Genesis
  */
 
 import React, { useState, useEffect } from 'react';
-import { Save, Loader2, Check, AlertCircle, Crown, Sparkles } from 'lucide-react';
+import { Save, Loader2, Crown, Info } from 'lucide-react';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -99,7 +98,6 @@ export function PlansConfigSection() {
 
       toast.success(`${plan.display_name} atualizado!`);
       
-      // Clear edits and reload
       setEditedPlans(prev => {
         const next = { ...prev };
         delete next[plan.id];
@@ -137,78 +135,83 @@ export function PlansConfigSection() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold">Configurar Planos</h3>
+          <h3 className="text-lg font-semibold text-foreground">Configurar Planos</h3>
           <p className="text-sm text-muted-foreground">
             Defina os valores dos planos comercial e promocional
           </p>
         </div>
       </div>
 
-      {/* Plans Grid */}
+      {/* Plans Grid - Standardized Design */}
       <div className="grid gap-4 md:grid-cols-3">
-        {plans.map((plan) => {
+        {plans.map((plan, index) => {
           const hasChanges = editedPlans[plan.id] && Object.keys(editedPlans[plan.id]).length > 0;
           const isSaving = savingPlanId === plan.id;
           const isPopular = getEditedValue(plan.id, 'is_popular', plan.is_popular);
 
           return (
-            <Card 
-              key={plan.id} 
+            <motion.div
+              key={plan.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
               className={cn(
-                "relative transition-all",
-                isPopular && "ring-2 ring-primary"
+                'relative rounded-xl p-5 transition-all',
+                'bg-white/5 border',
+                isPopular ? 'border-blue-500/50 ring-1 ring-blue-500/30' : 'border-white/10'
               )}
             >
               {/* Popular Badge */}
               {isPopular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                  <span className="bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                  <span className="bg-blue-500 text-white text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1 uppercase tracking-wider">
                     <Crown className="w-3 h-3" />
-                    POPULAR
+                    Popular
                   </span>
                 </div>
               )}
 
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-primary" />
+              {/* Plan Header */}
+              <div className="mb-5 text-center">
+                <h4 className="text-base font-semibold text-foreground mb-1">
                   {plan.display_name}
-                </CardTitle>
-                <CardDescription>
+                </h4>
+                <p className="text-xs text-muted-foreground">
                   {plan.duration_months} {plan.duration_months === 1 ? 'mês' : 'meses'}
-                </CardDescription>
-              </CardHeader>
+                </p>
+              </div>
 
-              <CardContent className="space-y-4">
+              {/* Form Fields */}
+              <div className="space-y-4">
                 {/* Price Commercial */}
-                <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
                     Valor Comercial (R$)
                   </Label>
                   <Input
                     type="text"
                     value={formatCurrency(getEditedValue(plan.id, 'price_cents', plan.price_cents))}
                     onChange={(e) => handleChange(plan.id, 'price_cents', parseCurrency(e.target.value))}
-                    className="h-10"
+                    className="h-10 bg-white/5 border-white/10 text-center font-mono"
                   />
                 </div>
 
                 {/* Price Promo */}
-                <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
                     Valor Promocional (R$)
                   </Label>
                   <Input
                     type="text"
                     value={formatCurrency(getEditedValue(plan.id, 'promo_price_cents', plan.promo_price_cents || plan.price_cents))}
                     onChange={(e) => handleChange(plan.id, 'promo_price_cents', parseCurrency(e.target.value))}
-                    className="h-10"
+                    className="h-10 bg-white/5 border-white/10 text-center font-mono"
                   />
                 </div>
 
                 {/* Discount % */}
-                <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
                     Desconto Exibido (%)
                   </Label>
                   <Input
@@ -217,13 +220,13 @@ export function PlansConfigSection() {
                     max="100"
                     value={getEditedValue(plan.id, 'discount_percentage', plan.discount_percentage || 0)}
                     onChange={(e) => handleChange(plan.id, 'discount_percentage', parseInt(e.target.value) || 0)}
-                    className="h-10"
+                    className="h-10 bg-white/5 border-white/10 text-center"
                   />
                 </div>
 
                 {/* Tagline */}
-                <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
                     Subtítulo
                   </Label>
                   <Input
@@ -231,13 +234,13 @@ export function PlansConfigSection() {
                     value={getEditedValue(plan.id, 'tagline', plan.tagline || '')}
                     onChange={(e) => handleChange(plan.id, 'tagline', e.target.value)}
                     placeholder="Ex: Ideal para começar"
-                    className="h-10"
+                    className="h-10 bg-white/5 border-white/10 text-sm"
                   />
                 </div>
 
                 {/* Is Popular */}
-                <div className="flex items-center justify-between pt-2">
-                  <Label className="text-sm">Marcar como Popular</Label>
+                <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                  <Label className="text-xs text-muted-foreground">Marcar como Popular</Label>
                   <Switch
                     checked={isPopular}
                     onCheckedChange={(checked) => handleChange(plan.id, 'is_popular', checked)}
@@ -249,7 +252,7 @@ export function PlansConfigSection() {
                   <Button
                     onClick={() => savePlan(plan)}
                     disabled={isSaving}
-                    className="w-full mt-2"
+                    className="w-full mt-2 bg-blue-500 hover:bg-blue-600"
                     size="sm"
                   >
                     {isSaving ? (
@@ -265,19 +268,21 @@ export function PlansConfigSection() {
                     )}
                   </Button>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </motion.div>
           );
         })}
       </div>
 
-      {/* Info */}
-      <div className="p-4 rounded-lg bg-muted/50 border border-border">
+      {/* Info Card */}
+      <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
         <div className="flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
-          <div className="text-sm text-muted-foreground">
-            <p className="font-medium mb-1">Sincronização Automática</p>
-            <p>
+          <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+            <Info className="w-4 h-4 text-blue-400" />
+          </div>
+          <div className="text-sm">
+            <p className="font-medium text-foreground mb-1">Sincronização Automática</p>
+            <p className="text-muted-foreground text-xs">
               Os valores configurados aqui são usados automaticamente na página comercial 
               e nas páginas promocionais. Alterações são aplicadas imediatamente.
             </p>

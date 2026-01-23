@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
+import { X, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,45 +28,45 @@ export function EvolutionWizard({ project, onBack, onComplete }: EvolutionWizard
 
   const handleSelectType = (type: EvolutionType) => {
     setSelectedType(type);
+    // Auto advance to form when selecting
+    setStep('form');
   };
 
   const handleAnswerChange = (fieldId: string, value: string | boolean | string[]) => {
     setAnswers((prev) => ({ ...prev, [fieldId]: value }));
   };
 
-  const handleNext = () => {
-    if (step === 'select' && selectedType) {
-      setStep('form');
-    } else if (step === 'form' && selectedType) {
-      // Validate required fields
-      const missingRequired = selectedType.fields
-        .filter((f) => f.required)
-        .filter((f) => {
-          const value = answers[f.id];
-          return !value || (typeof value === 'string' && value.trim() === '');
-        });
+  const handleGeneratePrompt = () => {
+    if (!selectedType) return;
 
-      if (missingRequired.length > 0) {
-        toast.error('Preencha os campos obrigatórios', {
-          description: missingRequired.map((f) => f.label).join(', '),
-        });
-        return;
-      }
+    // Validate required fields
+    const missingRequired = selectedType.fields
+      .filter((f) => f.required)
+      .filter((f) => {
+        const value = answers[f.id];
+        return !value || (typeof value === 'string' && value.trim() === '');
+      });
 
-      // Generate prompt
-      const projectContext: ProjectContext = {
-        name: project.client_name || project.template_name,
-        templateName: project.template_name,
-        templateSlug: project.template_slug,
-        platform: project.platform || 'lovable',
-        customSlug: project.custom_slug || undefined,
-        updatedAt: new Date(project.updated_at).toLocaleDateString('pt-BR'),
-      };
-
-      const prompt = generateEvolutionPrompt(projectContext, selectedType, answers);
-      setGeneratedPrompt(prompt);
-      setStep('preview');
+    if (missingRequired.length > 0) {
+      toast.error('Preencha os campos obrigatórios', {
+        description: missingRequired.map((f) => f.label).join(', '),
+      });
+      return;
     }
+
+    // Generate prompt
+    const projectContext: ProjectContext = {
+      name: project.client_name || project.template_name,
+      templateName: project.template_name,
+      templateSlug: project.template_slug,
+      platform: project.platform || 'lovable',
+      customSlug: project.custom_slug || undefined,
+      updatedAt: new Date(project.updated_at).toLocaleDateString('pt-BR'),
+    };
+
+    const prompt = generateEvolutionPrompt(projectContext, selectedType, answers);
+    setGeneratedPrompt(prompt);
+    setStep('preview');
   };
 
   const handleBack = () => {
@@ -126,136 +126,110 @@ export function EvolutionWizard({ project, onBack, onComplete }: EvolutionWizard
     }
   };
 
-  const getStepTitle = () => {
-    switch (step) {
-      case 'select':
-        return 'Selecione o tipo de evolução';
-      case 'form':
-        return 'Preencha as informações';
-      case 'preview':
-        return 'Prompt gerado';
-    }
-  };
-
-  const getStepNumber = () => {
-    switch (step) {
-      case 'select':
-        return 1;
-      case 'form':
-        return 2;
-      case 'preview':
-        return 3;
-    }
-  };
-
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-5">
+      {/* Modal-like Header */}
+      <div className="flex items-center justify-between p-4 rounded-t-xl bg-white/5 border border-white/10 border-b-0">
         <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleBack}
-            className="h-8 w-8"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
+          <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-amber-400" />
+          </div>
           <div>
-            <h2 className="text-base sm:text-lg font-bold text-foreground">
-              Evoluir: {project.client_name || project.template_name}
+            <h2 className="text-sm font-semibold text-foreground">
+              Evoluir {project.client_name || project.template_name}
             </h2>
-            <p className="text-xs text-muted-foreground">
-              Passo {getStepNumber()} de 3 • {getStepTitle()}
+            <p className="text-[11px] text-muted-foreground">
+              Selecione o tipo de atualização que deseja realizar no código.
             </p>
           </div>
         </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onBack}
+          className="h-8 w-8 rounded-full hover:bg-white/10"
+        >
+          <X className="w-4 h-4" />
+        </Button>
       </div>
 
-      {/* Progress Bar */}
-      <div className="flex gap-2">
-        {[1, 2, 3].map((s) => (
-          <div
-            key={s}
-            className={`h-1 flex-1 rounded-full transition-colors ${
-              s <= getStepNumber()
-                ? 'bg-gradient-to-r from-primary to-purple-600'
-                : 'bg-muted'
-            }`}
-          />
-        ))}
+      {/* Content Area */}
+      <div className="p-4 rounded-b-xl bg-white/5 border border-white/10 border-t-0 -mt-5">
+        <AnimatePresence mode="wait">
+          {step === 'select' && (
+            <motion.div
+              key="select"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+            >
+              <EvolutionCards
+                selectedType={selectedType}
+                onSelect={handleSelectType}
+              />
+            </motion.div>
+          )}
+
+          {step === 'form' && selectedType && (
+            <motion.div
+              key="form"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-4"
+            >
+              {/* Form Header with selected type */}
+              <div className="flex items-center gap-2 pb-3 border-b border-white/10">
+                <div className="w-6 h-6 rounded bg-amber-500/20 flex items-center justify-center">
+                  <Sparkles className="w-3 h-3 text-amber-400" />
+                </div>
+                <span className="text-xs font-semibold text-amber-300 uppercase tracking-wider">
+                  {selectedType.title}
+                </span>
+              </div>
+
+              <EvolutionForm
+                evolutionType={selectedType}
+                answers={answers}
+                onChange={handleAnswerChange}
+              />
+
+              {/* Generate Button */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+                <Button
+                  variant="ghost"
+                  onClick={handleBack}
+                  className="text-xs"
+                >
+                  Voltar
+                </Button>
+                <Button
+                  onClick={handleGeneratePrompt}
+                  className="gap-2 bg-amber-500 hover:bg-amber-600 text-black font-medium"
+                >
+                  GERAR UPDATE
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
+          {step === 'preview' && (
+            <motion.div
+              key="preview"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+            >
+              <EvolutionPreview
+                prompt={generatedPrompt}
+                platform={project.platform || 'lovable'}
+                onSave={handleSave}
+                saving={saving}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-
-      {/* Content */}
-      <AnimatePresence mode="wait">
-        {step === 'select' && (
-          <motion.div
-            key="select"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-          >
-            <EvolutionCards
-              selectedType={selectedType}
-              onSelect={handleSelectType}
-            />
-          </motion.div>
-        )}
-
-        {step === 'form' && selectedType && (
-          <motion.div
-            key="form"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-          >
-            <EvolutionForm
-              evolutionType={selectedType}
-              answers={answers}
-              onChange={handleAnswerChange}
-            />
-          </motion.div>
-        )}
-
-        {step === 'preview' && (
-          <motion.div
-            key="preview"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-          >
-            <EvolutionPreview
-              prompt={generatedPrompt}
-              platform={project.platform || 'lovable'}
-              onSave={handleSave}
-              saving={saving}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Footer Actions */}
-      {step !== 'preview' && (
-        <div className="flex justify-end pt-4 border-t border-border">
-          <Button
-            onClick={handleNext}
-            disabled={step === 'select' && !selectedType}
-            className="gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
-          >
-            {step === 'form' ? (
-              <>
-                <Sparkles className="w-4 h-4" />
-                Gerar Prompt
-              </>
-            ) : (
-              <>
-                Continuar
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </Button>
-        </div>
-      )}
     </div>
   );
 }
