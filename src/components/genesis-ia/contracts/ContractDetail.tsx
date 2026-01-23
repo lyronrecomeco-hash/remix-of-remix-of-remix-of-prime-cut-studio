@@ -333,11 +333,19 @@ export function ContractDetail({ contractId, onBack }: ContractDetailProps) {
     return doc.slice(0, -3).replace(/./g, '*') + doc.slice(-3);
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     if (!contract?.generated_content) {
       toast.error('Gere o contrato primeiro');
       return;
     }
+
+    // Buscar assinaturas mais recentes diretamente do banco
+    const { data: freshSignatures } = await supabase
+      .from('contract_signatures')
+      .select('*')
+      .eq('contract_id', contract.id);
+
+    const signaturesForPDF = freshSignatures || signatures;
 
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -363,8 +371,8 @@ export function ContractDetail({ contractId, onBack }: ContractDetailProps) {
     });
 
     // Adicionar seção de assinaturas no PDF
-    const contractorSignature = signatures.find(s => s.signer_type === 'contractor' && s.signed_at);
-    const contractedSignature = signatures.find(s => s.signer_type === 'contracted' && s.signed_at);
+    const contractorSignature = signaturesForPDF.find(s => s.signer_type === 'contractor' && s.signed_at);
+    const contractedSignature = signaturesForPDF.find(s => s.signer_type === 'contracted' && s.signed_at);
 
     // Verificar se precisa de nova página para assinaturas
     if (y + 80 > pageHeight - margin) {
