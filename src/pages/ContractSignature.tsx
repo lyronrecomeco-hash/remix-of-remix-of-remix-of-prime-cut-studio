@@ -410,18 +410,51 @@ export default function ContractSignature() {
   };
 
   const handleDownloadPDF = async () => {
-    if (!contract || !contract.generated_content) {
+    if (!contract) {
+      toast.error('Contrato não carregado');
+      return;
+    }
+
+    // Sempre buscar o contrato mais recente (evita PDF desatualizado)
+    const { data: freshContract, error: contractError } = await supabase
+      .from('contracts')
+      .select('contract_number, contractor_name, contractor_document, contracted_name, contracted_document, generated_content')
+      .eq('id', contract.id)
+      .maybeSingle();
+
+    if (contractError) {
+      console.error('Erro ao buscar contrato atualizado para PDF:', contractError);
+    }
+
+    const contractForPDF = freshContract ? ({ ...contract, ...freshContract } as Contract) : contract;
+
+    if (!contractForPDF.generated_content) {
       toast.error('Conteúdo do contrato não disponível');
       return;
     }
 
-    // Buscar assinaturas mais recentes diretamente do banco
-    const { data: freshSignatures } = await supabase
+    // Buscar assinaturas mais recentes (ordenadas) diretamente do banco
+    const { data: freshSignatures, error: signaturesError } = await supabase
       .from('contract_signatures')
       .select('id, signer_type, signer_name, signer_document, signature_image, signed_at')
-      .eq('contract_id', contract.id);
+      .eq('contract_id', contractForPDF.id)
+      .not('signed_at', 'is', null)
+      .order('signed_at', { ascending: false });
 
-    const signaturesForPDF = freshSignatures || existingSignatures;
+    if (signaturesError) {
+      console.error('Erro ao buscar assinaturas para PDF:', signaturesError);
+    }
+
+    const signaturesForPDF = (freshSignatures && freshSignatures.length > 0)
+      ? freshSignatures
+      : (existingSignatures || []).filter(s => !!s.signed_at);
+
+    const getPngBase64 = (dataUrl?: string | null) => {
+      if (!dataUrl) return null;
+      const commaIndex = dataUrl.indexOf(',');
+      const raw = commaIndex >= 0 ? dataUrl.slice(commaIndex + 1) : dataUrl;
+      return raw.replace(/\s/g, '');
+    };
 
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -429,7 +462,7 @@ export default function ContractSignature() {
     const maxWidth = pageWidth - (margin * 2);
     
     // Remove markdown bold markers for PDF
-    const cleanContent = contract.generated_content.replace(/\*\*/g, '');
+    const cleanContent = contractForPDF.generated_content.replace(/\*\*/g, '');
     
     doc.setFontSize(12);
     const lines = doc.splitTextToSize(cleanContent, maxWidth);
@@ -448,8 +481,9 @@ export default function ContractSignature() {
     });
 
     // Adicionar seção de assinaturas no PDF
-    const contractorSignature = signaturesForPDF.find(s => s.signer_type === 'contractor' && s.signed_at);
-    const contractedSignature = signaturesForPDF.find(s => s.signer_type === 'contracted' && s.signed_at);
+    // Como a lista vem ordenada por signed_at DESC, o primeiro match é o mais recente
+    const contractorSignature = signaturesForPDF.find(s => s.signer_type === 'contractor');
+    const contractedSignature = signaturesForPDF.find(s => s.signer_type === 'contracted');
 
     // Verificar se precisa de nova página para assinaturas
     if (y + 80 > pageHeight - margin) {
@@ -479,10 +513,13 @@ export default function ContractSignature() {
     const sigWidth = 60;
     const sigHeight = 20;
 
-    if (contractorSignature?.signature_image) {
+    const contractorSigBase64 = getPngBase64(contractorSignature?.signature_image);
+    const contractedSigBase64 = getPngBase64(contractedSignature?.signature_image);
+
+    if (contractorSigBase64) {
       try {
         doc.addImage(
-          contractorSignature.signature_image,
+          contractorSigBase64,
           'PNG',
           col1X + (colWidth - sigWidth) / 2,
           sigY,
@@ -494,10 +531,10 @@ export default function ContractSignature() {
       }
     }
 
-    if (contractedSignature?.signature_image) {
+    if (contractedSigBase64) {
       try {
         doc.addImage(
-          contractedSignature.signature_image,
+          contractedSigBase64,
           'PNG',
           col2X + (colWidth - sigWidth) / 2,
           sigY,
@@ -519,14 +556,14 @@ export default function ContractSignature() {
 
     // Nomes
     doc.setFontSize(10);
-    doc.text(contract.contractor_name || '', col1X + colWidth / 2, y, { align: 'center' });
-    doc.text(contract.contracted_name || '', col2X + colWidth / 2, y, { align: 'center' });
+    doc.text(contractForPDF.contractor_name || '', col1X + colWidth / 2, y, { align: 'center' });
+    doc.text(contractForPDF.contracted_name || '', col2X + colWidth / 2, y, { align: 'center' });
     y += 5;
 
     // Documentos mascarados
     doc.setFontSize(8);
-    doc.text(maskDocument(contract.contractor_document || ''), col1X + colWidth / 2, y, { align: 'center' });
-    doc.text(maskDocument(contract.contracted_document || ''), col2X + colWidth / 2, y, { align: 'center' });
+    doc.text(maskDocument(contractForPDF.contractor_document || ''), col1X + colWidth / 2, y, { align: 'center' });
+    doc.text(maskDocument(contractForPDF.contracted_document || ''), col2X + colWidth / 2, y, { align: 'center' });
     y += 5;
 
     // Datas de assinatura
@@ -547,7 +584,7 @@ export default function ContractSignature() {
       );
     }
 
-    doc.save(`contrato-${contract.contract_number}.pdf`);
+    doc.save(`contrato-${contractForPDF.contract_number}.pdf`);
     toast.success('PDF baixado com sucesso!');
   };
 
