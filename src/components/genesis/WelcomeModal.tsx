@@ -54,7 +54,7 @@ const slides = [
   {
     icon: Gift,
     title: '🎁 Presente de Boas-Vindas!',
-    description: 'Você ganhou 300 créditos grátis para começar! Use para criar fluxos com a Luna IA e testar todas as funcionalidades.',
+    description: 'Você recebeu créditos bônus para explorar a plataforma! Use para acessar recursos premium e aproveitar ao máximo sua assinatura.',
     gradient: 'from-primary to-primary/60',
     showCredits: true
   }
@@ -152,8 +152,8 @@ export const WelcomeModal = ({ open, onComplete, userName }: WelcomeModalProps) 
                       <div className="flex items-center gap-3">
                         <Sparkles className="w-6 h-6" />
                         <div>
-                          <div className="text-3xl font-bold">300</div>
-                          <div className="text-sm opacity-90">Créditos Grátis</div>
+                          <div className="text-3xl font-bold">Bônus</div>
+                          <div className="text-sm opacity-90">Créditos Inclusos</div>
                         </div>
                       </div>
                     </motion.div>

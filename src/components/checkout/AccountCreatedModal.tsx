@@ -24,7 +24,6 @@ interface AccountCreatedModalProps {
   email: string;
   password: string;
   planName?: string;
-  credits?: number;
   onContinue: () => void;
 }
 
@@ -33,7 +32,6 @@ export const AccountCreatedModal = ({
   email, 
   password, 
   planName = 'Básico',
-  credits = 300,
   onContinue 
 }: AccountCreatedModalProps) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -150,26 +148,17 @@ export const AccountCreatedModal = ({
               </div>
             </motion.div>
 
-            {/* Plan & Credits Info */}
+            {/* Plan Info */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25 }}
-              className="grid grid-cols-2 gap-3 mb-4"
+              className="rounded-xl border border-white/10 bg-white/5 p-4 mb-4"
             >
-              <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
-                <div className="flex items-center justify-center gap-1.5 mb-1">
-                  <Sparkles className="w-4 h-4 text-purple-400" />
-                  <span className="text-xs text-white/60">Plano</span>
-                </div>
-                <span className="text-sm font-semibold text-white capitalize">{planName}</span>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
-                <div className="flex items-center justify-center gap-1.5 mb-1">
-                  <Sparkles className="w-4 h-4 text-amber-400" />
-                  <span className="text-xs text-white/60">Créditos</span>
-                </div>
-                <span className="text-sm font-semibold text-emerald-400">+{credits} grátis</span>
+              <div className="flex items-center justify-center gap-2">
+                <Sparkles className="w-5 h-5 text-purple-400" />
+                <span className="text-sm text-white/60">Plano Ativado:</span>
+                <span className="text-base font-semibold text-white capitalize">{planName}</span>
               </div>
             </motion.div>
 

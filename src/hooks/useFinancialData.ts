@@ -39,31 +39,82 @@ export function useFinancialData(userId?: string): UseFinancialDataReturn {
 
   useEffect(() => {
     async function loadData() {
+      // Se não tem userId, não carrega dados (cada usuário vê seus próprios dados)
+      if (!userId) {
+        setPayments([]);
+        setContracts([]);
+        setSubscriptions([]);
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(true);
 
       try {
-        // Buscar pagamentos confirmados
-        const { data: paymentsData } = await supabase
-          .from('checkout_payments')
-          .select('amount_cents, paid_at, promo_link_id, source, created_at')
-          .eq('status', 'paid');
+        // Buscar pagamentos confirmados do usuário específico
+        // Primeiro precisamos encontrar o customer_id associado ao user
+        const { data: genesisUser } = await supabase
+          .from('genesis_users')
+          .select('email')
+          .eq('auth_user_id', userId)
+          .single();
 
-        setPayments(paymentsData || []);
+        if (!genesisUser?.email) {
+          setPayments([]);
+          setContracts([]);
+          setSubscriptions([]);
+          setIsLoading(false);
+          return;
+        }
 
-        // Buscar contratos assinados
-        const { data: contractsData } = await supabase
+        // Buscar customer por email
+        const { data: customer } = await supabase
+          .from('checkout_customers')
+          .select('id')
+          .eq('email', genesisUser.email)
+          .single();
+
+        if (customer?.id) {
+          // Buscar pagamentos do customer
+          const { data: paymentsData } = await supabase
+            .from('checkout_payments')
+            .select('amount_cents, paid_at, promo_link_id, source, created_at')
+            .eq('status', 'paid')
+            .eq('customer_id', customer.id);
+
+          setPayments(paymentsData || []);
+        } else {
+          setPayments([]);
+        }
+
+        // Buscar contratos do usuário (por user_id ou affiliate)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const contractsResult: { data: any[] | null } = await (supabase as any)
           .from('contracts')
-          .select('total_value, created_at, status');
+          .select('total_value, created_at, status')
+          .eq('created_by', userId)
+          .eq('status', 'signed');
 
-        setContracts(contractsData?.filter(c => c.status === 'signed') || []);
+        setContracts(contractsResult.data || []);
 
-        // Buscar assinaturas ativas
-        const { data: subsData } = await supabase
-          .from('genesis_subscriptions')
-          .select('id, status')
-          .eq('status', 'active');
+        // Buscar assinaturas ativas do usuário
+        const { data: genesisUserData } = await supabase
+          .from('genesis_users')
+          .select('id')
+          .eq('auth_user_id', userId)
+          .single();
 
-        setSubscriptions(subsData || []);
+        if (genesisUserData?.id) {
+          const { data: subsData } = await supabase
+            .from('genesis_subscriptions')
+            .select('id, status')
+            .eq('user_id', genesisUserData.id)
+            .eq('status', 'active');
+
+          setSubscriptions(subsData || []);
+        } else {
+          setSubscriptions([]);
+        }
 
       } catch (err) {
         console.error('Error loading financial data:', err);

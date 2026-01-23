@@ -103,9 +103,22 @@ const GenesisIADashboard = () => {
       return;
     }
 
-    setUserName(user.email?.split("@")[0] || "Usuário");
     setUserEmail(user.email || "");
     setUserId(user.id);
+
+    // Buscar nome do genesis_users (vem do checkout)
+    const { data: genesisUser } = await supabase
+      .from('genesis_users')
+      .select('name')
+      .eq('auth_user_id', user.id)
+      .single();
+
+    // Usar primeiro nome do genesis_users, ou do metadata, ou do email
+    const fullName = genesisUser?.name || 
+                     user.user_metadata?.name || 
+                     user.email?.split("@")[0] || 
+                     "Usuário";
+    setUserName(fullName.split(' ')[0]); // Apenas primeiro nome
 
     const { data: affiliate } = await supabase
       .from('affiliates')

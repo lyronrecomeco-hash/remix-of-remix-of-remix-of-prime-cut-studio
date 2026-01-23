@@ -16,8 +16,9 @@ export function ContractsTab({ affiliateId, onBack }: ContractsTabProps) {
 
   if (!affiliateId) {
     return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        Carregando...
+      <div className="flex flex-col items-center justify-center py-12 text-center gap-4">
+        <p className="text-muted-foreground">Você ainda não tem acesso a contratos.</p>
+        <p className="text-sm text-muted-foreground/70">Entre em contato com o suporte para habilitar esta funcionalidade.</p>
       </div>
     );
   }
