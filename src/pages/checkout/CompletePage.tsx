@@ -572,7 +572,6 @@ export default function CompletePage() {
         email={email || ''}
         password={password}
         planName={activationResult?.plan}
-        credits={activationResult?.credits}
         onContinue={handleContinue}
       />
     </>
