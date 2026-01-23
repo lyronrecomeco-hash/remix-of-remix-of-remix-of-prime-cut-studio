@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Copy, Download, RotateCcw, Sparkles, Save, Loader2 } from 'lucide-react';
+import { Check, Copy, Download, RotateCcw, Sparkles, Save, Loader2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFromScratch } from '../FromScratchContext';
 import { toast } from 'sonner';
@@ -20,17 +20,18 @@ interface StepPreviewProps {
 }
 
 const GENERATION_LOGS = [
-  '🔍 Analisando contexto do nicho...',
-  '📊 Processando objetivos do projeto...',
-  '🎨 Definindo design system...',
-  '📄 Estruturando páginas e seções...',
-  '⚡ Configurando funcionalidades...',
-  '🔧 Adicionando integrações...',
-  '📱 Otimizando para mobile...',
-  '🔒 Configurando segurança...',
-  '🎯 Aplicando SEO avançado...',
-  '✨ Finalizando prompt ultra-completo...',
-  '🚀 Prompt gerado com sucesso!'
+  { text: 'Analisando contexto do nicho...', icon: '🔍' },
+  { text: 'Processando objetivos do projeto...', icon: '📊' },
+  { text: 'Definindo design system...', icon: '🎨' },
+  { text: 'Estruturando páginas e seções...', icon: '📄' },
+  { text: 'Configurando funcionalidades...', icon: '⚡' },
+  { text: 'Adicionando integrações...', icon: '🔧' },
+  { text: 'Otimizando para mobile...', icon: '📱' },
+  { text: 'Configurando segurança...', icon: '🔒' },
+  { text: 'Aplicando SEO avançado...', icon: '🎯' },
+  { text: 'Validando arquitetura...', icon: '✅' },
+  { text: 'Finalizando prompt ultra-completo...', icon: '✨' },
+  { text: 'Prompt gerado com sucesso!', icon: '🚀' }
 ];
 
 export function StepPreview({ onComplete }: StepPreviewProps) {
@@ -41,7 +42,7 @@ export function StepPreview({ onComplete }: StepPreviewProps) {
   const [currentLogIndex, setCurrentLogIndex] = useState(0);
   const [displayedPrompt, setDisplayedPrompt] = useState('');
 
-  // Generation animation
+  // Generation animation - 30 seconds max
   useEffect(() => {
     if (isGenerating) {
       const logInterval = setInterval(() => {
@@ -54,7 +55,7 @@ export function StepPreview({ onComplete }: StepPreviewProps) {
           }
           return prev + 1;
         });
-      }, 2500); // ~27.5 seconds total (11 logs * 2.5s)
+      }, 2500); // 12 logs * 2.5s = 30 seconds
 
       return () => clearInterval(logInterval);
     }
@@ -64,7 +65,7 @@ export function StepPreview({ onComplete }: StepPreviewProps) {
     try {
       await navigator.clipboard.writeText(displayedPrompt);
       setCopied(true);
-      toast.success('Prompt copiado para a área de transferência!');
+      toast.success('Prompt copiado!');
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       toast.error('Erro ao copiar prompt');
@@ -81,7 +82,7 @@ export function StepPreview({ onComplete }: StepPreviewProps) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    toast.success('Prompt exportado com sucesso!');
+    toast.success('Prompt exportado!');
   };
 
   const handleReset = () => {
@@ -93,7 +94,6 @@ export function StepPreview({ onComplete }: StepPreviewProps) {
   };
 
   const confirmSave = () => {
-    // Here you would save to the library - for now just show success
     toast.success('Projeto salvo na biblioteca!');
     setShowSaveDialog(false);
     onComplete();
@@ -101,15 +101,15 @@ export function StepPreview({ onComplete }: StepPreviewProps) {
 
   if (isGenerating) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-8">
+      <div className="flex flex-col items-center justify-center min-h-[350px] space-y-6">
         {/* Animated Loader */}
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           className="relative"
         >
-          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-            <Loader2 className="w-12 h-12 text-primary animate-spin" />
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+            <Loader2 className="w-10 h-10 text-primary animate-spin" />
           </div>
           <motion.div
             className="absolute inset-0 rounded-full border-2 border-primary/30"
@@ -120,32 +120,32 @@ export function StepPreview({ onComplete }: StepPreviewProps) {
 
         {/* Title */}
         <div className="text-center">
-          <h3 className="text-xl font-bold text-foreground mb-2">
+          <h3 className="text-lg font-bold text-foreground mb-1">
             Gerando Prompt Ultra-Completo
           </h3>
-          <p className="text-sm text-muted-foreground">
-            Aguarde enquanto processamos suas configurações...
+          <p className="text-xs text-muted-foreground">
+            Processando suas configurações...
           </p>
         </div>
 
         {/* Logs */}
-        <div className="w-full max-w-md bg-card/50 rounded-xl border border-border/50 p-4 space-y-2">
+        <div className="w-full max-w-md bg-card/50 rounded-xl border border-border/50 p-3 space-y-1.5">
           <AnimatePresence mode="popLayout">
             {GENERATION_LOGS.slice(0, currentLogIndex + 1).map((log, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className={`flex items-center gap-2 text-sm ${
+                className={`flex items-center gap-2 text-xs ${
                   index === currentLogIndex ? 'text-primary font-medium' : 'text-muted-foreground'
                 }`}
               >
-                {index < currentLogIndex ? (
-                  <Check className="w-4 h-4 text-green-500" />
+              {index < currentLogIndex ? (
+                  <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                 ) : (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
                 )}
-                <span>{log}</span>
+                <span>{log.icon} {log.text}</span>
               </motion.div>
             ))}
           </AnimatePresence>
@@ -153,15 +153,15 @@ export function StepPreview({ onComplete }: StepPreviewProps) {
 
         {/* Progress Bar */}
         <div className="w-full max-w-md">
-          <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
             <motion.div
-              className="h-full bg-gradient-to-r from-primary to-primary/70"
+              className="h-full bg-primary"
               initial={{ width: '0%' }}
               animate={{ width: `${((currentLogIndex + 1) / GENERATION_LOGS.length) * 100}%` }}
               transition={{ duration: 0.5 }}
             />
           </div>
-          <p className="text-xs text-muted-foreground text-center mt-2">
+          <p className="text-xs text-muted-foreground text-center mt-1.5">
             {Math.round(((currentLogIndex + 1) / GENERATION_LOGS.length) * 100)}% concluído
           </p>
         </div>
@@ -170,94 +170,94 @@ export function StepPreview({ onComplete }: StepPreviewProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Success Header */}
       <motion.div
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         className="text-center"
       >
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30 mb-4">
-          <Sparkles className="w-8 h-8 text-primary" />
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30 mb-3">
+          <Sparkles className="w-6 h-6 text-primary" />
         </div>
-        <h3 className="text-2xl font-bold text-foreground mb-2">
-          Prompt Gerado com Sucesso! 🎉
+        <h3 className="text-xl font-bold text-foreground mb-1">
+          Prompt Gerado! 🎉
         </h3>
-        <p className="text-muted-foreground">
-          Seu prompt ultra-completo está pronto para usar
+        <p className="text-sm text-muted-foreground">
+          Seu prompt está pronto para usar
         </p>
       </motion.div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-3xl mx-auto">
-        <div className="p-3 rounded-lg bg-white/5 border border-white/10 text-center">
-          <div className="text-2xl font-bold text-foreground">{formData.selectedPages.length + formData.customPages.length}</div>
-          <div className="text-xs text-muted-foreground">Páginas</div>
+      <div className="grid grid-cols-4 gap-2 max-w-xl mx-auto">
+        <div className="p-2 rounded-lg bg-white/5 border border-white/10 text-center">
+          <div className="text-lg font-bold text-foreground">{formData.selectedPages.length + formData.customPages.length}</div>
+          <div className="text-[10px] text-muted-foreground">Páginas</div>
         </div>
-        <div className="p-3 rounded-lg bg-white/5 border border-white/10 text-center">
-          <div className="text-2xl font-bold text-foreground">{formData.selectedFeatures.length}</div>
-          <div className="text-xs text-muted-foreground">Features</div>
+        <div className="p-2 rounded-lg bg-white/5 border border-white/10 text-center">
+          <div className="text-lg font-bold text-foreground">{formData.selectedFeatures.length}</div>
+          <div className="text-[10px] text-muted-foreground">Features</div>
         </div>
-        <div className="p-3 rounded-lg bg-white/5 border border-white/10 text-center">
-          <div className="text-2xl font-bold text-foreground">{formData.integrations.length}</div>
-          <div className="text-xs text-muted-foreground">Integrações</div>
+        <div className="p-2 rounded-lg bg-white/5 border border-white/10 text-center">
+          <div className="text-lg font-bold text-foreground">{formData.integrations.length}</div>
+          <div className="text-[10px] text-muted-foreground">Integrações</div>
         </div>
-        <div className="p-3 rounded-lg bg-white/5 border border-white/10 text-center">
-          <div className="text-2xl font-bold text-foreground">{(displayedPrompt.length / 1000).toFixed(1)}k</div>
-          <div className="text-xs text-muted-foreground">Caracteres</div>
+        <div className="p-2 rounded-lg bg-white/5 border border-white/10 text-center">
+          <div className="text-lg font-bold text-foreground">{(displayedPrompt.length / 1000).toFixed(1)}k</div>
+          <div className="text-[10px] text-muted-foreground">Caracteres</div>
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex flex-wrap justify-center gap-3">
+      {/* Action Buttons - Compact */}
+      <div className="flex flex-wrap justify-center gap-2">
         <Button
           onClick={handleCopy}
-          size="lg"
-          className="bg-primary hover:bg-primary/90"
+          size="sm"
+          className="bg-primary hover:bg-primary/90 h-8 px-3 text-xs"
         >
-          {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-          {copied ? 'Copiado!' : 'Copiar Prompt'}
+          {copied ? <Check className="w-3.5 h-3.5 mr-1.5" /> : <Copy className="w-3.5 h-3.5 mr-1.5" />}
+          {copied ? 'Copiado!' : 'Copiar'}
         </Button>
-        <Button onClick={handleExport} variant="outline" size="lg">
-          <Download className="w-4 h-4 mr-2" />
+        <Button onClick={handleExport} variant="outline" size="sm" className="h-8 px-3 text-xs">
+          <Download className="w-3.5 h-3.5 mr-1.5" />
           Exportar .md
         </Button>
-        <Button onClick={handleSaveToLibrary} variant="outline" size="lg">
-          <Save className="w-4 h-4 mr-2" />
-          Salvar na Biblioteca
+        <Button onClick={handleSaveToLibrary} variant="outline" size="sm" className="h-8 px-3 text-xs">
+          <Save className="w-3.5 h-3.5 mr-1.5" />
+          Salvar
         </Button>
-        <Button onClick={handleReset} variant="ghost" size="lg">
-          <RotateCcw className="w-4 h-4 mr-2" />
-          Novo Projeto
+        <Button onClick={handleReset} variant="ghost" size="sm" className="h-8 px-3 text-xs">
+          <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+          Novo
         </Button>
       </div>
 
       {/* Prompt Preview */}
-      <div className="mt-6 rounded-xl bg-white/5 border border-white/10 overflow-hidden">
-        <div className="p-3 border-b border-white/10 flex items-center justify-between">
-          <span className="text-sm font-medium text-muted-foreground">Preview do Prompt</span>
-          <span className="text-xs text-muted-foreground">
+      <div className="rounded-xl bg-white/5 border border-white/10 overflow-hidden">
+        <div className="p-2.5 border-b border-white/10 flex items-center justify-between">
+          <span className="text-xs font-medium text-muted-foreground">Preview do Prompt</span>
+          <span className="text-[10px] text-muted-foreground">
             {displayedPrompt.split('\n').length} linhas
           </span>
         </div>
-        <div className="max-h-[400px] overflow-y-auto p-4">
-          <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-mono">
+        <div className="max-h-[280px] overflow-y-auto p-3">
+          <pre className="text-xs text-muted-foreground whitespace-pre-wrap font-mono leading-relaxed">
             {displayedPrompt}
           </pre>
         </div>
       </div>
 
       {/* Instructions */}
-      <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 max-w-2xl mx-auto">
-        <p className="text-sm text-muted-foreground text-center">
-          <strong className="text-foreground">Próximo passo:</strong> Cole este prompt na IA selecionada ({formData.targetAI === 'other' ? formData.otherAI : formData.targetAI}) 
-          e ela criará seu projeto completo automaticamente.
+      <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 max-w-lg mx-auto">
+        <p className="text-xs text-muted-foreground text-center">
+          <strong className="text-foreground">Próximo passo:</strong> Cole o prompt na IA ({formData.targetAI === 'other' ? formData.otherAI : formData.targetAI})
         </p>
       </div>
 
-      {/* Complete Button */}
+      {/* Back Button - Compact */}
       <div className="text-center">
-        <Button onClick={onComplete} variant="outline">
+        <Button onClick={onComplete} variant="ghost" size="sm" className="h-8 text-xs">
+          <ArrowLeft className="w-3.5 h-3.5 mr-1.5" />
           Voltar para Biblioteca
         </Button>
       </div>
@@ -268,7 +268,7 @@ export function StepPreview({ onComplete }: StepPreviewProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Salvar na Biblioteca?</AlertDialogTitle>
             <AlertDialogDescription>
-              Deseja salvar este projeto "{formData.projectName}" na sua biblioteca para acessar o prompt depois?
+              Deseja salvar "{formData.projectName}" na biblioteca?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
