@@ -19,24 +19,24 @@ export function StepLanguage() {
           <Globe className="w-4 h-4 text-primary" />
           Idioma Principal
         </label>
-        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2 sm:gap-3">
           {LANGUAGES.map((lang) => {
             const isSelected = formData.language === lang.code;
             return (
               <button
                 key={lang.code}
                 onClick={() => updateFormData('language', lang.code)}
-                className={`relative p-2.5 rounded-lg border text-center transition-all ${
+                className={`relative p-3 sm:p-4 rounded-xl border text-center transition-all ${
                   isSelected
-                    ? 'bg-primary/10 border-primary/50'
+                    ? 'bg-primary/10 border-primary/50 ring-2 ring-primary/30'
                     : 'bg-white/5 border-white/10 hover:border-white/20'
                 }`}
               >
-                <span className="text-xl block">{lang.flag}</span>
-                <span className="text-xs text-muted-foreground">{lang.name}</span>
+                <span className="text-2xl block mb-1">{lang.flag}</span>
+                <span className="text-xs sm:text-sm text-muted-foreground line-clamp-1">{lang.name}</span>
                 {isSelected && (
-                  <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
-                    <Check className="w-2.5 h-2.5 text-primary-foreground" />
+                  <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                    <Check className="w-3 h-3 text-primary-foreground" />
                   </div>
                 )}
               </button>
@@ -53,7 +53,7 @@ export function StepLanguage() {
               value={formData.customLanguage || ''}
               onChange={(e) => updateFormData('customLanguage', e.target.value)}
               placeholder="Ex: Holandês, Sueco..."
-              className="bg-white/5 border-white/10 h-9 text-sm max-w-xs"
+              className="bg-white/5 border-white/10 h-10 text-sm"
             />
           </motion.div>
         )}
@@ -70,24 +70,24 @@ export function StepLanguage() {
           <Coins className="w-4 h-4 text-primary" />
           Moeda
         </label>
-        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 sm:gap-3">
           {CURRENCIES.map((currency) => {
             const isSelected = formData.currency === currency.code;
             return (
               <button
                 key={currency.code}
                 onClick={() => updateFormData('currency', currency.code)}
-                className={`relative p-2.5 rounded-lg border text-center transition-all ${
+                className={`relative p-3 sm:p-4 rounded-xl border text-center transition-all ${
                   isSelected
-                    ? 'bg-primary/10 border-primary/50'
+                    ? 'bg-primary/10 border-primary/50 ring-2 ring-primary/30'
                     : 'bg-white/5 border-white/10 hover:border-white/20'
                 }`}
               >
-                <span className="text-base font-bold block">{currency.symbol}</span>
-                <span className="text-xs text-muted-foreground">{currency.name}</span>
+                <span className="text-lg sm:text-xl font-bold block">{currency.symbol}</span>
+                <span className="text-xs sm:text-sm text-muted-foreground">{currency.name}</span>
                 {isSelected && (
-                  <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
-                    <Check className="w-2.5 h-2.5 text-primary-foreground" />
+                  <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                    <Check className="w-3 h-3 text-primary-foreground" />
                   </div>
                 )}
               </button>
@@ -107,23 +107,23 @@ export function StepLanguage() {
           <Clock className="w-4 h-4 text-primary" />
           Fuso Horário
         </label>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
           {TIMEZONES.map((tz) => {
             const isSelected = formData.timezone === tz.code;
             return (
               <button
                 key={tz.code}
                 onClick={() => updateFormData('timezone', tz.code)}
-                className={`relative p-2.5 rounded-lg border text-left transition-all ${
+                className={`relative p-3 sm:p-4 rounded-xl border text-left transition-all ${
                   isSelected
-                    ? 'bg-primary/10 border-primary/50'
+                    ? 'bg-primary/10 border-primary/50 ring-2 ring-primary/30'
                     : 'bg-white/5 border-white/10 hover:border-white/20'
                 }`}
               >
                 <span className="text-sm font-medium">{tz.name}</span>
                 {isSelected && (
-                  <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
-                    <Check className="w-2.5 h-2.5 text-primary-foreground" />
+                  <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                    <Check className="w-3 h-3 text-primary-foreground" />
                   </div>
                 )}
               </button>
