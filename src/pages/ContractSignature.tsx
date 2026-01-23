@@ -292,6 +292,17 @@ export default function ContractSignature() {
       return;
     }
 
+    // Verificar se já existe assinatura do contratante
+    const existingContractorSig = existingSignatures.find(
+      s => s.signer_type === 'contractor' && s.signed_at
+    );
+    
+    if (existingContractorSig) {
+      toast.error('Este contrato já foi assinado pelo contratante.');
+      setSigned(true);
+      return;
+    }
+
     setSigning(true);
 
     try {
@@ -312,39 +323,61 @@ export default function ContractSignature() {
           user_agent: navigator.userAgent,
         });
 
-      if (signError) throw signError;
+      if (signError) {
+        console.error('Signature insert error:', signError);
+        throw signError;
+      }
 
-      // Registrar no audit log
-      await supabase
-        .from('contract_audit_logs')
-        .insert({
-          contract_id: contract.id,
-          action: 'contractor_signature_added',
-          actor_type: 'contractor',
-          actor_name: signerName,
-          details: {
-            signer_document: signerDocument,
-            signature_method: 'draw'
-          },
-          user_agent: navigator.userAgent
-        });
+      // Registrar no audit log (não bloqueia se falhar)
+      try {
+        await supabase
+          .from('contract_audit_logs')
+          .insert({
+            contract_id: contract.id,
+            action: 'contractor_signature_added',
+            actor_type: 'contractor',
+            actor_name: signerName,
+            details: {
+              signer_document: signerDocument,
+              signature_method: 'draw'
+            },
+            user_agent: navigator.userAgent
+          });
+      } catch (auditErr) {
+        console.warn('Audit log insert failed:', auditErr);
+      }
 
       // Verificar se contratado já assinou
       const { data: allSignatures } = await supabase
         .from('contract_signatures')
-        .select('signer_type')
+        .select('signer_type, signed_at')
         .eq('contract_id', contract.id);
 
-      const signerTypes = allSignatures?.map(s => s.signer_type) || [];
-      const hasContracted = signerTypes.includes('contracted');
+      const signedTypes = allSignatures
+        ?.filter(s => s.signed_at)
+        .map(s => s.signer_type) || [];
+      
+      const hasContractor = signedTypes.includes('contractor');
+      const hasContracted = signedTypes.includes('contracted');
+
+      // Determinar novo status
+      let newStatus = 'pending_signature';
+      if (hasContractor && hasContracted) {
+        newStatus = 'signed';
+      } else if (hasContractor || hasContracted) {
+        newStatus = 'partially_signed';
+      }
 
       // Atualizar status do contrato
-      const newStatus = hasContracted ? 'signed' : 'partially_signed';
-
-      await supabase
+      const { error: updateError } = await supabase
         .from('contracts')
         .update({ status: newStatus })
         .eq('id', contract.id);
+
+      if (updateError) {
+        console.error('Contract status update error:', updateError);
+        // Não lançar erro aqui - a assinatura foi registrada com sucesso
+      }
 
       // Refresh signatures to get the latest
       await fetchSignatures();
