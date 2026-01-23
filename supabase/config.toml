@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.page-ai-builder]
 verify_jwt = false
+
+[functions.checkout-activate-user]
+verify_jwt = false
