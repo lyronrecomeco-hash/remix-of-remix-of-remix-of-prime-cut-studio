@@ -13,30 +13,30 @@ const steps: Step[] = [
   {
     icon: MessageSquare,
     number: '1',
-    title: 'Responda as Perguntas',
+    title: 'Descreva sua ideia',
     description:
-      'Explique seu projeto, público e propósito. A Genesis entende o contexto e organiza a estrutura ideal.',
+      'Conte o que você quer criar. Nossa IA interpreta e estrutura tudo automaticamente.',
   },
   {
     icon: Palette,
     number: '2',
-    title: 'Visualize e Personalize',
+    title: 'Personalize o visual',
     description:
-      'Ajuste cores, tipografia e estilo com poucos cliques — mantendo um padrão visual profissional.',
+      'Escolha cores, fontes e estilo. Seu projeto já nasce com identidade profissional.',
   },
   {
     icon: MousePointer,
     number: '3',
-    title: 'Gere com 1 clique',
+    title: 'Gere instantaneamente',
     description:
-      'Em instantes, seu projeto fica pronto para gerar páginas, fluxos e telas com consistência de design.',
+      'Com um clique, seu SaaS está pronto — páginas, fluxos e estrutura completa.',
   },
   {
     icon: Rocket,
     number: '4',
-    title: 'Publique e Lucre',
+    title: 'Lance e monetize',
     description:
-      'Publique online, conecte integrações e comece a vender — com um produto escalável e bem estruturado.',
+      'Publique, conecte pagamentos e comece a faturar com seu produto digital.',
   },
 ];
 
@@ -44,7 +44,6 @@ const GenesisCommercialFeatures = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
   const [activeStep, setActiveStep] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
 
   const cards = useMemo(
     () =>
@@ -56,13 +55,14 @@ const GenesisCommercialFeatures = () => {
     []
   );
 
+  // Auto-advance animation
   useEffect(() => {
-    if (!isPlaying || !isInView) return;
+    if (!isInView) return;
     const interval = setInterval(() => {
       setActiveStep((prev) => (prev + 1) % steps.length);
-    }, 4000);
+    }, 3500);
     return () => clearInterval(interval);
-  }, [isPlaying, isInView]);
+  }, [isInView]);
 
   return (
     <section 
@@ -95,12 +95,11 @@ const GenesisCommercialFeatures = () => {
           </motion.div>
           
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-foreground tracking-tight">
-            Com a <span className="text-primary">Genesis</span>, desenvolver um SaaS é{' '}
-            <span className="text-primary">fácil, ágil e eficiente</span>
+            Do zero ao SaaS em <span className="text-primary">minutos</span>
           </h2>
           
           <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-            Um fluxo claro, visual e conectado — do questionário até a publicação.
+            Um processo simples, guiado e 100% visual — sem código, sem complicação.
           </p>
         </motion.div>
 
@@ -122,24 +121,16 @@ const GenesisCommercialFeatures = () => {
                   animate={isInView ? { opacity: 1, y: 0 } : {}}
                   transition={{ duration: 0.5, delay: step.idx * 0.08 }}
                   className="relative"
-                  onMouseEnter={() => {
-                    setActiveStep(step.idx);
-                    setIsPlaying(false);
-                  }}
-                  onMouseLeave={() => setIsPlaying(true)}
-                  onClick={() => {
-                    setActiveStep(step.idx);
-                    setIsPlaying(false);
-                  }}
                 >
                   <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-0">
                     {/* Left card slot */}
                     <div className="md:pr-8 flex justify-end">
                       {isLeft ? (
                         <motion.div
-                          whileHover={{ y: -2 }}
+                          animate={isActive ? { y: -4, scale: 1.02 } : { y: 0, scale: 1 }}
+                          transition={{ duration: 0.4 }}
                           className={
-                            'relative rounded-2xl border bg-card/60 backdrop-blur-md p-6 w-full max-w-md ' +
+                            'relative rounded-2xl border bg-card/60 backdrop-blur-md p-6 w-full max-w-md cursor-pointer ' +
                             (isActive
                               ? 'border-primary/50 shadow-[0_0_0_1px_hsl(var(--primary)/0.25),0_20px_40px_-20px_hsl(var(--primary)/0.35)]'
                               : 'border-border/60')
@@ -147,11 +138,11 @@ const GenesisCommercialFeatures = () => {
                         >
                           <div className="flex items-start gap-4">
                             <div className={
-                              'shrink-0 w-12 h-12 rounded-xl flex items-center justify-center border ' +
+                              'shrink-0 w-12 h-12 rounded-xl flex items-center justify-center border transition-colors duration-300 ' +
                               (isActive ? 'bg-primary/15 border-primary/25' : 'bg-muted/30 border-border/60')
                             }>
                               <Icon className={
-                                'w-6 h-6 ' + (isActive ? 'text-primary' : 'text-muted-foreground')
+                                'w-6 h-6 transition-colors duration-300 ' + (isActive ? 'text-primary' : 'text-muted-foreground')
                               } />
                             </div>
                             <div className="min-w-0">
@@ -174,22 +165,23 @@ const GenesisCommercialFeatures = () => {
                       {/* horizontal connector line */}
                       <div
                         className={
-                          'absolute top-1/2 -translate-y-1/2 h-px w-8 bg-primary/40 ' +
+                          'absolute top-1/2 -translate-y-1/2 h-px w-8 transition-colors duration-300 ' +
+                          (isActive ? 'bg-primary/60' : 'bg-border/40') + ' ' +
                           (isLeft ? '-left-8' : '-right-8')
                         }
                       />
                       <motion.div
-                        animate={isActive ? { scale: [1, 1.12, 1] } : { scale: 1 }}
-                        transition={{ duration: 1.6, repeat: isActive ? Infinity : 0 }}
+                        animate={isActive ? { scale: [1, 1.15, 1] } : { scale: 1 }}
+                        transition={{ duration: 1.8, repeat: isActive ? Infinity : 0 }}
                         className={
-                          'relative w-12 h-12 rounded-full grid place-items-center border bg-background z-10 ' +
+                          'relative w-12 h-12 rounded-full grid place-items-center border bg-background z-10 transition-all duration-300 ' +
                           (isActive
-                            ? 'border-primary/50 shadow-[0_0_24px_hsl(var(--primary)/0.35)]'
+                            ? 'border-primary/50 shadow-[0_0_24px_hsl(var(--primary)/0.4)]'
                             : 'border-border/70')
                         }
                       >
                         <span className={
-                          'text-sm font-semibold ' +
+                          'text-sm font-semibold transition-colors duration-300 ' +
                           (isActive ? 'text-primary' : 'text-muted-foreground')
                         }>
                           {step.number}
@@ -201,9 +193,10 @@ const GenesisCommercialFeatures = () => {
                     <div className="md:pl-8 flex justify-start">
                       {!isLeft ? (
                         <motion.div
-                          whileHover={{ y: -2 }}
+                          animate={isActive ? { y: -4, scale: 1.02 } : { y: 0, scale: 1 }}
+                          transition={{ duration: 0.4 }}
                           className={
-                            'relative rounded-2xl border bg-card/60 backdrop-blur-md p-6 w-full max-w-md ' +
+                            'relative rounded-2xl border bg-card/60 backdrop-blur-md p-6 w-full max-w-md cursor-pointer ' +
                             (isActive
                               ? 'border-primary/50 shadow-[0_0_0_1px_hsl(var(--primary)/0.25),0_20px_40px_-20px_hsl(var(--primary)/0.35)]'
                               : 'border-border/60')
@@ -211,11 +204,11 @@ const GenesisCommercialFeatures = () => {
                         >
                           <div className="flex items-start gap-4">
                             <div className={
-                              'shrink-0 w-12 h-12 rounded-xl flex items-center justify-center border ' +
+                              'shrink-0 w-12 h-12 rounded-xl flex items-center justify-center border transition-colors duration-300 ' +
                               (isActive ? 'bg-primary/15 border-primary/25' : 'bg-muted/30 border-border/60')
                             }>
                               <Icon className={
-                                'w-6 h-6 ' + (isActive ? 'text-primary' : 'text-muted-foreground')
+                                'w-6 h-6 transition-colors duration-300 ' + (isActive ? 'text-primary' : 'text-muted-foreground')
                               } />
                             </div>
                             <div className="min-w-0">
@@ -243,15 +236,18 @@ const GenesisCommercialFeatures = () => {
             })}
           </div>
 
-          {/* Auto indicator */}
-          <div className="mt-10 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/50 px-3 py-1.5">
-              <span
-                className="h-1.5 w-1.5 rounded-full bg-primary"
-                aria-hidden
+          {/* Progress indicator */}
+          <div className="mt-12 flex items-center justify-center gap-2">
+            {steps.map((_, idx) => (
+              <motion.div
+                key={idx}
+                animate={idx === activeStep ? { scale: 1.3 } : { scale: 1 }}
+                className={
+                  'w-2 h-2 rounded-full transition-colors duration-300 ' +
+                  (idx === activeStep ? 'bg-primary' : idx < activeStep ? 'bg-primary/50' : 'bg-border')
+                }
               />
-              {isPlaying ? 'Auto' : 'Manual'}
-            </span>
+            ))}
           </div>
         </div>
       </div>
