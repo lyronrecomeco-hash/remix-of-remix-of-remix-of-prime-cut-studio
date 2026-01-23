@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useFromScratch } from '../FromScratchContext';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { LovableConnectButton } from './LovableConnectButton';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -303,12 +304,28 @@ export function StepPreview({ onComplete, affiliateId }: StepPreviewProps) {
         </div>
       </div>
 
-      {/* Instructions */}
-      <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 max-w-lg mx-auto">
-        <p className="text-xs text-muted-foreground text-center">
-          <strong className="text-foreground">Próximo passo:</strong> Cole o prompt na IA ({formData.targetAI === 'other' ? formData.otherAI : formData.targetAI})
-        </p>
-      </div>
+      {/* Lovable Integration - Only shown when Lovable is selected */}
+      {formData.targetAI === 'lovable' && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <LovableConnectButton 
+            prompt={displayedPrompt} 
+            projectName={formData.projectName} 
+          />
+        </motion.div>
+      )}
+
+      {/* Instructions - Only show when NOT Lovable */}
+      {formData.targetAI !== 'lovable' && (
+        <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 max-w-lg mx-auto">
+          <p className="text-xs text-muted-foreground text-center">
+            <strong className="text-foreground">Próximo passo:</strong> Cole o prompt na IA ({formData.targetAI === 'other' ? formData.otherAI : formData.targetAI})
+          </p>
+        </div>
+      )}
 
       {/* Back Button - Compact */}
       <div className="text-center">

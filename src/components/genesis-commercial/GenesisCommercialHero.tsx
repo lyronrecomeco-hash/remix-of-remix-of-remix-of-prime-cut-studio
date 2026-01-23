@@ -16,12 +16,13 @@ const GenesisCommercialHero = () => {
     { icon: CheckCircle, title: 'Propostas Aceitas', desc: 'Gerencie as propostas aceitas do Radar Global e...' },
   ];
 
-  // Carousel items matching the real GenesisCarousel
+  // Carousel items matching the ORIGINAL GenesisCarousel - ALL cards restored
   const accessAlso = [
+    { icon: PenTool, title: 'Construir Página', desc: 'Crie páginas modernas com IA' },
     { icon: Smartphone, title: 'Apps Virais', desc: 'Exemplos de aplicativos de sucesso' },
     { icon: FileText, title: 'Propostas Personalizadas', desc: 'Crie propostas únicas com IA' },
     { icon: GraduationCap, title: 'Academia Genesis', desc: 'Aprimore suas habilidades' },
-    { icon: Rocket, title: 'Redator Automatizado', desc: 'Automatize sua produção de...' },
+    { icon: Rocket, title: 'Redator Automatizado', desc: 'Automatize sua produção de conteúdo' },
   ];
 
   // Duplicate items for infinite scroll
