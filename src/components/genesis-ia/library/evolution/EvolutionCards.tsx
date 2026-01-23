@@ -28,7 +28,7 @@ const CATEGORY_GROUPS = [
 
 export function EvolutionCards({ selectedType, onSelect }: EvolutionCardsProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {CATEGORY_GROUPS.map((group) => {
         const types = group.types
           .map((id) => EVOLUTION_TYPES.find((t) => t.id === id))
@@ -37,16 +37,16 @@ export function EvolutionCards({ selectedType, onSelect }: EvolutionCardsProps) 
         if (types.length === 0) return null;
 
         return (
-          <div key={group.id} className="space-y-3">
+          <div key={group.id} className="space-y-4">
             {/* Category Label */}
             <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+              <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
                 {group.label}
               </span>
             </div>
 
             {/* Cards Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {types.map((type, index) => {
                 const Icon = type.icon;
                 const isSelected = selectedType?.id === type.id;
@@ -59,19 +59,19 @@ export function EvolutionCards({ selectedType, onSelect }: EvolutionCardsProps) 
                     transition={{ delay: index * 0.03 }}
                     onClick={() => onSelect(type)}
                     className={cn(
-                      'relative p-4 rounded-xl border text-center transition-all duration-200',
+                      'relative p-5 rounded-xl border text-center transition-all duration-200',
                       'hover:scale-[1.02] hover:bg-white/10',
                       'focus:outline-none focus:ring-2 focus:ring-blue-500/50',
-                      'min-h-[100px] flex flex-col items-center justify-center gap-2',
+                      'min-h-[130px] flex flex-col items-center justify-center gap-3',
                       isSelected
-                        ? 'border-amber-500 bg-amber-500/10 shadow-lg shadow-amber-500/10'
-                        : 'border-white/10 bg-white/5 hover:border-white/20'
+                        ? 'border-blue-500 bg-blue-500/10 shadow-lg shadow-blue-500/10'
+                        : 'border-white/10 bg-white/5 hover:border-blue-500/30'
                     )}
                   >
                     {isSelected && (
                       <motion.div
                         layoutId="selected-evolution"
-                        className="absolute inset-0 rounded-xl border-2 border-amber-500"
+                        className="absolute inset-0 rounded-xl border-2 border-blue-500"
                         transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
                       />
                     )}
@@ -79,22 +79,22 @@ export function EvolutionCards({ selectedType, onSelect }: EvolutionCardsProps) 
                     <div className="relative z-10 flex flex-col items-center">
                       <div
                         className={cn(
-                          'w-10 h-10 rounded-lg flex items-center justify-center mb-2',
-                          isSelected ? 'bg-amber-500/20' : 'bg-white/10'
+                          'w-12 h-12 rounded-xl flex items-center justify-center mb-2',
+                          isSelected ? 'bg-blue-500/20' : 'bg-white/10'
                         )}
                       >
                         <Icon
                           className={cn(
-                            'w-5 h-5',
-                            isSelected ? 'text-amber-400' : 'text-muted-foreground'
+                            'w-6 h-6',
+                            isSelected ? 'text-blue-400' : 'text-muted-foreground'
                           )}
                         />
                       </div>
 
                       <h4
                         className={cn(
-                          'text-[11px] font-semibold leading-tight uppercase tracking-wide',
-                          isSelected ? 'text-amber-300' : 'text-foreground'
+                          'text-sm font-semibold leading-tight uppercase tracking-wide',
+                          isSelected ? 'text-blue-300' : 'text-foreground'
                         )}
                       >
                         {type.title}

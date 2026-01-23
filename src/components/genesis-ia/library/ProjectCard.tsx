@@ -109,68 +109,68 @@ export function ProjectCard({ project, index, onEdit, onEvolve, onDelete }: Proj
     >
       <div
         className={cn(
-          'relative rounded-xl border bg-white/5 overflow-hidden transition-all duration-300 min-h-[200px] flex flex-col',
+          'relative rounded-xl border bg-white/5 overflow-hidden transition-all duration-300 min-h-[220px] flex flex-col',
           isHovered
             ? 'border-blue-500/40 shadow-xl shadow-blue-500/5 bg-white/10'
             : 'border-white/10'
         )}
       >
         {/* Header with Icon */}
-        <div className="p-4 pb-3 flex items-start gap-3">
-          <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-xl flex-shrink-0">
+        <div className="p-5 pb-3 flex items-start gap-4">
+          <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-2xl flex-shrink-0">
             {getTemplateIcon(project.template_slug)}
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-foreground truncate">
+            <h3 className="text-base font-semibold text-foreground truncate">
               {project.client_name || project.template_name}
             </h3>
-            <p className="text-[11px] text-muted-foreground truncate">
+            <p className="text-xs text-muted-foreground truncate mt-0.5">
               Arquitetura e estratégia de nicho...
             </p>
           </div>
         </div>
 
         {/* Metadata */}
-        <div className="px-4 pb-3 space-y-2 flex-1">
+        <div className="px-5 pb-4 space-y-2.5 flex-1">
           {/* Platform */}
           <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Plataforma</span>
+            <span className="text-xs uppercase tracking-wider text-muted-foreground">Plataforma</span>
             <span className={cn(
-              'px-2 py-0.5 rounded text-[10px] font-medium',
-              'bg-amber-500/20 text-amber-300'
+              'px-2.5 py-0.5 rounded text-xs font-semibold',
+              'bg-blue-500/20 text-blue-300'
             )}>
               {platformInfo.label}
             </span>
           </div>
 
           {/* Created At */}
-          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-            <Calendar className="w-3 h-3" />
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Calendar className="w-3.5 h-3.5" />
             <span className="uppercase tracking-wider">Criado em</span>
             <span className="text-foreground/80 ml-auto">{createdDate}</span>
           </div>
 
           {/* Updated At */}
-          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-            <Clock className="w-3 h-3" />
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Clock className="w-3.5 h-3.5" />
             <span className="uppercase tracking-wider">Atualizado</span>
             <span className="text-foreground/80 ml-auto">há {relativeUpdatedAt}</span>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="px-4 pb-4 pt-2 border-t border-white/5 flex items-center gap-2">
+        <div className="px-5 pb-5 pt-3 border-t border-white/5 flex items-center gap-2">
           <Button
             size="sm"
             onClick={openPreview}
-            className="flex-1 h-8 text-xs bg-blue-500 hover:bg-blue-600 text-white font-medium"
+            className="flex-1 h-9 text-sm bg-blue-500 hover:bg-blue-600 text-white font-semibold"
           >
             ABRIR
-            <ExternalLink className="w-3 h-3 ml-1" />
+            <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/5 hover:bg-white/10">
+              <Button variant="ghost" size="icon" className="h-9 w-9 bg-white/5 hover:bg-white/10">
                 <MoreHorizontal className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
