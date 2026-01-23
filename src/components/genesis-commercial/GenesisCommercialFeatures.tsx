@@ -104,15 +104,16 @@ const GenesisCommercialFeatures = () => {
           </p>
         </motion.div>
 
-        {/* Timeline (ZOD-style) */}
+        {/* Timeline */}
         <div className="relative mx-auto max-w-5xl">
-          {/* center line */}
+          {/* center vertical line */}
           <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-border/70" />
 
-          <div className="space-y-6 md:space-y-10">
+          <div className="space-y-8 md:space-y-12">
             {cards.map((step) => {
               const Icon = step.icon;
               const isActive = step.idx === activeStep;
+              const isLeft = step.align === 'left';
 
               return (
                 <motion.div
@@ -131,14 +132,14 @@ const GenesisCommercialFeatures = () => {
                     setIsPlaying(false);
                   }}
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-6">
-                    {/* left slot */}
-                    <div className={step.align === 'left' ? 'md:pr-10' : 'md:pr-10 md:order-2'}>
-                      {step.align === 'left' && (
+                  <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-0">
+                    {/* Left card slot */}
+                    <div className="md:pr-8 flex justify-end">
+                      {isLeft ? (
                         <motion.div
                           whileHover={{ y: -2 }}
                           className={
-                            'relative rounded-2xl border bg-card/60 backdrop-blur-md p-6 ' +
+                            'relative rounded-2xl border bg-card/60 backdrop-blur-md p-6 w-full max-w-md ' +
                             (isActive
                               ? 'border-primary/50 shadow-[0_0_0_1px_hsl(var(--primary)/0.25),0_20px_40px_-20px_hsl(var(--primary)/0.35)]'
                               : 'border-border/60')
@@ -163,16 +164,46 @@ const GenesisCommercialFeatures = () => {
                             </div>
                           </div>
                         </motion.div>
+                      ) : (
+                        <div className="hidden md:block" />
                       )}
                     </div>
 
-                    {/* right slot */}
-                    <div className={step.align === 'right' ? 'md:pl-10' : 'md:pl-10 md:order-1'}>
-                      {step.align === 'right' && (
+                    {/* Center marker */}
+                    <div className="hidden md:flex flex-col items-center relative">
+                      {/* horizontal connector line */}
+                      <div
+                        className={
+                          'absolute top-1/2 -translate-y-1/2 h-px w-8 bg-primary/40 ' +
+                          (isLeft ? '-left-8' : '-right-8')
+                        }
+                      />
+                      <motion.div
+                        animate={isActive ? { scale: [1, 1.12, 1] } : { scale: 1 }}
+                        transition={{ duration: 1.6, repeat: isActive ? Infinity : 0 }}
+                        className={
+                          'relative w-12 h-12 rounded-full grid place-items-center border bg-background z-10 ' +
+                          (isActive
+                            ? 'border-primary/50 shadow-[0_0_24px_hsl(var(--primary)/0.35)]'
+                            : 'border-border/70')
+                        }
+                      >
+                        <span className={
+                          'text-sm font-semibold ' +
+                          (isActive ? 'text-primary' : 'text-muted-foreground')
+                        }>
+                          {step.number}
+                        </span>
+                      </motion.div>
+                    </div>
+
+                    {/* Right card slot */}
+                    <div className="md:pl-8 flex justify-start">
+                      {!isLeft ? (
                         <motion.div
                           whileHover={{ y: -2 }}
                           className={
-                            'relative rounded-2xl border bg-card/60 backdrop-blur-md p-6 ' +
+                            'relative rounded-2xl border bg-card/60 backdrop-blur-md p-6 w-full max-w-md ' +
                             (isActive
                               ? 'border-primary/50 shadow-[0_0_0_1px_hsl(var(--primary)/0.25),0_20px_40px_-20px_hsl(var(--primary)/0.35)]'
                               : 'border-border/60')
@@ -197,48 +228,22 @@ const GenesisCommercialFeatures = () => {
                             </div>
                           </div>
                         </motion.div>
+                      ) : (
+                        <div className="hidden md:block" />
                       )}
                     </div>
                   </div>
 
-                  {/* center marker */}
-                  <div className="hidden md:block absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-                    {/* connector */}
-                    <div
-                      className={
-                        'absolute top-1/2 -translate-y-1/2 h-px w-10 ' +
-                        (step.align === 'left' ? 'right-10' : 'left-10')
-                      }
-                      style={{
-                        background:
-                          'linear-gradient(90deg, transparent, hsl(var(--primary)/0.6), transparent)',
-                      }}
-                    />
-
-                    <motion.div
-                      animate={isActive ? { scale: [1, 1.12, 1] } : { scale: 1 }}
-                      transition={{ duration: 1.6, repeat: isActive ? Infinity : 0 }}
-                      className={
-                        'relative w-12 h-12 rounded-full grid place-items-center border bg-background ' +
-                        (isActive
-                          ? 'border-primary/50 shadow-[0_0_24px_hsl(var(--primary)/0.35)]'
-                          : 'border-border/70')
-                      }
-                    >
-                      <span className={
-                        'text-sm font-semibold ' +
-                        (isActive ? 'text-primary' : 'text-muted-foreground')
-                      }>
-                        {step.number}
-                      </span>
-                    </motion.div>
+                  {/* Mobile: show number badge */}
+                  <div className="md:hidden absolute -left-2 top-6 w-8 h-8 rounded-full grid place-items-center border bg-background border-border">
+                    <span className="text-xs font-semibold text-muted-foreground">{step.number}</span>
                   </div>
                 </motion.div>
               );
             })}
           </div>
 
-          {/* small indicator */}
+          {/* Auto indicator */}
           <div className="mt-10 flex items-center justify-center gap-2 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/50 px-3 py-1.5">
               <span
