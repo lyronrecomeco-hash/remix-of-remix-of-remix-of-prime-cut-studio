@@ -1,57 +1,10 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Check } from 'lucide-react';
+import { Search, Check, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useFromScratch } from '../FromScratchContext';
 import { NICHE_CONTEXTS, NICHE_CATEGORIES } from '../nicheContexts';
-
-// Import niche images
-import hamburgueriaImg from '@/assets/niches/hamburgueria.jpg';
-import pizzariaImg from '@/assets/niches/pizzaria.jpg';
-import restauranteImg from '@/assets/niches/restaurante.jpg';
-import cafeteriaImg from '@/assets/niches/cafeteria.jpg';
-import barbeariaImg from '@/assets/niches/barbearia.jpg';
-import salaoImg from '@/assets/niches/salao-beleza.jpg';
-import esteticaImg from '@/assets/niches/clinica-estetica.jpg';
-import academiaImg from '@/assets/niches/academia.jpg';
-import clinicaImg from '@/assets/niches/clinica-medica.jpg';
-import odontologiaImg from '@/assets/niches/odontologia.jpg';
-import personalImg from '@/assets/niches/personal-trainer.jpg';
-import nutricionistaImg from '@/assets/niches/nutricionista.jpg';
-import petshopImg from '@/assets/niches/petshop.jpg';
-import veterinariaImg from '@/assets/niches/veterinaria.jpg';
-import imobiliariaImg from '@/assets/niches/imobiliaria.jpg';
-import advocaciaImg from '@/assets/niches/advocacia.jpg';
-import contabilidadeImg from '@/assets/niches/contabilidade.jpg';
-import escolaImg from '@/assets/niches/escola-curso.jpg';
-import fotografoImg from '@/assets/niches/fotografo.jpg';
-import marketingImg from '@/assets/niches/agencia-marketing.jpg';
-import startupImg from '@/assets/niches/startup-tech.jpg';
-
-// Niche illustration images mapping
-const NICHE_IMAGES: Record<string, string> = {
-  'hamburgueria': hamburgueriaImg,
-  'pizzaria': pizzariaImg,
-  'restaurante': restauranteImg,
-  'cafeteria': cafeteriaImg,
-  'barbearia': barbeariaImg,
-  'salao-beleza': salaoImg,
-  'clinica-estetica': esteticaImg,
-  'academia': academiaImg,
-  'clinica-medica': clinicaImg,
-  'odontologia': odontologiaImg,
-  'personal-trainer': personalImg,
-  'nutricionista': nutricionistaImg,
-  'petshop': petshopImg,
-  'veterinaria': veterinariaImg,
-  'imobiliaria': imobiliariaImg,
-  'advocacia': advocaciaImg,
-  'contabilidade': contabilidadeImg,
-  'escola-curso': escolaImg,
-  'fotografo': fotografoImg,
-  'agencia-marketing': marketingImg,
-  'startup-tech': startupImg,
-};
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function StepNicheSelect() {
   const { formData, updateFormData } = useFromScratch();
@@ -77,34 +30,26 @@ export function StepNicheSelect() {
   }, [searchQuery, selectedCategory]);
 
   return (
-    <div className="space-y-3">
-      <div className="mb-2">
-        <h3 className="text-base font-bold text-foreground mb-0.5">
-          Qual é o segmento do negócio?
-        </h3>
-        <p className="text-xs text-muted-foreground">
-          Selecione o nicho para gerar um prompt contextualizado
-        </p>
-      </div>
-
-      {/* Search and Categories Row */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-[200px] max-w-xs">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+    <div className="space-y-4">
+      {/* Search and Categories */}
+      <div className="flex flex-col gap-3">
+        <div className="relative max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Buscar nicho..."
-            className="pl-8 bg-white/5 border-white/10 h-8 text-xs"
+            className="pl-9 bg-white/5 border-white/10 h-9"
           />
         </div>
-        <div className="flex flex-wrap gap-1">
+        
+        <div className="flex flex-wrap gap-1.5">
           <button
             onClick={() => setSelectedCategory(null)}
-            className={`px-2 py-1 rounded-full text-[10px] transition-colors ${
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
               !selectedCategory 
-                ? 'bg-primary text-primary-foreground' 
-                : 'bg-white/5 text-muted-foreground hover:bg-white/10'
+                ? 'bg-primary text-primary-foreground shadow-sm' 
+                : 'bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground'
             }`}
           >
             Todos
@@ -113,10 +58,10 @@ export function StepNicheSelect() {
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-2 py-1 rounded-full text-[10px] transition-colors ${
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                 selectedCategory === cat.id 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'bg-white/5 text-muted-foreground hover:bg-white/10'
+                  ? 'bg-primary text-primary-foreground shadow-sm' 
+                  : 'bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground'
               }`}
             >
               {cat.emoji} {cat.name}
@@ -125,84 +70,98 @@ export function StepNicheSelect() {
         </div>
       </div>
 
-      {/* Niches Grid - Compact Cards */}
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2">
-        {filteredNiches.map((niche, index) => {
-          const isSelected = formData.nicheId === niche.id;
-          const imageUrl = NICHE_IMAGES[niche.id];
-          
-          return (
-            <motion.button
-              key={niche.id}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.015 }}
-              onClick={() => updateFormData('nicheId', niche.id)}
-              className={`group relative rounded-lg overflow-hidden border text-left transition-all hover:-translate-y-0.5 hover:shadow-md ${
-                isSelected
-                  ? 'border-primary ring-1 ring-primary/30 shadow-md shadow-primary/20'
-                  : 'border-border bg-card hover:border-primary/50'
-              }`}
-            >
-              {/* Image */}
-              <div className="relative h-16 overflow-hidden">
-                {imageUrl ? (
-                  <>
-                    <img 
-                      src={imageUrl} 
-                      alt={niche.name}
-                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-                  </>
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
-                    <span className="text-xl">{niche.emoji}</span>
-                  </div>
-                )}
+      {/* Niches Grid - Compact Icon-based */}
+      <ScrollArea className="h-[280px] pr-2">
+        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2">
+          {filteredNiches.map((niche, index) => {
+            const isSelected = formData.nicheId === niche.id;
+            
+            return (
+              <motion.button
+                key={niche.id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.01 }}
+                onClick={() => updateFormData('nicheId', niche.id)}
+                className={`group relative flex flex-col items-center justify-center p-3 rounded-xl border transition-all hover:scale-[1.02] ${
+                  isSelected
+                    ? 'border-primary bg-primary/10 shadow-md shadow-primary/20'
+                    : 'border-white/10 bg-white/5 hover:border-primary/40 hover:bg-white/10'
+                }`}
+              >
+                {/* Emoji Icon */}
+                <span className="text-2xl mb-1.5">{niche.emoji}</span>
+                
+                {/* Name */}
+                <span className={`text-[10px] font-medium text-center leading-tight line-clamp-2 ${
+                  isSelected ? 'text-primary' : 'text-foreground/80'
+                }`}>
+                  {niche.name}
+                </span>
                 
                 {/* Selected Indicator */}
                 {isSelected && (
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="absolute top-1 right-1 w-4 h-4 rounded-full bg-primary flex items-center justify-center"
+                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center shadow-lg"
                   >
-                    <Check className="w-2.5 h-2.5 text-primary-foreground" />
+                    <Check className="w-3 h-3 text-primary-foreground" />
                   </motion.div>
                 )}
-                
-                {/* Emoji Badge */}
-                <div className="absolute bottom-1 left-1 text-sm bg-black/40 rounded px-1 backdrop-blur-sm">
-                  {niche.emoji}
-                </div>
-              </div>
-              
-              {/* Card Footer - Compact */}
-              <div className="px-1.5 py-1 bg-card">
-                <h4 className={`text-[10px] font-semibold line-clamp-1 ${isSelected ? 'text-primary' : 'text-foreground'}`}>
-                  {niche.name}
-                </h4>
-              </div>
-            </motion.button>
-          );
-        })}
-      </div>
+              </motion.button>
+            );
+          })}
+          
+          {/* Outro Nicho Card */}
+          <motion.button
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: filteredNiches.length * 0.01 }}
+            onClick={() => updateFormData('nicheId', 'outro')}
+            className={`group relative flex flex-col items-center justify-center p-3 rounded-xl border transition-all hover:scale-[1.02] ${
+              formData.nicheId === 'outro'
+                ? 'border-primary bg-primary/10 shadow-md shadow-primary/20'
+                : 'border-white/10 bg-white/5 hover:border-primary/40 hover:bg-white/10'
+            }`}
+          >
+            <Sparkles className="w-6 h-6 mb-1.5 text-yellow-500" />
+            <span className={`text-[10px] font-medium text-center leading-tight ${
+              formData.nicheId === 'outro' ? 'text-primary' : 'text-foreground/80'
+            }`}>
+              Outro Nicho
+            </span>
+            
+            {formData.nicheId === 'outro' && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center shadow-lg"
+              >
+                <Check className="w-3 h-3 text-primary-foreground" />
+              </motion.div>
+            )}
+          </motion.button>
+        </div>
+      </ScrollArea>
 
-      {/* Custom Niche - Inline */}
-      <div className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10">
-        <span className="text-[10px] text-muted-foreground whitespace-nowrap">Outro nicho:</span>
-        <Input
-          value={formData.customNiche || ''}
-          onChange={(e) => {
-            updateFormData('customNiche', e.target.value);
-            if (e.target.value) updateFormData('nicheId', 'outro');
-          }}
-          placeholder="Digite o nicho personalizado..."
-          className="bg-white/5 border-white/10 h-7 text-xs flex-1"
-        />
-      </div>
+      {/* Custom Niche Input */}
+      {formData.nicheId === 'outro' && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20"
+        >
+          <Sparkles className="w-4 h-4 text-primary shrink-0" />
+          <Input
+            value={formData.customNiche || ''}
+            onChange={(e) => updateFormData('customNiche', e.target.value)}
+            placeholder="Digite o nicho do seu negócio..."
+            className="bg-white/5 border-white/10 h-9 flex-1"
+            autoFocus
+          />
+        </motion.div>
+      )}
     </div>
   );
 }

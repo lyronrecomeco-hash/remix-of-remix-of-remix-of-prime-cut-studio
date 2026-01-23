@@ -1,6 +1,5 @@
-import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Check, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FromScratchProvider, useFromScratch } from './FromScratchContext';
 import { StepProjectType } from './steps/StepProjectType';
@@ -14,6 +13,7 @@ import { StepFeatures } from './steps/StepFeatures';
 import { StepExtras } from './steps/StepExtras';
 import { StepTargetAI } from './steps/StepTargetAI';
 import { StepPreview } from './steps/StepPreview';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const STEPS = [
   { id: 1, title: 'Tipo de Projeto', subtitle: 'Aplicativo ou Site' },
@@ -66,68 +66,99 @@ function WizardContent({ onBack, onComplete, affiliateId }: FromScratchWizardPro
   const currentStepInfo = STEPS[currentStep - 1];
 
   return (
-    <div className="w-full">
-      {/* Compact Header */}
-      <div className="flex items-center justify-between gap-3 mb-3">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={handleBack} className="h-7 w-7">
-            <ArrowLeft className="w-3.5 h-3.5" />
-          </Button>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-primary" />
-              <h2 className="text-sm font-bold text-foreground">Criar do Zero</h2>
+    <div className="flex flex-col h-full max-h-[calc(100vh-200px)]">
+      {/* Fixed Header */}
+      <div className="shrink-0 pb-4 border-b border-white/10">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleBack} 
+              className="h-8 w-8 rounded-lg hover:bg-white/10"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+            <div>
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-primary" />
+                <h2 className="text-base font-bold text-foreground">Criar do Zero</h2>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {currentStepInfo.title} • {currentStepInfo.subtitle}
+              </p>
             </div>
-            <p className="text-[10px] text-muted-foreground">
-              {currentStepInfo.title} - {currentStepInfo.subtitle}
-            </p>
+          </div>
+          <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full">
+            <span className="text-xs font-semibold text-primary">{currentStep}</span>
+            <span className="text-xs text-muted-foreground">de {totalSteps}</span>
           </div>
         </div>
-        <span className="text-[10px] text-muted-foreground">
-          {currentStep}/{totalSteps}
-        </span>
+
+        {/* Progress Bar */}
+        <div className="flex items-center gap-1">
+          {STEPS.map((step) => (
+            <div
+              key={step.id}
+              className={`flex-1 h-1 rounded-full transition-all duration-300 ${
+                step.id < currentStep 
+                  ? 'bg-primary' 
+                  : step.id === currentStep 
+                    ? 'bg-primary/70' 
+                    : 'bg-white/10'
+              }`}
+            />
+          ))}
+        </div>
       </div>
 
-      {/* Compact Progress Bar */}
-      <div className="flex items-center gap-0.5 mb-3">
-        {STEPS.map((step) => (
-          <div
-            key={step.id}
-            className={`flex-1 h-0.5 rounded-full transition-colors ${
-              step.id <= currentStep ? 'bg-primary' : 'bg-white/10'
-            }`}
-          />
-        ))}
+      {/* Step Title */}
+      <div className="shrink-0 py-4">
+        <h3 className="text-lg font-bold text-foreground">
+          {currentStepInfo.title === 'Nicho' ? 'Qual é o segmento do negócio?' : currentStepInfo.title}
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          {currentStepInfo.title === 'Nicho' 
+            ? 'Selecione o nicho para gerar um prompt contextualizado'
+            : currentStepInfo.subtitle
+          }
+        </p>
       </div>
 
-      {/* Step Content */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentStep}
-          initial={{ opacity: 0, x: 15 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -15 }}
-          transition={{ duration: 0.15 }}
-        >
-          {renderStep()}
-        </motion.div>
-      </AnimatePresence>
+      {/* Scrollable Step Content */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentStep}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.2 }}
+            className="h-full"
+          >
+            {renderStep()}
+          </motion.div>
+        </AnimatePresence>
+      </div>
 
-      {/* Compact Navigation */}
+      {/* Fixed Navigation */}
       {currentStep < 11 && (
-        <div className="flex justify-between mt-4 pt-3 border-t border-white/10">
-          <Button variant="ghost" size="sm" onClick={handleBack} className="h-7 text-[11px] px-2">
-            <ArrowLeft className="w-3 h-3 mr-1" />
+        <div className="shrink-0 flex justify-between items-center pt-4 mt-4 border-t border-white/10">
+          <Button 
+            variant="ghost" 
+            onClick={handleBack} 
+            className="h-9 px-4 text-sm hover:bg-white/10"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar
           </Button>
           <Button
             onClick={nextStep}
             disabled={!canProceed}
-            size="sm"
-            className="bg-primary hover:bg-primary/90 h-7 text-[11px] px-3"
+            className="h-9 px-6 text-sm bg-primary hover:bg-primary/90"
           >
             Próximo
-            <ArrowRight className="w-3 h-3 ml-1" />
+            <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </div>
       )}
