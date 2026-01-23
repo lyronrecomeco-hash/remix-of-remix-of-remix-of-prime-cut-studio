@@ -108,7 +108,7 @@ function WizardContent({ onBack, onComplete, affiliateId }: FromScratchWizardPro
       </div>
 
       {/* Content Area */}
-      <div className="p-5 rounded-b-xl bg-white/5 border border-white/10 border-t-0">
+      <div className="p-5 rounded-b-xl bg-white/5 border border-white/10 border-t-0 max-h-[500px] overflow-y-auto">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentStep}
