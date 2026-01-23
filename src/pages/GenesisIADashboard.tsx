@@ -88,9 +88,7 @@ const GenesisIADashboard = () => {
   const [editingCard, setEditingCard] = useState<CardData | null>(null);
   const [editingText, setEditingText] = useState<TextElementData | null>(null);
   const [showWelcome, setShowWelcome] = useState(false);
-
-  const isAdminUser = userEmail === 'lyronrp@gmail.com';
-  
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -106,10 +104,10 @@ const GenesisIADashboard = () => {
     setUserEmail(user.email || "");
     setUserId(user.id);
 
-    // Buscar nome do genesis_users (vem do checkout)
+    // Buscar nome e id do genesis_users (vem do checkout)
     const { data: genesisUser } = await supabase
       .from('genesis_users')
-      .select('name')
+      .select('id, name')
       .eq('auth_user_id', user.id)
       .single();
 
@@ -119,6 +117,17 @@ const GenesisIADashboard = () => {
                      user.email?.split("@")[0] || 
                      "Usuário";
     setUserName(fullName.split(' ')[0]); // Apenas primeiro nome
+
+    // Verificar role do usuário (super_admin)
+    if (genesisUser?.id) {
+      const { data: roleData } = await supabase
+        .from('genesis_user_roles')
+        .select('role')
+        .eq('user_id', genesisUser.id)
+        .maybeSingle();
+      
+      setIsAdmin(roleData?.role === 'super_admin');
+    }
 
     const { data: affiliate } = await supabase
       .from('affiliates')
@@ -130,9 +139,15 @@ const GenesisIADashboard = () => {
 
     setIsLoading(false);
 
-    // Show welcome popup after login, auto-dismiss after 15 seconds
-    setShowWelcome(true);
-    setTimeout(() => setShowWelcome(false), 15000);
+    // Welcome popup apenas na primeira vez (usar localStorage)
+    const welcomeSeenKey = `genesis_welcome_seen_${user.id}`;
+    const hasSeenWelcome = localStorage.getItem(welcomeSeenKey);
+    
+    if (!hasSeenWelcome) {
+      setShowWelcome(true);
+      localStorage.setItem(welcomeSeenKey, 'true');
+      setTimeout(() => setShowWelcome(false), 15000);
+    }
   };
 
   const handleLogout = async () => {
@@ -179,11 +194,12 @@ const GenesisIADashboard = () => {
     { icon: Grid3X3, label: 'Biblioteca', tabId: 'criar-projetos' },
     { icon: FileText, label: 'Contratos', tabId: 'contracts' },
     { icon: Gift, label: 'Promo', tabId: 'promocional' },
-    { icon: Users, label: 'Usuários', tabId: 'users' },
+    // Usuários só para admin
+    ...(isAdmin ? [{ icon: Users, label: 'Usuários', tabId: 'users' as ActiveTab }] : []),
     { icon: LayoutDashboard, label: 'Financeiro', tabId: 'financial' },
   ];
 
-  const adminDockItems: DockItem[] = isAdminUser ? [
+  const adminDockItems: DockItem[] = isAdmin ? [
     { icon: CreditCard, label: 'Pagamentos', tabId: 'payments' },
   ] : [];
 
@@ -551,11 +567,16 @@ const GenesisIADashboard = () => {
     }
 
     if (activeTab === 'accepted_proposals') {
-      if (!affiliateId) return null;
+      // Propostas aceitas - se não tiver affiliateId, mostra empty state
       return <AcceptedProposalsTab affiliateId={affiliateId} />;
     }
 
     if (activeTab === 'users') {
+      // Só admin pode acessar
+      if (!isAdmin) {
+        setActiveTab('dashboard');
+        return null;
+      }
       return <GenesisUsersTab userId={userId} />;
     }
 
@@ -568,18 +589,20 @@ const GenesisIADashboard = () => {
     }
 
     if (activeTab === 'criar-projetos') {
-      return <CriarProjetosTab affiliateId={affiliateId} onBack={() => setActiveTab('dashboard')} />;
+      // Biblioteca - userId como fallback
+      return <CriarProjetosTab affiliateId={affiliateId} userId={userId} onBack={() => setActiveTab('dashboard')} />;
     }
 
     if (activeTab === 'contracts') {
-      return <ContractsTab affiliateId={affiliateId} onBack={() => setActiveTab('dashboard')} />;
+      // Contratos - userId como fallback
+      return <ContractsTab affiliateId={affiliateId} userId={userId} onBack={() => setActiveTab('dashboard')} />;
     }
 
     if (activeTab === 'promocional') {
       return <PromocionalTab userId={userId} onBack={() => setActiveTab('dashboard')} />;
     }
 
-    if (activeTab === 'payments' && isAdminUser) {
+    if (activeTab === 'payments' && isAdmin) {
       return <GenesisPaymentsTab />;
     }
 

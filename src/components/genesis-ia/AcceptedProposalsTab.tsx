@@ -36,7 +36,7 @@ interface AcceptedProposal {
 }
 
 interface AcceptedProposalsTabProps {
-  affiliateId: string;
+  affiliateId: string | null;
 }
 
 export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps) => {
@@ -45,7 +45,11 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
   const [searchTerm, setSearchTerm] = useState("");
 
   const fetchProposals = async () => {
-    if (!affiliateId) return;
+    if (!affiliateId) {
+      setProposals([]);
+      setIsLoading(false);
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -69,7 +73,9 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
   useEffect(() => {
     fetchProposals();
 
-    // Real-time subscription
+    // Real-time subscription - só se tiver affiliateId
+    if (!affiliateId) return;
+    
     const channel = supabase
       .channel('accepted_proposals_realtime')
       .on(
