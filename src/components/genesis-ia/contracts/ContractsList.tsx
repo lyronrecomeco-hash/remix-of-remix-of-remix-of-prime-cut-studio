@@ -136,28 +136,55 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
 
   const handleDownloadPDF = async (contract: Contract, e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    if (!contract.generated_content) {
+
+    // Sempre buscar o contrato mais recente (evita PDF desatualizado)
+    const { data: freshContract, error: contractError } = await supabase
+      .from('contracts')
+      .select('contract_number, contractor_name, contractor_document, contracted_name, contracted_document, generated_content')
+      .eq('id', contract.id)
+      .maybeSingle();
+
+    if (contractError) {
+      console.error('Erro ao buscar contrato atualizado para PDF:', contractError);
+    }
+
+    const contractForPDF = freshContract ? ({ ...contract, ...freshContract } as Contract) : contract;
+
+    if (!contractForPDF.generated_content) {
       toast.error('Gere o contrato primeiro');
       return;
     }
 
-    // Buscar assinaturas do contrato
-    const { data: signaturesData } = await supabase
+    // Buscar assinaturas mais recentes (ordenadas) diretamente do banco
+    const { data: signaturesData, error: signaturesError } = await supabase
       .from('contract_signatures')
       .select('signer_type, signer_name, signed_at, signature_image')
-      .eq('contract_id', contract.id);
+      .eq('contract_id', contractForPDF.id)
+      .not('signed_at', 'is', null)
+      .order('signed_at', { ascending: false });
+
+    if (signaturesError) {
+      console.error('Erro ao buscar assinaturas para PDF:', signaturesError);
+    }
 
     const signatures: SignatureData[] = signaturesData || [];
-    const contractorSignature = signatures.find(s => s.signer_type === 'contractor' && s.signed_at);
-    const contractedSignature = signatures.find(s => s.signer_type === 'contracted' && s.signed_at);
+    // Como a lista vem ordenada por signed_at DESC, o primeiro match é o mais recente
+    const contractorSignature = signatures.find(s => s.signer_type === 'contractor');
+    const contractedSignature = signatures.find(s => s.signer_type === 'contracted');
+
+    const getPngBase64 = (dataUrl?: string | null) => {
+      if (!dataUrl) return null;
+      const commaIndex = dataUrl.indexOf(',');
+      const raw = commaIndex >= 0 ? dataUrl.slice(commaIndex + 1) : dataUrl;
+      return raw.replace(/\s/g, '');
+    };
 
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 20;
     const maxWidth = pageWidth - (margin * 2);
     
-    const cleanContent = contract.generated_content.replace(/\*\*/g, '');
+    const cleanContent = contractForPDF.generated_content.replace(/\*\*/g, '');
     
     doc.setFontSize(12);
     const lines = doc.splitTextToSize(cleanContent, maxWidth);
@@ -199,10 +226,13 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
     const sigWidth = 60;
     const sigHeight = 20;
 
-    if (contractorSignature?.signature_image) {
+    const contractorSigBase64 = getPngBase64(contractorSignature?.signature_image);
+    const contractedSigBase64 = getPngBase64(contractedSignature?.signature_image);
+
+    if (contractorSigBase64) {
       try {
         doc.addImage(
-          contractorSignature.signature_image,
+          contractorSigBase64,
           'PNG',
           col1X + (colWidth - sigWidth) / 2,
           sigY,
@@ -214,10 +244,10 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
       }
     }
 
-    if (contractedSignature?.signature_image) {
+    if (contractedSigBase64) {
       try {
         doc.addImage(
-          contractedSignature.signature_image,
+          contractedSigBase64,
           'PNG',
           col2X + (colWidth - sigWidth) / 2,
           sigY,
@@ -237,13 +267,13 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
     y += 5;
 
     doc.setFontSize(10);
-    doc.text(contract.contractor_name || '', col1X + colWidth / 2, y, { align: 'center' });
-    doc.text(contract.contracted_name || '', col2X + colWidth / 2, y, { align: 'center' });
+    doc.text(contractForPDF.contractor_name || '', col1X + colWidth / 2, y, { align: 'center' });
+    doc.text(contractForPDF.contracted_name || '', col2X + colWidth / 2, y, { align: 'center' });
     y += 5;
 
     doc.setFontSize(8);
-    doc.text(maskDocument(contract.contractor_document || ''), col1X + colWidth / 2, y, { align: 'center' });
-    doc.text(maskDocument(contract.contracted_document || ''), col2X + colWidth / 2, y, { align: 'center' });
+    doc.text(maskDocument(contractForPDF.contractor_document || ''), col1X + colWidth / 2, y, { align: 'center' });
+    doc.text(maskDocument(contractForPDF.contracted_document || ''), col2X + colWidth / 2, y, { align: 'center' });
     y += 5;
 
     if (contractorSignature?.signed_at) {
@@ -263,7 +293,7 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
       );
     }
 
-    doc.save(`contrato-${contract.contract_number}.pdf`);
+    doc.save(`contrato-${contractForPDF.contract_number}.pdf`);
     toast.success('PDF baixado!');
   };
 
