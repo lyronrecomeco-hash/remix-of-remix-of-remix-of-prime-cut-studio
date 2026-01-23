@@ -1,8 +1,8 @@
 import { useRef, useState, useEffect } from 'react';
-import { motion, useInView } from 'framer-motion';
+import { motion, useInView, AnimatePresence } from 'framer-motion';
 import { 
   MessageSquare, Palette, MousePointer, Rocket,
-  Sparkles, Check, Play, Pause
+  Sparkles, ArrowRight, Zap
 } from 'lucide-react';
 
 const steps = [
@@ -10,109 +10,159 @@ const steps = [
     icon: MessageSquare,
     number: '01',
     title: 'Responda as Perguntas',
-    description: 'Explique seu projeto, público e objetivos. Nossa IA compreenderá o planejamento e estrutura ideal.',
-    color: 'primary',
-    iconBg: 'bg-primary/20',
-    iconColor: 'text-primary',
+    description: 'Explique seu projeto, público e objetivos. Nossa IA compreenderá o planejamento e estrutura ideal para você.',
+    gradient: 'from-blue-500 to-cyan-400',
+    glowColor: 'shadow-blue-500/30',
   },
   {
     icon: Palette,
     number: '02',
     title: 'Visualize e Personalize',
-    description: 'Personalize cores, fontes e design de forma simples para refletir a identidade do seu negócio.',
-    color: 'pink',
-    iconBg: 'bg-gradient-to-br from-pink-500 to-rose-500',
-    iconColor: 'text-white',
+    description: 'Personalize cores, fontes e design de forma simples para refletir a identidade única do seu negócio.',
+    gradient: 'from-violet-500 to-purple-400',
+    glowColor: 'shadow-violet-500/30',
   },
   {
     icon: MousePointer,
     number: '03',
-    title: 'Gere com 1 clique',
+    title: 'Gere com 1 Clique',
     description: 'Em segundos, sua solução completa está pronta: website, sistemas e páginas de vendas inclusas.',
-    color: 'blue',
-    iconBg: 'bg-slate-700/80',
-    iconColor: 'text-primary',
+    gradient: 'from-emerald-500 to-teal-400',
+    glowColor: 'shadow-emerald-500/30',
   },
   {
     icon: Rocket,
     number: '04',
     title: 'Publique e Lucre',
     description: 'Publique online, conecte seu método de pagamento e comece a lucrar com seu novo produto digital.',
-    color: 'cyan',
-    iconBg: 'bg-slate-700/80',
-    iconColor: 'text-primary',
+    gradient: 'from-rose-500 to-pink-400',
+    glowColor: 'shadow-rose-500/30',
   },
 ];
 
 const GenesisCommercialFeatures = () => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: '-100px' });
+  const isInView = useInView(ref, { once: true, margin: '-50px' });
   const [activeStep, setActiveStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
 
-  // Auto-advance steps
   useEffect(() => {
-    if (!isPlaying) return;
+    if (!isPlaying || !isInView) return;
     const interval = setInterval(() => {
       setActiveStep((prev) => (prev + 1) % steps.length);
-    }, 3000);
+    }, 4000);
     return () => clearInterval(interval);
-  }, [isPlaying]);
+  }, [isPlaying, isInView]);
 
   return (
-    <section id="recursos" ref={ref} className="py-20 md:py-28 bg-background relative overflow-hidden">
-      {/* Subtle Background */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.03),transparent_70%)]" />
+    <section 
+      id="recursos" 
+      ref={ref} 
+      className="py-24 md:py-32 relative overflow-hidden"
+      style={{
+        background: 'linear-gradient(180deg, hsl(222 47% 8%) 0%, hsl(222 47% 6%) 50%, hsl(222 47% 8%) 100%)'
+      }}
+    >
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Gradient Orbs */}
+        <motion.div 
+          className="absolute top-1/4 left-1/4 w-[500px] h-[500px] rounded-full opacity-20 blur-[120px]"
+          style={{ background: 'radial-gradient(circle, hsl(var(--primary)), transparent)' }}
+          animate={{ 
+            scale: [1, 1.2, 1],
+            x: [0, 30, 0],
+            y: [0, -20, 0]
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div 
+          className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full opacity-15 blur-[100px]"
+          style={{ background: 'radial-gradient(circle, hsl(320 80% 50%), transparent)' }}
+          animate={{ 
+            scale: [1, 1.3, 1],
+            x: [0, -40, 0],
+            y: [0, 30, 0]
+          }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        />
+        
+        {/* Grid Pattern */}
+        <div 
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `
+              linear-gradient(hsl(var(--primary)) 1px, transparent 1px),
+              linear-gradient(90deg, hsl(var(--primary)) 1px, transparent 1px)
+            `,
+            backgroundSize: '60px 60px'
+          }}
+        />
       </div>
-
-      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
       <div className="container px-4 relative z-10 max-w-6xl mx-auto">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 40 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-14"
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="text-center mb-16 md:mb-20"
         >
           <motion.div 
-            initial={{ scale: 0.9, opacity: 0 }}
+            initial={{ scale: 0.8, opacity: 0 }}
             animate={isInView ? { scale: 1, opacity: 1 } : {}}
-            className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-sm font-semibold rounded-full bg-primary/10 border border-primary/20 text-primary"
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 mb-8 text-sm font-semibold rounded-full border border-primary/30 text-primary"
+            style={{
+              background: 'linear-gradient(135deg, hsl(var(--primary) / 0.15), hsl(var(--primary) / 0.05))',
+              boxShadow: '0 0 30px hsl(var(--primary) / 0.2), inset 0 1px 0 hsl(var(--primary) / 0.2)'
+            }}
           >
             <Sparkles className="w-4 h-4" />
             Como Funciona
+            <Zap className="w-4 h-4" />
           </motion.div>
           
-          <h2 className="text-3xl md:text-5xl font-black mb-5 text-foreground">
-            Com a <span className="text-primary">Genesis</span>, desenvolver um SaaS é{' '}
+          <h2 className="text-3xl md:text-5xl lg:text-6xl font-black mb-6 text-white leading-tight">
+            Com a <span className="bg-gradient-to-r from-primary via-cyan-400 to-primary bg-clip-text text-transparent">Genesis</span>, desenvolver um SaaS é{' '}
             <br className="hidden md:block" />
-            <span className="text-primary">fácil, ágil e eficiente</span>
+            <span className="bg-gradient-to-r from-primary to-cyan-400 bg-clip-text text-transparent">fácil, ágil e eficiente</span>
           </h2>
           
-          <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto">
             Tudo o que você precisa para criar SaaS profissionais e escaláveis, em um único lugar.
           </p>
         </motion.div>
 
-        {/* Steps Flow - Horizontal Layout with Connection Line */}
-        <div className="relative max-w-5xl mx-auto">
-          
-          {/* Progress Line - Desktop Only */}
-          <div className="hidden lg:block absolute top-[52px] left-[12%] right-[12%] h-0.5 bg-muted/30">
+        {/* Interactive Steps Timeline */}
+        <div className="relative">
+          {/* Connection Line - Desktop */}
+          <div className="hidden lg:block absolute top-[100px] left-[10%] right-[10%] h-1 rounded-full overflow-hidden bg-slate-800/50">
             <motion.div
-              className="h-full bg-gradient-to-r from-primary via-cyan-500 to-primary"
+              className="h-full rounded-full"
+              style={{
+                background: 'linear-gradient(90deg, hsl(var(--primary)), hsl(180 80% 50%), hsl(var(--primary)))'
+              }}
               initial={{ width: "0%" }}
               animate={isInView ? { 
                 width: `${((activeStep + 1) / steps.length) * 100}%` 
               } : {}}
-              transition={{ duration: 0.5, ease: "easeOut" }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+            />
+            {/* Glowing Effect */}
+            <motion.div
+              className="absolute top-0 h-full w-20 blur-md"
+              style={{
+                background: 'linear-gradient(90deg, transparent, hsl(var(--primary)), transparent)',
+                left: `${((activeStep + 1) / steps.length) * 100 - 5}%`
+              }}
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
             />
           </div>
-          
+
           {/* Steps Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             {steps.map((step, index) => {
               const isActive = index === activeStep;
               const isCompleted = index < activeStep;
@@ -121,93 +171,137 @@ const GenesisCommercialFeatures = () => {
               return (
                 <motion.div
                   key={step.title}
-                  initial={{ opacity: 0, y: 30 }}
+                  initial={{ opacity: 0, y: 50 }}
                   animate={isInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="relative group cursor-pointer"
-                  onClick={() => setActiveStep(index)}
+                  transition={{ duration: 0.6, delay: index * 0.15 }}
+                  className="relative group"
+                  onClick={() => {
+                    setActiveStep(index);
+                    setIsPlaying(false);
+                  }}
                   onMouseEnter={() => setIsPlaying(false)}
                   onMouseLeave={() => setIsPlaying(true)}
                 >
-                  {/* Step Number Indicator - Top Center */}
-                  <div className="flex justify-center mb-3 relative z-10">
+                  {/* Step Number Circle */}
+                  <div className="flex justify-center mb-6 relative z-10">
                     <motion.div 
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
-                        isActive 
-                          ? 'bg-primary text-white shadow-lg shadow-primary/40' 
-                          : isCompleted 
-                            ? 'bg-primary/80 text-white' 
-                            : 'bg-muted/50 text-muted-foreground border border-border'
-                      }`}
+                      className={`
+                        w-14 h-14 rounded-full flex items-center justify-center font-bold text-lg
+                        transition-all duration-500 cursor-pointer relative
+                        ${isActive || isCompleted
+                          ? `bg-gradient-to-br ${step.gradient} text-white shadow-xl ${step.glowColor}` 
+                          : 'bg-slate-800/80 text-slate-400 border-2 border-slate-700 hover:border-slate-600'
+                        }
+                      `}
                       animate={isActive ? { 
                         scale: [1, 1.1, 1],
+                        boxShadow: [
+                          '0 0 20px rgba(59, 130, 246, 0.3)',
+                          '0 0 40px rgba(59, 130, 246, 0.5)',
+                          '0 0 20px rgba(59, 130, 246, 0.3)'
+                        ]
                       } : {}}
-                      transition={{ duration: 1.5, repeat: isActive ? Infinity : 0 }}
+                      transition={{ duration: 2, repeat: isActive ? Infinity : 0 }}
+                      whileHover={{ scale: 1.1 }}
                     >
-                      {isCompleted ? (
-                        <Check className="w-4 h-4" />
-                      ) : (
-                        <span>{index + 1}</span>
+                      {step.number}
+                      
+                      {/* Pulse Ring */}
+                      {isActive && (
+                        <motion.div
+                          className={`absolute inset-0 rounded-full bg-gradient-to-br ${step.gradient}`}
+                          initial={{ scale: 1, opacity: 0.5 }}
+                          animate={{ scale: 1.8, opacity: 0 }}
+                          transition={{ duration: 1.5, repeat: Infinity }}
+                        />
                       )}
                     </motion.div>
                   </div>
 
                   {/* Card */}
                   <motion.div 
-                    className={`relative p-5 rounded-xl transition-all duration-300 overflow-hidden h-[200px] ${
-                      isActive 
-                        ? 'bg-gradient-to-br from-pink-500/90 to-rose-500/90 shadow-xl shadow-pink-500/20 border-0' 
-                        : 'bg-card/80 border border-border/50 hover:border-border'
-                    }`}
-                    animate={isActive ? { y: -4, scale: 1.02 } : { y: 0, scale: 1 }}
-                    whileHover={!isActive ? { y: -2 } : {}}
+                    className={`
+                      relative p-6 rounded-2xl cursor-pointer overflow-hidden
+                      transition-all duration-500 min-h-[220px]
+                      ${isActive 
+                        ? `bg-gradient-to-br ${step.gradient} shadow-2xl ${step.glowColor}` 
+                        : 'bg-slate-900/60 border border-slate-800 hover:border-slate-700 hover:bg-slate-900/80'
+                      }
+                    `}
+                    animate={isActive ? { 
+                      y: -8, 
+                      scale: 1.02,
+                    } : { 
+                      y: 0, 
+                      scale: 1 
+                    }}
+                    whileHover={!isActive ? { y: -4, scale: 1.01 } : {}}
+                    style={{
+                      backdropFilter: 'blur(10px)'
+                    }}
                   >
-                    {/* Step Number Background */}
-                    <div className={`absolute top-3 right-3 text-5xl font-black transition-colors ${
-                      isActive ? 'text-white/20' : 'text-muted/10'
-                    }`}>
+                    {/* Background Number */}
+                    <div className={`
+                      absolute -top-2 -right-2 text-8xl font-black pointer-events-none select-none
+                      ${isActive ? 'text-white/10' : 'text-slate-800/30'}
+                    `}>
                       {step.number}
                     </div>
 
+                    {/* Shimmer Effect */}
+                    {isActive && (
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                        initial={{ x: '-100%' }}
+                        animate={{ x: '100%' }}
+                        transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+                      />
+                    )}
+
                     {/* Icon */}
                     <motion.div 
-                      className={`relative w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${
-                        isActive 
-                          ? 'bg-white/20' 
-                          : step.iconBg
-                      }`}
+                      className={`
+                        relative w-14 h-14 rounded-xl flex items-center justify-center mb-5
+                        ${isActive 
+                          ? 'bg-white/20 backdrop-blur-sm' 
+                          : 'bg-slate-800/80 border border-slate-700'
+                        }
+                      `}
                       animate={isActive ? {
-                        scale: [1, 1.05, 1],
+                        rotate: [0, 5, -5, 0],
+                        scale: [1, 1.05, 1]
                       } : {}}
-                      transition={{ duration: 2, repeat: isActive ? Infinity : 0 }}
+                      transition={{ duration: 3, repeat: isActive ? Infinity : 0 }}
                     >
-                      <Icon className={`w-6 h-6 ${isActive ? 'text-white' : step.iconColor}`} />
+                      <Icon className={`w-7 h-7 ${isActive ? 'text-white' : 'text-slate-400'}`} />
                     </motion.div>
 
                     {/* Content */}
-                    <h3 className={`text-base font-bold mb-2 relative z-10 ${
-                      isActive ? 'text-white' : 'text-foreground'
+                    <h3 className={`text-lg font-bold mb-3 relative z-10 ${
+                      isActive ? 'text-white' : 'text-white/90'
                     }`}>
                       {step.title}
                     </h3>
-                    <p className={`text-sm leading-relaxed relative z-10 line-clamp-3 ${
-                      isActive ? 'text-white/90' : 'text-muted-foreground'
+                    <p className={`text-sm leading-relaxed relative z-10 ${
+                      isActive ? 'text-white/90' : 'text-slate-400'
                     }`}>
                       {step.description}
                     </p>
 
-                    {/* Connection Arrow - Desktop */}
+                    {/* Arrow Connector */}
                     {index < steps.length - 1 && (
-                      <div className="hidden lg:block absolute top-1/2 -right-4 -translate-y-1/2 z-20">
+                      <div className="hidden lg:flex absolute top-[100px] -right-6 z-20">
                         <motion.div
-                          className={`w-4 h-4 border-r-2 border-t-2 rotate-45 transition-colors ${
-                            isCompleted || isActive ? 'border-primary' : 'border-muted-foreground/20'
-                          }`}
-                          animate={{ 
-                            x: isCompleted || isActive ? [0, 3, 0] : 0,
-                          }}
-                          transition={{ duration: 1, repeat: Infinity }}
-                        />
+                          animate={isActive || isCompleted ? {
+                            x: [0, 5, 0],
+                            opacity: [0.6, 1, 0.6]
+                          } : {}}
+                          transition={{ duration: 1.5, repeat: Infinity }}
+                        >
+                          <ArrowRight className={`w-5 h-5 ${
+                            isActive || isCompleted ? 'text-primary' : 'text-slate-600'
+                          }`} />
+                        </motion.div>
                       </div>
                     )}
                   </motion.div>
@@ -216,45 +310,64 @@ const GenesisCommercialFeatures = () => {
             })}
           </div>
 
-          {/* Step Navigation Dots - Mobile/Tablet */}
-          <div className="flex justify-center gap-2 mt-8 lg:hidden">
-            {steps.map((_, index) => (
+          {/* Progress Dots */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ delay: 0.8 }}
+            className="flex justify-center items-center gap-3 mt-12"
+          >
+            {steps.map((step, index) => (
               <button
                 key={index}
-                onClick={() => setActiveStep(index)}
-                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                  index === activeStep 
-                    ? 'bg-primary scale-125' 
-                    : index < activeStep 
-                      ? 'bg-primary/50' 
-                      : 'bg-muted-foreground/30'
-                }`}
-              />
+                onClick={() => {
+                  setActiveStep(index);
+                  setIsPlaying(false);
+                }}
+                className="relative group/dot"
+              >
+                <motion.div
+                  className={`
+                    w-3 h-3 rounded-full transition-all duration-300
+                    ${index === activeStep 
+                      ? `bg-gradient-to-r ${step.gradient} shadow-lg ${step.glowColor}` 
+                      : index < activeStep 
+                        ? 'bg-primary/60' 
+                        : 'bg-slate-700 hover:bg-slate-600'
+                    }
+                  `}
+                  animate={index === activeStep ? { scale: [1, 1.3, 1] } : {}}
+                  transition={{ duration: 1.5, repeat: index === activeStep ? Infinity : 0 }}
+                />
+                {index === activeStep && (
+                  <motion.div
+                    className={`absolute inset-0 rounded-full bg-gradient-to-r ${step.gradient}`}
+                    initial={{ scale: 1, opacity: 0.6 }}
+                    animate={{ scale: 2.5, opacity: 0 }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  />
+                )}
+              </button>
             ))}
-          </div>
-
-          {/* Play/Pause Indicator */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex justify-center mt-6"
-          >
-            <button
-              onClick={() => setIsPlaying(!isPlaying)}
-              className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-full bg-card/50 border border-border/50"
-            >
-              {isPlaying ? (
-                <>
-                  <Pause className="w-3.5 h-3.5 text-primary" />
-                  <span>Reproduzindo</span>
-                </>
-              ) : (
-                <>
-                  <Play className="w-3.5 h-3.5 text-primary" />
-                  <span>Pausado</span>
-                </>
+            
+            {/* Auto-play indicator */}
+            <AnimatePresence>
+              {isPlaying && (
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  className="ml-4 flex items-center gap-2 text-xs text-slate-500"
+                >
+                  <motion.div
+                    className="w-2 h-2 rounded-full bg-primary"
+                    animate={{ opacity: [1, 0.3, 1] }}
+                    transition={{ duration: 1, repeat: Infinity }}
+                  />
+                  <span>Auto</span>
+                </motion.div>
               )}
-            </button>
+            </AnimatePresence>
           </motion.div>
         </div>
       </div>
