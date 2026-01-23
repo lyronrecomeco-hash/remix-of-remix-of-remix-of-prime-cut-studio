@@ -166,6 +166,7 @@ export function CriarProjetosTab({ affiliateId, onBack }: CriarProjetosTabProps)
             <FromScratchWizard
               onBack={handleFromScratchBack}
               onComplete={handleFromScratchComplete}
+              affiliateId={affiliateId}
             />
           </motion.div>
         )}
