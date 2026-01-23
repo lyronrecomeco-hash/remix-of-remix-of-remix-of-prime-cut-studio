@@ -442,13 +442,24 @@ export default function GenesisPanel() {
     }
   }, [isDarkMode]);
 
-  // Check if first time user
+  // Check if first time user or coming from checkout
   useEffect(() => {
     const checkFirstTime = async () => {
       if (!genesisUser) return;
       
       const welcomeKey = `genesis_welcome_shown_${genesisUser.id}`;
       const hasSeenWelcome = localStorage.getItem(welcomeKey);
+      
+      // Check URL params for welcome=true (coming from checkout)
+      const urlParams = new URLSearchParams(window.location.search);
+      const showWelcomeParam = urlParams.get('welcome') === 'true';
+      
+      if (showWelcomeParam) {
+        // Clear URL param without reload
+        window.history.replaceState({}, '', '/genesis-ia');
+        setShowWelcome(true);
+        return;
+      }
       
       if (!hasSeenWelcome) {
         setShowWelcome(true);

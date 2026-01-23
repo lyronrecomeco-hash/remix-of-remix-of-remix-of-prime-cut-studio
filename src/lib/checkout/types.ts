@@ -18,6 +18,8 @@ export interface CheckoutPayment {
   paymentCode: string;
   customerId?: string;
   customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
   amountCents: number;
   currency: string;
   description?: string;

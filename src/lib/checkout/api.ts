@@ -105,7 +105,9 @@ export async function getPaymentByCode(
         *,
         checkout_customers (
           first_name,
-          last_name
+          last_name,
+          email,
+          phone
         )
       `)
       .eq('payment_code', paymentCode)
@@ -125,17 +127,26 @@ export async function getPaymentByCode(
       }
     }
 
-    // Build customer name from related table
-    const customer = data.checkout_customers as { first_name: string; last_name: string } | null;
+    // Build customer data from related table
+    const customer = data.checkout_customers as { 
+      first_name: string; 
+      last_name: string; 
+      email?: string;
+      phone?: string;
+    } | null;
     const customerName = customer 
       ? `${customer.first_name} ${customer.last_name}`.trim()
       : undefined;
+    const customerEmail = customer?.email;
+    const customerPhone = customer?.phone;
 
     return {
       id: data.id,
       paymentCode: data.payment_code,
       customerId: data.customer_id,
       customerName,
+      customerEmail,
+      customerPhone,
       amountCents: data.amount_cents,
       currency: data.currency,
       description: data.description,
