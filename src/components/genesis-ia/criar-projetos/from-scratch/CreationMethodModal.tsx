@@ -26,16 +26,16 @@ export function CreationMethodModal({
     >
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
         onClick={onClose}
       />
       
-      {/* Modal */}
+      {/* Modal - Genesis Style */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="relative w-full max-w-2xl bg-background/95 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl"
+        className="relative w-full max-w-2xl bg-[hsl(220,20%,8%)] border border-white/10 rounded-2xl overflow-hidden shadow-2xl"
       >
         {/* Close button */}
         <button
@@ -45,49 +45,52 @@ export function CreationMethodModal({
           <X className="w-5 h-5 text-muted-foreground" />
         </button>
 
-        {/* Header */}
-        <div className="p-8 pb-4 text-center">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.1, type: 'spring' }}
-            className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/20 to-emerald-500/20 border border-blue-500/30 mb-4"
-          >
-            <Sparkles className="w-8 h-8 text-blue-400" />
-          </motion.div>
-          <h2 className="text-2xl font-bold text-foreground mb-2">
-            Criar Novo Projeto
-          </h2>
-          <p className="text-muted-foreground">
-            Como você deseja começar?
-          </p>
+        {/* Header - Genesis Style */}
+        <div className="p-6 pb-4 border-b border-white/10 bg-white/5">
+          <div className="flex items-center gap-4">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.1, type: 'spring' }}
+              className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center"
+            >
+              <Sparkles className="w-6 h-6 text-primary" />
+            </motion.div>
+            <div>
+              <h2 className="text-xl font-bold text-foreground">
+                Criar Novo Projeto
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Como você deseja começar?
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Options */}
-        <div className="p-8 pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Options - Genesis Style */}
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Template Option */}
           <motion.button
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
             onClick={onSelectTemplate}
-            className="group relative p-6 rounded-xl bg-white/5 border border-white/10 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all duration-300 text-left"
+            className="group relative p-5 rounded-xl bg-white/5 border border-white/10 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 text-left"
           >
             <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <LayoutTemplate className="w-6 h-6 text-blue-400" />
+              <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <LayoutTemplate className="w-5 h-5 text-primary" />
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-foreground mb-1 flex items-center gap-2">
+                <h3 className="text-base font-semibold text-foreground mb-1 flex items-center gap-2">
                   Escolher Modelo
                   <ArrowRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
                 </h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Templates prontos para personalizar rapidamente
                 </p>
               </div>
             </div>
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/0 via-blue-500/5 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity" />
           </motion.button>
 
           {/* From Scratch Option */}
@@ -96,29 +99,28 @@ export function CreationMethodModal({
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
             onClick={onStartFromScratch}
-            className="group relative p-6 rounded-xl bg-white/5 border border-white/10 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all duration-300 text-left"
+            className="group relative p-5 rounded-xl bg-white/5 border border-white/10 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all duration-300 text-left"
           >
             <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Sparkles className="w-6 h-6 text-emerald-400" />
+              <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-emerald-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Sparkles className="w-5 h-5 text-emerald-400" />
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-foreground mb-1 flex items-center gap-2">
+                <h3 className="text-base font-semibold text-foreground mb-1 flex items-center gap-2">
                   Criar do Zero
                   <ArrowRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
                 </h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Quiz interativo para gerar prompt ultra-completo
                 </p>
               </div>
             </div>
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity" />
           </motion.button>
         </div>
 
-        {/* Footer */}
-        <div className="px-8 pb-6 text-center">
-          <Button variant="ghost" size="sm" onClick={onClose} className="text-muted-foreground">
+        {/* Footer - Genesis Style */}
+        <div className="px-6 pb-5 flex justify-center border-t border-white/10 pt-4 bg-white/[0.02]">
+          <Button variant="ghost" size="sm" onClick={onClose} className="text-muted-foreground hover:bg-white/10">
             Cancelar
           </Button>
         </div>

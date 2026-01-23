@@ -136,19 +136,23 @@ export function RadiusFilterModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-primary" />
-            Filtrar por Localização
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden bg-[hsl(220,20%,8%)] border-white/10">
+        <DialogHeader className="pb-4 border-b border-white/10">
+          <DialogTitle className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+              <MapPin className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <span className="block">Filtrar por Localização</span>
+              <span className="text-xs text-muted-foreground font-normal">
+                Clique no mapa ou busque um bairro para definir o centro
+              </span>
+            </div>
           </DialogTitle>
-          <DialogDescription>
-            Clique no mapa ou busque um bairro para definir o centro. Ajuste o raio para filtrar os estabelecimentos.
-          </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Search bar */}
+        <div className="space-y-4 py-2">
+          {/* Search bar - Genesis Style */}
           <div className="flex gap-2">
             <div className="flex-1 relative">
               <Input
@@ -156,19 +160,19 @@ export function RadiusFilterModal({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="pr-10"
+                className="pr-10 bg-white/5 border-white/10 hover:bg-white/[0.07] transition-colors"
               />
               {searching && (
-                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-primary" />
               )}
             </div>
-            <Button onClick={handleSearch} disabled={searching} variant="outline">
+            <Button onClick={handleSearch} disabled={searching} variant="outline" className="bg-white/5 border-white/10 hover:bg-white/10">
               <Search className="h-4 w-4" />
             </Button>
           </div>
 
-          {/* Map */}
-          <div className="h-[400px] rounded-lg overflow-hidden border border-border bg-background">
+          {/* Map - Genesis Style */}
+          <div className="h-[400px] rounded-xl overflow-hidden border border-white/10 bg-white/5">
             {showMap ? (
               <RadiusMap
                 center={center}
@@ -179,18 +183,18 @@ export function RadiusFilterModal({
                   .map(r => ({ lat: r.latitude!, lng: r.longitude!, name: r.name }))}
               />
             ) : (
-              <div className="h-full flex items-center justify-center bg-muted/30">
+              <div className="h-full flex items-center justify-center bg-white/[0.02]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <span className="ml-2 text-muted-foreground">Carregando mapa...</span>
               </div>
             )}
           </div>
 
-          {/* Radius slider */}
-          <div className="space-y-2">
+          {/* Radius slider - Genesis Style */}
+          <div className="space-y-3 p-4 rounded-xl bg-white/5 border border-white/10">
             <div className="flex items-center justify-between">
-              <Label>Raio de busca</Label>
-              <span className="text-sm font-medium text-primary">{radius} km</span>
+              <Label className="text-sm font-medium">Raio de busca</Label>
+              <span className="text-sm font-bold text-primary">{radius} km</span>
             </div>
             <Slider
               value={[radius]}
@@ -207,25 +211,25 @@ export function RadiusFilterModal({
             </div>
           </div>
 
-          {/* Results count */}
-          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+          {/* Results count - Genesis Style */}
+          <div className="flex items-center justify-between p-3 bg-primary/10 border border-primary/20 rounded-xl">
             <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Filter className="h-4 w-4 text-primary" />
               <span className="text-sm">
-                <strong>{filteredCount}</strong> de <strong>{results.length}</strong> estabelecimentos na área
+                <strong className="text-primary">{filteredCount}</strong> de <strong>{results.length}</strong> estabelecimentos na área
               </span>
             </div>
             <span className="text-xs text-muted-foreground">
-              (com coordenadas disponíveis)
+              (com coordenadas)
             </span>
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={handleClearFilter}>
+          {/* Actions - Genesis Style */}
+          <div className="flex gap-3 pt-2">
+            <Button variant="outline" onClick={handleClearFilter} className="flex-1 bg-white/5 border-white/10 hover:bg-white/10">
               Limpar Filtro
             </Button>
-            <Button onClick={handleApplyFilter}>
+            <Button onClick={handleApplyFilter} className="flex-1">
               Aplicar Filtro ({filteredCount})
             </Button>
           </div>
