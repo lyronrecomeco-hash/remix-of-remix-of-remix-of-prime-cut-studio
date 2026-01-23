@@ -80,45 +80,80 @@ const GenesisCommercialPartnerships = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, delay: index * 0.2 }}
+              whileHover={{ y: -8, scale: 1.02 }}
               className="group relative"
             >
               {/* Card */}
-              <div className="relative h-full p-6 rounded-2xl bg-background border border-border hover:border-primary/30 transition-all duration-300 overflow-hidden">
+              <div className="relative h-full p-6 rounded-2xl bg-background border border-border hover:border-primary/50 transition-all duration-500 overflow-hidden hover:shadow-xl hover:shadow-primary/10">
                 {/* Background Glow on Hover */}
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 
-                {/* Logo */}
+                {/* Logo with animation */}
                 <div className="relative mb-5">
-                  <div className="bg-muted/50 rounded-xl p-4 w-fit border border-border">
-                    <img 
+                  <motion.div 
+                    className="bg-muted/50 rounded-xl p-4 w-fit border border-border group-hover:border-primary/30 transition-all duration-300"
+                    whileHover={{ scale: 1.1, rotate: 2 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                  >
+                    <motion.img 
                       src={partner.logo} 
                       alt={partner.name} 
                       className="h-7 w-auto object-contain"
+                      animate={{ 
+                        filter: isInView ? 'brightness(1)' : 'brightness(0.7)'
+                      }}
+                      whileHover={{ 
+                        scale: 1.1,
+                        filter: 'brightness(1.2) drop-shadow(0 0 8px hsl(var(--primary) / 0.5))'
+                      }}
+                      transition={{ duration: 0.3 }}
                     />
-                  </div>
+                  </motion.div>
                 </div>
 
-                {/* Title */}
-                <h3 className="text-lg font-bold text-foreground mb-1">
+                {/* Title with hover animation */}
+                <motion.h3 
+                  className="text-lg font-bold text-foreground mb-1 group-hover:text-primary transition-colors duration-300"
+                  whileHover={{ x: 4 }}
+                >
                   {partner.title}
-                </h3>
-                <p className="text-sm font-semibold mb-3 text-primary">
+                </motion.h3>
+                <motion.p 
+                  className="text-sm font-semibold mb-3 text-primary"
+                  initial={{ opacity: 0.8 }}
+                  whileHover={{ opacity: 1, scale: 1.02 }}
+                >
                   {partner.subtitle}
-                </p>
+                </motion.p>
 
                 {/* Description */}
                 <p className="text-muted-foreground mb-5 text-sm">
                   {partner.description}
                 </p>
 
-                {/* Badge */}
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-3">
-                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+                {/* Badge with pulse animation */}
+                <motion.div 
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-3"
+                  animate={{ 
+                    boxShadow: [
+                      '0 0 0 0 hsl(var(--primary) / 0)',
+                      '0 0 0 4px hsl(var(--primary) / 0.1)',
+                      '0 0 0 0 hsl(var(--primary) / 0)'
+                    ]
+                  }}
+                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+                >
+                  <motion.div
+                    animate={{ rotate: [0, 15, -15, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-primary" />
+                  </motion.div>
                   <span className="text-xs font-bold text-primary">{partner.badge}</span>
-                </div>
+                </motion.div>
                 <p className="text-xs text-muted-foreground mb-5">{partner.badgeDesc}</p>
 
-                {/* Benefits */}
+                {/* Benefits with stagger animation */}
                 <ul className="space-y-2.5">
                   {partner.benefits.map((benefit, i) => (
                     <motion.li
@@ -126,12 +161,21 @@ const GenesisCommercialPartnerships = () => {
                       initial={{ opacity: 0, x: -10 }}
                       animate={isInView ? { opacity: 1, x: 0 } : {}}
                       transition={{ delay: 0.4 + i * 0.1 }}
-                      className="flex items-center gap-2.5"
+                      whileHover={{ x: 6, scale: 1.02 }}
+                      className="flex items-center gap-2.5 cursor-default"
                     >
-                      <div className="w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center">
+                      <motion.div 
+                        className="w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center"
+                        whileHover={{ 
+                          scale: 1.3, 
+                          backgroundColor: 'hsl(var(--primary) / 0.3)' 
+                        }}
+                      >
                         <CheckCircle2 className="w-2.5 h-2.5 text-primary" />
-                      </div>
-                      <span className="text-muted-foreground text-sm">{benefit}</span>
+                      </motion.div>
+                      <span className="text-muted-foreground text-sm group-hover:text-foreground transition-colors">
+                        {benefit}
+                      </span>
                     </motion.li>
                   ))}
                 </ul>
@@ -153,10 +197,19 @@ const GenesisCommercialPartnerships = () => {
             { icon: Cloud, text: 'Cloud Enterprise' },
             { icon: Zap, text: '99.9% Uptime' },
           ].map((item, i) => (
-            <div key={i} className="flex items-center gap-2 text-muted-foreground">
-              <item.icon className="w-4 h-4 text-primary" />
+            <motion.div 
+              key={i} 
+              className="flex items-center gap-2 text-muted-foreground"
+              whileHover={{ scale: 1.05, color: 'hsl(var(--foreground))' }}
+            >
+              <motion.div
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.5 }}
+              >
+                <item.icon className="w-4 h-4 text-primary" />
+              </motion.div>
               <span className="text-sm">{item.text}</span>
-            </div>
+            </motion.div>
           ))}
         </motion.div>
       </div>

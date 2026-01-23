@@ -146,9 +146,29 @@ const GenesisCommercialRadar = () => {
   }, []);
 
   // Fetch real leads from database - diversified niches
+  // Diverse niches for mockup fallback
+  const DIVERSE_NICHES = [
+    'Academia', 'Restaurante', 'Clínica', 'Pet Shop', 'Salão', 
+    'Barbearia', 'Loja', 'Oficina', 'Fitness', 'Farmácia', 
+    'Pizzaria', 'Padaria', 'Consultório', 'Estética', 'Delivery'
+  ];
+
+  const MOCK_COMPANIES = [
+    'Studio Fitness Pro', 'Restaurante Sabor & Arte', 'Clínica Bem Estar', 
+    'Pet Center Amigo', 'Salão Beleza Total', 'Barbearia Corte Elite',
+    'Loja Moda Atual', 'Auto Mecânica Express', 'CrossFit Power', 
+    'Farmácia Popular Plus', 'Pizzaria Forno Italiano', 'Padaria Pão Quente',
+    'Consultório Dr. Saúde', 'Estética Renova', 'Delivery Rápido',
+    'Academia Top Shape', 'Restaurante La Pasta', 'Clínica Odonto Prime',
+    'Pet Shop Bicho Feliz', 'Salão Glamour', 'Barbearia Style Man',
+    'Loja Tech Store', 'Oficina Turbo', 'Studio Pilates',
+    'Farmácia Saúde Total', 'Pizzaria Napoli', 'Padaria Doce Mel',
+    'Clínica Vida Nova', 'Estética Body Care', 'Delivery Express'
+  ];
+
   useEffect(() => {
     const fetchLeads = async () => {
-      // Fetch from multiple affiliates to get diverse niches
+      // Fetch from database
       const { data, error } = await supabase
         .from('affiliate_prospects')
         .select('id, company_name, niche, company_city, company_state, company_phone, analysis_score, source')
@@ -156,7 +176,7 @@ const GenesisCommercialRadar = () => {
         .limit(50);
       
       if (!error && data && data.length > 0) {
-        // Diversify niches - shuffle and ensure variety
+        // Diversify niches
         const nicheGroups: Record<string, RealLead[]> = {};
         data.forEach(lead => {
           const niche = lead.niche || 'Outros';
@@ -164,7 +184,6 @@ const GenesisCommercialRadar = () => {
           nicheGroups[niche].push(lead);
         });
         
-        // Take leads from different niches to ensure diversity
         const diversifiedLeads: RealLead[] = [];
         const niches = Object.keys(nicheGroups);
         let index = 0;
@@ -181,7 +200,7 @@ const GenesisCommercialRadar = () => {
           index++;
         }
         
-        // Shuffle final result
+        // Shuffle
         for (let i = diversifiedLeads.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [diversifiedLeads[i], diversifiedLeads[j]] = [diversifiedLeads[j], diversifiedLeads[i]];
@@ -189,32 +208,39 @@ const GenesisCommercialRadar = () => {
         
         setLeads(diversifiedLeads);
       } else {
-        // Fallback - fetch any leads
-        const { data: fallbackData } = await supabase
-          .from('affiliate_prospects')
-          .select('id, company_name, niche, company_city, company_state, company_phone, analysis_score, source')
-          .limit(35);
+        // FALLBACK: Generate mock leads with diverse niches
+        const mockLeads: RealLead[] = MOCK_COMPANIES.map((company, i) => ({
+          id: `mock-${i}`,
+          company_name: company,
+          niche: DIVERSE_NICHES[i % DIVERSE_NICHES.length],
+          company_city: null,
+          company_state: null,
+          company_phone: null,
+          analysis_score: Math.floor(Math.random() * 40) + 55,
+          source: 'mock',
+        }));
         
-        if (fallbackData) {
-          setLeads(fallbackData.map(lead => ({
-            ...lead,
-            analysis_score: lead.analysis_score || Math.floor(Math.random() * 40) + 50,
-          })));
+        // Shuffle
+        for (let i = mockLeads.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [mockLeads[i], mockLeads[j]] = [mockLeads[j], mockLeads[i]];
         }
+        
+        setLeads(mockLeads);
       }
       setLoading(false);
     };
     fetchLeads();
   }, []);
 
-  // Auto-scroll carousel
+  // Auto-scroll carousel - FASTER
   useEffect(() => {
     const scrollContainer = scrollRef.current;
     if (!scrollContainer || leads.length === 0) return;
 
     let animationId: number;
     let scrollPosition = 0;
-    const speed = 0.5;
+    const speed = 1.2; // Faster speed
 
     const animate = () => {
       scrollPosition += speed;
