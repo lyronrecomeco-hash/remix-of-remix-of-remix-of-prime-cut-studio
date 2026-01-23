@@ -80,6 +80,15 @@ const getNicheIcon = (niche: string | null) => {
     'Pet Shop': '🐾',
     'Oficina': '🔧',
     'Fitness': '🏋️',
+    'Farmácia': '💊',
+    'Pizzaria': '🍕',
+    'Padaria': '🥖',
+    'Consultório': '🩺',
+    'Estética': '✨',
+    'Delivery': '🛵',
+    'Imobiliária': '🏠',
+    'Advocacia': '⚖️',
+    'Contabilidade': '📊',
   };
   return nicheIcons[niche || ''] || '🏢';
 };
@@ -95,6 +104,15 @@ const getEstimatedValue = (niche: string | null): { min: number; max: number; re
     'Salão': { min: 350, max: 700, recurrence: 55 },
     'Pet Shop': { min: 400, max: 900, recurrence: 70 },
     'Oficina': { min: 350, max: 750, recurrence: 45 },
+    'Farmácia': { min: 450, max: 950, recurrence: 65 },
+    'Pizzaria': { min: 400, max: 900, recurrence: 70 },
+    'Padaria': { min: 350, max: 700, recurrence: 50 },
+    'Consultório': { min: 700, max: 1800, recurrence: 120 },
+    'Estética': { min: 600, max: 1400, recurrence: 100 },
+    'Delivery': { min: 300, max: 700, recurrence: 45 },
+    'Imobiliária': { min: 800, max: 2500, recurrence: 200 },
+    'Advocacia': { min: 900, max: 3000, recurrence: 250 },
+    'Contabilidade': { min: 700, max: 1500, recurrence: 150 },
   };
   return values[niche || ''] || { min: 300, max: 800, recurrence: 50 };
 };
@@ -111,6 +129,15 @@ const getNicheTags = (niche: string | null): string[] => {
     'Salão': ['agendamento', 'catálogo'],
     'Pet Shop': ['agendamento', 'delivery'],
     'Oficina': ['orçamento', 'gestão'],
+    'Farmácia': ['estoque', 'vendas'],
+    'Pizzaria': ['pedidos', 'delivery'],
+    'Padaria': ['encomendas', 'cardápio'],
+    'Consultório': ['prontuário', 'agenda'],
+    'Estética': ['agendamento', 'pacotes'],
+    'Delivery': ['pedidos', 'rotas'],
+    'Imobiliária': ['imóveis', 'CRM'],
+    'Advocacia': ['processos', 'clientes'],
+    'Contabilidade': ['gestão', 'documentos'],
   };
   return tagMap[niche || ''] || ['site', 'presença digital'];
 };
