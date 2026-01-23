@@ -13,20 +13,19 @@ import { StepFeatures } from './steps/StepFeatures';
 import { StepExtras } from './steps/StepExtras';
 import { StepTargetAI } from './steps/StepTargetAI';
 import { StepPreview } from './steps/StepPreview';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 const STEPS = [
-  { id: 1, title: 'Tipo de Projeto', subtitle: 'Aplicativo ou Site' },
-  { id: 2, title: 'Nicho', subtitle: 'Segmento do negócio' },
-  { id: 3, title: 'Identidade', subtitle: 'Nome e informações' },
-  { id: 4, title: 'Idioma', subtitle: 'Localização e região' },
-  { id: 5, title: 'Objetivos', subtitle: 'O que deseja alcançar' },
-  { id: 6, title: 'Estrutura', subtitle: 'Páginas e seções' },
-  { id: 7, title: 'Visual', subtitle: 'Cores e estilo' },
-  { id: 8, title: 'Funcionalidades', subtitle: 'Features e integrações' },
-  { id: 9, title: 'Extras', subtitle: 'PWA, SEO e mais' },
-  { id: 10, title: 'IA Destino', subtitle: 'Onde usar o prompt' },
-  { id: 11, title: 'Finalizar', subtitle: 'Preview e exportar' },
+  { id: 1, title: 'Tipo', subtitle: 'Escolha o tipo' },
+  { id: 2, title: 'Nicho', subtitle: 'Segmento' },
+  { id: 3, title: 'Identidade', subtitle: 'Nome e info' },
+  { id: 4, title: 'Idioma', subtitle: 'Regional' },
+  { id: 5, title: 'Objetivos', subtitle: 'Metas' },
+  { id: 6, title: 'Estrutura', subtitle: 'Páginas' },
+  { id: 7, title: 'Visual', subtitle: 'Cores' },
+  { id: 8, title: 'Features', subtitle: 'Funções' },
+  { id: 9, title: 'Extras', subtitle: 'PWA/SEO' },
+  { id: 10, title: 'IA Destino', subtitle: 'Ferramenta' },
+  { id: 11, title: 'Preview', subtitle: 'Finalizar' },
 ];
 
 interface FromScratchWizardProps {
@@ -38,13 +37,7 @@ interface FromScratchWizardProps {
 function WizardContent({ onBack, onComplete, affiliateId }: FromScratchWizardProps) {
   const { currentStep, totalSteps, nextStep, prevStep, canProceed } = useFromScratch();
 
-  const handleBack = () => {
-    if (currentStep === 1) {
-      onBack();
-    } else {
-      prevStep();
-    }
-  };
+  const currentStepInfo = STEPS[currentStep - 1];
 
   const renderStep = () => {
     switch (currentStep) {
@@ -63,105 +56,86 @@ function WizardContent({ onBack, onComplete, affiliateId }: FromScratchWizardPro
     }
   };
 
-  const currentStepInfo = STEPS[currentStep - 1];
+  const handleBack = () => {
+    if (currentStep === 1) {
+      onBack();
+    } else {
+      prevStep();
+    }
+  };
 
   return (
-    <div className="flex flex-col h-full max-h-[calc(100vh-200px)]">
-      {/* Fixed Header */}
-      <div className="shrink-0 pb-4 border-b border-white/10">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={handleBack} 
-              className="h-8 w-8 rounded-lg hover:bg-white/10"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
+    <div className="space-y-0">
+      {/* Header Modal-like */}
+      <div className="flex items-center justify-between p-3 rounded-t-xl bg-white/5 border border-white/10 border-b-0">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleBack}
+            className="h-7 w-7 rounded-lg hover:bg-white/10"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+          </Button>
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center">
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
+            </div>
             <div>
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-primary" />
-                <h2 className="text-base font-bold text-foreground">Criar do Zero</h2>
-              </div>
-              <p className="text-xs text-muted-foreground">
+              <h3 className="text-sm font-semibold leading-tight">Criar do Zero</h3>
+              <p className="text-[10px] text-muted-foreground">
                 {currentStepInfo.title} • {currentStepInfo.subtitle}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full">
-            <span className="text-xs font-semibold text-primary">{currentStep}</span>
-            <span className="text-xs text-muted-foreground">de {totalSteps}</span>
-          </div>
         </div>
-
-        {/* Progress Bar */}
-        <div className="flex items-center gap-1">
-          {STEPS.map((step) => (
-            <div
-              key={step.id}
-              className={`flex-1 h-1 rounded-full transition-all duration-300 ${
-                step.id < currentStep 
-                  ? 'bg-primary' 
-                  : step.id === currentStep 
-                    ? 'bg-primary/70' 
-                    : 'bg-white/10'
-              }`}
-            />
-          ))}
+        <div className="flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded-full">
+          <span className="text-[10px] font-semibold text-primary">{currentStep}</span>
+          <span className="text-[10px] text-muted-foreground">de {totalSteps}</span>
         </div>
       </div>
 
-      {/* Step Title */}
-      <div className="shrink-0 py-4">
-        <h3 className="text-lg font-bold text-foreground">
-          {currentStepInfo.title === 'Nicho' ? 'Qual é o segmento do negócio?' : currentStepInfo.title}
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          {currentStepInfo.title === 'Nicho' 
-            ? 'Selecione o nicho para gerar um prompt contextualizado'
-            : currentStepInfo.subtitle
-          }
-        </p>
+      {/* Progress Bar */}
+      <div className="flex gap-0.5 px-3 py-1.5 bg-white/5 border-x border-white/10">
+        {STEPS.map((step) => (
+          <div
+            key={step.id}
+            className={`h-0.5 flex-1 rounded-full transition-colors ${
+              step.id <= currentStep ? 'bg-primary' : 'bg-white/10'
+            }`}
+          />
+        ))}
       </div>
 
-      {/* Scrollable Step Content */}
-      <div className="flex-1 min-h-0 overflow-hidden">
+      {/* Content Area */}
+      <div className="p-4 rounded-b-xl bg-white/5 border border-white/10 border-t-0">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentStep}
-            initial={{ opacity: 0, x: 20 }}
+            initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.2 }}
-            className="h-full"
+            exit={{ opacity: 0, x: -10 }}
+            transition={{ duration: 0.15 }}
           >
             {renderStep()}
           </motion.div>
         </AnimatePresence>
-      </div>
 
-      {/* Fixed Navigation */}
-      {currentStep < 11 && (
-        <div className="shrink-0 flex justify-between items-center pt-4 mt-4 border-t border-white/10">
-          <Button 
-            variant="ghost" 
-            onClick={handleBack} 
-            className="h-9 px-4 text-sm hover:bg-white/10"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar
-          </Button>
-          <Button
-            onClick={nextStep}
-            disabled={!canProceed}
-            className="h-9 px-6 text-sm bg-primary hover:bg-primary/90"
-          >
-            Próximo
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-        </div>
-      )}
+        {/* Navigation Footer */}
+        {currentStep < 11 && (
+          <div className="flex justify-end pt-3 mt-3 border-t border-white/10">
+            <Button
+              onClick={nextStep}
+              disabled={!canProceed}
+              size="sm"
+              className="h-7 text-[11px] gap-1.5"
+            >
+              Próximo
+              <ArrowRight className="w-3 h-3" />
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,9 +1,8 @@
 import { motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
-import { Check } from 'lucide-react';
+import { Check, Sparkles } from 'lucide-react';
 import { useFromScratch } from '../FromScratchContext';
 import { AI_TARGETS } from '../types';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Import AI icons
 import lovableIcon from '@/assets/ai-icons/lovable.ico';
@@ -15,7 +14,6 @@ import chatgptIcon from '@/assets/ai-icons/chatgpt.webp';
 import claudeIcon from '@/assets/ai-icons/claude.png';
 import googleIcon from '@/assets/ai-icons/google-studio.png';
 
-// AI Icons mapping
 const AI_ICONS: Record<string, string> = {
   'lovable': lovableIcon,
   'cursor': cursorIcon,
@@ -31,87 +29,93 @@ export function StepTargetAI() {
   const { formData, updateFormData } = useFromScratch();
 
   return (
-    <ScrollArea className="h-[320px] pr-2">
-      <div className="space-y-4 max-w-3xl">
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
-          {AI_TARGETS.map((ai, index) => {
-            const isSelected = formData.targetAI === ai.id;
-            const iconSrc = AI_ICONS[ai.id];
-            
-            return (
-              <motion.button
-                key={ai.id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.03 }}
-                onClick={() => updateFormData('targetAI', ai.id)}
-                className={`relative p-3 rounded-xl border transition-all hover:scale-[1.02] ${
-                  isSelected
-                    ? 'bg-primary/10 border-primary ring-1 ring-primary/30'
-                    : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10'
-                }`}
-              >
-                <div className="flex justify-center mb-2">
-                  {iconSrc ? (
-                    <img 
-                      src={iconSrc} 
-                      alt={ai.name} 
-                      className="w-8 h-8 rounded-lg object-contain"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-xl">
-                      {ai.icon}
-                    </div>
-                  )}
-                </div>
-                <h4 className="font-medium text-foreground text-center text-xs">{ai.name}</h4>
-                
-                {isSelected && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center"
-                  >
-                    <Check className="w-3 h-3 text-primary-foreground" />
-                  </motion.div>
+    <div className="space-y-3">
+      <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-8 gap-1.5">
+        {AI_TARGETS.map((ai, index) => {
+          const isSelected = formData.targetAI === ai.id;
+          const iconSrc = AI_ICONS[ai.id];
+          
+          return (
+            <motion.button
+              key={ai.id}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: index * 0.02 }}
+              onClick={() => updateFormData('targetAI', ai.id)}
+              className={`relative p-2 rounded-xl border transition-all ${
+                isSelected
+                  ? 'bg-primary/10 border-primary/50 ring-1 ring-primary/30'
+                  : 'bg-white/5 border-white/10 hover:border-white/20'
+              }`}
+            >
+              <div className="flex flex-col items-center gap-1">
+                {iconSrc ? (
+                  <img src={iconSrc} alt={ai.name} className="w-6 h-6 rounded-lg object-contain" />
+                ) : (
+                  <div className="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center text-sm">
+                    {ai.icon}
+                  </div>
                 )}
-              </motion.button>
-            );
-          })}
-        </div>
+                <span className="text-[9px] font-medium text-center">{ai.name}</span>
+              </div>
+              {isSelected && (
+                <div className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center">
+                  <Check className="w-2 h-2 text-primary-foreground" />
+                </div>
+              )}
+            </motion.button>
+          );
+        })}
 
-        {/* Custom AI Input */}
-        {formData.targetAI === 'other' && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="p-3 rounded-lg bg-primary/5 border border-primary/20"
-          >
-            <label className="text-xs font-medium block mb-2 text-muted-foreground">
-              Nome da IA ou Ferramenta
-            </label>
-            <Input
-              value={formData.otherAI || ''}
-              onChange={(e) => updateFormData('otherAI', e.target.value)}
-              placeholder="Ex: Gemini, Replit Agent, Cody..."
-              className="bg-white/5 border-white/10 h-9"
-              autoFocus
-            />
-          </motion.div>
-        )}
-
-        {/* Info about selected AI */}
-        {formData.targetAI && formData.targetAI !== 'other' && (
-          <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
-            <p className="text-xs text-muted-foreground text-center">
-              Prompt otimizado para{' '}
-              <span className="text-primary font-medium">
-                {AI_TARGETS.find(ai => ai.id === formData.targetAI)?.name}
-              </span>
-            </p>
+        {/* Other Option */}
+        <motion.button
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: AI_TARGETS.length * 0.02 }}
+          onClick={() => updateFormData('targetAI', 'other')}
+          className={`relative p-2 rounded-xl border transition-all ${
+            formData.targetAI === 'other'
+              ? 'bg-primary/10 border-primary/50 ring-1 ring-primary/30'
+              : 'bg-white/5 border-white/10 hover:border-white/20'
+          }`}
+        >
+          <div className="flex flex-col items-center gap-1">
+            <Sparkles className="w-6 h-6 text-muted-foreground" />
+            <span className="text-[9px] font-medium">Outro</span>
           </div>
-        )}
+          {formData.targetAI === 'other' && (
+            <div className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center">
+              <Check className="w-2 h-2 text-primary-foreground" />
+            </div>
+          )}
+        </motion.button>
       </div>
-    </ScrollArea>
+
+      {/* Custom AI Input */}
+      {formData.targetAI === 'other' && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-1.5"
+        >
+          <label className="text-xs text-muted-foreground">Especifique a ferramenta</label>
+          <Input
+            value={formData.otherAI || ''}
+            onChange={(e) => updateFormData('otherAI', e.target.value)}
+            placeholder="Ex: Replit Agent, GitHub Copilot..."
+            className="bg-white/5 border-white/10 h-8 text-xs"
+          />
+        </motion.div>
+      )}
+
+      {/* Info */}
+      {formData.targetAI && formData.targetAI !== 'other' && (
+        <div className="p-2 rounded-lg bg-white/5 border border-white/10">
+          <p className="text-[10px] text-muted-foreground text-center">
+            💡 Prompt otimizado para <span className="text-primary font-medium">{AI_TARGETS.find(a => a.id === formData.targetAI)?.name}</span>
+          </p>
+        </div>
+      )}
+    </div>
   );
 }

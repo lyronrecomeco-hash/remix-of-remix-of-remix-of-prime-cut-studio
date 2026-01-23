@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Building2, MapPin, Users, Sparkles } from 'lucide-react';
+import { Building2, Type, MapPin, Users } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,106 +9,97 @@ export function StepIdentity() {
   const { formData, updateFormData, selectedNiche } = useFromScratch();
 
   return (
-    <div className="grid gap-4 max-w-xl">
-      {/* Project Name */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="space-y-1.5"
-      >
-        <Label htmlFor="projectName" className="flex items-center gap-2 text-sm">
-          <Sparkles className="w-3.5 h-3.5 text-primary" />
-          Nome do Projeto *
-        </Label>
-        <Input
-          id="projectName"
-          value={formData.projectName}
-          onChange={(e) => updateFormData('projectName', e.target.value)}
-          placeholder={selectedNiche ? `Ex: ${selectedNiche.name} Premium` : 'Nome do seu projeto'}
-          className="bg-white/5 border-white/10 h-9"
-        />
-      </motion.div>
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-1.5"
+        >
+          <Label className="text-xs flex items-center gap-1.5">
+            <Type className="w-3 h-3 text-primary" />
+            Nome do Projeto *
+          </Label>
+          <Input
+            value={formData.projectName}
+            onChange={(e) => updateFormData('projectName', e.target.value)}
+            placeholder={selectedNiche ? `Ex: ${selectedNiche.name} Pro` : 'Ex: Meu Projeto'}
+            className="bg-white/5 border-white/10 h-8 text-xs"
+          />
+        </motion.div>
 
-      {/* Company Name */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05 }}
-        className="space-y-1.5"
-      >
-        <Label htmlFor="companyName" className="flex items-center gap-2 text-sm">
-          <Building2 className="w-3.5 h-3.5 text-emerald-400" />
-          Nome da Empresa *
-        </Label>
-        <Input
-          id="companyName"
-          value={formData.companyName}
-          onChange={(e) => updateFormData('companyName', e.target.value)}
-          placeholder="Ex: Bella Pizzaria, Studio Hair..."
-          className="bg-white/5 border-white/10 h-9"
-        />
-      </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="space-y-1.5"
+        >
+          <Label className="text-xs flex items-center gap-1.5">
+            <Building2 className="w-3 h-3 text-primary" />
+            Nome da Empresa *
+          </Label>
+          <Input
+            value={formData.companyName}
+            onChange={(e) => updateFormData('companyName', e.target.value)}
+            placeholder="Ex: Empresa XYZ"
+            className="bg-white/5 border-white/10 h-8 text-xs"
+          />
+        </motion.div>
+      </div>
 
-      {/* Two columns for optional fields */}
-      <div className="grid grid-cols-2 gap-4">
-        {/* Slogan */}
+      <div className="grid grid-cols-2 gap-3">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           className="space-y-1.5"
         >
-          <Label htmlFor="slogan" className="text-sm text-muted-foreground">
+          <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <Type className="w-3 h-3" />
             Slogan (opcional)
           </Label>
           <Input
-            id="slogan"
-            value={formData.slogan}
+            value={formData.slogan || ''}
             onChange={(e) => updateFormData('slogan', e.target.value)}
-            placeholder="Sabor que conquista..."
-            className="bg-white/5 border-white/10 h-9"
+            placeholder="Ex: Inovação que transforma"
+            className="bg-white/5 border-white/10 h-8 text-xs"
           />
         </motion.div>
 
-        {/* City/Region */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
           className="space-y-1.5"
         >
-          <Label htmlFor="cityRegion" className="flex items-center gap-2 text-sm text-muted-foreground">
-            <MapPin className="w-3.5 h-3.5 text-orange-400" />
-            Cidade (opcional)
+          <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <MapPin className="w-3 h-3" />
+            Cidade/Região (opcional)
           </Label>
           <Input
-            id="cityRegion"
-            value={formData.cityRegion}
+            value={formData.cityRegion || ''}
             onChange={(e) => updateFormData('cityRegion', e.target.value)}
-            placeholder="São Paulo - SP"
-            className="bg-white/5 border-white/10 h-9"
+            placeholder="Ex: São Paulo, SP"
+            className="bg-white/5 border-white/10 h-8 text-xs"
           />
         </motion.div>
       </div>
 
-      {/* Target Audience */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
         className="space-y-1.5"
       >
-        <Label htmlFor="targetAudience" className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Users className="w-3.5 h-3.5 text-purple-400" />
+        <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+          <Users className="w-3 h-3" />
           Público-Alvo (opcional)
         </Label>
         <Textarea
-          id="targetAudience"
-          value={formData.targetAudience}
+          value={formData.targetAudience || ''}
           onChange={(e) => updateFormData('targetAudience', e.target.value)}
-          placeholder="Ex: Jovens profissionais de 25-40 anos..."
-          className="bg-white/5 border-white/10 resize-none h-16"
-          rows={2}
+          placeholder="Descreva seu público-alvo: idade, interesses, comportamento..."
+          className="bg-white/5 border-white/10 min-h-[60px] text-xs resize-none"
         />
       </motion.div>
     </div>
