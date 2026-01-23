@@ -65,7 +65,7 @@ function WizardContent({ onBack, onComplete }: FromScratchWizardProps) {
   const currentStepInfo = STEPS[currentStep - 1];
 
   return (
-    <div className="min-h-[calc(100vh-200px)]">
+    <div className="min-h-[calc(100vh-200px)] max-w-6xl mx-auto">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-4">
@@ -74,7 +74,7 @@ function WizardContent({ onBack, onComplete }: FromScratchWizardProps) {
           </Button>
           <div>
             <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-emerald-400" />
+              <Sparkles className="w-5 h-5 text-primary" />
               <h2 className="text-xl font-bold text-foreground">Criar do Zero</h2>
             </div>
             <p className="text-sm text-muted-foreground">
@@ -90,7 +90,7 @@ function WizardContent({ onBack, onComplete }: FromScratchWizardProps) {
               key={step.id}
               className={`flex-1 h-1.5 rounded-full transition-colors ${
                 step.id <= currentStep 
-                  ? 'bg-gradient-to-r from-blue-500 to-emerald-500' 
+                  ? 'bg-primary' 
                   : 'bg-white/10'
               }`}
             />
@@ -124,7 +124,7 @@ function WizardContent({ onBack, onComplete }: FromScratchWizardProps) {
           <Button
             onClick={nextStep}
             disabled={!canProceed}
-            className="bg-gradient-to-r from-blue-500 to-emerald-500 hover:from-blue-600 hover:to-emerald-600"
+            className="bg-primary hover:bg-primary/90"
           >
             Próximo
             <ArrowRight className="w-4 h-4 ml-2" />

@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Globe, Coins, Clock } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { useFromScratch } from '../FromScratchContext';
 import { LANGUAGES, CURRENCIES, TIMEZONES } from '../types';
 
@@ -7,8 +8,8 @@ export function StepLanguage() {
   const { formData, updateFormData } = useFromScratch();
 
   return (
-    <div className="space-y-8 max-w-2xl mx-auto">
-      <div className="text-center mb-8">
+    <div className="space-y-8">
+      <div className="text-center mb-6">
         <h3 className="text-2xl font-bold text-foreground mb-2">
           Idioma e Localização
         </h3>
@@ -24,10 +25,10 @@ export function StepLanguage() {
         className="space-y-3"
       >
         <label className="flex items-center gap-2 text-sm font-medium">
-          <Globe className="w-4 h-4 text-blue-400" />
+          <Globe className="w-4 h-4 text-primary" />
           Idioma Principal
         </label>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
           {LANGUAGES.map((lang) => {
             const isSelected = formData.language === lang.code;
             return (
@@ -36,7 +37,7 @@ export function StepLanguage() {
                 onClick={() => updateFormData('language', lang.code)}
                 className={`p-3 rounded-lg border text-center transition-all ${
                   isSelected
-                    ? 'bg-blue-500/10 border-blue-500/50'
+                    ? 'bg-primary/10 border-primary/50'
                     : 'bg-white/5 border-white/10 hover:border-white/20'
                 }`}
               >
@@ -46,6 +47,25 @@ export function StepLanguage() {
             );
           })}
         </div>
+
+        {/* Custom Language Input */}
+        {formData.language === 'other' && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-3"
+          >
+            <label className="text-sm font-medium block mb-2">
+              Digite o idioma
+            </label>
+            <Input
+              value={formData.customLanguage || ''}
+              onChange={(e) => updateFormData('customLanguage', e.target.value)}
+              placeholder="Ex: Holandês, Sueco, Polonês..."
+              className="bg-white/5 border-white/10"
+            />
+          </motion.div>
+        )}
       </motion.div>
 
       {/* Currency */}
@@ -56,10 +76,10 @@ export function StepLanguage() {
         className="space-y-3"
       >
         <label className="flex items-center gap-2 text-sm font-medium">
-          <Coins className="w-4 h-4 text-emerald-400" />
+          <Coins className="w-4 h-4 text-primary" />
           Moeda
         </label>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
           {CURRENCIES.map((currency) => {
             const isSelected = formData.currency === currency.code;
             return (
@@ -68,7 +88,7 @@ export function StepLanguage() {
                 onClick={() => updateFormData('currency', currency.code)}
                 className={`p-3 rounded-lg border text-center transition-all ${
                   isSelected
-                    ? 'bg-emerald-500/10 border-emerald-500/50'
+                    ? 'bg-primary/10 border-primary/50'
                     : 'bg-white/5 border-white/10 hover:border-white/20'
                 }`}
               >
@@ -88,10 +108,10 @@ export function StepLanguage() {
         className="space-y-3"
       >
         <label className="flex items-center gap-2 text-sm font-medium">
-          <Clock className="w-4 h-4 text-orange-400" />
+          <Clock className="w-4 h-4 text-primary" />
           Fuso Horário
         </label>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {TIMEZONES.map((tz) => {
             const isSelected = formData.timezone === tz.code;
             return (
@@ -100,7 +120,7 @@ export function StepLanguage() {
                 onClick={() => updateFormData('timezone', tz.code)}
                 className={`p-3 rounded-lg border text-left transition-all ${
                   isSelected
-                    ? 'bg-orange-500/10 border-orange-500/50'
+                    ? 'bg-primary/10 border-primary/50'
                     : 'bg-white/5 border-white/10 hover:border-white/20'
                 }`}
               >

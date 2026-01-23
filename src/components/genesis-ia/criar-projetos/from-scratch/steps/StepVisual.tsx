@@ -17,7 +17,7 @@ export function StepVisual() {
   ];
 
   return (
-    <div className="space-y-8 max-w-3xl mx-auto">
+    <div className="space-y-8">
       <div className="text-center mb-6">
         <h3 className="text-2xl font-bold text-foreground mb-2">
           Design Visual
@@ -30,11 +30,11 @@ export function StepVisual() {
       {/* Color Presets */}
       <div className="space-y-3">
         <label className="flex items-center gap-2 text-sm font-medium">
-          <Palette className="w-4 h-4 text-blue-400" />
+          <Palette className="w-4 h-4 text-primary" />
           Paleta de Cores
         </label>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-          {allColorPresets.slice(0, 10).map((preset, index) => {
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
+          {allColorPresets.slice(0, 12).map((preset, index) => {
             const isSelected = formData.primaryColor === preset.primary;
             return (
               <motion.button
@@ -48,11 +48,11 @@ export function StepVisual() {
                 }}
                 className={`p-3 rounded-lg border transition-all ${
                   isSelected
-                    ? 'border-white/50 ring-2 ring-white/20'
+                    ? 'border-primary/50 ring-2 ring-primary/20'
                     : 'border-white/10 hover:border-white/20'
                 }`}
               >
-                <div className="flex gap-1 mb-2">
+                <div className="flex gap-1 mb-2 justify-center">
                   <div 
                     className="w-6 h-6 rounded-full" 
                     style={{ backgroundColor: preset.primary }}
@@ -62,7 +62,7 @@ export function StepVisual() {
                     style={{ backgroundColor: preset.secondary }}
                   />
                 </div>
-                <span className="text-xs text-muted-foreground line-clamp-1">
+                <span className="text-xs text-muted-foreground line-clamp-1 text-center block">
                   {preset.name}
                 </span>
               </motion.button>
@@ -111,7 +111,7 @@ export function StepVisual() {
                 onClick={() => updateFormData('themeMode', id)}
                 className={`flex-1 p-3 rounded-lg border flex items-center justify-center gap-2 transition-all ${
                   isSelected
-                    ? 'bg-blue-500/10 border-blue-500/50'
+                    ? 'bg-primary/10 border-primary/50'
                     : 'bg-white/5 border-white/10 hover:border-white/20'
                 }`}
               >
@@ -126,7 +126,7 @@ export function StepVisual() {
       {/* Typography */}
       <div className="space-y-3">
         <label className="flex items-center gap-2 text-sm font-medium">
-          <Type className="w-4 h-4 text-emerald-400" />
+          <Type className="w-4 h-4 text-primary" />
           Tipografia
         </label>
         <div className="flex flex-wrap gap-2">
@@ -138,7 +138,7 @@ export function StepVisual() {
                 onClick={() => updateFormData('typography', font)}
                 className={`px-3 py-2 rounded-lg border text-sm transition-all ${
                   isSelected
-                    ? 'bg-emerald-500/10 border-emerald-500/50'
+                    ? 'bg-primary/10 border-primary/50'
                     : 'bg-white/5 border-white/10 hover:border-white/20'
                 }`}
                 style={{ fontFamily: font }}
@@ -162,7 +162,7 @@ export function StepVisual() {
                 onClick={() => updateFormData('visualStyle', style)}
                 className={`px-3 py-2 rounded-lg border text-sm transition-all ${
                   isSelected
-                    ? 'bg-purple-500/10 border-purple-500/50'
+                    ? 'bg-primary/10 border-primary/50'
                     : 'bg-white/5 border-white/10 hover:border-white/20'
                 }`}
               >
