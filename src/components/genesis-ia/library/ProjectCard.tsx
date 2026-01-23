@@ -163,7 +163,7 @@ export function ProjectCard({ project, index, onEdit, onEvolve, onDelete }: Proj
           <Button
             size="sm"
             onClick={openPreview}
-            className="flex-1 h-8 text-xs bg-amber-500/90 hover:bg-amber-500 text-black font-medium"
+            className="flex-1 h-8 text-xs bg-blue-500 hover:bg-blue-600 text-white font-medium"
           >
             ABRIR
             <ExternalLink className="w-3 h-3 ml-1" />
