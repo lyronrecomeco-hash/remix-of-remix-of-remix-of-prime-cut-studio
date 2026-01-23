@@ -89,6 +89,7 @@ interface Signature {
   signer_document: string;
   signed_at: string | null;
   signature_method: string;
+  signature_image?: string | null;
 }
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
@@ -321,6 +322,17 @@ export function ContractDetail({ contractId, onBack }: ContractDetailProps) {
     toast.success('Contrato copiado!');
   };
 
+  const maskDocument = (doc: string) => {
+    if (!doc) return '';
+    const cleaned = doc.replace(/\D/g, '');
+    if (cleaned.length === 11) {
+      return `***.***.*${cleaned.slice(7, 9)}-${cleaned.slice(9, 11)}`;
+    } else if (cleaned.length === 14) {
+      return `**.***.***/${cleaned.slice(8, 12)}-${cleaned.slice(12, 14)}`;
+    }
+    return doc.slice(0, -3).replace(/./g, '*') + doc.slice(-3);
+  };
+
   const handleDownloadPDF = () => {
     if (!contract?.generated_content) {
       toast.error('Gere o contrato primeiro');
@@ -349,6 +361,106 @@ export function ContractDetail({ contractId, onBack }: ContractDetailProps) {
       doc.text(line, margin, y);
       y += lineHeight;
     });
+
+    // Adicionar seção de assinaturas no PDF
+    const contractorSignature = signatures.find(s => s.signer_type === 'contractor' && s.signed_at);
+    const contractedSignature = signatures.find(s => s.signer_type === 'contracted' && s.signed_at);
+
+    // Verificar se precisa de nova página para assinaturas
+    if (y + 80 > pageHeight - margin) {
+      doc.addPage();
+      y = margin;
+    }
+
+    y += 15;
+    doc.setFontSize(14);
+    doc.text('ASSINATURAS', pageWidth / 2, y, { align: 'center' });
+    y += 15;
+
+    const colWidth = (pageWidth - margin * 2) / 2;
+    const col1X = margin;
+    const col2X = margin + colWidth;
+
+    // Contratante
+    doc.setFontSize(11);
+    doc.text('CONTRATANTE', col1X + colWidth / 2, y, { align: 'center' });
+    
+    // Contratado
+    doc.text('CONTRATADO', col2X + colWidth / 2, y, { align: 'center' });
+    y += 8;
+
+    // Adicionar imagens de assinatura se existirem
+    const sigY = y;
+    const sigWidth = 60;
+    const sigHeight = 20;
+
+    if (contractorSignature?.signature_image) {
+      try {
+        doc.addImage(
+          contractorSignature.signature_image,
+          'PNG',
+          col1X + (colWidth - sigWidth) / 2,
+          sigY,
+          sigWidth,
+          sigHeight
+        );
+      } catch (e) {
+        console.warn('Erro ao adicionar assinatura do contratante no PDF:', e);
+      }
+    }
+
+    if (contractedSignature?.signature_image) {
+      try {
+        doc.addImage(
+          contractedSignature.signature_image,
+          'PNG',
+          col2X + (colWidth - sigWidth) / 2,
+          sigY,
+          sigWidth,
+          sigHeight
+        );
+      } catch (e) {
+        console.warn('Erro ao adicionar assinatura do contratado no PDF:', e);
+      }
+    }
+
+    y = sigY + sigHeight + 5;
+
+    // Linha de assinatura
+    doc.setDrawColor(100);
+    doc.line(col1X + 10, y, col1X + colWidth - 10, y);
+    doc.line(col2X + 10, y, col2X + colWidth - 10, y);
+    y += 5;
+
+    // Nomes
+    doc.setFontSize(10);
+    doc.text(contract.contractor_name || '', col1X + colWidth / 2, y, { align: 'center' });
+    doc.text(contract.contracted_name || '', col2X + colWidth / 2, y, { align: 'center' });
+    y += 5;
+
+    // Documentos mascarados
+    doc.setFontSize(8);
+    doc.text(maskDocument(contract.contractor_document || ''), col1X + colWidth / 2, y, { align: 'center' });
+    doc.text(maskDocument(contract.contracted_document || ''), col2X + colWidth / 2, y, { align: 'center' });
+    y += 5;
+
+    // Datas de assinatura
+    if (contractorSignature?.signed_at) {
+      doc.text(
+        `Assinado em ${format(new Date(contractorSignature.signed_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`,
+        col1X + colWidth / 2,
+        y,
+        { align: 'center' }
+      );
+    }
+    if (contractedSignature?.signed_at) {
+      doc.text(
+        `Assinado em ${format(new Date(contractedSignature.signed_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`,
+        col2X + colWidth / 2,
+        y,
+        { align: 'center' }
+      );
+    }
 
     doc.save(`contrato-${contract.contract_number}.pdf`);
     toast.success('PDF baixado!');

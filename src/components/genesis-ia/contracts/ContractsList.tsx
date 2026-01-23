@@ -45,12 +45,21 @@ interface Contract {
   title: string;
   status: string;
   contractor_name: string;
+  contractor_document: string;
   contracted_name: string;
+  contracted_document: string;
   total_value: number;
   created_at: string;
   service_type: string;
   service_modality: string;
   generated_content: string | null;
+}
+
+interface SignatureData {
+  signer_type: string;
+  signer_name: string;
+  signed_at: string | null;
+  signature_image?: string | null;
 }
 
 interface ContractsListProps {
@@ -82,7 +91,7 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
     try {
       const { data, error } = await supabase
         .from('contracts')
-        .select('id, contract_number, title, status, contractor_name, contracted_name, total_value, created_at, service_type, service_modality, generated_content')
+        .select('id, contract_number, title, status, contractor_name, contractor_document, contracted_name, contracted_document, total_value, created_at, service_type, service_modality, generated_content')
         .eq('affiliate_id', affiliateId)
         .order('created_at', { ascending: false });
 
@@ -94,6 +103,17 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
     } finally {
       setLoading(false);
     }
+  };
+
+  const maskDocument = (doc: string) => {
+    if (!doc) return '';
+    const cleaned = doc.replace(/\D/g, '');
+    if (cleaned.length === 11) {
+      return `***.***.*${cleaned.slice(7, 9)}-${cleaned.slice(9, 11)}`;
+    } else if (cleaned.length === 14) {
+      return `**.***.***/${cleaned.slice(8, 12)}-${cleaned.slice(12, 14)}`;
+    }
+    return doc.slice(0, -3).replace(/./g, '*') + doc.slice(-3);
   };
 
   const filteredContracts = contracts.filter(contract => {
@@ -114,13 +134,23 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
     }).format(value);
   };
 
-  const handleDownloadPDF = (contract: Contract, e: React.MouseEvent) => {
+  const handleDownloadPDF = async (contract: Contract, e: React.MouseEvent) => {
     e.stopPropagation();
     
     if (!contract.generated_content) {
       toast.error('Gere o contrato primeiro');
       return;
     }
+
+    // Buscar assinaturas do contrato
+    const { data: signaturesData } = await supabase
+      .from('contract_signatures')
+      .select('signer_type, signer_name, signed_at, signature_image')
+      .eq('contract_id', contract.id);
+
+    const signatures: SignatureData[] = signaturesData || [];
+    const contractorSignature = signatures.find(s => s.signer_type === 'contractor' && s.signed_at);
+    const contractedSignature = signatures.find(s => s.signer_type === 'contracted' && s.signed_at);
 
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -144,6 +174,94 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
       doc.text(line, margin, y);
       y += lineHeight;
     });
+
+    // Adicionar seção de assinaturas no PDF
+    if (y + 80 > pageHeight - margin) {
+      doc.addPage();
+      y = margin;
+    }
+
+    y += 15;
+    doc.setFontSize(14);
+    doc.text('ASSINATURAS', pageWidth / 2, y, { align: 'center' });
+    y += 15;
+
+    const colWidth = (pageWidth - margin * 2) / 2;
+    const col1X = margin;
+    const col2X = margin + colWidth;
+
+    doc.setFontSize(11);
+    doc.text('CONTRATANTE', col1X + colWidth / 2, y, { align: 'center' });
+    doc.text('CONTRATADO', col2X + colWidth / 2, y, { align: 'center' });
+    y += 8;
+
+    const sigY = y;
+    const sigWidth = 60;
+    const sigHeight = 20;
+
+    if (contractorSignature?.signature_image) {
+      try {
+        doc.addImage(
+          contractorSignature.signature_image,
+          'PNG',
+          col1X + (colWidth - sigWidth) / 2,
+          sigY,
+          sigWidth,
+          sigHeight
+        );
+      } catch (e) {
+        console.warn('Erro ao adicionar assinatura do contratante no PDF:', e);
+      }
+    }
+
+    if (contractedSignature?.signature_image) {
+      try {
+        doc.addImage(
+          contractedSignature.signature_image,
+          'PNG',
+          col2X + (colWidth - sigWidth) / 2,
+          sigY,
+          sigWidth,
+          sigHeight
+        );
+      } catch (e) {
+        console.warn('Erro ao adicionar assinatura do contratado no PDF:', e);
+      }
+    }
+
+    y = sigY + sigHeight + 5;
+
+    doc.setDrawColor(100);
+    doc.line(col1X + 10, y, col1X + colWidth - 10, y);
+    doc.line(col2X + 10, y, col2X + colWidth - 10, y);
+    y += 5;
+
+    doc.setFontSize(10);
+    doc.text(contract.contractor_name || '', col1X + colWidth / 2, y, { align: 'center' });
+    doc.text(contract.contracted_name || '', col2X + colWidth / 2, y, { align: 'center' });
+    y += 5;
+
+    doc.setFontSize(8);
+    doc.text(maskDocument(contract.contractor_document || ''), col1X + colWidth / 2, y, { align: 'center' });
+    doc.text(maskDocument(contract.contracted_document || ''), col2X + colWidth / 2, y, { align: 'center' });
+    y += 5;
+
+    if (contractorSignature?.signed_at) {
+      doc.text(
+        `Assinado em ${format(new Date(contractorSignature.signed_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`,
+        col1X + colWidth / 2,
+        y,
+        { align: 'center' }
+      );
+    }
+    if (contractedSignature?.signed_at) {
+      doc.text(
+        `Assinado em ${format(new Date(contractedSignature.signed_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`,
+        col2X + colWidth / 2,
+        y,
+        { align: 'center' }
+      );
+    }
 
     doc.save(`contrato-${contract.contract_number}.pdf`);
     toast.success('PDF baixado!');
