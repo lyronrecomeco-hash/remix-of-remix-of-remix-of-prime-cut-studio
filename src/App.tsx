@@ -76,7 +76,7 @@ const PaymentCodePage = lazy(() => import("./pages/checkout/PaymentCodePage"));
 const CheckoutSuccessPage = lazy(() => import("./pages/checkout/SuccessPage"));
 const CheckoutPendingPage = lazy(() => import("./pages/checkout/PendingPage"));
 const CheckoutErrorPage = lazy(() => import("./pages/checkout/ErrorPage"));
-
+const CheckoutCompletePage = lazy(() => import("./pages/checkout/CompletePage"));
 // QueryClient com retry logic e cache otimizado
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -296,6 +296,7 @@ const AppContent = () => {
             <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
             <Route path="/checkout/pending" element={<CheckoutPendingPage />} />
             <Route path="/checkout/error" element={<CheckoutErrorPage />} />
+            <Route path="/checkout/complete" element={<CheckoutCompletePage />} />
             <Route path="/checkout/:code" element={<PaymentCodePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

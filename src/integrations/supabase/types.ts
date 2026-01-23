@@ -1883,6 +1883,9 @@ export type Database = {
           payment_method: string | null
           pix_br_code: string | null
           pix_qr_code_base64: string | null
+          plan_id: string | null
+          promo_link_id: string | null
+          source: string | null
           status: string
           updated_at: string
           user_agent: string | null
@@ -1910,6 +1913,9 @@ export type Database = {
           payment_method?: string | null
           pix_br_code?: string | null
           pix_qr_code_base64?: string | null
+          plan_id?: string | null
+          promo_link_id?: string | null
+          source?: string | null
           status?: string
           updated_at?: string
           user_agent?: string | null
@@ -1937,6 +1943,9 @@ export type Database = {
           payment_method?: string | null
           pix_br_code?: string | null
           pix_qr_code_base64?: string | null
+          plan_id?: string | null
+          promo_link_id?: string | null
+          source?: string | null
           status?: string
           updated_at?: string
           user_agent?: string | null
@@ -1949,7 +1958,69 @@ export type Database = {
             referencedRelation: "checkout_customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "checkout_payments_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "checkout_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkout_payments_promo_link_id_fkey"
+            columns: ["promo_link_id"]
+            isOneToOne: false
+            referencedRelation: "promo_links"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      checkout_plans: {
+        Row: {
+          created_at: string | null
+          discount_percentage: number | null
+          display_name: string
+          duration_months: number
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          is_popular: boolean | null
+          name: string
+          price_cents: number
+          promo_price_cents: number | null
+          tagline: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          discount_percentage?: number | null
+          display_name: string
+          duration_months?: number
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_popular?: boolean | null
+          name: string
+          price_cents: number
+          promo_price_cents?: number | null
+          tagline?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          discount_percentage?: number | null
+          display_name?: string
+          duration_months?: number
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_popular?: boolean | null
+          name?: string
+          price_cents?: number
+          promo_price_cents?: number | null
+          tagline?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       checkout_webhook_config: {
         Row: {
@@ -9138,6 +9209,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          payment_id: string | null
           plan_type: string
           plan_value: number
           promo_link_id: string
@@ -9150,6 +9222,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          payment_id?: string | null
           plan_type: string
           plan_value: number
           promo_link_id: string
@@ -9162,6 +9235,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          payment_id?: string | null
           plan_type?: string
           plan_value?: number
           promo_link_id?: string
@@ -9172,6 +9246,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "promo_referrals_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "checkout_payments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "promo_referrals_promo_link_id_fkey"
             columns: ["promo_link_id"]
