@@ -34,24 +34,32 @@ export function LovableConnectButton({ prompt, projectName }: LovableConnectButt
   const [isExpanded, setIsExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // Build Lovable URL with auto-submit
+  const buildLovableUrl = () => {
+    const encodedPrompt = encodeURIComponent(prompt);
+    return `https://lovable.dev/?autosubmit=true#prompt=${encodedPrompt}`;
+  };
+
   const handleCopyAndOpen = async () => {
     try {
       await navigator.clipboard.writeText(prompt);
       setCopied(true);
-      toast.success('Prompt copiado! Cole no chat da Lovable.');
+      toast.success('Prompt copiado! Abrindo Lovable com deploy automático...');
       
-      // Open Lovable homepage - user creates project manually
+      // Open Lovable with auto-submit URL
       setTimeout(() => {
-        window.open('https://lovable.dev', '_blank');
+        window.open(buildLovableUrl(), '_blank');
         setCopied(false);
-      }, 800);
+      }, 500);
     } catch (err) {
-      toast.error('Erro ao copiar prompt');
+      // Fallback: just open with auto-submit even if copy fails
+      toast.info('Abrindo Lovable com seu projeto...');
+      window.open(buildLovableUrl(), '_blank');
     }
   };
 
   const handleOpenLovable = () => {
-    window.open('https://lovable.dev', '_blank');
+    window.open(buildLovableUrl(), '_blank');
   };
 
   return (
@@ -90,7 +98,7 @@ export function LovableConnectButton({ prompt, projectName }: LovableConnectButt
               </motion.span>
             </h4>
             <p className="text-xs text-muted-foreground">
-              Copie o prompt e cole no chat da Lovable
+              Deploy automático ao abrir
             </p>
           </div>
         </div>
@@ -124,8 +132,8 @@ export function LovableConnectButton({ prompt, projectName }: LovableConnectButt
               </>
             ) : (
               <>
-                <Copy className="w-4 h-4 mr-2" />
-                Copiar & Ir para Lovable
+                <Rocket className="w-4 h-4 mr-2" />
+                Criar Projeto na Lovable
               </>
             )}
           </Button>

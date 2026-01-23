@@ -172,92 +172,77 @@ const GenesisCommercialRadar = () => {
     return indices;
   }, []);
 
-  // Fetch real leads from database - diversified niches
-  // Diverse niches for mockup fallback
+  // Diverse niches for showcase - always show variety
   const DIVERSE_NICHES = [
     'Academia', 'Restaurante', 'Clínica', 'Pet Shop', 'Salão', 
     'Barbearia', 'Loja', 'Oficina', 'Fitness', 'Farmácia', 
-    'Pizzaria', 'Padaria', 'Consultório', 'Estética', 'Delivery'
+    'Pizzaria', 'Padaria', 'Consultório', 'Estética', 'Delivery',
+    'Imobiliária', 'Advocacia', 'Contabilidade'
   ];
 
-  const MOCK_COMPANIES = [
-    'Studio Fitness Pro', 'Restaurante Sabor & Arte', 'Clínica Bem Estar', 
-    'Pet Center Amigo', 'Salão Beleza Total', 'Barbearia Corte Elite',
-    'Loja Moda Atual', 'Auto Mecânica Express', 'CrossFit Power', 
-    'Farmácia Popular Plus', 'Pizzaria Forno Italiano', 'Padaria Pão Quente',
-    'Consultório Dr. Saúde', 'Estética Renova', 'Delivery Rápido',
-    'Academia Top Shape', 'Restaurante La Pasta', 'Clínica Odonto Prime',
-    'Pet Shop Bicho Feliz', 'Salão Glamour', 'Barbearia Style Man',
-    'Loja Tech Store', 'Oficina Turbo', 'Studio Pilates',
-    'Farmácia Saúde Total', 'Pizzaria Napoli', 'Padaria Doce Mel',
-    'Clínica Vida Nova', 'Estética Body Care', 'Delivery Express'
+  const MOCK_COMPANIES: { name: string; niche: string }[] = [
+    { name: 'Studio Fitness Pro', niche: 'Academia' },
+    { name: 'Restaurante Sabor & Arte', niche: 'Restaurante' },
+    { name: 'Clínica Bem Estar', niche: 'Clínica' },
+    { name: 'Pet Center Amigo', niche: 'Pet Shop' },
+    { name: 'Salão Beleza Total', niche: 'Salão' },
+    { name: 'Loja Moda Atual', niche: 'Loja' },
+    { name: 'Auto Mecânica Express', niche: 'Oficina' },
+    { name: 'CrossFit Power', niche: 'Fitness' },
+    { name: 'Farmácia Popular Plus', niche: 'Farmácia' },
+    { name: 'Pizzaria Forno Italiano', niche: 'Pizzaria' },
+    { name: 'Padaria Pão Quente', niche: 'Padaria' },
+    { name: 'Consultório Dr. Saúde', niche: 'Consultório' },
+    { name: 'Estética Renova', niche: 'Estética' },
+    { name: 'Delivery Rápido', niche: 'Delivery' },
+    { name: 'Imóveis Prime', niche: 'Imobiliária' },
+    { name: 'Advocacia Silva', niche: 'Advocacia' },
+    { name: 'Contábil Express', niche: 'Contabilidade' },
+    { name: 'Academia Top Shape', niche: 'Academia' },
+    { name: 'Restaurante La Pasta', niche: 'Restaurante' },
+    { name: 'Clínica Odonto Prime', niche: 'Clínica' },
+    { name: 'Pet Shop Bicho Feliz', niche: 'Pet Shop' },
+    { name: 'Salão Glamour', niche: 'Salão' },
+    { name: 'Loja Tech Store', niche: 'Loja' },
+    { name: 'Oficina Turbo', niche: 'Oficina' },
+    { name: 'Studio Pilates', niche: 'Fitness' },
+    { name: 'Farmácia Saúde Total', niche: 'Farmácia' },
+    { name: 'Pizzaria Napoli', niche: 'Pizzaria' },
+    { name: 'Padaria Doce Mel', niche: 'Padaria' },
+    { name: 'Clínica Vida Nova', niche: 'Consultório' },
+    { name: 'Estética Body Care', niche: 'Estética' },
+    { name: 'Delivery Express', niche: 'Delivery' },
+    { name: 'Corretora Horizonte', niche: 'Imobiliária' },
+    { name: 'Escritório Jurídico Costa', niche: 'Advocacia' },
+    { name: 'Contabilidade Moderna', niche: 'Contabilidade' },
   ];
 
   useEffect(() => {
-    const fetchLeads = async () => {
-      // Fetch from database
-      const { data, error } = await supabase
-        .from('affiliate_prospects')
-        .select('id, company_name, niche, company_city, company_state, company_phone, analysis_score, source')
-        .not('niche', 'is', null)
-        .limit(50);
+    const generateDiverseLeads = () => {
+      // Always generate diverse mock leads for best showcase experience
+      // This ensures visitors always see variety of niches
+      const mockLeads: RealLead[] = MOCK_COMPANIES.map((company, i) => ({
+        id: `lead-${i}-${Date.now()}`,
+        company_name: company.name,
+        niche: company.niche,
+        company_city: null,
+        company_state: null,
+        company_phone: null,
+        analysis_score: Math.floor(Math.random() * 35) + 60, // 60-95
+        source: 'radar',
+      }));
       
-      if (!error && data && data.length > 0) {
-        // Diversify niches
-        const nicheGroups: Record<string, RealLead[]> = {};
-        data.forEach(lead => {
-          const niche = lead.niche || 'Outros';
-          if (!nicheGroups[niche]) nicheGroups[niche] = [];
-          nicheGroups[niche].push(lead);
-        });
-        
-        const diversifiedLeads: RealLead[] = [];
-        const niches = Object.keys(nicheGroups);
-        let index = 0;
-        while (diversifiedLeads.length < 35 && index < 100) {
-          const niche = niches[index % niches.length];
-          const nicheLeads = nicheGroups[niche];
-          const leadIndex = Math.floor(index / niches.length);
-          if (nicheLeads && nicheLeads[leadIndex]) {
-            diversifiedLeads.push({
-              ...nicheLeads[leadIndex],
-              analysis_score: nicheLeads[leadIndex].analysis_score || Math.floor(Math.random() * 40) + 50,
-            });
-          }
-          index++;
-        }
-        
-        // Shuffle
-        for (let i = diversifiedLeads.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [diversifiedLeads[i], diversifiedLeads[j]] = [diversifiedLeads[j], diversifiedLeads[i]];
-        }
-        
-        setLeads(diversifiedLeads);
-      } else {
-        // FALLBACK: Generate mock leads with diverse niches
-        const mockLeads: RealLead[] = MOCK_COMPANIES.map((company, i) => ({
-          id: `mock-${i}`,
-          company_name: company,
-          niche: DIVERSE_NICHES[i % DIVERSE_NICHES.length],
-          company_city: null,
-          company_state: null,
-          company_phone: null,
-          analysis_score: Math.floor(Math.random() * 40) + 55,
-          source: 'mock',
-        }));
-        
-        // Shuffle
-        for (let i = mockLeads.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [mockLeads[i], mockLeads[j]] = [mockLeads[j], mockLeads[i]];
-        }
-        
-        setLeads(mockLeads);
+      // Fisher-Yates shuffle for true randomness
+      for (let i = mockLeads.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [mockLeads[i], mockLeads[j]] = [mockLeads[j], mockLeads[i]];
       }
+      
+      setLeads(mockLeads);
       setLoading(false);
     };
-    fetchLeads();
+    
+    generateDiverseLeads();
   }, []);
 
   // Auto-scroll carousel - FASTER
