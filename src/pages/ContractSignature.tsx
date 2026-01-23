@@ -91,12 +91,12 @@ export default function ContractSignature() {
     }
   }, [hash]);
 
-  // Subscribe to realtime changes
+  // Subscribe to realtime changes for signatures AND contract updates
   useEffect(() => {
     if (!contract?.id) return;
 
     const channel = supabase
-      .channel(`contract-signatures-${contract.id}`)
+      .channel(`contract-page-${contract.id}`)
       .on(
         'postgres_changes',
         {
@@ -109,6 +109,22 @@ export default function ContractSignature() {
           console.log('Signature change:', payload);
           fetchSignatures();
           fetchContractStatus();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'contracts',
+          filter: `id=eq.${contract.id}`
+        },
+        (payload) => {
+          console.log('Contract update:', payload);
+          // Update contract data including generated_content
+          if (payload.new) {
+            setContract(prev => prev ? { ...prev, ...payload.new as Contract } : null);
+          }
         }
       )
       .subscribe();
