@@ -25,7 +25,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import jsPDF from 'jspdf';
+import { generateContractPdf } from '@/lib/contracts/contractPdf';
 
 interface Contract {
   id: string;
@@ -456,134 +456,17 @@ export default function ContractSignature() {
       return raw.replace(/\s/g, '');
     };
 
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 20;
-    const maxWidth = pageWidth - (margin * 2);
-    
-    // Remove markdown bold markers for PDF
-    const cleanContent = contractForPDF.generated_content.replace(/\*\*/g, '');
-    
-    doc.setFontSize(12);
-    const lines = doc.splitTextToSize(cleanContent, maxWidth);
-    
-    let y = margin;
-    const lineHeight = 6;
-    const pageHeight = doc.internal.pageSize.getHeight();
-    
-    lines.forEach((line: string) => {
-      if (y + lineHeight > pageHeight - margin) {
-        doc.addPage();
-        y = margin;
-      }
-      doc.text(line, margin, y);
-      y += lineHeight;
+    const doc = generateContractPdf({
+      contract: {
+        contract_number: contractForPDF.contract_number,
+        contractor_name: contractForPDF.contractor_name,
+        contractor_document: contractForPDF.contractor_document,
+        contracted_name: contractForPDF.contracted_name,
+        contracted_document: contractForPDF.contracted_document,
+        generated_content: contractForPDF.generated_content,
+      },
+      signatures: signaturesForPDF,
     });
-
-    // Adicionar seção de assinaturas no PDF
-    // Como a lista vem ordenada por signed_at DESC, o primeiro match é o mais recente
-    const contractorSignature = signaturesForPDF.find(s => s.signer_type === 'contractor');
-    const contractedSignature = signaturesForPDF.find(s => s.signer_type === 'contracted');
-
-    // Verificar se precisa de nova página para assinaturas
-    if (y + 80 > pageHeight - margin) {
-      doc.addPage();
-      y = margin;
-    }
-
-    y += 15;
-    doc.setFontSize(14);
-    doc.text('ASSINATURAS', pageWidth / 2, y, { align: 'center' });
-    y += 15;
-
-    const colWidth = (pageWidth - margin * 2) / 2;
-    const col1X = margin;
-    const col2X = margin + colWidth;
-
-    // Contratante
-    doc.setFontSize(11);
-    doc.text('CONTRATANTE', col1X + colWidth / 2, y, { align: 'center' });
-    
-    // Contratado
-    doc.text('CONTRATADO', col2X + colWidth / 2, y, { align: 'center' });
-    y += 8;
-
-    // Adicionar imagens de assinatura se existirem
-    const sigY = y;
-    const sigWidth = 60;
-    const sigHeight = 20;
-
-    const contractorSigBase64 = getPngBase64(contractorSignature?.signature_image);
-    const contractedSigBase64 = getPngBase64(contractedSignature?.signature_image);
-
-    if (contractorSigBase64) {
-      try {
-        doc.addImage(
-          contractorSigBase64,
-          'PNG',
-          col1X + (colWidth - sigWidth) / 2,
-          sigY,
-          sigWidth,
-          sigHeight
-        );
-      } catch (e) {
-        console.warn('Erro ao adicionar assinatura do contratante no PDF:', e);
-      }
-    }
-
-    if (contractedSigBase64) {
-      try {
-        doc.addImage(
-          contractedSigBase64,
-          'PNG',
-          col2X + (colWidth - sigWidth) / 2,
-          sigY,
-          sigWidth,
-          sigHeight
-        );
-      } catch (e) {
-        console.warn('Erro ao adicionar assinatura do contratado no PDF:', e);
-      }
-    }
-
-    y = sigY + sigHeight + 5;
-
-    // Linha de assinatura
-    doc.setDrawColor(100);
-    doc.line(col1X + 10, y, col1X + colWidth - 10, y);
-    doc.line(col2X + 10, y, col2X + colWidth - 10, y);
-    y += 5;
-
-    // Nomes
-    doc.setFontSize(10);
-    doc.text(contractForPDF.contractor_name || '', col1X + colWidth / 2, y, { align: 'center' });
-    doc.text(contractForPDF.contracted_name || '', col2X + colWidth / 2, y, { align: 'center' });
-    y += 5;
-
-    // Documentos mascarados
-    doc.setFontSize(8);
-    doc.text(maskDocument(contractForPDF.contractor_document || ''), col1X + colWidth / 2, y, { align: 'center' });
-    doc.text(maskDocument(contractForPDF.contracted_document || ''), col2X + colWidth / 2, y, { align: 'center' });
-    y += 5;
-
-    // Datas de assinatura
-    if (contractorSignature?.signed_at) {
-      doc.text(
-        `Assinado em ${format(new Date(contractorSignature.signed_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`,
-        col1X + colWidth / 2,
-        y,
-        { align: 'center' }
-      );
-    }
-    if (contractedSignature?.signed_at) {
-      doc.text(
-        `Assinado em ${format(new Date(contractedSignature.signed_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`,
-        col2X + colWidth / 2,
-        y,
-        { align: 'center' }
-      );
-    }
-
     doc.save(`contrato-${contractForPDF.contract_number}.pdf`);
     toast.success('PDF baixado com sucesso!');
   };
