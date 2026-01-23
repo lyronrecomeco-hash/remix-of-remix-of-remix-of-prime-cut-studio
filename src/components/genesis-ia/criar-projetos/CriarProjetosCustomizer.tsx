@@ -21,8 +21,7 @@ import {
   Sparkles,
   Check,
   X,
-  ChevronRight,
-  Eye
+  ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,8 +31,6 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { TemplateInfo } from './CriarProjetosSelector';
 import { ProjectConfig } from './CriarProjetosManager';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card, CardContent } from '@/components/ui/card';
 
 interface CriarProjetosCustomizerProps {
   template: TemplateInfo;
@@ -274,470 +271,480 @@ export function CriarProjetosCustomizer({
   const progress = ((currentSectionIndex + 1) / sections.length) * 100;
 
   return (
-    <div className="min-h-[calc(100vh-200px)] flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3 mb-4 sm:mb-6">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8 sm:h-9 sm:w-9">
-            <ArrowLeft className="w-4 h-4" />
+    <div className="space-y-4">
+      {/* Modal-like Header - Same style as EvolutionWizard */}
+      <div className="flex items-center justify-between p-3 rounded-t-xl bg-white/5 border border-white/10 border-b-0">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={onBack} className="h-7 w-7 rounded-full hover:bg-white/10">
+            <ArrowLeft className="w-3.5 h-3.5" />
           </Button>
+          <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center">
+            <Sparkles className="w-3.5 h-3.5 text-primary" />
+          </div>
           <div>
-            <h1 className="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-semibold text-foreground">
               {editingConfig ? 'Editar' : 'Criar'} Projeto
-            </h1>
-            <p className="text-[10px] sm:text-xs text-muted-foreground">{template.name}</p>
+            </h2>
+            <p className="text-[10px] text-muted-foreground">{template.name}</p>
           </div>
         </div>
-        <Button onClick={handleSave} disabled={saving} size="sm" className="gap-1.5">
+        <Button onClick={handleSave} disabled={saving} size="sm" className="h-7 text-[11px] px-3 gap-1.5">
           {saving ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Loader2 className="w-3 h-3 animate-spin" />
           ) : (
             <>
-              <Save className="w-4 h-4" />
-              <span className="hidden sm:inline">Salvar</span>
+              <Save className="w-3 h-3" />
+              Salvar
             </>
           )}
         </Button>
       </div>
 
-      {/* Progress Bar */}
-      <div className="mb-4 sm:mb-6">
-        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-          <motion.div 
-            className="h-full bg-primary rounded-full"
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.3 }}
-          />
+      {/* Content Area - Same container style as EvolutionWizard */}
+      <div className="p-4 rounded-b-xl bg-white/5 border border-white/10 border-t-0 -mt-4">
+        {/* Progress Bar */}
+        <div className="mb-4">
+          <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+            <motion.div 
+              className="h-full bg-primary rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.3 }}
+            />
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-1">
+            Etapa {currentSectionIndex + 1} de {sections.length}
+          </p>
         </div>
-        <p className="text-[10px] sm:text-xs text-muted-foreground mt-1.5">
-          Etapa {currentSectionIndex + 1} de {sections.length}
-        </p>
-      </div>
 
-      {/* Section Navigation */}
-      <div className="flex gap-1.5 sm:gap-2 mb-4 sm:mb-6 overflow-x-auto pb-2 scrollbar-hide">
-        {sections.map((section, index) => {
-          const Icon = section.icon;
-          const isActive = activeSection === section.id;
-          const isCompleted = index < currentSectionIndex;
-          
-          return (
-            <button
-              key={section.id}
-              onClick={() => setActiveSection(section.id)}
-              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium whitespace-nowrap transition-all ${
-                isActive 
-                  ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25' 
-                  : isCompleted 
-                    ? 'bg-primary/10 text-primary' 
-                    : 'bg-muted/50 text-muted-foreground hover:bg-muted'
-              }`}
-            >
-              {isCompleted && !isActive ? (
-                <Check className="w-3.5 h-3.5" />
-              ) : (
-                <Icon className="w-3.5 h-3.5" />
-              )}
-              <span className="hidden sm:inline">{section.label}</span>
-            </button>
-          );
-        })}
-      </div>
+        {/* Section Navigation - Compact tabs */}
+        <div className="flex gap-1 mb-4 overflow-x-auto pb-1 scrollbar-hide">
+          {sections.map((section, index) => {
+            const Icon = section.icon;
+            const isActive = activeSection === section.id;
+            const isCompleted = index < currentSectionIndex;
+            
+            return (
+              <button
+                key={section.id}
+                onClick={() => setActiveSection(section.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-all ${
+                  isActive 
+                    ? 'bg-primary text-primary-foreground' 
+                    : isCompleted 
+                      ? 'bg-primary/10 text-primary' 
+                      : 'bg-white/5 text-muted-foreground hover:bg-white/10'
+                }`}
+              >
+                {isCompleted && !isActive ? (
+                  <Check className="w-3 h-3" />
+                ) : (
+                  <Icon className="w-3 h-3" />
+                )}
+                {section.label}
+              </button>
+            );
+          })}
+        </div>
 
-      {/* Content */}
-      <ScrollArea className="flex-1">
+        {/* Content */}
         <AnimatePresence mode="wait">
           <motion.div
             key={activeSection}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.2 }}
-            className="pb-6"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.15 }}
           >
             {/* Informações */}
             {activeSection === 'info' && (
-              <div className="space-y-4">
-                <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-                  <CardContent className="p-4 sm:p-6">
-                    <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                      <Building2 className="w-4 h-4 text-primary" />
-                      Dados do Negócio
-                    </h3>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="space-y-2 sm:col-span-2">
-                        <Label className="text-xs">Nome do Negócio *</Label>
-                        <Input
-                          placeholder="Ex: Pet Shop Amigo Fiel"
-                          value={config.business.name}
-                          onChange={(e) => updateBusiness('name', e.target.value)}
-                          className="h-10 sm:h-11"
-                        />
-                      </div>
-                      <div className="space-y-2 sm:col-span-2">
-                        <Label className="text-xs">Slogan</Label>
-                        <Input
-                          placeholder="Ex: Cuidando com amor desde 2010"
-                          value={config.business.slogan}
-                          onChange={(e) => updateBusiness('slogan', e.target.value)}
-                          className="h-10 sm:h-11"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs">Telefone</Label>
-                        <Input
-                          placeholder="(11) 99999-9999"
-                          value={config.business.phone}
-                          onChange={(e) => updateBusiness('phone', e.target.value)}
-                          className="h-10 sm:h-11"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs">WhatsApp</Label>
-                        <Input
-                          placeholder="5511999999999"
-                          value={config.business.whatsapp}
-                          onChange={(e) => updateBusiness('whatsapp', e.target.value)}
-                          className="h-10 sm:h-11"
-                        />
-                      </div>
-                      <div className="space-y-2 sm:col-span-2">
-                        <Label className="text-xs">Endereço</Label>
-                        <Input
-                          placeholder="Rua, número - Bairro, Cidade"
-                          value={config.business.address}
-                          onChange={(e) => updateBusiness('address', e.target.value)}
-                          className="h-10 sm:h-11"
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 pb-2 border-b border-white/10">
+                  <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center">
+                    <Building2 className="w-2.5 h-2.5 text-primary" />
+                  </div>
+                  <span className="text-[11px] font-semibold text-primary uppercase tracking-wider">
+                    Dados do Negócio
+                  </span>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Nome do Negócio *</Label>
+                    <Input
+                      placeholder="Ex: Pet Shop Amigo Fiel"
+                      value={config.business.name}
+                      onChange={(e) => updateBusiness('name', e.target.value)}
+                      className="h-9 bg-white/5 border-white/10 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Slogan</Label>
+                    <Input
+                      placeholder="Ex: Cuidando com amor desde 2010"
+                      value={config.business.slogan}
+                      onChange={(e) => updateBusiness('slogan', e.target.value)}
+                      className="h-9 bg-white/5 border-white/10 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Telefone</Label>
+                    <Input
+                      placeholder="(11) 99999-9999"
+                      value={config.business.phone}
+                      onChange={(e) => updateBusiness('phone', e.target.value)}
+                      className="h-9 bg-white/5 border-white/10 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">WhatsApp</Label>
+                    <Input
+                      placeholder="5511999999999"
+                      value={config.business.whatsapp}
+                      onChange={(e) => updateBusiness('whatsapp', e.target.value)}
+                      className="h-9 bg-white/5 border-white/10 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Endereço</Label>
+                    <Input
+                      placeholder="Rua, número - Bairro, Cidade"
+                      value={config.business.address}
+                      onChange={(e) => updateBusiness('address', e.target.value)}
+                      className="h-9 bg-white/5 border-white/10 text-sm"
+                    />
+                  </div>
+                </div>
               </div>
             )}
 
             {/* Branding */}
             {activeSection === 'branding' && (
-              <div className="space-y-4">
-                <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-                  <CardContent className="p-4 sm:p-6">
-                    <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                      <Palette className="w-4 h-4 text-primary" />
-                      Cores do Site
-                    </h3>
-                    <div className="grid gap-4 sm:grid-cols-3">
-                      <div className="space-y-2">
-                        <Label className="text-xs">Cor Principal</Label>
-                        <div className="flex gap-2">
-                          <div 
-                            className="w-12 h-10 sm:h-11 rounded-lg border cursor-pointer"
-                            style={{ backgroundColor: config.branding.primaryColor }}
-                          >
-                            <input
-                              type="color"
-                              value={config.branding.primaryColor}
-                              onChange={(e) => updateBranding('primaryColor', e.target.value)}
-                              className="w-full h-full opacity-0 cursor-pointer"
-                            />
-                          </div>
-                          <Input
-                            value={config.branding.primaryColor}
-                            onChange={(e) => updateBranding('primaryColor', e.target.value)}
-                            className="flex-1 font-mono text-xs h-10 sm:h-11"
-                          />
-                        </div>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 pb-2 border-b border-white/10">
+                  <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center">
+                    <Palette className="w-2.5 h-2.5 text-primary" />
+                  </div>
+                  <span className="text-[11px] font-semibold text-primary uppercase tracking-wider">
+                    Cores do Site
+                  </span>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Cor Principal</Label>
+                    <div className="flex gap-2">
+                      <div 
+                        className="w-9 h-9 rounded-lg border border-white/10 cursor-pointer overflow-hidden"
+                        style={{ backgroundColor: config.branding.primaryColor }}
+                      >
+                        <input
+                          type="color"
+                          value={config.branding.primaryColor}
+                          onChange={(e) => updateBranding('primaryColor', e.target.value)}
+                          className="w-full h-full opacity-0 cursor-pointer"
+                        />
                       </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs">Cor Secundária</Label>
-                        <div className="flex gap-2">
-                          <div 
-                            className="w-12 h-10 sm:h-11 rounded-lg border cursor-pointer"
-                            style={{ backgroundColor: config.branding.secondaryColor }}
-                          >
-                            <input
-                              type="color"
-                              value={config.branding.secondaryColor}
-                              onChange={(e) => updateBranding('secondaryColor', e.target.value)}
-                              className="w-full h-full opacity-0 cursor-pointer"
-                            />
-                          </div>
-                          <Input
-                            value={config.branding.secondaryColor}
-                            onChange={(e) => updateBranding('secondaryColor', e.target.value)}
-                            className="flex-1 font-mono text-xs h-10 sm:h-11"
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs">Cor de Destaque</Label>
-                        <div className="flex gap-2">
-                          <div 
-                            className="w-12 h-10 sm:h-11 rounded-lg border cursor-pointer"
-                            style={{ backgroundColor: config.branding.accentColor }}
-                          >
-                            <input
-                              type="color"
-                              value={config.branding.accentColor}
-                              onChange={(e) => updateBranding('accentColor', e.target.value)}
-                              className="w-full h-full opacity-0 cursor-pointer"
-                            />
-                          </div>
-                          <Input
-                            value={config.branding.accentColor}
-                            onChange={(e) => updateBranding('accentColor', e.target.value)}
-                            className="flex-1 font-mono text-xs h-10 sm:h-11"
-                          />
-                        </div>
-                      </div>
+                      <Input
+                        value={config.branding.primaryColor}
+                        onChange={(e) => updateBranding('primaryColor', e.target.value)}
+                        className="flex-1 font-mono text-[10px] h-9 bg-white/5 border-white/10"
+                      />
                     </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Cor Secundária</Label>
+                    <div className="flex gap-2">
+                      <div 
+                        className="w-9 h-9 rounded-lg border border-white/10 cursor-pointer overflow-hidden"
+                        style={{ backgroundColor: config.branding.secondaryColor }}
+                      >
+                        <input
+                          type="color"
+                          value={config.branding.secondaryColor}
+                          onChange={(e) => updateBranding('secondaryColor', e.target.value)}
+                          className="w-full h-full opacity-0 cursor-pointer"
+                        />
+                      </div>
+                      <Input
+                        value={config.branding.secondaryColor}
+                        onChange={(e) => updateBranding('secondaryColor', e.target.value)}
+                        className="flex-1 font-mono text-[10px] h-9 bg-white/5 border-white/10"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Cor de Destaque</Label>
+                    <div className="flex gap-2">
+                      <div 
+                        className="w-9 h-9 rounded-lg border border-white/10 cursor-pointer overflow-hidden"
+                        style={{ backgroundColor: config.branding.accentColor }}
+                      >
+                        <input
+                          type="color"
+                          value={config.branding.accentColor}
+                          onChange={(e) => updateBranding('accentColor', e.target.value)}
+                          className="w-full h-full opacity-0 cursor-pointer"
+                        />
+                      </div>
+                      <Input
+                        value={config.branding.accentColor}
+                        onChange={(e) => updateBranding('accentColor', e.target.value)}
+                        className="flex-1 font-mono text-[10px] h-9 bg-white/5 border-white/10"
+                      />
+                    </div>
+                  </div>
+                </div>
 
-                    {/* Preview */}
-                    <div className="mt-6 p-4 rounded-xl border bg-background">
-                      <p className="text-xs text-muted-foreground mb-3">Preview das cores</p>
-                      <div className="flex gap-3">
-                        <div 
-                          className="flex-1 h-16 rounded-lg flex items-center justify-center text-white text-xs font-medium"
-                          style={{ backgroundColor: config.branding.primaryColor }}
-                        >
-                          Principal
-                        </div>
-                        <div 
-                          className="flex-1 h-16 rounded-lg flex items-center justify-center text-white text-xs font-medium"
-                          style={{ backgroundColor: config.branding.secondaryColor }}
-                        >
-                          Secundária
-                        </div>
-                        <div 
-                          className="flex-1 h-16 rounded-lg flex items-center justify-center text-white text-xs font-medium"
-                          style={{ backgroundColor: config.branding.accentColor }}
-                        >
-                          Destaque
-                        </div>
-                      </div>
+                {/* Preview */}
+                <div className="mt-3 p-3 rounded-lg bg-white/5 border border-white/10">
+                  <p className="text-[10px] text-muted-foreground mb-2 uppercase tracking-wider">Preview</p>
+                  <div className="flex gap-2">
+                    <div 
+                      className="flex-1 h-10 rounded-lg flex items-center justify-center text-white text-[10px] font-medium"
+                      style={{ backgroundColor: config.branding.primaryColor }}
+                    >
+                      Principal
                     </div>
-                  </CardContent>
-                </Card>
+                    <div 
+                      className="flex-1 h-10 rounded-lg flex items-center justify-center text-white text-[10px] font-medium"
+                      style={{ backgroundColor: config.branding.secondaryColor }}
+                    >
+                      Secundária
+                    </div>
+                    <div 
+                      className="flex-1 h-10 rounded-lg flex items-center justify-center text-white text-[10px] font-medium"
+                      style={{ backgroundColor: config.branding.accentColor }}
+                    >
+                      Destaque
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
             {/* Features */}
             {activeSection === 'features' && (
-              <div className="space-y-4">
-                <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-                  <CardContent className="p-4 sm:p-6">
-                    <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                      <Settings2 className="w-4 h-4 text-primary" />
-                      Recursos do Site
-                    </h3>
-                    <div className="grid gap-3">
-                      {featuresList.map((feature) => {
-                        const Icon = feature.icon;
-                        const isEnabled = config.features[feature.key];
-                        
-                        return (
-                          <div 
-                            key={feature.key}
-                            className={`flex items-center justify-between p-3 sm:p-4 rounded-xl border transition-all ${
-                              isEnabled ? 'bg-primary/5 border-primary/20' : 'bg-muted/30 border-transparent'
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center ${
-                                isEnabled ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
-                              }`}>
-                                <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-foreground">{feature.label}</p>
-                                <p className="text-[10px] sm:text-xs text-muted-foreground">{feature.description}</p>
-                              </div>
-                            </div>
-                            <Switch
-                              checked={isEnabled}
-                              onCheckedChange={(checked) => updateFeature(feature.key, checked)}
-                            />
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 pb-2 border-b border-white/10">
+                  <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center">
+                    <Settings2 className="w-2.5 h-2.5 text-primary" />
+                  </div>
+                  <span className="text-[11px] font-semibold text-primary uppercase tracking-wider">
+                    Recursos do Site
+                  </span>
+                </div>
+                <div className="grid gap-2">
+                  {featuresList.map((feature) => {
+                    const Icon = feature.icon;
+                    const isEnabled = config.features[feature.key];
+                    
+                    return (
+                      <div 
+                        key={feature.key}
+                        className={`flex items-center justify-between p-2.5 rounded-lg border transition-all ${
+                          isEnabled ? 'bg-primary/5 border-primary/20' : 'bg-white/5 border-white/10'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+                            isEnabled ? 'bg-primary/10 text-primary' : 'bg-white/10 text-muted-foreground'
+                          }`}>
+                            <Icon className="w-3.5 h-3.5" />
                           </div>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
+                          <div>
+                            <p className="text-xs font-medium text-foreground">{feature.label}</p>
+                            <p className="text-[10px] text-muted-foreground">{feature.description}</p>
+                          </div>
+                        </div>
+                        <Switch
+                          checked={isEnabled}
+                          onCheckedChange={(checked) => updateFeature(feature.key, checked)}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
             {/* Social & Hours */}
             {activeSection === 'social' && (
               <div className="space-y-4">
-                <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-                  <CardContent className="p-4 sm:p-6">
-                    <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                      <Globe className="w-4 h-4 text-primary" />
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 pb-2 border-b border-white/10">
+                    <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center">
+                      <Globe className="w-2.5 h-2.5 text-primary" />
+                    </div>
+                    <span className="text-[11px] font-semibold text-primary uppercase tracking-wider">
                       Redes Sociais
-                    </h3>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label className="text-xs flex items-center gap-2">
-                          <Instagram className="w-3.5 h-3.5" /> Instagram
-                        </Label>
-                        <Input
-                          placeholder="@usuario"
-                          value={config.social.instagram}
-                          onChange={(e) => updateSocial('instagram', e.target.value)}
-                          className="h-10 sm:h-11"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs flex items-center gap-2">
-                          <Facebook className="w-3.5 h-3.5" /> Facebook
-                        </Label>
-                        <Input
-                          placeholder="facebook.com/pagina"
-                          value={config.social.facebook}
-                          onChange={(e) => updateSocial('facebook', e.target.value)}
-                          className="h-10 sm:h-11"
-                        />
-                      </div>
+                    </span>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                        <Instagram className="w-3 h-3" /> Instagram
+                      </Label>
+                      <Input
+                        placeholder="@usuario"
+                        value={config.social.instagram}
+                        onChange={(e) => updateSocial('instagram', e.target.value)}
+                        className="h-9 bg-white/5 border-white/10 text-sm"
+                      />
                     </div>
-                  </CardContent>
-                </Card>
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                        <Facebook className="w-3 h-3" /> Facebook
+                      </Label>
+                      <Input
+                        placeholder="facebook.com/pagina"
+                        value={config.social.facebook}
+                        onChange={(e) => updateSocial('facebook', e.target.value)}
+                        className="h-9 bg-white/5 border-white/10 text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
 
-                <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-                  <CardContent className="p-4 sm:p-6">
-                    <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-primary" />
-                      Horário de Funcionamento
-                    </h3>
-                    <div className="grid gap-4 sm:grid-cols-3">
-                      <div className="space-y-2">
-                        <Label className="text-xs">Seg - Sex</Label>
-                        <Input
-                          placeholder="08:00 - 18:00"
-                          value={config.hours.weekdays}
-                          onChange={(e) => updateHours('weekdays', e.target.value)}
-                          className="h-10 sm:h-11"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs">Sábado</Label>
-                        <Input
-                          placeholder="09:00 - 14:00"
-                          value={config.hours.saturday}
-                          onChange={(e) => updateHours('saturday', e.target.value)}
-                          className="h-10 sm:h-11"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs">Domingo</Label>
-                        <Input
-                          placeholder="Fechado"
-                          value={config.hours.sunday}
-                          onChange={(e) => updateHours('sunday', e.target.value)}
-                          className="h-10 sm:h-11"
-                        />
-                      </div>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 pb-2 border-b border-white/10">
+                    <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center">
+                      <Clock className="w-2.5 h-2.5 text-primary" />
                     </div>
-                  </CardContent>
-                </Card>
+                    <span className="text-[11px] font-semibold text-primary uppercase tracking-wider">
+                      Horário de Funcionamento
+                    </span>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Seg - Sex</Label>
+                      <Input
+                        placeholder="08:00 - 18:00"
+                        value={config.hours.weekdays}
+                        onChange={(e) => updateHours('weekdays', e.target.value)}
+                        className="h-9 bg-white/5 border-white/10 text-sm"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Sábado</Label>
+                      <Input
+                        placeholder="09:00 - 14:00"
+                        value={config.hours.saturday}
+                        onChange={(e) => updateHours('saturday', e.target.value)}
+                        className="h-9 bg-white/5 border-white/10 text-sm"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Domingo</Label>
+                      <Input
+                        placeholder="Fechado"
+                        value={config.hours.sunday}
+                        onChange={(e) => updateHours('sunday', e.target.value)}
+                        className="h-9 bg-white/5 border-white/10 text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
             {/* Link / Publish */}
             {activeSection === 'link' && (
-              <div className="space-y-4">
-                <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-                  <CardContent className="p-4 sm:p-6">
-                    <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                      <Globe className="w-4 h-4 text-primary" />
-                      Publicação
-                    </h3>
-                    
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label className="text-xs">Nome do Cliente (opcional)</Label>
-                        <Input
-                          placeholder="Ex: Pet Shop do João"
-                          value={clientName}
-                          onChange={(e) => setClientName(e.target.value)}
-                          className="h-10 sm:h-11"
-                        />
-                        <p className="text-[10px] text-muted-foreground">
-                          Este nome aparecerá na sua lista de projetos
-                        </p>
-                      </div>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 pb-2 border-b border-white/10">
+                  <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center">
+                    <Globe className="w-2.5 h-2.5 text-primary" />
+                  </div>
+                  <span className="text-[11px] font-semibold text-primary uppercase tracking-wider">
+                    Publicação
+                  </span>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Nome do Cliente (opcional)</Label>
+                    <Input
+                      placeholder="Ex: Pet Shop do João"
+                      value={clientName}
+                      onChange={(e) => setClientName(e.target.value)}
+                      className="h-9 bg-white/5 border-white/10 text-sm"
+                    />
+                    <p className="text-[10px] text-muted-foreground">
+                      Este nome aparecerá na sua lista de projetos
+                    </p>
+                  </div>
 
-                      <div className="space-y-2">
-                        <Label className="text-xs">URL Personalizada (opcional)</Label>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground whitespace-nowrap">/p/</span>
-                          <Input
-                            placeholder="minha-empresa"
-                            value={customSlug}
-                            onChange={(e) => setCustomSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                            className="h-10 sm:h-11 font-mono"
-                          />
-                        </div>
-                        <p className="text-[10px] text-muted-foreground">
-                          Use apenas letras minúsculas, números e hífens
-                        </p>
-                      </div>
-
-                      {/* Preview URL */}
-                      <div className="p-4 rounded-xl bg-muted/50 border">
-                        <p className="text-xs text-muted-foreground mb-2">URL do seu projeto:</p>
-                        <p className="text-sm font-mono text-primary break-all">
-                          /p/{customSlug || '[código-automático]'}
-                        </p>
-                      </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">URL Personalizada (opcional)</Label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-muted-foreground whitespace-nowrap">/p/</span>
+                      <Input
+                        placeholder="minha-empresa"
+                        value={customSlug}
+                        onChange={(e) => setCustomSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                        className="h-9 bg-white/5 border-white/10 text-sm font-mono"
+                      />
                     </div>
-                  </CardContent>
-                </Card>
+                    <p className="text-[10px] text-muted-foreground">
+                      Use apenas letras minúsculas, números e hífens
+                    </p>
+                  </div>
 
-                {/* Compact Save Button */}
-                <Button 
-                  onClick={handleSave} 
-                  disabled={saving} 
-                  size="sm"
-                  className="w-full h-9 text-xs gap-1.5"
-                >
-                  {saving ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <>
-                      <Sparkles className="w-3.5 h-3.5" />
-                      {editingConfig ? 'Atualizar' : 'Criar Projeto'}
-                    </>
-                  )}
-                </Button>
+                  {/* Preview URL */}
+                  <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+                    <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wider">URL do seu projeto</p>
+                    <p className="text-xs font-mono text-primary break-all">
+                      /p/{customSlug || '[código-automático]'}
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
           </motion.div>
         </AnimatePresence>
-      </ScrollArea>
 
-      {/* Compact Navigation Buttons */}
-      <div className="flex gap-2 mt-3 pt-3 border-t border-white/10">
-        {currentSectionIndex > 0 && (
+        {/* Navigation Buttons - Same style as EvolutionWizard */}
+        <div className="flex items-center justify-between gap-2 pt-4 mt-4 border-t border-white/10">
           <Button 
-            variant="outline" 
+            variant="ghost" 
             size="sm"
-            onClick={() => setActiveSection(sections[currentSectionIndex - 1].id)}
-            className="flex-1 h-8 text-xs"
+            onClick={() => {
+              if (currentSectionIndex > 0) {
+                setActiveSection(sections[currentSectionIndex - 1].id);
+              } else {
+                onBack();
+              }
+            }}
+            className="text-[11px] h-7"
           >
-            Anterior
+            Voltar
           </Button>
-        )}
-        {currentSectionIndex < sections.length - 1 && (
-          <Button 
-            size="sm"
-            onClick={() => setActiveSection(sections[currentSectionIndex + 1].id)}
-            className="flex-1 gap-1.5 h-8 text-xs"
-          >
-            Próximo
-            <ChevronRight className="w-3.5 h-3.5" />
-          </Button>
-        )}
+          
+          {currentSectionIndex < sections.length - 1 ? (
+            <Button 
+              onClick={() => setActiveSection(sections[currentSectionIndex + 1].id)}
+              size="sm"
+              className="gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground font-medium h-7 text-[11px]"
+            >
+              PRÓXIMO
+              <ChevronRight className="w-3 h-3" />
+            </Button>
+          ) : (
+            <Button 
+              onClick={handleSave}
+              disabled={saving}
+              size="sm"
+              className="gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground font-medium h-7 text-[11px]"
+            >
+              {saving ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <>
+                  <Sparkles className="w-3 h-3" />
+                  {editingConfig ? 'ATUALIZAR' : 'CRIAR PROJETO'}
+                </>
+              )}
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
