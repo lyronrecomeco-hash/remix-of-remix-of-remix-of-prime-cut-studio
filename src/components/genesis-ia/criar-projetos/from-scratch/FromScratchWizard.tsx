@@ -65,30 +65,30 @@ function WizardContent({ onBack, onComplete }: FromScratchWizardProps) {
   const currentStepInfo = STEPS[currentStep - 1];
 
   return (
-    <div className="min-h-[calc(100vh-200px)] max-w-6xl mx-auto">
+    <div className="min-h-[calc(100vh-200px)] w-full">
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-3 mb-4">
+      <div className="mb-4">
+        <div className="flex items-center gap-3 mb-3">
           <Button variant="ghost" size="icon" onClick={handleBack} className="h-8 w-8">
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div>
             <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-bold text-foreground">Criar do Zero</h2>
+              <Sparkles className="w-4 h-4 text-primary" />
+              <h2 className="text-lg font-bold text-foreground">Criar do Zero</h2>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               {currentStepInfo.title} - {currentStepInfo.subtitle}
             </p>
           </div>
         </div>
 
         {/* Progress Bar */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
           {STEPS.map((step) => (
             <div
               key={step.id}
-              className={`flex-1 h-1.5 rounded-full transition-colors ${
+              className={`flex-1 h-1 rounded-full transition-colors ${
                 step.id <= currentStep 
                   ? 'bg-primary' 
                   : 'bg-white/10'
@@ -96,7 +96,7 @@ function WizardContent({ onBack, onComplete }: FromScratchWizardProps) {
             />
           ))}
         </div>
-        <p className="text-xs text-muted-foreground mt-2 text-right">
+        <p className="text-[10px] text-muted-foreground mt-1.5 text-right">
           Etapa {currentStep} de {totalSteps}
         </p>
       </div>
@@ -116,18 +116,19 @@ function WizardContent({ onBack, onComplete }: FromScratchWizardProps) {
 
       {/* Navigation */}
       {currentStep < 11 && (
-        <div className="flex justify-between mt-8 pt-6 border-t border-white/10">
-          <Button variant="ghost" onClick={handleBack}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
+        <div className="flex justify-between mt-6 pt-4 border-t border-white/10">
+          <Button variant="ghost" size="sm" onClick={handleBack} className="h-8 text-xs">
+            <ArrowLeft className="w-3.5 h-3.5 mr-1.5" />
             Voltar
           </Button>
           <Button
             onClick={nextStep}
             disabled={!canProceed}
-            className="bg-primary hover:bg-primary/90"
+            size="sm"
+            className="bg-primary hover:bg-primary/90 h-8 text-xs"
           >
             Próximo
-            <ArrowRight className="w-4 h-4 ml-2" />
+            <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
           </Button>
         </div>
       )}

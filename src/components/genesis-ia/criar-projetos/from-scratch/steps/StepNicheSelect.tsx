@@ -1,33 +1,56 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Search } from 'lucide-react';
+import { Search, Check } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useFromScratch } from '../FromScratchContext';
 import { NICHE_CONTEXTS, NICHE_CATEGORIES } from '../nicheContexts';
 
-// Niche illustration images - professional representations
+// Import niche images
+import hamburgueriaImg from '@/assets/niches/hamburgueria.jpg';
+import pizzariaImg from '@/assets/niches/pizzaria.jpg';
+import restauranteImg from '@/assets/niches/restaurante.jpg';
+import cafeteriaImg from '@/assets/niches/cafeteria.jpg';
+import barbeariaImg from '@/assets/niches/barbearia.jpg';
+import salaoImg from '@/assets/niches/salao-beleza.jpg';
+import esteticaImg from '@/assets/niches/clinica-estetica.jpg';
+import academiaImg from '@/assets/niches/academia.jpg';
+import clinicaImg from '@/assets/niches/clinica-medica.jpg';
+import odontologiaImg from '@/assets/niches/odontologia.jpg';
+import personalImg from '@/assets/niches/personal-trainer.jpg';
+import nutricionistaImg from '@/assets/niches/nutricionista.jpg';
+import petshopImg from '@/assets/niches/petshop.jpg';
+import veterinariaImg from '@/assets/niches/veterinaria.jpg';
+import imobiliariaImg from '@/assets/niches/imobiliaria.jpg';
+import advocaciaImg from '@/assets/niches/advocacia.jpg';
+import contabilidadeImg from '@/assets/niches/contabilidade.jpg';
+import escolaImg from '@/assets/niches/escola-curso.jpg';
+import fotografoImg from '@/assets/niches/fotografo.jpg';
+import marketingImg from '@/assets/niches/agencia-marketing.jpg';
+import startupImg from '@/assets/niches/startup-tech.jpg';
+
+// Niche illustration images mapping
 const NICHE_IMAGES: Record<string, string> = {
-  'hamburgueria': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop',
-  'pizzaria': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
-  'restaurante': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop',
-  'cafeteria': 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&h=300&fit=crop',
-  'barbearia': 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=400&h=300&fit=crop',
-  'salao-beleza': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=300&fit=crop',
-  'clinica-estetica': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&h=300&fit=crop',
-  'academia': 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=300&fit=crop',
-  'clinica-medica': 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=400&h=300&fit=crop',
-  'odontologia': 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=400&h=300&fit=crop',
-  'personal-trainer': 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400&h=300&fit=crop',
-  'nutricionista': 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=400&h=300&fit=crop',
-  'petshop': 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=400&h=300&fit=crop',
-  'veterinaria': 'https://images.unsplash.com/photo-1628009368231-7bb7cfcb0def?w=400&h=300&fit=crop',
-  'imobiliaria': 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=300&fit=crop',
-  'advocacia': 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400&h=300&fit=crop',
-  'contabilidade': 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=300&fit=crop',
-  'escola-curso': 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400&h=300&fit=crop',
-  'fotografo': 'https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=400&h=300&fit=crop',
-  'agencia-marketing': 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=300&fit=crop',
-  'startup-tech': 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&h=300&fit=crop',
+  'hamburgueria': hamburgueriaImg,
+  'pizzaria': pizzariaImg,
+  'restaurante': restauranteImg,
+  'cafeteria': cafeteriaImg,
+  'barbearia': barbeariaImg,
+  'salao-beleza': salaoImg,
+  'clinica-estetica': esteticaImg,
+  'academia': academiaImg,
+  'clinica-medica': clinicaImg,
+  'odontologia': odontologiaImg,
+  'personal-trainer': personalImg,
+  'nutricionista': nutricionistaImg,
+  'petshop': petshopImg,
+  'veterinaria': veterinariaImg,
+  'imobiliaria': imobiliariaImg,
+  'advocacia': advocaciaImg,
+  'contabilidade': contabilidadeImg,
+  'escola-curso': escolaImg,
+  'fotografo': fotografoImg,
+  'agencia-marketing': marketingImg,
+  'startup-tech': startupImg,
 };
 
 export function StepNicheSelect() {
@@ -54,13 +77,13 @@ export function StepNicheSelect() {
   }, [searchQuery, selectedCategory]);
 
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <h3 className="text-2xl font-bold text-foreground mb-2">
+    <div className="space-y-4">
+      <div className="text-center mb-4">
+        <h3 className="text-xl font-bold text-foreground mb-1">
           Qual é o segmento do negócio?
         </h3>
-        <p className="text-muted-foreground">
-          Isso nos ajuda a gerar um prompt com contexto específico para o nicho
+        <p className="text-sm text-muted-foreground">
+          Selecione o nicho para gerar um prompt contextualizado
         </p>
       </div>
 
@@ -71,15 +94,15 @@ export function StepNicheSelect() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Buscar nicho..."
-          className="pl-10 bg-white/5 border-white/10"
+          className="pl-10 bg-white/5 border-white/10 h-9"
         />
       </div>
 
       {/* Categories */}
-      <div className="flex flex-wrap gap-2 justify-center">
+      <div className="flex flex-wrap gap-1.5 justify-center">
         <button
           onClick={() => setSelectedCategory(null)}
-          className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+          className={`px-2.5 py-1 rounded-full text-xs transition-colors ${
             !selectedCategory 
               ? 'bg-primary text-primary-foreground' 
               : 'bg-white/5 text-muted-foreground hover:bg-white/10'
@@ -91,7 +114,7 @@ export function StepNicheSelect() {
           <button
             key={cat.id}
             onClick={() => setSelectedCategory(cat.id)}
-            className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+            className={`px-2.5 py-1 rounded-full text-xs transition-colors ${
               selectedCategory === cat.id 
                 ? 'bg-primary text-primary-foreground' 
                 : 'bg-white/5 text-muted-foreground hover:bg-white/10'
@@ -102,8 +125,8 @@ export function StepNicheSelect() {
         ))}
       </div>
 
-      {/* Niches Grid - Similar to Template Selector */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      {/* Niches Grid - Template Selector Style */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
         {filteredNiches.map((niche, index) => {
           const isSelected = formData.nicheId === niche.id;
           const imageUrl = NICHE_IMAGES[niche.id];
@@ -115,14 +138,14 @@ export function StepNicheSelect() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: index * 0.02 }}
               onClick={() => updateFormData('nicheId', niche.id)}
-              className={`group relative rounded-xl overflow-hidden border text-left transition-all hover:-translate-y-1 ${
+              className={`group relative rounded-xl overflow-hidden border-2 text-left transition-all hover:-translate-y-1 hover:shadow-lg ${
                 isSelected
-                  ? 'border-primary/50 ring-2 ring-primary/20'
-                  : 'border-white/10 hover:border-white/20'
+                  ? 'border-primary ring-2 ring-primary/30 shadow-lg shadow-primary/20'
+                  : 'border-border bg-card hover:border-primary/50'
               }`}
             >
               {/* Image */}
-              <div className="relative h-28 overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5">
+              <div className="relative h-24 overflow-hidden">
                 {imageUrl ? (
                   <>
                     <img 
@@ -131,33 +154,39 @@ export function StepNicheSelect() {
                       className="w-full h-full object-cover transition-transform group-hover:scale-110"
                       loading="lazy"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                   </>
                 ) : (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-4xl">{niche.emoji}</span>
+                  <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+                    <span className="text-3xl">{niche.emoji}</span>
                   </div>
                 )}
                 
                 {/* Selected Indicator */}
                 {isSelected && (
-                  <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                    <svg className="w-4 h-4 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center"
+                  >
+                    <Check className="w-3 h-3 text-primary-foreground" />
+                  </motion.div>
                 )}
                 
                 {/* Emoji Badge */}
-                <div className="absolute bottom-2 left-2 text-xl bg-black/30 rounded-lg px-1.5 py-0.5 backdrop-blur-sm">
+                <div className="absolute bottom-1.5 left-1.5 text-lg bg-black/40 rounded-lg px-1.5 py-0.5 backdrop-blur-sm">
                   {niche.emoji}
                 </div>
               </div>
               
               {/* Card Footer */}
-              <div className="p-3 bg-card">
-                <h4 className="text-sm font-semibold text-foreground line-clamp-1">{niche.name}</h4>
-                <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{niche.description}</p>
+              <div className="p-2.5 bg-card">
+                <h4 className={`text-sm font-semibold line-clamp-1 ${isSelected ? 'text-primary' : 'text-foreground'}`}>
+                  {niche.name}
+                </h4>
+                <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                  {niche.description}
+                </p>
               </div>
             </motion.button>
           );
@@ -165,8 +194,8 @@ export function StepNicheSelect() {
       </div>
 
       {/* Custom Niche */}
-      <div className="max-w-md mx-auto mt-6">
-        <p className="text-sm text-muted-foreground text-center mb-2">
+      <div className="max-w-sm mx-auto mt-4 p-3 rounded-xl bg-white/5 border border-white/10">
+        <p className="text-xs text-muted-foreground text-center mb-2">
           Não encontrou seu nicho?
         </p>
         <Input
@@ -176,7 +205,7 @@ export function StepNicheSelect() {
             if (e.target.value) updateFormData('nicheId', 'outro');
           }}
           placeholder="Digite o nicho personalizado..."
-          className="bg-white/5 border-white/10 text-center"
+          className="bg-white/5 border-white/10 text-center h-9 text-sm"
         />
       </div>
     </div>

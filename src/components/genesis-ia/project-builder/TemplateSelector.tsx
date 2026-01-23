@@ -18,40 +18,40 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
   onContinue,
 }) => {
   return (
-    <div className="w-full min-h-[calc(100vh-200px)]">
+    <div className="w-full">
       <div className="w-full max-w-6xl mx-auto">
         
-        {/* Header */}
-        <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-2xl p-6 lg:p-8 mb-8">
-          <div className="flex items-center gap-4 lg:gap-6">
+        {/* Header - Compact */}
+        <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-xl p-4 mb-4">
+          <div className="flex items-center gap-3">
             <Button
               variant="outline"
               size="icon"
               onClick={onBack}
-              className="h-12 w-12 rounded-xl shrink-0"
+              className="h-9 w-9 rounded-lg shrink-0"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4" />
             </Button>
             
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
-                  <Layers className="w-6 h-6 text-primary" />
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center">
+                  <Layers className="w-4 h-4 text-primary" />
                 </div>
-                <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
+                <h1 className="text-xl font-bold text-foreground">
                   Escolha o Template
                 </h1>
               </div>
-              <p className="text-base lg:text-lg text-muted-foreground">
-                Selecione o nicho que melhor representa seu projeto. Isso ajudará a gerar um prompt mais preciso.
+              <p className="text-sm text-muted-foreground">
+                Selecione o nicho para gerar um prompt preciso
               </p>
             </div>
           </div>
         </div>
 
         {/* Templates Grid */}
-        <div className="bg-card border border-border rounded-2xl p-6 lg:p-8 shadow-sm mb-8">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
+        <div className="bg-card border border-border rounded-xl p-4 shadow-sm mb-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
             {TEMPLATES.map((template, index) => {
               const isSelected = selectedTemplate?.id === template.id;
 
@@ -60,12 +60,12 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                   key={template.id}
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.03 }}
+                  transition={{ delay: index * 0.02 }}
                   onClick={() => onSelect(template)}
                   className={`
-                    relative p-5 lg:p-6 rounded-xl border-2 transition-all duration-200 text-left group
+                    relative p-3 rounded-xl border-2 transition-all duration-200 text-left group hover:-translate-y-1
                     ${isSelected 
-                      ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20 scale-[1.02]' 
+                      ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20' 
                       : 'border-border bg-background hover:border-primary/50 hover:bg-muted/50 hover:shadow-md'
                     }
                   `}
@@ -75,22 +75,22 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className="absolute top-3 right-3 w-7 h-7 rounded-full bg-primary flex items-center justify-center"
+                      className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center"
                     >
-                      <Check className="w-4 h-4 text-primary-foreground" />
+                      <Check className="w-3 h-3 text-primary-foreground" />
                     </motion.div>
                   )}
 
                   {/* Icon */}
-                  <div className="text-4xl lg:text-5xl mb-4">{template.icon}</div>
+                  <div className="text-3xl mb-2">{template.icon}</div>
 
                   {/* Name */}
-                  <h3 className={`text-base lg:text-lg font-semibold mb-2 ${isSelected ? 'text-primary' : 'text-foreground'}`}>
+                  <h3 className={`text-sm font-semibold mb-1 ${isSelected ? 'text-primary' : 'text-foreground'}`}>
                     {template.name}
                   </h3>
 
                   {/* Description */}
-                  <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                     {template.description}
                   </p>
                 </motion.button>
@@ -99,9 +99,9 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
           </div>
         </div>
 
-        {/* Continue Button */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t border-border">
-          <p className="text-sm text-muted-foreground">
+        {/* Continue Button - Compact */}
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-4 border-t border-border">
+          <p className="text-xs text-muted-foreground">
             {selectedTemplate ? (
               <>Selecionado: <span className="font-medium text-foreground">{selectedTemplate.icon} {selectedTemplate.name}</span></>
             ) : (
@@ -112,11 +112,11 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
           <Button
             onClick={onContinue}
             disabled={!selectedTemplate}
-            size="lg"
-            className="h-12 px-8 text-base min-w-[200px]"
+            size="sm"
+            className="h-9 px-4 text-sm"
           >
             Continuar
-            <ArrowRight className="w-5 h-5 ml-2" />
+            <ArrowRight className="w-4 h-4 ml-1.5" />
           </Button>
         </div>
       </div>
