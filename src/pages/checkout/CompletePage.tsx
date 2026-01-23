@@ -24,26 +24,64 @@ import { AccountCreatedModal } from '@/components/checkout/AccountCreatedModal';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 
-// Password strength checker
-const getPasswordStrength = (password: string): { level: 'weak' | 'medium' | 'strong'; score: number } => {
+// Password strength checker with security levels
+const getPasswordStrength = (password: string): { 
+  level: 'weak' | 'medium' | 'strong'; 
+  score: number;
+  isValid: boolean;
+} => {
   let score = 0;
   
+  // Length checks
   if (password.length >= 6) score += 1;
   if (password.length >= 8) score += 1;
+  if (password.length >= 12) score += 1;
+  
+  // Character type checks
   if (/[a-z]/.test(password)) score += 1;
   if (/[A-Z]/.test(password)) score += 1;
   if (/[0-9]/.test(password)) score += 1;
-  if (/[^a-zA-Z0-9]/.test(password)) score += 1;
-
-  if (score <= 2) return { level: 'weak', score };
-  if (score <= 4) return { level: 'medium', score };
-  return { level: 'strong', score };
+  if (/[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/`~]/.test(password)) score += 1;
+  
+  // Penalize common patterns
+  if (/(.)\1{2,}/.test(password)) score -= 1; // Repeated chars
+  if (/^[0-9]+$/.test(password)) score -= 1; // Only numbers
+  if (/^(123|abc|qwe|password|senha)/i.test(password)) score -= 2; // Common patterns
+  
+  // Minimum requirements: 6 chars and at least 2 requirements met
+  const isValid = password.length >= 6 && score >= 3;
+  
+  if (score <= 2) return { level: 'weak', score: Math.max(0, score), isValid };
+  if (score <= 4) return { level: 'medium', score, isValid };
+  return { level: 'strong', score, isValid };
 };
 
 const strengthConfig = {
-  weak: { color: 'bg-red-500', text: 'Fraca', textColor: 'text-red-400' },
-  medium: { color: 'bg-amber-500', text: 'Média', textColor: 'text-amber-400' },
-  strong: { color: 'bg-emerald-500', text: 'Forte', textColor: 'text-emerald-400' },
+  weak: { 
+    color: 'bg-red-500', 
+    text: 'Fraca', 
+    textColor: 'text-red-400',
+    description: 'Adicione mais caracteres e variedade'
+  },
+  medium: { 
+    color: 'bg-amber-500', 
+    text: 'Média', 
+    textColor: 'text-amber-400',
+    description: 'Adicione caracteres especiais para melhorar'
+  },
+  strong: { 
+    color: 'bg-emerald-500', 
+    text: 'Forte', 
+    textColor: 'text-emerald-400',
+    description: 'Excelente! Senha segura'
+  },
+};
+
+// Sanitize password input (remove potentially dangerous chars but allow special chars for strength)
+const sanitizePassword = (input: string): string => {
+  // Allow letters, numbers, and common special characters
+  // Remove control characters and null bytes
+  return input.replace(/[\x00-\x1F\x7F]/g, '').slice(0, 128);
 };
 
 export default function CompletePage() {
@@ -66,16 +104,20 @@ export default function CompletePage() {
     plan: string;
     credits: number;
   } | null>(null);
+  const [attempts, setAttempts] = useState(0);
+  const [isRateLimited, setIsRateLimited] = useState(false);
 
   // Password strength
   const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
 
-  // Password requirements
+  // Password requirements with icons
   const requirements = useMemo(() => [
-    { met: password.length >= 6, text: 'Mínimo 6 caracteres' },
-    { met: /[a-z]/.test(password), text: 'Uma letra minúscula' },
-    { met: /[A-Z]/.test(password), text: 'Uma letra maiúscula' },
-    { met: /[0-9]/.test(password), text: 'Um número' },
+    { met: password.length >= 6, text: 'Mínimo 6 caracteres', priority: 1 },
+    { met: password.length >= 8, text: '8+ caracteres (recomendado)', priority: 2 },
+    { met: /[a-z]/.test(password), text: 'Uma letra minúscula', priority: 1 },
+    { met: /[A-Z]/.test(password), text: 'Uma letra maiúscula', priority: 1 },
+    { met: /[0-9]/.test(password), text: 'Um número', priority: 1 },
+    { met: /[!@#$%^&*(),.?":{}|<>_\-+=]/.test(password), text: 'Caractere especial (!@#$...)', priority: 2 },
   ], [password]);
 
   // Verificar se o email existe e pagamento está pago
@@ -123,12 +165,34 @@ export default function CompletePage() {
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
+    // Rate limiting check
+    if (attempts >= 5) {
+      setIsRateLimited(true);
+      setTimeout(() => {
+        setIsRateLimited(false);
+        setAttempts(0);
+      }, 60000); // 1 minute cooldown
+      newErrors.password = 'Muitas tentativas. Aguarde 1 minuto.';
+      setErrors(newErrors);
+      return false;
+    }
+
+    // Password validation
     if (!password) {
       newErrors.password = 'Senha é obrigatória';
     } else if (password.length < 6) {
       newErrors.password = 'Senha deve ter no mínimo 6 caracteres';
+    } else if (password.length > 128) {
+      newErrors.password = 'Senha muito longa (máximo 128 caracteres)';
+    } else if (!passwordStrength.isValid) {
+      newErrors.password = 'Senha muito fraca. Adicione mais variedade de caracteres.';
+    } else if (/(.)\1{3,}/.test(password)) {
+      newErrors.password = 'Evite repetir o mesmo caractere muitas vezes';
+    } else if (/^(123456|password|senha123|qwerty)/i.test(password)) {
+      newErrors.password = 'Senha muito comum. Escolha uma senha única.';
     }
 
+    // Confirm password validation
     if (!confirmPassword) {
       newErrors.confirmPassword = 'Confirme sua senha';
     } else if (password !== confirmPassword) {
@@ -142,14 +206,28 @@ export default function CompletePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (isRateLimited) {
+      toast.error('Aguarde antes de tentar novamente.');
+      return;
+    }
+
+    setAttempts(prev => prev + 1);
+
     if (!validateForm() || !email || !code) return;
 
     setIsLoading(true);
 
     try {
+      // Sanitize password before sending
+      const sanitizedPassword = sanitizePassword(password);
+      
       // Chamar edge function para ativar conta
       const { data, error } = await supabase.functions.invoke('checkout-activate-user', {
-        body: { email, code, password }
+        body: { 
+          email: email.toLowerCase().trim(), 
+          code: code.trim(), 
+          password: sanitizedPassword 
+        }
       });
 
       if (error) {
@@ -160,10 +238,18 @@ export default function CompletePage() {
       }
 
       if (!data?.success) {
-        toast.error(data?.error || 'Erro ao criar conta');
+        const errorMsg = data?.error || 'Erro ao criar conta';
+        toast.error(errorMsg);
+        
+        // Log security event (without sensitive data)
+        console.warn('Account activation failed:', { email: email.substring(0, 3) + '***', code: code.substring(0, 4) + '***' });
+        
         setIsLoading(false);
         return;
       }
+
+      // Reset attempts on success
+      setAttempts(0);
 
       // Sucesso! Mostrar modal
       setActivationResult({
@@ -305,18 +391,22 @@ export default function CompletePage() {
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => {
-                      setPassword(e.target.value);
+                      const sanitized = sanitizePassword(e.target.value);
+                      setPassword(sanitized);
                       if (errors.password) {
                         setErrors(prev => ({ ...prev, password: '' }));
                       }
                     }}
-                    disabled={isLoading}
+                    disabled={isLoading || isRateLimited}
                     placeholder="Mínimo 6 caracteres"
+                    maxLength={128}
+                    autoComplete="new-password"
                     className={cn(
                       "w-full h-12 pl-12 pr-12 rounded-xl border border-white/10",
                       "bg-white/5 text-white placeholder:text-white/30",
                       "focus:outline-none focus:ring-2 focus:ring-emerald-500/50",
-                      errors.password && "border-red-500/50"
+                      errors.password && "border-red-500/50",
+                      isRateLimited && "opacity-50 cursor-not-allowed"
                     )}
                   />
                   <button
@@ -336,33 +426,59 @@ export default function CompletePage() {
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
-                    className="mt-3 space-y-2"
+                    className="mt-3 space-y-3"
                   >
-                    {/* Strength Bar */}
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                        <motion.div
-                          className={cn("h-full rounded-full", strengthConfig[passwordStrength.level].color)}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${(passwordStrength.score / 6) * 100}%` }}
-                          transition={{ duration: 0.3 }}
-                        />
+                    {/* Strength Bar with segments */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 flex gap-1">
+                          {[1, 2, 3, 4, 5].map((segment) => (
+                            <div 
+                              key={segment}
+                              className={cn(
+                                "h-1.5 flex-1 rounded-full transition-all duration-300",
+                                passwordStrength.score >= segment 
+                                  ? strengthConfig[passwordStrength.level].color
+                                  : "bg-white/10"
+                              )}
+                            />
+                          ))}
+                        </div>
+                        <span className={cn("text-xs font-medium min-w-[50px] text-right", strengthConfig[passwordStrength.level].textColor)}>
+                          {strengthConfig[passwordStrength.level].text}
+                        </span>
                       </div>
-                      <span className={cn("text-xs font-medium", strengthConfig[passwordStrength.level].textColor)}>
-                        {strengthConfig[passwordStrength.level].text}
-                      </span>
+                      <p className="text-xs text-white/40">
+                        {strengthConfig[passwordStrength.level].description}
+                      </p>
                     </div>
 
-                    {/* Requirements */}
-                    <div className="grid grid-cols-2 gap-1.5">
+                    {/* Requirements Grid */}
+                    <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-white/5 border border-white/5">
                       {requirements.map((req, i) => (
-                        <div key={i} className="flex items-center gap-1.5 text-xs">
-                          {req.met ? (
-                            <Check className="w-3 h-3 text-emerald-500" />
-                          ) : (
-                            <X className="w-3 h-3 text-white/30" />
+                        <div 
+                          key={i} 
+                          className={cn(
+                            "flex items-center gap-2 text-xs transition-all",
+                            req.priority === 2 && "opacity-70"
                           )}
-                          <span className={req.met ? 'text-white/60' : 'text-white/30'}>
+                        >
+                          <div className={cn(
+                            "w-4 h-4 rounded-full flex items-center justify-center transition-all",
+                            req.met 
+                              ? "bg-emerald-500/20" 
+                              : "bg-white/5"
+                          )}>
+                            {req.met ? (
+                              <Check className="w-2.5 h-2.5 text-emerald-400" />
+                            ) : (
+                              <X className="w-2.5 h-2.5 text-white/20" />
+                            )}
+                          </div>
+                          <span className={cn(
+                            "transition-colors",
+                            req.met ? 'text-white/70' : 'text-white/30'
+                          )}>
                             {req.text}
                           </span>
                         </div>

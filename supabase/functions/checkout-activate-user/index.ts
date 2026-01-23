@@ -19,9 +19,19 @@ serve(async (req) => {
     const body = await req.json();
     const { email, code, password } = body;
 
-    console.log('[checkout-activate-user] Request:', { email, code, passwordLength: password?.length });
+    // Get client IP for logging
+    const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0] || 
+                     req.headers.get('cf-connecting-ip') || 
+                     'unknown';
 
-    // Validate input
+    console.log('[checkout-activate-user] Request:', { 
+      email: email?.substring(0, 3) + '***', 
+      code: code?.substring(0, 4) + '***', 
+      passwordLength: password?.length,
+      clientIP: clientIP.substring(0, 8) + '***'
+    });
+
+    // Validate input - sanitize email
     if (!email || !code || !password) {
       console.log('[checkout-activate-user] Missing required fields');
       return new Response(
@@ -30,12 +40,42 @@ serve(async (req) => {
       );
     }
 
+    // Sanitize and validate email
+    const sanitizedEmail = email.toLowerCase().trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(sanitizedEmail)) {
+      return new Response(
+        JSON.stringify({ error: 'Email inválido' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate password strength
     if (password.length < 6) {
       return new Response(
         JSON.stringify({ error: 'Senha deve ter no mínimo 6 caracteres' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    if (password.length > 128) {
+      return new Response(
+        JSON.stringify({ error: 'Senha muito longa (máximo 128 caracteres)' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check for common weak passwords
+    const weakPasswords = ['123456', 'password', 'senha123', 'qwerty', 'abc123', '111111', '000000'];
+    if (weakPasswords.includes(password.toLowerCase())) {
+      return new Response(
+        JSON.stringify({ error: 'Senha muito comum. Escolha uma senha mais segura.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Sanitize code
+    const sanitizedCode = code.trim().replace(/[^a-zA-Z0-9-_]/g, '');
 
     // 1. Verify payment exists and is paid
     const { data: payment, error: paymentError } = await supabase
@@ -44,7 +84,7 @@ serve(async (req) => {
         id, status, payment_code, plan_id, amount_cents,
         checkout_customers(id, email, first_name, last_name, phone)
       `)
-      .eq('payment_code', code)
+      .eq('payment_code', sanitizedCode)
       .single();
 
     if (paymentError || !payment) {
@@ -65,8 +105,23 @@ serve(async (req) => {
 
     // 2. Verify email matches
     const customer = payment.checkout_customers as any;
-    if (!customer || customer.email?.toLowerCase() !== email.toLowerCase()) {
-      console.log('[checkout-activate-user] Email mismatch:', { customerEmail: customer?.email, requestEmail: email });
+    if (!customer || customer.email?.toLowerCase() !== sanitizedEmail) {
+      console.log('[checkout-activate-user] Email mismatch');
+      // Log security event (fire and forget)
+      try {
+        await supabase.from('audit_logs').insert({
+          action: 'activation_email_mismatch',
+          entity_type: 'checkout_payment',
+          entity_id: payment.id,
+          details: { 
+            attempted_email: sanitizedEmail.substring(0, 3) + '***',
+            ip: clientIP
+          }
+        });
+      } catch (logError) {
+        console.warn('[checkout-activate-user] Failed to log audit event:', logError);
+      }
+      
       return new Response(
         JSON.stringify({ error: 'Email não corresponde ao pagamento' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
