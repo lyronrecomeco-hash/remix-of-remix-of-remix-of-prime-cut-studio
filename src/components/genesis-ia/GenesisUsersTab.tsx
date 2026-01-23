@@ -47,6 +47,9 @@ interface GenesisUser {
   company_name: string | null;
   is_active: boolean;
   created_at: string;
+  // Dados de assinatura
+  subscription_status?: string;
+  subscription_plan?: string;
 }
 
 interface GenesisUsersTabProps {
@@ -74,13 +77,33 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const { data, error } = await supabase
+      // Buscar usuários
+      const { data: usersData, error } = await supabase
         .from('genesis_users')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setUsers(data || []);
+
+      // Buscar assinaturas de todos os usuários
+      const { data: subscriptionsData } = await supabase
+        .from('genesis_subscriptions')
+        .select('user_id, status, plan');
+
+      // Mapear assinaturas por user_id
+      const subsMap = new Map<string, { status: string; plan: string }>();
+      (subscriptionsData || []).forEach((sub: { user_id: string; status: string; plan: string }) => {
+        subsMap.set(sub.user_id, { status: sub.status, plan: sub.plan });
+      });
+
+      // Combinar dados
+      const usersWithSubs = (usersData || []).map(user => ({
+        ...user,
+        subscription_status: subsMap.get(user.id)?.status || 'none',
+        subscription_plan: subsMap.get(user.id)?.plan || 'free',
+      }));
+
+      setUsers(usersWithSubs);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Erro ao carregar usuários');
@@ -233,9 +256,23 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
                       <span className="text-sm font-medium text-white">{user.name.charAt(0).toUpperCase()}</span>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-medium truncate text-white">{user.name}</p>
                         {!user.is_active && <Badge variant="secondary" className="text-xs bg-white/10 text-white/50">Inativo</Badge>}
+                        {/* Status de assinatura */}
+                        {user.subscription_status === 'active' ? (
+                          <Badge className="text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                            {user.subscription_plan === 'enterprise' ? 'Enterprise' : 
+                             user.subscription_plan === 'pro' ? 'Pro' : 
+                             user.subscription_plan === 'basic' ? 'Básico' : 'Ativo'}
+                          </Badge>
+                        ) : user.subscription_status === 'none' ? (
+                          <Badge variant="outline" className="text-xs border-white/20 text-white/40">Sem plano</Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs border-amber-500/30 text-amber-400">
+                            {user.subscription_status === 'trial' ? 'Trial' : user.subscription_status}
+                          </Badge>
+                        )}
                       </div>
                       <p className="text-sm text-white/50 truncate">{user.email}</p>
                     </div>

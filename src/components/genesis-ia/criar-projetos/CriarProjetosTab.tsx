@@ -10,18 +10,22 @@ import { FromScratchWizard } from './from-scratch/FromScratchWizard';
 
 interface CriarProjetosTabProps {
   affiliateId: string | null;
+  userId?: string;
   onBack: () => void;
 }
 
 type View = 'library' | 'select' | 'customize' | 'from-scratch';
 
-export function CriarProjetosTab({ affiliateId, onBack }: CriarProjetosTabProps) {
+export function CriarProjetosTab({ affiliateId, userId, onBack }: CriarProjetosTabProps) {
   const [view, setView] = useState<View>('library');
   const [showMethodModal, setShowMethodModal] = useState(false);
   
   // Customization state
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateInfo | null>(null);
   const [editingConfig, setEditingConfig] = useState<ProjectConfig | null>(null);
+
+  // Usar affiliateId se disponível, senão userId (para novos usuários que compraram acesso)
+  const effectiveId = affiliateId || userId || null;
 
   const handleSelectTemplate = (template: TemplateInfo) => {
     setSelectedTemplate(template);
@@ -83,13 +87,14 @@ export function CriarProjetosTab({ affiliateId, onBack }: CriarProjetosTabProps)
     setView('library');
   };
 
-  if (!affiliateId) {
+  if (!effectiveId) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Carregando...</p>
+      <div className="flex flex-col items-center justify-center py-12 text-center gap-4">
+        <div className="w-16 h-16 rounded-xl bg-white/10 flex items-center justify-center mb-2">
+          <Loader2 className="w-8 h-8 text-white/30" />
         </div>
+        <p className="text-muted-foreground">Carregando sua biblioteca...</p>
+        <p className="text-sm text-muted-foreground/70">Se demorar, atualize a página.</p>
       </div>
     );
   }
@@ -117,7 +122,7 @@ export function CriarProjetosTab({ affiliateId, onBack }: CriarProjetosTabProps)
             exit={{ opacity: 0, x: 20 }}
           >
             <ProjectLibrary
-              affiliateId={affiliateId}
+              affiliateId={effectiveId}
               onEdit={handleEdit}
               onCreateNew={handleCreateNew}
               onBack={onBack}
@@ -149,7 +154,7 @@ export function CriarProjetosTab({ affiliateId, onBack }: CriarProjetosTabProps)
             <CriarProjetosCustomizer
               template={selectedTemplate}
               editingConfig={editingConfig}
-              affiliateId={affiliateId}
+              affiliateId={effectiveId}
               onBack={handleBackFromCustomize}
               onSaved={handleSaved}
             />
@@ -166,7 +171,7 @@ export function CriarProjetosTab({ affiliateId, onBack }: CriarProjetosTabProps)
             <FromScratchWizard
               onBack={handleFromScratchBack}
               onComplete={handleFromScratchComplete}
-              affiliateId={affiliateId}
+              affiliateId={effectiveId}
             />
           </motion.div>
         )}

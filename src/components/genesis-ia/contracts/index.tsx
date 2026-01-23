@@ -5,20 +5,24 @@ import { ContractDetail } from './ContractDetail';
 
 interface ContractsTabProps {
   affiliateId: string | null;
+  userId?: string;
   onBack: () => void;
 }
 
 export type ContractView = 'list' | 'create' | 'detail';
 
-export function ContractsTab({ affiliateId, onBack }: ContractsTabProps) {
+export function ContractsTab({ affiliateId, userId, onBack }: ContractsTabProps) {
   const [view, setView] = useState<ContractView>('list');
   const [selectedContractId, setSelectedContractId] = useState<string | null>(null);
 
-  if (!affiliateId) {
+  // Usar affiliateId se disponível, senão userId
+  const effectiveId = affiliateId || userId || null;
+
+  if (!effectiveId) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center gap-4">
-        <p className="text-muted-foreground">Você ainda não tem acesso a contratos.</p>
-        <p className="text-sm text-muted-foreground/70">Entre em contato com o suporte para habilitar esta funcionalidade.</p>
+        <p className="text-muted-foreground">Carregando contratos...</p>
+        <p className="text-sm text-muted-foreground/70">Se demorar, atualize a página.</p>
       </div>
     );
   }
@@ -36,7 +40,7 @@ export function ContractsTab({ affiliateId, onBack }: ContractsTabProps) {
   if (view === 'create') {
     return (
       <ContractWizard 
-        affiliateId={affiliateId} 
+        affiliateId={effectiveId} 
         onBack={handleBackToList}
         onComplete={handleBackToList}
       />
@@ -54,7 +58,7 @@ export function ContractsTab({ affiliateId, onBack }: ContractsTabProps) {
 
   return (
     <ContractsList
-      affiliateId={affiliateId}
+      affiliateId={effectiveId}
       onCreateNew={() => setView('create')}
       onViewContract={handleViewContract}
     />
