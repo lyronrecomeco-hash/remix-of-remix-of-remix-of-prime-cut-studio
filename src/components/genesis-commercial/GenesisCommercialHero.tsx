@@ -265,7 +265,7 @@ const GenesisCommercialHero = () => {
                 >
                   <span className="text-lg">👋</span>
                   <div>
-                    <p className="text-white text-xs font-semibold">Bem vindo de volta, Super</p>
+                    <p className="text-white text-xs font-semibold">Bem vindo de volta, ADM</p>
                     <p className="text-white/50 text-[10px]">A forma mais simples de transformar sua ideia em SaaS em minutos com IA.</p>
                   </div>
                 </motion.div>
@@ -273,7 +273,7 @@ const GenesisCommercialHero = () => {
                 {/* Welcome Header - RESPONSIVE */}
                 <div className="text-center mb-4 md:mb-8 relative z-10 pt-6 sm:pt-0">
                   <h2 className="text-lg md:text-2xl lg:text-3xl font-bold text-white flex items-center justify-center gap-2 md:gap-3">
-                    Bom dia, Super! <span className="text-lg md:text-2xl">👋</span>
+                    Bom dia, ADM! <span className="text-lg md:text-2xl">👋</span>
                   </h2>
                   <p className="text-white/50 text-xs md:text-sm mt-1 md:mt-2">Crie, evolua e gerencie suas ideias em um só lugar.</p>
                 </div>

@@ -374,15 +374,25 @@ const GenesisCommercialRadar = () => {
                       </p>
                     </div>
 
-                    {/* Info with masks - Randomized locations */}
+                    {/* Info with masks - Blurred location for privacy */}
                     <div className="space-y-1.5 mb-3">
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <MapPin className="w-3.5 h-3.5 shrink-0" />
-                        <span>{getRandomMaskedLocation(locationIndex)}</span>
+                        <span className="relative">
+                          <span className="blur-[4px] select-none">São Paulo, SP</span>
+                          <span className="absolute inset-0 flex items-center justify-center bg-muted/30 backdrop-blur-[2px] rounded text-[10px] text-muted-foreground/70">
+                            🔒 Assine para ver
+                          </span>
+                        </span>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Phone className="w-3.5 h-3.5 shrink-0" />
-                        <span>{maskPhone()}</span>
+                        <span className="relative">
+                          <span className="blur-[4px] select-none">(11) 99999-9999</span>
+                          <span className="absolute inset-0 flex items-center justify-center bg-muted/30 backdrop-blur-[2px] rounded text-[10px] text-muted-foreground/70">
+                            🔒 Assine para ver
+                          </span>
+                        </span>
                       </div>
                     </div>
 
