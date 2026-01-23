@@ -143,7 +143,7 @@ const GenesisIADashboard = () => {
       case 'users': return 'Usuários';
       case 'settings': return 'Configurações';
       case 'financial': return 'Financeiro';
-      case 'criar-projetos': return 'Criar Projetos';
+      case 'criar-projetos': return 'Biblioteca';
       case 'contracts': return 'Contratos';
       case 'promocional': return 'Promocional';
       case 'payments': return 'Pagamentos';
@@ -163,7 +163,7 @@ const GenesisIADashboard = () => {
 
   const baseDockItems: DockItem[] = [
     { icon: Home, label: 'Início', tabId: 'dashboard' },
-    { icon: Layers, label: 'Projetos', tabId: 'criar-projetos' },
+    { icon: Grid3X3, label: 'Biblioteca', tabId: 'criar-projetos' },
     { icon: FileText, label: 'Contratos', tabId: 'contracts' },
     { icon: Gift, label: 'Promo', tabId: 'promocional' },
     { icon: Users, label: 'Usuários', tabId: 'users' },

@@ -568,12 +568,16 @@ export type Database = {
       affiliate_template_configs: {
         Row: {
           affiliate_id: string
+          category: string | null
           client_name: string | null
           config: Json
           created_at: string
           custom_slug: string | null
+          evolution_history: Json | null
           id: string
           is_active: boolean
+          last_prompt: string | null
+          platform: string | null
           template_name: string
           template_slug: string
           unique_code: string
@@ -582,12 +586,16 @@ export type Database = {
         }
         Insert: {
           affiliate_id: string
+          category?: string | null
           client_name?: string | null
           config?: Json
           created_at?: string
           custom_slug?: string | null
+          evolution_history?: Json | null
           id?: string
           is_active?: boolean
+          last_prompt?: string | null
+          platform?: string | null
           template_name: string
           template_slug: string
           unique_code: string
@@ -596,12 +604,16 @@ export type Database = {
         }
         Update: {
           affiliate_id?: string
+          category?: string | null
           client_name?: string | null
           config?: Json
           created_at?: string
           custom_slug?: string | null
+          evolution_history?: Json | null
           id?: string
           is_active?: boolean
+          last_prompt?: string | null
+          platform?: string | null
           template_name?: string
           template_slug?: string
           unique_code?: string
@@ -9169,6 +9181,41 @@ export type Database = {
           verified_at?: string | null
         }
         Relationships: []
+      }
+      project_evolutions: {
+        Row: {
+          answers: Json | null
+          created_at: string | null
+          evolution_type: string
+          id: string
+          project_id: string
+          prompt_generated: string
+        }
+        Insert: {
+          answers?: Json | null
+          created_at?: string | null
+          evolution_type: string
+          id?: string
+          project_id: string
+          prompt_generated: string
+        }
+        Update: {
+          answers?: Json | null
+          created_at?: string | null
+          evolution_type?: string
+          id?: string
+          project_id?: string
+          prompt_generated?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_evolutions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_template_configs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       promo_links: {
         Row: {

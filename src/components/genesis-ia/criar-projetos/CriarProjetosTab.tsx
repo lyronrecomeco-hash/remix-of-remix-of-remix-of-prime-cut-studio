@@ -1,52 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 import { CriarProjetosSelector, TemplateInfo } from './CriarProjetosSelector';
-import { CriarProjetosManager, ProjectConfig } from './CriarProjetosManager';
 import { CriarProjetosCustomizer } from './CriarProjetosCustomizer';
+import { ProjectLibrary } from '../library/ProjectLibrary';
+import { ProjectConfig } from '../library/ProjectCard';
 
 interface CriarProjetosTabProps {
   affiliateId: string | null;
   onBack: () => void;
 }
 
-type View = 'list' | 'select' | 'customize';
+type View = 'library' | 'select' | 'customize';
 
 export function CriarProjetosTab({ affiliateId, onBack }: CriarProjetosTabProps) {
-  const [view, setView] = useState<View>('list');
-  const [configs, setConfigs] = useState<ProjectConfig[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [view, setView] = useState<View>('library');
   
   // Customization state
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateInfo | null>(null);
   const [editingConfig, setEditingConfig] = useState<ProjectConfig | null>(null);
-
-  useEffect(() => {
-    if (affiliateId) {
-      loadConfigs();
-    }
-  }, [affiliateId]);
-
-  const loadConfigs = async () => {
-    if (!affiliateId) return;
-    
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('affiliate_template_configs')
-      .select('*')
-      .eq('affiliate_id', affiliateId)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error loading configs:', error);
-      toast.error('Erro ao carregar projetos');
-    } else {
-      setConfigs(data as ProjectConfig[]);
-    }
-    setLoading(false);
-  };
 
   const handleSelectTemplate = (template: TemplateInfo) => {
     setSelectedTemplate(template);
@@ -70,32 +42,15 @@ export function CriarProjetosTab({ affiliateId, onBack }: CriarProjetosTabProps)
     setView('customize');
   };
 
-  const handleDelete = async (id: string): Promise<boolean> => {
-    const { error } = await supabase
-      .from('affiliate_template_configs')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      toast.error('Erro ao excluir projeto');
-      return false;
-    }
-
-    toast.success('Projeto excluído');
-    await loadConfigs();
-    return true;
-  };
-
-  const handleSaved = async () => {
-    await loadConfigs();
-    setView('list');
+  const handleSaved = () => {
+    setView('library');
     setSelectedTemplate(null);
     setEditingConfig(null);
   };
 
   const handleBackFromCustomize = () => {
     if (editingConfig) {
-      setView('list');
+      setView('library');
     } else {
       setView('select');
     }
@@ -117,18 +72,16 @@ export function CriarProjetosTab({ affiliateId, onBack }: CriarProjetosTabProps)
   return (
     <div className="min-h-[calc(100vh-200px)]">
       <AnimatePresence mode="wait">
-        {view === 'list' && (
+        {view === 'library' && (
           <motion.div
-            key="list"
+            key="library"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
           >
-            <CriarProjetosManager
-              configs={configs}
-              loading={loading}
+            <ProjectLibrary
+              affiliateId={affiliateId}
               onEdit={handleEdit}
-              onDelete={handleDelete}
               onCreateNew={() => setView('select')}
               onBack={onBack}
             />
@@ -144,7 +97,7 @@ export function CriarProjetosTab({ affiliateId, onBack }: CriarProjetosTabProps)
           >
             <CriarProjetosSelector 
               onSelect={handleSelectTemplate} 
-              onBack={() => setView('list')}
+              onBack={() => setView('library')}
             />
           </motion.div>
         )}
