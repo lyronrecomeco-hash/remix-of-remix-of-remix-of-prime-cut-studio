@@ -57,6 +57,9 @@ export function FromScratchProvider({ children }: FromScratchProviderProps) {
       case 3: // Identity
         return !!formData.projectName && !!formData.companyName;
       case 4: // Language
+        if (formData.language === 'other') {
+          return !!formData.customLanguage;
+        }
         return !!formData.language;
       case 5: // Objectives
         return formData.selectedObjectives.length > 0 || formData.customObjectives.length > 0;

@@ -52,7 +52,7 @@ export function StepObjectives() {
       {/* Suggested Objectives */}
       <div className="space-y-3">
         <label className="flex items-center gap-2 text-sm font-medium">
-          <Target className="w-4 h-4 text-blue-400" />
+          <Target className="w-4 h-4 text-primary" />
           Objetivos Sugeridos {selectedNiche && `para ${selectedNiche.name}`}
         </label>
         <div className="flex flex-wrap gap-2">
@@ -67,7 +67,7 @@ export function StepObjectives() {
                 onClick={() => toggleObjective(objective)}
                 className={`px-4 py-2 rounded-lg border text-sm transition-all ${
                   isSelected
-                    ? 'bg-blue-500/20 border-blue-500/50 text-blue-300'
+                    ? 'bg-primary/20 border-primary/50 text-primary'
                     : 'bg-white/5 border-white/10 hover:border-white/20 text-foreground'
                 }`}
               >
@@ -100,7 +100,7 @@ export function StepObjectives() {
             {formData.customObjectives.map((objective) => (
               <span
                 key={objective}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 text-sm"
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary/20 border border-primary/50 text-primary text-sm"
               >
                 {objective}
                 <button

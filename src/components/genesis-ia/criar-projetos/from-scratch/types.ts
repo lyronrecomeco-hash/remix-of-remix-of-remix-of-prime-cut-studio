@@ -2,7 +2,7 @@
 
 export type ProjectType = 'app' | 'site';
 
-export type TargetAI = 'lovable' | 'cursor' | 'v0' | 'bolt' | 'chatgpt' | 'google-studio' | 'other';
+export type TargetAI = 'lovable' | 'cursor' | 'v0' | 'bolt' | 'chatgpt' | 'google-studio' | 'windsurf' | 'claude' | 'other';
 
 export type ThemeMode = 'light' | 'dark' | 'auto';
 
@@ -23,6 +23,7 @@ export interface FromScratchFormData {
   
   // Step 4: Language & Region
   language: string;
+  customLanguage?: string;
   currency: string;
   timezone: string;
   
@@ -69,6 +70,11 @@ export const LANGUAGES = [
   { code: 'it', name: 'Italiano', flag: '🇮🇹' },
   { code: 'ja', name: '日本語', flag: '🇯🇵' },
   { code: 'zh', name: '中文', flag: '🇨🇳' },
+  { code: 'ko', name: '한국어', flag: '🇰🇷' },
+  { code: 'ar', name: 'العربية', flag: '🇸🇦' },
+  { code: 'hi', name: 'हिन्दी', flag: '🇮🇳' },
+  { code: 'ru', name: 'Русский', flag: '🇷🇺' },
+  { code: 'other', name: 'Outro', flag: '🌍' },
 ];
 
 export const CURRENCIES = [
@@ -76,6 +82,8 @@ export const CURRENCIES = [
   { code: 'USD', symbol: '$', name: 'US Dollar' },
   { code: 'EUR', symbol: '€', name: 'Euro' },
   { code: 'GBP', symbol: '£', name: 'British Pound' },
+  { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
+  { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
 ];
 
 export const TIMEZONES = [
@@ -85,6 +93,8 @@ export const TIMEZONES = [
   { code: 'Europe/London', name: 'London (GMT+0)' },
   { code: 'Europe/Paris', name: 'Paris (GMT+1)' },
   { code: 'Asia/Tokyo', name: 'Tokyo (GMT+9)' },
+  { code: 'Asia/Shanghai', name: 'Shanghai (GMT+8)' },
+  { code: 'Australia/Sydney', name: 'Sydney (GMT+11)' },
 ];
 
 export const TYPOGRAPHY_OPTIONS = [
@@ -154,14 +164,70 @@ export const INTEGRATIONS = [
   { id: 'recaptcha', name: 'reCAPTCHA', icon: '🔒' },
 ];
 
-export const AI_TARGETS = [
-  { id: 'lovable' as TargetAI, name: 'Lovable', description: 'IA para criar apps React completos', icon: '💜' },
-  { id: 'cursor' as TargetAI, name: 'Cursor', description: 'IDE com IA integrada', icon: '🖥️' },
-  { id: 'v0' as TargetAI, name: 'v0 (Vercel)', description: 'Gerador de UI da Vercel', icon: '▲' },
-  { id: 'bolt' as TargetAI, name: 'Bolt.new', description: 'Ambiente IA full-stack', icon: '⚡' },
-  { id: 'chatgpt' as TargetAI, name: 'ChatGPT', description: 'OpenAI GPT-4', icon: '🤖' },
-  { id: 'google-studio' as TargetAI, name: 'Google AI Studio', description: 'Gemini da Google', icon: '🔷' },
-  { id: 'other' as TargetAI, name: 'Outra IA', description: 'Especificar manualmente', icon: '✨' },
+// AI Targets with real icons/logos represented
+export const AI_TARGETS: { id: TargetAI; name: string; description: string; icon: string; logoUrl?: string }[] = [
+  { 
+    id: 'lovable', 
+    name: 'Lovable', 
+    description: 'IA para criar apps React completos com deploy automático', 
+    icon: '💜',
+    logoUrl: 'https://lovable.dev/favicon.ico'
+  },
+  { 
+    id: 'cursor', 
+    name: 'Cursor', 
+    description: 'IDE com IA integrada para desenvolvedores', 
+    icon: '⚡',
+    logoUrl: 'https://cursor.sh/favicon.ico'
+  },
+  { 
+    id: 'v0', 
+    name: 'v0 (Vercel)', 
+    description: 'Gerador de UI da Vercel com shadcn/ui', 
+    icon: '▲',
+    logoUrl: 'https://v0.dev/favicon.ico'
+  },
+  { 
+    id: 'bolt', 
+    name: 'Bolt.new', 
+    description: 'Ambiente IA full-stack com preview instantâneo', 
+    icon: '⚡',
+    logoUrl: 'https://bolt.new/favicon.ico'
+  },
+  { 
+    id: 'windsurf', 
+    name: 'Windsurf', 
+    description: 'IDE IA da Codeium para desenvolvimento ágil', 
+    icon: '🏄',
+    logoUrl: 'https://codeium.com/favicon.ico'
+  },
+  { 
+    id: 'chatgpt', 
+    name: 'ChatGPT', 
+    description: 'OpenAI GPT-4 para geração de código', 
+    icon: '🤖',
+    logoUrl: 'https://chat.openai.com/favicon.ico'
+  },
+  { 
+    id: 'claude', 
+    name: 'Claude', 
+    description: 'Anthropic Claude para código limpo e seguro', 
+    icon: '🧠',
+    logoUrl: 'https://claude.ai/favicon.ico'
+  },
+  { 
+    id: 'google-studio', 
+    name: 'Google AI Studio', 
+    description: 'Gemini da Google para projetos avançados', 
+    icon: '🔷',
+    logoUrl: 'https://aistudio.google.com/favicon.ico'
+  },
+  { 
+    id: 'other', 
+    name: 'Outra IA', 
+    description: 'Especificar manualmente', 
+    icon: '✨'
+  },
 ];
 
 export const COLOR_PRESETS = [

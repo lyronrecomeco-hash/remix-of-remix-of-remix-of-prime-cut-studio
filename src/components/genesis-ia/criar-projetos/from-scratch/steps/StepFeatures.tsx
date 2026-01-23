@@ -41,7 +41,7 @@ export function StepFeatures() {
       {/* Features */}
       <div className="space-y-3">
         <label className="flex items-center gap-2 text-sm font-medium">
-          <Zap className="w-4 h-4 text-blue-400" />
+          <Zap className="w-4 h-4 text-primary" />
           Funcionalidades
         </label>
         <div className="flex flex-wrap gap-2">
@@ -58,7 +58,7 @@ export function StepFeatures() {
                 onClick={() => toggleFeature(feature)}
                 className={`px-3 py-2 rounded-lg border text-sm transition-all ${
                   isSelected
-                    ? 'bg-blue-500/20 border-blue-500/50 text-blue-300'
+                    ? 'bg-primary/20 border-primary/50 text-primary'
                     : 'bg-white/5 border-white/10 hover:border-white/20'
                 }`}
               >
@@ -76,7 +76,7 @@ export function StepFeatures() {
       {/* Integrations */}
       <div className="space-y-3">
         <label className="flex items-center gap-2 text-sm font-medium">
-          <Link className="w-4 h-4 text-emerald-400" />
+          <Link className="w-4 h-4 text-primary" />
           Integrações Externas
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
@@ -92,7 +92,7 @@ export function StepFeatures() {
                 onClick={() => toggleIntegration(integration.id)}
                 className={`p-3 rounded-lg border text-left transition-all ${
                   isSelected
-                    ? 'bg-emerald-500/10 border-emerald-500/50'
+                    ? 'bg-primary/10 border-primary/50'
                     : 'bg-white/5 border-white/10 hover:border-white/20'
                 }`}
               >

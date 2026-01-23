@@ -100,12 +100,12 @@ export function StepExtras() {
       </div>
 
       {/* Tip */}
-      <div className="mt-6 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+      <div className="mt-6 p-4 rounded-xl bg-primary/10 border border-primary/20">
         <div className="flex items-start gap-3">
-          <Settings className="w-5 h-5 text-blue-400 mt-0.5" />
+          <Settings className="w-5 h-5 text-primary mt-0.5" />
           <div>
-            <p className="text-sm text-blue-300 font-medium">Dica Profissional</p>
-            <p className="text-sm text-blue-200/70 mt-1">
+            <p className="text-sm text-primary font-medium">Dica Profissional</p>
+            <p className="text-sm text-muted-foreground mt-1">
               Para projetos comerciais, recomendamos manter todas as opções ativas para 
               garantir qualidade, performance e boas práticas.
             </p>
