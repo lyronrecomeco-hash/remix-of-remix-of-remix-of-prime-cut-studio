@@ -70,62 +70,65 @@ export const BusinessDetailModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <Building2 className="w-5 h-5 text-primary" />
-            {business.name}
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden p-0 bg-[hsl(220,20%,8%)] border-white/10">
+        {/* Header - Genesis Style */}
+        <DialogHeader className="px-5 pt-5 pb-4 border-b border-white/10 bg-white/5">
+          <DialogTitle className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+              <Building2 className="w-5 h-5 text-primary" />
+            </div>
+            <span className="text-lg font-semibold">{business.name}</span>
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 mt-2">
-          {/* Status Badges */}
+        <div className="px-5 py-4 space-y-4 max-h-[60vh] overflow-y-auto">
+          {/* Status Badges - Genesis Style */}
           <div className="flex flex-wrap gap-2">
             {hasWebsite ? (
-              <Badge className="bg-green-500/10 text-green-600 border-green-500/30">
+              <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
                 <Globe className="w-3 h-3 mr-1" />
                 Online
               </Badge>
             ) : (
-              <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/30">
+              <Badge className="bg-orange-500/10 text-orange-400 border-orange-500/30">
                 <Globe className="w-3 h-3 mr-1" />
                 Sem Site
               </Badge>
             )}
             {business.rating && (
-              <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/30">
+              <Badge className="bg-yellow-500/10 text-yellow-400 border-yellow-500/30">
                 <Star className="w-3 h-3 mr-1" />
                 {business.rating.toFixed(1)}
               </Badge>
             )}
             {business.reviews_count && (
-              <Badge variant="secondary">
+              <Badge variant="secondary" className="bg-white/5 border-white/10">
                 <Users className="w-3 h-3 mr-1" />
                 {business.reviews_count} avaliações
               </Badge>
             )}
             {business.category && (
-              <Badge variant="outline">{business.category}</Badge>
+              <Badge variant="outline" className="border-white/10">{business.category}</Badge>
             )}
           </div>
 
-          {/* Informações Detalhadas */}
-          <div className="space-y-3 bg-muted/30 rounded-lg p-4">
+          {/* Informações Detalhadas - Genesis Style */}
+          <div className="space-y-2">
             {/* Endereço */}
-            <div className="flex items-start gap-3">
-              <MapPin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-muted-foreground">Endereço</p>
-                <p className="text-sm">{business.address}</p>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/[0.07] transition-colors">
+              <MapPin className="w-4 h-4 text-primary shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground">Endereço</p>
+                <p className="text-sm truncate">{business.address}</p>
               </div>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 shrink-0"
+                className="h-8 w-8 shrink-0 hover:bg-white/10"
                 onClick={() => copyToClipboard(business.address, 'address')}
               >
                 {copiedField === 'address' ? (
-                  <Check className="w-4 h-4 text-green-500" />
+                  <Check className="w-4 h-4 text-emerald-400" />
                 ) : (
                   <Copy className="w-4 h-4" />
                 )}
@@ -134,21 +137,21 @@ export const BusinessDetailModal = ({
 
             {/* Telefone */}
             {business.phone && (
-              <div className="flex items-start gap-3">
-                <Phone className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">Telefone</p>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/[0.07] transition-colors">
+                <Phone className="w-4 h-4 text-primary shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground">Telefone</p>
                   <p className="text-sm">{business.phone}</p>
                 </div>
                 <div className="flex gap-1">
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 shrink-0"
+                    className="h-8 w-8 shrink-0 hover:bg-white/10"
                     onClick={() => copyToClipboard(business.phone!, 'phone')}
                   >
                     {copiedField === 'phone' ? (
-                      <Check className="w-4 h-4 text-green-500" />
+                      <Check className="w-4 h-4 text-emerald-400" />
                     ) : (
                       <Copy className="w-4 h-4" />
                     )}
@@ -156,7 +159,7 @@ export const BusinessDetailModal = ({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 shrink-0 text-green-500 hover:text-green-600"
+                    className="h-8 w-8 shrink-0 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
                     onClick={openWhatsApp}
                   >
                     <MessageCircle className="w-4 h-4" />
@@ -167,15 +170,15 @@ export const BusinessDetailModal = ({
 
             {/* Website */}
             {business.website && (
-              <div className="flex items-start gap-3">
-                <Globe className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">Website</p>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/[0.07] transition-colors">
+                <Globe className="w-4 h-4 text-primary shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground">Website</p>
                   <a 
                     href={business.website.startsWith('http') ? business.website : `https://${business.website}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-primary hover:underline break-all"
+                    className="text-sm text-primary hover:underline truncate block"
                   >
                     {business.website}
                   </a>
@@ -183,11 +186,11 @@ export const BusinessDetailModal = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 shrink-0"
+                  className="h-8 w-8 shrink-0 hover:bg-white/10"
                   onClick={() => copyToClipboard(business.website!, 'website')}
                 >
                   {copiedField === 'website' ? (
-                    <Check className="w-4 h-4 text-green-500" />
+                    <Check className="w-4 h-4 text-emerald-400" />
                   ) : (
                     <Copy className="w-4 h-4" />
                   )}
@@ -197,10 +200,10 @@ export const BusinessDetailModal = ({
 
             {/* Coordenadas */}
             {business.latitude && business.longitude && (
-              <div className="flex items-start gap-3">
-                <Navigation className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
+                <Navigation className="w-4 h-4 text-primary shrink-0" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">Coordenadas</p>
+                  <p className="text-xs text-muted-foreground">Coordenadas</p>
                   <p className="text-sm text-muted-foreground">
                     {business.latitude.toFixed(6)}, {business.longitude.toFixed(6)}
                   </p>
@@ -209,75 +212,58 @@ export const BusinessDetailModal = ({
             )}
           </div>
 
-          {/* Link do Google Place */}
-          <div className="bg-blue-500/5 border border-blue-500/20 rounded-lg p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium flex items-center gap-2">
-                  <img 
-                    src="https://www.google.com/images/branding/product/1x/maps_32dp.png" 
-                    alt="Google Maps" 
-                    className="w-4 h-4"
-                  />
-                  Google Maps / Place
-                </p>
-                <p className="text-xs text-muted-foreground mt-1 truncate">
-                  {googlePlaceUrl}
-                </p>
-              </div>
-              <div className="flex gap-2 shrink-0">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => copyToClipboard(googlePlaceUrl, 'googlePlace')}
-                  className="gap-1.5"
-                >
-                  {copiedField === 'googlePlace' ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-green-500" />
-                      Copiado
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5" />
-                      Copiar
-                    </>
-                  )}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => window.open(googlePlaceUrl, '_blank')}
-                  className="gap-1.5"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  Abrir
-                </Button>
-              </div>
+          {/* Link do Google Place - Genesis Style */}
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-500/10 border border-blue-500/20">
+            <img 
+              src="https://www.google.com/images/branding/product/1x/maps_32dp.png" 
+              alt="Google Maps" 
+              className="w-5 h-5 shrink-0"
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium">Google Maps</p>
+              <p className="text-xs text-muted-foreground truncate">{business.name}</p>
+            </div>
+            <div className="flex gap-1 shrink-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => copyToClipboard(googlePlaceUrl, 'googlePlace')}
+                className="h-7 px-2 hover:bg-blue-500/20"
+              >
+                {copiedField === 'googlePlace' ? (
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5" />
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.open(googlePlaceUrl, '_blank')}
+                className="h-7 px-2 hover:bg-blue-500/20"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+              </Button>
             </div>
           </div>
+        </div>
 
-          {/* Ações */}
-          <div className="flex gap-2 pt-2">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => onOpenChange(false)}
-            >
-              Fechar
-            </Button>
-            <Button
-              className="flex-1 gap-2"
-              onClick={onAddProspect}
-              disabled={isAdding}
-            >
-              {isAdding ? (
-                'Adicionando...'
-              ) : (
-                '+ Adicionar aos Prospectos'
-              )}
-            </Button>
-          </div>
+        {/* Footer - Genesis Style */}
+        <div className="px-5 py-4 border-t border-white/10 bg-white/5 flex gap-3">
+          <Button
+            variant="outline"
+            className="flex-1 bg-white/5 border-white/10 hover:bg-white/10"
+            onClick={() => onOpenChange(false)}
+          >
+            Fechar
+          </Button>
+          <Button
+            className="flex-1 gap-2"
+            onClick={onAddProspect}
+            disabled={isAdding}
+          >
+            {isAdding ? 'Adicionando...' : '+ Adicionar aos Prospectos'}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
