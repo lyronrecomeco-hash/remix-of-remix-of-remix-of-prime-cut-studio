@@ -40,6 +40,7 @@ import { formatCurrency } from '@/lib/checkout/validators';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { GatewayConfigSection } from './GatewayConfigSection';
+import { PlansConfigSection } from './PlansConfigSection';
 import {
   Pagination,
   PaginationContent,
@@ -399,8 +400,9 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-4 w-full max-w-lg">
+        <TabsList className="grid grid-cols-5 w-full max-w-2xl">
           <TabsTrigger value="payments">Pagamentos</TabsTrigger>
+          <TabsTrigger value="plans">Planos</TabsTrigger>
           <TabsTrigger value="gateway">Gateway</TabsTrigger>
           <TabsTrigger value="webhook">Webhook</TabsTrigger>
           <TabsTrigger value="test">Teste PIX</TabsTrigger>
@@ -543,7 +545,11 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
           )}
         </TabsContent>
 
-        {/* Webhook Tab */}
+        {/* Plans Tab */}
+        <TabsContent value="plans" className="space-y-4">
+          <PlansConfigSection />
+        </TabsContent>
+
         {/* Gateway Config Tab */}
         <TabsContent value="gateway" className="space-y-4">
           <GatewayConfigSection />

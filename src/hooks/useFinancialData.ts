@@ -5,88 +5,93 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-interface FinancialMetrics {
+interface RevenueHistoryItem {
+  month: string;
+  receita: number;
+}
+
+interface FinancialData {
   totalRevenue: number;
   thisMonth: number;
   lastMonth: number;
   growth: number;
-  totalClients: number;
-  conversionRate: number;
-  revenueByCategory: {
-    name: string;
-    value: number;
-    color: string;
-  }[];
-  revenueEvolution: {
-    month: string;
-    receita: number;
-    lucro: number;
-  }[];
-  isLoading: boolean;
-  error: string | null;
+  directSubscriptions: number;
+  promoSubscriptions: number;
+  contractsRevenue: number;
+  activeSubscriptions: number;
+  signedContracts: number;
+  revenueHistory: RevenueHistoryItem[];
 }
 
-export function useFinancialData(): FinancialMetrics {
+interface UseFinancialDataReturn {
+  data: FinancialData;
+  isLoading: boolean;
+  period: string;
+  setPeriod: (p: string) => void;
+}
+
+export function useFinancialData(userId?: string): UseFinancialDataReturn {
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [period, setPeriod] = useState('30d');
   const [payments, setPayments] = useState<any[]>([]);
   const [contracts, setContracts] = useState<any[]>([]);
-  const [referrals, setReferrals] = useState<any[]>([]);
+  const [subscriptions, setSubscriptions] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadData() {
       setIsLoading(true);
-      setError(null);
 
       try {
         // Buscar pagamentos confirmados
-        const { data: paymentsData, error: paymentsError } = await supabase
+        const { data: paymentsData } = await supabase
           .from('checkout_payments')
           .select('amount_cents, paid_at, promo_link_id, source, created_at')
           .eq('status', 'paid');
 
-        if (paymentsError) throw paymentsError;
         setPayments(paymentsData || []);
 
         // Buscar contratos assinados
-        const { data: contractsData, error: contractsError } = await supabase
+        const { data: contractsData } = await supabase
           .from('contracts')
           .select('total_value, created_at, status');
 
-        if (contractsError) throw contractsError;
         setContracts(contractsData?.filter(c => c.status === 'signed') || []);
 
-        // Buscar referrals ativos
-        const { data: referralsData, error: referralsError } = await supabase
-          .from('promo_referrals')
-          .select('plan_value, created_at, status');
+        // Buscar assinaturas ativas
+        const { data: subsData } = await supabase
+          .from('genesis_subscriptions')
+          .select('id, status')
+          .eq('status', 'active');
 
-        if (referralsError) throw referralsError;
-        setReferrals(referralsData?.filter(r => r.status === 'active') || []);
+        setSubscriptions(subsData || []);
 
       } catch (err) {
         console.error('Error loading financial data:', err);
-        setError('Erro ao carregar dados financeiros');
       } finally {
         setIsLoading(false);
       }
     }
 
     loadData();
-  }, []);
+  }, [userId, period]);
 
-  return useMemo(() => {
+  const data = useMemo((): FinancialData => {
     const now = new Date();
     const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
 
-    // Calcular receitas
-    const paymentRevenue = payments.reduce((sum, p) => sum + (p.amount_cents || 0), 0) / 100;
-    const contractRevenue = contracts.reduce((sum, c) => sum + (c.total_value || 0), 0);
-    const totalRevenue = paymentRevenue + contractRevenue;
+    // Receitas por tipo
+    const directPayments = payments.filter(p => !p.promo_link_id && p.source !== 'promo');
+    const promoPayments = payments.filter(p => p.promo_link_id || p.source === 'promo');
 
-    // Receita deste mês
+    const directSubscriptions = directPayments.reduce((sum, p) => sum + (p.amount_cents || 0), 0) / 100;
+    const promoSubscriptions = promoPayments.reduce((sum, p) => sum + (p.amount_cents || 0), 0) / 100;
+    const contractsRevenue = contracts.reduce((sum, c) => sum + (c.total_value || 0), 0);
+
+    const totalRevenue = directSubscriptions + promoSubscriptions + contractsRevenue;
+
+    // Este mês
     const thisMonthPayments = payments.filter(p => {
       const date = new Date(p.paid_at || p.created_at);
       return date >= thisMonthStart;
@@ -99,7 +104,7 @@ export function useFinancialData(): FinancialMetrics {
       thisMonthPayments.reduce((sum, p) => sum + (p.amount_cents || 0), 0) / 100 +
       thisMonthContracts.reduce((sum, c) => sum + (c.total_value || 0), 0);
 
-    // Receita mês passado
+    // Mês passado
     const lastMonthPayments = payments.filter(p => {
       const date = new Date(p.paid_at || p.created_at);
       return date >= lastMonthStart && date <= lastMonthEnd;
@@ -115,29 +120,8 @@ export function useFinancialData(): FinancialMetrics {
     // Crescimento
     const growth = lastMonth > 0 ? ((thisMonth - lastMonth) / lastMonth) * 100 : 0;
 
-    // Clientes únicos
-    const totalClients = payments.length + contracts.length;
-
-    // Taxa de conversão (referrals / total)
-    const conversionRate = referrals.length > 0 && payments.length > 0
-      ? (referrals.length / payments.length) * 100
-      : 0;
-
-    // Receita por categoria
-    const directPayments = payments.filter(p => !p.promo_link_id && p.source !== 'promo');
-    const promoPayments = payments.filter(p => p.promo_link_id || p.source === 'promo');
-
-    const directRevenue = directPayments.reduce((sum, p) => sum + (p.amount_cents || 0), 0) / 100;
-    const promoRevenue = promoPayments.reduce((sum, p) => sum + (p.amount_cents || 0), 0) / 100;
-
-    const revenueByCategory = [
-      { name: 'Assinaturas Diretas', value: directRevenue, color: 'hsl(var(--chart-1))' },
-      { name: 'Indicações (Promo)', value: promoRevenue, color: 'hsl(var(--chart-2))' },
-      { name: 'Contratos', value: contractRevenue, color: 'hsl(var(--chart-3))' },
-    ].filter(c => c.value > 0);
-
-    // Evolução mensal (últimos 6 meses)
-    const months = [];
+    // Histórico mensal
+    const revenueHistory: RevenueHistoryItem[] = [];
     for (let i = 5; i >= 0; i--) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
@@ -155,13 +139,9 @@ export function useFinancialData(): FinancialMetrics {
         monthPayments.reduce((sum, p) => sum + (p.amount_cents || 0), 0) / 100 +
         monthContracts.reduce((sum, c) => sum + (c.total_value || 0), 0);
 
-      // Lucro estimado (70% da receita)
-      const lucro = receita * 0.7;
-
-      months.push({
+      revenueHistory.push({
         month: date.toLocaleDateString('pt-BR', { month: 'short' }),
         receita,
-        lucro,
       });
     }
 
@@ -170,12 +150,14 @@ export function useFinancialData(): FinancialMetrics {
       thisMonth,
       lastMonth,
       growth,
-      totalClients,
-      conversionRate,
-      revenueByCategory,
-      revenueEvolution: months,
-      isLoading,
-      error,
+      directSubscriptions,
+      promoSubscriptions,
+      contractsRevenue,
+      activeSubscriptions: subscriptions.length,
+      signedContracts: contracts.length,
+      revenueHistory,
     };
-  }, [payments, contracts, referrals, isLoading, error]);
+  }, [payments, contracts, subscriptions]);
+
+  return { data, isLoading, period, setPeriod };
 }
