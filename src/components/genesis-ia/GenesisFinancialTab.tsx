@@ -1,4 +1,3 @@
-import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   DollarSign,
@@ -11,6 +10,7 @@ import {
   PieChart as PieChartIcon,
   Users,
   Target,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -20,11 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
 import {
   AreaChart,
   Area,
@@ -37,44 +32,14 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
+import { useFinancialData } from "@/hooks/useFinancialData";
 
 interface GenesisFinancialTabProps {
   userId: string;
 }
 
-const revenueData = [
-  { month: "Jan", receita: 45000, lucro: 13000 },
-  { month: "Fev", receita: 52000, lucro: 17000 },
-  { month: "Mar", receita: 48000, lucro: 17000 },
-  { month: "Abr", receita: 61000, lucro: 23000 },
-  { month: "Mai", receita: 55000, lucro: 21000 },
-  { month: "Jun", receita: 67000, lucro: 27000 },
-  { month: "Jul", receita: 72000, lucro: 30000 },
-];
-
-const categoryData = [
-  { name: "Assinaturas", value: 45, color: "hsl(217 91% 60%)" },
-  { name: "Serviços", value: 25, color: "hsl(145 70% 50%)" },
-  { name: "Produtos", value: 20, color: "hsl(280 70% 60%)" },
-  { name: "Outros", value: 10, color: "hsl(45 90% 55%)" },
-];
-
-const chartConfig = {
-  receita: { label: "Receita", color: "hsl(217 91% 60%)" },
-  lucro: { label: "Lucro", color: "hsl(145 70% 50%)" },
-};
-
 export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
-  const [period, setPeriod] = useState("30d");
-
-  const stats = useMemo(() => ({
-    totalRevenue: 400000,
-    thisMonth: 72000,
-    lastMonth: 67000,
-    growth: 7.5,
-    clients: 1250,
-    conversionRate: 8.4,
-  }), []);
+  const { data, isLoading, period, setPeriod } = useFinancialData(userId);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -97,6 +62,26 @@ export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
     visible: { opacity: 1, y: 0 }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const categoryData = [
+    { name: "Assinaturas Diretas", value: data.directSubscriptions, color: "hsl(217 91% 60%)" },
+    { name: "Assinaturas Promo", value: data.promoSubscriptions, color: "hsl(280 70% 60%)" },
+    { name: "Contratos", value: data.contractsRevenue, color: "hsl(145 70% 50%)" },
+  ].filter(c => c.value > 0);
+
+  const totalRevenue = data.directSubscriptions + data.promoSubscriptions + data.contractsRevenue;
+  const categoryDataPercent = categoryData.map(c => ({
+    ...c,
+    percent: totalRevenue > 0 ? Math.round((c.value / totalRevenue) * 100) : 0
+  }));
+
   return (
     <motion.div 
       className="w-full space-y-6"
@@ -105,14 +90,14 @@ export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
       animate="visible"
     >
       {/* Header */}
-      <motion.div variants={itemVariants} className="flex items-center justify-between">
+      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
             <DollarSign className="w-6 h-6 text-emerald-400" />
           </div>
           <div>
             <h2 className="text-2xl font-bold text-white">Financeiro</h2>
-            <p className="text-sm text-white/50">Acompanhe suas métricas em tempo real</p>
+            <p className="text-sm text-white/50">Dados reais do sistema</p>
           </div>
         </div>
         <Select value={period} onValueChange={setPeriod}>
@@ -137,12 +122,14 @@ export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
               <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
                 <DollarSign className="w-6 h-6 text-blue-400" />
               </div>
-              <div className="flex items-center gap-1 text-sm font-medium text-emerald-400">
-                <ArrowUpRight className="w-4 h-4" />
-                +12%
-              </div>
+              {data.growth > 0 && (
+                <div className="flex items-center gap-1 text-sm font-medium text-emerald-400">
+                  <ArrowUpRight className="w-4 h-4" />
+                  +{data.growth.toFixed(1)}%
+                </div>
+              )}
             </div>
-            <p className="text-3xl font-bold text-white">{formatCurrency(stats.totalRevenue)}</p>
+            <p className="text-3xl font-bold text-white">{formatCurrency(data.totalRevenue)}</p>
             <p className="text-sm text-white/50 mt-1">Faturamento Total</p>
           </CardContent>
         </Card>
@@ -154,12 +141,19 @@ export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
               <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-emerald-400" />
               </div>
-              <div className="flex items-center gap-1 text-sm font-medium text-emerald-400">
-                <ArrowUpRight className="w-4 h-4" />
-                +{stats.growth}%
-              </div>
+              {data.growth > 0 ? (
+                <div className="flex items-center gap-1 text-sm font-medium text-emerald-400">
+                  <ArrowUpRight className="w-4 h-4" />
+                  +{data.growth.toFixed(1)}%
+                </div>
+              ) : data.growth < 0 ? (
+                <div className="flex items-center gap-1 text-sm font-medium text-red-400">
+                  <ArrowDownRight className="w-4 h-4" />
+                  {data.growth.toFixed(1)}%
+                </div>
+              ) : null}
             </div>
-            <p className="text-3xl font-bold text-white">{formatCurrency(stats.thisMonth)}</p>
+            <p className="text-3xl font-bold text-white">{formatCurrency(data.thisMonth)}</p>
             <p className="text-sm text-white/50 mt-1">Neste Mês</p>
           </CardContent>
         </Card>
@@ -176,7 +170,7 @@ export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
                 Referência
               </div>
             </div>
-            <p className="text-3xl font-bold text-white">{formatCurrency(stats.lastMonth)}</p>
+            <p className="text-3xl font-bold text-white">{formatCurrency(data.lastMonth)}</p>
             <p className="text-sm text-white/50 mt-1">Mês Passado</p>
           </CardContent>
         </Card>
@@ -195,15 +189,11 @@ export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
           <CardContent className="px-5 pb-5">
             <div className="h-[280px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <AreaChart data={data.revenueHistory} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorReceita" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="hsl(217 91% 60%)" stopOpacity={0.3} />
                       <stop offset="95%" stopColor="hsl(217 91% 60%)" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="colorLucro" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(145 70% 50%)" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(145 70% 50%)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 40% 18%)" vertical={false} />
@@ -216,10 +206,9 @@ export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
                       borderRadius: "8px",
                       fontSize: "13px",
                     }}
-                    formatter={(value: number) => [formatCurrency(value), ""]}
+                    formatter={(value: number) => [formatCurrency(value), "Receita"]}
                   />
                   <Area type="monotone" dataKey="receita" stroke="hsl(217 91% 60%)" strokeWidth={2.5} fill="url(#colorReceita)" />
-                  <Area type="monotone" dataKey="lucro" stroke="hsl(145 70% 50%)" strokeWidth={2.5} fill="url(#colorLucro)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -227,10 +216,6 @@ export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-blue-500" />
                 <span className="text-sm text-white/50">Receita</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                <span className="text-sm text-white/50">Lucro</span>
               </div>
             </div>
           </CardContent>
@@ -245,45 +230,53 @@ export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="px-5 pb-5">
-            <div className="h-[200px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={categoryData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={55}
-                    outerRadius={85}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    {categoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} stroke="transparent" />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(222 47% 11%)",
-                      border: "1px solid hsl(217 40% 20%)",
-                      borderRadius: "8px",
-                      fontSize: "13px",
-                    }}
-                    formatter={(value: number) => [`${value}%`, ""]}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="space-y-2 mt-4">
-              {categoryData.map((item, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                    <span className="text-sm text-white/50">{item.name}</span>
-                  </div>
-                  <span className="text-sm font-semibold text-white">{item.value}%</span>
+            {categoryDataPercent.length > 0 ? (
+              <>
+                <div className="h-[200px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={categoryDataPercent}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={55}
+                        outerRadius={85}
+                        paddingAngle={3}
+                        dataKey="value"
+                      >
+                        {categoryDataPercent.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} stroke="transparent" />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "hsl(222 47% 11%)",
+                          border: "1px solid hsl(217 40% 20%)",
+                          borderRadius: "8px",
+                          fontSize: "13px",
+                        }}
+                        formatter={(value: number) => [formatCurrency(value), ""]}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
                 </div>
-              ))}
-            </div>
+                <div className="space-y-2 mt-4">
+                  {categoryDataPercent.map((item, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                        <span className="text-sm text-white/50">{item.name}</span>
+                      </div>
+                      <span className="text-sm font-semibold text-white">{item.percent}%</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="h-[280px] flex items-center justify-center text-white/40 text-sm">
+                Sem dados de receita ainda
+              </div>
+            )}
           </CardContent>
         </Card>
       </motion.div>
@@ -298,12 +291,8 @@ export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
                 <Users className="w-7 h-7 text-purple-400" />
               </div>
               <div className="flex-1">
-                <p className="text-2xl font-bold text-white">{stats.clients.toLocaleString()}</p>
-                <p className="text-sm text-white/50">Clientes Ativos</p>
-              </div>
-              <div className="flex items-center gap-1 text-sm font-medium text-emerald-400">
-                <ArrowUpRight className="w-4 h-4" />
-                +5.3%
+                <p className="text-2xl font-bold text-white">{data.activeSubscriptions.toLocaleString()}</p>
+                <p className="text-sm text-white/50">Assinaturas Ativas</p>
               </div>
             </div>
           </CardContent>
@@ -317,12 +306,8 @@ export function GenesisFinancialTab({ userId }: GenesisFinancialTabProps) {
                 <Target className="w-7 h-7 text-cyan-400" />
               </div>
               <div className="flex-1">
-                <p className="text-2xl font-bold text-white">{stats.conversionRate}%</p>
-                <p className="text-sm text-white/50">Taxa de Conversão</p>
-              </div>
-              <div className="flex items-center gap-1 text-sm font-medium text-emerald-400">
-                <ArrowUpRight className="w-4 h-4" />
-                +1.2%
+                <p className="text-2xl font-bold text-white">{data.signedContracts}</p>
+                <p className="text-sm text-white/50">Contratos Fechados</p>
               </div>
             </div>
           </CardContent>

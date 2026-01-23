@@ -41,13 +41,24 @@ export default function PromoPage() {
   };
 
   const handleSelectPlan = (planType: 'monthly' | 'yearly') => {
-    // Redirecionar para checkout com parâmetros do plano promocional
+    // Valores promocionais (mensal = 197, anual = 697)
+    const amounts: Record<string, number> = {
+      monthly: 19700,
+      yearly: 69700
+    };
+    const descriptions: Record<string, string> = {
+      monthly: 'Plano Mensal - Genesis IA',
+      yearly: 'Plano Anual - Genesis IA'
+    };
+    
     const params = new URLSearchParams({
-      ref: codigo || '',
+      amount: amounts[planType].toString(),
+      description: descriptions[planType],
       plan: planType,
-      promo: 'true'
+      ref: codigo || '',
+      source: 'promo'
     });
-    navigate(`/genesis-ia?${params.toString()}`);
+    navigate(`/checkout?${params.toString()}`);
   };
 
   if (isLoading) {
