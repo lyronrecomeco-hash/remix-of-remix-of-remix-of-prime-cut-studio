@@ -1,69 +1,79 @@
-import { useRef } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { motion, useInView } from 'framer-motion';
-import { Check, Crown, ArrowRight, Shield, Star } from 'lucide-react';
+import { Check, Crown, ArrowRight, Shield, Star, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
-const plans = [
-  {
-    name: 'Plano Mensal',
-    tagline: 'Ideal para começar',
-    price: '197',
-    originalPrice: null,
-    period: '/mês',
-    discount: null,
-    popular: false,
-    features: [
-      { text: 'Gerador de SaaS Premium Ilimitado', included: true },
-      { text: 'Gerador de página de vendas', included: true },
-      { text: 'Prospecte clientes ilimitado', included: true },
-      { text: 'Suporte exclusivo (WhatsApp)', included: true },
-    ],
-    cta: 'Assinar Mensal',
-  },
-  {
-    name: 'Plano Trimestral',
-    tagline: 'Economize 50%',
-    price: '297',
-    originalPrice: '597',
-    period: '/3 meses',
-    discount: '50% de desconto',
-    popular: true,
-    features: [
-      { text: 'Tudo do plano mensal', included: true },
-      { text: 'Calls semanais ao vivo', included: true },
-      { text: 'Serviços de Freelancer', included: true },
-    ],
-    cta: 'Assinar Trimestral',
-  },
-  {
-    name: 'Plano Anual',
-    tagline: 'Maior economia!',
-    price: '997',
-    originalPrice: '2.364',
-    period: '/ano',
-    discount: '58% de desconto',
-    popular: false,
-    features: [
-      { text: 'Tudo do plano trimestral', included: true },
-      { text: 'Acesso prioritário a novidades', included: true },
-      { text: 'Área de membros exclusiva', included: true },
-    ],
-    cta: 'Assinar Anual',
-  },
-];
+interface Plan {
+  id: string;
+  name: string;
+  displayName: string;
+  tagline: string | null;
+  priceCents: number;
+  originalPriceCents: number | null;
+  period: string;
+  discountPercentage: number | null;
+  isPopular: boolean;
+  features: string[];
+}
+
+const usePlans = () => {
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadPlans() {
+      const { data } = await supabase
+        .from('checkout_plans')
+        .select('*')
+        .eq('is_active', true)
+        .order('duration_months', { ascending: true });
+
+      if (data) {
+        setPlans(data.map(p => ({
+          id: p.id,
+          name: p.name,
+          displayName: p.display_name,
+          tagline: p.tagline,
+          priceCents: p.price_cents,
+          originalPriceCents: p.discount_percentage ? Math.round(p.price_cents / (1 - p.discount_percentage / 100)) : null,
+          period: p.duration_months === 1 ? '/mês' : p.duration_months === 3 ? '/3 meses' : '/ano',
+          discountPercentage: p.discount_percentage,
+          isPopular: p.is_popular,
+          features: Array.isArray(p.features) ? p.features as string[] : [],
+        })));
+      }
+      setIsLoading(false);
+    }
+    loadPlans();
+  }, []);
+
+  return { plans, isLoading };
+};
 
 const GenesisCommercialPricing = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
+  const navigate = useNavigate();
+  const { plans, isLoading } = usePlans();
+
+  const handleSelectPlan = (plan: Plan) => {
+    const params = new URLSearchParams({
+      amount: plan.priceCents.toString(),
+      plan: plan.name,
+      description: plan.displayName,
+    });
+    navigate(`/checkout?${params.toString()}`);
+  };
+
+  const formatPrice = (cents: number) => (cents / 100).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 
   return (
     <section id="planos" ref={ref} className="py-24 md:py-32 bg-background relative overflow-hidden">
-      {/* Subtle background */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.05),transparent_60%)]" />
 
       <div className="container px-4 relative z-10 max-w-6xl mx-auto">
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -78,18 +88,23 @@ const GenesisCommercialPricing = () => {
           </p>
         </motion.div>
 
-        {/* Pricing Cards - 3 columns */}
+        {isLoading && (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        )}
+
+        {!isLoading && (
         <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {plans.map((plan, index) => (
             <motion.div
-              key={plan.name}
+              key={plan.id}
               initial={{ opacity: 0, y: 30 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, delay: index * 0.15 }}
-              className={`relative ${plan.popular ? 'md:-mt-4 md:mb-4' : ''}`}
+              className={`relative ${plan.isPopular ? 'md:-mt-4 md:mb-4' : ''}`}
             >
-              {/* Popular Badge */}
-              {plan.popular && (
+              {plan.isPopular && (
                 <motion.div 
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -102,82 +117,70 @@ const GenesisCommercialPricing = () => {
                 </motion.div>
               )}
 
-              {/* Card */}
               <div className={`relative h-full p-6 rounded-2xl overflow-hidden transition-all duration-300 ${
-                plan.popular 
+                plan.isPopular 
                   ? 'bg-gradient-to-b from-primary/10 to-card border-2 border-primary/40 shadow-xl shadow-primary/10' 
                   : 'bg-card border border-border hover:border-primary/20'
               }`}>
                 <div className="relative">
-                  {/* Header */}
                   <div className="mb-6">
-                    <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
+                    <h3 className="text-xl font-bold text-foreground">{plan.displayName}</h3>
                     <p className="text-sm text-muted-foreground">{plan.tagline}</p>
                   </div>
 
-                  {/* Price */}
                   <div className="mb-6">
-                    {plan.originalPrice && (
+                    {plan.originalPriceCents && (
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-sm text-muted-foreground line-through">
-                          de R${plan.originalPrice}
+                          de R${formatPrice(plan.originalPriceCents)}
                         </span>
                         <span className="text-xs font-medium text-muted-foreground">por</span>
                       </div>
                     )}
                     <div className="flex items-baseline gap-1">
-                      <span className={`text-4xl font-black ${plan.popular ? 'text-primary' : 'text-foreground'}`}>
-                        R${plan.price}
+                      <span className={`text-4xl font-black ${plan.isPopular ? 'text-primary' : 'text-foreground'}`}>
+                        R${formatPrice(plan.priceCents)}
                       </span>
                       <span className="text-muted-foreground text-sm">{plan.period}</span>
                     </div>
                   </div>
 
-                  {/* Features */}
                   <ul className="space-y-3 mb-6">
                     {plan.features.map((feature, i) => (
                       <li key={i} className="flex items-start gap-3">
                         <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                          plan.popular ? 'bg-primary/20' : 'bg-muted'
+                          plan.isPopular ? 'bg-primary/20' : 'bg-muted'
                         }`}>
-                          <Check className={`w-3 h-3 ${plan.popular ? 'text-primary' : 'text-muted-foreground'}`} />
+                          <Check className={`w-3 h-3 ${plan.isPopular ? 'text-primary' : 'text-muted-foreground'}`} />
                         </div>
-                        <span className="text-sm text-muted-foreground">
-                          {feature.text}
-                        </span>
+                        <span className="text-sm text-muted-foreground">{feature}</span>
                       </li>
                     ))}
                   </ul>
 
-                  {/* Discount Badge */}
-                  {plan.discount && (
+                  {plan.discountPercentage && (
                     <div className="mb-4">
                       <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full ${
-                        plan.popular 
-                          ? 'bg-primary/20 text-primary' 
-                          : 'bg-muted text-muted-foreground'
+                        plan.isPopular ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
                       }`}>
                         <Check className="w-3 h-3" />
-                        {plan.discount}
+                        {plan.discountPercentage}% de desconto
                       </span>
                     </div>
                   )}
 
-                  {/* CTA */}
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     <Button 
-                      asChild
+                      onClick={() => handleSelectPlan(plan)}
                       size="lg"
-                      variant={plan.popular ? "default" : "outline"}
+                      variant={plan.isPopular ? "default" : "outline"}
                       className={`w-full py-5 text-sm font-semibold ${
-                        plan.popular 
+                        plan.isPopular 
                           ? 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20' 
                           : 'border-border hover:bg-muted/50 text-foreground'
                       }`}
                     >
-                      <Link to="/genesis" className="flex items-center justify-center gap-2">
-                        {plan.cta}
-                      </Link>
+                      Assinar {plan.displayName}
                     </Button>
                   </motion.div>
                 </div>
@@ -185,6 +188,7 @@ const GenesisCommercialPricing = () => {
             </motion.div>
           ))}
         </div>
+        )}
 
         {/* Trust Elements */}
         <motion.div
