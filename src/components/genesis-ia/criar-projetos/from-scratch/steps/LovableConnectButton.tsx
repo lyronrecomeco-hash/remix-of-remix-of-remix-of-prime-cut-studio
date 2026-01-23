@@ -4,21 +4,24 @@ import { ExternalLink, Sparkles, Copy, Check, Gift, Rocket, Zap } from 'lucide-r
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
-// Lovable logo SVG
-const LovableLogo = () => (
-  <svg viewBox="0 0 32 32" className="w-6 h-6">
+// Official Lovable logo (heart icon)
+const LovableLogo = ({ className = 'w-6 h-6' }: { className?: string }) => (
+  <svg viewBox="0 0 256 256" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="256" height="256" rx="60" fill="white"/>
+    <path 
+      d="M128 216C128 216 208 168 208 112C208 78.8 181.2 52 148 52C134.8 52 122.4 56.8 112 64.8C101.6 56.8 89.2 52 76 52C42.8 52 16 78.8 16 112C16 168 96 216 96 216L128 216Z"
+      fill="#FF6B6B"
+    />
+    <path 
+      d="M128 216C128 216 48 168 48 112C48 78.8 74.8 52 108 52C121.2 52 133.6 56.8 144 64.8C154.4 56.8 166.8 52 180 52C213.2 52 240 78.8 240 112C240 168 160 216 160 216L128 216Z"
+      fill="url(#lovable-heart-grad)"
+    />
     <defs>
-      <linearGradient id="lovable-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#FF6B6B" />
-        <stop offset="100%" stopColor="#FF8E8E" />
+      <linearGradient id="lovable-heart-grad" x1="48" y1="52" x2="240" y2="216" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#FF6B6B"/>
+        <stop offset="1" stopColor="#FF8E8E"/>
       </linearGradient>
     </defs>
-    <rect width="32" height="32" rx="8" fill="url(#lovable-grad)"/>
-    <path 
-      d="M16 24c-4.418 0-8-3.582-8-8s3.582-8 8-8 8 3.582 8 8-3.582 8-8 8zm0-14c-3.309 0-6 2.691-6 6s2.691 6 6 6 6-2.691 6-6-2.691-6-6-6z" 
-      fill="white"
-    />
-    <circle cx="16" cy="16" r="3" fill="white"/>
   </svg>
 );
 
@@ -35,11 +38,11 @@ export function LovableConnectButton({ prompt, projectName }: LovableConnectButt
     try {
       await navigator.clipboard.writeText(prompt);
       setCopied(true);
-      toast.success('Prompt copiado! Abrindo Lovable...');
+      toast.success('Prompt copiado! Cole no chat da Lovable.');
       
-      // Open Lovable in new tab after short delay
+      // Open Lovable homepage - user creates project manually
       setTimeout(() => {
-        window.open('https://lovable.dev/projects/create', '_blank');
+        window.open('https://lovable.dev', '_blank');
         setCopied(false);
       }, 800);
     } catch (err) {
@@ -57,24 +60,24 @@ export function LovableConnectButton({ prompt, projectName }: LovableConnectButt
       animate={{ opacity: 1, y: 0 }}
       className="w-full max-w-lg mx-auto"
     >
-      {/* Main Card */}
+      {/* Main Card - Genesis standardized */}
       <motion.div
-        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#FF6B6B]/10 via-card to-[#FF8E8E]/5 border border-[#FF6B6B]/30 p-5"
+        className="relative overflow-hidden rounded-2xl bg-card/60 backdrop-blur-md border border-border/60 p-5 hover:border-[#FF6B6B]/40 transition-colors"
         whileHover={{ scale: 1.01 }}
         transition={{ type: 'spring', stiffness: 300, damping: 20 }}
       >
         {/* Background Glow */}
-        <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#FF6B6B]/20 rounded-full blur-3xl" />
-        <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-[#FF8E8E]/10 rounded-full blur-2xl" />
+        <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#FF6B6B]/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-[#FF8E8E]/5 rounded-full blur-2xl pointer-events-none" />
 
         {/* Header */}
         <div className="flex items-center gap-3 mb-4 relative z-10">
           <motion.div
-            animate={{ rotate: [0, 5, -5, 0] }}
-            transition={{ duration: 3, repeat: Infinity }}
-            className="p-2 rounded-xl bg-gradient-to-br from-[#FF6B6B] to-[#FF8E8E] shadow-lg shadow-[#FF6B6B]/30"
+            animate={{ scale: [1, 1.05, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="w-12 h-12 rounded-xl bg-white shadow-lg shadow-[#FF6B6B]/20 flex items-center justify-center overflow-hidden"
           >
-            <LovableLogo />
+            <LovableLogo className="w-8 h-8" />
           </motion.div>
           <div className="flex-1">
             <h4 className="font-bold text-foreground flex items-center gap-2">
@@ -87,24 +90,24 @@ export function LovableConnectButton({ prompt, projectName }: LovableConnectButt
               </motion.span>
             </h4>
             <p className="text-xs text-muted-foreground">
-              Transforme seu prompt em app real
+              Copie o prompt e cole no chat da Lovable
             </p>
           </div>
         </div>
 
         {/* Benefits */}
         <div className="grid grid-cols-3 gap-2 mb-4 relative z-10">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-white/5 rounded-lg px-2 py-1.5">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/30 border border-border/50 rounded-lg px-2 py-1.5">
             <Gift className="w-3.5 h-3.5 text-[#FF6B6B]" />
-            <span>10 créditos grátis</span>
+            <span>5 créditos/dia</span>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-white/5 rounded-lg px-2 py-1.5">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/30 border border-border/50 rounded-lg px-2 py-1.5">
             <Zap className="w-3.5 h-3.5 text-[#FF6B6B]" />
-            <span>Deploy instantâneo</span>
+            <span>Deploy grátis</span>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-white/5 rounded-lg px-2 py-1.5">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/30 border border-border/50 rounded-lg px-2 py-1.5">
             <Rocket className="w-3.5 h-3.5 text-[#FF6B6B]" />
-            <span>100% otimizado</span>
+            <span>Prompt otimizado</span>
           </div>
         </div>
 
@@ -112,24 +115,24 @@ export function LovableConnectButton({ prompt, projectName }: LovableConnectButt
         <div className="flex gap-2 relative z-10">
           <Button
             onClick={handleCopyAndOpen}
-            className="flex-1 bg-gradient-to-r from-[#FF6B6B] to-[#FF8E8E] hover:from-[#FF5555] hover:to-[#FF7777] text-white shadow-lg shadow-[#FF6B6B]/25"
+            className="flex-1 bg-gradient-to-r from-[#FF6B6B] to-[#FF8E8E] hover:from-[#FF5555] hover:to-[#FF7777] text-white shadow-lg shadow-[#FF6B6B]/20"
           >
             {copied ? (
               <>
                 <Check className="w-4 h-4 mr-2" />
-                Copiado!
+                Copiado! Abrindo...
               </>
             ) : (
               <>
                 <Copy className="w-4 h-4 mr-2" />
-                Copiar & Abrir Lovable
+                Copiar & Ir para Lovable
               </>
             )}
           </Button>
           <Button
             onClick={handleOpenLovable}
             variant="outline"
-            className="border-[#FF6B6B]/30 hover:bg-[#FF6B6B]/10 hover:border-[#FF6B6B]/50"
+            className="border-border/60 hover:bg-muted/30 hover:border-[#FF6B6B]/40"
           >
             <ExternalLink className="w-4 h-4" />
           </Button>

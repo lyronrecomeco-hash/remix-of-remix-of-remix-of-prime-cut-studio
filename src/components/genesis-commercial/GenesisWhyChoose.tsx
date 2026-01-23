@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
 import { 
   Sparkles, 
@@ -9,16 +9,17 @@ import {
   Shield,
   Bot,
   Layers,
-  Check
+  Check,
+  MousePointer2
 } from 'lucide-react';
 
 const features = [
   {
     id: 'ai',
     icon: Bot,
-    title: 'IA que entende você',
-    description: 'Nossa inteligência artificial não apenas gera — ela compreende seu contexto, seu nicho e suas necessidades.',
-    highlight: 'Geração contextual avançada',
+    title: 'IA contextual',
+    description: 'Entendemos seu nicho, público e objetivos — e geramos estruturas otimizadas para cada cenário.',
+    highlight: 'Prompts inteligentes',
     demo: (
       <div className="space-y-3">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -27,7 +28,7 @@ const features = [
         </div>
         <div className="bg-muted/30 rounded-lg p-3 border border-border/50">
           <p className="text-xs text-foreground/80">
-            "Quero criar um sistema para clínicas de estética"
+            "Sistema para clínicas de estética com agendamento"
           </p>
         </div>
         <motion.div
@@ -39,7 +40,7 @@ const features = [
           <div className="flex items-start gap-2">
             <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
             <p className="text-xs text-foreground/90">
-              Identificado: agendamentos, prontuários, controle financeiro, fidelização...
+              Módulos: agendamentos, prontuários, financeiro, fidelização...
             </p>
           </div>
         </motion.div>
@@ -50,16 +51,16 @@ const features = [
     id: 'evolution',
     icon: Zap,
     title: 'Evolução contínua',
-    description: 'Atualize e evolua seus projetos existentes sem recriar do zero. Iteração inteligente e rápida.',
+    description: 'Itere sobre projetos existentes sem recriar do zero. Versões, histórico e rollback na palma da mão.',
     highlight: 'Versões ilimitadas',
     demo: (
       <div className="space-y-2">
         <div className="flex items-center justify-between bg-muted/30 rounded-lg p-3 border border-border/50">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-primary" />
-            <span className="text-xs text-foreground/80">Quiz Interativo v2.1</span>
+            <span className="text-xs text-foreground/80">Landing Page v3.2</span>
           </div>
-          <span className="text-[10px] text-muted-foreground">Atualizado agora</span>
+          <span className="text-[10px] text-muted-foreground">Agora</span>
         </div>
         <motion.div
           initial={{ opacity: 0 }}
@@ -69,7 +70,7 @@ const features = [
         >
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-primary/50" />
-            <span className="text-xs text-foreground/60">Quiz Interativo v2.0</span>
+            <span className="text-xs text-foreground/60">Landing Page v3.1</span>
           </div>
           <span className="text-[10px] text-muted-foreground">Ontem</span>
         </motion.div>
@@ -79,14 +80,14 @@ const features = [
   {
     id: 'visual',
     icon: Palette,
-    title: 'Design system completo',
-    description: 'Cores, tipografia, espaçamentos — tudo harmonizado automaticamente para um visual profissional.',
-    highlight: 'Zero conhecimento em design',
+    title: 'Design system',
+    description: 'Paletas, tipografia e espaçamentos harmonizados — visual profissional sem esforço.',
+    highlight: 'Zero design skills',
     demo: (
       <div className="space-y-3">
         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
           <Sparkles className="w-3.5 h-3.5 text-primary" />
-          <span>Qual estilo para seu SaaS?</span>
+          <span>Escolha um estilo:</span>
         </div>
         <div className="flex gap-2">
           {['Futurista', 'Minimalista', 'Corporativo'].map((style, i) => (
@@ -112,9 +113,9 @@ const features = [
   {
     id: 'analytics',
     icon: BarChart3,
-    title: 'Analytics integrado',
-    description: 'Acompanhe métricas, conversões e performance do seu SaaS em tempo real, direto do painel.',
-    highlight: 'Dados em tempo real',
+    title: 'Analytics nativo',
+    description: 'Métricas, conversões e performance em tempo real direto do seu painel Genesis.',
+    highlight: 'Dados ao vivo',
     demo: (
       <div className="flex items-end justify-center gap-1.5 h-20">
         {[40, 65, 45, 80, 55, 70, 90].map((h, i) => (
@@ -131,6 +132,8 @@ const features = [
   },
 ];
 
+const featureIds = features.map((f) => f.id);
+
 const bonusFeatures = [
   { icon: Globe, label: 'Multi-idioma nativo' },
   { icon: Shield, label: 'Segurança enterprise' },
@@ -141,6 +144,18 @@ const GenesisWhyChoose = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
   const [activeFeature, setActiveFeature] = useState('ai');
+
+  // Auto-rotate feature tabs every 4s
+  useEffect(() => {
+    if (!isInView) return;
+    const interval = setInterval(() => {
+      setActiveFeature((prev) => {
+        const idx = featureIds.indexOf(prev);
+        return featureIds[(idx + 1) % featureIds.length];
+      });
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [isInView]);
 
   const currentFeature = features.find((f) => f.id === activeFeature) || features[0];
 
@@ -223,8 +238,8 @@ const GenesisWhyChoose = () => {
                 </motion.div>
               </AnimatePresence>
 
-              {/* Feature Tabs */}
-              <div className="flex flex-wrap gap-2 mt-6">
+              {/* Feature Tabs with animated cursor */}
+              <div className="relative flex flex-wrap gap-2 mt-6">
                 {features.map((f) => {
                   const Icon = f.icon;
                   const isActive = f.id === activeFeature;
@@ -233,7 +248,7 @@ const GenesisWhyChoose = () => {
                       key={f.id}
                       onClick={() => setActiveFeature(f.id)}
                       className={
-                        'flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ' +
+                        'relative flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ' +
                         (isActive
                           ? 'bg-primary/15 border-primary/30 text-primary'
                           : 'bg-muted/20 border-border/50 text-muted-foreground hover:border-border hover:text-foreground')
@@ -241,6 +256,21 @@ const GenesisWhyChoose = () => {
                     >
                       <Icon className="w-3.5 h-3.5" />
                       {f.title.split(' ')[0]}
+                      {/* Animated cursor on active */}
+                      <AnimatePresence>
+                        {isActive && (
+                          <motion.span
+                            key="cursor"
+                            initial={{ opacity: 0, scale: 0.5, x: -8, y: 8 }}
+                            animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.5 }}
+                            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                            className="absolute -top-3 -right-3 pointer-events-none"
+                          >
+                            <MousePointer2 className="w-4 h-4 text-primary fill-primary/30 drop-shadow-lg" />
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
                     </button>
                   );
                 })}
