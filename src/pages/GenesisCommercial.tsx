@@ -2,6 +2,7 @@ import GenesisCommercialHeader from '@/components/genesis-commercial/GenesisComm
 import GenesisCommercialHero from '@/components/genesis-commercial/GenesisCommercialHero';
 import GenesisCommercialRadar from '@/components/genesis-commercial/GenesisCommercialRadar';
 import GenesisCommercialFeatures from '@/components/genesis-commercial/GenesisCommercialFeatures';
+import GenesisWhyChoose from '@/components/genesis-commercial/GenesisWhyChoose';
 import GenesisCommercialPartnerships from '@/components/genesis-commercial/GenesisCommercialPartnerships';
 import GenesisCommercialPricing from '@/components/genesis-commercial/GenesisCommercialPricing';
 import GenesisCommercialFAQ from '@/components/genesis-commercial/GenesisCommercialFAQ';
@@ -14,6 +15,7 @@ const GenesisCommercial = () => {
       <GenesisCommercialHero />
       <GenesisCommercialRadar />
       <GenesisCommercialFeatures />
+      <GenesisWhyChoose />
       <GenesisCommercialPartnerships />
       <GenesisCommercialPricing />
       <GenesisCommercialFAQ />
