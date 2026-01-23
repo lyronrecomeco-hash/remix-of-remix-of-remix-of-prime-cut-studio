@@ -4,6 +4,7 @@ import { Check, Copy, Download, RotateCcw, Sparkles, Save, Loader2, ArrowLeft } 
 import { Button } from '@/components/ui/button';
 import { useFromScratch } from '../FromScratchContext';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,6 +18,7 @@ import {
 
 interface StepPreviewProps {
   onComplete: () => void;
+  affiliateId?: string;
 }
 
 const GENERATION_LOGS = [
@@ -34,13 +36,19 @@ const GENERATION_LOGS = [
   { text: 'Prompt gerado com sucesso!', icon: '🚀' }
 ];
 
-export function StepPreview({ onComplete }: StepPreviewProps) {
+interface StepPreviewProps {
+  onComplete: () => void;
+  affiliateId?: string;
+}
+
+export function StepPreview({ onComplete, affiliateId }: StepPreviewProps) {
   const { generatedPrompt, resetWizard, formData, selectedNiche, generatePrompt } = useFromScratch();
   const [copied, setCopied] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [isGenerating, setIsGenerating] = useState(true);
   const [currentLogIndex, setCurrentLogIndex] = useState(0);
   const [displayedPrompt, setDisplayedPrompt] = useState('');
+  const [saving, setSaving] = useState(false);
 
   // Generation animation - 30 seconds max
   useEffect(() => {
@@ -93,10 +101,58 @@ export function StepPreview({ onComplete }: StepPreviewProps) {
     setShowSaveDialog(true);
   };
 
-  const confirmSave = () => {
-    toast.success('Projeto salvo na biblioteca!');
-    setShowSaveDialog(false);
-    onComplete();
+  const confirmSave = async () => {
+    if (!affiliateId) {
+      toast.error('Erro: ID do afiliado não encontrado');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const uniqueCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      
+      const { error } = await supabase
+        .from('affiliate_template_configs')
+        .insert([{
+          affiliate_id: affiliateId,
+          template_slug: 'from-scratch',
+          template_name: formData.projectName || 'Projeto Personalizado',
+          unique_code: uniqueCode,
+          client_name: formData.companyName || null,
+          platform: formData.targetAI === 'other' ? formData.otherAI : formData.targetAI,
+          last_prompt: displayedPrompt,
+          config: {
+            projectType: formData.projectType,
+            nicheId: formData.nicheId,
+            customNiche: formData.customNiche,
+            language: formData.language,
+            currency: formData.currency,
+            primaryColor: formData.primaryColor,
+            secondaryColor: formData.secondaryColor,
+            typography: formData.typography,
+            visualStyle: formData.visualStyle,
+            themeMode: formData.themeMode,
+            selectedPages: formData.selectedPages,
+            selectedFeatures: formData.selectedFeatures,
+            integrations: formData.integrations,
+            isPWA: formData.isPWA,
+            hasAdvancedSEO: formData.hasAdvancedSEO,
+            hasAnalytics: formData.hasAnalytics,
+          },
+          is_active: true
+        }]);
+
+      if (error) throw error;
+      
+      toast.success('Projeto salvo na biblioteca!');
+      setShowSaveDialog(false);
+      onComplete();
+    } catch (error) {
+      console.error('Error saving project:', error);
+      toast.error('Erro ao salvar projeto');
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (isGenerating) {
@@ -141,7 +197,7 @@ export function StepPreview({ onComplete }: StepPreviewProps) {
                 }`}
               >
               {index < currentLogIndex ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <Check className="w-3.5 h-3.5 text-primary shrink-0" />
                 ) : (
                   <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
                 )}

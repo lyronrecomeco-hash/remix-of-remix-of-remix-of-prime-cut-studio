@@ -694,19 +694,19 @@ export function CriarProjetosCustomizer({
                   </CardContent>
                 </Card>
 
-                {/* Save Button */}
+                {/* Compact Save Button */}
                 <Button 
                   onClick={handleSave} 
                   disabled={saving} 
-                  className="w-full h-12 sm:h-14 text-base gap-2"
-                  size="lg"
+                  size="sm"
+                  className="w-full h-9 text-xs gap-1.5"
                 >
                   {saving ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (
                     <>
-                      <Sparkles className="w-5 h-5" />
-                      {editingConfig ? 'Atualizar Projeto' : 'Criar Projeto'}
+                      <Sparkles className="w-3.5 h-3.5" />
+                      {editingConfig ? 'Atualizar' : 'Criar Projeto'}
                     </>
                   )}
                 </Button>
@@ -716,24 +716,26 @@ export function CriarProjetosCustomizer({
         </AnimatePresence>
       </ScrollArea>
 
-      {/* Navigation Buttons */}
-      <div className="flex gap-3 mt-4 pt-4 border-t">
+      {/* Compact Navigation Buttons */}
+      <div className="flex gap-2 mt-3 pt-3 border-t border-white/10">
         {currentSectionIndex > 0 && (
           <Button 
             variant="outline" 
+            size="sm"
             onClick={() => setActiveSection(sections[currentSectionIndex - 1].id)}
-            className="flex-1"
+            className="flex-1 h-8 text-xs"
           >
             Anterior
           </Button>
         )}
         {currentSectionIndex < sections.length - 1 && (
           <Button 
+            size="sm"
             onClick={() => setActiveSection(sections[currentSectionIndex + 1].id)}
-            className="flex-1 gap-2"
+            className="flex-1 gap-1.5 h-8 text-xs"
           >
             Próximo
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-3.5 h-3.5" />
           </Button>
         )}
       </div>

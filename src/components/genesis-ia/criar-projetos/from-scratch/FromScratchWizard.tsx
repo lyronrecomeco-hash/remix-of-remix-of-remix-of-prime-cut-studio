@@ -32,9 +32,10 @@ const STEPS = [
 interface FromScratchWizardProps {
   onBack: () => void;
   onComplete: () => void;
+  affiliateId?: string;
 }
 
-function WizardContent({ onBack, onComplete }: FromScratchWizardProps) {
+function WizardContent({ onBack, onComplete, affiliateId }: FromScratchWizardProps) {
   const { currentStep, totalSteps, nextStep, prevStep, canProceed } = useFromScratch();
 
   const handleBack = () => {
@@ -57,7 +58,7 @@ function WizardContent({ onBack, onComplete }: FromScratchWizardProps) {
       case 8: return <StepFeatures />;
       case 9: return <StepExtras />;
       case 10: return <StepTargetAI />;
-      case 11: return <StepPreview onComplete={onComplete} />;
+      case 11: return <StepPreview onComplete={onComplete} affiliateId={affiliateId} />;
       default: return null;
     }
   };
@@ -65,70 +66,68 @@ function WizardContent({ onBack, onComplete }: FromScratchWizardProps) {
   const currentStepInfo = STEPS[currentStep - 1];
 
   return (
-    <div className="min-h-[calc(100vh-200px)] w-full">
-      {/* Header */}
-      <div className="mb-4">
-        <div className="flex items-center gap-3 mb-3">
-          <Button variant="ghost" size="icon" onClick={handleBack} className="h-8 w-8">
-            <ArrowLeft className="w-4 h-4" />
+    <div className="w-full">
+      {/* Compact Header */}
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={handleBack} className="h-7 w-7">
+            <ArrowLeft className="w-3.5 h-3.5" />
           </Button>
           <div>
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-primary" />
-              <h2 className="text-lg font-bold text-foreground">Criar do Zero</h2>
+            <div className="flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
+              <h2 className="text-sm font-bold text-foreground">Criar do Zero</h2>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[10px] text-muted-foreground">
               {currentStepInfo.title} - {currentStepInfo.subtitle}
             </p>
           </div>
         </div>
+        <span className="text-[10px] text-muted-foreground">
+          {currentStep}/{totalSteps}
+        </span>
+      </div>
 
-        {/* Progress Bar */}
-        <div className="flex items-center gap-0.5">
-          {STEPS.map((step) => (
-            <div
-              key={step.id}
-              className={`flex-1 h-1 rounded-full transition-colors ${
-                step.id <= currentStep 
-                  ? 'bg-primary' 
-                  : 'bg-white/10'
-              }`}
-            />
-          ))}
-        </div>
-        <p className="text-[10px] text-muted-foreground mt-1.5 text-right">
-          Etapa {currentStep} de {totalSteps}
-        </p>
+      {/* Compact Progress Bar */}
+      <div className="flex items-center gap-0.5 mb-3">
+        {STEPS.map((step) => (
+          <div
+            key={step.id}
+            className={`flex-1 h-0.5 rounded-full transition-colors ${
+              step.id <= currentStep ? 'bg-primary' : 'bg-white/10'
+            }`}
+          />
+        ))}
       </div>
 
       {/* Step Content */}
       <AnimatePresence mode="wait">
         <motion.div
           key={currentStep}
-          initial={{ opacity: 0, x: 20 }}
+          initial={{ opacity: 0, x: 15 }}
           animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.2 }}
+          exit={{ opacity: 0, x: -15 }}
+          transition={{ duration: 0.15 }}
         >
           {renderStep()}
         </motion.div>
       </AnimatePresence>
 
-      {/* Navigation */}
+      {/* Compact Navigation */}
       {currentStep < 11 && (
-        <div className="flex justify-between mt-6 pt-4 border-t border-white/10">
-          <Button variant="ghost" size="sm" onClick={handleBack} className="h-8 text-xs">
-            <ArrowLeft className="w-3.5 h-3.5 mr-1.5" />
+        <div className="flex justify-between mt-4 pt-3 border-t border-white/10">
+          <Button variant="ghost" size="sm" onClick={handleBack} className="h-7 text-[11px] px-2">
+            <ArrowLeft className="w-3 h-3 mr-1" />
             Voltar
           </Button>
           <Button
             onClick={nextStep}
             disabled={!canProceed}
             size="sm"
-            className="bg-primary hover:bg-primary/90 h-8 text-xs"
+            className="bg-primary hover:bg-primary/90 h-7 text-[11px] px-3"
           >
             Próximo
-            <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+            <ArrowRight className="w-3 h-3 ml-1" />
           </Button>
         </div>
       )}

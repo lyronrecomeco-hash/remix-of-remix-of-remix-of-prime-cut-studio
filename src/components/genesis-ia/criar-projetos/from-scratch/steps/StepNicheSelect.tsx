@@ -77,56 +77,56 @@ export function StepNicheSelect() {
   }, [searchQuery, selectedCategory]);
 
   return (
-    <div className="space-y-4">
-      <div className="text-center mb-4">
-        <h3 className="text-xl font-bold text-foreground mb-1">
+    <div className="space-y-3">
+      <div className="mb-2">
+        <h3 className="text-base font-bold text-foreground mb-0.5">
           Qual é o segmento do negócio?
         </h3>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           Selecione o nicho para gerar um prompt contextualizado
         </p>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md mx-auto">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Buscar nicho..."
-          className="pl-10 bg-white/5 border-white/10 h-9"
-        />
-      </div>
-
-      {/* Categories */}
-      <div className="flex flex-wrap gap-1.5 justify-center">
-        <button
-          onClick={() => setSelectedCategory(null)}
-          className={`px-2.5 py-1 rounded-full text-xs transition-colors ${
-            !selectedCategory 
-              ? 'bg-primary text-primary-foreground' 
-              : 'bg-white/5 text-muted-foreground hover:bg-white/10'
-          }`}
-        >
-          Todos
-        </button>
-        {NICHE_CATEGORIES.map((cat) => (
+      {/* Search and Categories Row */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative flex-1 min-w-[200px] max-w-xs">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Buscar nicho..."
+            className="pl-8 bg-white/5 border-white/10 h-8 text-xs"
+          />
+        </div>
+        <div className="flex flex-wrap gap-1">
           <button
-            key={cat.id}
-            onClick={() => setSelectedCategory(cat.id)}
-            className={`px-2.5 py-1 rounded-full text-xs transition-colors ${
-              selectedCategory === cat.id 
+            onClick={() => setSelectedCategory(null)}
+            className={`px-2 py-1 rounded-full text-[10px] transition-colors ${
+              !selectedCategory 
                 ? 'bg-primary text-primary-foreground' 
                 : 'bg-white/5 text-muted-foreground hover:bg-white/10'
             }`}
           >
-            {cat.emoji} {cat.name}
+            Todos
           </button>
-        ))}
+          {NICHE_CATEGORIES.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.id)}
+              className={`px-2 py-1 rounded-full text-[10px] transition-colors ${
+                selectedCategory === cat.id 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'bg-white/5 text-muted-foreground hover:bg-white/10'
+              }`}
+            >
+              {cat.emoji} {cat.name}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Niches Grid - Template Selector Style */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+      {/* Niches Grid - Compact Cards */}
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2">
         {filteredNiches.map((niche, index) => {
           const isSelected = formData.nicheId === niche.id;
           const imageUrl = NICHE_IMAGES[niche.id];
@@ -136,29 +136,29 @@ export function StepNicheSelect() {
               key={niche.id}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.02 }}
+              transition={{ delay: index * 0.015 }}
               onClick={() => updateFormData('nicheId', niche.id)}
-              className={`group relative rounded-xl overflow-hidden border-2 text-left transition-all hover:-translate-y-1 hover:shadow-lg ${
+              className={`group relative rounded-lg overflow-hidden border text-left transition-all hover:-translate-y-0.5 hover:shadow-md ${
                 isSelected
-                  ? 'border-primary ring-2 ring-primary/30 shadow-lg shadow-primary/20'
+                  ? 'border-primary ring-1 ring-primary/30 shadow-md shadow-primary/20'
                   : 'border-border bg-card hover:border-primary/50'
               }`}
             >
               {/* Image */}
-              <div className="relative h-24 overflow-hidden">
+              <div className="relative h-16 overflow-hidden">
                 {imageUrl ? (
                   <>
                     <img 
                       src={imageUrl} 
                       alt={niche.name}
-                      className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
                       loading="lazy"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
                   </>
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
-                    <span className="text-3xl">{niche.emoji}</span>
+                    <span className="text-xl">{niche.emoji}</span>
                   </div>
                 )}
                 
@@ -167,37 +167,32 @@ export function StepNicheSelect() {
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center"
+                    className="absolute top-1 right-1 w-4 h-4 rounded-full bg-primary flex items-center justify-center"
                   >
-                    <Check className="w-3 h-3 text-primary-foreground" />
+                    <Check className="w-2.5 h-2.5 text-primary-foreground" />
                   </motion.div>
                 )}
                 
                 {/* Emoji Badge */}
-                <div className="absolute bottom-1.5 left-1.5 text-lg bg-black/40 rounded-lg px-1.5 py-0.5 backdrop-blur-sm">
+                <div className="absolute bottom-1 left-1 text-sm bg-black/40 rounded px-1 backdrop-blur-sm">
                   {niche.emoji}
                 </div>
               </div>
               
-              {/* Card Footer */}
-              <div className="p-2.5 bg-card">
-                <h4 className={`text-sm font-semibold line-clamp-1 ${isSelected ? 'text-primary' : 'text-foreground'}`}>
+              {/* Card Footer - Compact */}
+              <div className="px-1.5 py-1 bg-card">
+                <h4 className={`text-[10px] font-semibold line-clamp-1 ${isSelected ? 'text-primary' : 'text-foreground'}`}>
                   {niche.name}
                 </h4>
-                <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                  {niche.description}
-                </p>
               </div>
             </motion.button>
           );
         })}
       </div>
 
-      {/* Custom Niche */}
-      <div className="max-w-sm mx-auto mt-4 p-3 rounded-xl bg-white/5 border border-white/10">
-        <p className="text-xs text-muted-foreground text-center mb-2">
-          Não encontrou seu nicho?
-        </p>
+      {/* Custom Niche - Inline */}
+      <div className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10">
+        <span className="text-[10px] text-muted-foreground whitespace-nowrap">Outro nicho:</span>
         <Input
           value={formData.customNiche || ''}
           onChange={(e) => {
@@ -205,7 +200,7 @@ export function StepNicheSelect() {
             if (e.target.value) updateFormData('nicheId', 'outro');
           }}
           placeholder="Digite o nicho personalizado..."
-          className="bg-white/5 border-white/10 text-center h-9 text-sm"
+          className="bg-white/5 border-white/10 h-7 text-xs flex-1"
         />
       </div>
     </div>

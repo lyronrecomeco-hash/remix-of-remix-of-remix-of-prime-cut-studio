@@ -127,19 +127,19 @@ export function EvolutionWizard({ project, onBack, onComplete }: EvolutionWizard
   };
 
   return (
-    <div className="space-y-5">
-      {/* Modal-like Header */}
-      <div className="flex items-center justify-between p-4 rounded-t-xl bg-white/5 border border-white/10 border-b-0">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-amber-400" />
+    <div className="space-y-4">
+      {/* Modal-like Header - Primary Color */}
+      <div className="flex items-center justify-between p-3 rounded-t-xl bg-white/5 border border-white/10 border-b-0">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center">
+            <Sparkles className="w-3.5 h-3.5 text-primary" />
           </div>
           <div>
             <h2 className="text-sm font-semibold text-foreground">
               Evoluir {project.client_name || project.template_name}
             </h2>
-            <p className="text-[11px] text-muted-foreground">
-              Selecione o tipo de atualização que deseja realizar no código.
+            <p className="text-[10px] text-muted-foreground">
+              Selecione o tipo de atualização
             </p>
           </div>
         </div>
@@ -147,21 +147,21 @@ export function EvolutionWizard({ project, onBack, onComplete }: EvolutionWizard
           variant="ghost"
           size="icon"
           onClick={onBack}
-          className="h-8 w-8 rounded-full hover:bg-white/10"
+          className="h-7 w-7 rounded-full hover:bg-white/10"
         >
-          <X className="w-4 h-4" />
+          <X className="w-3.5 h-3.5" />
         </Button>
       </div>
 
       {/* Content Area */}
-      <div className="p-4 rounded-b-xl bg-white/5 border border-white/10 border-t-0 -mt-5">
+      <div className="p-3 rounded-b-xl bg-white/5 border border-white/10 border-t-0 -mt-4">
         <AnimatePresence mode="wait">
           {step === 'select' && (
             <motion.div
               key="select"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              exit={{ opacity: 0, y: -8 }}
             >
               <EvolutionCards
                 selectedType={selectedType}
@@ -173,17 +173,17 @@ export function EvolutionWizard({ project, onBack, onComplete }: EvolutionWizard
           {step === 'form' && selectedType && (
             <motion.div
               key="form"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="space-y-4"
+              exit={{ opacity: 0, y: -8 }}
+              className="space-y-3"
             >
-              {/* Form Header with selected type */}
-              <div className="flex items-center gap-2 pb-3 border-b border-white/10">
-                <div className="w-6 h-6 rounded bg-amber-500/20 flex items-center justify-center">
-                  <Sparkles className="w-3 h-3 text-amber-400" />
+              {/* Form Header with selected type - Primary Color */}
+              <div className="flex items-center gap-2 pb-2 border-b border-white/10">
+                <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center">
+                  <Sparkles className="w-2.5 h-2.5 text-primary" />
                 </div>
-                <span className="text-xs font-semibold text-amber-300 uppercase tracking-wider">
+                <span className="text-[11px] font-semibold text-primary uppercase tracking-wider">
                   {selectedType.title}
                 </span>
               </div>
@@ -194,18 +194,20 @@ export function EvolutionWizard({ project, onBack, onComplete }: EvolutionWizard
                 onChange={handleAnswerChange}
               />
 
-              {/* Generate Button */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+              {/* Generate Button - Primary Color */}
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-white/10">
                 <Button
                   variant="ghost"
+                  size="sm"
                   onClick={handleBack}
-                  className="text-xs"
+                  className="text-[11px] h-7"
                 >
                   Voltar
                 </Button>
                 <Button
                   onClick={handleGeneratePrompt}
-                  className="gap-2 bg-amber-500 hover:bg-amber-600 text-black font-medium"
+                  size="sm"
+                  className="gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground font-medium h-7 text-[11px]"
                 >
                   GERAR UPDATE
                 </Button>
@@ -216,9 +218,9 @@ export function EvolutionWizard({ project, onBack, onComplete }: EvolutionWizard
           {step === 'preview' && (
             <motion.div
               key="preview"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              exit={{ opacity: 0, y: -8 }}
             >
               <EvolutionPreview
                 prompt={generatedPrompt}

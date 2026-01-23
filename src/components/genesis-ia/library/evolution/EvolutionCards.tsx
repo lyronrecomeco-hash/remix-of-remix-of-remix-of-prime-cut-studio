@@ -28,7 +28,7 @@ const CATEGORY_GROUPS = [
 
 export function EvolutionCards({ selectedType, onSelect }: EvolutionCardsProps) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       {CATEGORY_GROUPS.map((group) => {
         const types = group.types
           .map((id) => EVOLUTION_TYPES.find((t) => t.id === id))
@@ -37,16 +37,14 @@ export function EvolutionCards({ selectedType, onSelect }: EvolutionCardsProps) 
         if (types.length === 0) return null;
 
         return (
-          <div key={group.id} className="space-y-4">
+          <div key={group.id} className="space-y-2">
             {/* Category Label */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
-                {group.label}
-              </span>
-            </div>
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+              {group.label}
+            </span>
 
-            {/* Cards Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {/* Cards Grid - Primary Colors */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
               {types.map((type, index) => {
                 const Icon = type.icon;
                 const isSelected = selectedType?.id === type.id;
@@ -56,45 +54,45 @@ export function EvolutionCards({ selectedType, onSelect }: EvolutionCardsProps) 
                     key={type.id}
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: index * 0.03 }}
+                    transition={{ delay: index * 0.02 }}
                     onClick={() => onSelect(type)}
                     className={cn(
-                      'relative p-5 rounded-xl border text-center transition-all duration-200',
-                      'hover:scale-[1.02] hover:bg-white/10',
-                      'focus:outline-none focus:ring-2 focus:ring-blue-500/50',
-                      'min-h-[130px] flex flex-col items-center justify-center gap-3',
+                      'relative p-3 rounded-lg border text-center transition-all duration-200',
+                      'hover:scale-[1.01] hover:bg-white/10',
+                      'focus:outline-none focus:ring-2 focus:ring-primary/50',
+                      'min-h-[90px] flex flex-col items-center justify-center gap-2',
                       isSelected
-                        ? 'border-blue-500 bg-blue-500/10 shadow-lg shadow-blue-500/10'
-                        : 'border-white/10 bg-white/5 hover:border-blue-500/30'
+                        ? 'border-primary bg-primary/10 shadow-md shadow-primary/10'
+                        : 'border-white/10 bg-white/5 hover:border-primary/30'
                     )}
                   >
                     {isSelected && (
                       <motion.div
                         layoutId="selected-evolution"
-                        className="absolute inset-0 rounded-xl border-2 border-blue-500"
-                        transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
+                        className="absolute inset-0 rounded-lg border-2 border-primary"
+                        transition={{ type: 'spring', bounce: 0.2, duration: 0.3 }}
                       />
                     )}
 
                     <div className="relative z-10 flex flex-col items-center">
                       <div
                         className={cn(
-                          'w-12 h-12 rounded-xl flex items-center justify-center mb-2',
-                          isSelected ? 'bg-blue-500/20' : 'bg-white/10'
+                          'w-8 h-8 rounded-lg flex items-center justify-center mb-1',
+                          isSelected ? 'bg-primary/20' : 'bg-white/10'
                         )}
                       >
                         <Icon
                           className={cn(
-                            'w-6 h-6',
-                            isSelected ? 'text-blue-400' : 'text-muted-foreground'
+                            'w-4 h-4',
+                            isSelected ? 'text-primary' : 'text-muted-foreground'
                           )}
                         />
                       </div>
 
                       <h4
                         className={cn(
-                          'text-sm font-semibold leading-tight uppercase tracking-wide',
-                          isSelected ? 'text-blue-300' : 'text-foreground'
+                          'text-[10px] font-semibold leading-tight uppercase tracking-wide',
+                          isSelected ? 'text-primary' : 'text-foreground'
                         )}
                       >
                         {type.title}
