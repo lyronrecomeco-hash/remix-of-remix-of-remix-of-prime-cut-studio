@@ -5,16 +5,19 @@ import { CriarProjetosSelector, TemplateInfo } from './CriarProjetosSelector';
 import { CriarProjetosCustomizer } from './CriarProjetosCustomizer';
 import { ProjectLibrary } from '../library/ProjectLibrary';
 import { ProjectConfig } from '../library/ProjectCard';
+import { CreationMethodModal } from './from-scratch/CreationMethodModal';
+import { FromScratchWizard } from './from-scratch/FromScratchWizard';
 
 interface CriarProjetosTabProps {
   affiliateId: string | null;
   onBack: () => void;
 }
 
-type View = 'library' | 'select' | 'customize';
+type View = 'library' | 'select' | 'customize' | 'from-scratch';
 
 export function CriarProjetosTab({ affiliateId, onBack }: CriarProjetosTabProps) {
   const [view, setView] = useState<View>('library');
+  const [showMethodModal, setShowMethodModal] = useState(false);
   
   // Customization state
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateInfo | null>(null);
@@ -58,6 +61,28 @@ export function CriarProjetosTab({ affiliateId, onBack }: CriarProjetosTabProps)
     setEditingConfig(null);
   };
 
+  const handleCreateNew = () => {
+    setShowMethodModal(true);
+  };
+
+  const handleSelectTemplateMethod = () => {
+    setShowMethodModal(false);
+    setView('select');
+  };
+
+  const handleStartFromScratch = () => {
+    setShowMethodModal(false);
+    setView('from-scratch');
+  };
+
+  const handleFromScratchComplete = () => {
+    setView('library');
+  };
+
+  const handleFromScratchBack = () => {
+    setView('library');
+  };
+
   if (!affiliateId) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -71,6 +96,18 @@ export function CriarProjetosTab({ affiliateId, onBack }: CriarProjetosTabProps)
 
   return (
     <div className="min-h-[calc(100vh-200px)]">
+      {/* Creation Method Modal */}
+      <AnimatePresence>
+        {showMethodModal && (
+          <CreationMethodModal
+            isOpen={showMethodModal}
+            onClose={() => setShowMethodModal(false)}
+            onSelectTemplate={handleSelectTemplateMethod}
+            onStartFromScratch={handleStartFromScratch}
+          />
+        )}
+      </AnimatePresence>
+
       <AnimatePresence mode="wait">
         {view === 'library' && (
           <motion.div
@@ -82,7 +119,7 @@ export function CriarProjetosTab({ affiliateId, onBack }: CriarProjetosTabProps)
             <ProjectLibrary
               affiliateId={affiliateId}
               onEdit={handleEdit}
-              onCreateNew={() => setView('select')}
+              onCreateNew={handleCreateNew}
               onBack={onBack}
             />
           </motion.div>
@@ -115,6 +152,20 @@ export function CriarProjetosTab({ affiliateId, onBack }: CriarProjetosTabProps)
               affiliateId={affiliateId}
               onBack={handleBackFromCustomize}
               onSaved={handleSaved}
+            />
+          </motion.div>
+        )}
+
+        {view === 'from-scratch' && (
+          <motion.div
+            key="from-scratch"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <FromScratchWizard
+              onBack={handleFromScratchBack}
+              onComplete={handleFromScratchComplete}
             />
           </motion.div>
         )}
