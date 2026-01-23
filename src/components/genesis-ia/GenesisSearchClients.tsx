@@ -287,15 +287,25 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
 
   return (
     <div className="space-y-5">
-      {/* Search Form */}
-      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-        <CardContent className="p-5">
+      {/* Search Form - Genesis Glassmorphism Style */}
+      <div className="rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-white/10 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+            <Search className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-foreground">Buscar Clientes</h3>
+            <p className="text-xs text-muted-foreground">Encontre oportunidades de negócio em qualquer lugar</p>
+          </div>
+        </div>
+        
+        <div className="p-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* Country */}
             <div>
-              <Label className="text-sm font-medium mb-2 block">🌍 País</Label>
+              <Label className="text-xs font-medium text-muted-foreground mb-2 block">🌍 País</Label>
               <Select value={countryCode} onValueChange={setCountryCode}>
-                <SelectTrigger className="h-10 bg-background/80">
+                <SelectTrigger className="h-10 bg-white/5 border-white/10 hover:bg-white/10 transition-colors">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="max-h-[280px]">
@@ -311,11 +321,11 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
             {/* State (Brazil only) */}
             {countryCode === 'BR' && (
               <div>
-                <Label className="text-sm font-medium mb-2 flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4 text-primary" /> Estado
+                <Label className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+                  <MapPin className="w-3 h-3 text-primary" /> Estado
                 </Label>
                 <Select value={state} onValueChange={setState}>
-                  <SelectTrigger className="h-10 bg-background/80">
+                  <SelectTrigger className="h-10 bg-white/5 border-white/10 hover:bg-white/10 transition-colors">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent className="max-h-[280px]">
@@ -329,24 +339,24 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
 
             {/* City */}
             <div>
-              <Label className="text-sm font-medium mb-2 flex items-center gap-1.5">
-                <MapPin className="w-4 h-4 text-primary" /> Cidade
+              <Label className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+                <MapPin className="w-3 h-3 text-primary" /> Cidade
               </Label>
               <Input
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 placeholder={countryCode === 'BR' ? 'Ex: São Paulo' : 'Ex: New York'}
-                className="h-10 bg-background/80"
+                className="h-10 bg-white/5 border-white/10 hover:bg-white/10 transition-colors"
               />
             </div>
 
             {/* Niche */}
             <div>
-              <Label className="text-sm font-medium mb-2 flex items-center gap-1.5">
-                <Building2 className="w-4 h-4 text-primary" /> Nicho
+              <Label className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+                <Building2 className="w-3 h-3 text-primary" /> Nicho
               </Label>
               <Select value={niche} onValueChange={setNiche}>
-                <SelectTrigger className="h-10 bg-background/80">
+                <SelectTrigger className="h-10 bg-white/5 border-white/10 hover:bg-white/10 transition-colors">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[280px]">
@@ -374,15 +384,16 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
           </div>
 
           {/* Filters Row */}
-          <div className="mt-4 flex flex-wrap items-center gap-4 pt-4 border-t border-border/50">
+          <div className="mt-4 flex flex-wrap items-center gap-4 pt-4 border-t border-white/10">
             <div className="flex items-center gap-2">
               <Checkbox 
                 id="excludeWebsite" 
                 checked={excludeWithWebsite}
                 onCheckedChange={(c) => setExcludeWithWebsite(c === true)}
+                className="border-white/20"
               />
-              <label htmlFor="excludeWebsite" className="text-sm cursor-pointer flex items-center gap-1.5">
-                <GlobeIcon className="w-4 h-4 text-muted-foreground" />
+              <label htmlFor="excludeWebsite" className="text-sm cursor-pointer flex items-center gap-1.5 text-muted-foreground">
+                <GlobeIcon className="w-4 h-4" />
                 Apenas empresas <strong className="text-primary">sem site</strong>
               </label>
             </div>
@@ -392,10 +403,11 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
                 id="onlyOpenNow" 
                 checked={onlyOpenNow}
                 onCheckedChange={(c) => setOnlyOpenNow(c === true)}
+                className="border-white/20"
               />
-              <label htmlFor="onlyOpenNow" className="text-sm cursor-pointer flex items-center gap-1.5">
-                <Clock className="w-4 h-4 text-muted-foreground" />
-                Abertas <strong className={businessesOpenNow ? "text-green-500" : "text-orange-500"}>
+              <label htmlFor="onlyOpenNow" className="text-sm cursor-pointer flex items-center gap-1.5 text-muted-foreground">
+                <Clock className="w-4 h-4" />
+                Abertas <strong className={businessesOpenNow ? "text-emerald-400" : "text-orange-400"}>
                   {businessesOpenNow ? 'agora' : 'fora de expediente'}
                 </strong>
               </label>
@@ -406,7 +418,7 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="gap-2 h-9"
+                className="gap-2 h-8 bg-white/5 border-white/10 hover:bg-white/10"
                 onClick={() => setRadiusFilterOpen(true)}
               >
                 <Map className="w-4 h-4" />
@@ -418,7 +430,7 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="gap-2 h-9 text-muted-foreground"
+                className="gap-2 h-8 text-muted-foreground"
                 onClick={() => setFilteredResults([])}
               >
                 <XCircle className="w-4 h-4" />
@@ -427,45 +439,50 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
             )}
 
             {selectedCountry && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground ml-auto">
-                <Clock className="w-4 h-4" />
+              <div className="flex items-center gap-2 text-xs text-muted-foreground ml-auto">
+                <Clock className="w-3.5 h-3.5" />
                 <span>{selectedCountry.flag} {currentLocalTime}</span>
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Loading */}
+      {/* Loading - Genesis Style */}
       {searching && (
-        <div className="flex flex-col items-center justify-center py-16 gap-4">
-          <Loader2 className="w-12 h-12 animate-spin text-primary" />
-          <p className="text-muted-foreground">Buscando empresas...</p>
+        <div className="rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm p-12 flex flex-col items-center justify-center gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+          <p className="text-muted-foreground font-medium">Buscando empresas...</p>
+          <p className="text-xs text-muted-foreground/70">Isso pode levar alguns segundos</p>
         </div>
       )}
 
-      {/* Empty State */}
+      {/* Empty State - Genesis Style */}
       {displayResults.length === 0 && !searching && (
-        <div className="flex flex-col items-center justify-center py-16 gap-4">
-          <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center">
-            <Search className="w-10 h-10 text-primary/50" />
+        <div className="rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm p-12 flex flex-col items-center justify-center gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <Search className="w-8 h-8 text-primary/50" />
           </div>
-          <h3 className="text-xl font-semibold">Faça uma busca</h3>
-          <p className="text-muted-foreground text-center max-w-md">
+          <h3 className="text-lg font-semibold">Faça uma busca</h3>
+          <p className="text-sm text-muted-foreground text-center max-w-md">
             Preencha os campos acima e clique em buscar para encontrar oportunidades de negócio.
           </p>
         </div>
       )}
 
-      {/* Results */}
+      {/* Results - Genesis Style */}
       {displayResults.length > 0 && !searching && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-primary" />
+            <h3 className="text-base font-semibold flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-primary" />
+              </div>
               {displayResults.length} Oportunidades Encontradas
             </h3>
-            <Badge variant="outline" className="text-sm px-3 py-1">
+            <Badge variant="outline" className="text-xs px-3 py-1 bg-white/5 border-white/10">
               Página {currentPage} de {totalPages}
             </Badge>
           </div>
@@ -476,19 +493,19 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
               const nicheIcon = getNicheIcon(result.niche);
 
               return (
-                <Card key={idx} className="overflow-hidden border-border hover:border-primary/50 transition-all hover:shadow-lg group h-fit">
-                  <CardContent className="p-4">
+                <div key={idx} className="rounded-2xl bg-white/5 border border-white/10 hover:border-primary/30 transition-all hover:bg-white/[0.07] overflow-hidden group h-fit">
+                  <div className="p-4">
                     {/* Header */}
                     <div className="flex items-start gap-3 mb-3">
-                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-2xl shrink-0">
+                      <div className="w-11 h-11 rounded-xl bg-primary/20 flex items-center justify-center text-xl shrink-0">
                         {nicheIcon}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-foreground truncate">{result.name}</h4>
+                        <h4 className="font-semibold text-foreground text-sm truncate">{result.name}</h4>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <span className="text-sm text-muted-foreground">{result.niche}</span>
+                          <span className="text-xs text-muted-foreground">{result.niche}</span>
                           {levelConfig && (
-                            <Badge variant="outline" className={cn("text-xs px-2 py-0.5", levelConfig.color)}>
+                            <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", levelConfig.color)}>
                               {levelConfig.label}
                             </Badge>
                           )}
@@ -497,20 +514,20 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
                     </div>
 
                     {/* Value Box */}
-                    <div className="grid grid-cols-2 gap-3 mb-3 p-3 rounded-xl bg-gradient-to-r from-primary/5 to-emerald-500/5 border border-border/50">
+                    <div className="grid grid-cols-2 gap-3 mb-3 p-3 rounded-xl bg-white/5 border border-white/10">
                       <div>
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                          <DollarSign className="w-3.5 h-3.5" /> VALOR ESTIMADO
+                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-0.5 uppercase tracking-wider">
+                          <DollarSign className="w-3 h-3" /> Valor
                         </div>
-                        <div className="text-lg font-bold text-primary">
+                        <div className="text-sm font-bold text-primary">
                           R$ {result.estimatedValueMin} - {result.estimatedValueMax}
                         </div>
                       </div>
                       <div>
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                          <TrendingUp className="w-3.5 h-3.5" /> RECORRÊNCIA
+                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-0.5 uppercase tracking-wider">
+                          <TrendingUp className="w-3 h-3" /> Recorrência
                         </div>
-                        <div className="text-lg font-bold text-emerald-500">
+                        <div className="text-sm font-bold text-emerald-400">
                           +R$ {result.monthlyRecurrence}/mês
                         </div>
                       </div>
@@ -575,49 +592,49 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
 
                     {/* Digital Status */}
                     <div className={cn(
-                      "text-sm px-3 py-2 rounded-lg mb-3 flex items-center gap-2",
+                      "text-xs px-3 py-2 rounded-lg mb-3 flex items-center gap-2",
                       result.needsWebsite 
                         ? "bg-orange-500/10 text-orange-400 border border-orange-500/20" 
-                        : "bg-muted text-muted-foreground"
+                        : "bg-white/5 text-muted-foreground border border-white/10"
                     )}>
                       {result.needsWebsite ? (
                         <>
-                          <XCircle className="w-4 h-4" />
+                          <XCircle className="w-3.5 h-3.5" />
                           Sem site — Oportunidade máxima
                         </>
                       ) : (
                         <>
-                          <CheckCircle2 className="w-4 h-4" />
+                          <CheckCircle2 className="w-3.5 h-3.5" />
                           Possui site — Pode melhorar
                         </>
                       )}
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-2 pt-3 border-t border-border">
+                    <div className="flex items-center gap-2 pt-3 border-t border-white/10">
                       <Button 
                         onClick={() => handleAcceptProject(result)}
                         size="sm"
-                        className="flex-1 gap-2"
+                        className="flex-1 gap-2 h-8 text-xs"
                       >
-                        <Zap className="w-4 h-4" /> Aceitar Projeto
+                        <Zap className="w-3.5 h-3.5" /> Aceitar
                       </Button>
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="gap-2"
+                        className="gap-2 h-8 text-xs bg-white/5 border-white/10 hover:bg-white/10"
                         onClick={() => openBusinessDetail(result)}
                       >
-                        <Eye className="w-4 h-4" /> Detalhes
+                        <Eye className="w-3.5 h-3.5" /> Detalhes
                       </Button>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               );
             })}
           </div>
 
-          {/* Pagination */}
+          {/* Pagination - Genesis Style */}
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2 pt-4">
               <Button
@@ -625,11 +642,11 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
                 size="sm"
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="gap-1"
+                className="gap-1 h-8 text-xs bg-white/5 border-white/10 hover:bg-white/10"
               >
-                <ChevronLeft className="w-4 h-4" /> Anterior
+                <ChevronLeft className="w-3.5 h-3.5" /> Anterior
               </Button>
-              <span className="px-4 text-sm text-muted-foreground">
+              <span className="px-4 text-xs text-muted-foreground">
                 {currentPage} / {totalPages}
               </span>
               <Button
@@ -637,9 +654,9 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
                 size="sm"
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="gap-1"
+                className="gap-1 h-8 text-xs bg-white/5 border-white/10 hover:bg-white/10"
               >
-                Próximo <ChevronRight className="w-4 h-4" />
+                Próximo <ChevronRight className="w-3.5 h-3.5" />
               </Button>
             </div>
           )}
