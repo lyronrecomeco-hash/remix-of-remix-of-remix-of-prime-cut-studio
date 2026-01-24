@@ -66,10 +66,11 @@ import { GenesisPaymentsTab } from "@/components/genesis-ia/payments/GenesisPaym
 import { PageBuilderTab } from "@/components/genesis-ia/page-builder";
 import { AcademiaGenesisTab } from "@/components/genesis-ia/academia";
 import { ProposalWizard } from "@/components/genesis-ia/proposal-wizard";
+import { SprintWizard } from "@/components/genesis-ia/sprint-mission";
 import GenesisBackground from "@/components/genesis-ia/GenesisBackground";
-import { FileText, Gift, CreditCard, Code2 } from "lucide-react";
+import { FileText, Gift, CreditCard, Code2, Rocket } from "lucide-react";
 
-type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional' | 'payments' | 'page-builder' | 'academia' | 'proposals';
+type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional' | 'payments' | 'page-builder' | 'academia' | 'proposals' | 'sprint-mission';
 
 // Icon mapping for dynamic rendering
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -179,6 +180,7 @@ const GenesisIADashboard = () => {
       case 'payments': return 'Pagamentos';
       case 'page-builder': return 'Construir Página';
       case 'proposals': return 'Propostas Personalizadas';
+      case 'sprint-mission': return 'Missão Sprint';
       default: return null;
     }
   };
@@ -633,6 +635,27 @@ const GenesisIADashboard = () => {
           </div>
           <div className="max-w-2xl mx-auto">
             <ProposalWizard />
+          </div>
+        </div>
+      );
+    }
+
+    if (activeTab === 'sprint-mission') {
+      return (
+        <div className="space-y-6">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setActiveTab('dashboard')}
+              className="text-white/50 hover:text-white hover:bg-white/10 h-9"
+            >
+              <ArrowLeft className="w-4 h-4 mr-1.5" />
+              Voltar
+            </Button>
+          </div>
+          <div className="max-w-2xl mx-auto">
+            <SprintWizard />
           </div>
         </div>
       );
