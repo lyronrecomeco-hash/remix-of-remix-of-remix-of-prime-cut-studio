@@ -45,7 +45,8 @@ const carouselItems: CarouselItem[] = [
     id: '4',
     icon: GraduationCap,
     title: 'Academia Genesis',
-    description: 'Aprimore suas habilidades'
+    description: 'Aprimore suas habilidades',
+    tabId: 'academia'
   },
   {
     id: '5',
