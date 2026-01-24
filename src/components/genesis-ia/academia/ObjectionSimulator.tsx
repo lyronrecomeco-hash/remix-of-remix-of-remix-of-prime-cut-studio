@@ -240,18 +240,18 @@ export const ObjectionSimulator = () => {
   // Scenario Selection
   if (!selectedScenario) {
     return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-            <Target className="w-5 h-5 text-purple-400" />
+      <div className="space-y-3 sm:space-y-4">
+        <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+            <Target className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
           </div>
           <div>
-            <h3 className="font-semibold text-white text-base">Escolha um cenário</h3>
-            <p className="text-xs text-white/50">Pratique respostas para situações reais de vendas</p>
+            <h3 className="font-semibold text-white text-sm sm:text-base">Escolha um cenário</h3>
+            <p className="text-[10px] sm:text-xs text-white/50">Pratique respostas para situações reais de vendas</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3">
           {scenarios.map((scenario, index) => (
             <motion.button
               key={scenario.id}
@@ -259,18 +259,18 @@ export const ObjectionSimulator = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.03 }}
               onClick={() => startSimulation(scenario)}
-              className="text-left p-4 bg-white/5 border border-white/10 hover:border-purple-500/30 hover:bg-white/[0.08] transition-all group"
-              style={{ borderRadius: '14px' }}
+              className="text-left p-3 sm:p-4 bg-white/5 border border-white/10 hover:border-purple-500/30 hover:bg-white/[0.08] transition-all group"
+              style={{ borderRadius: '12px' }}
             >
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <h4 className="font-medium text-white text-sm group-hover:text-purple-300 transition-colors line-clamp-1">
+              <div className="flex items-start justify-between gap-2 mb-1.5 sm:mb-2">
+                <h4 className="font-medium text-white text-xs sm:text-sm group-hover:text-purple-300 transition-colors line-clamp-1">
                   {scenario.title}
                 </h4>
-                <Badge className={`text-[10px] px-2 py-0.5 ${getDifficultyColor(scenario.difficulty)}`}>
+                <Badge className={`text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 flex-shrink-0 ${getDifficultyColor(scenario.difficulty)}`}>
                   {getDifficultyLabel(scenario.difficulty)}
                 </Badge>
               </div>
-              <p className="text-xs text-white/50 line-clamp-2">{scenario.description}</p>
+              <p className="text-[10px] sm:text-xs text-white/50 line-clamp-2">{scenario.description}</p>
             </motion.button>
           ))}
         </div>
@@ -280,64 +280,64 @@ export const ObjectionSimulator = () => {
 
   // Chat Interface
   return (
-    <div className="flex flex-col h-[520px] bg-white/5 border border-white/10 overflow-hidden" style={{ borderRadius: '14px' }}>
+    <div className="flex flex-col h-[400px] sm:h-[520px] bg-white/5 border border-white/10 overflow-hidden" style={{ borderRadius: '12px' }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-white/5">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-            <MessageSquare className="w-5 h-5 text-purple-400" />
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-white/10 bg-white/5">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+            <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
           </div>
           <div className="min-w-0">
-            <h4 className="font-semibold text-white text-sm truncate">{selectedScenario.title}</h4>
-            <p className="text-xs text-white/40 truncate">{selectedScenario.clientPersona.split(',')[0]}</p>
+            <h4 className="font-semibold text-white text-xs sm:text-sm truncate">{selectedScenario.title}</h4>
+            <p className="text-[10px] sm:text-xs text-white/40 truncate">{selectedScenario.clientPersona.split(',')[0]}</p>
           </div>
         </div>
         <Button
           variant="ghost"
           size="sm"
           onClick={resetSimulation}
-          className="text-white/50 hover:text-white hover:bg-white/10 h-9 px-3 text-sm"
+          className="text-white/50 hover:text-white hover:bg-white/10 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
         >
-          <RotateCcw className="w-4 h-4 mr-1.5" />
-          Novo
+          <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
+          <span className="hidden sm:inline">Novo</span>
         </Button>
       </div>
 
       {/* Messages */}
-      <ScrollArea ref={scrollRef} className="flex-1 px-4 py-3">
-        <div className="space-y-4">
+      <ScrollArea ref={scrollRef} className="flex-1 px-3 sm:px-4 py-2 sm:py-3">
+        <div className="space-y-3 sm:space-y-4">
           {messages.map((message) => (
             <motion.div
               key={message.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
+              className={`flex gap-2 sm:gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
             >
               {message.role === 'feedback' ? (
-                <div className="w-full p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Lightbulb className="w-4 h-4 text-amber-400" />
-                    <span className="text-xs font-semibold text-amber-400">Feedback da IA</span>
+                <div className="w-full p-3 sm:p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                  <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
+                    <Lightbulb className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
+                    <span className="text-[10px] sm:text-xs font-semibold text-amber-400">Feedback da IA</span>
                   </div>
-                  <p className="text-sm text-white/70 whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                  <p className="text-xs sm:text-sm text-white/70 whitespace-pre-wrap leading-relaxed">{message.content}</p>
                 </div>
               ) : (
                 <>
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                  <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
                     message.role === 'client' ? 'bg-red-500/20' : 'bg-blue-500/20'
                   }`}>
                     {message.role === 'client' ? (
-                      <User className="w-4 h-4 text-red-400" />
+                      <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400" />
                     ) : (
-                      <Bot className="w-4 h-4 text-blue-400" />
+                      <Bot className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-400" />
                     )}
                   </div>
-                  <div className={`max-w-[80%] px-3 py-2.5 rounded-xl ${
+                  <div className={`max-w-[85%] sm:max-w-[80%] px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-xl ${
                     message.role === 'client' 
                       ? 'bg-white/10 border border-white/10' 
                       : 'bg-blue-500/20 border border-blue-500/20'
                   }`}>
-                    <p className="text-sm text-white/90 whitespace-pre-wrap">{message.content}</p>
+                    <p className="text-xs sm:text-sm text-white/90 whitespace-pre-wrap">{message.content}</p>
                   </div>
                 </>
               )}
@@ -348,16 +348,16 @@ export const ObjectionSimulator = () => {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex gap-3"
+              className="flex gap-2 sm:gap-3"
             >
-              <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center">
-                <User className="w-4 h-4 text-red-400" />
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-red-500/20 flex items-center justify-center">
+                <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400" />
               </div>
-              <div className="bg-white/10 border border-white/10 px-3 py-2.5 rounded-xl">
-                <div className="flex gap-1.5">
-                  <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              <div className="bg-white/10 border border-white/10 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-xl">
+                <div className="flex gap-1 sm:gap-1.5">
+                  <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
               </div>
             </motion.div>
@@ -366,29 +366,29 @@ export const ObjectionSimulator = () => {
       </ScrollArea>
 
       {/* Input */}
-      <div className="px-4 py-3 border-t border-white/10 bg-white/5">
-        <div className="flex gap-3">
+      <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-t border-white/10 bg-white/5">
+        <div className="flex gap-2 sm:gap-3">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
             placeholder="Digite sua resposta..."
             disabled={isLoading}
-            className="bg-white/5 border-white/10 text-white placeholder:text-white/40 h-10 text-sm"
+            className="bg-white/5 border-white/10 text-white placeholder:text-white/40 h-9 sm:h-10 text-xs sm:text-sm"
           />
           <Button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className="bg-blue-500 hover:bg-blue-600 h-10 w-10 p-0"
+            className="bg-blue-500 hover:bg-blue-600 h-9 w-9 sm:h-10 sm:w-10 p-0 flex-shrink-0"
           >
             {isLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
             ) : (
-              <Send className="w-4 h-4" />
+              <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             )}
           </Button>
         </div>
-        <p className="text-xs text-white/30 mt-2 text-center">
+        <p className="text-[9px] sm:text-xs text-white/30 mt-1.5 sm:mt-2 text-center">
           A IA analisará sua resposta e simulará a reação do cliente
         </p>
       </div>

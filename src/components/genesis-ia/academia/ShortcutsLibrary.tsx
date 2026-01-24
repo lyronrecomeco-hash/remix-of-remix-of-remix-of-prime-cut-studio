@@ -129,26 +129,26 @@ export const ShortcutsLibrary = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
+      <div className="flex flex-col gap-2 sm:gap-3">
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
           <Input
             placeholder="Buscar atalhos..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40"
+            className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40 h-9 sm:h-10 text-xs sm:text-sm"
           />
         </div>
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
           {categories.map(cat => (
             <Button
               key={cat.id}
               variant={activeCategory === cat.id ? 'default' : 'outline'}
               size="sm"
               onClick={() => setActiveCategory(cat.id)}
-              className={`flex-shrink-0 ${
+              className={`flex-shrink-0 h-7 sm:h-8 px-2.5 sm:px-3 text-[10px] sm:text-xs ${
                 activeCategory === cat.id 
                   ? 'bg-blue-500 hover:bg-blue-600 text-white border-blue-500' 
                   : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'
@@ -161,7 +161,7 @@ export const ShortcutsLibrary = () => {
       </div>
 
       {/* Shortcuts Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
         {filteredShortcuts.map((shortcut, index) => {
           const Icon = shortcut.icon;
           const isCopied = copiedId === shortcut.id;
@@ -172,27 +172,27 @@ export const ShortcutsLibrary = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="group relative bg-white/5 border border-white/10 hover:border-blue-500/30 transition-all duration-200 p-4"
-              style={{ borderRadius: '14px' }}
+              className="group relative bg-white/5 border border-white/10 hover:border-blue-500/30 transition-all duration-200 p-3 sm:p-4"
+              style={{ borderRadius: '12px' }}
             >
               {/* Popular Badge */}
               {shortcut.popular && (
-                <Badge className="absolute -top-2 -right-2 bg-amber-500/90 text-white text-[10px] px-2">
+                <Badge className="absolute -top-2 -right-2 bg-amber-500/90 text-white text-[9px] sm:text-[10px] px-1.5 sm:px-2">
                   Popular
                 </Badge>
               )}
 
               {/* Header */}
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                    <Icon className="w-4 h-4 text-blue-400" />
+              <div className="flex items-start justify-between mb-2 sm:mb-3">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                    <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-400" />
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-white text-sm">{shortcut.title}</h4>
-                    <div className="flex gap-1 mt-1">
+                  <div className="min-w-0">
+                    <h4 className="font-semibold text-white text-xs sm:text-sm truncate">{shortcut.title}</h4>
+                    <div className="flex gap-1 mt-0.5 sm:mt-1">
                       {shortcut.tags.slice(0, 2).map(tag => (
-                        <Badge key={tag} variant="outline" className="text-[9px] px-1.5 py-0 border-white/10 text-white/50">
+                        <Badge key={tag} variant="outline" className="text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0 border-white/10 text-white/50">
                           {tag}
                         </Badge>
                       ))}
@@ -202,8 +202,8 @@ export const ShortcutsLibrary = () => {
               </div>
 
               {/* Content Preview */}
-              <div className="p-3 bg-white/5 rounded-lg border border-white/5 mb-3">
-                <p className="text-xs text-white/60 whitespace-pre-wrap line-clamp-4 font-mono">
+              <div className="p-2 sm:p-3 bg-white/5 rounded-lg border border-white/5 mb-2 sm:mb-3">
+                <p className="text-[10px] sm:text-xs text-white/60 whitespace-pre-wrap line-clamp-3 sm:line-clamp-4 font-mono">
                   {shortcut.content}
                 </p>
               </div>
@@ -212,7 +212,7 @@ export const ShortcutsLibrary = () => {
               <Button
                 onClick={() => handleCopy(shortcut)}
                 size="sm"
-                className={`w-full gap-2 ${
+                className={`w-full gap-1.5 sm:gap-2 h-8 sm:h-9 text-xs sm:text-sm ${
                   isCopied 
                     ? 'bg-emerald-500 hover:bg-emerald-600' 
                     : 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-400'
@@ -220,12 +220,12 @@ export const ShortcutsLibrary = () => {
               >
                 {isCopied ? (
                   <>
-                    <Check className="w-3.5 h-3.5" />
+                    <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     Copiado!
                   </>
                 ) : (
                   <>
-                    <Copy className="w-3.5 h-3.5" />
+                    <Copy className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     Copiar
                   </>
                 )}
@@ -236,9 +236,9 @@ export const ShortcutsLibrary = () => {
       </div>
 
       {filteredShortcuts.length === 0 && (
-        <div className="text-center py-12">
-          <Search className="w-12 h-12 mx-auto text-white/20 mb-3" />
-          <p className="text-white/50">Nenhum atalho encontrado</p>
+        <div className="text-center py-8 sm:py-12">
+          <Search className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-white/20 mb-2 sm:mb-3" />
+          <p className="text-white/50 text-xs sm:text-sm">Nenhum atalho encontrado</p>
         </div>
       )}
     </div>
