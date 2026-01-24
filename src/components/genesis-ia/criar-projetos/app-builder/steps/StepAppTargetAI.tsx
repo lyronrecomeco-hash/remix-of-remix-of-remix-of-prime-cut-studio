@@ -1,22 +1,16 @@
 import { motion } from 'framer-motion';
 import { Check, Sparkles } from 'lucide-react';
 import { useAppBuilder } from '../AppBuilderContext';
-import { AI_TARGETS, TargetAI } from '../types';
+import { AI_TARGETS } from '../types';
 import { Input } from '@/components/ui/input';
 
-// Import AI logos
-import lovableIcon from '@/assets/ai-icons/lovable-icon.svg';
-import cursorIcon from '@/assets/ai-icons/cursor-icon.svg';
-import v0Icon from '@/assets/ai-icons/v0-icon.svg';
-import boltIcon from '@/assets/ai-icons/bolt-icon.svg';
-import windsurfIcon from '@/assets/ai-icons/windsurf-icon.svg';
-
-const AI_ICONS: Record<string, string> = {
-  lovable: lovableIcon,
-  cursor: cursorIcon,
-  v0: v0Icon,
-  bolt: boltIcon,
-  windsurf: windsurfIcon,
+// AI emoji icons as fallback (no external SVG files needed)
+const AI_EMOJI: Record<string, string> = {
+  lovable: '💜',
+  cursor: '🖱️',
+  v0: '⚡',
+  bolt: '🔩',
+  windsurf: '🏄',
 };
 
 export function StepAppTargetAI() {
@@ -42,7 +36,7 @@ export function StepAppTargetAI() {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {siteAIs.map((ai, index) => {
           const isSelected = formData.targetAI === ai.id;
-          const hasIcon = AI_ICONS[ai.id];
+          const customEmoji = AI_EMOJI[ai.id];
 
           return (
             <motion.button
@@ -71,15 +65,7 @@ export function StepAppTargetAI() {
 
               {/* Icon or Emoji */}
               <div className="mb-3">
-                {hasIcon ? (
-                  <img 
-                    src={AI_ICONS[ai.id]} 
-                    alt={ai.name} 
-                    className="w-10 h-10 object-contain"
-                  />
-                ) : (
-                  <span className="text-3xl">{ai.icon}</span>
-                )}
+                <span className="text-3xl">{customEmoji || ai.icon}</span>
               </div>
 
               {/* Name */}
