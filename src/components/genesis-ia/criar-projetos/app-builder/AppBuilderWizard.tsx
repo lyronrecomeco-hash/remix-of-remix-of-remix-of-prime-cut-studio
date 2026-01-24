@@ -116,7 +116,19 @@ function WizardContent({ onBack, onComplete, affiliateId }: AppBuilderWizardProp
 
       {/* Main content - Split layout on desktop */}
       <div className="flex gap-6">
-        {/* Left side - Form */}
+        {/* Left side - Preview (desktop only) */}
+        <div className="hidden lg:block w-[320px] shrink-0">
+          <div className="sticky top-4">
+            <div className="h-[620px] flex items-center justify-center">
+              <AppBuilderPreview />
+            </div>
+            <p className="text-center text-xs text-muted-foreground mt-3">
+              Preview em tempo real
+            </p>
+          </div>
+        </div>
+
+        {/* Right side - Form */}
         <div className="flex-1 min-w-0">
           <div className="rounded-2xl bg-white/5 border border-white/10 p-4 sm:p-6">
             <AnimatePresence mode="wait">
@@ -152,18 +164,6 @@ function WizardContent({ onBack, onComplete, affiliateId }: AppBuilderWizardProp
                 </Button>
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Right side - Preview (desktop only) */}
-        <div className="hidden lg:block w-[320px] shrink-0">
-          <div className="sticky top-4">
-            <div className="rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 border border-white/10 p-4 h-[620px] flex items-center justify-center">
-              <AppBuilderPreview />
-            </div>
-            <p className="text-center text-xs text-muted-foreground mt-3">
-              Preview em tempo real
-            </p>
           </div>
         </div>
       </div>
