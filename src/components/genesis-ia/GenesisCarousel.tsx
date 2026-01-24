@@ -52,8 +52,9 @@ const carouselItems: CarouselItem[] = [
   {
     id: '5',
     icon: Rocket,
-    title: 'Redator Automatizado',
-    description: 'Automatize sua produção de conteúdo'
+    title: 'Missão Sprint',
+    description: 'Metas reais, execução guiada por IA',
+    tabId: 'sprint-mission'
   }
 ];
 
