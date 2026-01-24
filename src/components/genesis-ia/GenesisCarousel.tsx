@@ -39,7 +39,8 @@ const carouselItems: CarouselItem[] = [
     id: '3',
     icon: FileText,
     title: 'Propostas Personalizadas',
-    description: 'Crie propostas únicas com IA'
+    description: 'Crie propostas únicas com IA',
+    tabId: 'proposals'
   },
   {
     id: '4',
