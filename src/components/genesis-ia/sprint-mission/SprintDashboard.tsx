@@ -32,6 +32,7 @@ interface SprintDashboardProps {
   userName: string;
   formData: SprintMissionFormData;
   onReset: () => void;
+  onUpdate?: (updatedSprint: GeneratedSprint, completedActions: string[]) => void;
 }
 
 const actionIcons: Record<SprintAction['type'], React.ElementType> = {
