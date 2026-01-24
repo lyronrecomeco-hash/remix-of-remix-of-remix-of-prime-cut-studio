@@ -8,6 +8,7 @@ const corsHeaders = {
 interface ProposalRequest {
   answers: Record<string, string>;
   affiliateName: string;
+  regenerate?: boolean;
 }
 
 serve(async (req) => {
@@ -16,7 +17,7 @@ serve(async (req) => {
   }
 
   try {
-    const { answers, affiliateName }: ProposalRequest = await req.json();
+    const { answers, affiliateName, regenerate }: ProposalRequest = await req.json();
 
     const apiKey = Deno.env.get('LOVABLE_API_KEY');
     if (!apiKey) {
@@ -27,6 +28,10 @@ serve(async (req) => {
     const companyName = answers.company_name || 'a empresa';
     const companyNiche = answers.company_niche || 'negócio local';
     const mainProblem = answers.main_problem || '';
+    const decisionMaker = answers.decision_maker || '';
+    const competitors = answers.competitors || '';
+    const failedAttempts = answers.failed_attempts || '';
+    const dreamResult = answers.dream_result || '';
 
     // Get additional AI answers
     const additionalAnswers = Object.entries(answers)
@@ -90,7 +95,7 @@ Responda APENAS com a mensagem pronta. Comece direto com "Olá".`;
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
-        temperature: 0.85,
+        temperature: regenerate ? 0.95 : 0.85,
         max_tokens: 1500,
       }),
     });
