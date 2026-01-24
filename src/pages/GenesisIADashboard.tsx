@@ -64,10 +64,11 @@ import { ContractsTab } from "@/components/genesis-ia/contracts";
 import { PromocionalTab } from "@/components/genesis-ia/promocional";
 import { GenesisPaymentsTab } from "@/components/genesis-ia/payments/GenesisPaymentsTab";
 import { PageBuilderTab } from "@/components/genesis-ia/page-builder";
+import { AcademiaGenesisTab } from "@/components/genesis-ia/academia";
 import GenesisBackground from "@/components/genesis-ia/GenesisBackground";
 import { FileText, Gift, CreditCard, Code2 } from "lucide-react";
 
-type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional' | 'payments' | 'page-builder';
+type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional' | 'payments' | 'page-builder' | 'academia';
 
 // Icon mapping for dynamic rendering
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -608,6 +609,10 @@ const GenesisIADashboard = () => {
 
     if (activeTab === 'page-builder') {
       return <PageBuilderTab onBack={() => setActiveTab('dashboard')} />;
+    }
+
+    if (activeTab === 'academia') {
+      return <AcademiaGenesisTab onBack={() => setActiveTab('dashboard')} />;
     }
 
     return null;
