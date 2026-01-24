@@ -197,8 +197,8 @@ export const SprintWizard = () => {
           animate={{ scale: 1, opacity: 1 }}
           className="text-center space-y-4"
         >
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-orange-500/20 flex items-center justify-center mx-auto">
-            <Rocket className="w-7 h-7 sm:w-8 sm:h-8 text-orange-400 animate-bounce" />
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-purple-500/20 flex items-center justify-center mx-auto">
+            <Rocket className="w-7 h-7 sm:w-8 sm:h-8 text-purple-400 animate-bounce" />
           </div>
           <div>
             <h3 className="text-base sm:text-lg font-semibold text-white mb-1">Montando sua Missão...</h3>
@@ -219,8 +219,8 @@ export const SprintWizard = () => {
       <div className="px-3 sm:px-4 py-3 border-b border-white/10 bg-white/5">
         <div className="flex items-center justify-between mb-2 sm:mb-3">
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
-              <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 text-orange-400" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
+              <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
             </div>
             <div>
               <h4 className="font-semibold text-white text-xs sm:text-sm">Missão Sprint</h4>
@@ -298,7 +298,7 @@ export const SprintWizard = () => {
                       onClick={() => toggleChip(option)}
                       className={`px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-medium transition-all ${
                         isChipSelected(option)
-                          ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/25'
+                          ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/25'
                           : 'bg-white/5 text-white/70 hover:bg-white/10 border border-white/10'
                       }`}
                     >
@@ -319,7 +319,7 @@ export const SprintWizard = () => {
           disabled={!canProceed()}
           className={`w-full h-10 sm:h-11 font-medium text-sm transition-all ${
             isLastStep 
-              ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white'
+              ? 'bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white'
               : 'bg-white/10 hover:bg-white/20 text-white'
           }`}
         >

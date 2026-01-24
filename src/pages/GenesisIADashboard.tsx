@@ -642,21 +642,8 @@ const GenesisIADashboard = () => {
 
     if (activeTab === 'sprint-mission') {
       return (
-        <div className="space-y-6">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setActiveTab('dashboard')}
-              className="text-white/50 hover:text-white hover:bg-white/10 h-9"
-            >
-              <ArrowLeft className="w-4 h-4 mr-1.5" />
-              Voltar
-            </Button>
-          </div>
-          <div className="max-w-2xl mx-auto">
-            <SprintWizard />
-          </div>
+        <div className="space-y-4 sm:space-y-6">
+          <SprintWizard />
         </div>
       );
     }

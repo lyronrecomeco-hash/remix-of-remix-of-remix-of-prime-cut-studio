@@ -86,13 +86,13 @@ export const SprintDashboard = ({ sprint, userName, formData, onReset }: SprintD
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-orange-500/20 via-red-500/10 to-transparent border border-orange-500/20 p-4 sm:p-6"
+        className="bg-gradient-to-br from-purple-500/20 via-blue-500/10 to-transparent border border-purple-500/20 p-4 sm:p-6"
         style={{ borderRadius: '14px' }}
       >
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-orange-500/30 flex items-center justify-center">
-              <Rocket className="w-5 h-5 sm:w-6 sm:h-6 text-orange-400" />
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-purple-500/30 flex items-center justify-center">
+              <Rocket className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400" />
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-bold text-white">{sprint.mission_name}</h2>
@@ -112,7 +112,7 @@ export const SprintDashboard = ({ sprint, userName, formData, onReset }: SprintD
         {/* Stats Row */}
         <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4">
           <div className="bg-white/5 rounded-lg p-2 sm:p-3 text-center">
-            <Target className="w-4 h-4 text-orange-400 mx-auto mb-1" />
+            <Target className="w-4 h-4 text-purple-400 mx-auto mb-1" />
             <p className="text-xs text-white/40">Meta Diária</p>
             <p className="text-xs sm:text-sm font-semibold text-white truncate">{sprint.daily_target}</p>
           </div>
@@ -170,7 +170,7 @@ export const SprintDashboard = ({ sprint, userName, formData, onReset }: SprintD
       <div className="space-y-2 sm:space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-            <Zap className="w-4 h-4 text-orange-400" />
+            <Zap className="w-4 h-4 text-purple-400" />
             Ações do Sprint
           </h3>
           <Badge variant="outline" className="text-[10px] bg-white/5 border-white/10 text-white/50">
@@ -194,7 +194,7 @@ export const SprintDashboard = ({ sprint, userName, formData, onReset }: SprintD
                   isCompleted 
                     ? 'border-emerald-500/30 bg-emerald-500/5' 
                     : isInProgress 
-                      ? 'border-orange-500/30 bg-orange-500/5'
+                      ? 'border-purple-500/30 bg-purple-500/5'
                       : 'border-white/10 hover:border-white/20'
                 }`}
               >
@@ -256,7 +256,7 @@ export const SprintDashboard = ({ sprint, userName, formData, onReset }: SprintD
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-7 text-xs text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 px-2"
+                            className="h-7 text-xs text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 px-2"
                           >
                             <ExternalLink className="w-3 h-3 mr-1" />
                             Abrir recurso
@@ -266,14 +266,14 @@ export const SprintDashboard = ({ sprint, userName, formData, onReset }: SprintD
                           <Button
                             size="sm"
                             onClick={() => startAction(action.id)}
-                            className="h-7 text-xs bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 px-2"
+                            className="h-7 text-xs bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 px-2"
                           >
                             <Play className="w-3 h-3 mr-1" />
                             Iniciar
                           </Button>
                         )}
                         {isInProgress && (
-                          <Badge className="text-[10px] bg-orange-500/20 text-orange-400 border-orange-500/30">
+                          <Badge className="text-[10px] bg-purple-500/20 text-purple-400 border-purple-500/30">
                             Em andamento...
                           </Badge>
                         )}
