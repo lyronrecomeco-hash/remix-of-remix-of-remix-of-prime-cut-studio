@@ -119,7 +119,7 @@ export function StepAppResult({ onComplete, affiliateId }: StepAppResultProps) {
           template_slug: 'app-builder',
           template_name: formData.appName || 'Meu App',
           unique_code: uniqueCode,
-          config: formData as unknown as Record<string, unknown>,
+          config: JSON.parse(JSON.stringify(formData)),
           last_prompt: displayedPrompt,
           category: 'app',
           platform: formData.targetAI,
