@@ -66,7 +66,7 @@ import { GenesisPaymentsTab } from "@/components/genesis-ia/payments/GenesisPaym
 import { PageBuilderTab } from "@/components/genesis-ia/page-builder";
 import { AcademiaGenesisTab } from "@/components/genesis-ia/academia";
 import { ProposalWizard } from "@/components/genesis-ia/proposal-wizard";
-import { SprintWizard } from "@/components/genesis-ia/sprint-mission";
+import { SprintMissionTab } from "@/components/genesis-ia/sprint-mission";
 import GenesisBackground from "@/components/genesis-ia/GenesisBackground";
 import { FileText, Gift, CreditCard, Code2, Rocket } from "lucide-react";
 
@@ -641,11 +641,7 @@ const GenesisIADashboard = () => {
     }
 
     if (activeTab === 'sprint-mission') {
-      return (
-        <div className="space-y-4 sm:space-y-6">
-          <SprintWizard />
-        </div>
-      );
+      return <SprintMissionTab />;
     }
 
     return null;
