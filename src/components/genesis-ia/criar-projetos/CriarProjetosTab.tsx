@@ -7,7 +7,6 @@ import { ProjectLibrary } from '../library/ProjectLibrary';
 import { ProjectConfig } from '../library/ProjectCard';
 import { CreationMethodModal } from './from-scratch/CreationMethodModal';
 import { FromScratchWizard } from './from-scratch/FromScratchWizard';
-import { AppBuilderWizard } from './app-builder';
 
 interface CriarProjetosTabProps {
   affiliateId: string | null;
@@ -15,7 +14,7 @@ interface CriarProjetosTabProps {
   onBack: () => void;
 }
 
-type View = 'library' | 'select' | 'customize' | 'from-scratch' | 'app-builder';
+type View = 'library' | 'select' | 'customize' | 'from-scratch';
 
 export function CriarProjetosTab({ affiliateId, userId, onBack }: CriarProjetosTabProps) {
   const [view, setView] = useState<View>('library');
@@ -75,13 +74,9 @@ export function CriarProjetosTab({ affiliateId, userId, onBack }: CriarProjetosT
     setView('select');
   };
 
-  const handleStartFromScratch = (type: 'site' | 'app') => {
+  const handleStartFromScratch = () => {
     setShowMethodModal(false);
-    if (type === 'app') {
-      setView('app-builder');
-    } else {
-      setView('from-scratch');
-    }
+    setView('from-scratch');
   };
 
   const handleFromScratchComplete = () => {
@@ -89,14 +84,6 @@ export function CriarProjetosTab({ affiliateId, userId, onBack }: CriarProjetosT
   };
 
   const handleFromScratchBack = () => {
-    setView('library');
-  };
-
-  const handleAppBuilderComplete = () => {
-    setView('library');
-  };
-
-  const handleAppBuilderBack = () => {
     setView('library');
   };
 
@@ -184,21 +171,6 @@ export function CriarProjetosTab({ affiliateId, userId, onBack }: CriarProjetosT
             <FromScratchWizard
               onBack={handleFromScratchBack}
               onComplete={handleFromScratchComplete}
-              affiliateId={effectiveId}
-            />
-          </motion.div>
-        )}
-
-        {view === 'app-builder' && (
-          <motion.div
-            key="app-builder"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-          >
-            <AppBuilderWizard
-              onBack={handleAppBuilderBack}
-              onComplete={handleAppBuilderComplete}
               affiliateId={effectiveId}
             />
           </motion.div>
