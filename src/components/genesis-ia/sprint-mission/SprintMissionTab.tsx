@@ -205,9 +205,9 @@ export const SprintMissionTab = () => {
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
-            <Rocket className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400" />
+      <div className="flex items-center gap-3">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+            <Rocket className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
           </div>
           <div>
             <h2 className="text-base sm:text-lg font-bold text-white">Missão Sprint</h2>
@@ -218,7 +218,7 @@ export const SprintMissionTab = () => {
         </div>
         <Button
           onClick={() => setShowWizard(true)}
-          className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 h-9 sm:h-10 px-3 sm:px-4 text-xs sm:text-sm"
+          className="bg-blue-500 hover:bg-blue-600 h-9 sm:h-10 px-3 sm:px-4 text-xs sm:text-sm"
         >
           <Plus className="w-4 h-4 mr-1.5" />
           Nova Meta
@@ -238,7 +238,7 @@ export const SprintMissionTab = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="group bg-white/5 border border-white/10 hover:border-purple-500/30 transition-all cursor-pointer overflow-hidden"
+                className="group bg-white/5 border border-white/10 hover:border-blue-500/30 transition-all cursor-pointer overflow-hidden"
                 style={{ borderRadius: '14px' }}
                 onClick={() => openSprint(saved)}
               >
@@ -246,8 +246,8 @@ export const SprintMissionTab = () => {
                 <div className="p-3 sm:p-4 border-b border-white/5">
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                        <Target className="w-4 h-4 text-purple-400" />
+                      <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                        <Target className="w-4 h-4 text-blue-400" />
                       </div>
                       <div className="min-w-0">
                         <h3 className="text-sm font-semibold text-white truncate">
@@ -297,7 +297,7 @@ export const SprintMissionTab = () => {
                       <p className="text-[10px] font-medium text-white">{completedCount}/{saved.sprint.actions.length}</p>
                     </div>
                     <div className="bg-white/5 rounded-lg py-1.5 px-2">
-                      <TrendingUp className="w-3 h-3 text-purple-400 mx-auto mb-0.5" />
+                      <TrendingUp className="w-3 h-3 text-blue-400 mx-auto mb-0.5" />
                       <p className="text-[9px] text-white/40">Progresso</p>
                       <p className="text-[10px] font-medium text-white">{progress}%</p>
                     </div>
@@ -320,7 +320,7 @@ export const SprintMissionTab = () => {
                     className={`text-[9px] px-1.5 py-0 ${
                       progress === 100 
                         ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                        : 'bg-purple-500/20 text-purple-400 border-purple-500/30'
+                        : 'bg-blue-500/20 text-blue-400 border-blue-500/30'
                     }`}
                   >
                     {progress === 100 ? 'Concluído' : 'Ativo'}
@@ -338,8 +338,8 @@ export const SprintMissionTab = () => {
           className="flex flex-col items-center justify-center py-12 sm:py-16 bg-white/5 border border-white/10"
           style={{ borderRadius: '14px' }}
         >
-          <div className="w-16 h-16 rounded-2xl bg-purple-500/20 flex items-center justify-center mb-4">
-            <Rocket className="w-8 h-8 text-purple-400" />
+          <div className="w-16 h-16 rounded-2xl bg-blue-500/20 flex items-center justify-center mb-4">
+            <Rocket className="w-8 h-8 text-blue-400" />
           </div>
           <h3 className="text-base sm:text-lg font-semibold text-white mb-1">
             Nenhuma meta criada
@@ -349,7 +349,7 @@ export const SprintMissionTab = () => {
           </p>
           <Button
             onClick={() => setShowWizard(true)}
-            className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+            className="bg-blue-500 hover:bg-blue-600"
           >
             <Plus className="w-4 h-4 mr-2" />
             Criar Meta
