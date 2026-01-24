@@ -36,6 +36,32 @@ interface Scenario {
 }
 
 const scenarios: Scenario[] = [
+  // Cenários de PRIMEIRO CONTATO / ABORDAGEM
+  {
+    id: 'first-contact',
+    title: '"Quem é você?"',
+    description: 'Primeiro contato frio com cliente',
+    difficulty: 'easy',
+    clientPersona: 'Dona de salão de beleza, 42 anos, recebe muitas mensagens de vendedores. Está desconfiada e ocupada.',
+    objection: 'Oi, quem é você? Como conseguiu meu número? Não tenho interesse em nada, estou ocupada agora.'
+  },
+  {
+    id: 'presentation',
+    title: '"Me apresente sua solução"',
+    description: 'Cliente pediu para você apresentar',
+    difficulty: 'easy',
+    clientPersona: 'Dono de pizzaria, 35 anos, curioso. Viu seu anúncio e quer entender melhor antes de decidir.',
+    objection: 'Vi seu anúncio e fiquei curioso. Me explica rapidinho o que vocês fazem e como funciona? Tenho só 5 minutos.'
+  },
+  {
+    id: 'whatsapp-cold',
+    title: '"Mensagem no WhatsApp"',
+    description: 'Abordagem inicial via WhatsApp',
+    difficulty: 'medium',
+    clientPersona: 'Gerente de clínica odontológica, 40 anos, profissional. Recebeu sua mensagem e está avaliando se vale responder.',
+    objection: 'Recebi sua mensagem. O que exatamente vocês oferecem? Já recebi muitas propostas assim e nenhuma deu resultado.'
+  },
+  // Cenários de OBJEÇÕES CLÁSSICAS
   {
     id: 'price',
     title: '"Está muito caro"',
@@ -67,6 +93,39 @@ const scenarios: Scenario[] = [
     difficulty: 'medium',
     clientPersona: 'Advogada, 38 anos, workaholic. Reconhece que precisa mas acha que não tem tempo para lidar com isso agora.',
     objection: 'Eu sei que preciso melhorar minha presença online, mas agora estou com muitos processos. Não tenho tempo pra ficar acompanhando implementação.'
+  },
+  // Cenários AVANÇADOS
+  {
+    id: 'no-budget',
+    title: '"Não tenho orçamento"',
+    description: 'Cliente sem verba disponível',
+    difficulty: 'hard',
+    clientPersona: 'Dono de loja de materiais, 50 anos, conservador. Empresa familiar com finanças apertadas no momento.',
+    objection: 'Olha, sinceramente não tenho orçamento pra isso agora. O ano tá difícil, as vendas caíram, não posso assumir mais um custo fixo.'
+  },
+  {
+    id: 'spouse',
+    title: '"Preciso falar com meu sócio"',
+    description: 'Cliente precisa consultar terceiros',
+    difficulty: 'medium',
+    clientPersona: 'Co-proprietária de pet shop, 32 anos, animada mas não decide sozinha. Divide decisões com o marido/sócio.',
+    objection: 'Adorei a proposta! Mas não posso decidir isso sozinha, preciso falar com meu sócio primeiro. Ele viaja muito, só volta semana que vem.'
+  },
+  {
+    id: 'bad-experience',
+    title: '"Já fui enganado antes"',
+    description: 'Cliente com experiência negativa anterior',
+    difficulty: 'hard',
+    clientPersona: 'Dono de oficina mecânica, 55 anos, desconfiado. Já contratou agência que não entregou resultados.',
+    objection: 'Cara, já contratei uma agência dessas aí. Paguei 6 meses e não vi resultado nenhum. Me senti enganado. Por que seria diferente com vocês?'
+  },
+  {
+    id: 'works-fine',
+    title: '"Meu negócio vai bem assim"',
+    description: 'Cliente não vê necessidade de mudança',
+    difficulty: 'medium',
+    clientPersona: 'Dona de padaria tradicional, 48 anos, confiante. Negócio funciona há 20 anos do mesmo jeito.',
+    objection: 'Minha padaria funciona há 20 anos assim. Meus clientes me conhecem, não preciso de internet. Funciona bem do jeito que está.'
   }
 ];
 
@@ -181,37 +240,37 @@ export const ObjectionSimulator = () => {
   // Scenario Selection
   if (!selectedScenario) {
     return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
-            <Target className="w-5 h-5 text-purple-400" />
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+            <Target className="w-4 h-4 text-purple-400" />
           </div>
           <div>
-            <h3 className="font-semibold text-white">Escolha um cenário</h3>
-            <p className="text-xs text-white/50">Pratique respostas para objeções reais</p>
+            <h3 className="font-semibold text-white text-sm">Escolha um cenário</h3>
+            <p className="text-[10px] text-white/50">Pratique respostas para situações reais de vendas</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
           {scenarios.map((scenario, index) => (
             <motion.button
               key={scenario.id}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+              transition={{ delay: index * 0.03 }}
               onClick={() => startSimulation(scenario)}
-              className="text-left p-4 bg-white/5 border border-white/10 hover:border-purple-500/30 hover:bg-white/[0.08] transition-all group"
-              style={{ borderRadius: '14px' }}
+              className="text-left p-3 bg-white/5 border border-white/10 hover:border-purple-500/30 hover:bg-white/[0.08] transition-all group"
+              style={{ borderRadius: '12px' }}
             >
-              <div className="flex items-start justify-between mb-2">
-                <h4 className="font-semibold text-white text-sm group-hover:text-purple-300 transition-colors">
+              <div className="flex items-start justify-between gap-1 mb-1.5">
+                <h4 className="font-medium text-white text-xs group-hover:text-purple-300 transition-colors line-clamp-1">
                   {scenario.title}
                 </h4>
-                <Badge className={`text-[10px] ${getDifficultyColor(scenario.difficulty)}`}>
+                <Badge className={`text-[8px] px-1.5 py-0 ${getDifficultyColor(scenario.difficulty)}`}>
                   {getDifficultyLabel(scenario.difficulty)}
                 </Badge>
               </div>
-              <p className="text-xs text-white/50">{scenario.description}</p>
+              <p className="text-[10px] text-white/50 line-clamp-2">{scenario.description}</p>
             </motion.button>
           ))}
         </div>
@@ -221,64 +280,64 @@ export const ObjectionSimulator = () => {
 
   // Chat Interface
   return (
-    <div className="flex flex-col h-[500px] bg-white/5 border border-white/10 overflow-hidden" style={{ borderRadius: '14px' }}>
+    <div className="flex flex-col h-[420px] bg-white/5 border border-white/10 overflow-hidden" style={{ borderRadius: '12px' }}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-white/10 bg-white/5">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-purple-500/20 flex items-center justify-center">
-            <MessageSquare className="w-4 h-4 text-purple-400" />
+      <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 bg-white/5">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-7 h-7 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+            <MessageSquare className="w-3.5 h-3.5 text-purple-400" />
           </div>
-          <div>
-            <h4 className="font-semibold text-white text-sm">{selectedScenario.title}</h4>
-            <p className="text-[10px] text-white/40">{selectedScenario.clientPersona.split(',')[0]}</p>
+          <div className="min-w-0">
+            <h4 className="font-semibold text-white text-xs truncate">{selectedScenario.title}</h4>
+            <p className="text-[9px] text-white/40 truncate">{selectedScenario.clientPersona.split(',')[0]}</p>
           </div>
         </div>
         <Button
           variant="ghost"
           size="sm"
           onClick={resetSimulation}
-          className="text-white/50 hover:text-white hover:bg-white/10"
+          className="text-white/50 hover:text-white hover:bg-white/10 h-7 px-2 text-xs"
         >
-          <RotateCcw className="w-4 h-4 mr-2" />
-          Novo Cenário
+          <RotateCcw className="w-3 h-3 mr-1" />
+          Novo
         </Button>
       </div>
 
       {/* Messages */}
-      <ScrollArea ref={scrollRef} className="flex-1 p-4">
-        <div className="space-y-4">
+      <ScrollArea ref={scrollRef} className="flex-1 px-3 py-2">
+        <div className="space-y-3">
           {messages.map((message) => (
             <motion.div
               key={message.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
+              className={`flex gap-2 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
             >
               {message.role === 'feedback' ? (
-                <div className="w-full p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Lightbulb className="w-4 h-4 text-amber-400" />
-                    <span className="text-xs font-semibold text-amber-400">Feedback da IA</span>
+                <div className="w-full p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="text-[10px] font-semibold text-amber-400">Feedback da IA</span>
                   </div>
-                  <p className="text-xs text-white/70 whitespace-pre-wrap">{message.content}</p>
+                  <p className="text-[11px] text-white/70 whitespace-pre-wrap leading-relaxed">{message.content}</p>
                 </div>
               ) : (
                 <>
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                  <div className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 ${
                     message.role === 'client' ? 'bg-red-500/20' : 'bg-blue-500/20'
                   }`}>
                     {message.role === 'client' ? (
-                      <User className="w-4 h-4 text-red-400" />
+                      <User className="w-3 h-3 text-red-400" />
                     ) : (
-                      <Bot className="w-4 h-4 text-blue-400" />
+                      <Bot className="w-3 h-3 text-blue-400" />
                     )}
                   </div>
-                  <div className={`max-w-[80%] p-3 rounded-lg ${
+                  <div className={`max-w-[80%] px-2.5 py-2 rounded-lg ${
                     message.role === 'client' 
                       ? 'bg-white/10 border border-white/10' 
                       : 'bg-blue-500/20 border border-blue-500/20'
                   }`}>
-                    <p className="text-sm text-white/90 whitespace-pre-wrap">{message.content}</p>
+                    <p className="text-xs text-white/90 whitespace-pre-wrap">{message.content}</p>
                   </div>
                 </>
               )}
@@ -289,16 +348,16 @@ export const ObjectionSimulator = () => {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex gap-3"
+              className="flex gap-2"
             >
-              <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center">
-                <User className="w-4 h-4 text-red-400" />
+              <div className="w-6 h-6 rounded-md bg-red-500/20 flex items-center justify-center">
+                <User className="w-3 h-3 text-red-400" />
               </div>
-              <div className="bg-white/10 border border-white/10 p-3 rounded-lg">
+              <div className="bg-white/10 border border-white/10 px-2.5 py-2 rounded-lg">
                 <div className="flex gap-1">
-                  <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <span className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
               </div>
             </motion.div>
@@ -307,7 +366,7 @@ export const ObjectionSimulator = () => {
       </ScrollArea>
 
       {/* Input */}
-      <div className="p-4 border-t border-white/10 bg-white/5">
+      <div className="px-3 py-2 border-t border-white/10 bg-white/5">
         <div className="flex gap-2">
           <Input
             value={input}
@@ -315,21 +374,21 @@ export const ObjectionSimulator = () => {
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
             placeholder="Digite sua resposta..."
             disabled={isLoading}
-            className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
+            className="bg-white/5 border-white/10 text-white placeholder:text-white/40 h-8 text-xs"
           />
           <Button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className="bg-blue-500 hover:bg-blue-600"
+            className="bg-blue-500 hover:bg-blue-600 h-8 w-8 p-0"
           >
             {isLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
-              <Send className="w-4 h-4" />
+              <Send className="w-3.5 h-3.5" />
             )}
           </Button>
         </div>
-        <p className="text-[10px] text-white/30 mt-2 text-center">
+        <p className="text-[9px] text-white/30 mt-1.5 text-center">
           A IA analisará sua resposta e simulará a reação do cliente
         </p>
       </div>
