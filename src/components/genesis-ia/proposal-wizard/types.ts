@@ -3,115 +3,130 @@ export interface ProposalWizardStep {
   question: string;
   placeholder: string;
   helperText?: string;
-  type: 'text' | 'select' | 'textarea';
+  type: 'text' | 'select' | 'textarea' | 'chips';
   options?: string[];
   required?: boolean;
+  icon?: string;
 }
 
 export interface ProposalFormData {
   company_name: string;
-  niche: string;
+  company_niche: string;
   main_problem: string;
-  target_audience: string;
-  current_solution: string;
-  budget_range: string;
-  urgency: string;
+  decision_maker: string;
+  competitors: string;
+  failed_attempts: string;
+  dream_result: string;
   contact_phone: string;
+  // AI-generated questions
+  ai_questions?: Array<{
+    question: string;
+    answer: string;
+  }>;
 }
 
 export interface GeneratedProposal {
-  headline: string;
-  problema_identificado: string;
-  solucao_proposta: string;
-  beneficios: string[];
-  oferta_especial: string;
-  investimento: string;
-  mensagem_whatsapp: string;
+  mensagem_prospecao: string;
+  variantes?: string[];
 }
 
+// Perguntas estratégicas avançadas para gerar proposta de alta conversão
 export const WIZARD_STEPS: ProposalWizardStep[] = [
   {
     id: 'company_name',
-    question: 'Qual o nome da empresa?',
-    placeholder: 'Ex: Pizzaria do João',
-    helperText: 'Nome que aparecerá na proposta',
+    question: 'Qual o nome da empresa que você vai prospectar?',
+    placeholder: 'Ex: Barbearia Style, Clínica Dra. Ana...',
+    helperText: 'Nome completo como o cliente conhece',
     type: 'text',
-    required: true
+    required: true,
+    icon: 'building'
   },
   {
-    id: 'niche',
-    question: 'Qual o nicho/segmento do negócio?',
-    placeholder: 'Selecione o nicho',
-    type: 'select',
+    id: 'company_niche',
+    question: 'Qual o segmento/nicho desse negócio?',
+    placeholder: 'Selecione ou digite',
+    type: 'chips',
     options: [
-      'Restaurante/Pizzaria',
+      'Barbearia',
       'Salão de Beleza',
-      'Clínica Médica/Odontológica',
-      'Academia/Fitness',
+      'Clínica Estética',
+      'Clínica Médica',
+      'Clínica Odontológica',
+      'Restaurante',
+      'Pizzaria/Lanchonete',
+      'Academia',
       'Pet Shop',
-      'Loja de Roupas',
       'Advocacia',
+      'Contabilidade',
       'Imobiliária',
-      'Oficina Mecânica',
-      'Educação/Cursos',
+      'Loja de Roupas',
       'E-commerce',
-      'Outro'
+      'Oficina Mecânica',
+      'Escola/Curso'
     ],
-    required: true
+    required: true,
+    icon: 'briefcase'
   },
   {
     id: 'main_problem',
-    question: 'Qual a maior dor do cliente hoje?',
-    placeholder: 'Ex: Perdem clientes por não ter presença online...',
-    helperText: 'Seja específico - isso personaliza a proposta',
+    question: 'Qual a DOR mais visível desse negócio hoje?',
+    placeholder: 'Ex: Não aparecem no Google, cliente reclama de demora no WhatsApp, agenda bagunçada...',
+    helperText: 'O que você percebeu que está travando o crescimento deles?',
     type: 'textarea',
-    required: true
+    required: true,
+    icon: 'alert-triangle'
   },
   {
-    id: 'target_audience',
-    question: 'Quem é o público-alvo dele?',
-    placeholder: 'Ex: Mulheres 25-45 anos, classe B...',
-    helperText: 'Quanto mais detalhes, melhor a proposta',
-    type: 'text'
+    id: 'decision_maker',
+    question: 'Quem é o decisor? Qual o cargo/função?',
+    placeholder: 'Ex: Dono, Gerente, Sócio, Recepcionista...',
+    helperText: 'Saber quem decide acelera o fechamento',
+    type: 'text',
+    icon: 'user-check'
   },
   {
-    id: 'current_solution',
-    question: 'Como ele resolve isso hoje?',
-    placeholder: 'Ex: Só Instagram, site antigo, boca a boca...',
-    helperText: 'Entender o cenário atual ajuda a propor melhorias',
-    type: 'text'
-  },
-  {
-    id: 'budget_range',
-    question: 'Qual a faixa de investimento esperada?',
-    placeholder: 'Selecione a faixa',
-    type: 'select',
-    options: [
-      'Até R$ 500/mês',
-      'R$ 500 - R$ 1.000/mês',
-      'R$ 1.000 - R$ 2.000/mês',
-      'R$ 2.000 - R$ 5.000/mês',
-      'Acima de R$ 5.000/mês',
-      'Não definido'
-    ]
-  },
-  {
-    id: 'urgency',
-    question: 'Qual a urgência do cliente?',
+    id: 'competitors',
+    question: 'Os concorrentes diretos usam tecnologia/automação?',
     placeholder: 'Selecione',
     type: 'select',
     options: [
-      'Quer resolver agora',
-      'Próximas semanas',
-      'Próximo mês',
-      'Apenas pesquisando'
-    ]
+      'Sim, estão na frente tecnologicamente',
+      'Mais ou menos, alguns usam',
+      'Não, todos ainda são tradicionais',
+      'Não sei informar'
+    ],
+    helperText: 'Isso ajuda a criar urgência na proposta',
+    icon: 'users'
+  },
+  {
+    id: 'failed_attempts',
+    question: 'Esse cliente já tentou algo parecido antes?',
+    placeholder: 'Selecione',
+    type: 'select',
+    options: [
+      'Sim, contratou agência e não deu certo',
+      'Sim, tentou fazer sozinho',
+      'Não, é a primeira vez buscando isso',
+      'Não sei'
+    ],
+    helperText: 'Entender frustrações anteriores personaliza a abordagem',
+    icon: 'history'
+  },
+  {
+    id: 'dream_result',
+    question: 'Qual o RESULTADO DOS SONHOS desse cliente?',
+    placeholder: 'Ex: Agenda sempre cheia, não precisar responder WhatsApp manualmente, aparecer em primeiro no Google...',
+    helperText: 'O que faria ele falar "valeu cada centavo"?',
+    type: 'textarea',
+    required: true,
+    icon: 'star'
   },
   {
     id: 'contact_phone',
-    question: 'WhatsApp do cliente (opcional)',
+    question: 'WhatsApp do cliente (para envio direto)',
     placeholder: '(11) 99999-9999',
-    helperText: 'Para enviar a proposta diretamente',
-    type: 'text'
+    helperText: 'Opcional - para enviar a proposta na hora',
+    type: 'text',
+    icon: 'phone'
   }
 ];
