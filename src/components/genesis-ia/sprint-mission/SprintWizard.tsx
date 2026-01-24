@@ -36,7 +36,11 @@ const iconMap: Record<string, React.ElementType> = {
   zap: Zap
 };
 
-export const SprintWizard = () => {
+interface SprintWizardProps {
+  onSprintCreated?: (sprint: GeneratedSprint, formData: SprintMissionFormData) => void;
+}
+
+export const SprintWizard = ({ onSprintCreated }: SprintWizardProps = {}) => {
   const { genesisUser } = useGenesisAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<SprintMissionFormData>({
@@ -145,7 +149,11 @@ export const SprintWizard = () => {
       if (error) throw error;
 
       if (data?.sprint) {
-        setGeneratedSprint(data.sprint);
+        if (onSprintCreated) {
+          onSprintCreated(data.sprint, completeData);
+        } else {
+          setGeneratedSprint(data.sprint);
+        }
         toast.success('Sprint criado com sucesso! 🚀');
       } else {
         throw new Error('Sprint não retornado');

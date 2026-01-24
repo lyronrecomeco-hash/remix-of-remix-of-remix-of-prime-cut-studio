@@ -5,35 +5,27 @@ import {
   BookOpen, 
   CheckSquare, 
   Target,
-  Copy,
-  Check,
-  ChevronRight,
-  MessageSquare,
   Phone,
-  Users,
-  Zap,
-  Star,
-  TrendingUp,
-  Shield,
-  Clock
+  FileText
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
 import { ShortcutsLibrary } from './ShortcutsLibrary';
 import { PracticalGuides } from './PracticalGuides';
 import { ObjectionSimulator } from './ObjectionSimulator';
+import { PhoneScenarios } from './PhoneScenarios';
+import { ConversionScripts } from './ConversionScripts';
 
 interface AcademiaGenesisTabProps {
   onBack?: () => void;
 }
 
-type TabId = 'shortcuts' | 'guides' | 'simulator';
+type TabId = 'shortcuts' | 'guides' | 'simulator' | 'phone' | 'scripts';
 
 const tabs = [
-  { id: 'shortcuts' as TabId, icon: BookOpen, label: 'Atalhos', description: 'Prompts e templates prontos' },
-  { id: 'guides' as TabId, icon: CheckSquare, label: 'Guias', description: 'Checklists interativos' },
-  { id: 'simulator' as TabId, icon: Target, label: 'Simulador', description: 'Pratique objeções com IA' },
+  { id: 'shortcuts' as TabId, icon: BookOpen, label: 'Atalhos', description: 'Prompts prontos' },
+  { id: 'scripts' as TabId, icon: FileText, label: 'Scripts', description: 'Roteiros de venda' },
+  { id: 'guides' as TabId, icon: CheckSquare, label: 'Guias', description: 'Checklists' },
+  { id: 'simulator' as TabId, icon: Target, label: 'Chat', description: 'Objeções' },
+  { id: 'phone' as TabId, icon: Phone, label: 'Ligação', description: 'Por nicho' },
 ];
 
 export const AcademiaGenesisTab = ({ onBack }: AcademiaGenesisTabProps) => {
@@ -97,8 +89,10 @@ export const AcademiaGenesisTab = ({ onBack }: AcademiaGenesisTabProps) => {
           transition={{ duration: 0.2 }}
         >
           {activeTab === 'shortcuts' && <ShortcutsLibrary />}
+          {activeTab === 'scripts' && <ConversionScripts />}
           {activeTab === 'guides' && <PracticalGuides />}
           {activeTab === 'simulator' && <ObjectionSimulator />}
+          {activeTab === 'phone' && <PhoneScenarios />}
         </motion.div>
       </AnimatePresence>
     </div>
