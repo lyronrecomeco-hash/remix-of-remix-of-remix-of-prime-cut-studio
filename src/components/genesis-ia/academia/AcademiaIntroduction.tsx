@@ -53,26 +53,27 @@ export const AcademiaIntroduction = () => {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30 p-4 sm:p-5"
+        className="bg-white/5 border border-white/10 p-4 sm:p-5"
         style={{ borderRadius: '14px' }}
       >
         <div className="flex items-start gap-3 sm:gap-4">
-          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-primary/30 flex items-center justify-center flex-shrink-0">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
             <GraduationCap className="w-6 h-6 sm:w-7 sm:h-7 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
             <h1 className="text-lg sm:text-xl font-bold text-white mb-1">
-              Bem-vindo à Academia Genesis
+              Academia Genesis
             </h1>
             <p className="text-xs sm:text-sm text-white/60 leading-relaxed">
-              Seu centro de treinamento completo para dominar vendas. Ferramentas práticas, 
-              scripts testados e simuladores com IA para você fechar mais contratos.
+              Plataforma de treinamento intensivo em vendas. Aqui você encontra scripts prontos, 
+              simuladores de conversação com IA, roteiros de ligação e estratégias de viralização 
+              para fechar mais contratos e escalar seus resultados.
             </p>
           </div>
         </div>
 
         {/* Stats inline */}
-        <div className="flex gap-6 mt-4 pt-3 border-t border-primary/20">
+        <div className="flex gap-6 mt-4 pt-3 border-t border-white/10">
           {stats.map((stat, i) => (
             <div key={i} className="text-center">
               <p className="text-lg sm:text-xl font-bold text-primary">{stat.value}</p>
@@ -143,13 +144,13 @@ export const AcademiaIntroduction = () => {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="bg-cyan-500/10 border border-cyan-500/20 p-3 flex items-start gap-3"
+        className="bg-primary/10 border border-primary/20 p-3 flex items-start gap-3"
         style={{ borderRadius: '12px' }}
       >
-        <Award className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
+        <Award className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
         <div>
-          <p className="text-xs sm:text-sm text-cyan-300 font-medium">Dica de ouro</p>
-          <p className="text-[11px] sm:text-xs text-cyan-400/70">
+          <p className="text-xs sm:text-sm text-primary font-medium">Dica de ouro</p>
+          <p className="text-[11px] sm:text-xs text-white/60">
             Navegue pelas abas acima para acessar cada módulo. Comece pelos Atalhos para resultados rápidos!
           </p>
         </div>
