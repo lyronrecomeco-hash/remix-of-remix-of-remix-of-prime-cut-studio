@@ -762,13 +762,13 @@ const GenesisIADashboard = () => {
               {renderTabContent(ctx)}
             </main>
 
-            {/* Dock - Always visible with animated snake border */}
+            {/* Dock - Always visible with animated border outline */}
             <div className="fixed bottom-4 sm:bottom-8 left-0 right-0 flex justify-center z-50 px-4">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
-                className={`relative flex items-center ${config.dock.shadow} w-auto max-w-full overflow-x-auto group`}
+                className={`relative flex items-center ${config.dock.shadow} w-auto max-w-full overflow-x-auto group border border-primary/30`}
                 style={{
                   gap: 'clamp(8px, 2vw, 16px)',
                   padding: 'clamp(8px, 2vw, 12px) clamp(12px, 3vw, 16px)',
@@ -776,29 +776,23 @@ const GenesisIADashboard = () => {
                   backgroundColor: config.dock.backgroundColor,
                 }}
               >
-                {/* Animated snake border */}
+                {/* Animated glowing border */}
                 <div 
-                  className="absolute inset-0 rounded-[inherit] overflow-hidden"
-                  style={{ borderRadius: config.dock.borderRadius }}
-                >
-                  <div 
-                    className="absolute inset-0 rounded-[inherit]"
-                    style={{
-                      background: `linear-gradient(90deg, transparent, hsl(var(--primary)), hsl(var(--primary) / 0.5), transparent)`,
-                      backgroundSize: '200% 100%',
-                      animation: 'snakeBorder 3s linear infinite',
-                      maskImage: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                      maskComposite: 'exclude',
-                      WebkitMaskImage: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                      WebkitMaskComposite: 'xor',
-                      padding: '1.5px',
-                    }}
-                  />
-                </div>
+                  className="absolute inset-0 rounded-[inherit] pointer-events-none"
+                  style={{ 
+                    borderRadius: config.dock.borderRadius,
+                    boxShadow: '0 0 15px hsl(var(--primary) / 0.3), 0 0 30px hsl(var(--primary) / 0.15), inset 0 0 0 1px hsl(var(--primary) / 0.2)',
+                    animation: 'glowPulse 2s ease-in-out infinite',
+                  }}
+                />
                 <style>{`
-                  @keyframes snakeBorder {
-                    0% { background-position: 200% 0; }
-                    100% { background-position: -200% 0; }
+                  @keyframes glowPulse {
+                    0%, 100% { 
+                      box-shadow: 0 0 15px hsl(var(--primary) / 0.3), 0 0 30px hsl(var(--primary) / 0.15), inset 0 0 0 1px hsl(var(--primary) / 0.2);
+                    }
+                    50% { 
+                      box-shadow: 0 0 25px hsl(var(--primary) / 0.5), 0 0 50px hsl(var(--primary) / 0.25), inset 0 0 0 1px hsl(var(--primary) / 0.4);
+                    }
                   }
                 `}</style>
                 {dockItems.map((item, index) => {

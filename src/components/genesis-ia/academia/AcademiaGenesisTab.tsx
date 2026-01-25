@@ -12,7 +12,8 @@ import {
   Lightbulb,
   Trophy,
   Users,
-  TrendingUp
+  TrendingUp,
+  Video
 } from 'lucide-react';
 import { ShortcutsLibrary } from './ShortcutsLibrary';
 import { PracticalGuides } from './PracticalGuides';
@@ -20,24 +21,26 @@ import { ObjectionSimulator } from './ObjectionSimulator';
 import { PhoneScenarios } from './PhoneScenarios';
 import { ConversionScripts } from './ConversionScripts';
 import { AcademiaIntroduction } from './AcademiaIntroduction';
+import { TikTokStrategies } from './TikTokStrategies';
 
 interface AcademiaGenesisTabProps {
   onBack?: () => void;
 }
 
-// Tipo atualizado com introdução como primeira opção e novas abas
-type TabId = 'intro' | 'shortcuts' | 'scripts' | 'guides' | 'simulator' | 'phone' | 'mindset' | 'cases' | 'networking';
+// Tipo atualizado com introdução como primeira opção e novas abas incluindo TikTok
+type TabId = 'intro' | 'shortcuts' | 'scripts' | 'guides' | 'simulator' | 'phone' | 'tiktok' | 'mindset' | 'cases' | 'networking';
 
 const tabs = [
-  { id: 'intro' as TabId, icon: Home, label: 'Introdução', description: 'Visão geral' },
-  { id: 'shortcuts' as TabId, icon: BookOpen, label: 'Atalhos', description: 'Prompts prontos' },
-  { id: 'scripts' as TabId, icon: FileText, label: 'Scripts', description: 'Roteiros de venda' },
-  { id: 'guides' as TabId, icon: CheckSquare, label: 'Guias', description: 'Checklists' },
-  { id: 'simulator' as TabId, icon: Target, label: 'Chat', description: 'Objeções' },
-  { id: 'phone' as TabId, icon: Phone, label: 'Ligação', description: 'Por nicho' },
-  { id: 'mindset' as TabId, icon: Lightbulb, label: 'Mindset', description: 'Mentalidade' },
-  { id: 'cases' as TabId, icon: Trophy, label: 'Cases', description: 'Sucesso' },
-  { id: 'networking' as TabId, icon: Users, label: 'Networking', description: 'Conexões' },
+  { id: 'intro' as TabId, icon: Home, label: 'Introdução' },
+  { id: 'shortcuts' as TabId, icon: BookOpen, label: 'Atalhos' },
+  { id: 'scripts' as TabId, icon: FileText, label: 'Scripts' },
+  { id: 'guides' as TabId, icon: CheckSquare, label: 'Guias' },
+  { id: 'simulator' as TabId, icon: Target, label: 'Chat' },
+  { id: 'phone' as TabId, icon: Phone, label: 'Ligação' },
+  { id: 'tiktok' as TabId, icon: Video, label: 'TikTok' },
+  { id: 'mindset' as TabId, icon: Lightbulb, label: 'Mindset' },
+  { id: 'cases' as TabId, icon: Trophy, label: 'Cases' },
+  { id: 'networking' as TabId, icon: Users, label: 'Networking' },
 ];
 
 export const AcademiaGenesisTab = ({ onBack }: AcademiaGenesisTabProps) => {
@@ -59,39 +62,33 @@ export const AcademiaGenesisTab = ({ onBack }: AcademiaGenesisTabProps) => {
         </div>
       </div>
 
-      {/* Tab Navigation - Mobile Optimized */}
-      <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          
-          return (
-            <motion.button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-2.5 sm:py-3 border transition-all duration-200 flex-shrink-0 ${
-                isActive 
-                  ? 'bg-primary/20 border-primary/40 text-white' 
-                  : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:border-white/20'
-              }`}
-              style={{ borderRadius: '12px' }}
-            >
-              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center ${
-                isActive ? 'bg-primary/30' : 'bg-white/10'
-              }`}>
-                <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${isActive ? 'text-primary' : 'text-white/60'}`} />
-              </div>
-              <div className="text-left">
-                <p className={`text-xs sm:text-sm font-semibold ${isActive ? 'text-white' : 'text-white/80'}`}>
+      {/* Tab Navigation - Horizontally Scrollable */}
+      <div className="overflow-x-auto pb-2 scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
+        <div className="flex gap-1.5 sm:gap-2 min-w-max">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            
+            return (
+              <motion.button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                whileTap={{ scale: 0.95 }}
+                className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 sm:py-2.5 border transition-all duration-200 flex-shrink-0 ${
+                  isActive 
+                    ? 'bg-primary/20 border-primary/40 text-white' 
+                    : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
+                }`}
+                style={{ borderRadius: '10px' }}
+              >
+                <Icon className={`w-4 h-4 ${isActive ? 'text-primary' : 'text-white/50'}`} />
+                <span className={`text-xs font-medium whitespace-nowrap ${isActive ? 'text-white' : 'text-white/70'}`}>
                   {tab.label}
-                </p>
-                <p className="text-[10px] sm:text-xs text-white/40 hidden sm:block">{tab.description}</p>
-              </div>
-            </motion.button>
-          );
-        })}
+                </span>
+              </motion.button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Tab Content */}
@@ -103,12 +100,13 @@ export const AcademiaGenesisTab = ({ onBack }: AcademiaGenesisTabProps) => {
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.2 }}
         >
-          {activeTab === 'intro' && <AcademiaIntroduction onStart={() => setActiveTab('shortcuts')} />}
+          {activeTab === 'intro' && <AcademiaIntroduction />}
           {activeTab === 'shortcuts' && <ShortcutsLibrary />}
           {activeTab === 'scripts' && <ConversionScripts />}
           {activeTab === 'guides' && <PracticalGuides />}
           {activeTab === 'simulator' && <ObjectionSimulator />}
           {activeTab === 'phone' && <PhoneScenarios />}
+          {activeTab === 'tiktok' && <TikTokStrategies />}
           {activeTab === 'mindset' && <MindsetSection />}
           {activeTab === 'cases' && <SuccessCasesSection />}
           {activeTab === 'networking' && <NetworkingSection />}
