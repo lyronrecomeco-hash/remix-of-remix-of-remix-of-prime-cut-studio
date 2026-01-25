@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Sparkles, RefreshCw, Bell } from 'lucide-react';
+import { ArrowLeft, Bell, RefreshCw, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useGenesisAuth } from '@/contexts/GenesisAuthContext';
@@ -17,6 +17,12 @@ interface Post {
   created_at: string;
 }
 
+interface Reaction {
+  type: 'fire' | 'diamond' | 'energy' | 'target' | 'rocket';
+  count: number;
+  hasReacted: boolean;
+}
+
 interface CommunityTabProps {
   onBack: () => void;
 }
@@ -26,6 +32,8 @@ const GENESIS_HUB_EMAIL = 'lyronrp@gmail.com';
 export const CommunityTab = ({ onBack }: CommunityTabProps) => {
   const { genesisUser } = useGenesisAuth();
   const [posts, setPosts] = useState<Post[]>([]);
+  const [reactions, setReactions] = useState<Record<string, Reaction[]>>({});
+  const [commentsCounts, setCommentsCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
 
@@ -47,6 +55,42 @@ export const CommunityTab = ({ onBack }: CommunityTabProps) => {
       if (postsError) throw postsError;
 
       setPosts(postsData || []);
+
+      if (postsData && postsData.length > 0) {
+        const postIds = postsData.map(p => p.id);
+        
+        const { data: reactionsData } = await supabase
+          .from('community_reactions')
+          .select('*')
+          .in('post_id', postIds);
+
+        const reactionsMap: Record<string, Reaction[]> = {};
+        postIds.forEach(postId => {
+          const postReactions = reactionsData?.filter(r => r.post_id === postId) || [];
+          const reactionTypes: ('fire' | 'diamond' | 'energy' | 'target' | 'rocket')[] = 
+            ['fire', 'diamond', 'energy', 'target', 'rocket'];
+          
+          reactionsMap[postId] = reactionTypes.map(type => ({
+            type,
+            count: postReactions.filter(r => r.reaction_type === type).length,
+            hasReacted: postReactions.some(r => 
+              r.reaction_type === type && r.user_id === genesisUser?.id
+            )
+          }));
+        });
+        setReactions(reactionsMap);
+
+        const { data: commentsData } = await supabase
+          .from('community_comments')
+          .select('post_id')
+          .in('post_id', postIds);
+
+        const countsMap: Record<string, number> = {};
+        postIds.forEach(postId => {
+          countsMap[postId] = commentsData?.filter(c => c.post_id === postId).length || 0;
+        });
+        setCommentsCounts(countsMap);
+      }
     } catch (error) {
       console.error('Error loading posts:', error);
       toast.error('Erro ao carregar posts');
@@ -82,6 +126,45 @@ export const CommunityTab = ({ onBack }: CommunityTabProps) => {
     }
   };
 
+  const handleReact = async (postId: string, reactionType: string) => {
+    if (!genesisUser) {
+      toast.error('Faça login para reagir');
+      return;
+    }
+
+    try {
+      const currentReaction = reactions[postId]?.find(r => r.type === reactionType);
+      
+      if (currentReaction?.hasReacted) {
+        await supabase
+          .from('community_reactions')
+          .delete()
+          .eq('post_id', postId)
+          .eq('user_id', genesisUser.id)
+          .eq('reaction_type', reactionType);
+      } else {
+        await supabase
+          .from('community_reactions')
+          .insert({
+            post_id: postId,
+            user_id: genesisUser.id,
+            reaction_type: reactionType
+          });
+      }
+
+      setReactions(prev => ({
+        ...prev,
+        [postId]: prev[postId]?.map(r => 
+          r.type === reactionType 
+            ? { ...r, count: r.hasReacted ? r.count - 1 : r.count + 1, hasReacted: !r.hasReacted }
+            : r
+        ) || []
+      }));
+    } catch (error) {
+      console.error('Error reacting:', error);
+    }
+  };
+
   const handleDeletePost = async (postId: string) => {
     if (!isGenesisHub) return;
 
@@ -101,10 +184,14 @@ export const CommunityTab = ({ onBack }: CommunityTabProps) => {
     }
   };
 
+  const handleOpenComments = (postId: string) => {
+    toast.info('Comentários em breve!');
+  };
+
   return (
-    <div className="min-h-screen bg-[hsl(220,25%,6%)]">
-      {/* Header - Genesis style */}
-      <div className="sticky top-0 z-30 bg-[hsl(220,25%,8%)]/95 backdrop-blur-xl border-b border-white/10">
+    <div className="min-h-screen bg-gradient-to-b from-[hsl(220,30%,8%)] to-[hsl(220,25%,5%)]">
+      {/* Header - Genesis style with glassmorphism */}
+      <div className="sticky top-0 z-30 bg-[hsl(220,30%,10%)]/80 backdrop-blur-xl border-b border-blue-500/20">
         <div className="flex items-center justify-between px-4 h-14">
           <div className="flex items-center gap-3">
             <Button
@@ -115,13 +202,13 @@ export const CommunityTab = ({ onBack }: CommunityTabProps) => {
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center">
-                <Bell className="w-4 h-4 text-white" />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                <Bell className="w-5 h-5 text-white" />
               </div>
               <div>
                 <h1 className="text-lg font-bold text-white">Comunidade</h1>
-                <p className="text-[10px] text-white/40 -mt-0.5">Avisos & Atualizações</p>
+                <p className="text-[11px] text-blue-400/80 -mt-0.5">Avisos & Atualizações</p>
               </div>
             </div>
           </div>
@@ -131,7 +218,7 @@ export const CommunityTab = ({ onBack }: CommunityTabProps) => {
             size="icon"
             onClick={loadPosts}
             disabled={loading}
-            className="text-white/80 hover:text-white hover:bg-white/10 h-9 w-9 rounded-xl"
+            className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 h-9 w-9 rounded-xl"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
@@ -148,7 +235,9 @@ export const CommunityTab = ({ onBack }: CommunityTabProps) => {
         {loading ? (
           <div className="flex justify-center py-16">
             <div className="flex flex-col items-center gap-3">
-              <RefreshCw className="w-6 h-6 text-blue-500 animate-spin" />
+              <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                <RefreshCw className="w-5 h-5 text-blue-400 animate-spin" />
+              </div>
               <span className="text-sm text-white/40">Carregando...</span>
             </div>
           </div>
@@ -157,17 +246,17 @@ export const CommunityTab = ({ onBack }: CommunityTabProps) => {
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center mx-auto mb-4 border border-blue-500/20"
+              className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center mx-auto mb-4 border border-blue-500/30 shadow-lg shadow-blue-500/10"
             >
               <Sparkles className="w-10 h-10 text-blue-400" />
             </motion.div>
             <h3 className="text-xl font-bold text-white mb-2">Bem-vindo à Comunidade!</h3>
-            <p className="text-white/50 max-w-sm mx-auto text-sm">
+            <p className="text-blue-300/60 max-w-sm mx-auto text-sm">
               Fique por dentro das novidades, dicas e atualizações exclusivas da Genesis.
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-white/5">
+          <div className="divide-y divide-blue-500/10">
             {posts.map((post, index) => (
               <motion.div
                 key={post.id}
@@ -178,10 +267,15 @@ export const CommunityTab = ({ onBack }: CommunityTabProps) => {
                 <CommunityPost
                   id={post.id}
                   authorName={post.author_name}
+                  isVerified={true}
                   content={post.content}
                   imageUrl={post.image_url}
                   createdAt={post.created_at}
+                  reactions={reactions[post.id] || []}
+                  commentsCount={commentsCounts[post.id] || 0}
+                  onReact={handleReact}
                   onDelete={handleDeletePost}
+                  onOpenComments={handleOpenComments}
                   canDelete={isGenesisHub}
                 />
               </motion.div>
