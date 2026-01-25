@@ -102,7 +102,7 @@ const GenesisCommercialHero = () => {
 
           {/* Main Headline */}
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-black mb-4 md:mb-5 leading-[1.1] tracking-tight">
-            <span className="text-foreground">Seu Hub de Negócios</span>
+            <span className="text-foreground">Seu Hub de Automação</span>
             <br />
             <span className="text-primary">
               {typedText}
@@ -123,7 +123,7 @@ const GenesisCommercialHero = () => {
             transition={{ delay: 0.4 }}
             className="text-base md:text-lg text-muted-foreground mb-6 md:mb-8 max-w-2xl mx-auto px-4"
           >
-            Gerador de SaaS, páginas de vendas, contratos e prospecção de clientes — tudo em um só lugar.
+            Radar de prospecção com IA, automação de WhatsApp, gerador de páginas e contratos — tudo em um só lugar.
           </motion.p>
 
           {/* CTA Buttons */}
