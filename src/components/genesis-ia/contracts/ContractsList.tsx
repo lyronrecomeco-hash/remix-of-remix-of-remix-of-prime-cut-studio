@@ -60,12 +60,12 @@ interface ContractsListProps {
 }
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-  draft: { label: 'Rascunho', color: 'bg-slate-500/20 text-slate-400 border-slate-500/30', icon: FileText },
+  draft: { label: 'Rascunho', color: 'bg-muted text-muted-foreground border-border', icon: FileText },
   pending_signature: { label: 'Aguardando Assinatura', color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', icon: Clock },
-  partially_signed: { label: 'Parcialmente Assinado', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', icon: FileSignature },
+  partially_signed: { label: 'Parcialmente Assinado', color: 'bg-primary/20 text-primary border-primary/30', icon: FileSignature },
   signed: { label: 'Assinado', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', icon: CheckCircle2 },
-  cancelled: { label: 'Cancelado', color: 'bg-red-500/20 text-red-400 border-red-500/30', icon: XCircle },
-  expired: { label: 'Expirado', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30', icon: AlertTriangle },
+  cancelled: { label: 'Cancelado', color: 'bg-destructive/20 text-destructive border-destructive/30', icon: XCircle },
+  expired: { label: 'Expirado', color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', icon: AlertTriangle },
 };
 
 export function ContractsList({ affiliateId, onCreateNew, onViewContract }: ContractsListProps) {
@@ -193,8 +193,8 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-600/20 flex items-center justify-center flex-shrink-0">
-            <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+            <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
           </div>
           <div>
             <h2 className="text-base sm:text-lg font-bold text-foreground">Contratos</h2>
@@ -202,7 +202,7 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
           </div>
         </div>
         
-        <Button onClick={onCreateNew} className="gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 w-full sm:w-auto text-sm">
+        <Button onClick={onCreateNew} className="gap-2 w-full sm:w-auto text-sm">
           <Plus className="w-4 h-4" />
           Criar novo contrato
         </Button>
@@ -238,10 +238,10 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center py-12 sm:py-16 border-2 border-dashed border-border rounded-xl bg-card/30"
+          className="text-center py-12 sm:py-16 border-2 border-dashed border-border rounded-xl bg-white/5"
         >
-          <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-600/20 flex items-center justify-center">
-            <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-blue-400" />
+          <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 rounded-2xl bg-primary/20 flex items-center justify-center">
+            <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
           </div>
           <h3 className="text-base sm:text-lg font-semibold text-foreground mb-2">
             {searchQuery || statusFilter !== 'all' ? 'Nenhum contrato encontrado' : 'Nenhum contrato criado'}
@@ -252,7 +252,7 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
               : 'Crie seu primeiro contrato'}
           </p>
           {!searchQuery && statusFilter === 'all' && (
-            <Button onClick={onCreateNew} className="gap-2 bg-gradient-to-r from-blue-500 to-indigo-600">
+            <Button onClick={onCreateNew} className="gap-2">
               <Plus className="w-4 h-4" />
               Criar primeiro contrato
             </Button>
@@ -260,7 +260,7 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
         </motion.div>
       ) : (
         <>
-          {/* Desktop Table */}
+          {/* Desktop Table - Genesis Standard */}
           <div className="hidden md:block rounded-xl border border-border/50 bg-card/30 overflow-hidden shadow-sm">
             {/* Table Header */}
             <div className="grid grid-cols-[2fr_1.5fr_1fr_1fr_1.2fr_auto] gap-4 px-4 py-3 bg-card/60 border-b border-border/40">
