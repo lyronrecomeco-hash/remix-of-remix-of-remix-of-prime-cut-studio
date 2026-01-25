@@ -6,7 +6,8 @@ import {
   FileText,
   Sparkles,
   Rocket,
-  Code2
+  Code2,
+  Users
 } from 'lucide-react';
 
 interface CarouselItem {
@@ -55,6 +56,13 @@ const carouselItems: CarouselItem[] = [
     title: 'Missão Sprint',
     description: 'Metas reais, execução guiada por IA',
     tabId: 'sprint-mission'
+  },
+  {
+    id: '6',
+    icon: Users,
+    title: 'Comunidade',
+    description: 'Novidades e atualizações exclusivas',
+    tabId: 'community'
   }
 ];
 
