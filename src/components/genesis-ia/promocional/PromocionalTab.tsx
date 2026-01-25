@@ -140,20 +140,16 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
   }
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6">
       {/* Header do Programa */}
-      <div className="text-center mb-8 pt-4">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
-          <Handshake className="w-4 h-4 text-primary" />
-          <span className="text-sm font-medium text-primary">Programa de Parceiros</span>
+      <div className="flex items-center gap-3 pb-4 border-b border-white/10">
+        <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+          <Handshake className="w-6 h-6 text-primary" />
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-3">
-          Indique e Cresça Conosco
-        </h1>
-        <p className="text-white/60 max-w-2xl mx-auto">
-          Como parceiro Genesis Hub, você tem acesso a condições exclusivas para indicar novos usuários. 
-          Compartilhe seu link e acompanhe suas indicações em tempo real.
-        </p>
+        <div>
+          <h2 className="text-xl font-bold text-white">Programa de Parceiros</h2>
+          <p className="text-sm text-white/50">Indique e acompanhe suas conversões</p>
+        </div>
       </div>
 
       {/* Estatísticas Resumidas */}
@@ -235,7 +231,7 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
       </div>
 
       {/* Link Promocional */}
-      <Card className="border border-primary/30 bg-gradient-to-br from-primary/5 to-transparent" style={{ borderRadius: '14px' }}>
+      <Card className="border border-primary/30 bg-white/5" style={{ borderRadius: '14px' }}>
         <CardContent className="p-5">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
@@ -243,12 +239,11 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
             </div>
             <div>
               <h3 className="font-semibold text-white">Seu Link de Parceiro</h3>
-              <p className="text-sm text-white/50">Compartilhe em lives, grupos e redes sociais</p>
+              <p className="text-sm text-white/50">Compartilhe em grupos e redes sociais</p>
             </div>
           </div>
           <p className="text-sm text-white/60 mb-4 pl-[52px]">
-            Quando alguém acessar este link, terá acesso aos planos promocionais abaixo. 
-            Todas as assinaturas feitas através do seu link serão registradas automaticamente.
+            Todas as assinaturas através deste link serão contabilizadas automaticamente.
           </p>
           <div className="flex items-center gap-3">
             <div className="flex-1 px-4 py-3 rounded-lg bg-white/5 border border-white/10 font-mono text-sm text-white/80 truncate">
@@ -330,52 +325,52 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
         </div>
       </div>
 
-      {/* Boas Práticas */}
-      <Card className="border border-white/[0.08] bg-[hsl(215_30%_12%)]" style={{ borderRadius: '14px' }}>
+      {/* Dicas de Sucesso */}
+      <Card className="border border-white/[0.08] bg-white/5" style={{ borderRadius: '14px' }}>
         <CardContent className="p-5">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-              <Megaphone className="w-5 h-5 text-blue-400" />
+            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+              <Target className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-white">Boas Práticas</h3>
-              <p className="text-sm text-white/50">Como apresentar a Genesis IA</p>
+              <h3 className="font-semibold text-white">Dicas de Sucesso</h3>
+              <p className="text-sm text-white/50">Estratégias para indicar com eficiência</p>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="p-3 rounded-lg bg-white/5 border border-white/10">
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-white">Seja Autêntico</p>
-                  <p className="text-xs text-white/50">Compartilhe sua experiência real com a plataforma</p>
+                  <p className="text-xs text-white/50">Compartilhe sua experiência real</p>
                 </div>
               </div>
             </div>
             <div className="p-3 rounded-lg bg-white/5 border border-white/10">
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-white">Mostre Resultados</p>
-                  <p className="text-xs text-white/50">Demonstre como a Genesis IA ajudou seu negócio</p>
+                  <p className="text-xs text-white/50">Demonstre os benefícios obtidos</p>
                 </div>
               </div>
             </div>
             <div className="p-3 rounded-lg bg-white/5 border border-white/10">
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-white">Transparência</p>
-                  <p className="text-xs text-white/50">Informe que é um link de parceiro</p>
+                  <p className="text-sm font-medium text-white">Seja Transparente</p>
+                  <p className="text-xs text-white/50">Informe que é seu link exclusivo</p>
                 </div>
               </div>
             </div>
             <div className="p-3 rounded-lg bg-white/5 border border-white/10">
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-white">Foco no Valor</p>
-                  <p className="text-xs text-white/50">Destaque os benefícios reais da ferramenta</p>
+                  <p className="text-xs text-white/50">Destaque benefícios reais</p>
                 </div>
               </div>
             </div>

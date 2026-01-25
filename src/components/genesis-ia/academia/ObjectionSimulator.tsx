@@ -242,8 +242,8 @@ export const ObjectionSimulator = () => {
     return (
       <div className="space-y-3 sm:space-y-4">
         <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-            <Target className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+            <Target className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
           </div>
           <div>
             <h3 className="font-semibold text-white text-sm sm:text-base">Escolha um cenário</h3>
@@ -259,11 +259,11 @@ export const ObjectionSimulator = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.03 }}
               onClick={() => startSimulation(scenario)}
-              className="text-left p-3 sm:p-4 bg-white/5 border border-white/10 hover:border-purple-500/30 hover:bg-white/[0.08] transition-all group"
+              className="text-left p-3 sm:p-4 bg-white/5 border border-white/10 hover:border-primary/30 hover:bg-white/[0.08] transition-all group"
               style={{ borderRadius: '12px' }}
             >
               <div className="flex items-start justify-between gap-2 mb-1.5 sm:mb-2">
-                <h4 className="font-medium text-white text-xs sm:text-sm group-hover:text-purple-300 transition-colors line-clamp-1">
+                <h4 className="font-medium text-white text-xs sm:text-sm group-hover:text-primary transition-colors line-clamp-1">
                   {scenario.title}
                 </h4>
                 <Badge className={`text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 flex-shrink-0 ${getDifficultyColor(scenario.difficulty)}`}>
@@ -284,8 +284,8 @@ export const ObjectionSimulator = () => {
       {/* Header */}
       <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-white/10 bg-white/5">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-            <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+            <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
           </div>
           <div className="min-w-0">
             <h4 className="font-semibold text-white text-xs sm:text-sm truncate">{selectedScenario.title}</h4>

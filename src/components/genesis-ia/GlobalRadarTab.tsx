@@ -484,8 +484,8 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
         <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
-                <Star className="w-5 h-5 text-purple-400" />
+              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                <Star className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="text-xs text-white/50">Score Médio</p>
@@ -498,8 +498,8 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
         <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
-                <Bell className="w-5 h-5 text-amber-400" />
+              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                <Bell className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="text-xs text-white/50">Não Lidos</p>
@@ -574,6 +574,30 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
               {unreadCount > 0 && (
                 <Button variant="outline" size="sm" onClick={markAllAsRead} className="border-white/20 text-white/70 hover:text-white hover:bg-white/10">
                   Marcar lidos
+                </Button>
+              )}
+              
+              {opportunities.length > 0 && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={async () => {
+                    if (!affiliateId) return;
+                    const { error } = await supabase
+                      .from('global_radar_opportunities')
+                      .update({ status: 'rejected' })
+                      .eq('affiliate_id', affiliateId)
+                      .eq('status', 'new');
+                    if (!error) {
+                      setOpportunities([]);
+                      setLimitReached(false);
+                      toast.success('Resultados limpos com sucesso!');
+                    }
+                  }}
+                  className="border-red-500/30 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                >
+                  <X className="w-4 h-4 mr-1.5" />
+                  Limpar Tudo
                 </Button>
               )}
             </div>

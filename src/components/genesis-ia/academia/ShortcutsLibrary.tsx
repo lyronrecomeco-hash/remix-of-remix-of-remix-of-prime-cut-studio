@@ -84,7 +84,7 @@ const shortcuts: Shortcut[] = [
   },
   {
     id: '7',
-    title: 'Quebra de Objeção: Preciso Pensar',
+    title: 'Quebra: Preciso Pensar',
     content: 'Claro, entendo! É uma decisão importante.\n\nPra te ajudar a decidir, me conta: qual é a principal dúvida que ainda ficou?\n\nMuitas vezes posso esclarecer na hora 😊',
     category: 'fechamento',
     icon: TrendingUp,
@@ -97,6 +97,39 @@ const shortcuts: Shortcut[] = [
     category: 'followup',
     icon: Sparkles,
     tags: ['reativação', 'lead frio']
+  },
+  {
+    id: '9',
+    title: 'Ligação de Prospecção',
+    content: 'Bom dia [NOME]! Me chamo [SEU NOME] da [EMPRESA].\n\nEstou ligando porque vi que sua empresa [CONTEXTO] e temos uma solução que pode [BENEFÍCIO].\n\nVocê tem 2 minutinhos?',
+    category: 'prospeccao',
+    icon: Phone,
+    tags: ['ligação', 'cold call'],
+    popular: true
+  },
+  {
+    id: '10',
+    title: 'Gatilho de Urgência',
+    content: 'Oi [NOME]! Só passando pra avisar que a condição especial que te ofereci expira [DATA].\n\nDepois disso, o valor volta ao normal.\n\nConsegue decidir até lá? 🎯',
+    category: 'fechamento',
+    icon: Zap,
+    tags: ['urgência', 'fechamento']
+  },
+  {
+    id: '11',
+    title: 'Pedido de Indicação',
+    content: 'Oi [NOME]! Fico feliz que esteja gostando do nosso trabalho 🙌\n\nConhece alguém que também poderia se beneficiar?\n\nPra cada indicação que fechar, você ganha [BENEFÍCIO]!',
+    category: 'suporte',
+    icon: Users,
+    tags: ['indicação', 'referral']
+  },
+  {
+    id: '12',
+    title: 'Segunda Tentativa',
+    content: 'Oi [NOME], tentei falar contigo esses dias mas não consegui.\n\nSei que você está ocupado, então resumo em 1 frase:\n\n💡 [BENEFÍCIO PRINCIPAL]\n\nVale a pena conversar 5 min?',
+    category: 'followup',
+    icon: MessageSquare,
+    tags: ['follow-up', 'persistência']
   }
 ];
 

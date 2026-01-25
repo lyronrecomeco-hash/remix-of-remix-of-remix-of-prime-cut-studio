@@ -212,8 +212,8 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
       {/* Header */}
       <div className="flex items-center justify-between pb-4 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
-            <Settings className="w-6 h-6 text-purple-400" />
+          <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+            <Settings className="w-6 h-6 text-primary" />
           </div>
           <div>
             <h2 className="text-2xl font-bold text-white">Configurações</h2>
