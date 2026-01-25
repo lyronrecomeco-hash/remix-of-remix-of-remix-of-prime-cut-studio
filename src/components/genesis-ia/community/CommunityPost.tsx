@@ -1,7 +1,8 @@
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MoreHorizontal, Trash2 } from 'lucide-react';
+import { MessageCircle, MoreHorizontal, Trash2, Share2 } from 'lucide-react';
 import { GenesisVerifiedBadge } from './GenesisVerifiedBadge';
+import { CommunityReactions } from './CommunityReactions';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,23 +10,39 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+interface Reaction {
+  type: 'fire' | 'diamond' | 'energy' | 'target' | 'rocket';
+  count: number;
+  hasReacted: boolean;
+}
+
 interface CommunityPostProps {
   id: string;
   authorName: string;
+  isVerified: boolean;
   content: string;
   imageUrl?: string | null;
   createdAt: string;
+  reactions: Reaction[];
+  commentsCount: number;
+  onReact: (postId: string, reactionType: string) => void;
   onDelete?: (postId: string) => void;
+  onOpenComments: (postId: string) => void;
   canDelete?: boolean;
 }
 
 export const CommunityPost = ({
   id,
   authorName,
+  isVerified,
   content,
   imageUrl,
   createdAt,
+  reactions,
+  commentsCount,
+  onReact,
   onDelete,
+  onOpenComments,
   canDelete = false
 }: CommunityPostProps) => {
   const timeAgo = formatDistanceToNow(new Date(createdAt), {
@@ -34,11 +51,11 @@ export const CommunityPost = ({
   });
 
   return (
-    <article className="px-4 py-4 hover:bg-white/[0.02] transition-colors">
+    <article className="px-4 py-4 hover:bg-blue-500/[0.02] transition-colors">
       <div className="flex gap-3">
-        {/* Avatar */}
+        {/* Avatar - Genesis style */}
         <div className="flex-shrink-0">
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold text-base shadow-lg shadow-blue-500/20">
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold text-base shadow-lg shadow-blue-500/30">
             G
           </div>
         </div>
@@ -51,9 +68,9 @@ export const CommunityPost = ({
               <span className="font-semibold text-white text-[15px]">
                 {authorName}
               </span>
-              <GenesisVerifiedBadge size="sm" />
-              <span className="text-white/30 text-sm">·</span>
-              <span className="text-white/40 text-sm">{timeAgo}</span>
+              {isVerified && <GenesisVerifiedBadge size="sm" />}
+              <span className="text-blue-400/40 text-sm">·</span>
+              <span className="text-blue-400/60 text-sm">{timeAgo}</span>
             </div>
 
             {/* Delete action */}
@@ -64,7 +81,7 @@ export const CommunityPost = ({
                     <MoreHorizontal className="w-4 h-4" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-[hsl(220,25%,12%)] border-white/10">
+                <DropdownMenuContent align="end" className="bg-[hsl(220,30%,12%)] border-blue-500/20">
                   <DropdownMenuItem 
                     onClick={() => onDelete(id)}
                     className="text-red-400 focus:text-red-400 focus:bg-red-500/10 cursor-pointer"
@@ -78,7 +95,7 @@ export const CommunityPost = ({
           </div>
 
           {/* Text content */}
-          <div className="mb-2">
+          <div className="mb-3">
             <p className="text-white/90 text-[15px] whitespace-pre-wrap leading-relaxed">
               {content}
             </p>
@@ -86,7 +103,7 @@ export const CommunityPost = ({
 
           {/* Image */}
           {imageUrl && (
-            <div className="mt-3 rounded-xl overflow-hidden border border-white/10">
+            <div className="mb-3 rounded-xl overflow-hidden border border-blue-500/20">
               <img 
                 src={imageUrl} 
                 alt="Post" 
@@ -94,6 +111,40 @@ export const CommunityPost = ({
               />
             </div>
           )}
+
+          {/* Reactions bar */}
+          <div className="mb-3">
+            <CommunityReactions 
+              reactions={reactions}
+              onReact={(type) => onReact(id, type)}
+            />
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-4 -ml-2">
+            {/* Comments */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenComments(id);
+              }}
+              className="group flex items-center gap-1.5 text-blue-400/60 hover:text-blue-400 transition-colors"
+            >
+              <div className="p-2 rounded-lg group-hover:bg-blue-500/10 transition-colors">
+                <MessageCircle className="w-[18px] h-[18px]" />
+              </div>
+              {commentsCount > 0 && (
+                <span className="text-[13px]">{commentsCount}</span>
+              )}
+            </button>
+
+            {/* Share */}
+            <button className="group flex items-center text-blue-400/60 hover:text-cyan-400 transition-colors">
+              <div className="p-2 rounded-lg group-hover:bg-cyan-500/10 transition-colors">
+                <Share2 className="w-[18px] h-[18px]" />
+              </div>
+            </button>
+          </div>
         </div>
       </div>
     </article>
