@@ -634,9 +634,7 @@ const GenesisIADashboard = () => {
               Voltar
             </Button>
           </div>
-          <div className="max-w-2xl mx-auto">
-            <ProposalWizard />
-          </div>
+          <ProposalWizard />
         </div>
       );
     }
