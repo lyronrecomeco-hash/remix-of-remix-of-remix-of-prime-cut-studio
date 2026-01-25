@@ -479,36 +479,25 @@ export default function GenesisLogin() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left Side - Branding - Always uses the deep blue Genesis theme */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden transition-colors duration-300 bg-[hsl(222,47%,8%)]">
+      {/* Left Side - Branding - Genesis Blue Theme */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-[hsl(222,47%,11%)]">
         {/* Background Pattern */}
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/25 via-primary/5 to-transparent" />
-          <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%233b82f6' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/20 via-primary/5 to-transparent" />
+          <div className="absolute inset-0 opacity-30" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%233b82f6' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
           }} />
         </div>
 
-        {/* Floating Elements - Blue glow orbs */}
+        {/* Animated orbs - primary color */}
         <div className="absolute inset-0 overflow-hidden">
-          {[...Array(5)].map((_, i) => (
+          {[...Array(4)].map((_, i) => (
             <motion.div
               key={i}
-              className="absolute w-32 h-32 rounded-full blur-xl bg-primary/15"
-              style={{
-                left: `${20 + i * 15}%`,
-                top: `${10 + i * 20}%`,
-              }}
-              animate={{
-                y: [0, -30, 0],
-                scale: [1, 1.1, 1],
-              }}
-              transition={{
-                duration: 4 + i,
-                repeat: Infinity,
-                ease: 'easeInOut',
-                delay: i * 0.5,
-              }}
+              className="absolute w-40 h-40 rounded-full blur-3xl bg-primary/20"
+              style={{ left: `${15 + i * 20}%`, top: `${15 + i * 18}%` }}
+              animate={{ y: [0, -20, 0], scale: [1, 1.1, 1] }}
+              transition={{ duration: 5 + i, repeat: Infinity, ease: 'easeInOut', delay: i * 0.4 }}
             />
           ))}
         </div>
@@ -519,14 +508,14 @@ export default function GenesisLogin() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3 mb-12"
+            className="flex items-center gap-3 mb-10"
           >
-            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
-              <Zap className="w-8 h-8 text-white" />
+            <div className="w-14 h-14 rounded-2xl bg-primary/30 backdrop-blur-sm flex items-center justify-center border border-primary/30">
+              <Zap className="w-8 h-8 text-primary" />
             </div>
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-white">Genesis Hub</h1>
-              <p className="text-white/70 text-sm">WhatsApp Automation Platform</p>
+              <p className="text-primary/70 text-sm">Plataforma de Automação</p>
             </div>
           </motion.div>
 
@@ -535,15 +524,15 @@ export default function GenesisLogin() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="mb-12"
+            className="mb-10"
           >
             <h2 className="text-4xl xl:text-5xl font-bold leading-tight mb-4 text-white">
               Automatize seu
               <br />
-              <span className="text-white/90">WhatsApp Business</span>
+              <span className="text-primary">WhatsApp Business</span>
             </h2>
-            <p className="text-lg max-w-md text-white/70">
-              Plataforma completa para gestão de automação, chatbots e fluxos inteligentes de atendimento.
+            <p className="text-lg max-w-md text-white/60">
+              Plataforma completa para gestão de automação, chatbots e fluxos inteligentes.
             </p>
           </motion.div>
 
@@ -552,7 +541,7 @@ export default function GenesisLogin() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="grid grid-cols-2 gap-4"
+            className="grid grid-cols-2 gap-3"
           >
             {features.map((feature, index) => (
               <motion.div
@@ -560,14 +549,14 @@ export default function GenesisLogin() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 + index * 0.1 }}
-                className="flex items-start gap-3 p-4 rounded-xl backdrop-blur-sm border bg-white/5 border-primary/20"
+                className="flex items-start gap-3 p-4 rounded-xl backdrop-blur-sm bg-white/5 border border-primary/20"
               >
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-primary/20">
                   <feature.icon className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-sm text-white">{feature.label}</h3>
-                  <p className="text-xs text-white/70">{feature.desc}</p>
+                  <p className="text-xs text-white/50">{feature.desc}</p>
                 </div>
               </motion.div>
             ))}
@@ -578,39 +567,39 @@ export default function GenesisLogin() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="flex gap-8 mt-8 pt-8 border-t border-white/20"
+            className="flex gap-8 mt-8 pt-8 border-t border-primary/20"
           >
             <div>
-              <div className="text-3xl font-bold text-white">10k+</div>
-              <div className="text-sm text-white/70">Mensagens/dia</div>
+              <div className="text-3xl font-bold text-primary">10k+</div>
+              <div className="text-sm text-white/50">Mensagens/dia</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-white">99.9%</div>
-              <div className="text-sm text-white/70">Uptime</div>
+              <div className="text-3xl font-bold text-primary">99.9%</div>
+              <div className="text-sm text-white/50">Uptime</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-white">500+</div>
-              <div className="text-sm text-white/70">Empresas</div>
+              <div className="text-3xl font-bold text-primary">500+</div>
+              <div className="text-sm text-white/50">Empresas</div>
             </div>
           </motion.div>
         </div>
       </div>
 
-      {/* Right Side - Form (respects theme) */}
+      {/* Right Side - Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-6 md:p-12 bg-background min-h-screen overflow-y-auto">
         <div className="w-full max-w-md py-4 sm:py-0">
-          {/* Mobile Logo - Padronizado Genesis */}
+          {/* Mobile Logo - Genesis Theme */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex items-center gap-3 mb-6 sm:mb-8 lg:hidden"
           >
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center border border-primary/30">
-              <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/20 flex items-center justify-center border border-primary/30">
+              <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-foreground">Genesis Hub</h1>
-              <p className="text-muted-foreground text-[10px] sm:text-xs">WhatsApp Automation</p>
+              <p className="text-primary/60 text-[10px] sm:text-xs">Plataforma de Automação</p>
             </div>
           </motion.div>
 
