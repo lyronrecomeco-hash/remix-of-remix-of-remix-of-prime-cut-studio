@@ -619,7 +619,7 @@ export default function GenesisLogin() {
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: 'spring', stiffness: 200 }}
-                    className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center mx-auto"
+                    className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto"
                   >
                     <AnimatePresence mode="wait">
                       {verificationSuccess ? (
@@ -629,11 +629,11 @@ export default function GenesisLogin() {
                           animate={{ scale: 1, rotate: 0 }}
                           exit={{ scale: 0 }}
                         >
-                          <CheckCircle className="w-10 h-10 text-green-500" />
+                          <CheckCircle className="w-10 h-10 text-primary" />
                         </motion.div>
                       ) : (
                         <motion.div key="icon" initial={{ scale: 0 }} animate={{ scale: 1 }}>
-                          <MessageSquare className="w-10 h-10 text-green-500" />
+                          <MessageSquare className="w-10 h-10 text-primary" />
                         </motion.div>
                       )}
                     </AnimatePresence>

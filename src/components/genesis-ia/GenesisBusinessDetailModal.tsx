@@ -46,9 +46,9 @@ interface GenesisBusinessDetailModalProps {
 }
 
 const LEVEL_CONFIG = {
-  basic: { label: 'Básico', color: 'bg-slate-500/10 text-slate-400 border-slate-500/30' },
+  basic: { label: 'Básico', color: 'bg-white/10 text-white/60 border-white/20' },
   intermediate: { label: 'Intermediário', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30' },
-  advanced: { label: 'Avançado', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' },
+  advanced: { label: 'Avançado', color: 'bg-primary/20 text-primary border-primary/30' },
 };
 
 export const GenesisBusinessDetailModal = ({
@@ -105,7 +105,7 @@ export const GenesisBusinessDetailModal = ({
                   </Badge>
                 )}
                 {hasWebsite ? (
-                  <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 text-[11px] py-0">
+                  <Badge className="bg-primary/10 text-primary border-primary/30 text-[11px] py-0">
                     <Globe className="w-3 h-3 mr-1" /> Com Site
                   </Badge>
                 ) : (
@@ -114,7 +114,7 @@ export const GenesisBusinessDetailModal = ({
                   </Badge>
                 )}
                 {business.rating && (
-                  <Badge className="bg-yellow-500/10 text-yellow-400 border-yellow-500/30 text-[11px] py-0">
+                  <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/30 text-[11px] py-0">
                     <Star className="w-3 h-3 mr-1" /> {business.rating.toFixed(1)}
                   </Badge>
                 )}
@@ -140,7 +140,7 @@ export const GenesisBusinessDetailModal = ({
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 mb-1">
                   <TrendingUp className="w-3 h-3" /> Recorrência
                 </p>
-                <p className="text-lg font-bold text-emerald-400">
+                <p className="text-lg font-bold text-primary">
                   +R$ {business.monthlyRecurrence?.toLocaleString()}/mês
                 </p>
               </div>
@@ -206,7 +206,7 @@ export const GenesisBusinessDetailModal = ({
                 className="h-7 w-7 shrink-0 hover:bg-white/10"
                 onClick={() => copyToClipboard(business.address, 'address')}
               >
-                {copiedField === 'address' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedField === 'address' ? <Check className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5" />}
               </Button>
             </div>
 
@@ -221,12 +221,12 @@ export const GenesisBusinessDetailModal = ({
                   className="h-7 w-7 hover:bg-white/10"
                   onClick={() => copyToClipboard(business.phone!, 'phone')}
                 >
-                  {copiedField === 'phone' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedField === 'phone' ? <Check className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+                  className="h-7 w-7 text-primary hover:text-primary/80 hover:bg-primary/10"
                   onClick={openWhatsApp}
                 >
                   <MessageCircle className="w-3.5 h-3.5" />
@@ -246,7 +246,7 @@ export const GenesisBusinessDetailModal = ({
           </div>
 
           {/* Google Place - Genesis Style */}
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/10 border border-primary/20">
             <img 
               src="https://www.google.com/images/branding/product/1x/maps_32dp.png" 
               alt="Google Maps" 
@@ -259,7 +259,7 @@ export const GenesisBusinessDetailModal = ({
               className="h-7 w-7 hover:bg-blue-500/20"
               onClick={() => copyToClipboard(googlePlaceUrl, 'googlePlace')}
             >
-              {copiedField === 'googlePlace' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              {copiedField === 'googlePlace' ? <Check className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5" />}
             </Button>
             <Button
               variant="ghost"
@@ -286,7 +286,7 @@ export const GenesisBusinessDetailModal = ({
                   onClick={() => copyToClipboard(business.generatedMessage!, 'message')}
                 >
                   {copiedField === 'message' ? (
-                    <><Check className="w-3 h-3 text-emerald-400" /> Copiado</>
+                    <><Check className="w-3 h-3 text-primary" /> Copiado</>
                   ) : (
                     <><Copy className="w-3 h-3" /> Copiar</>
                   )}
