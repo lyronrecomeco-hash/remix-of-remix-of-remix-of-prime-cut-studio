@@ -256,7 +256,7 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
           )}
         </motion.div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredContracts.map((contract, index) => {
             const config = statusConfig[contract.status] || statusConfig.draft;
             const StatusIcon = config.icon;
@@ -266,20 +266,20 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="bg-white/5 border border-white/10 rounded-xl p-5 hover:bg-white/10 hover:border-primary/30 cursor-pointer transition-all group"
+                className="bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/10 hover:border-primary/30 cursor-pointer transition-all group min-h-[200px] flex flex-col"
                 onClick={() => onViewContract(contract.id)}
               >
                 {/* Header */}
-                <div className="flex items-start justify-between gap-3 mb-4">
+                <div className="flex items-start justify-between gap-3 mb-5">
                   <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
-                      <FileText className="w-5 h-5 text-primary" />
+                    <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-6 h-6 text-primary" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h4 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                      <h4 className="font-semibold text-base text-foreground truncate group-hover:text-primary transition-colors">
                         {contract.contractor_name}
                       </h4>
-                      <p className="text-xs text-muted-foreground truncate">
+                      <p className="text-sm text-muted-foreground truncate">
                         {contract.service_type}
                       </p>
                     </div>
@@ -312,32 +312,32 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
                 </div>
 
                 {/* Value & Recurrence */}
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="bg-white/5 rounded-lg p-3">
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                      <DollarSign className="w-3 h-3" />
+                <div className="grid grid-cols-2 gap-4 mb-5 flex-1">
+                  <div className="bg-white/5 rounded-lg p-4">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1.5">
+                      <DollarSign className="w-3.5 h-3.5" />
                       Valor
                     </div>
-                    <p className="text-sm font-bold text-foreground">{formatCurrency(contract.total_value)}</p>
+                    <p className="text-base font-bold text-foreground">{formatCurrency(contract.total_value)}</p>
                   </div>
-                  <div className="bg-white/5 rounded-lg p-3">
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                      <RefreshCw className="w-3 h-3" />
+                  <div className="bg-white/5 rounded-lg p-4">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1.5">
+                      <RefreshCw className="w-3.5 h-3.5" />
                       Tipo
                     </div>
-                    <p className={`text-sm font-medium ${contract.service_modality === 'recorrente' ? 'text-primary' : 'text-muted-foreground'}`}>
+                    <p className={`text-base font-medium ${contract.service_modality === 'recorrente' ? 'text-primary' : 'text-muted-foreground'}`}>
                       {contract.service_modality === 'recorrente' ? 'Recorrente' : 'Pontual'}
                     </p>
                   </div>
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-between pt-3 border-t border-white/10">
-                  <Badge variant="outline" className={`${config.color} text-xs gap-1.5`}>
-                    <StatusIcon className="w-3 h-3" />
+                <div className="flex items-center justify-between pt-4 border-t border-white/10 mt-auto">
+                  <Badge variant="outline" className={`${config.color} text-xs gap-1.5 py-1`}>
+                    <StatusIcon className="w-3.5 h-3.5" />
                     {config.label}
                   </Badge>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-sm text-muted-foreground">
                     {formatDate(contract.created_at)}
                   </span>
                 </div>

@@ -768,7 +768,7 @@ const GenesisIADashboard = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
-                className={`relative flex items-center ${config.dock.shadow} w-auto max-w-full overflow-x-auto group border border-primary/30`}
+                className={`relative flex items-center ${config.dock.shadow} w-auto max-w-full overflow-x-auto group`}
                 style={{
                   gap: 'clamp(8px, 2vw, 16px)',
                   padding: 'clamp(8px, 2vw, 12px) clamp(12px, 3vw, 16px)',
@@ -776,25 +776,7 @@ const GenesisIADashboard = () => {
                   backgroundColor: config.dock.backgroundColor,
                 }}
               >
-                {/* Animated glowing border */}
-                <div 
-                  className="absolute inset-0 rounded-[inherit] pointer-events-none"
-                  style={{ 
-                    borderRadius: config.dock.borderRadius,
-                    boxShadow: '0 0 15px hsl(var(--primary) / 0.3), 0 0 30px hsl(var(--primary) / 0.15), inset 0 0 0 1px hsl(var(--primary) / 0.2)',
-                    animation: 'glowPulse 2s ease-in-out infinite',
-                  }}
-                />
-                <style>{`
-                  @keyframes glowPulse {
-                    0%, 100% { 
-                      box-shadow: 0 0 15px hsl(var(--primary) / 0.3), 0 0 30px hsl(var(--primary) / 0.15), inset 0 0 0 1px hsl(var(--primary) / 0.2);
-                    }
-                    50% { 
-                      box-shadow: 0 0 25px hsl(var(--primary) / 0.5), 0 0 50px hsl(var(--primary) / 0.25), inset 0 0 0 1px hsl(var(--primary) / 0.4);
-                    }
-                  }
-                `}</style>
+                {/* Clean dock - no border outline */}
                 {dockItems.map((item, index) => {
                   const isActive = !item.onClick && activeTab === item.tabId;
                   return (
