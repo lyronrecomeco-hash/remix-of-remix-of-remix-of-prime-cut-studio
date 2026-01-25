@@ -331,7 +331,7 @@ export const ProposalWizard = () => {
           <Button
             onClick={handleGenerateWithAIAnswers}
             disabled={isGenerating}
-            className="w-full h-10 sm:h-11 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-medium text-sm"
+            className="w-full h-10 sm:h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-sm"
           >
             <Sparkles className="w-4 h-4 mr-2" />
             Gerar Proposta Matadora
@@ -350,8 +350,8 @@ export const ProposalWizard = () => {
           animate={{ scale: 1, opacity: 1 }}
           className="text-center space-y-4"
         >
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-purple-500/20 flex items-center justify-center mx-auto">
-            <Loader2 className="w-7 h-7 sm:w-8 sm:h-8 text-purple-400 animate-spin" />
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-primary/20 flex items-center justify-center mx-auto">
+            <Loader2 className="w-7 h-7 sm:w-8 sm:h-8 text-primary animate-spin" />
           </div>
           <div>
             <h3 className="text-base sm:text-lg font-semibold text-white mb-1">Gerando proposta...</h3>
@@ -372,8 +372,8 @@ export const ProposalWizard = () => {
       <div className="px-3 sm:px-4 py-3 border-b border-white/10 bg-white/5">
         <div className="flex items-center justify-between mb-2 sm:mb-3">
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
-              <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+              <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
             </div>
             <div>
               <h4 className="font-semibold text-white text-xs sm:text-sm">Criar Proposta</h4>
@@ -474,7 +474,7 @@ export const ProposalWizard = () => {
                         }}
                         className={`px-2.5 sm:px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-medium transition-all ${
                           getValue() === option
-                            ? 'bg-purple-500 text-white'
+                            ? 'bg-primary text-primary-foreground'
                             : 'bg-white/5 text-white/70 hover:bg-white/10 border border-white/10'
                         }`}
                       >
@@ -511,7 +511,7 @@ export const ProposalWizard = () => {
         <Button
           onClick={handleNext}
           disabled={currentQuestion.required && !canProceed()}
-          className="w-full h-10 sm:h-11 bg-purple-500 hover:bg-purple-600 text-white font-medium text-sm"
+          className="w-full h-10 sm:h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-sm"
         >
           {isLastStep ? (
             <>

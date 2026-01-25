@@ -362,44 +362,6 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
             </CardContent>
           </Card>
 
-          {/* Aparência */}
-          <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
-            <CardContent className="p-5 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                  <Palette className="w-4 h-4 text-purple-400" />
-                </div>
-                <h4 className="font-semibold text-white text-sm">Aparência</h4>
-              </div>
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  <Label className="text-xs text-white/50">Tema</Label>
-                  <Select
-                    value={settings.theme}
-                    onValueChange={(v) => updateSetting('theme', v as 'dark' | 'light' | 'system')}
-                  >
-                    <SelectTrigger className="h-8 text-xs bg-white/5 border-white/10">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="dark">Escuro</SelectItem>
-                      <SelectItem value="light">Claro</SelectItem>
-                      <SelectItem value="system">Sistema</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Separator className="bg-white/10" />
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs text-white/50">Modo compacto</Label>
-                  <Switch
-                    checked={settings.compactMode}
-                    onCheckedChange={(v) => updateSetting('compactMode', v)}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Segurança */}
           <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
             <CardContent className="p-5 space-y-4">
