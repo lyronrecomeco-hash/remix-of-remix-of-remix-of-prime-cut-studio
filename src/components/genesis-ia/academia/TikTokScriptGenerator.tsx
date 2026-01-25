@@ -63,9 +63,12 @@ Vou criar um roteiro completo com:
     setIsLoading(true);
 
     try {
+      // Filtrar mensagem de boas-vindas (primeira mensagem do assistant)
+      const chatHistory = messages.filter((m, i) => !(i === 0 && m.role === 'assistant'));
+      
       const response = await supabase.functions.invoke('tiktok-script-generator', {
         body: { 
-          messages: [...messages, { role: 'user', content: userMessage }]
+          messages: [...chatHistory, { role: 'user', content: userMessage }]
         }
       });
 
