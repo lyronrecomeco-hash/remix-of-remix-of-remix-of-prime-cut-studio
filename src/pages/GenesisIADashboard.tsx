@@ -762,21 +762,19 @@ const GenesisIADashboard = () => {
               {renderTabContent(ctx)}
             </main>
 
-            {/* Dock - Always visible with animated border outline */}
+            {/* Dock Menu */}
             <div className="fixed bottom-4 sm:bottom-8 left-0 right-0 flex justify-center z-50 px-4">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
-                className={`relative flex items-center ${config.dock.shadow} w-auto max-w-full overflow-x-auto group`}
+                className={`flex items-center bg-white/5 backdrop-blur-xl border border-white/10 ${config.dock.shadow} w-auto max-w-full overflow-x-auto`}
                 style={{
                   gap: 'clamp(8px, 2vw, 16px)',
                   padding: 'clamp(8px, 2vw, 12px) clamp(12px, 3vw, 16px)',
                   borderRadius: config.dock.borderRadius,
-                  backgroundColor: config.dock.backgroundColor,
                 }}
               >
-                {/* Clean dock - no border outline */}
                 {dockItems.map((item, index) => {
                   const isActive = !item.onClick && activeTab === item.tabId;
                   return (
