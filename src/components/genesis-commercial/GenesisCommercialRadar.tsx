@@ -314,17 +314,17 @@ const GenesisCommercialRadar = () => {
         {/* Auto-scrolling Cards Carousel */}
         <div className="relative">
           {/* Fade edges */}
-          <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-background via-background/80 to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-background via-background/80 to-transparent z-10 pointer-events-none" />
+          <div className="absolute left-0 top-0 bottom-0 w-12 md:w-24 bg-gradient-to-r from-background via-background/80 to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-12 md:w-24 bg-gradient-to-l from-background via-background/80 to-transparent z-10 pointer-events-none" />
           
           <div 
             ref={scrollRef}
-            className="flex gap-4 overflow-x-hidden pb-4"
+            className="flex gap-3 md:gap-4 overflow-x-hidden pb-4"
             style={{ scrollBehavior: 'auto' }}
           >
             {loading ? (
               Array(6).fill(0).map((_, i) => (
-                <div key={i} className="flex-shrink-0 w-[340px] h-[320px] bg-card border border-border rounded-xl animate-pulse" />
+                <div key={i} className="flex-shrink-0 w-[280px] md:w-[340px] h-[280px] md:h-[320px] bg-card border border-border rounded-xl animate-pulse" />
               ))
             ) : (
               displayLeads.map((lead, index) => {
@@ -336,7 +336,7 @@ const GenesisCommercialRadar = () => {
                 return (
                   <motion.div
                     key={`${lead.id}-${index}`}
-                    className="flex-shrink-0 w-[340px] bg-card/90 backdrop-blur-sm border border-border rounded-xl p-5 hover:border-primary/40 transition-all hover:shadow-lg hover:shadow-primary/5"
+                    className="flex-shrink-0 w-[280px] md:w-[340px] bg-card/90 backdrop-blur-sm border border-border rounded-xl p-4 md:p-5 hover:border-primary/40 transition-all hover:shadow-lg hover:shadow-primary/5"
                   >
                     {/* Header */}
                     <div className="flex items-start justify-between mb-4">
