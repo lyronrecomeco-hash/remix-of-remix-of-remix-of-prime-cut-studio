@@ -6,7 +6,7 @@ import {
   MapPin, Phone, Globe, Star, Building2, 
   ExternalLink, Copy, Check, Navigation, Users,
   MessageCircle, Zap, Calendar, FileText, ShoppingBag,
-  DollarSign, TrendingUp, Sparkles
+  DollarSign, TrendingUp, Sparkles, Tag
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -89,33 +89,25 @@ export const GenesisBusinessDetailModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[560px] w-[95vw] p-0 gap-0 overflow-hidden bg-[hsl(220,20%,8%)] border-white/10">
-        {/* Header - Genesis Style */}
-        <DialogHeader className="px-5 pt-5 pb-4 border-b border-white/10 bg-white/5">
-          <DialogTitle className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
-              <Building2 className="w-5 h-5 text-primary" />
+      <DialogContent className="max-w-[600px] w-[95vw] p-0 gap-0 overflow-hidden bg-[hsl(222,20%,8%)] border-white/10">
+        {/* Header - Standardized Genesis Style */}
+        <DialogHeader className="px-6 pt-6 pb-5 border-b border-white/10">
+          <DialogTitle className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+              <Building2 className="w-6 h-6 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-base leading-tight line-clamp-2">{business.name}</h3>
-              <div className="flex flex-wrap gap-1.5 mt-2">
+              <h3 className="font-bold text-lg leading-tight line-clamp-2 text-foreground">{business.name}</h3>
+              <p className="text-sm text-muted-foreground mt-1">{business.category || business.niche || 'Empresa'}</p>
+              <div className="flex flex-wrap gap-2 mt-3">
                 {levelConfig && (
-                  <Badge variant="outline" className={cn("text-[11px] py-0", levelConfig.color)}>
+                  <Badge variant="outline" className={cn("text-xs py-0.5 px-2", levelConfig.color)}>
                     {levelConfig.label}
                   </Badge>
                 )}
-                {hasWebsite ? (
-                  <Badge className="bg-primary/10 text-primary border-primary/30 text-[11px] py-0">
-                    <Globe className="w-3 h-3 mr-1" /> Com Site
-                  </Badge>
-                ) : (
-                  <Badge className="bg-orange-500/10 text-orange-400 border-orange-500/30 text-[11px] py-0">
-                    <Globe className="w-3 h-3 mr-1" /> Sem Site
-                  </Badge>
-                )}
                 {business.rating && (
-                  <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/30 text-[11px] py-0">
-                    <Star className="w-3 h-3 mr-1" /> {business.rating.toFixed(1)}
+                  <Badge className="bg-primary/10 text-primary border-primary/30 text-xs py-0.5 px-2">
+                    Score: {Math.round(business.rating * 10)}%
                   </Badge>
                 )}
               </div>
@@ -124,191 +116,140 @@ export const GenesisBusinessDetailModal = ({
         </DialogHeader>
 
         {/* Body */}
-        <div className="px-5 py-4 space-y-4 max-h-[60vh] overflow-y-auto">
-          {/* Value Box - Genesis Style */}
+        <div className="px-6 py-5 space-y-5 max-h-[60vh] overflow-y-auto">
+          {/* Value Box - Standardized */}
           {business.estimatedValueMin && business.estimatedValueMax && (
-            <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 mb-1">
-                  <DollarSign className="w-3 h-3" /> Valor Estimado
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 mb-2">
+                  <DollarSign className="w-3.5 h-3.5 text-primary" /> VALOR ESTIMADO
                 </p>
-                <p className="text-lg font-bold text-primary">
-                  R$ {business.estimatedValueMin.toLocaleString()} - {business.estimatedValueMax.toLocaleString()}
+                <p className="text-sm text-muted-foreground">Min: R$ {business.estimatedValueMin.toLocaleString()}</p>
+                <p className="text-xl font-bold text-primary mt-1">
+                  R$ {business.estimatedValueMax.toLocaleString()}
                 </p>
               </div>
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 mb-1">
-                  <TrendingUp className="w-3 h-3" /> Recorrência
+              <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 mb-2">
+                  <TrendingUp className="w-3.5 h-3.5 text-primary" /> RECORRÊNCIA MENSAL
                 </p>
-                <p className="text-lg font-bold text-primary">
+                <p className="text-xl font-bold text-primary mt-3">
                   +R$ {business.monthlyRecurrence?.toLocaleString()}/mês
                 </p>
               </div>
             </div>
           )}
 
-          {/* Services */}
-          <div>
-            <p className="text-xs font-medium text-muted-foreground mb-2">O que você pode oferecer:</p>
-            <div className="flex flex-wrap gap-1.5">
-              {business.needsWebsite && (
-                <Badge variant="secondary" className="text-xs bg-orange-500/10 text-orange-500 border-orange-500/20">
-                  <Globe className="w-3 h-3 mr-1" /> Site
-                </Badge>
-              )}
-              {business.needsScheduling && (
-                <Badge variant="secondary" className="text-xs bg-blue-500/10 text-blue-500 border-blue-500/20">
-                  <Calendar className="w-3 h-3 mr-1" /> Agendamentos
-                </Badge>
-              )}
-              {business.needsCRM && (
-                <Badge variant="secondary" className="text-xs bg-purple-500/10 text-purple-500 border-purple-500/20">
-                  <Users className="w-3 h-3 mr-1" /> CRM
-                </Badge>
-              )}
-              {business.needsMarketing && (
-                <Badge variant="secondary" className="text-xs bg-pink-500/10 text-pink-500 border-pink-500/20">
-                  <FileText className="w-3 h-3 mr-1" /> Marketing
-                </Badge>
-              )}
-              {business.needsEcommerce && (
-                <Badge variant="secondary" className="text-xs bg-green-500/10 text-green-500 border-green-500/20">
-                  <ShoppingBag className="w-3 h-3 mr-1" /> E-commerce
-                </Badge>
-              )}
-              {business.needsChatbot && (
-                <Badge variant="secondary" className="text-xs bg-cyan-500/10 text-cyan-500 border-cyan-500/20">
-                  <MessageCircle className="w-3 h-3 mr-1" /> Chatbot
-                </Badge>
-              )}
-            </div>
-          </div>
-
-          {/* AI Description - Genesis Style */}
+          {/* AI Description - Highlighted */}
           {business.aiDescription && (
-            <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
-              <p className="text-sm flex items-start gap-2">
+            <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
+              <p className="text-sm flex items-start gap-2.5">
                 <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <span>{business.aiDescription}</span>
+                <span className="text-primary">{business.aiDescription}</span>
               </p>
             </div>
           )}
 
-          {/* Contact Info - Genesis Style */}
-          <div className="space-y-2">
-            {/* Address */}
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/[0.07] transition-colors">
-              <MapPin className="w-4 h-4 text-primary shrink-0" />
-              <span className="text-sm flex-1">{business.address}</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 shrink-0 hover:bg-white/10"
-                onClick={() => copyToClipboard(business.address, 'address')}
-              >
-                {copiedField === 'address' ? <Check className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5" />}
-              </Button>
-            </div>
-
-            {/* Phone */}
-            {business.phone && (
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/[0.07] transition-colors">
-                <Phone className="w-4 h-4 text-primary shrink-0" />
-                <span className="text-sm flex-1">{business.phone}</span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 hover:bg-white/10"
-                  onClick={() => copyToClipboard(business.phone!, 'phone')}
-                >
-                  {copiedField === 'phone' ? <Check className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5" />}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-primary hover:text-primary/80 hover:bg-primary/10"
-                  onClick={openWhatsApp}
-                >
-                  <MessageCircle className="w-3.5 h-3.5" />
-                </Button>
-              </div>
-            )}
-
-            {/* Coordinates */}
-            {business.latitude && business.longitude && (
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/[0.07] transition-colors">
-                <Navigation className="w-4 h-4 text-primary shrink-0" />
-                <span className="text-sm text-muted-foreground flex-1">
-                  {business.latitude.toFixed(4)}, {business.longitude.toFixed(4)}
-                </span>
-              </div>
-            )}
+          {/* AI Analysis */}
+          <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+            <p className="text-sm flex items-start gap-2.5">
+              <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+              <span className="text-muted-foreground">
+                {business.name?.toLowerCase().includes('sem') ? 'sem presença digital' : 'análise disponível'} — oportunidade máxima
+              </span>
+            </p>
           </div>
 
-          {/* Google Place - Genesis Style */}
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/10 border border-primary/20">
-            <img 
-              src="https://www.google.com/images/branding/product/1x/maps_32dp.png" 
-              alt="Google Maps" 
-              className="w-5 h-5 shrink-0"
-            />
-            <span className="text-sm flex-1 truncate">{business.name}</span>
+          {/* Contact Info */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium text-foreground">Informações de Contato</h4>
+            
+            {/* Address */}
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <Globe className="w-4 h-4 text-primary shrink-0" />
+              <span>{business.address}</span>
+            </div>
+          </div>
+
+          {/* Services */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
+              <Tag className="w-4 h-4 text-primary" />
+              Serviços Recomendados
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {business.needsWebsite && (
+                <Badge variant="secondary" className="text-xs bg-white/10 text-foreground border-white/20">
+                  website
+                </Badge>
+              )}
+              {business.needsChatbot && (
+                <Badge variant="secondary" className="text-xs bg-white/10 text-foreground border-white/20">
+                  automation
+                </Badge>
+              )}
+              {business.needsScheduling && (
+                <Badge variant="secondary" className="text-xs bg-white/10 text-foreground border-white/20">
+                  WhatsApp
+                </Badge>
+              )}
+              {business.needsCRM && (
+                <Badge variant="secondary" className="text-xs bg-white/10 text-foreground border-white/20">
+                  CRM
+                </Badge>
+              )}
+              {business.needsMarketing && (
+                <Badge variant="secondary" className="text-xs bg-white/10 text-foreground border-white/20">
+                  marketing
+                </Badge>
+              )}
+              {business.needsEcommerce && (
+                <Badge variant="secondary" className="text-xs bg-white/10 text-foreground border-white/20">
+                  e-commerce
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          {/* Region & Date */}
+          <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2">
+            <span className="flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5" />
+              Região: {business.address?.split(',').pop()?.trim() || 'N/A'}
+            </span>
+            <span className="flex items-center gap-1.5">
+              📅 Encontrado: {new Date().toLocaleDateString('pt-BR')}
+            </span>
+          </div>
+
+          {/* Google Place Link */}
+          <div className="pt-2">
             <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 hover:bg-blue-500/20"
-              onClick={() => copyToClipboard(googlePlaceUrl, 'googlePlace')}
-            >
-              {copiedField === 'googlePlace' ? <Check className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5" />}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 hover:bg-blue-500/20"
+              variant="outline"
+              className="w-full gap-2 bg-white/5 border-white/10 hover:bg-white/10 text-sm"
               onClick={() => window.open(googlePlaceUrl, '_blank')}
             >
-              <ExternalLink className="w-3.5 h-3.5" />
+              <ExternalLink className="w-4 h-4" />
+              Pesquisar no Google
             </Button>
           </div>
-
-          {/* Generated Message - Genesis Style */}
-          {business.generatedMessage && (
-            <div className="rounded-xl border border-white/10 overflow-hidden">
-              <div className="flex items-center justify-between px-3 py-2 bg-white/5 border-b border-white/10">
-                <p className="text-xs font-medium flex items-center gap-1.5">
-                  <MessageCircle className="w-3.5 h-3.5 text-primary" />
-                  Mensagem Gerada
-                </p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 text-xs gap-1 hover:bg-white/10"
-                  onClick={() => copyToClipboard(business.generatedMessage!, 'message')}
-                >
-                  {copiedField === 'message' ? (
-                    <><Check className="w-3 h-3 text-primary" /> Copiado</>
-                  ) : (
-                    <><Copy className="w-3 h-3" /> Copiar</>
-                  )}
-                </Button>
-              </div>
-              <div className="p-3 max-h-24 overflow-y-auto bg-white/[0.02]">
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                  {business.generatedMessage}
-                </p>
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Footer - Genesis Style */}
-        <div className="px-5 py-4 border-t border-white/10 bg-white/5 flex gap-3">
+        {/* Footer - Action Buttons */}
+        <div className="px-6 py-5 border-t border-white/10 flex gap-3">
           <Button
             variant="outline"
             className="flex-1 bg-white/5 border-white/10 hover:bg-white/10"
             onClick={() => onOpenChange(false)}
           >
-            Fechar
+            Rejeitar
+          </Button>
+          <Button
+            variant="outline"
+            className="flex-1 bg-white/5 border-white/10 hover:bg-white/10"
+            onClick={() => onOpenChange(false)}
+          >
+            Salvar
           </Button>
           <Button
             className="flex-1 gap-2"
@@ -317,8 +258,7 @@ export const GenesisBusinessDetailModal = ({
               onOpenChange(false);
             }}
           >
-            <Zap className="w-4 h-4" />
-            Aceitar Projeto
+            Aceitar
           </Button>
         </div>
       </DialogContent>

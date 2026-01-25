@@ -36,7 +36,9 @@ Me conte sobre o vídeo que você quer criar:
 Vou criar um roteiro completo com:
 ✅ Gancho inicial (primeiros 3 segundos)
 ✅ Desenvolvimento com retenção
-✅ CTA poderoso para conversão`
+✅ CTA poderoso para conversão
+
+⚠️ **Importante:** Este gerador é exclusivo para conteúdo profissional da Genesis IA. Não são aceitos pedidos de conteúdo ofensivo, discriminatório ou inapropriado.`
     }
   ]);
   const [input, setInput] = useState('');
@@ -94,7 +96,7 @@ Vou criar um roteiro completo com:
     setMessages([
       {
         role: 'assistant',
-        content: `🎬 **Gerador de Roteiros TikTok**
+      content: `🎬 **Gerador de Roteiros TikTok**
 
 Olá! Sou seu assistente especializado em criar roteiros virais para TikTok focados em promover a **Genesis IA**.
 
@@ -107,7 +109,9 @@ Me conte sobre o vídeo que você quer criar:
 Vou criar um roteiro completo com:
 ✅ Gancho inicial (primeiros 3 segundos)
 ✅ Desenvolvimento com retenção
-✅ CTA poderoso para conversão`
+✅ CTA poderoso para conversão
+
+⚠️ **Importante:** Este gerador é exclusivo para conteúdo profissional da Genesis IA. Não são aceitos pedidos de conteúdo ofensivo, discriminatório ou inapropriado.`
       }
     ]);
   };

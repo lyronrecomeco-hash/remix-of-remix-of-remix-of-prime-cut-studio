@@ -291,7 +291,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                   value={formData.contractor_name}
                   onChange={(e) => updateField('contractor_name', e.target.value)}
                   placeholder="Nome completo ou razão social"
-                  className="bg-card/50"
+                  className="bg-white/5 border-white/10"
                 />
               </div>
               <div className="space-y-2">
@@ -317,7 +317,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                   value={formData.contractor_document}
                   onChange={(e) => updateField('contractor_document', e.target.value)}
                   placeholder={formData.contractor_document_type === 'cpf' ? '000.000.000-00' : '00.000.000/0000-00'}
-                  className="bg-card/50"
+                  className="bg-white/5 border-white/10"
                 />
               </div>
               <div className="space-y-2 sm:col-span-2">
@@ -326,7 +326,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                   value={formData.contractor_address}
                   onChange={(e) => updateField('contractor_address', e.target.value)}
                   placeholder="Rua, número, bairro, cidade, estado, CEP"
-                  className="bg-card/50"
+                  className="bg-white/5 border-white/10"
                 />
               </div>
               <div className="space-y-2">
@@ -336,7 +336,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                   value={formData.contractor_email}
                   onChange={(e) => updateField('contractor_email', e.target.value)}
                   placeholder="email@exemplo.com"
-                  className="bg-card/50"
+                  className="bg-white/5 border-white/10"
                 />
               </div>
               <div className="space-y-2">
@@ -345,7 +345,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                   value={formData.contractor_phone}
                   onChange={(e) => updateField('contractor_phone', e.target.value)}
                   placeholder="(00) 00000-0000"
-                  className="bg-card/50"
+                  className="bg-white/5 border-white/10"
                 />
                 <p className="text-[10px] text-muted-foreground">O contrato será enviado automaticamente para este número</p>
               </div>
@@ -363,7 +363,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                   value={formData.contracted_name}
                   onChange={(e) => updateField('contracted_name', e.target.value)}
                   placeholder="Nome completo ou razão social"
-                  className="bg-card/50"
+                  className="bg-white/5 border-white/10"
                 />
               </div>
               <div className="space-y-2">
@@ -389,7 +389,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                   value={formData.contracted_document}
                   onChange={(e) => updateField('contracted_document', e.target.value)}
                   placeholder={formData.contracted_document_type === 'cpf' ? '000.000.000-00' : '00.000.000/0000-00'}
-                  className="bg-card/50"
+                  className="bg-white/5 border-white/10"
                 />
               </div>
               <div className="space-y-2 sm:col-span-2">
@@ -398,7 +398,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                   value={formData.contracted_address}
                   onChange={(e) => updateField('contracted_address', e.target.value)}
                   placeholder="Rua, número, bairro, cidade, estado, CEP"
-                  className="bg-card/50"
+                  className="bg-white/5 border-white/10"
                 />
               </div>
               <div className="space-y-2">
@@ -408,7 +408,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                   value={formData.contracted_email}
                   onChange={(e) => updateField('contracted_email', e.target.value)}
                   placeholder="email@exemplo.com"
-                  className="bg-card/50"
+                  className="bg-white/5 border-white/10"
                 />
               </div>
               <div className="space-y-2">
@@ -417,7 +417,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                   value={formData.contracted_phone}
                   onChange={(e) => updateField('contracted_phone', e.target.value)}
                   placeholder="(00) 00000-0000"
-                  className="bg-card/50"
+                  className="bg-white/5 border-white/10"
                 />
               </div>
             </div>
@@ -433,7 +433,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                 value={formData.service_type}
                 onChange={(e) => updateField('service_type', e.target.value)}
                 placeholder="Ex: Desenvolvimento de Website, Consultoria, Marketing Digital..."
-                className="bg-card/50"
+                className="bg-white/5 border-white/10"
               />
             </div>
             <div className="space-y-2">
@@ -442,7 +442,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                 value={formData.service_description}
                 onChange={(e) => updateField('service_description', e.target.value)}
                 placeholder="Descreva em detalhes o que será entregue, quais são os entregáveis, metodologia..."
-                className="bg-card/50 min-h-[120px]"
+                className="bg-white/5 border-white/10 min-h-[120px]"
               />
             </div>
             <div className="space-y-2">
@@ -457,7 +457,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                   { value: 'recorrente', label: 'Recorrente', desc: 'Mensal/contínuo' },
                   { value: 'demanda', label: 'Por demanda', desc: 'Quando solicitado' },
                 ].map((option) => (
-                  <div key={option.value} className="flex items-center space-x-2 p-3 rounded-lg border bg-card/50 hover:border-primary/50 transition-colors">
+                  <div key={option.value} className="flex items-center space-x-2 p-3 rounded-lg border border-white/10 bg-white/5 hover:border-primary/50 transition-colors">
                     <RadioGroupItem value={option.value} id={`modality_${option.value}`} />
                     <div>
                       <Label htmlFor={`modality_${option.value}`} className="cursor-pointer">{option.label}</Label>
@@ -499,7 +499,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                   type="date"
                   value={formData.start_date}
                   onChange={(e) => updateField('start_date', e.target.value)}
-                  className="bg-card/50"
+                  className="bg-white/5 border-white/10"
                 />
               </div>
               <div className="space-y-2">
@@ -508,11 +508,11 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                   type="date"
                   value={formData.end_date}
                   onChange={(e) => updateField('end_date', e.target.value)}
-                  className="bg-card/50"
+                  className="bg-white/5 border-white/10"
                 />
               </div>
             </div>
-            <div className="flex items-center justify-between p-4 rounded-lg border bg-card/50">
+            <div className="flex items-center justify-between p-4 rounded-lg border border-white/10 bg-white/5">
               <div>
                 <Label>Entrega em etapas?</Label>
                 <p className="text-xs text-muted-foreground">O serviço será entregue em partes</p>
@@ -522,7 +522,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                 onCheckedChange={(v) => updateField('delivery_in_stages', v)}
               />
             </div>
-            <div className="flex items-center justify-between p-4 rounded-lg border bg-card/50">
+            <div className="flex items-center justify-between p-4 rounded-lg border border-white/10 bg-white/5">
               <div>
                 <Label>Permite prorrogação?</Label>
                 <p className="text-xs text-muted-foreground">O prazo pode ser estendido</p>
@@ -545,7 +545,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                   value={formData.total_value}
                   onChange={(e) => updateField('total_value', e.target.value)}
                   placeholder="R$ 0,00"
-                  className="bg-card/50"
+                  className="bg-white/5 border-white/10"
                 />
               </div>
               <div className="space-y-2">
@@ -554,7 +554,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                   value={formData.payment_method}
                   onChange={(e) => updateField('payment_method', e.target.value)}
                   placeholder="Ex: Pix, Transferência, Boleto..."
-                  className="bg-card/50"
+                  className="bg-white/5 border-white/10"
                 />
               </div>
               <div className="space-y-2">
@@ -565,7 +565,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                   max={24}
                   value={formData.installments}
                   onChange={(e) => updateField('installments', parseInt(e.target.value) || 1)}
-                  className="bg-card/50"
+                  className="bg-white/5 border-white/10"
                 />
               </div>
               <div className="space-y-2">
@@ -574,7 +574,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                   value={formData.late_fee_percentage}
                   onChange={(e) => updateField('late_fee_percentage', e.target.value)}
                   placeholder="Ex: 2"
-                  className="bg-card/50"
+                  className="bg-white/5 border-white/10"
                 />
               </div>
             </div>
@@ -584,7 +584,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
       case 'warranty':
         return (
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 rounded-lg border bg-card/50">
+            <div className="flex items-center justify-between p-4 rounded-lg border border-white/10 bg-white/5">
               <div>
                 <Label>O serviço possui garantia?</Label>
                 <p className="text-xs text-muted-foreground">Período de garantia após entrega</p>
@@ -601,7 +601,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                   value={formData.warranty_period}
                   onChange={(e) => updateField('warranty_period', e.target.value)}
                   placeholder="Ex: 90 dias, 6 meses, 1 ano..."
-                  className="bg-card/50"
+                  className="bg-white/5 border-white/10"
                 />
               </div>
             )}
@@ -611,7 +611,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                 value={formData.liability_limit}
                 onChange={(e) => updateField('liability_limit', e.target.value)}
                 placeholder="Ex: Limitado ao valor do contrato"
-                className="bg-card/50"
+                className="bg-white/5 border-white/10"
               />
             </div>
             <div className="space-y-2">
@@ -620,7 +620,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                 value={formData.not_included}
                 onChange={(e) => updateField('not_included', e.target.value)}
                 placeholder="Liste itens que não fazem parte do escopo..."
-                className="bg-card/50 min-h-[80px]"
+                className="bg-white/5 border-white/10 min-h-[80px]"
               />
             </div>
           </div>
@@ -629,7 +629,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
       case 'termination':
         return (
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 rounded-lg border bg-card/50">
+            <div className="flex items-center justify-between p-4 rounded-lg border border-white/10 bg-white/5">
               <div>
                 <Label>Permite rescisão antecipada?</Label>
                 <p className="text-xs text-muted-foreground">Qualquer parte pode cancelar antes do prazo</p>
@@ -647,7 +647,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                     value={formData.termination_penalty_percentage}
                     onChange={(e) => updateField('termination_penalty_percentage', e.target.value)}
                     placeholder="Ex: 10"
-                    className="bg-card/50"
+                    className="bg-white/5 border-white/10"
                   />
                 </div>
                 <div className="space-y-2">
@@ -657,7 +657,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                     min={0}
                     value={formData.notice_period_days}
                     onChange={(e) => updateField('notice_period_days', parseInt(e.target.value) || 0)}
-                    className="bg-card/50"
+                    className="bg-white/5 border-white/10"
                   />
                 </div>
               </>
@@ -678,7 +678,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                   value={formData.jurisdiction_city}
                   onChange={(e) => updateField('jurisdiction_city', e.target.value)}
                   placeholder="Ex: São Paulo"
-                  className="bg-card/50"
+                  className="bg-white/5 border-white/10"
                 />
               </div>
               <div className="space-y-2">
@@ -687,7 +687,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                   value={formData.jurisdiction_state}
                   onChange={(e) => updateField('jurisdiction_state', e.target.value)}
                   placeholder="Ex: SP"
-                  className="bg-card/50"
+                  className="bg-white/5 border-white/10"
                 />
               </div>
             </div>
