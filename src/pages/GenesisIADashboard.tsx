@@ -67,10 +67,11 @@ import { PageBuilderTab } from "@/components/genesis-ia/page-builder";
 import { AcademiaGenesisTab } from "@/components/genesis-ia/academia";
 import { ProposalWizard } from "@/components/genesis-ia/proposal-wizard";
 import { SprintMissionTab } from "@/components/genesis-ia/sprint-mission";
+import { CommunityTab } from "@/components/genesis-ia/community";
 import GenesisBackground from "@/components/genesis-ia/GenesisBackground";
 import { FileText, Gift, CreditCard, Code2, Rocket } from "lucide-react";
 
-type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional' | 'payments' | 'page-builder' | 'academia' | 'proposals' | 'sprint-mission';
+type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional' | 'payments' | 'page-builder' | 'academia' | 'proposals' | 'sprint-mission' | 'community';
 
 // Icon mapping for dynamic rendering
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -181,6 +182,7 @@ const GenesisIADashboard = () => {
       case 'page-builder': return 'Construir Página';
       case 'proposals': return 'Propostas Personalizadas';
       case 'sprint-mission': return 'Missão Sprint';
+      case 'community': return 'Comunidade';
       default: return null;
     }
   };
@@ -642,6 +644,10 @@ const GenesisIADashboard = () => {
 
     if (activeTab === 'sprint-mission') {
       return <SprintMissionTab onNavigate={(tab) => setActiveTab(tab as ActiveTab)} />;
+    }
+
+    if (activeTab === 'community') {
+      return <CommunityTab onBack={() => setActiveTab('dashboard')} />;
     }
 
     return null;
