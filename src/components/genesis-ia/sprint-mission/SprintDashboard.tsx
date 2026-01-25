@@ -19,13 +19,16 @@ import {
   Sparkles,
   Rocket,
   Copy,
-  ExternalLink
+  ExternalLink,
+  ArrowRight,
+  Layers
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { GeneratedSprint, SprintAction, SprintMissionFormData } from './types';
+import { getResourceForAction, getRecommendedResources, ResourceLink } from './ResourceLinks';
 
 interface SprintDashboardProps {
   sprint: GeneratedSprint;
@@ -33,6 +36,7 @@ interface SprintDashboardProps {
   formData: SprintMissionFormData;
   onReset: () => void;
   onUpdate?: (updatedSprint: GeneratedSprint, completedActions: string[]) => void;
+  onNavigate?: (tab: string) => void;
 }
 
 const actionIcons: Record<SprintAction['type'], React.ElementType> = {
@@ -50,11 +54,15 @@ const priorityColors: Record<SprintAction['priority'], string> = {
   low: 'bg-green-500/20 text-green-400 border-green-500/30'
 };
 
-export const SprintDashboard = ({ sprint, userName, formData, onReset }: SprintDashboardProps) => {
+export const SprintDashboard = ({ sprint, userName, formData, onReset, onNavigate }: SprintDashboardProps) => {
   const [actions, setActions] = useState<SprintAction[]>(sprint.actions);
   
   const completedCount = actions.filter(a => a.status === 'completed').length;
   const progressPercent = (completedCount / actions.length) * 100;
+
+  // Get recommended resources based on action types
+  const actionTypes = actions.map(a => a.type);
+  const recommendedResources = getRecommendedResources(actionTypes);
 
   const toggleActionStatus = (actionId: string) => {
     setActions(prev => prev.map(action => {
@@ -74,6 +82,15 @@ export const SprintDashboard = ({ sprint, userName, formData, onReset }: SprintD
       return action;
     }));
     toast.success('Ação iniciada! Foco total 🎯');
+  };
+
+  const openResource = (resource: ResourceLink) => {
+    if (onNavigate) {
+      onNavigate(resource.tab);
+      toast.success(`Abrindo ${resource.name}...`);
+    } else {
+      toast.info(`Recurso: ${resource.name}`);
+    }
   };
 
   const copyMotivation = () => {
@@ -250,36 +267,43 @@ export const SprintDashboard = ({ sprint, userName, formData, onReset }: SprintD
                       </span>
                     </div>
 
-                    {/* Action Buttons */}
-                    {!isCompleted && (
-                      <div className="flex items-center gap-2 mt-3 pt-2 border-t border-white/5">
-                        {action.linkedResource && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 text-xs text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 px-2"
-                          >
-                            <ExternalLink className="w-3 h-3 mr-1" />
-                            Abrir recurso
-                          </Button>
-                        )}
-                        {!isInProgress && (
-                          <Button
-                            size="sm"
-                            onClick={() => startAction(action.id)}
-                            className="h-7 text-xs bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 px-2"
-                          >
-                            <Play className="w-3 h-3 mr-1" />
-                            Iniciar
-                          </Button>
-                        )}
-                        {isInProgress && (
-                          <Badge className="text-[10px] bg-purple-500/20 text-purple-400 border-purple-500/30">
-                            Em andamento...
-                          </Badge>
-                        )}
-                      </div>
-                    )}
+                    {/* Action Buttons with Auto Resource */}
+                    {!isCompleted && (() => {
+                      const resource = getResourceForAction(action.type, action.linkedResource);
+                      return (
+                        <div className="flex items-center gap-2 mt-3 pt-2 border-t border-white/5">
+                          {resource && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openResource(resource);
+                              }}
+                              className="h-7 text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 px-2"
+                            >
+                              <ExternalLink className="w-3 h-3 mr-1" />
+                              {resource.name}
+                            </Button>
+                          )}
+                          {!isInProgress && (
+                            <Button
+                              size="sm"
+                              onClick={() => startAction(action.id)}
+                              className="h-7 text-xs bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 px-2"
+                            >
+                              <Play className="w-3 h-3 mr-1" />
+                              Iniciar
+                            </Button>
+                          )}
+                          {isInProgress && (
+                            <Badge className="text-[10px] bg-blue-500/20 text-blue-400 border-blue-500/30">
+                              Em andamento...
+                            </Badge>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </motion.div>
@@ -287,6 +311,43 @@ export const SprintDashboard = ({ sprint, userName, formData, onReset }: SprintD
           })}
         </div>
       </div>
+
+      {/* Recommended Resources */}
+      {recommendedResources.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="bg-gradient-to-br from-cyan-500/10 to-blue-500/5 border border-cyan-500/20 p-3 sm:p-4"
+          style={{ borderRadius: '14px' }}
+        >
+          <h4 className="text-xs font-semibold text-white mb-3 flex items-center gap-2">
+            <Layers className="w-4 h-4 text-cyan-400" />
+            Recursos Recomendados para essa Missão
+          </h4>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {recommendedResources.map((resource) => {
+              const ResourceIcon = resource.icon;
+              return (
+                <button
+                  key={resource.id}
+                  onClick={() => openResource(resource)}
+                  className="flex items-center gap-2 p-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-cyan-500/30 rounded-lg transition-all text-left group"
+                >
+                  <div className="w-7 h-7 rounded-md bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                    <ResourceIcon className="w-3.5 h-3.5 text-cyan-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-medium text-white truncate">{resource.name}</p>
+                    <p className="text-[9px] text-white/40 truncate">{resource.description}</p>
+                  </div>
+                  <ArrowRight className="w-3 h-3 text-white/20 group-hover:text-cyan-400 ml-auto flex-shrink-0 transition-colors" />
+                </button>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
 
       {/* Success Metrics */}
       {sprint.success_metrics && sprint.success_metrics.length > 0 && (
