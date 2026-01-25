@@ -7,19 +7,26 @@ import GenesisCommercialPartnerships from '@/components/genesis-commercial/Genes
 import GenesisCommercialPricing from '@/components/genesis-commercial/GenesisCommercialPricing';
 import GenesisCommercialFAQ from '@/components/genesis-commercial/GenesisCommercialFAQ';
 import GenesisCommercialFooter from '@/components/genesis-commercial/GenesisCommercialFooter';
+import InteractiveBackground from '@/components/genesis-commercial/InteractiveBackground';
 
 const GenesisCommercial = () => {
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
-      <GenesisCommercialHeader />
-      <GenesisCommercialHero />
-      <GenesisCommercialRadar />
-      <GenesisCommercialFeatures />
-      <GenesisWhyChoose />
-      <GenesisCommercialPartnerships />
-      <GenesisCommercialPricing />
-      <GenesisCommercialFAQ />
-      <GenesisCommercialFooter />
+    <div className="min-h-screen bg-background overflow-x-hidden relative">
+      {/* Interactive particle background */}
+      <InteractiveBackground />
+      
+      {/* Content */}
+      <div className="relative z-10">
+        <GenesisCommercialHeader />
+        <GenesisCommercialHero />
+        <GenesisCommercialRadar />
+        <GenesisCommercialFeatures />
+        <GenesisWhyChoose />
+        <GenesisCommercialPartnerships />
+        <GenesisCommercialPricing />
+        <GenesisCommercialFAQ />
+        <GenesisCommercialFooter />
+      </div>
     </div>
   );
 };

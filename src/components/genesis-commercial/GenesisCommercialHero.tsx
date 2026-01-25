@@ -75,28 +75,7 @@ const GenesisCommercialHero = () => {
   }, [isPaused, accessAlso.length]);
 
   return (
-    <section id="inicio" className="relative min-h-screen flex flex-col overflow-hidden bg-background">
-      {/* Animated Background - Premium */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,hsl(var(--primary)/0.15),transparent)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,hsl(var(--primary)/0.08),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(217,91%,60%,0.08),transparent_50%)]" />
-        
-        {/* Grid pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(hsl(var(--muted)/0.3)_1px,transparent_1px),linear-gradient(90deg,hsl(var(--muted)/0.3)_1px,transparent_1px)] bg-[size:80px_80px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,black_70%,transparent_100%)]" />
-        
-        {/* Floating orbs */}
-        <motion.div 
-          animate={{ y: [0, -30, 0], x: [0, 15, 0] }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-20 right-1/4 w-[600px] h-[600px] bg-gradient-to-br from-primary/10 to-blue-500/5 rounded-full blur-[120px]" 
-        />
-        <motion.div 
-          animate={{ y: [0, 20, 0], x: [0, -10, 0] }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-20 left-1/4 w-[400px] h-[400px] bg-gradient-to-tr from-cyan-500/8 to-primary/5 rounded-full blur-[100px]" 
-        />
-      </div>
+    <section id="inicio" className="relative min-h-screen flex flex-col overflow-hidden bg-transparent">
 
       {/* Main Content */}
       <div className="container relative z-10 px-4 pt-24 md:pt-32 pb-12 md:pb-16 max-w-7xl mx-auto flex-1 flex flex-col">
@@ -300,10 +279,10 @@ const GenesisCommercialHero = () => {
                 </div>
 
                 {/* Acesse também - RESPONSIVE */}
-                <div className="relative z-10 hidden sm:block">
+                <div className="relative z-10">
                   <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-5">
-                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-purple-500/20 flex items-center justify-center">
-                      <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-purple-400" />
+                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-primary/20 flex items-center justify-center">
+                      <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-primary" />
                     </div>
                     <span className="text-white font-bold text-sm md:text-base">Acesse também</span>
                   </div>
