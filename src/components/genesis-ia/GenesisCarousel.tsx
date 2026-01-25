@@ -100,8 +100,8 @@ export const GenesisCarousel = ({ onNavigate }: GenesisCarouselProps) => {
     <div className="w-full max-w-6xl mx-auto mt-5 sm:mt-10">
       {/* Header */}
       <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-6">
-        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
-          <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
+        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+          <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
         </div>
         <h2 className="text-base sm:text-xl font-bold text-white tracking-tight">Acesse também</h2>
       </div>
@@ -138,12 +138,12 @@ export const GenesisCarousel = ({ onNavigate }: GenesisCarouselProps) => {
                 onClick={() => item.tabId && onNavigate?.(item.tabId)}
               >
                 <div 
-                  className="w-[160px] sm:w-[260px] h-[100px] sm:h-[140px] bg-[hsl(210_60%_12%/0.7)] border border-blue-500/20 hover:border-blue-500/40 hover:bg-[hsl(210_60%_15%/0.8)] transition-all duration-300 p-3 sm:p-5 flex flex-col justify-between group backdrop-blur-sm"
+                  className="w-[160px] sm:w-[260px] h-[100px] sm:h-[140px] bg-white/5 border border-white/10 hover:border-primary/30 hover:bg-white/[0.08] transition-all duration-300 p-3 sm:p-5 flex flex-col justify-between group backdrop-blur-sm"
                   style={{ borderRadius: '14px' }}
                 >
                   {/* Icon */}
-                  <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl bg-blue-500/20 flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
+                  <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl bg-primary/20 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                   </div>
 
                   {/* Text */}

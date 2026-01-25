@@ -339,8 +339,8 @@ const GenesisIADashboard = () => {
                       description: 'Gerencie as propostas aceitas do Radar Global e acompanhe o progresso.',
                       icon: 'Target',
                       styles: {
-                        iconBackgroundColor: 'hsl(145 50% 25% / 0.5)',
-                        iconColor: 'hsl(145 70% 60%)',
+                        iconBackgroundColor: 'hsl(200 80% 40% / 0.2)',
+                        iconColor: 'hsl(200 80% 60%)',
                       },
                     } as unknown as CardData,
                   ];
@@ -349,11 +349,11 @@ const GenesisIADashboard = () => {
                     const IconComponent = ICON_MAP[card.icon] || Star;
                     const cardStyles = card.styles;
 
-                    // Different icon colors for each card (fallback)
+                    // Standardized blue/cyan color scheme for all cards
                     const iconColors = [
-                      { bg: 'bg-purple-500/20', color: 'text-purple-400' },
+                      { bg: 'bg-primary/20', color: 'text-primary' },
                       { bg: 'bg-blue-500/20', color: 'text-blue-400' },
-                      { bg: 'bg-emerald-500/20', color: 'text-emerald-400' },
+                      { bg: 'bg-cyan-500/20', color: 'text-cyan-400' },
                     ];
                     const colorScheme = iconColors[index % iconColors.length];
 
@@ -368,11 +368,11 @@ const GenesisIADashboard = () => {
                         onClick={() => setActiveTab(card.id as ActiveTab)}
                       >
                         <div 
-                          className="relative overflow-hidden bg-white/5 border border-white/10 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.08] h-[120px] sm:h-[130px] flex flex-col justify-between"
+                          className="relative overflow-hidden bg-white/5 border border-white/10 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:border-primary/30 hover:bg-white/[0.08] h-[120px] sm:h-[130px] flex flex-col justify-between"
                           style={{ borderRadius: '14px' }}
                         >
                           {/* Gradient overlay on hover */}
-                          <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                           
                           <div className="relative z-10 flex flex-col h-full">
                             <div className="flex items-center gap-3 sm:gap-4 mb-2 sm:mb-3">
