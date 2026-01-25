@@ -40,19 +40,26 @@ interface SavedSprint {
   completedActions: string[];
 }
 
-const STORAGE_KEY = 'genesis_saved_sprints';
-const DAILY_RESET_KEY = 'genesis_daily_reset';
+const STORAGE_KEY_PREFIX = 'genesis_saved_sprints_';
+const DAILY_RESET_KEY_PREFIX = 'genesis_daily_reset_';
 
 export const SprintMissionTab = ({ onNavigate }: SprintMissionTabProps = {}) => {
   const { genesisUser } = useGenesisAuth();
   const userName = genesisUser?.name?.split(' ')[0] || 'Parceiro';
+  const affiliateId = genesisUser?.id || 'guest';
+  
+  // Storage keys per user
+  const STORAGE_KEY = `${STORAGE_KEY_PREFIX}${affiliateId}`;
+  const DAILY_RESET_KEY = `${DAILY_RESET_KEY_PREFIX}${affiliateId}`;
   
   const [savedSprints, setSavedSprints] = useState<SavedSprint[]>([]);
   const [activeSprint, setActiveSprint] = useState<SavedSprint | null>(null);
   const [showWizard, setShowWizard] = useState(false);
 
-  // Load saved sprints from localStorage
+  // Load saved sprints from localStorage - bound to user
   useEffect(() => {
+    if (!affiliateId || affiliateId === 'guest') return;
+    
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
@@ -65,7 +72,7 @@ export const SprintMissionTab = ({ onNavigate }: SprintMissionTabProps = {}) => 
 
     // Check daily reset
     checkDailyReset();
-  }, []);
+  }, [affiliateId, STORAGE_KEY]);
 
   // Check and reset daily actions
   const checkDailyReset = () => {
@@ -230,12 +237,27 @@ export const SprintMissionTab = ({ onNavigate }: SprintMissionTabProps = {}) => 
         </Button>
       </div>
 
-      {/* Sprint Cards */}
+      {/* Sprint Cards - Matching Library Design */}
       {savedSprints.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-6xl">
+          {/* Create New Card */}
+          <motion.button
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            onClick={() => setShowWizard(true)}
+            className="flex flex-col items-center justify-center p-6 rounded-xl bg-white/5 border border-dashed border-white/20 hover:border-blue-500/50 hover:bg-white/10 transition-all min-h-[220px] group"
+          >
+            <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <Plus className="w-6 h-6 text-blue-400" />
+            </div>
+            <span className="text-sm font-medium text-foreground">Criar Nova Meta</span>
+            <span className="text-xs text-muted-foreground mt-1">Definir objetivo</span>
+          </motion.button>
+
           {savedSprints.map((saved, index) => {
             const progress = getProgress(saved);
             const completedCount = saved.sprint.actions.filter(a => a.status === 'completed').length;
+            const createdDate = new Date(saved.createdAt).toLocaleDateString('pt-BR');
             
             return (
               <motion.div
@@ -243,93 +265,100 @@ export const SprintMissionTab = ({ onNavigate }: SprintMissionTabProps = {}) => 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="group bg-white/5 border border-white/10 hover:border-blue-500/30 transition-all cursor-pointer overflow-hidden"
-                style={{ borderRadius: '14px' }}
-                onClick={() => openSprint(saved)}
+                className="group relative"
               >
-                {/* Card Header */}
-                <div className="p-3 sm:p-4 border-b border-white/5">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                        <Target className="w-4 h-4 text-blue-400" />
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="text-sm font-semibold text-white truncate">
-                          {saved.sprint.mission_name}
-                        </h3>
-                        <p className="text-[10px] text-white/40 truncate">
-                          {saved.sprint.goal_summary}
-                        </p>
-                      </div>
+                <div
+                  className="relative rounded-xl border bg-white/5 overflow-hidden transition-all duration-300 min-h-[220px] flex flex-col cursor-pointer hover:border-blue-500/40 hover:shadow-xl hover:shadow-blue-500/5 hover:bg-white/10 border-white/10"
+                  onClick={() => openSprint(saved)}
+                >
+                  {/* Header with Icon */}
+                  <div className="p-5 pb-3 flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-2xl flex-shrink-0">
+                      <Target className="w-6 h-6 text-blue-400" />
                     </div>
-                    
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base font-semibold text-foreground truncate">
+                        {saved.sprint.mission_name}
+                      </h3>
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">
+                        {saved.sprint.goal_summary}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Metadata */}
+                  <div className="px-5 pb-4 space-y-2.5 flex-1">
+                    {/* Progress Stats */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs uppercase tracking-wider text-muted-foreground">Progresso</span>
+                      <span className={`px-2.5 py-0.5 rounded text-xs font-semibold ${
+                        progress === 100 
+                          ? 'bg-emerald-500/20 text-emerald-300'
+                          : 'bg-blue-500/20 text-blue-300'
+                      }`}>
+                        {progress}% ({completedCount}/{saved.sprint.actions.length})
+                      </span>
+                    </div>
+
+                    {/* Deadline */}
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span className="uppercase tracking-wider">Prazo</span>
+                      <span className="text-foreground/80 ml-auto">{saved.sprint.total_days} dias</span>
+                    </div>
+
+                    {/* Created At */}
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span className="uppercase tracking-wider">Criado em</span>
+                      <span className="text-foreground/80 ml-auto">{createdDate}</span>
+                    </div>
+
+                    {/* Daily Target */}
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <TrendingUp className="w-3.5 h-3.5" />
+                      <span className="uppercase tracking-wider truncate flex-1">{saved.sprint.daily_target}</span>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="px-5 pb-2">
+                    <Progress value={progress} className="h-1.5 bg-white/10" />
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="px-5 pb-5 pt-3 border-t border-white/5 flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openSprint(saved);
+                      }}
+                      className="flex-1 h-9 text-sm bg-blue-500 hover:bg-blue-600 text-white font-semibold"
+                    >
+                      ABRIR
+                      <Play className="w-3.5 h-3.5 ml-1.5" />
+                    </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 p-0 text-white/30 hover:text-white hover:bg-white/10"
-                        >
+                        <Button variant="ghost" size="icon" className="h-9 w-9 bg-white/5 hover:bg-white/10">
                           <MoreVertical className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-gray-900 border-white/10">
+                      <DropdownMenuContent align="end" className="bg-card border-white/10">
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
                             deleteSprint(saved.id);
                           }}
-                          className="text-red-400 hover:text-red-300 focus:text-red-300"
+                          className="text-destructive focus:text-destructive"
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
-                          Remover
+                          Excluir
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-
-                  {/* Stats */}
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    <div className="bg-white/5 rounded-lg py-1.5 px-2">
-                      <Calendar className="w-3 h-3 text-blue-400 mx-auto mb-0.5" />
-                      <p className="text-[9px] text-white/40">Prazo</p>
-                      <p className="text-[10px] font-medium text-white">{saved.sprint.total_days}d</p>
-                    </div>
-                    <div className="bg-white/5 rounded-lg py-1.5 px-2">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-400 mx-auto mb-0.5" />
-                      <p className="text-[9px] text-white/40">Feitas</p>
-                      <p className="text-[10px] font-medium text-white">{completedCount}/{saved.sprint.actions.length}</p>
-                    </div>
-                    <div className="bg-white/5 rounded-lg py-1.5 px-2">
-                      <TrendingUp className="w-3 h-3 text-blue-400 mx-auto mb-0.5" />
-                      <p className="text-[9px] text-white/40">Progresso</p>
-                      <p className="text-[10px] font-medium text-white">{progress}%</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Progress Bar */}
-                <div className="px-3 sm:px-4 py-2 bg-white/[0.02]">
-                  <Progress value={progress} className="h-1.5 bg-white/10" />
-                </div>
-
-                {/* Daily Target */}
-                <div className="px-3 sm:px-4 py-2 flex items-center justify-between bg-white/[0.02]">
-                  <div className="flex items-center gap-1.5 text-[10px] text-white/40">
-                    <Clock className="w-3 h-3" />
-                    <span className="truncate">{saved.sprint.daily_target}</span>
-                  </div>
-                  <Badge 
-                    variant="outline" 
-                    className={`text-[9px] px-1.5 py-0 ${
-                      progress === 100 
-                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                        : 'bg-blue-500/20 text-blue-400 border-blue-500/30'
-                    }`}
-                  >
-                    {progress === 100 ? 'Concluído' : 'Ativo'}
-                  </Badge>
                 </div>
               </motion.div>
             );
