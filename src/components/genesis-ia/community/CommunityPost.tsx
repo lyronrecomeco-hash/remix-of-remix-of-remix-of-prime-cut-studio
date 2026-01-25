@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MessageCircle, MoreHorizontal, Trash2 } from 'lucide-react';
+import { MessageCircle, MoreHorizontal, Trash2, Heart, Repeat2, Share, BarChart2 } from 'lucide-react';
 import { GenesisVerifiedBadge } from './GenesisVerifiedBadge';
 import { CommunityReactions } from './CommunityReactions';
 import {
@@ -47,94 +47,147 @@ export const CommunityPost = ({
   onOpenComments,
   canDelete = false
 }: CommunityPostProps) => {
+  const [isLiked, setIsLiked] = useState(false);
+
   const timeAgo = formatDistanceToNow(new Date(createdAt), {
     addSuffix: false,
     locale: ptBR
   });
 
+  const totalReactions = reactions.reduce((sum, r) => sum + r.count, 0);
+
   return (
     <motion.article
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="border-b border-white/10 hover:bg-white/[0.02] transition-colors cursor-pointer"
     >
-      {/* Header */}
-      <div className="p-4 pb-3 flex items-start justify-between">
-        <div className="flex items-center gap-3">
+      <div className="px-4 py-3">
+        <div className="flex gap-3">
           {/* Avatar */}
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 via-blue-600 to-purple-700 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-blue-500/30">
-            G
+          <div className="flex-shrink-0">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold text-sm">
+              G
+            </div>
           </div>
-          
-          {/* Author info */}
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-white text-sm">
-                {authorName}
-              </span>
-              {isVerified && (
-                <GenesisVerifiedBadge size="sm" />
+
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1 flex-wrap">
+                <span className="font-bold text-white text-[15px] hover:underline">
+                  {authorName}
+                </span>
+                {isVerified && (
+                  <GenesisVerifiedBadge size="sm" />
+                )}
+                <span className="text-white/50 text-[15px]">·</span>
+                <span className="text-white/50 text-[15px] hover:underline">{timeAgo}</span>
+              </div>
+
+              {/* Actions */}
+              {canDelete && onDelete && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="p-2 -m-2 rounded-full hover:bg-blue-500/10 transition-colors text-white/40 hover:text-blue-400">
+                      <MoreHorizontal className="w-[18px] h-[18px]" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-card border-white/10">
+                    <DropdownMenuItem 
+                      onClick={() => onDelete(id)}
+                      className="text-red-400 focus:text-red-400 cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Excluir
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
             </div>
-            <span className="text-xs text-white/50">{timeAgo}</span>
+
+            {/* Text content */}
+            <div className="mt-0.5">
+              <p className="text-white text-[15px] whitespace-pre-wrap leading-[1.4]">
+                {content}
+              </p>
+            </div>
+
+            {/* Image */}
+            {imageUrl && (
+              <div className="mt-3">
+                <img 
+                  src={imageUrl} 
+                  alt="Post" 
+                  className="w-full rounded-2xl object-cover max-h-[512px] border border-white/10"
+                />
+              </div>
+            )}
+
+            {/* Reactions bar - Genesis style */}
+            <div className="mt-3">
+              <CommunityReactions 
+                reactions={reactions}
+                onReact={(type) => onReact(id, type)}
+              />
+            </div>
+
+            {/* Action buttons - Twitter style */}
+            <div className="mt-3 flex items-center justify-between max-w-md -ml-2">
+              {/* Comments */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenComments(id);
+                }}
+                className="group flex items-center gap-1 text-white/50 hover:text-blue-400 transition-colors"
+              >
+                <div className="p-2 rounded-full group-hover:bg-blue-500/10 transition-colors">
+                  <MessageCircle className="w-[18px] h-[18px]" />
+                </div>
+                <span className="text-[13px]">{commentsCount > 0 ? commentsCount : ''}</span>
+              </button>
+
+              {/* Repost */}
+              <button className="group flex items-center gap-1 text-white/50 hover:text-green-400 transition-colors">
+                <div className="p-2 rounded-full group-hover:bg-green-500/10 transition-colors">
+                  <Repeat2 className="w-[18px] h-[18px]" />
+                </div>
+              </button>
+
+              {/* Like */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsLiked(!isLiked);
+                }}
+                className={`group flex items-center gap-1 transition-colors ${
+                  isLiked ? 'text-pink-500' : 'text-white/50 hover:text-pink-500'
+                }`}
+              >
+                <div className="p-2 rounded-full group-hover:bg-pink-500/10 transition-colors">
+                  <Heart className={`w-[18px] h-[18px] ${isLiked ? 'fill-current' : ''}`} />
+                </div>
+                <span className="text-[13px]">{totalReactions > 0 ? totalReactions : ''}</span>
+              </button>
+
+              {/* Views */}
+              <button className="group flex items-center gap-1 text-white/50 hover:text-blue-400 transition-colors">
+                <div className="p-2 rounded-full group-hover:bg-blue-500/10 transition-colors">
+                  <BarChart2 className="w-[18px] h-[18px]" />
+                </div>
+              </button>
+
+              {/* Share */}
+              <button className="group flex items-center text-white/50 hover:text-blue-400 transition-colors">
+                <div className="p-2 rounded-full group-hover:bg-blue-500/10 transition-colors">
+                  <Share className="w-[18px] h-[18px]" />
+                </div>
+              </button>
+            </div>
           </div>
         </div>
-
-        {/* Actions */}
-        {canDelete && onDelete && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-white/40 hover:text-white/70">
-                <MoreHorizontal className="w-4 h-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-card border-white/10">
-              <DropdownMenuItem 
-                onClick={() => onDelete(id)}
-                className="text-destructive focus:text-destructive cursor-pointer"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Excluir
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="px-4 pb-3">
-        <p className="text-white/90 text-sm whitespace-pre-wrap leading-relaxed">
-          {content}
-        </p>
-      </div>
-
-      {/* Image */}
-      {imageUrl && (
-        <div className="px-4 pb-3">
-          <img 
-            src={imageUrl} 
-            alt="Post" 
-            className="w-full rounded-xl object-cover max-h-[400px]"
-          />
-        </div>
-      )}
-
-      {/* Footer */}
-      <div className="px-4 py-3 border-t border-white/5 flex items-center justify-between">
-        <CommunityReactions 
-          reactions={reactions}
-          onReact={(type) => onReact(id, type)}
-        />
-
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => onOpenComments(id)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 transition-colors text-white/60 hover:text-white/80"
-        >
-          <MessageCircle className="w-4 h-4" />
-          <span className="text-xs">{commentsCount}</span>
-        </motion.button>
       </div>
     </motion.article>
   );
