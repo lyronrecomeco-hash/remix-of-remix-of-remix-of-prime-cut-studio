@@ -26,7 +26,9 @@ import {
   Bell,
   Link as LinkIcon,
   Copy,
-  ExternalLink
+  ExternalLink,
+  RotateCcw,
+  Loader2
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -116,6 +118,8 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [activeTab, setActiveTab] = useState('payments');
   const [currentPage, setCurrentPage] = useState(1);
+  const [isRefunding, setIsRefunding] = useState(false);
+  const [showRefundConfirm, setShowRefundConfirm] = useState(false);
   const ITEMS_PER_PAGE = 10;
 
   useEffect(() => {
@@ -260,6 +264,38 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     toast.success(`${label} copiado!`);
+  };
+
+  const handleRefund = async () => {
+    if (!selectedPayment) return;
+    
+    setIsRefunding(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('checkout-refund-payment', {
+        body: { paymentCode: selectedPayment.payment_code }
+      });
+
+      if (error) {
+        console.error('Refund error:', error);
+        toast.error(error.message || 'Erro ao processar reembolso');
+        return;
+      }
+
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+
+      toast.success('Reembolso processado com sucesso!');
+      setShowRefundConfirm(false);
+      setSelectedPayment(null);
+      loadData();
+    } catch (err) {
+      console.error('Refund exception:', err);
+      toast.error('Erro ao processar reembolso');
+    } finally {
+      setIsRefunding(false);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -764,10 +800,73 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
                   </div>
                 )}
 
+                {/* Refund Button - Only show for paid payments */}
+                {selectedPayment.status === 'paid' && !showRefundConfirm && (
+                  <Button
+                    variant="destructive"
+                    className="w-full"
+                    onClick={() => setShowRefundConfirm(true)}
+                  >
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Reembolsar Integralmente
+                  </Button>
+                )}
+
+                {/* Refund Confirmation */}
+                {showRefundConfirm && (
+                  <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 space-y-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
+                        <AlertTriangle className="w-5 h-5 text-red-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-red-300">Confirmar Reembolso</h4>
+                        <p className="text-sm text-white/60 mt-1">
+                          Você está prestes a reembolsar <span className="font-bold text-red-400">{formatCurrency(selectedPayment.amount_cents)}</span> para o cliente.
+                        </p>
+                        <p className="text-xs text-white/40 mt-2">
+                          Esta ação não pode ser desfeita.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => setShowRefundConfirm(false)}
+                        disabled={isRefunding}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        className="flex-1"
+                        onClick={handleRefund}
+                        disabled={isRefunding}
+                      >
+                        {isRefunding ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Processando...
+                          </>
+                        ) : (
+                          <>
+                            <RotateCcw className="w-4 h-4 mr-2" />
+                            Confirmar Reembolso
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => setSelectedPayment(null)}
+                  onClick={() => {
+                    setShowRefundConfirm(false);
+                    setSelectedPayment(null);
+                  }}
                 >
                   Fechar
                 </Button>
