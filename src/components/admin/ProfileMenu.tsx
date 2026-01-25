@@ -77,79 +77,85 @@ const ProfileMenu = ({ onOpenProfile, onOpenAccount, avatarUrl }: ProfileMenuPro
               onClick={() => setIsOpen(false)}
             />
 
-            <motion.div
-              initial={{ opacity: 0, y: -10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              transition={{ duration: 0.15 }}
-              className="absolute right-0 top-12 w-64 bg-popover border border-border rounded-xl shadow-xl z-50 overflow-hidden"
-            >
-              {/* User Info Header */}
-              <div className="p-4 border-b border-border bg-secondary/30">
-                <div className="flex items-center gap-3">
-                  <Avatar className="w-12 h-12">
-                    <AvatarImage src={currentAvatarUrl || ''} className="object-cover" />
-                    <AvatarFallback className="bg-primary/20 text-primary">
-                      {user?.email?.charAt(0).toUpperCase() || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">
-                      {user?.email || 'Usuário'}
-                    </p>
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium mt-1 ${planBadge.color}`}>
-                      {planBadge.label === 'VITALÍCIO' && <Crown className="w-3 h-3" />}
-                      {planBadge.label}
-                    </span>
+              <motion.div
+                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                transition={{ duration: 0.15 }}
+                className="absolute right-0 top-12 w-64 bg-card/95 backdrop-blur-xl border border-primary/20 rounded-xl shadow-2xl z-50 overflow-hidden max-h-[calc(100vh-100px)]"
+              >
+                {/* User Info Header - Padronizado com tema Genesis */}
+                <div className="p-4 border-b border-primary/10 bg-primary/5">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-12 h-12 border-2 border-primary/30">
+                      <AvatarImage src={currentAvatarUrl || ''} className="object-cover" />
+                      <AvatarFallback className="bg-primary/20 text-primary font-semibold">
+                        {user?.email?.charAt(0).toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">
+                        {user?.email || 'Usuário'}
+                      </p>
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium mt-1 ${planBadge.color}`}>
+                        {planBadge.label === 'VITALÍCIO' && <Crown className="w-3 h-3" />}
+                        {planBadge.label}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Menu Items */}
-              <div className="p-2">
-                <button
-                  onClick={() => {
-                    setIsOpen(false);
-                    onOpenProfile();
-                  }}
-                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-secondary transition-colors text-left"
-                >
-                  <span className="flex items-center gap-3">
-                    <User className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm">Meu Perfil</span>
-                  </span>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                </button>
+                {/* Menu Items - Padronizado */}
+                <div className="p-2">
+                  <button
+                    onClick={() => {
+                      setIsOpen(false);
+                      onOpenProfile();
+                    }}
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-primary/10 transition-colors text-left group"
+                  >
+                    <span className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                        <User className="w-4 h-4 text-primary" />
+                      </div>
+                      <span className="text-sm text-foreground">Meu Perfil</span>
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </button>
 
-                <button
-                  onClick={() => {
-                    setIsOpen(false);
-                    onOpenAccount();
-                  }}
-                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-secondary transition-colors text-left"
-                >
-                  <span className="flex items-center gap-3">
-                    <Settings className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm">Minha Conta</span>
-                  </span>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                </button>
-              </div>
+                  <button
+                    onClick={() => {
+                      setIsOpen(false);
+                      onOpenAccount();
+                    }}
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-primary/10 transition-colors text-left group"
+                  >
+                    <span className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                        <Settings className="w-4 h-4 text-primary" />
+                      </div>
+                      <span className="text-sm text-foreground">Minha Conta</span>
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </button>
+                </div>
 
-              {/* Logout */}
-              <div className="p-2 border-t border-border">
-                <button
-                  onClick={() => {
-                    setIsOpen(false);
-                    signOut();
-                  }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-destructive/10 text-destructive transition-colors text-left"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span className="text-sm">Sair da conta</span>
-                </button>
-              </div>
-            </motion.div>
+                {/* Logout - Padronizado */}
+                <div className="p-2 border-t border-primary/10">
+                  <button
+                    onClick={() => {
+                      setIsOpen(false);
+                      signOut();
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-destructive/10 text-destructive transition-colors text-left group"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center group-hover:bg-destructive/20 transition-colors">
+                      <LogOut className="w-4 h-4" />
+                    </div>
+                    <span className="text-sm font-medium">Sair da conta</span>
+                  </button>
+                </div>
+              </motion.div>
           </>
         )}
       </AnimatePresence>

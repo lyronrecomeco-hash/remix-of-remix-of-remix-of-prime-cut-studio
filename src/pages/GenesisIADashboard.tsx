@@ -762,21 +762,45 @@ const GenesisIADashboard = () => {
               {renderTabContent(ctx)}
             </main>
 
-            {/* Dock - Always visible */}
+            {/* Dock - Always visible with animated snake border */}
             <div className="fixed bottom-4 sm:bottom-8 left-0 right-0 flex justify-center z-50 px-4">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
-                className={`flex items-center ${config.dock.shadow} w-auto max-w-full overflow-x-auto`}
+                className={`relative flex items-center ${config.dock.shadow} w-auto max-w-full overflow-x-auto group`}
                 style={{
                   gap: 'clamp(8px, 2vw, 16px)',
                   padding: 'clamp(8px, 2vw, 12px) clamp(12px, 3vw, 16px)',
                   borderRadius: config.dock.borderRadius,
                   backgroundColor: config.dock.backgroundColor,
-                  border: `1px solid ${config.dock.borderColor}`,
                 }}
               >
+                {/* Animated snake border */}
+                <div 
+                  className="absolute inset-0 rounded-[inherit] overflow-hidden"
+                  style={{ borderRadius: config.dock.borderRadius }}
+                >
+                  <div 
+                    className="absolute inset-0 rounded-[inherit]"
+                    style={{
+                      background: `linear-gradient(90deg, transparent, hsl(var(--primary)), hsl(var(--primary) / 0.5), transparent)`,
+                      backgroundSize: '200% 100%',
+                      animation: 'snakeBorder 3s linear infinite',
+                      maskImage: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                      maskComposite: 'exclude',
+                      WebkitMaskImage: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                      WebkitMaskComposite: 'xor',
+                      padding: '1.5px',
+                    }}
+                  />
+                </div>
+                <style>{`
+                  @keyframes snakeBorder {
+                    0% { background-position: 200% 0; }
+                    100% { background-position: -200% 0; }
+                  }
+                `}</style>
                 {dockItems.map((item, index) => {
                   const isActive = !item.onClick && activeTab === item.tabId;
                   return (

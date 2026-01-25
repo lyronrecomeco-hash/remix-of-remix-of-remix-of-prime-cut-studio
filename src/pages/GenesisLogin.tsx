@@ -597,20 +597,20 @@ export default function GenesisLogin() {
       </div>
 
       {/* Right Side - Form (respects theme) */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-background">
-        <div className="w-full max-w-md">
-          {/* Mobile Logo */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-6 md:p-12 bg-background min-h-screen overflow-y-auto">
+        <div className="w-full max-w-md py-4 sm:py-0">
+          {/* Mobile Logo - Padronizado Genesis */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3 mb-8 lg:hidden"
+            className="flex items-center gap-3 mb-6 sm:mb-8 lg:hidden"
           >
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
-              <Zap className="w-6 h-6 text-primary-foreground" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center border border-primary/30">
+              <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Genesis Hub</h1>
-              <p className="text-muted-foreground text-xs">WhatsApp Automation</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">Genesis Hub</h1>
+              <p className="text-muted-foreground text-[10px] sm:text-xs">WhatsApp Automation</p>
             </div>
           </motion.div>
 
