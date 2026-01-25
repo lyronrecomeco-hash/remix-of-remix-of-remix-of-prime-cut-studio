@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Users, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Sparkles, Settings, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useGenesisAuth } from '@/contexts/GenesisAuthContext';
@@ -36,6 +36,7 @@ export const CommunityTab = ({ onBack }: CommunityTabProps) => {
   const [commentsCounts, setCommentsCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
+  const [activeTab, setActiveTab] = useState<'para-voce' | 'seguindo'>('para-voce');
 
   const isGenesisHub = genesisUser?.email === GENESIS_HUB_EMAIL;
 
@@ -47,7 +48,6 @@ export const CommunityTab = ({ onBack }: CommunityTabProps) => {
     try {
       setLoading(true);
       
-      // Load posts
       const { data: postsData, error: postsError } = await supabase
         .from('community_posts')
         .select('*')
@@ -57,7 +57,6 @@ export const CommunityTab = ({ onBack }: CommunityTabProps) => {
 
       setPosts(postsData || []);
 
-      // Load reactions for all posts
       if (postsData && postsData.length > 0) {
         const postIds = postsData.map(p => p.id);
         
@@ -66,7 +65,6 @@ export const CommunityTab = ({ onBack }: CommunityTabProps) => {
           .select('*')
           .in('post_id', postIds);
 
-        // Process reactions
         const reactionsMap: Record<string, Reaction[]> = {};
         postIds.forEach(postId => {
           const postReactions = reactionsData?.filter(r => r.post_id === postId) || [];
@@ -83,7 +81,6 @@ export const CommunityTab = ({ onBack }: CommunityTabProps) => {
         });
         setReactions(reactionsMap);
 
-        // Load comments counts
         const { data: commentsData } = await supabase
           .from('community_comments')
           .select('post_id')
@@ -140,7 +137,6 @@ export const CommunityTab = ({ onBack }: CommunityTabProps) => {
       const currentReaction = reactions[postId]?.find(r => r.type === reactionType);
       
       if (currentReaction?.hasReacted) {
-        // Remove reaction
         await supabase
           .from('community_reactions')
           .delete()
@@ -148,7 +144,6 @@ export const CommunityTab = ({ onBack }: CommunityTabProps) => {
           .eq('user_id', genesisUser.id)
           .eq('reaction_type', reactionType);
       } else {
-        // Add reaction
         await supabase
           .from('community_reactions')
           .insert({
@@ -158,7 +153,6 @@ export const CommunityTab = ({ onBack }: CommunityTabProps) => {
           });
       }
 
-      // Update local state
       setReactions(prev => ({
         ...prev,
         [postId]: prev[postId]?.map(r => 
@@ -192,54 +186,91 @@ export const CommunityTab = ({ onBack }: CommunityTabProps) => {
   };
 
   const handleOpenComments = (postId: string) => {
-    // TODO: Implementar modal de comentários
     toast.info('Comentários em breve!');
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onBack}
-            className="text-white/50 hover:text-white hover:bg-white/10 h-9"
-          >
-            <ArrowLeft className="w-4 h-4 mr-1.5" />
-            Voltar
-          </Button>
-        </div>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={loadPosts}
-          disabled={loading}
-          className="text-white/50 hover:text-white hover:bg-white/10 h-9"
-        >
-          <RefreshCw className={`w-4 h-4 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
-          Atualizar
-        </Button>
-      </div>
-
-      {/* Title section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-8"
-      >
-        <div className="inline-flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-600/20 flex items-center justify-center border border-cyan-500/20">
-            <Users className="w-6 h-6 text-cyan-400" />
+    <div className="min-h-screen bg-[hsl(220,20%,6%)]">
+      {/* Header - Twitter style */}
+      <div className="sticky top-0 z-30 bg-[hsl(220,20%,6%)]/80 backdrop-blur-md border-b border-white/10">
+        <div className="flex items-center justify-between px-4 h-[53px]">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onBack}
+              className="text-white/90 hover:bg-white/10 h-9 w-9 rounded-full"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div>
+              <h1 className="text-xl font-bold text-white">Comunidade</h1>
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-white">Comunidade Genesis</h1>
+
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={loadPosts}
+              disabled={loading}
+              className="text-white/90 hover:bg-white/10 h-9 w-9 rounded-full"
+            >
+              <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-white/90 hover:bg-white/10 h-9 w-9 rounded-full"
+            >
+              <Sparkles className="w-5 h-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-white/90 hover:bg-white/10 h-9 w-9 rounded-full"
+            >
+              <Settings className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
-        <p className="text-white/60 text-sm max-w-md mx-auto">
-          Fique por dentro das novidades, atualizações e dicas exclusivas
-        </p>
-      </motion.div>
+
+        {/* Tabs */}
+        <div className="flex">
+          <button
+            onClick={() => setActiveTab('para-voce')}
+            className={`flex-1 py-4 text-center relative font-medium transition-colors ${
+              activeTab === 'para-voce' 
+                ? 'text-white' 
+                : 'text-white/50 hover:text-white/70'
+            }`}
+          >
+            Para você
+            {activeTab === 'para-voce' && (
+              <motion.div
+                layoutId="activeTab"
+                className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-1 bg-blue-500 rounded-full"
+              />
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('seguindo')}
+            className={`flex-1 py-4 text-center relative font-medium transition-colors ${
+              activeTab === 'seguindo' 
+                ? 'text-white' 
+                : 'text-white/50 hover:text-white/70'
+            }`}
+          >
+            Seguindo
+            {activeTab === 'seguindo' && (
+              <motion.div
+                layoutId="activeTab"
+                className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-1 bg-blue-500 rounded-full"
+              />
+            )}
+          </button>
+        </div>
+      </div>
 
       {/* Create post form - Only for Genesis Hub */}
       {isGenesisHub && (
@@ -247,44 +278,38 @@ export const CommunityTab = ({ onBack }: CommunityTabProps) => {
       )}
 
       {/* Posts feed */}
-      <div className="space-y-4">
+      <div>
         {loading ? (
           <div className="flex justify-center py-12">
-            <RefreshCw className="w-6 h-6 text-white/40 animate-spin" />
+            <RefreshCw className="w-6 h-6 text-blue-500 animate-spin" />
           </div>
         ) : posts.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-12 bg-white/5 rounded-2xl border border-white/10"
-          >
-            <Users className="w-12 h-12 text-white/20 mx-auto mb-4" />
-            <p className="text-white/60">Nenhum post ainda</p>
-            <p className="text-white/40 text-sm">Em breve teremos novidades!</p>
-          </motion.div>
+          <div className="text-center py-16 px-4">
+            <div className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
+              <Sparkles className="w-8 h-8 text-blue-500" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">Bem-vindo à Comunidade!</h3>
+            <p className="text-white/50 max-w-sm mx-auto">
+              Fique por dentro das novidades, dicas e atualizações exclusivas da Genesis.
+            </p>
+          </div>
         ) : (
-          posts.map((post, index) => (
-            <motion.div
+          posts.map((post) => (
+            <CommunityPost
               key={post.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-            >
-              <CommunityPost
-                id={post.id}
-                authorName={post.author_name}
-                isVerified={true}
-                content={post.content}
-                imageUrl={post.image_url}
-                createdAt={post.created_at}
-                reactions={reactions[post.id] || []}
-                commentsCount={commentsCounts[post.id] || 0}
-                onReact={handleReact}
-                onDelete={handleDeletePost}
-                onOpenComments={handleOpenComments}
-                canDelete={isGenesisHub}
-              />
-            </motion.div>
+              id={post.id}
+              authorName={post.author_name}
+              isVerified={true}
+              content={post.content}
+              imageUrl={post.image_url}
+              createdAt={post.created_at}
+              reactions={reactions[post.id] || []}
+              commentsCount={commentsCounts[post.id] || 0}
+              onReact={handleReact}
+              onDelete={handleDeletePost}
+              onOpenComments={handleOpenComments}
+              canDelete={isGenesisHub}
+            />
           ))
         )}
       </div>

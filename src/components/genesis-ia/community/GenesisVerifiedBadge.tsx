@@ -6,62 +6,84 @@ interface GenesisVerifiedBadgeProps {
 }
 
 export const GenesisVerifiedBadge = ({ size = 'md', className = '' }: GenesisVerifiedBadgeProps) => {
-  const sizeClasses = {
-    sm: 'w-4 h-4',
-    md: 'w-5 h-5',
-    lg: 'w-6 h-6'
+  const sizeMap = {
+    sm: { width: 16, height: 16 },
+    md: { width: 20, height: 20 },
+    lg: { width: 24, height: 24 }
   };
 
-  const iconSizes = {
-    sm: 'text-[8px]',
-    md: 'text-[10px]',
-    lg: 'text-[12px]'
-  };
+  const { width, height } = sizeMap[size];
 
   return (
     <motion.div
-      initial={{ scale: 0 }}
-      animate={{ scale: 1 }}
-      transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-      className={`relative inline-flex items-center justify-center ${sizeClasses[size]} ${className}`}
+      initial={{ scale: 0, rotate: -180 }}
+      animate={{ scale: 1, rotate: 0 }}
+      transition={{ 
+        type: 'spring', 
+        stiffness: 260, 
+        damping: 20,
+        duration: 0.6
+      }}
+      className={`relative inline-flex items-center justify-center ${className}`}
+      style={{ width, height }}
     >
-      {/* Glow effect */}
-      <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 rounded-full blur-[3px] opacity-60 animate-pulse" />
-      
-      {/* Main badge container */}
-      <div className="relative w-full h-full rounded-full bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 p-[1.5px] shadow-lg shadow-blue-500/40">
-        <div className="w-full h-full rounded-full bg-gradient-to-br from-cyan-500 via-blue-600 to-purple-700 flex items-center justify-center">
-          {/* Checkmark icon */}
-          <svg 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            className={`${iconSizes[size]} text-white drop-shadow-sm`}
-            style={{ width: '60%', height: '60%' }}
-          >
-            <path 
-              d="M9 12.5L11.5 15L15 10" 
-              stroke="currentColor" 
-              strokeWidth="2.5" 
-              strokeLinecap="round" 
-              strokeLinejoin="round"
-            />
-          </svg>
-        </div>
-      </div>
-
-      {/* Sparkle effects */}
+      {/* Subtle glow effect */}
       <motion.div
         animate={{ 
-          opacity: [0.4, 1, 0.4],
-          scale: [0.8, 1.1, 0.8]
+          opacity: [0.4, 0.7, 0.4],
+          scale: [1, 1.1, 1]
         }}
         transition={{ 
           duration: 2,
           repeat: Infinity,
           ease: "easeInOut"
         }}
-        className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-white rounded-full"
+        className="absolute inset-0 rounded-full"
+        style={{
+          background: 'radial-gradient(circle, rgba(29, 161, 242, 0.4) 0%, transparent 70%)',
+          filter: 'blur(2px)'
+        }}
       />
+
+      {/* Main badge SVG - Twitter-style wavy badge */}
+      <motion.svg
+        viewBox="0 0 24 24"
+        fill="none"
+        style={{ width: '100%', height: '100%' }}
+        animate={{ rotate: [0, 360] }}
+        transition={{
+          duration: 20,
+          repeat: Infinity,
+          ease: "linear"
+        }}
+      >
+        {/* Wavy badge shape */}
+        <path
+          d="M12 2C10.6868 2 9.38642 2.25866 8.17317 2.7612C6.95991 3.26375 5.85752 4.00035 4.92893 4.92893C4.00035 5.85752 3.26375 6.95991 2.7612 8.17317C2.25866 9.38642 2 10.6868 2 12C2 13.3132 2.25866 14.6136 2.7612 15.8268C3.26375 17.0401 4.00035 18.1425 4.92893 19.0711C5.85752 19.9997 6.95991 20.7362 8.17317 21.2388C9.38642 21.7413 10.6868 22 12 22C13.3132 22 14.6136 21.7413 15.8268 21.2388C17.0401 20.7362 18.1425 19.9997 19.0711 19.0711C19.9997 18.1425 20.7362 17.0401 21.2388 15.8268C21.7413 14.6136 22 13.3132 22 12C22 10.6868 21.7413 9.38642 21.2388 8.17317C20.7362 6.95991 19.9997 5.85752 19.0711 4.92893C18.1425 4.00035 17.0401 3.26375 15.8268 2.7612C14.6136 2.25866 13.3132 2 12 2Z"
+          fill="#1D9BF0"
+        />
+        {/* Wavy edges */}
+        <path
+          d="M22.25 12C22.25 11.295 21.8053 10.6812 21.1826 10.4313C21.0406 10.3743 20.9131 10.2851 20.8101 10.1701C20.7071 10.0551 20.6313 9.91727 20.5889 9.76756C20.5464 9.61785 20.5384 9.46014 20.5655 9.30676C20.5927 9.15338 20.6543 9.00837 20.7456 8.88267C21.1389 8.33267 21.1043 7.57833 20.5997 7.07367L17.927 4.40033C17.4223 3.896 16.668 3.86133 16.118 4.25467C15.9923 4.34595 15.8473 4.40757 15.6939 4.43472C15.5405 4.46187 15.3828 4.45387 15.2331 4.41142C15.0834 4.36898 14.9456 4.29319 14.8306 4.19019C14.7156 4.08719 14.6264 3.95966 14.5693 3.81767C14.3193 3.195 13.7057 2.75 13 2.75H12H11C10.2943 2.75 9.68067 3.195 9.43067 3.81767C9.37361 3.95966 9.28443 4.08719 9.16943 4.19019C9.05443 4.29319 8.91658 4.36898 8.76687 4.41142C8.61716 4.45387 8.45946 4.46187 8.30608 4.43472C8.15269 4.40757 8.00769 4.34595 7.882 4.25467C7.332 3.86133 6.57767 3.896 6.073 4.40033L3.40033 7.07367C2.89567 7.57833 2.86133 8.33267 3.25433 8.88267C3.34572 9.00837 3.40733 9.15338 3.43448 9.30676C3.46163 9.46014 3.45363 9.61785 3.41115 9.76756C3.36867 9.91727 3.29285 10.0551 3.18985 10.1701C3.08685 10.2851 2.95935 10.3743 2.81733 10.4313C2.19467 10.6813 1.75 11.295 1.75 12C1.75 12.705 2.19467 13.3188 2.81733 13.5687C2.95935 13.6257 3.08685 13.7149 3.18985 13.8299C3.29285 13.9449 3.36867 14.0828 3.41115 14.2325C3.45363 14.3822 3.46163 14.5399 3.43448 14.6933C3.40733 14.8466 3.34572 14.9916 3.25433 15.1173C2.86133 15.6673 2.89567 16.4217 3.40033 16.9263L6.073 19.6C6.57767 20.1043 7.332 20.139 7.882 19.7457C8.00769 19.6544 8.15269 19.5928 8.30608 19.5656C8.45946 19.5385 8.61716 19.5465 8.76687 19.589C8.91658 19.6314 9.05443 19.7072 9.16943 19.8102C9.28443 19.9132 9.37361 20.0407 9.43067 20.1827C9.68067 20.805 10.2943 21.25 11 21.25H12H13C13.7057 21.25 14.3193 20.805 14.5693 20.1827C14.6264 20.0407 14.7156 19.9132 14.8306 19.8102C14.9456 19.7072 15.0834 19.6314 15.2331 19.589C15.3828 19.5465 15.5405 19.5385 15.6939 19.5656C15.8473 19.5928 15.9923 19.6544 16.118 19.7457C16.668 20.139 17.4223 20.1043 17.927 19.6L20.5997 16.9263C21.1043 16.4217 21.1389 15.6673 20.7456 15.1173C20.6543 14.9916 20.5927 14.8466 20.5655 14.6933C20.5384 14.5399 20.5464 14.3822 20.5889 14.2325C20.6313 14.0828 20.7071 13.9449 20.8101 13.8299C20.9131 13.7149 21.0406 13.6257 21.1826 13.5687C21.8053 13.3188 22.25 12.705 22.25 12Z"
+          fill="#1D9BF0"
+        />
+      </motion.svg>
+
+      {/* Checkmark - static, not rotating */}
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        className="absolute"
+        style={{ width: '100%', height: '100%' }}
+      >
+        <path
+          d="M9.5 12.5L11 14L14.5 10"
+          stroke="white"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
     </motion.div>
   );
 };
