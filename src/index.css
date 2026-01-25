@@ -36,6 +36,13 @@
     --input: 222 30% 18%;
     --ring: 217 91% 60%;
 
+    /* Community reactions */
+    --reaction-fire: 25 95% 60%;
+    --reaction-diamond: 190 95% 55%;
+    --reaction-energy: 50 95% 55%;
+    --reaction-target: 0 85% 60%;
+    --reaction-rocket: 265 90% 70%;
+
     --radius: 0.75rem;
 
     /* Blue tokens */
