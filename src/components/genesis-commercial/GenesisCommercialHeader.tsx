@@ -50,7 +50,7 @@ const GenesisCommercialHeader = () => {
               <Bot className="w-4 h-4 text-primary" />
             </div>
             <span className="text-sm font-bold text-foreground hidden sm:block">
-              Genesis
+              Genesis Hub
             </span>
           </Link>
 

@@ -189,7 +189,7 @@ const GenesisWhyChoose = () => {
           </motion.div>
 
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-foreground tracking-tight">
-            Por que escolher a <span className="text-primary">Genesis</span>?
+            Por que escolher o <span className="text-primary">Genesis Hub</span>?
           </h2>
 
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">

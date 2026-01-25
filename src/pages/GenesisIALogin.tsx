@@ -50,7 +50,7 @@ const GenesisIALogin = () => {
         return;
       }
 
-      toast.success("Bem-vindo ao Genesis IA!");
+      toast.success("Bem-vindo ao Genesis Hub!");
       navigate("/genesis-ia/dashboard");
     } catch (error) {
       toast.error("Erro ao fazer login");
@@ -136,9 +136,9 @@ const GenesisIALogin = () => {
               </div>
               <div>
                 <h1 className="text-4xl font-bold text-white tracking-tight">
-                  Genesis<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400"> IA</span>
+                  Genesis<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400"> Hub</span>
                 </h1>
-                <p className="text-blue-300/60 text-sm font-medium">Inteligência Artificial Premium</p>
+                <p className="text-blue-300/60 text-sm font-medium">Plataforma de Negócios Inteligente</p>
               </div>
             </div>
           </motion.div>
@@ -250,7 +250,7 @@ const GenesisIALogin = () => {
               <Brain className="w-7 h-7 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-white">
-              Genesis<span className="text-blue-400"> IA</span>
+              Genesis<span className="text-blue-400"> Hub</span>
             </h1>
           </div>
 
@@ -352,17 +352,22 @@ const GenesisIALogin = () => {
             <div className="flex-1 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
           </div>
 
-          {/* Social Login Hint */}
+          {/* Support Link */}
           <div className="text-center">
-            <p className="text-blue-300/50 text-sm">
-              Acesso exclusivo para membros Genesis IA
-            </p>
+            <a 
+              href="https://wa.me/5527920005215" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-300/50 text-sm hover:text-blue-300 transition-colors"
+            >
+              Dúvidas de acesso? Contacte nosso suporte
+            </a>
           </div>
 
           {/* Footer */}
           <div className="mt-12 text-center">
             <p className="text-blue-300/30 text-xs">
-              © 2025 Genesis IA. Todos os direitos reservados.
+              © {new Date().getFullYear()} Genesis Hub. Todos os direitos reservados.
             </p>
           </div>
         </motion.div>
