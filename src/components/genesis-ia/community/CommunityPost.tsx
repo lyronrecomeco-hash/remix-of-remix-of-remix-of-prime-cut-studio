@@ -1,6 +1,6 @@
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MessageCircle, MoreHorizontal, Trash2, Share2 } from 'lucide-react';
+import { MessageCircle, MoreHorizontal, Trash2, Share2, Brain } from 'lucide-react';
 import { GenesisVerifiedBadge } from './GenesisVerifiedBadge';
 import { CommunityReactions } from './CommunityReactions';
 import {
@@ -51,12 +51,12 @@ export const CommunityPost = ({
   });
 
   return (
-    <article className="px-4 py-4 hover:bg-blue-500/[0.02] transition-colors">
+    <article className="glass-card p-4 hover:bg-card/60 transition-colors">
       <div className="flex gap-3">
-        {/* Avatar - Genesis style */}
+        {/* Avatar */}
         <div className="flex-shrink-0">
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold text-base shadow-lg shadow-blue-500/30">
-            G
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20">
+            <Brain className="w-6 h-6 text-primary-foreground" />
           </div>
         </div>
 
@@ -65,26 +65,26 @@ export const CommunityPost = ({
           {/* Header */}
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-white text-[15px]">
+              <span className="font-semibold text-foreground text-[15px]">
                 {authorName}
               </span>
               {isVerified && <GenesisVerifiedBadge size="sm" />}
-              <span className="text-blue-400/40 text-sm">·</span>
-              <span className="text-blue-400/60 text-sm">{timeAgo}</span>
+              <span className="text-muted-foreground/40 text-sm">·</span>
+              <span className="text-muted-foreground text-sm">{timeAgo}</span>
             </div>
 
             {/* Delete action */}
             {canDelete && onDelete && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-white/30 hover:text-white/60">
+                  <button className="p-1.5 rounded-lg hover:bg-muted/30 transition-colors text-muted-foreground/50 hover:text-muted-foreground">
                     <MoreHorizontal className="w-4 h-4" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-[hsl(220,30%,12%)] border-blue-500/20">
+                <DropdownMenuContent align="end" className="bg-card border-border">
                   <DropdownMenuItem 
                     onClick={() => onDelete(id)}
-                    className="text-red-400 focus:text-red-400 focus:bg-red-500/10 cursor-pointer"
+                    className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
                     Excluir
@@ -96,14 +96,14 @@ export const CommunityPost = ({
 
           {/* Text content */}
           <div className="mb-3">
-            <p className="text-white/90 text-[15px] whitespace-pre-wrap leading-relaxed">
+            <p className="text-foreground/90 text-[15px] whitespace-pre-wrap leading-relaxed">
               {content}
             </p>
           </div>
 
           {/* Image */}
           {imageUrl && (
-            <div className="mb-3 rounded-xl overflow-hidden border border-blue-500/20">
+            <div className="mb-3 rounded-xl overflow-hidden border border-border/50">
               <img 
                 src={imageUrl} 
                 alt="Post" 
@@ -128,9 +128,9 @@ export const CommunityPost = ({
                 e.stopPropagation();
                 onOpenComments(id);
               }}
-              className="group flex items-center gap-1.5 text-blue-400/60 hover:text-blue-400 transition-colors"
+              className="group flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors"
             >
-              <div className="p-2 rounded-lg group-hover:bg-blue-500/10 transition-colors">
+              <div className="p-2 rounded-lg group-hover:bg-primary/10 transition-colors">
                 <MessageCircle className="w-[18px] h-[18px]" />
               </div>
               {commentsCount > 0 && (
@@ -139,8 +139,8 @@ export const CommunityPost = ({
             </button>
 
             {/* Share */}
-            <button className="group flex items-center text-blue-400/60 hover:text-cyan-400 transition-colors">
-              <div className="p-2 rounded-lg group-hover:bg-cyan-500/10 transition-colors">
+            <button className="group flex items-center text-muted-foreground hover:text-accent transition-colors">
+              <div className="p-2 rounded-lg group-hover:bg-accent/10 transition-colors">
                 <Share2 className="w-[18px] h-[18px]" />
               </div>
             </button>

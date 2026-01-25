@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Bell, RefreshCw, Sparkles } from 'lucide-react';
+import { Bell, RefreshCw, Sparkles, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useGenesisAuth } from '@/contexts/GenesisAuthContext';
@@ -29,7 +29,7 @@ interface CommunityTabProps {
 
 const GENESIS_HUB_EMAIL = 'lyronrp@gmail.com';
 
-export const CommunityTab = ({ onBack }: CommunityTabProps) => {
+export const CommunityTab = ({ onBack: _onBack }: CommunityTabProps) => {
   const { genesisUser } = useGenesisAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [reactions, setReactions] = useState<Record<string, Reaction[]>>({});
@@ -189,27 +189,21 @@ export const CommunityTab = ({ onBack }: CommunityTabProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[hsl(220,30%,8%)] to-[hsl(220,25%,5%)]">
-      {/* Header - Genesis style with glassmorphism */}
-      <div className="sticky top-0 z-30 bg-[hsl(220,30%,10%)]/80 backdrop-blur-xl border-b border-blue-500/20">
-        <div className="flex items-center justify-between px-4 h-14">
+    <div className="w-full max-w-4xl mx-auto space-y-4 pb-8">
+      {/* Section Header */}
+      <motion.div 
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="glass-card p-4"
+      >
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onBack}
-              className="text-white/80 hover:text-white hover:bg-white/10 h-9 w-9 rounded-xl"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/30">
-                <Bell className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-white">Comunidade</h1>
-                <p className="text-[11px] text-blue-400/80 -mt-0.5">Avisos & Atualizações</p>
-              </div>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20">
+              <Bell className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-foreground">Comunidade</h2>
+              <p className="text-xs text-muted-foreground">Avisos & Atualizações</p>
             </div>
           </div>
 
@@ -218,12 +212,12 @@ export const CommunityTab = ({ onBack }: CommunityTabProps) => {
             size="icon"
             onClick={loadPosts}
             disabled={loading}
-            className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 h-9 w-9 rounded-xl"
+            className="text-primary hover:text-primary hover:bg-primary/10 h-9 w-9 rounded-xl"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Create post form - Only for Genesis Hub */}
       {isGenesisHub && (
@@ -231,56 +225,54 @@ export const CommunityTab = ({ onBack }: CommunityTabProps) => {
       )}
 
       {/* Posts feed */}
-      <div className="pb-20">
+      <div className="space-y-3">
         {loading ? (
-          <div className="flex justify-center py-16">
+          <div className="glass-card p-8">
             <div className="flex flex-col items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                <RefreshCw className="w-5 h-5 text-blue-400 animate-spin" />
+              <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+                <RefreshCw className="w-5 h-5 text-primary animate-spin" />
               </div>
-              <span className="text-sm text-white/40">Carregando...</span>
+              <span className="text-sm text-muted-foreground">Carregando...</span>
             </div>
           </div>
         ) : posts.length === 0 ? (
-          <div className="text-center py-20 px-4">
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center mx-auto mb-4 border border-blue-500/30 shadow-lg shadow-blue-500/10"
-            >
-              <Sparkles className="w-10 h-10 text-blue-400" />
-            </motion.div>
-            <h3 className="text-xl font-bold text-white mb-2">Bem-vindo à Comunidade!</h3>
-            <p className="text-blue-300/60 max-w-sm mx-auto text-sm">
+          <motion.div 
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="glass-card p-8 text-center"
+          >
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mx-auto mb-4 border border-primary/30 shadow-lg shadow-primary/10">
+              <Sparkles className="w-8 h-8 text-primary" />
+            </div>
+            <h3 className="text-lg font-bold text-foreground mb-2">Bem-vindo à Comunidade!</h3>
+            <p className="text-muted-foreground max-w-sm mx-auto text-sm">
               Fique por dentro das novidades, dicas e atualizações exclusivas da Genesis.
             </p>
-          </div>
+          </motion.div>
         ) : (
-          <div className="divide-y divide-blue-500/10">
-            {posts.map((post, index) => (
-              <motion.div
-                key={post.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <CommunityPost
-                  id={post.id}
-                  authorName={post.author_name}
-                  isVerified={true}
-                  content={post.content}
-                  imageUrl={post.image_url}
-                  createdAt={post.created_at}
-                  reactions={reactions[post.id] || []}
-                  commentsCount={commentsCounts[post.id] || 0}
-                  onReact={handleReact}
-                  onDelete={handleDeletePost}
-                  onOpenComments={handleOpenComments}
-                  canDelete={isGenesisHub}
-                />
-              </motion.div>
-            ))}
-          </div>
+          posts.map((post, index) => (
+            <motion.div
+              key={post.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+            >
+              <CommunityPost
+                id={post.id}
+                authorName={post.author_name}
+                isVerified={true}
+                content={post.content}
+                imageUrl={post.image_url}
+                createdAt={post.created_at}
+                reactions={reactions[post.id] || []}
+                commentsCount={commentsCounts[post.id] || 0}
+                onReact={handleReact}
+                onDelete={handleDeletePost}
+                onOpenComments={handleOpenComments}
+                canDelete={isGenesisHub}
+              />
+            </motion.div>
+          ))
         )}
       </div>
     </div>

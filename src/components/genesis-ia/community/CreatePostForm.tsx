@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Image, X, Loader2, Send } from 'lucide-react';
+import { Image, X, Loader2, Send, Brain } from 'lucide-react';
 import { GenesisVerifiedBadge } from './GenesisVerifiedBadge';
 
 interface CreatePostFormProps {
@@ -28,138 +28,140 @@ export const CreatePostForm = ({ onSubmit, isLoading }: CreatePostFormProps) => 
   const isOverLimit = characterCount > maxCharacters;
 
   return (
-    <div className="border-b border-blue-500/20 bg-[hsl(220,30%,10%)]/50">
-      <div className="px-4 py-4">
-        <div className="flex gap-3">
-          {/* Avatar */}
-          <div className="flex-shrink-0">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold text-base shadow-lg shadow-blue-500/30">
-              G
-            </div>
-          </div>
-
-          {/* Input area */}
-          <div className="flex-1 min-w-0">
-            {/* Author indicator */}
-            {isFocused && (
-              <motion.div 
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-1.5 mb-2"
-              >
-                <span className="text-sm font-semibold text-white">Genesis Hub</span>
-                <GenesisVerifiedBadge size="sm" />
-              </motion.div>
-            )}
-
-            {/* Textarea */}
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              onFocus={() => setIsFocused(true)}
-              placeholder="Compartilhar uma novidade..."
-              className="w-full bg-transparent text-white text-lg placeholder:text-blue-400/40 resize-none border-0 focus:ring-0 focus:outline-none"
-              style={{ 
-                lineHeight: '1.4',
-                minHeight: isFocused ? '100px' : '52px'
-              }}
-            />
-
-            {/* Image URL input */}
-            {showImageInput && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="mt-3"
-              >
-                <div className="relative">
-                  <input
-                    type="url"
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                    placeholder="Cole a URL da imagem"
-                    className="w-full px-3 py-2 bg-blue-500/10 border border-blue-500/30 rounded-xl text-white text-sm placeholder:text-blue-400/40 focus:outline-none focus:border-blue-500"
-                  />
-                  <button
-                    onClick={() => {
-                      setImageUrl('');
-                      setShowImageInput(false);
-                    }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-full"
-                  >
-                    <X className="w-4 h-4 text-white/50" />
-                  </button>
-                </div>
-                
-                {imageUrl && (
-                  <div className="mt-2 relative inline-block">
-                    <img 
-                      src={imageUrl} 
-                      alt="Preview" 
-                      className="max-h-40 rounded-xl object-cover border border-blue-500/20"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                  </div>
-                )}
-              </motion.div>
-            )}
-
-            {/* Actions bar */}
-            {(isFocused || content) && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="mt-3 flex items-center justify-between border-t border-blue-500/20 pt-3"
-              >
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => setShowImageInput(!showImageInput)}
-                    className={`p-2 rounded-lg transition-colors ${
-                      showImageInput 
-                        ? 'bg-blue-500/20 text-blue-400' 
-                        : 'hover:bg-blue-500/10 text-blue-400/60 hover:text-blue-400'
-                    }`}
-                  >
-                    <Image className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  {/* Character count */}
-                  {content.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      <span className={`text-sm ${isOverLimit ? 'text-red-400' : 'text-blue-400/40'}`}>
-                        {characterCount}/{maxCharacters}
-                      </span>
-                      <div className="w-px h-5 bg-blue-500/20" />
-                    </div>
-                  )}
-
-                  {/* Post button */}
-                  <button
-                    onClick={handleSubmit}
-                    disabled={!content.trim() || isLoading || isOverLimit}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm transition-all shadow-lg shadow-blue-500/30 flex items-center gap-2"
-                  >
-                    {isLoading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4" />
-                        Publicar
-                      </>
-                    )}
-                  </button>
-                </div>
-              </motion.div>
-            )}
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="glass-card p-4"
+    >
+      <div className="flex gap-3">
+        {/* Avatar */}
+        <div className="flex-shrink-0">
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20">
+            <Brain className="w-6 h-6 text-primary-foreground" />
           </div>
         </div>
+
+        {/* Input area */}
+        <div className="flex-1 min-w-0">
+          {/* Author indicator */}
+          {isFocused && (
+            <motion.div 
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-1.5 mb-2"
+            >
+              <span className="text-sm font-semibold text-foreground">Genesis Hub</span>
+              <GenesisVerifiedBadge size="sm" />
+            </motion.div>
+          )}
+
+          {/* Textarea */}
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            onFocus={() => setIsFocused(true)}
+            placeholder="Compartilhar uma novidade..."
+            className="w-full bg-transparent text-foreground text-base placeholder:text-muted-foreground resize-none border-0 focus:ring-0 focus:outline-none"
+            style={{ 
+              lineHeight: '1.4',
+              minHeight: isFocused ? '100px' : '52px'
+            }}
+          />
+
+          {/* Image URL input */}
+          {showImageInput && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="mt-3"
+            >
+              <div className="relative">
+                <input
+                  type="url"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="Cole a URL da imagem"
+                  className="w-full px-3 py-2 bg-muted/30 border border-border/50 rounded-xl text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
+                />
+                <button
+                  onClick={() => {
+                    setImageUrl('');
+                    setShowImageInput(false);
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-muted/50 rounded-full"
+                >
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </div>
+              
+              {imageUrl && (
+                <div className="mt-2 relative inline-block">
+                  <img 
+                    src={imageUrl} 
+                    alt="Preview" 
+                    className="max-h-40 rounded-xl object-cover border border-border/50"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {/* Actions bar */}
+          {(isFocused || content) && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="mt-3 flex items-center justify-between border-t border-border/30 pt-3"
+            >
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setShowImageInput(!showImageInput)}
+                  className={`p-2 rounded-lg transition-colors ${
+                    showImageInput 
+                      ? 'bg-primary/20 text-primary' 
+                      : 'hover:bg-muted/50 text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Image className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3">
+                {/* Character count */}
+                {content.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className={`text-sm ${isOverLimit ? 'text-destructive' : 'text-muted-foreground'}`}>
+                      {characterCount}/{maxCharacters}
+                    </span>
+                    <div className="w-px h-5 bg-border/30" />
+                  </div>
+                )}
+
+                {/* Post button */}
+                <button
+                  onClick={handleSubmit}
+                  disabled={!content.trim() || isLoading || isOverLimit}
+                  className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground font-semibold text-sm transition-all shadow-lg shadow-primary/30 flex items-center gap-2"
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      Publicar
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
