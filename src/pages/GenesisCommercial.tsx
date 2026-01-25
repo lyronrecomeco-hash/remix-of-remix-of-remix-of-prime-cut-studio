@@ -1,5 +1,6 @@
 import GenesisCommercialHeader from '@/components/genesis-commercial/GenesisCommercialHeader';
 import GenesisCommercialHero from '@/components/genesis-commercial/GenesisCommercialHero';
+import GenesisCommercialResources from '@/components/genesis-commercial/GenesisCommercialResources';
 import GenesisCommercialRadar from '@/components/genesis-commercial/GenesisCommercialRadar';
 import GenesisCommercialFeatures from '@/components/genesis-commercial/GenesisCommercialFeatures';
 import GenesisWhyChoose from '@/components/genesis-commercial/GenesisWhyChoose';
@@ -19,6 +20,7 @@ const GenesisCommercial = () => {
       <div className="relative z-10">
         <GenesisCommercialHeader />
         <GenesisCommercialHero />
+        <GenesisCommercialResources />
         <GenesisCommercialRadar />
         <GenesisCommercialFeatures />
         <GenesisWhyChoose />
