@@ -51,6 +51,13 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        reaction: {
+          fire: "hsl(var(--reaction-fire))",
+          diamond: "hsl(var(--reaction-diamond))",
+          energy: "hsl(var(--reaction-energy))",
+          target: "hsl(var(--reaction-target))",
+          rocket: "hsl(var(--reaction-rocket))",
+        },
         gold: {
           DEFAULT: "hsl(var(--gold))",
           foreground: "hsl(var(--gold-foreground))",
