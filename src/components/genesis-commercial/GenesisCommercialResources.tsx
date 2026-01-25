@@ -1,57 +1,105 @@
-import { useRef, useState } from 'react';
-import { motion, useInView } from 'framer-motion';
+import { useRef, useState, useEffect } from 'react';
+import { motion, useInView, AnimatePresence } from 'framer-motion';
 import { 
   Radar, 
   FileText, 
   GraduationCap, 
   Sparkles,
-  ArrowRight,
-  Zap
+  Globe,
+  Zap,
+  TrendingUp
 } from 'lucide-react';
 
 const resources = [
   {
     id: 'radar',
     icon: Radar,
-    title: 'Radar de Prospecção',
-    highlight: 'IA encontra clientes por você',
-    description: 'Enquanto você dorme, nossa IA varre o Brasil inteiro buscando empresas prontas para comprar.',
+    title: 'Radar Global',
+    highlight: 'Prospecção em +15 países',
+    description: 'Nossa IA varre o mercado internacional 24/7. Brasil, Portugal, EUA, Espanha e mais.',
+    stats: [
+      { label: 'Países', value: '15+' },
+      { label: 'Leads/dia', value: '500+' },
+      { label: 'Precisão', value: '97%' },
+    ],
   },
   {
     id: 'proposals',
     icon: FileText,
-    title: 'Propostas Inteligentes',
-    highlight: 'Feche em minutos, não dias',
-    description: 'Gere propostas personalizadas que convertem. A IA entende o cliente e cria argumentos únicos.',
+    title: 'Propostas com IA',
+    highlight: 'Conversão 3x maior',
+    description: 'Propostas personalizadas que entendem seu cliente. Argumentos únicos, fechamento rápido.',
+    stats: [
+      { label: 'Tempo', value: '30s' },
+      { label: 'Conversão', value: '+312%' },
+      { label: 'Templates', value: '50+' },
+    ],
   },
   {
     id: 'academy',
     icon: GraduationCap,
-    title: 'Academia de Vendas',
-    highlight: 'Domine a arte de fechar',
-    description: 'Simuladores de objeções, scripts de ligação e técnicas avançadas de negociação.',
+    title: 'Academia Genesis',
+    highlight: 'Domine vendas',
+    description: 'Simuladores de objeções, scripts prontos e técnicas avançadas de negociação.',
+    stats: [
+      { label: 'Módulos', value: '25+' },
+      { label: 'Exercícios', value: '100+' },
+      { label: 'Alunos', value: '2.8k' },
+    ],
   },
 ];
 
 const GenesisCommercialResources = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isHovering, setIsHovering] = useState(false);
+
+  // Auto-cycle through resources
+  useEffect(() => {
+    if (isHovering) return;
+    
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % resources.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [isHovering]);
 
   return (
     <section id="recursos" ref={ref} className="py-20 md:py-28 relative overflow-hidden bg-background">
-      {/* Background */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.08),transparent_70%)]" />
+      {/* Animated Background */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.06),transparent_70%)]" />
+        
+        {/* Floating orbs */}
+        <motion.div
+          animate={{
+            x: [0, 100, 0],
+            y: [0, -50, 0],
+            scale: [1, 1.2, 1],
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-primary/5 blur-3xl"
+        />
+        <motion.div
+          animate={{
+            x: [0, -80, 0],
+            y: [0, 60, 0],
+            scale: [1, 0.8, 1],
+          }}
+          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+          className="absolute bottom-1/4 right-1/4 w-48 h-48 rounded-full bg-cyan-500/5 blur-3xl"
+        />
       </div>
 
-      <div className="container px-4 relative z-10 max-w-5xl mx-auto">
+      <div className="container px-4 relative z-10 max-w-6xl mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="text-center mb-14"
+          className="text-center mb-16"
         >
           <motion.div 
             initial={{ scale: 0.9, opacity: 0 }}
@@ -59,88 +107,144 @@ const GenesisCommercialResources = () => {
             transition={{ delay: 0.1 }}
             className="inline-flex items-center gap-2 px-4 py-2 mb-5 text-sm font-semibold rounded-full bg-primary/10 border border-primary/20 text-primary"
           >
-            <Zap className="w-4 h-4" />
-            Ferramentas que Vendem
+            <Globe className="w-4 h-4" />
+            Alcance Global
           </motion.div>
           
           <h2 className="text-3xl md:text-5xl font-black mb-4 text-foreground">
-            Seu arsenal completo de{' '}
+            Ferramentas que{' '}
             <span className="bg-gradient-to-r from-primary via-cyan-400 to-primary bg-clip-text text-transparent">
-              vendas
+              vendem sozinhas
             </span>
           </h2>
           
           <p className="text-muted-foreground max-w-xl mx-auto text-lg">
-            Tudo integrado. Tudo automatizado. Tudo para você <span className="text-primary font-semibold">vender mais</span>.
+            Enquanto você descansa, a Genesis trabalha.
           </p>
         </motion.div>
 
-        {/* Resources - Horizontal Cards */}
-        <div className="space-y-4">
+        {/* Interactive Cards Grid */}
+        <div 
+          className="grid md:grid-cols-3 gap-5"
+          onMouseEnter={() => setIsHovering(true)}
+          onMouseLeave={() => setIsHovering(false)}
+        >
           {resources.map((resource, index) => {
             const Icon = resource.icon;
-            const isHovered = hoveredId === resource.id;
+            const isActive = activeIndex === index;
 
             return (
               <motion.div
                 key={resource.id}
-                initial={{ opacity: 0, x: index % 2 === 0 ? -40 : 40 }}
-                animate={isInView ? { opacity: 1, x: 0 } : {}}
-                transition={{ duration: 0.5, delay: 0.15 + index * 0.1 }}
-                onMouseEnter={() => setHoveredId(resource.id)}
-                onMouseLeave={() => setHoveredId(null)}
-                className="group relative"
+                initial={{ opacity: 0, y: 40 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.5, delay: 0.1 + index * 0.1 }}
+                onClick={() => setActiveIndex(index)}
+                className="relative cursor-pointer group"
               >
-                <div className={`
-                  relative flex items-center gap-6 rounded-2xl border p-5 md:p-6
-                  bg-card/50 backdrop-blur-sm cursor-pointer
-                  transition-all duration-300
-                  ${isHovered ? 'border-primary/40 bg-primary/5 scale-[1.01]' : 'border-border/50 hover:border-border'}
-                `}>
-                  {/* Icon */}
-                  <div className={`
-                    flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center
-                    transition-all duration-300
-                    ${isHovered ? 'bg-primary/20 scale-110' : 'bg-primary/10'}
-                  `}>
-                    <Icon className={`w-7 h-7 transition-colors duration-300 ${isHovered ? 'text-primary' : 'text-primary/70'}`} />
-                  </div>
+                <motion.div
+                  animate={{
+                    scale: isActive ? 1.02 : 1,
+                    y: isActive ? -4 : 0,
+                  }}
+                  transition={{ duration: 0.3 }}
+                  className={`
+                    relative h-full rounded-2xl border p-6 backdrop-blur-sm
+                    transition-all duration-500 overflow-hidden
+                    ${isActive 
+                      ? 'bg-primary/10 border-primary/40 shadow-lg shadow-primary/10' 
+                      : 'bg-card/50 border-border/40 hover:border-primary/20'
+                    }
+                  `}
+                >
+                  {/* Active glow */}
+                  <AnimatePresence>
+                    {isActive && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-cyan-500/10 pointer-events-none"
+                      />
+                    )}
+                  </AnimatePresence>
 
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-1">
-                      <h3 className="text-lg md:text-xl font-bold text-foreground">{resource.title}</h3>
-                      <span className={`
-                        hidden sm:inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold
-                        transition-all duration-300
-                        ${isHovered ? 'bg-primary text-primary-foreground' : 'bg-primary/15 text-primary'}
-                      `}>
-                        {resource.highlight}
-                      </span>
-                    </div>
-                    <p className="text-sm md:text-base text-muted-foreground line-clamp-2">
-                      {resource.description}
-                    </p>
-                  </div>
-
-                  {/* Arrow */}
-                  <div className={`
-                    flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center
-                    transition-all duration-300
-                    ${isHovered ? 'bg-primary text-primary-foreground translate-x-1' : 'bg-muted/50 text-muted-foreground'}
-                  `}>
-                    <ArrowRight className="w-5 h-5" />
-                  </div>
-
-                  {/* Glow effect */}
-                  {isHovered && (
+                  {/* Scanning line animation for active */}
+                  {isActive && (
                     <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="absolute inset-0 rounded-2xl bg-gradient-to-r from-primary/5 via-cyan-500/5 to-primary/5 pointer-events-none"
+                      initial={{ top: 0, opacity: 0 }}
+                      animate={{ top: '100%', opacity: [0, 1, 1, 0] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                      className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary to-transparent pointer-events-none"
                     />
                   )}
-                </div>
+
+                  <div className="relative z-10">
+                    {/* Icon with pulse */}
+                    <div className="relative mb-4">
+                      <motion.div
+                        animate={isActive ? {
+                          boxShadow: ['0 0 0 0 hsl(var(--primary)/0.4)', '0 0 0 12px hsl(var(--primary)/0)', '0 0 0 0 hsl(var(--primary)/0)'],
+                        } : {}}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                        className={`
+                          w-14 h-14 rounded-xl flex items-center justify-center
+                          transition-all duration-300
+                          ${isActive ? 'bg-primary/20' : 'bg-primary/10'}
+                        `}
+                      >
+                        <Icon className={`w-7 h-7 transition-colors duration-300 ${isActive ? 'text-primary' : 'text-primary/60'}`} />
+                      </motion.div>
+                    </div>
+
+                    {/* Title & Highlight */}
+                    <h3 className="text-xl font-bold text-foreground mb-1">{resource.title}</h3>
+                    <p className={`text-sm font-medium mb-3 transition-colors duration-300 ${isActive ? 'text-primary' : 'text-primary/60'}`}>
+                      {resource.highlight}
+                    </p>
+
+                    {/* Description */}
+                    <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
+                      {resource.description}
+                    </p>
+
+                    {/* Stats - Only show when active */}
+                    <AnimatePresence>
+                      {isActive && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="flex justify-between pt-4 border-t border-primary/20"
+                        >
+                          {resource.stats.map((stat, i) => (
+                            <motion.div
+                              key={stat.label}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: i * 0.1 }}
+                              className="text-center"
+                            >
+                              <div className="text-lg font-bold text-primary">{stat.value}</div>
+                              <div className="text-xs text-muted-foreground">{stat.label}</div>
+                            </motion.div>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Progress indicator */}
+                  {isActive && (
+                    <motion.div
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: 1 }}
+                      transition={{ duration: 3, ease: "linear" }}
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary via-cyan-400 to-primary origin-left"
+                    />
+                  )}
+                </motion.div>
               </motion.div>
             );
           })}
@@ -150,19 +254,39 @@ const GenesisCommercialResources = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.7 }}
-          className="mt-10 text-center"
+          transition={{ delay: 0.6 }}
+          className="mt-14 text-center"
         >
-          <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-primary/10 via-cyan-500/10 to-primary/10 border border-primary/20">
-            <Sparkles className="w-5 h-5 text-primary animate-pulse" />
-            <span className="text-lg font-bold bg-gradient-to-r from-primary via-cyan-400 to-primary bg-clip-text text-transparent">
-              E muito mais...
-            </span>
-            <Sparkles className="w-5 h-5 text-cyan-400 animate-pulse" />
-          </div>
-          <p className="mt-3 text-sm text-muted-foreground">
-            Biblioteca de apps, gestão de contratos, missões de vendas e recursos exclusivos para assinantes.
-          </p>
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.02, 1],
+            }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="inline-flex items-center gap-4 px-8 py-4 rounded-2xl bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border border-primary/20"
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+            >
+              <Sparkles className="w-6 h-6 text-primary" />
+            </motion.div>
+            
+            <div className="flex flex-col items-start">
+              <span className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary via-cyan-400 to-primary bg-clip-text text-transparent">
+                E muito mais...
+              </span>
+              <span className="text-xs text-muted-foreground">Descubra ao entrar</span>
+            </div>
+
+            <motion.div
+              animate={{ 
+                y: [0, -4, 0],
+              }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
+              <TrendingUp className="w-6 h-6 text-cyan-400" />
+            </motion.div>
+          </motion.div>
         </motion.div>
       </div>
     </section>
