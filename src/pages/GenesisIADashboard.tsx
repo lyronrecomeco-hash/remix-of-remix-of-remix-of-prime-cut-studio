@@ -113,7 +113,7 @@ const GenesisIADashboard = () => {
       .from('genesis_users')
       .select('id, name')
       .eq('auth_user_id', user.id)
-      .single();
+      .maybeSingle();
 
     // Usar primeiro nome do genesis_users, ou do metadata, ou do email
     const fullName = genesisUser?.name || 
@@ -133,11 +133,35 @@ const GenesisIADashboard = () => {
       setIsAdmin(roleData?.role === 'super_admin');
     }
 
-    const { data: affiliate } = await supabase
+    let { data: affiliate } = await supabase
       .from('affiliates')
       .select('id')
       .eq('user_id', user.id)
       .maybeSingle();
+
+    // Se não existe afiliado, criar automaticamente para o usuário
+    if (!affiliate) {
+      const affiliateCode = `GEN${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      const userNameForAffiliate = genesisUser?.name || user.email?.split("@")[0] || "Usuário";
+      
+      const { data: newAffiliate, error: createError } = await supabase
+        .from('affiliates')
+        .insert([{
+          user_id: user.id,
+          name: userNameForAffiliate,
+          email: user.email || '',
+          whatsapp: '',
+          affiliate_code: affiliateCode,
+          password_hash: 'auto-created', // Placeholder - usuário usa auth do Supabase
+          status: 'active'
+        }])
+        .select('id')
+        .single();
+      
+      if (!createError && newAffiliate) {
+        affiliate = newAffiliate;
+      }
+    }
 
     setAffiliateId(affiliate?.id ?? null);
 
