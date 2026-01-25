@@ -1,35 +1,39 @@
 import { useState, useRef } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
-import { ChevronDown, HelpCircle } from 'lucide-react';
+import { ChevronDown, HelpCircle, MessageCircle } from 'lucide-react';
 
 const faqs = [
   {
-    question: 'O que é a Genesis-IA?',
-    answer: 'A Genesis-IA é um hub completo de negócios que permite criar sites personalizados, gerar propostas com IA, gerenciar contratos e acompanhar suas finanças — tudo em uma única plataforma intuitiva.',
+    question: 'O que é o Genesis Hub?',
+    answer: 'O Genesis Hub é uma plataforma completa para consultores e agências digitais. Com ele você encontra clientes automaticamente via IA, gera propostas comerciais personalizadas, cria sites profissionais e gerencia todos os seus contratos — tudo em um único lugar.',
   },
   {
-    question: 'Para quem é a Genesis-IA?',
-    answer: 'Para freelancers, agências, consultores e empreendedores que desejam profissionalizar seus serviços, criar projetos rapidamente e escalar suas operações sem complicação técnica.',
+    question: 'Preciso ter conhecimento técnico?',
+    answer: 'Absolutamente não! O Genesis Hub foi projetado para ser extremamente intuitivo. Tudo funciona com poucos cliques. Se você sabe usar WhatsApp, sabe usar o Genesis. E ainda oferecemos suporte dedicado para qualquer dúvida.',
   },
   {
-    question: 'Preciso saber programar?',
-    answer: 'Não! A Genesis-IA foi desenvolvida para ser simples e intuitiva. Você cria sites, propostas e contratos apenas clicando e personalizando templates prontos. Se precisar de ajuda, nosso suporte está incluído.',
+    question: 'Como funciona o Radar de Prospecção?',
+    answer: 'O Radar varre milhares de empresas em todo o Brasil, analisa a presença digital de cada uma e entrega leads qualificados diretamente no seu painel. Você escolhe o nicho e a região, e a IA faz o trabalho de pesquisa por você.',
   },
   {
-    question: 'Como funciona o Criador de Projetos?',
-    answer: 'Você escolhe um nicho (petshop, barbearia, academia, etc.), seleciona um template profissional e personaliza com os dados do seu cliente. O projeto fica pronto em minutos, com hospedagem inclusa.',
+    question: 'Posso testar antes de assinar?',
+    answer: 'Sim! Oferecemos garantia incondicional de 7 dias. Você pode explorar todas as funcionalidades e, se não gostar, devolvemos 100% do seu investimento — sem perguntas, sem burocracia.',
   },
   {
-    question: 'Posso gerar propostas comerciais?',
-    answer: 'Sim! Nosso gerador de propostas usa IA para criar documentos profissionais personalizados para cada prospect. Basta preencher algumas informações e a IA faz o resto.',
+    question: 'Quantos projetos/clientes posso ter?',
+    answer: 'Não há limite! Você pode criar quantos projetos quiser, atender quantos clientes precisar e usar todas as ferramentas sem restrições. O Genesis Hub cresce junto com você.',
   },
   {
-    question: 'Como funciona a garantia de 7 dias?',
-    answer: 'Oferecemos garantia incondicional de 7 dias. Se não ficar satisfeito por qualquer motivo, basta solicitar o reembolso e devolvemos 100% do seu investimento, sem perguntas.',
+    question: 'O suporte está incluído?',
+    answer: 'Sim! Todos os planos incluem suporte via WhatsApp com resposta em até 24 horas. Além disso, você tem acesso à Academia Genesis com treinamentos completos de vendas e uso da plataforma.',
   },
   {
     question: 'Posso cancelar a qualquer momento?',
-    answer: 'Sim! Não temos fidelidade ou multa. Você pode cancelar sua assinatura quando quiser diretamente pelo painel. Seu acesso permanece ativo até o final do período já pago.',
+    answer: 'Sim, sem multas ou fidelidade. Você pode cancelar sua assinatura quando quiser diretamente pelo painel. Seu acesso permanece ativo até o final do período já pago.',
+  },
+  {
+    question: 'O Genesis Hub substitui outras ferramentas?',
+    answer: 'Para muitos usuários, sim! O Genesis Hub concentra prospecção, propostas, criação de sites, contratos e treinamento em uma única plataforma. Isso significa menos assinaturas, menos abas abertas e mais produtividade.',
   },
 ];
 
@@ -40,12 +44,14 @@ const FAQItem = ({ question, answer, isOpen, onClick }: {
   onClick: () => void;
 }) => {
   return (
-    <div className="border-b border-border last:border-0">
+    <div className="border-b border-border/60 last:border-0">
       <button
         onClick={onClick}
         className="flex items-center justify-between w-full py-5 text-left hover:text-primary transition-colors group"
       >
-        <span className="font-medium text-foreground pr-4 group-hover:text-primary transition-colors">{question}</span>
+        <span className="font-medium text-foreground pr-4 group-hover:text-primary transition-colors text-sm md:text-base">
+          {question}
+        </span>
         <ChevronDown className={`w-5 h-5 shrink-0 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180 text-primary' : ''}`} />
       </button>
       <AnimatePresence>
@@ -57,7 +63,7 @@ const FAQItem = ({ question, answer, isOpen, onClick }: {
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <p className="pb-5 text-muted-foreground leading-relaxed">{answer}</p>
+            <p className="pb-5 text-muted-foreground leading-relaxed text-sm md:text-base">{answer}</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -66,7 +72,7 @@ const FAQItem = ({ question, answer, isOpen, onClick }: {
 };
 
 const GenesisCommercialFAQ = () => {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
 
@@ -99,7 +105,7 @@ const GenesisCommercialFAQ = () => {
           </h2>
           
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Tire suas dúvidas sobre a Genesis-IA.
+            Tire suas dúvidas sobre o Genesis Hub e veja como podemos ajudar seu negócio a crescer.
           </p>
         </motion.div>
 
@@ -108,7 +114,7 @@ const GenesisCommercialFAQ = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="bg-card rounded-2xl border border-border p-6 md:p-8"
+          className="bg-card/60 backdrop-blur-sm rounded-2xl border border-border/60 p-6 md:p-8"
         >
           {faqs.map((faq, index) => (
             <FAQItem
@@ -128,17 +134,21 @@ const GenesisCommercialFAQ = () => {
           transition={{ delay: 0.6 }}
           className="mt-12 text-center"
         >
-          <p className="text-muted-foreground mb-4">
-            Ainda tem dúvidas? Fale com nosso time!
-          </p>
-          <a 
-            href="https://wa.me/5511999999999" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-semibold transition-colors"
-          >
-            Falar no WhatsApp →
-          </a>
+          <div className="inline-flex flex-col sm:flex-row items-center gap-4 p-6 rounded-2xl bg-card/40 border border-border/40">
+            <div className="text-center sm:text-left">
+              <p className="font-semibold text-foreground mb-1">Ainda tem dúvidas?</p>
+              <p className="text-sm text-muted-foreground">Nossa equipe responde em até 24h</p>
+            </div>
+            <a 
+              href="https://wa.me/5511999999999" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-sm transition-colors"
+            >
+              <MessageCircle className="w-4 h-4" />
+              Falar no WhatsApp
+            </a>
+          </div>
         </motion.div>
       </div>
     </section>
