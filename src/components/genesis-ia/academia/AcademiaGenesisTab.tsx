@@ -28,7 +28,7 @@ interface AcademiaGenesisTabProps {
 }
 
 // Tipo atualizado com introdução como primeira opção e novas abas incluindo TikTok
-type TabId = 'intro' | 'shortcuts' | 'scripts' | 'guides' | 'simulator' | 'phone' | 'tiktok' | 'mindset' | 'cases' | 'networking';
+type TabId = 'intro' | 'shortcuts' | 'scripts' | 'guides' | 'simulator' | 'phone' | 'tiktok' | 'mindset' | 'networking';
 
 const tabs = [
   { id: 'intro' as TabId, icon: Home, label: 'Introdução' },
@@ -39,7 +39,6 @@ const tabs = [
   { id: 'phone' as TabId, icon: Phone, label: 'Ligação' },
   { id: 'tiktok' as TabId, icon: Video, label: 'TikTok' },
   { id: 'mindset' as TabId, icon: Lightbulb, label: 'Mindset' },
-  { id: 'cases' as TabId, icon: Trophy, label: 'Cases' },
   { id: 'networking' as TabId, icon: Users, label: 'Networking' },
 ];
 
@@ -108,7 +107,6 @@ export const AcademiaGenesisTab = ({ onBack }: AcademiaGenesisTabProps) => {
           {activeTab === 'phone' && <PhoneScenarios />}
           {activeTab === 'tiktok' && <TikTokStrategies />}
           {activeTab === 'mindset' && <MindsetSection />}
-          {activeTab === 'cases' && <SuccessCasesSection />}
           {activeTab === 'networking' && <NetworkingSection />}
         </motion.div>
       </AnimatePresence>
@@ -195,70 +193,6 @@ const MindsetSection = () => {
   );
 };
 
-// Nova seção: Cases de Sucesso
-const SuccessCasesSection = () => {
-  const cases = [
-    {
-      name: 'Carlos - Consultor de RH',
-      result: 'R$ 47.000 em 30 dias',
-      description: 'Começou do zero usando apenas os scripts da Academia. Fechou 3 contratos recorrentes.',
-      testimonial: 'Os roteiros de ligação foram game-changer. Antes eu gaguejava, agora fecho com confiança.'
-    },
-    {
-      name: 'Ana - Agência de Marketing',
-      result: '12 clientes novos/mês',
-      description: 'Usou o simulador de objeções diariamente por 2 semanas. Sua taxa de fechamento dobrou.',
-      testimonial: 'Praticar objeções no simulador me preparou para qualquer coisa que o cliente fale.'
-    },
-    {
-      name: 'João - Freelancer Dev',
-      result: 'De R$ 3k para R$ 18k/mês',
-      description: 'Aplicou as técnicas de qualificação e aprendeu a filtrar clientes que pagam bem.',
-      testimonial: 'Entendi que o problema não era falta de cliente, era falta de posicionamento.'
-    },
-    {
-      name: 'Marina - Contadora',
-      result: '85% de conversão',
-      description: 'Usou os guias práticos para estruturar sua abordagem comercial completa.',
-      testimonial: 'Agora tenho um processo. Não vou mais para reuniões sem saber exatamente o que fazer.'
-    }
-  ];
-
-  return (
-    <div className="space-y-4">
-      <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-        <h3 className="text-lg font-bold text-white mb-2">🏆 Cases de Sucesso</h3>
-        <p className="text-white/60 text-sm">
-          Histórias reais de pessoas que aplicaram o conteúdo da Academia e transformaram seus resultados.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {cases.map((item, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: index * 0.1 }}
-            className="bg-gradient-to-br from-white/10 to-white/5 border border-white/10 rounded-xl p-5 hover:border-primary/30 transition-colors"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="font-semibold text-white">{item.name}</h4>
-              <span className="bg-primary/20 text-primary text-xs font-bold px-3 py-1 rounded-full">
-                {item.result}
-              </span>
-            </div>
-            <p className="text-white/70 text-sm mb-3">{item.description}</p>
-            <div className="bg-white/5 border-l-2 border-primary/50 pl-3 py-2">
-              <p className="text-white/60 text-xs italic">"{item.testimonial}"</p>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
 // Nova seção: Networking
 const NetworkingSection = () => {
   const tips = [
@@ -319,8 +253,8 @@ const NetworkingSection = () => {
               <div className="flex-1">
                 <h4 className="font-semibold text-white text-sm mb-1">{tip.title}</h4>
                 <p className="text-white/60 text-xs mb-2">{tip.content}</p>
-                <div className="flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/20 rounded-lg px-3 py-2">
-                  <span className="text-cyan-400 text-xs font-medium">🎯 Ação: {tip.action}</span>
+              <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-lg px-3 py-2">
+                  <span className="text-primary text-xs font-medium">🎯 Ação: {tip.action}</span>
                 </div>
               </div>
             </div>

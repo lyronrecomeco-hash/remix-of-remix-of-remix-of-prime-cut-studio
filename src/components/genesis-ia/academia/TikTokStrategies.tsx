@@ -4,7 +4,6 @@ import {
   Video, 
   Zap, 
   Eye, 
-  Clock, 
   MessageCircle, 
   TrendingUp,
   Copy,
@@ -12,10 +11,12 @@ import {
   Play,
   Target,
   Sparkles,
-  Volume2
+  Volume2,
+  PenTool
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { TikTokScriptGenerator } from './TikTokScriptGenerator';
 
 interface Strategy {
   id: string;
@@ -26,10 +27,11 @@ interface Strategy {
 }
 
 export const TikTokStrategies = () => {
-  const [activeCategory, setActiveCategory] = useState('hooks');
+  const [activeCategory, setActiveCategory] = useState('generator');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const categories = [
+    { id: 'generator', label: 'Gerar Roteiro', icon: PenTool },
     { id: 'hooks', label: 'Ganchos', icon: Zap },
     { id: 'retention', label: 'Retenção', icon: Eye },
     { id: 'styles', label: 'Estilos', icon: Video },
@@ -121,10 +123,10 @@ export const TikTokStrategies = () => {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="bg-gradient-to-br from-pink-500/20 to-primary/10 border border-pink-500/30 p-4" style={{ borderRadius: '14px' }}>
+      <div className="bg-white/5 border border-white/10 p-4" style={{ borderRadius: '14px' }}>
         <div className="flex items-start gap-3">
-          <div className="w-11 h-11 rounded-xl bg-pink-500/30 flex items-center justify-center flex-shrink-0">
-            <Video className="w-6 h-6 text-pink-400" />
+          <div className="w-11 h-11 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+            <Video className="w-6 h-6 text-primary" />
           </div>
           <div className="flex-1">
             <h3 className="text-base font-bold text-white mb-1">Estratégias TikTok para Vendas</h3>
@@ -135,16 +137,16 @@ export const TikTokStrategies = () => {
           </div>
         </div>
         
-        <div className="flex items-center gap-4 mt-3 pt-3 border-t border-pink-500/20">
-          <div className="flex items-center gap-1.5 text-xs text-pink-300">
+        <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/10">
+          <div className="flex items-center gap-1.5 text-xs text-primary">
             <Play className="w-3.5 h-3.5" />
             <span>30+ Estratégias</span>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-pink-300">
+          <div className="flex items-center gap-1.5 text-xs text-primary">
             <TrendingUp className="w-3.5 h-3.5" />
             <span>Viralização</span>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-pink-300">
+          <div className="flex items-center gap-1.5 text-xs text-primary">
             <Sparkles className="w-3.5 h-3.5" />
             <span>Conversão</span>
           </div>
@@ -174,66 +176,70 @@ export const TikTokStrategies = () => {
         })}
       </div>
 
-      {/* Strategies Grid */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeCategory}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-3"
-        >
-          {filteredStrategies.map((strategy, index) => {
-            const Icon = strategy.icon;
-            const isCopied = copiedId === strategy.id;
-            return (
-              <motion.div
-                key={strategy.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="bg-white/5 border border-white/10 p-4 hover:bg-white/10 hover:border-primary/30 transition-all group"
-                style={{ borderRadius: '12px' }}
-              >
-                <div className="flex items-start justify-between gap-3 mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                      <Icon className="w-4 h-4 text-primary" />
+      {/* Content */}
+      {activeCategory === 'generator' ? (
+        <TikTokScriptGenerator />
+      ) : (
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeCategory}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="grid grid-cols-1 md:grid-cols-2 gap-3"
+          >
+            {filteredStrategies.map((strategy, index) => {
+              const Icon = strategy.icon;
+              const isCopied = copiedId === strategy.id;
+              return (
+                <motion.div
+                  key={strategy.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="bg-white/5 border border-white/10 p-4 hover:bg-white/10 hover:border-primary/30 transition-all group"
+                  style={{ borderRadius: '12px' }}
+                >
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                        <Icon className="w-4 h-4 text-primary" />
+                      </div>
+                      <h4 className="text-sm font-semibold text-white">{strategy.title}</h4>
                     </div>
-                    <h4 className="text-sm font-semibold text-white">{strategy.title}</h4>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleCopy(strategy.id, strategy.content)}
+                      className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      {isCopied ? (
+                        <Check className="w-3.5 h-3.5 text-primary" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5 text-white/60" />
+                      )}
+                    </Button>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleCopy(strategy.id, strategy.content)}
-                    className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    {isCopied ? (
-                      <Check className="w-3.5 h-3.5 text-green-400" />
-                    ) : (
-                      <Copy className="w-3.5 h-3.5 text-white/60" />
-                    )}
-                  </Button>
-                </div>
-                <p className="text-xs text-white/60 leading-relaxed">{strategy.content}</p>
-              </motion.div>
-            );
-          })}
-        </motion.div>
-      </AnimatePresence>
+                  <p className="text-xs text-white/60 leading-relaxed">{strategy.content}</p>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </AnimatePresence>
+      )}
 
       {/* Pro Tip */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
-        className="bg-cyan-500/10 border border-cyan-500/20 p-3 flex items-start gap-3"
+        className="bg-primary/10 border border-primary/20 p-3 flex items-start gap-3"
         style={{ borderRadius: '12px' }}
       >
-        <Volume2 className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
+        <Volume2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
         <div>
-          <p className="text-xs font-semibold text-cyan-300 mb-1">Dica de Ouro</p>
-          <p className="text-[11px] text-cyan-400/70">
+          <p className="text-xs font-semibold text-primary mb-1">Dica de Ouro</p>
+          <p className="text-[11px] text-white/60">
             Poste consistentemente (1-3x por dia), use músicas trending, e responda TODOS os comentários 
             na primeira hora. O algoritmo recompensa engajamento rápido!
           </p>
