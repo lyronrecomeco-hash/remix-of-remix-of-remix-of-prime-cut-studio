@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import dashboardPreview from '@/assets/dashboard-preview.png';
+import DashboardPreviewMockup from './DashboardPreviewMockup';
 
 const GenesisCommercialHero = () => {
   const [typedText, setTypedText] = useState('');
@@ -124,7 +124,7 @@ const GenesisCommercialHero = () => {
           </motion.div>
         </motion.div>
 
-        {/* MacBook Mockup with Real Dashboard Screenshot */}
+        {/* MacBook Mockup with Cloned Dashboard */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
@@ -134,9 +134,8 @@ const GenesisCommercialHero = () => {
           {/* Glow behind screen */}
           <div className="absolute -inset-8 md:-inset-16 bg-gradient-to-r from-primary/20 via-cyan-500/10 to-primary/20 rounded-[30px] md:rounded-[50px] blur-3xl opacity-60" />
           
-          {/* Screen Only - RESPONSIVE */}
+          {/* Screen Frame */}
           <div className="relative">
-            {/* Screen Frame */}
             <div className="relative bg-card rounded-xl md:rounded-2xl border-[4px] md:border-[6px] border-border overflow-hidden shadow-2xl">
               {/* Menu Bar */}
               <div className="flex items-center gap-2 px-3 md:px-5 py-2 md:py-3 bg-card border-b border-border">
@@ -152,17 +151,8 @@ const GenesisCommercialHero = () => {
                 </div>
               </div>
 
-              {/* Real Dashboard Screenshot */}
-              <div className="relative">
-                <img 
-                  src={dashboardPreview} 
-                  alt="Genesis Hub Dashboard - Bom dia, ADM!" 
-                  className="w-full h-auto object-cover"
-                />
-                
-                {/* Subtle overlay for depth */}
-                <div className="absolute inset-0 bg-gradient-to-t from-card/20 via-transparent to-transparent pointer-events-none" />
-              </div>
+              {/* Live Dashboard Clone */}
+              <DashboardPreviewMockup />
             </div>
           </div>
         </motion.div>
