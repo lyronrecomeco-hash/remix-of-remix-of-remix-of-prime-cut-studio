@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flame, Diamond, Zap, Target, Rocket, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 interface Reaction {
   type: 'fire' | 'diamond' | 'energy' | 'target' | 'rocket';
@@ -14,46 +14,11 @@ interface CommunityReactionsProps {
 }
 
 const REACTION_CONFIG = {
-  fire: { 
-    icon: Flame, 
-    label: '🔥',
-    color: 'text-orange-400',
-    activeColor: 'text-orange-500',
-    bgActive: 'bg-orange-500/20',
-    borderActive: 'border-orange-500/30'
-  },
-  diamond: { 
-    icon: Diamond, 
-    label: '💎',
-    color: 'text-cyan-400',
-    activeColor: 'text-cyan-500',
-    bgActive: 'bg-cyan-500/20',
-    borderActive: 'border-cyan-500/30'
-  },
-  energy: { 
-    icon: Zap, 
-    label: '⚡',
-    color: 'text-yellow-400',
-    activeColor: 'text-yellow-500',
-    bgActive: 'bg-yellow-500/20',
-    borderActive: 'border-yellow-500/30'
-  },
-  target: { 
-    icon: Target, 
-    label: '🎯',
-    color: 'text-red-400',
-    activeColor: 'text-red-500',
-    bgActive: 'bg-red-500/20',
-    borderActive: 'border-red-500/30'
-  },
-  rocket: { 
-    icon: Rocket, 
-    label: '🚀',
-    color: 'text-purple-400',
-    activeColor: 'text-purple-500',
-    bgActive: 'bg-purple-500/20',
-    borderActive: 'border-purple-500/30'
-  }
+  fire: { emoji: '🔥', label: 'Fogo' },
+  diamond: { emoji: '💎', label: 'Diamante' },
+  energy: { emoji: '⚡', label: 'Energia' },
+  target: { emoji: '🎯', label: 'Foco' },
+  rocket: { emoji: '🚀', label: 'Foguete' }
 };
 
 export const CommunityReactions = ({ reactions, onReact }: CommunityReactionsProps) => {
@@ -66,7 +31,6 @@ export const CommunityReactions = ({ reactions, onReact }: CommunityReactionsPro
       {/* Active reactions - compact pills */}
       {activeReactions.map((reaction) => {
         const config = REACTION_CONFIG[reaction.type];
-        const Icon = config.icon;
         
         return (
           <motion.button
@@ -77,18 +41,16 @@ export const CommunityReactions = ({ reactions, onReact }: CommunityReactionsPro
               onReact(reaction.type);
             }}
             className={`
-              inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs
+              inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium
               border transition-all duration-200
               ${reaction.hasReacted 
-                ? `${config.bgActive} ${config.borderActive}` 
-                : 'bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/20'
+                ? 'bg-primary/20 border-primary/40 text-primary' 
+                : 'bg-muted/30 border-border/50 text-muted-foreground hover:bg-muted/50'
               }
             `}
           >
-            <Icon className={`w-3.5 h-3.5 ${reaction.hasReacted ? config.activeColor : config.color}`} />
-            <span className={`font-medium ${reaction.hasReacted ? config.activeColor : 'text-white/70'}`}>
-              {reaction.count}
-            </span>
+            <span className="text-sm">{config.emoji}</span>
+            <span>{reaction.count}</span>
           </motion.button>
         );
       })}
@@ -101,9 +63,9 @@ export const CommunityReactions = ({ reactions, onReact }: CommunityReactionsPro
             e.stopPropagation();
             setShowPicker(!showPicker);
           }}
-          className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 transition-colors"
+          className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border/50 transition-colors"
         >
-          <Plus className="w-4 h-4 text-blue-400/60" />
+          <Plus className="w-4 h-4 text-muted-foreground" />
         </motion.button>
 
         {/* Reaction picker */}
@@ -124,9 +86,8 @@ export const CommunityReactions = ({ reactions, onReact }: CommunityReactionsPro
                 transition={{ duration: 0.15 }}
                 className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50"
               >
-                <div className="bg-[hsl(220,30%,12%)] border border-blue-500/30 rounded-xl px-2 py-2 shadow-2xl shadow-blue-500/10 flex gap-1">
+                <div className="bg-card border border-border rounded-xl px-2 py-2 shadow-2xl shadow-primary/10 flex gap-1">
                   {Object.entries(REACTION_CONFIG).map(([type, config]) => {
-                    const Icon = config.icon;
                     const reaction = reactions.find(r => r.type === type);
                     
                     return (
@@ -140,10 +101,11 @@ export const CommunityReactions = ({ reactions, onReact }: CommunityReactionsPro
                           setShowPicker(false);
                         }}
                         className={`p-2 rounded-lg transition-colors ${
-                          reaction?.hasReacted ? config.bgActive : 'hover:bg-white/10'
+                          reaction?.hasReacted ? 'bg-primary/20' : 'hover:bg-muted/50'
                         }`}
+                        title={config.label}
                       >
-                        <Icon className={`w-5 h-5 ${config.color}`} />
+                        <span className="text-xl">{config.emoji}</span>
                       </motion.button>
                     );
                   })}
