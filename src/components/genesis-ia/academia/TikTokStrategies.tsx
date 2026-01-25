@@ -121,33 +121,33 @@ export const TikTokStrategies = () => {
   const filteredStrategies = strategies.filter(s => s.category === activeCategory);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Header */}
-      <div className="bg-white/5 border border-white/10 p-4" style={{ borderRadius: '14px' }}>
-        <div className="flex items-start gap-3">
-          <div className="w-11 h-11 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+      <div className="bg-white/5 border border-white/10 p-5" style={{ borderRadius: '14px' }}>
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
             <Video className="w-6 h-6 text-primary" />
           </div>
           <div className="flex-1">
-            <h3 className="text-base font-bold text-white mb-1">Estratégias TikTok para Vendas</h3>
-            <p className="text-xs text-white/60">
+            <h3 className="text-lg font-bold text-white mb-1">Estratégias TikTok para Vendas</h3>
+            <p className="text-sm text-white/70 leading-relaxed">
               Domine os ganchos, retenção e CTAs que transformam visualizações em clientes. 
               Aplicável também para Reels e Shorts.
             </p>
           </div>
         </div>
         
-        <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/10">
-          <div className="flex items-center gap-1.5 text-xs text-primary">
-            <Play className="w-3.5 h-3.5" />
+        <div className="flex items-center gap-5 mt-4 pt-4 border-t border-white/10">
+          <div className="flex items-center gap-2 text-sm text-primary">
+            <Play className="w-4 h-4" />
             <span>30+ Estratégias</span>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-primary">
-            <TrendingUp className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-2 text-sm text-primary">
+            <TrendingUp className="w-4 h-4" />
             <span>Viralização</span>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-primary">
-            <Sparkles className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-2 text-sm text-primary">
+            <Sparkles className="w-4 h-4" />
             <span>Conversão</span>
           </div>
         </div>
@@ -162,7 +162,7 @@ export const TikTokStrategies = () => {
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 border transition-all flex-shrink-0 ${
+              className={`flex items-center gap-2 px-4 py-3 border transition-all flex-shrink-0 ${
                 isActive 
                   ? 'bg-primary/20 border-primary/40 text-white' 
                   : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
@@ -170,7 +170,7 @@ export const TikTokStrategies = () => {
               style={{ borderRadius: '10px' }}
             >
               <Icon className={`w-4 h-4 ${isActive ? 'text-primary' : ''}`} />
-              <span className="text-xs font-medium">{cat.label}</span>
+              <span className="text-sm font-medium">{cat.label}</span>
             </button>
           );
         })}
@@ -186,7 +186,7 @@ export const TikTokStrategies = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="grid grid-cols-1 md:grid-cols-2 gap-3"
+            className="grid grid-cols-1 md:grid-cols-2 gap-4"
           >
             {filteredStrategies.map((strategy, index) => {
               const Icon = strategy.icon;
@@ -197,30 +197,30 @@ export const TikTokStrategies = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className="bg-white/5 border border-white/10 p-4 hover:bg-white/10 hover:border-primary/30 transition-all group"
+                  className="bg-white/5 border border-white/10 p-5 hover:bg-white/10 hover:border-primary/30 transition-all group"
                   style={{ borderRadius: '12px' }}
                 >
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                        <Icon className="w-4 h-4 text-primary" />
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                        <Icon className="w-5 h-5 text-primary" />
                       </div>
-                      <h4 className="text-sm font-semibold text-white">{strategy.title}</h4>
+                      <h4 className="text-base font-semibold text-white">{strategy.title}</h4>
                     </div>
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() => handleCopy(strategy.id, strategy.content)}
-                      className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       {isCopied ? (
-                        <Check className="w-3.5 h-3.5 text-primary" />
+                        <Check className="w-4 h-4 text-primary" />
                       ) : (
-                        <Copy className="w-3.5 h-3.5 text-white/60" />
+                        <Copy className="w-4 h-4 text-white/60" />
                       )}
                     </Button>
                   </div>
-                  <p className="text-xs text-white/60 leading-relaxed">{strategy.content}</p>
+                  <p className="text-sm text-white/70 leading-relaxed">{strategy.content}</p>
                 </motion.div>
               );
             })}
@@ -233,13 +233,13 @@ export const TikTokStrategies = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
-        className="bg-primary/10 border border-primary/20 p-3 flex items-start gap-3"
+        className="bg-primary/10 border border-primary/20 p-4 flex items-start gap-4"
         style={{ borderRadius: '12px' }}
       >
-        <Volume2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+        <Volume2 className="w-6 h-6 text-primary flex-shrink-0 mt-0.5" />
         <div>
-          <p className="text-xs font-semibold text-primary mb-1">Dica de Ouro</p>
-          <p className="text-[11px] text-white/60">
+          <p className="text-sm font-semibold text-primary mb-1">Dica de Ouro</p>
+          <p className="text-sm text-white/70">
             Poste consistentemente (1-3x por dia), use músicas trending, e responda TODOS os comentários 
             na primeira hora. O algoritmo recompensa engajamento rápido!
           </p>

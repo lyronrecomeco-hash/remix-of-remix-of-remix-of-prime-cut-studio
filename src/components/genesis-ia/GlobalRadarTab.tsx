@@ -950,7 +950,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                   <p className="text-sm text-muted-foreground">{selectedOpportunity.niche || 'Negócio local'}</p>
                   <div className="flex items-center gap-2 mt-2">
                     <Badge className={cn(
-                      selectedOpportunity.opportunity_level === 'advanced' && "bg-emerald-500/20 text-emerald-500 border-emerald-500/30",
+                      selectedOpportunity.opportunity_level === 'advanced' && "bg-primary/20 text-primary border-primary/30",
                       selectedOpportunity.opportunity_level === 'intermediate' && "bg-amber-500/20 text-amber-500 border-amber-500/30",
                       selectedOpportunity.opportunity_level === 'basic' && "bg-muted text-muted-foreground border-border",
                     )}>
@@ -967,29 +967,29 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
 
               {/* Estimated Values */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
+                <div className="p-4 rounded-xl bg-white/5 border border-white/10">
                   <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1">
                     <TrendingUp className="w-3 h-3" /> Valor Estimado
                   </p>
                   <p className="text-sm text-muted-foreground">Min: R$ {selectedOpportunity.estimated_value_min.toLocaleString()}</p>
-                  <p className="text-xl font-bold text-emerald-500">R$ {selectedOpportunity.estimated_value_max.toLocaleString()}</p>
+                  <p className="text-xl font-bold text-primary">R$ {selectedOpportunity.estimated_value_max.toLocaleString()}</p>
                 </div>
-                <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
+                <div className="p-4 rounded-xl bg-white/5 border border-white/10">
                   <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1">
                     <Calendar className="w-3 h-3" /> Recorrência Mensal
                   </p>
-                  <p className="text-xl font-bold text-emerald-400">+R$ {selectedOpportunity.monthly_recurrence?.toLocaleString() || '0'}/mês</p>
+                  <p className="text-xl font-bold text-primary">+R$ {selectedOpportunity.monthly_recurrence?.toLocaleString() || '0'}/mês</p>
                 </div>
               </div>
 
               {/* Digital Presence */}
               <div className={cn(
                 "p-4 rounded-xl flex items-center gap-3",
-                !selectedOpportunity.has_website ? "bg-emerald-500/10 border border-emerald-500/30" : "bg-muted/30 border border-border/50"
+                !selectedOpportunity.has_website ? "bg-primary/10 border border-primary/30" : "bg-white/5 border border-white/10"
               )}>
-                <Globe2 className={cn("w-5 h-5", !selectedOpportunity.has_website ? "text-emerald-500" : "text-muted-foreground")} />
+                <Globe2 className={cn("w-5 h-5", !selectedOpportunity.has_website ? "text-primary" : "text-muted-foreground")} />
                 <div>
-                  <p className={cn("text-sm font-medium", !selectedOpportunity.has_website ? "text-emerald-500" : "text-foreground")}>
+                  <p className={cn("text-sm font-medium", !selectedOpportunity.has_website ? "text-primary" : "text-foreground")}>
                     {selectedOpportunity.digital_presence_status || (selectedOpportunity.has_website ? 'Possui presença digital' : 'Sem presença digital')}
                   </p>
                   <p className="text-xs text-muted-foreground">
@@ -1071,13 +1071,13 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
               </div>
             </ModalBody>
 
-            <ModalFooter>
+            <ModalFooter className="flex-wrap sm:flex-nowrap">
               <Button
                 variant="outline"
                 onClick={() => {
                   window.open(`https://www.google.com/search?q=${encodeURIComponent(selectedOpportunity.company_name)}`, '_blank');
                 }}
-                className="gap-2"
+                className="gap-2 border-white/20 hover:bg-white/10"
               >
                 <ExternalLink className="w-4 h-4" />
                 Pesquisar no Google
@@ -1100,7 +1100,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                   handleAccept(selectedOpportunity);
                   setDetailModalOpen(false);
                 }}
-                className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+                className="gap-2 bg-primary hover:bg-primary/80"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 Aceitar Projeto
