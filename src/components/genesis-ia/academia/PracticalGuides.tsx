@@ -153,12 +153,8 @@ export const PracticalGuides = () => {
   };
 
   const getColorClasses = (color: string) => {
-    const colors: Record<string, { bg: string; text: string; border: string }> = {
-      emerald: { bg: 'bg-emerald-500/20', text: 'text-emerald-400', border: 'border-emerald-500/30' },
-      blue: { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30' },
-      purple: { bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500/30' },
-    };
-    return colors[color] || colors.blue;
+    // Use primary theme for all guides
+    return { bg: 'bg-primary/20', text: 'text-primary', border: 'border-primary/30' };
   };
 
   return (

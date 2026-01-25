@@ -93,11 +93,11 @@ interface Signature {
 }
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-  draft: { label: 'Rascunho', color: 'bg-slate-500/20 text-slate-400 border-slate-500/30', icon: FileText },
-  pending_signature: { label: 'Aguardando Assinatura', color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', icon: Clock },
-  partially_signed: { label: 'Parcialmente Assinado', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', icon: FileSignature },
-  signed: { label: 'Assinado', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', icon: CheckCircle2 },
-  cancelled: { label: 'Cancelado', color: 'bg-red-500/20 text-red-400 border-red-500/30', icon: XCircle },
+  draft: { label: 'Rascunho', color: 'bg-white/10 text-white/60 border-white/20', icon: FileText },
+  pending_signature: { label: 'Aguardando Assinatura', color: 'bg-primary/20 text-primary border-primary/30', icon: Clock },
+  partially_signed: { label: 'Parcialmente Assinado', color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30', icon: FileSignature },
+  signed: { label: 'Assinado', color: 'bg-primary/20 text-primary border-primary/30', icon: CheckCircle2 },
+  cancelled: { label: 'Cancelado', color: 'bg-destructive/20 text-destructive border-destructive/30', icon: XCircle },
 };
 
 export function ContractDetail({ contractId, onBack }: ContractDetailProps) {
@@ -478,11 +478,11 @@ export function ContractDetail({ contractId, onBack }: ContractDetailProps) {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-3 sm:p-4 rounded-xl border bg-gradient-to-br from-card to-card/80"
+              className="p-3 sm:p-4 rounded-xl border border-white/10 bg-white/5"
             >
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                  <User className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400" />
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                  <User className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
                 </div>
                 <h3 className="font-semibold text-foreground text-sm">Contratante</h3>
               </div>
@@ -499,11 +499,11 @@ export function ContractDetail({ contractId, onBack }: ContractDetailProps) {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="p-3 sm:p-4 rounded-xl border bg-gradient-to-br from-card to-card/80"
+              className="p-3 sm:p-4 rounded-xl border border-white/10 bg-white/5"
             >
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center">
-                  <Briefcase className="w-3 h-3 sm:w-4 sm:h-4 text-indigo-400" />
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                  <Briefcase className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
                 </div>
                 <h3 className="font-semibold text-foreground text-sm">Contratado</h3>
               </div>
@@ -522,7 +522,7 @@ export function ContractDetail({ contractId, onBack }: ContractDetailProps) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="p-3 sm:p-4 rounded-xl border bg-gradient-to-br from-card to-card/80"
+            className="p-3 sm:p-4 rounded-xl border border-white/10 bg-white/5"
           >
             <h3 className="font-semibold text-foreground mb-3 text-sm">Objeto do Contrato</h3>
             <div className="space-y-2 sm:space-y-3">
