@@ -60,12 +60,12 @@ interface ContractsListProps {
 }
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-  draft: { label: 'Rascunho', color: 'bg-muted text-muted-foreground border-border', icon: FileText },
-  pending_signature: { label: 'Aguardando Assinatura', color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', icon: Clock },
-  partially_signed: { label: 'Parcialmente Assinado', color: 'bg-primary/20 text-primary border-primary/30', icon: FileSignature },
-  signed: { label: 'Assinado', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', icon: CheckCircle2 },
+  draft: { label: 'Rascunho', color: 'bg-white/10 text-white/60 border-white/20', icon: FileText },
+  pending_signature: { label: 'Aguardando Assinatura', color: 'bg-primary/20 text-primary border-primary/30', icon: Clock },
+  partially_signed: { label: 'Parcialmente Assinado', color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30', icon: FileSignature },
+  signed: { label: 'Assinado', color: 'bg-primary/20 text-primary border-primary/30', icon: CheckCircle2 },
   cancelled: { label: 'Cancelado', color: 'bg-destructive/20 text-destructive border-destructive/30', icon: XCircle },
-  expired: { label: 'Expirado', color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', icon: AlertTriangle },
+  expired: { label: 'Expirado', color: 'bg-white/10 text-white/50 border-white/20', icon: AlertTriangle },
 };
 
 export function ContractsList({ affiliateId, onCreateNew, onViewContract }: ContractsListProps) {
@@ -284,7 +284,7 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
                   >
                     {/* Nome */}
                     <div className="min-w-0">
-                      <span className="text-sm font-medium text-foreground truncate block group-hover:text-blue-400 transition-colors">
+                      <span className="text-sm font-medium text-foreground truncate block group-hover:text-primary transition-colors">
                         {contract.contractor_name}
                       </span>
                     </div>
@@ -298,7 +298,7 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
                     
                     {/* Recorrência */}
                     <div>
-                      <span className={`text-sm whitespace-nowrap ${contract.service_modality === 'recorrente' ? 'text-emerald-400 font-medium' : 'text-muted-foreground'}`}>
+                      <span className={`text-sm whitespace-nowrap ${contract.service_modality === 'recorrente' ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
                         {contract.service_modality === 'recorrente' 
                           ? `${formatCurrency(contract.total_value)}/mês` 
                           : 'Pontual'}
@@ -385,8 +385,8 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
                         <span className="text-muted-foreground">Valor: </span>
                         <span className="font-semibold text-foreground">{formatCurrency(contract.total_value)}</span>
                       </div>
-                      <div>
-                        <span className={`${contract.service_modality === 'recorrente' ? 'text-emerald-400 font-medium' : 'text-muted-foreground'}`}>
+                    <div>
+                        <span className={`${contract.service_modality === 'recorrente' ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
                           {contract.service_modality === 'recorrente' ? 'Recorrente' : 'Pontual'}
                         </span>
                       </div>

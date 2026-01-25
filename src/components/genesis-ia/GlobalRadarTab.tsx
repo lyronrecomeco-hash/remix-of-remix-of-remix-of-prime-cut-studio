@@ -97,7 +97,8 @@ const LEVEL_CONFIG: Record<string, { label: string; color: string; bgColor: stri
 
 const AUTO_SCAN_INTERVAL = 2 * 60 * 1000; // 2 minutes
 const ITEMS_PER_PAGE = 12;
-const MAX_LEADS_LIMIT = 200; // Maximum leads before stopping scan
+const LIMIT_OPTIONS = [25, 50, 100, 200]; // User-selectable limits
+const DEFAULT_LIMIT = 50;
 
 export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepted }: GlobalRadarTabProps) => {
   const [opportunities, setOpportunities] = useState<RadarOpportunity[]>([]);
@@ -117,6 +118,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [limitReached, setLimitReached] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [maxLeadsLimit, setMaxLeadsLimit] = useState(DEFAULT_LIMIT);
   const autoScanIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -201,7 +203,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
         .eq('affiliate_id', affiliateId)
         .eq('status', 'new')
         .order('opportunity_score', { ascending: false })
-        .limit(MAX_LEADS_LIMIT);
+        .limit(maxLeadsLimit);
 
       // Filter only without website (high conversion %)
       if (filterNoWebsite) {
@@ -216,12 +218,12 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
       setUnreadCount((data || []).filter(o => !o.is_read).length);
       
       // Check if limit reached
-      const reachedLimit = (data?.length || 0) >= MAX_LEADS_LIMIT;
+      const reachedLimit = (data?.length || 0) >= maxLeadsLimit;
       setLimitReached(reachedLimit);
       
       if (reachedLimit && autoScanEnabled) {
         setAutoScanEnabled(false);
-        toast.info(`🎯 Limite de ${MAX_LEADS_LIMIT} leads atingido! Auto-scan pausado.`);
+        toast.info(`🎯 Limite de ${maxLeadsLimit} leads atingido! Auto-scan pausado.`);
       }
       
       // Calculate stats
@@ -240,7 +242,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
     } finally {
       setLoading(false);
     }
-  }, [affiliateId, filterNoWebsite, autoScanEnabled]);
+  }, [affiliateId, filterNoWebsite, autoScanEnabled, maxLeadsLimit]);
 
   // Run scan
   const runScan = useCallback(async (isAuto = false) => {
@@ -249,7 +251,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
     // Don't scan if limit reached
     if (limitReached) {
       if (!isAuto) {
-        toast.warning(`Limite de ${MAX_LEADS_LIMIT} leads atingido. Aceite ou rejeite alguns para continuar.`);
+        toast.warning(`Limite de ${maxLeadsLimit} leads atingido. Aceite ou rejeite alguns para continuar.`);
       }
       return;
     }
@@ -456,8 +458,8 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
         <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center">
-                <Radar className="w-5 h-5 text-cyan-400" />
+              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                <Radar className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="text-xs text-white/50">Total</p>
@@ -470,8 +472,8 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
         <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-emerald-400" />
+              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="text-xs text-white/50">Hoje</p>
@@ -543,9 +545,26 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
             </div>
 
             {/* Right - Toggles */}
-            <div className="flex items-center gap-6">
+            <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+              {/* Limit Selector */}
               <div className="flex items-center gap-2">
-                {autoScanEnabled ? <Wifi className="w-4 h-4 text-cyan-400" /> : <WifiOff className="w-4 h-4 text-white/30" />}
+                <span className="text-sm text-white/50">Limite:</span>
+                <Select value={String(maxLeadsLimit)} onValueChange={(v) => setMaxLeadsLimit(Number(v))}>
+                  <SelectTrigger className="w-20 h-8 bg-white/5 border-white/10 text-white text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LIMIT_OPTIONS.map((limit) => (
+                      <SelectItem key={limit} value={String(limit)}>
+                        {limit}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {autoScanEnabled ? <Wifi className="w-4 h-4 text-primary" /> : <WifiOff className="w-4 h-4 text-white/30" />}
                 <span className="text-sm text-white/50">Auto-Scan</span>
                 <Switch
                   checked={autoScanEnabled}
@@ -554,7 +573,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
               </div>
 
               <div className="flex items-center gap-2">
-                <Volume2 className={cn("w-4 h-4", soundEnabled ? "text-blue-400" : "text-white/30")} />
+                <Volume2 className={cn("w-4 h-4", soundEnabled ? "text-primary" : "text-white/30")} />
                 <span className="text-sm text-white/50">Som</span>
                 <Switch
                   checked={soundEnabled}
@@ -563,7 +582,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
               </div>
 
               <div className="flex items-center gap-2">
-                <Filter className={cn("w-4 h-4", filterNoWebsite ? "text-amber-400" : "text-white/30")} />
+                <Filter className={cn("w-4 h-4", filterNoWebsite ? "text-primary" : "text-white/30")} />
                 <span className="text-sm text-white/50">Alta Conversão</span>
                 <Switch
                   checked={filterNoWebsite}
@@ -594,7 +613,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                       toast.success('Resultados limpos com sucesso!');
                     }
                   }}
-                  className="border-red-500/30 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                  className="border-destructive/30 text-destructive hover:text-destructive hover:bg-destructive/10"
                 >
                   <X className="w-4 h-4 mr-1.5" />
                   Limpar Tudo
@@ -607,20 +626,20 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
 
       {/* Limit reached alert */}
       {limitReached && (
-        <Card className="border-amber-500/30 bg-amber-500/10" style={{ borderRadius: '14px' }}>
+        <Card className="border-primary/30 bg-primary/10" style={{ borderRadius: '14px' }}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0" />
+              <AlertCircle className="w-5 h-5 text-primary flex-shrink-0" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-amber-400">
-                  Limite de {MAX_LEADS_LIMIT} leads atingido
+                <p className="text-sm font-medium text-primary">
+                  Limite de {maxLeadsLimit} leads atingido
                 </p>
                 <p className="text-xs text-white/50">
                   Aceite ou rejeite alguns leads para liberar espaço e continuar o scan automático.
                 </p>
               </div>
-              <Badge variant="outline" className="border-amber-500/50 text-amber-400">
-                {opportunities.length}/{MAX_LEADS_LIMIT}
+              <Badge variant="outline" className="border-primary/50 text-primary">
+                {opportunities.length}/{maxLeadsLimit}
               </Badge>
             </div>
           </CardContent>
@@ -632,13 +651,13 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
         <CardHeader className="pb-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <CardTitle className="text-lg flex items-center gap-2 text-white">
-              <Globe2 className="w-5 h-5 text-cyan-400" />
+              <Globe2 className="w-5 h-5 text-primary" />
               Oportunidades Detectadas
               {opportunities.length > 0 && (
                 <Badge variant="secondary" className="ml-2 bg-white/10 text-white/70">
                   {filteredOpportunities.length !== opportunities.length 
                     ? `${filteredOpportunities.length}/${opportunities.length}`
-                    : `${opportunities.length}/${MAX_LEADS_LIMIT}`
+                    : `${opportunities.length}/${maxLeadsLimit}`
                   }
                 </Badge>
               )}
@@ -668,7 +687,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
         <CardContent>
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12 gap-3">
-              <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
               <p className="text-sm text-white/50">Carregando oportunidades...</p>
             </div>
           ) : filteredOpportunities.length === 0 && searchQuery ? (
@@ -688,8 +707,8 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
             </div>
           ) : opportunities.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-cyan-500/20 flex items-center justify-center">
-                <Radar className="w-8 h-8 text-cyan-400/50" />
+              <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center">
+                <Radar className="w-8 h-8 text-primary/50" />
               </div>
               <div>
                 <p className="text-lg font-medium text-white mb-1">Radar ativo</p>
@@ -726,13 +745,13 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                         <Card className={cn(
                           "relative overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-white/20",
                           "bg-white/5 border-white/10",
-                          !opp.is_read && "ring-1 ring-cyan-500/30"
+                          !opp.is_read && "ring-1 ring-primary/30"
                         )} style={{ borderRadius: '14px' }}>
                           {/* Color accent bar based on level */}
                           <div className={cn(
                             "absolute top-0 left-0 right-0 h-1",
-                            opp.opportunity_level === 'advanced' && "bg-cyan-500",
-                            opp.opportunity_level === 'intermediate' && "bg-amber-500",
+                            opp.opportunity_level === 'advanced' && "bg-primary",
+                            opp.opportunity_level === 'intermediate' && "bg-primary/60",
                             opp.opportunity_level === 'basic' && "bg-muted-foreground/30",
                           )} />
 
