@@ -641,7 +641,7 @@ const GenesisIADashboard = () => {
     }
 
     if (activeTab === 'sprint-mission') {
-      return <SprintMissionTab />;
+      return <SprintMissionTab onNavigate={(tab) => setActiveTab(tab as ActiveTab)} />;
     }
 
     return null;

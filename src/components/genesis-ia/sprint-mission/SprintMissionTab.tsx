@@ -27,6 +27,10 @@ import { SprintDashboard } from './SprintDashboard';
 import { GeneratedSprint, SprintMissionFormData } from './types';
 import { useGenesisAuth } from '@/contexts/GenesisAuthContext';
 
+interface SprintMissionTabProps {
+  onNavigate?: (tab: string) => void;
+}
+
 interface SavedSprint {
   id: string;
   sprint: GeneratedSprint;
@@ -39,7 +43,7 @@ interface SavedSprint {
 const STORAGE_KEY = 'genesis_saved_sprints';
 const DAILY_RESET_KEY = 'genesis_daily_reset';
 
-export const SprintMissionTab = () => {
+export const SprintMissionTab = ({ onNavigate }: SprintMissionTabProps = {}) => {
   const { genesisUser } = useGenesisAuth();
   const userName = genesisUser?.name?.split(' ')[0] || 'Parceiro';
   
@@ -192,6 +196,7 @@ export const SprintMissionTab = () => {
           userName={userName}
           formData={activeSprint.formData}
           onReset={() => setActiveSprint(null)}
+          onNavigate={onNavigate}
           onUpdate={(updatedSprint, completedActions) => 
             updateSprintProgress(activeSprint.id, updatedSprint, completedActions)
           }
