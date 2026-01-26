@@ -147,47 +147,94 @@ serve(async (req) => {
         
         if (envApiKey) {
           try {
-            // Buscar uso real da conta Serper
+            // Buscar uso real da conta Serper usando endpoint correto
             const accountResponse = await fetch('https://google.serper.dev/account', {
               method: 'GET',
               headers: {
                 'X-API-KEY': envApiKey,
-                'Content-Type': 'application/json',
               },
             });
 
+            console.log('Serper account response status:', accountResponse.status);
+            const responseText = await accountResponse.text();
+            console.log('Serper account response:', responseText);
+
             if (accountResponse.ok) {
-              const accountData = await accountResponse.json();
-              console.log('Serper account data:', accountData);
+              let accountData;
+              try {
+                accountData = JSON.parse(responseText);
+              } catch (e) {
+                console.error('Failed to parse Serper response:', e);
+                return new Response(JSON.stringify({ 
+                  success: false, 
+                  error: 'Invalid response from Serper API',
+                  raw: responseText
+                }), {
+                  status: 500,
+                  headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                });
+              }
+              
+              console.log('Serper account data parsed:', JSON.stringify(accountData));
               
               // Atualizar a primeira chave com o uso total da conta
+              // Serper retorna: balance (créditos restantes), rateLimit
               if (allKeys && allKeys.length > 0) {
-                const totalCreditsUsed = accountData.credits?.used || accountData.searchesUsed || 0;
+                // Calcular uso: total inicial - balance restante
+                // Se não temos o total inicial, usamos o balance diretamente
+                const balanceRemaining = accountData.balance || 0;
+                
+                // Buscar o uso atual armazenado para calcular total
+                const { data: currentKeyData } = await serviceClient
+                  .from('genesis_api_keys')
+                  .select('usage_count')
+                  .eq('id', allKeys[0].id)
+                  .single();
+                
+                // Atualizar com os dados disponíveis
+                // Balance = créditos restantes, então calculamos uso a partir do plano
+                // Se o plano tem 2500 créditos e balance = 2054, uso = 446
+                const PLAN_CREDITS = 2500; // Créditos do plano Serper
+                const estimatedUsage = PLAN_CREDITS - balanceRemaining;
                 
                 await serviceClient
                   .from('genesis_api_keys')
                   .update({ 
-                    usage_count: totalCreditsUsed,
+                    usage_count: estimatedUsage > 0 ? estimatedUsage : (currentKeyData?.usage_count || 0),
                     last_used_at: new Date().toISOString()
                   })
                   .eq('id', allKeys[0].id);
 
-                console.log(`Updated key ${allKeys[0].id} with total usage: ${totalCreditsUsed}`);
+                console.log(`Updated key ${allKeys[0].id} - Balance: ${balanceRemaining}, Estimated Usage: ${estimatedUsage}`);
+
+                return new Response(JSON.stringify({ 
+                  success: true, 
+                  account: {
+                    used: estimatedUsage > 0 ? estimatedUsage : 0,
+                    remaining: balanceRemaining,
+                    total: PLAN_CREDITS,
+                    rateLimit: accountData.rateLimit || 5,
+                    raw: accountData
+                  },
+                  message: 'Usage synchronized from Serper API'
+                }), {
+                  headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                });
               }
 
               return new Response(JSON.stringify({ 
                 success: true, 
                 account: accountData,
-                message: 'Usage synchronized from Serper API'
+                message: 'No keys to update'
               }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
               });
             } else {
-              const errorText = await accountResponse.text();
-              console.error('Serper account API error:', errorText);
+              console.error('Serper account API error:', responseText);
               return new Response(JSON.stringify({ 
                 success: false, 
-                error: 'Failed to fetch Serper account data'
+                error: `Serper API error: ${accountResponse.status}`,
+                details: responseText
               }), {
                 status: 500,
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -195,7 +242,13 @@ serve(async (req) => {
             }
           } catch (apiError) {
             console.error('Error fetching Serper account:', apiError);
-            throw apiError;
+            return new Response(JSON.stringify({ 
+              success: false, 
+              error: `Exception: ${apiError instanceof Error ? apiError.message : 'Unknown'}`
+            }), {
+              status: 500,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
           }
         }
 
