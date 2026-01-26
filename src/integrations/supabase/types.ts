@@ -4119,6 +4119,48 @@ export type Database = {
           },
         ]
       }
+      genesis_api_keys: {
+        Row: {
+          api_key_hash: string
+          api_key_preview: string
+          created_at: string
+          id: string
+          is_active: boolean
+          key_name: string
+          last_used_at: string | null
+          priority: number
+          provider: string
+          updated_at: string
+          usage_count: number
+        }
+        Insert: {
+          api_key_hash: string
+          api_key_preview: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          key_name: string
+          last_used_at?: string | null
+          priority?: number
+          provider?: string
+          updated_at?: string
+          usage_count?: number
+        }
+        Update: {
+          api_key_hash?: string
+          api_key_preview?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          key_name?: string
+          last_used_at?: string | null
+          priority?: number
+          provider?: string
+          updated_at?: string
+          usage_count?: number
+        }
+        Relationships: []
+      }
       genesis_api_status: {
         Row: {
           created_at: string | null
