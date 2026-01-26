@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Copy, 
@@ -8,12 +8,14 @@ import {
   ExternalLink,
   MessageSquare,
   Wand2,
-  RefreshCw
+  RefreshCw,
+  Save,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
-import { GeneratedProposal } from './types';
+import { GeneratedProposal, ProposalFormData } from './types';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ProposalResultProps {
@@ -21,12 +23,16 @@ interface ProposalResultProps {
   companyName: string;
   userName: string;
   phone?: string;
+  formData?: ProposalFormData;
+  affiliateId?: string | null;
   onReset: () => void;
 }
 
-export const ProposalResult = ({ proposal, companyName, userName, phone, onReset }: ProposalResultProps) => {
+export const ProposalResult = ({ proposal, companyName, userName, phone, formData, affiliateId, onReset }: ProposalResultProps) => {
   const [copied, setCopied] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const [currentMessage, setCurrentMessage] = useState(proposal.mensagem_prospecao);
 
   const copyToClipboard = async () => {
@@ -78,6 +84,43 @@ export const ProposalResult = ({ proposal, companyName, userName, phone, onReset
     }
   };
 
+  const saveProposal = async () => {
+    if (!affiliateId || !formData) {
+      toast.error('Não foi possível salvar a proposta');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('genesis_saved_proposals')
+        .insert({
+          affiliate_id: affiliateId,
+          company_name: formData.company_name,
+          company_niche: formData.company_niche,
+          main_problem: formData.main_problem,
+          decision_maker: formData.decision_maker,
+          competitors: formData.competitors,
+          failed_attempts: formData.failed_attempts,
+          dream_result: formData.dream_result,
+          contact_phone: formData.contact_phone,
+          ai_questions: formData.ai_questions,
+          generated_proposal: currentMessage,
+          status: 'draft',
+        });
+
+      if (error) throw error;
+
+      setIsSaved(true);
+      toast.success('Proposta salva com sucesso!');
+    } catch (error) {
+      console.error('Erro ao salvar proposta:', error);
+      toast.error('Erro ao salvar proposta');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // Format the message with proper styling
   const formatMessage = (text: string) => {
     return text.split('\n').map((line, index) => {
@@ -114,6 +157,24 @@ export const ProposalResult = ({ proposal, companyName, userName, phone, onReset
           </div>
         </div>
         <div className="flex items-center gap-1 sm:gap-2">
+          {affiliateId && formData && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={saveProposal}
+              disabled={isSaving || isSaved}
+              className="text-white/50 hover:text-white hover:bg-white/10 h-7 sm:h-8 px-2 text-[10px] sm:text-xs"
+            >
+              {isSaving ? (
+                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+              ) : isSaved ? (
+                <Check className="w-3 h-3 mr-1 text-green-400" />
+              ) : (
+                <Save className="w-3 h-3 mr-1" />
+              )}
+              <span className="hidden sm:inline">{isSaved ? 'Salva' : 'Salvar'}</span>
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"

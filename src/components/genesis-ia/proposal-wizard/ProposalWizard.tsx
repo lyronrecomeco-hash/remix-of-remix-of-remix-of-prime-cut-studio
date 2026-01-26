@@ -45,7 +45,7 @@ const iconMap: Record<string, React.ElementType> = {
   phone: Phone
 };
 
-export const ProposalWizard = () => {
+export const ProposalWizard = ({ affiliateId }: { affiliateId?: string | null }) => {
   const { genesisUser } = useGenesisAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<ProposalFormData>({
@@ -249,6 +249,8 @@ export const ProposalWizard = () => {
         companyName={formData.company_name}
         userName={userName}
         phone={formData.contact_phone}
+        formData={formData}
+        affiliateId={affiliateId}
         onReset={handleReset}
       />
     );
