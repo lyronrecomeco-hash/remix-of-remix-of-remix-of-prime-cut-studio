@@ -68,11 +68,13 @@ import { AcademiaGenesisTab } from "@/components/genesis-ia/academia";
 import { ProposalWizard } from "@/components/genesis-ia/proposal-wizard";
 import { SprintMissionTab } from "@/components/genesis-ia/sprint-mission";
 import { GenesisOnboardingGuide } from "@/components/genesis-ia/GenesisOnboardingGuide";
+import { ApiKeysTab } from "@/components/genesis-ia/api-keys";
+import { DevelopmentModal } from "@/components/genesis-ia/modals";
 
 import GenesisBackground from "@/components/genesis-ia/GenesisBackground";
-import { FileText, Gift, CreditCard, Code2, Rocket } from "lucide-react";
+import { FileText, Gift, CreditCard, Code2, Rocket, Key } from "lucide-react";
 
-type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional' | 'payments' | 'page-builder' | 'academia' | 'proposals' | 'sprint-mission';
+type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional' | 'payments' | 'page-builder' | 'academia' | 'proposals' | 'sprint-mission' | 'api-keys';
 
 // Icon mapping for dynamic rendering
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -94,6 +96,7 @@ const GenesisIADashboard = () => {
   const [editingText, setEditingText] = useState<TextElementData | null>(null);
   const [showWelcome, setShowWelcome] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showDevModal, setShowDevModal] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -207,11 +210,16 @@ const GenesisIADashboard = () => {
       case 'page-builder': return 'Construir Página';
       case 'proposals': return 'Propostas Personalizadas';
       case 'sprint-mission': return 'Missão Sprint';
+      case 'api-keys': return 'API Keys';
       default: return null;
     }
   };
 
   const handleCarouselNavigate = (tabId: string) => {
+    if (tabId === 'page-builder') {
+      setShowDevModal(true);
+      return;
+    }
     setActiveTab(tabId as ActiveTab);
   };
 
@@ -232,6 +240,7 @@ const GenesisIADashboard = () => {
 
   const adminDockItems: DockItem[] = isAdmin ? [
     { icon: CreditCard, label: 'Pagamentos', tabId: 'payments' },
+    { icon: Key, label: 'API Keys', tabId: 'api-keys' },
   ] : [];
 
   const dockItems: DockItem[] = [
@@ -243,12 +252,44 @@ const GenesisIADashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div 
+        className="min-h-screen flex items-center justify-center"
+        style={{
+          background: 'linear-gradient(180deg, hsl(220 25% 10%) 0%, hsl(230 30% 12%) 50%, hsl(220 25% 10%) 100%)',
+        }}
+      >
         <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center gap-4"
         >
-          <Brain className="w-14 h-14 text-primary" />
+          <motion.div
+            animate={{ 
+              scale: [1, 1.1, 1],
+              opacity: [0.7, 1, 0.7]
+            }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+            className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/30 to-cyan-500/30 flex items-center justify-center"
+          >
+            <Brain className="w-8 h-8 text-blue-400" />
+          </motion.div>
+          <div className="flex items-center gap-1">
+            {[0, 1, 2].map((i) => (
+              <motion.div
+                key={i}
+                animate={{ 
+                  scale: [1, 1.3, 1],
+                  opacity: [0.3, 1, 0.3]
+                }}
+                transition={{ 
+                  duration: 0.6, 
+                  repeat: Infinity, 
+                  delay: i * 0.15 
+                }}
+                className="w-2 h-2 rounded-full bg-blue-400"
+              />
+            ))}
+          </div>
         </motion.div>
       </div>
     );
@@ -637,8 +678,13 @@ const GenesisIADashboard = () => {
       return <GenesisPaymentsTab />;
     }
 
+    if (activeTab === 'api-keys' && isAdmin) {
+      return <ApiKeysTab onBack={() => setActiveTab('dashboard')} />;
+    }
+
     if (activeTab === 'page-builder') {
-      return <PageBuilderTab onBack={() => setActiveTab('dashboard')} />;
+      // Page builder is blocked - show modal
+      return null;
     }
 
     if (activeTab === 'academia') {
@@ -848,6 +894,13 @@ const GenesisIADashboard = () => {
                 onNavigate={(tab) => setActiveTab(tab as ActiveTab)} 
               />
             )}
+
+            {/* Development Modal for blocked features */}
+            <DevelopmentModal 
+              isOpen={showDevModal}
+              onClose={() => setShowDevModal(false)}
+              featureName="Construir Página"
+            />
           </div>
         );
       }}
