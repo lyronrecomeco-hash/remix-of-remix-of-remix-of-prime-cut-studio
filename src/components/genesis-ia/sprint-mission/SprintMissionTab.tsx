@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Rocket,
   Plus,
@@ -8,12 +8,11 @@ import {
   TrendingUp,
   Trash2,
   Play,
-  CheckCircle2,
   Clock,
-  MoreVertical
+  MoreVertical,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
   DropdownMenu,
@@ -21,152 +20,97 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { toast } from 'sonner';
 import { SprintWizard } from './SprintWizard';
 import { SprintDashboard } from './SprintDashboard';
 import { GeneratedSprint, SprintMissionFormData } from './types';
+import { useSprintMissions, SprintMission } from './useSprintMissions';
 import { useGenesisAuth } from '@/contexts/GenesisAuthContext';
 
 interface SprintMissionTabProps {
   onNavigate?: (tab: string) => void;
 }
 
-interface SavedSprint {
-  id: string;
-  sprint: GeneratedSprint;
-  formData: SprintMissionFormData;
-  createdAt: string;
-  lastAccessedAt: string;
-  completedActions: string[];
-}
-
-const STORAGE_KEY_PREFIX = 'genesis_saved_sprints_';
-const DAILY_RESET_KEY_PREFIX = 'genesis_daily_reset_';
-
 export const SprintMissionTab = ({ onNavigate }: SprintMissionTabProps = {}) => {
   const { genesisUser } = useGenesisAuth();
   const userName = genesisUser?.name?.split(' ')[0] || 'Parceiro';
-  const affiliateId = genesisUser?.id || 'guest';
-  
-  // Storage keys per user
-  const STORAGE_KEY = `${STORAGE_KEY_PREFIX}${affiliateId}`;
-  const DAILY_RESET_KEY = `${DAILY_RESET_KEY_PREFIX}${affiliateId}`;
-  
-  const [savedSprints, setSavedSprints] = useState<SavedSprint[]>([]);
-  const [activeSprint, setActiveSprint] = useState<SavedSprint | null>(null);
+  const affiliateId = genesisUser?.id;
+
+  const {
+    missions,
+    loading,
+    createMission,
+    deleteMission,
+    fetchProgress,
+    updateActionProgress,
+  } = useSprintMissions(affiliateId);
+
+  const [activeMission, setActiveMission] = useState<SprintMission | null>(null);
+  const [activeProgress, setActiveProgress] = useState<Map<string, 'pending' | 'in_progress' | 'completed'>>(new Map());
   const [showWizard, setShowWizard] = useState(false);
+  const [progressCache, setProgressCache] = useState<Map<string, number>>(new Map());
 
-  // Load saved sprints from localStorage - bound to user
+  // Load progress counts for all missions
   useEffect(() => {
-    if (!affiliateId || affiliateId === 'guest') return;
-    
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setSavedSprints(parsed);
-      } catch (e) {
-        console.error('Error parsing saved sprints:', e);
+    const loadProgressCounts = async () => {
+      const counts = new Map<string, number>();
+      for (const mission of missions) {
+        const progress = await fetchProgress(mission.id);
+        const completed = progress.filter((p) => p.status === 'completed').length;
+        counts.set(mission.id, completed);
       }
-    }
-
-    // Check daily reset
-    checkDailyReset();
-  }, [affiliateId, STORAGE_KEY]);
-
-  // Check and reset daily actions
-  const checkDailyReset = () => {
-    const lastReset = localStorage.getItem(DAILY_RESET_KEY);
-    const today = new Date().toDateString();
-    
-    if (lastReset !== today) {
-      // Reset all completed actions for a new day
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        try {
-          const sprints: SavedSprint[] = JSON.parse(saved);
-          const resetSprints = sprints.map(s => ({
-            ...s,
-            completedActions: [],
-            sprint: {
-              ...s.sprint,
-              actions: s.sprint.actions.map(a => ({ ...a, status: 'pending' as const }))
-            }
-          }));
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(resetSprints));
-          setSavedSprints(resetSprints);
-        } catch (e) {
-          console.error('Error resetting sprints:', e);
-        }
-      }
-      localStorage.setItem(DAILY_RESET_KEY, today);
-    }
-  };
-
-  // Save sprint to localStorage
-  const saveSprint = (sprint: GeneratedSprint, formData: SprintMissionFormData) => {
-    const newSprint: SavedSprint = {
-      id: Date.now().toString(),
-      sprint,
-      formData,
-      createdAt: new Date().toISOString(),
-      lastAccessedAt: new Date().toISOString(),
-      completedActions: []
+      setProgressCache(counts);
     };
     
-    const updated = [newSprint, ...savedSprints];
-    setSavedSprints(updated);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    
-    setActiveSprint(newSprint);
-    setShowWizard(false);
-    toast.success('Meta salva com sucesso!');
-  };
-
-  // Delete sprint
-  const deleteSprint = (id: string) => {
-    const updated = savedSprints.filter(s => s.id !== id);
-    setSavedSprints(updated);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    
-    if (activeSprint?.id === id) {
-      setActiveSprint(null);
+    if (missions.length > 0) {
+      loadProgressCounts();
     }
-    toast.success('Meta removida');
+  }, [missions, fetchProgress]);
+
+  // Load progress when opening a mission
+  const openMission = async (mission: SprintMission) => {
+    const progress = await fetchProgress(mission.id);
+    const progressMap = new Map<string, 'pending' | 'in_progress' | 'completed'>();
+    progress.forEach((p) => progressMap.set(p.actionId, p.status));
+    setActiveProgress(progressMap);
+    setActiveMission(mission);
+    setShowWizard(false);
   };
 
-  // Update sprint progress
-  const updateSprintProgress = (sprintId: string, updatedSprint: GeneratedSprint, completedActions: string[]) => {
-    const updated = savedSprints.map(s => {
-      if (s.id === sprintId) {
-        return {
-          ...s,
-          sprint: updatedSprint,
-          completedActions,
-          lastAccessedAt: new Date().toISOString()
-        };
-      }
-      return s;
+  // Save new sprint
+  const saveSprint = async (sprint: GeneratedSprint, formData: SprintMissionFormData) => {
+    const newMission = await createMission(sprint, formData);
+    if (newMission) {
+      setActiveMission(newMission);
+      setActiveProgress(new Map());
+      setShowWizard(false);
+    }
+  };
+
+  // Handle progress update from dashboard
+  const handleProgressUpdate = async (
+    updatedSprint: GeneratedSprint,
+    completedActionIds: string[]
+  ) => {
+    if (!activeMission) return;
+
+    // Update all actions in database
+    for (const action of updatedSprint.actions) {
+      await updateActionProgress(activeMission.id, action.id, action.status);
+    }
+
+    // Update local cache
+    setProgressCache((prev) => {
+      const newCache = new Map(prev);
+      newCache.set(activeMission.id, completedActionIds.length);
+      return newCache;
     });
-    
-    setSavedSprints(updated);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    
-    if (activeSprint?.id === sprintId) {
-      setActiveSprint({ ...activeSprint, sprint: updatedSprint, completedActions });
-    }
   };
 
-  // Open sprint
-  const openSprint = (sprint: SavedSprint) => {
-    setActiveSprint(sprint);
-    setShowWizard(false);
-  };
-
-  // Calculate sprint progress
-  const getProgress = (sprint: SavedSprint) => {
-    const completed = sprint.sprint.actions.filter(a => a.status === 'completed').length;
-    return Math.round((completed / sprint.sprint.actions.length) * 100);
+  // Calculate progress percentage
+  const getProgress = (mission: SprintMission) => {
+    const completedCount = progressCache.get(mission.id) || 0;
+    const total = mission.sprint.actions.length;
+    return Math.round((completedCount / total) * 100);
   };
 
   // Render wizard for new sprint
@@ -187,27 +131,45 @@ export const SprintMissionTab = ({ onNavigate }: SprintMissionTabProps = {}) => 
   }
 
   // Render active sprint dashboard
-  if (activeSprint) {
+  if (activeMission) {
+    // Merge database progress with sprint actions
+    const sprintWithProgress: GeneratedSprint = {
+      ...activeMission.sprint,
+      actions: activeMission.sprint.actions.map((action) => ({
+        ...action,
+        status: activeProgress.get(action.id) || action.status,
+      })),
+    };
+
     return (
       <div className="space-y-4">
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => setActiveSprint(null)}
+          onClick={() => setActiveMission(null)}
           className="text-white/50 hover:text-white hover:bg-white/10"
         >
           ← Voltar às metas
         </Button>
         <SprintDashboard
-          sprint={activeSprint.sprint}
+          sprint={sprintWithProgress}
           userName={userName}
-          formData={activeSprint.formData}
-          onReset={() => setActiveSprint(null)}
+          formData={activeMission.formData}
+          onReset={() => setActiveMission(null)}
           onNavigate={onNavigate}
-          onUpdate={(updatedSprint, completedActions) => 
-            updateSprintProgress(activeSprint.id, updatedSprint, completedActions)
-          }
+          onUpdate={handleProgressUpdate}
+          missionId={activeMission.id}
+          updateActionProgress={updateActionProgress}
         />
+      </div>
+    );
+  }
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
       </div>
     );
   }
@@ -217,7 +179,7 @@ export const SprintMissionTab = ({ onNavigate }: SprintMissionTabProps = {}) => 
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3">
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
             <Rocket className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
           </div>
@@ -238,7 +200,7 @@ export const SprintMissionTab = ({ onNavigate }: SprintMissionTabProps = {}) => 
       </div>
 
       {/* Sprint Cards - Matching Library Design */}
-      {savedSprints.length > 0 ? (
+      {missions.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-6xl">
           {/* Create New Card */}
           <motion.button
@@ -254,14 +216,14 @@ export const SprintMissionTab = ({ onNavigate }: SprintMissionTabProps = {}) => 
             <span className="text-xs text-muted-foreground mt-1">Definir objetivo</span>
           </motion.button>
 
-          {savedSprints.map((saved, index) => {
-            const progress = getProgress(saved);
-            const completedCount = saved.sprint.actions.filter(a => a.status === 'completed').length;
-            const createdDate = new Date(saved.createdAt).toLocaleDateString('pt-BR');
-            
+          {missions.map((mission, index) => {
+            const progress = getProgress(mission);
+            const completedCount = progressCache.get(mission.id) || 0;
+            const createdDate = new Date(mission.createdAt).toLocaleDateString('pt-BR');
+
             return (
               <motion.div
-                key={saved.id}
+                key={mission.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
@@ -269,7 +231,7 @@ export const SprintMissionTab = ({ onNavigate }: SprintMissionTabProps = {}) => 
               >
                 <div
                   className="relative rounded-xl border bg-white/5 overflow-hidden transition-all duration-300 min-h-[220px] flex flex-col cursor-pointer hover:border-blue-500/40 hover:shadow-xl hover:shadow-blue-500/5 hover:bg-white/10 border-white/10"
-                  onClick={() => openSprint(saved)}
+                  onClick={() => openMission(mission)}
                 >
                   {/* Header with Icon */}
                   <div className="p-5 pb-3 flex items-start gap-4">
@@ -278,10 +240,10 @@ export const SprintMissionTab = ({ onNavigate }: SprintMissionTabProps = {}) => 
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-base font-semibold text-foreground truncate">
-                        {saved.sprint.mission_name}
+                        {mission.sprint.mission_name}
                       </h3>
                       <p className="text-xs text-muted-foreground truncate mt-0.5">
-                        {saved.sprint.goal_summary}
+                        {mission.sprint.goal_summary}
                       </p>
                     </div>
                   </div>
@@ -292,11 +254,11 @@ export const SprintMissionTab = ({ onNavigate }: SprintMissionTabProps = {}) => 
                     <div className="flex items-center gap-2">
                       <span className="text-xs uppercase tracking-wider text-muted-foreground">Progresso</span>
                       <span className={`px-2.5 py-0.5 rounded text-xs font-semibold ${
-                        progress === 100 
+                        progress === 100
                           ? 'bg-emerald-500/20 text-emerald-300'
                           : 'bg-blue-500/20 text-blue-300'
                       }`}>
-                        {progress}% ({completedCount}/{saved.sprint.actions.length})
+                        {progress}% ({completedCount}/{mission.sprint.actions.length})
                       </span>
                     </div>
 
@@ -304,7 +266,7 @@ export const SprintMissionTab = ({ onNavigate }: SprintMissionTabProps = {}) => 
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Calendar className="w-3.5 h-3.5" />
                       <span className="uppercase tracking-wider">Prazo</span>
-                      <span className="text-foreground/80 ml-auto">{saved.sprint.total_days} dias</span>
+                      <span className="text-foreground/80 ml-auto">{mission.sprint.total_days} dias</span>
                     </div>
 
                     {/* Created At */}
@@ -317,7 +279,7 @@ export const SprintMissionTab = ({ onNavigate }: SprintMissionTabProps = {}) => 
                     {/* Daily Target */}
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <TrendingUp className="w-3.5 h-3.5" />
-                      <span className="uppercase tracking-wider truncate flex-1">{saved.sprint.daily_target}</span>
+                      <span className="uppercase tracking-wider truncate flex-1">{mission.sprint.daily_target}</span>
                     </div>
                   </div>
 
@@ -332,7 +294,7 @@ export const SprintMissionTab = ({ onNavigate }: SprintMissionTabProps = {}) => 
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        openSprint(saved);
+                        openMission(mission);
                       }}
                       className="flex-1 h-9 text-sm bg-blue-500 hover:bg-blue-600 text-white font-semibold"
                     >
@@ -349,7 +311,7 @@ export const SprintMissionTab = ({ onNavigate }: SprintMissionTabProps = {}) => 
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
-                            deleteSprint(saved.id);
+                            deleteMission(mission.id);
                           }}
                           className="text-destructive focus:text-destructive"
                         >

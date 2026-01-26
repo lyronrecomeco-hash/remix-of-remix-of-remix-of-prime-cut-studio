@@ -7667,6 +7667,77 @@ export type Database = {
         }
         Relationships: []
       }
+      genesis_sprint_missions: {
+        Row: {
+          affiliate_id: string
+          created_at: string | null
+          form_answers: Json | null
+          id: string
+          is_active: boolean | null
+          last_reset_at: string | null
+          mission_data: Json
+          updated_at: string | null
+        }
+        Insert: {
+          affiliate_id: string
+          created_at?: string | null
+          form_answers?: Json | null
+          id?: string
+          is_active?: boolean | null
+          last_reset_at?: string | null
+          mission_data: Json
+          updated_at?: string | null
+        }
+        Update: {
+          affiliate_id?: string
+          created_at?: string | null
+          form_answers?: Json | null
+          id?: string
+          is_active?: boolean | null
+          last_reset_at?: string | null
+          mission_data?: Json
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      genesis_sprint_progress: {
+        Row: {
+          action_id: string
+          completed_at: string | null
+          created_at: string | null
+          date: string | null
+          id: string
+          mission_id: string
+          status: string | null
+        }
+        Insert: {
+          action_id: string
+          completed_at?: string | null
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          mission_id: string
+          status?: string | null
+        }
+        Update: {
+          action_id?: string
+          completed_at?: string | null
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          mission_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_sprint_progress_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_sprint_missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       genesis_subscriptions: {
         Row: {
           created_at: string
