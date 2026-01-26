@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.checkout-refund-payment]
 verify_jwt = false
+
+[functions.manage-api-keys]
+verify_jwt = false
