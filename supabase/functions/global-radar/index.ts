@@ -275,28 +275,49 @@ serve(async (req) => {
     const places = searchData.places || [];
 
     // Buscar dados do usuário para o histórico
-    const { data: userData } = await supabase
+    const { data: userData, error: userError } = await supabase
       .from('genesis_users')
       .select('id, name, email')
       .eq('id', affiliateId)
       .single();
 
-    // Registrar no histórico de pesquisas
-    await supabase
-      .from('genesis_search_history')
-      .insert({
+    if (userError) {
+      console.log(`⚠️ User not found for affiliateId ${affiliateId}, using fallback`);
+    } else {
+      console.log(`👤 User found: ${userData?.name} (${userData?.email})`);
+    }
+
+    // Registrar no histórico de pesquisas COM try-catch para não quebrar a função
+    try {
+      const historyRecord = {
         user_id: affiliateId,
-        user_name: userData?.name || 'Unknown',
+        user_name: userData?.name || 'Usuário Genesis',
         user_email: userData?.email || '',
         search_type: 'radar',
         search_query: searchQuery,
         city: city,
-        region: selectedRegion,
+        state: selectedRegion, // Usar 'state' em vez de 'region' para compatibilidade
         niche: selectedNiche,
         results_count: places.length,
         api_key_id: usedKeyId,
         credits_used: 1
-      });
+      };
+
+      console.log('📝 Salvando histórico radar:', JSON.stringify(historyRecord));
+
+      const { error: historyError } = await supabase
+        .from('genesis_search_history')
+        .insert(historyRecord);
+      
+      if (historyError) {
+        console.error('❌ Erro ao salvar histórico radar:', historyError.message, historyError.details);
+      } else {
+        console.log(`✅ Histórico radar salvo: ${places.length} resultados para ${userData?.name || affiliateId}`);
+      }
+    } catch (historyException) {
+      console.error('❌ Exceção ao salvar histórico:', historyException);
+      // Não quebrar a função principal se o histórico falhar
+    }
 
     if (places.length === 0) {
       return new Response(

@@ -162,6 +162,7 @@ export const SearchClientsCard = ({ affiliateId, onAddProspect }: SearchClientsC
           state,
           niche,
           maxResults: parseInt(maxResults, 10),
+          affiliateId: affiliateId // Passa affiliateId para salvar histórico
         },
       });
 
