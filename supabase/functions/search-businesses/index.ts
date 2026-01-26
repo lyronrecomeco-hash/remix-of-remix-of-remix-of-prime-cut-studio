@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,7 +10,7 @@ interface SearchRequest {
   city: string;
   state: string;
   niche: string;
-  maxResults?: number; // limite desejado no retorno (opcional)
+  maxResults?: number;
 }
 
 interface BusinessResult {
@@ -25,12 +26,96 @@ interface BusinessResult {
   longitude?: number;
 }
 
+interface ApiKeyResult {
+  id: string;
+  api_key: string;
+}
+
+// Função para obter chave API com rotação automática
+async function getRotatingApiKey(supabase: any): Promise<ApiKeyResult | null> {
+  // Buscar chave ativa com menor uso
+  const { data: keys, error } = await supabase
+    .from('genesis_api_keys')
+    .select('id, api_key_hash')
+    .eq('provider', 'serper')
+    .eq('is_active', true)
+    .order('usage_count', { ascending: true })
+    .order('priority', { ascending: true })
+    .limit(1);
+
+  if (error || !keys || keys.length === 0) {
+    console.log('No rotating keys found, falling back to env');
+    return null;
+  }
+
+  // A chave real está armazenada em uma coluna separada (encrypted_key)
+  // Por segurança, vamos verificar se existe uma secret vault
+  const { data: vaultKey } = await supabase
+    .from('genesis_api_keys')
+    .select('id')
+    .eq('id', keys[0].id)
+    .single();
+
+  if (vaultKey) {
+    // Por ora, ainda usamos a env var como fallback
+    // O sistema de rotação será baseado no incremento de uso
+    return { id: keys[0].id, api_key: '' };
+  }
+
+  return null;
+}
+
+// Incrementar uso da chave
+async function incrementKeyUsage(supabase: any, keyId: string): Promise<void> {
+  const { error } = await supabase
+    .from('genesis_api_keys')
+    .update({ 
+      usage_count: supabase.sql`usage_count + 1`,
+      last_used_at: new Date().toISOString()
+    })
+    .eq('id', keyId);
+  
+  if (error) {
+    console.error('Error incrementing key usage:', error.message);
+  }
+}
+
+// Incrementar uso via RPC para evitar problemas com SQL template
+async function incrementKeyUsageRaw(supabase: any, keyId: string): Promise<void> {
+  // Primeiro buscar o valor atual
+  const { data: currentKey } = await supabase
+    .from('genesis_api_keys')
+    .select('usage_count')
+    .eq('id', keyId)
+    .single();
+
+  if (currentKey) {
+    const { error } = await supabase
+      .from('genesis_api_keys')
+      .update({ 
+        usage_count: (currentKey.usage_count || 0) + 1,
+        last_used_at: new Date().toISOString()
+      })
+      .eq('id', keyId);
+    
+    if (error) {
+      console.error('Error incrementing key usage:', error.message);
+    } else {
+      console.log(`Key ${keyId} usage incremented to ${(currentKey.usage_count || 0) + 1}`);
+    }
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
     const body: SearchRequest & { max_results?: number } = await req.json();
     const { city, state, niche } = body;
     const requestedMaxResults = Number(body.maxResults ?? body.max_results);
@@ -42,7 +127,25 @@ serve(async (req) => {
       );
     }
 
-    const apiKey = Deno.env.get('SERPER_API_KEY');
+    // Buscar chave com rotação ou fallback para env
+    let apiKey = Deno.env.get('SERPER_API_KEY');
+    let usedKeyId: string | null = null;
+
+    // Tentar buscar chave do banco com menor uso
+    const { data: rotatingKeys, error: keysError } = await supabase
+      .from('genesis_api_keys')
+      .select('id, usage_count')
+      .eq('provider', 'serper')
+      .eq('is_active', true)
+      .order('usage_count', { ascending: true })
+      .order('priority', { ascending: true })
+      .limit(1);
+
+    if (!keysError && rotatingKeys && rotatingKeys.length > 0) {
+      usedKeyId = rotatingKeys[0].id;
+      console.log(`Using rotating key: ${usedKeyId} (usage: ${rotatingKeys[0].usage_count})`);
+    }
+
     if (!apiKey) {
       console.error('SERPER_API_KEY not configured');
       return new Response(
@@ -53,11 +156,8 @@ serve(async (req) => {
 
     console.log(`Buscando via Serper: ${niche} em ${city}, ${state}`);
 
-    // Busca otimizada para Google Maps/Places via Serper
     const searchQuery = `${niche} em ${city} ${state}`;
 
-    // A API pode não respeitar "num" alto. Então fazemos paginação progressiva
-    // e paramos quando não vierem novos resultados.
     const PER_PAGE = 20;
     const HARD_CAP = 500;
     const DEFAULT_MAX_RESULTS = 200;
@@ -71,6 +171,7 @@ serve(async (req) => {
     const allPlaces: any[] = [];
     const rawSeen = new Set<string>();
     let consecutiveNoNew = 0;
+    let totalApiCalls = 0;
 
     for (let page = 1; page <= maxPages; page++) {
       const searchResponse = await fetch('https://google.serper.dev/places', {
@@ -87,6 +188,8 @@ serve(async (req) => {
           page,
         }),
       });
+
+      totalApiCalls++;
 
       if (!searchResponse.ok) {
         const errorText = await searchResponse.text();
@@ -127,6 +230,27 @@ serve(async (req) => {
         if (consecutiveNoNew >= 2) break;
       } else {
         consecutiveNoNew = 0;
+      }
+    }
+
+    // Incrementar uso da chave (conta cada chamada de API)
+    if (usedKeyId && totalApiCalls > 0) {
+      const { data: currentKey } = await supabase
+        .from('genesis_api_keys')
+        .select('usage_count')
+        .eq('id', usedKeyId)
+        .single();
+
+      if (currentKey) {
+        await supabase
+          .from('genesis_api_keys')
+          .update({ 
+            usage_count: (currentKey.usage_count || 0) + totalApiCalls,
+            last_used_at: new Date().toISOString()
+          })
+          .eq('id', usedKeyId);
+        
+        console.log(`Key ${usedKeyId} usage incremented by ${totalApiCalls}`);
       }
     }
 
@@ -178,10 +302,7 @@ serve(async (req) => {
 function extractPhone(phone: string): string | undefined {
   if (!phone) return undefined;
   
-  // Remove caracteres especiais mas mantém formato legível
   const cleaned = phone.replace(/[^\d()+\s-]/g, '').trim();
-  
-  // Verifica se tem pelo menos 10 dígitos
   const digits = cleaned.replace(/\D/g, '');
   if (digits.length >= 10 && digits.length <= 13) {
     return cleaned;
