@@ -208,7 +208,8 @@ export const SearchClientsTab = ({ affiliateId, affiliateName, onAddProspect, on
           countryCode, 
           niche, 
           maxResults: 30,
-          affiliateName: currentAffiliateName || 'Consultor Genesis'
+          affiliateName: currentAffiliateName || 'Consultor Genesis',
+          affiliateId: affiliateId // Passa affiliateId para salvar histórico
         },
       });
 

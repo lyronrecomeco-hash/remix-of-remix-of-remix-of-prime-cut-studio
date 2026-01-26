@@ -188,7 +188,8 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
           countryCode, 
           niche, 
           maxResults: 100,
-          affiliateName: 'Consultor Genesis'
+          affiliateName: 'Consultor Genesis',
+          affiliateId: userId // Passa o userId para salvar histórico
         },
       });
 

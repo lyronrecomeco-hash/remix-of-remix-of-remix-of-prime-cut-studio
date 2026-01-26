@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -950,14 +951,19 @@ function adaptMessage(templateConfig: { base: string; variations: string[] }, af
     .replace(/{DEMO_LINK}/g, demoLink);
 }
 
+// Extended interface to include affiliateId
+interface SearchRequestWithAffiliate extends SearchRequest {
+  affiliateId?: string;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const body: SearchRequest = await req.json();
-    const { city, countryCode, niche, maxResults: requestedMax, affiliateName } = body;
+    const body: SearchRequestWithAffiliate = await req.json();
+    const { city, countryCode, niche, maxResults: requestedMax, affiliateName, affiliateId } = body;
 
     if (!city || !countryCode || !niche) {
       return new Response(
@@ -1144,6 +1150,55 @@ serve(async (req) => {
       .filter((r: BusinessResult | null): r is BusinessResult => !!r);
 
     console.log(`Final results with messages: ${results.length}`);
+
+    // Salvar histórico de pesquisa COM try-catch robusto
+    if (affiliateId) {
+      try {
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        // Buscar dados do usuário
+        const { data: userData, error: userError } = await supabase
+          .from('genesis_users')
+          .select('id, name, email')
+          .eq('id', affiliateId)
+          .single();
+
+        if (userError) {
+          console.log(`⚠️ User not found for affiliateId ${affiliateId}`);
+        }
+
+        const historyRecord = {
+          user_id: affiliateId,
+          user_name: userData?.name || consultantName,
+          user_email: userData?.email || '',
+          search_type: 'global_prospecting',
+          search_query: searchQuery,
+          city: cityName,
+          state: stateAbbr || countryCode,
+          niche: niche,
+          results_count: results.length,
+          credits_used: 1
+        };
+
+        console.log('📝 Salvando histórico global:', JSON.stringify(historyRecord));
+
+        const { error: historyError } = await supabase
+          .from('genesis_search_history')
+          .insert(historyRecord);
+        
+        if (historyError) {
+          console.error('❌ Erro ao salvar histórico global:', historyError.message, historyError.details);
+        } else {
+          console.log(`✅ Histórico global salvo: ${results.length} resultados para ${userData?.name || affiliateId}`);
+        }
+      } catch (historyException) {
+        console.error('❌ Exceção ao salvar histórico:', historyException);
+      }
+    } else {
+      console.log('⚠️ affiliateId não fornecido, histórico não será salvo');
+    }
 
     return new Response(
       JSON.stringify({ success: true, results, countryCode }),

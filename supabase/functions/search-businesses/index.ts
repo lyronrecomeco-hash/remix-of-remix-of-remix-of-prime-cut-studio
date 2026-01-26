@@ -11,6 +11,7 @@ interface SearchRequest {
   state: string;
   niche: string;
   maxResults?: number;
+  affiliateId?: string; // ID do usuário Genesis para salvar histórico
 }
 
 interface BusinessResult {
@@ -117,7 +118,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const body: SearchRequest & { max_results?: number } = await req.json();
-    const { city, state, niche } = body;
+    const { city, state, niche, affiliateId } = body;
     const requestedMaxResults = Number(body.maxResults ?? body.max_results);
 
     if (!city || !state || !niche) {
@@ -253,68 +254,96 @@ serve(async (req) => {
         console.log(`Key ${usedKeyId} usage incremented by ${totalApiCalls}`);
       }
 
-      // Registrar no histórico de pesquisas
-      const authHeader = req.headers.get('authorization');
-      let searchUserId: string | null = null;
-      let authUserId: string | null = null;
-      let searchUserName = 'Sistema';
-      let searchUserEmail = '';
+      // Registrar no histórico de pesquisas COM try-catch robusto
+      try {
+        let searchUserId: string | null = affiliateId || null; // Prioriza affiliateId do body
+        let authUserId: string | null = null;
+        let searchUserName = 'Usuário Genesis';
+        let searchUserEmail = '';
 
-      if (authHeader?.startsWith('Bearer ')) {
-        try {
-          const token = authHeader.replace('Bearer ', '');
-          const { data: { user } } = await supabase.auth.getUser(token);
-          if (user) {
-            authUserId = user.id;
-            // Buscar dados do genesis_user
-            const { data: genesisUser } = await supabase
-              .from('genesis_users')
-              .select('id, name, email')
-              .eq('auth_user_id', user.id)
-              .maybeSingle();
-            
-            if (genesisUser) {
-              searchUserId = genesisUser.id;
-              searchUserName = genesisUser.name || 'Usuário';
-              searchUserEmail = genesisUser.email || user.email || '';
-            } else {
-              searchUserName = user.email?.split('@')[0] || 'Usuário';
-              searchUserEmail = user.email || '';
-            }
-            
-            console.log(`👤 Usuário identificado: ${searchUserName} (auth: ${authUserId}, genesis: ${searchUserId})`);
+        // Se affiliateId foi passado, buscar dados do usuário
+        if (affiliateId) {
+          const { data: genesisUser, error: userError } = await supabase
+            .from('genesis_users')
+            .select('id, name, email')
+            .eq('id', affiliateId)
+            .single();
+          
+          if (!userError && genesisUser) {
+            searchUserId = genesisUser.id;
+            searchUserName = genesisUser.name || 'Usuário Genesis';
+            searchUserEmail = genesisUser.email || '';
+            console.log(`👤 Usuário via affiliateId: ${searchUserName} (${searchUserEmail})`);
+          } else {
+            console.log(`⚠️ affiliateId ${affiliateId} não encontrado no genesis_users`);
           }
-        } catch (e) {
-          console.log('Could not get user info for history:', e);
+        } else {
+          // Fallback: tentar obter via auth header
+          const authHeader = req.headers.get('authorization');
+          if (authHeader?.startsWith('Bearer ')) {
+            try {
+              const token = authHeader.replace('Bearer ', '');
+              const { data: { user } } = await supabase.auth.getUser(token);
+              if (user) {
+                authUserId = user.id;
+                const { data: genesisUser } = await supabase
+                  .from('genesis_users')
+                  .select('id, name, email')
+                  .eq('auth_user_id', user.id)
+                  .maybeSingle();
+                
+                if (genesisUser) {
+                  searchUserId = genesisUser.id;
+                  searchUserName = genesisUser.name || 'Usuário';
+                  searchUserEmail = genesisUser.email || user.email || '';
+                } else {
+                  searchUserName = user.email?.split('@')[0] || 'Usuário';
+                  searchUserEmail = user.email || '';
+                }
+                
+                console.log(`👤 Usuário via auth: ${searchUserName} (auth: ${authUserId}, genesis: ${searchUserId})`);
+              }
+            } catch (e) {
+              console.log('Could not get user info from auth:', e);
+            }
+          }
         }
-      }
 
-      // Inserir registro de histórico
-      const historyRecord = {
-        user_id: searchUserId || usedKeyId || '00000000-0000-0000-0000-000000000000',
-        auth_user_id: authUserId,
-        user_name: searchUserName,
-        user_email: searchUserEmail,
-        search_type: 'prospecting',
-        search_query: searchQuery,
-        city: city,
-        state: state,
-        niche: niche,
-        results_count: allPlaces.length,
-        api_key_id: usedKeyId,
-        credits_used: totalApiCalls
-      };
+        // Só salvar histórico se temos um user_id válido
+        if (!searchUserId) {
+          console.log('⚠️ Nenhum user_id válido, histórico não será salvo');
+        } else {
+          // Inserir registro de histórico
+          const historyRecord = {
+            user_id: searchUserId,
+            auth_user_id: authUserId,
+            user_name: searchUserName,
+            user_email: searchUserEmail,
+            search_type: 'prospecting',
+            search_query: searchQuery,
+            city: city,
+            state: state,
+            niche: niche,
+            results_count: allPlaces.length,
+            api_key_id: usedKeyId,
+            credits_used: totalApiCalls
+          };
 
-      console.log('📝 Salvando histórico:', JSON.stringify(historyRecord));
+          console.log('📝 Salvando histórico prospecting:', JSON.stringify(historyRecord));
 
-      const { error: historyError } = await supabase
-        .from('genesis_search_history')
-        .insert(historyRecord);
-      
-      if (historyError) {
-        console.error('❌ Erro ao salvar histórico:', historyError.message);
-      } else {
-        console.log(`✅ Histórico salvo: ${allPlaces.length} resultados para ${searchUserName}`);
+          const { error: historyError } = await supabase
+            .from('genesis_search_history')
+            .insert(historyRecord);
+          
+          if (historyError) {
+            console.error('❌ Erro ao salvar histórico:', historyError.message, historyError.details);
+          } else {
+            console.log(`✅ Histórico salvo: ${allPlaces.length} resultados para ${searchUserName}`);
+          }
+        }
+      } catch (historyException) {
+        console.error('❌ Exceção ao salvar histórico:', historyException);
+        // Não quebrar a função principal se o histórico falhar
       }
     }
 
