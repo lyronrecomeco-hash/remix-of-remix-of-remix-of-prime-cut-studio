@@ -1,5 +1,13 @@
 // Contextos automáticos por nicho para geração de prompts ultra-completos
 
+// Tipos de requisitos backend por nicho
+export interface BackendRequirement {
+  id: string;
+  name: string;
+  description: string;
+  technicalSpec: string;
+}
+
 export interface NicheContext {
   id: string;
   name: string;
@@ -17,6 +25,8 @@ export interface NicheContext {
     secondary: string;
     name: string;
   }[];
+  // NOVO: Requisitos de backend funcional
+  backendRequirements?: BackendRequirement[];
 }
 
 export const NICHE_CONTEXTS: NicheContext[] = [
@@ -40,8 +50,7 @@ export const NICHE_CONTEXTS: NicheContext[] = [
     suggestedFeatures: [
       'Cardápio interativo com categorias',
       'Fotos em alta qualidade dos produtos',
-      'Botão WhatsApp flutuante',
-      'Mapa de localização Google Maps',
+      'Sistema de carrinho de pedidos',
       'Horário de funcionamento',
       'Sistema de promoções com destaque',
       'Galeria de fotos do ambiente',
@@ -53,6 +62,160 @@ export const NICHE_CONTEXTS: NicheContext[] = [
       { primary: '#dc2626', secondary: '#fbbf24', name: 'Vermelho & Amarelo (Clássico)' },
       { primary: '#ea580c', secondary: '#1c1917', name: 'Laranja & Preto (Premium)' },
       { primary: '#b91c1c', secondary: '#fef3c7', name: 'Vermelho Escuro & Creme' }
+    ],
+    backendRequirements: [
+      {
+        id: 'cart-system',
+        name: 'Sistema de Carrinho',
+        description: 'Carrinho de compras completo com persistência local',
+        technicalSpec: `
+## CARRINHO DE COMPRAS (localStorage)
+
+### Estado do Carrinho:
+\`\`\`typescript
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  size?: 'P' | 'M' | 'G' | 'GG';
+  extras?: { name: string; price: number }[];
+  observations?: string;
+  imageUrl?: string;
+}
+
+interface Cart {
+  items: CartItem[];
+  subtotal: number;
+  deliveryFee: number;
+  total: number;
+  deliveryType: 'delivery' | 'pickup';
+}
+\`\`\`
+
+### Funcionalidades Obrigatórias:
+- Adicionar item ao carrinho com quantidade
+- Selecionar tamanho do lanche (P, M, G, GG) com preços diferentes
+- Adicionar extras/adicionais (bacon extra, queijo extra, etc) com preço individual
+- Campo de observações por item ("sem cebola", "bem passado", etc)
+- Atualizar quantidade de itens
+- Remover itens do carrinho
+- Calcular subtotal automaticamente
+- Opção de entrega ou retirada
+- Taxa de entrega (R$ 5-10 configurável)
+- Calcular total final
+- Persistir carrinho no localStorage
+- Badge com contador de itens no ícone do carrinho
+- Drawer/Modal lateral para visualizar carrinho
+`
+      },
+      {
+        id: 'whatsapp-order',
+        name: 'Pedido via WhatsApp',
+        description: 'Mensagem formatada com pedido completo',
+        technicalSpec: `
+## INTEGRAÇÃO WHATSAPP PARA PEDIDOS
+
+### Fluxo de Checkout:
+1. Cliente monta o pedido no carrinho
+2. Escolhe entrega ou retirada
+3. Se entrega: preenche endereço completo (rua, número, bairro, complemento, CEP)
+4. Preenche nome e telefone
+5. Escolhe forma de pagamento (Dinheiro, PIX, Cartão na entrega)
+6. Se dinheiro: campo para "troco para quanto?"
+7. Clica em "Enviar Pedido"
+
+### Formato da Mensagem WhatsApp:
+\`\`\`
+🍔 *NOVO PEDIDO - [NOME DA HAMBURGUERIA]*
+
+📋 *ITENS DO PEDIDO:*
+━━━━━━━━━━━━━━━━━
+[Para cada item:]
+• 2x Hambúrguer Artesanal (G) - R$ 45,00
+   ➕ Bacon extra (+R$ 5,00)
+   ➕ Queijo cheddar (+R$ 4,00)
+   📝 Obs: Sem cebola, bem passado
+
+• 1x Batata Frita Grande - R$ 18,00
+━━━━━━━━━━━━━━━━━
+
+💰 *RESUMO:*
+Subtotal: R$ 72,00
+Taxa de entrega: R$ 8,00
+*TOTAL: R$ 80,00*
+
+📍 *ENTREGA:*
+Nome: João Silva
+Tel: (11) 99999-9999
+Endereço: Rua das Flores, 123
+Bairro: Centro
+Complemento: Apt 45
+CEP: 01234-567
+
+💳 *PAGAMENTO:*
+Dinheiro (troco para R$ 100)
+
+⏰ Pedido realizado: 14/01/2025 às 19:45
+\`\`\`
+
+### Código de Geração:
+\`\`\`typescript
+function generateWhatsAppMessage(cart: Cart, customer: CustomerInfo): string {
+  // Formatar mensagem conforme template acima
+  // Usar encodeURIComponent para URL
+  // Retornar link: https://wa.me/55XXXXXXXXXXX?text=MENSAGEM
+}
+\`\`\`
+`
+      },
+      {
+        id: 'menu-management',
+        name: 'Cardápio Dinâmico',
+        description: 'Sistema de cardápio com categorias e preços',
+        technicalSpec: `
+## ESTRUTURA DO CARDÁPIO
+
+### Categorias:
+- Hamburgueres
+- Combos
+- Porções
+- Bebidas
+- Sobremesas
+
+### Estrutura de Dados:
+\`\`\`typescript
+interface MenuItem {
+  id: string;
+  category: string;
+  name: string;
+  description: string;
+  prices: {
+    size: 'P' | 'M' | 'G' | 'GG';
+    price: number;
+  }[];
+  extras: {
+    name: string;
+    price: number;
+  }[];
+  imageUrl: string;
+  isAvailable: boolean;
+  isPromotion: boolean;
+  promotionPrice?: number;
+}
+\`\`\`
+
+### UI do Cardápio:
+- Tabs ou accordion por categoria
+- Card de produto com imagem, nome, descrição, preço "a partir de"
+- Modal de detalhes ao clicar no produto
+- Seletor de tamanho com preços
+- Checkboxes para adicionais
+- Campo de observações
+- Botão "Adicionar ao Carrinho"
+- Feedback visual de item adicionado
+`
+      }
     ]
   },
   {
@@ -74,7 +237,7 @@ export const NICHE_CONTEXTS: NicheContext[] = [
     suggestedFeatures: [
       'Cardápio categorizado por sabores',
       'Fotos das pizzas em destaque',
-      'Botão WhatsApp flutuante',
+      'Sistema de carrinho',
       'Tempo estimado de entrega',
       'Promoções do dia',
       'Galeria do ambiente',
@@ -86,6 +249,93 @@ export const NICHE_CONTEXTS: NicheContext[] = [
       { primary: '#dc2626', secondary: '#16a34a', name: 'Vermelho & Verde (Italiano)' },
       { primary: '#b91c1c', secondary: '#fef3c7', name: 'Vermelho & Creme' },
       { primary: '#1c1917', secondary: '#dc2626', name: 'Preto & Vermelho (Premium)' }
+    ],
+    backendRequirements: [
+      {
+        id: 'pizza-builder',
+        name: 'Montador de Pizza',
+        description: 'Sistema de pizza meio-a-meio e personalizada',
+        technicalSpec: `
+## SISTEMA DE MONTAGEM DE PIZZA
+
+### Funcionalidades:
+1. Escolher tamanho (Broto, Média, Grande, Gigante)
+2. Opção de pizza inteira ou meio-a-meio
+3. Se meio-a-meio: selecionar 2 sabores
+4. Preço = maior preço dos 2 sabores
+5. Bordas recheadas como adicional
+6. Campo de observações
+
+### Estrutura:
+\`\`\`typescript
+interface PizzaOrder {
+  size: 'broto' | 'media' | 'grande' | 'gigante';
+  isHalfHalf: boolean;
+  flavor1: string;
+  flavor2?: string;
+  stuffedCrust?: 'catupiry' | 'cheddar' | 'chocolate';
+  observations?: string;
+  price: number;
+}
+\`\`\`
+
+### Cálculo de Preço Meio-a-Meio:
+\`\`\`typescript
+const price = isHalfHalf 
+  ? Math.max(flavor1Price, flavor2Price) 
+  : flavor1Price;
+\`\`\`
+`
+      },
+      {
+        id: 'cart-system',
+        name: 'Sistema de Carrinho',
+        description: 'Carrinho com pizzas e acompanhamentos',
+        technicalSpec: `
+## CARRINHO PARA PIZZARIA
+
+Similar ao sistema de hamburgueria, mas adaptado:
+- Suporte a pizzas meio-a-meio
+- Bebidas (2L, lata, 600ml)
+- Bordas recheadas
+- Sobremesas
+- Taxa de entrega por região
+- Tempo estimado de entrega exibido
+`
+      },
+      {
+        id: 'whatsapp-order',
+        name: 'Pedido via WhatsApp',
+        description: 'Mensagem formatada para pedido de pizza',
+        technicalSpec: `
+## MENSAGEM WHATSAPP PIZZARIA
+
+\`\`\`
+🍕 *NOVO PEDIDO - [NOME DA PIZZARIA]*
+
+📋 *PIZZAS:*
+━━━━━━━━━━━━━━━━━
+• 1x Pizza Grande
+   🍕 1/2 Calabresa + 1/2 Portuguesa
+   🧀 Borda: Catupiry (+R$ 8,00)
+   📝 Obs: Bem assada
+
+• 1x Pizza Média
+   🍕 Margherita
+━━━━━━━━━━━━━━━━━
+
+🥤 *BEBIDAS:*
+• 1x Coca-Cola 2L - R$ 14,00
+
+💰 *TOTAL: R$ 95,00*
+
+📍 *ENTREGA:*
+[dados do cliente]
+
+⏰ Tempo estimado: 45-60 min
+\`\`\`
+`
+      }
     ]
   },
   {
@@ -110,8 +360,7 @@ export const NICHE_CONTEXTS: NicheContext[] = [
       'Galeria do ambiente',
       'Menu do chef',
       'Calendário de eventos',
-      'Depoimentos',
-      'Mapa de localização'
+      'Depoimentos'
     ],
     seoKeywords: ['restaurante', 'gastronomia', 'reserva restaurante', 'jantar especial', 'experiência gastronômica'],
     commonSections: ['Hero atmosférico', 'Cardápio', 'Sobre o chef', 'Galeria', 'Reservas', 'Eventos'],
@@ -119,6 +368,58 @@ export const NICHE_CONTEXTS: NicheContext[] = [
       { primary: '#1c1917', secondary: '#d4af37', name: 'Preto & Dourado (Elegante)' },
       { primary: '#7c2d12', secondary: '#fef3c7', name: 'Marrom & Creme (Aconchegante)' },
       { primary: '#166534', secondary: '#fef3c7', name: 'Verde & Creme (Orgânico)' }
+    ],
+    backendRequirements: [
+      {
+        id: 'reservation-system',
+        name: 'Sistema de Reservas',
+        description: 'Reserva de mesas online com confirmação',
+        technicalSpec: `
+## SISTEMA DE RESERVAS
+
+### Formulário de Reserva:
+\`\`\`typescript
+interface Reservation {
+  date: Date;
+  time: string; // slots: 12:00, 12:30, 13:00...
+  partySize: number; // 1-12 pessoas
+  name: string;
+  phone: string;
+  email: string;
+  occasion?: 'aniversario' | 'romantico' | 'negocios' | 'outro';
+  specialRequests?: string;
+}
+\`\`\`
+
+### Funcionalidades:
+1. Calendário para selecionar data (apenas dias futuros)
+2. Horários disponíveis baseados no dia
+3. Seletor de quantidade de pessoas
+4. Campos de contato obrigatórios
+5. Ocasião especial (opcional)
+6. Pedidos especiais (cadeirinha, aniversário, etc)
+7. Envio via WhatsApp formatado OU email
+8. Confirmação visual após envio
+
+### Mensagem WhatsApp:
+\`\`\`
+🍽️ *NOVA RESERVA - [RESTAURANTE]*
+
+📅 Data: 15/01/2025
+⏰ Horário: 20:00
+👥 Pessoas: 4
+
+👤 Nome: Maria Silva
+📱 Tel: (11) 99999-9999
+📧 Email: maria@email.com
+
+🎉 Ocasião: Aniversário
+📝 Obs: Mesa próxima à janela, por favor
+
+Aguardando confirmação!
+\`\`\`
+`
+      }
     ]
   },
   {
@@ -173,11 +474,10 @@ export const NICHE_CONTEXTS: NicheContext[] = [
     ],
     suggestedPages: ['Home', 'Serviços', 'Barbeiros', 'Galeria', 'Agendamento', 'Produtos', 'Contato'],
     suggestedFeatures: [
-      'Sistema de agendamento',
+      'Sistema de agendamento completo',
       'Perfil dos barbeiros',
       'Galeria de trabalhos',
       'Preços dos serviços',
-      'Botão WhatsApp',
       'Avaliações de clientes',
       'Loja de produtos'
     ],
@@ -187,6 +487,81 @@ export const NICHE_CONTEXTS: NicheContext[] = [
       { primary: '#1c1917', secondary: '#d97706', name: 'Preto & Dourado (Clássico)' },
       { primary: '#78350f', secondary: '#fef3c7', name: 'Marrom & Creme (Vintage)' },
       { primary: '#1c1917', secondary: '#dc2626', name: 'Preto & Vermelho (Moderno)' }
+    ],
+    backendRequirements: [
+      {
+        id: 'booking-system',
+        name: 'Sistema de Agendamento',
+        description: 'Agendamento online com escolha de barbeiro e serviço',
+        technicalSpec: `
+## SISTEMA DE AGENDAMENTO BARBEARIA
+
+### Fluxo de Agendamento:
+1. Escolher SERVIÇO (Corte, Barba, Combo, etc) com duração e preço
+2. Escolher BARBEIRO (com foto, especialidade e disponibilidade)
+3. Escolher DATA (calendário mostrando dias disponíveis)
+4. Escolher HORÁRIO (slots baseados na disponibilidade do barbeiro)
+5. Preencher DADOS (nome, telefone, email opcional)
+6. CONFIRMAR (resumo + envio WhatsApp)
+
+### Estrutura de Dados:
+\`\`\`typescript
+interface Service {
+  id: string;
+  name: string;
+  description: string;
+  duration: number; // minutos
+  price: number;
+  imageUrl?: string;
+}
+
+interface Barber {
+  id: string;
+  name: string;
+  photo: string;
+  specialties: string[];
+  workDays: number[]; // 0-6 (dom-sab)
+  workHours: { start: string; end: string };
+}
+
+interface Booking {
+  service: Service;
+  barber: Barber;
+  date: Date;
+  time: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string;
+}
+\`\`\`
+
+### Mensagem WhatsApp Agendamento:
+\`\`\`
+💈 *NOVO AGENDAMENTO - [BARBEARIA]*
+
+✂️ Serviço: Corte + Barba
+💰 Valor: R$ 70,00
+⏱️ Duração: 45 min
+
+👨‍🦱 Barbeiro: Carlos
+📅 Data: Segunda, 15/01/2025
+⏰ Horário: 15:30
+
+👤 Cliente: João Silva
+📱 Tel: (11) 99999-9999
+
+✅ Aguardando confirmação
+\`\`\`
+
+### UI Obrigatória:
+- Cards de serviços com ícone, nome, duração, preço
+- Grid de barbeiros com foto e especialidades
+- Calendário visual destacando dias disponíveis
+- Slots de horário em grade ou lista
+- Resumo lateral/inferior sempre visível
+- Botão de confirmação com loading state
+`
+      }
     ]
   },
   {
@@ -206,13 +581,12 @@ export const NICHE_CONTEXTS: NicheContext[] = [
     ],
     suggestedPages: ['Home', 'Serviços', 'Equipe', 'Portfolio', 'Noivas', 'Agendamento', 'Contato'],
     suggestedFeatures: [
-      'Sistema de agendamento',
+      'Sistema de agendamento completo',
       'Portfolio antes/depois',
       'Perfil das profissionais',
-      'Lista de serviços',
+      'Lista de serviços com preços',
       'Pacotes especiais',
-      'Depoimentos',
-      'Instagram integrado'
+      'Depoimentos'
     ],
     seoKeywords: ['salão de beleza', 'cabelereiro', 'manicure', 'maquiagem', 'estética'],
     commonSections: ['Hero elegante', 'Serviços', 'Transformações', 'Equipe', 'Agendamento', 'Contato'],
@@ -220,6 +594,50 @@ export const NICHE_CONTEXTS: NicheContext[] = [
       { primary: '#ec4899', secondary: '#fdf2f8', name: 'Rosa & Branco (Feminino)' },
       { primary: '#1c1917', secondary: '#d4af37', name: 'Preto & Dourado (Luxo)' },
       { primary: '#7c3aed', secondary: '#faf5ff', name: 'Roxo & Lavanda (Moderno)' }
+    ],
+    backendRequirements: [
+      {
+        id: 'booking-system',
+        name: 'Sistema de Agendamento',
+        description: 'Agendamento online com profissional e serviços múltiplos',
+        technicalSpec: `
+## SISTEMA DE AGENDAMENTO SALÃO
+
+### Fluxo (similar barbearia mas com diferenças):
+1. Escolher SERVIÇO(S) - pode selecionar múltiplos
+2. Sistema calcula duração total automaticamente
+3. Escolher PROFISSIONAL com especialidade
+4. Escolher DATA e HORÁRIO
+5. Preencher DADOS
+6. Confirmar via WhatsApp
+
+### Diferenciais Salão:
+- Múltiplos serviços no mesmo agendamento
+- Cálculo de tempo total (corte 40min + escova 30min = 70min)
+- Profissionais especializados por tipo de serviço
+- Opção de "sem preferência" de profissional
+- Pacotes pré-definidos (Noiva, Dia da Noiva, etc)
+
+### Mensagem WhatsApp:
+\`\`\`
+💇‍♀️ *NOVO AGENDAMENTO - [SALÃO]*
+
+💅 Serviços:
+   • Corte feminino - R$ 80
+   • Escova - R$ 50
+   • Manicure - R$ 40
+💰 Total: R$ 170,00
+⏱️ Duração total: 2h
+
+👩‍🦰 Profissional: Ana
+📅 Data: 15/01/2025
+⏰ Horário: 14:00
+
+👤 Cliente: Maria
+📱 Tel: (11) 99999-9999
+\`\`\`
+`
+      }
     ]
   },
   {
