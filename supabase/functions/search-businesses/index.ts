@@ -252,6 +252,23 @@ serve(async (req) => {
         
         console.log(`Key ${usedKeyId} usage incremented by ${totalApiCalls}`);
       }
+
+      // Registrar no histórico de pesquisas
+      await supabase
+        .from('genesis_search_history')
+        .insert({
+          user_id: usedKeyId, // Will be updated when we have user context
+          user_name: 'Sistema',
+          user_email: '',
+          search_type: 'prospecting',
+          search_query: searchQuery,
+          city: city,
+          state: state,
+          niche: niche,
+          results_count: allPlaces.length,
+          api_key_id: usedKeyId,
+          credits_used: totalApiCalls
+        });
     }
 
     // Deduplicar e processar
