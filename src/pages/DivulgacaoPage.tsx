@@ -9,59 +9,56 @@ import {
   Rocket, 
   MessageCircle,
   TrendingUp,
-  Users,
   Clock,
   CheckCircle2,
   ArrowRight,
   Star,
   Shield,
-  Brain
+  X,
+  AlertCircle
 } from 'lucide-react';
 
-// Instagram Post Card Component (1:1 aspect ratio)
+// Instagram Post Card Component (4:5 aspect ratio = 1080x1350)
 const InstagramPost = ({ 
   children, 
-  className = "",
-  gradient = "from-background via-background to-primary/5"
+  index = 0
 }: { 
   children: React.ReactNode; 
-  className?: string;
-  gradient?: string;
+  index?: number;
 }) => (
   <motion.div
-    initial={{ opacity: 0, y: 20 }}
+    initial={{ opacity: 0, y: 30 }}
     whileInView={{ opacity: 1, y: 0 }}
     viewport={{ once: true }}
-    transition={{ duration: 0.5 }}
-    className={`relative aspect-square w-full max-w-[400px] bg-gradient-to-br ${gradient} rounded-2xl border border-white/10 overflow-hidden shadow-xl ${className}`}
+    transition={{ duration: 0.5, delay: index * 0.1 }}
+    className="relative bg-[#050810] overflow-hidden"
+    style={{ 
+      aspectRatio: '4/5',
+      width: '100%',
+      maxWidth: '400px'
+    }}
   >
     {children}
   </motion.div>
 );
 
-// Reusable Genesis Logo SVG
-const GenesisG = ({ size = 80, className = "" }: { size?: number; className?: string }) => (
-  <svg 
-    width={size} 
-    height={size} 
-    viewBox="0 0 100 100" 
-    fill="none" 
-    className={className}
-  >
+// Genesis Logo "G"
+const GenesisG = ({ size = 60 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
     <defs>
-      <linearGradient id="gGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <linearGradient id="gGrad" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stopColor="#3B82F6" />
         <stop offset="100%" stopColor="#06B6D4" />
       </linearGradient>
     </defs>
-    <circle cx="50" cy="50" r="45" stroke="url(#gGradient)" strokeWidth="8" fill="none" strokeLinecap="round" strokeDasharray="200 60" />
-    <path d="M50 50 H75" stroke="url(#gGradient)" strokeWidth="8" strokeLinecap="round" />
+    <circle cx="50" cy="50" r="42" stroke="url(#gGrad)" strokeWidth="8" fill="none" strokeLinecap="round" strokeDasharray="190 70" />
+    <path d="M50 50 H72" stroke="url(#gGrad)" strokeWidth="8" strokeLinecap="round" />
   </svg>
 );
 
 const DivulgacaoPage = () => {
   return (
-    <div className="min-h-screen bg-background py-12 px-4">
+    <div className="min-h-screen bg-[#030508] py-12 px-4">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-16 text-center">
         <motion.div
@@ -69,336 +66,406 @@ const DivulgacaoPage = () => {
           animate={{ opacity: 1, y: 0 }}
           className="flex items-center justify-center gap-3 mb-4"
         >
-          <GenesisG size={48} />
-          <h1 className="text-3xl md:text-4xl font-bold">
-            <span className="text-gradient">Genesis Hub</span> - Posts para Instagram
+          <GenesisG size={40} />
+          <h1 className="text-2xl md:text-3xl font-bold text-white">
+            Posts para Instagram <span className="text-primary">1080×1350px</span>
           </h1>
         </motion.div>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
-          Designs prontos para divulgação. Clique com botão direito → Salvar imagem, ou tire print da tela.
+        <p className="text-white/60 max-w-xl mx-auto text-sm">
+          Formato 4:5 otimizado para feed. Print ou salve cada imagem individualmente.
         </p>
       </div>
 
       {/* Posts Grid */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 justify-items-center">
         
-        {/* Post 1 - Apresentação Principal */}
-        <InstagramPost gradient="from-[#0A0F1C] via-[#0D1424] to-[#0A0F1C]">
+        {/* POST 1 - GANCHO/CURIOSIDADE */}
+        <InstagramPost index={0}>
+          {/* Background gradient */}
           <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-cyan-500/10" />
-          <div className="relative h-full flex flex-col items-center justify-center p-8 text-center">
-            <GenesisG size={100} className="mb-6" />
-            <h2 className="text-3xl font-bold text-white mb-2">Genesis Hub</h2>
-            <p className="text-cyan-400 text-lg font-medium mb-6">Sua Central de Vendas com IA</p>
-            <div className="w-16 h-0.5 bg-gradient-to-r from-primary to-cyan-500 mb-6" />
-            <p className="text-white/70 text-sm">
-              Automatize • Prospecte • Converta
-            </p>
+          
+          <div className="relative h-full flex flex-col p-10">
+            {/* Logo top */}
+            <div className="flex items-center gap-2 mb-auto">
+              <GenesisG size={32} />
+              <span className="text-white/60 text-sm font-medium tracking-wider">GENESIS HUB</span>
+            </div>
+
+            {/* Main content centered */}
+            <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
+              <span className="text-primary text-sm font-semibold tracking-widest mb-6">VOCÊ AINDA...</span>
+              
+              <h2 className="text-4xl md:text-5xl font-bold text-white leading-tight mb-8">
+                Prospecta<br />
+                <span className="text-white/40">manualmente?</span>
+              </h2>
+
+              <div className="w-20 h-1 bg-gradient-to-r from-primary to-cyan-500 rounded-full mb-8" />
+
+              <p className="text-white/70 text-lg max-w-[280px]">
+                Enquanto você busca 1 cliente, a IA encontra 100.
+              </p>
+            </div>
+
+            {/* Footer CTA */}
+            <div className="flex items-center justify-center gap-2 text-primary">
+              <span className="text-sm font-medium">Arraste para ver →</span>
+            </div>
           </div>
-          {/* Corner decorations */}
-          <div className="absolute top-4 left-4 w-8 h-8 border-l-2 border-t-2 border-primary/50" />
-          <div className="absolute bottom-4 right-4 w-8 h-8 border-r-2 border-b-2 border-cyan-500/50" />
         </InstagramPost>
 
-        {/* Post 2 - Problema/Dor */}
-        <InstagramPost gradient="from-[#0A0F1C] via-[#0D1424] to-[#0A0F1C]">
-          <div className="relative h-full flex flex-col p-8">
-            <div className="text-red-400/80 text-sm font-medium mb-4">VOCÊ AINDA...</div>
+        {/* POST 2 - DOR/PROBLEMA */}
+        <InstagramPost index={1}>
+          <div className="absolute inset-0 bg-gradient-to-b from-red-500/5 to-transparent" />
+          
+          <div className="relative h-full flex flex-col p-10">
+            <div className="flex items-center gap-2 mb-8">
+              <AlertCircle className="w-5 h-5 text-red-400" />
+              <span className="text-red-400 text-sm font-semibold tracking-wider">O PROBLEMA</span>
+            </div>
+
+            <div className="flex-1 flex flex-col justify-center">
+              <h2 className="text-3xl font-bold text-white mb-10">
+                Horas perdidas<br />
+                <span className="text-white/40">todo dia fazendo:</span>
+              </h2>
+
+              <div className="space-y-5">
+                {[
+                  "Buscando leads no Google",
+                  "Copiando dados manualmente",
+                  "Escrevendo propostas do zero",
+                  "Enviando mensagens uma a uma",
+                  "Sem saber quem priorizar"
+                ].map((text, i) => (
+                  <div key={i} className="flex items-center gap-4">
+                    <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
+                      <X className="w-4 h-4 text-red-400" />
+                    </div>
+                    <span className="text-white/80 text-lg">{text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <p className="text-white/40 text-sm text-center mt-8">
+              Isso acaba hoje. →
+            </p>
+          </div>
+        </InstagramPost>
+
+        {/* POST 3 - APRESENTAÇÃO DA SOLUÇÃO */}
+        <InstagramPost index={2}>
+          <div className="absolute inset-0">
+            <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-primary/30 rounded-full blur-[100px]" />
+          </div>
+          
+          <div className="relative h-full flex flex-col items-center justify-center p-10 text-center">
+            <span className="text-cyan-400 text-sm font-semibold tracking-widest mb-8">APRESENTAMOS</span>
+            
+            <GenesisG size={120} />
+            
+            <h2 className="text-5xl font-bold text-white mt-8 mb-4">
+              Genesis<br />Hub
+            </h2>
+            
+            <p className="text-xl text-white/60 mb-10">
+              Sua central de vendas<br />com Inteligência Artificial
+            </p>
+
+            <div className="flex items-center gap-6 text-white/50 text-sm">
+              <span>Automatize</span>
+              <div className="w-1 h-1 rounded-full bg-primary" />
+              <span>Prospecte</span>
+              <div className="w-1 h-1 rounded-full bg-primary" />
+              <span>Converta</span>
+            </div>
+          </div>
+        </InstagramPost>
+
+        {/* POST 4 - RADAR DE LEADS */}
+        <InstagramPost index={3}>
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
+          
+          <div className="relative h-full flex flex-col p-10">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                <Target className="w-4 h-4 text-primary" />
+              </div>
+              <span className="text-primary text-sm font-semibold tracking-wider">RECURSO 01</span>
+            </div>
+
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Radar de<br />Oportunidades
+            </h2>
+            
+            <p className="text-white/60 text-lg mb-8">
+              IA encontra empresas que precisam do seu serviço. Automaticamente.
+            </p>
+
+            <div className="flex-1 flex items-center justify-center">
+              <div className="relative">
+                <div className="w-48 h-48 rounded-full border-2 border-primary/30 flex items-center justify-center">
+                  <div className="w-32 h-32 rounded-full border-2 border-primary/50 flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
+                      <Target className="w-8 h-8 text-primary" />
+                    </div>
+                  </div>
+                </div>
+                {/* Pings */}
+                <div className="absolute top-4 right-4 w-3 h-3 bg-green-400 rounded-full animate-pulse" />
+                <div className="absolute bottom-8 left-2 w-3 h-3 bg-cyan-400 rounded-full animate-pulse" />
+                <div className="absolute top-1/2 right-0 w-3 h-3 bg-primary rounded-full animate-pulse" />
+              </div>
+            </div>
+
+            <div className="bg-white/5 rounded-2xl p-5 border border-white/10">
+              <div className="flex items-center justify-between">
+                <span className="text-white/60">Leads encontrados</span>
+                <span className="text-3xl font-bold text-green-400">+500/mês</span>
+              </div>
+            </div>
+          </div>
+        </InstagramPost>
+
+        {/* POST 5 - PROPOSTAS AUTOMÁTICAS */}
+        <InstagramPost index={4}>
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-transparent to-transparent" />
+          
+          <div className="relative h-full flex flex-col p-10">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center">
+                <FileText className="w-4 h-4 text-cyan-400" />
+              </div>
+              <span className="text-cyan-400 text-sm font-semibold tracking-wider">RECURSO 02</span>
+            </div>
+
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Propostas que<br />
+              <span className="text-cyan-400">Vendem Sozinhas</span>
+            </h2>
+            
+            <p className="text-white/60 text-lg mb-8">
+              IA analisa o cliente e cria propostas personalizadas em segundos.
+            </p>
+
             <div className="flex-1 flex flex-col justify-center space-y-4">
               {[
-                "Perde horas procurando clientes?",
-                "Manda propostas que nunca fecham?",
-                "Não sabe quem abordar primeiro?",
-                "Gasta fortunas com leads frios?"
-              ].map((text, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  className="flex items-center gap-3"
-                >
-                  <div className="w-2 h-2 rounded-full bg-red-400" />
-                  <span className="text-white/90 text-lg">{text}</span>
-                </motion.div>
-              ))}
-            </div>
-            <div className="mt-auto pt-6 text-center">
-              <p className="text-white/50 text-sm">A Genesis resolve isso 👇</p>
-            </div>
-          </div>
-        </InstagramPost>
-
-        {/* Post 3 - Radar de Oportunidades */}
-        <InstagramPost gradient="from-[#0A0F1C] via-[#0D1424] to-[#0A0F1C]">
-          <div className="absolute inset-0">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-primary/20 rounded-full blur-[80px]" />
-          </div>
-          <div className="relative h-full flex flex-col items-center justify-center p-8 text-center">
-            <div className="relative mb-6">
-              <Target className="w-20 h-20 text-primary" />
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full animate-pulse" />
-            </div>
-            <h2 className="text-2xl font-bold text-white mb-2">Radar de Oportunidades</h2>
-            <p className="text-white/70 mb-6">
-              IA encontra empresas que <span className="text-cyan-400">PRECISAM</span> do seu serviço
-            </p>
-            <div className="bg-white/5 border border-white/10 rounded-xl p-4 w-full">
-              <div className="flex items-center justify-between text-sm mb-2">
-                <span className="text-white/60">Leads encontrados hoje:</span>
-                <span className="text-green-400 font-bold">+127</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-white/60">Score médio:</span>
-                <span className="text-primary font-bold">8.4/10</span>
-              </div>
-            </div>
-          </div>
-        </InstagramPost>
-
-        {/* Post 4 - Propostas Automáticas */}
-        <InstagramPost gradient="from-[#0A0F1C] via-[#0D1424] to-[#0A0F1C]">
-          <div className="relative h-full flex flex-col items-center justify-center p-8 text-center">
-            <FileText className="w-16 h-16 text-cyan-400 mb-6" />
-            <h2 className="text-2xl font-bold text-white mb-2">Propostas que Vendem</h2>
-            <p className="text-white/70 mb-6">
-              IA cria propostas personalizadas em <span className="text-primary">segundos</span>
-            </p>
-            <div className="space-y-3 w-full">
-              {[
-                { icon: Brain, text: "Análise do cliente" },
-                { icon: Sparkles, text: "Texto persuasivo" },
-                { icon: Zap, text: "Envio automático" }
-              ].map(({ icon: Icon, text }, i) => (
-                <div key={i} className="flex items-center gap-3 bg-white/5 rounded-lg p-3">
-                  <Icon className="w-5 h-5 text-primary" />
-                  <span className="text-white/90">{text}</span>
-                  <CheckCircle2 className="w-4 h-4 text-green-400 ml-auto" />
+                { icon: Target, text: "Analisa o perfil do lead", done: true },
+                { icon: Sparkles, text: "Gera texto persuasivo", done: true },
+                { icon: Zap, text: "Envia automaticamente", done: true }
+              ].map(({ icon: Icon, text, done }, i) => (
+                <div key={i} className="flex items-center gap-4 bg-white/5 rounded-xl p-4 border border-white/10">
+                  <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center">
+                    <Icon className="w-5 h-5 text-cyan-400" />
+                  </div>
+                  <span className="text-white flex-1">{text}</span>
+                  {done && <CheckCircle2 className="w-5 h-5 text-green-400" />}
                 </div>
               ))}
             </div>
+
+            <p className="text-white/40 text-sm text-center mt-6">
+              De 2 horas → para 10 segundos
+            </p>
           </div>
         </InstagramPost>
 
-        {/* Post 5 - Resultados/Números */}
-        <InstagramPost gradient="from-[#0A0F1C] via-[#0D1424] to-[#0A0F1C]">
-          <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent" />
-          <div className="relative h-full flex flex-col p-8">
-            <div className="text-primary text-sm font-medium mb-4 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" />
-              RESULTADOS REAIS
+        {/* POST 6 - WHATSAPP IA */}
+        <InstagramPost index={5}>
+          <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-transparent" />
+          
+          <div className="relative h-full flex flex-col p-10">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center">
+                <MessageCircle className="w-4 h-4 text-green-400" />
+              </div>
+              <span className="text-green-400 text-sm font-semibold tracking-wider">RECURSO 03</span>
             </div>
+
+            <h2 className="text-4xl font-bold text-white mb-4">
+              WhatsApp com<br />
+              <span className="text-green-400">Inteligência Artificial</span>
+            </h2>
+
+            <div className="flex-1 flex flex-col justify-center">
+              {/* Chat mockup */}
+              <div className="bg-[#0B141A] rounded-2xl p-5 space-y-4 border border-white/10">
+                <div className="flex gap-3">
+                  <div className="bg-[#1F2C34] rounded-2xl rounded-tl-none p-4 max-w-[80%]">
+                    <p className="text-white/90 text-sm">Olá! Quero saber mais sobre o serviço de vocês 🙂</p>
+                    <span className="text-white/40 text-xs">10:32</span>
+                  </div>
+                </div>
+                
+                <div className="flex gap-3 justify-end">
+                  <div className="bg-[#005C4B] rounded-2xl rounded-tr-none p-4 max-w-[80%]">
+                    <p className="text-white/90 text-sm">Olá, João! 👋 Vi que sua empresa está crescendo...</p>
+                    <div className="flex items-center gap-1 justify-end mt-1">
+                      <span className="text-white/40 text-xs">10:32</span>
+                      <Bot className="w-3 h-3 text-cyan-400" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-white/40 text-xs">
+                  <Bot className="w-4 h-4 text-primary" />
+                  <span>Respondido pela Genesis IA</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-3 mt-6">
+              <Clock className="w-5 h-5 text-green-400" />
+              <span className="text-white/70">Atendimento 24/7 automático</span>
+            </div>
+          </div>
+        </InstagramPost>
+
+        {/* POST 7 - RESULTADOS/PROVA SOCIAL */}
+        <InstagramPost index={6}>
+          <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent" />
+          
+          <div className="relative h-full flex flex-col p-10">
+            <div className="flex items-center gap-2 mb-6">
+              <TrendingUp className="w-5 h-5 text-primary" />
+              <span className="text-primary text-sm font-semibold tracking-wider">RESULTADOS</span>
+            </div>
+
+            <h2 className="text-4xl font-bold text-white mb-8">
+              Números que<br />
+              <span className="text-gradient bg-gradient-to-r from-primary to-cyan-400 bg-clip-text text-transparent">impressionam</span>
+            </h2>
+
             <div className="flex-1 grid grid-cols-2 gap-4">
               {[
-                { value: "3x", label: "Mais conversões", color: "text-green-400" },
-                { value: "80%", label: "Tempo economizado", color: "text-cyan-400" },
-                { value: "500+", label: "Leads/mês", color: "text-primary" },
-                { value: "24/7", label: "Prospecção ativa", color: "text-purple-400" }
+                { value: "3x", label: "Mais conversões", color: "from-green-400 to-emerald-500" },
+                { value: "80%", label: "Tempo economizado", color: "from-cyan-400 to-blue-500" },
+                { value: "500+", label: "Leads por mês", color: "from-primary to-violet-500" },
+                { value: "24/7", label: "Prospecção ativa", color: "from-purple-400 to-pink-500" }
               ].map((stat, i) => (
-                <div key={i} className="bg-white/5 rounded-xl p-4 flex flex-col items-center justify-center border border-white/5">
-                  <span className={`text-3xl font-bold ${stat.color}`}>{stat.value}</span>
-                  <span className="text-white/60 text-xs text-center mt-1">{stat.label}</span>
+                <div key={i} className="bg-white/5 rounded-2xl p-5 flex flex-col items-center justify-center border border-white/10">
+                  <span className={`text-4xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`}>
+                    {stat.value}
+                  </span>
+                  <span className="text-white/50 text-sm text-center mt-2">{stat.label}</span>
                 </div>
               ))}
             </div>
-            <p className="text-center text-white/50 text-xs mt-4">
-              Dados de clientes Genesis Hub
-            </p>
-          </div>
-        </InstagramPost>
 
-        {/* Post 6 - WhatsApp Integration */}
-        <InstagramPost gradient="from-[#0A0F1C] via-[#0D1424] to-[#0A0F1C]">
-          <div className="relative h-full flex flex-col items-center justify-center p-8 text-center">
-            <div className="relative mb-6">
-              <MessageCircle className="w-20 h-20 text-green-500" />
-              <Bot className="w-10 h-10 text-primary absolute -bottom-2 -right-2 bg-background rounded-full p-1" />
-            </div>
-            <h2 className="text-2xl font-bold text-white mb-2">WhatsApp + IA</h2>
-            <p className="text-white/70 mb-6">
-              Atendimento automático 24h
-            </p>
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 w-full space-y-3">
-              <div className="flex gap-2">
-                <div className="bg-white/10 rounded-xl rounded-bl-none p-3 text-left text-sm text-white/90 max-w-[80%]">
-                  Olá, quero saber mais sobre seus serviços
-                </div>
-              </div>
-              <div className="flex gap-2 justify-end">
-                <div className="bg-primary/20 border border-primary/30 rounded-xl rounded-br-none p-3 text-left text-sm text-white/90 max-w-[80%]">
-                  Olá! 👋 Temos a solução perfeita para você...
-                </div>
-              </div>
-            </div>
-          </div>
-        </InstagramPost>
-
-        {/* Post 7 - Features List */}
-        <InstagramPost gradient="from-[#0A0F1C] via-[#0D1424] to-[#0A0F1C]">
-          <div className="relative h-full flex flex-col p-8">
-            <h2 className="text-xl font-bold text-white mb-6 text-center">
-              Tudo que você precisa
-            </h2>
-            <div className="flex-1 space-y-3">
-              {[
-                { icon: Target, text: "Radar de Leads com IA" },
-                { icon: FileText, text: "Propostas Automáticas" },
-                { icon: Bot, text: "Chatbot Inteligente" },
-                { icon: BarChart3, text: "Dashboard Completo" },
-                { icon: Users, text: "CRM Integrado" },
-                { icon: Clock, text: "Prospecção 24/7" }
-              ].map(({ icon: Icon, text }, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  className="flex items-center gap-3 bg-white/5 rounded-lg p-3 border border-white/5"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                    <Icon className="w-4 h-4 text-primary" />
-                  </div>
-                  <span className="text-white/90 text-sm">{text}</span>
-                  <CheckCircle2 className="w-4 h-4 text-green-400 ml-auto" />
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </InstagramPost>
-
-        {/* Post 8 - Preço/CTA */}
-        <InstagramPost gradient="from-[#0A0F1C] via-[#0D1424] to-[#0A0F1C]">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-cyan-500/10" />
-          <div className="relative h-full flex flex-col items-center justify-center p-8 text-center">
-            <div className="text-primary text-sm font-medium mb-2">OFERTA ESPECIAL</div>
-            <h2 className="text-2xl font-bold text-white mb-4">
-              Comece agora por
-            </h2>
-            <div className="mb-6">
-              <span className="text-white/50 text-lg line-through">R$ 497</span>
-              <div className="text-5xl font-bold text-gradient">R$ 197</div>
-              <span className="text-white/60 text-sm">/mês</span>
-            </div>
-            <div className="bg-white/5 border border-primary/30 rounded-xl p-4 w-full mb-6">
-              <div className="flex items-center justify-center gap-2 text-primary">
-                <Shield className="w-5 h-5" />
-                <span className="font-medium">7 dias de teste grátis</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-cyan-400">
-              <span>Acesse genesishub.cloud</span>
-              <ArrowRight className="w-4 h-4" />
-            </div>
-          </div>
-        </InstagramPost>
-
-        {/* Post 9 - Depoimento/Social Proof */}
-        <InstagramPost gradient="from-[#0A0F1C] via-[#0D1424] to-[#0A0F1C]">
-          <div className="relative h-full flex flex-col items-center justify-center p-8 text-center">
-            <div className="flex gap-1 mb-6">
+            <div className="flex items-center justify-center gap-1 mt-8">
               {[1,2,3,4,5].map(i => (
-                <Star key={i} className="w-6 h-6 text-yellow-400 fill-yellow-400" />
+                <Star key={i} className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+              ))}
+              <span className="text-white/60 text-sm ml-2">4.9/5 de satisfação</span>
+            </div>
+          </div>
+        </InstagramPost>
+
+        {/* POST 8 - OFERTA/CTA */}
+        <InstagramPost index={7}>
+          <div className="absolute inset-0">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary/20 rounded-full blur-[100px]" />
+          </div>
+          
+          <div className="relative h-full flex flex-col items-center justify-center p-10 text-center">
+            <div className="bg-gradient-to-r from-primary to-cyan-500 text-white text-sm font-bold px-4 py-2 rounded-full mb-8">
+              OFERTA ESPECIAL
+            </div>
+
+            <h2 className="text-3xl font-bold text-white mb-2">
+              Comece sua transformação
+            </h2>
+            <p className="text-white/60 mb-8">
+              7 dias grátis para testar tudo
+            </p>
+
+            <div className="mb-8">
+              <span className="text-white/40 text-xl line-through">R$ 497</span>
+              <div className="text-6xl font-bold bg-gradient-to-r from-primary to-cyan-400 bg-clip-text text-transparent">
+                R$ 197
+              </div>
+              <span className="text-white/50">/mês</span>
+            </div>
+
+            <div className="space-y-3 w-full max-w-[280px] mb-8">
+              {[
+                "Radar de Leads ilimitado",
+                "Propostas automáticas",
+                "WhatsApp com IA",
+                "Suporte prioritário"
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0" />
+                  <span className="text-white/80 text-sm">{item}</span>
+                </div>
               ))}
             </div>
-            <p className="text-white/90 text-lg italic mb-6 leading-relaxed">
-              "Em 1 mês, fechei mais contratos do que nos últimos 6 meses combinados. A Genesis mudou meu negócio."
+
+            <div className="bg-gradient-to-r from-primary to-cyan-500 rounded-full px-10 py-4 flex items-center gap-2">
+              <span className="text-white font-bold text-lg">COMEÇAR AGORA</span>
+              <ArrowRight className="w-5 h-5 text-white" />
+            </div>
+
+            <p className="text-white/40 text-sm mt-6">
+              genesishub.cloud
             </p>
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-cyan-500 flex items-center justify-center text-white font-bold">
+          </div>
+        </InstagramPost>
+
+        {/* POST 9 - DEPOIMENTO */}
+        <InstagramPost index={8}>
+          <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 via-transparent to-transparent" />
+          
+          <div className="relative h-full flex flex-col items-center justify-center p-10 text-center">
+            <div className="flex gap-1 mb-8">
+              {[1,2,3,4,5].map(i => (
+                <Star key={i} className="w-7 h-7 text-yellow-400 fill-yellow-400" />
+              ))}
+            </div>
+
+            <p className="text-2xl text-white/90 italic leading-relaxed mb-10 max-w-[300px]">
+              "Em 1 mês com a Genesis, fechei mais contratos do que nos últimos 6 meses."
+            </p>
+
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-cyan-500 flex items-center justify-center text-white text-xl font-bold">
                 JP
               </div>
               <div className="text-left">
-                <div className="text-white font-medium">João Pedro</div>
-                <div className="text-white/50 text-sm">Agência Digital</div>
+                <div className="text-white font-semibold text-lg">João Pedro</div>
+                <div className="text-white/50">CEO, Agência Digital</div>
               </div>
+            </div>
+
+            <div className="w-16 h-0.5 bg-gradient-to-r from-primary to-cyan-500 mb-8" />
+
+            <div className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-green-400" />
+              <span className="text-white/60 text-sm">Resultado real verificado</span>
             </div>
           </div>
         </InstagramPost>
 
       </div>
 
-      {/* Stories Section */}
-      <div className="max-w-7xl mx-auto mt-20">
-        <h2 className="text-2xl font-bold text-center mb-8">
-          <span className="text-gradient">Stories</span> (9:16)
-        </h2>
-        
-        <div className="flex flex-wrap justify-center gap-6">
-          
-          {/* Story 1 */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            className="w-[250px] aspect-[9/16] bg-gradient-to-br from-[#0A0F1C] via-[#0D1424] to-[#0A0F1C] rounded-3xl border border-white/10 overflow-hidden relative"
-          >
-            <div className="absolute inset-0 bg-gradient-to-b from-primary/20 via-transparent to-cyan-500/20" />
-            <div className="relative h-full flex flex-col items-center justify-center p-6 text-center">
-              <GenesisG size={80} className="mb-8" />
-              <h3 className="text-2xl font-bold text-white mb-4">Genesis Hub</h3>
-              <p className="text-white/70 mb-8">Sua central de vendas com Inteligência Artificial</p>
-              <div className="mt-auto">
-                <div className="bg-white/10 backdrop-blur-sm rounded-full px-6 py-3 border border-white/20">
-                  <span className="text-white text-sm">Arraste para cima ↑</span>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Story 2 */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1 }}
-            className="w-[250px] aspect-[9/16] bg-gradient-to-br from-[#0A0F1C] via-[#0D1424] to-[#0A0F1C] rounded-3xl border border-white/10 overflow-hidden relative"
-          >
-            <div className="relative h-full flex flex-col p-6">
-              <div className="text-primary text-sm font-medium mb-4">IMAGINE...</div>
-              <div className="flex-1 flex flex-col justify-center space-y-4">
-                {[
-                  "Leads chegando sozinhos",
-                  "Propostas que convertem",
-                  "WhatsApp automatizado",
-                  "Dashboard em tempo real"
-                ].map((text, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <Sparkles className="w-5 h-5 text-cyan-400" />
-                    <span className="text-white text-lg">{text}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-auto text-center">
-                <p className="text-primary font-medium">Isso é Genesis Hub</p>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Story 3 - CTA */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2 }}
-            className="w-[250px] aspect-[9/16] bg-gradient-to-br from-[#0A0F1C] via-[#0D1424] to-[#0A0F1C] rounded-3xl border border-white/10 overflow-hidden relative"
-          >
-            <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent" />
-            <div className="relative h-full flex flex-col items-center justify-center p-6 text-center">
-              <Rocket className="w-16 h-16 text-primary mb-6" />
-              <h3 className="text-2xl font-bold text-white mb-2">Comece Agora</h3>
-              <p className="text-white/70 mb-6">7 dias grátis para testar</p>
-              <div className="text-4xl font-bold text-gradient mb-2">R$ 197</div>
-              <span className="text-white/50 text-sm mb-8">/mês</span>
-              <div className="bg-gradient-to-r from-primary to-cyan-500 rounded-full px-8 py-4">
-                <span className="text-white font-bold">ACESSAR AGORA</span>
-              </div>
-              <p className="text-white/50 text-xs mt-4">genesishub.cloud</p>
-            </div>
-          </motion.div>
-
+      {/* Download Instructions */}
+      <div className="max-w-2xl mx-auto mt-20 text-center">
+        <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
+          <Rocket className="w-10 h-10 text-primary mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-white mb-4">Como usar esses posts</h3>
+          <div className="space-y-3 text-left text-white/70">
+            <p>1. <strong className="text-white">Print da tela</strong> - Use Cmd/Ctrl + Shift + 4 (Mac) ou ferramenta de recorte (Windows)</p>
+            <p>2. <strong className="text-white">Recorte o post</strong> - Mantenha o formato 4:5 (1080×1350px)</p>
+            <p>3. <strong className="text-white">Poste no Instagram</strong> - Feed, carrossel ou stories</p>
+          </div>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="max-w-7xl mx-auto mt-20 text-center">
-        <p className="text-muted-foreground">
-          © 2026 Genesis Hub. Todos os designs são livres para uso em divulgação da marca.
+      <div className="max-w-7xl mx-auto mt-12 text-center">
+        <p className="text-white/40 text-sm">
+          © 2026 Genesis Hub. Material de divulgação oficial.
         </p>
       </div>
     </div>
