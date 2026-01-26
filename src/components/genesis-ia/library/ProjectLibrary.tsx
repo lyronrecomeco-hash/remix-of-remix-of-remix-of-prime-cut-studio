@@ -308,7 +308,7 @@ export function ProjectLibrary({ affiliateId, onEdit, onCreateNew, onBack }: Pro
           )}
         </motion.div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-6xl">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {/* Create New Card */}
           <motion.button
             initial={{ opacity: 0, scale: 0.95 }}

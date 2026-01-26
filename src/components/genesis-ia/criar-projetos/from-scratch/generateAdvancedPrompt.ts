@@ -276,14 +276,14 @@ ${formData.hasAdvancedSEO ? `- **Meta Tags**: Title, description, og:image, twit
 - **URLs**: Amigáveis e descritivas` : '- SEO básico com meta tags essenciais'}
 
 ### Responsividade:
-${formData.isMobileFirst ? `- **Mobile First**: Design primário para mobile, depois desktop
+- **Mobile First**: Design primário para mobile, depois desktop
 - **Breakpoints**: 
   - Mobile: < 640px
   - Tablet: 640px - 1024px
   - Desktop: > 1024px
   - Wide: > 1440px
 - **Touch Friendly**: Áreas de toque mínimo de 44px
-- **Gestos**: Suporte a swipe onde aplicável` : '- Responsivo padrão para principais dispositivos'}
+- **Gestos**: Suporte a swipe onde aplicável
 
 ### Acessibilidade:
 ${formData.hasAccessibility ? `- **WCAG 2.1 AA**: Conformidade com diretrizes

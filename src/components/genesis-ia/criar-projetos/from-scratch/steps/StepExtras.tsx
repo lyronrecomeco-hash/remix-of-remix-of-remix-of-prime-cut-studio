@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Smartphone, Search, BarChart3, Zap, Accessibility, Check } from 'lucide-react';
+import { Smartphone, Search, BarChart3, Zap, Accessibility, Check, Monitor } from 'lucide-react';
 import { useFromScratch } from '../FromScratchContext';
 import { Switch } from '@/components/ui/switch';
 
@@ -11,7 +11,6 @@ export function StepExtras() {
     { key: 'hasAdvancedSEO' as const, icon: Search, title: 'SEO Avançado', description: 'Meta tags, schema markup' },
     { key: 'hasAnalytics' as const, icon: BarChart3, title: 'Analytics', description: 'GA4, eventos customizados' },
     { key: 'isPerformanceOptimized' as const, icon: Zap, title: 'Performance', description: 'Lazy loading, cache' },
-    { key: 'isMobileFirst' as const, icon: Smartphone, title: 'Mobile First', description: 'Design responsivo' },
     { key: 'hasAccessibility' as const, icon: Accessibility, title: 'Acessibilidade', description: 'WCAG 2.1, ARIA' },
   ];
 
