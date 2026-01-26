@@ -130,38 +130,38 @@ export const VISUAL_STYLES = [
   'Neobrutalism',
 ];
 
+// Features CORE - sem duplicatas com integrações
 export const COMMON_FEATURES = [
-  'Botão WhatsApp flutuante',
-  'Formulário de contato',
-  'Mapa de localização',
-  'Galeria de fotos',
+  'Formulário de contato inteligente',
+  'Galeria de fotos/imagens',
   'Depoimentos de clientes',
   'FAQ / Perguntas frequentes',
-  'Newsletter',
-  'Chat online',
-  'Área de login',
-  'Carrinho de compras',
   'Sistema de busca',
   'Filtros avançados',
   'Avaliações e reviews',
   'Compartilhamento social',
   'Modo escuro/claro',
   'Multi-idioma',
+  'Notificações push',
+  'Cookies consent',
 ];
 
+// Integrações EXTERNAS - serviços de terceiros
 export const INTEGRATIONS = [
-  { id: 'whatsapp', name: 'WhatsApp Business', icon: '💬' },
-  { id: 'google-maps', name: 'Google Maps', icon: '🗺️' },
-  { id: 'google-analytics', name: 'Google Analytics', icon: '📊' },
-  { id: 'facebook-pixel', name: 'Facebook Pixel', icon: '📱' },
-  { id: 'stripe', name: 'Stripe Pagamentos', icon: '💳' },
-  { id: 'mercadopago', name: 'Mercado Pago', icon: '💰' },
-  { id: 'instagram', name: 'Instagram Feed', icon: '📸' },
-  { id: 'youtube', name: 'YouTube Embed', icon: '▶️' },
-  { id: 'calendly', name: 'Calendly Agendamento', icon: '📅' },
-  { id: 'mailchimp', name: 'Mailchimp Newsletter', icon: '📧' },
-  { id: 'hotjar', name: 'Hotjar Heatmaps', icon: '🔥' },
-  { id: 'recaptcha', name: 'reCAPTCHA', icon: '🔒' },
+  { id: 'whatsapp', name: 'WhatsApp Business', icon: '💬', description: 'Botão flutuante + mensagens automáticas' },
+  { id: 'google-maps', name: 'Google Maps', icon: '🗺️', description: 'Mapa interativo de localização' },
+  { id: 'google-analytics', name: 'Google Analytics', icon: '📊', description: 'Tracking de visitas e conversões' },
+  { id: 'facebook-pixel', name: 'Facebook Pixel', icon: '📱', description: 'Remarketing e conversões' },
+  { id: 'stripe', name: 'Stripe', icon: '💳', description: 'Pagamentos internacionais' },
+  { id: 'mercadopago', name: 'Mercado Pago', icon: '💰', description: 'PIX, boleto e cartão' },
+  { id: 'instagram', name: 'Instagram Feed', icon: '📸', description: 'Feed integrado ao site' },
+  { id: 'youtube', name: 'YouTube Embed', icon: '▶️', description: 'Vídeos incorporados' },
+  { id: 'calendly', name: 'Calendly', icon: '📅', description: 'Agendamento automático' },
+  { id: 'mailchimp', name: 'Mailchimp', icon: '📧', description: 'Email marketing e newsletter' },
+  { id: 'hotjar', name: 'Hotjar', icon: '🔥', description: 'Heatmaps e gravação de sessões' },
+  { id: 'recaptcha', name: 'reCAPTCHA', icon: '🔒', description: 'Proteção contra bots' },
+  { id: 'tawk', name: 'Tawk.to Chat', icon: '💭', description: 'Chat ao vivo gratuito' },
+  { id: 'crisp', name: 'Crisp Chat', icon: '💬', description: 'Chat moderno com chatbot' },
 ];
 
 // AI Targets with real icons/logos represented

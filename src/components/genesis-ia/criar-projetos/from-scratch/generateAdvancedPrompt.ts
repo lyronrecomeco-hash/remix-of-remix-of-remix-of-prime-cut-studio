@@ -241,6 +241,8 @@ ${isApp ? `
 
 `}
 
+${generateBackendRequirementsSection(niche)}
+
 ---
 
 ## 📱 REQUISITOS TÉCNICOS
@@ -458,4 +460,54 @@ ${isApp ? '- Solicite diagramas de arquitetura primeiro\n- Depois implemente por
 - Revise e teste cada componente antes de avançar
 - Solicite melhorias e otimizações quando necessário
 ${isApp ? '- Configure backend conforme a plataforma suportar\n- Priorize segurança e performance' : ''}`;
+}
+
+// NOVA FUNÇÃO: Gerar seção de requisitos de backend funcional
+function generateBackendRequirementsSection(niche: NicheContext | undefined): string {
+  if (!niche?.backendRequirements || niche.backendRequirements.length === 0) {
+    return '';
+  }
+
+  const requirements = niche.backendRequirements.map(req => `
+### ${req.name}
+**${req.description}**
+
+${req.technicalSpec}
+`).join('\n');
+
+  return `
+---
+
+## 🔧 ESPECIFICAÇÕES FUNCIONAIS DE BACKEND
+
+> ⚠️ **IMPORTANTE**: As funcionalidades abaixo NÃO são apenas visuais. 
+> Devem ser implementadas com lógica funcional completa conforme especificado.
+
+${requirements}
+
+### Princípios Obrigatórios:
+
+1. **Estado Persistente**: Usar localStorage para carrinho/dados temporários
+2. **Validação de Formulários**: React Hook Form + Zod em TODOS os formulários
+3. **Feedback Visual**: Loading states, toasts de sucesso/erro, skeleton loading
+4. **Mobile First**: Todas as interações devem funcionar perfeitamente em mobile
+5. **WhatsApp Integration**: Mensagens formatadas com emojis e estrutura clara
+6. **Error Handling**: Tratar erros graciosamente com mensagens amigáveis
+
+### Padrão de Mensagem WhatsApp:
+
+\`\`\`typescript
+function generateWhatsAppLink(phone: string, message: string): string {
+  const cleanPhone = phone.replace(/\\D/g, '');
+  const encodedMessage = encodeURIComponent(message);
+  return \`https://wa.me/55\${cleanPhone}?text=\${encodedMessage}\`;
+}
+
+// Abrir em nova aba
+function openWhatsApp(phone: string, message: string): void {
+  const link = generateWhatsAppLink(phone, message);
+  window.open(link, '_blank');
+}
+\`\`\`
+`;
 }
