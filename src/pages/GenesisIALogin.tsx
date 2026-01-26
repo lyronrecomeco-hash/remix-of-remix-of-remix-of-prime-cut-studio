@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
-  Brain, 
   Lock, 
   Mail, 
   Eye, 
@@ -11,6 +10,7 @@ import {
   ArrowRight,
   MessageCircle
 } from "lucide-react";
+import genesisLogo from "@/assets/genesis-logo.png";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -269,8 +269,8 @@ const GenesisIALogin = () => {
               className="flex justify-center mb-10"
             >
               <div className="relative">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-cyan-500/20 flex items-center justify-center border border-primary/30 backdrop-blur-sm">
-                  <Brain className="w-8 h-8 text-primary" />
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-cyan-500/20 flex items-center justify-center border border-primary/30 backdrop-blur-sm overflow-hidden p-2">
+                  <img src={genesisLogo} alt="Genesis Hub" className="w-full h-full object-contain" />
                 </div>
                 <motion.div
                   className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary"

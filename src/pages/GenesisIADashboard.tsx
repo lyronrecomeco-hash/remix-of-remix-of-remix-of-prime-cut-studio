@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Brain, 
   Search,
   Settings,
   LogOut,
@@ -40,6 +39,7 @@ import {
   Layers,
   Box
 } from "lucide-react";
+import genesisLogo from "@/assets/genesis-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
@@ -274,9 +274,9 @@ const GenesisIADashboard = () => {
               opacity: [0.7, 1, 0.7]
             }}
             transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-            className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/30 to-cyan-500/30 flex items-center justify-center"
+            className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/30 to-cyan-500/30 flex items-center justify-center overflow-hidden p-2"
           >
-            <Brain className="w-8 h-8 text-blue-400" />
+            <img src={genesisLogo} alt="Genesis Hub" className="w-full h-full object-contain" />
           </motion.div>
           <div className="flex items-center gap-1">
             {[0, 1, 2].map((i) => (
@@ -760,10 +760,10 @@ const GenesisIADashboard = () => {
                     ) : (
                       <>
                         <div 
-                          className="w-9 h-9 rounded-lg flex items-center justify-center"
+                          className="w-9 h-9 rounded-lg flex items-center justify-center overflow-hidden p-1"
                           style={{ backgroundColor: config.header.logoColor }}
                         >
-                          <Brain className="w-5 h-5 text-primary-foreground" />
+                          <img src={genesisLogo} alt="Genesis Hub" className="w-full h-full object-contain" />
                         </div>
                         <h1 
                           className="text-base font-bold"
