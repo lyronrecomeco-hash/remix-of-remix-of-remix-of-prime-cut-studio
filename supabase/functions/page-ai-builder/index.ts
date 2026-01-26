@@ -201,7 +201,7 @@ Inclua:
 Estilo: ${style}
 Idioma do conteúdo: Português do Brasil`;
 
-    console.log('Generating page for prompt:', prompt);
+    console.log('Generating page with Gemini 2.5 Pro for prompt:', prompt);
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -210,13 +210,13 @@ Idioma do conteúdo: Português do Brasil`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'google/gemini-2.5-pro',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        temperature: 0.7,
-        max_tokens: 8000,
+        temperature: 0.3,
+        max_tokens: 16000,
       }),
     });
 
@@ -260,7 +260,7 @@ Idioma do conteúdo: Português do Brasil`;
       );
     }
 
-    console.log('Successfully generated page code, length:', generatedCode.length);
+    console.log('Successfully generated page code with Gemini 2.5 Pro, length:', generatedCode.length);
 
     return new Response(
       JSON.stringify({ success: true, code: generatedCode }),

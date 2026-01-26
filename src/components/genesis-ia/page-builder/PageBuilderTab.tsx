@@ -15,7 +15,6 @@ import {
   ExternalLink,
   PanelLeftClose,
   PanelLeft,
-  MessageSquare,
   Wand2,
   Lightbulb,
   ChevronRight,
@@ -25,7 +24,9 @@ import {
   Building2,
   UtensilsCrossed,
   Palette,
-  AlertTriangle
+  AlertTriangle,
+  Cpu,
+  Layers
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -55,130 +56,93 @@ const promptSuggestions = [
   { icon: Palette, text: 'Portfolio designer' },
 ];
 
-// Professional Loading Animation - Genesis Theme
+// Compact Loading Animation - Genesis Theme
 const GeneratingAnimation = ({ progress }: { progress: number }) => {
   const steps = ['Analisando', 'Processando', 'Estruturando', 'Estilizando', 'Finalizando'];
   const currentStepIndex = Math.min(Math.floor(progress / 20), steps.length - 1);
 
   return (
-    <div className="h-full flex items-center justify-center bg-background">
-      <div className="absolute inset-0 opacity-[0.03]">
-        <div 
-          className="absolute inset-0" 
-          style={{
-            backgroundImage: `linear-gradient(hsl(var(--primary) / 0.1) 1px, transparent 1px), 
-                              linear-gradient(90deg, hsl(var(--primary) / 0.1) 1px, transparent 1px)`,
-            backgroundSize: '80px 80px'
-          }}
-        />
-      </div>
-
-      <div className="relative z-10 text-center max-w-md px-8">
-        <div className="w-24 h-24 mx-auto mb-8 relative">
-          <div className="absolute inset-0 rounded-2xl bg-primary/5 border border-primary/20" />
+    <div className="h-full flex items-center justify-center bg-background/50">
+      <div className="relative z-10 text-center max-w-sm px-6">
+        <div className="w-16 h-16 mx-auto mb-6 relative">
+          <div className="absolute inset-0 rounded-xl bg-primary/10 border border-primary/20" />
           <div className="absolute inset-0 flex items-center justify-center">
             <motion.div
               animate={{ rotate: 360 }}
-              transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+              transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
             >
-              <Loader2 className="w-10 h-10 text-primary" />
+              <Cpu className="w-7 h-7 text-primary" />
             </motion.div>
           </div>
-          <motion.div
-            className="absolute -inset-2 rounded-3xl border border-primary/20"
-            animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.1, 0.3] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          />
         </div>
 
-        <h2 className="text-xl font-semibold text-foreground mb-3">Construindo sua página</h2>
-        <p className="text-base text-muted-foreground mb-10">A IA está gerando código React + Tailwind</p>
+        <h2 className="text-lg font-semibold text-foreground mb-2">Gemini 2.5 Pro</h2>
+        <p className="text-sm text-muted-foreground mb-6">Gerando código React + Tailwind</p>
 
-        <div className="flex items-center justify-center gap-3 mb-6">
+        <div className="flex items-center justify-center gap-2 mb-4">
           {steps.map((step, idx) => (
-            <div key={idx} className="flex items-center gap-3">
-              <motion.div
-                className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${
-                  idx <= currentStepIndex ? 'bg-primary' : 'bg-muted'
-                }`}
-                animate={idx === currentStepIndex ? { scale: [1, 1.3, 1] } : {}}
-                transition={{ duration: 1, repeat: Infinity }}
-              />
-              {idx < steps.length - 1 && (
-                <div className={`w-8 h-px ${idx < currentStepIndex ? 'bg-primary/50' : 'bg-muted'}`} />
-              )}
-            </div>
+            <motion.div
+              key={idx}
+              className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+                idx <= currentStepIndex ? 'bg-primary' : 'bg-muted'
+              }`}
+              animate={idx === currentStepIndex ? { scale: [1, 1.3, 1] } : {}}
+              transition={{ duration: 0.8, repeat: Infinity }}
+            />
           ))}
         </div>
 
         <motion.p
           key={currentStepIndex}
-          initial={{ opacity: 0, y: 5 }}
+          initial={{ opacity: 0, y: 3 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-sm text-primary font-medium mb-8"
+          className="text-xs text-primary font-medium mb-4"
         >
           {steps[currentStepIndex]}...
         </motion.p>
 
-        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+        <div className="h-1 bg-muted rounded-full overflow-hidden">
           <motion.div
             className="h-full bg-primary"
             style={{ width: `${progress}%` }}
             transition={{ duration: 0.3 }}
           />
         </div>
-
-        <p className="text-xs text-muted-foreground mt-6">Isso pode levar até 30 segundos</p>
       </div>
     </div>
   );
 };
 
-// Empty Preview State
+// Empty Preview State - Compact
 const EmptyPreviewState = () => (
-  <div className="h-full flex items-center justify-center bg-background">
-    <div className="absolute inset-0 opacity-[0.02]">
-      <div 
-        className="absolute inset-0" 
-        style={{
-          backgroundImage: `linear-gradient(hsl(var(--primary) / 0.1) 1px, transparent 1px), 
-                            linear-gradient(90deg, hsl(var(--primary) / 0.1) 1px, transparent 1px)`,
-          backgroundSize: '60px 60px'
-        }}
-      />
-    </div>
-
+  <div className="h-full flex items-center justify-center bg-background/30">
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       className="text-center"
     >
-      <div className="w-16 h-16 mx-auto mb-5 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-        <Eye className="w-7 h-7 text-primary/50" />
+      <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+        <Eye className="w-5 h-5 text-primary/50" />
       </div>
-      <p className="text-base text-muted-foreground mb-2">Área de Preview</p>
-      <p className="text-sm text-muted-foreground/60">Envie uma mensagem para gerar sua página</p>
+      <p className="text-sm text-muted-foreground">Preview</p>
     </motion.div>
   </div>
 );
 
-// Error State Component
+// Error State Component - Compact
 const PreviewErrorState = ({ error }: { error: string }) => (
-  <div className="h-full flex items-center justify-center bg-background p-8">
-    <div className="max-w-lg w-full">
-      <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-6">
-        <div className="flex items-start gap-4">
-          <div className="w-10 h-10 rounded-lg bg-destructive/20 flex items-center justify-center shrink-0">
-            <AlertTriangle className="w-5 h-5 text-destructive" />
+  <div className="h-full flex items-center justify-center bg-background/30 p-4">
+    <div className="max-w-md w-full">
+      <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-4">
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 rounded-lg bg-destructive/20 flex items-center justify-center shrink-0">
+            <AlertTriangle className="w-4 h-4 text-destructive" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-semibold text-foreground mb-2">Erro ao renderizar</h3>
-            <pre className="text-sm text-destructive bg-background/50 p-3 rounded-lg overflow-auto max-h-32 whitespace-pre-wrap break-words">
+            <h3 className="text-sm font-semibold text-foreground mb-1">Erro</h3>
+            <pre className="text-xs text-destructive bg-background/50 p-2 rounded-lg overflow-auto max-h-20 whitespace-pre-wrap break-words">
               {error}
             </pre>
-            <p className="text-sm text-muted-foreground mt-3">
-              Tente gerar novamente ou simplifique o prompt.
-            </p>
           </div>
         </div>
       </div>
@@ -210,9 +174,9 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
       const interval = setInterval(() => {
         setGeneratingProgress(prev => {
           if (prev >= 90) return prev;
-          return prev + Math.random() * 8 + 2;
+          return prev + Math.random() * 6 + 2;
         });
-      }, 500);
+      }, 600);
       return () => clearInterval(interval);
     } else {
       setGeneratingProgress(100);
@@ -248,14 +212,13 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
       const assistantMessage: ChatMessage = {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: '✨ Página gerada com sucesso!',
+        content: '✨ Página gerada com Gemini 2.5 Pro!',
         code: data.code,
         timestamp: new Date()
       };
 
       setMessages(prev => [...prev, assistantMessage]);
       setCurrentCode(data.code);
-      console.log('Generated code:', data.code?.substring(0, 500));
       toast.success('Página gerada!');
     } catch (error) {
       console.error('Error generating page:', error);
@@ -317,181 +280,186 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
     window.open(URL.createObjectURL(blob), '_blank');
   };
 
-  // Empty State - Initial Screen
+  // Empty State - Initial Screen (Compact Design)
   if (messages.length === 0 && !currentCode) {
     return (
-      <div className="h-full flex flex-col items-center justify-center px-4 py-8 fixed inset-0 z-50 bg-background">
-        <div className="absolute inset-0 opacity-[0.02]">
-          <div 
-            className="absolute inset-0" 
-            style={{
-              backgroundImage: `linear-gradient(hsl(var(--primary) / 0.1) 1px, transparent 1px), 
-                                linear-gradient(90deg, hsl(var(--primary) / 0.1) 1px, transparent 1px)`,
-              backgroundSize: '80px 80px'
-            }}
-          />
+      <div className="h-full flex flex-col fixed inset-0 z-50 bg-background">
+        {/* Header Bar */}
+        <div className="flex items-center justify-between px-4 py-2.5 bg-white/5 border-b border-white/10 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-lg">
+              <Layers className="w-4 h-4 text-primary" />
+              <span className="text-sm font-medium text-primary">Page Builder</span>
+            </div>
+            <div className="h-4 w-px bg-white/10" />
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Cpu className="w-3.5 h-3.5" />
+              <span>Gemini 2.5 Pro</span>
+            </div>
+          </div>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-2xl relative z-10"
-        >
+        {/* Main Content */}
+        <div className="flex-1 flex items-center justify-center px-4 py-6">
           <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', delay: 0.1 }}
-            className="flex justify-center mb-8"
-          >
-            <div className="w-20 h-20 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-              <Wand2 className="w-9 h-9 text-primary" />
-            </div>
-          </motion.div>
-          
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-center mb-10"
+            className="w-full max-w-xl"
           >
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-              O que vamos <span className="text-primary">construir hoje?</span>
-            </h1>
-            <p className="text-base text-muted-foreground">
-              Descreva sua página e a IA criará código React + Tailwind
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="mb-8"
-          >
-            <div className="relative bg-card border border-border rounded-xl overflow-hidden">
-              <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
-                <MessageSquare className="w-5 h-5 text-primary" />
-                <span className="text-sm font-medium text-muted-foreground">Descreva sua página</span>
+            {/* Icon */}
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', delay: 0.1 }}
+              className="flex justify-center mb-5"
+            >
+              <div className="w-14 h-14 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                <Wand2 className="w-6 h-6 text-primary" />
               </div>
-              
-              <textarea
-                ref={inputRef}
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Ex: Landing page para startup de IA com hero, features, pricing..."
-                className="w-full bg-transparent text-foreground placeholder:text-muted-foreground/50 resize-none text-base p-5 pb-16 focus:outline-none min-h-[140px]"
-              />
-              
-              <div className="absolute bottom-4 right-4 flex items-center gap-3">
-                <span className="text-sm text-muted-foreground">{prompt.length}</span>
-                <Button
-                  onClick={handleGenerate}
-                  disabled={!prompt.trim() || prompt.length < 5}
-                  size="sm"
-                  className="h-10 px-5 bg-primary hover:bg-primary/90 disabled:opacity-30 rounded-lg text-sm font-medium gap-2"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Gerar
-                </Button>
-              </div>
-            </div>
-          </motion.div>
+            </motion.div>
+            
+            {/* Title */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="text-center mb-6"
+            >
+              <h1 className="text-xl md:text-2xl font-bold text-foreground mb-1.5">
+                O que vamos <span className="text-primary">construir?</span>
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Descreva sua página e a IA criará código React + Tailwind
+              </p>
+            </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <Lightbulb className="w-4 h-4 text-primary/60" />
-              <span className="text-sm font-medium text-muted-foreground">Sugestões</span>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {promptSuggestions.map((suggestion, idx) => {
-                const Icon = suggestion.icon;
-                return (
-                  <motion.button
-                    key={idx}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => handleSuggestionClick(suggestion.text)}
-                    className="flex items-center gap-3 px-4 py-3 bg-card hover:bg-accent/50 border border-border hover:border-primary/30 rounded-xl text-left transition-all group"
+            {/* Input Card - Glassmorphism */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="mb-5"
+            >
+              <div className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden">
+                <textarea
+                  ref={inputRef}
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Ex: Landing page para startup de IA com hero, features, pricing..."
+                  className="w-full bg-transparent text-foreground placeholder:text-muted-foreground/50 resize-none text-sm p-4 pb-14 focus:outline-none min-h-[100px]"
+                />
+                
+                <div className="absolute bottom-3 right-3 flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground tabular-nums">{prompt.length}</span>
+                  <Button
+                    onClick={handleGenerate}
+                    disabled={!prompt.trim() || prompt.length < 5}
+                    size="sm"
+                    className="h-8 px-4 bg-primary hover:bg-primary/90 disabled:opacity-30 rounded-lg text-xs font-medium gap-1.5"
                   >
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <Icon className="w-5 h-5 text-primary/70" />
-                    </div>
-                    <span className="text-sm text-muted-foreground group-hover:text-foreground line-clamp-2">{suggestion.text}</span>
-                    <ChevronRight className="w-4 h-4 text-muted group-hover:text-primary/50 ml-auto shrink-0" />
-                  </motion.button>
-                );
-              })}
-            </div>
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Gerar
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Suggestions - Compact Grid */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.25 }}
+            >
+              <div className="flex items-center gap-1.5 mb-3">
+                <Lightbulb className="w-3.5 h-3.5 text-primary/60" />
+                <span className="text-xs font-medium text-muted-foreground">Sugestões</span>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {promptSuggestions.map((suggestion, idx) => {
+                  const Icon = suggestion.icon;
+                  return (
+                    <motion.button
+                      key={idx}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => handleSuggestionClick(suggestion.text)}
+                      className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-primary/30 rounded-lg text-left transition-all group"
+                    >
+                      <div className="w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+                        <Icon className="w-3.5 h-3.5 text-primary/70" />
+                      </div>
+                      <span className="text-xs text-muted-foreground group-hover:text-foreground line-clamp-1 flex-1">{suggestion.text}</span>
+                      <ChevronRight className="w-3 h-3 text-muted group-hover:text-primary/50 shrink-0" />
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </motion.div>
           </motion.div>
-        </motion.div>
+        </div>
       </div>
     );
   }
 
-  // Main Builder Interface
+  // Main Builder Interface - Compact & Glassmorphism
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
-      {/* Top Toolbar */}
-      <div className="flex items-center justify-between px-4 py-3 bg-card/50 border-b border-border shrink-0">
-        <div className="flex items-center gap-3">
+      {/* Top Toolbar - Compact */}
+      <div className="flex items-center justify-between px-3 py-2 bg-white/5 border-b border-white/10 shrink-0">
+        <div className="flex items-center gap-2">
           <Button
             onClick={() => setIsChatOpen(!isChatOpen)}
             variant="ghost"
             size="sm"
-            className="h-9 gap-2 text-muted-foreground hover:text-foreground text-sm"
+            className="h-7 px-2 gap-1.5 text-muted-foreground hover:text-foreground text-xs"
           >
-            {isChatOpen ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeft className="w-5 h-5" />}
+            {isChatOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
             <span className="hidden sm:inline">{isChatOpen ? 'Fechar' : 'Chat'}</span>
           </Button>
           
-          <div className="h-5 w-px bg-border" />
+          <div className="h-4 w-px bg-white/10" />
           
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-lg">
-            <div className={`w-2 h-2 rounded-full ${isGenerating ? 'bg-yellow-400 animate-pulse' : 'bg-primary'}`} />
-            <span className="text-sm font-medium text-primary">
-              {isGenerating ? 'Gerando...' : 'Ativo'}
-            </span>
+          <div className="flex items-center gap-1.5 px-2 py-1 bg-primary/10 border border-primary/20 rounded-md">
+            <Cpu className="w-3 h-3 text-primary" />
+            <span className="text-xs font-medium text-primary">Gemini Pro</span>
+            <div className={`w-1.5 h-1.5 rounded-full ${isGenerating ? 'bg-yellow-400 animate-pulse' : 'bg-emerald-400'}`} />
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button
             onClick={() => setShowCode(!showCode)}
             variant="ghost"
             size="sm"
-            className={`h-9 gap-2 text-sm ${showCode ? 'bg-accent text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+            className={`h-7 px-2 gap-1.5 text-xs ${showCode ? 'bg-white/10 text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
             disabled={!currentCode}
           >
-            {showCode ? <Eye className="w-4 h-4" /> : <Code2 className="w-4 h-4" />}
+            {showCode ? <Eye className="w-3.5 h-3.5" /> : <Code2 className="w-3.5 h-3.5" />}
             <span className="hidden sm:inline">{showCode ? 'Preview' : 'Código'}</span>
           </Button>
           
-          <Button onClick={handleCopyCode} variant="ghost" size="sm" className="h-9 w-9 p-0 text-muted-foreground hover:text-foreground" disabled={!currentCode}>
-            {copied ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
+          <Button onClick={handleCopyCode} variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground" disabled={!currentCode}>
+            {copied ? <Check className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5" />}
           </Button>
           
-          <Button onClick={openInNewTab} variant="ghost" size="sm" className="h-9 w-9 p-0 text-muted-foreground hover:text-foreground" disabled={!currentCode}>
-            <ExternalLink className="w-4 h-4" />
+          <Button onClick={openInNewTab} variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground" disabled={!currentCode}>
+            <ExternalLink className="w-3.5 h-3.5" />
           </Button>
           
-          <Button onClick={() => setIsFullscreen(!isFullscreen)} variant="ghost" size="sm" className="h-9 w-9 p-0 text-muted-foreground hover:text-foreground">
-            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          <Button onClick={() => setIsFullscreen(!isFullscreen)} variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground">
+            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
           </Button>
           
-          <div className="h-5 w-px bg-border mx-1" />
+          <div className="h-4 w-px bg-white/10 mx-1" />
           
-          <Button onClick={handleExport} size="sm" className="h-9 gap-2 bg-primary hover:bg-primary/90 text-sm" disabled={!currentCode}>
-            <Download className="w-4 h-4" />
+          <Button onClick={handleExport} size="sm" className="h-7 px-3 gap-1.5 bg-primary hover:bg-primary/90 text-xs" disabled={!currentCode}>
+            <Download className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Exportar</span>
           </Button>
           
-          <Button onClick={handleNewChat} variant="ghost" size="sm" className="h-9 gap-2 text-muted-foreground hover:text-foreground text-sm">
-            <RefreshCw className="w-4 h-4" />
+          <Button onClick={handleNewChat} variant="ghost" size="sm" className="h-7 px-2 gap-1.5 text-muted-foreground hover:text-foreground text-xs">
+            <RefreshCw className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Nova</span>
           </Button>
         </div>
@@ -500,44 +468,44 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
       {/* Main Content */}
       <div className="flex-1 overflow-hidden">
         <ResizablePanelGroup direction="horizontal" className="h-full">
-          {/* Chat Panel */}
+          {/* Chat Panel - Compact */}
           <AnimatePresence initial={false}>
             {isChatOpen && (
-              <ResizablePanel defaultSize={28} minSize={20} maxSize={40} className="bg-card/30">
+              <ResizablePanel defaultSize={25} minSize={18} maxSize={35} className="bg-white/[0.02]">
                 <motion.div
-                  initial={{ opacity: 0, x: -20 }}
+                  initial={{ opacity: 0, x: -15 }}
                   animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
+                  exit={{ opacity: 0, x: -15 }}
                   className="h-full flex flex-col"
                 >
-                  {/* Messages */}
-                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  {/* Messages - Compact */}
+                  <div className="flex-1 overflow-y-auto p-3 space-y-3">
                     {messages.map((msg) => (
                       <motion.div
                         key={msg.id}
-                        initial={{ opacity: 0, y: 10 }}
+                        initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                       >
-                        <div className={`max-w-[90%] rounded-xl px-4 py-3 ${
+                        <div className={`max-w-[90%] rounded-lg px-3 py-2 ${
                           msg.role === 'user' 
                             ? 'bg-primary text-primary-foreground' 
-                            : 'bg-accent text-accent-foreground border border-border'
+                            : 'bg-white/5 text-foreground border border-white/10'
                         }`}>
-                          <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                          <p className="text-xs whitespace-pre-wrap">{msg.content}</p>
                           {msg.code && (
                             <button
                               onClick={() => {
                                 setCurrentCode(msg.code!);
                                 setPreviewError(null);
                               }}
-                               className={`mt-2 text-xs flex items-center gap-1.5 underline-offset-2 hover:underline ${
-                                 msg.role === 'user'
-                                   ? 'text-primary-foreground/80 hover:text-primary-foreground'
-                                   : 'text-primary/80 hover:text-primary'
-                               }`}
+                              className={`mt-1.5 text-[10px] flex items-center gap-1 underline-offset-2 hover:underline ${
+                                msg.role === 'user'
+                                  ? 'text-primary-foreground/80 hover:text-primary-foreground'
+                                  : 'text-primary/80 hover:text-primary'
+                              }`}
                             >
-                              <Eye className="w-3.5 h-3.5" />
+                              <Eye className="w-3 h-3" />
                               Ver versão
                             </button>
                           )}
@@ -547,17 +515,17 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
                     
                     {isGenerating && (
                       <motion.div
-                        initial={{ opacity: 0, y: 10 }}
+                        initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-accent rounded-xl p-4 border border-border"
+                        className="bg-white/5 rounded-lg p-3 border border-white/10"
                       >
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <Loader2 className="w-4 h-4 text-primary animate-spin" />
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-foreground mb-2">Gerando...</p>
-                            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                            <p className="text-xs font-medium text-foreground mb-1.5">Gerando...</p>
+                            <div className="h-1 bg-white/10 rounded-full overflow-hidden">
                               <motion.div
                                 className="h-full bg-primary"
                                 style={{ width: `${generatingProgress}%` }}
@@ -571,59 +539,59 @@ export const PageBuilderTab = ({ onBack }: PageBuilderTabProps) => {
                     <div ref={chatEndRef} />
                   </div>
 
-                   {/* Input */}
-                   <div className="p-4 border-t border-border">
-                     <div className="relative bg-card/40 border border-border rounded-xl overflow-hidden">
-                       <textarea
-                         ref={inputRef}
-                         value={prompt}
-                         onChange={(e) => setPrompt(e.target.value)}
-                         onKeyDown={handleKeyDown}
-                         placeholder="Descreva alterações..."
-                         disabled={isGenerating}
-                         className="w-full bg-transparent text-foreground placeholder:text-muted-foreground/60 resize-none text-sm p-4 pr-28 pb-12 focus:outline-none min-h-[56px] max-h-[160px] overflow-y-auto disabled:opacity-50"
-                         rows={3}
-                       />
+                  {/* Input - Compact */}
+                  <div className="p-3 border-t border-white/10">
+                    <div className="relative bg-white/5 border border-white/10 rounded-lg overflow-hidden">
+                      <textarea
+                        ref={inputRef}
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Descreva alterações..."
+                        disabled={isGenerating}
+                        className="w-full bg-transparent text-foreground placeholder:text-muted-foreground/60 resize-none text-xs p-3 pr-20 pb-10 focus:outline-none min-h-[48px] max-h-[120px] overflow-y-auto disabled:opacity-50"
+                        rows={2}
+                      />
 
-                       <div className="absolute bottom-3 right-3 flex items-center gap-2">
-                         <span className="text-xs text-muted-foreground tabular-nums">{prompt.length}</span>
-                         <Button
-                           onClick={handleGenerate}
-                           disabled={!prompt.trim() || isGenerating}
-                           size="sm"
-                           className="h-9 px-4 bg-primary hover:bg-primary/90 disabled:opacity-30 rounded-lg gap-2"
-                         >
-                           {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUp className="w-4 h-4" />}
-                           <span className="text-sm">Enviar</span>
-                         </Button>
-                       </div>
-                     </div>
-                   </div>
+                      <div className="absolute bottom-2 right-2 flex items-center gap-1.5">
+                        <span className="text-[10px] text-muted-foreground tabular-nums">{prompt.length}</span>
+                        <Button
+                          onClick={handleGenerate}
+                          disabled={!prompt.trim() || isGenerating}
+                          size="sm"
+                          className="h-7 px-3 bg-primary hover:bg-primary/90 disabled:opacity-30 rounded-md gap-1.5"
+                        >
+                          {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowUp className="w-3.5 h-3.5" />}
+                          <span className="text-xs">Enviar</span>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 </motion.div>
               </ResizablePanel>
             )}
           </AnimatePresence>
 
-          {isChatOpen && <ResizableHandle withHandle className="bg-border/50 hover:bg-primary/20 transition-colors w-1" />}
+          {isChatOpen && <ResizableHandle withHandle className="bg-white/5 hover:bg-primary/20 transition-colors w-0.5" />}
 
           {/* Preview Panel */}
-          <ResizablePanel defaultSize={isChatOpen ? 72 : 100}>
-            <div className="h-full flex flex-col bg-background">
+          <ResizablePanel defaultSize={isChatOpen ? 75 : 100}>
+            <div className="h-full flex flex-col bg-background/50">
               {isGenerating ? (
                 <GeneratingAnimation progress={generatingProgress} />
-               ) : currentCode ? (
+              ) : currentCode ? (
                 showCode ? (
-                  <div className="h-full overflow-auto p-5">
-                    <pre className="text-sm text-foreground/80 font-mono whitespace-pre-wrap leading-relaxed bg-card p-5 rounded-xl border border-border">
+                  <div className="h-full overflow-auto p-3">
+                    <pre className="text-xs text-foreground/80 font-mono whitespace-pre-wrap leading-relaxed bg-white/5 p-4 rounded-xl border border-white/10">
                       {currentCode}
                     </pre>
                   </div>
                 ) : previewError ? (
                   <PreviewErrorState error={previewError} />
                 ) : (
-                  <div className="h-full w-full p-4">
-                     <div className="h-full w-full rounded-xl overflow-hidden shadow-2xl border border-border bg-background">
-                       <PageBuilderPreview code={currentCode} />
+                  <div className="h-full w-full p-2">
+                    <div className="h-full w-full rounded-lg overflow-hidden shadow-xl border border-white/10 bg-background">
+                      <PageBuilderPreview code={currentCode} />
                     </div>
                   </div>
                 )
@@ -818,35 +786,34 @@ function generateHtmlPreview(code: string): string {
       'QrCode','Barcode','Scan','ScanLine','Focus','Crosshair','Aperture','CameraOff',
       'Printer','Save','Copy','Clipboard','ClipboardCheck','ClipboardList','ClipboardCopy',
       'CalendarDays','CalendarCheck','CalendarClock','Timer','TimerOff','Hourglass','Watch','Stopwatch',
-      'Repeat','Repeat1','Shuffle','SkipBack','SkipForward','Rewind','FastForward',
-      'MicOff','Radio','Podcast','Rss','Cast','Airplay','Tv','Projector',
-      'Gamepad','Gamepad2','Joystick','Dices','Puzzle','Swords','ShieldAlert','ShieldOff'
+      'Sunrise','Sunset','CloudSun','CloudMoon','CloudRain','CloudSnow','CloudLightning','Thermometer',
+      'Heart','HeartHandshake','HeartPulse','Stethoscope','Pill','Syringe','Activity','Bone',
+      'User','UserPlus','UserMinus','UserCheck','UserX','UserCircle','UserCog','Users',
+      'Building','Building2','Castle','Church','Factory','Hotel','Landmark','School','Hospital','Store',
+      'Bed','Sofa','Armchair','Bath','Tv','Refrigerator','WashingMachine','Fan','Lamp','LampDesk',
+      'Shirt','Pants','Dress','Glasses','Hat','Watch','Gem','Ring','Crown','Wallet',
+      'GraduationCap','Backpack','PencilRuler','Calculator','Scissors','Eraser','Paperclip','Pin','Pushpin',
+      'Guitar','Piano','Drum','Headphones','Speaker','Radio','Podcast','Mic','Play','Pause','SkipBack','SkipForward',
+      'Gamepad','Joystick','Dice1','Dice2','Dice3','Dice4','Dice5','Dice6','Puzzle','ToyBrick',
+      'Baby','Cat','Dog','Bird','Fish','Bug','Turtle','Rabbit','Rat','Snail',
+      'Footprints','Paw','Bone','Feather','Shell','Egg','Milk','Soup','Salad','Sandwich',
+      'Coffee','Wine','Beer','Martini','GlassWater','CupSoda','Candy','Cookie','Croissant','Popcorn'
     ];
     
-    iconNames.forEach(function(name) {
-      window[name] = createLucideIcon(name);
-    });
+    iconNames.forEach(function(name) { window[name] = createLucideIcon(name); });
   <\/script>
   
-  <script>
-    // Compile and run the component
+  <script type="text/babel">
+    ${cleanedCode}
+    
     try {
-      var sourceCode = ${JSON.stringify(cleanedCode)};
-      
-      // Use Babel to transform the code with TypeScript and React presets
-      var result = Babel.transform(sourceCode, {
-        presets: ['react', 'typescript'],
-        filename: 'page.tsx'
-      });
-      
-      // Create and execute the compiled code
-      var script = document.createElement('script');
-      script.textContent = result.code + '\\n\\ntry { var root = ReactDOM.createRoot(document.getElementById("root")); root.render(React.createElement(PageComponent)); } catch(e) { console.error("Render error:", e); document.getElementById("root").innerHTML = "<div data-preview-error style=\\"padding:40px;color:#ef4444;\\">" + e.message + "</div>"; }';
-      document.body.appendChild(script);
-      
-    } catch (e) {
-      console.error('Compilation error:', e);
-      document.getElementById('root').innerHTML = '<div data-preview-error style="padding:60px;max-width:600px;margin:0 auto;"><div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:24px;"><h2 style="color:#dc2626;font-size:18px;margin-bottom:12px;">Erro de compilação</h2><pre style="background:#1f2937;color:#f87171;padding:16px;border-radius:8px;overflow:auto;font-size:13px;white-space:pre-wrap;">' + e.message + '</pre></div></div>';
+      if (typeof PageComponent !== 'undefined') {
+        ReactDOM.createRoot(document.getElementById('root')).render(<PageComponent />);
+      } else {
+        document.getElementById('root').innerHTML = '<div style="padding:40px;color:red;">Component not found</div>';
+      }
+    } catch (err) {
+      document.getElementById('root').innerHTML = '<div style="padding:40px;color:red;">Render Error: ' + err.message + '</div>';
     }
   <\/script>
 </body>
