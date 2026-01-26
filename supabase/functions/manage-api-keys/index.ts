@@ -28,20 +28,18 @@ serve(async (req) => {
       });
     }
 
-    // Extract token
+    // Extract and validate token
     const token = authHeader.replace('Bearer ', '');
     
-    // Create client for JWT validation
-    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } }
-    });
+    // Use service role client to validate the JWT
+    const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
     
-    // Validate JWT using getClaims
-    const { data: { user }, error: claimsError } = await authClient.auth.getUser();
+    // Get user from token
+    const { data: { user }, error: userError } = await serviceClient.auth.getUser(token);
     
-    if (claimsError || !user) {
-      console.error('Invalid token or claims:', claimsError?.message);
-      return new Response(JSON.stringify({ error: 'Unauthorized - Invalid token' }), {
+    if (userError || !user) {
+      console.error('Token validation failed:', userError?.message);
+      return new Response(JSON.stringify({ error: 'Unauthorized - Invalid token', details: userError?.message }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -49,10 +47,6 @@ serve(async (req) => {
 
     const userId = user.id;
     console.log('Authenticated user:', userId);
-
-    // Use service role client for admin operations
-    const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
-    
     // Find genesis user
     const { data: genesisUser, error: genesisError } = await serviceClient
       .from('genesis_users')
