@@ -112,6 +112,7 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
     started_at: string | null;
     expires_at: string | null;
   } | null>(null);
+  const [isPromoUser, setIsPromoUser] = useState(false);
 
   useEffect(() => {
     loadSettings();
@@ -146,13 +147,21 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
         .maybeSingle();
 
       if (data) {
-        // Check if expired
         const isExpired = data.expires_at && new Date(data.expires_at) < new Date();
         setSubscription({
           ...data,
           status: isExpired ? 'expired' : data.status
         });
       }
+
+      // Check if user came from promo
+      const { data: promoData } = await supabase
+        .from('promo_referrals')
+        .select('id')
+        .eq('referred_user_id', userId)
+        .maybeSingle();
+      
+      setIsPromoUser(!!promoData);
     } catch (error) {
       console.error('Error loading subscription:', error);
     }
@@ -322,6 +331,7 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
           status={subscription?.status || 'inactive'}
           startedAt={subscription?.started_at || undefined}
           expiresAt={subscription?.expires_at || undefined}
+          isPromoUser={isPromoUser}
           onRenewed={loadSubscription}
         />
       </div>

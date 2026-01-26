@@ -26,6 +26,7 @@ interface SubscriptionBillingCardIAProps {
   status: string;
   startedAt?: string;
   expiresAt?: string;
+  isPromoUser?: boolean;
   onRenewed?: () => void;
 }
 
@@ -36,6 +37,7 @@ export function SubscriptionBillingCardIA({
   status,
   startedAt,
   expiresAt,
+  isPromoUser = false,
   onRenewed,
 }: SubscriptionBillingCardIAProps) {
   const [showRenewalModal, setShowRenewalModal] = useState(false);
@@ -225,6 +227,7 @@ export function SubscriptionBillingCardIA({
         userId={userId}
         currentPlan={plan}
         currentExpiresAt={expiresAt}
+        isPromoUser={isPromoUser}
         onSuccess={handleRenewalSuccess}
       />
     </>
