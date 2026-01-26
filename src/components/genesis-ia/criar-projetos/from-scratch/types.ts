@@ -51,7 +51,6 @@ export interface FromScratchFormData {
   hasAdvancedSEO: boolean;
   hasAnalytics: boolean;
   isPerformanceOptimized: boolean;
-  isMobileFirst: boolean;
   hasAccessibility: boolean;
   
   // Step 10: Target AI
@@ -269,7 +268,6 @@ export const initialFromScratchFormData: FromScratchFormData = {
   hasAdvancedSEO: true,
   hasAnalytics: true,
   isPerformanceOptimized: true,
-  isMobileFirst: true,
   hasAccessibility: true,
   targetAI: 'lovable',
 };

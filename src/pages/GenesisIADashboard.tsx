@@ -662,7 +662,7 @@ const GenesisIADashboard = () => {
     }
 
     if (activeTab === 'financial') {
-      return <GenesisFinancialTab userId={userId} />;
+      return <GenesisFinancialTab userId={userId} userEmail={userEmail} />;
     }
 
     if (activeTab === 'criar-projetos') {
