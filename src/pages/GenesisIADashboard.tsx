@@ -680,7 +680,8 @@ const GenesisIADashboard = () => {
     }
 
     if (activeTab === 'promocional') {
-      return <PromocionalTab userId={userId} onBack={() => setActiveTab('dashboard')} />;
+      // PromocionalTab uses auth.user_id for promo_links table
+      return <PromocionalTab userId={authUserId} onBack={() => setActiveTab('dashboard')} />;
     }
 
     if (activeTab === 'payments' && isAdmin) {
