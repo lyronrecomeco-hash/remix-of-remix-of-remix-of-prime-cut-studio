@@ -29,6 +29,11 @@ interface GenesisUser {
   email: string;
   auth_user_id: string;
   search_count?: number;
+  // Subscription fields
+  plan?: string;
+  plan_name?: string;
+  subscription_status?: string;
+  expires_at?: string;
 }
 
 interface SearchHistory {
@@ -101,13 +106,32 @@ export function ApiKeysTab({ onBack }: ApiKeysTabProps) {
 
   const loadUsers = async () => {
     try {
-      const { data, error } = await supabase
+      // First get users
+      const { data: usersData, error: usersError } = await supabase
         .from('genesis_users')
         .select('id, name, email, auth_user_id')
         .order('name');
 
-      if (error) throw error;
-      setUsers(data || []);
+      if (usersError) throw usersError;
+
+      // Then get subscriptions
+      const { data: subscriptionsData } = await supabase
+        .from('genesis_subscriptions')
+        .select('user_id, plan, plan_name, status, expires_at');
+
+      // Merge data
+      const mergedUsers = (usersData || []).map(user => {
+        const sub = subscriptionsData?.find(s => s.user_id === user.id);
+        return {
+          ...user,
+          plan: sub?.plan || 'free',
+          plan_name: sub?.plan_name || 'Free',
+          subscription_status: sub?.status || 'inactive',
+          expires_at: sub?.expires_at
+        };
+      });
+
+      setUsers(mergedUsers);
     } catch (error) {
       console.error('Error loading users:', error);
     }
@@ -645,38 +669,75 @@ export function ApiKeysTab({ onBack }: ApiKeysTabProps) {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {paginatedUsers.map((user, index) => (
-                      <motion.div
-                        key={user.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.03 }}
-                        onClick={() => loadSearchHistory(user)}
-                        className="flex items-center justify-between p-3 rounded-lg border bg-white/5 border-white/10 hover:bg-white/10 cursor-pointer transition-colors group"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center">
-                            <span className="text-blue-400 font-semibold">
-                              {user.name?.charAt(0)?.toUpperCase() || 'U'}
-                            </span>
+                    {paginatedUsers.map((user, index) => {
+                      const isExpired = user.expires_at && new Date(user.expires_at) < new Date();
+                      const planColors: Record<string, string> = {
+                        'starter': 'from-blue-500/20 to-cyan-500/20 text-blue-400 border-blue-500/30',
+                        'professional': 'from-purple-500/20 to-pink-500/20 text-purple-400 border-purple-500/30',
+                        'enterprise': 'from-amber-500/20 to-orange-500/20 text-amber-400 border-amber-500/30',
+                        'free': 'from-gray-500/20 to-slate-500/20 text-gray-400 border-gray-500/30'
+                      };
+                      const planColor = planColors[user.plan || 'free'] || planColors.free;
+                      
+                      return (
+                        <motion.div
+                          key={user.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.03 }}
+                          onClick={() => loadSearchHistory(user)}
+                          className="flex items-center justify-between p-3 rounded-lg border bg-white/5 border-white/10 hover:bg-white/10 cursor-pointer transition-colors group"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center">
+                              <span className="text-blue-400 font-semibold">
+                                {user.name?.charAt(0)?.toUpperCase() || 'U'}
+                              </span>
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <p className="text-white font-medium text-sm">{user.name}</p>
+                                {/* Plan Badge */}
+                                <Badge 
+                                  variant="outline" 
+                                  className={`text-[10px] px-1.5 py-0 bg-gradient-to-r ${planColor}`}
+                                >
+                                  {user.plan_name || 'Free'}
+                                </Badge>
+                                {/* Status Badge */}
+                                {user.subscription_status === 'active' && !isExpired ? (
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                                    Ativo
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-400 border-red-500/30">
+                                    {isExpired ? 'Expirado' : 'Inativo'}
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <p className="text-white/40 text-xs">{user.email}</p>
+                                {user.expires_at && (
+                                  <span className="text-white/30 text-[10px]">
+                                    • Venc: {new Date(user.expires_at).toLocaleDateString('pt-BR')}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-white font-medium text-sm">{user.name}</p>
-                            <p className="text-white/40 text-xs">{user.email}</p>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 px-3 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/30 text-blue-400 hover:from-blue-500/20 hover:to-cyan-500/20 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <Search className="w-3.5 h-3.5 mr-1.5" />
+                              Ver Histórico
+                            </Button>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 px-3 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/30 text-blue-400 hover:from-blue-500/20 hover:to-cyan-500/20 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <Search className="w-3.5 h-3.5 mr-1.5" />
-                            Ver Histórico
-                          </Button>
-                        </div>
-                      </motion.div>
-                    ))}
+                        </motion.div>
+                      );
+                    })}
 
                     {/* Users Pagination */}
                     {totalUsersPages > 1 && (
