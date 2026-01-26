@@ -110,7 +110,7 @@ const GenesisIADashboard = () => {
     }
 
     setUserEmail(user.email || "");
-    setUserId(user.id);
+   // NÃO usar auth user.id aqui - vamos usar genesis_user.id depois
 
     // Buscar nome e id do genesis_users (vem do checkout)
     const { data: genesisUser } = await supabase
@@ -118,6 +118,15 @@ const GenesisIADashboard = () => {
       .select('id, name')
       .eq('auth_user_id', user.id)
       .maybeSingle();
+
+   // CRÍTICO: Usar o ID do genesis_users, não auth.id
+   if (genesisUser?.id) {
+     setUserId(genesisUser.id);
+   } else {
+     // Fallback para auth id se não encontrar genesis_user
+     setUserId(user.id);
+     console.warn('Genesis user not found, using auth_user_id as fallback');
+   }
 
     // Usar primeiro nome do genesis_users, ou do metadata, ou do email
     const fullName = genesisUser?.name || 
