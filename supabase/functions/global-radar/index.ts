@@ -35,7 +35,7 @@ const SEARCH_REGIONS: Record<string, { cities: string[]; countryCode: string; la
   },
 };
 
-// Nichos para busca - foco em negócios locais que geralmente não têm presença digital
+// Nichos para busca
 const SEARCH_NICHES: Record<string, Record<string, string>> = {
   'en': {
     'barbershop': 'barbershop near me',
@@ -120,21 +120,17 @@ interface RadarRequest {
 }
 
 function calculateOpportunityScore(business: any): number {
-  let score = 60; // Base score mais alto
+  let score = 60;
   
-  // Sem website = grande oportunidade
   if (!business.website) score += 30;
-  else score -= 5; // Ainda pode melhorar o site
+  else score -= 5;
   
-  // Telefone disponível = mais fácil contato
   if (business.phone) score += 5;
   
-  // Avaliação baixa ou inexistente = precisa de ajuda
   if (!business.rating || business.rating < 3) score += 10;
   else if (business.rating < 4) score += 5;
   else if (business.rating >= 4.5) score -= 5;
   
-  // Poucas reviews = menos visibilidade
   if (!business.reviews_count || business.reviews_count < 20) score += 10;
   else if (business.reviews_count < 50) score += 5;
   
@@ -195,6 +191,22 @@ serve(async (req) => {
       throw new Error('SERPER_API_KEY not configured');
     }
 
+    // Buscar chave com menor uso para rotação
+    let usedKeyId: string | null = null;
+    const { data: rotatingKeys, error: keysError } = await supabase
+      .from('genesis_api_keys')
+      .select('id, usage_count')
+      .eq('provider', 'serper')
+      .eq('is_active', true)
+      .order('usage_count', { ascending: true })
+      .order('priority', { ascending: true })
+      .limit(1);
+
+    if (!keysError && rotatingKeys && rotatingKeys.length > 0) {
+      usedKeyId = rotatingKeys[0].id;
+      console.log(`Using rotating key: ${usedKeyId} (usage: ${rotatingKeys[0].usage_count})`);
+    }
+
     // Selecionar região aleatória se não especificada
     const regions = Object.keys(SEARCH_REGIONS);
     const selectedRegion = region || regions[Math.floor(Math.random() * regions.length)];
@@ -230,6 +242,27 @@ serve(async (req) => {
         num: Math.min(maxResults, 20),
       }),
     });
+
+    // Incrementar uso da chave após chamada à API
+    if (usedKeyId) {
+      const { data: currentKey } = await supabase
+        .from('genesis_api_keys')
+        .select('usage_count')
+        .eq('id', usedKeyId)
+        .single();
+
+      if (currentKey) {
+        await supabase
+          .from('genesis_api_keys')
+          .update({ 
+            usage_count: (currentKey.usage_count || 0) + 1,
+            last_used_at: new Date().toISOString()
+          })
+          .eq('id', usedKeyId);
+        
+        console.log(`Key ${usedKeyId} usage incremented to ${(currentKey.usage_count || 0) + 1}`);
+      }
+    }
 
     if (!searchResponse.ok) {
       const errorText = await searchResponse.text();
