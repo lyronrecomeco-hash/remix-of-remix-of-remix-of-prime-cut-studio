@@ -53,6 +53,29 @@ export function ApiKeysTab({ onBack }: ApiKeysTabProps) {
     }
   };
 
+  const syncUsage = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-api-keys', {
+        body: { action: 'sync_usage' }
+      });
+
+      if (error) throw error;
+      
+      if (data?.success) {
+        toast.success('Uso sincronizado com a API Serper!');
+        loadKeys(); // Recarregar para mostrar dados atualizados
+      } else {
+        toast.error(data?.error || 'Erro ao sincronizar');
+      }
+    } catch (error: any) {
+      console.error('Error syncing usage:', error);
+      toast.error('Erro ao sincronizar uso');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleAddKey = async () => {
     if (!newKeyName.trim() || !newKeyValue.trim()) {
       toast.error('Preencha nome e chave');
@@ -155,7 +178,7 @@ export function ApiKeysTab({ onBack }: ApiKeysTabProps) {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-4 gap-3">
         <Card className="bg-white/5 border-white/10">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -191,6 +214,19 @@ export function ApiKeysTab({ onBack }: ApiKeysTabProps) {
               <div>
                 <p className="text-2xl font-bold text-white">{totalUsage.toLocaleString()}</p>
                 <p className="text-xs text-white/50">Requisições Total</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-white/5 border-white/10 cursor-pointer hover:bg-white/10 transition-colors" onClick={syncUsage}>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                <RefreshCw className={`w-5 h-5 text-purple-400 ${loading ? 'animate-spin' : ''}`} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-white">Sincronizar</p>
+                <p className="text-xs text-white/50">Atualizar uso real</p>
               </div>
             </div>
           </CardContent>

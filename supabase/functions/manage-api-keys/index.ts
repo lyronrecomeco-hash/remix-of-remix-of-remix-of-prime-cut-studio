@@ -130,6 +130,84 @@ serve(async (req) => {
         });
       }
 
+      case 'sync_usage': {
+        // Buscar todas as chaves ativas e sincronizar uso real da API Serper
+        const { data: allKeys, error: fetchError } = await serviceClient
+          .from('genesis_api_keys')
+          .select('id, api_key_hash')
+          .eq('provider', 'serper')
+          .eq('is_active', true);
+
+        if (fetchError) {
+          throw fetchError;
+        }
+
+        // Para sincronizar, precisamos da chave real - buscar do vault ou usar a env
+        const envApiKey = Deno.env.get('SERPER_API_KEY');
+        
+        if (envApiKey) {
+          try {
+            // Buscar uso real da conta Serper
+            const accountResponse = await fetch('https://google.serper.dev/account', {
+              method: 'GET',
+              headers: {
+                'X-API-KEY': envApiKey,
+                'Content-Type': 'application/json',
+              },
+            });
+
+            if (accountResponse.ok) {
+              const accountData = await accountResponse.json();
+              console.log('Serper account data:', accountData);
+              
+              // Atualizar a primeira chave com o uso total da conta
+              if (allKeys && allKeys.length > 0) {
+                const totalCreditsUsed = accountData.credits?.used || accountData.searchesUsed || 0;
+                
+                await serviceClient
+                  .from('genesis_api_keys')
+                  .update({ 
+                    usage_count: totalCreditsUsed,
+                    last_used_at: new Date().toISOString()
+                  })
+                  .eq('id', allKeys[0].id);
+
+                console.log(`Updated key ${allKeys[0].id} with total usage: ${totalCreditsUsed}`);
+              }
+
+              return new Response(JSON.stringify({ 
+                success: true, 
+                account: accountData,
+                message: 'Usage synchronized from Serper API'
+              }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+              });
+            } else {
+              const errorText = await accountResponse.text();
+              console.error('Serper account API error:', errorText);
+              return new Response(JSON.stringify({ 
+                success: false, 
+                error: 'Failed to fetch Serper account data'
+              }), {
+                status: 500,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+              });
+            }
+          } catch (apiError) {
+            console.error('Error fetching Serper account:', apiError);
+            throw apiError;
+          }
+        }
+
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: 'No API key configured for sync'
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
       case 'add': {
         if (!keyName || !apiKey) {
           return new Response(JSON.stringify({ error: 'Key name and API key required' }), {
