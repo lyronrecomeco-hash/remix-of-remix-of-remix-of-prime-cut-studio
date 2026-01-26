@@ -7471,6 +7471,68 @@ export type Database = {
         }
         Relationships: []
       }
+      genesis_saved_proposals: {
+        Row: {
+          affiliate_id: string
+          ai_questions: Json | null
+          company_name: string
+          company_niche: string | null
+          competitors: string | null
+          contact_phone: string | null
+          created_at: string
+          decision_maker: string | null
+          dream_result: string | null
+          failed_attempts: string | null
+          generated_proposal: string | null
+          id: string
+          main_problem: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          affiliate_id: string
+          ai_questions?: Json | null
+          company_name: string
+          company_niche?: string | null
+          competitors?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          decision_maker?: string | null
+          dream_result?: string | null
+          failed_attempts?: string | null
+          generated_proposal?: string | null
+          id?: string
+          main_problem?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          affiliate_id?: string
+          ai_questions?: Json | null
+          company_name?: string
+          company_niche?: string | null
+          competitors?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          decision_maker?: string | null
+          dream_result?: string | null
+          failed_attempts?: string | null
+          generated_proposal?: string | null
+          id?: string
+          main_problem?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_saved_proposals_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       genesis_security_settings: {
         Row: {
           created_at: string | null
@@ -7654,6 +7716,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      genesis_user_onboarding: {
+        Row: {
+          completed_steps: Json | null
+          created_at: string
+          current_step: string | null
+          first_login_at: string | null
+          id: string
+          last_step_at: string | null
+          onboarding_completed: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_steps?: Json | null
+          created_at?: string
+          current_step?: string | null
+          first_login_at?: string | null
+          id?: string
+          last_step_at?: string | null
+          onboarding_completed?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_steps?: Json | null
+          created_at?: string
+          current_step?: string | null
+          first_login_at?: string | null
+          id?: string
+          last_step_at?: string | null
+          onboarding_completed?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       genesis_user_roles: {
         Row: {

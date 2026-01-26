@@ -7,13 +7,12 @@ import {
   Globe,
   Bell,
   Shield,
-  Palette,
   FileText,
   Edit3,
-  X,
   Copy,
   Check
 } from 'lucide-react';
+import { GenesisPasswordModal } from './GenesisPasswordModal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -101,6 +100,7 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
   const [saving, setSaving] = useState(false);
   const [messageModalOpen, setMessageModalOpen] = useState(false);
   const [proposalModalOpen, setProposalModalOpen] = useState(false);
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [tempMessage, setTempMessage] = useState('');
   const [tempProposal, setTempProposal] = useState('');
   const [copiedVar, setCopiedVar] = useState<string | null>(null);
@@ -385,7 +385,12 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
                     {userId.slice(0, 12)}...
                   </p>
                 </div>
-                <Button variant="outline" size="sm" className="w-full h-8 text-xs mt-2 border-white/20 text-white/70 hover:text-white hover:bg-white/10">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setPasswordModalOpen(true)}
+                  className="w-full h-8 text-xs mt-2 border-white/20 text-white/70 hover:text-white hover:bg-white/10"
+                >
                   Alterar Senha
                 </Button>
               </div>
@@ -491,6 +496,12 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
           </Button>
         </ModalFooter>
       </Modal>
+
+      {/* Password Change Modal */}
+      <GenesisPasswordModal 
+        isOpen={passwordModalOpen} 
+        onClose={() => setPasswordModalOpen(false)} 
+      />
     </div>
   );
 };

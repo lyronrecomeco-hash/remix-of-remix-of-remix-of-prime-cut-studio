@@ -67,6 +67,7 @@ import { PageBuilderTab } from "@/components/genesis-ia/page-builder";
 import { AcademiaGenesisTab } from "@/components/genesis-ia/academia";
 import { ProposalWizard } from "@/components/genesis-ia/proposal-wizard";
 import { SprintMissionTab } from "@/components/genesis-ia/sprint-mission";
+import { GenesisOnboardingGuide } from "@/components/genesis-ia/GenesisOnboardingGuide";
 
 import GenesisBackground from "@/components/genesis-ia/GenesisBackground";
 import { FileText, Gift, CreditCard, Code2, Rocket } from "lucide-react";
@@ -658,7 +659,7 @@ const GenesisIADashboard = () => {
               Voltar
             </Button>
           </div>
-          <ProposalWizard />
+          <ProposalWizard affiliateId={affiliateId} />
         </div>
       );
     }
@@ -838,6 +839,14 @@ const GenesisIADashboard = () => {
               <div className="fixed bottom-32 left-1/2 -translate-x-1/2 px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm font-medium shadow-lg z-50">
                 ✏️ Arraste os cards para reposicionar • Redimensione pelos cantos
               </div>
+            )}
+
+            {/* Onboarding Guide for new users */}
+            {userId && (
+              <GenesisOnboardingGuide 
+                userId={userId} 
+                onNavigate={(tab) => setActiveTab(tab as ActiveTab)} 
+              />
             )}
           </div>
         );
