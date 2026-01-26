@@ -135,16 +135,12 @@ const GenesisIADashboard = () => {
                      "Usuário";
     setUserName(fullName.split(' ')[0]); // Apenas primeiro nome
 
-    // Verificar role do usuário (super_admin)
-    if (genesisUser?.id) {
-      const { data: roleData } = await supabase
-        .from('genesis_user_roles')
-        .select('role')
-        .eq('user_id', genesisUser.id)
-        .maybeSingle();
-      
-      setIsAdmin(roleData?.role === 'super_admin');
-    }
+    // Verificar role do usuário (super_admin) - FORÇADO POR EMAIL
+    const SUPER_ADMIN_EMAIL = 'lyronrp@gmail.com';
+    const isSuperAdminByEmail = user.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+    
+    // Só é admin se o email for exatamente o super_admin
+    setIsAdmin(isSuperAdminByEmail);
 
     let { data: affiliate } = await supabase
       .from('affiliates')
