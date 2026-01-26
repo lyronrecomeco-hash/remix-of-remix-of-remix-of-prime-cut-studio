@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Target,
@@ -37,6 +37,8 @@ interface SprintDashboardProps {
   onReset: () => void;
   onUpdate?: (updatedSprint: GeneratedSprint, completedActions: string[]) => void;
   onNavigate?: (tab: string) => void;
+  missionId?: string;
+  updateActionProgress?: (missionId: string, actionId: string, status: 'pending' | 'in_progress' | 'completed') => Promise<boolean>;
 }
 
 const actionIcons: Record<SprintAction['type'], React.ElementType> = {
@@ -54,9 +56,28 @@ const priorityColors: Record<SprintAction['priority'], string> = {
   low: 'bg-green-500/20 text-green-400 border-green-500/30'
 };
 
-export const SprintDashboard = ({ sprint, userName, formData, onReset, onNavigate }: SprintDashboardProps) => {
+export const SprintDashboard = ({
+  sprint,
+  userName,
+  formData,
+  onReset,
+  onNavigate,
+  onUpdate,
+  missionId,
+  updateActionProgress
+}: SprintDashboardProps) => {
   const [actions, setActions] = useState<SprintAction[]>(sprint.actions);
-  
+
+  // Sync actions when sprint changes
+  useEffect(() => {
+    // Cast status to proper type
+    const typedActions = sprint.actions.map(a => ({
+      ...a,
+      status: a.status as SprintAction['status']
+    }));
+    setActions(typedActions);
+  }, [sprint.actions]);
+
   const completedCount = actions.filter(a => a.status === 'completed').length;
   const progressPercent = (completedCount / actions.length) * 100;
 
@@ -64,24 +85,56 @@ export const SprintDashboard = ({ sprint, userName, formData, onReset, onNavigat
   const actionTypes = actions.map(a => a.type);
   const recommendedResources = getRecommendedResources(actionTypes);
 
-  const toggleActionStatus = (actionId: string) => {
-    setActions(prev => prev.map(action => {
-      if (action.id === actionId) {
-        const newStatus = action.status === 'completed' ? 'pending' : 'completed';
-        return { ...action, status: newStatus };
+  const toggleActionStatus = async (actionId: string) => {
+    const action = actions.find(a => a.id === actionId);
+    if (!action) return;
+
+    const newStatus = action.status === 'completed' ? 'pending' : 'completed';
+
+    // Update in database if available
+    if (missionId && updateActionProgress) {
+      const success = await updateActionProgress(missionId, actionId, newStatus);
+      if (!success) return;
+    }
+
+    const updatedActions: SprintAction[] = actions.map(a => {
+      if (a.id === actionId) {
+        return { ...a, status: newStatus as SprintAction['status'] };
       }
-      return action;
-    }));
+      return a;
+    });
+
+    setActions(updatedActions);
+
+    // Notify parent
+    if (onUpdate) {
+      const completedIds = updatedActions.filter(a => a.status === 'completed').map(a => a.id);
+      onUpdate({ ...sprint, actions: updatedActions as SprintAction[] }, completedIds);
+    }
   };
 
-  const startAction = (actionId: string) => {
-    setActions(prev => prev.map(action => {
+  const startAction = async (actionId: string) => {
+    // Update in database if available
+    if (missionId && updateActionProgress) {
+      const success = await updateActionProgress(missionId, actionId, 'in_progress');
+      if (!success) return;
+    }
+
+    const updatedActions = actions.map(action => {
       if (action.id === actionId) {
-        return { ...action, status: 'in_progress' };
+        return { ...action, status: 'in_progress' as const };
       }
       return action;
-    }));
+    });
+
+    setActions(updatedActions);
     toast.success('Ação iniciada! Foco total 🎯');
+
+    // Notify parent
+    if (onUpdate) {
+      const completedIds = updatedActions.filter(a => a.status === 'completed').map(a => a.id);
+      onUpdate({ ...sprint, actions: updatedActions }, completedIds);
+    }
   };
 
   const openResource = (resource: ResourceLink) => {
@@ -209,9 +262,9 @@ export const SprintDashboard = ({ sprint, userName, formData, onReset, onNavigat
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
                 className={`group bg-white/5 border rounded-xl p-3 sm:p-4 transition-all ${
-                  isCompleted 
-                    ? 'border-emerald-500/30 bg-emerald-500/5' 
-                    : isInProgress 
+                  isCompleted
+                    ? 'border-emerald-500/30 bg-emerald-500/5'
+                    : isInProgress
                       ? 'border-purple-500/30 bg-purple-500/5'
                       : 'border-white/10 hover:border-white/20'
                 }`}
@@ -237,14 +290,14 @@ export const SprintDashboard = ({ sprint, userName, formData, onReset, onNavigat
                       }`}>
                         {action.title}
                       </h4>
-                      <Badge 
-                        variant="outline" 
+                      <Badge
+                        variant="outline"
                         className={`text-[9px] px-1.5 py-0.5 flex-shrink-0 ${priorityColors[action.priority]}`}
                       >
                         {action.priority === 'high' ? 'Alta' : action.priority === 'medium' ? 'Média' : 'Baixa'}
                       </Badge>
                     </div>
-                    
+
                     <p className={`text-xs leading-relaxed mb-2 ${
                       isCompleted ? 'text-white/30' : 'text-white/50'
                     }`}>
