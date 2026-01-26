@@ -274,6 +274,30 @@ serve(async (req) => {
     console.log('Serper response sample:', JSON.stringify(searchData).substring(0, 500));
     const places = searchData.places || [];
 
+    // Buscar dados do usuário para o histórico
+    const { data: userData } = await supabase
+      .from('genesis_users')
+      .select('id, name, email')
+      .eq('id', affiliateId)
+      .single();
+
+    // Registrar no histórico de pesquisas
+    await supabase
+      .from('genesis_search_history')
+      .insert({
+        user_id: affiliateId,
+        user_name: userData?.name || 'Unknown',
+        user_email: userData?.email || '',
+        search_type: 'radar',
+        search_query: searchQuery,
+        city: city,
+        region: selectedRegion,
+        niche: selectedNiche,
+        results_count: places.length,
+        api_key_id: usedKeyId,
+        credits_used: 1
+      });
+
     if (places.length === 0) {
       return new Response(
         JSON.stringify({ success: true, opportunities: [], message: 'No businesses found' }),

@@ -7575,6 +7575,65 @@ export type Database = {
           },
         ]
       }
+      genesis_search_history: {
+        Row: {
+          api_key_id: string | null
+          city: string | null
+          created_at: string
+          credits_used: number | null
+          id: string
+          niche: string | null
+          region: string | null
+          results_count: number | null
+          search_query: string | null
+          search_type: string
+          state: string | null
+          user_email: string | null
+          user_id: string
+          user_name: string | null
+        }
+        Insert: {
+          api_key_id?: string | null
+          city?: string | null
+          created_at?: string
+          credits_used?: number | null
+          id?: string
+          niche?: string | null
+          region?: string | null
+          results_count?: number | null
+          search_query?: string | null
+          search_type?: string
+          state?: string | null
+          user_email?: string | null
+          user_id: string
+          user_name?: string | null
+        }
+        Update: {
+          api_key_id?: string | null
+          city?: string | null
+          created_at?: string
+          credits_used?: number | null
+          id?: string
+          niche?: string | null
+          region?: string | null
+          results_count?: number | null
+          search_query?: string | null
+          search_type?: string
+          state?: string | null
+          user_email?: string | null
+          user_id?: string
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genesis_search_history_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "genesis_api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       genesis_security_settings: {
         Row: {
           created_at: string | null
