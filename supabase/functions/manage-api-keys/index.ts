@@ -18,55 +18,107 @@ serve(async (req) => {
     
     // Get user from auth header
     const authHeader = req.headers.get('authorization');
+    console.log('Auth header present:', !!authHeader);
+    
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      console.error('No authorization header provided');
+      return new Response(JSON.stringify({ error: 'Unauthorized - No auth header' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
+    // Create user client with the auth header
     const userClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
     });
 
     const { data: { user }, error: userError } = await userClient.auth.getUser();
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+    
+    if (userError) {
+      console.error('Error getting user:', userError.message);
+      return new Response(JSON.stringify({ error: 'Unauthorized - Invalid token', details: userError.message }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    
+    if (!user) {
+      console.error('No user found from token');
+      return new Response(JSON.stringify({ error: 'Unauthorized - No user' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    // Verify super_admin role
+    console.log('Authenticated user:', user.id);
+
+    // Use service role client for admin operations
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
     
-    const { data: genesisUser } = await serviceClient
+    // Find genesis user
+    const { data: genesisUser, error: genesisError } = await serviceClient
       .from('genesis_users')
       .select('id')
       .eq('auth_user_id', user.id)
       .maybeSingle();
 
+    if (genesisError) {
+      console.error('Error finding genesis user:', genesisError.message);
+      return new Response(JSON.stringify({ error: 'Database error', details: genesisError.message }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     if (!genesisUser) {
-      return new Response(JSON.stringify({ error: 'User not found' }), {
+      console.error('Genesis user not found for auth user:', user.id);
+      return new Response(JSON.stringify({ error: 'User not found in genesis_users' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    const { data: roleData } = await serviceClient
+    console.log('Genesis user found:', genesisUser.id);
+
+    // Check role
+    const { data: roleData, error: roleError } = await serviceClient
       .from('genesis_user_roles')
       .select('role')
       .eq('user_id', genesisUser.id)
       .maybeSingle();
 
+    if (roleError) {
+      console.error('Error checking role:', roleError.message);
+      return new Response(JSON.stringify({ error: 'Error checking permissions' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    console.log('User role:', roleData?.role);
+
     if (roleData?.role !== 'super_admin') {
-      return new Response(JSON.stringify({ error: 'Super admin access required' }), {
+      console.error('User is not super_admin:', roleData?.role);
+      return new Response(JSON.stringify({ error: 'Super admin access required', currentRole: roleData?.role }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    const { action, keyName, apiKey, keyId, isActive } = await req.json();
+    // Parse request body
+    let body;
+    try {
+      body = await req.json();
+    } catch (e) {
+      return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const { action, keyName, apiKey, keyId, isActive } = body;
+    console.log('Action:', action);
 
     switch (action) {
       case 'list': {
@@ -77,8 +129,12 @@ serve(async (req) => {
           .order('priority', { ascending: true })
           .order('usage_count', { ascending: true });
 
-        if (error) throw error;
-        return new Response(JSON.stringify({ keys }), {
+        if (error) {
+          console.error('Error listing keys:', error.message);
+          throw error;
+        }
+        
+        return new Response(JSON.stringify({ keys: keys || [] }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
@@ -103,7 +159,7 @@ serve(async (req) => {
           ? existingKeys[0].priority + 1 
           : 0;
 
-        // Create simple hash for storage (in production, use proper encryption)
+        // Create hash for storage
         const encoder = new TextEncoder();
         const data = encoder.encode(apiKey);
         const hashBuffer = await crypto.subtle.digest('SHA-256', data);
@@ -121,10 +177,10 @@ serve(async (req) => {
             is_active: true
           });
 
-        if (error) throw error;
-
-        // Store actual key in vault/env (simplified - store in separate secure storage)
-        // For now, we'll use the hash as identifier and store mapping
+        if (error) {
+          console.error('Error adding key:', error.message);
+          throw error;
+        }
 
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -144,7 +200,10 @@ serve(async (req) => {
           .update({ is_active: isActive })
           .eq('id', keyId);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error toggling key:', error.message);
+          throw error;
+        }
 
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -164,7 +223,10 @@ serve(async (req) => {
           .delete()
           .eq('id', keyId);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error deleting key:', error.message);
+          throw error;
+        }
 
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -178,7 +240,7 @@ serve(async (req) => {
         });
     }
   } catch (error: unknown) {
-    console.error('Error:', error);
+    console.error('Unhandled error:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
