@@ -32,7 +32,7 @@ interface GenesisUser {
 }
 
 interface SearchHistory {
-  id?: string;
+  id: string;
   user_id: string;
   user_name: string;
   user_email: string;
@@ -45,16 +45,6 @@ interface SearchHistory {
   results_count: number;
   credits_used: number;
   created_at: string;
-  // Campos da API Serper
-  time?: string;
-  query?: string;
-  type?: string;
-  gl?: string;
-  hl?: string;
-  page?: number;
-  num?: number;
-  credits?: number;
-  response_time?: number;
 }
 
 interface ApiKeysTabProps {
@@ -158,50 +148,45 @@ export function ApiKeysTab({ onBack }: ApiKeysTabProps) {
     setHistoryModalOpen(true);
 
     try {
-      // Buscar logs GERAIS da API Serper (todas as pesquisas já feitas)
-      const { data, error } = await supabase.functions.invoke('manage-api-keys', {
-        body: { action: 'fetch_logs' }
-      });
-
-      if (error) throw error;
-
-      if (!data?.success) {
-        throw new Error(data?.error || 'Erro ao buscar logs');
-      }
-
-      const logs = data.logs || [];
-      console.log(`📊 Logs da Serper carregados: ${logs.length} registros totais`);
-
-      // Aplicar filtros de data no client-side
+      // Buscar histórico de pesquisas do usuário específico da tabela genesis_search_history
       const currentFilter = filter || dateFilter;
-      let filteredLogs = logs;
+      let query = supabase
+        .from('genesis_search_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(500);
 
+      // Aplicar filtros de data
       if (currentFilter !== 'all') {
         const now = new Date();
-        let startDate: Date | null = null;
+        let startDate: string | null = null;
 
         if (currentFilter === 'today') {
-          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
         } else if (currentFilter === 'week') {
-          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
         } else if (currentFilter === 'month') {
-          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
         } else if (currentFilter === 'custom' && customDateStart) {
-          startDate = new Date(customDateStart);
+          startDate = new Date(customDateStart).toISOString();
         }
 
         if (startDate) {
-          filteredLogs = logs.filter((log: any) => {
-            const logDate = new Date(log.time);
-            const matchesStart = logDate >= startDate!;
-            const matchesEnd = !customDateEnd || logDate <= new Date(customDateEnd + 'T23:59:59');
-            return matchesStart && matchesEnd;
-          });
+          query = query.gte('created_at', startDate);
+        }
+
+        if (currentFilter === 'custom' && customDateEnd) {
+          query = query.lte('created_at', new Date(customDateEnd + 'T23:59:59').toISOString());
         }
       }
 
-      setSearchHistory(filteredLogs);
-      console.log(`✅ Exibindo ${filteredLogs.length} logs após filtro`);
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      console.log(`📊 Histórico carregado: ${(data || []).length} pesquisas de ${user.name}`);
+      setSearchHistory(data || []);
     } catch (error) {
       console.error('Error loading search history:', error);
       toast.error('Erro ao carregar histórico');
@@ -743,8 +728,8 @@ export function ApiKeysTab({ onBack }: ApiKeysTabProps) {
               <TrendingUp className="w-7 h-7 text-white" />
             </div>
             <div className="flex-1">
-              <h2 className="text-xl font-bold text-white">Histórico de Pesquisas</h2>
-            <p className="text-white/50 text-sm mt-1">Todas as pesquisas realizadas via Serper.dev</p>
+              <h2 className="text-xl font-bold text-white">Histórico de {selectedUser?.name || 'Usuário'}</h2>
+              <p className="text-white/50 text-sm mt-1">Pesquisas realizadas por este usuário</p>
             </div>
             {searchHistory.length > 0 && (
               <Badge className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-300 border border-blue-500/30 px-3 py-1.5">
@@ -818,7 +803,7 @@ export function ApiKeysTab({ onBack }: ApiKeysTabProps) {
             ) : (
               searchHistory.map((item, index) => (
                 <motion.div
-                  key={item.id || item.time || index}
+                  key={item.id || index}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.02 }}
@@ -826,10 +811,10 @@ export function ApiKeysTab({ onBack }: ApiKeysTabProps) {
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3 flex-1">
-                      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getSearchTypeColor(item.search_type || item.type || 'manual').split(' ')[0]} ${getSearchTypeColor(item.search_type || item.type || 'manual').split(' ')[1]} flex items-center justify-center flex-shrink-0`}>
-                        {(item.search_type || item.type) === 'radar' ? (
+                      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getSearchTypeColor(item.search_type || 'manual').split(' ')[0]} ${getSearchTypeColor(item.search_type || 'manual').split(' ')[1]} flex items-center justify-center flex-shrink-0`}>
+                        {item.search_type === 'radar' ? (
                           <Globe className="w-5 h-5 text-cyan-400" />
-                        ) : (item.search_type || item.type) === 'prospecting' || (item.search_type || item.type) === 'places' ? (
+                        ) : item.search_type === 'prospecting' || item.search_type === 'places' ? (
                           <TrendingUp className="w-5 h-5 text-emerald-400" />
                         ) : (
                           <Search className="w-5 h-5 text-purple-400" />
@@ -837,14 +822,14 @@ export function ApiKeysTab({ onBack }: ApiKeysTabProps) {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-white font-medium text-sm truncate">
-                          {item.search_query || item.query || `${item.niche || ''} ${item.city ? `em ${item.city}` : ''}`.trim() || 'Pesquisa'}
+                          {item.search_query || `${item.niche || ''} ${item.city ? `em ${item.city}` : ''}`.trim() || 'Pesquisa'}
                         </p>
                         <div className="flex items-center gap-3 mt-2 flex-wrap">
                           <Badge 
                             variant="outline" 
-                            className={`text-[10px] px-2 py-0.5 bg-gradient-to-r ${getSearchTypeColor(item.search_type || item.type || 'manual')}`}
+                            className={`text-[10px] px-2 py-0.5 bg-gradient-to-r ${getSearchTypeColor(item.search_type || 'manual')}`}
                           >
-                            {getSearchTypeLabel(item.search_type || item.type || 'manual')}
+                            {getSearchTypeLabel(item.search_type || 'manual')}
                           </Badge>
                           {item.city && (
                             <span className="text-white/40 text-xs flex items-center gap-1">
@@ -857,30 +842,25 @@ export function ApiKeysTab({ onBack }: ApiKeysTabProps) {
                               {item.niche}
                             </span>
                           )}
-                          {item.gl && (
-                            <span className="text-white/40 text-xs">
-                              {item.gl.toUpperCase()}
-                            </span>
-                          )}
                         </div>
                       </div>
                     </div>
                     <div className="text-right flex-shrink-0">
                       <div className="flex items-center gap-2 justify-end">
                         <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-emerald-500/30 text-emerald-400 bg-emerald-500/10">
-                          {item.results_count || item.num || 0} resultados
+                          {item.results_count || 0} resultados
                         </Badge>
-                        {(item.credits_used || item.credits) && (
+                        {item.credits_used > 0 && (
                           <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-blue-500/30 text-blue-400 bg-blue-500/10">
-                            {item.credits_used || item.credits} créditos
+                            {item.credits_used} créditos
                           </Badge>
                         )}
                       </div>
                       <div className="flex items-center gap-1.5 justify-end mt-2 text-white/40 text-xs">
                         <Clock className="w-3 h-3" />
-                        <span>{new Date(item.created_at || item.time || '').toLocaleDateString('pt-BR')}</span>
+                        <span>{new Date(item.created_at).toLocaleDateString('pt-BR')}</span>
                         <span className="text-white/20">•</span>
-                        <span>{new Date(item.created_at || item.time || '').toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                        <span>{new Date(item.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
                     </div>
                   </div>
