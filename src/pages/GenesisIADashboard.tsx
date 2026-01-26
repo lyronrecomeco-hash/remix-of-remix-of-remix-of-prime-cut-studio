@@ -89,6 +89,7 @@ const GenesisIADashboard = () => {
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [userId, setUserId] = useState("");
+  const [authUserId, setAuthUserId] = useState(""); // Auth user ID for onboarding
   const [affiliateId, setAffiliateId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
@@ -97,7 +98,6 @@ const GenesisIADashboard = () => {
   const [showWelcome, setShowWelcome] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showDevModal, setShowDevModal] = useState(false);
-
   useEffect(() => {
     checkAuth();
   }, []);
@@ -110,7 +110,7 @@ const GenesisIADashboard = () => {
     }
 
     setUserEmail(user.email || "");
-   // NÃO usar auth user.id aqui - vamos usar genesis_user.id depois
+    setAuthUserId(user.id); // Store auth user ID for onboarding
 
     // Buscar nome e id do genesis_users (vem do checkout)
     const { data: genesisUser } = await supabase
@@ -896,10 +896,10 @@ const GenesisIADashboard = () => {
               </div>
             )}
 
-            {/* Onboarding Guide for new users */}
-            {userId && (
+            {/* Onboarding Guide for new users - use authUserId for consistency */}
+            {authUserId && (
               <GenesisOnboardingGuide 
-                userId={userId} 
+                userId={authUserId} 
                 onNavigate={(tab) => setActiveTab(tab as ActiveTab)} 
               />
             )}

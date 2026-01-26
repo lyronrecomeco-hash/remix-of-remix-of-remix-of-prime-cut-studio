@@ -86,20 +86,44 @@ export const GenesisOnboardingGuide = ({ userId, onNavigate }: GenesisOnboarding
   }, [userId]);
 
   const checkOnboardingStatus = async () => {
+    // First check localStorage as a fallback
+    const localKey = `genesis_onboarding_completed_${userId}`;
+    const completedLocally = localStorage.getItem(localKey);
+    if (completedLocally === 'true') {
+      setIsVisible(false);
+      return;
+    }
+
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('genesis_user_onboarding')
         .select('*')
         .eq('user_id', userId)
         .maybeSingle();
 
+      if (error) {
+        console.error('Error fetching onboarding status:', error);
+        // If there's an error, don't show the guide to avoid annoyance
+        setIsVisible(false);
+        return;
+      }
+
       if (!data) {
         // First time user - show onboarding
-        await supabase.from('genesis_user_onboarding').insert({
+        const { error: insertError } = await supabase.from('genesis_user_onboarding').insert({
           user_id: userId,
           first_login_at: new Date().toISOString(),
           current_step: 'welcome',
         });
+        
+        if (insertError) {
+          console.error('Error inserting onboarding record:', insertError);
+          // Mark as complete locally to prevent repeated attempts
+          localStorage.setItem(localKey, 'true');
+          setIsVisible(false);
+          return;
+        }
+        
         setIsVisible(true);
       } else if (!data.onboarding_completed) {
         // Continue from where they left off
@@ -107,9 +131,14 @@ export const GenesisOnboardingGuide = ({ userId, onNavigate }: GenesisOnboarding
         setCurrentStepIndex(Math.max(0, stepIndex));
         setCompletedSteps(Array.isArray(data.completed_steps) ? data.completed_steps as string[] : []);
         setIsVisible(true);
+      } else {
+        // Already completed - mark locally too
+        localStorage.setItem(localKey, 'true');
+        setIsVisible(false);
       }
     } catch (error) {
       console.error('Error checking onboarding status:', error);
+      setIsVisible(false);
     }
   };
 
@@ -153,6 +182,10 @@ export const GenesisOnboardingGuide = ({ userId, onNavigate }: GenesisOnboarding
   };
 
   const handleClose = async () => {
+    // Mark as complete in localStorage first
+    const localKey = `genesis_onboarding_completed_${userId}`;
+    localStorage.setItem(localKey, 'true');
+    
     await saveProgress('done', true);
     setIsVisible(false);
   };
