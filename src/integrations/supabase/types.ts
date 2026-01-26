@@ -7851,6 +7851,7 @@ export type Database = {
           max_flows: number
           max_instances: number
           plan: Database["public"]["Enums"]["genesis_plan"]
+          plan_name: string | null
           started_at: string
           status: string
           updated_at: string
@@ -7864,6 +7865,7 @@ export type Database = {
           max_flows?: number
           max_instances?: number
           plan?: Database["public"]["Enums"]["genesis_plan"]
+          plan_name?: string | null
           started_at?: string
           status?: string
           updated_at?: string
@@ -7877,6 +7879,7 @@ export type Database = {
           max_flows?: number
           max_instances?: number
           plan?: Database["public"]["Enums"]["genesis_plan"]
+          plan_name?: string | null
           started_at?: string
           status?: string
           updated_at?: string
