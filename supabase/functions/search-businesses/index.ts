@@ -253,9 +253,10 @@ serve(async (req) => {
         console.log(`Key ${usedKeyId} usage incremented by ${totalApiCalls}`);
       }
 
-      // Registrar no histórico de pesquisas com dados do auth header se disponível
+      // Registrar no histórico de pesquisas
       const authHeader = req.headers.get('authorization');
-      let searchUserId = usedKeyId;
+      let searchUserId: string | null = null;
+      let authUserId: string | null = null;
       let searchUserName = 'Sistema';
       let searchUserEmail = '';
 
@@ -264,6 +265,7 @@ serve(async (req) => {
           const token = authHeader.replace('Bearer ', '');
           const { data: { user } } = await supabase.auth.getUser(token);
           if (user) {
+            authUserId = user.id;
             // Buscar dados do genesis_user
             const { data: genesisUser } = await supabase
               .from('genesis_users')
@@ -275,28 +277,45 @@ serve(async (req) => {
               searchUserId = genesisUser.id;
               searchUserName = genesisUser.name || 'Usuário';
               searchUserEmail = genesisUser.email || user.email || '';
+            } else {
+              searchUserName = user.email?.split('@')[0] || 'Usuário';
+              searchUserEmail = user.email || '';
             }
+            
+            console.log(`👤 Usuário identificado: ${searchUserName} (auth: ${authUserId}, genesis: ${searchUserId})`);
           }
         } catch (e) {
           console.log('Could not get user info for history:', e);
         }
       }
 
-      await supabase
+      // Inserir registro de histórico
+      const historyRecord = {
+        user_id: searchUserId || usedKeyId || '00000000-0000-0000-0000-000000000000',
+        auth_user_id: authUserId,
+        user_name: searchUserName,
+        user_email: searchUserEmail,
+        search_type: 'prospecting',
+        search_query: searchQuery,
+        city: city,
+        state: state,
+        niche: niche,
+        results_count: allPlaces.length,
+        api_key_id: usedKeyId,
+        credits_used: totalApiCalls
+      };
+
+      console.log('📝 Salvando histórico:', JSON.stringify(historyRecord));
+
+      const { error: historyError } = await supabase
         .from('genesis_search_history')
-        .insert({
-          user_id: searchUserId || '00000000-0000-0000-0000-000000000000',
-          user_name: searchUserName,
-          user_email: searchUserEmail,
-          search_type: 'prospecting',
-          search_query: searchQuery,
-          city: city,
-          state: state,
-          niche: niche,
-          results_count: allPlaces.length,
-          api_key_id: usedKeyId,
-          credits_used: totalApiCalls
-        });
+        .insert(historyRecord);
+      
+      if (historyError) {
+        console.error('❌ Erro ao salvar histórico:', historyError.message);
+      } else {
+        console.log(`✅ Histórico salvo: ${allPlaces.length} resultados para ${searchUserName}`);
+      }
     }
 
     // Deduplicar e processar

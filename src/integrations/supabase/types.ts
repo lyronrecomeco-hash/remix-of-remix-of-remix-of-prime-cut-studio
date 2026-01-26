@@ -7578,6 +7578,7 @@ export type Database = {
       genesis_search_history: {
         Row: {
           api_key_id: string | null
+          auth_user_id: string | null
           city: string | null
           created_at: string
           credits_used: number | null
@@ -7594,6 +7595,7 @@ export type Database = {
         }
         Insert: {
           api_key_id?: string | null
+          auth_user_id?: string | null
           city?: string | null
           created_at?: string
           credits_used?: number | null
@@ -7610,6 +7612,7 @@ export type Database = {
         }
         Update: {
           api_key_id?: string | null
+          auth_user_id?: string | null
           city?: string | null
           created_at?: string
           credits_used?: number | null

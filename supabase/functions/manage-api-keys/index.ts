@@ -131,10 +131,10 @@ serve(async (req) => {
       }
 
       case 'sync_usage': {
-        // Buscar todas as chaves ativas e sincronizar uso real da API Serper
+        // Buscar todas as chaves ativas 
         const { data: allKeys, error: fetchError } = await serviceClient
           .from('genesis_api_keys')
-          .select('id, api_key_hash')
+          .select('id, api_key_hash, key_name, usage_count')
           .eq('provider', 'serper')
           .eq('is_active', true);
 
@@ -142,121 +142,107 @@ serve(async (req) => {
           throw fetchError;
         }
 
-        // Para sincronizar, precisamos da chave real - buscar do vault ou usar a env
+        if (!allKeys || allKeys.length === 0) {
+          return new Response(JSON.stringify({ 
+            success: false, 
+            error: 'Nenhuma chave ativa encontrada'
+          }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        // Helper para descriptografar (as chaves estão armazenadas como hash, usamos env como fallback)
         const envApiKey = Deno.env.get('SERPER_API_KEY');
-        
-        if (envApiKey) {
-          try {
-            // Buscar uso real da conta Serper usando endpoint correto
-            const accountResponse = await fetch('https://google.serper.dev/account', {
-              method: 'GET',
-              headers: {
-                'X-API-KEY': envApiKey,
-              },
-            });
+        const PLAN_CREDITS = 2500; // Créditos por plano Serper
+        const syncResults: any[] = [];
+        let totalUsed = 0;
+        let totalRemaining = 0;
 
-            console.log('Serper account response status:', accountResponse.status);
-            const responseText = await accountResponse.text();
-            console.log('Serper account response:', responseText);
+        // Para cada chave, sincronizar o uso individualmente
+        // Nota: Como armazenamos apenas o hash, usamos a env key para a primeira chave
+        // Em produção, deveriamos armazenar as chaves de forma que possam ser descriptografadas
+        for (let i = 0; i < allKeys.length; i++) {
+          const key = allKeys[i];
+          
+          // Usar a env key apenas para a primeira chave (demo)
+          // Em produção, cada chave teria sua própria API key armazenada de forma segura
+          if (i === 0 && envApiKey) {
+            try {
+              const accountResponse = await fetch('https://google.serper.dev/account', {
+                method: 'GET',
+                headers: {
+                  'X-API-KEY': envApiKey,
+                },
+              });
 
-            if (accountResponse.ok) {
-              let accountData;
-              try {
-                accountData = JSON.parse(responseText);
-              } catch (e) {
-                console.error('Failed to parse Serper response:', e);
-                return new Response(JSON.stringify({ 
-                  success: false, 
-                  error: 'Invalid response from Serper API',
-                  raw: responseText
-                }), {
-                  status: 500,
-                  headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-                });
-              }
-              
-              console.log('Serper account data parsed:', JSON.stringify(accountData));
-              
-              // Atualizar a primeira chave com o uso total da conta
-              // Serper retorna: balance (créditos restantes), rateLimit
-              if (allKeys && allKeys.length > 0) {
-                // Calcular uso: total inicial - balance restante
-                // Se não temos o total inicial, usamos o balance diretamente
+              if (accountResponse.ok) {
+                const accountData = await accountResponse.json();
                 const balanceRemaining = accountData.balance || 0;
-                
-                // Buscar o uso atual armazenado para calcular total
-                const { data: currentKeyData } = await serviceClient
-                  .from('genesis_api_keys')
-                  .select('usage_count')
-                  .eq('id', allKeys[0].id)
-                  .single();
-                
-                // Atualizar com os dados disponíveis
-                // Balance = créditos restantes, então calculamos uso a partir do plano
-                // Se o plano tem 2500 créditos e balance = 2054, uso = 446
-                const PLAN_CREDITS = 2500; // Créditos do plano Serper
-                const estimatedUsage = PLAN_CREDITS - balanceRemaining;
-                
+                const estimatedUsage = Math.max(0, PLAN_CREDITS - balanceRemaining);
+
+                // Atualizar APENAS esta chave específica
                 await serviceClient
                   .from('genesis_api_keys')
                   .update({ 
-                    usage_count: estimatedUsage > 0 ? estimatedUsage : (currentKeyData?.usage_count || 0),
+                    usage_count: estimatedUsage,
                     last_used_at: new Date().toISOString()
                   })
-                  .eq('id', allKeys[0].id);
+                  .eq('id', key.id);
 
-                console.log(`Updated key ${allKeys[0].id} - Balance: ${balanceRemaining}, Estimated Usage: ${estimatedUsage}`);
+                totalUsed += estimatedUsage;
+                totalRemaining += balanceRemaining;
 
-                return new Response(JSON.stringify({ 
-                  success: true, 
-                  account: {
-                    used: estimatedUsage > 0 ? estimatedUsage : 0,
-                    remaining: balanceRemaining,
-                    total: PLAN_CREDITS,
-                    rateLimit: accountData.rateLimit || 5,
-                    raw: accountData
-                  },
-                  message: 'Usage synchronized from Serper API'
-                }), {
-                  headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                syncResults.push({
+                  keyId: key.id,
+                  keyName: key.key_name,
+                  used: estimatedUsage,
+                  remaining: balanceRemaining,
+                  total: PLAN_CREDITS,
+                  status: 'synced'
+                });
+
+                console.log(`✅ Key ${key.key_name}: ${estimatedUsage} used, ${balanceRemaining} remaining`);
+              } else {
+                console.error(`❌ Failed to sync key ${key.key_name}: ${accountResponse.status}`);
+                syncResults.push({
+                  keyId: key.id,
+                  keyName: key.key_name,
+                  status: 'error',
+                  error: `API status: ${accountResponse.status}`
                 });
               }
-
-              return new Response(JSON.stringify({ 
-                success: true, 
-                account: accountData,
-                message: 'No keys to update'
-              }), {
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-              });
-            } else {
-              console.error('Serper account API error:', responseText);
-              return new Response(JSON.stringify({ 
-                success: false, 
-                error: `Serper API error: ${accountResponse.status}`,
-                details: responseText
-              }), {
-                status: 500,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            } catch (apiError) {
+              console.error(`❌ Error syncing key ${key.key_name}:`, apiError);
+              syncResults.push({
+                keyId: key.id,
+                keyName: key.key_name,
+                status: 'error',
+                error: apiError instanceof Error ? apiError.message : 'Unknown error'
               });
             }
-          } catch (apiError) {
-            console.error('Error fetching Serper account:', apiError);
-            return new Response(JSON.stringify({ 
-              success: false, 
-              error: `Exception: ${apiError instanceof Error ? apiError.message : 'Unknown'}`
-            }), {
-              status: 500,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          } else {
+            // Para chaves sem API key real armazenada, manter uso atual
+            syncResults.push({
+              keyId: key.id,
+              keyName: key.key_name,
+              used: key.usage_count || 0,
+              status: 'unchanged',
+              note: 'Chave sem acesso direto à API - uso baseado em logs locais'
             });
           }
         }
 
         return new Response(JSON.stringify({ 
-          success: false, 
-          error: 'No API key configured for sync'
+          success: true, 
+          account: {
+            used: totalUsed,
+            remaining: totalRemaining,
+            total: PLAN_CREDITS * allKeys.length,
+          },
+          keys: syncResults,
+          message: `${syncResults.filter(r => r.status === 'synced').length} chave(s) sincronizada(s)`
         }), {
-          status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
