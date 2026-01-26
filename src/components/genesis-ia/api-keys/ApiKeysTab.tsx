@@ -147,7 +147,7 @@ export function ApiKeysTab({ onBack }: ApiKeysTabProps) {
         </div>
         <Button
           onClick={() => setAdding(true)}
-          className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white h-9"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground h-9"
         >
           <Plus className="w-4 h-4 mr-1.5" />
           Nova Chave
@@ -238,7 +238,7 @@ export function ApiKeysTab({ onBack }: ApiKeysTabProps) {
                   <Button
                     onClick={handleAddKey}
                     disabled={saving}
-                    className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
                   >
                     {saving ? 'Salvando...' : 'Salvar Chave'}
                   </Button>

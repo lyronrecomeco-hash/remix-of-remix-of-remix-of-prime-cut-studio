@@ -16,42 +16,39 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     
-    // Get user from auth header
+    // Get and validate auth header
     const authHeader = req.headers.get('authorization');
     console.log('Auth header present:', !!authHeader);
     
-    if (!authHeader) {
-      console.error('No authorization header provided');
-      return new Response(JSON.stringify({ error: 'Unauthorized - No auth header' }), {
+    if (!authHeader?.startsWith('Bearer ')) {
+      console.error('Invalid or missing authorization header');
+      return new Response(JSON.stringify({ error: 'Unauthorized - Invalid auth header' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    // Create user client with the auth header
-    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+    // Extract token
+    const token = authHeader.replace('Bearer ', '');
+    
+    // Create client for JWT validation
+    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
     });
-
-    const { data: { user }, error: userError } = await userClient.auth.getUser();
     
-    if (userError) {
-      console.error('Error getting user:', userError.message);
-      return new Response(JSON.stringify({ error: 'Unauthorized - Invalid token', details: userError.message }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    // Validate JWT using getClaims
+    const { data: { user }, error: claimsError } = await authClient.auth.getUser();
     
-    if (!user) {
-      console.error('No user found from token');
-      return new Response(JSON.stringify({ error: 'Unauthorized - No user' }), {
+    if (claimsError || !user) {
+      console.error('Invalid token or claims:', claimsError?.message);
+      return new Response(JSON.stringify({ error: 'Unauthorized - Invalid token' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    console.log('Authenticated user:', user.id);
+    const userId = user.id;
+    console.log('Authenticated user:', userId);
 
     // Use service role client for admin operations
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
@@ -60,20 +57,20 @@ serve(async (req) => {
     const { data: genesisUser, error: genesisError } = await serviceClient
       .from('genesis_users')
       .select('id')
-      .eq('auth_user_id', user.id)
+      .eq('auth_user_id', userId)
       .maybeSingle();
 
     if (genesisError) {
       console.error('Error finding genesis user:', genesisError.message);
-      return new Response(JSON.stringify({ error: 'Database error', details: genesisError.message }), {
+      return new Response(JSON.stringify({ error: 'Database error' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
     if (!genesisUser) {
-      console.error('Genesis user not found for auth user:', user.id);
-      return new Response(JSON.stringify({ error: 'User not found in genesis_users' }), {
+      console.error('Genesis user not found for auth user:', userId);
+      return new Response(JSON.stringify({ error: 'User not found' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -99,8 +96,8 @@ serve(async (req) => {
     console.log('User role:', roleData?.role);
 
     if (roleData?.role !== 'super_admin') {
-      console.error('User is not super_admin:', roleData?.role);
-      return new Response(JSON.stringify({ error: 'Super admin access required', currentRole: roleData?.role }), {
+      console.error('User is not super_admin');
+      return new Response(JSON.stringify({ error: 'Super admin access required' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
