@@ -13,6 +13,7 @@ import {
   Check
 } from 'lucide-react';
 import { GenesisPasswordModal } from './GenesisPasswordModal';
+import { SubscriptionBillingCardIA } from './billing';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -104,9 +105,17 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
   const [tempMessage, setTempMessage] = useState('');
   const [tempProposal, setTempProposal] = useState('');
   const [copiedVar, setCopiedVar] = useState<string | null>(null);
+  const [subscription, setSubscription] = useState<{
+    plan: string;
+    plan_name: string | null;
+    status: string;
+    started_at: string | null;
+    expires_at: string | null;
+  } | null>(null);
 
   useEffect(() => {
     loadSettings();
+    loadSubscription();
   }, [userId]);
 
   const loadSettings = async () => {
@@ -125,6 +134,27 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
       console.error('Error loading settings:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadSubscription = async () => {
+    try {
+      const { data } = await supabase
+        .from('genesis_subscriptions')
+        .select('plan, plan_name, status, started_at, expires_at')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (data) {
+        // Check if expired
+        const isExpired = data.expires_at && new Date(data.expires_at) < new Date();
+        setSubscription({
+          ...data,
+          status: isExpired ? 'expired' : data.status
+        });
+      }
+    } catch (error) {
+      console.error('Error loading subscription:', error);
     }
   };
 
@@ -280,6 +310,20 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
             </CardContent>
           </Card>
         </div>
+      </div>
+
+      {/* Billing Section */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-medium text-white/50 uppercase tracking-wider">Fatura e Assinatura</h3>
+        <SubscriptionBillingCardIA
+          userId={userId}
+          plan={subscription?.plan || 'free'}
+          planName={subscription?.plan_name || undefined}
+          status={subscription?.status || 'inactive'}
+          startedAt={subscription?.started_at || undefined}
+          expiresAt={subscription?.expires_at || undefined}
+          onRenewed={loadSubscription}
+        />
       </div>
 
       {/* Settings Grid */}
