@@ -183,11 +183,15 @@ serve(async (req) => {
       authUserId = newUser.user.id;
     }
 
-    // 4. Get plan info
-    let planName = 'basic';
+    // 4. Get plan info - improved mapping
+    const PLAN_CONFIG: Record<number, { plan: string; plan_name: string; max_instances: number; max_flows: number }> = {
+      1: { plan: 'starter', plan_name: 'Plano Mensal', max_instances: 3, max_flows: 10 },
+      3: { plan: 'professional', plan_name: 'Plano Trimestral', max_instances: 5, max_flows: 25 },
+      12: { plan: 'enterprise', plan_name: 'Plano Anual', max_instances: 10, max_flows: 50 },
+    };
+
     let durationMonths = 1;
-    let maxInstances = 1;
-    let maxFlows = 5;
+    let planConfig = PLAN_CONFIG[1];
 
     if (payment.plan_id) {
       const { data: plan } = await supabase
@@ -196,14 +200,15 @@ serve(async (req) => {
         .eq('id', payment.plan_id)
         .single();
 
-      if (plan) {
-        planName = plan.name || 'basic';
-        durationMonths = plan.duration_months || 1;
-        const features = plan.features as any;
-        maxInstances = features?.max_instances || 1;
-        maxFlows = features?.max_flows || 5;
+      if (plan?.duration_months) {
+        durationMonths = plan.duration_months;
+        planConfig = PLAN_CONFIG[durationMonths] || PLAN_CONFIG[1];
       }
     }
+
+    const planName = planConfig.plan_name;
+    const maxInstances = planConfig.max_instances;
+    const maxFlows = planConfig.max_flows;
 
     console.log('[checkout-activate-user] Plan:', { planName, durationMonths, maxInstances, maxFlows });
 
@@ -258,28 +263,41 @@ serve(async (req) => {
 
     const { data: existingSub } = await supabase
       .from('genesis_subscriptions')
-      .select('id')
+      .select('id, expires_at')
       .eq('user_id', authUserId)
       .single();
 
     if (existingSub) {
+      // If subscription exists and hasn't expired, extend from current expiration
+      let newExpiresAt = expiresAt;
+      if (existingSub.expires_at && new Date(existingSub.expires_at) > new Date()) {
+        const currentExpiry = new Date(existingSub.expires_at);
+        currentExpiry.setMonth(currentExpiry.getMonth() + durationMonths);
+        newExpiresAt = currentExpiry;
+      }
+
       await supabase
         .from('genesis_subscriptions')
         .update({
-          plan: planName,
+          plan: planConfig.plan,
+          plan_name: planConfig.plan_name,
           status: 'active',
           max_instances: maxInstances,
           max_flows: maxFlows,
-          expires_at: expiresAt.toISOString()
+          started_at: new Date().toISOString(),
+          expires_at: newExpiresAt.toISOString(),
+          updated_at: new Date().toISOString()
         })
         .eq('id', existingSub.id);
     } else {
       await supabase.from('genesis_subscriptions').insert({
         user_id: authUserId,
-        plan: planName,
+        plan: planConfig.plan,
+        plan_name: planConfig.plan_name,
         status: 'active',
         max_instances: maxInstances,
         max_flows: maxFlows,
+        started_at: new Date().toISOString(),
         expires_at: expiresAt.toISOString()
       });
     }

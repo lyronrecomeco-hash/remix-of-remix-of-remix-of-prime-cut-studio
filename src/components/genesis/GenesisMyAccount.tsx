@@ -3,28 +3,27 @@ import { motion } from 'framer-motion';
 import {
   User,
   Phone,
-  Mail,
   Building2,
   Save,
   AlertCircle,
   CheckCircle2,
-  Smartphone,
-  Crown
+  Smartphone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useGenesisAuth } from '@/contexts/GenesisAuthContext';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
+import { SubscriptionBillingCard } from './SubscriptionBillingCard';
+import { useNavigate } from 'react-router-dom';
 
 export function GenesisMyAccount() {
   const { genesisUser, subscription, credits, refreshUser } = useGenesisAuth();
+  const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -278,41 +277,18 @@ export function GenesisMyAccount() {
         </motion.div>
       </div>
 
-      {/* Subscription Info */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Crown className="w-5 h-5 text-primary" />
-              Meu Plano
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-4 rounded-lg bg-muted/50">
-                <p className="text-sm text-muted-foreground">Plano Atual</p>
-                <p className="text-lg font-bold mt-1">{subscription?.plan_name || 'Free'}</p>
-              </div>
-              <div className="p-4 rounded-lg bg-muted/50">
-                <p className="text-sm text-muted-foreground">Instâncias</p>
-                <p className="text-lg font-bold mt-1">{subscription?.max_instances || 1}</p>
-              </div>
-              <div className="p-4 rounded-lg bg-muted/50">
-                <p className="text-sm text-muted-foreground">Fluxos</p>
-                <p className="text-lg font-bold mt-1">{subscription?.max_flows || 5}</p>
-              </div>
-              <div className="p-4 rounded-lg bg-muted/50">
-                <p className="text-sm text-muted-foreground">Créditos</p>
-                <p className="text-lg font-bold mt-1">{credits?.available_credits || 0}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+      {/* Subscription Billing Card */}
+      <SubscriptionBillingCard
+        plan={subscription?.plan || 'free'}
+        planName={subscription?.plan_name}
+        status={subscription?.status || 'active'}
+        startedAt={subscription?.started_at}
+        expiresAt={subscription?.expires_at}
+        maxInstances={subscription?.max_instances || 1}
+        maxFlows={subscription?.max_flows || 5}
+        onRenew={() => navigate('/')}
+        onUpgrade={() => navigate('/')}
+      />
 
       {/* Save Button */}
       {hasChanges && (
