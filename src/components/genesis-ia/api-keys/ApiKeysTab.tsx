@@ -159,8 +159,8 @@ export function ApiKeysTab({ onBack }: ApiKeysTabProps) {
         <Card className="bg-white/5 border-white/10">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
-                <CheckCircle2 className="w-5 h-5 text-green-400" />
+              <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-white">{activeKeys}</p>
@@ -185,8 +185,8 @@ export function ApiKeysTab({ onBack }: ApiKeysTabProps) {
         <Card className="bg-white/5 border-white/10">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                <RefreshCw className="w-5 h-5 text-purple-400" />
+              <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center">
+                <RefreshCw className="w-5 h-5 text-cyan-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-white">{totalUsage.toLocaleString()}</p>
@@ -238,7 +238,7 @@ export function ApiKeysTab({ onBack }: ApiKeysTabProps) {
                   <Button
                     onClick={handleAddKey}
                     disabled={saving}
-                    className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white"
+                    className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
                   >
                     {saving ? 'Salvando...' : 'Salvar Chave'}
                   </Button>

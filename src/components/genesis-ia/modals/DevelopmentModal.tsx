@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Construction, X, Sparkles } from 'lucide-react';
+import { Construction, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface DevelopmentModalProps {
@@ -30,9 +30,9 @@ export function DevelopmentModal({ isOpen, onClose, featureName }: DevelopmentMo
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
           >
-            <div className="w-full max-w-md bg-gradient-to-b from-slate-900 to-slate-950 border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
-              {/* Header gradient */}
-              <div className="h-2 bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500" />
+            <div className="w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+              {/* Header gradient - Genesis blue/cyan theme */}
+              <div className="h-1.5 bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500" />
               
               <div className="p-6 text-center">
                 {/* Icon */}
@@ -43,14 +43,14 @@ export function DevelopmentModal({ isOpen, onClose, featureName }: DevelopmentMo
                       scale: [1, 1.05, 1]
                     }}
                     transition={{ duration: 2, repeat: Infinity }}
-                    className="w-full h-full rounded-2xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center"
+                    className="w-full h-full rounded-2xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center border border-blue-500/20"
                   >
                     <Construction className="w-10 h-10 text-blue-400" />
                   </motion.div>
                   <motion.div
                     animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
                     transition={{ duration: 1.5, repeat: Infinity }}
-                    className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-cyan-500/30 flex items-center justify-center"
+                    className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-cyan-500/30 flex items-center justify-center border border-cyan-400/30"
                   >
                     <Sparkles className="w-3 h-3 text-cyan-400" />
                   </motion.div>
@@ -69,7 +69,7 @@ export function DevelopmentModal({ isOpen, onClose, featureName }: DevelopmentMo
                 </p>
                 
                 {/* Features coming */}
-                <div className="bg-white/5 rounded-xl p-4 mb-6 text-left">
+                <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-6 text-left">
                   <p className="text-white/40 text-xs uppercase tracking-wider mb-2">O que vem por aí:</p>
                   <ul className="space-y-2">
                     {['Geração de páginas com IA avançada', 'Templates profissionais', 'Exportação completa'].map((item, i) => (
@@ -81,10 +81,10 @@ export function DevelopmentModal({ isOpen, onClose, featureName }: DevelopmentMo
                   </ul>
                 </div>
                 
-                {/* Button */}
+                {/* Button - Genesis theme */}
                 <Button
                   onClick={onClose}
-                  className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
+                  className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0"
                 >
                   Entendi
                 </Button>

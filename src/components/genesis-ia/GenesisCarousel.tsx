@@ -6,7 +6,8 @@ import {
   FileText,
   Sparkles,
   Rocket,
-  Code2
+  Code2,
+  Lock
 } from 'lucide-react';
 
 interface CarouselItem {
@@ -15,6 +16,7 @@ interface CarouselItem {
   title: string;
   description: string;
   tabId?: string;
+  blocked?: boolean;
 }
 
 interface GenesisCarouselProps {
@@ -26,8 +28,9 @@ const carouselItems: CarouselItem[] = [
     id: '1',
     icon: Code2,
     title: 'Construir Página',
-    description: 'Crie páginas modernas com IA',
-    tabId: 'page-builder'
+    description: 'Em desenvolvimento',
+    tabId: 'page-builder',
+    blocked: true
   },
   {
     id: '2',
@@ -127,31 +130,53 @@ export const GenesisCarousel = ({ onNavigate }: GenesisCarouselProps) => {
         >
           {duplicatedItems.map((item, index) => {
             const IconComponent = item.icon;
+            const isBlocked = item.blocked;
             
             return (
               <motion.div
                 key={`${item.id}-${index}`}
-                whileHover={{ scale: 1.02, y: -4 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={!isBlocked ? { scale: 1.02, y: -4 } : {}}
+                whileTap={!isBlocked ? { scale: 0.98 } : {}}
                 transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                className="flex-shrink-0 cursor-pointer snap-start"
+                className={`flex-shrink-0 snap-start ${isBlocked ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                 onClick={() => item.tabId && onNavigate?.(item.tabId)}
               >
                 <div 
-                  className="w-[160px] sm:w-[260px] h-[100px] sm:h-[140px] bg-white/5 border border-white/10 hover:border-primary/30 hover:bg-white/[0.08] transition-all duration-300 p-3 sm:p-5 flex flex-col justify-between group backdrop-blur-sm"
+                  className={`w-[160px] sm:w-[260px] h-[100px] sm:h-[140px] transition-all duration-300 p-3 sm:p-5 flex flex-col justify-between backdrop-blur-sm relative overflow-hidden ${
+                    isBlocked 
+                      ? 'bg-white/[0.02] border border-white/5 opacity-50 grayscale' 
+                      : 'bg-white/5 border border-white/10 hover:border-primary/30 hover:bg-white/[0.08] group'
+                  }`}
                   style={{ borderRadius: '14px' }}
                 >
+                  {/* Blocked overlay */}
+                  {isBlocked && (
+                    <div className="absolute inset-0 flex items-center justify-center z-10">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/10 flex items-center justify-center">
+                        <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-white/40" />
+                      </div>
+                    </div>
+                  )}
+
                   {/* Icon */}
-                  <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl bg-primary/20 flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                  <div className={`w-8 h-8 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center transition-transform ${
+                    isBlocked 
+                      ? 'bg-white/5' 
+                      : 'bg-primary/20 group-hover:scale-105'
+                  }`}>
+                    <IconComponent className={`w-4 h-4 sm:w-5 sm:h-5 ${isBlocked ? 'text-white/20' : 'text-primary'}`} />
                   </div>
 
                   {/* Text */}
                   <div className="space-y-0">
-                    <h3 className="font-semibold text-white text-xs sm:text-base leading-tight group-hover:text-white/90 transition-colors line-clamp-1">
+                    <h3 className={`font-semibold text-xs sm:text-base leading-tight line-clamp-1 ${
+                      isBlocked ? 'text-white/30' : 'text-white group-hover:text-white/90'
+                    } transition-colors`}>
                       {item.title}
                     </h3>
-                    <p className="text-[10px] sm:text-sm text-white/50 group-hover:text-white/60 transition-colors line-clamp-1">
+                    <p className={`text-[10px] sm:text-sm line-clamp-1 ${
+                      isBlocked ? 'text-white/20' : 'text-white/50 group-hover:text-white/60'
+                    } transition-colors`}>
                       {item.description}
                     </p>
                   </div>
