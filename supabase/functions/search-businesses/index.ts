@@ -253,13 +253,41 @@ serve(async (req) => {
         console.log(`Key ${usedKeyId} usage incremented by ${totalApiCalls}`);
       }
 
-      // Registrar no histórico de pesquisas
+      // Registrar no histórico de pesquisas com dados do auth header se disponível
+      const authHeader = req.headers.get('authorization');
+      let searchUserId = usedKeyId;
+      let searchUserName = 'Sistema';
+      let searchUserEmail = '';
+
+      if (authHeader?.startsWith('Bearer ')) {
+        try {
+          const token = authHeader.replace('Bearer ', '');
+          const { data: { user } } = await supabase.auth.getUser(token);
+          if (user) {
+            // Buscar dados do genesis_user
+            const { data: genesisUser } = await supabase
+              .from('genesis_users')
+              .select('id, name, email')
+              .eq('auth_user_id', user.id)
+              .maybeSingle();
+            
+            if (genesisUser) {
+              searchUserId = genesisUser.id;
+              searchUserName = genesisUser.name || 'Usuário';
+              searchUserEmail = genesisUser.email || user.email || '';
+            }
+          }
+        } catch (e) {
+          console.log('Could not get user info for history:', e);
+        }
+      }
+
       await supabase
         .from('genesis_search_history')
         .insert({
-          user_id: usedKeyId, // Will be updated when we have user context
-          user_name: 'Sistema',
-          user_email: '',
+          user_id: searchUserId || '00000000-0000-0000-0000-000000000000',
+          user_name: searchUserName,
+          user_email: searchUserEmail,
           search_type: 'prospecting',
           search_query: searchQuery,
           city: city,
