@@ -70,6 +70,7 @@ const StarpetshopPage = lazy(() => import("./pages/starpetshop"));
 const PortfolioPage = lazy(() => import("./pages/portfolio/[slug]"));
 const ContractSignature = lazy(() => import("./pages/ContractSignature"));
 const PromoPage = lazy(() => import("./pages/PromoPage"));
+const DivulgacaoPage = lazy(() => import("./pages/DivulgacaoPage"));
 // Checkout Pages
 const CheckoutPage = lazy(() => import("./pages/checkout/CheckoutPage"));
 const PaymentCodePage = lazy(() => import("./pages/checkout/PaymentCodePage"));
@@ -291,6 +292,8 @@ const AppContent = () => {
             <Route path="/contratos/assinar/:hash" element={<ContractSignature />} />
             {/* Promo Page */}
             <Route path="/promo/:codigo" element={<PromoPage />} />
+            {/* Divulgação Page */}
+            <Route path="/divul" element={<DivulgacaoPage />} />
             {/* Checkout Routes - Static routes first, dynamic last */}
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
