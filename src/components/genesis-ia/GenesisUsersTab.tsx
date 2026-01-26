@@ -50,6 +50,8 @@ interface GenesisUser {
   // Dados de assinatura
   subscription_status?: string;
   subscription_plan?: string;
+  subscription_plan_name?: string;
+  subscription_expires_at?: string;
 }
 
 interface GenesisUsersTabProps {
@@ -88,20 +90,29 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
       // Buscar assinaturas de todos os usuários
       const { data: subscriptionsData } = await supabase
         .from('genesis_subscriptions')
-        .select('user_id, status, plan');
+        .select('user_id, status, plan, plan_name, expires_at');
 
       // Mapear assinaturas por user_id
-      const subsMap = new Map<string, { status: string; plan: string }>();
-      (subscriptionsData || []).forEach((sub: { user_id: string; status: string; plan: string }) => {
-        subsMap.set(sub.user_id, { status: sub.status, plan: sub.plan });
+      const subsMap = new Map<string, { status: string; plan: string; plan_name: string | null; expires_at: string | null }>();
+      (subscriptionsData || []).forEach((sub: { user_id: string; status: string; plan: string; plan_name: string | null; expires_at: string | null }) => {
+        subsMap.set(sub.user_id, { status: sub.status, plan: sub.plan, plan_name: sub.plan_name, expires_at: sub.expires_at });
       });
 
       // Combinar dados
-      const usersWithSubs = (usersData || []).map(user => ({
-        ...user,
-        subscription_status: subsMap.get(user.id)?.status || 'none',
-        subscription_plan: subsMap.get(user.id)?.plan || 'free',
-      }));
+      const usersWithSubs = (usersData || []).map(user => {
+        const sub = subsMap.get(user.id);
+        // Verificar se está expirado
+        const isExpired = sub?.expires_at ? new Date(sub.expires_at) < new Date() : false;
+        const effectiveStatus = isExpired ? 'expired' : (sub?.status || 'none');
+        
+        return {
+          ...user,
+          subscription_status: effectiveStatus,
+          subscription_plan: sub?.plan || 'free',
+          subscription_plan_name: sub?.plan_name || null,
+          subscription_expires_at: sub?.expires_at || null,
+        };
+      });
 
       setUsers(usersWithSubs);
     } catch (error) {
@@ -259,22 +270,37 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-medium truncate text-white">{user.name}</p>
                         {!user.is_active && <Badge variant="secondary" className="text-xs bg-white/10 text-white/50">Inativo</Badge>}
-                        {/* Status de assinatura */}
-                        {user.subscription_status === 'active' ? (
-                          <Badge className="text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
-                            {user.subscription_plan === 'enterprise' ? 'Enterprise' : 
-                             user.subscription_plan === 'pro' ? 'Pro' : 
-                             user.subscription_plan === 'basic' ? 'Básico' : 'Ativo'}
+                        {/* Plano */}
+                        {user.subscription_plan_name ? (
+                          <Badge className="text-xs bg-primary/20 text-primary border-primary/30">
+                            {user.subscription_plan_name}
                           </Badge>
-                        ) : user.subscription_status === 'none' ? (
-                          <Badge variant="outline" className="text-xs border-white/20 text-white/40">Sem plano</Badge>
+                        ) : user.subscription_plan && user.subscription_plan !== 'free' ? (
+                          <Badge className="text-xs bg-blue-500/20 text-blue-400 border-blue-500/30">
+                            {user.subscription_plan === 'starter' ? 'Mensal' : 
+                             user.subscription_plan === 'pro' ? 'Trimestral' : 
+                             user.subscription_plan === 'enterprise' ? 'Anual' : user.subscription_plan}
+                          </Badge>
                         ) : (
-                          <Badge variant="outline" className="text-xs border-amber-500/30 text-amber-400">
-                            {user.subscription_status === 'trial' ? 'Trial' : user.subscription_status}
-                          </Badge>
+                          <Badge variant="outline" className="text-xs border-white/20 text-white/40">Free</Badge>
+                        )}
+                        {/* Status */}
+                        {user.subscription_status === 'active' ? (
+                          <Badge className="text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Ativo</Badge>
+                        ) : user.subscription_status === 'expired' ? (
+                          <Badge className="text-xs bg-red-500/20 text-red-400 border-red-500/30">Expirado</Badge>
+                        ) : user.subscription_status === 'trial' ? (
+                          <Badge className="text-xs bg-amber-500/20 text-amber-400 border-amber-500/30">Trial</Badge>
+                        ) : null}
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-white/50">
+                        <span className="truncate">{user.email}</span>
+                        {user.subscription_expires_at && (
+                          <span className="text-xs text-white/30">
+                            • Expira: {new Date(user.subscription_expires_at).toLocaleDateString('pt-BR')}
+                          </span>
                         )}
                       </div>
-                      <p className="text-sm text-white/50 truncate">{user.email}</p>
                     </div>
                   </div>
                   <div className="hidden md:block text-sm text-white/40">{formatDate(user.created_at)}</div>
