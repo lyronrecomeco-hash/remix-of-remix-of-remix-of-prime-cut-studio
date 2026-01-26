@@ -6,6 +6,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-webhook-secret, asaas-access-token',
 };
 
+// Plan mapping configuration
+const PLAN_CONFIG: Record<number, { plan: string; plan_name: string; max_instances: number; max_flows: number }> = {
+  1: { plan: 'starter', plan_name: 'Plano Mensal', max_instances: 3, max_flows: 10 },
+  3: { plan: 'professional', plan_name: 'Plano Trimestral', max_instances: 5, max_flows: 25 },
+  12: { plan: 'enterprise', plan_name: 'Plano Anual', max_instances: 10, max_flows: 50 },
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -179,10 +186,9 @@ serve(async (req) => {
     // Find payment by gateway-specific ID
     let payment;
     if (gateway === 'misticpay') {
-      // MisticPay uses transactionId - search by misticpay_transaction_id or payment_code containing the ID
       const { data, error } = await supabase
         .from('checkout_payments')
-        .select('id, status, payment_code')
+        .select('id, status, payment_code, plan_id, customer_id')
         .or(`misticpay_transaction_id.eq.${paymentId},payment_code.ilike.%${paymentId}%`)
         .single();
       payment = data;
@@ -190,7 +196,7 @@ serve(async (req) => {
     } else if (gateway === 'asaas') {
       const { data, error } = await supabase
         .from('checkout_payments')
-        .select('id, status, payment_code')
+        .select('id, status, payment_code, plan_id, customer_id')
         .eq('asaas_payment_id', paymentId)
         .single();
       payment = data;
@@ -198,7 +204,7 @@ serve(async (req) => {
     } else {
       const { data, error } = await supabase
         .from('checkout_payments')
-        .select('id, status, payment_code')
+        .select('id, status, payment_code, plan_id, customer_id')
         .eq('abacatepay_billing_id', paymentId)
         .single();
       payment = data;
@@ -213,9 +219,10 @@ serve(async (req) => {
       );
     }
 
-    console.log('Found payment:', payment.payment_code);
+    console.log('Found payment:', payment.payment_code, 'Current status:', payment.status, 'New status:', newStatus);
 
     // Update payment status if changed
+    const wasAlreadyPaid = payment.status === 'paid';
     if (newStatus !== 'pending' && newStatus !== payment.status) {
       const updateData: Record<string, unknown> = { status: newStatus };
       
@@ -229,6 +236,159 @@ serve(async (req) => {
         .eq('id', payment.id);
 
       console.log('Updated payment status to:', newStatus);
+    }
+
+    // ============= ACTIVATE SUBSCRIPTION WHEN PAYMENT IS CONFIRMED =============
+    if (newStatus === 'paid' && !wasAlreadyPaid) {
+      console.log('[Subscription Activation] Starting activation flow...');
+      
+      try {
+        // 1. Get customer info
+        const { data: customer } = await supabase
+          .from('checkout_customers')
+          .select('email, first_name, last_name, phone')
+          .eq('id', payment.customer_id)
+          .single();
+
+        if (!customer?.email) {
+          console.error('[Subscription Activation] Customer not found or no email');
+        } else {
+          console.log('[Subscription Activation] Customer:', customer.email);
+
+          // 2. Get plan info
+          let durationMonths = 1; // Default to monthly
+          let planConfig = PLAN_CONFIG[1];
+
+          if (payment.plan_id) {
+            const { data: plan } = await supabase
+              .from('checkout_plans')
+              .select('duration_months, name')
+              .eq('id', payment.plan_id)
+              .single();
+
+            if (plan?.duration_months) {
+              durationMonths = plan.duration_months;
+              planConfig = PLAN_CONFIG[durationMonths] || PLAN_CONFIG[1];
+              console.log('[Subscription Activation] Plan:', plan.name, 'Duration:', durationMonths, 'months');
+            }
+          } else {
+            console.log('[Subscription Activation] No plan_id, defaulting to monthly plan');
+          }
+
+          // 3. Find genesis_user by email
+          const { data: genesisUser } = await supabase
+            .from('genesis_users')
+            .select('id, auth_user_id')
+            .eq('email', customer.email.toLowerCase())
+            .single();
+
+          if (!genesisUser) {
+            console.log('[Subscription Activation] Genesis user not found for email:', customer.email);
+            // User will be created when they set their password via checkout-activate-user
+          } else {
+            console.log('[Subscription Activation] Found genesis_user:', genesisUser.id);
+
+            // 4. Calculate expiration date
+            const now = new Date();
+            const expiresAt = new Date(now);
+            expiresAt.setMonth(expiresAt.getMonth() + durationMonths);
+
+            // 5. Upsert subscription
+            const { data: existingSub } = await supabase
+              .from('genesis_subscriptions')
+              .select('id, expires_at')
+              .eq('user_id', genesisUser.id)
+              .single();
+
+            const subscriptionData = {
+              user_id: genesisUser.id,
+              plan: planConfig.plan,
+              plan_name: planConfig.plan_name,
+              status: 'active',
+              max_instances: planConfig.max_instances,
+              max_flows: planConfig.max_flows,
+              started_at: now.toISOString(),
+              expires_at: expiresAt.toISOString(),
+              updated_at: now.toISOString(),
+            };
+
+            if (existingSub) {
+              // If subscription exists and hasn't expired, extend from current expiration
+              if (existingSub.expires_at && new Date(existingSub.expires_at) > now) {
+                const currentExpiry = new Date(existingSub.expires_at);
+                currentExpiry.setMonth(currentExpiry.getMonth() + durationMonths);
+                subscriptionData.expires_at = currentExpiry.toISOString();
+                console.log('[Subscription Activation] Extending existing subscription to:', subscriptionData.expires_at);
+              }
+
+              await supabase
+                .from('genesis_subscriptions')
+                .update(subscriptionData)
+                .eq('id', existingSub.id);
+
+              console.log('[Subscription Activation] Updated subscription:', existingSub.id);
+            } else {
+              const { data: newSub, error: subError } = await supabase
+                .from('genesis_subscriptions')
+                .insert(subscriptionData)
+                .select('id')
+                .single();
+
+              if (subError) {
+                console.error('[Subscription Activation] Error creating subscription:', subError);
+              } else {
+                console.log('[Subscription Activation] Created subscription:', newSub?.id);
+              }
+            }
+
+            // 6. Add bonus credits for new purchase
+            const { data: existingCredits } = await supabase
+              .from('genesis_credits')
+              .select('id, available_credits')
+              .eq('user_id', genesisUser.id)
+              .single();
+
+            const bonusCredits = durationMonths >= 12 ? 500 : durationMonths >= 3 ? 400 : 300;
+
+            if (existingCredits) {
+              await supabase
+                .from('genesis_credits')
+                .update({
+                  available_credits: existingCredits.available_credits + bonusCredits
+                })
+                .eq('id', existingCredits.id);
+              console.log('[Subscription Activation] Added', bonusCredits, 'bonus credits');
+            } else {
+              await supabase.from('genesis_credits').insert({
+                user_id: genesisUser.id,
+                available_credits: bonusCredits,
+                total_credits: bonusCredits
+              });
+              console.log('[Subscription Activation] Created credits with', bonusCredits, 'initial credits');
+            }
+
+            // 7. Log activation event
+            await supabase.from('checkout_payment_events').insert({
+              payment_id: payment.id,
+              event_type: 'subscription_activated',
+              event_data: {
+                user_id: genesisUser.id,
+                plan: planConfig.plan,
+                plan_name: planConfig.plan_name,
+                duration_months: durationMonths,
+                expires_at: subscriptionData.expires_at,
+                bonus_credits: bonusCredits,
+              },
+              source: 'webhook',
+            });
+
+            console.log('[Subscription Activation] ✅ Complete!');
+          }
+        }
+      } catch (activationError) {
+        console.error('[Subscription Activation] Error:', activationError);
+        // Don't fail the webhook, just log the error
+      }
     }
 
     // Log webhook event

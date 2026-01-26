@@ -32,6 +32,8 @@ interface GenesisSubscription {
   status: string;
   max_instances: number;
   max_flows: number;
+  started_at?: string;
+  expires_at?: string;
 }
 
 interface GenesisAuthState {
@@ -45,6 +47,8 @@ interface GenesisAuthState {
   isSuperAdmin: boolean;
   needsRegistration: boolean;
   googleUserData: { email: string; name: string; avatarUrl?: string } | null;
+  isSubscriptionExpired: boolean;
+  daysUntilExpiry: number | null;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, name: string, phone?: string, companyName?: string) => Promise<{ error: any }>;
   signInWithGoogle: () => Promise<{ error: any }>;
@@ -69,6 +73,22 @@ export function GenesisAuthProvider({ children }: { children: ReactNode }) {
   const [googleUserData, setGoogleUserData] = useState<{ email: string; name: string; avatarUrl?: string } | null>(null);
 
   const isSuperAdmin = roles.some(r => r.role === 'super_admin');
+
+  // Calculate subscription expiration status
+  const isSubscriptionExpired = (() => {
+    if (isSuperAdmin) return false; // Super admins never expire
+    if (!subscription?.expires_at) return false; // No expiration set
+    if (subscription.plan === 'free') return false; // Free plans don't expire
+    return new Date(subscription.expires_at) < new Date();
+  })();
+
+  const daysUntilExpiry = (() => {
+    if (!subscription?.expires_at) return null;
+    const expiresAt = new Date(subscription.expires_at);
+    const now = new Date();
+    const diffTime = expiresAt.getTime() - now.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  })();
 
   const fetchGenesisData = useCallback(async (authUserId: string, authUser?: User) => {
     try {
@@ -437,6 +457,8 @@ export function GenesisAuthProvider({ children }: { children: ReactNode }) {
         isSuperAdmin,
         needsRegistration,
         googleUserData,
+        isSubscriptionExpired,
+        daysUntilExpiry,
         signIn,
         signUp,
         signInWithGoogle,
