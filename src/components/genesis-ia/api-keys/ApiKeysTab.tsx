@@ -148,38 +148,50 @@ export function ApiKeysTab({ onBack }: ApiKeysTabProps) {
     setHistoryModalOpen(true);
 
     try {
+      // Aplicar filtros de data
+      const currentFilter = filter || dateFilter;
+      const now = new Date();
+      let startDate: string | null = null;
+      let endDate: string | null = null;
+
+      if (currentFilter === 'today') {
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+      } else if (currentFilter === 'week') {
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      } else if (currentFilter === 'month') {
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      } else if (currentFilter === 'custom' && customDateStart) {
+        startDate = customDateStart;
+        endDate = customDateEnd ? customDateEnd + 'T23:59:59' : null;
+      }
+
+      // Buscar por user_id OU auth_user_id (para maior compatibilidade)
       let query = supabase
         .from('genesis_search_history')
         .select('*')
-        .eq('user_id', user.id)
+        .or(`user_id.eq.${user.id},auth_user_id.eq.${user.auth_user_id}`)
         .order('created_at', { ascending: false });
 
-      // Apply date filters
-      const currentFilter = filter || dateFilter;
-      const now = new Date();
-      if (currentFilter === 'today') {
-        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-        query = query.gte('created_at', startOfDay);
-      } else if (currentFilter === 'week') {
-        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
-        query = query.gte('created_at', weekAgo);
-      } else if (currentFilter === 'month') {
-        const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
-        query = query.gte('created_at', monthAgo);
-      } else if (currentFilter === 'custom' && customDateStart) {
-        query = query.gte('created_at', customDateStart);
-        if (customDateEnd) {
-          query = query.lte('created_at', customDateEnd + 'T23:59:59');
-        }
+      if (startDate) {
+        query = query.gte('created_at', startDate);
+      }
+      if (endDate) {
+        query = query.lte('created_at', endDate);
       }
 
       const { data, error } = await query.limit(100);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Query error:', error);
+        throw error;
+      }
+      
+      console.log(`📊 Histórico carregado: ${data?.length || 0} registros para ${user.name}`);
       setSearchHistory(data || []);
     } catch (error) {
       console.error('Error loading search history:', error);
       toast.error('Erro ao carregar histórico');
+      setSearchHistory([]);
     } finally {
       setHistoryLoading(false);
     }
