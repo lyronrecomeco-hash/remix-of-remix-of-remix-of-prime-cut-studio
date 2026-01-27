@@ -9682,6 +9682,140 @@ export type Database = {
           },
         ]
       }
+      promotional_settings: {
+        Row: {
+          default_commission_rate: number | null
+          id: string
+          max_withdrawal_amount: number | null
+          min_withdrawal_amount: number | null
+          updated_at: string | null
+          updated_by: string | null
+          withdrawal_processing_days: number | null
+        }
+        Insert: {
+          default_commission_rate?: number | null
+          id?: string
+          max_withdrawal_amount?: number | null
+          min_withdrawal_amount?: number | null
+          updated_at?: string | null
+          updated_by?: string | null
+          withdrawal_processing_days?: number | null
+        }
+        Update: {
+          default_commission_rate?: number | null
+          id?: string
+          max_withdrawal_amount?: number | null
+          min_withdrawal_amount?: number | null
+          updated_at?: string | null
+          updated_by?: string | null
+          withdrawal_processing_days?: number | null
+        }
+        Relationships: []
+      }
+      promotional_users: {
+        Row: {
+          available_balance: number | null
+          commission_rate: number | null
+          created_at: string | null
+          created_by: string | null
+          email: string
+          id: string
+          name: string
+          pending_balance: number | null
+          referral_code: string
+          status: string | null
+          total_earnings: number | null
+          type: string
+          updated_at: string | null
+          user_id: string
+          whatsapp: string
+        }
+        Insert: {
+          available_balance?: number | null
+          commission_rate?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          email: string
+          id?: string
+          name: string
+          pending_balance?: number | null
+          referral_code: string
+          status?: string | null
+          total_earnings?: number | null
+          type: string
+          updated_at?: string | null
+          user_id: string
+          whatsapp: string
+        }
+        Update: {
+          available_balance?: number | null
+          commission_rate?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          email?: string
+          id?: string
+          name?: string
+          pending_balance?: number | null
+          referral_code?: string
+          status?: string | null
+          total_earnings?: number | null
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+          whatsapp?: string
+        }
+        Relationships: []
+      }
+      promotional_withdrawals: {
+        Row: {
+          amount: number
+          holder_name: string
+          id: string
+          notes: string | null
+          pix_key: string
+          pix_type: string
+          processed_at: string | null
+          processed_by: string | null
+          promotional_user_id: string
+          requested_at: string | null
+          status: string | null
+        }
+        Insert: {
+          amount: number
+          holder_name: string
+          id?: string
+          notes?: string | null
+          pix_key: string
+          pix_type: string
+          processed_at?: string | null
+          processed_by?: string | null
+          promotional_user_id: string
+          requested_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          amount?: number
+          holder_name?: string
+          id?: string
+          notes?: string | null
+          pix_key?: string
+          pix_type?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          promotional_user_id?: string
+          requested_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotional_withdrawals_promotional_user_id_fkey"
+            columns: ["promotional_user_id"]
+            isOneToOne: false
+            referencedRelation: "promotional_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proposal_questionnaire_history: {
         Row: {
           ai_follow_up: string | null
