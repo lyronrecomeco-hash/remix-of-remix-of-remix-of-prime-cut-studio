@@ -8,6 +8,9 @@ const corsHeaders = {
 
 interface RefundRequest {
   paymentCode: string;
+  // For MisticPay: admin must supply destination PIX key (not from checkout customer)
+  pixKey?: string;
+  pixKeyType?: 'CPF' | 'CNPJ' | 'EMAIL' | 'TELEFONE' | 'CHAVE_ALEATORIA';
 }
 
 // Helper to decrypt API key
@@ -55,18 +58,19 @@ async function refundAsaas(
   return { success: true };
 }
 
-// ============= MISTICPAY REFUND (via Withdraw) =============
+// ============= MISTICPAY REFUND (via Withdraw to admin-provided PIX key) =============
 async function refundMisticPay(
   amountCents: number,
-  customerCpf: string,
+  pixKey: string,
+  pixKeyType: string,
   clientId: string,
   clientSecret: string
 ): Promise<{ success: boolean; error?: string }> {
-  console.log('[MisticPay] Processing refund via PIX cash-out (withdraw) + status validation...');
+  console.log('[MisticPay] Processing refund via PIX cash-out (withdraw) to admin-provided key...');
 
-  // According to MisticPay docs, there is no dedicated "refund" endpoint.
-  // The API supports returning money via PIX by issuing a cash-out (withdraw)
-  // to the payer PIX key (CPF), then validating the transaction via /transactions/check.
+  // MisticPay does NOT have a "PIX devolution/return" endpoint.
+  // The only way to return money is via /api/transactions/withdraw to a given PIX key.
+  // This requires CASHOUT/ALL permission on the API credentials.
 
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
   const safeJson = async (res: Response) => {
@@ -78,9 +82,9 @@ async function refundMisticPay(
   };
 
   const amountReais = Number((amountCents / 100).toFixed(2));
-  const cleanCpf = customerCpf.replace(/\D/g, '');
+  const cleanPixKey = pixKey.replace(/\D/g, ''); // Remove formatting for CPF/CNPJ/phone
 
-  console.log(`[MisticPay] Attempting withdraw of R$ ${amountReais.toFixed(2)} to CPF ${cleanCpf}`);
+  console.log(`[MisticPay] Attempting withdraw of R$ ${amountReais.toFixed(2)} to ${pixKeyType}:${cleanPixKey}`);
 
   const withdrawResponse = await fetch('https://api.misticpay.com/api/transactions/withdraw', {
     method: 'POST',
@@ -91,9 +95,8 @@ async function refundMisticPay(
     },
     body: JSON.stringify({
       amount: amountReais,
-      pixKey: cleanCpf,
-      // Docs require uppercase values: "CPF", "CNPJ", "EMAIL", "TELEFONE", "CHAVE_ALEATORIA"
-      pixKeyType: 'CPF',
+      pixKey: pixKeyType === 'EMAIL' ? pixKey : cleanPixKey,
+      pixKeyType: pixKeyType,
       description: 'Reembolso de pagamento',
     }),
   });
@@ -108,12 +111,11 @@ async function refundMisticPay(
     'Erro ao solicitar saque (withdraw) na MisticPay';
 
   if (!withdrawResponse.ok) {
-    // Common/critical errors that must be explicit for admins:
     if (typeof withdrawErrMsg === 'string' && withdrawErrMsg.toLowerCase().includes('não está autorizada a solicitar saques')) {
       return {
         success: false,
         error:
-          'Credenciais MisticPay sem permissão CASHOUT/ALL para solicitar saque (withdraw). Para estornar PIX via API é necessário habilitar CASHOUT/ALL ou usar credenciais autorizadas.',
+          'Credenciais MisticPay sem permissão CASHOUT/ALL para solicitar saque (withdraw). Habilite essa permissão no painel MisticPay.',
       };
     }
 
@@ -132,7 +134,6 @@ async function refundMisticPay(
   }
 
   // Validate withdraw processing. Only return success when transactionState is COMPLETO.
-  // Keep the polling short to avoid function timeouts.
   const maxAttempts = 10;
   const delayMs = 1500;
 
@@ -233,7 +234,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { paymentCode }: RefundRequest = await req.json();
+    const { paymentCode, pixKey, pixKeyType }: RefundRequest = await req.json();
     
     if (!paymentCode) {
       return new Response(
@@ -348,18 +349,26 @@ serve(async (req) => {
         );
       }
 
-      const clientId = decryptApiKey(gatewayConfig.misticpay_client_id_hash, gatewayConfig.user_id);
-      const clientSecret = decryptApiKey(gatewayConfig.misticpay_client_secret_hash, gatewayConfig.user_id);
-      const customerCpf = payment.checkout_customers?.cpf || '';
-
-      if (!customerCpf) {
+      // MisticPay requires admin-provided PIX key for refund (withdraw)
+      if (!pixKey || !pixKeyType) {
         return new Response(
-          JSON.stringify({ error: 'CPF do cliente não encontrado para reembolso' }),
+          JSON.stringify({ error: 'Para MisticPay, informe a chave PIX (pixKey) e o tipo (pixKeyType) do destinatário.' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      refundResult = await refundMisticPay(payment.amount_cents, customerCpf, clientId, clientSecret);
+      const validPixKeyTypes = ['CPF', 'CNPJ', 'EMAIL', 'TELEFONE', 'CHAVE_ALEATORIA'];
+      if (!validPixKeyTypes.includes(pixKeyType)) {
+        return new Response(
+          JSON.stringify({ error: `pixKeyType inválido. Use: ${validPixKeyTypes.join(', ')}` }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const clientId = decryptApiKey(gatewayConfig.misticpay_client_id_hash, gatewayConfig.user_id);
+      const clientSecret = decryptApiKey(gatewayConfig.misticpay_client_secret_hash, gatewayConfig.user_id);
+
+      refundResult = await refundMisticPay(payment.amount_cents, pixKey, pixKeyType, clientId, clientSecret);
 
     } else if (gateway === 'abacatepay') {
       if (!payment.abacatepay_billing_id) {
