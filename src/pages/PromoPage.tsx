@@ -44,18 +44,26 @@ export default function PromoPage() {
 
   useEffect(() => {
     validateCode();
-    fetchPlans();
   }, [codigo]);
+
+  useEffect(() => {
+    fetchPlans();
+  }, []);
 
   const fetchPlans = async () => {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('checkout_plans')
         .select('*')
         .eq('is_active', true)
         .order('duration_months', { ascending: true });
       
-      if (data) {
+      if (error) {
+        console.error('Erro ao buscar planos:', error);
+        return;
+      }
+      
+      if (data && data.length > 0) {
         setPlans(data);
       }
     } catch (error) {
@@ -279,7 +287,12 @@ export default function PromoPage() {
               transition={{ delay: 0.45 }}
               className="grid grid-cols-1 md:grid-cols-3 gap-6"
             >
-              {plans.map((plan) => {
+              {plans.length === 0 ? (
+                <div className="col-span-3 text-center py-12">
+                  <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+                  <p className="text-muted-foreground">Carregando planos...</p>
+                </div>
+              ) : plans.map((plan) => {
                 const isPopular = plan.is_popular || plan.name === 'quarterly';
                 const isBestValue = plan.name === 'yearly';
                 const price = getPlanPrice(plan);
