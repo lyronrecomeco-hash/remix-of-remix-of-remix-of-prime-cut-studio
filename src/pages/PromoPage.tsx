@@ -41,6 +41,7 @@ export default function PromoPage() {
   const [isValidCode, setIsValidCode] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [promoLinkId, setPromoLinkId] = useState<string | null>(null);
 
   useEffect(() => {
     validateCode();
@@ -86,6 +87,9 @@ export default function PromoPage() {
         .maybeSingle();
 
       setIsValidCode(!!data);
+      if (data?.id) {
+        setPromoLinkId(data.id);
+      }
     } catch (error) {
       console.error('Erro ao validar código:', error);
       setIsValidCode(false);
@@ -102,9 +106,16 @@ export default function PromoPage() {
       amount: amount.toString(),
       description: `${plan.display_name} - Genesis Hub`,
       plan: plan.name,
+      planId: plan.id, // Add plan ID
       ref: codigo || '',
       source: 'promo'
     });
+    
+    // Add promo_link_id if available
+    if (promoLinkId) {
+      params.set('promoLinkId', promoLinkId);
+    }
+    
     navigate(`/checkout?${params.toString()}`);
   };
 

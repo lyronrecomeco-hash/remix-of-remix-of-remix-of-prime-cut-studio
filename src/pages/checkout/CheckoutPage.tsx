@@ -29,6 +29,9 @@ export default function CheckoutPage() {
   // Parâmetros da URL
   const amountCents = parseInt(searchParams.get('amount') || '9900', 10);
   const description = searchParams.get('description') || 'Pagamento';
+  const planId = searchParams.get('planId') || undefined;
+  const promoLinkId = searchParams.get('promoLinkId') || undefined;
+  const source = searchParams.get('source') || 'direct';
   
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -102,6 +105,9 @@ export default function CheckoutPage() {
         description,
         paymentMethod: result.data.paymentMethod,
         installments: pricing.installments,
+        planId,
+        promoLinkId,
+        source,
         metadata: {
           cardNumber: result.data.cardNumber ? '****' + result.data.cardNumber.slice(-4) : undefined,
         },
