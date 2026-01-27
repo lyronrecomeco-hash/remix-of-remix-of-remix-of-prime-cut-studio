@@ -23,15 +23,45 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 
+interface Plan {
+  id: string;
+  name: string;
+  display_name: string;
+  price_cents: number;
+  promo_price_cents: number | null;
+  duration_months: number;
+  is_popular: boolean | null;
+  discount_percentage: number | null;
+  tagline: string | null;
+}
+
 export default function PromoPage() {
   const { codigo } = useParams<{ codigo: string }>();
   const navigate = useNavigate();
   const [isValidCode, setIsValidCode] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [plans, setPlans] = useState<Plan[]>([]);
 
   useEffect(() => {
     validateCode();
+    fetchPlans();
   }, [codigo]);
+
+  const fetchPlans = async () => {
+    try {
+      const { data } = await supabase
+        .from('checkout_plans')
+        .select('*')
+        .eq('is_active', true)
+        .order('duration_months', { ascending: true });
+      
+      if (data) {
+        setPlans(data);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar planos:', error);
+    }
+  };
 
   const validateCode = async () => {
     if (!codigo) {
@@ -56,26 +86,29 @@ export default function PromoPage() {
     }
   };
 
-  const handleSelectPlan = (planType: 'monthly' | 'quarterly' | 'yearly') => {
-    const amounts: Record<string, number> = {
-      monthly: 19700,
-      quarterly: 29700,
-      yearly: 69700
-    };
-    const descriptions: Record<string, string> = {
-      monthly: 'Plano Mensal - Genesis Hub',
-      quarterly: 'Plano Trimestral - Genesis Hub',
-      yearly: 'Plano Anual - Genesis Hub'
-    };
+  const handleSelectPlan = (plan: Plan) => {
+    // Usar promo_price_cents se disponível, senão price_cents
+    const amount = plan.promo_price_cents || plan.price_cents;
     
     const params = new URLSearchParams({
-      amount: amounts[planType].toString(),
-      description: descriptions[planType],
-      plan: planType,
+      amount: amount.toString(),
+      description: `${plan.display_name} - Genesis Hub`,
+      plan: plan.name,
       ref: codigo || '',
       source: 'promo'
     });
     navigate(`/checkout?${params.toString()}`);
+  };
+
+  const getPlanPrice = (plan: Plan) => {
+    return plan.promo_price_cents || plan.price_cents;
+  };
+
+  const formatCurrency = (cents: number) => {
+    return (cents / 100).toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    });
   };
 
   if (isLoading) {
@@ -246,152 +279,112 @@ export default function PromoPage() {
               transition={{ delay: 0.45 }}
               className="grid grid-cols-1 md:grid-cols-3 gap-6"
             >
-              {/* Plano Mensal */}
-              <Card className="border border-border bg-card hover:border-primary/30 transition-all group">
-                <CardContent className="p-6 md:p-8">
-                  <div className="mb-6">
-                    <h3 className="text-xl font-bold text-foreground">Mensal</h3>
-                    <p className="text-sm text-muted-foreground">Ideal para começar</p>
-                  </div>
-                  
-                  <div className="mb-6">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-sm text-muted-foreground line-through">R$ 297</span>
-                    </div>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-bold text-foreground">R$ 197</span>
-                      <span className="text-muted-foreground">/mês</span>
-                    </div>
-                    <Badge className="mt-2 bg-primary/10 text-primary border-primary/20">
-                      Economia de R$ 100
-                    </Badge>
-                  </div>
+              {plans.map((plan) => {
+                const isPopular = plan.is_popular || plan.name === 'quarterly';
+                const isBestValue = plan.name === 'yearly';
+                const price = getPlanPrice(plan);
+                const hasDiscount = plan.promo_price_cents && plan.promo_price_cents < plan.price_cents;
+                const monthlyPrice = Math.round(price / plan.duration_months);
+                
+                const featuresByPlan: Record<string, string[]> = {
+                  monthly: ['Acesso completo à plataforma', 'Prospecção com IA ilimitada', 'Suporte via chat', 'Cancele quando quiser'],
+                  quarterly: ['Tudo do plano mensal', 'Economia significativa', 'Suporte prioritário', 'Templates exclusivos', 'Treinamento em grupo'],
+                  yearly: ['Tudo do plano trimestral', '12 meses de acesso', 'Máxima economia', 'Atualizações vitalícias', 'Mentoria exclusiva']
+                };
 
-                  <ul className="space-y-3 mb-8">
-                    {['Acesso completo à plataforma', 'Prospecção com IA ilimitada', 'Suporte via chat', 'Cancele quando quiser'].map((item) => (
-                      <li key={item} className="flex items-start gap-3 text-sm text-muted-foreground">
-                        <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Button 
-                    onClick={() => handleSelectPlan('monthly')}
-                    variant="outline"
-                    className="w-full h-12 text-base group-hover:border-primary group-hover:text-primary transition-colors"
+                return (
+                  <Card 
+                    key={plan.id}
+                    className={`border bg-card relative transition-all ${
+                      isPopular 
+                        ? 'border-2 border-primary md:scale-105 shadow-xl shadow-primary/10' 
+                        : 'border-border hover:border-primary/30 group'
+                    }`}
                   >
-                    Começar Agora
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </CardContent>
-              </Card>
+                    {isPopular && (
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                        <Badge className="bg-primary text-primary-foreground px-4 py-1.5 text-sm font-bold shadow-lg">
+                          <Star className="w-4 h-4 mr-1" /> MAIS POPULAR
+                        </Badge>
+                      </div>
+                    )}
+                    {isBestValue && !isPopular && (
+                      <div className="absolute top-4 right-4">
+                        <Badge className="bg-primary/10 text-primary border-primary/20">
+                          <Crown className="w-3 h-3 mr-1" />
+                          MELHOR VALOR
+                        </Badge>
+                      </div>
+                    )}
+                    <CardContent className={`p-6 md:p-8 ${isPopular ? 'pt-10' : ''}`}>
+                      <div className="mb-6">
+                        <h3 className="text-xl font-bold text-foreground">{plan.display_name}</h3>
+                        <p className="text-sm text-muted-foreground">{plan.tagline || 'Acesso completo'}</p>
+                      </div>
+                      
+                      <div className="mb-6">
+                        {hasDiscount && (
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-sm text-muted-foreground line-through">{formatCurrency(plan.price_cents)}</span>
+                          </div>
+                        )}
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-4xl font-bold text-foreground">{formatCurrency(price)}</span>
+                          <span className="text-muted-foreground">
+                            /{plan.duration_months === 1 ? 'mês' : plan.duration_months === 3 ? '3 meses' : 'ano'}
+                          </span>
+                        </div>
+                        {plan.duration_months > 1 && (
+                          <div className="flex items-center gap-2 mt-2">
+                            {plan.discount_percentage && plan.discount_percentage > 0 && (
+                              <Badge className={isPopular ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary border-primary/20'}>
+                                -{plan.discount_percentage}% OFF
+                              </Badge>
+                            )}
+                            <span className="text-sm text-primary font-semibold">= {formatCurrency(monthlyPrice)}/mês</span>
+                          </div>
+                        )}
+                        {!hasDiscount && plan.duration_months === 1 && (
+                          <Badge className="mt-2 bg-primary/10 text-primary border-primary/20">
+                            Sem compromisso
+                          </Badge>
+                        )}
+                      </div>
 
-              {/* Plano Trimestral - Destaque */}
-              <Card className="border-2 border-primary bg-card relative md:scale-105 shadow-xl shadow-primary/10">
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-primary text-primary-foreground px-4 py-1.5 text-sm font-bold shadow-lg">
-                    <Star className="w-4 h-4 mr-1" /> MAIS POPULAR
-                  </Badge>
-                </div>
-                <CardContent className="p-6 md:p-8 pt-10">
-                  <div className="mb-6">
-                    <h3 className="text-xl font-bold text-foreground">Trimestral</h3>
-                    <p className="text-sm text-muted-foreground">O mais escolhido</p>
-                  </div>
-                  
-                  <div className="mb-6">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-sm text-muted-foreground line-through">R$ 591</span>
-                    </div>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-bold text-foreground">R$ 297</span>
-                      <span className="text-muted-foreground">/3 meses</span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Badge className="bg-primary text-primary-foreground">-50% OFF</Badge>
-                      <span className="text-sm text-primary font-semibold">= R$ 99/mês</span>
-                    </div>
-                  </div>
+                      <ul className="space-y-3 mb-8">
+                        {(featuresByPlan[plan.name] || featuresByPlan.monthly).map((item) => (
+                          <li key={item} className={`flex items-start gap-3 text-sm ${isPopular ? 'text-foreground' : 'text-muted-foreground'}`}>
+                            <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
 
-                  <ul className="space-y-3 mb-8">
-                    {[
-                      'Tudo do plano mensal',
-                      'Economia de 50%',
-                      'Suporte prioritário',
-                      'Templates exclusivos',
-                      'Treinamento em grupo'
-                    ].map((item) => (
-                      <li key={item} className="flex items-start gap-3 text-sm text-foreground">
-                        <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Button 
-                    onClick={() => handleSelectPlan('quarterly')}
-                    className="w-full h-12 text-base bg-primary hover:bg-primary/90 shadow-lg shadow-primary/30"
-                  >
-                    <Rocket className="w-5 h-5 mr-2" />
-                    Escolher Trimestral
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Plano Anual */}
-              <Card className="border border-border bg-card relative group hover:border-primary/30 transition-all">
-                <div className="absolute top-4 right-4">
-                  <Badge className="bg-primary/10 text-primary border-primary/20">
-                    <Crown className="w-3 h-3 mr-1" />
-                    MELHOR VALOR
-                  </Badge>
-                </div>
-                <CardContent className="p-6 md:p-8">
-                  <div className="mb-6">
-                    <h3 className="text-xl font-bold text-foreground">Anual</h3>
-                    <p className="text-sm text-muted-foreground">Máxima economia</p>
-                  </div>
-                  
-                  <div className="mb-6">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-sm text-muted-foreground line-through">R$ 2.364</span>
-                    </div>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-bold text-foreground">R$ 697</span>
-                      <span className="text-muted-foreground">/ano</span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Badge className="bg-primary/10 text-primary border-primary/20">-70% OFF</Badge>
-                      <span className="text-sm text-primary font-semibold">= R$ 58/mês</span>
-                    </div>
-                  </div>
-
-                  <ul className="space-y-3 mb-8">
-                    {[
-                      'Tudo do plano trimestral',
-                      '12 meses de acesso',
-                      'Economia de 70%',
-                      'Atualizações vitalícias',
-                      'Mentoria exclusiva'
-                    ].map((item) => (
-                      <li key={item} className="flex items-start gap-3 text-sm text-muted-foreground">
-                        <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Button 
-                    onClick={() => handleSelectPlan('yearly')}
-                    variant="outline"
-                    className="w-full h-12 text-base group-hover:border-primary group-hover:text-primary transition-colors"
-                  >
-                    Escolher Anual
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </CardContent>
-              </Card>
+                      <Button 
+                        onClick={() => handleSelectPlan(plan)}
+                        variant={isPopular ? 'default' : 'outline'}
+                        className={`w-full h-12 text-base ${
+                          isPopular 
+                            ? 'bg-primary hover:bg-primary/90 shadow-lg shadow-primary/30' 
+                            : 'group-hover:border-primary group-hover:text-primary transition-colors'
+                        }`}
+                      >
+                        {isPopular ? (
+                          <>
+                            <Rocket className="w-5 h-5 mr-2" />
+                            Escolher {plan.display_name}
+                          </>
+                        ) : (
+                          <>
+                            Começar Agora
+                            <ArrowRight className="w-4 h-4 ml-2" />
+                          </>
+                        )}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </motion.div>
           </div>
 
