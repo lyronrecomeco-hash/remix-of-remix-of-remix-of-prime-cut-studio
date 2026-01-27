@@ -119,12 +119,6 @@ export default function PromoPage() {
     { icon: Users, title: 'CRM Completo', desc: 'Gerencie todos seus leads em um só lugar' },
   ];
 
-  const testimonials = [
-    { name: 'Carlos M.', role: 'Consultor de Marketing', text: 'Triplicou meus resultados em 60 dias. Impressionante!' },
-    { name: 'Ana Paula S.', role: 'Agência Digital', text: 'Automatizei a prospecção e nunca mais fiquei sem clientes.' },
-    { name: 'Roberto F.', role: 'Freelancer', text: 'Paguei o investimento no primeiro cliente que fechei.' },
-  ];
-
   return (
     <div className="min-h-screen flex flex-col bg-background relative overflow-hidden">
       {/* Background Effects */}
@@ -136,9 +130,11 @@ export default function PromoPage() {
       {/* Header */}
       <header className="py-8 px-4 border-b border-border/50 relative z-10">
         <div className="max-w-4xl mx-auto flex items-center justify-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
-            <Brain className="w-6 h-6 text-primary-foreground" />
-          </div>
+          <img 
+            src="/genesis-logo.png" 
+            alt="Genesis Hub" 
+            className="w-12 h-12 object-contain"
+          />
           <span className="text-2xl font-bold text-foreground">
             Genesis Hub
           </span>
@@ -398,37 +394,6 @@ export default function PromoPage() {
               </Card>
             </motion.div>
           </div>
-
-          {/* Social Proof */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="mb-16"
-          >
-            <h3 className="text-xl font-bold text-center text-foreground mb-8">
-              O que dizem nossos clientes
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {testimonials.map((testimonial, index) => (
-                <div
-                  key={index}
-                  className="p-5 rounded-2xl bg-card border border-border"
-                >
-                  <div className="flex items-center gap-1 mb-3">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 text-primary fill-primary" />
-                    ))}
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-4">"{testimonial.text}"</p>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">{testimonial.name}</p>
-                    <p className="text-xs text-muted-foreground">{testimonial.role}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
 
           {/* Final CTA */}
           <motion.div
