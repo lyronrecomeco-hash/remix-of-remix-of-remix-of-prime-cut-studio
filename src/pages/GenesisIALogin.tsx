@@ -176,7 +176,7 @@ const GenesisIALogin = () => {
       }
 
       toast.success("Bem-vindo ao Genesis Hub!");
-      navigate("/genesis-ia/dashboard");
+      navigate("/login/dashboard");
     } catch (error) {
       toast.error("Erro ao fazer login");
     } finally {

@@ -43,6 +43,8 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { GatewayConfigSection } from './GatewayConfigSection';
 import { PlansConfigSection } from './PlansConfigSection';
+import { WithdrawalsManagementTab } from './WithdrawalsManagementTab';
+import { CommissionsConfigTab } from './CommissionsConfigTab';
 import {
   Pagination,
   PaginationContent,
@@ -436,13 +438,23 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-5 w-full max-w-2xl">
+        <TabsList className="grid grid-cols-7 w-full max-w-3xl">
           <TabsTrigger value="payments">Pagamentos</TabsTrigger>
+          <TabsTrigger value="withdrawals">Saques</TabsTrigger>
+          <TabsTrigger value="commissions">Comissões</TabsTrigger>
           <TabsTrigger value="plans">Planos</TabsTrigger>
           <TabsTrigger value="gateway">Gateway</TabsTrigger>
           <TabsTrigger value="webhook">Webhook</TabsTrigger>
           <TabsTrigger value="test">Teste PIX</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="withdrawals" className="mt-6">
+          <WithdrawalsManagementTab />
+        </TabsContent>
+
+        <TabsContent value="commissions" className="mt-6">
+          <CommissionsConfigTab />
+        </TabsContent>
 
         {/* Payments Tab */}
         <TabsContent value="payments" className="space-y-4">

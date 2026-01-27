@@ -12,7 +12,10 @@ import {
   Eye,
   EyeOff,
   Phone,
-  Building2
+  Building2,
+  Crown,
+  Sparkles,
+  Handshake
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,8 +38,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { WelcomeCredentialsModal } from './users/WelcomeCredentialsModal';
 
 interface GenesisUser {
   id: string;
@@ -67,6 +78,13 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
   const [saving, setSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [createdUserData, setCreatedUserData] = useState<{
+    name: string;
+    email: string;
+    password: string;
+    userType: 'client' | 'influencer' | 'partner';
+  } | null>(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -75,7 +93,14 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
     phone: '',
     company_name: '',
     is_active: true,
+    user_type: 'client' as 'client' | 'influencer' | 'partner',
   });
+
+  const USER_TYPE_CONFIG = {
+    client: { label: 'Cliente', icon: Crown, className: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
+    influencer: { label: 'Influencer', icon: Sparkles, className: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
+    partner: { label: 'Parceiro', icon: Handshake, className: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
+  };
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -128,7 +153,7 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
   }, [fetchUsers]);
 
   const resetForm = () => {
-    setFormData({ name: '', email: '', password: '', phone: '', company_name: '', is_active: true });
+    setFormData({ name: '', email: '', password: '', phone: '', company_name: '', is_active: true, user_type: 'client' });
     setEditingUser(null);
     setShowPassword(false);
   };
@@ -144,6 +169,7 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
       phone: user.phone || '',
       company_name: user.company_name || '',
       is_active: user.is_active,
+      user_type: 'client', // Default, pois não temos essa info no user ainda
     });
     setIsModalOpen(true);
   };
@@ -188,6 +214,36 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
             is_active: formData.is_active,
           });
           if (error) throw error;
+
+          // Criar subscription se for influencer ou partner (sem pagamento)
+          if (formData.user_type !== 'client') {
+            const { data: newGenesisUser } = await supabase
+              .from('genesis_users')
+              .select('id')
+              .eq('auth_user_id', authData.user.id)
+              .single();
+
+            if (newGenesisUser) {
+              await supabase.from('genesis_subscriptions').insert([{
+                user_id: newGenesisUser.id,
+                plan: 'starter',
+                plan_name: formData.user_type === 'influencer' ? 'Influencer' : 'Parceiro',
+                status: 'active',
+                user_type: formData.user_type,
+                started_at: new Date().toISOString(),
+                expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+              }]);
+            }
+          }
+
+          // Mostrar modal de boas-vindas
+          setCreatedUserData({
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+            userType: formData.user_type,
+          });
+          setShowWelcomeModal(true);
         }
         toast.success('Usuário criado');
       }
@@ -358,6 +414,27 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
               <Label>Empresa</Label>
               <Input value={formData.company_name} onChange={(e) => setFormData(p => ({ ...p, company_name: e.target.value }))} />
             </div>
+            {!editingUser && (
+              <div className="space-y-2">
+                <Label>Tipo de Usuário *</Label>
+                <Select
+                  value={formData.user_type}
+                  onValueChange={(value) => setFormData(p => ({ ...p, user_type: value as 'client' | 'influencer' | 'partner' }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="client">👑 Cliente (Pagante)</SelectItem>
+                    <SelectItem value="influencer">✨ Influencer (Promocional)</SelectItem>
+                    <SelectItem value="partner">🤝 Parceiro (Promocional)</SelectItem>
+                  </SelectContent>
+                </Select>
+                {formData.user_type !== 'client' && (
+                  <p className="text-xs text-emerald-400">Acesso promocional: 1 ano sem pagamento</p>
+                )}
+              </div>
+            )}
             <div className="flex items-center justify-between">
               <Label>Ativo</Label>
               <Switch checked={formData.is_active} onCheckedChange={(c) => setFormData(p => ({ ...p, is_active: c }))} />
@@ -382,6 +459,18 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Boas-Vindas */}
+      {createdUserData && (
+        <WelcomeCredentialsModal
+          isOpen={showWelcomeModal}
+          onClose={() => {
+            setShowWelcomeModal(false);
+            setCreatedUserData(null);
+          }}
+          userData={createdUserData}
+        />
+      )}
     </div>
   );
 };

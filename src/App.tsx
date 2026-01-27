@@ -277,7 +277,10 @@ const AppContent = () => {
             <Route path="/clinica-estetica/:code" element={<ClinicaEsteticaPage />} />
             <Route path="/clinica-estetica/agendar" element={<ClinicaEsteticaAgendarPage />} />
             <Route path="/clinica-estetica/:code/agendar" element={<ClinicaEsteticaAgendarPage />} />
-            {/* Genesis IA Routes */}
+            {/* Genesis IA Routes - Nova rota /login */}
+            <Route path="/login" element={<GenesisIALogin />} />
+            <Route path="/login/dashboard" element={<GenesisIADashboard />} />
+            {/* Redirect antigo genesis-ia para novo /login */}
             <Route path="/genesis-ia" element={<GenesisIALogin />} />
             <Route path="/genesis-ia/dashboard" element={<GenesisIADashboard />} />
             {/* Petshop Demo */}

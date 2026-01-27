@@ -7856,6 +7856,7 @@ export type Database = {
           status: string
           updated_at: string
           user_id: string
+          user_type: string | null
         }
         Insert: {
           created_at?: string
@@ -7870,6 +7871,7 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id: string
+          user_type?: string | null
         }
         Update: {
           created_at?: string
@@ -7884,6 +7886,7 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string
+          user_type?: string | null
         }
         Relationships: [
           {
@@ -9593,6 +9596,7 @@ export type Database = {
       promo_links: {
         Row: {
           affiliate_id: string | null
+          commission_rate: number | null
           created_at: string
           id: string
           promo_code: string
@@ -9601,6 +9605,7 @@ export type Database = {
         }
         Insert: {
           affiliate_id?: string | null
+          commission_rate?: number | null
           created_at?: string
           id?: string
           promo_code: string
@@ -9609,6 +9614,7 @@ export type Database = {
         }
         Update: {
           affiliate_id?: string | null
+          commission_rate?: number | null
           created_at?: string
           id?: string
           promo_code?: string
