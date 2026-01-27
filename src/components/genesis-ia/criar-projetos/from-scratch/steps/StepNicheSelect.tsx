@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Check, Sparkles } from 'lucide-react';
+import { Search, Check } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useFromScratch } from '../FromScratchContext';
 import { NICHE_CONTEXTS, NICHE_CATEGORIES } from '../nicheContexts';
+import { APP_NICHE_CONTEXTS, APP_CATEGORIES } from '../appNicheContexts';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function StepNicheSelect() {
@@ -11,8 +12,14 @@ export function StepNicheSelect() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
+  const isApp = formData.projectType === 'app';
+
+  // Usar contextos diferentes baseado no tipo de projeto
+  const categories = isApp ? APP_CATEGORIES : NICHE_CATEGORIES;
+
   const filteredNiches = useMemo(() => {
-    let niches = NICHE_CONTEXTS;
+    let niches: Array<{ id: string; name: string; emoji: string; description: string; category: string }> = 
+      isApp ? APP_NICHE_CONTEXTS : NICHE_CONTEXTS;
     
     if (selectedCategory) {
       niches = niches.filter(n => n.category === selectedCategory);
@@ -27,10 +34,19 @@ export function StepNicheSelect() {
     }
     
     return niches;
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery, selectedCategory, isApp]);
 
   return (
     <div className="space-y-4">
+      {/* Info sobre tipo de projeto */}
+      <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+        <p className="text-sm text-primary">
+          {isApp 
+            ? '📱 Selecionando tipo de sistema/aplicativo - com backend, autenticação e dashboard'
+            : '🌐 Selecionando nicho para site comercial - focado em conversão e SEO'}
+        </p>
+      </div>
+
       {/* Search and Categories */}
       <div className="flex flex-col gap-3">
         <div className="relative max-w-sm">
@@ -38,7 +54,7 @@ export function StepNicheSelect() {
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Buscar nicho..."
+            placeholder={isApp ? "Buscar tipo de sistema..." : "Buscar nicho..."}
             className="pl-10 bg-white/5 border-white/10 h-10 text-sm"
           />
         </div>
@@ -54,7 +70,7 @@ export function StepNicheSelect() {
           >
             Todos
           </button>
-          {NICHE_CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
@@ -104,47 +120,37 @@ export function StepNicheSelect() {
               </motion.button>
             );
           })}
-          
-          {/* Outro Nicho Card */}
-          <motion.button
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: filteredNiches.length * 0.01 }}
-            onClick={() => updateFormData('nicheId', 'outro')}
-            className={`relative flex flex-col items-center justify-center p-3 rounded-lg border transition-all ${
-              formData.nicheId === 'outro'
-                ? 'border-primary bg-primary/10'
-                : 'border-white/10 bg-white/5 hover:border-white/20'
-            }`}
-          >
-            <Sparkles className="w-6 h-6 mb-1 text-yellow-500" />
-            <span className={`text-xs font-medium text-center ${
-              formData.nicheId === 'outro' ? 'text-primary' : 'text-foreground/80'
-            }`}>
-              Outro
-            </span>
-            
-            {formData.nicheId === 'outro' && (
-              <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
-                <Check className="w-2.5 h-2.5 text-primary-foreground" />
-              </div>
-            )}
-          </motion.button>
         </div>
       </ScrollArea>
 
-      {/* Custom Niche Input */}
-      {formData.nicheId === 'outro' && (
+      {/* Custom Niche Input - para sites */}
+      {!isApp && formData.nicheId === 'outro' && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20"
         >
-          <Sparkles className="w-4 h-4 text-primary shrink-0" />
           <Input
             value={formData.customNiche || ''}
             onChange={(e) => updateFormData('customNiche', e.target.value)}
             placeholder="Digite o nicho do seu negócio..."
+            className="bg-white/5 border-white/10 h-9 text-sm flex-1"
+            autoFocus
+          />
+        </motion.div>
+      )}
+
+      {/* Custom App Description - para apps */}
+      {isApp && formData.nicheId === 'outro-app' && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20"
+        >
+          <Input
+            value={formData.customNiche || ''}
+            onChange={(e) => updateFormData('customNiche', e.target.value)}
+            placeholder="Descreva o tipo de sistema que deseja criar..."
             className="bg-white/5 border-white/10 h-9 text-sm flex-1"
             autoFocus
           />
