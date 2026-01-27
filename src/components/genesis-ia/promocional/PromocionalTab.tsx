@@ -16,13 +16,15 @@ import {
   Megaphone,
   Star,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Wallet
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { WithdrawalSection } from './WithdrawalSection';
 
 interface PromoReferral {
   id: string;
@@ -45,12 +47,20 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
   const [referrals, setReferrals] = useState<PromoReferral[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [availableBalance, setAvailableBalance] = useState(0);
 
   const promoLink = `https://genesishub.cloud/promo/${promoCode}`;
 
   useEffect(() => {
     loadPromoData();
   }, [userId]);
+
+  // Atualizar saldo quando promoLinkId mudar
+  useEffect(() => {
+    if (promoLinkId) {
+      loadBalance();
+    }
+  }, [promoLinkId, userId]);
 
   const loadPromoData = async () => {
     try {
@@ -87,6 +97,31 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
       toast.error('Erro ao carregar dados');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadBalance = async () => {
+    try {
+      // Buscar comissões confirmadas (10% das indicações ativas)
+      const { data: referralData } = await supabase
+        .from('promo_referrals')
+        .select('plan_value')
+        .eq('promo_link_id', promoLinkId)
+        .eq('status', 'active');
+
+      // Buscar saques já realizados
+      const { data: withdrawalsData } = await supabase
+        .from('promotional_withdrawals')
+        .select('amount, status')
+        .eq('promotional_user_id', userId)
+        .in('status', ['pending', 'paid']);
+
+      const totalCommission = (referralData || []).reduce((acc, r) => acc + (r.plan_value * 0.10), 0);
+      const totalWithdrawn = (withdrawalsData || []).reduce((acc, w) => acc + w.amount, 0);
+      
+      setAvailableBalance(Math.max(0, totalCommission - totalWithdrawn));
+    } catch (error) {
+      console.error('Erro ao carregar saldo:', error);
     }
   };
 
@@ -512,6 +547,13 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Seção de Saque */}
+      <WithdrawalSection 
+        userId={userId}
+        availableBalance={availableBalance}
+        onWithdrawalSubmitted={loadBalance}
+      />
     </div>
   );
 }
