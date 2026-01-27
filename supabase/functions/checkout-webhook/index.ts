@@ -344,7 +344,7 @@ serve(async (req) => {
             // 6. Add bonus credits for new purchase
             const { data: existingCredits } = await supabase
               .from('genesis_credits')
-              .select('id, available_credits')
+              .select('id, available_credits, total_purchased')
               .eq('user_id', genesisUser.id)
               .single();
 
@@ -354,7 +354,10 @@ serve(async (req) => {
               await supabase
                 .from('genesis_credits')
                 .update({
-                  available_credits: existingCredits.available_credits + bonusCredits
+                  available_credits: (existingCredits.available_credits || 0) + bonusCredits,
+                  total_purchased: (existingCredits.total_purchased || 0) + bonusCredits,
+                  last_purchase_at: now.toISOString(),
+                  updated_at: now.toISOString(),
                 })
                 .eq('id', existingCredits.id);
               console.log('[Subscription Activation] Added', bonusCredits, 'bonus credits');
@@ -362,7 +365,9 @@ serve(async (req) => {
               await supabase.from('genesis_credits').insert({
                 user_id: genesisUser.id,
                 available_credits: bonusCredits,
-                total_credits: bonusCredits
+                used_credits: 0,
+                total_purchased: bonusCredits,
+                last_purchase_at: now.toISOString(),
               });
               console.log('[Subscription Activation] Created credits with', bonusCredits, 'initial credits');
             }
