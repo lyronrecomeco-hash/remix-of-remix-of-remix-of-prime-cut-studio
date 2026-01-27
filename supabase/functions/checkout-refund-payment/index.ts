@@ -61,7 +61,7 @@ async function refundMisticPay(
   customerCpf: string,
   clientId: string,
   clientSecret: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; partialRefund?: boolean; refundedAmount?: number }> {
   console.log('[MisticPay] Processing refund via withdraw...');
 
   // MisticPay doesn't have a refund endpoint
@@ -88,16 +88,31 @@ async function refundMisticPay(
   }
 
   const availableBalance = balanceData.data?.balance || 0;
+  
+  // MisticPay charges fees on deposits, so available balance may be less than original payment
+  // We'll refund what's available (the amount minus fees)
+  let refundAmount = amountReais;
+  let isPartialRefund = false;
+  
   if (availableBalance < amountReais) {
-    return { 
-      success: false, 
-      error: `Saldo insuficiente na MisticPay. Disponível: R$ ${availableBalance.toFixed(2)}` 
-    };
+    if (availableBalance < 1) {
+      // Minimum withdraw is R$ 1.00
+      return { 
+        success: false, 
+        error: `Saldo insuficiente para reembolso. A MisticPay retém taxas sobre depósitos. Saldo disponível: R$ ${availableBalance.toFixed(2)}` 
+      };
+    }
+    // Use available balance as partial refund
+    refundAmount = availableBalance;
+    isPartialRefund = true;
+    console.log(`[MisticPay] Partial refund: Available R$ ${availableBalance.toFixed(2)} of R$ ${amountReais.toFixed(2)}`);
   }
 
   // Process withdraw to customer's CPF as PIX key
   // Clean CPF to only digits for PIX key
   const cleanCpf = customerCpf.replace(/\D/g, '');
+  
+  console.log(`[MisticPay] Attempting withdraw of R$ ${refundAmount.toFixed(2)} to CPF ${cleanCpf}`);
   
   const withdrawResponse = await fetch('https://api.misticpay.com/api/transactions/withdraw', {
     method: 'POST',
@@ -107,10 +122,10 @@ async function refundMisticPay(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      amount: amountReais,
+      amount: refundAmount,
       pixKey: cleanCpf,
       pixKeyType: 'cpf',
-      description: 'Reembolso de pagamento',
+      description: isPartialRefund ? 'Reembolso parcial (valor líquido)' : 'Reembolso de pagamento',
     }),
   });
 
@@ -124,7 +139,11 @@ async function refundMisticPay(
     };
   }
 
-  return { success: true };
+  return { 
+    success: true, 
+    partialRefund: isPartialRefund, 
+    refundedAmount: refundAmount 
+  };
 }
 
 // ============= ABACATEPAY REFUND =============
