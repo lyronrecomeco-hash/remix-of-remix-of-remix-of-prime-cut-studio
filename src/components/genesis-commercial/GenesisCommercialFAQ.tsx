@@ -4,36 +4,28 @@ import { ChevronDown, HelpCircle, MessageCircle } from 'lucide-react';
 
 const faqs = [
   {
-    question: 'O que é o Genesis Hub?',
-    answer: 'O Genesis Hub é uma plataforma completa para consultores e agências digitais. Com ele você encontra clientes automaticamente via IA, gera propostas comerciais personalizadas, cria sites profissionais e gerencia todos os seus contratos — tudo em um único lugar.',
+    question: 'Quanto tempo leva para começar a usar?',
+    answer: 'Imediatamente! Após o pagamento, você recebe acesso total ao painel em menos de 1 minuto. Já pode começar a prospectar clientes, gerar propostas e criar projetos na hora.',
   },
   {
-    question: 'Preciso ter conhecimento técnico?',
-    answer: 'Absolutamente não! O Genesis Hub foi projetado para ser extremamente intuitivo. Tudo funciona com poucos cliques. Se você sabe usar WhatsApp, sabe usar o Genesis. E ainda oferecemos suporte dedicado para qualquer dúvida.',
+    question: 'Preciso ter experiência com vendas ou tecnologia?',
+    answer: 'Não! O Genesis Hub foi criado para quem está começando. A Academia Genesis inclui treinamentos de vendas do zero, e todas as ferramentas funcionam com poucos cliques — se você usa WhatsApp, consegue usar o Genesis.',
   },
   {
-    question: 'Como funciona o Radar de Prospecção?',
-    answer: 'O Radar varre milhares de empresas em todo o Brasil, analisa a presença digital de cada uma e entrega leads qualificados diretamente no seu painel. Você escolhe o nicho e a região, e a IA faz o trabalho de pesquisa por você.',
+    question: 'Como funciona a busca de clientes?',
+    answer: 'O Radar de Prospecção varre empresas por cidade e nicho, mostra quais não têm site (oportunidades quentes) e ainda gera propostas automáticas com IA. Você só precisa enviar pelo WhatsApp.',
   },
   {
-    question: 'Posso testar antes de assinar?',
-    answer: 'Sim! Oferecemos garantia incondicional de 7 dias. Você pode explorar todas as funcionalidades e, se não gostar, devolvemos 100% do seu investimento — sem perguntas, sem burocracia.',
+    question: 'E se eu não conseguir vender?',
+    answer: 'Garantia incondicional de 7 dias. Se não gostar ou achar que não é para você, devolvemos 100% do valor — sem perguntas. Você testa sem risco nenhum.',
   },
   {
-    question: 'Quantos projetos/clientes posso ter?',
-    answer: 'Não há limite! Você pode criar quantos projetos quiser, atender quantos clientes precisar e usar todas as ferramentas sem restrições. O Genesis Hub cresce junto com você.',
+    question: 'Consigo atender clientes de qualquer lugar?',
+    answer: 'Sim! O painel funciona 100% online. Você pode prospectar em qualquer cidade do Brasil e até internacionalmente. Trabalhe de onde quiser, quando quiser.',
   },
   {
-    question: 'O suporte está incluído?',
-    answer: 'Sim! Todos os planos incluem suporte via WhatsApp com resposta em até 24 horas. Além disso, você tem acesso à Academia Genesis com treinamentos completos de vendas e uso da plataforma.',
-  },
-  {
-    question: 'Posso cancelar a qualquer momento?',
-    answer: 'Sim, sem multas ou fidelidade. Você pode cancelar sua assinatura quando quiser diretamente pelo painel. Seu acesso permanece ativo até o final do período já pago.',
-  },
-  {
-    question: 'O Genesis Hub substitui outras ferramentas?',
-    answer: 'Para muitos usuários, sim! O Genesis Hub concentra prospecção, propostas, criação de sites, contratos e treinamento em uma única plataforma. Isso significa menos assinaturas, menos abas abertas e mais produtividade.',
+    question: 'O que está incluso no plano?',
+    answer: 'Acesso completo a: Radar de Prospecção com IA, Gerador de Propostas Personalizadas, Biblioteca de Projetos, Academia de Vendas, Gestão de Contratos e suporte via WhatsApp. Tudo em um único login.',
   },
 ];
 
@@ -96,7 +88,7 @@ const GenesisCommercialFAQ = () => {
             className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-sm font-semibold rounded-full bg-primary/10 border border-primary/20 text-primary"
           >
             <HelpCircle className="w-4 h-4" />
-            Dúvidas Frequentes
+            Tire Suas Dúvidas
           </motion.div>
           
           <h2 className="text-3xl md:text-5xl font-black mb-6 text-foreground">
@@ -105,7 +97,7 @@ const GenesisCommercialFAQ = () => {
           </h2>
           
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Tire suas dúvidas sobre o Genesis Hub e veja como podemos ajudar seu negócio a crescer.
+            As dúvidas mais comuns de quem está conhecendo o Genesis Hub.
           </p>
         </motion.div>
 

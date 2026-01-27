@@ -18,12 +18,21 @@ export interface ProposalFormData {
   failed_attempts: string;
   dream_result: string;
   contact_phone: string;
+  // Estilo de copy
+  copy_style?: 'balanced' | 'aggressive' | 'empathetic' | 'urgency';
   // AI-generated questions
   ai_questions?: Array<{
     question: string;
     answer: string;
   }>;
 }
+
+export const COPY_STYLES = [
+  { id: 'balanced', label: 'Equilibrada', description: 'Profissional e cordial', emoji: '⚖️' },
+  { id: 'aggressive', label: 'Agressiva', description: 'Direta e persuasiva', emoji: '🔥' },
+  { id: 'empathetic', label: 'Empática', description: 'Toca na dor do cliente', emoji: '💬' },
+  { id: 'urgency', label: 'Urgência', description: 'Cria senso de escassez', emoji: '⏰' },
+] as const;
 
 export interface GeneratedProposal {
   mensagem_prospecao: string;

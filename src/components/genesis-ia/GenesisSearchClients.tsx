@@ -138,6 +138,8 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
   const [niche, setNiche] = useState('');
   const [excludeWithWebsite, setExcludeWithWebsite] = useState(false);
   const [onlyOpenNow, setOnlyOpenNow] = useState(false);
+  const [minStars, setMinStars] = useState<number>(0);
+  const [maxStars, setMaxStars] = useState<number>(5);
   const [radiusFilterOpen, setRadiusFilterOpen] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedBusiness, setSelectedBusiness] = useState<SearchResult | null>(null);
@@ -230,6 +232,18 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
         businessResults = businessResults.filter(r => !r.website);
         if (businessResults.length < beforeCount) {
           toast.info(`${beforeCount - businessResults.length} empresas com site removidas`);
+        }
+      }
+
+      // Filtrar por estrelas (mínimo e máximo)
+      if (minStars > 0 || maxStars < 5) {
+        const beforeStarsCount = businessResults.length;
+        businessResults = businessResults.filter(r => {
+          const rating = r.rating || 0;
+          return rating >= minStars && rating <= maxStars;
+        });
+        if (businessResults.length < beforeStarsCount) {
+          toast.info(`${beforeStarsCount - businessResults.length} empresas fora do filtro de estrelas`);
         }
       }
 
@@ -414,6 +428,35 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
               </label>
             </div>
 
+            {/* Star Rating Filter */}
+            <div className="flex items-center gap-2">
+              <Star className="w-4 h-4 text-amber-400" />
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={`min-${star}`}
+                    onClick={() => setMinStars(minStars === star ? 0 : star)}
+                    className={`w-5 h-5 transition-colors ${star <= minStars ? 'text-amber-400' : 'text-white/20 hover:text-amber-400/50'}`}
+                  >
+                    <Star className="w-full h-full fill-current" />
+                  </button>
+                ))}
+              </div>
+              <span className="text-xs text-muted-foreground">mín</span>
+              <span className="text-white/20 mx-1">|</span>
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={`max-${star}`}
+                    onClick={() => setMaxStars(maxStars === star ? 5 : star)}
+                    className={`w-5 h-5 transition-colors ${star <= maxStars ? 'text-amber-400' : 'text-white/20 hover:text-amber-400/50'}`}
+                  >
+                    <Star className="w-full h-full fill-current" />
+                  </button>
+                ))}
+              </div>
+              <span className="text-xs text-muted-foreground">máx</span>
+            </div>
 
             {results.length > 0 && (
               <Button 
