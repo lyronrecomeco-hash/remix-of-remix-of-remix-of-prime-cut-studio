@@ -61,58 +61,18 @@ async function refundMisticPay(
   customerCpf: string,
   clientId: string,
   clientSecret: string
-): Promise<{ success: boolean; error?: string; partialRefund?: boolean; refundedAmount?: number }> {
+): Promise<{ success: boolean; error?: string }> {
   console.log('[MisticPay] Processing refund via withdraw...');
 
   // MisticPay doesn't have a refund endpoint
   // We use withdraw to send money back to customer's PIX key (CPF)
   const amountReais = amountCents / 100;
 
-  // First check balance
-  const balanceResponse = await fetch('https://api.misticpay.com/api/users/balance', {
-    method: 'GET',
-    headers: {
-      'ci': clientId,
-      'cs': clientSecret,
-    },
-  });
-
-  const balanceData = await balanceResponse.json();
-  console.log('[MisticPay] Balance response:', JSON.stringify(balanceData));
-
-  if (!balanceResponse.ok) {
-    return { 
-      success: false, 
-      error: 'Erro ao verificar saldo MisticPay' 
-    };
-  }
-
-  const availableBalance = balanceData.data?.balance || 0;
-  
-  // MisticPay charges fees on deposits, so available balance may be less than original payment
-  // We'll refund what's available (the amount minus fees)
-  let refundAmount = amountReais;
-  let isPartialRefund = false;
-  
-  if (availableBalance < amountReais) {
-    if (availableBalance < 1) {
-      // Minimum withdraw is R$ 1.00
-      return { 
-        success: false, 
-        error: `Saldo insuficiente para reembolso. A MisticPay retém taxas sobre depósitos. Saldo disponível: R$ ${availableBalance.toFixed(2)}` 
-      };
-    }
-    // Use available balance as partial refund
-    refundAmount = availableBalance;
-    isPartialRefund = true;
-    console.log(`[MisticPay] Partial refund: Available R$ ${availableBalance.toFixed(2)} of R$ ${amountReais.toFixed(2)}`);
-  }
-
   // Process withdraw to customer's CPF as PIX key
   // Clean CPF to only digits for PIX key
   const cleanCpf = customerCpf.replace(/\D/g, '');
   
-  console.log(`[MisticPay] Attempting withdraw of R$ ${refundAmount.toFixed(2)} to CPF ${cleanCpf}`);
+  console.log(`[MisticPay] Attempting withdraw of R$ ${amountReais.toFixed(2)} to CPF ${cleanCpf}`);
   
   const withdrawResponse = await fetch('https://api.misticpay.com/api/transactions/withdraw', {
     method: 'POST',
@@ -122,10 +82,10 @@ async function refundMisticPay(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      amount: refundAmount,
+      amount: amountReais,
       pixKey: cleanCpf,
       pixKeyType: 'cpf',
-      description: isPartialRefund ? 'Reembolso parcial (valor líquido)' : 'Reembolso de pagamento',
+      description: 'Reembolso de pagamento',
     }),
   });
 
@@ -136,54 +96,6 @@ async function refundMisticPay(
 
   if (!withdrawResponse.ok) {
     const errMsg = getErrorMsg(withdrawData);
-
-    // Some accounts have enough balance for the payment amount but not enough to cover MisticPay fees.
-    // When the API returns: "Saldo insuficiente, faltam X reais", we retry with a reduced amount.
-    const missingMatch = /faltam\s+([0-9]+(?:[.,][0-9]+)?)\s*reais/i.exec(errMsg);
-    if (missingMatch) {
-      const missingStr = missingMatch[1];
-      const missing = Number(missingStr.replace(',', '.'));
-      if (!Number.isNaN(missing) && missing > 0) {
-        const retryAmount = Math.max(0, Math.round((refundAmount - missing) * 100) / 100);
-
-        // Only retry if it actually reduces the amount
-        if (retryAmount > 0 && retryAmount < refundAmount) {
-          console.log(`[MisticPay] Insufficient funds for fees. Retrying with reduced amount: R$ ${retryAmount.toFixed(2)} (missing fee: R$ ${missing.toFixed(2)})`);
-
-          const retryResponse = await fetch('https://api.misticpay.com/api/transactions/withdraw', {
-            method: 'POST',
-            headers: {
-              'ci': clientId,
-              'cs': clientSecret,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              amount: retryAmount,
-              pixKey: cleanCpf,
-              pixKeyType: 'cpf',
-              description: 'Reembolso (valor líquido após taxas)',
-            }),
-          });
-
-          const retryData = await retryResponse.json();
-          console.log('[MisticPay] Retry withdraw response:', JSON.stringify(retryData));
-
-          if (retryResponse.ok) {
-            return {
-              success: true,
-              partialRefund: true,
-              refundedAmount: retryAmount,
-            };
-          }
-
-          return {
-            success: false,
-            error: getErrorMsg(retryData),
-          };
-        }
-      }
-    }
-
     return {
       success: false,
       error: errMsg,
@@ -192,8 +104,6 @@ async function refundMisticPay(
 
   return {
     success: true,
-    partialRefund: isPartialRefund,
-    refundedAmount: refundAmount,
   };
 }
 
@@ -345,6 +255,13 @@ serve(async (req) => {
         );
       }
 
+      if ((payment.payment_method || '').toUpperCase() !== 'PIX') {
+        return new Response(
+          JSON.stringify({ error: 'Para este gateway, o reembolso só pode ser feito via PIX (mesmo meio de pagamento).' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       if (!gatewayConfig?.misticpay_client_id_hash || !gatewayConfig?.misticpay_client_secret_hash) {
         return new Response(
           JSON.stringify({ error: 'Credenciais MisticPay não configuradas' }),
@@ -390,30 +307,29 @@ serve(async (req) => {
       );
     }
 
-    // 5. Handle refund result
-    // IMPORTANT: MisticPay refunds are implemented via withdraw and may fail due to gateway fees.
-    // To guarantee the admin flow doesn't break, we allow "forced finalize" for MisticPay when the
-    // gateway cannot execute the transfer (account still gets blocked and payment is marked refunded).
-    const normalizedRefundError = (refundResult.error || '').toLowerCase();
-    const forceFinalizeMisticPay =
-      gateway === 'misticpay' &&
-      !refundResult.success &&
-      (
-        normalizedRefundError.includes('saldo insuficiente') ||
-        normalizedRefundError.includes('valor deve ser maior ou igual') ||
-        normalizedRefundError.includes('maior ou igual a r$ 1')
-      );
-
-    if (!refundResult.success && !forceFinalizeMisticPay) {
+    // 5. Handle refund result (IMPORTANT: only mark as refunded after the gateway confirms success)
+    if (!refundResult.success) {
       console.error('[Refund] Failed:', refundResult.error);
+
+      // Log failed refund attempt
+      await supabase
+        .from('checkout_payment_events')
+        .insert({
+          payment_id: payment.id,
+          event_type: 'REFUND_FAILED',
+          event_data: {
+            gateway,
+            amount_cents: payment.amount_cents,
+            attempted_at: new Date().toISOString(),
+            error: refundResult.error,
+          },
+          source: 'manual',
+        });
+
       return new Response(
-        JSON.stringify({ error: refundResult.error }),
+        JSON.stringify({ error: refundResult.error, gateway }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-    }
-
-    if (forceFinalizeMisticPay) {
-      console.warn('[Refund] MisticPay refund could not be executed due to gateway fees/balance. Finalizing refund internally and blocking account. Error:', refundResult.error);
     }
 
     // 6. Update payment status to refunded
@@ -476,13 +392,12 @@ serve(async (req) => {
       .from('checkout_payment_events')
       .insert({
         payment_id: payment.id,
-        event_type: forceFinalizeMisticPay ? 'REFUND_FINALIZED_WITH_GATEWAY_ERROR' : 'REFUND_PROCESSED',
+        event_type: 'REFUND_PROCESSED',
         event_data: {
           gateway,
           amount_cents: payment.amount_cents,
           refunded_at: new Date().toISOString(),
           user_blocked: !!customerEmail,
-          gateway_error: forceFinalizeMisticPay ? refundResult.error : null,
         },
         source: 'manual',
       });
@@ -492,13 +407,10 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: forceFinalizeMisticPay
-          ? 'Conta bloqueada e reembolso finalizado no sistema. Atenção: o gateway MisticPay retornou saldo insuficiente (taxas) — transferência pode exigir ação manual.'
-          : 'Reembolso processado com sucesso',
+        message: 'Reembolso processado com sucesso',
         paymentCode,
         gateway,
         amountCents: payment.amount_cents,
-        forceFinalized: forceFinalizeMisticPay,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
