@@ -158,7 +158,7 @@ const GenesisCommercialPricing = () => {
                     ))}
                   </ul>
 
-                  {plan.discountPercentage && (
+                  {plan.discountPercentage && plan.discountPercentage > 0 && (
                     <div className="mb-4">
                       <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full ${
                         plan.isPopular ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'

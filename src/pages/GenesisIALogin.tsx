@@ -269,9 +269,7 @@ const GenesisIALogin = () => {
               className="flex justify-center mb-10"
             >
               <div className="relative">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-cyan-500/20 flex items-center justify-center border border-primary/30 backdrop-blur-sm overflow-hidden p-2">
-                  <img src={genesisLogo} alt="Genesis Hub" className="w-full h-full object-contain" />
-                </div>
+                <img src={genesisLogo} alt="Genesis Hub" className="w-16 h-16 object-contain" />
                 <motion.div
                   className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary"
                   animate={{ scale: [1, 1.2, 1], opacity: [1, 0.8, 1] }}

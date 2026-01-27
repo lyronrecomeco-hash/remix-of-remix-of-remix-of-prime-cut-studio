@@ -24,14 +24,7 @@ interface GenesisCarouselProps {
 }
 
 const carouselItems: CarouselItem[] = [
-  {
-    id: '1',
-    icon: Code2,
-    title: 'Construir Página',
-    description: 'Em desenvolvimento',
-    tabId: 'page-builder',
-    blocked: true
-  },
+  // HIDDEN: Card "Construir Página" removido do carrossel por solicitação
   {
     id: '2',
     icon: Smartphone,

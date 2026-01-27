@@ -635,7 +635,7 @@ const DivulgacaoPage = () => {
       <div className="max-w-7xl mx-auto mt-16 text-center">
         <img src={genesisLogo} alt="Genesis Hub" className="w-12 h-12 object-contain mx-auto mb-3 opacity-50" />
         <p className="text-white/30 text-xs">
-          © 2026 Genesis Hub - Transformando vendas com IA
+          © 2025 Genesis Hub - Transformando vendas com IA
         </p>
       </div>
     </div>

@@ -16,7 +16,7 @@ const GenesisCommercialFooter = () => {
 
           {/* Right - Copyright */}
           <p className="text-sm text-muted-foreground text-center sm:text-right">
-            © 2026 GENESIS HUB. Transformando ideias em realidade.
+            © 2025 GENESIS HUB. Transformando ideias em realidade.
           </p>
         </div>
       </div>
