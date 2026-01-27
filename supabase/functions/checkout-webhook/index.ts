@@ -255,7 +255,7 @@ serve(async (req) => {
         } else {
           console.log('[Subscription Activation] Customer:', customer.email);
 
-          // 2. Get plan info
+          // 2. Get plan info - try multiple sources
           let durationMonths = 1; // Default to monthly
           let planConfig = PLAN_CONFIG[1];
 
@@ -269,10 +269,33 @@ serve(async (req) => {
             if (plan?.duration_months) {
               durationMonths = plan.duration_months;
               planConfig = PLAN_CONFIG[durationMonths] || PLAN_CONFIG[1];
-              console.log('[Subscription Activation] Plan:', plan.name, 'Duration:', durationMonths, 'months');
+              console.log('[Subscription Activation] Plan from plan_id:', plan.name, 'Duration:', durationMonths, 'months');
             }
           } else {
-            console.log('[Subscription Activation] No plan_id, defaulting to monthly plan');
+            // Try to infer plan from payment amount
+            console.log('[Subscription Activation] No plan_id, attempting to infer from amount:', payment.amount_cents);
+            
+            const { data: matchingPlan } = await supabase
+              .from('checkout_plans')
+              .select('id, name, duration_months')
+              .or(`price_cents.eq.${payment.amount_cents},promo_price_cents.eq.${payment.amount_cents}`)
+              .eq('is_active', true)
+              .limit(1)
+              .maybeSingle();
+            
+            if (matchingPlan?.duration_months) {
+              durationMonths = matchingPlan.duration_months;
+              planConfig = PLAN_CONFIG[durationMonths] || PLAN_CONFIG[1];
+              console.log('[Subscription Activation] Plan inferred from amount:', matchingPlan.name, 'Duration:', durationMonths, 'months');
+              
+              // Update payment with plan_id for consistency
+              await supabase
+                .from('checkout_payments')
+                .update({ plan_id: matchingPlan.id })
+                .eq('id', payment.id);
+            } else {
+              console.log('[Subscription Activation] Could not infer plan, defaulting to monthly');
+            }
           }
 
           // 3. Find genesis_user by email
