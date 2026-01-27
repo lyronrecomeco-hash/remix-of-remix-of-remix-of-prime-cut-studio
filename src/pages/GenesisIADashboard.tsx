@@ -72,6 +72,7 @@ import { ApiKeysTab } from "@/components/genesis-ia/api-keys";
 import { DevelopmentModal } from "@/components/genesis-ia/modals";
 
 import GenesisBackground from "@/components/genesis-ia/GenesisBackground";
+import { ViralSaasTab } from "@/components/genesis-ia/viral-apps/ViralSaasTab";
 import { FileText, Gift, CreditCard, Code2, Rocket, Key } from "lucide-react";
 
 type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional' | 'payments' | 'page-builder' | 'academia' | 'proposals' | 'sprint-mission' | 'api-keys' | 'viral-saas';
@@ -722,7 +723,6 @@ const GenesisIADashboard = () => {
     }
 
     if (activeTab === 'viral-saas') {
-      const ViralSaasTab = require('@/components/genesis-ia/viral-apps/ViralSaasTab').default;
       return <ViralSaasTab />;
     }
 

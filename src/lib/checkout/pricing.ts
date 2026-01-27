@@ -45,12 +45,8 @@ export function calculateCheckoutPricing(input: CheckoutPricingInput): CheckoutP
   const installmentValueCents = Math.ceil(totalWithInterestCents / installments);
 
   if (input.paymentMethod === 'PIX') {
-    const desiredDiscount = Math.ceil(baseAmountCents * 0.05);
-    const discounted = baseAmountCents - desiredDiscount;
-
-    // Gateway exige mínimo de R$ 1,00. Se o desconto quebrar o mínimo, zera o desconto.
-    const finalAmountCents = Math.max(MIN_GATEWAY_AMOUNT_CENTS, discounted);
-    const pixDiscountCents = Math.max(0, baseAmountCents - finalAmountCents);
+    // PIX não tem desconto automático - valor final é o valor base
+    const finalAmountCents = Math.max(MIN_GATEWAY_AMOUNT_CENTS, baseAmountCents);
 
     return {
       baseAmountCents,
@@ -60,7 +56,7 @@ export function calculateCheckoutPricing(input: CheckoutPricingInput): CheckoutP
       interestRate: 0,
       totalWithInterestCents: baseAmountCents,
       installmentValueCents: baseAmountCents,
-      pixDiscountCents,
+      pixDiscountCents: 0,
       finalAmountCents,
     };
   }
