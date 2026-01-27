@@ -13,18 +13,18 @@ import {
   Shield,
   HelpCircle,
   Target,
-  Megaphone,
   Star,
   CheckCircle2,
   AlertCircle,
-  Wallet
+  Wallet,
+  Banknote
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { WithdrawalSection } from './WithdrawalSection';
+import { WithdrawalModal } from './WithdrawalModal';
 
 interface PromoReferral {
   id: string;
@@ -48,6 +48,7 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [copiedLink, setCopiedLink] = useState(false);
   const [availableBalance, setAvailableBalance] = useState(0);
+  const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
 
   const promoLink = `https://genesishub.cloud/promo/${promoCode}`;
 
@@ -176,15 +177,33 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header do Programa */}
-      <div className="flex items-center gap-3 pb-4 border-b border-white/10">
-        <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
-          <Handshake className="w-6 h-6 text-primary" />
+      {/* Header do Programa com Botão de Saque */}
+      <div className="flex items-center justify-between pb-4 border-b border-white/10">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+            <Handshake className="w-6 h-6 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-white">Programa de Parceiros</h2>
+            <p className="text-sm text-white/50">Indique e acompanhe suas conversões</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-xl font-bold text-white">Programa de Parceiros</h2>
-          <p className="text-sm text-white/50">Indique e acompanhe suas conversões</p>
-        </div>
+        
+        {/* Botão de Saque Estratégico */}
+        <Button
+          onClick={() => setShowWithdrawalModal(true)}
+          className="gap-2 bg-emerald-600 hover:bg-emerald-700"
+          style={{ borderRadius: '10px' }}
+        >
+          <Banknote className="w-4 h-4" />
+          <span className="hidden sm:inline">Solicitar Saque</span>
+          <span className="sm:hidden">Saque</span>
+          {availableBalance > 0 && (
+            <Badge variant="secondary" className="bg-white/20 text-white border-0 ml-1">
+              {formatCurrency(availableBalance)}
+            </Badge>
+          )}
+        </Button>
       </div>
 
       {/* Estatísticas Resumidas */}
@@ -548,8 +567,10 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
         </CardContent>
       </Card>
 
-      {/* Seção de Saque */}
-      <WithdrawalSection 
+      {/* Modal de Saque */}
+      <WithdrawalModal 
+        isOpen={showWithdrawalModal}
+        onClose={() => setShowWithdrawalModal(false)}
         userId={userId}
         availableBalance={availableBalance}
         onWithdrawalSubmitted={loadBalance}
