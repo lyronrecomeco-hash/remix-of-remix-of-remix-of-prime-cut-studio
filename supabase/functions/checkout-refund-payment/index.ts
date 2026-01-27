@@ -62,48 +62,127 @@ async function refundMisticPay(
   clientId: string,
   clientSecret: string
 ): Promise<{ success: boolean; error?: string }> {
-  console.log('[MisticPay] Processing refund via withdraw...');
+  console.log('[MisticPay] Processing refund via PIX cash-out (withdraw) + status validation...');
 
-  // MisticPay doesn't have a refund endpoint
-  // We use withdraw to send money back to customer's PIX key (CPF)
-  const amountReais = amountCents / 100;
+  // According to MisticPay docs, there is no dedicated "refund" endpoint.
+  // The API supports returning money via PIX by issuing a cash-out (withdraw)
+  // to the payer PIX key (CPF), then validating the transaction via /transactions/check.
 
-  // Process withdraw to customer's CPF as PIX key
-  // Clean CPF to only digits for PIX key
+  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+  const safeJson = async (res: Response) => {
+    try {
+      return await res.json();
+    } catch {
+      return null;
+    }
+  };
+
+  const amountReais = Number((amountCents / 100).toFixed(2));
   const cleanCpf = customerCpf.replace(/\D/g, '');
-  
+
   console.log(`[MisticPay] Attempting withdraw of R$ ${amountReais.toFixed(2)} to CPF ${cleanCpf}`);
-  
+
   const withdrawResponse = await fetch('https://api.misticpay.com/api/transactions/withdraw', {
     method: 'POST',
     headers: {
-      'ci': clientId,
-      'cs': clientSecret,
+      ci: clientId,
+      cs: clientSecret,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       amount: amountReais,
       pixKey: cleanCpf,
-      pixKeyType: 'cpf',
+      // Docs require uppercase values: "CPF", "CNPJ", "EMAIL", "TELEFONE", "CHAVE_ALEATORIA"
+      pixKeyType: 'CPF',
       description: 'Reembolso de pagamento',
     }),
   });
 
-  const withdrawData = await withdrawResponse.json();
+  const withdrawData: any = await safeJson(withdrawResponse);
   console.log('[MisticPay] Withdraw response:', JSON.stringify(withdrawData));
 
-  const getErrorMsg = (data: any) => data?.message || data?.error || 'Erro ao processar reembolso MisticPay';
+  const withdrawErrMsg =
+    withdrawData?.message ||
+    withdrawData?.error ||
+    withdrawData?.errors?.[0]?.message ||
+    'Erro ao solicitar saque (withdraw) na MisticPay';
 
   if (!withdrawResponse.ok) {
-    const errMsg = getErrorMsg(withdrawData);
+    // Common/critical errors that must be explicit for admins:
+    if (typeof withdrawErrMsg === 'string' && withdrawErrMsg.toLowerCase().includes('não está autorizada a solicitar saques')) {
+      return {
+        success: false,
+        error:
+          'Credenciais MisticPay sem permissão CASHOUT/ALL para solicitar saque (withdraw). Para estornar PIX via API é necessário habilitar CASHOUT/ALL ou usar credenciais autorizadas.',
+      };
+    }
+
     return {
       success: false,
-      error: errMsg,
+      error: withdrawErrMsg,
     };
   }
 
+  const withdrawTransactionId = withdrawData?.data?.transactionId;
+  if (!withdrawTransactionId) {
+    return {
+      success: false,
+      error: 'MisticPay não retornou transactionId do saque; não é possível validar o estorno.',
+    };
+  }
+
+  // Validate withdraw processing. Only return success when transactionState is COMPLETO.
+  // Keep the polling short to avoid function timeouts.
+  const maxAttempts = 10;
+  const delayMs = 1500;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    console.log(`[MisticPay] Checking withdraw transaction status (attempt ${attempt}/${maxAttempts}) | transactionId=${withdrawTransactionId}`);
+
+    const checkResponse = await fetch('https://api.misticpay.com/api/transactions/check', {
+      method: 'POST',
+      headers: {
+        ci: clientId,
+        cs: clientSecret,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ transactionId: withdrawTransactionId }),
+    });
+
+    const checkData: any = await safeJson(checkResponse);
+    console.log('[MisticPay] Check response:', JSON.stringify(checkData));
+
+    const tx = checkData?.transaction;
+    const txState: string | undefined = tx?.transactionState;
+
+    if (!checkResponse.ok) {
+      const checkErr =
+        checkData?.message ||
+        checkData?.error ||
+        'Erro ao validar status do saque (transactions/check) na MisticPay';
+      return { success: false, error: checkErr };
+    }
+
+    if (txState === 'COMPLETO') {
+      console.log('[MisticPay] ✅ Withdraw COMPLETO. Refund validated.');
+      return { success: true };
+    }
+
+    if (txState === 'FALHA') {
+      return {
+        success: false,
+        error: 'Saque (estorno) falhou na MisticPay (transactionState=FALHA).',
+      };
+    }
+
+    // PENDENTE or any other intermediate state
+    await sleep(delayMs);
+  }
+
   return {
-    success: true,
+    success: false,
+    error:
+      'Saque (estorno) solicitado na MisticPay, mas não foi confirmado como COMPLETO a tempo. Tente novamente em alguns instantes.',
   };
 }
 
