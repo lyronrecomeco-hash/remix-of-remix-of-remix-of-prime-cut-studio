@@ -765,12 +765,11 @@ const GenesisIADashboard = () => {
                       </>
                     ) : (
                       <>
-                        <div 
-                          className="w-9 h-9 rounded-lg flex items-center justify-center overflow-hidden p-1"
-                          style={{ backgroundColor: config.header.logoColor }}
-                        >
-                          <img src={genesisLogo} alt="Genesis Hub" className="w-full h-full object-contain" />
-                        </div>
+                        <img 
+                          src={genesisLogo} 
+                          alt="Genesis Hub" 
+                          className="w-12 h-12 object-contain"
+                        />
                         <h1 
                           className="text-base font-bold"
                           style={{ color: config.header.titleColor }}
