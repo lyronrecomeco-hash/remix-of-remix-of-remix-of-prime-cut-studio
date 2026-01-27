@@ -51,44 +51,64 @@ interface GenesisFinancialTabProps {
 // Conta especial com dados financeiros reais simulados para produção de conteúdo
 const CONTENT_ACCOUNT_EMAIL = "lyronrecomeco@gmail.com";
 
-// Métricas SaaS estratégicas - valores realistas para operação consolidada
-// Ticket médio: R$450/mês | LTV: R$5.400 | CAC: R$180 | Churn: 3.2%
+// Métricas SaaS estratégicas - operação consolidada com 32 contratos ativos
+// MRR: R$14.256 | ARR: R$171.072 | Ticket médio: R$445,50 | Churn: 2.8%
 const CONTENT_ACCOUNT_FINANCIAL_DATA = {
-  totalRevenue: 127450, // MRR acumulado 6 meses
-  thisMonth: 28970, // MRR atual (64 clientes x R$452 ticket médio)
-  lastMonth: 24380, // MRR anterior
-  growth: 18.82, // Crescimento MoM saudável
-  directSubscriptions: 71820, // 56% orgânico
-  promoSubscriptions: 38290, // 30% via afiliados/promo
-  contractsRevenue: 17340, // 14% enterprise/anual
-  activeSubscriptions: 64, // Clientes ativos
-  signedContracts: 8, // Contratos enterprise
-  referrals: 31,
-  convertedReferrals: 12,
+  totalRevenue: 89470, // Receita acumulada 6 meses
+  thisMonth: 18340, // Receita do mês (renovações + novos)
+  lastMonth: 15890, // Mês anterior
+  growth: 15.42, // Crescimento MoM sustentável
+  directSubscriptions: 52680, // 59% orgânico/indicação
+  promoSubscriptions: 24150, // 27% via links promo
+  contractsRevenue: 12640, // 14% upsell/enterprise
+  activeSubscriptions: 32, // Contratos ativos
+  signedContracts: 32, // Total de contratos
+  referrals: 47,
+  convertedReferrals: 19,
   revenueHistory: [
-    { month: 'Ago', receita: 12840 },  // 28 clientes
-    { month: 'Set', receita: 16290 },  // 36 clientes (+8)
-    { month: 'Out', receita: 19750 },  // 44 clientes (+8)
-    { month: 'Nov', receita: 24380 },  // 54 clientes (+10)
-    { month: 'Dez', receita: 26220 },  // 58 clientes (+4 fim de ano)
-    { month: 'Jan', receita: 28970 },  // 64 clientes (+6)
+    { month: 'Ago', receita: 8420 },   // 12 contratos
+    { month: 'Set', receita: 10890 },  // 17 contratos (+5)
+    { month: 'Out', receita: 13240 },  // 22 contratos (+5)
+    { month: 'Nov', receita: 15890 },  // 27 contratos (+5)
+    { month: 'Dez', receita: 17560 },  // 30 contratos (+3)
+    { month: 'Jan', receita: 18340 },  // 32 contratos (+2)
   ],
 };
 
-// Vendas recentes - mix realista de planos
+// Contratos SaaS reais - empresas de diversos nichos
 const CONTENT_ACCOUNT_CONTRACTS = [
-  { id: 1, client: 'Plano Anual', value: 1997, date: '2026-01-26', status: 'signed' },
-  { id: 2, client: 'Plano Mensal', value: 297, date: '2026-01-25', status: 'signed' },
-  { id: 3, client: 'Plano Trimestral', value: 697, date: '2026-01-24', status: 'signed' },
-  { id: 4, client: 'Plano Mensal', value: 297, date: '2026-01-23', status: 'signed' },
-  { id: 5, client: 'Plano Mensal', value: 297, date: '2026-01-22', status: 'signed' },
-  { id: 6, client: 'Plano Anual', value: 1997, date: '2026-01-21', status: 'signed' },
-  { id: 7, client: 'Plano Trimestral', value: 697, date: '2026-01-20', status: 'signed' },
-  { id: 8, client: 'Plano Mensal', value: 297, date: '2026-01-19', status: 'signed' },
-  { id: 9, client: 'Plano Mensal', value: 297, date: '2026-01-18', status: 'signed' },
-  { id: 10, client: 'Plano Anual', value: 1997, date: '2026-01-17', status: 'signed' },
-  { id: 11, client: 'Plano Trimestral', value: 697, date: '2026-01-15', status: 'signed' },
-  { id: 12, client: 'Plano Mensal', value: 297, date: '2026-01-14', status: 'signed' },
+  { id: 1, client: 'Barbearia Premium Cuts', value: 297, date: '2026-01-26', status: 'signed' },
+  { id: 2, client: 'Clínica Odonto Smile', value: 697, date: '2026-01-25', status: 'signed' },
+  { id: 3, client: 'Pet Shop Amigo Fiel', value: 297, date: '2026-01-24', status: 'signed' },
+  { id: 4, client: 'Studio Pilates Vida', value: 1997, date: '2026-01-23', status: 'signed' },
+  { id: 5, client: 'Hamburgueria Artesanal', value: 297, date: '2026-01-22', status: 'signed' },
+  { id: 6, client: 'Salão Belle Femme', value: 697, date: '2026-01-21', status: 'signed' },
+  { id: 7, client: 'Advocacia Mendes', value: 1997, date: '2026-01-20', status: 'signed' },
+  { id: 8, client: 'Pizzaria Forno & Massa', value: 297, date: '2026-01-19', status: 'signed' },
+  { id: 9, client: 'Academia Iron Fitness', value: 697, date: '2026-01-18', status: 'signed' },
+  { id: 10, client: 'Clínica Vet Care', value: 297, date: '2026-01-17', status: 'signed' },
+  { id: 11, client: 'Restaurante Sabor Caseiro', value: 697, date: '2026-01-16', status: 'signed' },
+  { id: 12, client: 'Barbearia Old School', value: 297, date: '2026-01-15', status: 'signed' },
+  { id: 13, client: 'Estética Corpo & Alma', value: 1997, date: '2026-01-14', status: 'signed' },
+  { id: 14, client: 'Padaria Pão Quente', value: 297, date: '2026-01-13', status: 'signed' },
+  { id: 15, client: 'Consultório Dr. Silva', value: 697, date: '2026-01-12', status: 'signed' },
+  { id: 16, client: 'Açaí Point Tropical', value: 297, date: '2026-01-11', status: 'signed' },
+  { id: 17, client: 'Auto Center Express', value: 697, date: '2026-01-10', status: 'signed' },
+  { id: 18, client: 'Loja Urban Style', value: 297, date: '2026-01-09', status: 'signed' },
+  { id: 19, client: 'Psicóloga Dra. Ana', value: 1997, date: '2026-01-08', status: 'signed' },
+  { id: 20, client: 'Sushi Delivery Koi', value: 297, date: '2026-01-07', status: 'signed' },
+  { id: 21, client: 'Escola de Idiomas', value: 697, date: '2026-01-06', status: 'signed' },
+  { id: 22, client: 'Petshop Mundo Animal', value: 297, date: '2026-01-05', status: 'signed' },
+  { id: 23, client: 'Clínica Fisio Saúde', value: 697, date: '2026-01-04', status: 'signed' },
+  { id: 24, client: 'Barbearia The Gent', value: 297, date: '2026-01-03', status: 'signed' },
+  { id: 25, client: 'Dentista Dr. Costa', value: 1997, date: '2026-01-02', status: 'signed' },
+  { id: 26, client: 'Cafeteria Grão Nobre', value: 297, date: '2025-12-28', status: 'signed' },
+  { id: 27, client: 'Imobiliária Casa Nova', value: 697, date: '2025-12-26', status: 'signed' },
+  { id: 28, client: 'Lavanderia Express', value: 297, date: '2025-12-24', status: 'signed' },
+  { id: 29, client: 'Studio de Tatuagem', value: 697, date: '2025-12-22', status: 'signed' },
+  { id: 30, client: 'Floricultura Jardim', value: 297, date: '2025-12-20', status: 'signed' },
+  { id: 31, client: 'Ótica Visão Clara', value: 1997, date: '2025-12-18', status: 'signed' },
+  { id: 32, client: 'Cervejaria Artesanal', value: 697, date: '2025-12-15', status: 'signed' },
 ];
 
 export function GenesisFinancialTab({ userId, userEmail }: GenesisFinancialTabProps) {
