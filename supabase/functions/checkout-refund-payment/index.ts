@@ -96,6 +96,9 @@ async function refundMisticPay(
   }
 
   // Process withdraw to customer's CPF as PIX key
+  // Clean CPF to only digits for PIX key
+  const cleanCpf = customerCpf.replace(/\D/g, '');
+  
   const withdrawResponse = await fetch('https://api.misticpay.com/api/transactions/withdraw', {
     method: 'POST',
     headers: {
@@ -105,7 +108,8 @@ async function refundMisticPay(
     },
     body: JSON.stringify({
       amount: amountReais,
-      pixKey: customerCpf,
+      pixKey: cleanCpf,
+      pixKeyType: 'cpf',
       description: 'Reembolso de pagamento',
     }),
   });
