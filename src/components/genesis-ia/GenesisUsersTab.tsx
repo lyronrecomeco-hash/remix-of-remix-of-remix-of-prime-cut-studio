@@ -12,7 +12,9 @@ import {
   Eye,
   EyeOff,
   Phone,
-  Building2
+  Building2,
+  Sparkles,
+  UserPlus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,6 +39,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { CreatePromotionalUserModal } from './promocional/CreatePromotionalUserModal';
 
 interface GenesisUser {
   id: string;
@@ -54,19 +57,36 @@ interface GenesisUser {
   subscription_expires_at?: string;
 }
 
+interface PromotionalUser {
+  id: string;
+  user_id: string;
+  name: string;
+  email: string;
+  whatsapp: string;
+  type: string;
+  available_balance: number;
+  commission_rate: number;
+  status: string;
+  created_at: string;
+}
+
 interface GenesisUsersTabProps {
   userId: string;
 }
 
 export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
   const [users, setUsers] = useState<GenesisUser[]>([]);
+  const [promotionalUsers, setPromotionalUsers] = useState<PromotionalUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPromotionalModalOpen, setIsPromotionalModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<GenesisUser | null>(null);
   const [saving, setSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [activeView, setActiveView] = useState<'users' | 'promotional'>('users');
+  const [defaultCommissionRate, setDefaultCommissionRate] = useState(10);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -115,6 +135,24 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
       });
 
       setUsers(usersWithSubs);
+
+      // Buscar usuários promocionais
+      const { data: promoData } = await supabase
+        .from('promotional_users')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      setPromotionalUsers(promoData || []);
+
+      // Buscar configurações
+      const { data: settingsData } = await supabase
+        .from('promotional_settings')
+        .select('default_commission_rate')
+        .single();
+      
+      if (settingsData) {
+        setDefaultCommissionRate(settingsData.default_commission_rate);
+      }
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Erro ao carregar usuários');
@@ -223,107 +261,218 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
     u.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const filteredPromotionalUsers = promotionalUsers.filter(u =>
+    u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const formatDate = (d: string) => new Date(d).toLocaleDateString('pt-BR');
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
-            <Users className="w-6 h-6 text-blue-400" />
+          <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+            <Users className="w-6 h-6 text-primary" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-white">Gerenciar Usuários</h2>
-            <p className="text-sm text-white/50">{users.length} usuário(s)</p>
+            <h2 className="text-xl font-semibold text-foreground">Gerenciar Usuários</h2>
+            <p className="text-sm text-muted-foreground">
+              {users.length} usuário(s) • {promotionalUsers.length} promocional(is)
+            </p>
           </div>
         </div>
-        <Button onClick={openCreateModal} className="gap-2"><Plus className="w-4 h-4" />Novo Usuário</Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => setIsPromotionalModalOpen(true)} 
+            className="gap-2"
+          >
+            <Sparkles className="w-4 h-4" />
+            Influenciador/Parceiro
+          </Button>
+          <Button onClick={openCreateModal} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Novo Usuário
+          </Button>
+        </div>
       </div>
 
+      {/* View Toggle */}
+      <div className="flex gap-2 p-1 bg-muted/50 rounded-lg w-fit">
+        <Button
+          variant={activeView === 'users' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => setActiveView('users')}
+          className="gap-2"
+        >
+          <Users className="w-4 h-4" />
+          Usuários ({users.length})
+        </Button>
+        <Button
+          variant={activeView === 'promotional' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => setActiveView('promotional')}
+          className="gap-2"
+        >
+          <Sparkles className="w-4 h-4" />
+          Promocionais ({promotionalUsers.length})
+        </Button>
+      </div>
+
+      {/* Search */}
       <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
-        <Input placeholder="Buscar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 bg-white/5 border-white/10" style={{ borderRadius: '10px' }} />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input 
+          placeholder="Buscar..." 
+          value={searchTerm} 
+          onChange={(e) => setSearchTerm(e.target.value)} 
+          className="pl-10"
+        />
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-white/50" /></div>
-      ) : filteredUsers.length === 0 ? (
-        <Card className="border-dashed bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
-          <CardContent className="flex flex-col items-center py-12">
-            <div className="w-16 h-16 rounded-xl bg-white/10 flex items-center justify-center mb-4">
-              <Users className="w-8 h-8 text-white/30" />
-            </div>
-            <p className="text-white/50">{searchTerm ? 'Nenhum encontrado' : 'Nenhum usuário'}</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-3">
-          {filteredUsers.map((user) => (
-            <Card key={user.id} className={`bg-white/5 border-white/10 ${!user.is_active ? 'opacity-60' : ''}`} style={{ borderRadius: '14px' }}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-                      <span className="text-sm font-medium text-white">{user.name.charAt(0).toUpperCase()}</span>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-medium truncate text-white">{user.name}</p>
-                        {!user.is_active && <Badge variant="secondary" className="text-xs bg-white/10 text-white/50">Inativo</Badge>}
-                        {/* Plano */}
-                        {user.subscription_plan_name ? (
-                          <Badge className="text-xs bg-primary/20 text-primary border-primary/30">
-                            {user.subscription_plan_name}
-                          </Badge>
-                        ) : user.subscription_plan && user.subscription_plan !== 'free' ? (
-                          <Badge className="text-xs bg-blue-500/20 text-blue-400 border-blue-500/30">
-                            {user.subscription_plan === 'starter' ? 'Mensal' : 
-                             user.subscription_plan === 'pro' ? 'Trimestral' : 
-                             user.subscription_plan === 'enterprise' ? 'Anual' : user.subscription_plan}
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-xs border-white/20 text-white/40">Free</Badge>
-                        )}
-                        {/* Status */}
-                        {user.subscription_status === 'active' ? (
-                          <Badge className="text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Ativo</Badge>
-                        ) : user.subscription_status === 'expired' ? (
-                          <Badge className="text-xs bg-red-500/20 text-red-400 border-red-500/30">Expirado</Badge>
-                        ) : user.subscription_status === 'trial' ? (
-                          <Badge className="text-xs bg-amber-500/20 text-amber-400 border-amber-500/30">Trial</Badge>
-                        ) : null}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-white/50">
-                        <span className="truncate">{user.email}</span>
-                        {user.subscription_expires_at && (
-                          <span className="text-xs text-white/30">
-                            • Expira: {new Date(user.subscription_expires_at).toLocaleDateString('pt-BR')}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="hidden md:block text-sm text-white/40">{formatDate(user.created_at)}</div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-white/50 hover:text-white hover:bg-white/10"><MoreVertical className="w-4 h-4" /></Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => openEditModal(user)}><Pencil className="w-4 h-4 mr-2" />Editar</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleToggleActive(user)}>
-                        {user.is_active ? <><UserX className="w-4 h-4 mr-2" />Desativar</> : <><UserCheck className="w-4 h-4 mr-2" />Ativar</>}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => setDeleteConfirm(user.id)} className="text-destructive"><Trash2 className="w-4 h-4 mr-2" />Excluir</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="flex justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
+      ) : activeView === 'users' ? (
+        // Users List
+        filteredUsers.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center py-12">
+              <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center mb-4">
+                <Users className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <p className="text-muted-foreground">{searchTerm ? 'Nenhum encontrado' : 'Nenhum usuário'}</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-3">
+            {filteredUsers.map((user) => (
+              <Card key={user.id} className={`${!user.is_active ? 'opacity-60' : ''}`}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                        <span className="text-sm font-medium text-primary">{user.name.charAt(0).toUpperCase()}</span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-medium truncate">{user.name}</p>
+                          {!user.is_active && <Badge variant="secondary" className="text-xs">Inativo</Badge>}
+                          {/* Plano */}
+                          {user.subscription_plan_name ? (
+                            <Badge className="text-xs bg-primary/20 text-primary border-primary/30">
+                              {user.subscription_plan_name}
+                            </Badge>
+                          ) : user.subscription_plan && user.subscription_plan !== 'free' ? (
+                            <Badge className="text-xs bg-blue-500/20 text-blue-400 border-blue-500/30">
+                              {user.subscription_plan === 'starter' ? 'Mensal' : 
+                               user.subscription_plan === 'pro' ? 'Trimestral' : 
+                               user.subscription_plan === 'enterprise' ? 'Anual' : user.subscription_plan}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-xs">Free</Badge>
+                          )}
+                          {/* Status */}
+                          {user.subscription_status === 'active' ? (
+                            <Badge className="text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Ativo</Badge>
+                          ) : user.subscription_status === 'expired' ? (
+                            <Badge className="text-xs bg-red-500/20 text-red-400 border-red-500/30">Expirado</Badge>
+                          ) : user.subscription_status === 'trial' ? (
+                            <Badge className="text-xs bg-amber-500/20 text-amber-400 border-amber-500/30">Trial</Badge>
+                          ) : null}
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span className="truncate">{user.email}</span>
+                          {user.subscription_expires_at && (
+                            <span className="text-xs">
+                              • Expira: {new Date(user.subscription_expires_at).toLocaleDateString('pt-BR')}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="hidden md:block text-sm text-muted-foreground">{formatDate(user.created_at)}</div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="w-4 h-4" /></Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openEditModal(user)}><Pencil className="w-4 h-4 mr-2" />Editar</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleToggleActive(user)}>
+                          {user.is_active ? <><UserX className="w-4 h-4 mr-2" />Desativar</> : <><UserCheck className="w-4 h-4 mr-2" />Ativar</>}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => setDeleteConfirm(user.id)} className="text-destructive"><Trash2 className="w-4 h-4 mr-2" />Excluir</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )
+      ) : (
+        // Promotional Users List
+        filteredPromotionalUsers.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center py-12">
+              <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center mb-4">
+                <Sparkles className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <p className="text-muted-foreground">{searchTerm ? 'Nenhum encontrado' : 'Nenhum usuário promocional'}</p>
+              <Button 
+                variant="outline" 
+                className="mt-4 gap-2" 
+                onClick={() => setIsPromotionalModalOpen(true)}
+              >
+                <UserPlus className="w-4 h-4" />
+                Criar Primeiro
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-3">
+            {filteredPromotionalUsers.map((user) => (
+              <Card key={user.id} className={`${user.status !== 'active' ? 'opacity-60' : ''}`}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                        <Sparkles className="w-5 h-5 text-purple-400" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-medium truncate">{user.name}</p>
+                          <Badge className={`text-xs ${
+                            user.type === 'influencer' 
+                              ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' 
+                              : 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+                          }`}>
+                            {user.type === 'influencer' ? 'Influenciador' : 'Parceiro'}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {user.commission_rate}% comissão
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span className="truncate">{user.email}</span>
+                          <span className="text-xs">• Saldo: R$ {user.available_balance.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="hidden md:block text-sm text-muted-foreground">{formatDate(user.created_at)}</div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )
       )}
 
+      {/* Create/Edit User Modal */}
       <Dialog open={isModalOpen} onOpenChange={(o) => { setIsModalOpen(o); if (!o) resetForm(); }}>
         <DialogContent>
           <DialogHeader>
@@ -370,6 +519,7 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
         </DialogContent>
       </Dialog>
 
+      {/* Delete Confirmation Modal */}
       <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <DialogContent>
           <DialogHeader>
@@ -382,6 +532,14 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Create Promotional User Modal */}
+      <CreatePromotionalUserModal
+        isOpen={isPromotionalModalOpen}
+        onClose={() => setIsPromotionalModalOpen(false)}
+        onSuccess={fetchUsers}
+        defaultCommissionRate={defaultCommissionRate}
+      />
     </div>
   );
 };
