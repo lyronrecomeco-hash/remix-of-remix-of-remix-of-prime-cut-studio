@@ -336,7 +336,10 @@ serve(async (req) => {
     console.log('Creating payment:', { 
       paymentMethod: body.paymentMethod, 
       amountCents: body.amountCents,
-      gateway: body.gateway || 'auto-detect'
+      gateway: body.gateway || 'auto-detect',
+      planId: body.planId || 'none',
+      promoLinkId: body.promoLinkId || 'none',
+      source: body.source || 'direct'
     });
 
     if (!body.customer || !body.amountCents || !body.paymentMethod) {
