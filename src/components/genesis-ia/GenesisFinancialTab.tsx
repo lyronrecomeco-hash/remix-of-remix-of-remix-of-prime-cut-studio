@@ -51,43 +51,44 @@ interface GenesisFinancialTabProps {
 // Conta especial com dados financeiros reais simulados para produção de conteúdo
 const CONTENT_ACCOUNT_EMAIL = "lyronrecomeco@gmail.com";
 
-// Valores baseados nos planos reais: Mensal R$297, Trimestral R$697, Anual R$1997
+// Métricas SaaS estratégicas - valores realistas para operação consolidada
+// Ticket médio: R$450/mês | LTV: R$5.400 | CAC: R$180 | Churn: 3.2%
 const CONTENT_ACCOUNT_FINANCIAL_DATA = {
-  totalRevenue: 38941, // ~4 meses de vendas consistentes
-  thisMonth: 11879, // Mês atual forte
-  lastMonth: 9514, // Mês anterior
-  growth: 24.86, // Crescimento sólido MoM
-  directSubscriptions: 21582, // Assinaturas diretas (orgânico)
-  promoSubscriptions: 8316, // Via links promocionais
-  contractsRevenue: 9043, // Contratos enterprise/custom
-  activeSubscriptions: 47, // Assinantes ativos
-  signedContracts: 6, // Contratos enterprise
-  referrals: 23,
-  convertedReferrals: 9,
+  totalRevenue: 127450, // MRR acumulado 6 meses
+  thisMonth: 28970, // MRR atual (64 clientes x R$452 ticket médio)
+  lastMonth: 24380, // MRR anterior
+  growth: 18.82, // Crescimento MoM saudável
+  directSubscriptions: 71820, // 56% orgânico
+  promoSubscriptions: 38290, // 30% via afiliados/promo
+  contractsRevenue: 17340, // 14% enterprise/anual
+  activeSubscriptions: 64, // Clientes ativos
+  signedContracts: 8, // Contratos enterprise
+  referrals: 31,
+  convertedReferrals: 12,
   revenueHistory: [
-    { month: 'Ago', receita: 2673 },  // Início - 9 vendas mensal
-    { month: 'Set', receita: 4879 },  // Crescimento - mix mensal/trimestral
-    { month: 'Out', receita: 6247 },  // Tração - primeiros anuais
-    { month: 'Nov', receita: 9514 },  // Aceleração
-    { month: 'Dez', receita: 10628 }, // Pico fim de ano
-    { month: 'Jan', receita: 11879 }, // Mês atual
+    { month: 'Ago', receita: 12840 },  // 28 clientes
+    { month: 'Set', receita: 16290 },  // 36 clientes (+8)
+    { month: 'Out', receita: 19750 },  // 44 clientes (+8)
+    { month: 'Nov', receita: 24380 },  // 54 clientes (+10)
+    { month: 'Dez', receita: 26220 },  // 58 clientes (+4 fim de ano)
+    { month: 'Jan', receita: 28970 },  // 64 clientes (+6)
   ],
 };
 
-// Vendas SaaS reais - baseadas nos planos do sistema
+// Vendas recentes - mix realista de planos
 const CONTENT_ACCOUNT_CONTRACTS = [
-  { id: 1, client: 'Plano Anual', value: 1997, date: '2026-01-24', status: 'signed' },
-  { id: 2, client: 'Plano Trimestral', value: 697, date: '2026-01-22', status: 'signed' },
-  { id: 3, client: 'Plano Anual', value: 1997, date: '2026-01-19', status: 'signed' },
-  { id: 4, client: 'Plano Mensal', value: 297, date: '2026-01-18', status: 'signed' },
-  { id: 5, client: 'Plano Trimestral', value: 697, date: '2026-01-17', status: 'signed' },
-  { id: 6, client: 'Plano Mensal', value: 297, date: '2026-01-16', status: 'signed' },
-  { id: 7, client: 'Plano Anual', value: 1997, date: '2026-01-14', status: 'signed' },
-  { id: 8, client: 'Plano Mensal', value: 297, date: '2026-01-12', status: 'signed' },
-  { id: 9, client: 'Plano Trimestral', value: 697, date: '2026-01-10', status: 'signed' },
-  { id: 10, client: 'Plano Mensal', value: 297, date: '2026-01-08', status: 'signed' },
-  { id: 11, client: 'Plano Anual', value: 1997, date: '2026-01-05', status: 'signed' },
-  { id: 12, client: 'Plano Trimestral', value: 697, date: '2026-01-03', status: 'signed' },
+  { id: 1, client: 'Plano Anual', value: 1997, date: '2026-01-26', status: 'signed' },
+  { id: 2, client: 'Plano Mensal', value: 297, date: '2026-01-25', status: 'signed' },
+  { id: 3, client: 'Plano Trimestral', value: 697, date: '2026-01-24', status: 'signed' },
+  { id: 4, client: 'Plano Mensal', value: 297, date: '2026-01-23', status: 'signed' },
+  { id: 5, client: 'Plano Mensal', value: 297, date: '2026-01-22', status: 'signed' },
+  { id: 6, client: 'Plano Anual', value: 1997, date: '2026-01-21', status: 'signed' },
+  { id: 7, client: 'Plano Trimestral', value: 697, date: '2026-01-20', status: 'signed' },
+  { id: 8, client: 'Plano Mensal', value: 297, date: '2026-01-19', status: 'signed' },
+  { id: 9, client: 'Plano Mensal', value: 297, date: '2026-01-18', status: 'signed' },
+  { id: 10, client: 'Plano Anual', value: 1997, date: '2026-01-17', status: 'signed' },
+  { id: 11, client: 'Plano Trimestral', value: 697, date: '2026-01-15', status: 'signed' },
+  { id: 12, client: 'Plano Mensal', value: 297, date: '2026-01-14', status: 'signed' },
 ];
 
 export function GenesisFinancialTab({ userId, userEmail }: GenesisFinancialTabProps) {
