@@ -28,8 +28,9 @@ const carouselItems: CarouselItem[] = [
   {
     id: '2',
     icon: Smartphone,
-    title: 'Apps Virais',
-    description: 'Exemplos de aplicativos de sucesso'
+    title: 'SaaS Virais',
+    description: 'Modelos de alta conversão',
+    tabId: 'viral-saas'
   },
   {
     id: '3',

@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   Circle,
   Play,
-  RotateCcw,
   TrendingUp,
   Zap,
   Search,
@@ -175,8 +174,9 @@ export const SprintDashboard = ({
             size="sm"
             onClick={onReset}
             className="text-white/50 hover:text-white hover:bg-white/10 h-8 px-2"
+            title="Voltar às metas"
           >
-            <RotateCcw className="w-4 h-4" />
+            <ArrowRight className="w-4 h-4 rotate-180" />
           </Button>
         </div>
 
@@ -426,14 +426,14 @@ export const SprintDashboard = ({
         </motion.div>
       )}
 
-      {/* New Sprint Button */}
+      {/* Back to List Button */}
       <Button
         onClick={onReset}
         variant="outline"
         className="w-full h-10 border-white/10 text-white/60 hover:text-white hover:bg-white/5"
       >
-        <RotateCcw className="w-4 h-4 mr-2" />
-        Criar Nova Missão
+        <ArrowRight className="w-4 h-4 mr-2 rotate-180" />
+        Voltar às Metas
       </Button>
     </div>
   );
