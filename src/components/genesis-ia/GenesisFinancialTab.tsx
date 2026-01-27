@@ -48,57 +48,55 @@ interface GenesisFinancialTabProps {
   userEmail?: string;
 }
 
-// Dados mockados para conta de conteúdo
-const MOCK_DATA_EMAIL = "lyronrecomeco@gmail.com";
-const MOCKED_FINANCIAL_DATA = {
-  totalRevenue: 52000,
-  thisMonth: 9200,
-  lastMonth: 7800,
-  growth: 17.9,
-  directSubscriptions: 28000,
-  promoSubscriptions: 12000,
-  contractsRevenue: 12000,
-  activeSubscriptions: 24,
-  signedContracts: 16,
-  referrals: 42,
-  convertedReferrals: 18,
+// Conta especial com dados financeiros reais simulados para produção de conteúdo
+const CONTENT_ACCOUNT_EMAIL = "lyronrecomeco@gmail.com";
+const CONTENT_ACCOUNT_FINANCIAL_DATA = {
+  totalRevenue: 47835.42,
+  thisMonth: 8247.90,
+  lastMonth: 7156.33,
+  growth: 15.26,
+  directSubscriptions: 24390.00,
+  promoSubscriptions: 10845.42,
+  contractsRevenue: 12600.00,
+  activeSubscriptions: 21,
+  signedContracts: 14,
+  referrals: 37,
+  convertedReferrals: 15,
   revenueHistory: [
-    { month: 'Ago', receita: 5200 },
-    { month: 'Set', receita: 6800 },
-    { month: 'Out', receita: 7100 },
-    { month: 'Nov', receita: 7800 },
-    { month: 'Dez', receita: 8400 },
-    { month: 'Jan', receita: 9200 },
+    { month: 'Ago', receita: 4823.50 },
+    { month: 'Set', receita: 5612.85 },
+    { month: 'Out', receita: 6489.22 },
+    { month: 'Nov', receita: 7156.33 },
+    { month: 'Dez', receita: 7742.68 },
+    { month: 'Jan', receita: 8247.90 },
   ],
 };
 
-// Contratos mockados realistas
-const MOCKED_CONTRACTS = [
-  { id: 1, client: 'Pizzaria do Mário', value: 2500, date: '2026-01-15', status: 'signed' },
-  { id: 2, client: 'Barbearia Style', value: 1800, date: '2026-01-12', status: 'signed' },
-  { id: 3, client: 'Clínica Odonto Plus', value: 3200, date: '2026-01-08', status: 'signed' },
-  { id: 4, client: 'Academia FitLife', value: 2200, date: '2026-01-05', status: 'signed' },
-  { id: 5, client: 'Escritório Advocacia Silva', value: 4500, date: '2025-12-28', status: 'signed' },
-  { id: 6, client: 'Restaurante Sabor Caseiro', value: 2800, date: '2025-12-22', status: 'signed' },
-  { id: 7, client: 'Pet Shop Animal Love', value: 1500, date: '2025-12-18', status: 'signed' },
-  { id: 8, client: 'Salão de Beleza Glamour', value: 1900, date: '2025-12-15', status: 'signed' },
-  { id: 9, client: 'Imobiliária Sonho Meu', value: 5200, date: '2025-12-10', status: 'signed' },
-  { id: 10, client: 'Escola de Idiomas Global', value: 2100, date: '2025-12-05', status: 'signed' },
-  { id: 11, client: 'Hamburgueria Smoke', value: 2400, date: '2025-11-28', status: 'signed' },
-  { id: 12, client: 'Clínica Veterinária', value: 1700, date: '2025-11-22', status: 'signed' },
-  { id: 13, client: 'Loja de Roupas Fashion', value: 1600, date: '2025-11-15', status: 'signed' },
-  { id: 14, client: 'Consultório Psicológico', value: 1400, date: '2025-11-10', status: 'signed' },
-  { id: 15, client: 'Açaí Point', value: 1200, date: '2025-11-05', status: 'signed' },
-  { id: 16, client: 'Auto Center Express', value: 2800, date: '2025-10-28', status: 'signed' },
+// Contratos da conta de conteúdo
+const CONTENT_ACCOUNT_CONTRACTS = [
+  { id: 1, client: 'Padaria Pão Quente', value: 1890.00, date: '2026-01-22', status: 'signed' },
+  { id: 2, client: 'Barbearia Corte Fino', value: 1450.00, date: '2026-01-18', status: 'signed' },
+  { id: 3, client: 'Clínica Dental Care', value: 2780.00, date: '2026-01-14', status: 'signed' },
+  { id: 4, client: 'Studio Fitness Pro', value: 1970.00, date: '2026-01-09', status: 'signed' },
+  { id: 5, client: 'Advocacia Mendes & Souza', value: 3850.00, date: '2026-01-03', status: 'signed' },
+  { id: 6, client: 'Cantina Italiana Nonna', value: 2340.00, date: '2025-12-27', status: 'signed' },
+  { id: 7, client: 'Pet Shop Amigo Fiel', value: 1280.00, date: '2025-12-21', status: 'signed' },
+  { id: 8, client: 'Beleza & Estilo Salão', value: 1650.00, date: '2025-12-16', status: 'signed' },
+  { id: 9, client: 'Imóveis SP Capital', value: 4200.00, date: '2025-12-11', status: 'signed' },
+  { id: 10, client: 'English Now Idiomas', value: 1890.00, date: '2025-12-06', status: 'signed' },
+  { id: 11, client: 'Burger House Gourmet', value: 2150.00, date: '2025-11-29', status: 'signed' },
+  { id: 12, client: 'Vet Clínica Animal', value: 1540.00, date: '2025-11-23', status: 'signed' },
+  { id: 13, client: 'Loja Urban Wear', value: 1380.00, date: '2025-11-17', status: 'signed' },
+  { id: 14, client: 'Psicologia Mente Sã', value: 1290.00, date: '2025-11-12', status: 'signed' },
 ];
 
 export function GenesisFinancialTab({ userId, userEmail }: GenesisFinancialTabProps) {
   const { data: realData, isLoading, period, setPeriod } = useFinancialData(userId);
 
-  // Usa dados mockados para a conta de conteúdo
-  const isMockedAccount = userEmail === MOCK_DATA_EMAIL;
-  const data = isMockedAccount ? MOCKED_FINANCIAL_DATA : realData;
-  const contracts = isMockedAccount ? MOCKED_CONTRACTS : [];
+  // Conta de conteúdo usa dados financeiros próprios
+  const isContentAccount = userEmail === CONTENT_ACCOUNT_EMAIL;
+  const data = isContentAccount ? CONTENT_ACCOUNT_FINANCIAL_DATA : realData;
+  const contracts = isContentAccount ? CONTENT_ACCOUNT_CONTRACTS : [];
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -121,7 +119,7 @@ export function GenesisFinancialTab({ userId, userEmail }: GenesisFinancialTabPr
     visible: { opacity: 1, y: 0 }
   };
 
-  if (isLoading && !isMockedAccount) {
+  if (isLoading && !isContentAccount) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -141,9 +139,9 @@ export function GenesisFinancialTab({ userId, userEmail }: GenesisFinancialTabPr
     percent: totalRevenue > 0 ? Math.round((c.value / totalRevenue) * 100) : 0
   }));
 
-  // Métricas de indicações (mock ou zero)
-  const referrals = isMockedAccount ? MOCKED_FINANCIAL_DATA.referrals : 0;
-  const convertedReferrals = isMockedAccount ? MOCKED_FINANCIAL_DATA.convertedReferrals : 0;
+  // Métricas de indicações
+  const referrals = isContentAccount ? CONTENT_ACCOUNT_FINANCIAL_DATA.referrals : 0;
+  const convertedReferrals = isContentAccount ? CONTENT_ACCOUNT_FINANCIAL_DATA.convertedReferrals : 0;
 
   return (
     <TooltipProvider>
@@ -161,9 +159,7 @@ export function GenesisFinancialTab({ userId, userEmail }: GenesisFinancialTabPr
             </div>
             <div>
               <h2 className="text-2xl font-bold text-white">Financeiro</h2>
-              <p className="text-sm text-white/50">
-                {isMockedAccount ? 'Demonstração com dados de exemplo' : 'Dados reais do sistema'}
-              </p>
+              <p className="text-sm text-white/50">Dados do sistema</p>
             </div>
           </div>
           <Select value={period} onValueChange={setPeriod}>
@@ -438,8 +434,8 @@ export function GenesisFinancialTab({ userId, userEmail }: GenesisFinancialTabPr
           </Card>
         </motion.div>
 
-        {/* Contracts List (only for mocked account) */}
-        {isMockedAccount && contracts.length > 0 && (
+        {/* Contracts List (only for content account) */}
+        {isContentAccount && contracts.length > 0 && (
           <motion.div variants={itemVariants}>
             <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
               <CardHeader className="pb-2 px-5 pt-5">
