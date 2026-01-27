@@ -4,28 +4,53 @@ import { Target, Plus, X, Check, Star } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useFromScratch } from '../FromScratchContext';
+import { getAppNicheById } from '../appNicheContexts';
 
-const DEFAULT_OBJECTIVES = [
+// Objetivos padrão para SITES
+const DEFAULT_SITE_OBJECTIVES = [
   'Aumentar vendas online',
   'Capturar leads',
   'Fortalecer presença digital',
-  'Automatizar processos',
   'Melhorar atendimento',
   'Gerar autoridade',
   'Expandir alcance',
   'Fidelizar clientes'
 ];
 
+// Objetivos padrão para APPS
+const DEFAULT_APP_OBJECTIVES = [
+  'Automatizar processos manuais',
+  'Centralizar informações',
+  'Reduzir erros operacionais',
+  'Aumentar produtividade',
+  'Melhorar tomada de decisão',
+  'Escalar operações',
+  'Integrar sistemas existentes',
+  'Gerar relatórios automáticos'
+];
+
 export function StepObjectives() {
   const { formData, updateFormData, selectedNiche } = useFromScratch();
   const [customInput, setCustomInput] = useState('');
 
+  const isApp = formData.projectType === 'app';
+  const appNiche = isApp ? getAppNicheById(formData.nicheId) : null;
+
   const suggestedObjectives = useMemo(() => {
-    if (selectedNiche?.defaultObjectives) {
-      return [...new Set([...selectedNiche.defaultObjectives, ...DEFAULT_OBJECTIVES])];
+    // Para Apps
+    if (isApp && appNiche?.defaultObjectives) {
+      return [...new Set([...appNiche.defaultObjectives, ...DEFAULT_APP_OBJECTIVES])];
     }
-    return DEFAULT_OBJECTIVES;
-  }, [selectedNiche]);
+    if (isApp) {
+      return DEFAULT_APP_OBJECTIVES;
+    }
+    
+    // Para Sites
+    if (selectedNiche?.defaultObjectives) {
+      return [...new Set([...selectedNiche.defaultObjectives, ...DEFAULT_SITE_OBJECTIVES])];
+    }
+    return DEFAULT_SITE_OBJECTIVES;
+  }, [selectedNiche, isApp, appNiche]);
 
   const toggleObjective = (objective: string) => {
     const current = formData.selectedObjectives;

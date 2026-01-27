@@ -1,13 +1,52 @@
 import { motion } from 'framer-motion';
-import { Zap, Link, Check, Star } from 'lucide-react';
+import { Zap, Link, Check, Star, Database } from 'lucide-react';
 import { useFromScratch } from '../FromScratchContext';
 import { COMMON_FEATURES, INTEGRATIONS } from '../types';
+import { getAppNicheById } from '../appNicheContexts';
+
+// Features específicas para APPS
+const APP_CORE_FEATURES = [
+  'Autenticação segura (login/registro)',
+  'Controle de permissões por perfil',
+  'Dashboard com métricas',
+  'Relatórios exportáveis (PDF/Excel)',
+  'Logs de auditoria',
+  'Notificações em tempo real',
+  'Busca global',
+  'Modo offline (PWA)',
+  'Backup automático',
+  'API REST para integrações',
+  'Multi-tenant',
+  'Temas claro/escuro'
+];
+
+// Integrações específicas para APPS
+const APP_INTEGRATIONS = [
+  { id: 'supabase', name: 'Supabase', icon: '🔷', description: 'Backend as a Service' },
+  { id: 'stripe', name: 'Stripe', icon: '💳', description: 'Pagamentos e assinaturas' },
+  { id: 'whatsapp-api', name: 'WhatsApp API', icon: '📱', description: 'Notificações e chatbot' },
+  { id: 'email-smtp', name: 'Email SMTP', icon: '📧', description: 'Envio de emails transacionais' },
+  { id: 'storage', name: 'Cloud Storage', icon: '☁️', description: 'Upload de arquivos' },
+  { id: 'analytics', name: 'Analytics', icon: '📊', description: 'Métricas e eventos' },
+  { id: 'oauth', name: 'OAuth Social', icon: '🔐', description: 'Login com Google/GitHub' },
+  { id: 'webhook', name: 'Webhooks', icon: '🔗', description: 'Integrações externas' },
+];
 
 export function StepFeatures() {
   const { formData, updateFormData, selectedNiche } = useFromScratch();
+  
+  const isApp = formData.projectType === 'app';
+  const appNiche = isApp ? getAppNicheById(formData.nicheId) : null;
 
-  const suggestedFeatures = selectedNiche?.suggestedFeatures || [];
-  const allFeatures = [...new Set([...suggestedFeatures, ...COMMON_FEATURES])];
+  // Definir features baseado no tipo de projeto
+  const suggestedFeatures = isApp 
+    ? (appNiche?.coreFeatures || [])
+    : (selectedNiche?.suggestedFeatures || []);
+  
+  const baseFeatures = isApp ? APP_CORE_FEATURES : COMMON_FEATURES;
+  const allFeatures = [...new Set([...suggestedFeatures, ...baseFeatures])];
+  
+  const integrations = isApp ? APP_INTEGRATIONS : INTEGRATIONS;
 
   const toggleFeature = (feature: string) => {
     const current = formData.selectedFeatures;
@@ -32,8 +71,8 @@ export function StepFeatures() {
       {/* Features */}
       <div className="space-y-3">
         <label className="flex items-center gap-2 text-sm font-medium">
-          <Zap className="w-4 h-4 text-primary" />
-          Funcionalidades
+          {isApp ? <Database className="w-4 h-4 text-primary" /> : <Zap className="w-4 h-4 text-primary" />}
+          {isApp ? 'Funcionalidades do Sistema' : 'Funcionalidades'}
         </label>
         <div className="flex flex-wrap gap-2">
           {allFeatures.map((feature, index) => {
@@ -56,7 +95,7 @@ export function StepFeatures() {
                 <span className="flex items-center gap-1.5">
                   {isSelected && <Check className="w-3.5 h-3.5" />}
                   {feature}
-                  {isSuggested && !isSelected && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />}
+                  {isSuggested && !isSelected && <Star className="w-3 h-3 text-amber-500 fill-amber-500" />}
                 </span>
               </motion.button>
             );
@@ -68,10 +107,10 @@ export function StepFeatures() {
       <div className="space-y-3">
         <label className="flex items-center gap-2 text-sm font-medium">
           <Link className="w-4 h-4 text-primary" />
-          Integrações Externas
+          {isApp ? 'Integrações do Sistema' : 'Integrações Externas'}
         </label>
         <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
-          {INTEGRATIONS.map((integration, index) => {
+          {integrations.map((integration, index) => {
             const isSelected = formData.integrations.includes(integration.id);
             
             return (

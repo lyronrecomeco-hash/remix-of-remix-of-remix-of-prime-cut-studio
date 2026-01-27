@@ -1,10 +1,14 @@
 import { FromScratchFormData, LANGUAGES, CURRENCIES, AI_TARGETS } from './types';
 import { NicheContext } from './nicheContexts';
+import { AppNicheContext, getAppNicheById } from './appNicheContexts';
 
 export function generateAdvancedPrompt(
   formData: FromScratchFormData,
   niche: NicheContext | undefined
 ): string {
+  const isApp = formData.projectType === 'app';
+  const appNiche = isApp ? getAppNicheById(formData.nicheId) : null;
+  
   const timestamp = new Date().toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
@@ -17,8 +21,12 @@ export function generateAdvancedPrompt(
   const currency = CURRENCIES.find(c => c.code === formData.currency);
   const targetAI = AI_TARGETS.find(ai => ai.id === formData.targetAI);
   
-  const isApp = formData.projectType === 'app';
   const projectTypeLabel = isApp ? 'Aplicativo Web com Painel Administrativo' : 'Site Comercial / Landing Page';
+  
+  // Usar o contexto correto baseado no tipo de projeto
+  const activeNiche = isApp ? appNiche : niche;
+  const nicheName = activeNiche?.name || formData.customNiche || 'Negócio Personalizado';
+  const nicheEmoji = (activeNiche as any)?.emoji || '';
   
   const allObjectives = [...formData.selectedObjectives, ...formData.customObjectives];
   const allPages = [...formData.selectedPages, ...formData.customPages];
@@ -77,7 +85,7 @@ export function generateAdvancedPrompt(
 
 ## 📋 BRIEFING EXECUTIVO
 
-Este é um projeto de **${projectTypeLabel}** para ${formData.companyName}, atuando no segmento de **${niche?.name || formData.customNiche || 'Negócio Personalizado'}**${formData.cityRegion ? `, localizado em ${formData.cityRegion}` : ''}. O objetivo é criar uma presença digital completa e profissional que ${isApp ? 'inclua funcionalidades de gestão e painel administrativo' : 'maximize conversões e gere leads qualificados'}.
+Este é um projeto de **\${projectTypeLabel}** para \${formData.companyName}, atuando no segmento de **\${nicheName}**\${formData.cityRegion ? \`, localizado em \${formData.cityRegion}\` : ''}. O objetivo é criar uma presença digital completa e profissional que \${isApp ? 'inclua funcionalidades de gestão e painel administrativo' : 'maximize conversões e gere leads qualificados'}.
 
 ---
 
@@ -85,29 +93,37 @@ Este é um projeto de **${projectTypeLabel}** para ${formData.companyName}, atua
 
 | Campo | Valor |
 |-------|-------|
-| **Nome do Projeto** | ${formData.projectName} |
-| **Empresa/Estabelecimento** | ${formData.companyName} |
-| **Slogan** | ${formData.slogan || 'A definir'} |
-| **Tipo de Projeto** | ${projectTypeLabel} |
-| **Segmento/Nicho** | ${niche?.name || formData.customNiche || 'Personalizado'} ${niche?.emoji || ''} |
-| **Localização** | ${formData.cityRegion || 'A definir'} |
-| **Público-Alvo** | ${formData.targetAudience || 'A definir'} |
-| **Idioma Principal** | ${language?.flag || ''} ${language?.name || formData.language} |
-| **Moeda** | ${currency?.symbol || ''} ${currency?.name || formData.currency} |
+| **Nome do Projeto** | \${formData.projectName} |
+| **Empresa/Estabelecimento** | \${formData.companyName} |
+| **Slogan** | \${formData.slogan || 'A definir'} |
+| **Tipo de Projeto** | \${projectTypeLabel} |
+| **Segmento/Nicho** | \${nicheName} \${nicheEmoji} |
+| **Localização** | \${formData.cityRegion || 'A definir'} |
+| **Público-Alvo** | \${formData.targetAudience || 'A definir'} |
+| **Idioma Principal** | \${language?.flag || ''} \${language?.name || formData.language} |
+| **Moeda** | \${currency?.symbol || ''} \${currency?.name || formData.currency} |
 
 ---
 
-## 💡 CONTEXTO ESPECÍFICO DO NICHO
+## 💡 CONTEXTO ESPECÍFICO DO \${isApp ? 'SISTEMA' : 'NICHO'}
 
-${niche?.contextPrompt || `Este é um projeto personalizado que requer atenção especial às necessidades específicas do negócio. O design deve refletir a identidade da marca e os valores da empresa. Funcionalidades devem ser adaptadas ao modelo de negócio específico.`}
+\${activeNiche?.contextPrompt || \`Este é um projeto personalizado que requer atenção especial às necessidades específicas do negócio. O design deve refletir a identidade da marca e os valores da empresa. Funcionalidades devem ser adaptadas ao modelo de negócio específico.\`}
 
-${niche ? `
+\${isApp && appNiche ? \`
+### Entidades de Dados Principais:
+\${appNiche.databaseEntities?.map(e => \`- \${e}\`).join('\\n') || '- A definir'}
+
+### Perfis de Usuário:
+\${appNiche.userRoles?.map(r => \`- \${r}\`).join('\\n') || '- admin'}
+\` : ''}
+
+\${!isApp && niche ? \`
 ### Palavras-chave SEO Sugeridas:
-${niche.seoKeywords.map(kw => `\`${kw}\``).join(', ')}
+\${niche.seoKeywords.map(kw => \`\\\`\${kw}\\\`\`).join(', ')}
 
 ### Seções Típicas do Segmento:
-${niche.commonSections.map(s => `- ${s}`).join('\n')}
-` : ''}
+\${niche.commonSections.map(s => \`- \${s}\`).join('\\n')}
+\` : ''}
 
 ---
 
@@ -241,7 +257,7 @@ ${isApp ? `
 
 `}
 
-${generateBackendRequirementsSection(niche)}
+${generateBackendRequirementsSection(niche, appNiche)}
 
 ---
 
@@ -463,12 +479,19 @@ ${isApp ? '- Configure backend conforme a plataforma suportar\n- Priorize segura
 }
 
 // NOVA FUNÇÃO: Gerar seção de requisitos de backend funcional
-function generateBackendRequirementsSection(niche: NicheContext | undefined): string {
-  if (!niche?.backendRequirements || niche.backendRequirements.length === 0) {
+function generateBackendRequirementsSection(
+  niche: NicheContext | undefined, 
+  appNiche?: AppNicheContext | null
+): string {
+  const requirements = appNiche?.backendRequirements || niche?.backendRequirements;
+  
+  if (!requirements || requirements.length === 0) {
     return '';
   }
 
-  const requirements = niche.backendRequirements.map(req => `
+  const isApp = !!appNiche;
+  
+  const reqsFormatted = requirements.map(req => `
 ### ${req.name}
 **${req.description}**
 
@@ -483,10 +506,30 @@ ${req.technicalSpec}
 > ⚠️ **IMPORTANTE**: As funcionalidades abaixo NÃO são apenas visuais. 
 > Devem ser implementadas com lógica funcional completa conforme especificado.
 
-${requirements}
+${reqsFormatted}
 
 ### Princípios Obrigatórios:
 
+${isApp ? `
+1. **Autenticação**: Implementar com Supabase Auth - login, registro, recuperação de senha
+2. **Autorização**: RLS policies para cada tabela baseadas no user_id
+3. **CRUD Completo**: Todas as entidades devem ter Create, Read, Update, Delete
+4. **Validação**: Zod schemas para validar dados antes de salvar
+5. **Loading States**: Skeleton loading enquanto busca dados
+6. **Error Handling**: Try/catch com toast de erro amigável
+7. **Otimistic Updates**: Atualizar UI antes de confirmar com backend
+8. **Realtime**: Usar Supabase Realtime para dados que mudam frequentemente
+
+### Estrutura de Tabelas Supabase:
+
+\`\`\`sql
+-- Sempre incluir estes campos base:
+id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+user_id UUID REFERENCES auth.users(id)
+\`\`\`
+` : `
 1. **Estado Persistente**: Usar localStorage para carrinho/dados temporários
 2. **Validação de Formulários**: React Hook Form + Zod em TODOS os formulários
 3. **Feedback Visual**: Loading states, toasts de sucesso/erro, skeleton loading
@@ -502,6 +545,8 @@ function generateWhatsAppLink(phone: string, message: string): string {
   const encodedMessage = encodeURIComponent(message);
   return \`https://wa.me/55\${cleanPhone}?text=\${encodedMessage}\`;
 }
+\`\`\`
+`}
 
 // Abrir em nova aba
 function openWhatsApp(phone: string, message: string): void {
