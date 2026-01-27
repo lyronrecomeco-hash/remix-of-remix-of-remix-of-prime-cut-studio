@@ -50,44 +50,44 @@ interface GenesisFinancialTabProps {
 
 // Conta especial com dados financeiros reais simulados para produção de conteúdo
 const CONTENT_ACCOUNT_EMAIL = "lyronrecomeco@gmail.com";
+
+// Valores baseados nos planos reais: Mensal R$297, Trimestral R$697, Anual R$1997
 const CONTENT_ACCOUNT_FINANCIAL_DATA = {
-  totalRevenue: 47835.42,
-  thisMonth: 8247.90,
-  lastMonth: 7156.33,
-  growth: 15.26,
-  directSubscriptions: 24390.00,
-  promoSubscriptions: 10845.42,
-  contractsRevenue: 12600.00,
-  activeSubscriptions: 21,
-  signedContracts: 14,
-  referrals: 37,
-  convertedReferrals: 15,
+  totalRevenue: 38941, // ~4 meses de vendas consistentes
+  thisMonth: 11879, // Mês atual forte
+  lastMonth: 9514, // Mês anterior
+  growth: 24.86, // Crescimento sólido MoM
+  directSubscriptions: 21582, // Assinaturas diretas (orgânico)
+  promoSubscriptions: 8316, // Via links promocionais
+  contractsRevenue: 9043, // Contratos enterprise/custom
+  activeSubscriptions: 47, // Assinantes ativos
+  signedContracts: 6, // Contratos enterprise
+  referrals: 23,
+  convertedReferrals: 9,
   revenueHistory: [
-    { month: 'Ago', receita: 4823.50 },
-    { month: 'Set', receita: 5612.85 },
-    { month: 'Out', receita: 6489.22 },
-    { month: 'Nov', receita: 7156.33 },
-    { month: 'Dez', receita: 7742.68 },
-    { month: 'Jan', receita: 8247.90 },
+    { month: 'Ago', receita: 2673 },  // Início - 9 vendas mensal
+    { month: 'Set', receita: 4879 },  // Crescimento - mix mensal/trimestral
+    { month: 'Out', receita: 6247 },  // Tração - primeiros anuais
+    { month: 'Nov', receita: 9514 },  // Aceleração
+    { month: 'Dez', receita: 10628 }, // Pico fim de ano
+    { month: 'Jan', receita: 11879 }, // Mês atual
   ],
 };
 
-// Contratos da conta de conteúdo
+// Vendas SaaS reais - baseadas nos planos do sistema
 const CONTENT_ACCOUNT_CONTRACTS = [
-  { id: 1, client: 'Padaria Pão Quente', value: 1890.00, date: '2026-01-22', status: 'signed' },
-  { id: 2, client: 'Barbearia Corte Fino', value: 1450.00, date: '2026-01-18', status: 'signed' },
-  { id: 3, client: 'Clínica Dental Care', value: 2780.00, date: '2026-01-14', status: 'signed' },
-  { id: 4, client: 'Studio Fitness Pro', value: 1970.00, date: '2026-01-09', status: 'signed' },
-  { id: 5, client: 'Advocacia Mendes & Souza', value: 3850.00, date: '2026-01-03', status: 'signed' },
-  { id: 6, client: 'Cantina Italiana Nonna', value: 2340.00, date: '2025-12-27', status: 'signed' },
-  { id: 7, client: 'Pet Shop Amigo Fiel', value: 1280.00, date: '2025-12-21', status: 'signed' },
-  { id: 8, client: 'Beleza & Estilo Salão', value: 1650.00, date: '2025-12-16', status: 'signed' },
-  { id: 9, client: 'Imóveis SP Capital', value: 4200.00, date: '2025-12-11', status: 'signed' },
-  { id: 10, client: 'English Now Idiomas', value: 1890.00, date: '2025-12-06', status: 'signed' },
-  { id: 11, client: 'Burger House Gourmet', value: 2150.00, date: '2025-11-29', status: 'signed' },
-  { id: 12, client: 'Vet Clínica Animal', value: 1540.00, date: '2025-11-23', status: 'signed' },
-  { id: 13, client: 'Loja Urban Wear', value: 1380.00, date: '2025-11-17', status: 'signed' },
-  { id: 14, client: 'Psicologia Mente Sã', value: 1290.00, date: '2025-11-12', status: 'signed' },
+  { id: 1, client: 'Plano Anual', value: 1997, date: '2026-01-24', status: 'signed' },
+  { id: 2, client: 'Plano Trimestral', value: 697, date: '2026-01-22', status: 'signed' },
+  { id: 3, client: 'Plano Anual', value: 1997, date: '2026-01-19', status: 'signed' },
+  { id: 4, client: 'Plano Mensal', value: 297, date: '2026-01-18', status: 'signed' },
+  { id: 5, client: 'Plano Trimestral', value: 697, date: '2026-01-17', status: 'signed' },
+  { id: 6, client: 'Plano Mensal', value: 297, date: '2026-01-16', status: 'signed' },
+  { id: 7, client: 'Plano Anual', value: 1997, date: '2026-01-14', status: 'signed' },
+  { id: 8, client: 'Plano Mensal', value: 297, date: '2026-01-12', status: 'signed' },
+  { id: 9, client: 'Plano Trimestral', value: 697, date: '2026-01-10', status: 'signed' },
+  { id: 10, client: 'Plano Mensal', value: 297, date: '2026-01-08', status: 'signed' },
+  { id: 11, client: 'Plano Anual', value: 1997, date: '2026-01-05', status: 'signed' },
+  { id: 12, client: 'Plano Trimestral', value: 697, date: '2026-01-03', status: 'signed' },
 ];
 
 export function GenesisFinancialTab({ userId, userEmail }: GenesisFinancialTabProps) {
