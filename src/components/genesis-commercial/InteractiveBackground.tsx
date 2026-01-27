@@ -31,17 +31,21 @@ export const InteractiveBackground = () => {
   ];
 
   const initParticles = useCallback((width: number, height: number) => {
-    const particleCount = Math.min(Math.floor((width * height) / 15000), 80);
+    // Reduzir partículas para mobile (melhora performance)
+    const isMobile = width < 768;
+    const particleCount = isMobile 
+      ? Math.min(Math.floor((width * height) / 30000), 25) 
+      : Math.min(Math.floor((width * height) / 15000), 60);
     const particles: Particle[] = [];
     
     for (let i = 0; i < particleCount; i++) {
       particles.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.3,
-        vy: (Math.random() - 0.5) * 0.3,
-        size: Math.random() * 2 + 1,
-        opacity: Math.random() * 0.4 + 0.1,
+        vx: (Math.random() - 0.5) * (isMobile ? 0.15 : 0.3),
+        vy: (Math.random() - 0.5) * (isMobile ? 0.15 : 0.3),
+        size: Math.random() * (isMobile ? 1.5 : 2) + 1,
+        opacity: Math.random() * 0.3 + 0.1,
         color: colors[Math.floor(Math.random() * colors.length)],
       });
     }
@@ -63,8 +67,9 @@ export const InteractiveBackground = () => {
 
     const particles = particlesRef.current;
     const mouse = mouseRef.current;
-    const connectionDistance = 120;
-    const mouseInfluenceRadius = 150;
+    const isMobile = width < 768;
+    const connectionDistance = isMobile ? 80 : 120;
+    const mouseInfluenceRadius = isMobile ? 100 : 150;
 
     // Update and draw particles
     particles.forEach((particle, i) => {
@@ -180,22 +185,10 @@ export const InteractiveBackground = () => {
       {/* Grid pattern - subtle */}
       <div className="absolute inset-0 bg-[linear-gradient(hsl(var(--muted)/0.15)_1px,transparent_1px),linear-gradient(90deg,hsl(var(--muted)/0.15)_1px,transparent_1px)] bg-[size:80px_80px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,black_70%,transparent_100%)]" />
       
-      {/* Floating orbs - using primary color variants */}
-      <motion.div 
-        animate={{ y: [0, -30, 0], x: [0, 15, 0] }}
-        transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-20 right-1/4 w-[400px] h-[400px] md:w-[600px] md:h-[600px] bg-primary/[0.06] rounded-full blur-[100px] md:blur-[120px]" 
-      />
-      <motion.div 
-        animate={{ y: [0, 20, 0], x: [0, -10, 0] }}
-        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute bottom-20 left-1/4 w-[300px] h-[300px] md:w-[400px] md:h-[400px] bg-primary/[0.04] rounded-full blur-[80px] md:blur-[100px]" 
-      />
-      <motion.div 
-        animate={{ y: [0, -15, 0], x: [0, -20, 0] }}
-        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-1/2 right-1/3 w-[200px] h-[200px] md:w-[300px] md:h-[300px] bg-primary/[0.05] rounded-full blur-[70px] md:blur-[90px]" 
-      />
+      {/* Floating orbs - static on mobile for performance, animated on desktop */}
+      <div className="absolute top-20 right-1/4 w-[200px] h-[200px] md:w-[500px] md:h-[500px] bg-primary/[0.05] rounded-full blur-[60px] md:blur-[100px]" />
+      <div className="absolute bottom-20 left-1/4 w-[150px] h-[150px] md:w-[350px] md:h-[350px] bg-primary/[0.04] rounded-full blur-[50px] md:blur-[80px]" />
+      <div className="hidden md:block absolute top-1/2 right-1/3 w-[250px] h-[250px] bg-primary/[0.04] rounded-full blur-[70px]" />
     </div>
   );
 };

@@ -31,7 +31,7 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useGenesisAuth } from '@/contexts/GenesisAuthContext';
-import { WIZARD_STEPS, ProposalFormData, GeneratedProposal } from './types';
+import { WIZARD_STEPS, ProposalFormData, GeneratedProposal, COPY_STYLES } from './types';
 import { ProposalResult } from './ProposalResult';
 
 const iconMap: Record<string, React.ElementType> = {
@@ -57,6 +57,7 @@ export const ProposalWizard = ({ affiliateId }: { affiliateId?: string | null })
     failed_attempts: '',
     dream_result: '',
     contact_phone: '',
+    copy_style: 'balanced',
     ai_questions: []
   });
   const [customNiche, setCustomNiche] = useState('');
@@ -198,7 +199,8 @@ export const ProposalWizard = ({ affiliateId }: { affiliateId?: string | null })
       const { data, error } = await supabase.functions.invoke('luna-generate-full-proposal', {
         body: {
           answers,
-          affiliateName: userName
+          affiliateName: userName,
+          copyStyle: formData.copy_style || 'balanced'
         }
       });
 
@@ -326,6 +328,37 @@ export const ProposalWizard = ({ affiliateId }: { affiliateId?: string | null })
               />
             </motion.div>
           ))}
+
+          {/* Copy Style Selection */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: aiQuestions.length * 0.1 }}
+            className="space-y-2 pt-2 border-t border-white/10"
+          >
+            <label className="text-xs sm:text-sm text-white font-medium flex items-center gap-2">
+              🎯 Estilo da Copy
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {COPY_STYLES.map((style) => (
+                <button
+                  key={style.id}
+                  onClick={() => setFormData(prev => ({ ...prev, copy_style: style.id as any }))}
+                  className={`p-2 rounded-lg text-left transition-all ${
+                    formData.copy_style === style.id
+                      ? 'bg-primary/20 border border-primary/50'
+                      : 'bg-white/5 border border-white/10 hover:bg-white/10'
+                  }`}
+                >
+                  <span className="text-sm">{style.emoji}</span>
+                  <span className={`text-xs font-medium ml-1 ${formData.copy_style === style.id ? 'text-primary' : 'text-white'}`}>
+                    {style.label}
+                  </span>
+                  <p className="text-[10px] text-white/40 mt-0.5">{style.description}</p>
+                </button>
+              ))}
+            </div>
+          </motion.div>
         </div>
 
         {/* Footer */}
