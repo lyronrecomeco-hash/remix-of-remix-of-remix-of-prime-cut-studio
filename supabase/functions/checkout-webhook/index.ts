@@ -188,7 +188,7 @@ serve(async (req) => {
     if (gateway === 'misticpay') {
       const { data, error } = await supabase
         .from('checkout_payments')
-        .select('id, status, payment_code, plan_id, customer_id')
+        .select('id, status, payment_code, plan_id, customer_id, promo_link_id, amount_cents')
         .or(`misticpay_transaction_id.eq.${paymentId},payment_code.ilike.%${paymentId}%`)
         .single();
       payment = data;
@@ -196,7 +196,7 @@ serve(async (req) => {
     } else if (gateway === 'asaas') {
       const { data, error } = await supabase
         .from('checkout_payments')
-        .select('id, status, payment_code, plan_id, customer_id')
+        .select('id, status, payment_code, plan_id, customer_id, promo_link_id, amount_cents')
         .eq('asaas_payment_id', paymentId)
         .single();
       payment = data;
@@ -204,7 +204,7 @@ serve(async (req) => {
     } else {
       const { data, error } = await supabase
         .from('checkout_payments')
-        .select('id, status, payment_code, plan_id, customer_id')
+        .select('id, status, payment_code, plan_id, customer_id, promo_link_id, amount_cents')
         .eq('abacatepay_billing_id', paymentId)
         .single();
       payment = data;
@@ -383,6 +383,69 @@ serve(async (req) => {
             });
 
             console.log('[Subscription Activation] ✅ Complete!');
+          }
+          
+          // ============= REGISTER PROMO REFERRAL =============
+          if (payment.promo_link_id) {
+            console.log('[Promo Referral] Registering referral for promo_link_id:', payment.promo_link_id);
+            
+            try {
+              // Get plan info for referral
+              let planType = 'monthly';
+              let planValue = payment.amount_cents / 100;
+              
+              if (payment.plan_id) {
+                const { data: planData } = await supabase
+                  .from('checkout_plans')
+                  .select('name, duration_months')
+                  .eq('id', payment.plan_id)
+                  .single();
+                
+                if (planData) {
+                  planType = planData.duration_months === 12 ? 'yearly' : 
+                             planData.duration_months === 3 ? 'quarterly' : 'monthly';
+                }
+              }
+              
+              // Check if referral already exists
+              const { data: existingReferral } = await supabase
+                .from('promo_referrals')
+                .select('id')
+                .eq('promo_link_id', payment.promo_link_id)
+                .eq('referred_email', customer.email.toLowerCase())
+                .maybeSingle();
+              
+              if (!existingReferral) {
+                // Create new referral
+                await supabase.from('promo_referrals').insert({
+                  promo_link_id: payment.promo_link_id,
+                  referred_email: customer.email.toLowerCase(),
+                  referred_name: `${customer.first_name} ${customer.last_name}`.trim(),
+                  plan_type: planType,
+                  plan_value: planValue,
+                  payment_id: payment.id,
+                  status: 'active',
+                });
+                
+                console.log('[Promo Referral] ✅ Referral registered successfully');
+              } else {
+                // Update existing referral with payment
+                await supabase
+                  .from('promo_referrals')
+                  .update({
+                    payment_id: payment.id,
+                    plan_value: planValue,
+                    status: 'active',
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq('id', existingReferral.id);
+                
+                console.log('[Promo Referral] ✅ Referral updated with payment');
+              }
+            } catch (referralError) {
+              console.error('[Promo Referral] Error:', referralError);
+              // Don't fail the webhook
+            }
           }
         }
       } catch (activationError) {

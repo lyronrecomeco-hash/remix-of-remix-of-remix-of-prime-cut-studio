@@ -339,7 +339,48 @@ serve(async (req) => {
       // Still return success since refund was processed
     }
 
-    // 7. Log refund event
+    // 7. Block user subscription if they have one
+    const customerEmail = payment.checkout_customers?.email;
+    if (customerEmail) {
+      console.log(`[Refund] Looking for genesis_user with email: ${customerEmail}`);
+      
+      const { data: genesisUser } = await supabase
+        .from('genesis_users')
+        .select('id, auth_user_id')
+        .eq('email', customerEmail.toLowerCase())
+        .maybeSingle();
+
+      if (genesisUser) {
+        console.log(`[Refund] Found genesis_user: ${genesisUser.id}. Blocking subscription...`);
+        
+        // Block the subscription
+        const { error: subError } = await supabase
+          .from('genesis_subscriptions')
+          .update({
+            status: 'blocked',
+            plan: 'free',
+            plan_name: 'Conta Bloqueada - Reembolso',
+            max_instances: 0,
+            max_flows: 0,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('user_id', genesisUser.id);
+
+        if (subError) {
+          console.error('[Refund] Error blocking subscription:', subError);
+        } else {
+          console.log('[Refund] ✅ Subscription blocked successfully');
+        }
+
+        // Update genesis_user status
+        await supabase
+          .from('genesis_users')
+          .update({ status: 'blocked' })
+          .eq('id', genesisUser.id);
+      }
+    }
+
+    // 8. Log refund event
     await supabase
       .from('checkout_payment_events')
       .insert({
@@ -349,6 +390,7 @@ serve(async (req) => {
           gateway,
           amount_cents: payment.amount_cents,
           refunded_at: new Date().toISOString(),
+          user_blocked: !!customerEmail,
         },
         source: 'manual',
       });

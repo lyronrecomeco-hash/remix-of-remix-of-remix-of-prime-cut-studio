@@ -22,6 +22,9 @@ interface CreatePaymentRequest {
   cardToken?: string;
   installments?: number;
   gateway?: 'abacatepay' | 'asaas' | 'misticpay';
+  planId?: string;
+  promoLinkId?: string;
+  source?: string;
 }
 
 // Helper to decrypt API key
@@ -533,6 +536,9 @@ serve(async (req) => {
         expires_at: paymentResult.expiresAt,
         metadata: body.metadata,
         installments: body.installments,
+        plan_id: body.planId || null,
+        promo_link_id: body.promoLinkId || null,
+        source: body.source || 'direct',
       })
       .select('id, payment_code, pix_br_code, pix_qr_code_base64, expires_at, abacatepay_url')
       .single();

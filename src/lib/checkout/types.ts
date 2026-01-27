@@ -71,6 +71,9 @@ export interface CreatePaymentRequest {
   description?: string;
   paymentMethod: 'PIX' | 'CARD';
   installments?: number;
+  planId?: string;
+  promoLinkId?: string;
+  source?: string;
   metadata?: Record<string, unknown>;
 }
 

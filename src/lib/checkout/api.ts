@@ -34,7 +34,17 @@ export async function createPayment(
 ): Promise<CreatePaymentResponse> {
   try {
     const { data, error } = await supabase.functions.invoke('checkout-create-payment', {
-      body: request,
+      body: {
+        customer: request.customer,
+        amountCents: request.amountCents,
+        description: request.description,
+        paymentMethod: request.paymentMethod,
+        installments: request.installments,
+        planId: request.planId,
+        promoLinkId: request.promoLinkId,
+        source: request.source,
+        metadata: request.metadata,
+      },
     });
 
     if (error) {

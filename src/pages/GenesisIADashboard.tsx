@@ -70,6 +70,7 @@ import { SprintMissionTab } from "@/components/genesis-ia/sprint-mission";
 import { GenesisOnboardingGuide } from "@/components/genesis-ia/GenesisOnboardingGuide";
 import { ApiKeysTab } from "@/components/genesis-ia/api-keys";
 import { DevelopmentModal } from "@/components/genesis-ia/modals";
+import { AccountBlockedModal } from "@/components/genesis/AccountBlockedModal";
 
 import GenesisBackground from "@/components/genesis-ia/GenesisBackground";
 import { ViralSaasTab } from "@/components/genesis-ia/viral-apps/ViralSaasTab";
@@ -99,6 +100,9 @@ const GenesisIADashboard = () => {
   const [showWelcome, setShowWelcome] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showDevModal, setShowDevModal] = useState(false);
+  const [isAccountBlocked, setIsAccountBlocked] = useState(false);
+  const [blockReason, setBlockReason] = useState<string>('');
+  
   useEffect(() => {
     checkAuth();
   }, []);
@@ -116,17 +120,34 @@ const GenesisIADashboard = () => {
     // Buscar nome e id do genesis_users (vem do checkout)
     const { data: genesisUser } = await supabase
       .from('genesis_users')
-      .select('id, name')
+      .select('id, name, is_active')
       .eq('auth_user_id', user.id)
       .maybeSingle();
 
    // CRÍTICO: Usar o ID do genesis_users, não auth.id
+   let genesisUserId: string | null = null;
+   
    if (genesisUser?.id) {
+     genesisUserId = genesisUser.id;
      setUserId(genesisUser.id);
    } else {
      // Fallback para auth id se não encontrar genesis_user
      setUserId(user.id);
      console.warn('Genesis user not found, using auth_user_id as fallback');
+   }
+   
+   // Check subscription status for blocked
+   if (genesisUserId) {
+     const { data: subscription } = await supabase
+       .from('genesis_subscriptions')
+       .select('status, plan_name')
+       .eq('user_id', genesisUserId)
+       .maybeSingle();
+     
+     if (subscription?.status === 'blocked') {
+       setIsAccountBlocked(true);
+       setBlockReason(subscription.plan_name || 'Conta bloqueada');
+     }
    }
 
     // Usar primeiro nome do genesis_users, ou do metadata, ou do email
@@ -911,6 +932,12 @@ const GenesisIADashboard = () => {
               isOpen={showDevModal}
               onClose={() => setShowDevModal(false)}
               featureName="Construir Página"
+            />
+            
+            {/* Account Blocked Modal */}
+            <AccountBlockedModal 
+              isOpen={isAccountBlocked}
+              reason={blockReason}
             />
           </div>
         );
