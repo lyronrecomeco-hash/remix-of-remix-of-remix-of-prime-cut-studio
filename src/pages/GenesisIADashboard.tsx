@@ -106,7 +106,7 @@ const GenesisIADashboard = () => {
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      navigate("/genesis-ia");
+      navigate("/login");
       return;
     }
 
@@ -191,7 +191,7 @@ const GenesisIADashboard = () => {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast.success("Até logo!");
-    navigate("/genesis-ia");
+    navigate("/login");
   };
 
   const getGreeting = () => {

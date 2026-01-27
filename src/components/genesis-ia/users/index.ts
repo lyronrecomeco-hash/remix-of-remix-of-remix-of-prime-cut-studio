@@ -1,0 +1,1 @@
+export { WelcomeCredentialsModal } from './WelcomeCredentialsModal';
