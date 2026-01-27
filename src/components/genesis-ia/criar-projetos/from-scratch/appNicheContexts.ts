@@ -758,6 +758,373 @@ interface TicketMessage {
       }
     ]
   },
+  // NOVOS: SAAS
+  {
+    id: 'saas-subscription',
+    name: 'SaaS com Assinaturas',
+    emoji: '💎',
+    description: 'Plataforma SaaS com planos e cobrança recorrente',
+    category: 'saas',
+    contextPrompt: `Plataforma SaaS com múltiplos planos de assinatura, trial gratuito, gestão de billing, área do cliente e painel admin. Integração com gateway de pagamento para cobrança recorrente. Dashboard de métricas de MRR, churn e LTV.`,
+    defaultObjectives: [
+      'Cobrança recorrente automatizada',
+      'Múltiplos planos e preços',
+      'Trial gratuito',
+      'Gestão de assinantes',
+      'Métricas SaaS (MRR, Churn, LTV)',
+      'Painel administrativo'
+    ],
+    suggestedModules: ['Dashboard', 'Assinaturas', 'Planos', 'Clientes', 'Billing', 'Analytics', 'Configurações'],
+    coreFeatures: [
+      'Planos de assinatura',
+      'Checkout integrado',
+      'Portal do cliente',
+      'Upgrade/Downgrade de planos',
+      'Cancelamento e retenção',
+      'Métricas de MRR/ARR',
+      'Webhooks de pagamento',
+      'Emails transacionais'
+    ],
+    databaseEntities: ['usuarios', 'planos', 'assinaturas', 'faturas', 'pagamentos', 'metricas'],
+    userRoles: ['admin', 'subscriber', 'support'],
+    backendRequirements: []
+  },
+  {
+    id: 'saas-white-label',
+    name: 'SaaS White Label',
+    emoji: '🏷️',
+    description: 'Sistema multi-tenant com personalização por cliente',
+    category: 'saas',
+    contextPrompt: `Plataforma SaaS multi-tenant onde cada cliente tem seu próprio ambiente personalizado (cores, logo, domínio). Gestão centralizada para admin e painéis isolados por tenant. Ideal para revenda de software.`,
+    defaultObjectives: [
+      'Multi-tenant isolado',
+      'Personalização por cliente',
+      'Domínio customizado',
+      'Gestão centralizada',
+      'Billing por tenant',
+      'Relatórios por tenant'
+    ],
+    suggestedModules: ['Super Admin', 'Tenants', 'Usuários', 'Configurações', 'Billing', 'Logs'],
+    coreFeatures: [
+      'Isolamento de dados',
+      'Tema por tenant',
+      'Domínio customizado',
+      'Gestão de usuários por tenant',
+      'Limites por plano',
+      'Relatórios consolidados',
+      'Onboarding automatizado'
+    ],
+    databaseEntities: ['tenants', 'tenant_users', 'tenant_configs', 'plans', 'subscriptions'],
+    userRoles: ['super_admin', 'tenant_admin', 'tenant_user'],
+    backendRequirements: []
+  },
+  // DELIVERY E PEDIDOS
+  {
+    id: 'delivery-app',
+    name: 'App de Delivery',
+    emoji: '🛵',
+    description: 'Sistema de pedidos e entregas com tracking',
+    category: 'marketplace',
+    contextPrompt: `Aplicativo de delivery com cardápio digital, carrinho, checkout, pagamento online, acompanhamento em tempo real e gestão de entregadores. Painel admin para restaurantes e dashboard de operações.`,
+    defaultObjectives: [
+      'Cardápio digital completo',
+      'Carrinho e checkout',
+      'Pagamento online',
+      'Tracking em tempo real',
+      'Gestão de entregadores',
+      'Relatórios de vendas'
+    ],
+    suggestedModules: ['Cardápio', 'Pedidos', 'Entregas', 'Clientes', 'Entregadores', 'Pagamentos', 'Relatórios'],
+    coreFeatures: [
+      'Cardápio com fotos',
+      'Carrinho persistente',
+      'Múltiplas formas de pagamento',
+      'Estimativa de tempo',
+      'Tracking do pedido',
+      'Chat com entregador',
+      'Avaliações',
+      'Cupons de desconto'
+    ],
+    databaseEntities: ['produtos', 'categorias', 'pedidos', 'itens_pedido', 'entregas', 'entregadores', 'avaliacoes'],
+    userRoles: ['admin', 'restaurante', 'entregador', 'cliente'],
+    backendRequirements: []
+  },
+  {
+    id: 'ordering-system',
+    name: 'Sistema de Pedidos',
+    emoji: '📋',
+    description: 'Gestão de pedidos para restaurantes e lojas',
+    category: 'gestao',
+    contextPrompt: `Sistema de gestão de pedidos para estabelecimentos com totem de autoatendimento, comanda digital, integração com cozinha/produção e controle de filas. Ideal para fast-food, padarias, açaíterias.`,
+    defaultObjectives: [
+      'Autoatendimento (totem/QR)',
+      'Comanda digital',
+      'Integração com cozinha',
+      'Controle de filas',
+      'Relatórios de vendas',
+      'Gestão de estoque'
+    ],
+    suggestedModules: ['Totem', 'Pedidos', 'Cozinha', 'Caixa', 'Produtos', 'Relatórios'],
+    coreFeatures: [
+      'Interface de totem touch',
+      'QR Code na mesa',
+      'Painel da cozinha',
+      'Chamada por senha',
+      'Impressão de comanda',
+      'Split de pagamento',
+      'Promoções e combos',
+      'Tempo médio de preparo'
+    ],
+    databaseEntities: ['produtos', 'pedidos', 'itens_pedido', 'comandas', 'filas', 'caixas'],
+    userRoles: ['admin', 'caixa', 'cozinha', 'atendente'],
+    backendRequirements: []
+  },
+  {
+    id: 'booking-platform',
+    name: 'Plataforma de Reservas',
+    emoji: '🎫',
+    description: 'Reservas para eventos, restaurantes, hotéis',
+    category: 'gestao',
+    contextPrompt: `Sistema de reservas com disponibilidade em tempo real, confirmação automática, lembretes, gestão de capacidade e integração com calendário. Ideal para restaurantes, hotéis, eventos e espaços.`,
+    defaultObjectives: [
+      'Reservas online 24h',
+      'Disponibilidade em tempo real',
+      'Confirmação automática',
+      'Gestão de capacidade',
+      'Lista de espera',
+      'Relatórios de ocupação'
+    ],
+    suggestedModules: ['Reservas', 'Calendário', 'Clientes', 'Espaços', 'Check-in', 'Relatórios'],
+    coreFeatures: [
+      'Calendário de disponibilidade',
+      'Reserva por período',
+      'Confirmação por WhatsApp/Email',
+      'Lembretes automáticos',
+      'Check-in digital',
+      'Política de cancelamento',
+      'Lista de espera',
+      'Overbooking controlado'
+    ],
+    databaseEntities: ['espacos', 'reservas', 'clientes', 'horarios', 'politicas', 'lista_espera'],
+    userRoles: ['admin', 'recepcionista', 'cliente'],
+    backendRequirements: []
+  },
+  // AUTOMAÇÃO
+  {
+    id: 'workflow-automation',
+    name: 'Automação de Processos',
+    emoji: '🔄',
+    description: 'Builder de workflows e automações',
+    category: 'automacao',
+    contextPrompt: `Plataforma de automação com builder visual de workflows, triggers baseados em eventos, integrações via API e histórico de execuções. Similar a Zapier/n8n para automações internas.`,
+    defaultObjectives: [
+      'Builder visual de workflows',
+      'Triggers automáticos',
+      'Integrações via API',
+      'Histórico de execuções',
+      'Monitoramento de erros',
+      'Templates prontos'
+    ],
+    suggestedModules: ['Workflows', 'Triggers', 'Execuções', 'Integrações', 'Templates', 'Logs'],
+    coreFeatures: [
+      'Editor visual drag-and-drop',
+      'Triggers por evento/tempo',
+      'Ações condicionais',
+      'Variáveis e transformações',
+      'Retry automático',
+      'Webhooks',
+      'Logs detalhados',
+      'Versionamento'
+    ],
+    databaseEntities: ['workflows', 'triggers', 'execucoes', 'logs', 'integracoes', 'templates'],
+    userRoles: ['admin', 'editor', 'viewer'],
+    backendRequirements: []
+  },
+  {
+    id: 'chatbot-builder',
+    name: 'Builder de Chatbots',
+    emoji: '🤖',
+    description: 'Criador de chatbots e fluxos de atendimento',
+    category: 'automacao',
+    contextPrompt: `Plataforma de criação de chatbots com builder visual de fluxos, integração com WhatsApp/Instagram, IA para respostas, transferência para humano e analytics de conversas.`,
+    defaultObjectives: [
+      'Builder visual de fluxos',
+      'Integração WhatsApp',
+      'Respostas com IA',
+      'Transferência para humano',
+      'Analytics de conversas',
+      'Templates por nicho'
+    ],
+    suggestedModules: ['Builder', 'Chatbots', 'Conversas', 'Analytics', 'Integrações', 'Templates'],
+    coreFeatures: [
+      'Editor de fluxos visual',
+      'Variáveis de contexto',
+      'Respostas com IA/GPT',
+      'Menus e botões',
+      'Envio de mídia',
+      'Horário de atendimento',
+      'Filas de atendimento',
+      'Relatórios de performance'
+    ],
+    databaseEntities: ['chatbots', 'fluxos', 'sessoes', 'mensagens', 'analytics', 'templates'],
+    userRoles: ['admin', 'builder', 'atendente'],
+    backendRequirements: []
+  },
+  // COMUNICAÇÃO
+  {
+    id: 'team-chat',
+    name: 'Chat de Equipe',
+    emoji: '💬',
+    description: 'Comunicação interna para times',
+    category: 'comunicacao',
+    contextPrompt: `Plataforma de comunicação para equipes com canais, mensagens diretas, compartilhamento de arquivos, threads e integrações. Similar ao Slack para uso interno.`,
+    defaultObjectives: [
+      'Comunicação em tempo real',
+      'Canais por projeto/equipe',
+      'Mensagens diretas',
+      'Compartilhamento de arquivos',
+      'Busca no histórico',
+      'Integrações'
+    ],
+    suggestedModules: ['Canais', 'Mensagens', 'Arquivos', 'Membros', 'Busca', 'Configurações'],
+    coreFeatures: [
+      'Chat em tempo real',
+      'Canais públicos/privados',
+      'Threads de discussão',
+      'Menções e notificações',
+      'Upload de arquivos',
+      'Emoji reactions',
+      'Busca global',
+      'Status de presença'
+    ],
+    databaseEntities: ['canais', 'mensagens', 'arquivos', 'membros', 'threads', 'notificacoes'],
+    userRoles: ['admin', 'member', 'guest'],
+    backendRequirements: []
+  },
+  // SAÚDE
+  {
+    id: 'clinic-management',
+    name: 'Gestão de Clínicas',
+    emoji: '🏥',
+    description: 'Sistema completo para clínicas e consultórios',
+    category: 'saude',
+    contextPrompt: `Sistema de gestão para clínicas com prontuário eletrônico, agendamento, prescrições, faturamento e relatórios. Compliance com LGPD e segurança de dados de saúde.`,
+    defaultObjectives: [
+      'Prontuário eletrônico',
+      'Agendamento integrado',
+      'Prescrições digitais',
+      'Faturamento',
+      'Relatórios médicos',
+      'Compliance LGPD'
+    ],
+    suggestedModules: ['Agenda', 'Pacientes', 'Prontuários', 'Prescrições', 'Faturamento', 'Relatórios'],
+    coreFeatures: [
+      'Prontuário completo',
+      'Histórico do paciente',
+      'Prescrição digital',
+      'Atestados e laudos',
+      'Agenda visual',
+      'Fila de espera',
+      'Convênios',
+      'Teleconsulta'
+    ],
+    databaseEntities: ['pacientes', 'prontuarios', 'consultas', 'prescricoes', 'documentos', 'convenios'],
+    userRoles: ['admin', 'medico', 'recepcionista', 'paciente'],
+    backendRequirements: []
+  },
+  // FINANCEIRO
+  {
+    id: 'invoice-system',
+    name: 'Faturamento e NF',
+    emoji: '🧾',
+    description: 'Emissão de faturas e notas fiscais',
+    category: 'financeiro',
+    contextPrompt: `Sistema de faturamento com emissão de faturas, boletos, integração com gateway de pagamento, gestão de cobranças e relatórios financeiros. Integração com contabilidade.`,
+    defaultObjectives: [
+      'Emissão de faturas',
+      'Cobrança automática',
+      'Boleto e PIX',
+      'Gestão de inadimplentes',
+      'Relatórios financeiros',
+      'Integração contábil'
+    ],
+    suggestedModules: ['Faturas', 'Clientes', 'Cobranças', 'Pagamentos', 'Relatórios', 'Configurações'],
+    coreFeatures: [
+      'Geração de faturas',
+      'Cobrança recorrente',
+      'Múltiplos gateways',
+      'Régua de cobrança',
+      'Nota fiscal automática',
+      'Conciliação bancária',
+      'Relatório de inadimplência',
+      'API para integrações'
+    ],
+    databaseEntities: ['clientes', 'faturas', 'itens_fatura', 'pagamentos', 'cobrancas', 'notas_fiscais'],
+    userRoles: ['admin', 'financeiro', 'cliente'],
+    backendRequirements: []
+  },
+  // HR / RH
+  {
+    id: 'hr-system',
+    name: 'Gestão de RH',
+    emoji: '👔',
+    description: 'Recursos humanos, folha e colaboradores',
+    category: 'gestao',
+    contextPrompt: `Sistema de RH com cadastro de colaboradores, controle de ponto, férias, folha de pagamento simplificada, avaliações de desempenho e organograma. Portal do colaborador incluso.`,
+    defaultObjectives: [
+      'Cadastro de colaboradores',
+      'Controle de ponto',
+      'Gestão de férias',
+      'Avaliações de desempenho',
+      'Portal do colaborador',
+      'Organograma'
+    ],
+    suggestedModules: ['Colaboradores', 'Ponto', 'Férias', 'Avaliações', 'Portal', 'Relatórios'],
+    coreFeatures: [
+      'Ficha de colaborador',
+      'Registro de ponto',
+      'Banco de horas',
+      'Solicitação de férias',
+      'Avaliação 360°',
+      'Holerite digital',
+      'Documentos do colaborador',
+      'Onboarding digital'
+    ],
+    databaseEntities: ['colaboradores', 'registros_ponto', 'ferias', 'avaliacoes', 'documentos', 'departamentos'],
+    userRoles: ['admin', 'rh', 'gestor', 'colaborador'],
+    backendRequirements: []
+  },
+  // IMOBILIÁRIO
+  {
+    id: 'real-estate',
+    name: 'Sistema Imobiliário',
+    emoji: '🏠',
+    description: 'Gestão de imóveis, locações e vendas',
+    category: 'gestao',
+    contextPrompt: `Sistema para imobiliárias com cadastro de imóveis, gestão de locações e vendas, CRM de clientes, contratos, visitas e integração com portais. Dashboard de performance por corretor.`,
+    defaultObjectives: [
+      'Cadastro de imóveis',
+      'Gestão de locações',
+      'CRM de clientes',
+      'Agendamento de visitas',
+      'Contratos digitais',
+      'Relatórios de vendas'
+    ],
+    suggestedModules: ['Imóveis', 'Clientes', 'Visitas', 'Contratos', 'Corretores', 'Relatórios'],
+    coreFeatures: [
+      'Ficha do imóvel',
+      'Galeria de fotos',
+      'Match imóvel x cliente',
+      'Agenda de visitas',
+      'Proposta digital',
+      'Contrato eletrônico',
+      'Integração com portais',
+      'Comissões'
+    ],
+    databaseEntities: ['imoveis', 'clientes', 'visitas', 'propostas', 'contratos', 'corretores'],
+    userRoles: ['admin', 'corretor', 'proprietario', 'cliente'],
+    backendRequirements: []
+  },
   {
     id: 'outro-app',
     name: 'Outro Sistema',
@@ -786,41 +1153,7 @@ interface TicketMessage {
     ],
     databaseEntities: [],
     userRoles: ['admin', 'operador', 'visualizador'],
-    backendRequirements: [
-      {
-        id: 'base-system',
-        name: 'Estrutura Base',
-        description: 'Autenticação e permissões',
-        technicalSpec: `
-## ESTRUTURA BASE DO SISTEMA
-
-### Autenticação:
-- Supabase Auth para login/registro
-- Tabela profiles com dados do usuário
-- Sistema de roles e permissões
-
-### Estrutura de Permissões:
-\`\`\`typescript
-interface Permission {
-  module: string;
-  actions: ('view' | 'create' | 'edit' | 'delete')[];
-}
-
-interface Role {
-  id: string;
-  name: string;
-  permissions: Permission[];
-}
-\`\`\`
-
-### Dashboard:
-- Cards com métricas principais
-- Gráficos de evolução
-- Tabela de últimas atividades
-- Atalhos para ações frequentes
-`
-      }
-    ]
+    backendRequirements: []
   }
 ];
 

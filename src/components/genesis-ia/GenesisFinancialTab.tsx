@@ -63,12 +63,12 @@ const MOCKED_FINANCIAL_DATA = {
   referrals: 42,
   convertedReferrals: 18,
   revenueHistory: [
-    { month: 'ago', receita: 5200 },
-    { month: 'set', receita: 6800 },
-    { month: 'out', receita: 7100 },
-    { month: 'nov', receita: 7800 },
-    { month: 'dez', receita: 8400 },
-    { month: 'jan', receita: 9200 },
+    { month: 'Ago', receita: 5200 },
+    { month: 'Set', receita: 6800 },
+    { month: 'Out', receita: 7100 },
+    { month: 'Nov', receita: 7800 },
+    { month: 'Dez', receita: 8400 },
+    { month: 'Jan', receita: 9200 },
   ],
 };
 
