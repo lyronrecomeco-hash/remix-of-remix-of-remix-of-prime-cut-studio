@@ -38,6 +38,139 @@ interface ProjectLibraryProps {
 type ViewMode = 'list' | 'evolve';
 type FilterTab = 'all' | 'apps' | 'sites';
 
+// Projetos mockados para conta de conteúdo
+const MOCK_DATA_EMAIL = "lyronrecomeco@gmail.com";
+const MOCKED_PROJECTS: ProjectConfig[] = [
+  {
+    id: 'mock-1',
+    affiliate_id: 'mock',
+    template_slug: 'pizzaria-moderna',
+    template_name: 'Pizzaria do Mário',
+    unique_code: 'PIZZA123',
+    custom_slug: 'pizzaria-mario',
+    config: { businessName: 'Pizzaria do Mário', phone: '11999887766' },
+    is_active: true,
+    views_count: 847,
+    created_at: '2026-01-10T10:00:00Z',
+    updated_at: '2026-01-25T14:30:00Z',
+    client_name: 'Mário Silva',
+    category: 'gastronomia',
+    platform: 'lovable',
+  },
+  {
+    id: 'mock-2',
+    affiliate_id: 'mock',
+    template_slug: 'barbearia-premium',
+    template_name: 'Barbearia Style',
+    unique_code: 'BARBER456',
+    custom_slug: 'barbearia-style',
+    config: { businessName: 'Barbearia Style', phone: '11988776655' },
+    is_active: true,
+    views_count: 523,
+    created_at: '2026-01-08T09:00:00Z',
+    updated_at: '2026-01-24T16:00:00Z',
+    client_name: 'Carlos Mendes',
+    category: 'servicos',
+    platform: 'lovable',
+  },
+  {
+    id: 'mock-3',
+    affiliate_id: 'mock',
+    template_slug: 'clinica-odonto',
+    template_name: 'Odonto Plus Clínica',
+    unique_code: 'ODONTO789',
+    custom_slug: 'odonto-plus',
+    config: { businessName: 'Odonto Plus', phone: '11977665544' },
+    is_active: true,
+    views_count: 312,
+    created_at: '2026-01-05T11:00:00Z',
+    updated_at: '2026-01-22T10:00:00Z',
+    client_name: 'Dra. Ana Costa',
+    category: 'saude',
+    platform: 'bolt',
+  },
+  {
+    id: 'mock-4',
+    affiliate_id: 'mock',
+    template_slug: 'academia-fitness',
+    template_name: 'FitLife Academia',
+    unique_code: 'FIT101',
+    custom_slug: 'fitlife-academia',
+    config: { businessName: 'FitLife', phone: '11966554433' },
+    is_active: true,
+    views_count: 678,
+    created_at: '2025-12-28T08:00:00Z',
+    updated_at: '2026-01-20T12:00:00Z',
+    client_name: 'Roberto Lima',
+    category: 'fitness',
+    platform: 'lovable',
+  },
+  {
+    id: 'mock-5',
+    affiliate_id: 'mock',
+    template_slug: 'restaurante-gourmet',
+    template_name: 'Sabor Caseiro',
+    unique_code: 'REST202',
+    custom_slug: 'sabor-caseiro',
+    config: { businessName: 'Sabor Caseiro', phone: '11955443322' },
+    is_active: true,
+    views_count: 456,
+    created_at: '2025-12-20T14:00:00Z',
+    updated_at: '2026-01-18T09:00:00Z',
+    client_name: 'Maria Santos',
+    category: 'gastronomia',
+    platform: 'lovable',
+  },
+  {
+    id: 'mock-6',
+    affiliate_id: 'mock',
+    template_slug: 'petshop-animal',
+    template_name: 'Animal Love Pet Shop',
+    unique_code: 'PET303',
+    custom_slug: 'animal-love',
+    config: { businessName: 'Animal Love', phone: '11944332211' },
+    is_active: true,
+    views_count: 289,
+    created_at: '2025-12-15T10:00:00Z',
+    updated_at: '2026-01-15T11:00:00Z',
+    client_name: 'Fernanda Oliveira',
+    category: 'pets',
+    platform: 'v0',
+  },
+  {
+    id: 'mock-7',
+    affiliate_id: 'mock',
+    template_slug: 'salao-beleza',
+    template_name: 'Glamour Beleza',
+    unique_code: 'GLAM404',
+    custom_slug: 'glamour-beleza',
+    config: { businessName: 'Glamour', phone: '11933221100' },
+    is_active: true,
+    views_count: 534,
+    created_at: '2025-12-10T16:00:00Z',
+    updated_at: '2026-01-12T08:00:00Z',
+    client_name: 'Juliana Alves',
+    category: 'beleza',
+    platform: 'lovable',
+  },
+  {
+    id: 'mock-8',
+    affiliate_id: 'mock',
+    template_slug: 'hamburgueria-artesanal',
+    template_name: 'Smoke Burger House',
+    unique_code: 'BURG505',
+    custom_slug: 'smoke-burger',
+    config: { businessName: 'Smoke Burger', phone: '11922110099' },
+    is_active: true,
+    views_count: 891,
+    created_at: '2025-11-28T12:00:00Z',
+    updated_at: '2026-01-10T15:00:00Z',
+    client_name: 'Pedro Henrique',
+    category: 'gastronomia',
+    platform: 'lovable',
+  },
+];
+
 export function ProjectLibrary({ affiliateId, onEdit, onCreateNew, onBack }: ProjectLibraryProps) {
   const [projects, setProjects] = useState<ProjectConfig[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +179,7 @@ export function ProjectLibrary({ affiliateId, onEdit, onCreateNew, onBack }: Pro
   const [filterTab, setFilterTab] = useState<FilterTab>('all');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [isMockedAccount, setIsMockedAccount] = useState(false);
   
   // Evolution state
   const [viewMode, setViewMode] = useState<ViewMode>('list');
@@ -88,6 +222,17 @@ export function ProjectLibrary({ affiliateId, onEdit, onCreateNew, onBack }: Pro
 
   const loadProjects = async () => {
     setLoading(true);
+    
+    // Verificar se é conta mockada
+    const { data: affiliateData } = await supabase
+      .from('affiliates')
+      .select('email')
+      .eq('id', affiliateId)
+      .single();
+    
+    const isMocked = affiliateData?.email === MOCK_DATA_EMAIL;
+    setIsMockedAccount(isMocked);
+    
     const { data, error } = await supabase
       .from('affiliate_template_configs')
       .select('*')
@@ -97,8 +242,17 @@ export function ProjectLibrary({ affiliateId, onEdit, onCreateNew, onBack }: Pro
     if (error) {
       console.error('Error loading projects:', error);
       toast.error('Erro ao carregar projetos');
+      // Se for conta mockada, usa os projetos mock mesmo com erro
+      if (isMocked) {
+        setProjects(MOCKED_PROJECTS);
+      }
     } else {
-      setProjects(data as ProjectConfig[]);
+      // Para conta mockada, combina projetos reais com mockados
+      if (isMocked) {
+        setProjects([...MOCKED_PROJECTS, ...(data as ProjectConfig[])]);
+      } else {
+        setProjects(data as ProjectConfig[]);
+      }
     }
     setLoading(false);
   };

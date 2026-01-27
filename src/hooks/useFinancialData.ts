@@ -190,8 +190,12 @@ export function useFinancialData(userId?: string): UseFinancialDataReturn {
         monthPayments.reduce((sum, p) => sum + (p.amount_cents || 0), 0) / 100 +
         monthContracts.reduce((sum, c) => sum + (c.total_value || 0), 0);
 
+      // Capitalizar primeira letra do mês
+      const monthName = date.toLocaleDateString('pt-BR', { month: 'short' });
+      const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1).replace('.', '');
+      
       revenueHistory.push({
-        month: date.toLocaleDateString('pt-BR', { month: 'short' }),
+        month: capitalizedMonth,
         receita,
       });
     }
