@@ -9319,6 +9319,51 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_applications: {
+        Row: {
+          age: number
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          instagram: string | null
+          notes: string | null
+          processed_at: string | null
+          processed_by: string | null
+          status: Database["public"]["Enums"]["partner_application_status"]
+          tiktok: string | null
+          whatsapp: string
+        }
+        Insert: {
+          age: number
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          instagram?: string | null
+          notes?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: Database["public"]["Enums"]["partner_application_status"]
+          tiktok?: string | null
+          whatsapp: string
+        }
+        Update: {
+          age?: number
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          instagram?: string | null
+          notes?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: Database["public"]["Enums"]["partner_application_status"]
+          tiktok?: string | null
+          whatsapp?: string
+        }
+        Relationships: []
+      }
       petshop_categories: {
         Row: {
           created_at: string
@@ -13508,6 +13553,7 @@ export type Database = {
         | "error"
       genesis_plan: "free" | "starter" | "professional" | "enterprise"
       genesis_role: "super_admin" | "admin" | "user"
+      partner_application_status: "pending" | "approved" | "rejected"
       pix_type: "cpf" | "cnpj" | "email" | "phone" | "random"
       proposal_status: "draft" | "sent" | "accepted" | "cancelled"
       referral_status: "pending" | "confirmed" | "cancelled" | "paid"
@@ -13654,6 +13700,7 @@ export const Constants = {
       ],
       genesis_plan: ["free", "starter", "professional", "enterprise"],
       genesis_role: ["super_admin", "admin", "user"],
+      partner_application_status: ["pending", "approved", "rejected"],
       pix_type: ["cpf", "cnpj", "email", "phone", "random"],
       proposal_status: ["draft", "sent", "accepted", "cancelled"],
       referral_status: ["pending", "confirmed", "cancelled", "paid"],
