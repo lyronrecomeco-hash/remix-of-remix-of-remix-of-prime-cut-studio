@@ -136,7 +136,7 @@ export function RadiusFilterModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden bg-[hsl(220,20%,8%)] border-white/10">
+      <DialogContent className="w-[95vw] sm:max-w-4xl max-h-[90dvh] overflow-hidden bg-[hsl(220,20%,8%)] border-white/10 flex flex-col">
         <DialogHeader className="pb-4 border-b border-white/10">
           <DialogTitle className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
@@ -151,7 +151,7 @@ export function RadiusFilterModal({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        <div className="space-y-4 py-2 overflow-y-auto flex-1 min-h-0">
           {/* Search bar - Genesis Style */}
           <div className="flex gap-2">
             <div className="flex-1 relative">
@@ -172,7 +172,7 @@ export function RadiusFilterModal({
           </div>
 
           {/* Map - Genesis Style */}
-          <div className="h-[400px] rounded-xl overflow-hidden border border-white/10 bg-white/5">
+          <div className="h-[260px] sm:h-[400px] rounded-xl overflow-hidden border border-white/10 bg-white/5">
             {showMap ? (
               <RadiusMap
                 center={center}

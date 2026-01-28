@@ -11,7 +11,6 @@ import {
   X,
   RefreshCw,
   Building2,
-  Phone,
   ExternalLink,
   Filter,
   Clock,
@@ -863,7 +862,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                                     ? "text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/30" 
                                     : "text-white/20 cursor-not-allowed"
                                 )}
-                                title={opp.company_phone ? `WhatsApp: ${opp.company_phone}` : 'Telefone não disponível'}
+                                title={opp.company_phone ? 'Abrir WhatsApp' : 'Telefone não disponível'}
                               >
                                 <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
                               </Button>
@@ -885,7 +884,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                                     ? "text-blue-500 hover:text-blue-400 hover:bg-blue-500/10 hover:border-blue-500/30" 
                                     : "text-white/20 cursor-not-allowed"
                                 )}
-                                title={opp.company_email ? `Email: ${opp.company_email}` : 'Email não disponível'}
+                                title={opp.company_email ? 'Abrir Email' : 'Email não disponível'}
                               >
                                 <Mail className="w-4 h-4 sm:w-5 sm:h-5" />
                               </Button>
@@ -1057,18 +1056,49 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                     <span className="text-muted-foreground">{selectedOpportunity.company_city}, {selectedOpportunity.company_country || 'Brasil'}</span>
                   </div>
                 )}
-                {selectedOpportunity.company_phone && (
-                  <div className="flex items-center gap-3 text-sm">
-                    <Phone className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                    <span className="text-muted-foreground">{selectedOpportunity.company_phone}</span>
-                  </div>
-                )}
-                {selectedOpportunity.company_email && (
-                  <div className="flex items-center gap-3 text-sm">
-                    <Mail className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                    <span className="text-muted-foreground">{selectedOpportunity.company_email}</span>
-                  </div>
-                )}
+                <div className="flex items-center gap-2 pt-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={!selectedOpportunity.company_phone}
+                    onClick={() => {
+                      if (selectedOpportunity.company_phone) {
+                        const cleanPhone = selectedOpportunity.company_phone.replace(/\D/g, '');
+                        const phone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+                        window.open(`https://wa.me/${phone}`, '_blank');
+                      }
+                    }}
+                    className={cn(
+                      "h-9 w-9 p-0 border-white/20",
+                      selectedOpportunity.company_phone
+                        ? "text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/30"
+                        : "text-white/20 cursor-not-allowed"
+                    )}
+                    title={selectedOpportunity.company_phone ? 'Abrir WhatsApp' : 'Telefone não disponível'}
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={!selectedOpportunity.company_email}
+                    onClick={() => {
+                      if (selectedOpportunity.company_email) {
+                        window.open(`mailto:${selectedOpportunity.company_email}`, '_blank');
+                      }
+                    }}
+                    className={cn(
+                      "h-9 w-9 p-0 border-white/20",
+                      selectedOpportunity.company_email
+                        ? "text-blue-500 hover:text-blue-400 hover:bg-blue-500/10 hover:border-blue-500/30"
+                        : "text-white/20 cursor-not-allowed"
+                    )}
+                    title={selectedOpportunity.company_email ? 'Abrir Email' : 'Email não disponível'}
+                  >
+                    <Mail className="w-4 h-4" />
+                  </Button>
+                </div>
                 {selectedOpportunity.company_website && (
                   <div className="flex items-center gap-3 text-sm">
                     <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
