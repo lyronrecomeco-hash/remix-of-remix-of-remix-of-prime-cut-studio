@@ -6,7 +6,7 @@ import {
   MapPin, Phone, Globe, Star, Building2, 
   ExternalLink, Copy, Check, Navigation, Users,
   MessageCircle, Zap, Calendar, FileText, ShoppingBag,
-  DollarSign, TrendingUp, Sparkles, Tag
+  DollarSign, TrendingUp, Sparkles, Tag, MessageSquare, Mail
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -15,6 +15,7 @@ interface SearchResult {
   name: string;
   address: string;
   phone?: string;
+  email?: string;
   website?: string;
   rating?: number;
   reviews_count?: number;
@@ -87,26 +88,30 @@ export const GenesisBusinessDetailModal = ({
   const hasWebsite = !!business.website;
   const levelConfig = business.opportunityLevel ? LEVEL_CONFIG[business.opportunityLevel] : null;
 
+  const cleanPhone = business.phone?.replace(/\D/g, '') || '';
+  const whatsappUrl = cleanPhone ? `https://wa.me/${cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`}` : '';
+  const emailUrl = business.email ? `mailto:${business.email}` : '';
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[600px] w-[95vw] p-0 gap-0 overflow-hidden bg-[hsl(222,20%,8%)] border-white/10">
-        {/* Header - Standardized Genesis Style */}
-        <DialogHeader className="px-6 pt-6 pb-5 border-b border-white/10">
-          <DialogTitle className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
-              <Building2 className="w-6 h-6 text-primary" />
+      <DialogContent className="max-w-[95vw] sm:max-w-[600px] p-0 gap-0 overflow-hidden bg-[hsl(222,20%,8%)] border-white/10">
+        {/* Header - Mobile Responsive */}
+        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-4 sm:pb-5 border-b border-white/10">
+          <DialogTitle className="flex items-start gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+              <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-lg leading-tight line-clamp-2 text-foreground">{business.name}</h3>
-              <p className="text-sm text-muted-foreground mt-1">{business.category || business.niche || 'Empresa'}</p>
-              <div className="flex flex-wrap gap-2 mt-3">
+              <h3 className="font-bold text-base sm:text-lg leading-tight line-clamp-2 text-foreground">{business.name}</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">{business.category || business.niche || 'Empresa'}</p>
+              <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2 sm:mt-3">
                 {levelConfig && (
-                  <Badge variant="outline" className={cn("text-xs py-0.5 px-2", levelConfig.color)}>
+                  <Badge variant="outline" className={cn("text-[10px] sm:text-xs py-0 px-1.5 sm:px-2", levelConfig.color)}>
                     {levelConfig.label}
                   </Badge>
                 )}
                 {business.rating && (
-                  <Badge className="bg-primary/10 text-primary border-primary/30 text-xs py-0.5 px-2">
+                  <Badge className="bg-primary/10 text-primary border-primary/30 text-[10px] sm:text-xs py-0 px-1.5 sm:px-2">
                     Score: {Math.round(business.rating * 10)}%
                   </Badge>
                 )}
@@ -115,45 +120,45 @@ export const GenesisBusinessDetailModal = ({
           </DialogTitle>
         </DialogHeader>
 
-        {/* Body */}
-        <div className="px-6 py-5 space-y-5 max-h-[60vh] overflow-y-auto">
-          {/* Value Box - Standardized */}
+        {/* Body - Mobile Responsive */}
+        <div className="px-4 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5 max-h-[50vh] sm:max-h-[60vh] overflow-y-auto">
+          {/* Value Box */}
           {business.estimatedValueMin && business.estimatedValueMax && (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-                <p className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 mb-2">
-                  <DollarSign className="w-3.5 h-3.5 text-primary" /> VALOR ESTIMADO
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              <div className="p-3 sm:p-4 rounded-xl bg-white/5 border border-white/10">
+                <p className="text-[10px] sm:text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1 sm:gap-1.5 mb-1 sm:mb-2">
+                  <DollarSign className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary" /> VALOR
                 </p>
-                <p className="text-sm text-muted-foreground">Min: R$ {business.estimatedValueMin.toLocaleString()}</p>
-                <p className="text-xl font-bold text-primary mt-1">
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Min: R$ {business.estimatedValueMin.toLocaleString()}</p>
+                <p className="text-lg sm:text-xl font-bold text-primary mt-0.5 sm:mt-1">
                   R$ {business.estimatedValueMax.toLocaleString()}
                 </p>
               </div>
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-                <p className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 mb-2">
-                  <TrendingUp className="w-3.5 h-3.5 text-primary" /> RECORRÊNCIA MENSAL
+              <div className="p-3 sm:p-4 rounded-xl bg-white/5 border border-white/10">
+                <p className="text-[10px] sm:text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1 sm:gap-1.5 mb-1 sm:mb-2">
+                  <TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary" /> RECORRÊNCIA
                 </p>
-                <p className="text-xl font-bold text-primary mt-3">
+                <p className="text-lg sm:text-xl font-bold text-primary mt-2 sm:mt-3">
                   +R$ {business.monthlyRecurrence?.toLocaleString()}/mês
                 </p>
               </div>
             </div>
           )}
 
-          {/* AI Description - Highlighted */}
+          {/* AI Description */}
           {business.aiDescription && (
-            <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
-              <p className="text-sm flex items-start gap-2.5">
-                <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+            <div className="p-3 sm:p-4 rounded-xl bg-primary/10 border border-primary/20">
+              <p className="text-xs sm:text-sm flex items-start gap-2 sm:gap-2.5">
+                <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0 mt-0.5" />
                 <span className="text-primary">{business.aiDescription}</span>
               </p>
             </div>
           )}
 
           {/* AI Analysis */}
-          <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-            <p className="text-sm flex items-start gap-2.5">
-              <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+          <div className="p-3 sm:p-4 rounded-xl bg-white/5 border border-white/10">
+            <p className="text-xs sm:text-sm flex items-start gap-2 sm:gap-2.5">
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0 mt-0.5" />
               <span className="text-muted-foreground">
                 {business.name?.toLowerCase().includes('sem') ? 'sem presença digital' : 'análise disponível'} — oportunidade máxima
               </span>
@@ -161,50 +166,49 @@ export const GenesisBusinessDetailModal = ({
           </div>
 
           {/* Contact Info */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium text-foreground">Informações de Contato</h4>
+          <div className="space-y-2 sm:space-y-3">
+            <h4 className="text-xs sm:text-sm font-medium text-foreground">Informações de Contato</h4>
             
-            {/* Address */}
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <Globe className="w-4 h-4 text-primary shrink-0" />
-              <span>{business.address}</span>
+            <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground">
+              <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" />
+              <span className="truncate">{business.address}</span>
             </div>
           </div>
 
           {/* Services */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
-              <Tag className="w-4 h-4 text-primary" />
+          <div className="space-y-2 sm:space-y-3">
+            <h4 className="text-xs sm:text-sm font-medium text-foreground flex items-center gap-2">
+              <Tag className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
               Serviços Recomendados
             </h4>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {business.needsWebsite && (
-                <Badge variant="secondary" className="text-xs bg-white/10 text-foreground border-white/20">
+                <Badge variant="secondary" className="text-[10px] sm:text-xs bg-white/10 text-foreground border-white/20">
                   website
                 </Badge>
               )}
               {business.needsChatbot && (
-                <Badge variant="secondary" className="text-xs bg-white/10 text-foreground border-white/20">
+                <Badge variant="secondary" className="text-[10px] sm:text-xs bg-white/10 text-foreground border-white/20">
                   automation
                 </Badge>
               )}
               {business.needsScheduling && (
-                <Badge variant="secondary" className="text-xs bg-white/10 text-foreground border-white/20">
+                <Badge variant="secondary" className="text-[10px] sm:text-xs bg-white/10 text-foreground border-white/20">
                   WhatsApp
                 </Badge>
               )}
               {business.needsCRM && (
-                <Badge variant="secondary" className="text-xs bg-white/10 text-foreground border-white/20">
+                <Badge variant="secondary" className="text-[10px] sm:text-xs bg-white/10 text-foreground border-white/20">
                   CRM
                 </Badge>
               )}
               {business.needsMarketing && (
-                <Badge variant="secondary" className="text-xs bg-white/10 text-foreground border-white/20">
+                <Badge variant="secondary" className="text-[10px] sm:text-xs bg-white/10 text-foreground border-white/20">
                   marketing
                 </Badge>
               )}
               {business.needsEcommerce && (
-                <Badge variant="secondary" className="text-xs bg-white/10 text-foreground border-white/20">
+                <Badge variant="secondary" className="text-[10px] sm:text-xs bg-white/10 text-foreground border-white/20">
                   e-commerce
                 </Badge>
               )}
@@ -212,13 +216,13 @@ export const GenesisBusinessDetailModal = ({
           </div>
 
           {/* Region & Date */}
-          <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2">
-            <span className="flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5" />
-              Região: {business.address?.split(',').pop()?.trim() || 'N/A'}
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-[10px] sm:text-xs text-muted-foreground pt-2">
+            <span className="flex items-center gap-1 sm:gap-1.5">
+              <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              {business.address?.split(',').pop()?.trim() || 'N/A'}
             </span>
-            <span className="flex items-center gap-1.5">
-              📅 Encontrado: {new Date().toLocaleDateString('pt-BR')}
+            <span className="flex items-center gap-1 sm:gap-1.5">
+              📅 {new Date().toLocaleDateString('pt-BR')}
             </span>
           </div>
 
@@ -226,40 +230,75 @@ export const GenesisBusinessDetailModal = ({
           <div className="pt-2">
             <Button
               variant="outline"
-              className="w-full gap-2 bg-white/5 border-white/10 hover:bg-white/10 text-sm"
+              className="w-full gap-2 bg-white/5 border-white/10 hover:bg-white/10 text-xs sm:text-sm h-9 sm:h-10"
               onClick={() => window.open(googlePlaceUrl, '_blank')}
             >
-              <ExternalLink className="w-4 h-4" />
+              <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               Pesquisar no Google
             </Button>
           </div>
         </div>
 
-        {/* Footer - Action Buttons */}
-        <div className="px-6 py-5 border-t border-white/10 flex gap-3">
-          <Button
-            variant="outline"
-            className="flex-1 bg-white/5 border-white/10 hover:bg-white/10"
-            onClick={() => onOpenChange(false)}
-          >
-            Rejeitar
-          </Button>
-          <Button
-            variant="outline"
-            className="flex-1 bg-white/5 border-white/10 hover:bg-white/10"
-            onClick={() => onOpenChange(false)}
-          >
-            Salvar
-          </Button>
-          <Button
-            className="flex-1 gap-2"
-            onClick={() => {
-              onAcceptProject();
-              onOpenChange(false);
-            }}
-          >
-            Aceitar
-          </Button>
+        {/* Footer - Action Buttons with WhatsApp/Email */}
+        <div className="px-4 sm:px-6 py-4 sm:py-5 border-t border-white/10 space-y-3">
+          {/* Contact Buttons */}
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              disabled={!business.phone}
+              onClick={() => whatsappUrl && window.open(whatsappUrl, '_blank')}
+              className={cn(
+                "flex-1 gap-1.5 h-9 sm:h-10 text-xs sm:text-sm",
+                business.phone 
+                  ? "text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/10" 
+                  : "text-muted-foreground/50 border-white/10 cursor-not-allowed"
+              )}
+            >
+              <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              WhatsApp
+            </Button>
+            <Button
+              variant="outline"
+              disabled={!business.email}
+              onClick={() => emailUrl && window.open(emailUrl, '_blank')}
+              className={cn(
+                "flex-1 gap-1.5 h-9 sm:h-10 text-xs sm:text-sm",
+                business.email 
+                  ? "text-blue-500 border-blue-500/30 hover:bg-blue-500/10" 
+                  : "text-muted-foreground/50 border-white/10 cursor-not-allowed"
+              )}
+            >
+              <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              Email
+            </Button>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 sm:gap-3">
+            <Button
+              variant="outline"
+              className="flex-1 bg-white/5 border-white/10 hover:bg-white/10 h-9 sm:h-10 text-xs sm:text-sm"
+              onClick={() => onOpenChange(false)}
+            >
+              Rejeitar
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1 bg-white/5 border-white/10 hover:bg-white/10 h-9 sm:h-10 text-xs sm:text-sm"
+              onClick={() => onOpenChange(false)}
+            >
+              Salvar
+            </Button>
+            <Button
+              className="flex-1 gap-2 h-9 sm:h-10 text-xs sm:text-sm"
+              onClick={() => {
+                onAcceptProject();
+                onOpenChange(false);
+              }}
+            >
+              Aceitar
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

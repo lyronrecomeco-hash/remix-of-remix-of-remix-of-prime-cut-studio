@@ -26,7 +26,7 @@ import {
   CheckCircle2,
   XCircle,
   Eye,
-  
+  Mail
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,6 +49,7 @@ interface SearchResult {
   name: string;
   address: string;
   phone?: string;
+  email?: string;
   website?: string;
   rating?: number;
   reviews_count?: number;
@@ -654,8 +655,46 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
                       )}
                     </div>
 
-                    {/* Actions */}
+                    {/* Actions - WhatsApp / Email / Details */}
                     <div className="flex items-center gap-2 pt-3 border-t border-white/10">
+                      {/* WhatsApp Button */}
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        disabled={!result.phone}
+                        onClick={() => {
+                          if (result.phone) {
+                            const cleanPhone = result.phone.replace(/\D/g, '');
+                            const phone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+                            window.open(`https://wa.me/${phone}`, '_blank');
+                          }
+                        }}
+                        className={cn(
+                          "gap-1.5 h-8 text-xs",
+                          result.phone 
+                            ? "text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/10" 
+                            : "text-muted-foreground/50 border-white/10 cursor-not-allowed"
+                        )}
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                      </Button>
+                      
+                      {/* Email Button */}
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        disabled={!result.email}
+                        onClick={() => result.email && window.open(`mailto:${result.email}`, '_blank')}
+                        className={cn(
+                          "gap-1.5 h-8 text-xs",
+                          result.email 
+                            ? "text-blue-500 border-blue-500/30 hover:bg-blue-500/10" 
+                            : "text-muted-foreground/50 border-white/10 cursor-not-allowed"
+                        )}
+                      >
+                        <Mail className="w-3.5 h-3.5" />
+                      </Button>
+
                       <Button 
                         onClick={() => handleAcceptProject(result)}
                         size="sm"
@@ -669,7 +708,7 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
                         className="gap-2 h-8 text-xs bg-white/5 border-white/10 hover:bg-white/10"
                         onClick={() => openBusinessDetail(result)}
                       >
-                        <Eye className="w-3.5 h-3.5" /> Detalhes
+                        <Eye className="w-3.5 h-3.5" />
                       </Button>
                     </div>
                   </div>
