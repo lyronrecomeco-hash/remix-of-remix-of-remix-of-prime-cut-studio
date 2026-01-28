@@ -15,7 +15,12 @@ import {
   Building2,
   Crown,
   Sparkles,
-  Handshake
+  Handshake,
+  Wifi,
+  WifiOff,
+  Timer,
+  MonitorSmartphone,
+  Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,6 +53,18 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { WelcomeCredentialsModal } from './users/WelcomeCredentialsModal';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
+interface UserPresence {
+  user_id: string;
+  is_online: boolean;
+  last_seen_at: string | null;
+  last_login_at: string | null;
+  current_page: string | null;
+  device_info: string | null;
+  session_started_at: string | null;
+}
 
 interface GenesisUser {
   id: string;
@@ -71,6 +88,7 @@ interface GenesisUsersTabProps {
 
 export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
   const [users, setUsers] = useState<GenesisUser[]>([]);
+  const [presenceData, setPresenceData] = useState<Record<string, UserPresence>>({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -148,9 +166,83 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
     }
   }, []);
 
+  const fetchPresenceData = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_presence')
+        .select('*');
+
+      if (error) {
+        console.error('Error fetching presence:', error);
+        return;
+      }
+
+      const presenceMap: Record<string, UserPresence> = {};
+      data?.forEach(p => {
+        presenceMap[p.user_id] = p as UserPresence;
+      });
+      setPresenceData(presenceMap);
+    } catch (error) {
+      console.error('Error fetching presence data:', error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchUsers();
-  }, [fetchUsers]);
+    fetchPresenceData();
+
+    // Realtime presence updates
+    const presenceChannel = supabase
+      .channel('genesis-user-presence-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_presence'
+        },
+        (payload) => {
+          const newData = payload.new as Record<string, unknown>;
+          if (newData && 'user_id' in newData) {
+            setPresenceData(prev => ({
+              ...prev,
+              [newData.user_id as string]: newData as unknown as UserPresence
+            }));
+          }
+        }
+      )
+      .subscribe();
+
+    // Atualizar presença a cada 30s
+    const interval = setInterval(fetchPresenceData, 30000);
+
+    return () => {
+      supabase.removeChannel(presenceChannel);
+      clearInterval(interval);
+    };
+  }, [fetchUsers, fetchPresenceData]);
+
+  // Função para formatar tempo desde última atividade
+  const formatLastSeen = (lastSeen: string | null): string => {
+    if (!lastSeen) return 'Nunca';
+    try {
+      return formatDistanceToNow(new Date(lastSeen), { addSuffix: true, locale: ptBR });
+    } catch {
+      return 'Inválido';
+    }
+  };
+
+  // Função para verificar se está realmente online (visto nos últimos 2 min)
+  const isReallyOnline = (authUserId: string): boolean => {
+    const presence = presenceData[authUserId];
+    if (!presence?.is_online) return false;
+    if (!presence.last_seen_at) return false;
+    const twoMinutesAgo = Date.now() - 2 * 60 * 1000;
+    return new Date(presence.last_seen_at).getTime() > twoMinutesAgo;
+  };
+
+  // Contadores
+  const onlineCount = users.filter(u => isReallyOnline(u.auth_user_id)).length;
 
   const resetForm = () => {
     setFormData({ name: '', email: '', password: '', phone: '', company_name: '', is_active: true, user_type: 'client' });
@@ -290,7 +382,13 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
           </div>
           <div>
             <h2 className="text-xl font-semibold text-white">Gerenciar Usuários</h2>
-            <p className="text-sm text-white/50">{users.length} usuário(s)</p>
+            <div className="flex items-center gap-3 text-sm">
+              <span className="text-white/50">{users.length} usuário(s)</span>
+              <span className="flex items-center gap-1 text-emerald-400">
+                <Wifi className="w-3 h-3 animate-pulse" />
+                {onlineCount} online
+              </span>
+            </div>
           </div>
         </div>
         <Button onClick={openCreateModal} className="gap-2"><Plus className="w-4 h-4" />Novo Usuário</Button>
@@ -314,17 +412,39 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
         </Card>
       ) : (
         <div className="grid gap-3">
-          {filteredUsers.map((user) => (
-            <Card key={user.id} className={`bg-white/5 border-white/10 ${!user.is_active ? 'opacity-60' : ''}`} style={{ borderRadius: '14px' }}>
+          {filteredUsers.map((user) => {
+            const online = isReallyOnline(user.auth_user_id);
+            const presence = presenceData[user.auth_user_id];
+            
+            return (
+            <Card key={user.id} className={`bg-white/5 border-white/10 ${!user.is_active ? 'opacity-60' : ''} ${online ? 'border-emerald-500/30 bg-emerald-500/5' : ''}`} style={{ borderRadius: '14px' }}>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-                      <span className="text-sm font-medium text-white">{user.name.charAt(0).toUpperCase()}</span>
+                    {/* Avatar com indicador online */}
+                    <div className="relative">
+                      <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                        <span className="text-sm font-medium text-white">{user.name.charAt(0).toUpperCase()}</span>
+                      </div>
+                      {online && (
+                        <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-background animate-pulse" />
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-medium truncate text-white">{user.name}</p>
+                        {/* Badge Online/Offline */}
+                        {online ? (
+                          <Badge className="text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                            <Wifi className="w-3 h-3 mr-1" />
+                            Online
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="text-xs bg-white/5 text-white/40">
+                            <WifiOff className="w-3 h-3 mr-1" />
+                            Offline
+                          </Badge>
+                        )}
                         {!user.is_active && <Badge variant="secondary" className="text-xs bg-white/10 text-white/50">Inativo</Badge>}
                         {/* Plano */}
                         {user.subscription_plan_name ? (
@@ -340,7 +460,7 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
                         ) : (
                           <Badge variant="outline" className="text-xs border-white/20 text-white/40">Free</Badge>
                         )}
-                        {/* Status */}
+                        {/* Status Assinatura */}
                         {user.subscription_status === 'active' ? (
                           <Badge className="text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Ativo</Badge>
                         ) : user.subscription_status === 'expired' ? (
@@ -349,11 +469,30 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
                           <Badge className="text-xs bg-amber-500/20 text-amber-400 border-amber-500/30">Trial</Badge>
                         ) : null}
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-white/50">
+                      <div className="flex items-center gap-2 text-sm text-white/50 flex-wrap">
                         <span className="truncate">{user.email}</span>
                         {user.subscription_expires_at && (
                           <span className="text-xs text-white/30">
                             • Expira: {new Date(user.subscription_expires_at).toLocaleDateString('pt-BR')}
+                          </span>
+                        )}
+                      </div>
+                      {/* Info de Presença */}
+                      <div className="flex items-center gap-3 mt-1 text-xs text-white/40 flex-wrap">
+                        <span className="flex items-center gap-1">
+                          <Timer className="w-3 h-3" />
+                          Visto: {formatLastSeen(presence?.last_seen_at ?? null)}
+                        </span>
+                        {presence?.last_login_at && (
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            Login: {formatLastSeen(presence.last_login_at)}
+                          </span>
+                        )}
+                        {online && presence?.current_page && (
+                          <span className="flex items-center gap-1 text-emerald-400/70">
+                            <MonitorSmartphone className="w-3 h-3" />
+                            {presence.current_page}
                           </span>
                         )}
                       </div>
@@ -376,7 +515,7 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
                 </div>
               </CardContent>
             </Card>
-          ))}
+          )})}
         </div>
       )}
 
