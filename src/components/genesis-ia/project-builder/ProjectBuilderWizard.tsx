@@ -105,35 +105,35 @@ const WizardContent: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   return (
     <div className="w-full min-h-[calc(100vh-200px)]">
       {/* Main Container with proper max-width for desktop */}
-      <div className="w-full max-w-6xl mx-auto">
+      <div className="w-full max-w-6xl mx-auto px-2 sm:px-4">
         
         {/* Header Section */}
-        <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-2xl p-6 lg:p-8 mb-8">
-          <div className="flex items-center gap-4 lg:gap-6">
+        <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 mb-4 sm:mb-6 lg:mb-8">
+          <div className="flex items-center gap-3 sm:gap-4 lg:gap-6">
             <Button 
               variant="outline" 
               size="icon" 
               onClick={handleBack} 
-              className="h-12 w-12 rounded-xl shrink-0"
+              className="h-9 w-9 sm:h-10 sm:w-10 lg:h-12 lg:w-12 rounded-lg sm:rounded-xl shrink-0"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </Button>
             
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-3xl lg:text-4xl">{selectedTemplate?.icon}</span>
-                <h1 className="text-2xl lg:text-3xl font-bold text-foreground truncate">
+              <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2">
+                <span className="text-2xl sm:text-3xl lg:text-4xl">{selectedTemplate?.icon}</span>
+                <h1 className="text-lg sm:text-xl lg:text-3xl font-bold text-foreground truncate">
                   {selectedTemplate?.name}
                 </h1>
               </div>
-              <p className="text-base lg:text-lg text-muted-foreground">
+              <p className="text-xs sm:text-sm lg:text-lg text-muted-foreground line-clamp-2">
                 {STEP_DESCRIPTIONS[currentStep - 1]}
               </p>
             </div>
 
-            <div className="hidden md:flex items-center gap-2 bg-background/80 backdrop-blur-sm rounded-xl px-4 py-2 border border-border">
-              <Sparkles className="w-5 h-5 text-primary" />
-              <span className="text-sm font-medium text-foreground">
+            <div className="hidden md:flex items-center gap-2 bg-background/80 backdrop-blur-sm rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 border border-border">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+              <span className="text-xs sm:text-sm font-medium text-foreground">
                 Etapa {currentStep} de {totalSteps}
               </span>
             </div>
@@ -141,7 +141,7 @@ const WizardContent: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         </div>
 
         {/* Progress Steps - Desktop Style */}
-        <div className="hidden lg:block mb-10">
+        <div className="hidden lg:block mb-6 lg:mb-10">
           <div className="flex items-center justify-between">
             {STEP_TITLES.map((title, i) => {
               const stepNum = i + 1;
@@ -153,7 +153,7 @@ const WizardContent: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   <div className="flex flex-col items-center">
                     <div
                       className={`
-                        w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300
+                        w-10 h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center font-bold text-sm lg:text-lg transition-all duration-300
                         ${isCompleted 
                           ? 'bg-primary text-primary-foreground' 
                           : isActive 
@@ -162,15 +162,15 @@ const WizardContent: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         }
                       `}
                     >
-                      {isCompleted ? <Check className="w-6 h-6" /> : stepNum}
+                      {isCompleted ? <Check className="w-5 h-5 lg:w-6 lg:h-6" /> : stepNum}
                     </div>
-                    <span className={`mt-2 text-sm font-medium ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
+                    <span className={`mt-2 text-xs lg:text-sm font-medium ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
                       {title}
                     </span>
                   </div>
                   
                   {i < STEP_TITLES.length - 1 && (
-                    <div className={`flex-1 h-1 mx-2 rounded-full transition-colors ${
+                    <div className={`flex-1 h-1 mx-1 lg:mx-2 rounded-full transition-colors ${
                       i < currentStep - 1 ? 'bg-primary' : 'bg-muted'
                     }`} />
                   )}
@@ -181,20 +181,20 @@ const WizardContent: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         </div>
 
         {/* Mobile Progress */}
-        <div className="lg:hidden mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium text-foreground">
+        <div className="lg:hidden mb-4 sm:mb-6">
+          <div className="flex items-center justify-between mb-2 sm:mb-3">
+            <span className="text-xs sm:text-sm font-medium text-foreground">
               {STEP_TITLES[currentStep - 1]}
             </span>
-            <span className="text-sm text-muted-foreground">
+            <span className="text-xs sm:text-sm text-muted-foreground">
               {currentStep} / {totalSteps}
             </span>
           </div>
-          <div className="flex gap-1.5">
+          <div className="flex gap-1 sm:gap-1.5">
             {Array.from({ length: totalSteps }).map((_, i) => (
               <div
                 key={i}
-                className={`h-2 flex-1 rounded-full transition-colors ${
+                className={`h-1.5 sm:h-2 flex-1 rounded-full transition-colors ${
                   i < currentStep ? 'bg-primary' : 'bg-muted'
                 }`}
               />
@@ -203,7 +203,7 @@ const WizardContent: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         </div>
 
         {/* Content Card */}
-        <div className="bg-card border border-border rounded-2xl p-6 lg:p-10 shadow-sm">
+        <div className="bg-card border border-border rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-10 shadow-sm">
           <AnimatePresence mode="wait">
             <motion.div
               key={showResult ? 'result' : currentStep}
@@ -211,7 +211,7 @@ const WizardContent: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3, ease: 'easeOut' }}
-              className="min-h-[400px] lg:min-h-[500px]"
+              className="min-h-[350px] sm:min-h-[400px] lg:min-h-[500px]"
             >
               {showResult ? <StepResult /> : renderStep()}
             </motion.div>
@@ -220,14 +220,14 @@ const WizardContent: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
         {/* Navigation Footer */}
         {!showResult && (
-          <div className="flex flex-col sm:flex-row justify-between gap-4 mt-8 pt-6 border-t border-border">
+          <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-4 mt-4 sm:mt-6 lg:mt-8 pt-4 sm:pt-6 border-t border-border">
             <Button 
               variant="outline" 
               onClick={handleBack}
               size="lg"
-              className="h-12 px-6 text-base"
+              className="h-10 sm:h-11 lg:h-12 px-4 sm:px-6 text-sm sm:text-base order-2 sm:order-1"
             >
-              <ArrowLeft className="w-5 h-5 mr-2" />
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
               Voltar
             </Button>
 
@@ -235,17 +235,17 @@ const WizardContent: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               onClick={nextStep} 
               disabled={!canProceed}
               size="lg"
-              className="h-12 px-8 text-base"
+              className="h-10 sm:h-11 lg:h-12 px-4 sm:px-6 lg:px-8 text-sm sm:text-base order-1 sm:order-2"
             >
               {isLastStep ? (
                 <>
-                  <Sparkles className="w-5 h-5 mr-2" />
+                  <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                   Gerar Prompt
                 </>
               ) : (
                 <>
                   Próximo
-                  <ArrowRight className="w-5 h-5 ml-2" />
+                  <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2" />
                 </>
               )}
             </Button>

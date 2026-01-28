@@ -43,18 +43,18 @@ export const StepFeatures: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="text-center mb-10">
-        <h3 className="text-2xl lg:text-3xl font-bold text-foreground mb-3">
+    <div className="space-y-6 px-2 sm:px-0">
+      <div className="text-center mb-6 sm:mb-10">
+        <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-2 sm:mb-3">
           Funcionalidades Específicas
         </h3>
-        <p className="text-base lg:text-lg text-muted-foreground max-w-xl mx-auto">
+        <p className="text-sm sm:text-base lg:text-lg text-muted-foreground max-w-xl mx-auto px-2">
           Recursos que seu {selectedTemplate?.name} precisa
         </p>
       </div>
 
       <div className="max-w-4xl mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
           {allFeatures.map((feature, index) => {
             const isSelected = formData.selectedFeatures.includes(feature);
             const isSuggested = selectedTemplate?.specificFeatures.includes(feature);
@@ -67,7 +67,7 @@ export const StepFeatures: React.FC = () => {
                 transition={{ delay: index * 0.03 }}
                 onClick={() => toggleFeature(feature)}
                 className={`
-                  flex items-center gap-4 p-5 rounded-xl border-2 transition-all text-left
+                  flex items-center gap-3 sm:gap-4 p-3 sm:p-4 lg:p-5 rounded-xl border-2 transition-all text-left
                   ${isSelected 
                     ? 'border-primary bg-primary/10 shadow-md shadow-primary/10' 
                     : 'border-border bg-background hover:border-primary/50 hover:shadow-md'
@@ -75,17 +75,17 @@ export const StepFeatures: React.FC = () => {
                 `}
               >
                 <div className={`
-                  w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0
+                  w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 rounded-lg flex items-center justify-center flex-shrink-0
                   ${isSelected ? 'bg-primary' : 'border-2 border-muted-foreground/30'}
                 `}>
-                  {isSelected && <Check className="w-4 h-4 text-primary-foreground" />}
+                  {isSelected && <Check className="w-3 h-3 sm:w-4 sm:h-4 text-primary-foreground" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className={`text-base ${isSelected ? 'text-primary font-medium' : 'text-foreground'}`}>
+                  <span className={`text-sm sm:text-base ${isSelected ? 'text-primary font-medium' : 'text-foreground'}`}>
                     {feature}
                   </span>
                   {isSuggested && (
-                    <span className="ml-2 text-sm text-primary/60">✨</span>
+                    <span className="ml-1 sm:ml-2 text-xs sm:text-sm text-primary/60">✨</span>
                   )}
                 </div>
               </motion.button>
@@ -93,7 +93,7 @@ export const StepFeatures: React.FC = () => {
           })}
         </div>
 
-        <p className="text-sm text-muted-foreground mt-8 text-center">
+        <p className="text-xs sm:text-sm text-muted-foreground mt-6 sm:mt-8 text-center">
           ✨ Funcionalidades recomendadas para {selectedTemplate?.name}
         </p>
       </div>
