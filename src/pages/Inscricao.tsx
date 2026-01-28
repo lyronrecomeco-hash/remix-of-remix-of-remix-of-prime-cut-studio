@@ -25,7 +25,7 @@ const applicationSchema = z.object({
   age: z.number().min(16, 'Idade mínima: 16 anos').max(100, 'Idade inválida'),
   whatsapp: z.string().min(10, 'WhatsApp inválido'),
   instagram: z.string().optional(),
-  tiktok: z.string().optional(),
+  tiktok: z.string().min(2, 'TikTok é obrigatório'),
 });
 
 const Inscricao = () => {
@@ -47,7 +47,7 @@ const Inscricao = () => {
     {
       icon: TrendingUp,
       title: 'Ganhe por Prospecção',
-      description: 'Receba comissões por cada cliente que você trouxer para a plataforma.'
+      description: 'Use as ferramentas do painel para prospectar empresas e vender SaaS, ganhando comissões.'
     },
     {
       icon: Users,
@@ -56,13 +56,13 @@ const Inscricao = () => {
     },
     {
       icon: Video,
-      title: 'Conteúdo Pronto',
-      description: 'Acesse templates e materiais prontos para criar seus vídeos.'
+      title: 'Gerador de Roteiros',
+      description: 'Crie roteiros virais para TikTok com IA para seus vídeos de divulgação.'
     },
     {
       icon: Sparkles,
       title: 'Ferramentas Premium',
-      description: 'Acesso completo ao painel Genesis Hub para criar conteúdo.'
+      description: 'Acesso completo ao painel Genesis Hub para criar conteúdo e prospectar.'
     }
   ];
 
@@ -155,9 +155,11 @@ const Inscricao = () => {
             <span className="hidden sm:inline">Voltar</span>
           </button>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
+            <img 
+              src="/genesis-logo.png" 
+              alt="Genesis Hub" 
+              className="w-10 h-10 object-contain"
+            />
             <span className="font-bold text-lg text-white">Genesis Hub</span>
           </div>
           <div className="w-20" />
@@ -358,13 +360,16 @@ const Inscricao = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-white">TikTok (opcional)</label>
+                    <label className="text-sm font-medium text-white">TikTok *</label>
                     <Input
                       placeholder="@seutiktok"
                       value={formData.tiktok}
                       onChange={(e) => handleInputChange('tiktok', e.target.value)}
                       className="h-12 bg-white/5 border-white/10 text-white placeholder:text-white/40"
                     />
+                    {errors.tiktok && (
+                      <p className="text-sm text-red-400">{errors.tiktok}</p>
+                    )}
                   </div>
                 </div>
 
