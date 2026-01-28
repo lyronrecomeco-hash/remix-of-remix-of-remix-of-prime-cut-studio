@@ -84,74 +84,7 @@ interface GuideSection {
   steps: Step[];
 }
 
-const goldenTips = [
-  {
-    icon: Target,
-    title: "Escolha nichos MUITO lucrativos",
-    tip: "Clínicas de estética, barbearias premium, restaurantes com delivery, clínicas odontológicas e advocacias têm maior ticket médio e conversão. Foque em negócios que faturam acima de R$15k/mês - eles valorizam mais a presença digital e têm dinheiro para investir. Evite MEIs pequenos no começo.",
-    extra: "NICHOS TOP 5: 1) Clínicas de estética (ticket R$2-5k), 2) Odontologia (ticket R$1.5-4k), 3) Advocacia (ticket R$2-6k), 4) Barbearias premium (ticket R$800-2k), 5) Restaurantes/delivery (ticket R$1-3k)"
-  },
-  {
-    icon: Star,
-    title: "Mire em empresas com 1-3 estrelas",
-    tip: "Empresas com avaliações baixas no Google estão DESESPERADAS por ajuda - são leads muito mais quentes! Elas sabem que precisam melhorar e estão abertas a soluções. Mencione as avaliações na abordagem de forma sutil: 'Vi que vocês têm algumas avaliações que poderiam ser melhores...'",
-    extra: "SCRIPT: 'Olá [nome], vi a [empresa] no Google e percebi que vocês têm algumas avaliações que não refletem a qualidade do serviço de vocês. Isso acontece muito quando não tem uma presença digital forte. Posso ajudar a virar esse jogo!'"
-  },
-  {
-    icon: Zap,
-    title: "Responda em até 5 minutos - SEMPRE",
-    tip: "Leads respondidos em menos de 5 minutos têm 21x mais chances de converter do que leads respondidos após 30 minutos. Configure notificações no celular, tenha templates prontos para resposta rápida e NUNCA deixe para depois. A velocidade mata 100% da concorrência que demora horas ou dias!",
-    extra: "DICA PRÁTICA: Crie atalhos de texto no seu celular com respostas prontas. No iPhone: Ajustes > Geral > Teclado > Substituição de Texto. No Android: use apps como Texpand."
-  },
-  {
-    icon: MessageSquare,
-    title: "Use áudio de 30-60 segundos no WhatsApp",
-    tip: "Mensagens de áudio personalizadas geram 3x mais respostas que texto puro. Seja pessoal, mencione o nome da empresa, comente algo específico que você viu (avaliação, foto, post). Mostre que você REALMENTE pesquisou sobre o negócio deles - isso diferencia você de 99% dos concorrentes que mandam msg genérica.",
-    extra: "ESTRUTURA DO ÁUDIO: 1) Cumprimento pessoal (5s), 2) Porque está entrando em contato (10s), 3) O que você notou sobre o negócio deles (15s), 4) Sua solução resumida (15s), 5) CTA com próximo passo (10s). Total: ~55 segundos."
-  },
-  {
-    icon: Link,
-    title: "SEMPRE inclua o link demo do site - É OBRIGATÓRIO!",
-    tip: "Propostas com link do site demo têm 7x mais conversão (de 5% para 35%!). O cliente PRECISA visualizar o site funcionando com o nome dele, as cores dele, personalizado. Crie o demo ANTES de enviar a proposta - essa é a chave absoluta do fechamento. Sem link = sem venda.",
-    extra: "O link demo é a sua maior arma de vendas. Quando o cliente vê o site PRONTO com o nome da empresa dele, ele já se imagina com aquilo. É muito mais fácil vender algo que a pessoa pode VER e TOCAR do que uma promessa abstrata."
-  },
-  {
-    icon: Clock,
-    title: "Crie urgência REAL (não fake)",
-    tip: "Ofereça desconto genuíno por tempo limitado (48-72h máximo) ou mencione que você só atende X clientes por mês (se for verdade). A escassez REAL acelera a tomada de decisão. Nunca deixe o lead 'pensar' por muito tempo - quem pensa muito, não compra.",
-    extra: "EXEMPLOS DE URGÊNCIA: 'Até sexta-feira consigo manter o valor promocional', 'Este mês só tenho vaga para mais 2 projetos', 'Semana que vem o valor reajusta 20%'"
-  },
-  {
-    icon: Repeat,
-    title: "Faça follow-up estratégico (5-7 contatos)",
-    tip: "80% das vendas acontecem após o 5º contato, mas 92% dos vendedores desistem antes. Programe lembretes: 24h, 3 dias, 7 dias, 14 dias, 21 dias. Varie a abordagem: texto, áudio, imagem do site, vídeo mostrando o site. Persistência EDUCADA = conversão garantida.",
-    extra: "SEQUÊNCIA DE FOLLOW-UP: Dia 1: Proposta inicial | Dia 2: 'Conseguiu ver?' | Dia 4: Áudio personalizado | Dia 7: 'Novidade no site' | Dia 14: 'Última chance do valor' | Dia 21: 'Fechando vagas do mês'"
-  },
-  {
-    icon: Handshake,
-    title: "Feche no WhatsApp - não espere reunião",
-    tip: "Quanto mais etapas no processo de venda, maior a chance de perder o cliente. Envie proposta simplificada por WhatsApp, apresente os pacotes por texto/áudio, aceite pagamento via Pix NA HORA. Facilite ao máximo para o cliente dizer SIM. Reunião = desculpa para não decidir.",
-    extra: "REGRA DE OURO: Se o cliente pediu reunião, você já perdeu a venda. A não ser que seja ticket muito alto (+R$5k), resolva tudo no WhatsApp. Reunião é para grandes empresas B2B, não para pequenos negócios."
-  }
-];
-
 const guideSections: GuideSection[] = [
-  {
-    id: "golden-tips",
-    title: "🏆 Dicas de Ouro",
-    description: "8 estratégias comprovadas que triplicam suas conversões - leia ANTES de começar",
-    icon: Lightbulb,
-    color: "amber",
-    steps: goldenTips.map((tip, index) => ({
-      id: `tip-${index}`,
-      title: tip.title,
-      description: tip.tip,
-      icon: tip.icon,
-      details: [tip.tip],
-      tips: [tip.extra || ""],
-      example: tip.extra
-    }))
-  },
   {
     id: "prospecting",
     title: "🔍 Prospecção de Clientes",
@@ -489,6 +422,35 @@ const guideSections: GuideSection[] = [
           "Salve o link em um documento junto com o nome do cliente e data - organização!"
         ],
         warning: "⚠️ ESTE LINK É OBRIGATÓRIO NA PROPOSTA! Sem ele, sua conversão cai de 35% para míseros 5%."
+      },
+      {
+        id: "golden-tips",
+        title: "💡 Dicas de Ouro para Alta Conversão",
+        description: "8 estratégias testadas que triplicam suas vendas - aplique TODAS!",
+        icon: Lightbulb,
+        details: [
+          "🎯 NICHO CERTO: Foque em clínicas de estética, barbearias premium, odonto, advocacia e restaurantes - ticket médio alto e valorizam presença digital",
+          "",
+          "⭐ LEADS 1-3 ESTRELAS: Empresas com avaliações baixas estão DESESPERADAS por ajuda - leads muito mais quentes! Mencione as avaliações na abordagem de forma sutil",
+          "",
+          "⚡ RESPOSTA EM 5 MINUTOS: Leads respondidos em menos de 5 minutos têm 21x mais chances de converter. Configure notificações e tenha templates prontos!",
+          "",
+          "🎙️ ÁUDIO DE 30-60s: Mensagens de áudio personalizadas geram 3x mais respostas que texto. Seja pessoal, mencione o nome da empresa, comente algo específico",
+          "",
+          "🔗 LINK DEMO SEMPRE: Propostas com link do site demo têm 7x mais conversão (35% vs 5%). O cliente PRECISA visualizar o site funcionando. SEM LINK = SEM VENDA!",
+          "",
+          "⏰ URGÊNCIA REAL: Ofereça desconto por tempo limitado (48-72h) ou mencione vagas limitadas. Escassez REAL acelera a decisão",
+          "",
+          "🔄 FOLLOW-UP 5-7X: 80% das vendas acontecem após o 5º contato. Programe: 24h, 3 dias, 7 dias, 14 dias. Varie a abordagem!",
+          "",
+          "📱 FECHE NO WHATSAPP: Quanto mais etapas, mais chances de perder. Envie proposta, apresente pacotes e aceite Pix NA HORA. Reunião = desculpa para não decidir"
+        ],
+        tips: [
+          "SCRIPT ÁUDIO: 1) Cumprimento (5s) → 2) Porque entra em contato (10s) → 3) O que notou no negócio (15s) → 4) Solução (15s) → 5) CTA (10s)",
+          "SEQUÊNCIA FOLLOW-UP: Dia 1: Proposta | Dia 2: 'Conseguiu ver?' | Dia 4: Áudio | Dia 7: 'Novidade no site' | Dia 14: 'Última chance'",
+          "NICHOS TOP 5: 1) Clínicas estética (R$2-5k) 2) Odonto (R$1.5-4k) 3) Advocacia (R$2-6k) 4) Barbearias premium (R$800-2k) 5) Restaurantes (R$1-3k)"
+        ],
+        example: "SCRIPT PRIMEIRO CONTATO: 'Olá [nome]! Vi a [empresa] no Google e percebi que vocês têm algumas avaliações que poderiam ser melhores - isso acontece quando não tem presença digital forte. Já criei um protótipo do site para vocês: 👉 [LINK] 👈 Dá uma olhada! Podemos trocar uma ideia?'"
       }
     ]
   },
@@ -978,7 +940,6 @@ export function HelpCenterTab() {
             <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {guideSections.map((section, index) => {
                 const Icon = section.icon;
-                const isGoldenTips = section.id === 'golden-tips';
                 return (
                   <motion.div
                     key={section.id}
@@ -987,29 +948,27 @@ export function HelpCenterTab() {
                     transition={{ delay: index * 0.1 }}
                   >
                     <Card 
-                      className={`${isGoldenTips 
-                        ? 'bg-gradient-to-br from-amber-500/20 via-yellow-500/10 to-orange-500/20 border-amber-500/30 hover:border-amber-400/50' 
-                        : 'bg-white/5 border-white/10 hover:bg-white/10'} transition-all cursor-pointer group h-full`}
+                      className="bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer group h-full"
                       onClick={() => handleSelectSection(section.id)}
                     >
                       <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-6">
                         <div className="flex items-center gap-2 sm:gap-3">
-                          <div className={`p-2 sm:p-2.5 rounded-lg ${isGoldenTips ? 'bg-amber-500/20 group-hover:bg-amber-500/30' : 'bg-primary/20 group-hover:bg-primary/30'} transition-colors shrink-0`}>
-                            <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${isGoldenTips ? 'text-amber-400' : 'text-primary'}`} />
+                          <div className="p-2 sm:p-2.5 rounded-lg bg-primary/20 group-hover:bg-primary/30 transition-colors shrink-0">
+                            <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <CardTitle className={`text-sm sm:text-base ${isGoldenTips ? 'text-amber-200 group-hover:text-amber-100' : 'text-white group-hover:text-primary'} transition-colors truncate`}>
+                            <CardTitle className="text-sm sm:text-base text-white group-hover:text-primary transition-colors truncate">
                               {section.title}
                             </CardTitle>
                           </div>
-                          <ChevronRight className={`w-4 h-4 sm:w-5 sm:h-5 ${isGoldenTips ? 'text-amber-400/40 group-hover:text-amber-300' : 'text-white/40 group-hover:text-primary'} group-hover:translate-x-1 transition-all shrink-0`} />
+                          <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-white/40 group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0" />
                         </div>
                       </CardHeader>
                       <CardContent className="pt-0 p-3 sm:p-6 sm:pt-0">
-                        <p className={`text-xs sm:text-sm ${isGoldenTips ? 'text-amber-300/70' : 'text-white/60'} line-clamp-2`}>{section.description}</p>
+                        <p className="text-xs sm:text-sm text-white/60 line-clamp-2">{section.description}</p>
                         <div className="mt-2 sm:mt-3 flex items-center gap-2">
-                          <Badge variant="secondary" className={`${isGoldenTips ? 'bg-amber-500/20 text-amber-300' : 'bg-white/10 text-white/70'} text-[10px] sm:text-xs`}>
-                            {section.steps.length} {isGoldenTips ? 'dicas' : 'passos detalhados'}
+                          <Badge variant="secondary" className="bg-white/10 text-white/70 text-[10px] sm:text-xs">
+                            {section.steps.length} passos detalhados
                           </Badge>
                         </div>
                       </CardContent>
