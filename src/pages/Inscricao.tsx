@@ -146,14 +146,7 @@ const Inscricao = () => {
     >
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-white/10">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <button 
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span className="hidden sm:inline">Voltar</span>
-          </button>
+        <div className="container mx-auto px-4 py-4 flex items-center justify-center">
           <div className="flex items-center gap-3">
             <img 
               src="/genesis-g-logo.png" 
@@ -162,7 +155,6 @@ const Inscricao = () => {
             />
             <span className="font-bold text-lg text-white">Genesis Hub</span>
           </div>
-          <div className="w-20" />
         </div>
       </header>
 
