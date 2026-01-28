@@ -11,7 +11,9 @@ import {
   CheckCircle2,
   X,
   RefreshCw,
-  Eye
+  Eye,
+  MessageSquare,
+  Mail
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,10 +24,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
+
 interface RadarOpportunity {
   id: string;
   company_name: string;
   company_phone: string | null;
+  company_email: string | null;
   company_website: string | null;
   company_address: string | null;
   company_city: string | null;
@@ -263,164 +267,202 @@ export const GlobalRadarCard = ({ affiliateId, onAcceptOpportunity }: GlobalRada
         </CardContent>
       </Card>
 
-      {/* Modal de Oportunidades */}
+      {/* Modal de Oportunidades - Mobile Responsive */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Radar className="w-5 h-5 text-purple-500" />
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] p-0 gap-0 overflow-hidden">
+          <DialogHeader className="px-4 sm:px-6 py-4 sm:py-5 border-b border-border">
+            <DialogTitle className="flex items-center gap-2 sm:gap-3 text-base sm:text-lg">
+              <Radar className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500" />
               Radar Global — Oportunidades
             </DialogTitle>
           </DialogHeader>
 
           {/* Ações */}
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex flex-wrap items-center gap-2 px-4 sm:px-6 py-3 sm:py-4 border-b border-border/50">
             <Button
               variant="outline"
               size="sm"
               onClick={runScan}
               disabled={scanning}
-              className="gap-1.5"
+              className="gap-1.5 h-8 text-xs sm:text-sm"
             >
               {scanning ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Escaneando...
+                  <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
+                  <span className="hidden sm:inline">Escaneando...</span>
+                  <span className="sm:hidden">Scan...</span>
                 </>
               ) : (
                 <>
-                  <RefreshCw className="w-4 h-4" />
-                  Escanear Agora
+                  <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Escanear Agora</span>
+                  <span className="sm:hidden">Scan</span>
                 </>
               )}
             </Button>
             
-            <Badge variant="secondary">
+            <Badge variant="secondary" className="text-[10px] sm:text-xs">
               <Globe2 className="w-3 h-3 mr-1" />
-              {opportunities.length} oportunidades ativas
+              {opportunities.length} ativas
             </Badge>
           </div>
 
-          <ScrollArea className="h-[60vh] pr-4">
-            {loading ? (
-              <div className="flex flex-col items-center justify-center py-12 gap-3">
-                <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
-                <p className="text-sm text-muted-foreground">Carregando oportunidades...</p>
-              </div>
-            ) : opportunities.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 gap-3 text-center">
-                <Globe2 className="w-12 h-12 text-muted-foreground/30" />
-                <p className="text-muted-foreground">Nenhuma oportunidade no momento</p>
-                <Button variant="outline" size="sm" onClick={runScan} disabled={scanning}>
-                  <Radar className="w-4 h-4 mr-1.5" />
-                  Iniciar Scan Global
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {opportunities.map((opp) => {
-                  const levelConfig = LEVEL_CONFIG[opp.opportunity_level] || LEVEL_CONFIG.basic;
-                  
-                  return (
-                    <div
-                      key={opp.id}
-                      className={cn(
-                        "relative p-4 rounded-lg border-2 transition-all",
-                        opp.opportunity_level === 'advanced' && "border-emerald-500/50 bg-gradient-to-r from-emerald-500/5 to-transparent",
-                        opp.opportunity_level === 'intermediate' && "border-amber-500/50 bg-gradient-to-r from-amber-500/5 to-transparent",
-                        opp.opportunity_level === 'basic' && "border-border",
-                      )}
-                    >
-                      {/* Score Badge */}
-                      <div className="absolute top-3 right-3">
-                        <Badge className={cn(
-                          opp.opportunity_score >= 80 && "bg-emerald-500",
-                          opp.opportunity_score >= 60 && opp.opportunity_score < 80 && "bg-amber-500",
-                          opp.opportunity_score < 60 && "bg-slate-400",
-                        )}>
-                          <TrendingUp className="w-3 h-3 mr-1" />
-                          {opp.opportunity_score}%
-                        </Badge>
-                      </div>
-
-                      {/* Header */}
-                      <div className="flex items-start gap-3 mb-2">
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-xl">
-                          🏢
+          <ScrollArea className="h-[55vh] sm:h-[60vh]">
+            <div className="px-4 sm:px-6 py-3 sm:py-4">
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-8 sm:py-12 gap-3">
+                  <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-purple-500" />
+                  <p className="text-xs sm:text-sm text-muted-foreground">Carregando oportunidades...</p>
+                </div>
+              ) : opportunities.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 sm:py-12 gap-3 text-center">
+                  <Globe2 className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground/30" />
+                  <p className="text-sm text-muted-foreground">Nenhuma oportunidade no momento</p>
+                  <Button variant="outline" size="sm" onClick={runScan} disabled={scanning} className="h-8 text-xs">
+                    <Radar className="w-3.5 h-3.5 mr-1.5" />
+                    Iniciar Scan Global
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {opportunities.map((opp) => {
+                    const levelConfig = LEVEL_CONFIG[opp.opportunity_level] || LEVEL_CONFIG.basic;
+                    const cleanPhone = opp.company_phone?.replace(/\D/g, '') || '';
+                    const whatsappUrl = cleanPhone ? `https://wa.me/55${cleanPhone}` : '';
+                    const emailUrl = opp.company_email ? `mailto:${opp.company_email}` : '';
+                    
+                    return (
+                      <div
+                        key={opp.id}
+                        className={cn(
+                          "relative p-3 sm:p-4 rounded-lg border-2 transition-all",
+                          opp.opportunity_level === 'advanced' && "border-emerald-500/50 bg-gradient-to-r from-emerald-500/5 to-transparent",
+                          opp.opportunity_level === 'intermediate' && "border-amber-500/50 bg-gradient-to-r from-amber-500/5 to-transparent",
+                          opp.opportunity_level === 'basic' && "border-border",
+                        )}
+                      >
+                        {/* Score Badge */}
+                        <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
+                          <Badge className={cn(
+                            "text-[10px] sm:text-xs",
+                            opp.opportunity_score >= 80 && "bg-emerald-500",
+                            opp.opportunity_score >= 60 && opp.opportunity_score < 80 && "bg-amber-500",
+                            opp.opportunity_score < 60 && "bg-slate-400",
+                          )}>
+                            <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />
+                            {opp.opportunity_score}%
+                          </Badge>
                         </div>
-                        <div className="flex-1 min-w-0 pr-16">
-                          <h4 className="font-semibold truncate">{opp.company_name}</h4>
-                          <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <MapPin className="w-3 h-3" />
-                            {opp.company_city}, {opp.search_region || opp.company_country}
+
+                        {/* Header */}
+                        <div className="flex items-start gap-2 sm:gap-3 mb-2">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center text-base sm:text-xl shrink-0">
+                            🏢
+                          </div>
+                          <div className="flex-1 min-w-0 pr-12 sm:pr-16">
+                            <h4 className="font-semibold text-sm sm:text-base truncate">{opp.company_name}</h4>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1">
+                              <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                              {opp.company_city}, {opp.search_region || opp.company_country}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Level & Values */}
+                        <div className="flex items-center gap-1.5 sm:gap-2 mb-2 flex-wrap">
+                          <Badge variant="outline" className={cn("text-[10px] sm:text-xs py-0", levelConfig.color)}>
+                            {levelConfig.icon} {levelConfig.label}
+                          </Badge>
+                          <Badge variant="secondary" className="text-[10px] sm:text-xs py-0">
+                            R$ {opp.estimated_value_min}~{opp.estimated_value_max}
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px] sm:text-xs text-blue-600 py-0">
+                            +R$ {opp.monthly_recurrence}/mês
+                          </Badge>
+                        </div>
+
+                        {/* Description */}
+                        {opp.ai_description && (
+                          <p className="text-[11px] sm:text-sm text-muted-foreground mb-2 line-clamp-1">
+                            {opp.ai_description}
                           </p>
+                        )}
+
+                        {/* Tags */}
+                        {opp.service_tags && opp.service_tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-2 sm:mb-3">
+                            {opp.service_tags.slice(0, 3).map((tag, idx) => (
+                              <Badge key={idx} variant="outline" className="text-[9px] sm:text-xs py-0">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Actions - WhatsApp / Email / Reject */}
+                        <div className="flex items-center gap-2 pt-2 border-t border-border/50">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={!opp.company_phone}
+                            onClick={() => whatsappUrl && window.open(whatsappUrl, '_blank')}
+                            className={cn(
+                              "flex-1 gap-1.5 h-8 text-xs",
+                              opp.company_phone 
+                                ? "text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/10" 
+                                : "text-muted-foreground/50 border-border cursor-not-allowed"
+                            )}
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">WhatsApp</span>
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={!opp.company_email}
+                            onClick={() => emailUrl && window.open(emailUrl, '_blank')}
+                            className={cn(
+                              "flex-1 gap-1.5 h-8 text-xs",
+                              opp.company_email 
+                                ? "text-blue-500 border-blue-500/30 hover:bg-blue-500/10" 
+                                : "text-muted-foreground/50 border-border cursor-not-allowed"
+                            )}
+                          >
+                            <Mail className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">Email</span>
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleAccept(opp)}
+                            disabled={acceptingId === opp.id}
+                            className={cn(
+                              "flex-1 gap-1.5 h-8 text-xs",
+                              opp.opportunity_level === 'advanced' && "bg-emerald-600 hover:bg-emerald-700",
+                              opp.opportunity_level === 'intermediate' && "bg-amber-600 hover:bg-amber-700",
+                            )}
+                          >
+                            {acceptingId === opp.id ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <CheckCircle2 className="w-3 h-3" />
+                            )}
+                            <span className="hidden sm:inline">Aceitar</span>
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleReject(opp.id)}
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive shrink-0"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
                         </div>
                       </div>
-
-                      {/* Level & Values */}
-                      <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        <Badge variant="outline" className={levelConfig.color}>
-                          {levelConfig.icon} {levelConfig.label}
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs">
-                          R$ {opp.estimated_value_min}~{opp.estimated_value_max}
-                        </Badge>
-                        <Badge variant="outline" className="text-xs text-blue-600">
-                          +R$ {opp.monthly_recurrence}/mês
-                        </Badge>
-                      </div>
-
-                      {/* Description */}
-                      {opp.ai_description && (
-                        <p className="text-sm text-muted-foreground mb-2 line-clamp-1">
-                          {opp.ai_description}
-                        </p>
-                      )}
-
-                      {/* Tags */}
-                      {opp.service_tags && opp.service_tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-3">
-                          {opp.service_tags.slice(0, 3).map((tag, idx) => (
-                            <Badge key={idx} variant="outline" className="text-xs">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Actions */}
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => handleAccept(opp)}
-                          disabled={acceptingId === opp.id}
-                          className={cn(
-                            "flex-1 gap-1.5",
-                            opp.opportunity_level === 'advanced' && "bg-emerald-600 hover:bg-emerald-700",
-                            opp.opportunity_level === 'intermediate' && "bg-amber-600 hover:bg-amber-700",
-                          )}
-                        >
-                          {acceptingId === opp.id ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          ) : (
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                          )}
-                          Aceitar Projeto
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleReject(opp.id)}
-                          className="text-muted-foreground hover:text-destructive"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </ScrollArea>
         </DialogContent>
       </Dialog>
