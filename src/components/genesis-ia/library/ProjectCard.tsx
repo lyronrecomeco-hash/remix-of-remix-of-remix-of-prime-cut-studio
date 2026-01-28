@@ -109,34 +109,34 @@ export function ProjectCard({ project, index, onEdit, onEvolve, onDelete }: Proj
     >
       <div
         className={cn(
-          'relative rounded-xl border bg-white/5 overflow-hidden transition-all duration-300 min-h-[220px] flex flex-col',
+          'relative rounded-xl border bg-white/5 overflow-hidden transition-all duration-300 min-h-[180px] sm:min-h-[220px] flex flex-col',
           isHovered
             ? 'border-blue-500/40 shadow-xl shadow-blue-500/5 bg-white/10'
             : 'border-white/10'
         )}
       >
         {/* Header with Icon */}
-        <div className="p-5 pb-3 flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-2xl flex-shrink-0">
+        <div className="p-3 sm:p-5 pb-2 sm:pb-3 flex items-start gap-2 sm:gap-4">
+          <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-white/10 flex items-center justify-center text-lg sm:text-2xl flex-shrink-0">
             {getTemplateIcon(project.template_slug)}
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-semibold text-foreground truncate">
+            <h3 className="text-sm sm:text-base font-semibold text-foreground truncate">
               {project.client_name || project.template_name}
             </h3>
-            <p className="text-xs text-muted-foreground truncate mt-0.5">
-              Arquitetura e estratégia de nicho...
+            <p className="text-[10px] sm:text-xs text-muted-foreground truncate mt-0.5">
+              Arquitetura e estratégia...
             </p>
           </div>
         </div>
 
         {/* Metadata */}
-        <div className="px-5 pb-4 space-y-2.5 flex-1">
+        <div className="px-3 sm:px-5 pb-3 sm:pb-4 space-y-1.5 sm:space-y-2.5 flex-1">
           {/* Platform */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs uppercase tracking-wider text-muted-foreground">Plataforma</span>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <span className="text-[9px] sm:text-xs uppercase tracking-wider text-muted-foreground">Plataforma</span>
             <span className={cn(
-              'px-2.5 py-0.5 rounded text-xs font-semibold',
+              'px-1.5 sm:px-2.5 py-0.5 rounded text-[10px] sm:text-xs font-semibold',
               'bg-blue-500/20 text-blue-300'
             )}>
               {platformInfo.label}
@@ -144,34 +144,34 @@ export function ProjectCard({ project, index, onEdit, onEvolve, onDelete }: Proj
           </div>
 
           {/* Created At */}
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Calendar className="w-3.5 h-3.5" />
-            <span className="uppercase tracking-wider">Criado em</span>
-            <span className="text-foreground/80 ml-auto">{createdDate}</span>
+          <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground">
+            <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <span className="uppercase tracking-wider hidden sm:inline">Criado em</span>
+            <span className="text-foreground/80 ml-auto text-[10px] sm:text-xs">{createdDate}</span>
           </div>
 
           {/* Updated At */}
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Clock className="w-3.5 h-3.5" />
-            <span className="uppercase tracking-wider">Atualizado</span>
-            <span className="text-foreground/80 ml-auto">há {relativeUpdatedAt}</span>
+          <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground">
+            <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <span className="uppercase tracking-wider hidden sm:inline">Atualizado</span>
+            <span className="text-foreground/80 ml-auto text-[10px] sm:text-xs">há {relativeUpdatedAt}</span>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="px-5 pb-5 pt-3 border-t border-white/5 flex items-center gap-2">
+        <div className="px-3 sm:px-5 pb-3 sm:pb-5 pt-2 sm:pt-3 border-t border-white/5 flex items-center gap-1.5 sm:gap-2">
           <Button
             size="sm"
             onClick={openPreview}
-            className="flex-1 h-9 text-sm bg-blue-500 hover:bg-blue-600 text-white font-semibold"
+            className="flex-1 h-7 sm:h-9 text-[10px] sm:text-sm bg-blue-500 hover:bg-blue-600 text-white font-semibold"
           >
             ABRIR
-            <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
+            <ExternalLink className="w-3 h-3 sm:w-3.5 sm:h-3.5 ml-1 sm:ml-1.5" />
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9 bg-white/5 hover:bg-white/10">
-                <MoreHorizontal className="w-4 h-4" />
+              <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-9 sm:w-9 bg-white/5 hover:bg-white/10">
+                <MoreHorizontal className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-card border-white/10">

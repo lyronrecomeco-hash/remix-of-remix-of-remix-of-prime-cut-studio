@@ -146,23 +146,23 @@ export function CriarProjetosSelector({ onSelect, onBack }: CriarProjetosSelecto
     : templates.filter(t => t.category === activeCategory);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 px-1 sm:px-0">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="space-y-1"
       >
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8">
-            <ArrowLeft className="w-4 h-4" />
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Button variant="ghost" size="icon" onClick={onBack} className="h-7 w-7 sm:h-8 sm:w-8">
+            <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </Button>
           <div>
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-bold text-foreground">Escolha um Template</h2>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+              <h2 className="text-lg sm:text-xl font-bold text-foreground">Escolha um Template</h2>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Selecione um modelo e personalize para seu cliente.
             </p>
           </div>
@@ -174,7 +174,7 @@ export function CriarProjetosSelector({ onSelect, onBack }: CriarProjetosSelecto
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="flex flex-wrap gap-2"
+        className="flex flex-wrap gap-1.5 sm:gap-2"
       >
         {categories.map((cat) => {
           const Icon = cat.icon;
@@ -185,17 +185,18 @@ export function CriarProjetosSelector({ onSelect, onBack }: CriarProjetosSelecto
               variant={isActive ? "default" : "ghost"}
               size="sm"
               onClick={() => setActiveCategory(cat.id)}
-              className={`gap-2 ${isActive ? '' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`gap-1.5 sm:gap-2 h-7 sm:h-8 text-[10px] sm:text-xs px-2 sm:px-3 ${isActive ? '' : 'text-muted-foreground hover:text-foreground'}`}
             >
-              <Icon className="w-4 h-4" />
-              {cat.label}
+              <Icon className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">{cat.label}</span>
+              <span className="sm:hidden">{cat.label.split(' ')[0]}</span>
             </Button>
           );
         })}
       </motion.div>
 
       {/* Templates Grid - Fixed width cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-4xl">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-5 max-w-4xl">
         {filteredTemplates.map((template, index) => (
           <motion.div
             key={template.id}
@@ -208,10 +209,9 @@ export function CriarProjetosSelector({ onSelect, onBack }: CriarProjetosSelecto
                 : 'opacity-70'
             }`}
             onClick={() => template.available && onSelect(template)}
-            style={{ maxWidth: '320px' }}
           >
             {/* Preview Area */}
-            <div className={`relative h-44 overflow-hidden ${template.previewImage ? '' : `bg-gradient-to-br ${template.gradient}`}`}>
+            <div className={`relative h-28 sm:h-36 lg:h-44 overflow-hidden ${template.previewImage ? '' : `bg-gradient-to-br ${template.gradient}`}`}>
               {/* Real Preview with image */}
               {template.previewImage ? (
                 <>
@@ -221,26 +221,26 @@ export function CriarProjetosSelector({ onSelect, onBack }: CriarProjetosSelecto
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-                  <div className="absolute bottom-3 left-3 right-3 text-white">
-                    <div className="text-xs font-medium text-primary mb-1">{template.preview.badge}</div>
-                    <div className="text-base font-bold">{template.preview.title}</div>
-                    <div className="text-xs text-white/70">{template.preview.subtitle}</div>
+                  <div className="absolute bottom-2 sm:bottom-3 left-2 sm:left-3 right-2 sm:right-3 text-white">
+                    <div className="text-[10px] sm:text-xs font-medium text-primary mb-0.5 sm:mb-1">{template.preview.badge}</div>
+                    <div className="text-sm sm:text-base font-bold">{template.preview.title}</div>
+                    <div className="text-[10px] sm:text-xs text-white/70">{template.preview.subtitle}</div>
                   </div>
                 </>
               ) : (
                 <>
                   {/* Mock Phone/Screen Preview */}
-                  <div className="absolute inset-0 flex items-center justify-center p-4">
-                    <div className="relative w-24 h-40 bg-black/40 rounded-2xl border border-white/10 backdrop-blur-sm overflow-hidden shadow-2xl transform group-hover:scale-105 transition-transform duration-300">
-                      <div className="absolute inset-1 rounded-xl bg-gradient-to-b from-white/10 to-transparent overflow-hidden">
-                        <div className="p-3 space-y-2 text-center">
-                          <div className="inline-block px-2 py-0.5 text-[8px] bg-white/20 text-white rounded-full">
+                  <div className="absolute inset-0 flex items-center justify-center p-2 sm:p-4">
+                    <div className="relative w-16 sm:w-24 h-28 sm:h-40 bg-black/40 rounded-xl sm:rounded-2xl border border-white/10 backdrop-blur-sm overflow-hidden shadow-2xl transform group-hover:scale-105 transition-transform duration-300">
+                      <div className="absolute inset-1 rounded-lg sm:rounded-xl bg-gradient-to-b from-white/10 to-transparent overflow-hidden">
+                        <div className="p-2 sm:p-3 space-y-1 sm:space-y-2 text-center">
+                          <div className="inline-block px-1.5 sm:px-2 py-0.5 text-[6px] sm:text-[8px] bg-white/20 text-white rounded-full">
                             {template.preview.badge}
                           </div>
-                          <div className="text-[10px] font-bold text-white leading-tight">
+                          <div className="text-[8px] sm:text-[10px] font-bold text-white leading-tight">
                             {template.preview.title}
                           </div>
-                          <div className="text-[8px] text-white/70">
+                          <div className="text-[6px] sm:text-[8px] text-white/70">
                             {template.preview.subtitle}
                           </div>
                         </div>
@@ -253,8 +253,8 @@ export function CriarProjetosSelector({ onSelect, onBack }: CriarProjetosSelecto
               {/* Coming Soon Overlay */}
               {!template.available && (
                 <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center">
-                  <Badge variant="secondary" className="gap-1.5">
-                    <Lock className="w-3 h-3" />
+                  <Badge variant="secondary" className="gap-1 sm:gap-1.5 text-[10px] sm:text-xs">
+                    <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                     Em breve
                   </Badge>
                 </div>
@@ -262,11 +262,11 @@ export function CriarProjetosSelector({ onSelect, onBack }: CriarProjetosSelecto
             </div>
 
             {/* Card Footer */}
-            <div className="p-3 space-y-1">
-              <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm">
+            <div className="p-2.5 sm:p-3 space-y-0.5 sm:space-y-1">
+              <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-xs sm:text-sm">
                 {template.name}
               </h3>
-              <p className="text-xs text-muted-foreground line-clamp-2">
+              <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-2">
                 {template.description}
               </p>
             </div>
@@ -278,9 +278,9 @@ export function CriarProjetosSelector({ onSelect, onBack }: CriarProjetosSelecto
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-center py-12 text-muted-foreground"
+          className="text-center py-8 sm:py-12 text-muted-foreground"
         >
-          <p>Nenhum template disponível nesta categoria ainda.</p>
+          <p className="text-xs sm:text-sm">Nenhum template disponível nesta categoria ainda.</p>
         </motion.div>
       )}
     </div>
