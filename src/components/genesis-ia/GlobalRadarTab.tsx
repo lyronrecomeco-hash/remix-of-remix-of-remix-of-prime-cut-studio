@@ -51,6 +51,7 @@ interface RadarOpportunity {
   id: string;
   company_name: string;
   company_phone: string | null;
+  company_email: string | null;
   company_website: string | null;
   company_address: string | null;
   company_city: string | null;
@@ -809,18 +810,12 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                               </p>
                             )}
 
-                            {/* Location & Phone */}
+                            {/* Location */}
                             <div className="space-y-1.5 mb-3">
                               <p className="text-xs text-white/50 flex items-center gap-1.5">
                                 <MapPin className="w-3 h-3 flex-shrink-0 text-white/30" />
                                 <span className="truncate">{opp.company_address || opp.company_city || 'Localização não informada'}</span>
                               </p>
-                              {opp.company_phone && (
-                                <p className="text-xs text-white/50 flex items-center gap-1.5">
-                                  <Phone className="w-3 h-3 flex-shrink-0 text-white/30" />
-                                  <span>{opp.company_phone}</span>
-                                </p>
-                              )}
                             </div>
 
                             {/* Digital Presence Status */}
@@ -847,8 +842,55 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                               </div>
                             )}
 
-                            {/* Actions */}
+                            {/* Actions - Icon buttons for WhatsApp, Email */}
                             <div className="flex items-center gap-2 pt-3 border-t border-white/10">
+                              {/* WhatsApp Button */}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (opp.company_phone) {
+                                    const cleanPhone = opp.company_phone.replace(/\D/g, '');
+                                    const phone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+                                    window.open(`https://wa.me/${phone}`, '_blank');
+                                  }
+                                }}
+                                disabled={!opp.company_phone}
+                                className={cn(
+                                  "h-9 w-9 sm:h-10 sm:w-10 p-0 border-white/20",
+                                  opp.company_phone 
+                                    ? "text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/30" 
+                                    : "text-white/20 cursor-not-allowed"
+                                )}
+                                title={opp.company_phone ? `WhatsApp: ${opp.company_phone}` : 'Telefone não disponível'}
+                              >
+                                <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
+                              </Button>
+                              
+                              {/* Email Button */}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (opp.company_email) {
+                                    window.open(`mailto:${opp.company_email}`, '_blank');
+                                  }
+                                }}
+                                disabled={!opp.company_email}
+                                className={cn(
+                                  "h-9 w-9 sm:h-10 sm:w-10 p-0 border-white/20",
+                                  opp.company_email 
+                                    ? "text-blue-500 hover:text-blue-400 hover:bg-blue-500/10 hover:border-blue-500/30" 
+                                    : "text-white/20 cursor-not-allowed"
+                                )}
+                                title={opp.company_email ? `Email: ${opp.company_email}` : 'Email não disponível'}
+                              >
+                                <Mail className="w-4 h-4 sm:w-5 sm:h-5" />
+                              </Button>
+
+                              {/* Ver Perfil Button */}
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -856,22 +898,10 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                                   e.stopPropagation();
                                   handleOpenDetail(opp);
                                 }}
-                                className="flex-1 h-10 border-white/20 text-white/70 hover:text-white hover:bg-white/10"
+                                className="flex-1 h-9 sm:h-10 border-white/20 text-white/70 hover:text-white hover:bg-white/10 text-xs sm:text-sm"
                               >
-                                <Eye className="w-4 h-4 mr-1.5" />
+                                <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
                                 Ver Perfil
-                              </Button>
-                              
-                              <Button
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleAccept(opp);
-                                }}
-                                className="flex-1 h-10 bg-primary hover:bg-primary/90 text-primary-foreground"
-                              >
-                                <CheckCircle2 className="w-4 h-4 mr-1.5" />
-                                Aceitar
                               </Button>
                             </div>
                           </CardContent>
@@ -1031,6 +1061,12 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                   <div className="flex items-center gap-3 text-sm">
                     <Phone className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                     <span className="text-muted-foreground">{selectedOpportunity.company_phone}</span>
+                  </div>
+                )}
+                {selectedOpportunity.company_email && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <Mail className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-muted-foreground">{selectedOpportunity.company_email}</span>
                   </div>
                 )}
                 {selectedOpportunity.company_website && (
