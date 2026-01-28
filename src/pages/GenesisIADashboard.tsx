@@ -71,12 +71,13 @@ import { GenesisOnboardingGuide } from "@/components/genesis-ia/GenesisOnboardin
 import { ApiKeysTab } from "@/components/genesis-ia/api-keys";
 import { DevelopmentModal } from "@/components/genesis-ia/modals";
 import { AccountBlockedModal } from "@/components/genesis/AccountBlockedModal";
+import PartnerApplications from "@/components/admin/PartnerApplications";
 
 import GenesisBackground from "@/components/genesis-ia/GenesisBackground";
 import { ViralSaasTab } from "@/components/genesis-ia/viral-apps/ViralSaasTab";
-import { FileText, Gift, CreditCard, Code2, Rocket, Key } from "lucide-react";
+import { FileText, Gift, CreditCard, Code2, Rocket, Key, ClipboardList } from "lucide-react";
 
-type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional' | 'payments' | 'page-builder' | 'academia' | 'proposals' | 'sprint-mission' | 'api-keys' | 'viral-saas';
+type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional' | 'payments' | 'page-builder' | 'academia' | 'proposals' | 'sprint-mission' | 'api-keys' | 'viral-saas' | 'partner-applications';
 
 // Icon mapping for dynamic rendering
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -239,6 +240,7 @@ const GenesisIADashboard = () => {
       case 'sprint-mission': return 'Missão Sprint';
       case 'api-keys': return 'API Keys';
       case 'viral-saas': return 'SaaS Virais';
+      case 'partner-applications': return 'Inscrições';
       default: return null;
     }
   };
@@ -269,6 +271,7 @@ const GenesisIADashboard = () => {
   const adminDockItems: DockItem[] = isAdmin ? [
     { icon: CreditCard, label: 'Pagamentos', tabId: 'payments' },
     { icon: Key, label: 'API Keys', tabId: 'api-keys' },
+    { icon: ClipboardList, label: 'Inscrições', tabId: 'partner-applications' },
   ] : [];
 
   const dockItems: DockItem[] = [
@@ -745,6 +748,10 @@ const GenesisIADashboard = () => {
 
     if (activeTab === 'viral-saas') {
       return <ViralSaasTab />;
+    }
+
+    if (activeTab === 'partner-applications' && isAdmin) {
+      return <PartnerApplications />;
     }
 
     return null;

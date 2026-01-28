@@ -71,6 +71,7 @@ const PortfolioPage = lazy(() => import("./pages/portfolio/[slug]"));
 const ContractSignature = lazy(() => import("./pages/ContractSignature"));
 const PromoPage = lazy(() => import("./pages/PromoPage"));
 const DivulgacaoPage = lazy(() => import("./pages/DivulgacaoPage"));
+const Inscricao = lazy(() => import("./pages/Inscricao"));
 // Checkout Pages
 const CheckoutPage = lazy(() => import("./pages/checkout/CheckoutPage"));
 const PaymentCodePage = lazy(() => import("./pages/checkout/PaymentCodePage"));
@@ -297,6 +298,8 @@ const AppContent = () => {
             <Route path="/promo/:codigo" element={<PromoPage />} />
             {/* Divulgação Page */}
             <Route path="/divul" element={<DivulgacaoPage />} />
+            {/* Inscrição Parceiros */}
+            <Route path="/inscricao" element={<Inscricao />} />
             {/* Checkout Routes - Static routes first, dynamic last */}
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
