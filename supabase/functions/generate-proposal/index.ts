@@ -35,32 +35,62 @@ serve(async (req) => {
       .map((a, i) => `${i + 1}. ${a.question}\n   Resposta: ${a.answer}`)
       .join('\n\n');
 
-    const systemPrompt = `Você é um especialista em vendas B2B e consultor de negócios para o sistema Genesis.
-Sua tarefa é analisar as respostas do questionário e gerar uma proposta comercial personalizada.
+    const systemPrompt = `Você é um especialista em vendas B2B e consultor de negócios com 20 anos de experiência.
+Sua tarefa é analisar as respostas do questionário e gerar uma proposta comercial ALTAMENTE PERSONALIZADA e PERSUASIVA.
+
+REGRAS CRÍTICAS:
+- NÃO seja genérico! Use EXATAMENTE as informações das respostas
+- Mencione o NOME da empresa e detalhes específicos do negócio
+- Calcule números REALISTAS baseados no nicho ${niche}
+- Seja ESPECÍFICO sobre as dores e como resolvê-las
 
 A proposta deve conter:
-1. **painPoints**: Lista de 3-5 dores/desafios identificados do negócio
-2. **benefits**: Lista de 5-7 benefícios específicos que o Genesis trará
-3. **roiAnalysis**: Análise de ROI com:
-   - estimatedSavings: economia estimada em R$/mês
-   - timeRecovery: horas economizadas por semana
-   - revenueIncrease: potencial aumento de receita em %
-   - paybackPeriod: período de retorno em meses
-4. **pricing**: Recomendação de plano com justificativa
-5. **personalizedPitch**: Pitch de venda personalizado (2-3 parágrafos)
-6. **nextSteps**: Lista de 3-4 próximos passos para fechamento
 
-IMPORTANTE:
-- Seja específico para o nicho ${niche}
-- Use dados realistas baseados nas respostas
-- Foque no valor, não no preço
-- Retorne APENAS JSON válido, sem markdown ou explicações`;
+1. **painPoints**: Lista de 4-6 dores ESPECÍFICAS identificadas no negócio. NÃO USE frases genéricas como "falta de presença digital". 
+   - Use exemplos: "Clientes ligam fora do horário e não conseguem agendar", "Concorrente X está dominando o Google na região"
+   - Baseie-se nas respostas do cliente
 
-    const userPrompt = `Empresa: ${companyName}
-Nicho: ${niche}
+2. **benefits**: Lista de 5-7 benefícios CONCRETOS com números:
+   - "Agendamento online 24h - capture clientes às 23h quando sua concorrência está fechada"
+   - "Redução de 80% nas ligações de agendamento - seu funcionário foca no atendimento"
+   - Seja específico para o nicho
 
-Respostas do Questionário:
+3. **roiAnalysis**: Análise de ROI REALISTA:
+   - estimatedSavings: economia em R$/mês (considere: tempo de funcionário, ligações perdidas, clientes que vão para concorrência)
+   - timeRecovery: horas economizadas por semana (seja conservador: 5-15h)
+   - revenueIncrease: aumento de receita em % (seja realista: 15-40%)
+   - paybackPeriod: período de retorno em meses (1-3 meses é ideal)
+
+4. **pricing**: Objeto com:
+   - plan: nome do plano recomendado
+   - justification: POR QUE esse plano é ideal para ESSA empresa específica (mencione o nome e situação dela)
+
+5. **personalizedPitch**: Pitch de 3 parágrafos PERSUASIVO:
+   - Parágrafo 1: Identifique a DOR principal (use nome da empresa)
+   - Parágrafo 2: Mostre a TRANSFORMAÇÃO possível com exemplos do nicho
+   - Parágrafo 3: Crie URGÊNCIA (concorrência, perda de clientes, oportunidade)
+
+6. **nextSteps**: Lista de 4 próximos passos ACIONÁVEIS:
+   - Primeiro passo sempre: "Agende uma demonstração de 15 minutos para ver o sistema funcionando"
+   - Inclua: timeline realista, o que o cliente precisa fornecer, expectativa de resultado
+
+FORMATO: Retorne APENAS JSON válido, sem markdown ou explicações.
+NICHO: ${niche}
+EMPRESA: ${companyName}`;
+
+    const userPrompt = `DADOS DA EMPRESA:
+- Nome: ${companyName}
+- Nicho: ${niche}
+
+RESPOSTAS DO QUESTIONÁRIO (use essas informações para personalizar):
 ${answersContext}
+
+INSTRUÇÕES FINAIS:
+1. Use o nome "${companyName}" no pitch
+2. Mencione detalhes específicos das respostas acima
+3. Calcule ROI baseado no tipo de negócio (${niche})
+4. Seja persuasivo mas realista nos números
+5. Crie urgência mencionando concorrência ou perda de oportunidades
 
 Gere a proposta comercial em formato JSON:`;
 
