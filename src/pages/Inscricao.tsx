@@ -46,13 +46,13 @@ const Inscricao = () => {
   const benefits = [
     {
       icon: TrendingUp,
-      title: 'Ganhe por Prospecção',
-      description: 'Use as ferramentas do painel para prospectar empresas e vender SaaS, ganhando comissões.'
+      title: 'Ferramentas de Prospecção',
+      description: 'Use o painel completo para prospectar empresas e vender SaaS de forma profissional.'
     },
     {
       icon: Users,
       title: 'Ganhe por Indicação',
-      description: 'Comissões recorrentes por indicações que se tornam assinantes.'
+      description: 'Comissões recorrentes por cada indicação que se tornar assinante.'
     },
     {
       icon: Video,
@@ -61,7 +61,7 @@ const Inscricao = () => {
     },
     {
       icon: Sparkles,
-      title: 'Ferramentas Premium',
+      title: 'Acesso Premium',
       description: 'Acesso completo ao painel Genesis Hub para criar conteúdo e prospectar.'
     }
   ];
