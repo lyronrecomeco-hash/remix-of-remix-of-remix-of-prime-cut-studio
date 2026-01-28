@@ -15,6 +15,7 @@ import MobileBottomNav from "@/components/MobileBottomNav";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import UpgradeModal from "@/components/subscription/UpgradeModal";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import PresenceTracker from "@/components/PresenceTracker";
 import { Suspense, lazy, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { toast as notify } from "sonner";
@@ -327,6 +328,7 @@ const App = () => (
                 <FeedbackProvider>
                   <NotificationProvider>
                     <TooltipProvider>
+                      <PresenceTracker />
                       <AppContent />
                     </TooltipProvider>
                   </NotificationProvider>
