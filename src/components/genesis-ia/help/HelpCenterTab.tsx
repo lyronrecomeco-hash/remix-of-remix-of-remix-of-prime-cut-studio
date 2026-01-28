@@ -284,23 +284,23 @@ const guideSections: GuideSection[] = [
     steps: [
       {
         id: "step1",
-        title: "Por Que o Site Demo é CRUCIAL",
+        title: "Por Que Criar o Site é CRUCIAL",
         description: "Entenda por que criar o site ANTES é a estratégia que separa amadores de profissionais.",
         icon: Lightbulb,
         details: [
           "PSICOLOGIA: Quando o cliente VÊ o site pronto com o nome dele, ele JÁ SE IMAGINA usando",
           "DIFERENCIAÇÃO: 99% dos concorrentes só prometem. Você MOSTRA o resultado antes de cobrar",
-          "CONFIANÇA: Ver é acreditar. Um link demo elimina todo ceticismo e objeção",
+          "CONFIANÇA: Ver é acreditar. O link do site elimina todo ceticismo e objeção",
           "URGÊNCIA: Cliente vê o site lindo e não quer perder - acelera a decisão de compra",
-          "CONVERSÃO: Propostas com link demo convertem 35% vs 5% sem link. É 7x mais eficiente!",
+          "CONVERSÃO: Propostas com link do site convertem 35% vs 5% sem link. É 7x mais eficiente!",
           "TEMPO: Parece mais trabalho, mas você fecha mais rápido e com menos negociação"
         ],
         tips: [
-          "Crie o demo em 20-30 minutos (com prática). O fechamento economiza 2-3 horas de negociação.",
-          "Um demo bem feito justifica preços 30-50% maiores que a concorrência",
-          "Cliente que vê o demo fica 'apegado' - difícil escolher outra opção depois"
+          "Crie o site em 20-30 minutos (com prática). O fechamento economiza 2-3 horas de negociação.",
+          "Um site bem feito justifica preços 30-50% maiores que a concorrência",
+          "Cliente que vê o site fica 'apegado' - difícil escolher outra opção depois"
         ],
-        warning: "NUNCA envie proposta sem o link demo. Você está jogando dinheiro fora. Repito: SEM LINK = SEM VENDA."
+        warning: "NUNCA envie proposta sem o link do site. Você está jogando dinheiro fora. Repito: SEM LINK = SEM VENDA."
       },
       {
         id: "step2",
@@ -405,7 +405,7 @@ const guideSections: GuideSection[] = [
       },
       {
         id: "step7",
-        title: "Publicando e Obtendo o Link Demo",
+        title: "Publicando e Obtendo o Link do Site",
         description: "O passo final: publicar o site e obter o link mágico que fecha vendas.",
         icon: Share2,
         details: [
@@ -437,7 +437,7 @@ const guideSections: GuideSection[] = [
           "",
           "🎙️ ÁUDIO DE 30-60s: Mensagens de áudio personalizadas geram 3x mais respostas que texto. Seja pessoal, mencione o nome da empresa, comente algo específico",
           "",
-          "🔗 LINK DEMO SEMPRE: Propostas com link do site demo têm 7x mais conversão (35% vs 5%). O cliente PRECISA visualizar o site funcionando. SEM LINK = SEM VENDA!",
+          "🔗 LINK DO SITE SEMPRE: Propostas com link do site têm 7x mais conversão (35% vs 5%). O cliente PRECISA visualizar o site funcionando. SEM LINK = SEM VENDA!",
           "",
           "⏰ URGÊNCIA REAL: Ofereça desconto por tempo limitado (48-72h) ou mencione vagas limitadas. Escassez REAL acelera a decisão",
           "",
@@ -467,7 +467,7 @@ const guideSections: GuideSection[] = [
         icon: ClipboardCheck,
         details: [
           "✅ CHECKLIST ANTES DE CRIAR A PROPOSTA:",
-          "1. Você já tem o LINK DEMO do site criado? (Se não, PARE e crie primeiro!)",
+          "1. Você já tem o LINK DO SITE criado? (Se não, PARE e crie primeiro!)",
           "2. Você analisou a empresa? (Site atual, redes sociais, avaliações Google)",
           "3. Você identificou as DORES específicas? (O que reclamam? O que falta?)",
           "4. Você sabe o NOME correto da empresa e do dono (se possível)?",
@@ -479,7 +479,7 @@ const guideSections: GuideSection[] = [
           "Use o nome do DONO se souber - 'Olá Carlos' converte 3x mais que 'Olá equipe'",
           "Leia as últimas 5 avaliações negativas no Google - ali estão os argumentos de venda"
         ],
-        warning: "Se você não tem o link demo, PARE AQUI. Volte para a Biblioteca e crie o site primeiro. Proposta sem demo = desperdício de tempo."
+        warning: "Se você não tem o link do site, PARE AQUI. Volte para a Biblioteca e crie o site primeiro. Proposta sem link = desperdício de tempo."
       },
       {
         id: "step2",
@@ -562,7 +562,7 @@ const guideSections: GuideSection[] = [
           "REVISE TUDO antes de enviar:",
           "  → O nome da empresa está correto?",
           "  → As dores mencionadas fazem sentido?",
-          "  → O link demo está incluído? (Se não, ADICIONE!)",
+          "  → O link do site está incluído? (Se não, ADICIONE!)",
           "  → O CTA é claro? (O que você quer que o cliente faça?)",
           "Edite manualmente o que precisar - a IA é base, você personaliza",
           "Clique em 'Salvar' para guardar a proposta no sistema"
@@ -570,22 +570,22 @@ const guideSections: GuideSection[] = [
         tips: [
           "Leia a proposta em VOZ ALTA - você vai perceber se soa natural ou robótico",
           "Adicione um emoji ou dois para humanizar 😊 - mas não exagere",
-          "O link demo PRECISA estar na proposta. Se não estiver, adicione manualmente!"
+          "O link do site PRECISA estar na proposta. Se não estiver, adicione manualmente!"
         ]
       },
       {
         id: "step6",
-        title: "OBRIGATÓRIO: Incluir o Link Demo",
+        title: "OBRIGATÓRIO: Incluir o Link do Site",
         description: "Este é o passo que SEPARA vendedores de amadores. Não pule!",
         icon: Link,
         details: [
-          "⚠️ PARE E VERIFIQUE: O link do site demo está na proposta?",
+          "⚠️ PARE E VERIFIQUE: O link do site está na proposta?",
           "Se NÃO está, adicione AGORA antes de enviar:",
           "",
           "ESTRUTURA IDEAL:",
           "'[...texto da proposta...]'",
           "'Inclusive, já preparei um protótipo do site para vocês verem como ficaria:'",
-          "'👉 [LINK DO DEMO] 👈'",
+          "'👉 [LINK DO SITE] 👈'",
           "'É só clicar e ver funcionando no celular ou computador!'",
           "",
           "O cliente PRECISA visualizar o site para entender o valor",
@@ -596,7 +596,7 @@ const guideSections: GuideSection[] = [
           "Teste o link VOCÊ antes de enviar - links quebrados = credibilidade zero",
           "Mencione que funciona no celular - maioria vai abrir pelo WhatsApp"
         ],
-        warning: "DADOS REAIS: Propostas SEM link demo = 5% de conversão. COM link demo = 35% de conversão. É 7x mais eficiente! NÃO IGNORE ISSO."
+        warning: "DADOS REAIS: Propostas SEM link do site = 5% de conversão. COM link = 35% de conversão. É 7x mais eficiente! NÃO IGNORE ISSO."
       },
       {
         id: "step7",
@@ -658,7 +658,7 @@ const guideSections: GuideSection[] = [
           "   'Podemos conversar 5 minutos sobre isso? Qual melhor horário para você?'"
         ],
         tips: [
-          "Mensagem curta + link demo = melhor resultado. Não escreva redação.",
+          "Mensagem curta + link do site = melhor resultado. Não escreva redação.",
           "Personalize com o NOME da empresa - mostra que você pesquisou",
           "CTA deve ser fácil de responder: 'amanhã 10h funciona?' é melhor que 'me liga'"
         ],
@@ -897,34 +897,15 @@ export function HelpCenterTab() {
             exit={{ opacity: 0, y: -20 }}
             className="space-y-6"
           >
-            {/* Important Notice */}
-            <Card className="bg-gradient-to-br from-red-500/10 via-orange-500/5 to-amber-500/10 border-red-500/30">
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-red-500/20 shrink-0">
-                    <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-red-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className="text-sm font-medium text-red-300 mb-1">⚠️ REGRA DE OURO: Link Demo é OBRIGATÓRIO!</h4>
-                    <p className="text-xs text-red-300/80 leading-relaxed">
-                      <strong>Propostas SEM link demo = 5% de conversão.</strong> Propostas COM link demo = <strong>35% de conversão</strong>. 
-                      Isso é 7x mais eficiente! <strong>SEMPRE</strong> crie o site demo na Biblioteca ANTES de enviar qualquer proposta. 
-                      Sem o link do site funcionando, você está literalmente jogando dinheiro fora.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Quick Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
               <div className="p-3 rounded-lg bg-white/5 border border-white/10">
                 <div className="text-lg sm:text-xl font-bold text-primary">7x</div>
-                <div className="text-[10px] sm:text-xs text-white/60">Mais conversão com demo</div>
+                <div className="text-[10px] sm:text-xs text-white/60">Mais conversão com site</div>
               </div>
               <div className="p-3 rounded-lg bg-white/5 border border-white/10">
                 <div className="text-lg sm:text-xl font-bold text-green-400">35%</div>
-                <div className="text-[10px] sm:text-xs text-white/60">Taxa com link demo</div>
+                <div className="text-[10px] sm:text-xs text-white/60">Taxa com link do site</div>
               </div>
               <div className="p-3 rounded-lg bg-white/5 border border-white/10">
                 <div className="text-lg sm:text-xl font-bold text-amber-400">5-7</div>
@@ -1005,7 +986,7 @@ export function HelpCenterTab() {
                   <ArrowRight className="hidden sm:block w-3 h-3 text-white/30" />
                   <div className="flex items-center gap-2">
                     <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary font-medium">4</div>
-                    <span>Incluir link demo</span>
+                    <span>Incluir link do site</span>
                   </div>
                   <ArrowRight className="hidden sm:block w-3 h-3 text-white/30" />
                   <div className="flex items-center gap-2">
