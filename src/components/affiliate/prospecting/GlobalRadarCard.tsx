@@ -269,7 +269,7 @@ export const GlobalRadarCard = ({ affiliateId, onAcceptOpportunity }: GlobalRada
 
       {/* Modal de Oportunidades - Mobile Responsive */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] p-0 gap-0 overflow-hidden">
+        <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90dvh] p-0 gap-0 overflow-hidden flex flex-col">
           <DialogHeader className="px-4 sm:px-6 py-4 sm:py-5 border-b border-border">
             <DialogTitle className="flex items-center gap-2 sm:gap-3 text-base sm:text-lg">
               <Radar className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500" />
@@ -307,7 +307,7 @@ export const GlobalRadarCard = ({ affiliateId, onAcceptOpportunity }: GlobalRada
             </Badge>
           </div>
 
-          <ScrollArea className="h-[55vh] sm:h-[60vh]">
+          <ScrollArea className="flex-1 min-h-0">
             <div className="px-4 sm:px-6 py-3 sm:py-4">
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-8 sm:py-12 gap-3">

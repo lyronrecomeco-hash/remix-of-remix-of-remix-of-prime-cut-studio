@@ -94,7 +94,7 @@ export const GenesisBusinessDetailModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] sm:max-w-[600px] p-0 gap-0 overflow-hidden bg-[hsl(222,20%,8%)] border-white/10">
+      <DialogContent className="w-[95vw] sm:max-w-[600px] max-h-[90dvh] p-0 gap-0 overflow-hidden bg-[hsl(222,20%,8%)] border-white/10 flex flex-col">
         {/* Header - Mobile Responsive */}
         <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-4 sm:pb-5 border-b border-white/10">
           <DialogTitle className="flex items-start gap-3 sm:gap-4">
@@ -121,7 +121,7 @@ export const GenesisBusinessDetailModal = ({
         </DialogHeader>
 
         {/* Body - Mobile Responsive */}
-        <div className="px-4 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5 max-h-[50vh] sm:max-h-[60vh] overflow-y-auto">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5 overflow-y-auto flex-1 min-h-0">
           {/* Value Box */}
           {business.estimatedValueMin && business.estimatedValueMax && (
             <div className="grid grid-cols-2 gap-3 sm:gap-4">

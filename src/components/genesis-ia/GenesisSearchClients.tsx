@@ -4,7 +4,6 @@ import {
   MapPin, 
   Building2, 
   Loader2, 
-  Phone, 
   Globe, 
   Star,
   ExternalLink,
@@ -628,11 +627,6 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
                       <p className="flex items-center gap-2 truncate">
                         <MapPin className="w-4 h-4 shrink-0" /> {result.address}
                       </p>
-                      {result.phone && (
-                        <p className="flex items-center gap-2">
-                          <Phone className="w-4 h-4" /> {result.phone}
-                        </p>
-                      )}
                     </div>
 
                     {/* Digital Status */}
