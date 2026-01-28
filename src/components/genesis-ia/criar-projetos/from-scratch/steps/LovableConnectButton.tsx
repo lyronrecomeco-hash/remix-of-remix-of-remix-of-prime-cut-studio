@@ -34,6 +34,9 @@ export function LovableConnectButton({ prompt, projectName }: LovableConnectButt
   const [isExpanded, setIsExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // Referral link with 10 free credits
+  const LOVABLE_REFERRAL_LINK = 'https://lovable.dev/invite/G0FY6YR';
+  
   // Build Lovable URL with auto-submit
   const buildLovableUrl = () => {
     const encodedPrompt = encodeURIComponent(prompt);
@@ -44,22 +47,23 @@ export function LovableConnectButton({ prompt, projectName }: LovableConnectButt
     try {
       await navigator.clipboard.writeText(prompt);
       setCopied(true);
-      toast.success('Prompt copiado! Abrindo Lovable com deploy automático...');
+      toast.success('Prompt copiado! Abrindo Lovable com 10 créditos grátis...');
       
-      // Open Lovable with auto-submit URL
+      // First time users go to referral link, returning users go to auto-submit
+      // We use referral link to ensure they get the bonus credits
       setTimeout(() => {
-        window.open(buildLovableUrl(), '_blank');
+        window.open(LOVABLE_REFERRAL_LINK, '_blank');
         setCopied(false);
       }, 500);
     } catch (err) {
-      // Fallback: just open with auto-submit even if copy fails
-      toast.info('Abrindo Lovable com seu projeto...');
-      window.open(buildLovableUrl(), '_blank');
+      // Fallback: just open referral link even if copy fails
+      toast.info('Abrindo Lovable...');
+      window.open(LOVABLE_REFERRAL_LINK, '_blank');
     }
   };
 
   const handleOpenLovable = () => {
-    window.open(buildLovableUrl(), '_blank');
+    window.open(LOVABLE_REFERRAL_LINK, '_blank');
   };
 
   return (

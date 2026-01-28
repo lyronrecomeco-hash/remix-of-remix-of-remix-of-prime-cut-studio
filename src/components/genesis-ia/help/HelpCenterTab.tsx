@@ -54,36 +54,60 @@ const goldenTips = [
   {
     icon: Target,
     title: "Escolha nichos lucrativos",
-    tip: "Clínicas de estética, barbearias premium e restaurantes com delivery têm maior ticket médio e conversão."
+    tip: "Clínicas de estética, barbearias premium e restaurantes com delivery têm maior ticket médio e conversão. Foque em negócios que faturam acima de R$10k/mês - eles valorizam mais a presença digital."
   },
   {
     icon: Star,
-    title: "Mire em 1-3 estrelas",
-    tip: "Empresas com avaliações baixas estão desesperadas por ajuda - são leads muito mais quentes!"
+    title: "Mire em empresas 1-3 estrelas",
+    tip: "Empresas com avaliações baixas no Google estão desesperadas por ajuda - são leads muito mais quentes! Elas sabem que precisam melhorar e estão abertas a soluções. Mencione as avaliações na abordagem."
   },
   {
     icon: Zap,
     title: "Responda em até 5 minutos",
-    tip: "Leads respondidos em menos de 5 minutos têm 21x mais chances de converter."
+    tip: "Leads respondidos em menos de 5 minutos têm 21x mais chances de converter. Configure notificações e tenha templates prontos para resposta rápida. Velocidade mata a concorrência!"
   },
   {
     icon: MessageSquare,
     title: "Use áudio no WhatsApp",
-    tip: "Mensagens de áudio de 30-60s geram 3x mais respostas que texto."
+    tip: "Mensagens de áudio de 30-60 segundos geram 3x mais respostas que texto puro. Seja pessoal, mencione o nome da empresa e mostre que você pesquisou sobre o negócio deles."
   },
   {
     icon: Link,
-    title: "SEMPRE inclua o link demo",
-    tip: "Propostas com link do site demo têm 5x mais conversão. O cliente PRECISA ver na prática!"
+    title: "SEMPRE inclua o link demo do site",
+    tip: "Propostas com link do site demo têm 5x mais conversão (de 5% para 35%!). O cliente PRECISA visualizar o site funcionando. Crie o demo ANTES de enviar a proposta - essa é a chave do fechamento!"
   },
   {
     icon: Lightbulb,
-    title: "Crie urgência real",
-    tip: "Ofereça desconto por tempo limitado (48h) ou vagas limitadas para acelerar a decisão."
+    title: "Crie urgência real e escassez",
+    tip: "Ofereça desconto por tempo limitado (48h máximo) ou mencione que você só atende X clientes por mês. A escassez acelera a tomada de decisão. Nunca deixe o lead 'pensar' por muito tempo."
+  },
+  {
+    icon: UserCheck,
+    title: "Faça follow-up estratégico",
+    tip: "80% das vendas acontecem após o 5º contato! Programe lembretes: 24h, 3 dias, 7 dias. Varie a abordagem: texto, áudio, imagem do site. Persistência educada = conversão."
+  },
+  {
+    icon: Handshake,
+    title: "Feche no WhatsApp, não espere reunião",
+    tip: "Quanto mais etapas no processo, mais chance de perder o cliente. Envie proposta simplificada por WhatsApp, aceite pagamento via Pix na hora. Facilite ao máximo para o cliente dizer SIM."
   }
 ];
 
 const guideSections: GuideSection[] = [
+  {
+    id: "golden-tips",
+    title: "Dicas de Ouro",
+    description: "Estratégias comprovadas para maximizar suas conversões",
+    icon: Lightbulb,
+    steps: goldenTips.map((tip, index) => ({
+      id: `tip-${index}`,
+      title: tip.title,
+      description: tip.tip,
+      icon: tip.icon,
+      details: [tip.tip],
+      tips: []
+    }))
+  },
   {
     id: "prospecting",
     title: "Prospecção de Clientes",
@@ -92,61 +116,76 @@ const guideSections: GuideSection[] = [
     steps: [
       {
         id: "step1",
-        title: "Acessar 'Encontrar Clientes'",
-        description: "No menu principal, clique em 'Encontrar Clientes' para iniciar sua busca.",
+        title: "Acessar a Ferramenta de Prospecção",
+        description: "O primeiro passo é acessar a ferramenta 'Encontrar Clientes' no menu principal.",
         icon: Search,
         details: [
-          "Clique no card 'Encontrar Clientes' na tela inicial",
-          "Você será direcionado para a ferramenta de busca inteligente",
-          "A busca utiliza IA para encontrar empresas sem presença digital"
+          "Clique no card 'Encontrar Clientes' na tela inicial do dashboard",
+          "Você será direcionado para a ferramenta de busca inteligente que utiliza IA",
+          "A busca encontra empresas que NÃO têm presença digital adequada",
+          "Essas são empresas com sites desatualizados, sem site, ou com baixa avaliação",
+          "Cada empresa encontrada é um potencial cliente para seus serviços"
         ],
         tips: [
-          "Defina seu nicho antes de começar",
-          "Busque por cidades menores primeiro - menos concorrência"
+          "Defina seu nicho de atuação antes de começar - especialização vende mais",
+          "Comece buscando em cidades menores - menos concorrência e donos mais acessíveis",
+          "Nichos de saúde, beleza e alimentação costumam ter maior ticket médio"
         ]
       },
       {
         id: "step2",
-        title: "Definir Critérios de Busca",
-        description: "Configure os filtros para encontrar leads qualificados.",
+        title: "Configurar os Filtros de Busca",
+        description: "Configure os filtros para encontrar leads realmente qualificados que têm potencial de compra.",
         icon: Target,
         details: [
-          "Escolha o nicho de atuação (ex: clínicas, restaurantes, academias)",
-          "Selecione a cidade e estado",
-          "Defina a quantidade de resultados desejados",
-          "Use filtros de avaliação (estrelas) para qualidade"
+          "NICHO: Escolha o segmento (clínicas, restaurantes, academias, salões, etc)",
+          "LOCALIZAÇÃO: Selecione cidade e estado - comece pela sua região",
+          "QUANTIDADE: Defina quantos resultados deseja (10-50 é ideal para começar)",
+          "AVALIAÇÃO: Filtre por estrelas no Google - 1-3 estrelas são leads mais quentes",
+          "Use a combinação certa: nicho lucrativo + cidade pequena + baixa avaliação = OURO"
         ],
         tips: [
-          "Empresas com 1-3 estrelas são mais propensas a precisar de ajuda",
-          "Nichos de saúde e beleza costumam converter bem"
+          "Empresas com 1-3 estrelas estão desesperadas por ajuda - taxa de conversão 3x maior",
+          "Cidades com 50-200 mil habitantes têm menos concorrência e donos mais acessíveis",
+          "Nichos premium (clínicas, advocacia, arquitetura) pagam tickets maiores"
         ]
       },
       {
         id: "step3",
-        title: "Analisar Resultados",
-        description: "Avalie cada empresa encontrada antes de salvar.",
+        title: "Analisar Cada Empresa",
+        description: "Antes de salvar, analise cada empresa para garantir que é um lead qualificado.",
         icon: ClipboardCheck,
         details: [
-          "Verifique se a empresa tem site ou redes sociais",
-          "Analise as avaliações e comentários no Google",
-          "Observe horário de funcionamento e telefone disponível",
-          "Clique em 'Ver Detalhes' para mais informações"
+          "SITE ATUAL: Verifique se tem site - se não tem, é lead quente. Se tem site ruim, também é oportunidade",
+          "REDES SOCIAIS: Veja Instagram/Facebook - perfis abandonados indicam oportunidade",
+          "AVALIAÇÕES: Leia os comentários negativos - são dores que você pode resolver",
+          "CONTATO: Confirme se tem WhatsApp disponível - facilita muito a abordagem",
+          "HORÁRIO: Empresas que funcionam em horário comercial são mais fáceis de contatar",
+          "Clique em 'Ver Detalhes' para acessar informações completas da empresa"
         ],
         tips: [
-          "Empresas sem site são leads mais quentes",
-          "WhatsApp disponível facilita o contato inicial"
+          "Anote as dores específicas mencionadas nas avaliações - use na proposta",
+          "Empresas sem resposta aos comentários negativos = donos sobrecarregados = oportunidade",
+          "Verifique a concorrência local - se tem competitor com bom site, mostre a diferença"
         ]
       },
       {
         id: "step4",
-        title: "Salvar Leads Qualificados",
-        description: "Salve os melhores prospects para trabalhar depois.",
+        title: "Salvar e Organizar os Leads",
+        description: "Salve os melhores prospects para trabalhar de forma organizada.",
         icon: CheckCircle2,
         details: [
-          "Clique no botão 'Salvar' no card da empresa",
-          "O lead será adicionado à sua lista de prospects",
-          "Você pode adicionar notas e tags para organização",
-          "Acesse seus leads salvos na aba 'Propostas Aceitas'"
+          "Clique no botão 'Salvar' no card de cada empresa qualificada",
+          "O lead será adicionado à sua lista de prospects automaticamente",
+          "Adicione NOTAS com informações importantes (dores, oportunidades identificadas)",
+          "Use TAGS para organizar por prioridade (quente, morno, frio)",
+          "Acesse seus leads salvos na aba 'Propostas' para dar continuidade",
+          "Organize sua prospecção: salve 20-30 leads por dia, trabalhe 5-10 por dia"
+        ],
+        tips: [
+          "Qualidade > quantidade: melhor ter 10 leads qualificados que 100 aleatórios",
+          "Leads 'quentes' devem ser contatados em até 24h para não esfriar",
+          "Mantenha uma rotina: 1h de prospecção pela manhã = 20+ leads/dia"
         ]
       }
     ]
@@ -154,34 +193,45 @@ const guideSections: GuideSection[] = [
   {
     id: "radar",
     title: "Radar Global",
-    description: "Busca automática de leads em escala",
+    description: "Busca automática de leads em escala nacional",
     icon: Radar,
     steps: [
       {
         id: "step1",
-        title: "Entender o Radar",
-        description: "O Radar Global busca leads automaticamente em diversas cidades.",
+        title: "Entender o Poder do Radar",
+        description: "O Radar Global é sua máquina de geração de leads automática que trabalha 24/7.",
         icon: Globe,
         details: [
-          "O Radar varre múltiplas cidades simultaneamente",
-          "Encontra empresas sem presença digital de forma automática",
-          "Prioriza leads com maior potencial de conversão",
-          "Atualiza constantemente com novos resultados"
+          "O Radar varre MÚLTIPLAS cidades simultaneamente buscando oportunidades",
+          "Encontra empresas sem presença digital de forma totalmente automática",
+          "Usa algoritmos de IA para priorizar leads com maior potencial de conversão",
+          "Atualiza constantemente com novos resultados frescos todos os dias",
+          "Cada lead já vem com score de qualidade calculado automaticamente",
+          "Você foca no contato, o Radar foca na busca - produtividade máxima!"
+        ],
+        tips: [
+          "Configure o Radar uma vez e deixe rodando - ele trabalha enquanto você vende",
+          "Leads do Radar já vêm pré-qualificados pela IA"
         ]
       },
       {
         id: "step2",
-        title: "Aceitar Leads do Radar",
-        description: "Revise e aceite os melhores leads encontrados.",
+        title: "Aceitar os Melhores Leads",
+        description: "Revise e aceite os leads mais promissores encontrados pelo Radar.",
         icon: UserCheck,
         details: [
-          "Acesse a aba 'Radar Global' no menu",
-          "Revise os leads apresentados com score de qualidade",
-          "Clique em 'Aceitar' para adicionar à sua lista",
-          "Leads aceitos vão para 'Propostas Aceitas'"
+          "Acesse a aba 'Radar Global' no menu lateral esquerdo",
+          "Revise os leads apresentados - cada um tem um SCORE de qualidade (0-100)",
+          "SCORE 80-100: Lead quente, prioridade máxima - contatar imediatamente",
+          "SCORE 60-79: Lead bom, vale a pena abordar na sequência",
+          "SCORE abaixo de 60: Analise caso a caso antes de aceitar",
+          "Clique em 'Aceitar' para adicionar o lead à sua lista de trabalho",
+          "Leads aceitos vão automaticamente para a aba 'Propostas'"
         ],
         tips: [
-          "Aceite leads com score acima de 70 para melhor conversão"
+          "Aceite leads com score acima de 70 para melhor taxa de conversão",
+          "Processe os leads diariamente - leads frescos convertem mais",
+          "O Radar aprende com suas aceitações e melhora as sugestões"
         ]
       }
     ]
@@ -189,160 +239,206 @@ const guideSections: GuideSection[] = [
   {
     id: "library",
     title: "Biblioteca de Projetos",
-    description: "Crie projetos do zero ou use modelos prontos",
+    description: "Crie projetos do zero ou use modelos prontos para cada cliente",
     icon: Library,
     steps: [
       {
         id: "step1",
-        title: "Acessar a Biblioteca",
-        description: "Acesse a biblioteca de templates e ferramentas.",
+        title: "Acessar a Biblioteca de Projetos",
+        description: "A Biblioteca é onde você cria os sites demo que vão impressionar seus clientes.",
         icon: Library,
         details: [
-          "Clique em 'Biblioteca' no menu lateral",
-          "Você verá opções de criação e modelos prontos",
-          "Escolha entre 'Começar do Zero' ou 'Modelos Prontos'"
+          "Clique em 'Biblioteca' no menu lateral esquerdo",
+          "Você verá duas opções principais: 'Começar do Zero' e 'Modelos Prontos'",
+          "'Começar do Zero': wizard guiado com 11 etapas para projeto 100% personalizado",
+          "'Modelos Prontos': templates já otimizados por nicho, prontos para usar",
+          "Cada projeto salvo fica acessível em 'Meus Projetos' para reutilização"
+        ],
+        tips: [
+          "Use 'Começar do Zero' para clientes premium que pagam mais",
+          "Use 'Modelos Prontos' para volume e velocidade"
         ]
       },
       {
         id: "step2",
-        title: "Começar do Zero",
-        description: "Crie um projeto totalmente personalizado.",
+        title: "Wizard 'Começar do Zero' - Etapas 1-4",
+        description: "Configure as bases do projeto seguindo cada etapa do wizard.",
         icon: Sparkles,
         details: [
-          "Selecione 'Começar do Zero'",
-          "Escolha o tipo de projeto (Landing Page, Sistema, etc)",
-          "Selecione o nicho da empresa cliente",
-          "Preencha informações sobre a identidade visual",
-          "Defina objetivos, páginas e funcionalidades",
-          "O sistema gerará um prompt otimizado para IA"
+          "ETAPA 1 - TIPO: Escolha Site Comercial ou Aplicativo Web",
+          "ETAPA 2 - NICHO: Selecione o segmento (barbearia, clínica, restaurante, etc)",
+          "ETAPA 3 - INFORMAÇÕES: Nome da empresa, descrição do negócio",
+          "ETAPA 4 - IDENTIDADE: Cores da marca, estilo visual desejado",
+          "O sistema usa essas informações para gerar um prompt altamente personalizado",
+          "Cada campo preenchido melhora a qualidade final do site gerado"
         ],
         tips: [
-          "Quanto mais detalhes fornecer, melhor será o resultado",
-          "Use as cores da marca do cliente quando possível"
+          "Se não souber as cores, pesquise no Instagram/Facebook do cliente",
+          "Descreva o negócio em detalhes - quanto mais, melhor o resultado"
         ]
       },
       {
         id: "step3",
-        title: "Usar Modelo Pronto",
-        description: "Escolha um template já otimizado.",
-        icon: FileText,
+        title: "Wizard 'Começar do Zero' - Etapas 5-8",
+        description: "Defina funcionalidades e objetivos do projeto.",
+        icon: Target,
         details: [
-          "Navegue pelos modelos disponíveis por categoria",
-          "Cada modelo já vem otimizado para o nicho",
-          "Clique para visualizar preview do modelo",
-          "Personalize com as informações do cliente"
+          "ETAPA 5 - OBJETIVOS: O que o site precisa alcançar? (vendas, agendamentos, contato)",
+          "ETAPA 6 - PÁGINAS: Quais páginas o site terá (home, sobre, serviços, contato)",
+          "ETAPA 7 - FUNCIONALIDADES: Formulário de contato, WhatsApp, agendamento online",
+          "ETAPA 8 - DIFERENCIAIS: O que destaca esse negócio dos concorrentes",
+          "Marque todas as funcionalidades relevantes para o nicho do cliente",
+          "O wizard injeta lógica de backend específica para cada funcionalidade"
+        ],
+        tips: [
+          "Barbearias precisam de agendamento, restaurantes de cardápio com delivery",
+          "Sempre inclua botão de WhatsApp - é o que mais converte no Brasil"
         ]
       },
       {
         id: "step4",
-        title: "Gerar e Usar na Lovable",
-        description: "Use o prompt gerado na plataforma Lovable.",
-        icon: Rocket,
+        title: "Wizard 'Começar do Zero' - Etapas 9-11 e Geração",
+        description: "Finalize o wizard e gere o prompt otimizado.",
+        icon: FileText,
         details: [
-          "Revise o prompt final gerado pelo sistema",
-          "Clique em 'Copiar Prompt' para copiar",
-          "Clique em 'Ir para Lovable' - use nosso link especial para ganhar 10 créditos!",
-          "Cole o prompt no Lovable e aguarde a mágica acontecer",
-          "O site será gerado automaticamente pela IA"
+          "ETAPA 9 - CONTEÚDO: Textos, slogans, informações específicas",
+          "ETAPA 10 - REFERÊNCIAS: Links de sites que o cliente gosta (opcional)",
+          "ETAPA 11 - REVISÃO: Confira tudo antes de gerar",
+          "Clique em 'Gerar Prompt' para criar o comando otimizado para a IA",
+          "O prompt gerado inclui TODAS as especificações que você preencheu",
+          "Salve o projeto para acessar depois em 'Meus Projetos'"
         ],
         tips: [
-          "Ao criar conta na Lovable pelo nosso link, você ganha 10 créditos grátis!",
-          "Salve prompts que funcionaram bem para reutilizar"
+          "Revise cuidadosamente antes de gerar - erros aqui viram erros no site",
+          "Projetos salvos podem ser editados e reutilizados"
         ]
       },
       {
         id: "step5",
-        title: "Publicar e Obter Link Demo",
-        description: "Publique o site e copie o link para usar na proposta.",
+        title: "Criar na Lovable com Link de Convite",
+        description: "Use o botão 'Criar na Lovable' para abrir com 10 créditos grátis!",
+        icon: Rocket,
+        details: [
+          "Após gerar o prompt, clique no botão 'Criar na Lovable'",
+          "O sistema abre a Lovable automaticamente com nosso LINK DE CONVITE ESPECIAL",
+          "Ao criar conta pelo link, você ganha 10 CRÉDITOS GRÁTIS adicionais!",
+          "O prompt é copiado automaticamente para você colar no chat",
+          "Aguarde a IA gerar o site completo (geralmente 2-5 minutos)",
+          "A Lovable cria sites profissionais com código limpo e responsivo"
+        ],
+        tips: [
+          "Cada crédito = 1 solicitação. Use com sabedoria!",
+          "Peça ajustes no chat se precisar: 'mude a cor do botão para azul'"
+        ],
+        warning: "IMPORTANTE: Use sempre o botão da plataforma para abrir a Lovable. Assim você ganha os créditos grátis!"
+      },
+      {
+        id: "step6",
+        title: "Publicar e Copiar Link Demo",
+        description: "Publique o site e obtenha o link para enviar ao cliente.",
         icon: Link,
         details: [
-          "Após o site ficar pronto no Lovable, clique em 'Publicar'",
-          "Aguarde a publicação ser concluída",
-          "Copie o link do site publicado (ex: suaempresa.lovable.app)",
-          "ESTE LINK É ESSENCIAL para enviar na proposta ao cliente!",
-          "O cliente precisa VER o site funcionando para fechar negócio"
+          "Quando o site estiver pronto na Lovable, clique em 'Publish' no canto superior direito",
+          "Aguarde a publicação ser concluída (geralmente 1-2 minutos)",
+          "A Lovable gera um link como: nomedaempresa.lovable.app",
+          "COPIE ESSE LINK - você vai precisar dele para a proposta!",
+          "O link funciona em qualquer dispositivo - móvel e desktop",
+          "O cliente verá exatamente como o site dele vai ficar"
         ],
-        warning: "SEM o link demo, sua proposta terá conversão muito baixa. O cliente precisa visualizar o site!"
+        warning: "ESTE LINK É OBRIGATÓRIO na proposta! Sem ele, conversão cai de 35% para apenas 5%."
       }
     ]
   },
   {
     id: "proposals",
     title: "Propostas Personalizadas",
-    description: "Gere propostas de venda para cada cliente",
+    description: "Gere propostas comerciais persuasivas com IA para cada cliente",
     icon: MessageSquare,
     steps: [
       {
         id: "step1",
-        title: "Acessar Propostas",
-        description: "Acesse a ferramenta de geração de propostas.",
+        title: "Acessar a Ferramenta de Propostas",
+        description: "Acesse o gerador de propostas para criar abordagens personalizadas.",
         icon: FileText,
         details: [
-          "Clique em 'Propostas Personalizadas' na tela inicial",
-          "Escolha entre criar nova ou ver propostas salvas",
-          "Para nova proposta, clique em 'Criar Proposta'"
+          "Clique em 'Propostas Personalizadas' na tela inicial do dashboard",
+          "Você verá o wizard de criação de propostas comerciais",
+          "As propostas são geradas por IA com base nos dados que você fornecer",
+          "Cada proposta é única e focada nas dores específicas do cliente",
+          "Propostas salvas ficam em 'Minhas Propostas' para reutilização"
+        ],
+        tips: [
+          "Crie o site demo ANTES de gerar a proposta",
+          "Tenha em mãos: nome da empresa, problemas identificados, contato"
         ]
       },
       {
         id: "step2",
-        title: "Selecionar Nicho e Preencher Dados",
-        description: "Escolha o nicho e preencha informações do cliente.",
+        title: "Selecionar Nicho e Preencher Dados do Cliente",
+        description: "Informe detalhes do cliente para a IA gerar proposta relevante.",
         icon: Building2,
         details: [
-          "Selecione o nicho da empresa (clínica, restaurante, etc)",
-          "Preencha o nome da empresa e contato",
-          "Informe os principais problemas que a empresa tem",
-          "Descreva o que o cliente deseja alcançar",
-          "Responda às perguntas de qualificação"
+          "NICHO: Selecione o segmento exato (clínica odontológica, barbearia, etc)",
+          "NOME DA EMPRESA: Digite o nome correto para personalizar a mensagem",
+          "CONTATO: WhatsApp e/ou email para follow-up",
+          "PROBLEMAS: Liste as dores que você identificou (site ruim, sem redes, etc)",
+          "OBJETIVOS: O que o cliente quer alcançar (mais clientes, automatizar agendamento)",
+          "PERGUNTAS: Responda às perguntas de qualificação do wizard"
         ],
         tips: [
-          "Quanto mais detalhes, melhor a proposta gerada",
-          "Mencione dores específicas do cliente"
+          "Quanto mais detalhes, mais persuasiva fica a proposta",
+          "Use informações das avaliações negativas do Google para identificar dores"
         ]
       },
       {
         id: "step3",
-        title: "Gerar Proposta com IA",
-        description: "IA gera uma proposta comercial completa.",
+        title: "Escolher Tom e Gerar com IA",
+        description: "Selecione o estilo de comunicação e deixe a IA trabalhar.",
         icon: Sparkles,
         details: [
-          "Com base nas respostas, a IA gera uma proposta personalizada",
-          "A proposta inclui: dores identificadas, solução, benefícios e ROI",
-          "Você pode escolher o tom (agressivo, persuasivo, dor)",
-          "Revise a proposta e ajuste se necessário"
+          "TOM AGRESSIVO: Para leads frios que nunca ouviram de você. Foca na dor.",
+          "TOM PERSUASIVO: Para leads mornos que já demonstraram interesse",
+          "TOM DOR: Enfatiza os problemas atuais e o custo de não agir",
+          "Clique em 'Gerar Proposta' e aguarde a IA processar",
+          "A proposta inclui: gancho inicial, identificação de dores, solução, benefícios e CTA",
+          "Revise a proposta gerada e faça ajustes manuais se necessário"
         ],
         tips: [
-          "Use tom agressivo para leads frios",
-          "Tom persuasivo funciona melhor para leads quentes"
+          "Tom agressivo funciona melhor para primeiro contato frio",
+          "Se o lead já respondeu antes, use tom persuasivo"
         ]
       },
       {
         id: "step4",
-        title: "Incluir Link do Site Demo",
-        description: "FUNDAMENTAL: adicione o link do site que você criou.",
+        title: "OBRIGATÓRIO: Incluir Link do Site Demo",
+        description: "Adicione o link do site que você criou - isso é FUNDAMENTAL!",
         icon: Link,
         details: [
-          "ANTES de enviar, inclua o link do site demo criado na Lovable",
-          "Cole o link (ex: empresa.lovable.app) na mensagem",
-          "Escreva algo como: 'Já criei um protótipo do seu site, veja: [link]'",
-          "O cliente PRECISA ver o site funcionando para decidir"
+          "PARE AQUI SE NÃO TEM O LINK! Volte e crie o site demo primeiro.",
+          "Cole o link do site demo (ex: empresa.lovable.app) na proposta",
+          "Adicione uma frase como: 'Já criei um protótipo do seu site, veja funcionando: [link]'",
+          "O cliente precisa VISUALIZAR o site para entender o valor",
+          "Sites demo impressionam porque mostram resultado ANTES do pagamento",
+          "Essa técnica diferencia você de 99% da concorrência que só promete"
         ],
-        warning: "Propostas SEM link demo têm conversão de apenas 5%. COM link, sobe para 35%!"
+        warning: "DADOS REAIS: Propostas SEM link demo = 5% de conversão. COM link demo = 35% de conversão. É 7x mais eficiente!"
       },
       {
         id: "step5",
-        title: "Enviar para o Cliente",
-        description: "Copie e envie a proposta via WhatsApp.",
+        title: "Enviar pelo WhatsApp no Momento Certo",
+        description: "Timing e formato corretos maximizam a taxa de resposta.",
         icon: Send,
         details: [
-          "Clique em 'Copiar Proposta' ou 'Enviar WhatsApp'",
-          "Personalize a mensagem com o nome do cliente",
-          "Inclua o link do site demo que você criou",
-          "Envie e acompanhe a resposta"
+          "Clique em 'Copiar Proposta' para copiar o texto formatado",
+          "Ou clique em 'Enviar WhatsApp' para abrir direto no WhatsApp",
+          "HORÁRIOS IDEAIS: 9h-11h e 14h-17h (horário comercial)",
+          "DIAS IDEAIS: Segunda, terça e quarta têm maiores taxas de resposta",
+          "Evite finais de semana e feriados - donos estão ocupados operando",
+          "Envie primeiro uma mensagem de texto, depois áudio de 30-60 segundos"
         ],
         tips: [
-          "Envie em horário comercial (9h-18h)",
-          "Segunda e terça têm melhor taxa de resposta"
+          "Áudio personalizado após o texto aumenta resposta em 3x",
+          "Se não responder em 24h, envie follow-up educado"
         ]
       }
     ]
@@ -350,90 +446,115 @@ const guideSections: GuideSection[] = [
   {
     id: "closing",
     title: "Fechando o Contrato",
-    description: "Como converter leads em clientes pagantes",
+    description: "Converta leads em clientes pagantes com técnicas comprovadas",
     icon: Handshake,
     steps: [
       {
         id: "step1",
-        title: "Primeiro Contato",
-        description: "Faça uma abordagem profissional com site demo.",
+        title: "Primeira Abordagem com Impacto",
+        description: "O primeiro contato precisa ser profissional e direto.",
         icon: MessageSquare,
         details: [
-          "Use a proposta gerada + link do site demo",
-          "Personalize a mensagem com o nome da empresa",
-          "Seja direto: 'Vi que sua empresa precisa de presença digital'",
-          "Mostre o site: 'Já fiz um protótipo, veja: [link]'",
-          "Ofereça uma conversa rápida de 5 minutos"
+          "ESTRUTURA DA MENSAGEM: Gancho + Dor + Solução + Link Demo + CTA",
+          "GANCHO: 'Olá [nome], vi sua empresa no Google e notei algo importante...'",
+          "DOR: 'Vi que vocês não têm site/têm site desatualizado/avaliações baixas'",
+          "SOLUÇÃO: 'Ajudo empresas como a sua a ter presença digital profissional'",
+          "LINK: 'Inclusive já fiz um protótipo para vocês, veja: [link demo]'",
+          "CTA: 'Podemos conversar 5 minutos sobre isso? Qual melhor horário?'"
         ],
         tips: [
-          "Envie nos horários comerciais",
-          "Segunda e terça costumam ter melhor resposta",
-          "Mensagem curta + link demo = melhor conversão"
+          "Mensagem curta + link demo = melhor resultado",
+          "Personalize com o NOME da empresa - mostra que pesquisou"
         ]
       },
       {
         id: "step2",
-        title: "Apresentar Solução",
-        description: "Mostre como você pode ajudar com evidências.",
-        icon: Rocket,
+        title: "Lidar com Objeções Comuns",
+        description: "Respostas prontas para as principais objeções que você vai ouvir.",
+        icon: Target,
         details: [
-          "Explique o problema que identificou",
-          "Mostre o site demo que você criou",
-          "Apresente sua solução de forma simples",
-          "Use dados e números quando possível"
+          "'Não tenho dinheiro': 'Entendo! Por isso facilito: você pode parcelar em X vezes'",
+          "'Deixa pra depois': 'Quanto tempo faz que está pensando nisso? Cada dia sem site são clientes perdendo...'",
+          "'Já tenho um sobrinho': 'Ótimo! Só uma pergunta: o site está gerando clientes? Posso mostrar a diferença'",
+          "'Vou pensar': 'Claro! O que exatamente precisa pensar? Talvez eu possa esclarecer agora'",
+          "'Está caro': 'Quanto você acha que perde por mês sem uma presença digital adequada?'",
+          "Sempre redirecione para o VALOR, não para o preço"
         ],
         tips: [
-          "Foque nos benefícios, não nas features",
-          "'Você vai ter mais clientes' > 'Site responsivo'"
+          "Nunca descarte uma objeção - é uma oportunidade de educar",
+          "Use perguntas para entender a real preocupação por trás"
         ]
       },
       {
         id: "step3",
-        title: "Negociar Valores",
-        description: "Defina preços e condições.",
-        icon: Target,
+        title: "Apresentar Pacotes e Preços",
+        description: "Estruture sua oferta com opções para diferentes perfis.",
+        icon: Rocket,
         details: [
-          "Tenha uma tabela de preços base definida",
-          "Ofereça opções (básico, intermediário, completo)",
-          "Facilite o pagamento (pix, parcelado, etc)",
-          "Deixe claro o que está incluído"
+          "PACOTE BÁSICO: Site simples + WhatsApp + formulário. Preço de entrada.",
+          "PACOTE INTERMEDIÁRIO: Site + funcionalidades do nicho + 3 meses suporte",
+          "PACOTE PREMIUM: Tudo + domínio + email profissional + 6 meses suporte",
+          "Sempre apresente 3 opções - maioria escolhe o do meio",
+          "Destaque o pacote intermediário como 'mais popular'",
+          "Inclua BÔNUS em vez de dar desconto (ex: criação de logo grátis)"
         ],
         tips: [
-          "Nunca dê desconto de primeira",
-          "Inclua bônus em vez de baixar preço"
+          "Precifique o básico pelo que o mercado paga, não pelo seu medo",
+          "Pacote premium existe para fazer o intermediário parecer bom negócio"
         ]
       },
       {
         id: "step4",
-        title: "Formalizar Contrato",
-        description: "Documente tudo para segurança.",
+        title: "Formalizar com Contrato Digital",
+        description: "Proteja você e o cliente com documentação adequada.",
         icon: FileText,
         details: [
-          "Acesse a aba 'Contratos' no menu",
-          "Crie um novo contrato com os dados do cliente",
-          "Defina escopo, prazos e valores",
-          "Envie para assinatura digital"
+          "Acesse a aba 'Contratos' no menu lateral do dashboard",
+          "Preencha os dados: contratante, contratado, escopo, valores, prazos",
+          "O sistema gera contrato com cláusulas essenciais automaticamente",
+          "Envie para assinatura digital via link - não precisa imprimir",
+          "O contrato define: o que será entregue, quando, quanto custa, o que acontece se atrasar",
+          "Guarde o contrato assinado em local seguro para referência"
         ],
         tips: [
-          "Sempre formalize por escrito",
-          "Contrato protege você e o cliente"
+          "NUNCA comece sem contrato assinado - protege ambas as partes",
+          "Contrato também passa profissionalismo e gera confiança"
         ]
       },
       {
         id: "step5",
-        title: "Iniciar Projeto",
-        description: "Finalize o site e entregue valor.",
-        icon: Rocket,
+        title: "Receber Pagamento e Iniciar",
+        description: "Finalize a venda e comece o projeto com o pé direito.",
+        icon: CheckCircle2,
         details: [
-          "Use o site demo como base e finalize com ajustes",
-          "Adicione conteúdo real do cliente (fotos, textos)",
-          "Configure domínio personalizado se contratado",
-          "Mantenha o cliente atualizado do progresso",
-          "Entregue antes do prazo quando possível"
+          "Solicite pelo menos 50% de entrada antes de começar",
+          "FORMAS DE PAGAMENTO: Pix (mais usado), transferência, cartão parcelado",
+          "Envie comprovante de recebimento e agradeça a confiança",
+          "Defina cronograma: 'Em X dias envio a primeira versão para aprovação'",
+          "Solicite materiais do cliente: logo, fotos, textos, informações",
+          "Mantenha comunicação ativa: atualizações a cada 2-3 dias"
         ],
         tips: [
-          "Entregas parciais geram confiança",
-          "Peça feedback durante o processo"
+          "Nunca aceite 'pago depois de pronto' - isso dá errado",
+          "Cliente que não paga entrada provavelmente vai dar problema"
+        ]
+      },
+      {
+        id: "step6",
+        title: "Entregar e Fidelizar",
+        description: "Uma boa entrega gera indicações e recorrência.",
+        icon: Star,
+        details: [
+          "Use o site demo como base e finalize com ajustes solicitados",
+          "Adicione o conteúdo real do cliente (fotos, textos, preços)",
+          "Faça até 2 rodadas de ajustes incluídas no preço",
+          "Configure domínio personalizado se contratado (domínio.com.br)",
+          "Ensine o básico ao cliente: como editar, onde ver estatísticas",
+          "PEÇA AVALIAÇÃO: 'Poderia deixar uma avaliação no Google sobre nosso trabalho?'"
+        ],
+        tips: [
+          "Cliente satisfeito indica 3-5 novos clientes em média",
+          "Ofereça plano de manutenção mensal para receita recorrente"
         ]
       }
     ]
@@ -493,54 +614,19 @@ export function HelpCenterTab() {
             exit={{ opacity: 0, y: -20 }}
             className="space-y-6"
           >
-            {/* Golden Tips Card */}
-            <Card className="bg-gradient-to-br from-amber-500/20 via-yellow-500/10 to-orange-500/20 border-amber-500/30">
-              <CardHeader className="pb-2 sm:pb-3">
-                <CardTitle className="text-sm sm:text-base flex items-center gap-2 text-amber-300">
-                  <Lightbulb className="w-4 h-4 sm:w-5 sm:h-5" />
-                  Dicas de Ouro para Prospectar
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
-                  {goldenTips.map((item, index) => {
-                    const Icon = item.icon;
-                    return (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="p-2.5 sm:p-3 rounded-lg bg-black/20 border border-amber-500/20"
-                      >
-                        <div className="flex items-start gap-2">
-                          <div className="p-1.5 rounded-md bg-amber-500/20 shrink-0">
-                            <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400" />
-                          </div>
-                          <div className="min-w-0">
-                            <h4 className="text-xs font-medium text-amber-200 mb-0.5">{item.title}</h4>
-                            <p className="text-[10px] sm:text-xs text-amber-300/70 leading-relaxed">{item.tip}</p>
-                          </div>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Important Notice */}
-            <Card className="bg-red-500/10 border-red-500/30">
+            <Card className="bg-gradient-to-br from-red-500/10 via-orange-500/5 to-amber-500/10 border-red-500/30">
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-start gap-3">
                   <div className="p-2 rounded-lg bg-red-500/20 shrink-0">
                     <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-red-400" />
                   </div>
                   <div className="min-w-0">
-                    <h4 className="text-sm font-medium text-red-300 mb-1">IMPORTANTE: Link Demo é Obrigatório!</h4>
+                    <h4 className="text-sm font-medium text-red-300 mb-1">⚠️ CRÍTICO: Link Demo é Obrigatório!</h4>
                     <p className="text-xs text-red-300/80 leading-relaxed">
-                      Para enviar propostas com alta conversão, você PRECISA criar o site demo na Lovable primeiro e incluir o link na mensagem. 
-                      Propostas sem link demo têm apenas 5% de conversão. Com o link, a conversão sobe para 35%!
+                      Para enviar propostas com alta conversão, você <strong>PRECISA</strong> criar o site demo na Lovable primeiro e incluir o link na mensagem. 
+                      Propostas sem link demo têm apenas 5% de conversão. Com o link, a conversão sobe para <strong>35%</strong>! 
+                      Vá em Biblioteca → Criar Projeto → Lovable para criar o site demo antes de enviar qualquer proposta.
                     </p>
                   </div>
                 </div>
@@ -551,6 +637,7 @@ export function HelpCenterTab() {
             <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {guideSections.map((section, index) => {
                 const Icon = section.icon;
+                const isGoldenTips = section.id === 'golden-tips';
                 return (
                   <motion.div
                     key={section.id}
@@ -559,27 +646,29 @@ export function HelpCenterTab() {
                     transition={{ delay: index * 0.1 }}
                   >
                     <Card 
-                      className="bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer group h-full"
+                      className={`${isGoldenTips 
+                        ? 'bg-gradient-to-br from-amber-500/20 via-yellow-500/10 to-orange-500/20 border-amber-500/30 hover:border-amber-400/50' 
+                        : 'bg-white/5 border-white/10 hover:bg-white/10'} transition-all cursor-pointer group h-full`}
                       onClick={() => handleSelectSection(section.id)}
                     >
                       <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-6">
                         <div className="flex items-center gap-2 sm:gap-3">
-                          <div className="p-2 sm:p-2.5 rounded-lg bg-primary/20 group-hover:bg-primary/30 transition-colors shrink-0">
-                            <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                          <div className={`p-2 sm:p-2.5 rounded-lg ${isGoldenTips ? 'bg-amber-500/20 group-hover:bg-amber-500/30' : 'bg-primary/20 group-hover:bg-primary/30'} transition-colors shrink-0`}>
+                            <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${isGoldenTips ? 'text-amber-400' : 'text-primary'}`} />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <CardTitle className="text-sm sm:text-base text-white group-hover:text-primary transition-colors truncate">
+                            <CardTitle className={`text-sm sm:text-base ${isGoldenTips ? 'text-amber-200 group-hover:text-amber-100' : 'text-white group-hover:text-primary'} transition-colors truncate`}>
                               {section.title}
                             </CardTitle>
                           </div>
-                          <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-white/40 group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0" />
+                          <ChevronRight className={`w-4 h-4 sm:w-5 sm:h-5 ${isGoldenTips ? 'text-amber-400/40 group-hover:text-amber-300' : 'text-white/40 group-hover:text-primary'} group-hover:translate-x-1 transition-all shrink-0`} />
                         </div>
                       </CardHeader>
                       <CardContent className="pt-0 p-3 sm:p-6 sm:pt-0">
-                        <p className="text-xs sm:text-sm text-white/60 line-clamp-2">{section.description}</p>
+                        <p className={`text-xs sm:text-sm ${isGoldenTips ? 'text-amber-300/70' : 'text-white/60'} line-clamp-2`}>{section.description}</p>
                         <div className="mt-2 sm:mt-3 flex items-center gap-2">
-                          <Badge variant="secondary" className="bg-white/10 text-white/70 text-[10px] sm:text-xs">
-                            {section.steps.length} passos
+                          <Badge variant="secondary" className={`${isGoldenTips ? 'bg-amber-500/20 text-amber-300' : 'bg-white/10 text-white/70'} text-[10px] sm:text-xs`}>
+                            {section.steps.length} {isGoldenTips ? 'dicas' : 'passos'}
                           </Badge>
                         </div>
                       </CardContent>
@@ -588,29 +677,6 @@ export function HelpCenterTab() {
                 );
               })}
             </div>
-
-            {/* Lovable CTA */}
-            <Card className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 border-blue-500/30">
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                  <div className="flex-1">
-                    <h3 className="text-base sm:text-lg font-semibold text-white mb-1">
-                      🎁 Ganhe 10 Créditos Grátis na Lovable!
-                    </h3>
-                    <p className="text-xs sm:text-sm text-white/70">
-                      Crie sua conta na Lovable pelo nosso link e ganhe créditos extras para criar sites com IA.
-                    </p>
-                  </div>
-                  <Button 
-                    onClick={() => window.open('https://lovable.dev/invite/G0FY6YR', '_blank')}
-                    className="gap-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 shrink-0"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    Criar Conta
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
           </motion.div>
         ) : (
           <motion.div
