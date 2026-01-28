@@ -1,0 +1,1 @@
+export { HelpCenterTab } from './HelpCenterTab';
