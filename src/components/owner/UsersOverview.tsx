@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,9 +10,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { 
   Users, Search, RefreshCw, Shield, Clock, Mail, CheckCircle, XCircle, Crown, UserCog,
-  Globe, Activity, BarChart3, Bell, Send, Eye, History, Database, Calendar, TrendingUp
+  Globe, Activity, BarChart3, Bell, Send, Eye, History, Database, Calendar, TrendingUp,
+  Wifi, WifiOff, Timer, MonitorSmartphone
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
   Dialog,
@@ -22,6 +23,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+
+interface UserPresence {
+  user_id: string;
+  is_online: boolean;
+  last_seen_at: string | null;
+  last_login_at: string | null;
+  current_page: string | null;
+  device_info: string | null;
+  session_started_at: string | null;
+}
 
 interface AdminUser {
   id: string;
@@ -38,6 +49,12 @@ interface AdminUser {
   last_ip?: string;
   appointments_count?: number;
   clients_count?: number;
+  // Novos campos de presença
+  is_online?: boolean;
+  last_seen_at?: string | null;
+  current_page?: string | null;
+  device_info?: string | null;
+  session_started_at?: string | null;
 }
 
 interface LoginHistory {
@@ -59,6 +76,7 @@ interface UserWarning {
 
 const UsersOverview = () => {
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [presenceData, setPresenceData] = useState<Record<string, UserPresence>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -72,8 +90,60 @@ const UsersOverview = () => {
   const [warningMessage, setWarningMessage] = useState('');
   const [sendingWarning, setSendingWarning] = useState(false);
 
+  const fetchPresenceData = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_presence')
+        .select('*');
+
+      if (error) {
+        console.error('Error fetching presence:', error);
+        return;
+      }
+
+      const presenceMap: Record<string, UserPresence> = {};
+      data?.forEach(p => {
+        presenceMap[p.user_id] = p as UserPresence;
+      });
+      setPresenceData(presenceMap);
+    } catch (error) {
+      console.error('Error fetching presence data:', error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchUsers();
+    fetchPresenceData();
+    
+    // Atualizar presença em tempo real
+    const presenceChannel = supabase
+      .channel('user-presence-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_presence'
+        },
+        (payload) => {
+          const newData = payload.new as Record<string, unknown>;
+          if (newData && 'user_id' in newData) {
+            setPresenceData(prev => ({
+              ...prev,
+              [newData.user_id as string]: newData as unknown as UserPresence
+            }));
+          }
+        }
+      )
+      .subscribe();
+
+    // Atualizar presença a cada 30s
+    const interval = setInterval(fetchPresenceData, 30000);
+
+    return () => {
+      supabase.removeChannel(presenceChannel);
+      clearInterval(interval);
+    };
   }, []);
 
   const fetchUsers = async () => {
@@ -301,7 +371,21 @@ const UsersOverview = () => {
     }
   };
 
-  const filteredUsers = users.filter(user => {
+  // Combinar usuários com dados de presença
+  const usersWithPresence = users.map(user => {
+    const presence = presenceData[user.user_id];
+    return {
+      ...user,
+      is_online: presence?.is_online ?? false,
+      last_seen_at: presence?.last_seen_at ?? null,
+      current_page: presence?.current_page ?? null,
+      device_info: presence?.device_info ?? null,
+      session_started_at: presence?.session_started_at ?? null,
+      last_login_at: presence?.last_login_at ?? user.last_login ?? null,
+    };
+  });
+
+  const filteredUsers = usersWithPresence.filter(user => {
     if (!searchTerm) return true;
     const search = searchTerm.toLowerCase();
     return (
@@ -312,12 +396,34 @@ const UsersOverview = () => {
     );
   });
 
+  // Calcular quantos estão online agora
+  const onlineNow = usersWithPresence.filter(u => u.is_online).length;
+
   const stats = {
     total: users.length,
     active: users.filter(u => u.is_active).length,
+    online: onlineNow,
     superAdmins: users.filter(u => u.role === 'super_admin').length,
     admins: users.filter(u => u.role === 'admin').length,
     barbers: users.filter(u => u.role === 'barber').length,
+  };
+
+  // Função para formatar tempo desde última atividade
+  const formatLastSeen = (lastSeen: string | null): string => {
+    if (!lastSeen) return 'Nunca';
+    try {
+      return formatDistanceToNow(new Date(lastSeen), { addSuffix: true, locale: ptBR });
+    } catch {
+      return 'Inválido';
+    }
+  };
+
+  // Função para verificar se está realmente online (visto nos últimos 2 min)
+  const isReallyOnline = (lastSeen: string | null, isOnline: boolean): boolean => {
+    if (!isOnline) return false;
+    if (!lastSeen) return false;
+    const twoMinutesAgo = Date.now() - 2 * 60 * 1000;
+    return new Date(lastSeen).getTime() > twoMinutesAgo;
   };
 
   return (
@@ -334,7 +440,7 @@ const UsersOverview = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
         <Card className="border-border/50">
           <CardContent className="pt-4">
             <div className="flex items-center gap-2">
@@ -342,6 +448,15 @@ const UsersOverview = () => {
               <span className="text-sm text-muted-foreground">Total</span>
             </div>
             <p className="text-2xl font-bold mt-1">{stats.total}</p>
+          </CardContent>
+        </Card>
+        <Card className="border-border/50 bg-emerald-500/5 border-emerald-500/20">
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-2">
+              <Wifi className="w-4 h-4 text-emerald-500 animate-pulse" />
+              <span className="text-sm text-emerald-600">Online Agora</span>
+            </div>
+            <p className="text-2xl font-bold mt-1 text-emerald-600">{stats.online}</p>
           </CardContent>
         </Card>
         <Card className="border-border/50">
@@ -405,20 +520,44 @@ const UsersOverview = () => {
               {filteredUsers.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">Nenhum usuário encontrado</p>
               ) : (
-                filteredUsers.map((user) => (
+                filteredUsers.map((user) => {
+                  const reallyOnline = isReallyOnline(user.last_seen_at, user.is_online ?? false);
+                  return (
                   <div
                     key={user.user_id}
-                    className="p-4 rounded-lg bg-card border border-border/50 hover:border-border transition-colors"
+                    className={`p-4 rounded-lg bg-card border transition-colors ${
+                      reallyOnline 
+                        ? 'border-emerald-500/50 bg-emerald-500/5' 
+                        : 'border-border/50 hover:border-border'
+                    }`}
                   >
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                       <div className="flex items-start gap-3">
-                        <div className="p-2 rounded-lg bg-primary/10">
-                          {getRoleIcon(user.role || '')}
+                        {/* Indicador de status online */}
+                        <div className="relative">
+                          <div className="p-2 rounded-lg bg-primary/10">
+                            {getRoleIcon(user.role || '')}
+                          </div>
+                          {reallyOnline && (
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-background animate-pulse" />
+                          )}
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <h3 className="font-medium text-foreground">{user.name}</h3>
                             {getRoleBadge(user.role || '')}
+                            {/* Badge de status online */}
+                            {reallyOnline ? (
+                              <Badge className="bg-emerald-500/20 text-emerald-600 border-emerald-500/30">
+                                <Wifi className="w-3 h-3 mr-1" />
+                                Online
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary" className="text-muted-foreground">
+                                <WifiOff className="w-3 h-3 mr-1" />
+                                Offline
+                              </Badge>
+                            )}
                             {!user.is_active && <Badge variant="destructive">Inativo</Badge>}
                           </div>
                           <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
@@ -426,6 +565,17 @@ const UsersOverview = () => {
                             {user.email}
                           </div>
                           <div className="flex flex-wrap gap-4 mt-2 text-xs text-muted-foreground">
+                            {/* Status de presença detalhado */}
+                            <div className="flex items-center gap-1">
+                              <Timer className="w-3 h-3" />
+                              Visto: {formatLastSeen(user.last_seen_at)}
+                            </div>
+                            {user.current_page && reallyOnline && (
+                              <div className="flex items-center gap-1 text-emerald-600">
+                                <MonitorSmartphone className="w-3 h-3" />
+                                {user.current_page}
+                              </div>
+                            )}
                             <div className="flex items-center gap-1">
                               <Globe className="w-3 h-3" />
                               IP: {user.last_ip}
@@ -440,8 +590,8 @@ const UsersOverview = () => {
                             </div>
                             {user.last_login && (
                               <div className="flex items-center gap-1">
-                                <Clock className="w-3 h-3 text-green-500" />
-                                Último: {format(new Date(user.last_login), 'dd/MM HH:mm', { locale: ptBR })}
+                                <Clock className="w-3 h-3 text-primary" />
+                                Último login: {format(new Date(user.last_login), 'dd/MM HH:mm', { locale: ptBR })}
                               </div>
                             )}
                           </div>
@@ -472,7 +622,7 @@ const UsersOverview = () => {
                       </div>
                     </div>
                   </div>
-                ))
+                )})
               )}
             </div>
           </ScrollArea>
@@ -486,11 +636,78 @@ const UsersOverview = () => {
             <DialogTitle className="flex items-center gap-2">
               {getRoleIcon(selectedUser?.role || '')}
               {selectedUser?.name}
+              {(() => {
+                const presence = selectedUser ? presenceData[selectedUser.user_id] : null;
+                const online = presence ? isReallyOnline(presence.last_seen_at, presence.is_online) : false;
+                return online ? (
+                  <Badge className="bg-emerald-500/20 text-emerald-600 ml-2">
+                    <Wifi className="w-3 h-3 mr-1" />
+                    Online
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary" className="ml-2">
+                    <WifiOff className="w-3 h-3 mr-1" />
+                    Offline
+                  </Badge>
+                );
+              })()}
             </DialogTitle>
             <DialogDescription>{selectedUser?.email}</DialogDescription>
           </DialogHeader>
           
           <div className="space-y-6">
+            {/* Status de Presença em Tempo Real */}
+            {selectedUser && presenceData[selectedUser.user_id] && (
+              <Card className="border-emerald-500/30 bg-emerald-500/5">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Wifi className="w-4 h-4 text-emerald-500" />
+                    Status em Tempo Real
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-muted-foreground">Última atividade:</span>
+                      <p className="font-medium">
+                        {formatLastSeen(presenceData[selectedUser.user_id].last_seen_at)}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Último login:</span>
+                      <p className="font-medium">
+                        {presenceData[selectedUser.user_id].last_login_at 
+                          ? format(new Date(presenceData[selectedUser.user_id].last_login_at!), 'dd/MM/yyyy HH:mm', { locale: ptBR })
+                          : 'N/A'}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Página atual:</span>
+                      <p className="font-medium font-mono text-xs">
+                        {presenceData[selectedUser.user_id].current_page || 'N/A'}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Sessão iniciada:</span>
+                      <p className="font-medium">
+                        {presenceData[selectedUser.user_id].session_started_at
+                          ? format(new Date(presenceData[selectedUser.user_id].session_started_at!), 'dd/MM HH:mm', { locale: ptBR })
+                          : 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                  {presenceData[selectedUser.user_id].device_info && (
+                    <div className="pt-2 border-t border-border/50">
+                      <span className="text-muted-foreground">Dispositivo:</span>
+                      <p className="font-mono text-xs text-muted-foreground">
+                        {presenceData[selectedUser.user_id].device_info?.slice(0, 80)}...
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             {/* User Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card className="border-border/50">

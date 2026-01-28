@@ -10618,6 +10618,51 @@ export type Database = {
         }
         Relationships: []
       }
+      user_presence: {
+        Row: {
+          created_at: string | null
+          current_page: string | null
+          device_info: string | null
+          id: string
+          ip_address: string | null
+          is_online: boolean | null
+          last_login_at: string | null
+          last_seen_at: string | null
+          session_started_at: string | null
+          total_session_seconds: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_page?: string | null
+          device_info?: string | null
+          id?: string
+          ip_address?: string | null
+          is_online?: boolean | null
+          last_login_at?: string | null
+          last_seen_at?: string | null
+          session_started_at?: string | null
+          total_session_seconds?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_page?: string | null
+          device_info?: string | null
+          id?: string
+          ip_address?: string | null
+          is_online?: boolean | null
+          last_login_at?: string | null
+          last_seen_at?: string | null
+          session_started_at?: string | null
+          total_session_seconds?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           avatar_type: string | null
