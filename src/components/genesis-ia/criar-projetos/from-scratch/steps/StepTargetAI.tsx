@@ -51,8 +51,8 @@ export function StepTargetAI() {
   const { formData, updateFormData } = useFromScratch();
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+    <div className="space-y-3 sm:space-y-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
         {SITE_AI_TARGETS.map((ai, index) => {
           const isSelected = formData.targetAI === ai.id;
           const iconSrc = AI_ICONS[ai.id];
@@ -64,28 +64,28 @@ export function StepTargetAI() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: index * 0.03 }}
               onClick={() => updateFormData('targetAI', ai.id as any)}
-              className={`relative p-4 rounded-xl border transition-all ${
+              className={`relative p-3 sm:p-4 rounded-xl border transition-all ${
                 isSelected
                   ? 'bg-primary/10 border-primary/50 ring-2 ring-primary/30'
                   : 'bg-white/5 border-white/10 hover:border-white/20'
               }`}
             >
-              <div className="flex flex-col items-center gap-3">
+              <div className="flex flex-col items-center gap-2 sm:gap-3">
                 {iconSrc ? (
-                  <img src={iconSrc} alt={ai.name} className="w-12 h-12 rounded-xl object-contain" />
+                  <img src={iconSrc} alt={ai.name} className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl object-contain" />
                 ) : (
-                  <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
-                    <Sparkles className="w-6 h-6" />
+                  <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl bg-white/10 flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
                 )}
                 <div className="text-center">
-                  <p className="text-sm font-semibold">{ai.name}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{ai.description}</p>
+                  <p className="text-xs sm:text-sm font-semibold">{ai.name}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 line-clamp-1">{ai.description}</p>
                 </div>
               </div>
               {isSelected && (
-                <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                  <Check className="w-3.5 h-3.5 text-primary-foreground" />
+                <div className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary flex items-center justify-center">
+                  <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary-foreground" />
                 </div>
               )}
             </motion.button>
@@ -98,24 +98,24 @@ export function StepTargetAI() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: SITE_AI_TARGETS.length * 0.03 }}
           onClick={() => updateFormData('targetAI', 'other')}
-          className={`relative p-4 rounded-xl border transition-all ${
+          className={`relative p-3 sm:p-4 rounded-xl border transition-all ${
             formData.targetAI === 'other'
               ? 'bg-primary/10 border-primary/50 ring-2 ring-primary/30'
               : 'bg-white/5 border-white/10 hover:border-white/20'
           }`}
         >
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-muted-foreground" />
+          <div className="flex flex-col items-center gap-2 sm:gap-3">
+            <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl bg-white/10 flex items-center justify-center">
+              <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground" />
             </div>
             <div className="text-center">
-              <p className="text-sm font-semibold">Outro</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Especificar</p>
+              <p className="text-xs sm:text-sm font-semibold">Outro</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">Especificar</p>
             </div>
           </div>
           {formData.targetAI === 'other' && (
-            <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-              <Check className="w-3.5 h-3.5 text-primary-foreground" />
+            <div className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary flex items-center justify-center">
+              <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary-foreground" />
             </div>
           )}
         </motion.button>
@@ -126,22 +126,22 @@ export function StepTargetAI() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-2"
+          className="space-y-1.5 sm:space-y-2"
         >
-          <label className="text-sm text-muted-foreground">Especifique a ferramenta</label>
+          <label className="text-xs sm:text-sm text-muted-foreground">Especifique a ferramenta</label>
           <Input
             value={formData.otherAI || ''}
             onChange={(e) => updateFormData('otherAI', e.target.value)}
             placeholder="Ex: Replit Agent, GitHub Copilot..."
-            className="bg-white/5 border-white/10 h-10 text-sm"
+            className="bg-white/5 border-white/10 h-8 sm:h-10 text-xs sm:text-sm"
           />
         </motion.div>
       )}
 
       {/* Info */}
       {formData.targetAI && formData.targetAI !== 'other' && (
-        <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-          <p className="text-sm text-muted-foreground text-center">
+        <div className="p-2.5 sm:p-3 rounded-lg bg-white/5 border border-white/10">
+          <p className="text-xs sm:text-sm text-muted-foreground text-center">
             💡 Prompt otimizado para <span className="text-primary font-medium">{SITE_AI_TARGETS.find(a => a.id === formData.targetAI)?.name}</span>
           </p>
         </div>

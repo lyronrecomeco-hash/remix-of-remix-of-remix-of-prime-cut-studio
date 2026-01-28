@@ -342,64 +342,64 @@ export function ProjectLibrary({ affiliateId, onEdit, onCreateNew, onBack }: Pro
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5 px-1 sm:px-0">
       {/* Stats Cards */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="p-4 rounded-xl bg-white/5 border border-white/10"
+          className="p-3 sm:p-4 rounded-xl bg-white/5 border border-white/10"
         >
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-              Projetos Ativos
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+              Projetos
             </span>
-            <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
-              <Layers className="w-4 h-4 text-blue-400" />
+            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
+              <Layers className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400" />
             </div>
           </div>
-          <span className="text-2xl font-bold text-foreground">{totalProjects}</span>
+          <span className="text-xl sm:text-2xl font-bold text-foreground">{totalProjects}</span>
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="p-4 rounded-xl bg-white/5 border border-white/10"
+          className="p-3 sm:p-4 rounded-xl bg-white/5 border border-white/10"
         >
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-              Apps Criados
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+              Apps
             </span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-              <Monitor className="w-4 h-4 text-emerald-400" />
+            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+              <Monitor className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-400" />
             </div>
           </div>
-          <span className="text-2xl font-bold text-foreground">{appsCount}</span>
+          <span className="text-xl sm:text-2xl font-bold text-foreground">{appsCount}</span>
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="p-4 rounded-xl bg-white/5 border border-white/10"
+          className="p-3 sm:p-4 rounded-xl bg-white/5 border border-white/10"
         >
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-              Sites Criados
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+              Sites
             </span>
-            <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
-              <Globe className="w-4 h-4 text-purple-400" />
+            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
+              <Globe className="w-3 h-3 sm:w-4 sm:h-4 text-purple-400" />
             </div>
           </div>
-          <span className="text-2xl font-bold text-foreground">{sitesCount}</span>
+          <span className="text-xl sm:text-2xl font-bold text-foreground">{sitesCount}</span>
         </motion.div>
       </div>
 
       {/* Filter Tabs + Search */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div className="flex flex-col gap-2 sm:gap-3">
         {/* Tabs */}
-        <div className="flex items-center gap-1 p-1 rounded-lg bg-white/5 border border-white/10">
+        <div className="flex items-center gap-1 p-1 rounded-lg bg-white/5 border border-white/10 w-fit">
           {[
             { id: 'all', label: 'TODOS' },
             { id: 'apps', label: 'APPS' },
@@ -408,7 +408,7 @@ export function ProjectLibrary({ affiliateId, onEdit, onCreateNew, onBack }: Pro
             <button
               key={tab.id}
               onClick={() => setFilterTab(tab.id as FilterTab)}
-              className={`px-4 py-1.5 rounded-md text-xs font-medium transition-all ${
+              className={`px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-md text-[10px] sm:text-xs font-medium transition-all ${
                 filterTab === tab.id
                   ? 'bg-white/10 text-foreground'
                   : 'text-muted-foreground hover:text-foreground'
@@ -420,13 +420,13 @@ export function ProjectLibrary({ affiliateId, onEdit, onCreateNew, onBack }: Pro
         </div>
 
         {/* Search */}
-        <div className="relative w-full sm:w-auto">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <div className="relative w-full sm:w-56">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
           <Input
             placeholder="Buscar projeto..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 w-full sm:w-56 h-9 bg-white/5 border-white/10 text-sm"
+            className="pl-8 sm:pl-9 w-full h-8 sm:h-9 bg-white/5 border-white/10 text-xs sm:text-sm"
           />
         </div>
       </div>
@@ -436,17 +436,17 @@ export function ProjectLibrary({ affiliateId, onEdit, onCreateNew, onBack }: Pro
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center py-16 rounded-xl bg-white/5 border border-white/10"
+          className="text-center py-10 sm:py-16 rounded-xl bg-white/5 border border-white/10"
         >
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-blue-500/20 flex items-center justify-center">
-            <FolderOpen className="w-8 h-8 text-blue-400" />
+          <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 rounded-2xl bg-blue-500/20 flex items-center justify-center">
+            <FolderOpen className="w-6 h-6 sm:w-8 sm:h-8 text-blue-400" />
           </div>
-          <h3 className="text-base font-semibold text-foreground mb-2">
+          <h3 className="text-sm sm:text-base font-semibold text-foreground mb-1.5 sm:mb-2">
             {searchQuery || filterTab !== 'all'
               ? 'Nenhum projeto encontrado'
               : 'Biblioteca vazia'}
           </h3>
-          <p className="text-xs text-muted-foreground mb-6 px-4 max-w-sm mx-auto">
+          <p className="text-[10px] sm:text-xs text-muted-foreground mb-4 sm:mb-6 px-4 max-w-sm mx-auto">
             {searchQuery || filterTab !== 'all'
               ? 'Tente ajustar os filtros de busca'
               : 'Crie seu primeiro projeto usando nossos templates profissionais'}
@@ -454,27 +454,28 @@ export function ProjectLibrary({ affiliateId, onEdit, onCreateNew, onBack }: Pro
           {!searchQuery && filterTab === 'all' && (
             <Button
               onClick={onCreateNew}
-              className="gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+              size="sm"
+              className="gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 h-9 text-xs sm:text-sm"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               Criar Projeto
             </Button>
           )}
         </motion.div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
           {/* Create New Card */}
           <motion.button
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             onClick={onCreateNew}
-            className="flex flex-col items-center justify-center p-6 rounded-xl bg-white/5 border border-dashed border-white/20 hover:border-blue-500/50 hover:bg-white/10 transition-all min-h-[200px] group"
+            className="flex flex-col items-center justify-center p-4 sm:p-6 rounded-xl bg-white/5 border border-dashed border-white/20 hover:border-blue-500/50 hover:bg-white/10 transition-all min-h-[160px] sm:min-h-[200px] group"
           >
-            <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-              <Plus className="w-6 h-6 text-blue-400" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-500/20 flex items-center justify-center mb-2 sm:mb-3 group-hover:scale-110 transition-transform">
+              <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
             </div>
-            <span className="text-sm font-medium text-foreground">Criar Novo Projeto</span>
-            <span className="text-xs text-muted-foreground mt-1">Começar do zero</span>
+            <span className="text-xs sm:text-sm font-medium text-foreground">Criar Novo Projeto</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">Começar do zero</span>
           </motion.button>
 
           {/* Project Cards */}

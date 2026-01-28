@@ -158,15 +158,15 @@ export function StepPreview({ onComplete, affiliateId }: StepPreviewProps) {
 
   if (isGenerating) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[350px] space-y-6">
+      <div className="flex flex-col items-center justify-center min-h-[280px] sm:min-h-[350px] space-y-4 sm:space-y-6">
         {/* Animated Loader */}
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           className="relative"
         >
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-            <Loader2 className="w-10 h-10 text-primary animate-spin" />
+          <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+            <Loader2 className="w-7 h-7 sm:w-10 sm:h-10 text-primary animate-spin" />
           </div>
           <motion.div
             className="absolute inset-0 rounded-full border-2 border-primary/30"
@@ -177,30 +177,30 @@ export function StepPreview({ onComplete, affiliateId }: StepPreviewProps) {
 
         {/* Title */}
         <div className="text-center">
-          <h3 className="text-lg font-bold text-foreground mb-1">
+          <h3 className="text-base sm:text-lg font-bold text-foreground mb-0.5 sm:mb-1">
             Gerando Prompt Ultra-Completo
           </h3>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-[10px] sm:text-xs text-muted-foreground">
             Processando suas configurações...
           </p>
         </div>
 
         {/* Logs */}
-        <div className="w-full max-w-md bg-card/50 rounded-xl border border-border/50 p-3 space-y-1.5">
+        <div className="w-full max-w-sm sm:max-w-md bg-card/50 rounded-xl border border-border/50 p-2.5 sm:p-3 space-y-1 sm:space-y-1.5">
           <AnimatePresence mode="popLayout">
             {GENERATION_LOGS.slice(0, currentLogIndex + 1).map((log, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className={`flex items-center gap-2 text-xs ${
+                className={`flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs ${
                   index === currentLogIndex ? 'text-primary font-medium' : 'text-muted-foreground'
                 }`}
               >
               {index < currentLogIndex ? (
-                  <Check className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary shrink-0" />
                 ) : (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
+                  <Loader2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-spin shrink-0" />
                 )}
                 <span>{log.icon} {log.text}</span>
               </motion.div>
@@ -209,8 +209,8 @@ export function StepPreview({ onComplete, affiliateId }: StepPreviewProps) {
         </div>
 
         {/* Progress Bar */}
-        <div className="w-full max-w-md">
-          <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+        <div className="w-full max-w-sm sm:max-w-md">
+          <div className="h-1 sm:h-1.5 bg-white/5 rounded-full overflow-hidden">
             <motion.div
               className="h-full bg-primary"
               initial={{ width: '0%' }}
@@ -218,7 +218,7 @@ export function StepPreview({ onComplete, affiliateId }: StepPreviewProps) {
               transition={{ duration: 0.5 }}
             />
           </div>
-          <p className="text-xs text-muted-foreground text-center mt-1.5">
+          <p className="text-[10px] sm:text-xs text-muted-foreground text-center mt-1 sm:mt-1.5">
             {Math.round(((currentLogIndex + 1) / GENERATION_LOGS.length) * 100)}% concluído
           </p>
         </div>
@@ -227,78 +227,78 @@ export function StepPreview({ onComplete, affiliateId }: StepPreviewProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {/* Success Header */}
       <motion.div
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         className="text-center"
       >
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30 mb-3">
-          <Sparkles className="w-6 h-6 text-primary" />
+        <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30 mb-2 sm:mb-3">
+          <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
         </div>
-        <h3 className="text-xl font-bold text-foreground mb-1">
+        <h3 className="text-lg sm:text-xl font-bold text-foreground mb-0.5 sm:mb-1">
           Prompt Gerado! 🎉
         </h3>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs sm:text-sm text-muted-foreground">
           Seu prompt está pronto para usar
         </p>
       </motion.div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-4 gap-2 max-w-xl mx-auto">
-        <div className="p-2 rounded-lg bg-white/5 border border-white/10 text-center">
-          <div className="text-lg font-bold text-foreground">{formData.selectedPages.length + formData.customPages.length}</div>
-          <div className="text-[10px] text-muted-foreground">Páginas</div>
+      <div className="grid grid-cols-4 gap-1.5 sm:gap-2 max-w-xl mx-auto">
+        <div className="p-1.5 sm:p-2 rounded-lg bg-white/5 border border-white/10 text-center">
+          <div className="text-sm sm:text-lg font-bold text-foreground">{formData.selectedPages.length + formData.customPages.length}</div>
+          <div className="text-[8px] sm:text-[10px] text-muted-foreground">Páginas</div>
         </div>
-        <div className="p-2 rounded-lg bg-white/5 border border-white/10 text-center">
-          <div className="text-lg font-bold text-foreground">{formData.selectedFeatures.length}</div>
-          <div className="text-[10px] text-muted-foreground">Features</div>
+        <div className="p-1.5 sm:p-2 rounded-lg bg-white/5 border border-white/10 text-center">
+          <div className="text-sm sm:text-lg font-bold text-foreground">{formData.selectedFeatures.length}</div>
+          <div className="text-[8px] sm:text-[10px] text-muted-foreground">Features</div>
         </div>
-        <div className="p-2 rounded-lg bg-white/5 border border-white/10 text-center">
-          <div className="text-lg font-bold text-foreground">{formData.integrations.length}</div>
-          <div className="text-[10px] text-muted-foreground">Integrações</div>
+        <div className="p-1.5 sm:p-2 rounded-lg bg-white/5 border border-white/10 text-center">
+          <div className="text-sm sm:text-lg font-bold text-foreground">{formData.integrations.length}</div>
+          <div className="text-[8px] sm:text-[10px] text-muted-foreground">Integrações</div>
         </div>
-        <div className="p-2 rounded-lg bg-white/5 border border-white/10 text-center">
-          <div className="text-lg font-bold text-foreground">{(displayedPrompt.length / 1000).toFixed(1)}k</div>
-          <div className="text-[10px] text-muted-foreground">Caracteres</div>
+        <div className="p-1.5 sm:p-2 rounded-lg bg-white/5 border border-white/10 text-center">
+          <div className="text-sm sm:text-lg font-bold text-foreground">{(displayedPrompt.length / 1000).toFixed(1)}k</div>
+          <div className="text-[8px] sm:text-[10px] text-muted-foreground">Caracteres</div>
         </div>
       </div>
 
       {/* Action Buttons - Compact */}
-      <div className="flex flex-wrap justify-center gap-2">
+      <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2">
         <Button
           onClick={handleCopy}
           size="sm"
-          className="bg-primary hover:bg-primary/90 h-8 px-3 text-xs"
+          className="bg-primary hover:bg-primary/90 h-7 sm:h-8 px-2.5 sm:px-3 text-[10px] sm:text-xs"
         >
-          {copied ? <Check className="w-3.5 h-3.5 mr-1.5" /> : <Copy className="w-3.5 h-3.5 mr-1.5" />}
+          {copied ? <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-1.5" /> : <Copy className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-1.5" />}
           {copied ? 'Copiado!' : 'Copiar'}
         </Button>
-        <Button onClick={handleExport} variant="outline" size="sm" className="h-8 px-3 text-xs">
-          <Download className="w-3.5 h-3.5 mr-1.5" />
-          Exportar .md
+        <Button onClick={handleExport} variant="outline" size="sm" className="h-7 sm:h-8 px-2.5 sm:px-3 text-[10px] sm:text-xs">
+          <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-1.5" />
+          Exportar
         </Button>
-        <Button onClick={handleSaveToLibrary} variant="outline" size="sm" className="h-8 px-3 text-xs">
-          <Save className="w-3.5 h-3.5 mr-1.5" />
+        <Button onClick={handleSaveToLibrary} variant="outline" size="sm" className="h-7 sm:h-8 px-2.5 sm:px-3 text-[10px] sm:text-xs">
+          <Save className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-1.5" />
           Salvar
         </Button>
-        <Button onClick={handleReset} variant="ghost" size="sm" className="h-8 px-3 text-xs">
-          <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+        <Button onClick={handleReset} variant="ghost" size="sm" className="h-7 sm:h-8 px-2.5 sm:px-3 text-[10px] sm:text-xs">
+          <RotateCcw className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-1.5" />
           Novo
         </Button>
       </div>
 
       {/* Prompt Preview */}
       <div className="rounded-xl bg-white/5 border border-white/10 overflow-hidden">
-        <div className="p-2.5 border-b border-white/10 flex items-center justify-between">
-          <span className="text-xs font-medium text-muted-foreground">Preview do Prompt</span>
-          <span className="text-[10px] text-muted-foreground">
+        <div className="p-2 sm:p-2.5 border-b border-white/10 flex items-center justify-between">
+          <span className="text-[10px] sm:text-xs font-medium text-muted-foreground">Preview do Prompt</span>
+          <span className="text-[8px] sm:text-[10px] text-muted-foreground">
             {displayedPrompt.split('\n').length} linhas
           </span>
         </div>
-        <div className="max-h-[280px] overflow-y-auto p-3">
-          <pre className="text-xs text-muted-foreground whitespace-pre-wrap font-mono leading-relaxed">
+        <div className="max-h-[200px] sm:max-h-[280px] overflow-y-auto p-2.5 sm:p-3">
+          <pre className="text-[10px] sm:text-xs text-muted-foreground whitespace-pre-wrap font-mono leading-relaxed">
             {displayedPrompt}
           </pre>
         </div>
@@ -320,8 +320,8 @@ export function StepPreview({ onComplete, affiliateId }: StepPreviewProps) {
 
       {/* Instructions - Only show when NOT Lovable */}
       {formData.targetAI !== 'lovable' && (
-        <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 max-w-lg mx-auto">
-          <p className="text-xs text-muted-foreground text-center">
+        <div className="p-2.5 sm:p-3 rounded-xl bg-primary/5 border border-primary/20 max-w-lg mx-auto">
+          <p className="text-[10px] sm:text-xs text-muted-foreground text-center">
             <strong className="text-foreground">Próximo passo:</strong> Cole o prompt na IA ({formData.targetAI === 'other' ? formData.otherAI : formData.targetAI})
           </p>
         </div>
@@ -329,24 +329,24 @@ export function StepPreview({ onComplete, affiliateId }: StepPreviewProps) {
 
       {/* Back Button - Compact */}
       <div className="text-center">
-        <Button onClick={onComplete} variant="ghost" size="sm" className="h-8 text-xs">
-          <ArrowLeft className="w-3.5 h-3.5 mr-1.5" />
+        <Button onClick={onComplete} variant="ghost" size="sm" className="h-7 sm:h-8 text-[10px] sm:text-xs">
+          <ArrowLeft className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-1.5" />
           Voltar para Biblioteca
         </Button>
       </div>
 
       {/* Save Dialog */}
       <AlertDialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>Salvar na Biblioteca?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-base sm:text-lg">Salvar na Biblioteca?</AlertDialogTitle>
+            <AlertDialogDescription className="text-xs sm:text-sm">
               Deseja salvar "{formData.projectName}" na biblioteca?
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmSave} className="bg-primary hover:bg-primary/90">
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel className="h-8 sm:h-9 text-xs sm:text-sm">Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmSave} className="bg-primary hover:bg-primary/90 h-8 sm:h-9 text-xs sm:text-sm">
               Salvar
             </AlertDialogAction>
           </AlertDialogFooter>
