@@ -75,9 +75,10 @@ import PartnerApplications from "@/components/admin/PartnerApplications";
 
 import GenesisBackground from "@/components/genesis-ia/GenesisBackground";
 import { ViralSaasTab } from "@/components/genesis-ia/viral-apps/ViralSaasTab";
-import { FileText, Gift, CreditCard, Code2, Rocket, Key, ClipboardList } from "lucide-react";
+import { FileText, Gift, CreditCard, Code2, Rocket, Key, ClipboardList, HelpCircle } from "lucide-react";
+import { HelpCenterTab } from "@/components/genesis-ia/help";
 
-type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional' | 'payments' | 'page-builder' | 'academia' | 'proposals' | 'sprint-mission' | 'api-keys' | 'viral-saas' | 'partner-applications';
+type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional' | 'payments' | 'page-builder' | 'academia' | 'proposals' | 'sprint-mission' | 'api-keys' | 'viral-saas' | 'partner-applications' | 'help';
 
 // Icon mapping for dynamic rendering
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -241,6 +242,7 @@ const GenesisIADashboard = () => {
       case 'api-keys': return 'API Keys';
       case 'viral-saas': return 'SaaS Virais';
       case 'partner-applications': return 'Inscrições';
+      case 'help': return 'Central de Ajuda';
       default: return null;
     }
   };
@@ -277,6 +279,7 @@ const GenesisIADashboard = () => {
   const dockItems: DockItem[] = [
     ...baseDockItems,
     ...adminDockItems,
+    { icon: HelpCircle, label: 'Ajuda', tabId: 'help' },
     { icon: Settings, label: 'Config', tabId: 'settings' },
     { icon: LogOut, label: 'Sair', onClick: handleLogout },
   ];
@@ -752,6 +755,10 @@ const GenesisIADashboard = () => {
 
     if (activeTab === 'partner-applications' && isAdmin) {
       return <PartnerApplications />;
+    }
+
+    if (activeTab === 'help') {
+      return <HelpCenterTab />;
     }
 
     return null;
