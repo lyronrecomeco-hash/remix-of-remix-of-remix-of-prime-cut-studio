@@ -3443,6 +3443,197 @@ export type Database = {
         }
         Relationships: []
       }
+      enriched_leads: {
+        Row: {
+          ads_analysis_id: string | null
+          affiliate_id: string | null
+          ai_analysis: Json | null
+          business_address: string | null
+          business_city: string | null
+          business_country: string | null
+          business_email: string | null
+          business_name: string
+          business_niche: string | null
+          business_phone: string | null
+          business_state: string | null
+          business_website: string | null
+          contacted_at: string | null
+          contacted_via: string | null
+          created_at: string
+          digital_presence_score: number | null
+          digital_presence_status: string | null
+          email_is_valid: boolean | null
+          enriched_at: string | null
+          estimated_value_max: number | null
+          estimated_value_min: number | null
+          expires_at: string | null
+          external_id: string | null
+          google_rating: number | null
+          google_reviews_count: number | null
+          has_active_ads: boolean | null
+          id: string
+          monthly_recurrence: number | null
+          opportunity_level: string | null
+          opportunity_score: number | null
+          pain_points: string[] | null
+          phone_has_whatsapp: boolean | null
+          phone_is_valid: boolean | null
+          recommended_services: string[] | null
+          source: string
+          status: string | null
+          suggested_pitch: string | null
+          updated_at: string
+          validation_id: string | null
+          website_health_id: string | null
+          website_is_healthy: boolean | null
+        }
+        Insert: {
+          ads_analysis_id?: string | null
+          affiliate_id?: string | null
+          ai_analysis?: Json | null
+          business_address?: string | null
+          business_city?: string | null
+          business_country?: string | null
+          business_email?: string | null
+          business_name: string
+          business_niche?: string | null
+          business_phone?: string | null
+          business_state?: string | null
+          business_website?: string | null
+          contacted_at?: string | null
+          contacted_via?: string | null
+          created_at?: string
+          digital_presence_score?: number | null
+          digital_presence_status?: string | null
+          email_is_valid?: boolean | null
+          enriched_at?: string | null
+          estimated_value_max?: number | null
+          estimated_value_min?: number | null
+          expires_at?: string | null
+          external_id?: string | null
+          google_rating?: number | null
+          google_reviews_count?: number | null
+          has_active_ads?: boolean | null
+          id?: string
+          monthly_recurrence?: number | null
+          opportunity_level?: string | null
+          opportunity_score?: number | null
+          pain_points?: string[] | null
+          phone_has_whatsapp?: boolean | null
+          phone_is_valid?: boolean | null
+          recommended_services?: string[] | null
+          source: string
+          status?: string | null
+          suggested_pitch?: string | null
+          updated_at?: string
+          validation_id?: string | null
+          website_health_id?: string | null
+          website_is_healthy?: boolean | null
+        }
+        Update: {
+          ads_analysis_id?: string | null
+          affiliate_id?: string | null
+          ai_analysis?: Json | null
+          business_address?: string | null
+          business_city?: string | null
+          business_country?: string | null
+          business_email?: string | null
+          business_name?: string
+          business_niche?: string | null
+          business_phone?: string | null
+          business_state?: string | null
+          business_website?: string | null
+          contacted_at?: string | null
+          contacted_via?: string | null
+          created_at?: string
+          digital_presence_score?: number | null
+          digital_presence_status?: string | null
+          email_is_valid?: boolean | null
+          enriched_at?: string | null
+          estimated_value_max?: number | null
+          estimated_value_min?: number | null
+          expires_at?: string | null
+          external_id?: string | null
+          google_rating?: number | null
+          google_reviews_count?: number | null
+          has_active_ads?: boolean | null
+          id?: string
+          monthly_recurrence?: number | null
+          opportunity_level?: string | null
+          opportunity_score?: number | null
+          pain_points?: string[] | null
+          phone_has_whatsapp?: boolean | null
+          phone_is_valid?: boolean | null
+          recommended_services?: string[] | null
+          source?: string
+          status?: string | null
+          suggested_pitch?: string | null
+          updated_at?: string
+          validation_id?: string | null
+          website_health_id?: string | null
+          website_is_healthy?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enriched_leads_ads_analysis_id_fkey"
+            columns: ["ads_analysis_id"]
+            isOneToOne: false
+            referencedRelation: "lead_ads_analysis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enriched_leads_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enriched_leads_validation_id_fkey"
+            columns: ["validation_id"]
+            isOneToOne: false
+            referencedRelation: "lead_validations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enriched_leads_website_health_id_fkey"
+            columns: ["website_health_id"]
+            isOneToOne: false
+            referencedRelation: "website_health_checks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enrichment_cache: {
+        Row: {
+          cache_key: string
+          cache_type: string
+          created_at: string
+          data: Json
+          expires_at: string
+          hit_count: number | null
+          id: string
+        }
+        Insert: {
+          cache_key: string
+          cache_type: string
+          created_at?: string
+          data?: Json
+          expires_at: string
+          hit_count?: number | null
+          id?: string
+        }
+        Update: {
+          cache_key?: string
+          cache_type?: string
+          created_at?: string
+          data?: Json
+          expires_at?: string
+          hit_count?: number | null
+          id?: string
+        }
+        Relationships: []
+      }
       feedbacks: {
         Row: {
           avatar_type: string
@@ -8940,6 +9131,144 @@ export type Database = {
           },
         ]
       }
+      lead_ads_analysis: {
+        Row: {
+          ad_platforms: string[] | null
+          analyzed_at: string | null
+          business_domain: string | null
+          business_name: string
+          campaign_types: string[] | null
+          created_at: string
+          estimated_monthly_spend: string | null
+          expires_at: string | null
+          google_ads_count: number | null
+          google_ads_details: Json | null
+          google_ads_status: string | null
+          google_tag_detected: boolean | null
+          has_google_ads: boolean | null
+          has_meta_ads: boolean | null
+          id: string
+          investment_indicator: string | null
+          last_ad_detected_at: string | null
+          meta_ads_count: number | null
+          meta_ads_details: Json | null
+          meta_ads_status: string | null
+          meta_pixel_detected: boolean | null
+          overall_ad_status: string | null
+        }
+        Insert: {
+          ad_platforms?: string[] | null
+          analyzed_at?: string | null
+          business_domain?: string | null
+          business_name: string
+          campaign_types?: string[] | null
+          created_at?: string
+          estimated_monthly_spend?: string | null
+          expires_at?: string | null
+          google_ads_count?: number | null
+          google_ads_details?: Json | null
+          google_ads_status?: string | null
+          google_tag_detected?: boolean | null
+          has_google_ads?: boolean | null
+          has_meta_ads?: boolean | null
+          id?: string
+          investment_indicator?: string | null
+          last_ad_detected_at?: string | null
+          meta_ads_count?: number | null
+          meta_ads_details?: Json | null
+          meta_ads_status?: string | null
+          meta_pixel_detected?: boolean | null
+          overall_ad_status?: string | null
+        }
+        Update: {
+          ad_platforms?: string[] | null
+          analyzed_at?: string | null
+          business_domain?: string | null
+          business_name?: string
+          campaign_types?: string[] | null
+          created_at?: string
+          estimated_monthly_spend?: string | null
+          expires_at?: string | null
+          google_ads_count?: number | null
+          google_ads_details?: Json | null
+          google_ads_status?: string | null
+          google_tag_detected?: boolean | null
+          has_google_ads?: boolean | null
+          has_meta_ads?: boolean | null
+          id?: string
+          investment_indicator?: string | null
+          last_ad_detected_at?: string | null
+          meta_ads_count?: number | null
+          meta_ads_details?: Json | null
+          meta_ads_status?: string | null
+          meta_pixel_detected?: boolean | null
+          overall_ad_status?: string | null
+        }
+        Relationships: []
+      }
+      lead_validations: {
+        Row: {
+          contact_type: string
+          contact_value: string
+          created_at: string
+          email_is_catch_all: boolean | null
+          email_is_disposable: boolean | null
+          email_mx_valid: boolean | null
+          email_provider: string | null
+          email_syntax_valid: boolean | null
+          expires_at: string | null
+          id: string
+          is_valid: boolean | null
+          phone_carrier: string | null
+          phone_country_code: string | null
+          phone_formatted: string | null
+          phone_has_whatsapp: boolean | null
+          phone_is_mobile: boolean | null
+          validated_at: string | null
+          validation_details: Json | null
+        }
+        Insert: {
+          contact_type: string
+          contact_value: string
+          created_at?: string
+          email_is_catch_all?: boolean | null
+          email_is_disposable?: boolean | null
+          email_mx_valid?: boolean | null
+          email_provider?: string | null
+          email_syntax_valid?: boolean | null
+          expires_at?: string | null
+          id?: string
+          is_valid?: boolean | null
+          phone_carrier?: string | null
+          phone_country_code?: string | null
+          phone_formatted?: string | null
+          phone_has_whatsapp?: boolean | null
+          phone_is_mobile?: boolean | null
+          validated_at?: string | null
+          validation_details?: Json | null
+        }
+        Update: {
+          contact_type?: string
+          contact_value?: string
+          created_at?: string
+          email_is_catch_all?: boolean | null
+          email_is_disposable?: boolean | null
+          email_mx_valid?: boolean | null
+          email_provider?: string | null
+          email_syntax_valid?: boolean | null
+          expires_at?: string | null
+          id?: string
+          is_valid?: boolean | null
+          phone_carrier?: string | null
+          phone_country_code?: string | null
+          phone_formatted?: string | null
+          phone_has_whatsapp?: boolean | null
+          phone_is_mobile?: boolean | null
+          validated_at?: string | null
+          validation_details?: Json | null
+        }
+        Relationships: []
+      }
       login_attempts: {
         Row: {
           attempted_at: string
@@ -10854,6 +11183,78 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      website_health_checks: {
+        Row: {
+          checked_at: string | null
+          cms_detected: string | null
+          created_at: string
+          domain: string
+          expires_at: string | null
+          has_google_analytics: boolean | null
+          has_google_tag: boolean | null
+          has_meta_pixel: boolean | null
+          has_ssl: boolean | null
+          health_score: number | null
+          health_status: string | null
+          http_status: number | null
+          id: string
+          is_accessible: boolean | null
+          meta_description: string | null
+          page_title: string | null
+          response_time_ms: number | null
+          ssl_expires_at: string | null
+          ssl_valid: boolean | null
+          technologies: Json | null
+          url: string
+        }
+        Insert: {
+          checked_at?: string | null
+          cms_detected?: string | null
+          created_at?: string
+          domain: string
+          expires_at?: string | null
+          has_google_analytics?: boolean | null
+          has_google_tag?: boolean | null
+          has_meta_pixel?: boolean | null
+          has_ssl?: boolean | null
+          health_score?: number | null
+          health_status?: string | null
+          http_status?: number | null
+          id?: string
+          is_accessible?: boolean | null
+          meta_description?: string | null
+          page_title?: string | null
+          response_time_ms?: number | null
+          ssl_expires_at?: string | null
+          ssl_valid?: boolean | null
+          technologies?: Json | null
+          url: string
+        }
+        Update: {
+          checked_at?: string | null
+          cms_detected?: string | null
+          created_at?: string
+          domain?: string
+          expires_at?: string | null
+          has_google_analytics?: boolean | null
+          has_google_tag?: boolean | null
+          has_meta_pixel?: boolean | null
+          has_ssl?: boolean | null
+          health_score?: number | null
+          health_status?: string | null
+          http_status?: number | null
+          id?: string
+          is_accessible?: boolean | null
+          meta_description?: string | null
+          page_title?: string | null
+          response_time_ms?: number | null
+          ssl_expires_at?: string | null
+          ssl_valid?: boolean | null
+          technologies?: Json | null
+          url?: string
         }
         Relationships: []
       }
@@ -13326,6 +13727,7 @@ export type Database = {
         Args: { p_timeout_minutes?: number; p_user_id: string }
         Returns: boolean
       }
+      cleanup_expired_cache: { Args: never; Returns: undefined }
       cleanup_expired_sessions: { Args: never; Returns: undefined }
       cleanup_expired_verification_codes: { Args: never; Returns: undefined }
       cleanup_old_genesis_codes: { Args: never; Returns: undefined }
