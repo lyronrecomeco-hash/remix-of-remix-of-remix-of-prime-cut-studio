@@ -5,7 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { 
   MapPin, Phone, Globe, Building2, 
   MessageSquare, Mail, DollarSign, TrendingUp, 
-  Sparkles, Tag, Loader2, BarChart3, CheckCircle2, X
+  Sparkles, Tag, Loader2, BarChart3, CheckCircle2, X,
+  Instagram, Facebook
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -97,6 +98,32 @@ export const RadarOpportunityModal = ({
   const emailUrl = opportunity.company_email ? `mailto:${opportunity.company_email}` : '';
   const levelConfig = LEVEL_CONFIG[opportunity.opportunity_level] || LEVEL_CONFIG.basic;
 
+  // Helper para detectar URLs de redes sociais
+  const isSocialMediaUrl = (url: string): boolean => {
+    const lowerUrl = url.toLowerCase();
+    return lowerUrl.includes('facebook.com') || 
+           lowerUrl.includes('instagram.com') || 
+           lowerUrl.includes('fb.com') ||
+           lowerUrl.includes('fb.me');
+  };
+
+  // Extrair URLs de redes sociais
+  const getSocialUrls = () => {
+    const urls: { instagram?: string; facebook?: string } = {};
+    if (opportunity.company_website) {
+      const lowerUrl = opportunity.company_website.toLowerCase();
+      if (lowerUrl.includes('instagram.com')) {
+        urls.instagram = opportunity.company_website.startsWith('http') ? opportunity.company_website : `https://${opportunity.company_website}`;
+      }
+      if (lowerUrl.includes('facebook.com') || lowerUrl.includes('fb.com') || lowerUrl.includes('fb.me')) {
+        urls.facebook = opportunity.company_website.startsWith('http') ? opportunity.company_website : `https://${opportunity.company_website}`;
+      }
+    }
+    return urls;
+  };
+
+  const socialUrls = getSocialUrls();
+
   // Usar dados enriquecidos se disponíveis
   const displayScore = enrichedData?.scoring?.opportunityScore || opportunity.opportunity_score;
   const displayValueMin = enrichedData?.scoring?.estimatedValueMin || opportunity.estimated_value_min;
@@ -109,8 +136,8 @@ export const RadarOpportunityModal = ({
         {/* Header */}
         <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4 border-b border-white/10 shrink-0">
           <DialogTitle className="flex items-center gap-3 sm:gap-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-purple-500/20 flex items-center justify-center shrink-0">
-              <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+              <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-bold text-base sm:text-lg leading-tight line-clamp-1 text-foreground">{opportunity.company_name}</h3>
@@ -143,7 +170,7 @@ export const RadarOpportunityModal = ({
         {/* Body - Side by Side */}
         <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden">
           {/* Left Side - Info */}
-          <div className="lg:w-[400px] lg:border-r border-white/10 flex flex-col overflow-hidden">
+          <div className="lg:w-[340px] lg:min-w-[340px] lg:max-w-[340px] lg:border-r border-white/10 flex flex-col overflow-hidden">
             <div className="px-4 sm:px-6 py-4 space-y-4 overflow-y-auto flex-1">
               {/* Value Box */}
               <div className="grid grid-cols-2 gap-3">
@@ -168,10 +195,10 @@ export const RadarOpportunityModal = ({
 
               {/* AI Description */}
               {(enrichedData?.scoring?.digitalPresenceStatus || opportunity.ai_description) && (
-                <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20">
+                <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
                   <p className="text-xs flex items-start gap-2">
-                    <Sparkles className="w-3.5 h-3.5 text-purple-400 shrink-0 mt-0.5" />
-                    <span className="text-purple-300">{enrichedData?.scoring?.digitalPresenceStatus || opportunity.ai_description}</span>
+                    <Sparkles className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                    <span className="text-primary">{enrichedData?.scoring?.digitalPresenceStatus || opportunity.ai_description}</span>
                   </p>
                 </div>
               )}
@@ -218,7 +245,7 @@ export const RadarOpportunityModal = ({
                   </div>
                 )}
 
-                {opportunity.company_website && (
+                {opportunity.company_website && !isSocialMediaUrl(opportunity.company_website) && (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Globe className="w-3.5 h-3.5 text-primary shrink-0" />
                     <a 
@@ -264,29 +291,45 @@ export const RadarOpportunityModal = ({
                   disabled={!opportunity.company_phone}
                   onClick={() => whatsappUrl && window.open(whatsappUrl, '_blank')}
                   className={cn(
-                    "flex-1 gap-1.5 h-9 text-xs",
+                    "flex-1 gap-1.5 h-9 text-xs px-2",
                     opportunity.company_phone 
                       ? "text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/10" 
                       : "text-muted-foreground/50 border-white/10 cursor-not-allowed"
                   )}
                 >
                   <MessageSquare className="w-3.5 h-3.5" />
-                  WhatsApp
                 </Button>
                 <Button
                   variant="outline"
                   disabled={!opportunity.company_email}
                   onClick={() => emailUrl && window.open(emailUrl, '_blank')}
                   className={cn(
-                    "flex-1 gap-1.5 h-9 text-xs",
+                    "flex-1 gap-1.5 h-9 text-xs px-2",
                     opportunity.company_email 
                       ? "text-blue-500 border-blue-500/30 hover:bg-blue-500/10" 
                       : "text-muted-foreground/50 border-white/10 cursor-not-allowed"
                   )}
                 >
                   <Mail className="w-3.5 h-3.5" />
-                  Email
                 </Button>
+                {socialUrls.instagram && (
+                  <Button
+                    variant="outline"
+                    onClick={() => window.open(socialUrls.instagram, '_blank')}
+                    className="flex-1 gap-1.5 h-9 text-xs px-2 text-pink-500 border-pink-500/30 hover:bg-pink-500/10"
+                  >
+                    <Instagram className="w-3.5 h-3.5" />
+                  </Button>
+                )}
+                {socialUrls.facebook && (
+                  <Button
+                    variant="outline"
+                    onClick={() => window.open(socialUrls.facebook, '_blank')}
+                    className="flex-1 gap-1.5 h-9 text-xs px-2 text-blue-600 border-blue-600/30 hover:bg-blue-600/10"
+                  >
+                    <Facebook className="w-3.5 h-3.5" />
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -295,7 +338,7 @@ export const RadarOpportunityModal = ({
           <div className="flex-1 flex flex-col overflow-hidden border-t lg:border-t-0 border-white/10">
             <div className="px-4 sm:px-6 py-3 border-b border-white/10 shrink-0">
               <div className="flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-purple-400" />
+                <BarChart3 className="w-4 h-4 text-primary" />
                 <h4 className="text-sm font-semibold text-foreground">Análise Avançada</h4>
               </div>
             </div>
@@ -318,29 +361,45 @@ export const RadarOpportunityModal = ({
               disabled={!opportunity.company_phone}
               onClick={() => whatsappUrl && window.open(whatsappUrl, '_blank')}
               className={cn(
-                "gap-1.5 h-10 text-sm",
+                "gap-1.5 h-10 text-sm px-3",
                 opportunity.company_phone 
                   ? "text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/10" 
                   : "text-muted-foreground/50 border-white/10 cursor-not-allowed"
               )}
             >
               <MessageSquare className="w-4 h-4" />
-              WhatsApp
             </Button>
             <Button
               variant="outline"
               disabled={!opportunity.company_email}
               onClick={() => emailUrl && window.open(emailUrl, '_blank')}
               className={cn(
-                "gap-1.5 h-10 text-sm",
+                "gap-1.5 h-10 text-sm px-3",
                 opportunity.company_email 
                   ? "text-blue-500 border-blue-500/30 hover:bg-blue-500/10" 
                   : "text-muted-foreground/50 border-white/10 cursor-not-allowed"
               )}
             >
               <Mail className="w-4 h-4" />
-              Email
             </Button>
+            {socialUrls.instagram && (
+              <Button
+                variant="outline"
+                onClick={() => window.open(socialUrls.instagram, '_blank')}
+                className="gap-1.5 h-10 text-sm px-3 text-pink-500 border-pink-500/30 hover:bg-pink-500/10"
+              >
+                <Instagram className="w-4 h-4" />
+              </Button>
+            )}
+            {socialUrls.facebook && (
+              <Button
+                variant="outline"
+                onClick={() => window.open(socialUrls.facebook, '_blank')}
+                className="gap-1.5 h-10 text-sm px-3 text-blue-600 border-blue-600/30 hover:bg-blue-600/10"
+              >
+                <Facebook className="w-4 h-4" />
+              </Button>
+            )}
           </div>
           <div className="flex gap-3">
             <Button
@@ -355,7 +414,7 @@ export const RadarOpportunityModal = ({
               Rejeitar
             </Button>
             <Button
-              className="bg-purple-600 hover:bg-purple-700 gap-2 h-10 text-sm"
+              className="bg-primary hover:bg-primary/90 gap-2 h-10 text-sm"
               onClick={() => {
                 onAccept();
                 toast.success('Oportunidade aceita!');
@@ -386,7 +445,7 @@ export const RadarOpportunityModal = ({
             Rejeitar
           </Button>
           <Button
-            className="flex-1 bg-purple-600 hover:bg-purple-700 gap-1.5 h-9 text-xs"
+            className="flex-1 bg-primary hover:bg-primary/90 gap-1.5 h-9 text-xs"
             onClick={() => {
               onAccept();
               toast.success('Aceita!');
