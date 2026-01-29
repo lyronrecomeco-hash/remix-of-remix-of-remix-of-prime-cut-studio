@@ -106,7 +106,7 @@ const GenesisIADashboard = () => {
   const [showDevModal, setShowDevModal] = useState(false);
   const [isAccountBlocked, setIsAccountBlocked] = useState(false);
   const [blockReason, setBlockReason] = useState<string>('');
-  const [restrictedModal, setRestrictedModal] = useState<{ open: boolean; label: string }>({ open: false, label: '' });
+  const [restrictedModal, setRestrictedModal] = useState<{ open: boolean; label: string; id: string }>({ open: false, label: '', id: '' });
   
   const { isMenuAllowed } = useMenuPermissions();
   
@@ -273,7 +273,7 @@ const GenesisIADashboard = () => {
         'help': 'Central de Ajuda',
         'settings': 'Configurações',
       };
-      setRestrictedModal({ open: true, label: labelMap[tabId] || tabId });
+      setRestrictedModal({ open: true, label: labelMap[tabId] || tabId, id: tabId });
       return;
     }
     setActiveTab(tabId as ActiveTab);
@@ -282,7 +282,7 @@ const GenesisIADashboard = () => {
   // Handle dock navigation with permission check
   const handleDockNavigate = (tabId: ActiveTab, label: string) => {
     if (!isMenuAllowed(tabId)) {
-      setRestrictedModal({ open: true, label });
+      setRestrictedModal({ open: true, label, id: tabId });
       return;
     }
     setActiveTab(tabId);
@@ -987,6 +987,7 @@ const GenesisIADashboard = () => {
               open={restrictedModal.open}
               onOpenChange={(open) => setRestrictedModal({ ...restrictedModal, open })}
               menuLabel={restrictedModal.label}
+              menuId={restrictedModal.id}
             />
           </div>
         );

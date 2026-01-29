@@ -1,37 +1,46 @@
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Lock, MessageCircle, X } from 'lucide-react';
+import { Lock, MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+
+// Descrições dos módulos do menu
+const MENU_DESCRIPTIONS: Record<string, string> = {
+  'dashboard': 'O painel principal com visão geral do seu negócio e métricas importantes.',
+  'prospects': 'Ferramenta de IA para encontrar e qualificar potenciais clientes automaticamente.',
+  'radar': 'Radar global de oportunidades de negócio em tempo real.',
+  'criar-projetos': 'Biblioteca de projetos e templates prontos para usar.',
+  'contracts': 'Sistema de gestão e criação de contratos digitais.',
+  'promocional': 'Materiais promocionais e links de divulgação personalizados.',
+  'help': 'Central de ajuda com tutoriais e suporte técnico.',
+  'settings': 'Configurações da sua conta e preferências do sistema.',
+};
 
 interface RestrictedAccessModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   menuLabel?: string;
+  menuId?: string;
 }
 
 export const RestrictedAccessModal = ({ 
   open, 
   onOpenChange,
-  menuLabel 
+  menuLabel,
+  menuId
 }: RestrictedAccessModalProps) => {
-  const whatsappNumber = '5511999999915'; // WhatsApp Genesis final 15
+  const whatsappNumber = '5527920005215';
   const whatsappMessage = encodeURIComponent(
     `Olá! Gostaria de solicitar acesso ao módulo "${menuLabel || 'restrito'}" na minha conta.`
   );
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
+  
+  const description = menuId ? MENU_DESCRIPTIONS[menuId] : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden bg-[hsl(222,20%,8%)] border-white/10 [&>button]:hidden">
         {/* Header with gradient */}
         <div className="relative px-6 pt-8 pb-6 text-center bg-gradient-to-b from-primary/10 to-transparent">
-          <button
-            onClick={() => onOpenChange(false)}
-            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
-          >
-            <X className="w-4 h-4 text-muted-foreground" />
-          </button>
-          
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -64,6 +73,20 @@ export const RestrictedAccessModal = ({
 
         {/* Content */}
         <div className="px-6 pb-6 space-y-4">
+          {/* Descrição do módulo */}
+          {description && (
+            <motion.div
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.18 }}
+              className="p-3 rounded-lg bg-primary/10 border border-primary/20"
+            >
+              <p className="text-sm text-foreground/80 text-center">
+                {description}
+              </p>
+            </motion.div>
+          )}
+          
           <motion.div
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -101,7 +124,7 @@ export const RestrictedAccessModal = ({
           </motion.div>
 
           <p className="text-xs text-center text-muted-foreground">
-            WhatsApp: (11) 99999-99<span className="text-primary font-medium">15</span>
+            WhatsApp: (27) 92000-<span className="text-primary font-medium">5215</span>
           </p>
         </div>
       </DialogContent>
