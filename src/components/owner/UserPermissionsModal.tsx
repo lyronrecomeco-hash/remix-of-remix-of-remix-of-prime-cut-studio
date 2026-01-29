@@ -6,28 +6,27 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { 
-  Shield, Calendar, Users, DollarSign, BarChart3, Target, 
-  Palmtree, Clock, Scissors, Image, MessageSquare, AlertTriangle, 
-  Lock, Settings, Loader2, Save
+  Shield, Home, Grid3X3, FileText, Gift, Users, LayoutDashboard,
+  CreditCard, Key, ClipboardList, HelpCircle, Settings, 
+  Loader2, Save, Radar, Search
 } from 'lucide-react';
 import { useManageMenuPermissions } from '@/hooks/useMenuPermissions';
 
-// Menu items definition matching AdminPanel
+// Menu items definition matching GenesisIADashboard
 const MENU_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard', icon: Calendar, description: 'Painel principal com visão geral' },
-  { id: 'agenda', label: 'Agenda', icon: Calendar, description: 'Gerenciamento de agendamentos' },
-  { id: 'fila', label: 'Fila de Espera', icon: Users, description: 'Controle da fila de clientes' },
-  { id: 'financeiro', label: 'Financeiro', icon: DollarSign, description: 'Relatórios financeiros' },
-  { id: 'desempenho', label: 'Desempenho', icon: BarChart3, description: 'Métricas e análises' },
-  { id: 'metas', label: 'Metas', icon: Target, description: 'Definição e acompanhamento de metas' },
-  { id: 'folgas', label: 'Folgas/Férias', icon: Palmtree, description: 'Gestão de folgas e férias' },
-  { id: 'horarios', label: 'Horários', icon: Clock, description: 'Configuração de horários' },
-  { id: 'servicos', label: 'Serviços', icon: Scissors, description: 'Cadastro de serviços' },
-  { id: 'galeria', label: 'Galeria', icon: Image, description: 'Galeria de imagens' },
-  { id: 'feedbacks', label: 'Feedbacks', icon: MessageSquare, description: 'Avaliações de clientes' },
-  { id: 'logs', label: 'Logs de Auditoria', icon: AlertTriangle, description: 'Histórico de ações' },
-  { id: 'usuarios', label: 'Usuários', icon: Lock, description: 'Gerenciamento de usuários' },
-  { id: 'config', label: 'Configurações', icon: Settings, description: 'Configurações do sistema' },
+  { id: 'dashboard', label: 'Início', icon: Home, description: 'Painel principal do Genesis' },
+  { id: 'prospects', label: 'Scanner IA', icon: Search, description: 'Encontrar clientes com IA' },
+  { id: 'radar', label: 'Radar Global', icon: Radar, description: 'Radar de oportunidades' },
+  { id: 'criar-projetos', label: 'Biblioteca', icon: Grid3X3, description: 'Biblioteca de projetos' },
+  { id: 'contracts', label: 'Contratos', icon: FileText, description: 'Gestão de contratos' },
+  { id: 'promocional', label: 'Promocional', icon: Gift, description: 'Materiais promocionais' },
+  { id: 'users', label: 'Usuários', icon: Users, description: 'Gerenciamento de usuários' },
+  { id: 'financial', label: 'Financeiro', icon: LayoutDashboard, description: 'Relatórios financeiros' },
+  { id: 'payments', label: 'Pagamentos', icon: CreditCard, description: 'Gestão de pagamentos' },
+  { id: 'api-keys', label: 'API Keys', icon: Key, description: 'Chaves de API' },
+  { id: 'partner-applications', label: 'Inscrições', icon: ClipboardList, description: 'Inscrições de parceiros' },
+  { id: 'help', label: 'Central de Ajuda', icon: HelpCircle, description: 'Suporte e tutoriais' },
+  { id: 'settings', label: 'Configurações', icon: Settings, description: 'Configurações do sistema' },
 ];
 
 interface UserPermissionsModalProps {
