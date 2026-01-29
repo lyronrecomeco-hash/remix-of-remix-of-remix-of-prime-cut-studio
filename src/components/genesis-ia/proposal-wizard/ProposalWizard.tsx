@@ -15,7 +15,8 @@ import {
   History,
   Star,
   Phone,
-  Brain
+  Brain,
+  Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,7 +32,7 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useGenesisAuth } from '@/contexts/GenesisAuthContext';
-import { WIZARD_STEPS, ProposalFormData, GeneratedProposal, COPY_STYLES } from './types';
+import { WIZARD_STEPS, ProposalFormData, GeneratedProposal, COPY_STYLES, CLIENT_COUNTRIES } from './types';
 import { ProposalResult } from './ProposalResult';
 
 const iconMap: Record<string, React.ElementType> = {
@@ -42,7 +43,8 @@ const iconMap: Record<string, React.ElementType> = {
   users: Users,
   history: History,
   star: Star,
-  phone: Phone
+  phone: Phone,
+  globe: Globe
 };
 
 export const ProposalWizard = ({ affiliateId }: { affiliateId?: string | null }) => {
@@ -57,6 +59,7 @@ export const ProposalWizard = ({ affiliateId }: { affiliateId?: string | null })
     failed_attempts: '',
     dream_result: '',
     contact_phone: '',
+    client_country: 'brazil',
     copy_style: 'balanced',
     ai_questions: []
   });
@@ -186,7 +189,8 @@ export const ProposalWizard = ({ affiliateId }: { affiliateId?: string | null })
         decision_maker: formData.decision_maker,
         competitors: formData.competitors,
         failed_attempts: formData.failed_attempts,
-        dream_result: formData.dream_result
+        dream_result: formData.dream_result,
+        client_country: formData.client_country
       };
 
       // Add AI question answers
@@ -196,11 +200,16 @@ export const ProposalWizard = ({ affiliateId }: { affiliateId?: string | null })
         }
       });
 
+      // Get country info for language adaptation
+      const countryInfo = CLIENT_COUNTRIES.find(c => c.id === formData.client_country);
+
       const { data, error } = await supabase.functions.invoke('luna-generate-full-proposal', {
         body: {
           answers,
           affiliateName: userName,
-          copyStyle: formData.copy_style || 'balanced'
+          copyStyle: formData.copy_style || 'balanced',
+          clientCountry: formData.client_country,
+          countryLanguage: countryInfo?.language || 'Português (Brasil)'
         }
       });
 
@@ -237,6 +246,8 @@ export const ProposalWizard = ({ affiliateId }: { affiliateId?: string | null })
       failed_attempts: '',
       dream_result: '',
       contact_phone: '',
+      client_country: 'brazil',
+      copy_style: 'balanced',
       ai_questions: []
     });
   };
@@ -526,6 +537,36 @@ export const ProposalWizard = ({ affiliateId }: { affiliateId?: string | null })
                     placeholder="Ou digite outro nicho..."
                     className="bg-white/5 border-white/10 text-white placeholder:text-white/40 h-9 sm:h-10 text-center text-xs sm:text-sm"
                   />
+                </div>
+              )}
+
+              {currentQuestion.type === 'country' && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {CLIENT_COUNTRIES.map((country) => (
+                      <button
+                        key={country.id}
+                        onClick={() => setValue(country.id)}
+                        className={`p-2.5 sm:p-3 rounded-lg text-left transition-all flex items-center gap-2 ${
+                          getValue() === country.id
+                            ? 'bg-primary/20 border-2 border-primary'
+                            : 'bg-white/5 border border-white/10 hover:bg-white/10'
+                        }`}
+                      >
+                        <span className="text-lg sm:text-xl">{country.flag}</span>
+                        <div className="flex-1 min-w-0">
+                          <span className={`text-xs sm:text-sm font-medium block truncate ${
+                            getValue() === country.id ? 'text-primary' : 'text-white'
+                          }`}>
+                            {country.label}
+                          </span>
+                          <span className="text-[9px] sm:text-[10px] text-white/40 block truncate">
+                            {country.language}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
