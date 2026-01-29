@@ -65,7 +65,7 @@ import { PromocionalTab } from "@/components/genesis-ia/promocional";
 import { GenesisPaymentsTab } from "@/components/genesis-ia/payments/GenesisPaymentsTab";
 import { PageBuilderTab } from "@/components/genesis-ia/page-builder";
 import { AcademiaGenesisTab } from "@/components/genesis-ia/academia";
-import { ProposalWizard } from "@/components/genesis-ia/proposal-wizard";
+import { ProposalContainer } from "@/components/genesis-ia/proposal-wizard";
 import { SprintMissionTab } from "@/components/genesis-ia/sprint-mission";
 import { GenesisOnboardingGuide } from "@/components/genesis-ia/GenesisOnboardingGuide";
 import { ApiKeysTab } from "@/components/genesis-ia/api-keys";
@@ -728,19 +728,11 @@ const GenesisIADashboard = () => {
 
     if (activeTab === 'proposals') {
       return (
-        <div className="space-y-6">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setActiveTab('dashboard')}
-              className="text-white/50 hover:text-white hover:bg-white/10 h-9"
-            >
-              <ArrowLeft className="w-4 h-4 mr-1.5" />
-              Voltar
-            </Button>
-          </div>
-          <ProposalWizard affiliateId={affiliateId} />
+        <div className="space-y-4">
+          <ProposalContainer 
+            affiliateId={affiliateId} 
+            onBack={() => setActiveTab('dashboard')}
+          />
         </div>
       );
     }

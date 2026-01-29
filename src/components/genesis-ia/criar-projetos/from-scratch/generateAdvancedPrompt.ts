@@ -292,14 +292,23 @@ ${formData.hasAdvancedSEO ? `- **Meta Tags**: Title, description, og:image, twit
 - **URLs**: Amigáveis e descritivas` : '- SEO básico com meta tags essenciais'}
 
 ### Responsividade:
-- **Mobile First**: Design primário para mobile, depois desktop
-- **Breakpoints**: 
-  - Mobile: < 640px
-  - Tablet: 640px - 1024px
-  - Desktop: > 1024px
-  - Wide: > 1440px
-- **Touch Friendly**: Áreas de toque mínimo de 44px
-- **Gestos**: Suporte a swipe onde aplicável
+${(() => {
+  const devices = [];
+  if (formData.responsiveMobile) devices.push('Mobile (< 640px)');
+  if (formData.responsiveTablet) devices.push('Tablet (640px - 1024px)');
+  if (formData.responsiveDesktop) devices.push('Desktop (1024px - 1440px)');
+  if (formData.responsiveLargeScreen) devices.push('Large Screen (> 1440px)');
+  return devices.length > 0 ? `
+- **Dispositivos Suportados**: ${devices.join(', ')}
+- **Mobile First**: ${formData.responsiveMobile ? 'Sim - Design primário para mobile' : 'Não - Desktop First'}
+- **Breakpoints Personalizados**: 
+${formData.responsiveMobile ? '  - Mobile: < 640px (layout single-column, touch-friendly)' : ''}
+${formData.responsiveTablet ? '  - Tablet: 640px - 1024px (layout adaptado, suporte touch + mouse)' : ''}
+${formData.responsiveDesktop ? '  - Desktop: 1024px - 1440px (layout full, hover states, sidebar)' : ''}
+${formData.responsiveLargeScreen ? '  - Large Screen: > 1440px (max-width container, layout otimizado para monitores grandes)' : ''}
+- **Touch Friendly**: ${formData.responsiveMobile || formData.responsiveTablet ? 'Áreas de toque mínimo de 44px' : 'N/A'}
+- **Gestos**: ${formData.responsiveMobile ? 'Suporte a swipe onde aplicável' : 'N/A'}` : '- Responsividade padrão com breakpoints básicos';
+})()}
 
 ### Acessibilidade:
 ${formData.hasAccessibility ? `- **WCAG 2.1 AA**: Conformidade com diretrizes
