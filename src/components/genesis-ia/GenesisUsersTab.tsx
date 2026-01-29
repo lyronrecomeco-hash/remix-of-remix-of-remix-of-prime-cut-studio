@@ -20,7 +20,8 @@ import {
   WifiOff,
   Timer,
   MonitorSmartphone,
-  Clock
+  Clock,
+  KeyRound
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,6 +54,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { WelcomeCredentialsModal } from './users/WelcomeCredentialsModal';
+import { UserPermissionsModal } from '@/components/owner/UserPermissionsModal';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -97,6 +99,7 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [permissionsUser, setPermissionsUser] = useState<{ user_id: string; name: string; email: string } | null>(null);
   const [createdUserData, setCreatedUserData] = useState<{
     name: string;
     email: string;
@@ -417,7 +420,16 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
             const presence = presenceData[user.auth_user_id];
             
             return (
-            <Card key={user.id} className={`bg-white/5 border-white/10 ${!user.is_active ? 'opacity-60' : ''} ${online ? 'border-emerald-500/30 bg-emerald-500/5' : ''}`} style={{ borderRadius: '14px' }}>
+            <Card 
+              key={user.id} 
+              className={`bg-white/5 border-white/10 cursor-pointer transition-all hover:bg-white/10 ${!user.is_active ? 'opacity-60' : ''} ${online ? 'border-emerald-500/30 bg-emerald-500/5' : ''}`} 
+              style={{ borderRadius: '14px' }}
+              onClick={() => setPermissionsUser({
+                user_id: user.auth_user_id,
+                name: user.name,
+                email: user.email
+              })}
+            >
               <CardContent className="p-4">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -501,9 +513,23 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
                   <div className="hidden md:block text-sm text-white/40">{formatDate(user.created_at)}</div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-white/50 hover:text-white hover:bg-white/10"><MoreVertical className="w-4 h-4" /></Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-white/50 hover:text-white hover:bg-white/10"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenuItem onClick={() => setPermissionsUser({
+                        user_id: user.auth_user_id,
+                        name: user.name,
+                        email: user.email
+                      })}>
+                        <KeyRound className="w-4 h-4 mr-2" />Acessos
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openEditModal(user)}><Pencil className="w-4 h-4 mr-2" />Editar</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleToggleActive(user)}>
                         {user.is_active ? <><UserX className="w-4 h-4 mr-2" />Desativar</> : <><UserCheck className="w-4 h-4 mr-2" />Ativar</>}
@@ -610,6 +636,13 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
           userData={createdUserData}
         />
       )}
+
+      {/* Modal de Permissões de Menu */}
+      <UserPermissionsModal
+        open={!!permissionsUser}
+        onOpenChange={(open) => !open && setPermissionsUser(null)}
+        user={permissionsUser}
+      />
     </div>
   );
 };
