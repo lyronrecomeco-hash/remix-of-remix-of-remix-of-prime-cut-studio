@@ -3,11 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
-  MapPin, Phone, Globe, Star, Building2, 
-  ExternalLink, Copy, Check, Navigation, Users,
-  MessageCircle, Zap, Calendar, FileText, ShoppingBag,
-  DollarSign, TrendingUp, Sparkles, Tag, MessageSquare, Mail,
-  BarChart3, RefreshCw, Loader2
+  MapPin, Phone, Globe, Building2, 
+  ExternalLink, MessageSquare, Mail,
+  DollarSign, TrendingUp, Sparkles, Tag,
+  Loader2, BarChart3, Star
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -65,13 +64,11 @@ export const GenesisBusinessDetailModal = ({
   onAcceptProject
 }: GenesisBusinessDetailModalProps) => {
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [showEnrichment, setShowEnrichment] = useState(false);
   const { enrichedData, isLoading, error, enrichLead, clearData } = useLeadEnrichment();
 
   // Limpar dados ao fechar modal
   useEffect(() => {
     if (!open) {
-      setShowEnrichment(false);
       clearData();
     }
   }, [open, clearData]);
@@ -85,8 +82,6 @@ export const GenesisBusinessDetailModal = ({
 
   const handleEnrichLead = async () => {
     if (!business) return;
-    
-    setShowEnrichment(true);
     
     await enrichLead({
       name: business.name,
@@ -121,17 +116,6 @@ export const GenesisBusinessDetailModal = ({
     }
   };
 
-  const openWhatsApp = () => {
-    if (business.phone) {
-      const cleanPhone = business.phone.replace(/\D/g, '');
-      const phone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
-      window.open(`https://wa.me/${phone}`, '_blank');
-    }
-  };
-
-  const hasWebsite = !!business.website;
-  const levelConfig = business.opportunityLevel ? LEVEL_CONFIG[business.opportunityLevel] : null;
-
   const cleanPhone = business.phone?.replace(/\D/g, '') || '';
   const whatsappUrl = cleanPhone ? `https://wa.me/${cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`}` : '';
   const emailUrl = business.email ? `mailto:${business.email}` : '';
@@ -145,38 +129,21 @@ export const GenesisBusinessDetailModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] sm:max-w-[700px] max-h-[90dvh] p-0 gap-0 overflow-hidden bg-[hsl(222,20%,8%)] border-white/10 flex flex-col">
-        {/* Header - Mobile Responsive */}
-        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-4 sm:pb-5 border-b border-white/10">
-          <DialogTitle className="flex items-start gap-3 sm:gap-4">
+      <DialogContent className="w-[95vw] sm:max-w-[1100px] max-h-[90dvh] p-0 gap-0 overflow-hidden bg-[hsl(222,20%,8%)] border-white/10 flex flex-col">
+        {/* Header Compacto */}
+        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4 border-b border-white/10 shrink-0">
+          <DialogTitle className="flex items-center gap-3 sm:gap-4">
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
               <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-base sm:text-lg leading-tight line-clamp-2 text-foreground">{business.name}</h3>
-              <p className="text-xs sm:text-sm text-muted-foreground mt-1">{business.category || business.niche || 'Empresa'}</p>
-              <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2 sm:mt-3">
-                {displayLevel && (
-                  <Badge variant="outline" className={cn(
-                    "text-[10px] sm:text-xs py-0 px-1.5 sm:px-2",
-                    displayLevel === 'hot' && "bg-red-500/20 text-red-400 border-red-500/30",
-                    displayLevel === 'warm' && "bg-orange-500/20 text-orange-400 border-orange-500/30",
-                    displayLevel === 'cool' && "bg-blue-500/20 text-blue-400 border-blue-500/30",
-                    displayLevel === 'cold' && "bg-gray-500/20 text-gray-400 border-gray-500/30",
-                    displayLevel === 'basic' && LEVEL_CONFIG.basic.color,
-                    displayLevel === 'intermediate' && LEVEL_CONFIG.intermediate.color,
-                    displayLevel === 'advanced' && LEVEL_CONFIG.advanced.color,
-                  )}>
-                    {displayLevel === 'hot' ? '🔥 Hot' : 
-                     displayLevel === 'warm' ? '🌡️ Warm' :
-                     displayLevel === 'cool' ? '❄️ Cool' :
-                     displayLevel === 'cold' ? '🧊 Cold' :
-                     LEVEL_CONFIG[displayLevel as keyof typeof LEVEL_CONFIG]?.label || displayLevel}
-                  </Badge>
-                )}
-                {displayScore && (
-                  <Badge className="bg-primary/10 text-primary border-primary/30 text-[10px] sm:text-xs py-0 px-1.5 sm:px-2">
-                    Score: {displayScore}%
+              <h3 className="font-bold text-base sm:text-lg leading-tight line-clamp-1 text-foreground">{business.name}</h3>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs sm:text-sm text-muted-foreground">{business.category || business.niche || 'Empresa'}</span>
+                {business.rating && (
+                  <Badge variant="outline" className="text-[10px] sm:text-xs py-0 px-1.5 gap-0.5 bg-amber-500/10 text-amber-400 border-amber-500/30">
+                    <Star className="w-2.5 h-2.5 fill-current" />
+                    {business.rating.toFixed(1)}
                   </Badge>
                 )}
                 {isLoading && (
@@ -190,194 +157,231 @@ export const GenesisBusinessDetailModal = ({
           </DialogTitle>
         </DialogHeader>
 
-        {/* Body - Mobile Responsive */}
-        <div className="px-4 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5 overflow-y-auto flex-1 min-h-0">
-          {/* Value Box - Usar dados enriquecidos */}
-          {displayValueMin && displayValueMax && (
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
-              <div className="p-3 sm:p-4 rounded-xl bg-white/5 border border-white/10">
-                <p className="text-[10px] sm:text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1 sm:gap-1.5 mb-1 sm:mb-2">
-                  <DollarSign className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary" /> VALOR
-                </p>
-                <p className="text-[10px] sm:text-sm text-muted-foreground">Min: R$ {displayValueMin.toLocaleString()}</p>
-                <p className="text-lg sm:text-xl font-bold text-primary mt-0.5 sm:mt-1">
-                  R$ {displayValueMax.toLocaleString()}
-                </p>
-              </div>
-              <div className="p-3 sm:p-4 rounded-xl bg-white/5 border border-white/10">
-                <p className="text-[10px] sm:text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1 sm:gap-1.5 mb-1 sm:mb-2">
-                  <TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary" /> RECORRÊNCIA
-                </p>
-                <p className="text-lg sm:text-xl font-bold text-primary mt-2 sm:mt-3">
-                  +R$ {displayRecurrence?.toLocaleString()}/mês
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Painel de Enriquecimento */}
-          {showEnrichment && (
-            <LeadEnrichmentPanel
-              data={enrichedData}
-              isLoading={isLoading}
-              error={error}
-              onRefresh={handleEnrichLead}
-            />
-          )}
-
-          {/* AI Description - Fallback se não tiver dados enriquecidos */}
-          {!showEnrichment && business.aiDescription && (
-            <div className="p-3 sm:p-4 rounded-xl bg-primary/10 border border-primary/20">
-              <p className="text-xs sm:text-sm flex items-start gap-2 sm:gap-2.5">
-                <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0 mt-0.5" />
-                <span className="text-primary">{business.aiDescription}</span>
-              </p>
-            </div>
-          )}
-
-          {/* Contact Info */}
-          <div className="space-y-2 sm:space-y-3">
-            <h4 className="text-xs sm:text-sm font-medium text-foreground">Informações de Contato</h4>
-            
-            <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground">
-              <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" />
-              <span className="truncate">{business.address}</span>
-            </div>
-            
-            {business.phone && (
-              <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground">
-                <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" />
-                <span>{business.phone}</span>
-                {enrichedData?.validation?.phone?.hasWhatsapp && (
-                  <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
-                    WhatsApp ✓
-                  </Badge>
-                )}
-              </div>
-            )}
-            
-            {business.email && (
-              <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground">
-                <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" />
-                <span className="truncate">{business.email}</span>
-                {enrichedData?.validation?.email?.isValid && (
-                  <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
-                    Válido ✓
-                  </Badge>
-                )}
-              </div>
-            )}
-
-            {business.website && (
-              <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground">
-                <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" />
-                <a 
-                  href={business.website.startsWith('http') ? business.website : `https://${business.website}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline truncate"
-                >
-                  {business.website}
-                </a>
-                {enrichedData?.websiteHealth?.isAccessible && (
-                  <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
-                    Online ✓
-                  </Badge>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Services - Usar dados enriquecidos se disponíveis */}
-          <div className="space-y-2 sm:space-y-3">
-            <h4 className="text-xs sm:text-sm font-medium text-foreground flex items-center gap-2">
-              <Tag className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
-              Serviços Recomendados
-            </h4>
-            <div className="flex flex-wrap gap-1.5 sm:gap-2">
-              {enrichedData?.scoring?.recommendedServices ? (
-                enrichedData.scoring.recommendedServices.slice(0, 6).map((service, i) => (
-                  <Badge key={i} variant="secondary" className="text-[10px] sm:text-xs bg-white/10 text-foreground border-white/20">
-                    {service}
-                  </Badge>
-                ))
-              ) : (
-                <>
-                  {business.needsWebsite && (
-                    <Badge variant="secondary" className="text-[10px] sm:text-xs bg-white/10 text-foreground border-white/20">
-                      website
-                    </Badge>
-                  )}
-                  {business.needsChatbot && (
-                    <Badge variant="secondary" className="text-[10px] sm:text-xs bg-white/10 text-foreground border-white/20">
-                      automation
-                    </Badge>
-                  )}
-                  {business.needsScheduling && (
-                    <Badge variant="secondary" className="text-[10px] sm:text-xs bg-white/10 text-foreground border-white/20">
-                      WhatsApp
-                    </Badge>
-                  )}
-                  {business.needsCRM && (
-                    <Badge variant="secondary" className="text-[10px] sm:text-xs bg-white/10 text-foreground border-white/20">
-                      CRM
-                    </Badge>
-                  )}
-                  {business.needsMarketing && (
-                    <Badge variant="secondary" className="text-[10px] sm:text-xs bg-white/10 text-foreground border-white/20">
-                      marketing
-                    </Badge>
-                  )}
-                  {business.needsEcommerce && (
-                    <Badge variant="secondary" className="text-[10px] sm:text-xs bg-white/10 text-foreground border-white/20">
-                      e-commerce
-                    </Badge>
-                  )}
-                </>
+        {/* Body - Side by Side Layout */}
+        <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden">
+          {/* Left Side - Business Info */}
+          <div className="lg:w-[400px] lg:border-r border-white/10 flex flex-col overflow-hidden">
+            <div className="px-4 sm:px-6 py-4 space-y-4 overflow-y-auto flex-1">
+              {/* Value Box - Compact */}
+              {displayValueMin && displayValueMax && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 mb-1">
+                      <DollarSign className="w-3 h-3 text-primary" /> VALOR
+                    </p>
+                    <p className="text-xs text-muted-foreground">Min: R$ {displayValueMin.toLocaleString()}</p>
+                    <p className="text-lg font-bold text-primary">
+                      R$ {displayValueMax.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 mb-1">
+                      <TrendingUp className="w-3 h-3 text-primary" /> RECORRÊNCIA
+                    </p>
+                    <p className="text-lg font-bold text-primary mt-3">
+                      +R$ {displayRecurrence?.toLocaleString()}/mês
+                    </p>
+                  </div>
+                </div>
               )}
+
+              {/* AI Description */}
+              {(enrichedData?.scoring?.digitalPresenceStatus || business.aiDescription) && (
+                <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
+                  <p className="text-xs flex items-start gap-2">
+                    <Sparkles className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                    <span className="text-primary">{enrichedData?.scoring?.digitalPresenceStatus || business.aiDescription}</span>
+                  </p>
+                </div>
+              )}
+
+              {/* Contact Info */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-medium text-foreground">Informações de Contato</h4>
+                
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span className="truncate">{business.address}</span>
+                </div>
+                
+                {business.phone && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Phone className="w-3.5 h-3.5 text-primary shrink-0" />
+                    <span>{business.phone}</span>
+                    {enrichedData?.validation?.phone?.hasWhatsapp && (
+                      <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                        WhatsApp ✓
+                      </Badge>
+                    )}
+                  </div>
+                )}
+                
+                {business.email && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Mail className="w-3.5 h-3.5 text-primary shrink-0" />
+                    <span className="truncate">{business.email}</span>
+                    {enrichedData?.validation?.email?.isValid && (
+                      <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                        Válido ✓
+                      </Badge>
+                    )}
+                  </div>
+                )}
+
+                {business.website && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Globe className="w-3.5 h-3.5 text-primary shrink-0" />
+                    <a 
+                      href={business.website.startsWith('http') ? business.website : `https://${business.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline truncate"
+                    >
+                      {business.website}
+                    </a>
+                    {enrichedData?.websiteHealth?.isAccessible && (
+                      <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                        Online ✓
+                      </Badge>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Services */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-medium text-foreground flex items-center gap-2">
+                  <Tag className="w-3.5 h-3.5 text-primary" />
+                  Serviços Recomendados
+                </h4>
+                <div className="flex flex-wrap gap-1.5">
+                  {enrichedData?.scoring?.recommendedServices ? (
+                    enrichedData.scoring.recommendedServices.slice(0, 6).map((service, i) => (
+                      <Badge key={i} variant="secondary" className="text-[10px] bg-white/10 text-foreground border-white/20">
+                        {service}
+                      </Badge>
+                    ))
+                  ) : (
+                    <>
+                      {business.needsWebsite && (
+                        <Badge variant="secondary" className="text-[10px] bg-white/10 text-foreground border-white/20">
+                          website
+                        </Badge>
+                      )}
+                      {business.needsChatbot && (
+                        <Badge variant="secondary" className="text-[10px] bg-white/10 text-foreground border-white/20">
+                          automation
+                        </Badge>
+                      )}
+                      {business.needsScheduling && (
+                        <Badge variant="secondary" className="text-[10px] bg-white/10 text-foreground border-white/20">
+                          WhatsApp
+                        </Badge>
+                      )}
+                      {business.needsCRM && (
+                        <Badge variant="secondary" className="text-[10px] bg-white/10 text-foreground border-white/20">
+                          CRM
+                        </Badge>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Google Place Link */}
+              <Button
+                variant="outline"
+                className="w-full gap-2 bg-white/5 border-white/10 hover:bg-white/10 text-xs h-9"
+                onClick={() => window.open(googlePlaceUrl, '_blank')}
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                Pesquisar no Google
+              </Button>
+            </div>
+
+            {/* Footer - Left Side Actions (Mobile Only) */}
+            <div className="px-4 sm:px-6 py-3 border-t border-white/10 space-y-2 lg:hidden shrink-0">
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  disabled={!business.phone}
+                  onClick={() => whatsappUrl && window.open(whatsappUrl, '_blank')}
+                  className={cn(
+                    "flex-1 gap-1.5 h-9 text-xs",
+                    business.phone 
+                      ? "text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/10" 
+                      : "text-muted-foreground/50 border-white/10 cursor-not-allowed"
+                  )}
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  WhatsApp
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={!business.email}
+                  onClick={() => emailUrl && window.open(emailUrl, '_blank')}
+                  className={cn(
+                    "flex-1 gap-1.5 h-9 text-xs",
+                    business.email 
+                      ? "text-blue-500 border-blue-500/30 hover:bg-blue-500/10" 
+                      : "text-muted-foreground/50 border-white/10 cursor-not-allowed"
+                  )}
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  Email
+                </Button>
+              </div>
             </div>
           </div>
 
-          {/* Region & Date */}
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-[10px] sm:text-xs text-muted-foreground pt-2">
-            <span className="flex items-center gap-1 sm:gap-1.5">
-              <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              {business.address?.split(',').pop()?.trim() || 'N/A'}
-            </span>
-            <span className="flex items-center gap-1 sm:gap-1.5">
-              📅 {new Date().toLocaleDateString('pt-BR')}
-            </span>
-          </div>
-
-          {/* Google Place Link */}
-          <div className="pt-2">
-            <Button
-              variant="outline"
-              className="w-full gap-2 bg-white/5 border-white/10 hover:bg-white/10 text-xs sm:text-sm h-9 sm:h-10"
-              onClick={() => window.open(googlePlaceUrl, '_blank')}
-            >
-              <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              Pesquisar no Google
-            </Button>
+          {/* Right Side - Análise Avançada */}
+          <div className="flex-1 flex flex-col overflow-hidden border-t lg:border-t-0 border-white/10">
+            <div className="px-4 sm:px-6 py-3 border-b border-white/10 shrink-0">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-primary" />
+                <h4 className="text-sm font-semibold text-foreground">Análise Avançada</h4>
+                {displayScore && (
+                  <Badge className={cn(
+                    "ml-auto text-xs",
+                    displayLevel === 'hot' && "bg-red-500/20 text-red-400 border-red-500/30",
+                    displayLevel === 'warm' && "bg-orange-500/20 text-orange-400 border-orange-500/30",
+                    displayLevel === 'cool' && "bg-blue-500/20 text-blue-400 border-blue-500/30",
+                    displayLevel === 'cold' && "bg-gray-500/20 text-gray-400 border-gray-500/30",
+                    displayLevel === 'basic' && "bg-slate-500/20 text-slate-400",
+                    displayLevel === 'intermediate' && "bg-amber-500/20 text-amber-400",
+                    displayLevel === 'advanced' && "bg-emerald-500/20 text-emerald-400",
+                  )}>
+                    Score: {displayScore}%
+                  </Badge>
+                )}
+              </div>
+            </div>
+            <div className="px-4 sm:px-6 py-4 overflow-y-auto flex-1">
+              <LeadEnrichmentPanel
+                data={enrichedData}
+                isLoading={isLoading}
+                error={error}
+                onRefresh={handleEnrichLead}
+              />
+            </div>
           </div>
         </div>
 
-        {/* Footer - Action Buttons with WhatsApp/Email */}
-        <div className="px-4 sm:px-6 py-4 sm:py-5 border-t border-white/10 space-y-3">
-          {/* Contact Buttons */}
-          <div className="flex gap-2">
+        {/* Footer - Action Buttons (Desktop) */}
+        <div className="hidden lg:flex px-6 py-4 border-t border-white/10 shrink-0 gap-3">
+          <div className="flex gap-2 flex-1">
             <Button
               variant="outline"
               disabled={!business.phone}
               onClick={() => whatsappUrl && window.open(whatsappUrl, '_blank')}
               className={cn(
-                "flex-1 gap-1.5 h-9 sm:h-10 text-xs sm:text-sm",
+                "gap-1.5 h-10 text-sm",
                 business.phone 
                   ? "text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/10" 
                   : "text-muted-foreground/50 border-white/10 cursor-not-allowed"
               )}
             >
-              <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <MessageSquare className="w-4 h-4" />
               WhatsApp
             </Button>
             <Button
@@ -385,45 +389,60 @@ export const GenesisBusinessDetailModal = ({
               disabled={!business.email}
               onClick={() => emailUrl && window.open(emailUrl, '_blank')}
               className={cn(
-                "flex-1 gap-1.5 h-9 sm:h-10 text-xs sm:text-sm",
+                "gap-1.5 h-10 text-sm",
                 business.email 
                   ? "text-blue-500 border-blue-500/30 hover:bg-blue-500/10" 
                   : "text-muted-foreground/50 border-white/10 cursor-not-allowed"
               )}
             >
-              <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <Mail className="w-4 h-4" />
               Email
             </Button>
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-2 sm:gap-3">
+          <div className="flex gap-3">
             <Button
               variant="outline"
-              className="flex-1 bg-white/5 border-white/10 hover:bg-white/10 h-9 sm:h-10 text-xs sm:text-sm"
+              className="bg-white/5 border-white/10 hover:bg-white/10 h-10 text-sm"
               onClick={() => onOpenChange(false)}
             >
               Rejeitar
             </Button>
             <Button
-              variant="outline"
-              className="flex-1 bg-white/5 border-white/10 hover:bg-white/10 h-9 sm:h-10 text-xs sm:text-sm"
-              onClick={() => onOpenChange(false)}
-            >
-              Salvar
-            </Button>
-            <Button
-              className="flex-1 gap-2 h-9 sm:h-10 text-xs sm:text-sm"
+              className="bg-primary hover:bg-primary/90 gap-2 h-10 text-sm"
               onClick={() => {
                 onAcceptProject();
-                onOpenChange(false);
+                toast.success('Projeto aceito! Adicionado aos seus prospects.');
               }}
             >
-              Aceitar
+              <Sparkles className="w-4 h-4" />
+              Aceitar Projeto
             </Button>
           </div>
+        </div>
+
+        {/* Footer - Mobile */}
+        <div className="lg:hidden px-4 py-3 border-t border-white/10 shrink-0 flex gap-2">
+          <Button
+            variant="outline"
+            className="flex-1 bg-white/5 border-white/10 hover:bg-white/10 h-9 text-xs"
+            onClick={() => onOpenChange(false)}
+          >
+            Rejeitar
+          </Button>
+          <Button
+            className="flex-1 bg-primary hover:bg-primary/90 gap-1.5 h-9 text-xs"
+            onClick={() => {
+              onAcceptProject();
+              toast.success('Projeto aceito!');
+            }}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            Aceitar
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
   );
 };
+
+export default GenesisBusinessDetailModal;

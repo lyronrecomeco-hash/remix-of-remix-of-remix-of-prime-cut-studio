@@ -1,48 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-// Lista de domínios de email temporários conhecidos
-const DISPOSABLE_DOMAINS = [
-  'tempmail.com', 'throwaway.email', 'guerrillamail.com', 'mailinator.com',
-  '10minutemail.com', 'yopmail.com', 'fakeinbox.com', 'trashmail.com',
-  'getnada.com', 'mohmal.com', 'temp-mail.org', 'dispostable.com',
-  'sharklasers.com', 'maildrop.cc', 'mailnesia.com', 'tempail.com'
-];
-
-// Provedores de email conhecidos
-const EMAIL_PROVIDERS: Record<string, string> = {
-  'gmail.com': 'Gmail',
-  'googlemail.com': 'Gmail',
-  'outlook.com': 'Outlook',
-  'hotmail.com': 'Hotmail',
-  'live.com': 'Microsoft Live',
-  'yahoo.com': 'Yahoo',
-  'yahoo.com.br': 'Yahoo Brasil',
-  'icloud.com': 'iCloud',
-  'me.com': 'iCloud',
-  'uol.com.br': 'UOL',
-  'bol.com.br': 'BOL',
-  'terra.com.br': 'Terra',
-  'globo.com': 'Globo',
-  'ig.com.br': 'iG',
-  'protonmail.com': 'ProtonMail',
-  'zoho.com': 'Zoho',
-};
-
-// Códigos de país e seus DDIs
-const COUNTRY_CODES: Record<string, { code: string; mobilePrefix: string[] }> = {
-  'BR': { code: '55', mobilePrefix: ['9'] },
-  'US': { code: '1', mobilePrefix: ['2', '3', '4', '5', '6', '7', '8', '9'] },
-  'PT': { code: '351', mobilePrefix: ['9'] },
-  'AR': { code: '54', mobilePrefix: ['9'] },
-  'MX': { code: '52', mobilePrefix: ['1'] },
-  'ES': { code: '34', mobilePrefix: ['6', '7'] },
-  'UK': { code: '44', mobilePrefix: ['7'] },
 };
 
 interface ValidateRequest {
@@ -53,218 +13,175 @@ interface ValidateRequest {
 
 interface EmailValidation {
   isValid: boolean;
-  syntaxValid: boolean;
+  syntax: boolean;
   mxValid: boolean;
   isDisposable: boolean;
-  isCatchAll: boolean;
+  isCatchAll: boolean | null;
   provider: string | null;
   domain: string;
-  normalized: string;
+  confidence: number;
+  hunterVerified?: boolean;
 }
 
 interface PhoneValidation {
   isValid: boolean;
+  formatted: string;
   isMobile: boolean;
   hasWhatsapp: boolean;
   carrier: string | null;
   countryCode: string;
-  formatted: string;
-  normalized: string;
 }
 
-// Validação de sintaxe de email
-function validateEmailSyntax(email: string): boolean {
-  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-  return emailRegex.test(email);
-}
+// Lista de domínios descartáveis
+const DISPOSABLE_DOMAINS = new Set([
+  'tempmail.com', 'throwaway.com', '10minutemail.com', 'guerrillamail.com',
+  'mailinator.com', 'yopmail.com', 'temp-mail.org', 'fakeinbox.com',
+  'trashmail.com', 'dispostable.com', 'sharklasers.com', 'guerrillamail.info',
+  'grr.la', 'spam4.me', 'maildrop.cc', 'getairmail.com'
+]);
 
-// Verificação de MX records via DNS
-async function checkMxRecords(domain: string): Promise<boolean> {
+// Provedores conhecidos
+const KNOWN_PROVIDERS: Record<string, string> = {
+  'gmail.com': 'Google',
+  'googlemail.com': 'Google',
+  'outlook.com': 'Microsoft',
+  'hotmail.com': 'Microsoft',
+  'live.com': 'Microsoft',
+  'yahoo.com': 'Yahoo',
+  'icloud.com': 'Apple',
+  'protonmail.com': 'ProtonMail',
+  'zoho.com': 'Zoho',
+};
+
+// Validar email com Hunter.io
+async function validateEmailWithHunter(email: string): Promise<{ result: string; score: number } | null> {
+  const hunterApiKey = Deno.env.get('HUNTER_IO_API_KEY');
+  if (!hunterApiKey) {
+    console.log('Hunter.io API key not configured');
+    return null;
+  }
+  
   try {
-    const response = await fetch(`https://dns.google/resolve?name=${domain}&type=MX`);
+    const response = await fetch(
+      `https://api.hunter.io/v2/email-verifier?email=${encodeURIComponent(email)}&api_key=${hunterApiKey}`
+    );
+    
+    if (!response.ok) {
+      console.error('Hunter.io API error:', response.status);
+      return null;
+    }
+    
     const data = await response.json();
-    return data.Answer && data.Answer.length > 0;
-  } catch {
-    return false;
+    return {
+      result: data.data?.result || 'unknown',
+      score: data.data?.score || 0
+    };
+  } catch (error) {
+    console.error('Hunter.io validation error:', error);
+    return null;
   }
 }
 
-// Verificar se é domínio descartável
-function isDisposableEmail(domain: string): boolean {
-  return DISPOSABLE_DOMAINS.some(d => domain.toLowerCase().includes(d));
-}
-
-// Obter provedor de email
-function getEmailProvider(domain: string): string | null {
-  return EMAIL_PROVIDERS[domain.toLowerCase()] || null;
-}
-
-// Validar email completo
 async function validateEmail(email: string): Promise<EmailValidation> {
-  const normalized = email.toLowerCase().trim();
-  const syntaxValid = validateEmailSyntax(normalized);
+  const domain = email.split('@')[1]?.toLowerCase() || '';
+  const syntaxValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   
   if (!syntaxValid) {
     return {
       isValid: false,
-      syntaxValid: false,
+      syntax: false,
       mxValid: false,
       isDisposable: false,
-      isCatchAll: false,
+      isCatchAll: null,
       provider: null,
-      domain: '',
-      normalized,
+      domain,
+      confidence: 0
     };
   }
   
-  const domain = normalized.split('@')[1];
-  const [mxValid, isDisposable] = await Promise.all([
-    checkMxRecords(domain),
-    Promise.resolve(isDisposableEmail(domain)),
-  ]);
+  const isDisposable = DISPOSABLE_DOMAINS.has(domain);
+  const provider = KNOWN_PROVIDERS[domain] || null;
   
-  const provider = getEmailProvider(domain);
-  
-  // Emails de provedores conhecidos geralmente são catch-all
-  const isCatchAll = ['gmail.com', 'outlook.com', 'yahoo.com'].includes(domain.toLowerCase());
-  
-  return {
-    isValid: syntaxValid && mxValid && !isDisposable,
-    syntaxValid,
-    mxValid,
-    isDisposable,
-    isCatchAll,
-    provider,
-    domain,
-    normalized,
-  };
-}
-
-// Normalizar telefone brasileiro
-function normalizePhone(phone: string, countryCode: string = 'BR'): string {
-  // Remover todos os caracteres não numéricos
-  let normalized = phone.replace(/\D/g, '');
-  
-  // Se começa com 0, remover
-  if (normalized.startsWith('0')) {
-    normalized = normalized.substring(1);
+  // Verificar MX records via DNS
+  let mxValid = false;
+  try {
+    const dnsResponse = await fetch(`https://dns.google/resolve?name=${domain}&type=MX`);
+    const dnsData = await dnsResponse.json();
+    mxValid = (dnsData.Answer && dnsData.Answer.length > 0);
+  } catch {
+    mxValid = provider !== null; // Se é provedor conhecido, assume válido
   }
   
-  // Se tem código do país, remover
-  const country = COUNTRY_CODES[countryCode];
-  if (country && normalized.startsWith(country.code)) {
-    normalized = normalized.substring(country.code.length);
-  }
+  // Validar com Hunter.io se disponível
+  const hunterResult = await validateEmailWithHunter(email);
   
-  return normalized;
-}
-
-// Formatar telefone
-function formatPhone(phone: string, countryCode: string = 'BR'): string {
-  const normalized = normalizePhone(phone, countryCode);
-  
-  if (countryCode === 'BR') {
-    if (normalized.length === 11) {
-      return `(${normalized.slice(0, 2)}) ${normalized.slice(2, 7)}-${normalized.slice(7)}`;
-    } else if (normalized.length === 10) {
-      return `(${normalized.slice(0, 2)}) ${normalized.slice(2, 6)}-${normalized.slice(6)}`;
-    }
-  }
-  
-  return phone;
-}
-
-// Verificar se é celular (Brasil)
-function isMobilePhone(phone: string, countryCode: string = 'BR'): boolean {
-  const normalized = normalizePhone(phone, countryCode);
-  
-  if (countryCode === 'BR') {
-    // Celulares brasileiros têm 11 dígitos e o 3º dígito é 9
-    if (normalized.length === 11) {
-      return normalized.charAt(2) === '9';
-    }
-    // Ou 10 dígitos com 9 no início do número
-    if (normalized.length === 10) {
-      return normalized.charAt(2) === '9';
-    }
-  }
-  
-  const country = COUNTRY_CODES[countryCode];
-  if (country) {
-    return country.mobilePrefix.some(prefix => normalized.startsWith(prefix));
-  }
-  
-  return false;
-}
-
-// Detectar operadora (simplificado para Brasil)
-function detectCarrier(phone: string, countryCode: string = 'BR'): string | null {
-  const normalized = normalizePhone(phone, countryCode);
-  
-  if (countryCode !== 'BR' || normalized.length < 2) {
-    return null;
-  }
-  
-  const ddd = normalized.substring(0, 2);
-  
-  // DDDs das principais regiões
-  const ddds: Record<string, string> = {
-    '11': 'São Paulo',
-    '21': 'Rio de Janeiro',
-    '31': 'Belo Horizonte',
-    '41': 'Curitiba',
-    '51': 'Porto Alegre',
-    '61': 'Brasília',
-    '71': 'Salvador',
-    '81': 'Recife',
-    '85': 'Fortaleza',
-    '92': 'Manaus',
-  };
-  
-  return ddds[ddd] || `DDD ${ddd}`;
-}
-
-// Verificar se tem WhatsApp (heurística baseada em formato)
-function checkWhatsappPotential(phone: string, countryCode: string = 'BR'): boolean {
-  const normalized = normalizePhone(phone, countryCode);
-  
-  // WhatsApp requer celular
-  if (!isMobilePhone(phone, countryCode)) {
-    return false;
-  }
-  
-  // Verificar comprimento válido
-  if (countryCode === 'BR') {
-    return normalized.length === 11;
-  }
-  
-  return true;
-}
-
-// Validar telefone completo
-function validatePhone(phone: string, countryCode: string = 'BR'): PhoneValidation {
-  const normalized = normalizePhone(phone, countryCode);
-  const isMobile = isMobilePhone(phone, countryCode);
-  const hasWhatsapp = checkWhatsappPotential(phone, countryCode);
-  const carrier = detectCarrier(phone, countryCode);
-  const formatted = formatPhone(phone, countryCode);
-  
-  // Validação básica de comprimento
-  let isValid = false;
-  if (countryCode === 'BR') {
-    isValid = normalized.length >= 10 && normalized.length <= 11;
+  // Calcular confiança baseado em Hunter.io ou heurísticas
+  let confidence = 0;
+  if (hunterResult) {
+    confidence = hunterResult.score;
   } else {
-    isValid = normalized.length >= 7 && normalized.length <= 15;
+    if (syntaxValid) confidence += 30;
+    if (mxValid) confidence += 40;
+    if (!isDisposable) confidence += 20;
+    if (provider) confidence += 10;
   }
+  
+  const isValid = hunterResult 
+    ? (hunterResult.result === 'deliverable' || hunterResult.result === 'risky')
+    : (syntaxValid && mxValid && !isDisposable);
   
   return {
     isValid,
+    syntax: syntaxValid,
+    mxValid,
+    isDisposable,
+    isCatchAll: null,
+    provider,
+    domain,
+    confidence,
+    hunterVerified: !!hunterResult
+  };
+}
+
+function validatePhone(phone: string, countryCode: string = 'BR'): PhoneValidation {
+  // Limpar caracteres não numéricos
+  const cleaned = phone.replace(/\D/g, '');
+  
+  // Validação básica de tamanho
+  const isValid = cleaned.length >= 10 && cleaned.length <= 15;
+  
+  // Detectar se é celular (Brasil: começa com 9 após DDD)
+  let isMobile = false;
+  let formatted = cleaned;
+  
+  if (countryCode === 'BR') {
+    // Formato brasileiro: DDD + número
+    if (cleaned.length === 11) {
+      isMobile = cleaned.charAt(2) === '9';
+      formatted = `+55 (${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;
+    } else if (cleaned.length === 10) {
+      isMobile = false; // Fixo
+      formatted = `+55 (${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6)}`;
+    } else if (cleaned.length >= 12 && cleaned.startsWith('55')) {
+      const number = cleaned.slice(2);
+      isMobile = number.charAt(2) === '9';
+      formatted = `+55 (${number.slice(0, 2)}) ${number.slice(2, 7)}-${number.slice(7)}`;
+    }
+  } else {
+    // Outros países - heurística básica
+    isMobile = cleaned.length >= 10;
+  }
+  
+  // Detectar potencial WhatsApp (celular no Brasil geralmente tem)
+  const hasWhatsapp = isMobile && countryCode === 'BR';
+  
+  return {
+    isValid,
+    formatted,
     isMobile,
     hasWhatsapp,
-    carrier,
-    countryCode,
-    formatted,
-    normalized,
+    carrier: null,
+    countryCode
   };
 }
 
@@ -275,120 +192,19 @@ serve(async (req) => {
 
   try {
     const { email, phone, countryCode = 'BR' }: ValidateRequest = await req.json();
-
-    if (!email && !phone) {
-      throw new Error('Email ou telefone é obrigatório');
-    }
-
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    const results: {
-      email?: EmailValidation;
-      phone?: PhoneValidation;
-      cached: boolean;
-    } = { cached: false };
-
-    // Validar email
+    
+    const result: { email?: EmailValidation; phone?: PhoneValidation } = {};
+    
     if (email) {
-      const normalizedEmail = email.toLowerCase().trim();
-      
-      // Verificar cache
-      const { data: cachedEmail } = await supabase
-        .from('lead_validations')
-        .select('*')
-        .eq('contact_value', normalizedEmail)
-        .eq('contact_type', 'email')
-        .gt('expires_at', new Date().toISOString())
-        .single();
-
-      if (cachedEmail) {
-        results.email = {
-          isValid: cachedEmail.is_valid,
-          syntaxValid: cachedEmail.email_syntax_valid,
-          mxValid: cachedEmail.email_mx_valid,
-          isDisposable: cachedEmail.email_is_disposable,
-          isCatchAll: cachedEmail.email_is_catch_all,
-          provider: cachedEmail.email_provider,
-          domain: normalizedEmail.split('@')[1],
-          normalized: normalizedEmail,
-        };
-        results.cached = true;
-      } else {
-        results.email = await validateEmail(email);
-        
-        // Salvar no cache (7 dias)
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 7);
-        
-        await supabase.from('lead_validations').upsert({
-          contact_value: results.email.normalized,
-          contact_type: 'email',
-          is_valid: results.email.isValid,
-          email_syntax_valid: results.email.syntaxValid,
-          email_mx_valid: results.email.mxValid,
-          email_is_disposable: results.email.isDisposable,
-          email_is_catch_all: results.email.isCatchAll,
-          email_provider: results.email.provider,
-          validation_details: results.email,
-          expires_at: expiresAt.toISOString(),
-        }, {
-          onConflict: 'contact_value,contact_type',
-        });
-      }
+      result.email = await validateEmail(email);
     }
-
-    // Validar telefone
+    
     if (phone) {
-      const normalizedPhone = normalizePhone(phone, countryCode);
-      
-      // Verificar cache
-      const { data: cachedPhone } = await supabase
-        .from('lead_validations')
-        .select('*')
-        .eq('contact_value', normalizedPhone)
-        .eq('contact_type', 'phone')
-        .gt('expires_at', new Date().toISOString())
-        .single();
-
-      if (cachedPhone) {
-        results.phone = {
-          isValid: cachedPhone.is_valid,
-          isMobile: cachedPhone.phone_is_mobile,
-          hasWhatsapp: cachedPhone.phone_has_whatsapp,
-          carrier: cachedPhone.phone_carrier,
-          countryCode: cachedPhone.phone_country_code,
-          formatted: cachedPhone.phone_formatted,
-          normalized: normalizedPhone,
-        };
-        results.cached = true;
-      } else {
-        results.phone = validatePhone(phone, countryCode);
-        
-        // Salvar no cache (7 dias)
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 7);
-        
-        await supabase.from('lead_validations').upsert({
-          contact_value: results.phone.normalized,
-          contact_type: 'phone',
-          is_valid: results.phone.isValid,
-          phone_is_mobile: results.phone.isMobile,
-          phone_has_whatsapp: results.phone.hasWhatsapp,
-          phone_carrier: results.phone.carrier,
-          phone_country_code: results.phone.countryCode,
-          phone_formatted: results.phone.formatted,
-          validation_details: results.phone,
-          expires_at: expiresAt.toISOString(),
-        }, {
-          onConflict: 'contact_value,contact_type',
-        });
-      }
+      result.phone = validatePhone(phone, countryCode);
     }
 
     return new Response(
-      JSON.stringify({ success: true, data: results }),
+      JSON.stringify({ success: true, data: result }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

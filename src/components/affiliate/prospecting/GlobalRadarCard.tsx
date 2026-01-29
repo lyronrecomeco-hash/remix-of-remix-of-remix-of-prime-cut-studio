@@ -4,16 +4,13 @@ import {
   Globe2, 
   Loader2, 
   ChevronRight,
-  Bell,
   Zap,
   TrendingUp,
   MapPin,
   CheckCircle2,
   X,
   RefreshCw,
-  Eye,
-  MessageSquare,
-  Mail
+  Eye
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +20,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { RadarOpportunityModal } from './RadarOpportunityModal';
 
 
 interface RadarOpportunity {
@@ -79,6 +77,8 @@ export const GlobalRadarCard = ({ affiliateId, onAcceptOpportunity }: GlobalRada
   const [scanning, setScanning] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
+  const [selectedOpportunity, setSelectedOpportunity] = useState<RadarOpportunity | null>(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
 
   // Carregar oportunidades
   const fetchOpportunities = async () => {
@@ -399,37 +399,20 @@ export const GlobalRadarCard = ({ affiliateId, onAcceptOpportunity }: GlobalRada
                           </div>
                         )}
 
-                        {/* Actions - WhatsApp / Email / Reject */}
+                        {/* Actions - Ver Detalhes / Accept / Reject */}
                         <div className="flex items-center gap-2 pt-2 border-t border-border/50">
                           <Button
                             size="sm"
                             variant="outline"
-                            disabled={!opp.company_phone}
-                            onClick={() => whatsappUrl && window.open(whatsappUrl, '_blank')}
-                            className={cn(
-                              "flex-1 gap-1.5 h-8 text-xs",
-                              opp.company_phone 
-                                ? "text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/10" 
-                                : "text-muted-foreground/50 border-border cursor-not-allowed"
-                            )}
+                            onClick={() => {
+                              setSelectedOpportunity(opp);
+                              setDetailModalOpen(true);
+                            }}
+                            className="flex-1 gap-1.5 h-8 text-xs text-primary border-primary/30 hover:bg-primary/10"
                           >
-                            <MessageSquare className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline">WhatsApp</span>
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={!opp.company_email}
-                            onClick={() => emailUrl && window.open(emailUrl, '_blank')}
-                            className={cn(
-                              "flex-1 gap-1.5 h-8 text-xs",
-                              opp.company_email 
-                                ? "text-blue-500 border-blue-500/30 hover:bg-blue-500/10" 
-                                : "text-muted-foreground/50 border-border cursor-not-allowed"
-                            )}
-                          >
-                            <Mail className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline">Email</span>
+                            <Eye className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">Análise Completa</span>
+                            <span className="sm:hidden">Ver</span>
                           </Button>
                           <Button
                             size="sm"
@@ -466,6 +449,26 @@ export const GlobalRadarCard = ({ affiliateId, onAcceptOpportunity }: GlobalRada
           </ScrollArea>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Análise Detalhada */}
+      <RadarOpportunityModal
+        open={detailModalOpen}
+        onOpenChange={setDetailModalOpen}
+        opportunity={selectedOpportunity}
+        onAccept={() => {
+          if (selectedOpportunity) {
+            handleAccept(selectedOpportunity);
+            setDetailModalOpen(false);
+          }
+        }}
+        onReject={() => {
+          if (selectedOpportunity) {
+            handleReject(selectedOpportunity.id);
+            setDetailModalOpen(false);
+          }
+        }}
+        accepting={acceptingId === selectedOpportunity?.id}
+      />
     </>
   );
 };
