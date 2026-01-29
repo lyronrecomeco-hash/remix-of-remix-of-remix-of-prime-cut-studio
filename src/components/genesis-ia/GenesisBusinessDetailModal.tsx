@@ -6,7 +6,7 @@ import {
   MapPin, Phone, Globe, Building2, 
   ExternalLink, MessageSquare, Mail,
   DollarSign, TrendingUp, Sparkles, Tag,
-  Loader2, BarChart3, Star
+  Loader2, BarChart3, Star, Instagram, Facebook
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -120,6 +120,32 @@ export const GenesisBusinessDetailModal = ({
   const whatsappUrl = cleanPhone ? `https://wa.me/${cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`}` : '';
   const emailUrl = business.email ? `mailto:${business.email}` : '';
 
+  // Helper para detectar URLs de redes sociais
+  const isSocialMediaUrl = (url: string): boolean => {
+    const lowerUrl = url.toLowerCase();
+    return lowerUrl.includes('facebook.com') || 
+           lowerUrl.includes('instagram.com') || 
+           lowerUrl.includes('fb.com') ||
+           lowerUrl.includes('fb.me');
+  };
+
+  // Extrair URLs de redes sociais
+  const getSocialUrls = () => {
+    const urls: { instagram?: string; facebook?: string } = {};
+    if (business.website) {
+      const lowerUrl = business.website.toLowerCase();
+      if (lowerUrl.includes('instagram.com')) {
+        urls.instagram = business.website.startsWith('http') ? business.website : `https://${business.website}`;
+      }
+      if (lowerUrl.includes('facebook.com') || lowerUrl.includes('fb.com') || lowerUrl.includes('fb.me')) {
+        urls.facebook = business.website.startsWith('http') ? business.website : `https://${business.website}`;
+      }
+    }
+    return urls;
+  };
+
+  const socialUrls = getSocialUrls();
+
   // Usar dados enriquecidos se disponíveis
   const displayScore = enrichedData?.scoring?.opportunityScore || (business.rating ? Math.round(business.rating * 10) : null);
   const displayLevel = enrichedData?.scoring?.opportunityLevel || business.opportunityLevel;
@@ -160,7 +186,7 @@ export const GenesisBusinessDetailModal = ({
         {/* Body - Side by Side Layout */}
         <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden">
           {/* Left Side - Business Info */}
-          <div className="lg:w-[400px] lg:border-r border-white/10 flex flex-col overflow-hidden">
+          <div className="lg:w-[340px] lg:min-w-[340px] lg:max-w-[340px] lg:border-r border-white/10 flex flex-col overflow-hidden">
             <div className="px-4 sm:px-6 py-4 space-y-4 overflow-y-auto flex-1">
               {/* Value Box - Compact */}
               {displayValueMin && displayValueMax && (
@@ -228,7 +254,7 @@ export const GenesisBusinessDetailModal = ({
                   </div>
                 )}
 
-                {business.website && (
+                {business.website && !isSocialMediaUrl(business.website) && (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Globe className="w-3.5 h-3.5 text-primary shrink-0" />
                     <a 
@@ -307,29 +333,45 @@ export const GenesisBusinessDetailModal = ({
                   disabled={!business.phone}
                   onClick={() => whatsappUrl && window.open(whatsappUrl, '_blank')}
                   className={cn(
-                    "flex-1 gap-1.5 h-9 text-xs",
+                    "flex-1 gap-1.5 h-9 text-xs px-2",
                     business.phone 
                       ? "text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/10" 
                       : "text-muted-foreground/50 border-white/10 cursor-not-allowed"
                   )}
                 >
                   <MessageSquare className="w-3.5 h-3.5" />
-                  WhatsApp
                 </Button>
                 <Button
                   variant="outline"
                   disabled={!business.email}
                   onClick={() => emailUrl && window.open(emailUrl, '_blank')}
                   className={cn(
-                    "flex-1 gap-1.5 h-9 text-xs",
+                    "flex-1 gap-1.5 h-9 text-xs px-2",
                     business.email 
                       ? "text-blue-500 border-blue-500/30 hover:bg-blue-500/10" 
                       : "text-muted-foreground/50 border-white/10 cursor-not-allowed"
                   )}
                 >
                   <Mail className="w-3.5 h-3.5" />
-                  Email
                 </Button>
+                {socialUrls.instagram && (
+                  <Button
+                    variant="outline"
+                    onClick={() => window.open(socialUrls.instagram, '_blank')}
+                    className="flex-1 gap-1.5 h-9 text-xs px-2 text-pink-500 border-pink-500/30 hover:bg-pink-500/10"
+                  >
+                    <Instagram className="w-3.5 h-3.5" />
+                  </Button>
+                )}
+                {socialUrls.facebook && (
+                  <Button
+                    variant="outline"
+                    onClick={() => window.open(socialUrls.facebook, '_blank')}
+                    className="flex-1 gap-1.5 h-9 text-xs px-2 text-blue-600 border-blue-600/30 hover:bg-blue-600/10"
+                  >
+                    <Facebook className="w-3.5 h-3.5" />
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -375,29 +417,45 @@ export const GenesisBusinessDetailModal = ({
               disabled={!business.phone}
               onClick={() => whatsappUrl && window.open(whatsappUrl, '_blank')}
               className={cn(
-                "gap-1.5 h-10 text-sm",
+                "gap-1.5 h-10 text-sm px-3",
                 business.phone 
                   ? "text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/10" 
                   : "text-muted-foreground/50 border-white/10 cursor-not-allowed"
               )}
             >
               <MessageSquare className="w-4 h-4" />
-              WhatsApp
             </Button>
             <Button
               variant="outline"
               disabled={!business.email}
               onClick={() => emailUrl && window.open(emailUrl, '_blank')}
               className={cn(
-                "gap-1.5 h-10 text-sm",
+                "gap-1.5 h-10 text-sm px-3",
                 business.email 
                   ? "text-blue-500 border-blue-500/30 hover:bg-blue-500/10" 
                   : "text-muted-foreground/50 border-white/10 cursor-not-allowed"
               )}
             >
               <Mail className="w-4 h-4" />
-              Email
             </Button>
+            {socialUrls.instagram && (
+              <Button
+                variant="outline"
+                onClick={() => window.open(socialUrls.instagram, '_blank')}
+                className="gap-1.5 h-10 text-sm px-3 text-pink-500 border-pink-500/30 hover:bg-pink-500/10"
+              >
+                <Instagram className="w-4 h-4" />
+              </Button>
+            )}
+            {socialUrls.facebook && (
+              <Button
+                variant="outline"
+                onClick={() => window.open(socialUrls.facebook, '_blank')}
+                className="gap-1.5 h-10 text-sm px-3 text-blue-600 border-blue-600/30 hover:bg-blue-600/10"
+              >
+                <Facebook className="w-4 h-4" />
+              </Button>
+            )}
           </div>
           <div className="flex gap-3">
             <Button
