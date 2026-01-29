@@ -59,3 +59,18 @@ verify_jwt = false
 
 [functions.manage-api-keys]
 verify_jwt = false
+
+[functions.validate-contact]
+verify_jwt = false
+
+[functions.check-website-health]
+verify_jwt = false
+
+[functions.detect-ads-activity]
+verify_jwt = false
+
+[functions.score-lead-ai]
+verify_jwt = false
+
+[functions.enrich-lead-complete]
+verify_jwt = false
