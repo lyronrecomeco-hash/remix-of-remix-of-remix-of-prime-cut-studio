@@ -2,6 +2,121 @@ import { FromScratchFormData, LANGUAGES, CURRENCIES, AI_TARGETS } from './types'
 import { NicheContext } from './nicheContexts';
 import { AppNicheContext, getAppNicheById } from './appNicheContexts';
 
+// Adaptações culturais e linguísticas por idioma
+const LANGUAGE_ADAPTATIONS: Record<string, {
+  promptLanguage: string;
+  nativeInstructions: string;
+  persuasionStyle: string;
+  culturalTone: string;
+  siteLanguageLabel: string;
+}> = {
+  'pt-BR': {
+    promptLanguage: 'Português Brasileiro',
+    nativeInstructions: 'Escreva TODO o conteúdo do site em português brasileiro natural e comercial. Use linguagem próxima, amigável e persuasiva como um vendedor brasileiro experiente.',
+    persuasionStyle: 'Foque em benefícios emocionais, use gatilhos de escassez e urgência com naturalidade, crie conexão pessoal com o visitante.',
+    culturalTone: 'Brasileiro - Próximo, caloroso, usa "você", emoji com moderação, prova social forte',
+    siteLanguageLabel: 'O site DEVE ser 100% em Português Brasileiro'
+  },
+  'pt-PT': {
+    promptLanguage: 'Português de Portugal',
+    nativeInstructions: 'Escreva TODO o conteúdo do site em português de Portugal. Use linguagem formal mas acessível, respeitosa e profissional.',
+    persuasionStyle: 'Foque em qualidade, tradição e confiabilidade. Argumentação lógica com provas concretas.',
+    culturalTone: 'Português Europeu - Formal, respeitoso, usa "você" ou "o senhor/a", profissional',
+    siteLanguageLabel: 'O site DEVE ser 100% em Português de Portugal'
+  },
+  'en': {
+    promptLanguage: 'English (US)',
+    nativeInstructions: 'Write ALL website content in natural American English. Use professional, direct, and results-focused language like a native American sales expert.',
+    persuasionStyle: 'Focus on ROI, time-saving, efficiency. Use data and statistics. Be direct and action-oriented.',
+    culturalTone: 'American English - Direct, professional, value-driven, results-focused, confident',
+    siteLanguageLabel: 'The website MUST be 100% in American English'
+  },
+  'en-GB': {
+    promptLanguage: 'English (UK)',
+    nativeInstructions: 'Write ALL website content in British English. Use polished, refined language with a professional yet approachable tone.',
+    persuasionStyle: 'Focus on quality, reliability, and trust. Use understated confidence and social proof.',
+    culturalTone: 'British English - Polished, refined, trustworthy, understated confidence',
+    siteLanguageLabel: 'The website MUST be 100% in British English'
+  },
+  'es': {
+    promptLanguage: 'Español (España)',
+    nativeInstructions: 'Escribe TODO el contenido del sitio web en español de España nativo. Usa un lenguaje comercial profesional, cercano y persuasivo.',
+    persuasionStyle: 'Enfócate en la confianza, calidad y relación personal. Usa testimonios y garantías.',
+    culturalTone: 'Español Europeo - Profesional, cercano, usa "usted" o "tú" según contexto, confiable',
+    siteLanguageLabel: 'El sitio web DEBE estar 100% en Español de España'
+  },
+  'es-MX': {
+    promptLanguage: 'Español (México)',
+    nativeInstructions: 'Escribe TODO el contenido del sitio web en español mexicano natural. Usa lenguaje amigable, cálido y comercial.',
+    persuasionStyle: 'Enfócate en beneficios familiares, ahorro y valor. Conexión emocional fuerte.',
+    culturalTone: 'Español Mexicano - Amigable, cálido, usa "usted" respetuoso, familiar',
+    siteLanguageLabel: 'El sitio web DEBE estar 100% en Español de México'
+  },
+  'es-AR': {
+    promptLanguage: 'Español (Argentina)',
+    nativeInstructions: 'Escribí TODO el contenido del sitio web en español argentino nativo. Usá el voseo naturalmente y un tono cercano.',
+    persuasionStyle: 'Enfocate en la calidad, la pasión y la conexión personal. Usá testimonios reales.',
+    culturalTone: 'Español Argentino - Cercano, apasionado, usa "vos", directo pero cálido',
+    siteLanguageLabel: 'El sitio web DEBE estar 100% en Español de Argentina'
+  },
+  'fr': {
+    promptLanguage: 'Français',
+    nativeInstructions: 'Rédigez TOUT le contenu du site en français natif. Utilisez un langage commercial élégant, professionnel et persuasif.',
+    persuasionStyle: 'Mettez l\'accent sur l\'élégance, la qualité et l\'expertise. Argumentation logique et raffinée.',
+    culturalTone: 'Français - Élégant, professionnel, vouvoiement, sophistiqué',
+    siteLanguageLabel: 'Le site web DOIT être 100% en Français'
+  },
+  'de': {
+    promptLanguage: 'Deutsch',
+    nativeInstructions: 'Schreiben Sie ALLE Website-Inhalte in nativem Deutsch. Verwenden Sie professionelle, präzise und vertrauenswürdige Geschäftssprache.',
+    persuasionStyle: 'Fokus auf Qualität, Zuverlässigkeit und technische Exzellenz. Faktenbasierte Argumentation.',
+    culturalTone: 'Deutsch - Präzise, professionell, Sie-Form, qualitätsorientiert',
+    siteLanguageLabel: 'Die Website MUSS 100% auf Deutsch sein'
+  },
+  'it': {
+    promptLanguage: 'Italiano',
+    nativeInstructions: 'Scrivi TUTTO il contenuto del sito in italiano nativo. Usa un linguaggio commerciale elegante, passionale e persuasivo.',
+    persuasionStyle: 'Enfatizza qualità, tradizione, passione e artigianalità. Connessione emotiva forte.',
+    culturalTone: 'Italiano - Elegante, appassionato, usa "Lei" formale, emotivo ma professionale',
+    siteLanguageLabel: 'Il sito web DEVE essere 100% in Italiano'
+  },
+  'zh': {
+    promptLanguage: '中文 (简体)',
+    nativeInstructions: '用地道的简体中文撰写网站所有内容。使用专业、礼貌、有说服力的商业语言。',
+    persuasionStyle: '强调信任、质量和长期关系。使用社会证明和权威背书。',
+    culturalTone: '简体中文 - 专业、礼貌、注重关系、尊重传统',
+    siteLanguageLabel: '网站必须100%使用简体中文'
+  },
+  'ja': {
+    promptLanguage: '日本語',
+    nativeInstructions: 'ウェブサイトのすべてのコンテンツをネイティブな日本語で書いてください。プロフェッショナルで礼儀正しく、説得力のあるビジネス言語を使用してください。',
+    persuasionStyle: '品質、信頼性、おもてなしの精神を強調。控えめながら説得力のある表現。',
+    culturalTone: '日本語 - 丁寧、プロフェッショナル、敬語使用、品質重視',
+    siteLanguageLabel: 'ウェブサイトは100%日本語でなければなりません'
+  },
+  'ko': {
+    promptLanguage: '한국어',
+    nativeInstructions: '웹사이트의 모든 콘텐츠를 네이티브 한국어로 작성하세요. 전문적이고 정중하며 설득력 있는 비즈니스 언어를 사용하세요.',
+    persuasionStyle: '품질, 신뢰, 혁신을 강조하세요. 사회적 증거와 전문성을 활용하세요.',
+    culturalTone: '한국어 - 전문적, 정중한 존댓말 사용, 혁신적, 신뢰 중심',
+    siteLanguageLabel: '웹사이트는 100% 한국어로 되어야 합니다'
+  },
+  'ar': {
+    promptLanguage: 'العربية',
+    nativeInstructions: 'اكتب جميع محتويات الموقع باللغة العربية الفصحى. استخدم لغة تجارية احترافية ومقنعة ومحترمة.',
+    persuasionStyle: 'ركز على الثقة والجودة والعلاقات طويلة الأمد. استخدم الدليل الاجتماعي والضمانات.',
+    culturalTone: 'العربية - محترم، رسمي، يركز على الثقة والجودة',
+    siteLanguageLabel: 'يجب أن يكون الموقع 100% باللغة العربية'
+  },
+  'other': {
+    promptLanguage: 'Idioma Personalizado',
+    nativeInstructions: 'Escreva o conteúdo do site no idioma especificado pelo usuário. Use linguagem comercial profissional e persuasiva nativa daquele país.',
+    persuasionStyle: 'Adapte o estilo de persuasão para a cultura local. Foque em benefícios e provas sociais.',
+    culturalTone: 'Adapte o tom cultural para o país de destino',
+    siteLanguageLabel: 'O site deve estar no idioma escolhido pelo usuário'
+  }
+};
+
 export function generateAdvancedPrompt(
   formData: FromScratchFormData,
   niche: NicheContext | undefined
@@ -20,6 +135,10 @@ export function generateAdvancedPrompt(
   const language = LANGUAGES.find(l => l.code === formData.language);
   const currency = CURRENCIES.find(c => c.code === formData.currency);
   const targetAI = AI_TARGETS.find(ai => ai.id === formData.targetAI);
+  
+  // Obter adaptação cultural baseada no idioma
+  const languageCode = formData.language || 'pt-BR';
+  const adaptation = LANGUAGE_ADAPTATIONS[languageCode] || LANGUAGE_ADAPTATIONS['other'];
   
   const projectTypeLabel = isApp ? 'Aplicativo Web com Painel Administrativo' : 'Site Comercial / Landing Page';
   
@@ -80,8 +199,45 @@ export function generateAdvancedPrompt(
     ? formData.integrations.map(int => `- ${int}`).join('\n')
     : '- Nenhuma integração específica selecionada';
 
-  // Build the mega prompt
+  // Build the mega prompt with native language instructions
   const prompt = `# 🚀 PROJETO: ${formData.projectName.toUpperCase()}
+
+---
+
+## 🌍 INSTRUÇÕES CRÍTICAS DE IDIOMA E CULTURA
+
+> ⚠️ **REGRA OBRIGATÓRIA - LEIA PRIMEIRO**
+
+### Idioma do Site: ${adaptation.promptLanguage}
+**${adaptation.siteLanguageLabel}**
+
+### Instruções de Escrita Nativa:
+${adaptation.nativeInstructions}
+
+### Estilo de Persuasão:
+${adaptation.persuasionStyle}
+
+### Tom Cultural:
+${adaptation.culturalTone}
+
+### Regras de Copywriting Persuasivo:
+1. **Headlines**: Crie títulos impactantes que capturam atenção imediata e prometem benefícios claros
+2. **Subheadlines**: Expanda o benefício principal e gere curiosidade
+3. **Body Copy**: Use linguagem emocional, conte histórias, mostre transformação
+4. **CTAs**: Botões com verbos de ação específicos e urgência natural
+5. **Provas Sociais**: Depoimentos, números, logos de clientes (placeholders realistas)
+6. **Escassez/Urgência**: Use com naturalidade e autenticidade, sem parecer forçado
+7. **Benefícios > Features**: Sempre traduza funcionalidades em benefícios para o usuário
+8. **Objeções**: Antecipe e responda objeções comuns do público-alvo
+
+### ❌ PROIBIDO:
+- Tradução literal de textos genéricos
+- Linguagem robótica ou de IA
+- Frases clichês sem personalização
+- Textos vagos sem benefícios concretos
+- Lorem ipsum ou placeholders vazios (use textos reais persuasivos)
+
+---
 
 ## 📋 BRIEFING EXECUTIVO
 
@@ -100,7 +256,7 @@ Este é um projeto de **\${projectTypeLabel}** para \${formData.companyName}, at
 | **Segmento/Nicho** | \${nicheName} \${nicheEmoji} |
 | **Localização** | \${formData.cityRegion || 'A definir'} |
 | **Público-Alvo** | \${formData.targetAudience || 'A definir'} |
-| **Idioma Principal** | \${language?.flag || ''} \${language?.name || formData.language} |
+| **Idioma do Site** | ${adaptation.promptLanguage} |
 | **Moeda** | \${currency?.symbol || ''} \${currency?.name || formData.currency} |
 
 ---
@@ -396,6 +552,8 @@ ${getAISpecificInstructions(formData.targetAI, formData.otherAI, isApp)}
 - Componentes devem ser reutilizáveis e testáveis
 - Performance é prioridade desde o início
 - Design responsivo não é opcional, é obrigatório
+- **IMPORTANTE**: Todo texto do site deve ser escrito em ${adaptation.promptLanguage} com tom ${adaptation.culturalTone}
+- Textos devem ser persuasivos, nativos e comerciais - NÃO USE tradução literal
 
 ---
 
@@ -407,7 +565,17 @@ ${getAISpecificInstructions(formData.targetAI, formData.otherAI, isApp)}
 | **IA Destino** | ${targetAI?.name || formData.otherAI || 'Não especificada'} |
 | **Tipo de Projeto** | ${projectTypeLabel} |
 | **Nicho** | ${niche?.name || formData.customNiche || 'Personalizado'} |
-| **Versão do Prompt** | 2.0 - Ultra-Completo |
+| **Idioma Nativo** | ${adaptation.promptLanguage} |
+| **Tom Cultural** | ${adaptation.culturalTone} |
+| **Versão do Prompt** | 2.1 - Ultra-Completo + Idioma Nativo |
+
+---
+
+## 🎯 LEMBRETE FINAL PARA A IA
+
+> **${adaptation.siteLanguageLabel}**
+> 
+> Todos os textos (headlines, CTAs, descrições, botões, menus, footer, etc.) devem ser escritos como se fossem criados por um copywriter nativo e experiente do país de destino. O objetivo é maximizar conversões com linguagem que ressoe naturalmente com o público local.
 
 ---
 
