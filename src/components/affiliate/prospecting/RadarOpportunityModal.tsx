@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { 
   MapPin, Phone, Globe, Building2, 
   MessageSquare, Mail, DollarSign, TrendingUp, 
-  Sparkles, Tag, Loader2, BarChart3, CheckCircle2,
+  Sparkles, Tag, Loader2, BarChart3, CheckCircle2, X,
   Instagram, Facebook
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -132,23 +132,29 @@ export const RadarOpportunityModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg lg:max-w-4xl max-h-[90dvh] overflow-hidden p-0 bg-[hsl(220,20%,8%)] border-white/10 flex flex-col">
+      <DialogContent className="w-[95vw] sm:max-w-[1100px] max-h-[90dvh] p-0 gap-0 overflow-hidden bg-[hsl(222,20%,8%)] border-white/10 flex flex-col">
         {/* Header */}
-        <DialogHeader className="px-5 pt-5 pb-4 border-b border-white/10 bg-white/5 shrink-0">
-          <DialogTitle className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
-              <Building2 className="w-5 h-5 text-primary" />
+        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4 border-b border-white/10 shrink-0">
+          <DialogTitle className="flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+              <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <span className="text-lg font-semibold line-clamp-1">{opportunity.company_name}</span>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-xs text-muted-foreground">{opportunity.niche || 'Empresa'}</span>
-                <Badge variant="outline" className={cn("text-[10px] py-0 px-1.5", levelConfig.color)}>
+              <h3 className="font-bold text-base sm:text-lg leading-tight line-clamp-1 text-foreground">{opportunity.company_name}</h3>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs sm:text-sm text-muted-foreground">{opportunity.niche || 'Empresa'}</span>
+                <Badge variant="outline" className={cn("text-[10px] sm:text-xs py-0 px-1.5", levelConfig.color)}>
                   {levelConfig.label}
                 </Badge>
+                {isLoading && (
+                  <Badge variant="outline" className="text-[10px] sm:text-xs py-0 px-1.5 sm:px-2 bg-blue-500/10 text-blue-400 border-blue-500/30">
+                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                    Analisando...
+                  </Badge>
+                )}
               </div>
             </div>
-            {/* Score Badge */}
+            {/* Score Badge - Header */}
             <Badge className={cn(
               "text-sm px-3 py-1 shrink-0",
               displayScore >= 80 && "bg-emerald-500",
@@ -158,36 +164,30 @@ export const RadarOpportunityModal = ({
               <TrendingUp className="w-3.5 h-3.5 mr-1" />
               {displayScore}%
             </Badge>
-            {isLoading && (
-              <Badge variant="outline" className="text-xs py-1 px-2 bg-blue-500/10 text-blue-400 border-blue-500/30 shrink-0">
-                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                Analisando...
-              </Badge>
-            )}
           </DialogTitle>
         </DialogHeader>
 
         {/* Body - Side by Side */}
         <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden">
           {/* Left Side - Info */}
-          <div className="lg:w-[280px] lg:min-w-[280px] lg:max-w-[280px] lg:border-r border-white/10 flex flex-col overflow-hidden">
-            <div className="px-5 py-4 space-y-3 overflow-y-auto flex-1">
+          <div className="lg:w-[340px] lg:min-w-[340px] lg:max-w-[340px] lg:border-r border-white/10 flex flex-col overflow-hidden">
+            <div className="px-4 sm:px-6 py-4 space-y-4 overflow-y-auto flex-1">
               {/* Value Box */}
-              <div className="grid grid-cols-2 gap-2">
-                <div className="p-2.5 rounded-lg bg-white/5 border border-white/10">
-                  <p className="text-[9px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 mb-0.5">
-                    <DollarSign className="w-2.5 h-2.5 text-primary" /> VALOR
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 mb-1">
+                    <DollarSign className="w-3 h-3 text-primary" /> VALOR
                   </p>
-                  <p className="text-[10px] text-muted-foreground">Min: R$ {displayValueMin.toLocaleString()}</p>
-                  <p className="text-sm font-bold text-primary">
+                  <p className="text-xs text-muted-foreground">Min: R$ {displayValueMin.toLocaleString()}</p>
+                  <p className="text-lg font-bold text-primary">
                     R$ {displayValueMax.toLocaleString()}
                   </p>
                 </div>
-                <div className="p-2.5 rounded-lg bg-white/5 border border-white/10">
-                  <p className="text-[9px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 mb-0.5">
-                    <TrendingUp className="w-2.5 h-2.5 text-primary" /> RECORRÊNCIA
+                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 mb-1">
+                    <TrendingUp className="w-3 h-3 text-primary" /> RECORRÊNCIA
                   </p>
-                  <p className="text-sm font-bold text-primary mt-2">
+                  <p className="text-lg font-bold text-primary mt-3">
                     +R$ {displayRecurrence.toLocaleString()}/mês
                   </p>
                 </div>
@@ -195,38 +195,38 @@ export const RadarOpportunityModal = ({
 
               {/* AI Description */}
               {(enrichedData?.scoring?.digitalPresenceStatus || opportunity.ai_description) && (
-                <div className="p-2.5 rounded-lg bg-primary/10 border border-primary/20">
-                  <p className="text-[11px] flex items-start gap-2">
-                    <Sparkles className="w-3 h-3 text-primary shrink-0 mt-0.5" />
-                    <span className="text-primary leading-tight">{enrichedData?.scoring?.digitalPresenceStatus || opportunity.ai_description}</span>
+                <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
+                  <p className="text-xs flex items-start gap-2">
+                    <Sparkles className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                    <span className="text-primary">{enrichedData?.scoring?.digitalPresenceStatus || opportunity.ai_description}</span>
                   </p>
                 </div>
               )}
 
               {/* Contact Info */}
-              <div className="space-y-1.5">
-                <h4 className="text-[11px] font-medium text-foreground">Informações</h4>
+              <div className="space-y-2">
+                <h4 className="text-xs font-medium text-foreground">Informações</h4>
                 
                 {opportunity.company_city && (
-                  <div className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/[0.07] transition-colors">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
-                    <span className="text-[11px] text-muted-foreground">{opportunity.company_city}, {opportunity.search_region || opportunity.company_country}</span>
+                    <span>{opportunity.company_city}, {opportunity.search_region || opportunity.company_country}</span>
                   </div>
                 )}
                 
                 {opportunity.company_address && (
-                  <div className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/[0.07] transition-colors">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Globe className="w-3.5 h-3.5 text-primary shrink-0" />
-                    <span className="text-[11px] text-muted-foreground truncate">{opportunity.company_address}</span>
+                    <span className="truncate">{opportunity.company_address}</span>
                   </div>
                 )}
                 
                 {opportunity.company_phone && (
-                  <div className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/[0.07] transition-colors">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Phone className="w-3.5 h-3.5 text-primary shrink-0" />
-                    <span className="text-[11px] text-muted-foreground flex-1">{opportunity.company_phone}</span>
+                    <span>{opportunity.company_phone}</span>
                     {enrichedData?.validation?.phone?.hasWhatsapp && (
-                      <Badge variant="outline" className="text-[9px] py-0 px-1 bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                      <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
                         WhatsApp ✓
                       </Badge>
                     )}
@@ -234,11 +234,11 @@ export const RadarOpportunityModal = ({
                 )}
                 
                 {opportunity.company_email && (
-                  <div className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/[0.07] transition-colors">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Mail className="w-3.5 h-3.5 text-primary shrink-0" />
-                    <span className="text-[11px] text-muted-foreground truncate flex-1">{opportunity.company_email}</span>
+                    <span className="truncate">{opportunity.company_email}</span>
                     {enrichedData?.validation?.email?.isValid && (
-                      <Badge variant="outline" className="text-[9px] py-0 px-1 bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                      <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
                         Válido ✓
                       </Badge>
                     )}
@@ -246,18 +246,18 @@ export const RadarOpportunityModal = ({
                 )}
 
                 {opportunity.company_website && !isSocialMediaUrl(opportunity.company_website) && (
-                  <div className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/[0.07] transition-colors">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Globe className="w-3.5 h-3.5 text-primary shrink-0" />
                     <a 
                       href={opportunity.company_website.startsWith('http') ? opportunity.company_website : `https://${opportunity.company_website}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[11px] text-primary hover:underline truncate flex-1"
+                      className="text-primary hover:underline truncate"
                     >
                       {opportunity.company_website}
                     </a>
                     {enrichedData?.websiteHealth?.isAccessible && (
-                      <Badge variant="outline" className="text-[9px] py-0 px-1 bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                      <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
                         Online ✓
                       </Badge>
                     )}
@@ -267,14 +267,14 @@ export const RadarOpportunityModal = ({
 
               {/* Service Tags */}
               {(enrichedData?.scoring?.recommendedServices || opportunity.service_tags)?.length > 0 && (
-                <div className="space-y-1.5">
-                  <h4 className="text-[11px] font-medium text-foreground flex items-center gap-2">
-                    <Tag className="w-3 h-3 text-primary" />
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-foreground flex items-center gap-2">
+                    <Tag className="w-3.5 h-3.5 text-primary" />
                     Serviços Recomendados
                   </h4>
-                  <div className="flex flex-wrap gap-1">
-                    {(enrichedData?.scoring?.recommendedServices || opportunity.service_tags).slice(0, 5).map((tag, idx) => (
-                      <Badge key={idx} variant="secondary" className="text-[9px] py-0 px-1.5 bg-white/10 text-foreground border-white/20">
+                  <div className="flex flex-wrap gap-1.5">
+                    {(enrichedData?.scoring?.recommendedServices || opportunity.service_tags).slice(0, 6).map((tag, idx) => (
+                      <Badge key={idx} variant="secondary" className="text-[10px] bg-white/10 text-foreground border-white/20">
                         {tag}
                       </Badge>
                     ))}
@@ -284,7 +284,7 @@ export const RadarOpportunityModal = ({
             </div>
 
             {/* Mobile Contact Buttons */}
-            <div className="px-5 py-3 border-t border-white/10 space-y-2 lg:hidden shrink-0">
+            <div className="px-4 sm:px-6 py-3 border-t border-white/10 space-y-2 lg:hidden shrink-0">
               <div className="flex gap-2">
                 <Button
                   variant="outline"
@@ -336,13 +336,13 @@ export const RadarOpportunityModal = ({
 
           {/* Right Side - Análise Avançada */}
           <div className="flex-1 flex flex-col overflow-hidden border-t lg:border-t-0 border-white/10">
-            <div className="px-5 py-3 border-b border-white/10 bg-white/5 shrink-0">
+            <div className="px-4 sm:px-6 py-3 border-b border-white/10 shrink-0">
               <div className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4 text-primary" />
                 <h4 className="text-sm font-semibold text-foreground">Análise Avançada</h4>
               </div>
             </div>
-            <div className="px-5 py-4 overflow-y-auto flex-1">
+            <div className="px-4 sm:px-6 py-4 overflow-y-auto flex-1">
               <LeadEnrichmentPanel
                 data={enrichedData}
                 isLoading={isLoading}
@@ -354,15 +354,14 @@ export const RadarOpportunityModal = ({
         </div>
 
         {/* Footer - Desktop */}
-        <div className="hidden lg:flex px-5 py-4 border-t border-white/10 bg-white/5 shrink-0 gap-3">
-          <div className="flex gap-2">
+        <div className="hidden lg:flex px-6 py-4 border-t border-white/10 shrink-0 gap-3">
+          <div className="flex gap-2 flex-1">
             <Button
               variant="outline"
-              size="sm"
               disabled={!opportunity.company_phone}
               onClick={() => whatsappUrl && window.open(whatsappUrl, '_blank')}
               className={cn(
-                "gap-1.5 h-9 px-3",
+                "gap-1.5 h-10 text-sm px-3",
                 opportunity.company_phone 
                   ? "text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/10" 
                   : "text-muted-foreground/50 border-white/10 cursor-not-allowed"
@@ -372,11 +371,10 @@ export const RadarOpportunityModal = ({
             </Button>
             <Button
               variant="outline"
-              size="sm"
               disabled={!opportunity.company_email}
               onClick={() => emailUrl && window.open(emailUrl, '_blank')}
               className={cn(
-                "gap-1.5 h-9 px-3",
+                "gap-1.5 h-10 text-sm px-3",
                 opportunity.company_email 
                   ? "text-blue-500 border-blue-500/30 hover:bg-blue-500/10" 
                   : "text-muted-foreground/50 border-white/10 cursor-not-allowed"
@@ -387,9 +385,8 @@ export const RadarOpportunityModal = ({
             {socialUrls.instagram && (
               <Button
                 variant="outline"
-                size="sm"
                 onClick={() => window.open(socialUrls.instagram, '_blank')}
-                className="gap-1.5 h-9 px-3 text-pink-500 border-pink-500/30 hover:bg-pink-500/10"
+                className="gap-1.5 h-10 text-sm px-3 text-pink-500 border-pink-500/30 hover:bg-pink-500/10"
               >
                 <Instagram className="w-4 h-4" />
               </Button>
@@ -397,27 +394,27 @@ export const RadarOpportunityModal = ({
             {socialUrls.facebook && (
               <Button
                 variant="outline"
-                size="sm"
                 onClick={() => window.open(socialUrls.facebook, '_blank')}
-                className="gap-1.5 h-9 px-3 text-blue-600 border-blue-600/30 hover:bg-blue-600/10"
+                className="gap-1.5 h-10 text-sm px-3 text-blue-600 border-blue-600/30 hover:bg-blue-600/10"
               >
                 <Facebook className="w-4 h-4" />
               </Button>
             )}
           </div>
-          <div className="flex gap-3 ml-auto">
+          <div className="flex gap-3">
             <Button
               variant="outline"
-              className="bg-white/5 border-white/10 hover:bg-white/10"
+              className="bg-white/5 border-white/10 hover:bg-white/10 h-10 text-sm"
               onClick={() => {
                 onReject();
                 onOpenChange(false);
               }}
             >
+              <X className="w-4 h-4 mr-1" />
               Rejeitar
             </Button>
             <Button
-              className="gap-2"
+              className="bg-primary hover:bg-primary/90 gap-2 h-10 text-sm"
               onClick={() => {
                 onAccept();
                 toast.success('Oportunidade aceita!');
@@ -435,7 +432,7 @@ export const RadarOpportunityModal = ({
         </div>
 
         {/* Footer - Mobile */}
-        <div className="lg:hidden px-5 py-3 border-t border-white/10 bg-white/5 shrink-0 flex gap-2">
+        <div className="lg:hidden px-4 py-3 border-t border-white/10 shrink-0 flex gap-2">
           <Button
             variant="outline"
             className="flex-1 bg-white/5 border-white/10 hover:bg-white/10 h-9 text-xs"
@@ -444,10 +441,11 @@ export const RadarOpportunityModal = ({
               onOpenChange(false);
             }}
           >
+            <X className="w-3.5 h-3.5 mr-1" />
             Rejeitar
           </Button>
           <Button
-            className="flex-1 gap-1.5 h-9 text-xs"
+            className="flex-1 bg-primary hover:bg-primary/90 gap-1.5 h-9 text-xs"
             onClick={() => {
               onAccept();
               toast.success('Aceita!');
