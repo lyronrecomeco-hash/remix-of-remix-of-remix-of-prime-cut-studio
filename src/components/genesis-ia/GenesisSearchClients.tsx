@@ -107,6 +107,17 @@ function getLocalTime(countryCode: string): string {
   }
 }
 
+function isSocialMediaUrl(url?: string): boolean {
+  if (!url) return false;
+  const lower = url.toLowerCase();
+  return (
+    lower.includes('instagram.com') ||
+    lower.includes('facebook.com') ||
+    lower.includes('fb.com') ||
+    lower.includes('fb.me')
+  );
+}
+
 const LEVEL_CONFIG = {
   basic: { label: 'Básico', color: 'bg-slate-500/10 text-slate-400 border-slate-500/30', icon: '🔵' },
   intermediate: { label: 'Intermediário', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30', icon: '🟡' },
@@ -203,8 +214,8 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
         return;
       }
 
-      let businessResults: SearchResult[] = searchData.results.map((r: any) => {
-        const hasWebsite = !!r.website;
+       let businessResults: SearchResult[] = searchData.results.map((r: any) => {
+         const hasWebsite = !!r.website && !isSocialMediaUrl(r.website);
         const opportunityLevel = !hasWebsite ? 'advanced' : Math.random() > 0.5 ? 'basic' : 'intermediate';
         
         return {
@@ -227,9 +238,10 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
         };
       });
 
-      if (excludeWithWebsite) {
+       if (excludeWithWebsite) {
         const beforeCount = businessResults.length;
-        businessResults = businessResults.filter(r => !r.website);
+         // Considera Instagram/Facebook como "sem site" para fins de filtro
+         businessResults = businessResults.filter(r => !r.website || isSocialMediaUrl(r.website));
         if (businessResults.length < beforeCount) {
           toast.info(`${beforeCount - businessResults.length} empresas com site removidas`);
         }
@@ -531,7 +543,7 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
             </Badge>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 w-full max-w-4xl">
             {paginatedResults.map((result, idx) => {
               const levelConfig = result.opportunityLevel ? LEVEL_CONFIG[result.opportunityLevel] : null;
               const nicheIcon = getNicheIcon(result.niche);
