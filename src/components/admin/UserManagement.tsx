@@ -16,13 +16,15 @@ import {
   Eye,
   EyeOff,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  KeyRound
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotification } from '@/contexts/NotificationContext';
 import { z } from 'zod';
+import { UserPermissionsModal } from '@/components/owner/UserPermissionsModal';
 
 const userSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -41,6 +43,7 @@ const UserManagement = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [permissionsUser, setPermissionsUser] = useState<{ user_id: string; name: string; email: string } | null>(null);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -404,10 +407,21 @@ const UserManagement = () => {
                   {!isCurrentUser && (
                     <div className="flex items-center gap-2">
                       <button
+                        onClick={() => setPermissionsUser({
+                          user_id: adminUser.userId,
+                          name: adminUser.name,
+                          email: adminUser.email
+                        })}
+                        className="w-10 h-10 rounded-lg bg-primary/20 text-primary hover:bg-primary/30 flex items-center justify-center transition-colors"
+                        title="Gerenciar Acessos"
+                      >
+                        <KeyRound className="w-4 h-4" />
+                      </button>
+                      <button
                         onClick={() => handleToggleActive(adminUser.userId, adminUser.isActive)}
                         className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
                           adminUser.isActive 
-                            ? 'bg-green-500/20 text-green-500 hover:bg-green-500/30' 
+                            ? 'bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30' 
                             : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
                         }`}
                         title={adminUser.isActive ? 'Desativar' : 'Ativar'}
@@ -438,6 +452,13 @@ const UserManagement = () => {
           })
         )}
       </div>
+
+      {/* User Permissions Modal */}
+      <UserPermissionsModal
+        open={!!permissionsUser}
+        onOpenChange={(open) => !open && setPermissionsUser(null)}
+        user={permissionsUser}
+      />
     </div>
   );
 };
