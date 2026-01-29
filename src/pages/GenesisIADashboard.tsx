@@ -75,8 +75,10 @@ import PartnerApplications from "@/components/admin/PartnerApplications";
 
 import GenesisBackground from "@/components/genesis-ia/GenesisBackground";
 import { ViralSaasTab } from "@/components/genesis-ia/viral-apps/ViralSaasTab";
-import { FileText, Gift, CreditCard, Code2, Rocket, Key, ClipboardList, HelpCircle } from "lucide-react";
+import { FileText, Gift, CreditCard, Code2, Rocket, Key, ClipboardList, HelpCircle, Lock } from "lucide-react";
 import { HelpCenterTab } from "@/components/genesis-ia/help";
+import { useMenuPermissions } from "@/hooks/useMenuPermissions";
+import { RestrictedAccessModal } from "@/components/admin/RestrictedAccessModal";
 
 type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional' | 'payments' | 'page-builder' | 'academia' | 'proposals' | 'sprint-mission' | 'api-keys' | 'viral-saas' | 'partner-applications' | 'help';
 
@@ -104,6 +106,9 @@ const GenesisIADashboard = () => {
   const [showDevModal, setShowDevModal] = useState(false);
   const [isAccountBlocked, setIsAccountBlocked] = useState(false);
   const [blockReason, setBlockReason] = useState<string>('');
+  const [restrictedModal, setRestrictedModal] = useState<{ open: boolean; label: string }>({ open: false, label: '' });
+  
+  const { isMenuAllowed } = useMenuPermissions();
   
   useEffect(() => {
     checkAuth();
@@ -252,7 +257,35 @@ const GenesisIADashboard = () => {
       setShowDevModal(true);
       return;
     }
+    // Check permission before navigating
+    if (!isMenuAllowed(tabId)) {
+      const labelMap: Record<string, string> = {
+        'prospects': 'Scanner IA',
+        'radar': 'Radar Global',
+        'criar-projetos': 'Biblioteca',
+        'contracts': 'Contratos',
+        'promocional': 'Promocional',
+        'users': 'Usuários',
+        'financial': 'Financeiro',
+        'payments': 'Pagamentos',
+        'api-keys': 'API Keys',
+        'partner-applications': 'Inscrições',
+        'help': 'Central de Ajuda',
+        'settings': 'Configurações',
+      };
+      setRestrictedModal({ open: true, label: labelMap[tabId] || tabId });
+      return;
+    }
     setActiveTab(tabId as ActiveTab);
+  };
+
+  // Handle dock navigation with permission check
+  const handleDockNavigate = (tabId: ActiveTab, label: string) => {
+    if (!isMenuAllowed(tabId)) {
+      setRestrictedModal({ open: true, label });
+      return;
+    }
+    setActiveTab(tabId);
   };
 
 
@@ -886,27 +919,37 @@ const GenesisIADashboard = () => {
               >
                 {dockItems.map((item, index) => {
                   const isActive = !item.onClick && activeTab === item.tabId;
+                  const isRestricted = item.tabId && !isMenuAllowed(item.tabId);
+                  
                   return (
                     <motion.button
                       key={index}
-                      onClick={item.onClick || (() => setActiveTab(item.tabId!))}
+                      onClick={item.onClick || (() => handleDockNavigate(item.tabId!, item.label))}
                       className="relative rounded-xl flex items-center justify-center transition-colors flex-shrink-0"
                       style={{
                         width: 'clamp(36px, 8vw, 48px)',
                         height: 'clamp(36px, 8vw, 48px)',
                         backgroundColor: isActive ? `${config.dock.activeColor}20` : 'transparent',
+                        opacity: isRestricted ? 0.4 : 1,
                       }}
                       whileHover={{ scale: 1.15, y: -8 }}
                       whileTap={{ scale: 0.95 }}
                       transition={{ type: "spring", stiffness: 400, damping: 17 }}
                     >
-                      <item.icon 
-                        className="w-5 h-5 sm:w-6 sm:h-6"
-                        style={{ 
-                          color: isActive ? config.dock.activeColor : config.dock.inactiveColor,
-                        }} 
-                      />
-                      {isActive && (
+                      {isRestricted ? (
+                        <Lock 
+                          className="w-5 h-5 sm:w-6 sm:h-6"
+                          style={{ color: config.dock.inactiveColor }}
+                        />
+                      ) : (
+                        <item.icon 
+                          className="w-5 h-5 sm:w-6 sm:h-6"
+                          style={{ 
+                            color: isActive ? config.dock.activeColor : config.dock.inactiveColor,
+                          }} 
+                        />
+                      )}
+                      {isActive && !isRestricted && (
                         <div 
                           className="absolute bottom-1 sm:bottom-1.5 w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full"
                           style={{ backgroundColor: config.dock.activeColor }}
@@ -929,7 +972,7 @@ const GenesisIADashboard = () => {
             {authUserId && (
               <GenesisOnboardingGuide 
                 userId={authUserId} 
-                onNavigate={(tab) => setActiveTab(tab as ActiveTab)} 
+                onNavigate={(tab) => handleCarouselNavigate(tab)} 
               />
             )}
 
@@ -944,6 +987,13 @@ const GenesisIADashboard = () => {
             <AccountBlockedModal 
               isOpen={isAccountBlocked}
               reason={blockReason}
+            />
+
+            {/* Restricted Access Modal */}
+            <RestrictedAccessModal
+              open={restrictedModal.open}
+              onOpenChange={(open) => setRestrictedModal({ ...restrictedModal, open })}
+              menuLabel={restrictedModal.label}
             />
           </div>
         );
