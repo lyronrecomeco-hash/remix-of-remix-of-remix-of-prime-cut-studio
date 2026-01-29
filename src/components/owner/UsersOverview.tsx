@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { 
   Users, Search, RefreshCw, Shield, Clock, Mail, CheckCircle, XCircle, Crown, UserCog,
   Globe, Activity, BarChart3, Bell, Send, Eye, History, Database, Calendar, TrendingUp,
-  Wifi, WifiOff, Timer, MonitorSmartphone
+  Wifi, WifiOff, Timer, MonitorSmartphone, KeyRound
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -23,6 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { UserPermissionsModal } from './UserPermissionsModal';
 
 interface UserPresence {
   user_id: string;
@@ -89,6 +90,9 @@ const UsersOverview = () => {
   const [warningUser, setWarningUser] = useState<AdminUser | null>(null);
   const [warningMessage, setWarningMessage] = useState('');
   const [sendingWarning, setSendingWarning] = useState(false);
+  
+  // Permissions modal
+  const [permissionsUser, setPermissionsUser] = useState<AdminUser | null>(null);
 
   const fetchPresenceData = useCallback(async () => {
     try {
@@ -609,6 +613,15 @@ const UsersOverview = () => {
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => setPermissionsUser(user)}
+                          className="text-primary border-primary/30 hover:bg-primary/10"
+                        >
+                          <KeyRound className="w-4 h-4 mr-1" />
+                          Acessos
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => setWarningUser(user)}
                         >
                           <Bell className="w-4 h-4 mr-1" />
@@ -814,6 +827,13 @@ const UsersOverview = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* User Permissions Modal */}
+      <UserPermissionsModal
+        open={!!permissionsUser}
+        onOpenChange={(open) => !open && setPermissionsUser(null)}
+        user={permissionsUser}
+      />
     </div>
   );
 };

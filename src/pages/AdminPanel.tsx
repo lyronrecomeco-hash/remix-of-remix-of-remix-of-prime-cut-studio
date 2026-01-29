@@ -74,6 +74,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { DollarSign, BarChart3, Palmtree, Target } from 'lucide-react';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/admin/PullToRefreshIndicator';
+import { useMenuPermissions } from '@/hooks/useMenuPermissions';
+import { RestrictedAccessModal } from '@/components/admin/RestrictedAccessModal';
 import { useContext } from 'react';
 
 const menuItems = [
@@ -116,8 +118,20 @@ const AdminPanel = () => {
     return (stored as 'sidebar' | 'dock') || 'sidebar';
   });
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [restrictedModal, setRestrictedModal] = useState<{ open: boolean; label: string }>({ open: false, label: '' });
   const { notify } = useNotification();
   const { signOut, user, isSuperAdmin } = useAuth();
+  const { isMenuAllowed } = useMenuPermissions();
+
+  // Handler for menu click with permission check
+  const handleMenuClick = useCallback((menuId: string, menuLabel: string, closeMobile?: boolean) => {
+    if (isMenuAllowed(menuId)) {
+      setActiveTab(menuId);
+      if (closeMobile) setIsSidebarOpen(false);
+    } else {
+      setRestrictedModal({ open: true, label: menuLabel });
+    }
+  }, [isMenuAllowed]);
 
   // Show loading if context not available (happens during HMR)
   if (!appContext) {
@@ -1485,7 +1499,7 @@ const AdminPanel = () => {
                   transition={{ delay: index * 0.03, type: 'spring', stiffness: 400, damping: 20 }}
                 >
                   <motion.button
-                    onClick={() => setActiveTab(item.id)}
+                    onClick={() => handleMenuClick(item.id, item.label)}
                     whileHover={{ scale: 1.3, y: -12 }}
                     whileTap={{ scale: 0.95 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 17 }}
@@ -1577,21 +1591,28 @@ const AdminPanel = () => {
           )}
 
           <nav className={`flex-1 min-h-0 overflow-y-auto scrollbar-hide py-2 ${isSidebarCollapsed ? 'px-2' : 'px-4'}`}>
-            {menuItems.map((item) => (
+            {menuItems.map((item) => {
+              const allowed = isMenuAllowed(item.id);
+              return (
               <div key={item.id} className="relative group">
                 <button
-                  onClick={() => setActiveTab(item.id)}
+                  onClick={() => handleMenuClick(item.id, item.label)}
                   className={`w-full flex items-center gap-3 rounded-xl mb-1 transition-all relative touch-manipulation ${
                     isSidebarCollapsed ? 'px-3 py-3 justify-center' : 'px-4 py-2.5'
                   } ${
                     activeTab === item.id
                       ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                      : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
+                      : allowed 
+                        ? 'text-sidebar-foreground hover:bg-sidebar-accent/50'
+                        : 'text-muted-foreground/50 hover:bg-red-500/10'
                   }`}
                 >
                   <item.icon className="w-5 h-5 flex-shrink-0" />
                   {!isSidebarCollapsed && <span className="text-base">{item.label}</span>}
-                  {item.id === 'feedbacks' && newFeedbacksCount > 0 && (
+                  {!allowed && !isSidebarCollapsed && (
+                    <Lock className="w-3.5 h-3.5 ml-auto text-red-400" />
+                  )}
+                  {item.id === 'feedbacks' && newFeedbacksCount > 0 && allowed && (
                     <span className={`px-2 py-0.5 bg-primary text-primary-foreground text-xs rounded-full ${
                       isSidebarCollapsed ? 'absolute -top-1 -right-1 w-4 h-4 p-0 flex items-center justify-center text-[10px]' : 'absolute right-4'
                     }`}>
@@ -1605,7 +1626,7 @@ const AdminPanel = () => {
                   </div>
                 )}
               </div>
-            ))}
+            )})}
           </nav>
           
           {/* Logout Button - Separated at bottom */}
@@ -1658,28 +1679,32 @@ const AdminPanel = () => {
 
               <nav className="flex-1 px-3 pb-3 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
                 <div className="space-y-1">
-                  {menuItems.map((item) => (
+                  {menuItems.map((item) => {
+                    const allowed = isMenuAllowed(item.id);
+                    return (
                     <button
                       key={item.id}
-                      onClick={() => {
-                        setActiveTab(item.id);
-                        setIsSidebarOpen(false);
-                      }}
+                      onClick={() => handleMenuClick(item.id, item.label, true)}
                       className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all relative touch-manipulation ${
                         activeTab === item.id
                           ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                          : 'text-sidebar-foreground hover:bg-sidebar-accent/50 active:bg-sidebar-accent/70'
+                          : allowed
+                            ? 'text-sidebar-foreground hover:bg-sidebar-accent/50 active:bg-sidebar-accent/70'
+                            : 'text-muted-foreground/50 hover:bg-red-500/10'
                       }`}
                     >
                       <item.icon className="w-5 h-5 shrink-0" />
                       <span className="truncate text-sm">{item.label}</span>
-                      {item.id === 'feedbacks' && newFeedbacksCount > 0 && (
+                      {!allowed && (
+                        <Lock className="w-3.5 h-3.5 ml-auto text-red-400" />
+                      )}
+                      {item.id === 'feedbacks' && newFeedbacksCount > 0 && allowed && (
                         <span className="ml-auto px-2 py-0.5 bg-primary text-primary-foreground text-xs rounded-full">
                           {newFeedbacksCount}
                         </span>
                       )}
                     </button>
-                  ))}
+                  )})}
                 </div>
               </nav>
               
@@ -1759,6 +1784,11 @@ const AdminPanel = () => {
           onAvatarUpdate={(url) => setCurrentAvatarUrl(url)}
         />
         <AccountModal isOpen={isAccountModalOpen} onClose={() => setIsAccountModalOpen(false)} />
+        <RestrictedAccessModal
+          open={restrictedModal.open}
+          onOpenChange={(open) => setRestrictedModal({ ...restrictedModal, open })}
+          menuLabel={restrictedModal.label}
+        />
 
         {/* Content with Pull-to-Refresh */}
         <div 
