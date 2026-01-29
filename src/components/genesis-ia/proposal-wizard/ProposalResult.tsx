@@ -112,7 +112,12 @@ export const ProposalResult = ({ proposal, companyName, userName, phone, formDat
       if (error) throw error;
 
       setIsSaved(true);
-      toast.success('Proposta salva com sucesso!');
+      toast.success('Proposta salva! Veja na aba Biblioteca.', {
+        action: {
+          label: 'Ver',
+          onClick: () => window.location.reload(),
+        },
+      });
     } catch (error) {
       console.error('Erro ao salvar proposta:', error);
       toast.error('Erro ao salvar proposta');

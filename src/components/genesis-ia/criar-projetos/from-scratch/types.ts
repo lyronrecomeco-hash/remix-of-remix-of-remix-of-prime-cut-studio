@@ -52,6 +52,11 @@ export interface FromScratchFormData {
   hasAnalytics: boolean;
   isPerformanceOptimized: boolean;
   hasAccessibility: boolean;
+  // Step 9.5: Responsiveness
+  responsiveMobile: boolean;
+  responsiveTablet: boolean;
+  responsiveDesktop: boolean;
+  responsiveLargeScreen: boolean;
   
   // Step 10: Target AI
   targetAI: TargetAI;
@@ -269,5 +274,9 @@ export const initialFromScratchFormData: FromScratchFormData = {
   hasAnalytics: true,
   isPerformanceOptimized: true,
   hasAccessibility: true,
+  responsiveMobile: true,
+  responsiveTablet: true,
+  responsiveDesktop: true,
+  responsiveLargeScreen: false,
   targetAI: 'lovable',
 };

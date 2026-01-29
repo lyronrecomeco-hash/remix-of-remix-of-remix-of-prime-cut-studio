@@ -133,6 +133,26 @@ serve(async (req) => {
       .map(([_, value]) => value)
       .join('\n');
 
+    // Build demo link based on country language
+    const getDemoLinkText = (country: string) => {
+      const translations: Record<string, { prefix: string; linkText: string }> = {
+        brazil: { prefix: 'Fiz um exemplo para você ver como demonstração:', linkText: 'Link' },
+        usa: { prefix: 'I put together a quick demo for you to see:', linkText: 'Link' },
+        uk: { prefix: 'I\'ve prepared a demo for you to have a look:', linkText: 'Link' },
+        spain: { prefix: 'He preparado un ejemplo para que veas cómo funciona:', linkText: 'Enlace' },
+        portugal: { prefix: 'Preparei um exemplo para ver como funciona:', linkText: 'Link' },
+        mexico: { prefix: 'Le preparé un ejemplo para que vea cómo funciona:', linkText: 'Enlace' },
+        argentina: { prefix: 'Te armé un ejemplo para que veas cómo funciona:', linkText: 'Link' },
+        france: { prefix: 'J\'ai préparé un exemple pour vous montrer:', linkText: 'Lien' },
+        germany: { prefix: 'Ich habe ein Beispiel für Sie vorbereitet:', linkText: 'Link' },
+        italy: { prefix: 'Ho preparato un esempio per mostrarLe:', linkText: 'Link' },
+        other: { prefix: 'I prepared a demo for you to see:', linkText: 'Link' },
+      };
+      return translations[country] || translations.brazil;
+    };
+
+    const demoLink = getDemoLinkText(country);
+
     const systemPrompt = `Você é Luna, uma IA especialista em vendas consultivas para a Genesis Hub.
 Sua tarefa é GERAR A MENSAGEM DE PROSPECÇÃO diretamente no idioma e estilo cultural especificado.
 
@@ -154,17 +174,26 @@ ESCREVA DIRETAMENTE a mensagem que será enviada ao cliente, NO IDIOMA E ESTILO 
 
 ESTRUTURA DA MENSAGEM (adaptar para o idioma e cultura):
 1. Saudação nativa apropriada
-2. Apresentação breve do consultor
-3. O que a Genesis Hub oferece (sites, agendamento automático, automação WhatsApp)
-4. Por que entrando em contato com ESTA empresa
-5. Fechamento com call-to-action culturalmente apropriado
+2. Apresentação breve do consultor (use o NOME DO CONSULTOR informado)
+3. O que a Genesis Hub oferece para a EMPRESA (use o NOME DA EMPRESA informado)
+4. Mencione o PROBLEMA identificado e como você pode resolver
+5. Cite o RESULTADO DOS SONHOS que o cliente deseja
+6. Use informações específicas do NICHO do cliente
+7. Inclua o link de demonstração (${demoLink.prefix})
+   ${demoLink.linkText}: [LINK_DEMO]
+8. Fechamento com call-to-action culturalmente apropriado
+
+DADOS ADICIONAIS DO QUESTIONÁRIO (USE TODOS na mensagem):
+${decisionMaker ? `- Decisor: ${decisionMaker}` : ''}
+${competitors ? `- Concorrência usa tecnologia: ${competitors}` : ''}
+${failedAttempts ? `- Tentativas anteriores: ${failedAttempts}` : ''}
+${additionalAnswers ? `- Respostas adicionais: ${additionalAnswers}` : ''}
 
 REGRAS CRÍTICAS:
-- COMECE com a saudação nativa do país (${adaptation.greeting})
-- Substitua {NOME_CONSULTOR} pelo nome do consultor
-- Substitua {NOME_EMPRESA} pelo nome da empresa
+- USE o nome do consultor "${affiliateName}" na assinatura
+- USE o nome da empresa "${companyName}" no texto
+- INCLUA o link de demonstração sempre
 - NÃO faça tradução literal - escreva naturalmente como um vendedor nativo
-- Mantenha tom profissional mas culturalmente adequado
 - A mensagem deve parecer escrita por um HUMANO NATIVO do país, não por IA`;
 
     const userPrompt = `Gere a mensagem de prospecção no idioma ${adaptation.language}:
@@ -177,8 +206,15 @@ IDIOMA: ${adaptation.language}
 
 ${mainProblem ? `PROBLEMA IDENTIFICADO: ${mainProblem}` : ''}
 ${dreamResult ? `RESULTADO DESEJADO: ${dreamResult}` : ''}
+${decisionMaker ? `DECISOR: ${decisionMaker}` : ''}
+${competitors ? `CONCORRÊNCIA USA TECH: ${competitors}` : ''}
+${failedAttempts ? `TENTATIVAS ANTERIORES: ${failedAttempts}` : ''}
 
-Responda APENAS com a mensagem pronta no idioma ${adaptation.language}. Comece direto com "${adaptation.greeting}".`;
+LINK DE DEMONSTRAÇÃO:
+${demoLink.prefix}
+${demoLink.linkText}: [LINK_DEMO]
+
+Responda APENAS com a mensagem pronta no idioma ${adaptation.language}. Comece direto com "${adaptation.greeting}" e use TODOS os dados fornecidos.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
