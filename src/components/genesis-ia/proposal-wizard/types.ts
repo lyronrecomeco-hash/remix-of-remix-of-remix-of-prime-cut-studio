@@ -3,7 +3,7 @@ export interface ProposalWizardStep {
   question: string;
   placeholder: string;
   helperText?: string;
-  type: 'text' | 'select' | 'textarea' | 'chips';
+  type: 'text' | 'select' | 'textarea' | 'chips' | 'country';
   options?: string[];
   required?: boolean;
   icon?: string;
@@ -18,6 +18,8 @@ export interface ProposalFormData {
   failed_attempts: string;
   dream_result: string;
   contact_phone: string;
+  // País do cliente para adaptação de idioma
+  client_country: string;
   // Estilo de copy
   copy_style?: 'balanced' | 'aggressive' | 'empathetic' | 'urgency';
   // AI-generated questions
@@ -26,6 +28,20 @@ export interface ProposalFormData {
     answer: string;
   }>;
 }
+
+export const CLIENT_COUNTRIES = [
+  { id: 'brazil', label: 'Brasil', flag: '🇧🇷', language: 'Português (Brasil)' },
+  { id: 'usa', label: 'Estados Unidos', flag: '🇺🇸', language: 'English (US)' },
+  { id: 'spain', label: 'Espanha', flag: '🇪🇸', language: 'Español' },
+  { id: 'portugal', label: 'Portugal', flag: '🇵🇹', language: 'Português (Portugal)' },
+  { id: 'mexico', label: 'México', flag: '🇲🇽', language: 'Español (México)' },
+  { id: 'argentina', label: 'Argentina', flag: '🇦🇷', language: 'Español (Argentina)' },
+  { id: 'france', label: 'França', flag: '🇫🇷', language: 'Français' },
+  { id: 'germany', label: 'Alemanha', flag: '🇩🇪', language: 'Deutsch' },
+  { id: 'italy', label: 'Itália', flag: '🇮🇹', language: 'Italiano' },
+  { id: 'uk', label: 'Reino Unido', flag: '🇬🇧', language: 'English (UK)' },
+  { id: 'other', label: 'Outro', flag: '🌍', language: 'Adaptar' },
+] as const;
 
 export const COPY_STYLES = [
   { id: 'balanced', label: 'Equilibrada', description: 'Profissional e cordial', emoji: '⚖️' },
@@ -129,6 +145,15 @@ export const WIZARD_STEPS: ProposalWizardStep[] = [
     type: 'textarea',
     required: true,
     icon: 'star'
+  },
+  {
+    id: 'client_country',
+    question: 'Em qual país está o cliente?',
+    placeholder: 'Selecione o país',
+    helperText: 'A proposta será adaptada para o idioma e cultura comercial local',
+    type: 'country',
+    required: true,
+    icon: 'globe'
   },
   {
     id: 'contact_phone',
