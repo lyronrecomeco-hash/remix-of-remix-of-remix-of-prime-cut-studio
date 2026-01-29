@@ -22,7 +22,7 @@ export const RestrictedAccessModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden bg-[hsl(222,20%,8%)] border-white/10">
+      <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden bg-[hsl(222,20%,8%)] border-white/10 [&>button]:hidden">
         {/* Header with gradient */}
         <div className="relative px-6 pt-8 pb-6 text-center bg-gradient-to-b from-primary/10 to-transparent">
           <button

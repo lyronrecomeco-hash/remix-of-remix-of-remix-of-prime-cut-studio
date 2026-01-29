@@ -6,13 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { 
-  Shield, Home, Grid3X3, FileText, Gift, Users, LayoutDashboard,
-  CreditCard, Key, ClipboardList, HelpCircle, Settings, 
-  Loader2, Save, Radar, Search
+  Shield, Home, Grid3X3, FileText, Gift,
+  Loader2, Save, Radar, Search, HelpCircle, Settings
 } from 'lucide-react';
 import { useManageMenuPermissions } from '@/hooks/useMenuPermissions';
 
 // Menu items definition matching GenesisIADashboard
+// Menu items available for permission control (excludes admin-only items)
 const MENU_ITEMS = [
   { id: 'dashboard', label: 'Início', icon: Home, description: 'Painel principal do Genesis' },
   { id: 'prospects', label: 'Scanner IA', icon: Search, description: 'Encontrar clientes com IA' },
@@ -20,11 +20,6 @@ const MENU_ITEMS = [
   { id: 'criar-projetos', label: 'Biblioteca', icon: Grid3X3, description: 'Biblioteca de projetos' },
   { id: 'contracts', label: 'Contratos', icon: FileText, description: 'Gestão de contratos' },
   { id: 'promocional', label: 'Promocional', icon: Gift, description: 'Materiais promocionais' },
-  { id: 'users', label: 'Usuários', icon: Users, description: 'Gerenciamento de usuários' },
-  { id: 'financial', label: 'Financeiro', icon: LayoutDashboard, description: 'Relatórios financeiros' },
-  { id: 'payments', label: 'Pagamentos', icon: CreditCard, description: 'Gestão de pagamentos' },
-  { id: 'api-keys', label: 'API Keys', icon: Key, description: 'Chaves de API' },
-  { id: 'partner-applications', label: 'Inscrições', icon: ClipboardList, description: 'Inscrições de parceiros' },
   { id: 'help', label: 'Central de Ajuda', icon: HelpCircle, description: 'Suporte e tutoriais' },
   { id: 'settings', label: 'Configurações', icon: Settings, description: 'Configurações do sistema' },
 ];

@@ -75,7 +75,7 @@ import PartnerApplications from "@/components/admin/PartnerApplications";
 
 import GenesisBackground from "@/components/genesis-ia/GenesisBackground";
 import { ViralSaasTab } from "@/components/genesis-ia/viral-apps/ViralSaasTab";
-import { FileText, Gift, CreditCard, Code2, Rocket, Key, ClipboardList, HelpCircle, Lock } from "lucide-react";
+import { FileText, Gift, CreditCard, Code2, Rocket, Key, ClipboardList, HelpCircle } from "lucide-react";
 import { HelpCenterTab } from "@/components/genesis-ia/help";
 import { useMenuPermissions } from "@/hooks/useMenuPermissions";
 import { RestrictedAccessModal } from "@/components/admin/RestrictedAccessModal";
@@ -930,25 +930,18 @@ const GenesisIADashboard = () => {
                         width: 'clamp(36px, 8vw, 48px)',
                         height: 'clamp(36px, 8vw, 48px)',
                         backgroundColor: isActive ? `${config.dock.activeColor}20` : 'transparent',
-                        opacity: isRestricted ? 0.4 : 1,
+                        opacity: isRestricted ? 0.5 : 1,
                       }}
                       whileHover={{ scale: 1.15, y: -8 }}
                       whileTap={{ scale: 0.95 }}
                       transition={{ type: "spring", stiffness: 400, damping: 17 }}
                     >
-                      {isRestricted ? (
-                        <Lock 
-                          className="w-5 h-5 sm:w-6 sm:h-6"
-                          style={{ color: config.dock.inactiveColor }}
-                        />
-                      ) : (
-                        <item.icon 
-                          className="w-5 h-5 sm:w-6 sm:h-6"
-                          style={{ 
-                            color: isActive ? config.dock.activeColor : config.dock.inactiveColor,
-                          }} 
-                        />
-                      )}
+                      <item.icon 
+                        className="w-5 h-5 sm:w-6 sm:h-6"
+                        style={{ 
+                          color: isActive ? config.dock.activeColor : config.dock.inactiveColor,
+                        }} 
+                      />
                       {isActive && !isRestricted && (
                         <div 
                           className="absolute bottom-1 sm:bottom-1.5 w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full"
