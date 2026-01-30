@@ -72,6 +72,7 @@ interface SearchResult {
 
 interface GenesisSearchClientsProps {
   userId: string;
+  onAccepted?: () => void;
 }
 
 const COUNTRY_TIMEZONES: Record<string, string> = {
@@ -131,7 +132,7 @@ function getNicheIcon(niche?: string): string {
   return NICHE_ICONS['default'];
 }
 
-export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
+export const GenesisSearchClients = ({ userId, onAccepted }: GenesisSearchClientsProps) => {
   const [countryCode, setCountryCode] = useState('BR');
   const [state, setState] = useState('');
   const [city, setCity] = useState('');
@@ -271,6 +272,13 @@ export const GenesisSearchClients = ({ userId }: GenesisSearchClientsProps) => {
 
   const handleAcceptProject = (result: SearchResult) => {
     toast.success(`Projeto ${result.name} aceito!`);
+    // Close modal
+    setDetailModalOpen(false);
+    setSelectedBusiness(null);
+    // Navigate to accepted proposals
+    if (onAccepted) {
+      setTimeout(() => onAccepted(), 300);
+    }
   };
 
   const openBusinessDetail = (result: SearchResult) => {

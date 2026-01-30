@@ -692,7 +692,7 @@ const GenesisIADashboard = () => {
     if (activeTab === 'dashboard') return renderDashboard(ctx);
     
     if (activeTab === 'prospects') {
-      return <GenesisSearchClients userId={userId} />;
+      return <GenesisSearchClients userId={userId} onAccepted={() => setActiveTab('accepted_proposals')} />;
     }
 
     if (activeTab === 'radar') {
