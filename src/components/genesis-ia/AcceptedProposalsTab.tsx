@@ -109,9 +109,9 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
 
   const getScoreColor = (score: number | null) => {
     if (!score) return 'text-white/50';
-    if (score >= 80) return 'text-emerald-400';
-    if (score >= 60) return 'text-amber-400';
-    return 'text-red-400';
+    if (score >= 80) return 'text-primary';
+    if (score >= 60) return 'text-cyan-400';
+    return 'text-muted-foreground';
   };
 
   const formatCurrency = (value: number) => {
@@ -151,12 +151,12 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-            <Target className="w-5 h-5 text-emerald-400" />
+            <Target className="w-5 h-5 text-primary" />
             Propostas Aceitas
           </h2>
           <p className="text-sm text-white/50 mt-1">
@@ -212,18 +212,14 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
                 transition={{ delay: index * 0.05 }}
               >
                 <Card 
-                  className="border-white/10 hover:border-white/20 transition-all duration-200"
-                  style={{ backgroundColor: 'hsl(215 30% 12%)' }}
+                  className="border-white/10 hover:border-primary/30 bg-white/5 transition-all duration-200"
                 >
                   <CardContent className="p-5">
                     {/* Header */}
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <div 
-                          className="w-10 h-10 rounded-lg flex items-center justify-center"
-                          style={{ backgroundColor: 'hsl(145 50% 25% / 0.5)' }}
-                        >
-                          <Building2 className="w-5 h-5 text-emerald-400" />
+                        <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                          <Building2 className="w-5 h-5 text-primary" />
                         </div>
                         <div>
                           <h3 className="font-semibold text-white text-sm line-clamp-1">
@@ -232,7 +228,7 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
                           {proposal.niche && (
                             <Badge 
                               variant="outline" 
-                              className="mt-1 text-xs border-white/10 text-white/60"
+                              className="mt-1 text-xs border-primary/30 text-primary/80"
                             >
                               {proposal.niche}
                             </Badge>
@@ -262,7 +258,7 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
                         </div>
                       )}
                       {(proposal.analysis_data as Record<string, unknown>)?.estimated_value_min && (
-                        <div className="flex items-center gap-2 text-sm text-emerald-400/80">
+                        <div className="flex items-center gap-2 text-sm text-primary/80">
                           <Star className="w-3.5 h-3.5" />
                           <span>
                             {formatCurrency((proposal.analysis_data as Record<string, unknown>).estimated_value_min as number)} - {formatCurrency(((proposal.analysis_data as Record<string, unknown>).estimated_value_max || (proposal.analysis_data as Record<string, unknown>).estimated_value_min) as number)}

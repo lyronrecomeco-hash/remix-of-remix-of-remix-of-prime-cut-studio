@@ -95,13 +95,13 @@ export const AcceptedLeadsSection = ({ affiliateId, onViewAll }: AcceptedLeadsSe
 
   const getScoreColor = (score: number | null) => {
     if (!score) return 'text-muted-foreground';
-    if (score >= 80) return 'text-emerald-500';
-    if (score >= 60) return 'text-amber-500';
+    if (score >= 80) return 'text-primary';
+    if (score >= 60) return 'text-cyan-400';
     return 'text-muted-foreground';
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto mt-6 sm:mt-8 px-1 sm:px-0">
+    <div className="w-full max-w-5xl mx-auto mt-6 sm:mt-8 px-1 sm:px-0">
       <div className="flex items-center justify-between mb-3 sm:mb-4">
         <div className="flex items-center gap-2">
           <Target className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
@@ -134,13 +134,13 @@ export const AcceptedLeadsSection = ({ affiliateId, onViewAll }: AcceptedLeadsSe
                   "bg-card border-border/50"
                 )}>
                   {/* Top accent */}
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500" />
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-primary" />
 
                   <CardContent className="p-3 sm:p-4 pt-4 sm:pt-5">
                     {/* Header */}
                     <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
-                        <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                        <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="font-semibold text-foreground leading-tight line-clamp-1 text-xs sm:text-sm">
@@ -162,9 +162,9 @@ export const AcceptedLeadsSection = ({ affiliateId, onViewAll }: AcceptedLeadsSe
 
                     {/* Value */}
                     {analysisData?.estimated_value_max && (
-                      <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3 p-1.5 sm:p-2 bg-muted/30 rounded-lg">
-                        <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-500" />
-                        <span className="text-xs sm:text-sm font-semibold text-emerald-500">
+                      <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3 p-1.5 sm:p-2 bg-primary/10 rounded-lg">
+                        <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
+                        <span className="text-xs sm:text-sm font-semibold text-primary">
                           R$ {analysisData.estimated_value_max.toLocaleString()}
                         </span>
                         {analysisData?.monthly_recurrence && (
@@ -200,7 +200,7 @@ export const AcceptedLeadsSection = ({ affiliateId, onViewAll }: AcceptedLeadsSe
                         className={cn(
                           "h-8 w-8 sm:h-9 sm:w-9 p-0",
                           lead.company_phone 
-                            ? "text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 border-emerald-500/30" 
+                            ? "text-primary hover:text-primary/80 hover:bg-primary/10 border-primary/30" 
                             : "text-muted-foreground/30 cursor-not-allowed"
                         )}
                         title={lead.company_phone ? `WhatsApp: ${lead.company_phone}` : 'Telefone não disponível'}
