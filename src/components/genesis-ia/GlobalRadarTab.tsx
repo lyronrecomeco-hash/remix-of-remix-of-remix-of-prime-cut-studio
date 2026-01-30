@@ -45,6 +45,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { COUNTRIES as GLOBAL_COUNTRIES, getNichesForCountry, getCountryByCode } from '@/components/affiliate/prospecting/global/globalSearchData';
 
 interface RadarOpportunity {
   id: string;
@@ -77,17 +78,8 @@ interface GlobalRadarTabProps {
   onAccepted?: () => void;
 }
 
-// Countries for scanning
-const COUNTRIES = [
-  { code: 'BR', name: 'Brasil', flag: '🇧🇷' },
-  { code: 'PT', name: 'Portugal', flag: '🇵🇹' },
-  { code: 'US', name: 'Estados Unidos', flag: '🇺🇸' },
-  { code: 'ES', name: 'Espanha', flag: '🇪🇸' },
-  { code: 'MX', name: 'México', flag: '🇲🇽' },
-  { code: 'AR', name: 'Argentina', flag: '🇦🇷' },
-  { code: 'CO', name: 'Colômbia', flag: '🇨🇴' },
-  { code: 'CL', name: 'Chile', flag: '🇨🇱' },
-];
+// Countries for scanning - using central data source
+const COUNTRIES = GLOBAL_COUNTRIES;
 
 const LEVEL_CONFIG: Record<string, { label: string; color: string; bgColor: string; icon: string }> = {
   basic: { label: 'Básico', color: 'text-muted-foreground', bgColor: 'bg-muted', icon: '⚪' },
