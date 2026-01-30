@@ -101,7 +101,7 @@ export const AcceptedLeadsSection = ({ affiliateId, onViewAll }: AcceptedLeadsSe
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto mt-6 sm:mt-8 px-1 sm:px-0">
+    <div className="w-full max-w-5xl mt-6 sm:mt-8 px-1 sm:px-0">
       <div className="flex items-center justify-between mb-3 sm:mb-4">
         <div className="flex items-center gap-2">
           <Target className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
