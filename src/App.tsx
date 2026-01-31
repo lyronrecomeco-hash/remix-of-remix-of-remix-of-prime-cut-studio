@@ -90,6 +90,7 @@ const GymWorkoutsPage = lazy(() => import("./pages/academiapro/app/GymWorkoutsPa
 const GymClassesPage = lazy(() => import("./pages/academiapro/app/GymClassesPage"));
 const GymProgressPage = lazy(() => import("./pages/academiapro/app/GymProgressPage"));
 const GymProfilePage = lazy(() => import("./pages/academiapro/app/GymProfilePage"));
+const GymMyPlanPage = lazy(() => import("./pages/academiapro/app/GymMyPlanPage"));
 const GymAdminDashboard = lazy(() => import("./pages/academiapro/admin/GymAdminDashboard"));
 const GymAdminStudents = lazy(() => import("./pages/academiapro/admin/GymAdminStudents"));
 const GymAdminWorkouts = lazy(() => import("./pages/academiapro/admin/GymAdminWorkouts"));
@@ -343,6 +344,7 @@ const AppContent = () => {
               <Route path="treinos" element={<Suspense fallback={<GymPageLoader />}><GymWorkoutsPage /></Suspense>} />
               <Route path="aulas" element={<Suspense fallback={<GymPageLoader />}><GymClassesPage /></Suspense>} />
               <Route path="evolucao" element={<Suspense fallback={<GymPageLoader />}><GymProgressPage /></Suspense>} />
+              <Route path="meu-plano" element={<Suspense fallback={<GymPageLoader />}><GymMyPlanPage /></Suspense>} />
               <Route path="perfil" element={<Suspense fallback={<GymPageLoader />}><GymProfilePage /></Suspense>} />
             </Route>
             <Route path="/academiapro/admin" element={<GymAdminLayout />}>

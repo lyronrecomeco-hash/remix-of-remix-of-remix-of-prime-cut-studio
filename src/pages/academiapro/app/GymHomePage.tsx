@@ -9,7 +9,8 @@ import {
   ChevronRight,
   Play,
   Trophy,
-  Timer
+  Timer,
+  Target
 } from 'lucide-react';
 import { useGymAuth } from '@/contexts/GymAuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -189,6 +190,13 @@ export default function GymHomePage() {
         transition={{ delay: 0.3 }}
         className="grid grid-cols-2 gap-3"
       >
+        <Link to="/academiapro/app/meu-plano">
+          <div className="bg-gradient-to-br from-orange-500/20 to-red-600/20 border border-orange-500/30 rounded-xl p-4 hover:border-orange-500/50 transition-all h-full">
+            <Target className="w-6 h-6 text-orange-500 mb-2" />
+            <h3 className="font-medium">Meu Plano</h3>
+            <p className="text-xs text-zinc-400">Agenda personalizada</p>
+          </div>
+        </Link>
         <Link to="/academiapro/app/aulas">
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-all h-full">
             <CalendarDays className="w-6 h-6 text-zinc-400 mb-2" />
@@ -201,6 +209,13 @@ export default function GymHomePage() {
             <TrendingUp className="w-6 h-6 text-zinc-400 mb-2" />
             <h3 className="font-medium">Minha Evolução</h3>
             <p className="text-xs text-zinc-400">Veja seu progresso</p>
+          </div>
+        </Link>
+        <Link to="/academiapro/app/treinos">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-all h-full">
+            <Dumbbell className="w-6 h-6 text-zinc-400 mb-2" />
+            <h3 className="font-medium">Treinos</h3>
+            <p className="text-xs text-zinc-400">Biblioteca de treinos</p>
           </div>
         </Link>
       </motion.div>
