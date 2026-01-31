@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppProvider } from "@/contexts/AppContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
@@ -85,7 +85,6 @@ const CheckoutErrorPage = lazy(() => import("./pages/checkout/ErrorPage"));
 const CheckoutCompletePage = lazy(() => import("./pages/checkout/CompletePage"));
 // Academia Genesis Pages
 const GymLoginPage = lazy(() => import("./pages/academiapro/auth/GymLoginPage"));
-const GymRegisterPage = lazy(() => import("./pages/academiapro/auth/GymRegisterPage"));
 const GymHomePage = lazy(() => import("./pages/academiapro/app/GymHomePage"));
 const GymWorkoutsPage = lazy(() => import("./pages/academiapro/app/GymWorkoutsPage"));
 const GymClassesPage = lazy(() => import("./pages/academiapro/app/GymClassesPage"));
@@ -326,8 +325,8 @@ const AppContent = () => {
             <Route path="/checkout/complete" element={<CheckoutCompletePage />} />
             <Route path="/checkout/:code" element={<PaymentCodePage />} />
             {/* Academia Genesis Routes */}
+            <Route path="/academiapro" element={<Navigate to="/academiapro/auth/login" replace />} />
             <Route path="/academiapro/auth/login" element={<GymLoginPage />} />
-            <Route path="/academiapro/auth/registro" element={<GymRegisterPage />} />
             <Route path="/academiapro/app" element={<GymAppLayout />}>
               <Route index element={<GymHomePage />} />
               <Route path="treinos" element={<GymWorkoutsPage />} />

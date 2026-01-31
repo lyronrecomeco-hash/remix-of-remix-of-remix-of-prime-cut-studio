@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Search, 
-  Plus, 
   MoreHorizontal, 
   Mail, 
   Phone,
@@ -19,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { CreateStudentDialog } from '@/components/academiapro/admin/CreateStudentDialog';
 import { format } from 'date-fns';
 
 export default function GymAdminStudents() {
@@ -31,6 +31,7 @@ export default function GymAdminStudents() {
   }, []);
 
   const fetchStudents = async () => {
+    setIsLoading(true);
     const { data, error } = await supabase
       .from('gym_profiles')
       .select(`
@@ -74,10 +75,7 @@ export default function GymAdminStudents() {
           <h1 className="text-3xl font-bold">Alunos</h1>
           <p className="text-zinc-400 mt-1">Gerencie os alunos da academia</p>
         </div>
-        <Button className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Aluno
-        </Button>
+        <CreateStudentDialog onSuccess={fetchStudents} />
       </motion.div>
 
       {/* Filters */}

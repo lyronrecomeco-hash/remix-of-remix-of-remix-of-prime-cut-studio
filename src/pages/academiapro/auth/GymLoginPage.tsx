@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Dumbbell, Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,11 +10,21 @@ import { toast } from 'sonner';
 
 export default function GymLoginPage() {
   const navigate = useNavigate();
-  const { signIn, isLoading: authLoading } = useGymAuth();
+  const { signIn, isLoading: authLoading, isAuthenticated, role } = useGymAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated && role) {
+      if (role === 'admin' || role === 'instrutor') {
+        navigate('/academiapro/admin');
+      } else {
+        navigate('/academiapro/app');
+      }
+    }
+  }, [isAuthenticated, role, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +41,6 @@ export default function GymLoginPage() {
     }
 
     toast.success('Login realizado com sucesso!');
-    navigate('/academiapro/app');
   };
 
   return (
@@ -109,20 +118,10 @@ export default function GymLoginPage() {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-zinc-400 text-sm">
-              Não tem uma conta?{' '}
-              <Link to="/academiapro/auth/register" className="text-orange-500 hover:text-orange-400 font-medium">
-                Cadastre-se
-              </Link>
+            <p className="text-zinc-500 text-xs">
+              Seu acesso é criado pelo administrador da academia.
             </p>
           </div>
-        </div>
-
-        {/* Admin Link */}
-        <div className="mt-6 text-center">
-          <Link to="/academiapro/admin/login" className="text-zinc-500 hover:text-zinc-400 text-sm">
-            Acesso Administrativo →
-          </Link>
         </div>
       </motion.div>
     </div>
