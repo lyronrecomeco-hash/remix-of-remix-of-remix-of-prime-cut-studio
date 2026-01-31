@@ -46,7 +46,7 @@ export default function GymProfilePage() {
   };
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 lg:p-0 space-y-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -70,8 +70,8 @@ export default function GymProfilePage() {
               {profile?.full_name?.charAt(0) || 'U'}
             </AvatarFallback>
           </Avatar>
-          <div>
-            <h2 className="text-xl font-bold">{profile?.full_name || 'Usuário'}</h2>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-xl font-bold truncate">{profile?.full_name || 'Usuário'}</h2>
             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-orange-500/20 text-orange-500">
               {getRoleLabel()}
             </span>
@@ -80,12 +80,12 @@ export default function GymProfilePage() {
 
         <div className="space-y-3">
           <div className="flex items-center gap-3 text-zinc-400">
-            <Mail className="w-5 h-5" />
-            <span className="text-sm">{profile?.email}</span>
+            <Mail className="w-5 h-5 flex-shrink-0" />
+            <span className="text-sm truncate">{profile?.email}</span>
           </div>
           {profile?.phone && (
             <div className="flex items-center gap-3 text-zinc-400">
-              <Phone className="w-5 h-5" />
+              <Phone className="w-5 h-5 flex-shrink-0" />
               <span className="text-sm">{profile.phone}</span>
             </div>
           )}
@@ -100,17 +100,17 @@ export default function GymProfilePage() {
         className="grid grid-cols-3 gap-3"
       >
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
-          <Ruler className="w-5 h-5 text-orange-500 mx-auto mb-1" />
+          <Ruler className="w-5 h-5 text-zinc-400 mx-auto mb-1" />
           <p className="text-lg font-bold">{profile?.height_cm || '--'}</p>
           <p className="text-xs text-zinc-400">cm altura</p>
         </div>
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
-          <Scale className="w-5 h-5 text-orange-500 mx-auto mb-1" />
+          <Scale className="w-5 h-5 text-zinc-400 mx-auto mb-1" />
           <p className="text-lg font-bold">{profile?.weight_kg || '--'}</p>
           <p className="text-xs text-zinc-400">kg peso</p>
         </div>
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
-          <Target className="w-5 h-5 text-orange-500 mx-auto mb-1" />
+          <Target className="w-5 h-5 text-zinc-400 mx-auto mb-1" />
           <p className="text-lg font-bold">{profile?.goals?.length || 0}</p>
           <p className="text-xs text-zinc-400">objetivos</p>
         </div>

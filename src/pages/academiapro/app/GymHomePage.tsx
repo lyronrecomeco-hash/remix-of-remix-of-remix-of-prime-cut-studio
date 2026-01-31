@@ -88,7 +88,7 @@ export default function GymHomePage() {
   };
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 lg:p-0 space-y-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -112,12 +112,12 @@ export default function GymHomePage() {
           <p className="text-[10px] text-zinc-400">Sequência</p>
         </div>
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-center">
-          <Dumbbell className="w-5 h-5 text-orange-500 mx-auto mb-1" />
+          <Dumbbell className="w-5 h-5 text-zinc-400 mx-auto mb-1" />
           <p className="text-xl font-bold">{stats.workoutsThisWeek}</p>
           <p className="text-[10px] text-zinc-400">Esta semana</p>
         </div>
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-center">
-          <Trophy className="w-5 h-5 text-orange-500 mx-auto mb-1" />
+          <Trophy className="w-5 h-5 text-zinc-400 mx-auto mb-1" />
           <p className="text-xl font-bold">{stats.totalPRs}</p>
           <p className="text-[10px] text-zinc-400">PRs</p>
         </div>
@@ -151,9 +151,9 @@ export default function GymHomePage() {
               </div>
             </div>
 
-            <div className="flex gap-2 mb-4">
+            <div className="flex gap-2 mb-4 overflow-x-auto -mx-1 px-1">
               {todayWorkout.gym_user_workout_exercises?.slice(0, 3).map((ex: any, i: number) => (
-                <div key={i} className="flex-1 bg-zinc-800/50 rounded-lg p-2">
+                <div key={i} className="flex-shrink-0 flex-1 min-w-[100px] bg-zinc-800/50 rounded-lg p-2">
                   <p className="text-xs text-zinc-400 truncate">
                     {ex.gym_exercises?.name || 'Exercício'}
                   </p>
@@ -190,15 +190,15 @@ export default function GymHomePage() {
         className="grid grid-cols-2 gap-3"
       >
         <Link to="/academiapro/app/aulas">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-orange-500/50 transition-all">
-            <CalendarDays className="w-6 h-6 text-orange-500 mb-2" />
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-all h-full">
+            <CalendarDays className="w-6 h-6 text-zinc-400 mb-2" />
             <h3 className="font-medium">Aulas Coletivas</h3>
             <p className="text-xs text-zinc-400">Agende sua aula</p>
           </div>
         </Link>
         <Link to="/academiapro/app/evolucao">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-orange-500/50 transition-all">
-            <TrendingUp className="w-6 h-6 text-orange-500 mb-2" />
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-all h-full">
+            <TrendingUp className="w-6 h-6 text-zinc-400 mb-2" />
             <h3 className="font-medium">Minha Evolução</h3>
             <p className="text-xs text-zinc-400">Veja seu progresso</p>
           </div>
