@@ -32,9 +32,9 @@ export function GymAppLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white pb-20 lg:pb-0 lg:flex">
+    <div className="min-h-screen bg-zinc-950 text-white pb-20 lg:pb-0 lg:flex w-full">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:border-r lg:border-zinc-800 lg:fixed lg:inset-y-0">
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:border-r lg:border-zinc-800 lg:fixed lg:inset-y-0 lg:left-0">
         <div className="p-6 border-b border-zinc-800">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
@@ -69,9 +69,9 @@ export function GymAppLayout() {
         </nav>
       </aside>
       
-      {/* Main Content */}
-      <main className="flex-1 lg:ml-64">
-        <div className="max-w-4xl mx-auto lg:p-8">
+      {/* Main Content - Left aligned on desktop */}
+      <main className="flex-1 lg:ml-64 w-full">
+        <div className="w-full lg:p-8 lg:max-w-none">
           <Outlet />
         </div>
       </main>

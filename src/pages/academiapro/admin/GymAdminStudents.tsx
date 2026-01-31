@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Search, 
@@ -6,7 +6,12 @@ import {
   Mail, 
   Phone,
   Filter,
-  Download
+  Download,
+  UserX,
+  Edit,
+  Dumbbell,
+  Eye,
+  RefreshCw
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -17,35 +22,45 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { CreateStudentDialog } from '@/components/academiapro/admin/CreateStudentDialog';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
 
 export default function GymAdminStudents() {
   const [students, setStudents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    fetchStudents();
-  }, []);
-
-  const fetchStudents = async () => {
+  const fetchStudents = useCallback(async () => {
     setIsLoading(true);
+    
+    // Fetch only gym users - those who have a role in gym_user_roles
     const { data, error } = await supabase
       .from('gym_profiles')
       .select(`
         *,
-        gym_user_roles(role),
+        gym_user_roles!inner(role),
         gym_subscriptions(status, plan_id, expires_at)
       `)
       .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching students:', error);
+      toast.error('Erro ao carregar alunos');
+    }
 
     if (data) {
       setStudents(data);
     }
     setIsLoading(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchStudents();
+  }, [fetchStudents]);
 
   const filteredStudents = students.filter(s => 
     s.full_name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -54,13 +69,39 @@ export default function GymAdminStudents() {
 
   const getSubscriptionStatus = (student: any) => {
     const sub = student.gym_subscriptions?.[0];
-    if (!sub) return { label: 'Sem plano', color: 'text-zinc-400 bg-zinc-800' };
+    if (!sub) return { label: 'Sem plano', variant: 'secondary' as const };
     switch (sub.status) {
-      case 'active': return { label: 'Ativo', color: 'text-green-500 bg-green-500/20' };
-      case 'pending': return { label: 'Pendente', color: 'text-yellow-500 bg-yellow-500/20' };
-      case 'inactive': return { label: 'Inativo', color: 'text-red-500 bg-red-500/20' };
-      default: return { label: sub.status, color: 'text-zinc-400 bg-zinc-800' };
+      case 'active': return { label: 'Ativo', variant: 'default' as const };
+      case 'pending': return { label: 'Pendente', variant: 'outline' as const };
+      case 'inactive': return { label: 'Inativo', variant: 'destructive' as const };
+      default: return { label: sub.status, variant: 'secondary' as const };
     }
+  };
+
+  const getRoleBadge = (student: any) => {
+    const role = student.gym_user_roles?.[0]?.role || student.gym_user_roles?.role;
+    switch (role) {
+      case 'admin': return { label: 'Admin', className: 'bg-red-500/20 text-red-400 border-red-500/30' };
+      case 'instrutor': return { label: 'Instrutor', className: 'bg-blue-500/20 text-blue-400 border-blue-500/30' };
+      default: return { label: 'Aluno', className: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30' };
+    }
+  };
+
+  const handleDeactivate = async (studentId: string, userId: string) => {
+    if (!confirm('Deseja realmente desativar este usuário?')) return;
+
+    const { error } = await supabase
+      .from('gym_user_roles')
+      .update({ is_active: false })
+      .eq('user_id', userId);
+
+    if (error) {
+      toast.error('Erro ao desativar usuário');
+      return;
+    }
+
+    toast.success('Usuário desativado');
+    fetchStudents();
   };
 
   return (
@@ -73,9 +114,21 @@ export default function GymAdminStudents() {
       >
         <div>
           <h1 className="text-3xl font-bold">Alunos</h1>
-          <p className="text-zinc-400 mt-1">Gerencie os alunos da academia</p>
+          <p className="text-zinc-400 mt-1">
+            {filteredStudents.length} usuário{filteredStudents.length !== 1 ? 's' : ''} cadastrado{filteredStudents.length !== 1 ? 's' : ''}
+          </p>
         </div>
-        <CreateStudentDialog onSuccess={fetchStudents} />
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={fetchStudents}
+            className="border-zinc-700"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </Button>
+          <CreateStudentDialog onSuccess={fetchStudents} />
+        </div>
       </motion.div>
 
       {/* Filters */}
@@ -88,7 +141,7 @@ export default function GymAdminStudents() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
           <Input
-            placeholder="Buscar aluno..."
+            placeholder="Buscar por nome ou email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10 bg-zinc-900 border-zinc-800"
@@ -117,8 +170,9 @@ export default function GymAdminStudents() {
               <tr>
                 <th className="text-left p-4 font-medium text-zinc-400">Aluno</th>
                 <th className="text-left p-4 font-medium text-zinc-400 hidden sm:table-cell">Contato</th>
-                <th className="text-left p-4 font-medium text-zinc-400 hidden md:table-cell">Status</th>
-                <th className="text-left p-4 font-medium text-zinc-400 hidden lg:table-cell">Cadastro</th>
+                <th className="text-left p-4 font-medium text-zinc-400 hidden md:table-cell">Tipo</th>
+                <th className="text-left p-4 font-medium text-zinc-400 hidden lg:table-cell">Status</th>
+                <th className="text-left p-4 font-medium text-zinc-400 hidden xl:table-cell">Cadastro</th>
                 <th className="text-right p-4 font-medium text-zinc-400">Ações</th>
               </tr>
             </thead>
@@ -137,13 +191,15 @@ export default function GymAdminStudents() {
                     </td>
                     <td className="p-4 hidden sm:table-cell"><div className="h-4 bg-zinc-800 rounded w-40" /></td>
                     <td className="p-4 hidden md:table-cell"><div className="h-6 bg-zinc-800 rounded w-20" /></td>
-                    <td className="p-4 hidden lg:table-cell"><div className="h-4 bg-zinc-800 rounded w-24" /></td>
+                    <td className="p-4 hidden lg:table-cell"><div className="h-6 bg-zinc-800 rounded w-16" /></td>
+                    <td className="p-4 hidden xl:table-cell"><div className="h-4 bg-zinc-800 rounded w-24" /></td>
                     <td className="p-4"><div className="h-8 bg-zinc-800 rounded w-8 ml-auto" /></td>
                   </tr>
                 ))
               ) : filteredStudents.length > 0 ? (
                 filteredStudents.map((student) => {
                   const status = getSubscriptionStatus(student);
+                  const roleBadge = getRoleBadge(student);
                   return (
                     <tr key={student.id} className="border-t border-zinc-800 hover:bg-zinc-800/30">
                       <td className="p-4">
@@ -164,7 +220,7 @@ export default function GymAdminStudents() {
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 text-sm text-zinc-400">
                             <Mail className="w-4 h-4" />
-                            {student.email}
+                            <span className="truncate max-w-[150px]">{student.email}</span>
                           </div>
                           {student.phone && (
                             <div className="flex items-center gap-2 text-sm text-zinc-400">
@@ -175,11 +231,16 @@ export default function GymAdminStudents() {
                         </div>
                       </td>
                       <td className="p-4 hidden md:table-cell">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${status.color}`}>
-                          {status.label}
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium border ${roleBadge.className}`}>
+                          {roleBadge.label}
                         </span>
                       </td>
-                      <td className="p-4 hidden lg:table-cell text-zinc-400 text-sm">
+                      <td className="p-4 hidden lg:table-cell">
+                        <Badge variant={status.variant}>
+                          {status.label}
+                        </Badge>
+                      </td>
+                      <td className="p-4 hidden xl:table-cell text-zinc-400 text-sm">
                         {format(new Date(student.created_at), 'dd/MM/yyyy')}
                       </td>
                       <td className="p-4 text-right">
@@ -190,10 +251,26 @@ export default function GymAdminStudents() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-800">
-                            <DropdownMenuItem>Ver perfil</DropdownMenuItem>
-                            <DropdownMenuItem>Editar</DropdownMenuItem>
-                            <DropdownMenuItem>Criar treino</DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-500">Desativar</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer">
+                              <Eye className="w-4 h-4 mr-2" />
+                              Ver perfil
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer">
+                              <Edit className="w-4 h-4 mr-2" />
+                              Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer">
+                              <Dumbbell className="w-4 h-4 mr-2" />
+                              Criar treino
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator className="bg-zinc-800" />
+                            <DropdownMenuItem 
+                              className="cursor-pointer text-red-500 focus:text-red-500"
+                              onClick={() => handleDeactivate(student.id, student.user_id)}
+                            >
+                              <UserX className="w-4 h-4 mr-2" />
+                              Desativar
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </td>
@@ -202,8 +279,8 @@ export default function GymAdminStudents() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-zinc-400">
-                    Nenhum aluno encontrado
+                  <td colSpan={6} className="p-8 text-center text-zinc-400">
+                    {search ? 'Nenhum aluno encontrado com este filtro' : 'Nenhum aluno cadastrado ainda'}
                   </td>
                 </tr>
               )}
