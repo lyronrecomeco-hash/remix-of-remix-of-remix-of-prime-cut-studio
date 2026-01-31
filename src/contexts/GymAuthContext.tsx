@@ -30,7 +30,6 @@ interface GymAuthContextType {
   isInstructor: boolean;
   isStudent: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, fullName: string, phone?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -102,47 +101,24 @@ export function GymAuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      return { error };
-    } catch (error) {
-      return { error: error as Error };
-    }
-  };
-
-  const signUp = async (email: string, password: string, fullName: string, phone?: string) => {
-    try {
-      const redirectUrl = `${window.location.origin}/academiapro/app`;
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            full_name: fullName,
-            phone: phone
-          }
-        }
-      });
-
       if (error) return { error };
-
+      
+      // Verify user has a gym profile (is a gym member)
       if (data.user) {
-        // Create gym profile
-        await supabase.from('gym_profiles').insert({
-          user_id: data.user.id,
-          full_name: fullName,
-          email: email,
-          phone: phone || null
-        });
-
-        // Assign default role (aluno)
-        await supabase.from('gym_user_roles').insert({
-          user_id: data.user.id,
-          role: 'aluno'
-        });
+        const { data: gymProfile, error: profileError } = await supabase
+          .from('gym_profiles')
+          .select('id')
+          .eq('user_id', data.user.id)
+          .single();
+        
+        if (profileError || !gymProfile) {
+          await supabase.auth.signOut();
+          return { error: new Error('Usuário não cadastrado nesta academia. Contate o administrador.') };
+        }
       }
-
+      
       return { error: null };
     } catch (error) {
       return { error: error as Error };
@@ -174,7 +150,6 @@ export function GymAuthProvider({ children }: { children: ReactNode }) {
     isInstructor: role === 'instrutor' || role === 'admin',
     isStudent: role === 'aluno',
     signIn,
-    signUp,
     signOut,
     refreshProfile
   };
