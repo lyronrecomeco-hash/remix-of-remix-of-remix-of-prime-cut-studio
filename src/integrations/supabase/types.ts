@@ -9441,6 +9441,56 @@ export type Database = {
         }
         Relationships: []
       }
+      gym_payments: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          paid_at: string | null
+          payment_method: string | null
+          plan_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          plan_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          plan_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_payments_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "gym_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gym_personal_records: {
         Row: {
           achieved_at: string
@@ -9653,18 +9703,21 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_active: boolean
           role: Database["public"]["Enums"]["gym_role"]
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
+          is_active?: boolean
           role?: Database["public"]["Enums"]["gym_role"]
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          is_active?: boolean
           role?: Database["public"]["Enums"]["gym_role"]
           user_id?: string
         }

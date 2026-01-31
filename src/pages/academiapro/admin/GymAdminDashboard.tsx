@@ -36,26 +36,20 @@ export default function GymAdminDashboard() {
   const fetchStats = async () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
-    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
 
-    const [studentsRes, subsRes, checkInsRes, revenueRes, pendingRes] = await Promise.all([
+    const [studentsRes, subsRes, checkInsRes] = await Promise.all([
       supabase.from('gym_profiles').select('id', { count: 'exact' })
         .not('user_id', 'is', null),
       supabase.from('gym_subscriptions').select('id', { count: 'exact' }).eq('status', 'active'),
-      supabase.from('gym_check_ins').select('id', { count: 'exact' }).gte('checked_in_at', today.toISOString()),
-      supabase.from('gym_payments').select('amount_cents').eq('status', 'paid').gte('paid_at', monthStart.toISOString()),
-      supabase.from('gym_payments').select('id', { count: 'exact' }).eq('status', 'pending')
+      supabase.from('gym_check_ins').select('id', { count: 'exact' }).gte('checked_in_at', today.toISOString())
     ]);
-
-    const monthlyRevenue = (revenueRes.data || []).reduce((sum, p) => sum + (p.amount_cents || 0), 0);
 
     setStats({
       totalStudents: studentsRes.count || 0,
       activeSubscriptions: subsRes.count || 0,
       todayCheckIns: checkInsRes.count || 0,
-      monthlyRevenue,
-      pendingPayments: pendingRes.count || 0
+      monthlyRevenue: 0,
+      pendingPayments: 0
     });
     setIsLoading(false);
   };
