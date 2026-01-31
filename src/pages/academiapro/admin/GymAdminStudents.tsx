@@ -11,7 +11,8 @@ import {
   Edit,
   Dumbbell,
   Eye,
-  RefreshCw
+  RefreshCw,
+  UserPlus
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -24,7 +25,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { CreateStudentDialog } from '@/components/academiapro/admin/CreateStudentDialog';
+import { CreateStudentWizard } from '@/components/academiapro/admin/CreateStudentWizard';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +34,7 @@ export default function GymAdminStudents() {
   const [students, setStudents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
 
   const fetchStudents = useCallback(async () => {
     setIsLoading(true);
@@ -122,7 +124,13 @@ export default function GymAdminStudents() {
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
           </Button>
-          <CreateStudentDialog onSuccess={fetchStudents} />
+          <Button 
+            onClick={() => setIsWizardOpen(true)}
+            className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
+          >
+            <UserPlus className="w-4 h-4 mr-2" />
+            Novo Aluno
+          </Button>
         </div>
       </motion.div>
 
@@ -283,6 +291,13 @@ export default function GymAdminStudents() {
           </table>
         </div>
       </motion.div>
+
+      {/* Wizard Modal */}
+      <CreateStudentWizard 
+        isOpen={isWizardOpen} 
+        onClose={() => setIsWizardOpen(false)} 
+        onSuccess={fetchStudents} 
+      />
     </div>
   );
 }

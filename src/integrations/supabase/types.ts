@@ -9655,6 +9655,154 @@ export type Database = {
         }
         Relationships: []
       }
+      gym_student_class_enrollments: {
+        Row: {
+          class_id: string
+          enrolled_at: string
+          id: string
+          is_active: boolean
+          student_plan_id: string
+        }
+        Insert: {
+          class_id: string
+          enrolled_at?: string
+          id?: string
+          is_active?: boolean
+          student_plan_id: string
+        }
+        Update: {
+          class_id?: string
+          enrolled_at?: string
+          id?: string
+          is_active?: boolean
+          student_plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_student_class_enrollments_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "gym_classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gym_student_class_enrollments_student_plan_id_fkey"
+            columns: ["student_plan_id"]
+            isOneToOne: false
+            referencedRelation: "gym_student_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gym_student_plans: {
+        Row: {
+          created_at: string
+          end_date: string | null
+          goals: string[] | null
+          id: string
+          instructor_id: string
+          observations: string | null
+          plan_id: string | null
+          start_date: string
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_date?: string | null
+          goals?: string[] | null
+          id?: string
+          instructor_id: string
+          observations?: string | null
+          plan_id?: string | null
+          start_date?: string
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string | null
+          goals?: string[] | null
+          id?: string
+          instructor_id?: string
+          observations?: string | null
+          plan_id?: string | null
+          start_date?: string
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_student_plans_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "gym_profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "gym_student_plans_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "gym_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gym_student_plans_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "gym_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      gym_student_workout_schedule: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          id: string
+          is_active: boolean
+          preferred_time: string | null
+          student_plan_id: string
+          workout_id: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          id?: string
+          is_active?: boolean
+          preferred_time?: string | null
+          student_plan_id: string
+          workout_id: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          id?: string
+          is_active?: boolean
+          preferred_time?: string | null
+          student_plan_id?: string
+          workout_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_student_workout_schedule_student_plan_id_fkey"
+            columns: ["student_plan_id"]
+            isOneToOne: false
+            referencedRelation: "gym_student_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gym_student_workout_schedule_workout_id_fkey"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "gym_user_workouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gym_subscriptions: {
         Row: {
           auto_renew: boolean | null
