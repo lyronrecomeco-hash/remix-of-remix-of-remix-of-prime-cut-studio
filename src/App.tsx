@@ -120,6 +120,13 @@ const PageLoader = () => (
   </div>
 );
 
+// Loading component específico para Academia Genesis
+const GymPageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-zinc-950">
+    <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+  </div>
+);
+
 // Register Service Worker for PWA
 const registerServiceWorker = async () => {
   if ('serviceWorker' in navigator) {
@@ -324,23 +331,27 @@ const AppContent = () => {
             <Route path="/checkout/error" element={<CheckoutErrorPage />} />
             <Route path="/checkout/complete" element={<CheckoutCompletePage />} />
             <Route path="/checkout/:code" element={<PaymentCodePage />} />
-            {/* Academia Genesis Routes */}
+            {/* Academia Genesis Routes - with specific loader */}
             <Route path="/academiapro" element={<Navigate to="/academiapro/auth/login" replace />} />
-            <Route path="/academiapro/auth/login" element={<GymLoginPage />} />
+            <Route path="/academiapro/auth/login" element={
+              <Suspense fallback={<GymPageLoader />}>
+                <GymLoginPage />
+              </Suspense>
+            } />
             <Route path="/academiapro/app" element={<GymAppLayout />}>
-              <Route index element={<GymHomePage />} />
-              <Route path="treinos" element={<GymWorkoutsPage />} />
-              <Route path="aulas" element={<GymClassesPage />} />
-              <Route path="evolucao" element={<GymProgressPage />} />
-              <Route path="perfil" element={<GymProfilePage />} />
+              <Route index element={<Suspense fallback={<GymPageLoader />}><GymHomePage /></Suspense>} />
+              <Route path="treinos" element={<Suspense fallback={<GymPageLoader />}><GymWorkoutsPage /></Suspense>} />
+              <Route path="aulas" element={<Suspense fallback={<GymPageLoader />}><GymClassesPage /></Suspense>} />
+              <Route path="evolucao" element={<Suspense fallback={<GymPageLoader />}><GymProgressPage /></Suspense>} />
+              <Route path="perfil" element={<Suspense fallback={<GymPageLoader />}><GymProfilePage /></Suspense>} />
             </Route>
             <Route path="/academiapro/admin" element={<GymAdminLayout />}>
-              <Route index element={<GymAdminDashboard />} />
-              <Route path="alunos" element={<GymAdminStudents />} />
-              <Route path="treinos" element={<GymAdminWorkouts />} />
-              <Route path="aulas" element={<GymAdminClasses />} />
-              <Route path="financeiro" element={<GymAdminFinance />} />
-              <Route path="configuracoes" element={<GymAdminSettings />} />
+              <Route index element={<Suspense fallback={<GymPageLoader />}><GymAdminDashboard /></Suspense>} />
+              <Route path="alunos" element={<Suspense fallback={<GymPageLoader />}><GymAdminStudents /></Suspense>} />
+              <Route path="treinos" element={<Suspense fallback={<GymPageLoader />}><GymAdminWorkouts /></Suspense>} />
+              <Route path="aulas" element={<Suspense fallback={<GymPageLoader />}><GymAdminClasses /></Suspense>} />
+              <Route path="financeiro" element={<Suspense fallback={<GymPageLoader />}><GymAdminFinance /></Suspense>} />
+              <Route path="configuracoes" element={<Suspense fallback={<GymPageLoader />}><GymAdminSettings /></Suspense>} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

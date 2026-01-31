@@ -149,9 +149,9 @@ export default function GymAdminDashboard() {
           </h2>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { icon: UserPlus, label: 'Novo Aluno', path: '/academiapro/admin/alunos/novo' },
-              { icon: Dumbbell, label: 'Criar Treino', path: '/academiapro/admin/treinos/novo' },
-              { icon: CalendarDays, label: 'Nova Aula', path: '/academiapro/admin/aulas/nova' },
+              { icon: UserPlus, label: 'Novo Aluno', path: '/academiapro/admin/alunos' },
+              { icon: Dumbbell, label: 'Criar Treino', path: '/academiapro/admin/treinos' },
+              { icon: CalendarDays, label: 'Nova Aula', path: '/academiapro/admin/aulas' },
               { icon: Users, label: 'Ver Alunos', path: '/academiapro/admin/alunos' },
             ].map((action, i) => (
               <a
