@@ -18,9 +18,12 @@ export default function GymLoginPage() {
 
   useEffect(() => {
     if (isAuthenticated && role) {
-      // Sempre redireciona para o app do aluno por padrão
-      // Admin/instrutor podem acessar /academiapro/admin diretamente pela rota
-      navigate('/academiapro/app');
+      // Redireciona baseado no role do usuário
+      if (role === 'admin' || role === 'instrutor') {
+        navigate('/academiapro/admin');
+      } else {
+        navigate('/academiapro/app');
+      }
     }
   }, [isAuthenticated, role, navigate]);
 
