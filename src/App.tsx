@@ -10,6 +10,9 @@ import { FeedbackProvider } from "@/contexts/FeedbackContext";
 import { GalleryProvider } from "@/contexts/GalleryContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { GenesisAuthProvider } from "@/contexts/GenesisAuthContext";
+import { GymAuthProvider } from "@/contexts/GymAuthContext";
+import { GymAppLayout } from "@/components/academiapro/app/GymAppLayout";
+import { GymAdminLayout } from "@/components/academiapro/admin/GymAdminLayout";
 import { useSecurityProtection } from "@/hooks/useSecurityProtection";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -80,6 +83,20 @@ const CheckoutSuccessPage = lazy(() => import("./pages/checkout/SuccessPage"));
 const CheckoutPendingPage = lazy(() => import("./pages/checkout/PendingPage"));
 const CheckoutErrorPage = lazy(() => import("./pages/checkout/ErrorPage"));
 const CheckoutCompletePage = lazy(() => import("./pages/checkout/CompletePage"));
+// Academia Genesis Pages
+const GymLoginPage = lazy(() => import("./pages/academiapro/auth/GymLoginPage"));
+const GymRegisterPage = lazy(() => import("./pages/academiapro/auth/GymRegisterPage"));
+const GymHomePage = lazy(() => import("./pages/academiapro/app/GymHomePage"));
+const GymWorkoutsPage = lazy(() => import("./pages/academiapro/app/GymWorkoutsPage"));
+const GymClassesPage = lazy(() => import("./pages/academiapro/app/GymClassesPage"));
+const GymProgressPage = lazy(() => import("./pages/academiapro/app/GymProgressPage"));
+const GymProfilePage = lazy(() => import("./pages/academiapro/app/GymProfilePage"));
+const GymAdminDashboard = lazy(() => import("./pages/academiapro/admin/GymAdminDashboard"));
+const GymAdminStudents = lazy(() => import("./pages/academiapro/admin/GymAdminStudents"));
+const GymAdminWorkouts = lazy(() => import("./pages/academiapro/admin/GymAdminWorkouts"));
+const GymAdminClasses = lazy(() => import("./pages/academiapro/admin/GymAdminClasses"));
+const GymAdminFinance = lazy(() => import("./pages/academiapro/admin/GymAdminFinance"));
+const GymAdminSettings = lazy(() => import("./pages/academiapro/admin/GymAdminSettings"));
 // QueryClient com retry logic e cache otimizado
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -308,6 +325,24 @@ const AppContent = () => {
             <Route path="/checkout/error" element={<CheckoutErrorPage />} />
             <Route path="/checkout/complete" element={<CheckoutCompletePage />} />
             <Route path="/checkout/:code" element={<PaymentCodePage />} />
+            {/* Academia Genesis Routes */}
+            <Route path="/academiapro/auth/login" element={<GymLoginPage />} />
+            <Route path="/academiapro/auth/registro" element={<GymRegisterPage />} />
+            <Route path="/academiapro/app" element={<GymAppLayout />}>
+              <Route index element={<GymHomePage />} />
+              <Route path="treinos" element={<GymWorkoutsPage />} />
+              <Route path="aulas" element={<GymClassesPage />} />
+              <Route path="evolucao" element={<GymProgressPage />} />
+              <Route path="perfil" element={<GymProfilePage />} />
+            </Route>
+            <Route path="/academiapro/admin" element={<GymAdminLayout />}>
+              <Route index element={<GymAdminDashboard />} />
+              <Route path="alunos" element={<GymAdminStudents />} />
+              <Route path="treinos" element={<GymAdminWorkouts />} />
+              <Route path="aulas" element={<GymAdminClasses />} />
+              <Route path="financeiro" element={<GymAdminFinance />} />
+              <Route path="configuracoes" element={<GymAdminSettings />} />
+            </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
@@ -322,20 +357,22 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <GenesisAuthProvider>
-          <SubscriptionProvider>
-            <AppProvider>
-              <GalleryProvider>
-                <FeedbackProvider>
-                  <NotificationProvider>
-                    <TooltipProvider>
-                      <PresenceTracker />
-                      <AppContent />
-                    </TooltipProvider>
-                  </NotificationProvider>
-                </FeedbackProvider>
-              </GalleryProvider>
-            </AppProvider>
-          </SubscriptionProvider>
+          <GymAuthProvider>
+            <SubscriptionProvider>
+              <AppProvider>
+                <GalleryProvider>
+                  <FeedbackProvider>
+                    <NotificationProvider>
+                      <TooltipProvider>
+                        <PresenceTracker />
+                        <AppContent />
+                      </TooltipProvider>
+                    </NotificationProvider>
+                  </FeedbackProvider>
+                </GalleryProvider>
+              </AppProvider>
+            </SubscriptionProvider>
+          </GymAuthProvider>
         </GenesisAuthProvider>
       </AuthProvider>
     </QueryClientProvider>
