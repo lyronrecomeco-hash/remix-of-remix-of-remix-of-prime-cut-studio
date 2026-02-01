@@ -7,7 +7,8 @@ import {
   Dumbbell,
   GripVertical,
   Check,
-  HelpCircle
+  HelpCircle,
+  Edit
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -63,10 +64,13 @@ export default function WorkoutKanban() {
       .order('created_at', { ascending: false });
 
     if (data) {
-      // Add status field for local kanban management
+      // Load status from local storage or default to draft
+      const savedStatuses = localStorage.getItem('workout_kanban_statuses');
+      const statusMap = savedStatuses ? JSON.parse(savedStatuses) : {};
+      
       const templatesWithStatus = data.map((t: any) => ({
         ...t,
-        status: 'draft' // Default status for kanban
+        status: statusMap[t.id] || 'draft'
       }));
       setTemplates(templatesWithStatus);
     }
@@ -81,6 +85,14 @@ export default function WorkoutKanban() {
       .order('full_name');
     
     if (data) setStudents(data);
+  };
+
+  const saveStatuses = (newTemplates: any[]) => {
+    const statusMap: Record<string, string> = {};
+    newTemplates.forEach(t => {
+      statusMap[t.id] = t.status;
+    });
+    localStorage.setItem('workout_kanban_statuses', JSON.stringify(statusMap));
   };
 
   const handleDragStart = (e: React.DragEvent, templateId: string) => {
@@ -98,13 +110,12 @@ export default function WorkoutKanban() {
     if (!draggedItem) return;
 
     // Update local state immediately for smooth UX
-    setTemplates(prev => prev.map(t => 
+    const newTemplates = templates.map(t => 
       t.id === draggedItem ? { ...t, status: targetStatus } : t
-    ));
+    );
+    setTemplates(newTemplates);
+    saveStatuses(newTemplates);
 
-    // Note: In a real app, you'd update the database here
-    // Since gym_workout_templates might not have a status column,
-    // we'll just show a toast for now
     toast.success(`Treino movido para ${COLUMNS.find(c => c.id === targetStatus)?.title}`);
     setDraggedItem(null);
   };
@@ -121,8 +132,6 @@ export default function WorkoutKanban() {
 
       // Create workout for each selected student
       for (const studentId of selectedStudents) {
-        const student = students.find(s => s.user_id === studentId);
-        
         // Create user workout
         const { data: workout, error: workoutError } = await supabase
           .from('gym_user_workouts')
@@ -159,12 +168,14 @@ export default function WorkoutKanban() {
       toast.success(`Treino atribuído a ${selectedStudents.length} aluno(s)`);
       setShowAssignModal(false);
       setSelectedStudents([]);
-      setSelectedTemplate(null);
       
       // Move to assigned column
-      setTemplates(prev => prev.map(t => 
+      const newTemplates = templates.map(t => 
         t.id === selectedTemplate.id ? { ...t, status: 'assigned' } : t
-      ));
+      );
+      setTemplates(newTemplates);
+      saveStatuses(newTemplates);
+      setSelectedTemplate(null);
     } catch (error) {
       console.error('Error assigning workout:', error);
       toast.error('Erro ao atribuir treino');
@@ -218,6 +229,7 @@ export default function WorkoutKanban() {
             size="icon"
             onClick={() => setShowHelp(true)}
             className="hover:bg-orange-500/20 text-zinc-400 hover:text-orange-500"
+            title="Como funciona"
           >
             <HelpCircle className="w-5 h-5" />
           </Button>
@@ -240,11 +252,11 @@ export default function WorkoutKanban() {
       </div>
 
       {/* Kanban Board */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto pb-4">
         {COLUMNS.map(column => (
           <div
             key={column.id}
-            className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 min-h-[500px]"
+            className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 min-h-[400px] min-w-[250px]"
             onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, column.id)}
           >
@@ -278,16 +290,23 @@ export default function WorkoutKanban() {
                   >
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex items-center gap-2">
-                        <GripVertical className="w-4 h-4 text-zinc-600" />
-                        <h4 className="font-medium text-sm">{template.name}</h4>
+                        <GripVertical className="w-4 h-4 text-zinc-600 flex-shrink-0" />
+                        <h4 className="font-medium text-sm line-clamp-1">{template.name}</h4>
                       </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 w-6 p-0 hover:bg-zinc-700"
+                      >
+                        <Edit className="w-3 h-3" />
+                      </Button>
                     </div>
                     
-                    <p className="text-xs text-zinc-400 mb-3 line-clamp-2">
+                    <p className="text-xs text-zinc-400 mb-3 line-clamp-2 ml-6">
                       {template.description || 'Sem descrição'}
                     </p>
                     
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between ml-6">
                       <div className="flex items-center gap-2">
                         <Badge className={`text-xs ${getDifficultyBadge(template.difficulty)}`}>
                           {template.difficulty || 'N/A'}
