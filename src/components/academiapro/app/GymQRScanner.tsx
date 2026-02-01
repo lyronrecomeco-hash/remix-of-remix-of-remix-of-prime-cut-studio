@@ -28,9 +28,14 @@ export function GymQRScanner({ open, onOpenChange }: GymQRScannerProps) {
   const rafRef = useRef<number | null>(null);
   const isProcessingRef = useRef(false);
   const hasScannedRef = useRef(false);
+  const isDetectingRef = useRef(false);
+  const lastScanAtRef = useRef(0);
+  const detectorRef = useRef<any>(null);
+  const scanFrameRef = useRef<() => void>(() => {});
 
   const [scanResult, setScanResult] = useState<'success' | 'error' | null>(null);
   const [flashEnabled, setFlashEnabled] = useState(false);
+  const [torchSupported, setTorchSupported] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState('Iniciando câmera...');
 
@@ -43,28 +48,61 @@ export function GymQRScanner({ open, onOpenChange }: GymQRScannerProps) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
+    setFlashEnabled(false);
+    setTorchSupported(false);
+  }, []);
+
+  useEffect(() => {
+    // Prefer BarcodeDetector when available (usually much more reliable on Android Chrome)
+    if ((window as any).BarcodeDetector) {
+      try {
+        detectorRef.current = new (window as any).BarcodeDetector({ formats: ['qr_code'] });
+      } catch {
+        detectorRef.current = null;
+      }
+    }
+    return () => {
+      detectorRef.current = null;
+    };
+  }, []);
+
+  const requestNextFrame = useCallback(() => {
+    rafRef.current = requestAnimationFrame(() => scanFrameRef.current());
   }, []);
 
   const handleSuccessfulScan = useCallback(async (code: string) => {
     if (isProcessingRef.current || hasScannedRef.current) return;
     isProcessingRef.current = true;
     hasScannedRef.current = true;
-
-    setStatusMessage('Processando...');
+    setStatusMessage('QR detectado...');
 
     try {
       // Validate QR code format
       if (!code.startsWith('GYM-GENESIS-')) {
         setScanResult('error');
+        setStatusMessage('QR inválido');
         toast.error('QR Code inválido');
-        isProcessingRef.current = false;
+        window.setTimeout(() => {
+          setScanResult(null);
+          setStatusMessage('Posicione o QR Code');
+          hasScannedRef.current = false;
+          isProcessingRef.current = false;
+          requestNextFrame();
+        }, 1200);
         return;
       }
 
       if (!user?.id) {
         setScanResult('error');
+        setStatusMessage('Faça login para continuar');
         toast.error('Você precisa estar logado');
-        isProcessingRef.current = false;
+        window.setTimeout(() => {
+          setScanResult(null);
+          setStatusMessage('Posicione o QR Code');
+          hasScannedRef.current = false;
+          isProcessingRef.current = false;
+          requestNextFrame();
+        }, 1200);
         return;
       }
 
@@ -112,15 +150,22 @@ export function GymQRScanner({ open, onOpenChange }: GymQRScannerProps) {
       setScanResult('error');
       setStatusMessage('Erro ao registrar');
       toast.error('Erro ao registrar check-in');
+      window.setTimeout(() => {
+        setScanResult(null);
+        setStatusMessage('Posicione o QR Code');
+        hasScannedRef.current = false;
+        isProcessingRef.current = false;
+        requestNextFrame();
+      }, 1500);
     } finally {
       isProcessingRef.current = false;
     }
-  }, [user, onOpenChange]);
+  }, [user, onOpenChange, requestNextFrame]);
 
   const scanFrame = useCallback(() => {
     if (!videoRef.current || !canvasRef.current || hasScannedRef.current || isProcessingRef.current) {
       if (!hasScannedRef.current) {
-        rafRef.current = requestAnimationFrame(scanFrame);
+        requestNextFrame();
       }
       return;
     }
@@ -129,14 +174,52 @@ export function GymQRScanner({ open, onOpenChange }: GymQRScannerProps) {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
+    const now = performance.now();
+    if (now - lastScanAtRef.current < 120) {
+      requestNextFrame();
+      return;
+    }
+    lastScanAtRef.current = now;
+
     if (!ctx || video.readyState !== video.HAVE_ENOUGH_DATA) {
-      rafRef.current = requestAnimationFrame(scanFrame);
+      requestNextFrame();
       return;
     }
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0);
+    // 1) Try BarcodeDetector when available
+    if (detectorRef.current && !isDetectingRef.current) {
+      isDetectingRef.current = true;
+      detectorRef.current
+        .detect(video)
+        .then((codes: any[]) => {
+          const value = codes?.[0]?.rawValue;
+          if (value) {
+            handleSuccessfulScan(value);
+          }
+        })
+        .catch(() => {
+          // ignore and fall back to jsQR below
+        })
+        .finally(() => {
+          isDetectingRef.current = false;
+          requestNextFrame();
+        });
+      return;
+    }
+
+    // 2) Fallback jsQR (downscaled for performance)
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+    if (!vw || !vh) {
+      requestNextFrame();
+      return;
+    }
+    const targetW = Math.min(720, vw);
+    const scale = targetW / vw;
+    const targetH = Math.floor(vh * scale);
+    canvas.width = targetW;
+    canvas.height = targetH;
+    ctx.drawImage(video, 0, 0, targetW, targetH);
 
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const code = jsQR(imageData.data, imageData.width, imageData.height, {
@@ -148,8 +231,12 @@ export function GymQRScanner({ open, onOpenChange }: GymQRScannerProps) {
       return;
     }
 
-    rafRef.current = requestAnimationFrame(scanFrame);
-  }, [handleSuccessfulScan]);
+    requestNextFrame();
+  }, [handleSuccessfulScan, requestNextFrame]);
+
+  useEffect(() => {
+    scanFrameRef.current = scanFrame;
+  }, [scanFrame]);
 
   const startCamera = useCallback(async () => {
     setIsLoading(true);
@@ -172,19 +259,28 @@ export function GymQRScanner({ open, onOpenChange }: GymQRScannerProps) {
         videoRef.current.srcObject = mediaStream;
         await videoRef.current.play();
       }
+
+      // torch capability
+      try {
+        const track = mediaStream.getVideoTracks()[0];
+        const capabilities = (track?.getCapabilities?.() as any) || {};
+        setTorchSupported(!!capabilities.torch);
+      } catch {
+        setTorchSupported(false);
+      }
       
       setIsLoading(false);
       setStatusMessage('Posicione o QR Code');
       
       // Start scanning loop
-      rafRef.current = requestAnimationFrame(scanFrame);
+      requestNextFrame();
     } catch (error) {
       console.error('Camera error:', error);
       setIsLoading(false);
       setStatusMessage('Erro ao acessar câmera');
       toast.error('Não foi possível acessar a câmera');
     }
-  }, [scanFrame]);
+  }, [requestNextFrame]);
 
   useEffect(() => {
     if (open) {
@@ -201,6 +297,11 @@ export function GymQRScanner({ open, onOpenChange }: GymQRScannerProps) {
       toast.info('Câmera não disponível');
       return;
     }
+
+    if (!torchSupported) {
+      toast.info('Lanterna não suportada neste dispositivo');
+      return;
+    }
     
     try {
       const track = streamRef.current.getVideoTracks()[0];
@@ -215,7 +316,6 @@ export function GymQRScanner({ open, onOpenChange }: GymQRScannerProps) {
         advanced: [{ torch: !flashEnabled } as any]
       });
       setFlashEnabled(!flashEnabled);
-      toast.success(flashEnabled ? 'Flash desligado' : 'Flash ligado');
     } catch (error) {
       console.error('Flash error:', error);
       toast.error('Erro ao controlar flash');
@@ -249,6 +349,7 @@ export function GymQRScanner({ open, onOpenChange }: GymQRScannerProps) {
                 variant="ghost"
                 size="icon"
                 onClick={toggleFlash}
+                disabled={isLoading}
                 className="text-white hover:bg-white/20 w-12 h-12"
               >
                 {flashEnabled ? (

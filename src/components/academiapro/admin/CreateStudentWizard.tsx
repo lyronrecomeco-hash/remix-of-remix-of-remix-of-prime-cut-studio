@@ -343,7 +343,7 @@ export function CreateStudentWizard({ isOpen, onClose, onSuccess }: CreateStuden
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Cadastrar Novo Aluno" size="3xl">
       {/* Progress Steps */}
-      <div className="px-6 py-4 border-b border-zinc-800">
+      <div className="px-6 py-4 border-b border-border">
         <div className="flex items-center justify-between">
           {STEPS.map((step, index) => {
             const Icon = step.icon;
@@ -353,19 +353,19 @@ export function CreateStudentWizard({ isOpen, onClose, onSuccess }: CreateStuden
             return (
               <div key={step.id} className="flex items-center">
                 <div className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${
-                  isCompleted 
-                    ? 'bg-green-500 text-white' 
-                    : isActive 
-                      ? 'bg-gradient-to-r from-orange-500 to-red-600 text-white' 
-                      : 'bg-zinc-800 text-zinc-500'
+                  isCompleted
+                    ? 'bg-primary text-primary-foreground'
+                    : isActive
+                      ? 'bg-primary text-primary-foreground ring-2 ring-primary/30'
+                      : 'bg-muted text-muted-foreground'
                 }`}>
                   {isCompleted ? <Check className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
                 </div>
-                <span className={`ml-2 text-sm hidden sm:block ${isActive ? 'text-white font-medium' : 'text-zinc-500'}`}>
+                <span className={`ml-2 text-sm hidden sm:block ${isActive ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
                   {step.label}
                 </span>
                 {index < STEPS.length - 1 && (
-                  <ChevronRight className="w-5 h-5 text-zinc-700 mx-2 hidden sm:block" />
+                  <ChevronRight className="w-5 h-5 text-muted-foreground/40 mx-2 hidden sm:block" />
                 )}
               </div>
             );
@@ -394,7 +394,7 @@ export function CreateStudentWizard({ isOpen, onClose, onSuccess }: CreateStuden
           type="button"
           variant="outline"
           onClick={() => currentStep === 0 ? onClose() : setCurrentStep(prev => prev - 1)}
-          className="border-zinc-700"
+          className="border-input"
         >
           <ChevronLeft className="w-4 h-4 mr-2" />
           {currentStep === 0 ? 'Cancelar' : 'Voltar'}
@@ -405,7 +405,7 @@ export function CreateStudentWizard({ isOpen, onClose, onSuccess }: CreateStuden
             type="button"
             onClick={() => setCurrentStep(prev => prev + 1)}
             disabled={!canAdvance()}
-            className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
             Próximo
             <ChevronRight className="w-4 h-4 ml-2" />
@@ -415,7 +415,7 @@ export function CreateStudentWizard({ isOpen, onClose, onSuccess }: CreateStuden
             type="button"
             onClick={handleSubmit}
             disabled={isLoading}
-            className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
             {isLoading ? (
               <>
@@ -447,7 +447,7 @@ function StepDados({ formData, updateField, showPassword, setShowPassword, gener
             id="full_name"
             value={formData.full_name}
             onChange={(e) => updateField('full_name', e.target.value)}
-            className="bg-zinc-800 border-zinc-700"
+            className="bg-background border-input"
             placeholder="João Silva"
             required
           />
@@ -460,7 +460,7 @@ function StepDados({ formData, updateField, showPassword, setShowPassword, gener
             type="email"
             value={formData.email}
             onChange={(e) => updateField('email', e.target.value)}
-            className="bg-zinc-800 border-zinc-700"
+            className="bg-background border-input"
             placeholder="joao@email.com"
             required
           />
@@ -474,7 +474,7 @@ function StepDados({ formData, updateField, showPassword, setShowPassword, gener
             id="phone"
             value={formData.phone}
             onChange={(e) => updateField('phone', e.target.value)}
-            className="bg-zinc-800 border-zinc-700"
+            className="bg-background border-input"
             placeholder="(11) 99999-9999"
           />
         </div>
@@ -485,10 +485,10 @@ function StepDados({ formData, updateField, showPassword, setShowPassword, gener
             value={formData.role}
             onValueChange={(value: 'aluno' | 'instrutor' | 'admin') => updateField('role', value)}
           >
-            <SelectTrigger className="bg-zinc-800 border-zinc-700">
+            <SelectTrigger className="bg-background border-input">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-zinc-800 border-zinc-700">
+            <SelectContent className="bg-popover border-border">
               <SelectItem value="aluno">Aluno</SelectItem>
               <SelectItem value="instrutor">Instrutor</SelectItem>
               <SelectItem value="admin">Administrador</SelectItem>
@@ -506,7 +506,7 @@ function StepDados({ formData, updateField, showPassword, setShowPassword, gener
               type={showPassword ? 'text' : 'password'}
               value={formData.password}
               onChange={(e) => updateField('password', e.target.value)}
-              className="bg-zinc-800 border-zinc-700 pr-10"
+              className="bg-background border-input pr-10"
               placeholder="Mínimo 6 caracteres"
               required
               minLength={6}
@@ -523,7 +523,7 @@ function StepDados({ formData, updateField, showPassword, setShowPassword, gener
             type="button" 
             variant="outline" 
             onClick={generatePassword}
-            className="border-zinc-700 hover:bg-zinc-800"
+            className="border-input"
           >
             Gerar
           </Button>
