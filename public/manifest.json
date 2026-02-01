@@ -1,15 +1,15 @@
 {
-  "name": "Genesis Barber Studio",
-  "short_name": "Genesis",
-  "description": "Barbearia premium com agendamento online - Tema Black & Gold",
-  "start_url": "/",
+  "name": "Academia Genesis",
+  "short_name": "Genesis Gym",
+  "description": "Sistema completo de gestão para academias - treinos, aulas, check-in e mais",
+  "start_url": "/academiapro/app",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#0a0a0a",
-  "theme_color": "#d4a531",
+  "background_color": "#09090b",
+  "theme_color": "#f97316",
   "orientation": "portrait-primary",
   "lang": "pt-BR",
-  "categories": ["lifestyle", "business"],
+  "categories": ["fitness", "health", "lifestyle"],
   "icons": [
     {
       "src": "/icon-192.png",
@@ -29,17 +29,17 @@
   "related_applications": [],
   "shortcuts": [
     {
-      "name": "Agendar",
-      "short_name": "Agendar",
-      "description": "Fazer novo agendamento",
-      "url": "/agendar",
+      "name": "Meus Treinos",
+      "short_name": "Treinos",
+      "description": "Ver meus treinos",
+      "url": "/academiapro/app/treinos",
       "icons": []
     },
     {
-      "name": "Meus Agendamentos",
-      "short_name": "Meus",
-      "description": "Ver meus agendamentos",
-      "url": "/meus-agendamentos",
+      "name": "Aulas",
+      "short_name": "Aulas",
+      "description": "Ver aulas disponíveis",
+      "url": "/academiapro/app/aulas",
       "icons": []
     }
   ]

@@ -87,9 +87,9 @@ export function KanbanHelpModal({ open, onOpenChange, type }: KanbanHelpModalPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-lg max-h-[90dvh] overflow-hidden flex flex-col">
+      <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-lg max-h-[85vh] overflow-hidden flex flex-col fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-[100]">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="flex items-center gap-3">
+          <DialogTitle className="flex items-center gap-3 text-white">
             <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
               <Info className="w-5 h-5 text-orange-500" />
             </div>
