@@ -18,7 +18,6 @@ export default function GymLoginPage() {
 
   useEffect(() => {
     if (isAuthenticated && role) {
-      // Redireciona baseado no role do usuário
       if (role === 'admin' || role === 'instrutor') {
         navigate('/academiapro/admin');
       } else {
@@ -45,26 +44,33 @@ export default function GymLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-950 via-zinc-950 to-zinc-900 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
-      >
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 mb-4">
-            <Dumbbell className="w-8 h-8 text-white" />
+    <div className="min-h-screen bg-zinc-950 flex">
+      {/* Left side - Form */}
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="w-full max-w-md"
+        >
+          {/* Logo */}
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-xl bg-orange-500 flex items-center justify-center">
+                <Dumbbell className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-white">Academia Genesis</h1>
+                <p className="text-zinc-500 text-sm">Sistema de gestão</p>
+              </div>
+            </div>
+            <h2 className="text-2xl lg:text-3xl font-bold text-white">Bem-vindo de volta</h2>
+            <p className="text-zinc-400 mt-2">Entre com suas credenciais para acessar</p>
           </div>
-          <h1 className="text-2xl font-bold text-white">Academia Genesis</h1>
-          <p className="text-zinc-400 mt-2">Acesse sua conta</p>
-        </div>
 
-        {/* Form Card */}
-        <div className="bg-zinc-900/50 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6 shadow-2xl">
+          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-zinc-300">Email</Label>
+              <Label htmlFor="email" className="text-zinc-300 text-sm">Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
                 <Input
@@ -73,14 +79,14 @@ export default function GymLoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="seu@email.com"
-                  className="pl-10 bg-zinc-800/50 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-orange-500"
+                  className="pl-10 h-12 bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus:border-orange-500 focus:ring-orange-500"
                   required
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-zinc-300">Senha</Label>
+              <Label htmlFor="password" className="text-zinc-300 text-sm">Senha</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
                 <Input
@@ -89,7 +95,7 @@ export default function GymLoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="pl-10 pr-10 bg-zinc-800/50 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-orange-500"
+                  className="pl-10 pr-10 h-12 bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus:border-orange-500 focus:ring-orange-500"
                   required
                 />
                 <button
@@ -105,7 +111,7 @@ export default function GymLoginPage() {
             <Button
               type="submit"
               disabled={isLoading || authLoading}
-              className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-semibold py-6"
+              className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-semibold"
             >
               {isLoading ? (
                 <>
@@ -118,13 +124,54 @@ export default function GymLoginPage() {
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-zinc-500 text-xs">
-              Seu acesso é criado pelo administrador da academia.
-            </p>
+          <p className="mt-8 text-center text-zinc-500 text-xs">
+            Seu acesso é criado pelo administrador da academia.
+          </p>
+        </motion.div>
+      </div>
+
+      {/* Right side - Decorative */}
+      <div className="hidden lg:flex lg:flex-1 bg-zinc-900 items-center justify-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-red-600/10" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-orange-500/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-red-600/20 rounded-full blur-3xl" />
+        
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2 }}
+          className="relative z-10 text-center px-12"
+        >
+          <div className="w-24 h-24 mx-auto mb-8 rounded-2xl bg-orange-500/20 flex items-center justify-center">
+            <Dumbbell className="w-12 h-12 text-orange-500" />
           </div>
-        </div>
-      </motion.div>
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Gerencie sua academia
+          </h2>
+          <p className="text-zinc-400 text-lg max-w-md">
+            Controle completo de alunos, treinos, aulas e finanças em um único lugar.
+          </p>
+          
+          <div className="mt-12 grid grid-cols-3 gap-6">
+            {[
+              { label: 'Alunos', value: '500+' },
+              { label: 'Treinos', value: '1.2K' },
+              { label: 'Aulas', value: '50+' },
+            ].map((stat, i) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 + i * 0.1 }}
+                className="bg-zinc-800/50 rounded-xl p-4"
+              >
+                <p className="text-2xl font-bold text-orange-500">{stat.value}</p>
+                <p className="text-zinc-500 text-sm">{stat.label}</p>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 }

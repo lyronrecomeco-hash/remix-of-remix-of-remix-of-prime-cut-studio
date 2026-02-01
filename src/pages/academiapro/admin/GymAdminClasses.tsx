@@ -8,13 +8,15 @@ import {
   MapPin,
   Calendar,
   ChevronRight,
+  ChevronLeft,
   Eye,
   Edit,
   Power,
-  Trash2
+  Search
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,6 +45,7 @@ import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 const WEEKDAYS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+const ITEMS_PER_PAGE = 9;
 
 export default function GymAdminClasses() {
   const [classes, setClasses] = useState<any[]>([]);
@@ -51,6 +54,8 @@ export default function GymAdminClasses() {
   const [showSessions, setShowSessions] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     fetchClasses();
@@ -68,14 +73,22 @@ export default function GymAdminClasses() {
     setIsLoading(false);
   };
 
+  const filteredClasses = classes.filter(c => 
+    c.name?.toLowerCase().includes(search.toLowerCase()) ||
+    c.category?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredClasses.length / ITEMS_PER_PAGE);
+  const paginatedClasses = filteredClasses.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   const fetchSessions = async (classId: string) => {
     setIsLoadingSessions(true);
     const { data } = await supabase
       .from('gym_class_sessions')
-      .select(`
-        *,
-        gym_class_bookings(count)
-      `)
+      .select(`*, gym_class_bookings(count)`)
       .eq('class_id', classId)
       .gte('scheduled_at', new Date().toISOString())
       .order('scheduled_at')
@@ -130,7 +143,6 @@ export default function GymAdminClasses() {
   const handleGenerateSessions = async () => {
     if (!selectedClass) return;
 
-    // Generate sessions for next 14 days
     const newSessions: any[] = [];
     const recurringDays = selectedClass.recurring_days || [];
 
@@ -197,35 +209,52 @@ export default function GymAdminClasses() {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
         <div>
-          <h1 className="text-3xl font-bold">Aulas Coletivas</h1>
-          <p className="text-zinc-400 mt-1">
+          <h1 className="text-2xl lg:text-3xl font-bold">Aulas Coletivas</h1>
+          <p className="text-zinc-400 mt-1 text-sm">
             {classes.filter(c => c.is_active).length} aulas ativas de {classes.length} cadastradas
           </p>
         </div>
-        <Button className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
+        <Button className="bg-orange-500 hover:bg-orange-600 text-white">
           <Plus className="w-4 h-4 mr-2" />
           Nova Aula
         </Button>
+      </motion.div>
+
+      {/* Search */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+      >
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+          <Input
+            placeholder="Buscar aulas..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+            className="pl-10 bg-zinc-900 border-zinc-800"
+          />
+        </div>
       </motion.div>
 
       {/* Classes Grid */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.1 }}
+        transition={{ delay: 0.2 }}
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
       >
         {isLoading ? (
           Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 animate-pulse">
-              <div className="h-6 bg-zinc-800 rounded w-2/3 mb-4" />
+            <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 animate-pulse">
+              <div className="h-5 bg-zinc-800 rounded w-2/3 mb-4" />
               <div className="h-4 bg-zinc-800 rounded w-full mb-2" />
               <div className="h-4 bg-zinc-800 rounded w-3/4 mb-4" />
               <div className="h-10 bg-zinc-800 rounded" />
             </div>
           ))
-        ) : classes.length > 0 ? (
-          classes.map((classItem, index) => {
+        ) : paginatedClasses.length > 0 ? (
+          paginatedClasses.map((classItem, index) => {
             const categoryBadge = getCategoryBadge(classItem.category);
             return (
               <motion.div
@@ -233,15 +262,15 @@ export default function GymAdminClasses() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className={`bg-zinc-900 border rounded-2xl p-6 ${
+                className={`bg-zinc-900 border rounded-xl p-5 ${
                   classItem.is_active ? 'border-zinc-800' : 'border-red-500/30 opacity-60'
                 }`}
               >
-                <div className="flex items-start justify-between mb-4">
+                <div className="flex items-start justify-between mb-3">
                   <div>
-                    <h3 className="font-semibold text-lg">{classItem.name}</h3>
+                    <h3 className="font-semibold text-base">{classItem.name}</h3>
                     <div className="flex gap-2 mt-2">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium border ${categoryBadge.className}`}>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${categoryBadge.className}`}>
                         {categoryBadge.label}
                       </span>
                       {!classItem.is_active && (
@@ -251,8 +280,8 @@ export default function GymAdminClasses() {
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="w-5 h-5" />
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreHorizontal className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-800">
@@ -283,28 +312,24 @@ export default function GymAdminClasses() {
                   {classItem.description || 'Sem descrição'}
                 </p>
 
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center gap-2 text-sm text-zinc-400">
+                <div className="space-y-1.5 mb-4 text-sm">
+                  <div className="flex items-center gap-2 text-zinc-400">
                     <Calendar className="w-4 h-4 text-zinc-500" />
-                    {formatDays(classItem.recurring_days)}
+                    <span>{formatDays(classItem.recurring_days)}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-zinc-400">
+                  <div className="flex items-center gap-2 text-zinc-400">
                     <Clock className="w-4 h-4 text-zinc-500" />
-                    {classItem.start_time?.slice(0, 5) || '--:--'} ({classItem.duration_minutes || 60} min)
+                    <span>{classItem.start_time?.slice(0, 5) || '--:--'} ({classItem.duration_minutes || 60} min)</span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-zinc-400">
+                  <div className="flex items-center gap-2 text-zinc-400">
                     <Users className="w-4 h-4 text-zinc-500" />
-                    Máx. {classItem.max_capacity || 20} alunos
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-zinc-400">
-                    <MapPin className="w-4 h-4 text-zinc-500" />
-                    {classItem.location || 'Local não definido'}
+                    <span>Máx. {classItem.max_capacity || 20} alunos</span>
                   </div>
                 </div>
 
                 <Button 
                   variant="outline" 
-                  className="w-full border-zinc-700 hover:bg-zinc-800"
+                  className="w-full border-zinc-700 hover:bg-zinc-800 text-sm"
                   onClick={() => handleManageSessions(classItem)}
                 >
                   Gerenciar Sessões
@@ -314,23 +339,66 @@ export default function GymAdminClasses() {
             );
           })
         ) : (
-          <div className="col-span-full bg-zinc-900 border border-zinc-800 rounded-2xl p-12 text-center">
+          <div className="col-span-full bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
             <Calendar className="w-12 h-12 text-zinc-600 mx-auto mb-4" />
-            <h3 className="font-semibold text-lg mb-2">Nenhuma aula cadastrada</h3>
+            <h3 className="font-semibold text-lg mb-2">Nenhuma aula encontrada</h3>
             <p className="text-zinc-400 text-sm mb-4">
-              Crie sua primeira aula coletiva
+              {search ? 'Tente outro termo de busca' : 'Crie sua primeira aula coletiva'}
             </p>
-            <Button className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Nova Aula
-            </Button>
+            {!search && (
+              <Button className="bg-orange-500 hover:bg-orange-600 text-white">
+                <Plus className="w-4 h-4 mr-2" />
+                Nova Aula
+              </Button>
+            )}
           </div>
         )}
       </motion.div>
 
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex items-center justify-center gap-2"
+        >
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="border-zinc-700"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <div className="flex items-center gap-1">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <Button
+                key={page}
+                variant={currentPage === page ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setCurrentPage(page)}
+                className={currentPage === page ? 'bg-orange-500 hover:bg-orange-600' : 'border-zinc-700'}
+              >
+                {page}
+              </Button>
+            ))}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="border-zinc-700"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </motion.div>
+      )}
+
       {/* Sessions Dialog */}
       <Dialog open={showSessions} onOpenChange={setShowSessions}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Sessões - {selectedClass?.name}</DialogTitle>
             <DialogDescription className="text-zinc-400">
@@ -344,7 +412,7 @@ export default function GymAdminClasses() {
             </p>
             <Button 
               onClick={handleGenerateSessions}
-              className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
+              className="bg-orange-500 hover:bg-orange-600 text-white"
             >
               <Plus className="w-4 h-4 mr-2" />
               Gerar Próximas 2 Semanas
@@ -374,16 +442,16 @@ export default function GymAdminClasses() {
                     <TableRow key={session.id} className="border-zinc-800">
                       <TableCell>
                         <div>
-                          <p className="font-medium">
+                          <p className="font-medium text-sm">
                             {format(new Date(session.scheduled_at), "EEEE, dd 'de' MMMM", { locale: ptBR })}
                           </p>
-                          <p className="text-sm text-zinc-400">
+                          <p className="text-xs text-zinc-400">
                             {format(new Date(session.scheduled_at), 'HH:mm')}
                           </p>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 text-sm">
                           <Users className="w-4 h-4 text-zinc-500" />
                           {bookings}/{selectedClass?.max_capacity || 20}
                         </div>
@@ -398,10 +466,10 @@ export default function GymAdminClasses() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-red-500 hover:text-red-400"
+                            className="text-red-500 hover:text-red-400 hover:bg-red-500/10"
                             onClick={() => handleCancelSession(session.id)}
                           >
-                            <Trash2 className="w-4 h-4" />
+                            Cancelar
                           </Button>
                         )}
                       </TableCell>
