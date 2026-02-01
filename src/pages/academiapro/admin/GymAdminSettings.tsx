@@ -1,16 +1,14 @@
 import { motion } from 'framer-motion';
 import { 
-  Settings, 
   Building2, 
   Bell, 
-  Palette,
-  Shield,
-  Database
+  Shield
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { GymThemePersonalization } from '@/components/academiapro/admin/GymThemePersonalization';
 
 export default function GymAdminSettings() {
   return (
@@ -23,6 +21,9 @@ export default function GymAdminSettings() {
         <h1 className="text-3xl font-bold">Configurações</h1>
         <p className="text-zinc-400 mt-1">Configure sua academia</p>
       </motion.div>
+
+      {/* Personalization Section */}
+      <GymThemePersonalization />
 
       {/* Academy Info */}
       <motion.div
