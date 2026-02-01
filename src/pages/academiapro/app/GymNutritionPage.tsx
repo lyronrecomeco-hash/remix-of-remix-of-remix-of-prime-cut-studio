@@ -5,30 +5,29 @@ import {
   Droplets, 
   Plus,
   Flame,
-  Apple,
   Search,
-  Mic,
   TrendingUp,
   AlertCircle,
   Trash2,
   ChevronRight,
   Target,
-  Zap
+  Dumbbell,
+  Camera
 } from 'lucide-react';
 import { useGymAuth } from '@/contexts/GymAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-import { VoiceMealRecorder } from '@/components/academiapro/nutrition/VoiceMealRecorder';
+import { PhotoMealScanner } from '@/components/academiapro/nutrition/PhotoMealScanner';
 import { MealConfirmationModal } from '@/components/academiapro/nutrition/MealConfirmationModal';
 import { NutritionAIChat } from '@/components/academiapro/nutrition/NutritionAIChat';
 import { NutritionProgressCharts } from '@/components/academiapro/nutrition/NutritionProgressCharts';
+import { useWorkoutCalorieAdjustment } from '@/hooks/useWorkoutCalorieAdjustment';
 
 interface NutritionGoals {
   id: string;
@@ -110,29 +109,21 @@ export default function GymNutritionPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showFoodSearch, setShowFoodSearch] = useState(false);
   const [showProgressCharts, setShowProgressCharts] = useState(false);
+  const [showPhotoScanner, setShowPhotoScanner] = useState(false);
 
-  // Voice recording states
-  const [isProcessingVoice, setIsProcessingVoice] = useState(false);
+  // Photo scanning states
+  const [isProcessingPhoto, setIsProcessingPhoto] = useState(false);
   const [parsedMeal, setParsedMeal] = useState<ParsedMeal | null>(null);
   const [showMealConfirmation, setShowMealConfirmation] = useState(false);
   const [isSavingMeal, setIsSavingMeal] = useState(false);
 
+  // Workout integration
+  const { workoutData } = useWorkoutCalorieAdjustment(
+    user?.id,
+    goals?.daily_calories || 2000
+  );
+
   const today = format(new Date(), 'yyyy-MM-dd');
-
-  const friendlyFunctionErrorMessage = (err: any, data: any, fallback: string) => {
-    const raw = (data?.error as string | undefined) || (err?.message as string | undefined) || fallback;
-    const status = err?.context?.status || err?.status || data?.status;
-
-    if (status === 429 || /insufficient_quota|quota|429/i.test(raw)) {
-      return 'Limite de uso do serviço de transcrição atingido. Tente novamente em alguns minutos ou ajuste o plano/créditos do provedor.';
-    }
-
-    if (status === 401 || /401|unauthorized/i.test(raw)) {
-      return 'Serviço de transcrição não autorizado. Verifique a configuração do provedor.';
-    }
-
-    return raw;
-  };
 
   useEffect(() => {
     if (user) {
@@ -278,51 +269,33 @@ export default function GymNutritionPage() {
     }
   };
 
-  // Voice processing
-  const handleVoiceTranscription = useCallback(async (audioBase64: string) => {
-    setIsProcessingVoice(true);
+  // Photo processing
+  const handlePhotoAnalysis = useCallback(async (imageBase64: string) => {
+    setIsProcessingPhoto(true);
     
     try {
-      toast.info('Transcrevendo áudio...');
-      const { data: transcriptionData, error: transcriptionError } = await supabase.functions.invoke('nutrition-voice-processor', {
+      toast.info('Analisando foto...');
+      const { data, error } = await supabase.functions.invoke('nutrition-voice-processor', {
         body: {
-          action: 'transcribe',
-          audio: audioBase64
+          action: 'analyze-photo',
+          image: imageBase64
         }
       });
 
-      if (transcriptionError || !transcriptionData?.success) {
-        throw new Error(
-          friendlyFunctionErrorMessage(transcriptionError, transcriptionData, 'Erro na transcrição')
-        );
+      if (error || !data?.success) {
+        throw new Error(data?.error || error?.message || 'Erro ao analisar foto');
       }
 
-      const transcribedText = transcriptionData.text;
-      console.log('Transcribed:', transcribedText);
-
-      toast.info('Analisando refeição com IA...');
-      const { data: parseData, error: parseError } = await supabase.functions.invoke('nutrition-voice-processor', {
-        body: {
-          action: 'parse-meal',
-          text: transcribedText
-        }
-      });
-
-      if (parseError || !parseData?.success) {
-        throw new Error(
-          (parseData?.error as string | undefined) || (parseError?.message as string | undefined) || 'Erro ao analisar refeição'
-        );
-      }
-
-      console.log('Parsed meal:', parseData.meal);
-      setParsedMeal(parseData.meal);
+      console.log('Photo analysis result:', data.meal);
+      setParsedMeal(data.meal);
       setShowMealConfirmation(true);
+      setShowPhotoScanner(false);
 
     } catch (error: any) {
-      console.error('Voice processing error:', error);
-      toast.error(error.message || 'Erro ao processar áudio');
+      console.error('Photo analysis error:', error);
+      toast.error(error.message || 'Erro ao analisar foto');
     } finally {
-      setIsProcessingVoice(false);
+      setIsProcessingPhoto(false);
     }
   }, []);
 
@@ -368,13 +341,16 @@ export default function GymNutritionPage() {
   const totalFat = mealLogs.reduce((sum, m) => sum + m.fat_grams, 0);
   const totalWater = hydrationLogs.reduce((sum, h) => sum + h.amount_ml, 0);
 
-  const calorieProgress = goals ? (totalCalories / goals.daily_calories) * 100 : 0;
+  // Use adjusted goal from workout integration
+  const effectiveCalorieGoal = workoutData.adjustedCalorieGoal;
+
+  const calorieProgress = effectiveCalorieGoal ? (totalCalories / effectiveCalorieGoal) * 100 : 0;
   const proteinProgress = goals ? (totalProtein / goals.protein_grams) * 100 : 0;
   const carbsProgress = goals ? (totalCarbs / goals.carbs_grams) * 100 : 0;
   const fatProgress = goals ? (totalFat / goals.fat_grams) * 100 : 0;
   const waterProgress = goals ? (totalWater / goals.water_ml) * 100 : 0;
 
-  const remainingCalories = Math.max(0, (goals?.daily_calories || 2000) - totalCalories);
+  const remainingCalories = Math.max(0, effectiveCalorieGoal - totalCalories);
 
   if (isLoading) {
     return (
@@ -387,113 +363,104 @@ export default function GymNutritionPage() {
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <div className="bg-gradient-to-br from-primary/20 via-primary/10 to-background px-4 pt-4 pb-6">
+      <div className="px-4 pt-4 pb-6 border-b border-border">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex items-center justify-between"
         >
           <div>
-            <h1 className="text-2xl font-bold text-foreground">NutriTrack</h1>
+            <h1 className="text-xl font-bold text-foreground">Nutrição</h1>
             <p className="text-muted-foreground text-sm">
               {format(new Date(), "EEEE, d MMM", { locale: ptBR })}
             </p>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center">
-            <Apple className="w-6 h-6 text-primary" />
-          </div>
         </motion.div>
 
-        {/* Main Calorie Ring */}
+        {/* Main Calorie Display */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1 }}
-          className="mt-6 flex items-center justify-center"
+          className="mt-6"
         >
-          <div className="relative">
-            <svg className="w-40 h-40 transform -rotate-90">
-              <circle
-                cx="80"
-                cy="80"
-                r="70"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="12"
-                className="text-muted/30"
-              />
-              <circle
-                cx="80"
-                cy="80"
-                r="70"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="12"
-                strokeLinecap="round"
-                strokeDasharray={2 * Math.PI * 70}
-                strokeDashoffset={2 * Math.PI * 70 * (1 - Math.min(calorieProgress, 100) / 100)}
-                className="text-primary transition-all duration-1000"
-              />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <Flame className="w-5 h-5 text-primary mb-1" />
-              <span className="text-3xl font-bold text-foreground">{totalCalories}</span>
-              <span className="text-xs text-muted-foreground">/ {goals?.daily_calories} kcal</span>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Flame className="w-5 h-5 text-primary" />
+              <span className="text-sm font-medium text-foreground">Calorias</span>
             </div>
+            <span className="text-sm text-muted-foreground">
+              {totalCalories} / {effectiveCalorieGoal} kcal
+            </span>
           </div>
-        </motion.div>
+          
+          <div className="relative h-3 bg-muted rounded-full overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${Math.min(calorieProgress, 100)}%` }}
+              transition={{ duration: 0.8 }}
+              className="absolute inset-y-0 left-0 bg-primary rounded-full"
+            />
+          </div>
+          
+          <p className="text-sm text-muted-foreground mt-2">
+            <span className="text-primary font-medium">{remainingCalories}</span> kcal restantes
+          </p>
 
-        {/* Remaining calories */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="text-center text-sm text-muted-foreground mt-2"
-        >
-          <span className="text-primary font-semibold">{remainingCalories}</span> kcal restantes
-        </motion.p>
+          {/* Workout Adjustment Indicator */}
+          {workoutData.totalWorkouts > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-2 mt-3 p-2 bg-primary/5 border border-primary/20 rounded-lg"
+            >
+              <Dumbbell className="w-4 h-4 text-primary" />
+              <span className="text-xs text-muted-foreground">
+                +{workoutData.estimatedCaloriesBurned} kcal queimadas hoje
+                <span className="text-primary ml-1">
+                  (+{Math.round(workoutData.estimatedCaloriesBurned * 0.7)} ajustado)
+                </span>
+              </span>
+            </motion.div>
+          )}
+        </motion.div>
       </div>
 
       {/* Content */}
-      <div className="px-4 -mt-2 space-y-4">
+      <div className="px-4 py-4 space-y-4">
         {/* Quick Actions */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+          className="grid grid-cols-2 gap-3"
         >
           <Card 
             className="bg-card border-border cursor-pointer hover:border-primary/50 transition-colors"
             onClick={() => setShowFoodSearch(true)}
           >
             <CardContent className="p-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Plus className="w-5 h-5 text-primary" />
+              <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                <Plus className="w-5 h-5 text-muted-foreground" />
               </div>
               <div>
-                <p className="font-medium text-sm text-foreground">Adicionar</p>
-                <p className="text-xs text-muted-foreground">Registro manual</p>
+                <p className="font-medium text-sm text-foreground">Manual</p>
+                <p className="text-xs text-muted-foreground">Buscar alimento</p>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-primary/20 to-primary/5 border-primary/30">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                  <Mic className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-sm text-foreground">Por Voz</p>
-                  <p className="text-xs text-muted-foreground">Fale sua refeição</p>
-                </div>
+          <Card 
+            className="bg-card border-border cursor-pointer hover:border-primary/50 transition-colors"
+            onClick={() => setShowPhotoScanner(true)}
+          >
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Camera className="w-5 h-5 text-primary" />
               </div>
-              <div className="mt-3">
-                <VoiceMealRecorder
-                  onTranscription={handleVoiceTranscription}
-                  isProcessing={isProcessingVoice}
-                />
+              <div>
+                <p className="font-medium text-sm text-foreground">Scanner</p>
+                <p className="text-xs text-muted-foreground">Foto do prato</p>
               </div>
             </CardContent>
           </Card>
@@ -506,8 +473,8 @@ export default function GymNutritionPage() {
           transition={{ delay: 0.3 }}
         >
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-foreground flex items-center gap-2">
-              <Target className="w-4 h-4 text-primary" />
+            <h3 className="font-medium text-foreground flex items-center gap-2">
+              <Target className="w-4 h-4 text-muted-foreground" />
               Macros
             </h3>
           </div>
@@ -517,7 +484,6 @@ export default function GymNutritionPage() {
               value={totalProtein}
               goal={goals?.protein_grams || 150}
               progress={proteinProgress}
-              variant="strong"
               unit="g"
             />
             <MacroCard
@@ -525,7 +491,6 @@ export default function GymNutritionPage() {
               value={totalCarbs}
               goal={goals?.carbs_grams || 200}
               progress={carbsProgress}
-              variant="medium"
               unit="g"
             />
             <MacroCard
@@ -533,7 +498,6 @@ export default function GymNutritionPage() {
               value={totalFat}
               goal={goals?.fat_grams || 70}
               progress={fatProgress}
-              variant="soft"
               unit="g"
             />
           </div>
@@ -545,21 +509,21 @@ export default function GymNutritionPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
-          <Card className="bg-card border-border overflow-hidden">
+          <Card className="bg-card border-border">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <Droplets className="w-5 h-5 text-primary" />
+                  <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
+                    <Droplets className="w-4 h-4 text-muted-foreground" />
                   </div>
                   <div>
-                    <p className="font-semibold text-foreground">Hidratação</p>
+                    <p className="font-medium text-foreground text-sm">Hidratação</p>
                     <p className="text-xs text-muted-foreground">
                       {totalWater}ml de {goals?.water_ml}ml
                     </p>
                   </div>
                 </div>
-                <span className="text-lg font-bold text-primary">{Math.round(waterProgress)}%</span>
+                <span className="text-sm font-medium text-muted-foreground">{Math.round(waterProgress)}%</span>
               </div>
               
               <div className="relative h-2 bg-muted rounded-full overflow-hidden mb-3">
@@ -567,7 +531,7 @@ export default function GymNutritionPage() {
                   initial={{ width: 0 }}
                   animate={{ width: `${Math.min(waterProgress, 100)}%` }}
                   transition={{ duration: 1, delay: 0.5 }}
-                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary to-primary/60 rounded-full"
+                  className="absolute inset-y-0 left-0 bg-primary rounded-full"
                 />
               </div>
 
@@ -578,7 +542,7 @@ export default function GymNutritionPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => addWater(ml)}
-                    className="flex-1 border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/50 text-xs"
+                    className="flex-1 text-xs"
                   >
                     +{ml}ml
                   </Button>
@@ -586,9 +550,9 @@ export default function GymNutritionPage() {
               </div>
 
               {waterProgress < 50 && (
-                <div className="flex items-center gap-2 mt-3 p-2 bg-primary/10 rounded-lg">
-                  <AlertCircle className="w-4 h-4 text-primary" />
-                  <span className="text-xs text-primary">Beba mais água!</span>
+                <div className="flex items-center gap-2 mt-3 p-2 bg-muted rounded-lg">
+                  <AlertCircle className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Beba mais água!</span>
                 </div>
               )}
             </CardContent>
@@ -603,11 +567,11 @@ export default function GymNutritionPage() {
         >
           <Button
             variant="outline"
-            className="w-full justify-between border-border hover:bg-muted"
+            className="w-full justify-between"
             onClick={() => setShowProgressCharts(!showProgressCharts)}
           >
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-primary" />
+              <TrendingUp className="w-4 h-4 text-muted-foreground" />
               <span>Progresso Semanal</span>
             </div>
             <ChevronRight className={`w-4 h-4 transition-transform ${showProgressCharts ? 'rotate-90' : ''}`} />
@@ -637,8 +601,8 @@ export default function GymNutritionPage() {
           transition={{ delay: 0.6 }}
         >
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-foreground flex items-center gap-2">
-              <Utensils className="w-4 h-4 text-primary" />
+            <h3 className="font-medium text-foreground flex items-center gap-2">
+              <Utensils className="w-4 h-4 text-muted-foreground" />
               Refeições de Hoje
             </h3>
             <span className="text-xs text-muted-foreground">{mealLogs.length} itens</span>
@@ -646,11 +610,11 @@ export default function GymNutritionPage() {
 
           {mealLogs.length === 0 ? (
             <Card className="bg-card border-border border-dashed">
-              <CardContent className="p-8 text-center">
-                <Utensils className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
+              <CardContent className="p-6 text-center">
+                <Utensils className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
                 <p className="text-muted-foreground text-sm">Nenhuma refeição registrada</p>
                 <p className="text-muted-foreground/70 text-xs mt-1">
-                  Use a voz ou adicione manualmente
+                  Tire uma foto ou adicione manualmente
                 </p>
               </CardContent>
             </Card>
@@ -676,7 +640,7 @@ export default function GymNutritionPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-foreground/60 backdrop-blur-sm z-50 flex items-end"
+            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-end"
             onClick={() => setShowFoodSearch(false)}
           >
             <motion.div
@@ -684,22 +648,22 @@ export default function GymNutritionPage() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="w-full bg-card rounded-t-3xl max-h-[90dvh] overflow-hidden"
+              className="w-full bg-card rounded-t-2xl max-h-[85dvh] overflow-hidden border-t border-border"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-4 border-b border-border">
                 <div className="w-12 h-1 bg-muted rounded-full mx-auto mb-4" />
-                <h3 className="font-semibold text-lg text-center text-foreground">Adicionar Alimento</h3>
+                <h3 className="font-medium text-center text-foreground">Adicionar Alimento</h3>
               </div>
 
-              <div className="p-4 space-y-4 overflow-y-auto max-h-[calc(90dvh-6.5rem)]">
+              <div className="p-4 space-y-4 overflow-y-auto max-h-[calc(85dvh-5rem)]">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     placeholder="Buscar alimento..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 bg-muted border-border"
+                    className="pl-10"
                     autoFocus
                   />
                 </div>
@@ -715,13 +679,13 @@ export default function GymNutritionPage() {
                         <button
                           key={food.id}
                           onClick={() => setSelectedFood(food)}
-                          className={`w-full text-left p-3 rounded-xl transition-all ${
+                          className={`w-full text-left p-3 rounded-lg transition-all ${
                             selectedFood?.id === food.id
-                              ? 'bg-primary/20 border-2 border-primary'
-                              : 'bg-muted hover:bg-muted/80 border-2 border-transparent'
+                              ? 'bg-primary/10 border border-primary/30'
+                              : 'bg-muted hover:bg-muted/80 border border-transparent'
                           }`}
                         >
-                          <p className="font-medium text-foreground">{food.name}</p>
+                          <p className="font-medium text-foreground text-sm">{food.name}</p>
                           <p className="text-xs text-muted-foreground">
                             {food.calories_per_100g} kcal • P:{food.protein_per_100g}g • C:{food.carbs_per_100g}g • G:{food.fat_per_100g}g
                           </p>
@@ -733,8 +697,8 @@ export default function GymNutritionPage() {
 
                 {selectedFood && (
                   <div className="space-y-4 pt-4 border-t border-border">
-                    <div className="bg-primary/10 rounded-xl p-3">
-                      <p className="font-medium text-primary">{selectedFood.name}</p>
+                    <div className="bg-muted rounded-lg p-3">
+                      <p className="font-medium text-foreground text-sm">{selectedFood.name}</p>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-3">
@@ -744,7 +708,6 @@ export default function GymNutritionPage() {
                           type="number"
                           value={quantity}
                           onChange={(e) => setQuantity(e.target.value)}
-                          className="bg-muted border-border"
                         />
                       </div>
                       <div>
@@ -752,7 +715,7 @@ export default function GymNutritionPage() {
                         <select
                           value={selectedMealType}
                           onChange={(e) => setSelectedMealType(e.target.value)}
-                          className="w-full h-10 px-3 bg-muted border border-border rounded-lg text-sm text-foreground"
+                          className="w-full h-10 px-3 bg-background border border-input rounded-md text-sm text-foreground"
                         >
                           {mealTypes.map((type) => (
                             <option key={type.value} value={type.value}>
@@ -770,7 +733,6 @@ export default function GymNutritionPage() {
                           setSelectedFood(null);
                           setShowFoodSearch(false);
                         }}
-                        className="border-border"
                       >
                         Cancelar
                       </Button>
@@ -781,6 +743,51 @@ export default function GymNutritionPage() {
                     </div>
                   </div>
                 )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Photo Scanner Modal */}
+      <AnimatePresence>
+        {showPhotoScanner && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowPhotoScanner(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-sm bg-card rounded-2xl overflow-hidden border border-border"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4 border-b border-border">
+                <h3 className="font-medium text-center text-foreground">Scanner de Refeição</h3>
+                <p className="text-xs text-center text-muted-foreground mt-1">
+                  Tire uma foto ou selecione da galeria
+                </p>
+              </div>
+
+              <div className="p-6">
+                <PhotoMealScanner
+                  onPhotoAnalyzed={handlePhotoAnalysis}
+                  isProcessing={isProcessingPhoto}
+                />
+              </div>
+
+              <div className="p-4 border-t border-border">
+                <Button
+                  variant="ghost"
+                  className="w-full"
+                  onClick={() => setShowPhotoScanner(false)}
+                >
+                  Cancelar
+                </Button>
               </div>
             </motion.div>
           </motion.div>
@@ -819,40 +826,28 @@ function MacroCard({
   value, 
   goal, 
   progress, 
-  variant,
   unit 
 }: { 
   label: string; 
   value: number; 
   goal: number; 
   progress: number; 
-  variant: 'strong' | 'medium' | 'soft';
   unit: string;
 }) {
-  const indicatorClass =
-    variant === 'strong'
-      ? 'bg-primary'
-      : variant === 'medium'
-        ? 'bg-primary/70'
-        : 'bg-primary/40';
-
   return (
     <Card className="bg-card border-border">
       <CardContent className="p-3">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-muted-foreground">{label}</span>
-          <div className={`w-2 h-2 rounded-full ${indicatorClass}`} />
-        </div>
-        <p className="text-lg font-bold text-foreground">
+        <span className="text-xs text-muted-foreground">{label}</span>
+        <p className="text-lg font-semibold text-foreground mt-1">
           {value.toFixed(0)}
-          <span className="text-xs text-muted-foreground font-normal">{unit}</span>
+          <span className="text-xs text-muted-foreground font-normal ml-0.5">{unit}</span>
         </p>
-        <div className="relative h-1.5 bg-muted rounded-full overflow-hidden mt-2">
+        <div className="relative h-1 bg-muted rounded-full overflow-hidden mt-2">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${Math.min(progress, 100)}%` }}
             transition={{ duration: 0.8 }}
-            className={`absolute inset-y-0 left-0 rounded-full ${indicatorClass}`}
+            className="absolute inset-y-0 left-0 rounded-full bg-primary"
           />
         </div>
         <p className="text-[10px] text-muted-foreground mt-1">Meta: {goal}{unit}</p>
@@ -878,18 +873,18 @@ function MealCard({
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.05 }}
     >
-      <Card className="bg-card border-border hover:border-primary/30 transition-colors">
+      <Card className="bg-card border-border">
         <CardContent className="p-3">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">{mealType?.icon || '🍽️'}</span>
+            <span className="text-xl">{mealType?.icon || '🍽️'}</span>
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-foreground truncate">{meal.food_name}</p>
+              <p className="font-medium text-foreground text-sm truncate">{meal.food_name}</p>
               <p className="text-xs text-muted-foreground">
                 {meal.quantity_grams}g • {format(new Date(meal.logged_at), 'HH:mm')}
               </p>
             </div>
             <div className="text-right flex-shrink-0">
-              <p className="font-bold text-primary">{meal.calories}</p>
+              <p className="font-semibold text-foreground">{meal.calories}</p>
               <p className="text-[10px] text-muted-foreground">kcal</p>
             </div>
             <Button

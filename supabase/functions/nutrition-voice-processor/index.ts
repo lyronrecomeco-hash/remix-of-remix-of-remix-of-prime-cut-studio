@@ -49,6 +49,54 @@ interface ParsedMeal {
   original_text: string;
 }
 
+const MEAL_ANALYSIS_PROMPT = `Você é um nutricionista especialista em análise de refeições.
+Sua tarefa é analisar imagens ou descrições de refeições e retornar dados nutricionais precisos.
+
+REGRAS IMPORTANTES:
+1. Use a tabela TACO/USDA como referência para valores nutricionais
+2. Estime porções realistas baseado no tamanho visual dos alimentos
+3. Identifique TODOS os alimentos visíveis na imagem
+4. Se houver líquidos/água visível, extraia a quantidade estimada em ml
+5. Determine o tipo de refeição baseado nos alimentos (breakfast/lunch/snack/dinner)
+6. Valores nutricionais devem ser por porção estimada, não por 100g
+7. Inclua fibras e sódio nas estimativas
+
+FORMATO DE RESPOSTA (JSON estrito):
+{
+  "foods": [
+    {
+      "name": "nome do alimento",
+      "quantity_grams": número,
+      "calories": número,
+      "protein_grams": número,
+      "carbs_grams": número,
+      "fat_grams": número,
+      "fiber_grams": número,
+      "sodium_mg": número,
+      "confidence": 0.0-1.0
+    }
+  ],
+  "water_ml": número (0 se não visível),
+  "meal_type": "breakfast|lunch|snack|dinner",
+  "total_calories": número,
+  "total_protein": número,
+  "total_carbs": número,
+  "total_fat": número,
+  "total_fiber": número,
+  "total_sodium": número,
+  "original_text": "descrição breve dos alimentos identificados"
+}
+
+Referências nutricionais comuns (por porção típica):
+- Arroz branco (150g): 195kcal, 4g prot, 43g carb, 0.4g gord
+- Feijão carioca (100g): 76kcal, 5g prot, 14g carb, 0.5g gord
+- Frango grelhado (100g): 165kcal, 31g prot, 0g carb, 3.6g gord
+- Ovo frito (50g): 90kcal, 6g prot, 0.6g carb, 7g gord
+- Salada verde (100g): 15kcal, 1g prot, 2g carb, 0.2g gord
+- Pão francês (50g): 150kcal, 5g prot, 29g carb, 1.5g gord
+- Banana (100g): 89kcal, 1g prot, 23g carb, 0.3g gord
+- Maçã (150g): 78kcal, 0.4g prot, 21g carb, 0.2g gord`;
+
 serve(async (req) => {
   console.log("[nutrition-voice-processor] Request received");
   
@@ -57,8 +105,96 @@ serve(async (req) => {
   }
 
   try {
-    const { action, audio, text, userId, currentMacros, nutritionGoals } = await req.json();
+    const { action, audio, image, text, userId, currentMacros, nutritionGoals } = await req.json();
     console.log(`[nutrition-voice-processor] Action: ${action}`);
+
+    // Photo analysis action
+    if (action === 'analyze-photo') {
+      const lovableKey = Deno.env.get('LOVABLE_API_KEY');
+      if (!lovableKey) {
+        throw new Error('Lovable API key not configured');
+      }
+
+      if (!image) {
+        return jsonResponse({ success: false, error: 'No image provided' }, { status: 400 });
+      }
+
+      console.log("[nutrition-voice-processor] Analyzing photo with Gemini Vision...");
+
+      const visionResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${lovableKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            {
+              role: 'system',
+              content: MEAL_ANALYSIS_PROMPT,
+            },
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: `data:image/jpeg;base64,${image}`,
+                  },
+                },
+                {
+                  type: 'text',
+                  text: 'Analise esta imagem de refeição e retorne os dados nutricionais em JSON.',
+                },
+              ],
+            },
+          ],
+          temperature: 0.3,
+          max_tokens: 1500,
+        }),
+      });
+
+      if (!visionResponse.ok) {
+        const errorText = await visionResponse.text();
+        const parsed = await parseMaybeJson(errorText);
+        console.error("[nutrition-voice-processor] Vision error:", parsed || errorText);
+        return jsonResponse(
+          {
+            success: false,
+            error: parsed?.error?.message || `Vision API error: ${visionResponse.status}`,
+          },
+          { status: visionResponse.status },
+        );
+      }
+
+      const visionResult = await visionResponse.json();
+      const content = visionResult.choices?.[0]?.message?.content || '';
+      console.log("[nutrition-voice-processor] Vision response:", content);
+
+      // Extract JSON from response (may be wrapped in markdown)
+      let jsonContent = content;
+      const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (jsonMatch) {
+        jsonContent = jsonMatch[1].trim();
+      }
+
+      let parsedMeal: ParsedMeal;
+      try {
+        parsedMeal = JSON.parse(jsonContent);
+      } catch (e) {
+        console.error("[nutrition-voice-processor] JSON parse error:", e, "Content:", jsonContent);
+        return jsonResponse(
+          { success: false, error: 'Não foi possível identificar os alimentos na foto. Tente tirar uma foto mais clara.' },
+          { status: 400 }
+        );
+      }
+
+      return jsonResponse({
+        success: true,
+        meal: parsedMeal,
+      });
+    }
 
     if (action === 'transcribe') {
       // Use Lovable AI (Gemini) for transcription via multimodal
@@ -198,20 +334,20 @@ Referências nutricionais comuns (por porção típica):
 "${text}"`;
 
       console.log("[nutrition-voice-processor] Calling Lovable AI for meal parsing...");
-      const aiResponse = await fetch('https://api.lovable.dev/v1/chat/completions', {
+      const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${lovableKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'openai/gpt-5-mini',
+          model: 'google/gemini-2.5-flash',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userMessage }
           ],
           temperature: 0.3,
-          response_format: { type: 'json_object' }
+          max_tokens: 1500,
         }),
       });
 
@@ -265,14 +401,14 @@ INSTRUÇÕES:
 7. Se perguntarem sobre alimentos específicos, forneça informações nutricionais aproximadas`;
 
       console.log("[nutrition-voice-processor] Calling nutrition chat AI...");
-      const aiResponse = await fetch('https://api.lovable.dev/v1/chat/completions', {
+      const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${lovableKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'openai/gpt-5-mini',
+          model: 'google/gemini-2.5-flash',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: text }
