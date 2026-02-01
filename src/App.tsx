@@ -99,6 +99,8 @@ const GymAdminWorkouts = lazy(() => import("./pages/academiapro/admin/GymAdminWo
 const GymAdminClasses = lazy(() => import("./pages/academiapro/admin/GymAdminClasses"));
 const GymAdminFinance = lazy(() => import("./pages/academiapro/admin/GymAdminFinance"));
 const GymAdminSettings = lazy(() => import("./pages/academiapro/admin/GymAdminSettings"));
+const GymAdminAttendance = lazy(() => import("./pages/academiapro/admin/GymAdminAttendance"));
+const GymSettingsAppPage = lazy(() => import("./pages/academiapro/app/GymSettingsAppPage"));
 // QueryClient com retry logic e cache otimizado
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -351,12 +353,14 @@ const AppContent = () => {
               <Route path="meu-plano" element={<Suspense fallback={<GymPageLoader />}><GymMyPlanPage /></Suspense>} />
               <Route path="perfil" element={<Suspense fallback={<GymPageLoader />}><GymProfilePage /></Suspense>} />
               <Route path="perfil/editar" element={<Suspense fallback={<GymPageLoader />}><GymEditProfilePage /></Suspense>} />
+              <Route path="configuracoes" element={<Suspense fallback={<GymPageLoader />}><GymSettingsAppPage /></Suspense>} />
             </Route>
             <Route path="/academiapro/admin" element={<GymAdminLayout />}>
               <Route index element={<Suspense fallback={<GymPageLoader />}><GymAdminDashboard /></Suspense>} />
               <Route path="alunos" element={<Suspense fallback={<GymPageLoader />}><GymAdminStudents /></Suspense>} />
               <Route path="treinos" element={<Suspense fallback={<GymPageLoader />}><GymAdminWorkouts /></Suspense>} />
               <Route path="aulas" element={<Suspense fallback={<GymPageLoader />}><GymAdminClasses /></Suspense>} />
+              <Route path="presenca" element={<Suspense fallback={<GymPageLoader />}><GymAdminAttendance /></Suspense>} />
               <Route path="financeiro" element={<Suspense fallback={<GymPageLoader />}><GymAdminFinance /></Suspense>} />
               <Route path="configuracoes" element={<Suspense fallback={<GymPageLoader />}><GymAdminSettings /></Suspense>} />
             </Route>
