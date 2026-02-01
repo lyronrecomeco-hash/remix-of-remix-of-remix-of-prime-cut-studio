@@ -105,8 +105,8 @@ export default function ClassesKanban() {
   }, [loadSavedStatuses]);
 
   const fetchStudents = async () => {
-    const { data } = await supabase
-      .from('gym_profiles')
+    const { data } = await (supabase
+      .from('gym_profiles') as any)
       .select('*')
       .eq('role', 'aluno')
       .eq('is_active', true)
@@ -193,8 +193,8 @@ export default function ClassesKanban() {
     if (!selectedClass || selectedStudents.length === 0) return;
 
     try {
-      const { data: plans } = await supabase
-        .from('gym_student_plans')
+      const { data: plans } = await (supabase
+        .from('gym_student_plans') as any)
         .select('id, user_id')
         .in('user_id', selectedStudents)
         .eq('status', 'active');
