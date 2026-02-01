@@ -61,56 +61,81 @@ serve(async (req) => {
     console.log(`[nutrition-voice-processor] Action: ${action}`);
 
     if (action === 'transcribe') {
-      // Use OpenAI Whisper for transcription
-      const openaiKey = Deno.env.get('OPENAI_API_KEY');
-      if (!openaiKey) {
-        throw new Error('OpenAI API key not configured');
+      // Use Lovable AI (Gemini) for transcription via multimodal
+      const lovableKey = Deno.env.get('LOVABLE_API_KEY');
+      if (!lovableKey) {
+        throw new Error('Lovable API key not configured');
       }
 
-      // Decode base64 audio
-      const audioBuffer = Uint8Array.from(atob(audio), c => c.charCodeAt(0));
-      
-      // Create form data for Whisper API
-      const formData = new FormData();
-      const audioBlob = new Blob([audioBuffer], { type: 'audio/webm' });
-      formData.append('file', audioBlob, 'audio.webm');
-      formData.append('model', 'whisper-1');
-      formData.append('language', 'pt');
+      console.log("[nutrition-voice-processor] Calling Lovable AI for transcription...");
 
-      console.log("[nutrition-voice-processor] Calling Whisper API...");
-      const whisperResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      const transcribeResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${openaiKey}`,
+          'Authorization': `Bearer ${lovableKey}`,
+          'Content-Type': 'application/json',
         },
-        body: formData,
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            {
+              role: 'system',
+              content: 'Você é um transcritor de áudio. Transcreva fielmente o que foi dito no áudio. Responda APENAS com a transcrição, sem comentários adicionais. Se não conseguir entender, diga "Áudio não compreendido".',
+            },
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'input_audio',
+                  input_audio: {
+                    data: audio,
+                    format: 'webm',
+                  },
+                },
+                {
+                  type: 'text',
+                  text: 'Transcreva o áudio acima em português brasileiro.',
+                },
+              ],
+            },
+          ],
+          temperature: 0.1,
+          max_tokens: 500,
+        }),
       });
 
-      if (!whisperResponse.ok) {
-        const errorText = await whisperResponse.text();
+      if (!transcribeResponse.ok) {
+        const errorText = await transcribeResponse.text();
         const parsed = await parseMaybeJson(errorText);
-        const providerMessage = parsed?.error?.message;
-        const providerCode = parsed?.error?.code || parsed?.error?.type;
+        console.error("[nutrition-voice-processor] Lovable AI transcription error:", parsed || errorText);
 
-        console.error("[nutrition-voice-processor] Whisper error:", parsed || errorText);
-
-        // Important: propagate the provider status code (429/401/etc.) so the client can handle gracefully.
         return jsonResponse(
           {
             success: false,
-            error: providerMessage || `Whisper API error: ${whisperResponse.status}`,
-            code: providerCode || null,
+            error: parsed?.error?.message || `Transcription error: ${transcribeResponse.status}`,
+            code: parsed?.error?.code || null,
           },
-          { status: whisperResponse.status },
+          { status: transcribeResponse.status },
         );
       }
 
-      const transcription = await whisperResponse.json();
-      console.log("[nutrition-voice-processor] Transcription:", transcription.text);
+      const transcribeResult = await transcribeResponse.json();
+      const transcribedText = transcribeResult.choices?.[0]?.message?.content?.trim() || '';
+      console.log("[nutrition-voice-processor] Transcription:", transcribedText);
+
+      if (!transcribedText || transcribedText === 'Áudio não compreendido') {
+        return jsonResponse(
+          {
+            success: false,
+            error: 'Não foi possível entender o áudio. Tente falar mais claramente.',
+          },
+          { status: 400 },
+        );
+      }
 
       return jsonResponse({
         success: true,
-        text: transcription.text,
+        text: transcribedText,
       });
     }
 
