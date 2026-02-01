@@ -1,32 +1,117 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Dumbbell, Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Dumbbell, Mail, Lock, Eye, EyeOff, Loader2, Heart, Flame, Trophy, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useGymAuth } from '@/contexts/GymAuthContext';
 import { toast } from 'sonner';
 
-// Animated dumbbell component
-const AnimatedDumbbell = ({ delay = 0, className = '' }: { delay?: number; className?: string }) => (
+// Animated person lifting weights
+const AnimatedPerson = () => (
+  <motion.div className="relative w-48 h-48">
+    {/* Body */}
+    <motion.div 
+      className="absolute bottom-8 left-1/2 -translate-x-1/2 w-12 h-24 bg-orange-500 rounded-t-3xl"
+      animate={{ scaleY: [1, 0.95, 1] }}
+      transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+    />
+    {/* Head */}
+    <motion.div 
+      className="absolute bottom-32 left-1/2 -translate-x-1/2 w-10 h-10 bg-orange-400 rounded-full"
+    />
+    {/* Arms with weights */}
+    <motion.div 
+      className="absolute bottom-20 left-1/2 -translate-x-1/2 flex items-center gap-4"
+      animate={{ y: [0, -20, 0] }}
+      transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+    >
+      {/* Left weight */}
+      <div className="flex items-center">
+        <div className="w-4 h-4 bg-zinc-600 rounded" />
+        <div className="w-10 h-2 bg-zinc-500" />
+        <div className="w-4 h-4 bg-zinc-600 rounded" />
+      </div>
+      {/* Bar */}
+      <div className="w-8 h-2 bg-zinc-400 -mx-6" />
+      {/* Right weight */}
+      <div className="flex items-center">
+        <div className="w-4 h-4 bg-zinc-600 rounded" />
+        <div className="w-10 h-2 bg-zinc-500" />
+        <div className="w-4 h-4 bg-zinc-600 rounded" />
+      </div>
+    </motion.div>
+    {/* Legs */}
+    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-2">
+      <motion.div 
+        className="w-4 h-8 bg-orange-600 rounded-b-lg"
+        animate={{ scaleY: [1, 0.9, 1] }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      <motion.div 
+        className="w-4 h-8 bg-orange-600 rounded-b-lg"
+        animate={{ scaleY: [1, 0.9, 1] }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut', delay: 0.1 }}
+      />
+    </div>
+  </motion.div>
+);
+
+// Floating gym elements
+const FloatingElement = ({ icon: Icon, delay, x, y, size = 24 }: any) => (
   <motion.div
-    initial={{ rotate: -15, scale: 0.9 }}
+    initial={{ opacity: 0, scale: 0 }}
     animate={{ 
-      rotate: [null, 15, -15],
-      scale: [null, 1.1, 0.9]
+      opacity: [0.2, 0.4, 0.2],
+      scale: [1, 1.2, 1],
+      y: [0, -10, 0]
     }}
     transition={{ 
-      duration: 2,
+      duration: 3,
       delay,
       repeat: Infinity,
-      repeatType: 'reverse',
       ease: 'easeInOut'
     }}
-    className={className}
+    className="absolute"
+    style={{ left: x, top: y }}
   >
-    <Dumbbell className="w-full h-full text-orange-500" />
+    <Icon size={size} className="text-orange-500" />
   </motion.div>
+);
+
+// Heartbeat line animation
+const HeartbeatLine = () => (
+  <svg className="w-full h-16 text-orange-500/30" viewBox="0 0 400 50">
+    <motion.path
+      d="M0,25 L80,25 L100,10 L120,40 L140,15 L160,35 L180,25 L400,25"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      initial={{ pathLength: 0 }}
+      animate={{ pathLength: 1 }}
+      transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+    />
+  </svg>
+);
+
+// Pulsing circles
+const PulsingCircle = ({ delay, size }: { delay: number; size: number }) => (
+  <motion.div
+    className="absolute rounded-full border-2 border-orange-500/20"
+    style={{ width: size, height: size }}
+    initial={{ scale: 0.8, opacity: 0 }}
+    animate={{ 
+      scale: [1, 1.5, 1],
+      opacity: [0.1, 0.3, 0.1]
+    }}
+    transition={{ 
+      duration: 4,
+      delay,
+      repeat: Infinity,
+      ease: 'easeInOut'
+    }}
+  />
 );
 
 export default function GymLoginPage() {
@@ -75,22 +160,50 @@ export default function GymLoginPage() {
         >
           {/* Logo */}
           <div className="mb-8">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-xl bg-orange-500 flex items-center justify-center">
+            <motion.div 
+              className="flex items-center gap-3 mb-6"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <motion.div 
+                className="w-12 h-12 rounded-xl bg-orange-500 flex items-center justify-center"
+                whileHover={{ scale: 1.1, rotate: 10 }}
+                transition={{ type: 'spring', stiffness: 300 }}
+              >
                 <Dumbbell className="w-6 h-6 text-white" />
-              </div>
+              </motion.div>
               <div>
                 <h1 className="text-xl font-bold text-white">Academia Genesis</h1>
                 <p className="text-zinc-500 text-sm">Sistema de gestão</p>
               </div>
-            </div>
-            <h2 className="text-2xl lg:text-3xl font-bold text-white">Bem-vindo de volta</h2>
-            <p className="text-zinc-400 mt-2">Entre com suas credenciais para acessar</p>
+            </motion.div>
+            <motion.h2 
+              className="text-2xl lg:text-3xl font-bold text-white"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              Bem-vindo de volta
+            </motion.h2>
+            <motion.p 
+              className="text-zinc-400 mt-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              Entre com suas credenciais para acessar
+            </motion.p>
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
+            <motion.div 
+              className="space-y-2"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4 }}
+            >
               <Label htmlFor="email" className="text-zinc-300 text-sm">Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
@@ -104,9 +217,14 @@ export default function GymLoginPage() {
                   required
                 />
               </div>
-            </div>
+            </motion.div>
 
-            <div className="space-y-2">
+            <motion.div 
+              className="space-y-2"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.5 }}
+            >
               <Label htmlFor="password" className="text-zinc-300 text-sm">Senha</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
@@ -127,64 +245,59 @@ export default function GymLoginPage() {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-            </div>
+            </motion.div>
 
-            <Button
-              type="submit"
-              disabled={isLoading || authLoading}
-              className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-semibold"
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                  Entrando...
-                </>
-              ) : (
-                'Entrar'
-              )}
-            </Button>
+              <Button
+                type="submit"
+                disabled={isLoading || authLoading}
+                className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-semibold"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                    Entrando...
+                  </>
+                ) : (
+                  'Entrar'
+                )}
+              </Button>
+            </motion.div>
           </form>
 
-          <p className="mt-8 text-center text-zinc-500 text-xs">
+          <motion.p 
+            className="mt-8 text-center text-zinc-500 text-xs"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7 }}
+          >
             Seu acesso é criado pelo administrador da academia.
-          </p>
+          </motion.p>
         </motion.div>
       </div>
 
       {/* Right side - Animated Gym Visual */}
       <div className="hidden lg:flex lg:flex-1 bg-zinc-900 items-center justify-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-red-600/10" />
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-red-600/5" />
         
-        {/* Floating dumbbells animation */}
-        <div className="absolute inset-0">
-          <AnimatedDumbbell delay={0} className="absolute top-20 left-20 w-12 h-12 opacity-20" />
-          <AnimatedDumbbell delay={0.5} className="absolute top-40 right-32 w-8 h-8 opacity-15" />
-          <AnimatedDumbbell delay={1} className="absolute bottom-32 left-32 w-10 h-10 opacity-20" />
-          <AnimatedDumbbell delay={1.5} className="absolute bottom-20 right-20 w-14 h-14 opacity-15" />
-          <AnimatedDumbbell delay={0.3} className="absolute top-1/3 left-1/4 w-6 h-6 opacity-10" />
-          <AnimatedDumbbell delay={0.8} className="absolute bottom-1/3 right-1/4 w-8 h-8 opacity-10" />
-        </div>
+        {/* Floating gym icons */}
+        <FloatingElement icon={Dumbbell} delay={0} x="15%" y="20%" size={32} />
+        <FloatingElement icon={Heart} delay={0.5} x="80%" y="15%" size={24} />
+        <FloatingElement icon={Flame} delay={1} x="20%" y="75%" size={28} />
+        <FloatingElement icon={Trophy} delay={1.5} x="85%" y="70%" size={26} />
+        <FloatingElement icon={Zap} delay={0.8} x="10%" y="45%" size={20} />
+        <FloatingElement icon={Dumbbell} delay={1.2} x="90%" y="45%" size={22} />
         
-        {/* Animated rings */}
+        {/* Pulsing circles in center */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }}
-            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-            className="absolute w-96 h-96 rounded-full border-2 border-orange-500/20"
-          />
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: [1, 1.3, 1], opacity: [0.1, 0.15, 0.1] }}
-            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
-            className="absolute w-80 h-80 rounded-full border border-orange-500/15"
-          />
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: [1, 1.4, 1], opacity: [0.05, 0.1, 0.05] }}
-            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-            className="absolute w-64 h-64 rounded-full border border-orange-500/10"
-          />
+          <PulsingCircle delay={0} size={200} />
+          <PulsingCircle delay={0.5} size={280} />
+          <PulsingCircle delay={1} size={360} />
+          <PulsingCircle delay={1.5} size={440} />
         </div>
         
         <motion.div
@@ -193,53 +306,57 @@ export default function GymLoginPage() {
           transition={{ delay: 0.2 }}
           className="relative z-10 text-center px-12"
         >
-          {/* Main animated dumbbell */}
-          <motion.div 
-            className="w-32 h-32 mx-auto mb-8 rounded-2xl bg-orange-500/20 flex items-center justify-center relative"
-            animate={{ 
-              boxShadow: [
-                '0 0 20px rgba(249, 115, 22, 0.2)',
-                '0 0 40px rgba(249, 115, 22, 0.4)',
-                '0 0 20px rgba(249, 115, 22, 0.2)'
-              ]
-            }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          {/* Animated person lifting */}
+          <div className="flex justify-center mb-8">
+            <AnimatedPerson />
+          </div>
+          
+          {/* Heartbeat line */}
+          <div className="max-w-sm mx-auto mb-6">
+            <HeartbeatLine />
+          </div>
+          
+          <motion.h2 
+            className="text-3xl font-bold text-white mb-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
           >
-            <motion.div
-              animate={{ 
-                rotate: [0, 10, 0, -10, 0],
-                scale: [1, 1.1, 1, 1.1, 1]
-              }}
-              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              <Dumbbell className="w-16 h-16 text-orange-500" />
-            </motion.div>
-          </motion.div>
-          
-          <h2 className="text-3xl font-bold text-white mb-4">
-            Gerencie sua academia
-          </h2>
-          <p className="text-zinc-400 text-lg max-w-md">
-            Controle completo de alunos, treinos, aulas e finanças em um único lugar.
-          </p>
-          
-          {/* Animated features */}
-          <motion.div 
-            className="mt-12 flex flex-wrap justify-center gap-3"
+            Supere seus limites
+          </motion.h2>
+          <motion.p 
+            className="text-zinc-400 text-lg max-w-md"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
           >
-            {['Treinos', 'Aulas', 'Alunos', 'Financeiro'].map((feature, i) => (
-              <motion.span
-                key={feature}
+            Gerencie treinos, acompanhe evolução e transforme vidas
+          </motion.p>
+          
+          {/* Animated features */}
+          <motion.div 
+            className="mt-10 flex flex-wrap justify-center gap-3"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            {[
+              { icon: Dumbbell, text: 'Treinos' },
+              { icon: Heart, text: 'Saúde' },
+              { icon: Trophy, text: 'Metas' },
+              { icon: Flame, text: 'Evolução' }
+            ].map((feature, i) => (
+              <motion.div
+                key={feature.text}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.6 + i * 0.1 }}
-                className="px-4 py-2 bg-zinc-800/50 rounded-full text-sm text-zinc-300 border border-zinc-700/50"
+                transition={{ delay: 0.7 + i * 0.1 }}
+                whileHover={{ scale: 1.05, y: -2 }}
+                className="flex items-center gap-2 px-4 py-2 bg-zinc-800/50 rounded-full text-sm text-zinc-300 border border-zinc-700/50"
               >
-                {feature}
-              </motion.span>
+                <feature.icon className="w-4 h-4 text-orange-500" />
+                {feature.text}
+              </motion.div>
             ))}
           </motion.div>
         </motion.div>

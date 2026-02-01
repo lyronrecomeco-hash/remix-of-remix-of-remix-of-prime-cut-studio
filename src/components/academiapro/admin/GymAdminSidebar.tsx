@@ -8,7 +8,8 @@ import {
   Settings,
   LogOut,
   Menu,
-  X
+  X,
+  UserCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useGymAuth } from '@/contexts/GymAuthContext';
@@ -20,6 +21,7 @@ const navItems = [
   { path: '/academiapro/admin/alunos', icon: Users, label: 'Alunos' },
   { path: '/academiapro/admin/treinos', icon: Dumbbell, label: 'Treinos' },
   { path: '/academiapro/admin/aulas', icon: CalendarDays, label: 'Aulas' },
+  { path: '/academiapro/admin/presenca', icon: UserCheck, label: 'Presença' },
   { path: '/academiapro/admin/financeiro', icon: CreditCard, label: 'Financeiro' },
   { path: '/academiapro/admin/configuracoes', icon: Settings, label: 'Configurações' },
 ];
