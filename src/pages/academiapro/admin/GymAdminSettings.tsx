@@ -1,29 +1,41 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Building2, 
   Bell, 
-  Shield
+  Shield,
+  Palette
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Modal, ModalBody } from '@/components/ui/modal';
 import { GymThemePersonalization } from '@/components/academiapro/admin/GymThemePersonalization';
 
 export default function GymAdminSettings() {
+  const [isPersonalizationOpen, setIsPersonalizationOpen] = useState(false);
+
   return (
     <div className="space-y-6 w-full">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
       >
-        <h1 className="text-3xl font-bold">Configurações</h1>
-        <p className="text-zinc-400 mt-1">Configure sua academia</p>
+        <div>
+          <h1 className="text-3xl font-bold">Configurações</h1>
+          <p className="text-zinc-400 mt-1">Configure sua academia</p>
+        </div>
+        <Button
+          onClick={() => setIsPersonalizationOpen(true)}
+          className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
+        >
+          <Palette className="w-4 h-4 mr-2" />
+          Personalização
+        </Button>
       </motion.div>
-
-      {/* Personalization Section */}
-      <GymThemePersonalization />
 
       {/* Academy Info */}
       <motion.div
@@ -155,6 +167,18 @@ export default function GymAdminSettings() {
           </div>
         </div>
       </motion.div>
+
+      {/* Personalization Modal */}
+      <Modal
+        isOpen={isPersonalizationOpen}
+        onClose={() => setIsPersonalizationOpen(false)}
+        title="Personalização do Sistema"
+        size="3xl"
+      >
+        <ModalBody className="max-h-[70vh] overflow-y-auto">
+          <GymThemePersonalization />
+        </ModalBody>
+      </Modal>
     </div>
   );
 }
