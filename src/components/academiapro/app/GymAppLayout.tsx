@@ -33,12 +33,12 @@ export function GymAppLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white pb-20 lg:pb-0 lg:flex w-full">
-      {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:border-r lg:border-zinc-800 lg:fixed lg:inset-y-0 lg:left-0">
+    <div className="min-h-screen bg-zinc-950 text-white lg:flex w-full">
+      {/* Desktop Sidebar - FIXED */}
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:border-r lg:border-zinc-800 lg:fixed lg:inset-y-0 lg:left-0 bg-zinc-950 z-40">
         <div className="p-6 border-b border-zinc-800">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center">
               <Dumbbell className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -47,7 +47,7 @@ export function GymAppLayout() {
             </div>
           </div>
         </div>
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path || 
               (item.path !== '/academiapro/app' && location.pathname.startsWith(item.path));
@@ -58,7 +58,7 @@ export function GymAppLayout() {
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
                   isActive 
-                    ? "bg-gradient-to-r from-orange-500/20 to-red-600/20 text-orange-500 border border-orange-500/30" 
+                    ? "bg-orange-500/20 text-orange-500 border border-orange-500/30" 
                     : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
                 )}
               >
@@ -70,9 +70,9 @@ export function GymAppLayout() {
         </nav>
       </aside>
       
-      {/* Main Content - Left aligned on desktop */}
-      <main className="flex-1 lg:ml-64 w-full">
-        <div className="w-full lg:p-8 lg:max-w-none">
+      {/* Main Content - Scrollable */}
+      <main className="flex-1 lg:ml-64 w-full min-h-screen pb-20 lg:pb-0">
+        <div className="w-full lg:p-8 lg:max-w-none h-full overflow-y-auto">
           <Outlet />
         </div>
       </main>

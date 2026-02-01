@@ -8,6 +8,27 @@ import { Label } from '@/components/ui/label';
 import { useGymAuth } from '@/contexts/GymAuthContext';
 import { toast } from 'sonner';
 
+// Animated dumbbell component
+const AnimatedDumbbell = ({ delay = 0, className = '' }: { delay?: number; className?: string }) => (
+  <motion.div
+    initial={{ rotate: -15, scale: 0.9 }}
+    animate={{ 
+      rotate: [null, 15, -15],
+      scale: [null, 1.1, 0.9]
+    }}
+    transition={{ 
+      duration: 2,
+      delay,
+      repeat: Infinity,
+      repeatType: 'reverse',
+      ease: 'easeInOut'
+    }}
+    className={className}
+  >
+    <Dumbbell className="w-full h-full text-orange-500" />
+  </motion.div>
+);
+
 export default function GymLoginPage() {
   const navigate = useNavigate();
   const { signIn, isLoading: authLoading, isAuthenticated, role } = useGymAuth();
@@ -130,11 +151,41 @@ export default function GymLoginPage() {
         </motion.div>
       </div>
 
-      {/* Right side - Decorative */}
+      {/* Right side - Animated Gym Visual */}
       <div className="hidden lg:flex lg:flex-1 bg-zinc-900 items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-red-600/10" />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-orange-500/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-red-600/20 rounded-full blur-3xl" />
+        
+        {/* Floating dumbbells animation */}
+        <div className="absolute inset-0">
+          <AnimatedDumbbell delay={0} className="absolute top-20 left-20 w-12 h-12 opacity-20" />
+          <AnimatedDumbbell delay={0.5} className="absolute top-40 right-32 w-8 h-8 opacity-15" />
+          <AnimatedDumbbell delay={1} className="absolute bottom-32 left-32 w-10 h-10 opacity-20" />
+          <AnimatedDumbbell delay={1.5} className="absolute bottom-20 right-20 w-14 h-14 opacity-15" />
+          <AnimatedDumbbell delay={0.3} className="absolute top-1/3 left-1/4 w-6 h-6 opacity-10" />
+          <AnimatedDumbbell delay={0.8} className="absolute bottom-1/3 right-1/4 w-8 h-8 opacity-10" />
+        </div>
+        
+        {/* Animated rings */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }}
+            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+            className="absolute w-96 h-96 rounded-full border-2 border-orange-500/20"
+          />
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: [1, 1.3, 1], opacity: [0.1, 0.15, 0.1] }}
+            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
+            className="absolute w-80 h-80 rounded-full border border-orange-500/15"
+          />
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: [1, 1.4, 1], opacity: [0.05, 0.1, 0.05] }}
+            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+            className="absolute w-64 h-64 rounded-full border border-orange-500/10"
+          />
+        </div>
         
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
@@ -142,9 +193,29 @@ export default function GymLoginPage() {
           transition={{ delay: 0.2 }}
           className="relative z-10 text-center px-12"
         >
-          <div className="w-24 h-24 mx-auto mb-8 rounded-2xl bg-orange-500/20 flex items-center justify-center">
-            <Dumbbell className="w-12 h-12 text-orange-500" />
-          </div>
+          {/* Main animated dumbbell */}
+          <motion.div 
+            className="w-32 h-32 mx-auto mb-8 rounded-2xl bg-orange-500/20 flex items-center justify-center relative"
+            animate={{ 
+              boxShadow: [
+                '0 0 20px rgba(249, 115, 22, 0.2)',
+                '0 0 40px rgba(249, 115, 22, 0.4)',
+                '0 0 20px rgba(249, 115, 22, 0.2)'
+              ]
+            }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <motion.div
+              animate={{ 
+                rotate: [0, 10, 0, -10, 0],
+                scale: [1, 1.1, 1, 1.1, 1]
+              }}
+              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              <Dumbbell className="w-16 h-16 text-orange-500" />
+            </motion.div>
+          </motion.div>
+          
           <h2 className="text-3xl font-bold text-white mb-4">
             Gerencie sua academia
           </h2>
@@ -152,24 +223,25 @@ export default function GymLoginPage() {
             Controle completo de alunos, treinos, aulas e finanças em um único lugar.
           </p>
           
-          <div className="mt-12 grid grid-cols-3 gap-6">
-            {[
-              { label: 'Alunos', value: '500+' },
-              { label: 'Treinos', value: '1.2K' },
-              { label: 'Aulas', value: '50+' },
-            ].map((stat, i) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 + i * 0.1 }}
-                className="bg-zinc-800/50 rounded-xl p-4"
+          {/* Animated features */}
+          <motion.div 
+            className="mt-12 flex flex-wrap justify-center gap-3"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            {['Treinos', 'Aulas', 'Alunos', 'Financeiro'].map((feature, i) => (
+              <motion.span
+                key={feature}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.6 + i * 0.1 }}
+                className="px-4 py-2 bg-zinc-800/50 rounded-full text-sm text-zinc-300 border border-zinc-700/50"
               >
-                <p className="text-2xl font-bold text-orange-500">{stat.value}</p>
-                <p className="text-zinc-500 text-sm">{stat.label}</p>
-              </motion.div>
+                {feature}
+              </motion.span>
             ))}
-          </div>
+          </motion.div>
         </motion.div>
       </div>
     </div>

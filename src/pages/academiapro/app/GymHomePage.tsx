@@ -10,15 +10,18 @@ import {
   Play,
   Trophy,
   Timer,
-  Target
+  Target,
+  QrCode
 } from 'lucide-react';
 import { useGymAuth } from '@/contexts/GymAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { GymQRCheckIn } from '@/components/academiapro/app/GymQRCheckIn';
 
 export default function GymHomePage() {
-  const { profile } = useGymAuth();
+  const { profile, user } = useGymAuth();
   const [todayWorkout, setTodayWorkout] = useState<any>(null);
+  const [showCheckIn, setShowCheckIn] = useState(false);
   const [stats, setStats] = useState({
     workoutsThisWeek: 0,
     totalPRs: 0,
@@ -64,8 +67,8 @@ export default function GymHomePage() {
         .select('id', { count: 'exact' })
         .eq('user_id', profile?.user_id)
         .gte('started_at', weekStart.toISOString()),
-      supabase
-        .from('gym_personal_records')
+      (supabase
+        .from('gym_personal_records' as any) as any)
         .select('id', { count: 'exact' })
         .eq('user_id', profile?.user_id)
     ]);
@@ -89,16 +92,29 @@ export default function GymHomePage() {
   };
 
   return (
-    <div className="p-4 lg:p-0 space-y-6">
+    <div className="p-4 lg:p-0 space-y-6 pb-24 lg:pb-0">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="pt-2"
+        className="flex items-center justify-between pt-2"
       >
-        <p className="text-zinc-400 text-sm">{greeting()},</p>
-        <h1 className="text-2xl font-bold">{profile?.full_name?.split(' ')[0] || 'Atleta'}</h1>
+        <div>
+          <p className="text-zinc-400 text-sm">{greeting()},</p>
+          <h1 className="text-2xl font-bold">{profile?.full_name?.split(' ')[0] || 'Atleta'}</h1>
+        </div>
+        <Button 
+          variant="outline" 
+          size="icon"
+          onClick={() => setShowCheckIn(true)}
+          className="border-orange-500/50 text-orange-500 hover:bg-orange-500/10"
+        >
+          <QrCode className="w-5 h-5" />
+        </Button>
       </motion.div>
+
+      {/* QR Check-in Modal */}
+      <GymQRCheckIn open={showCheckIn} onOpenChange={setShowCheckIn} />
 
       {/* Stats Cards */}
       <motion.div
@@ -107,7 +123,7 @@ export default function GymHomePage() {
         transition={{ delay: 0.1 }}
         className="grid grid-cols-3 gap-3"
       >
-        <div className="bg-gradient-to-br from-orange-500/20 to-red-600/20 border border-orange-500/30 rounded-xl p-3 text-center">
+        <div className="bg-orange-500/20 border border-orange-500/30 rounded-xl p-3 text-center">
           <Flame className="w-5 h-5 text-orange-500 mx-auto mb-1" />
           <p className="text-xl font-bold">{stats.streak}</p>
           <p className="text-[10px] text-zinc-400">Sequência</p>
@@ -138,7 +154,7 @@ export default function GymHomePage() {
         </div>
 
         {todayWorkout ? (
-          <div className="bg-gradient-to-br from-zinc-900 to-zinc-900/50 border border-zinc-800 rounded-2xl p-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h3 className="font-semibold text-lg">{todayWorkout.name}</h3>
@@ -191,7 +207,7 @@ export default function GymHomePage() {
         className="grid grid-cols-2 gap-3"
       >
         <Link to="/academiapro/app/meu-plano">
-          <div className="bg-gradient-to-br from-orange-500/20 to-red-600/20 border border-orange-500/30 rounded-xl p-4 hover:border-orange-500/50 transition-all h-full">
+          <div className="bg-orange-500/20 border border-orange-500/30 rounded-xl p-4 hover:border-orange-500/50 transition-all h-full">
             <Target className="w-6 h-6 text-orange-500 mb-2" />
             <h3 className="font-medium">Meu Plano</h3>
             <p className="text-xs text-zinc-400">Agenda personalizada</p>

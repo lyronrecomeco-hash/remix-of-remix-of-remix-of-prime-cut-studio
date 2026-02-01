@@ -12,7 +12,8 @@ import {
   ChevronRight,
   Ruler,
   Scale,
-  Target
+  Target,
+  Edit
 } from 'lucide-react';
 import { useGymAuth } from '@/contexts/GymAuthContext';
 import { Button } from '@/components/ui/button';
@@ -66,7 +67,7 @@ export default function GymProfilePage() {
         <div className="flex items-center gap-4 mb-6">
           <Avatar className="w-20 h-20 border-2 border-orange-500">
             <AvatarImage src={profile?.avatar_url || ''} />
-            <AvatarFallback className="bg-gradient-to-br from-orange-500 to-red-600 text-white text-xl">
+            <AvatarFallback className="bg-orange-500/20 text-orange-500 text-xl">
               {profile?.full_name?.charAt(0) || 'U'}
             </AvatarFallback>
           </Avatar>
@@ -76,6 +77,14 @@ export default function GymProfilePage() {
               {getRoleLabel()}
             </span>
           </div>
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={() => navigate('/academiapro/app/perfil/editar')}
+            className="border-zinc-700 hover:bg-zinc-800"
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
         </div>
 
         <div className="space-y-3">

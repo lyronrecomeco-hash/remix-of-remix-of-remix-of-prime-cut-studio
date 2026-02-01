@@ -28,7 +28,8 @@ export function GymAdminLayout() {
   return (
     <div className="min-h-screen bg-zinc-950 text-white flex">
       <GymAdminSidebar />
-      <main className="flex-1 overflow-auto">
+      {/* Main Content - Scrollable only, sidebar stays fixed */}
+      <main className="flex-1 lg:ml-64 overflow-auto min-h-screen">
         <div className="p-4 lg:p-8">
           <Outlet />
         </div>
