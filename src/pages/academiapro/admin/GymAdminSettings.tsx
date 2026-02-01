@@ -27,7 +27,7 @@ export default function GymAdminSettings() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6"
+        className="bg-card border border-border rounded-2xl p-6"
       >
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
@@ -78,7 +78,7 @@ export default function GymAdminSettings() {
           </div>
         </div>
 
-        <Button className="mt-6 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
+        <Button className="mt-6">
           Salvar Alterações
         </Button>
       </motion.div>

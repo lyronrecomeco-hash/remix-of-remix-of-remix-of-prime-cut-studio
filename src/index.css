@@ -566,6 +566,30 @@
   }
 }
 
+/* Gym theme bridge: makes existing zinc/orange utility usage follow the gym theme instantly */
+@layer utilities {
+  body.gym-mode .bg-zinc-950 { background-color: hsl(var(--background)) !important; }
+  body.gym-mode .bg-zinc-900 { background-color: hsl(var(--card)) !important; }
+  body.gym-mode .bg-zinc-800 { background-color: hsl(var(--muted)) !important; }
+  body.gym-mode .bg-zinc-800\/50 { background-color: hsl(var(--muted) / 0.5) !important; }
+
+  body.gym-mode .text-white { color: hsl(var(--foreground)) !important; }
+  body.gym-mode .text-zinc-300 { color: hsl(var(--foreground) / 0.9) !important; }
+  body.gym-mode .text-zinc-400 { color: hsl(var(--muted-foreground)) !important; }
+  body.gym-mode .text-zinc-500 { color: hsl(var(--muted-foreground) / 0.9) !important; }
+
+  body.gym-mode .border-zinc-800 { border-color: hsl(var(--border)) !important; }
+  body.gym-mode .border-zinc-700 { border-color: hsl(var(--border)) !important; }
+
+  body.gym-mode .text-orange-500 { color: hsl(var(--primary)) !important; }
+  body.gym-mode .bg-orange-500 { background-color: hsl(var(--primary)) !important; }
+  body.gym-mode .bg-orange-500\/20 { background-color: hsl(var(--primary) / 0.2) !important; }
+  body.gym-mode .border-orange-500\/30 { border-color: hsl(var(--primary) / 0.3) !important; }
+
+  body.gym-mode .focus\:border-orange-500:focus { border-color: hsl(var(--primary)) !important; }
+  body.gym-mode .focus\:ring-orange-500:focus { --tw-ring-color: hsl(var(--ring)) !important; }
+}
+
 /* Genesis Light Mode Enhancements */
 .genesis-light .glass-card {
   @apply bg-white/90 border-border;

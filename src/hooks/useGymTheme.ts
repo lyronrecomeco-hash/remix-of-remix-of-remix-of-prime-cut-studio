@@ -49,17 +49,83 @@ function hexToHSL(hex: string): string {
   return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 }
 
+function getLuminance(hex: string): number {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) return 0;
+
+  const r = parseInt(result[1], 16) / 255;
+  const g = parseInt(result[2], 16) / 255;
+  const b = parseInt(result[3], 16) / 255;
+
+  const toLinear = (c: number) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+  const rl = toLinear(r);
+  const gl = toLinear(g);
+  const bl = toLinear(b);
+
+  return 0.2126 * rl + 0.7152 * gl + 0.0722 * bl;
+}
+
+function adjustHslLightness(hsl: string, delta: number): string {
+  const parts = hsl.trim().split(/\s+/);
+  if (parts.length !== 3) return hsl;
+
+  const h = Number(parts[0]);
+  const s = Number(parts[1].replace('%', ''));
+  const l = Number(parts[2].replace('%', ''));
+
+  if (Number.isNaN(h) || Number.isNaN(s) || Number.isNaN(l)) return hsl;
+  const nextL = Math.min(100, Math.max(0, l + delta));
+  return `${h} ${s}% ${nextL}%`;
+}
+
+function pickForegroundForBackground(bgHex: string): string {
+  // Dark bg => white text; Light bg => dark text
+  return getLuminance(bgHex) > 0.55 ? '222 47% 8%' : '0 0% 100%';
+}
+
 // Apply theme to CSS variables
 function applyThemeToDOM(theme: GymThemeSettings) {
   const root = document.documentElement;
+
+  const background = hexToHSL(theme.background_color);
+  const card = hexToHSL(theme.card_color);
+  const foreground = hexToHSL(theme.text_color);
+  const primary = hexToHSL(theme.primary_color);
+  const secondary = hexToHSL(theme.secondary_color);
+  const accent = hexToHSL(theme.accent_color);
+
+  const isDark = getLuminance(theme.background_color) < 0.5;
+  const border = adjustHslLightness(card, isDark ? 10 : -10);
+  const input = adjustHslLightness(card, isDark ? 6 : -6);
+  const muted = adjustHslLightness(card, isDark ? 4 : -4);
+  const mutedFg = adjustHslLightness(foreground, isDark ? -35 : 35);
   
   // Apply gym-specific CSS variables
-  root.style.setProperty('--gym-primary', hexToHSL(theme.primary_color));
-  root.style.setProperty('--gym-secondary', hexToHSL(theme.secondary_color));
-  root.style.setProperty('--gym-accent', hexToHSL(theme.accent_color));
-  root.style.setProperty('--gym-background', hexToHSL(theme.background_color));
-  root.style.setProperty('--gym-card', hexToHSL(theme.card_color));
-  root.style.setProperty('--gym-text', hexToHSL(theme.text_color));
+  root.style.setProperty('--gym-primary', primary);
+  root.style.setProperty('--gym-secondary', secondary);
+  root.style.setProperty('--gym-accent', accent);
+  root.style.setProperty('--gym-background', background);
+  root.style.setProperty('--gym-card', card);
+  root.style.setProperty('--gym-text', foreground);
+
+  // Map gym theme to the app design tokens (Tailwind semantic colors)
+  root.style.setProperty('--background', background);
+  root.style.setProperty('--foreground', foreground);
+  root.style.setProperty('--card', card);
+  root.style.setProperty('--card-foreground', foreground);
+  root.style.setProperty('--popover', card);
+  root.style.setProperty('--popover-foreground', foreground);
+  root.style.setProperty('--primary', primary);
+  root.style.setProperty('--primary-foreground', pickForegroundForBackground(theme.primary_color));
+  root.style.setProperty('--secondary', secondary);
+  root.style.setProperty('--secondary-foreground', pickForegroundForBackground(theme.secondary_color));
+  root.style.setProperty('--accent', accent);
+  root.style.setProperty('--accent-foreground', pickForegroundForBackground(theme.accent_color));
+  root.style.setProperty('--border', border);
+  root.style.setProperty('--input', input);
+  root.style.setProperty('--muted', muted);
+  root.style.setProperty('--muted-foreground', mutedFg);
+  root.style.setProperty('--ring', primary);
   
   // Store in localStorage for immediate access on reload
   localStorage.setItem('gym_theme', JSON.stringify(theme));
