@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Palette, RotateCcw, Save, Loader2, Image, Building2, Sun, Moon, Droplets, Flame, Leaf, Zap } from 'lucide-react';
+import { Palette, RotateCcw, Check, Loader2, Image, Building2, Sun, Moon, Droplets, Flame, Leaf, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { useGymTheme, GymThemeSettings } from '@/hooks/useGymTheme';
@@ -48,7 +47,7 @@ function ColorPicker({ label, description, value, onChange }: ColorPickerProps) 
 // Pre-defined themes
 const presetThemes: { name: string; icon: React.ReactNode; colors: Omit<GymThemeSettings, 'id'> }[] = [
   {
-    name: 'Genesis (Padrão)',
+    name: 'Genesis',
     icon: <Flame className="w-5 h-5" />,
     colors: {
       primary_color: '#F97316',
@@ -60,7 +59,7 @@ const presetThemes: { name: string; icon: React.ReactNode; colors: Omit<GymTheme
     }
   },
   {
-    name: 'Modo Claro',
+    name: 'Claro',
     icon: <Sun className="w-5 h-5" />,
     colors: {
       primary_color: '#F97316',
@@ -72,7 +71,7 @@ const presetThemes: { name: string; icon: React.ReactNode; colors: Omit<GymTheme
     }
   },
   {
-    name: 'Oceano Azul',
+    name: 'Oceano',
     icon: <Droplets className="w-5 h-5" />,
     colors: {
       primary_color: '#3B82F6',
@@ -84,7 +83,7 @@ const presetThemes: { name: string; icon: React.ReactNode; colors: Omit<GymTheme
     }
   },
   {
-    name: 'Vermelho Intenso',
+    name: 'Vermelho',
     icon: <Zap className="w-5 h-5" />,
     colors: {
       primary_color: '#EF4444',
@@ -96,7 +95,7 @@ const presetThemes: { name: string; icon: React.ReactNode; colors: Omit<GymTheme
     }
   },
   {
-    name: 'Verde Natureza',
+    name: 'Natureza',
     icon: <Leaf className="w-5 h-5" />,
     colors: {
       primary_color: '#22C55E',
@@ -108,7 +107,7 @@ const presetThemes: { name: string; icon: React.ReactNode; colors: Omit<GymTheme
     }
   },
   {
-    name: 'Noite Escura',
+    name: 'Noturno',
     icon: <Moon className="w-5 h-5" />,
     colors: {
       primary_color: '#A855F7',
@@ -133,119 +132,93 @@ export function GymThemePersonalization() {
 
   const [gymName, setGymName] = useState('Academia Genesis');
   const [showAdvancedColors, setShowAdvancedColors] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState<string | null>('Genesis');
 
-  const applyPreset = (preset: typeof presetThemes[0]) => {
+  const applyPreset = async (preset: typeof presetThemes[0]) => {
+    setSelectedTheme(preset.name);
     updateThemePreview(preset.colors);
+    // Automatically save when selecting a preset
+    await saveTheme({ ...preset.colors, id: theme.id });
+  };
+
+  const handleApply = async () => {
+    await saveTheme();
+  };
+
+  const handleReset = async () => {
+    setSelectedTheme('Genesis');
+    resetToDefault();
+    await saveTheme(presetThemes[0].colors);
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6"
+      >
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+        </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Preview Card */}
-      <div className="p-4 rounded-xl border border-zinc-700" style={{ backgroundColor: theme.card_color }}>
-        <p className="text-xs text-zinc-400 mb-3">Pré-visualização</p>
-        <div className="flex items-center gap-3">
-          <div 
-            className="w-12 h-12 rounded-xl flex items-center justify-center"
-            style={{ backgroundColor: theme.primary_color }}
-          >
-            <Palette className="w-6 h-6" style={{ color: theme.text_color }} />
-          </div>
-          <div>
-            <p className="font-semibold" style={{ color: theme.text_color }}>{gymName}</p>
-            <p className="text-sm" style={{ color: theme.accent_color }}>Seu sistema personalizado</p>
-          </div>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.15 }}
+      className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6"
+    >
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
+          <Palette className="w-5 h-5 text-orange-500" />
         </div>
-        <div className="mt-4 flex gap-2 flex-wrap">
-          <div 
-            className="px-4 py-2 rounded-lg text-sm font-medium"
-            style={{ backgroundColor: theme.primary_color, color: theme.text_color }}
-          >
-            Botão Primário
-          </div>
-          <div 
-            className="px-4 py-2 rounded-lg text-sm font-medium"
-            style={{ backgroundColor: theme.secondary_color, color: theme.text_color }}
-          >
-            Botão Secundário
-          </div>
+        <div>
+          <h2 className="font-semibold text-lg">Personalização</h2>
+          <p className="text-sm text-zinc-400">Customize o visual do sistema</p>
         </div>
       </div>
 
-      {/* Identity Section */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
-            <Building2 className="w-5 h-5 text-orange-500" />
-          </div>
+      <div className="space-y-4">
+        {/* Preset Themes */}
+        <div className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-xl">
           <div>
-            <h3 className="font-semibold">Identidade</h3>
-            <p className="text-sm text-zinc-400">Nome e logo da academia</p>
-          </div>
-        </div>
-        
-        <div className="space-y-3">
-          <div className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-xl">
-            <div>
-              <p className="font-medium">Nome da Academia</p>
-              <p className="text-sm text-zinc-400">Exibido em todo o sistema</p>
-            </div>
-            <Input
-              value={gymName}
-              onChange={(e) => setGymName(e.target.value)}
-              className="w-48 bg-zinc-700 border-zinc-600"
-              placeholder="Nome da academia"
-            />
-          </div>
-          
-          <div className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-xl">
-            <div>
-              <p className="font-medium">Logo da Academia</p>
-              <p className="text-sm text-zinc-400">Imagem PNG ou SVG</p>
-            </div>
-            <Button variant="outline" size="sm" className="border-zinc-600 hover:bg-zinc-700">
-              <Image className="w-4 h-4 mr-2" />
-              Alterar Logo
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Preset Themes Section */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
-            <Palette className="w-5 h-5 text-orange-500" />
-          </div>
-          <div>
-            <h3 className="font-semibold">Temas Prontos</h3>
+            <p className="font-medium">Tema do Sistema</p>
             <p className="text-sm text-zinc-400">Selecione um tema pré-configurado</p>
           </div>
         </div>
         
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 px-2">
           {presetThemes.map((preset) => (
             <button
               key={preset.name}
               onClick={() => applyPreset(preset)}
-              className="flex flex-col items-center gap-2 p-4 rounded-xl border border-zinc-700 hover:border-orange-500/50 transition-all group"
+              disabled={isSaving}
+              className={`relative flex flex-col items-center gap-2 p-3 rounded-xl border transition-all ${
+                selectedTheme === preset.name 
+                  ? 'border-orange-500 ring-2 ring-orange-500/30' 
+                  : 'border-zinc-700 hover:border-zinc-600'
+              }`}
               style={{ backgroundColor: preset.colors.card_color }}
             >
+              {selectedTheme === preset.name && (
+                <div className="absolute -top-1 -right-1 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
+                  <Check className="w-3 h-3 text-white" />
+                </div>
+              )}
               <div 
-                className="w-10 h-10 rounded-lg flex items-center justify-center"
+                className="w-8 h-8 rounded-lg flex items-center justify-center"
                 style={{ backgroundColor: preset.colors.primary_color, color: preset.colors.text_color }}
               >
                 {preset.icon}
               </div>
               <span 
-                className="text-xs font-medium text-center"
+                className="text-xs font-medium"
                 style={{ color: preset.colors.text_color }}
               >
                 {preset.name}
@@ -253,19 +226,37 @@ export function GymThemePersonalization() {
             </button>
           ))}
         </div>
-      </div>
 
-      {/* Advanced Colors Section */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
-              <Palette className="w-5 h-5 text-orange-500" />
-            </div>
-            <div>
-              <h3 className="font-semibold">Cores Personalizadas</h3>
-              <p className="text-sm text-zinc-400">Ajuste cada cor manualmente</p>
-            </div>
+        {/* Identity */}
+        <div className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-xl">
+          <div>
+            <p className="font-medium">Nome da Academia</p>
+            <p className="text-sm text-zinc-400">Exibido em todo o sistema</p>
+          </div>
+          <Input
+            value={gymName}
+            onChange={(e) => setGymName(e.target.value)}
+            className="w-40 sm:w-48 bg-zinc-700 border-zinc-600"
+            placeholder="Nome"
+          />
+        </div>
+        
+        <div className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-xl">
+          <div>
+            <p className="font-medium">Logo da Academia</p>
+            <p className="text-sm text-zinc-400">Imagem PNG ou SVG</p>
+          </div>
+          <Button variant="outline" size="sm" className="border-zinc-600 hover:bg-zinc-700">
+            <Image className="w-4 h-4 mr-2" />
+            Alterar
+          </Button>
+        </div>
+
+        {/* Advanced Colors Toggle */}
+        <div className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-xl">
+          <div>
+            <p className="font-medium">Cores Personalizadas</p>
+            <p className="text-sm text-zinc-400">Ajuste cada cor manualmente</p>
           </div>
           <Switch
             checked={showAdvancedColors}
@@ -278,85 +269,99 @@ export function GymThemePersonalization() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="space-y-3"
+            className="space-y-3 pl-4 border-l-2 border-orange-500/30"
           >
             <ColorPicker
               label="Cor Primária"
               description="Botões e destaques principais"
               value={theme.primary_color}
-              onChange={(value) => updateThemePreview({ primary_color: value })}
+              onChange={(value) => {
+                setSelectedTheme(null);
+                updateThemePreview({ primary_color: value });
+              }}
             />
             
             <ColorPicker
               label="Cor Secundária"
               description="Gradientes e elementos secundários"
               value={theme.secondary_color}
-              onChange={(value) => updateThemePreview({ secondary_color: value })}
+              onChange={(value) => {
+                setSelectedTheme(null);
+                updateThemePreview({ secondary_color: value });
+              }}
             />
             
             <ColorPicker
               label="Cor de Destaque"
               description="Links, badges e indicadores"
               value={theme.accent_color}
-              onChange={(value) => updateThemePreview({ accent_color: value })}
+              onChange={(value) => {
+                setSelectedTheme(null);
+                updateThemePreview({ accent_color: value });
+              }}
             />
             
             <ColorPicker
               label="Cor de Fundo"
               description="Fundo geral do sistema"
               value={theme.background_color}
-              onChange={(value) => updateThemePreview({ background_color: value })}
+              onChange={(value) => {
+                setSelectedTheme(null);
+                updateThemePreview({ background_color: value });
+              }}
             />
             
             <ColorPicker
               label="Cor dos Cards"
               description="Fundo de cards e modais"
               value={theme.card_color}
-              onChange={(value) => updateThemePreview({ card_color: value })}
+              onChange={(value) => {
+                setSelectedTheme(null);
+                updateThemePreview({ card_color: value });
+              }}
             />
             
             <ColorPicker
               label="Cor do Texto"
               description="Textos principais e títulos"
               value={theme.text_color}
-              onChange={(value) => updateThemePreview({ text_color: value })}
+              onChange={(value) => {
+                setSelectedTheme(null);
+                updateThemePreview({ text_color: value });
+              }}
             />
+
+            <div className="flex gap-3 pt-2">
+              <Button
+                variant="outline"
+                onClick={handleReset}
+                className="flex-1 border-zinc-700 hover:bg-zinc-800"
+                disabled={isSaving}
+              >
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Restaurar
+              </Button>
+              <Button 
+                className="flex-1 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
+                onClick={handleApply}
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Aplicando...
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4 mr-2" />
+                    Aplicar
+                  </>
+                )}
+              </Button>
+            </div>
           </motion.div>
         )}
       </div>
-
-      {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <Button
-          variant="outline"
-          onClick={resetToDefault}
-          className="flex-1 border-zinc-700 hover:bg-zinc-800"
-        >
-          <RotateCcw className="w-4 h-4 mr-2" />
-          Restaurar Padrão
-        </Button>
-        <Button 
-          className="flex-1 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
-          onClick={() => saveTheme()}
-          disabled={isSaving}
-        >
-          {isSaving ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Salvando...
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4 mr-2" />
-              Salvar Personalização
-            </>
-          )}
-        </Button>
-      </div>
-
-      <p className="text-xs text-zinc-500 text-center">
-        As alterações serão aplicadas globalmente no login, painel admin e app do aluno
-      </p>
-    </div>
+    </motion.div>
   );
 }
