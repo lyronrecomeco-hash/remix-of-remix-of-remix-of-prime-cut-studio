@@ -100,6 +100,7 @@ const GymAdminClasses = lazy(() => import("./pages/academiapro/admin/GymAdminCla
 const GymAdminFinance = lazy(() => import("./pages/academiapro/admin/GymAdminFinance"));
 const GymAdminSettings = lazy(() => import("./pages/academiapro/admin/GymAdminSettings"));
 const GymAdminAttendance = lazy(() => import("./pages/academiapro/admin/GymAdminAttendance"));
+const GymAdminCheckIn = lazy(() => import("./pages/academiapro/admin/GymAdminCheckIn"));
 const GymSettingsAppPage = lazy(() => import("./pages/academiapro/app/GymSettingsAppPage"));
 // QueryClient com retry logic e cache otimizado
 const queryClient = new QueryClient({
@@ -360,6 +361,7 @@ const AppContent = () => {
               <Route path="alunos" element={<Suspense fallback={<GymPageLoader />}><GymAdminStudents /></Suspense>} />
               <Route path="treinos" element={<Suspense fallback={<GymPageLoader />}><GymAdminWorkouts /></Suspense>} />
               <Route path="aulas" element={<Suspense fallback={<GymPageLoader />}><GymAdminClasses /></Suspense>} />
+              <Route path="checkin" element={<Suspense fallback={<GymPageLoader />}><GymAdminCheckIn /></Suspense>} />
               <Route path="presenca" element={<Suspense fallback={<GymPageLoader />}><GymAdminAttendance /></Suspense>} />
               <Route path="financeiro" element={<Suspense fallback={<GymPageLoader />}><GymAdminFinance /></Suspense>} />
               <Route path="configuracoes" element={<Suspense fallback={<GymPageLoader />}><GymAdminSettings /></Suspense>} />

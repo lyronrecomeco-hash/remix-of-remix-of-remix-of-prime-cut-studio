@@ -7,7 +7,7 @@ import {
   UserCheck,
   UserX,
   Clock,
-  Filter
+  HelpCircle
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { KanbanHelpModal } from './KanbanHelpModal';
 
 interface AttendanceColumn {
   id: string;
@@ -38,6 +39,7 @@ export default function AttendanceKanban() {
   const [search, setSearch] = useState('');
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
 
   useEffect(() => {
     fetchStudents();
@@ -147,13 +149,26 @@ export default function AttendanceKanban() {
 
   return (
     <div className="space-y-6">
+      {/* Help Modal */}
+      <KanbanHelpModal open={showHelp} onOpenChange={setShowHelp} type="attendance" />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold">Controle de Presença</h1>
-          <p className="text-zinc-400 mt-1 text-sm">
-            Arraste os alunos para registrar presença
-          </p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="text-2xl lg:text-3xl font-bold">Controle de Presença</h1>
+            <p className="text-zinc-400 mt-1 text-sm">
+              Arraste os alunos para registrar presença
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowHelp(true)}
+            className="hover:bg-orange-500/20 text-zinc-400 hover:text-orange-500"
+          >
+            <HelpCircle className="w-5 h-5" />
+          </Button>
         </div>
         <div className="flex items-center gap-3">
           <Input

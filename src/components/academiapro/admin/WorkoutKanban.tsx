@@ -2,13 +2,12 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Plus, 
-  MoreHorizontal, 
   Search,
   Users,
   Dumbbell,
   GripVertical,
-  X,
-  Check
+  Check,
+  HelpCircle
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -23,6 +22,7 @@ import {
 } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { toast } from 'sonner';
+import { KanbanHelpModal } from './KanbanHelpModal';
 
 interface KanbanColumn {
   id: string;
@@ -45,6 +45,7 @@ export default function WorkoutKanban() {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+  const [showHelp, setShowHelp] = useState(false);
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
 
   useEffect(() => {
@@ -202,11 +203,24 @@ export default function WorkoutKanban() {
 
   return (
     <div className="space-y-6">
+      {/* Help Modal */}
+      <KanbanHelpModal open={showHelp} onOpenChange={setShowHelp} type="workouts" />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold">Treinos</h1>
-          <p className="text-zinc-400 mt-1 text-sm">Gerencie e atribua treinos aos alunos</p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="text-2xl lg:text-3xl font-bold">Treinos</h1>
+            <p className="text-zinc-400 mt-1 text-sm">Gerencie e atribua treinos aos alunos</p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowHelp(true)}
+            className="hover:bg-orange-500/20 text-zinc-400 hover:text-orange-500"
+          >
+            <HelpCircle className="w-5 h-5" />
+          </Button>
         </div>
         <Button className="bg-orange-500 hover:bg-orange-600 text-white">
           <Plus className="w-4 h-4 mr-2" />
