@@ -66,13 +66,30 @@ export default function ClassesKanban() {
       .order('name');
 
     if (data) {
+      // Load status from localStorage
+      const savedStatuses = localStorage.getItem('classes_kanban_statuses');
+      let statusMap: Record<string, string> = {};
+      try {
+        statusMap = savedStatuses ? JSON.parse(savedStatuses) : {};
+      } catch (e) {
+        statusMap = {};
+      }
+      
       const classesWithStatus = data.map((c: any) => ({
         ...c,
-        status: !c.is_active ? 'inactive' : 'active'
+        status: statusMap[c.id] || (!c.is_active ? 'inactive' : 'active')
       }));
       setClasses(classesWithStatus);
     }
     setIsLoading(false);
+  };
+
+  const saveStatuses = (newClasses: any[]) => {
+    const statusMap: Record<string, string> = {};
+    newClasses.forEach(c => {
+      statusMap[c.id] = c.status;
+    });
+    localStorage.setItem('classes_kanban_statuses', JSON.stringify(statusMap));
   };
 
   const fetchStudents = async () => {
@@ -102,10 +119,12 @@ export default function ClassesKanban() {
     const classItem = classes.find(c => c.id === draggedItem);
     if (!classItem) return;
 
-    // Update local state immediately
-    setClasses(prev => prev.map(c => 
+    // Update local state immediately and save to localStorage
+    const updatedClasses = classes.map(c => 
       c.id === draggedItem ? { ...c, status: targetStatus } : c
-    ));
+    );
+    setClasses(updatedClasses);
+    saveStatuses(updatedClasses);
 
     // Update is_active in database
     const isActive = targetStatus === 'active' || targetStatus === 'full';
@@ -117,9 +136,11 @@ export default function ClassesKanban() {
     if (error) {
       toast.error('Erro ao atualizar aula');
       // Revert state on error
-      setClasses(prev => prev.map(c => 
+      const revertedClasses = classes.map(c => 
         c.id === draggedItem ? { ...c, status: classItem.status } : c
-      ));
+      );
+      setClasses(revertedClasses);
+      saveStatuses(revertedClasses);
       return;
     }
 

@@ -149,8 +149,10 @@ export default function AttendanceKanban() {
 
   return (
     <div className="space-y-6">
-      {/* Help Modal */}
-      <KanbanHelpModal open={showHelp} onOpenChange={setShowHelp} type="attendance" />
+      {/* Help Modal - rendered at root level */}
+      {showHelp && (
+        <KanbanHelpModal open={showHelp} onOpenChange={setShowHelp} type="attendance" />
+      )}
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

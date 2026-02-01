@@ -66,7 +66,12 @@ export default function WorkoutKanban() {
     if (data) {
       // Load status from local storage or default to draft
       const savedStatuses = localStorage.getItem('workout_kanban_statuses');
-      const statusMap = savedStatuses ? JSON.parse(savedStatuses) : {};
+      let statusMap: Record<string, string> = {};
+      try {
+        statusMap = savedStatuses ? JSON.parse(savedStatuses) : {};
+      } catch (e) {
+        statusMap = {};
+      }
       
       const templatesWithStatus = data.map((t: any) => ({
         ...t,
