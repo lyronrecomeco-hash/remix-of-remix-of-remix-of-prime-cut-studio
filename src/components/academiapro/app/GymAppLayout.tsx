@@ -1,6 +1,6 @@
 import { Outlet, Navigate, NavLink, useLocation } from 'react-router-dom';
 import { useGymAuth } from '@/contexts/GymAuthContext';
-import { GymMobileMenu } from './GymMobileMenu';
+import { GymBottomNav } from './GymBottomNav';
 import { Loader2, Home, Dumbbell, CalendarDays, TrendingUp, User, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -78,8 +78,8 @@ export function GymAppLayout() {
         </div>
       </main>
       
-      {/* Mobile Menu */}
-      <GymMobileMenu />
+      {/* Mobile Bottom Navigation */}
+      <GymBottomNav />
     </div>
   );
 }
