@@ -1,11 +1,11 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Dumbbell, CalendarDays, TrendingUp, User, Settings } from 'lucide-react';
+import { Home, Dumbbell, CalendarDays, TrendingUp, User, Apple } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { path: '/academiapro/app', icon: Home, label: 'Início' },
   { path: '/academiapro/app/treinos', icon: Dumbbell, label: 'Treinos' },
-  { path: '/academiapro/app/aulas', icon: CalendarDays, label: 'Aulas' },
+  { path: '/academiapro/app/nutricao', icon: Apple, label: 'Nutrição' },
   { path: '/academiapro/app/evolucao', icon: TrendingUp, label: 'Evolução' },
   { path: '/academiapro/app/perfil', icon: User, label: 'Perfil' },
 ];
