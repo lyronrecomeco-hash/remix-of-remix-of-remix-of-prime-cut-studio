@@ -1,12 +1,18 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Utensils, 
   Droplets, 
   Plus,
   Flame,
   Apple,
-  Search
+  Search,
+  Mic,
+  TrendingUp,
+  AlertCircle,
+  Trash2,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { useGymAuth } from '@/contexts/GymAuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,6 +23,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+import { VoiceMealRecorder } from '@/components/academiapro/nutrition/VoiceMealRecorder';
+import { MealConfirmationModal } from '@/components/academiapro/nutrition/MealConfirmationModal';
+import { NutritionAIChat } from '@/components/academiapro/nutrition/NutritionAIChat';
+import { NutritionProgressCharts } from '@/components/academiapro/nutrition/NutritionProgressCharts';
 
 interface NutritionGoals {
   id: string;
@@ -55,6 +66,29 @@ interface FoodItem {
   category: string;
 }
 
+interface ParsedMeal {
+  foods: Array<{
+    name: string;
+    quantity_grams: number;
+    calories: number;
+    protein_grams: number;
+    carbs_grams: number;
+    fat_grams: number;
+    fiber_grams: number;
+    sodium_mg: number;
+    confidence: number;
+  }>;
+  water_ml: number;
+  meal_type: string;
+  total_calories: number;
+  total_protein: number;
+  total_carbs: number;
+  total_fat: number;
+  total_fiber: number;
+  total_sodium: number;
+  original_text: string;
+}
+
 const mealTypes = [
   { value: 'breakfast', label: 'Café da Manhã', icon: '🌅' },
   { value: 'lunch', label: 'Almoço', icon: '☀️' },
@@ -75,6 +109,13 @@ export default function GymNutritionPage() {
   const [waterAmount, setWaterAmount] = useState('250');
   const [isLoading, setIsLoading] = useState(true);
   const [showFoodSearch, setShowFoodSearch] = useState(false);
+  const [showProgressCharts, setShowProgressCharts] = useState(false);
+
+  // Voice recording states
+  const [isProcessingVoice, setIsProcessingVoice] = useState(false);
+  const [parsedMeal, setParsedMeal] = useState<ParsedMeal | null>(null);
+  const [showMealConfirmation, setShowMealConfirmation] = useState(false);
+  const [isSavingMeal, setIsSavingMeal] = useState(false);
 
   const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -191,24 +232,122 @@ export default function GymNutritionPage() {
     }
   };
 
-  const addWater = async () => {
-    const amount = parseInt(waterAmount);
-    if (!amount) return;
+  const addWater = async (amount?: number) => {
+    const waterMl = amount || parseInt(waterAmount);
+    if (!waterMl) return;
 
     const { error } = await supabase
       .from('gym_hydration_logs' as any)
       .insert({
         user_id: user?.id,
-        amount_ml: amount
+        amount_ml: waterMl
       });
 
     if (error) {
       toast.error('Erro ao registrar água');
     } else {
-      toast.success(`+${amount}ml registrado!`);
+      toast.success(`+${waterMl}ml registrado!`);
       loadHydrationLogs();
     }
   };
+
+  const deleteMeal = async (mealId: string) => {
+    const { error } = await supabase
+      .from('gym_meal_logs' as any)
+      .delete()
+      .eq('id', mealId);
+
+    if (error) {
+      toast.error('Erro ao excluir refeição');
+    } else {
+      toast.success('Refeição excluída');
+      loadMealLogs();
+    }
+  };
+
+  // Voice processing
+  const handleVoiceTranscription = useCallback(async (audioBase64: string) => {
+    setIsProcessingVoice(true);
+    
+    try {
+      // Step 1: Transcribe audio
+      toast.info('Transcrevendo áudio...');
+      const { data: transcriptionData, error: transcriptionError } = await supabase.functions.invoke('nutrition-voice-processor', {
+        body: {
+          action: 'transcribe',
+          audio: audioBase64
+        }
+      });
+
+      if (transcriptionError || !transcriptionData?.success) {
+        throw new Error(transcriptionData?.error || 'Erro na transcrição');
+      }
+
+      const transcribedText = transcriptionData.text;
+      console.log('Transcribed:', transcribedText);
+
+      // Step 2: Parse meal with AI
+      toast.info('Analisando refeição com IA...');
+      const { data: parseData, error: parseError } = await supabase.functions.invoke('nutrition-voice-processor', {
+        body: {
+          action: 'parse-meal',
+          text: transcribedText
+        }
+      });
+
+      if (parseError || !parseData?.success) {
+        throw new Error(parseData?.error || 'Erro ao analisar refeição');
+      }
+
+      console.log('Parsed meal:', parseData.meal);
+      setParsedMeal(parseData.meal);
+      setShowMealConfirmation(true);
+
+    } catch (error: any) {
+      console.error('Voice processing error:', error);
+      toast.error(error.message || 'Erro ao processar áudio');
+    } finally {
+      setIsProcessingVoice(false);
+    }
+  }, []);
+
+  const handleConfirmMeal = useCallback(async (meal: ParsedMeal) => {
+    setIsSavingMeal(true);
+
+    try {
+      // Save all foods from the meal
+      for (const food of meal.foods) {
+        await supabase
+          .from('gym_meal_logs' as any)
+          .insert({
+            user_id: user?.id,
+            food_name: food.name,
+            calories: food.calories,
+            protein_grams: food.protein_grams,
+            carbs_grams: food.carbs_grams,
+            fat_grams: food.fat_grams,
+            quantity_grams: food.quantity_grams,
+            meal_type: meal.meal_type
+          });
+      }
+
+      // Add water if mentioned
+      if (meal.water_ml > 0) {
+        await addWater(meal.water_ml);
+      }
+
+      toast.success('Refeição registrada com sucesso!');
+      setShowMealConfirmation(false);
+      setParsedMeal(null);
+      loadMealLogs();
+
+    } catch (error: any) {
+      console.error('Save meal error:', error);
+      toast.error('Erro ao salvar refeição');
+    } finally {
+      setIsSavingMeal(false);
+    }
+  }, [user?.id]);
 
   const totalCalories = mealLogs.reduce((sum, m) => sum + m.calories, 0);
   const totalProtein = mealLogs.reduce((sum, m) => sum + m.protein_grams, 0);
@@ -221,6 +360,15 @@ export default function GymNutritionPage() {
   const carbsProgress = goals ? (totalCarbs / goals.carbs_grams) * 100 : 0;
   const fatProgress = goals ? (totalFat / goals.fat_grams) * 100 : 0;
   const waterProgress = goals ? (totalWater / goals.water_ml) * 100 : 0;
+
+  // Alert status
+  const getCalorieStatus = () => {
+    if (calorieProgress > 110) return { type: 'warning', message: 'Acima da meta' };
+    if (calorieProgress >= 90 && calorieProgress <= 110) return { type: 'success', message: 'Na meta' };
+    return null;
+  };
+
+  const calorieStatus = getCalorieStatus();
 
   if (isLoading) {
     return (
@@ -239,13 +387,37 @@ export default function GymNutritionPage() {
       >
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <Apple className="w-7 h-7 text-primary" />
-          NutriTrack
+          NutriTrack Pro
         </h1>
         <p className="text-muted-foreground text-sm">
           {format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR })}
         </p>
       </motion.div>
 
+      {/* Voice Recording Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-2xl p-5"
+      >
+        <div className="flex items-center gap-2 mb-4">
+          <Mic className="w-5 h-5 text-primary" />
+          <h3 className="font-semibold">Registro por Voz</h3>
+        </div>
+        <p className="text-sm text-muted-foreground mb-4">
+          Diga o que você comeu e a IA irá identificar os alimentos automaticamente.
+        </p>
+        <VoiceMealRecorder
+          onTranscription={handleVoiceTranscription}
+          isProcessing={isProcessingVoice}
+        />
+        <p className="text-xs text-muted-foreground text-center mt-3">
+          Ex: "Comi arroz, frango grelhado e salada. Tomei 500ml de água."
+        </p>
+      </motion.div>
+
+      {/* Calories Dashboard */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -267,11 +439,23 @@ export default function GymNutritionPage() {
           </div>
         </div>
         <Progress value={Math.min(calorieProgress, 100)} className="h-3 bg-muted" />
-        <p className="text-xs text-muted-foreground mt-2">
-          {goals ? goals.daily_calories - totalCalories : 0} kcal restantes
-        </p>
+        <div className="flex items-center justify-between mt-2">
+          <p className="text-xs text-muted-foreground">
+            {goals ? Math.max(0, goals.daily_calories - totalCalories) : 0} kcal restantes
+          </p>
+          {calorieStatus && (
+            <span className={`text-xs px-2 py-0.5 rounded-full ${
+              calorieStatus.type === 'warning' 
+                ? 'bg-destructive/20 text-destructive' 
+                : 'bg-green-500/20 text-green-500'
+            }`}>
+              {calorieStatus.message}
+            </span>
+          )}
+        </div>
       </motion.div>
 
+      {/* Macros Grid */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -307,6 +491,7 @@ export default function GymNutritionPage() {
         </div>
       </motion.div>
 
+      {/* Hydration Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -334,7 +519,7 @@ export default function GymNutritionPage() {
             />
             <Button
               size="sm"
-              onClick={addWater}
+              onClick={() => addWater()}
               className="bg-blue-500 hover:bg-blue-600"
             >
               <Plus className="w-4 h-4" />
@@ -342,21 +527,63 @@ export default function GymNutritionPage() {
           </div>
         </div>
         <Progress value={Math.min(waterProgress, 100)} className="h-2 bg-muted" />
+        {waterProgress < 50 && (
+          <div className="flex items-center gap-2 mt-3 text-amber-500 text-xs">
+            <AlertCircle className="w-4 h-4" />
+            <span>Você ainda está abaixo da meta de hidratação!</span>
+          </div>
+        )}
         <div className="flex justify-between mt-3">
           {[250, 350, 500].map((ml) => (
             <Button
               key={ml}
               variant="outline"
               size="sm"
-              onClick={() => setWaterAmount(ml.toString())}
+              onClick={() => addWater(ml)}
               className="border-border hover:bg-muted text-xs"
             >
-              {ml}ml
+              +{ml}ml
             </Button>
           ))}
         </div>
       </motion.div>
 
+      {/* Progress Charts Toggle */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.35 }}
+      >
+        <Button
+          variant="outline"
+          className="w-full justify-between"
+          onClick={() => setShowProgressCharts(!showProgressCharts)}
+        >
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-primary" />
+            <span>Progresso Semanal</span>
+          </div>
+          {showProgressCharts ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </Button>
+        
+        <AnimatePresence>
+          {showProgressCharts && user && goals && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden mt-3"
+            >
+              <NutritionProgressCharts 
+                userId={user.id} 
+                dailyCalorieGoal={goals.daily_calories} 
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      {/* Meals Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -371,10 +598,10 @@ export default function GymNutritionPage() {
           <Button
             size="sm"
             onClick={() => setShowFoodSearch(true)}
-            className="bg-primary hover:bg-primary/90"
+            variant="outline"
           >
             <Plus className="w-4 h-4 mr-1" />
-            Adicionar
+            Manual
           </Button>
         </div>
 
@@ -451,7 +678,7 @@ export default function GymNutritionPage() {
                     Cancelar
                   </Button>
                   <Button
-                    className="flex-1 bg-primary hover:bg-primary/90"
+                    className="flex-1"
                     onClick={addMeal}
                   >
                     Adicionar
@@ -479,7 +706,7 @@ export default function GymNutritionPage() {
               </p>
             ) : (
               mealLogs.map((meal) => (
-                <MealCard key={meal.id} meal={meal} />
+                <MealCard key={meal.id} meal={meal} onDelete={deleteMeal} />
               ))
             )}
           </TabsContent>
@@ -494,22 +721,52 @@ export default function GymNutritionPage() {
                 mealLogs
                   .filter(m => m.meal_type === type.value)
                   .map((meal) => (
-                    <MealCard key={meal.id} meal={meal} />
+                    <MealCard key={meal.id} meal={meal} onDelete={deleteMeal} />
                   ))
               )}
             </TabsContent>
           ))}
         </Tabs>
       </motion.div>
+
+      {/* Meal Confirmation Modal */}
+      <MealConfirmationModal
+        isOpen={showMealConfirmation}
+        onClose={() => {
+          setShowMealConfirmation(false);
+          setParsedMeal(null);
+        }}
+        meal={parsedMeal}
+        onConfirm={handleConfirmMeal}
+        isLoading={isSavingMeal}
+      />
+
+      {/* AI Chat Assistant */}
+      <NutritionAIChat
+        currentMacros={{
+          calories: totalCalories,
+          protein: totalProtein,
+          carbs: totalCarbs,
+          fat: totalFat,
+          water: totalWater
+        }}
+        nutritionGoals={goals}
+      />
     </div>
   );
 }
 
-function MealCard({ meal }: { meal: MealLog }) {
+function MealCard({ meal, onDelete }: { meal: MealLog; onDelete: (id: string) => void }) {
   const mealType = mealTypes.find(t => t.value === meal.meal_type);
   
   return (
-    <div className="bg-card border border-border rounded-xl p-4">
+    <motion.div 
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, x: -100 }}
+      className="bg-card border border-border rounded-xl p-4"
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="text-2xl">{mealType?.icon || '🍽️'}</span>
@@ -520,13 +777,23 @@ function MealCard({ meal }: { meal: MealLog }) {
             </p>
           </div>
         </div>
-        <div className="text-right">
-          <p className="font-bold text-primary">{meal.calories} kcal</p>
-          <p className="text-xs text-muted-foreground">
-            P: {meal.protein_grams}g | C: {meal.carbs_grams}g | G: {meal.fat_grams}g
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <p className="font-bold text-primary">{meal.calories} kcal</p>
+            <p className="text-xs text-muted-foreground">
+              P: {meal.protein_grams}g | C: {meal.carbs_grams}g | G: {meal.fat_grams}g
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="w-8 h-8 hover:bg-destructive/10"
+            onClick={() => onDelete(meal.id)}
+          >
+            <Trash2 className="w-4 h-4 text-destructive" />
+          </Button>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
