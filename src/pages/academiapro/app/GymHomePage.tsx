@@ -164,7 +164,7 @@ export default function GymHomePage() {
             </div>
 
             <Link to={`/academiapro/app/treinos/${todayWorkout.id}/executar`}>
-              <Button className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
+              <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white">
                 <Play className="w-4 h-4 mr-2" />
                 Iniciar Treino
               </Button>
