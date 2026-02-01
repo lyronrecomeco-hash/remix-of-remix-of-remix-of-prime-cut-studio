@@ -163,7 +163,7 @@ export function MealConfirmationModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-md max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Utensils className="w-5 h-5 text-primary" />
@@ -221,7 +221,7 @@ export function MealConfirmationModal({
                     </div>
                     <div className="flex items-center gap-1">
                       {food.confidence < 0.7 && (
-                        <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                        <AlertTriangle className="w-4 h-4 text-destructive" />
                       )}
                       <Button
                         variant="ghost"
@@ -246,16 +246,16 @@ export function MealConfirmationModal({
                       <span className="block font-medium text-foreground">{food.calories}</span>
                       kcal
                     </div>
-                    <div className="bg-blue-500/10 rounded px-2 py-1 text-center">
-                      <span className="block font-medium text-blue-500">{food.protein_grams}g</span>
+                    <div className="bg-muted/50 rounded px-2 py-1 text-center">
+                      <span className="block font-medium text-foreground">{food.protein_grams}g</span>
                       prot
                     </div>
-                    <div className="bg-yellow-500/10 rounded px-2 py-1 text-center">
-                      <span className="block font-medium text-yellow-500">{food.carbs_grams}g</span>
+                    <div className="bg-muted/50 rounded px-2 py-1 text-center">
+                      <span className="block font-medium text-foreground">{food.carbs_grams}g</span>
                       carb
                     </div>
-                    <div className="bg-red-500/10 rounded px-2 py-1 text-center">
-                      <span className="block font-medium text-red-500">{food.fat_grams}g</span>
+                    <div className="bg-muted/50 rounded px-2 py-1 text-center">
+                      <span className="block font-medium text-foreground">{food.fat_grams}g</span>
                       gord
                     </div>
                   </div>
@@ -266,8 +266,8 @@ export function MealConfirmationModal({
 
           {/* Water */}
           {currentMeal.water_ml > 0 && (
-            <div className="flex items-center gap-2 bg-blue-500/10 rounded-lg p-3">
-              <Droplets className="w-5 h-5 text-blue-400" />
+            <div className="flex items-center gap-2 bg-primary/10 rounded-lg p-3">
+              <Droplets className="w-5 h-5 text-primary" />
               <span className="text-sm">
                 <span className="font-medium">{currentMeal.water_ml}ml</span> de água
               </span>
@@ -285,19 +285,19 @@ export function MealConfirmationModal({
             </div>
             <div className="grid grid-cols-4 gap-2 text-xs">
               <div className="text-center">
-                <span className="block font-semibold text-blue-500">{currentMeal.total_protein}g</span>
+                <span className="block font-semibold text-foreground">{currentMeal.total_protein}g</span>
                 <span className="text-muted-foreground">Proteína</span>
               </div>
               <div className="text-center">
-                <span className="block font-semibold text-yellow-500">{currentMeal.total_carbs}g</span>
+                <span className="block font-semibold text-foreground">{currentMeal.total_carbs}g</span>
                 <span className="text-muted-foreground">Carbos</span>
               </div>
               <div className="text-center">
-                <span className="block font-semibold text-red-500">{currentMeal.total_fat}g</span>
+                <span className="block font-semibold text-foreground">{currentMeal.total_fat}g</span>
                 <span className="text-muted-foreground">Gordura</span>
               </div>
               <div className="text-center">
-                <span className="block font-semibold text-green-500">{currentMeal.total_fiber}g</span>
+                <span className="block font-semibold text-foreground">{currentMeal.total_fiber}g</span>
                 <span className="text-muted-foreground">Fibra</span>
               </div>
             </div>
