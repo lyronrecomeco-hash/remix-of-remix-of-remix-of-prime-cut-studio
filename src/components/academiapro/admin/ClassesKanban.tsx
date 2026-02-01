@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Plus, 
@@ -9,7 +9,8 @@ import {
   GripVertical,
   UserPlus,
   Check,
-  HelpCircle
+  HelpCircle,
+  Loader2
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,7 @@ import { KanbanHelpModal } from './KanbanHelpModal';
 
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const WEEKDAYS_FULL = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+const STORAGE_KEY = 'gym_classes_kanban_statuses';
 
 interface KanbanColumn {
   id: string;
@@ -55,45 +57,56 @@ export default function ClassesKanban() {
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
 
-  useEffect(() => {
-    fetchClasses();
-    fetchStudents();
+  // Load saved statuses from localStorage
+  const loadSavedStatuses = useCallback((): Record<string, string> => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
   }, []);
 
-  const fetchClasses = async () => {
-    const { data } = await (supabase.from('gym_classes') as any)
-      .select('*')
-      .order('name');
-
-    if (data) {
-      // Load status from localStorage
-      const savedStatuses = localStorage.getItem('classes_kanban_statuses');
-      let statusMap: Record<string, string> = {};
-      try {
-        statusMap = savedStatuses ? JSON.parse(savedStatuses) : {};
-      } catch (e) {
-        statusMap = {};
-      }
-      
-      const classesWithStatus = data.map((c: any) => ({
-        ...c,
-        status: statusMap[c.id] || (!c.is_active ? 'inactive' : 'active')
-      }));
-      setClasses(classesWithStatus);
-    }
-    setIsLoading(false);
-  };
-
-  const saveStatuses = (newClasses: any[]) => {
+  // Save statuses to localStorage
+  const saveStatuses = useCallback((classesData: any[]) => {
     const statusMap: Record<string, string> = {};
-    newClasses.forEach(c => {
-      statusMap[c.id] = c.status;
+    classesData.forEach(c => {
+      if (c.id && c.status) {
+        statusMap[c.id] = c.status;
+      }
     });
-    localStorage.setItem('classes_kanban_statuses', JSON.stringify(statusMap));
-  };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(statusMap));
+  }, []);
+
+  const fetchClasses = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await (supabase
+        .from('gym_classes') as any)
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+
+      const savedStatuses = loadSavedStatuses();
+      
+      const classesWithStatus = (data || []).map((c: any) => ({
+        ...c,
+        status: savedStatuses[c.id] || (c.is_active ? 'active' : 'inactive')
+      }));
+      
+      setClasses(classesWithStatus);
+    } catch (error) {
+      console.error('Error fetching classes:', error);
+      toast.error('Erro ao carregar aulas');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [loadSavedStatuses]);
 
   const fetchStudents = async () => {
-    const { data } = await (supabase.from('gym_profiles') as any)
+    const { data } = await supabase
+      .from('gym_profiles')
       .select('*')
       .eq('role', 'aluno')
       .eq('is_active', true)
@@ -101,6 +114,11 @@ export default function ClassesKanban() {
 
     if (data) setStudents(data);
   };
+
+  useEffect(() => {
+    fetchClasses();
+    fetchStudents();
+  }, [fetchClasses]);
 
   const handleDragStart = (e: React.DragEvent, classId: string) => {
     setDraggedItem(classId);
@@ -117,34 +135,43 @@ export default function ClassesKanban() {
     if (!draggedItem) return;
 
     const classItem = classes.find(c => c.id === draggedItem);
-    if (!classItem) return;
+    if (!classItem || classItem.status === targetStatus) {
+      setDraggedItem(null);
+      return;
+    }
 
-    // Update local state immediately and save to localStorage
+    // Update local state immediately
     const updatedClasses = classes.map(c => 
       c.id === draggedItem ? { ...c, status: targetStatus } : c
     );
     setClasses(updatedClasses);
+    
+    // Save to localStorage immediately
     saveStatuses(updatedClasses);
 
     // Update is_active in database
     const isActive = targetStatus === 'active' || targetStatus === 'full';
-    const { error } = await supabase
-      .from('gym_classes')
-      .update({ is_active: isActive })
-      .eq('id', draggedItem);
+    
+    try {
+      const { error } = await supabase
+        .from('gym_classes')
+        .update({ is_active: isActive })
+        .eq('id', draggedItem);
 
-    if (error) {
+      if (error) throw error;
+      
+      toast.success(`Aula movida para ${COLUMNS.find(col => col.id === targetStatus)?.title}`);
+    } catch (error) {
+      console.error('Error updating class:', error);
       toast.error('Erro ao atualizar aula');
-      // Revert state on error
+      // Revert on error
       const revertedClasses = classes.map(c => 
         c.id === draggedItem ? { ...c, status: classItem.status } : c
       );
       setClasses(revertedClasses);
       saveStatuses(revertedClasses);
-      return;
     }
-
-    toast.success(`Aula movida para ${COLUMNS.find(col => col.id === targetStatus)?.title}`);
+    
     setDraggedItem(null);
   };
 
@@ -166,8 +193,8 @@ export default function ClassesKanban() {
     if (!selectedClass || selectedStudents.length === 0) return;
 
     try {
-      // Get students' active plans
-      const { data: plans } = await (supabase.from('gym_student_plans') as any)
+      const { data: plans } = await supabase
+        .from('gym_student_plans')
         .select('id, user_id')
         .in('user_id', selectedStudents)
         .eq('status', 'active');
@@ -216,36 +243,30 @@ export default function ClassesKanban() {
   };
 
   const getCategoryBadge = (category: string) => {
-    switch (category) {
-      case 'cardio': return 'bg-red-500/20 text-red-400';
-      case 'forca': return 'bg-blue-500/20 text-blue-400';
-      case 'flexibilidade': return 'bg-purple-500/20 text-purple-400';
-      case 'hiit': return 'bg-orange-500/20 text-orange-400';
-      case 'funcional': return 'bg-cyan-500/20 text-cyan-400';
-      case 'danca': return 'bg-pink-500/20 text-pink-400';
-      case 'luta': return 'bg-yellow-500/20 text-yellow-400';
-      case 'relaxamento': return 'bg-green-500/20 text-green-400';
-      default: return 'bg-zinc-500/20 text-zinc-400';
-    }
+    const badges: Record<string, string> = {
+      cardio: 'bg-red-500/20 text-red-400',
+      forca: 'bg-blue-500/20 text-blue-400',
+      flexibilidade: 'bg-purple-500/20 text-purple-400',
+      hiit: 'bg-orange-500/20 text-orange-400',
+      funcional: 'bg-cyan-500/20 text-cyan-400',
+      danca: 'bg-pink-500/20 text-pink-400',
+      luta: 'bg-yellow-500/20 text-yellow-400',
+      relaxamento: 'bg-green-500/20 text-green-400'
+    };
+    return badges[category] || 'bg-zinc-500/20 text-zinc-400';
   };
 
   const getCategoryLabel = (category: string) => {
     const labels: Record<string, string> = {
-      cardio: 'Cardio',
-      forca: 'Força',
-      flexibilidade: 'Flexibilidade',
-      hiit: 'HIIT',
-      funcional: 'Funcional',
-      danca: 'Dança',
-      luta: 'Luta',
-      relaxamento: 'Relaxamento'
+      cardio: 'Cardio', forca: 'Força', flexibilidade: 'Flexibilidade',
+      hiit: 'HIIT', funcional: 'Funcional', danca: 'Dança',
+      luta: 'Luta', relaxamento: 'Relaxamento'
     };
     return labels[category] || 'Geral';
   };
 
   return (
     <div className="space-y-6">
-      {/* Help Modal */}
       <KanbanHelpModal open={showHelp} onOpenChange={setShowHelp} type="classes" />
       
       {/* Header */}
@@ -260,7 +281,6 @@ export default function ClassesKanban() {
             size="icon"
             onClick={() => setShowHelp(true)}
             className="hover:bg-orange-500/20 text-zinc-400 hover:text-orange-500"
-            title="Como funciona"
           >
             <HelpCircle className="w-5 h-5" />
           </Button>
@@ -300,7 +320,6 @@ export default function ClassesKanban() {
             onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, column.id)}
           >
-            {/* Column Header */}
             <div className="flex items-center gap-2 mb-4">
               <div className={`w-3 h-3 rounded-full ${column.color}`} />
               <h3 className="font-semibold text-sm">{column.title}</h3>
@@ -309,12 +328,11 @@ export default function ClassesKanban() {
               </Badge>
             </div>
 
-            {/* Column Items */}
             <div className="space-y-3">
               {isLoading ? (
-                Array.from({ length: 2 }).map((_, i) => (
-                  <div key={i} className="bg-zinc-800 rounded-lg p-3 animate-pulse h-28" />
-                ))
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+                </div>
               ) : (
                 getColumnItems(column.id).map(classItem => (
                   <motion.div
@@ -356,7 +374,7 @@ export default function ClassesKanban() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="w-full h-7 text-xs hover:bg-orange-500/20 hover:text-orange-400 ml-0"
+                      className="w-full h-7 text-xs hover:bg-orange-500/20 hover:text-orange-400"
                       onClick={() => openAssignModal(classItem)}
                     >
                       <UserPlus className="w-3 h-3 mr-1" />

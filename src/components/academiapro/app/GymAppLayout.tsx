@@ -1,7 +1,7 @@
 import { Outlet, Navigate, NavLink, useLocation } from 'react-router-dom';
 import { useGymAuth } from '@/contexts/GymAuthContext';
-import { GymBottomNav } from './GymBottomNav';
-import { Loader2, Home, Dumbbell, CalendarDays, TrendingUp, User, Target, Scan } from 'lucide-react';
+import { GymMobileMenu } from './GymMobileMenu';
+import { Loader2, Home, Dumbbell, CalendarDays, TrendingUp, User, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Desktop sidebar items - NO Config (only via Profile)
@@ -78,8 +78,8 @@ export function GymAppLayout() {
         </div>
       </main>
       
-      {/* Mobile Bottom Nav */}
-      <GymBottomNav />
+      {/* Mobile Menu */}
+      <GymMobileMenu />
     </div>
   );
 }
