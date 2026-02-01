@@ -61,21 +61,33 @@ export default function ClassesKanban() {
   const loadSavedStatuses = useCallback((): Record<string, string> => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : {};
+      if (!saved) return {};
+      const parsed = JSON.parse(saved);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+      return parsed as Record<string, string>;
     } catch {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        // ignore
+      }
       return {};
     }
   }, []);
 
   // Save statuses to localStorage
   const saveStatuses = useCallback((classesData: any[]) => {
-    const statusMap: Record<string, string> = {};
-    classesData.forEach(c => {
-      if (c.id && c.status) {
-        statusMap[c.id] = c.status;
-      }
-    });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(statusMap));
+    try {
+      const statusMap: Record<string, string> = {};
+      classesData.forEach(c => {
+        if (c.id && c.status) {
+          statusMap[c.id] = c.status;
+        }
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(statusMap));
+    } catch {
+      // ignore
+    }
   }, []);
 
   const fetchClasses = useCallback(async () => {
@@ -153,7 +165,7 @@ export default function ClassesKanban() {
     const isActive = targetStatus === 'active' || targetStatus === 'full';
     
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('gym_classes')
         .update({ is_active: isActive })
         .eq('id', draggedItem);
