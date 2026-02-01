@@ -7,7 +7,8 @@ import {
   UserCheck,
   UserX,
   Clock,
-  HelpCircle
+  HelpCircle,
+  Loader2
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -52,40 +53,53 @@ export default function AttendanceKanban() {
   }, [selectedDate, students]);
 
   const fetchStudents = async () => {
-    const { data } = await (supabase.from('gym_profiles') as any)
-      .select('*')
-      .eq('role', 'aluno')
-      .eq('is_active', true)
-      .order('full_name');
+    try {
+      const { data, error } = await (supabase
+        .from('gym_profiles') as any)
+        .select('*')
+        .eq('role', 'aluno')
+        .eq('is_active', true)
+        .order('full_name');
 
-    if (data) {
-      setStudents(data);
+      if (error) throw error;
+      setStudents(data || []);
+    } catch (error) {
+      console.error('Error fetching students:', error);
+      toast.error('Erro ao carregar alunos');
     }
   };
 
   const fetchAttendance = async () => {
     setIsLoading(true);
     
-    // Get check-ins for the selected date
-    const { data: checkIns } = await supabase
-      .from('gym_check_ins')
-      .select('*')
-      .gte('checked_in_at', `${selectedDate}T00:00:00`)
-      .lte('checked_in_at', `${selectedDate}T23:59:59`);
+    try {
+      // Get check-ins for the selected date - WITHOUT the problematic join
+      const { data: checkIns, error } = await supabase
+        .from('gym_check_ins')
+        .select('*')
+        .gte('checked_in_at', `${selectedDate}T00:00:00`)
+        .lte('checked_in_at', `${selectedDate}T23:59:59`);
 
-    // Create attendance records combining students and check-ins
-    const attendanceRecords = students.map(student => {
-      const checkIn = checkIns?.find(c => c.user_id === student.user_id);
-      return {
-        id: student.user_id,
-        student,
-        checkIn,
-        status: checkIn ? 'present' : 'pending'
-      };
-    });
+      if (error) throw error;
 
-    setAttendances(attendanceRecords);
-    setIsLoading(false);
+      // Create attendance records combining students and check-ins
+      const attendanceRecords = students.map(student => {
+        const checkIn = checkIns?.find(c => c.user_id === student.user_id);
+        return {
+          id: student.user_id,
+          student,
+          checkIn,
+          status: checkIn ? 'present' : 'pending'
+        };
+      });
+
+      setAttendances(attendanceRecords);
+    } catch (error) {
+      console.error('Error fetching attendance:', error);
+      toast.error('Erro ao carregar presenças');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDragStart = (e: React.DragEvent, attendanceId: string) => {
@@ -105,35 +119,36 @@ export default function AttendanceKanban() {
     const attendance = attendances.find(a => a.id === draggedItem);
     if (!attendance) return;
 
-    // Update local state
+    const previousStatus = attendance.status;
+
+    // Update local state immediately
     setAttendances(prev => prev.map(a => 
       a.id === draggedItem ? { ...a, status: targetStatus } : a
     ));
 
     // Handle check-in creation or update
     if (targetStatus === 'present' && !attendance.checkIn) {
-      // Create check-in
-      const { error } = await supabase
-        .from('gym_check_ins')
-        .insert({
-          user_id: attendance.student.user_id,
-          checked_in_at: new Date().toISOString(),
-          check_in_type: 'manual'
-        });
+      try {
+        const { error } = await supabase
+          .from('gym_check_ins')
+          .insert({
+            user_id: attendance.student.user_id,
+            checked_in_at: new Date().toISOString(),
+            method: 'manual'
+          });
 
-      if (error) {
+        if (error) throw error;
+        toast.success(`${attendance.student.full_name} marcado como presente`);
+        fetchAttendance(); // Refresh to get the new check-in
+      } catch (error) {
+        console.error('Error creating check-in:', error);
         toast.error('Erro ao registrar presença');
         // Revert state
         setAttendances(prev => prev.map(a => 
-          a.id === draggedItem ? { ...a, status: attendance.status } : a
+          a.id === draggedItem ? { ...a, status: previousStatus } : a
         ));
-        return;
       }
-
-      toast.success(`${attendance.student.full_name} marcado como presente`);
     } else if (targetStatus === 'absent') {
-      // If there's a check-in, we'd need to delete it
-      // For now, just show toast
       toast.info(`${attendance.student.full_name} marcado como falta`);
     }
 
@@ -149,10 +164,8 @@ export default function AttendanceKanban() {
 
   return (
     <div className="space-y-6">
-      {/* Help Modal - rendered at root level */}
-      {showHelp && (
-        <KanbanHelpModal open={showHelp} onOpenChange={setShowHelp} type="attendance" />
-      )}
+      {/* Help Modal */}
+      <KanbanHelpModal open={showHelp} onOpenChange={setShowHelp} type="attendance" />
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -228,9 +241,9 @@ export default function AttendanceKanban() {
               {/* Column Items */}
               <div className="space-y-2">
                 {isLoading ? (
-                  Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="bg-zinc-800 rounded-lg p-3 animate-pulse h-16" />
-                  ))
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+                  </div>
                 ) : (
                   getColumnItems(column.id).map(attendance => (
                     <motion.div
