@@ -28,6 +28,7 @@ import { CreateClassModal } from '@/components/academiapro/admin/CreateClassModa
 import { KanbanHelpModal } from './KanbanHelpModal';
 
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+const WEEKDAYS_FULL = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
 interface KanbanColumn {
   id: string;
@@ -101,7 +102,7 @@ export default function ClassesKanban() {
     const classItem = classes.find(c => c.id === draggedItem);
     if (!classItem) return;
 
-    // Update local state
+    // Update local state immediately
     setClasses(prev => prev.map(c => 
       c.id === draggedItem ? { ...c, status: targetStatus } : c
     ));
@@ -115,7 +116,7 @@ export default function ClassesKanban() {
 
     if (error) {
       toast.error('Erro ao atualizar aula');
-      // Revert state
+      // Revert state on error
       setClasses(prev => prev.map(c => 
         c.id === draggedItem ? { ...c, status: classItem.status } : c
       ));
@@ -186,7 +187,10 @@ export default function ClassesKanban() {
 
   const formatDays = (days: number[] | null) => {
     if (!days || days.length === 0) return 'Sem dias';
-    if (days.length === 7) return 'Todos';
+    if (days.length === 7) return 'Todos os dias';
+    if (days.length <= 3) {
+      return days.map(d => WEEKDAYS_FULL[d]).join(', ');
+    }
     return days.map(d => WEEKDAYS[d]).join(', ');
   };
 
@@ -196,8 +200,26 @@ export default function ClassesKanban() {
       case 'forca': return 'bg-blue-500/20 text-blue-400';
       case 'flexibilidade': return 'bg-purple-500/20 text-purple-400';
       case 'hiit': return 'bg-orange-500/20 text-orange-400';
+      case 'funcional': return 'bg-cyan-500/20 text-cyan-400';
+      case 'danca': return 'bg-pink-500/20 text-pink-400';
+      case 'luta': return 'bg-yellow-500/20 text-yellow-400';
+      case 'relaxamento': return 'bg-green-500/20 text-green-400';
       default: return 'bg-zinc-500/20 text-zinc-400';
     }
+  };
+
+  const getCategoryLabel = (category: string) => {
+    const labels: Record<string, string> = {
+      cardio: 'Cardio',
+      forca: 'Força',
+      flexibilidade: 'Flexibilidade',
+      hiit: 'HIIT',
+      funcional: 'Funcional',
+      danca: 'Dança',
+      luta: 'Luta',
+      relaxamento: 'Relaxamento'
+    };
+    return labels[category] || 'Geral';
   };
 
   return (
@@ -217,6 +239,7 @@ export default function ClassesKanban() {
             size="icon"
             onClick={() => setShowHelp(true)}
             className="hover:bg-orange-500/20 text-zinc-400 hover:text-orange-500"
+            title="Como funciona"
           >
             <HelpCircle className="w-5 h-5" />
           </Button>
@@ -248,11 +271,11 @@ export default function ClassesKanban() {
       </div>
 
       {/* Kanban Board */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto pb-4">
         {COLUMNS.map(column => (
           <div
             key={column.id}
-            className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 min-h-[400px]"
+            className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 min-h-[400px] min-w-[250px]"
             onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, column.id)}
           >
@@ -285,34 +308,34 @@ export default function ClassesKanban() {
                     }`}
                   >
                     <div className="flex items-start gap-2 mb-2">
-                      <GripVertical className="w-4 h-4 text-zinc-600 mt-0.5" />
+                      <GripVertical className="w-4 h-4 text-zinc-600 mt-0.5 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium text-sm truncate">{classItem.name}</h4>
                         <Badge className={`text-xs mt-1 ${getCategoryBadge(classItem.category)}`}>
-                          {classItem.category || 'Geral'}
+                          {getCategoryLabel(classItem.category)}
                         </Badge>
                       </div>
                     </div>
                     
-                    <div className="space-y-1 text-xs text-zinc-400 mb-3">
+                    <div className="space-y-1.5 text-xs text-zinc-400 mb-3 ml-6">
                       <div className="flex items-center gap-1.5">
-                        <Calendar className="w-3 h-3" />
-                        {formatDays(classItem.recurring_days)}
+                        <Calendar className="w-3 h-3 flex-shrink-0" />
+                        <span className="truncate">{formatDays(classItem.recurring_days)}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <Clock className="w-3 h-3" />
-                        {classItem.start_time?.slice(0, 5) || '--:--'} ({classItem.duration_minutes || 60}min)
+                        <Clock className="w-3 h-3 flex-shrink-0" />
+                        <span>{classItem.start_time?.slice(0, 5) || '--:--'} ({classItem.duration_minutes || 60}min)</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <Users className="w-3 h-3" />
-                        Máx. {classItem.max_capacity || 20}
+                        <Users className="w-3 h-3 flex-shrink-0" />
+                        <span>Máx. {classItem.max_capacity || 20} alunos</span>
                       </div>
                     </div>
                     
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="w-full h-7 text-xs hover:bg-orange-500/20 hover:text-orange-400"
+                      className="w-full h-7 text-xs hover:bg-orange-500/20 hover:text-orange-400 ml-0"
                       onClick={() => openAssignModal(classItem)}
                     >
                       <UserPlus className="w-3 h-3 mr-1" />
