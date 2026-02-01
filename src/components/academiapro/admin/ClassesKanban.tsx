@@ -6,10 +6,10 @@ import {
   Calendar,
   Clock,
   Users,
-  Edit,
   GripVertical,
   UserPlus,
-  Check
+  Check,
+  HelpCircle
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { CreateClassModal } from '@/components/academiapro/admin/CreateClassModal';
+import { KanbanHelpModal } from './KanbanHelpModal';
 
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
@@ -51,6 +52,7 @@ export default function ClassesKanban() {
   const [selectedClass, setSelectedClass] = useState<any>(null);
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
 
   useEffect(() => {
     fetchClasses();
@@ -200,11 +202,24 @@ export default function ClassesKanban() {
 
   return (
     <div className="space-y-6">
+      {/* Help Modal */}
+      <KanbanHelpModal open={showHelp} onOpenChange={setShowHelp} type="classes" />
+      
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold">Aulas Coletivas</h1>
-          <p className="text-zinc-400 mt-1 text-sm">Organize e gerencie suas aulas</p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="text-2xl lg:text-3xl font-bold">Aulas Coletivas</h1>
+            <p className="text-zinc-400 mt-1 text-sm">Organize e gerencie suas aulas</p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowHelp(true)}
+            className="hover:bg-orange-500/20 text-zinc-400 hover:text-orange-500"
+          >
+            <HelpCircle className="w-5 h-5" />
+          </Button>
         </div>
         <Button 
           onClick={() => setShowCreateModal(true)}

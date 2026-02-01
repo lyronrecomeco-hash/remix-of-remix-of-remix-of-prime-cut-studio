@@ -11,12 +11,12 @@ import {
   Trophy,
   Timer,
   Target,
-  QrCode
+  Scan
 } from 'lucide-react';
 import { useGymAuth } from '@/contexts/GymAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { GymQRCheckIn } from '@/components/academiapro/app/GymQRCheckIn';
+import { GymQRScanner } from '@/components/academiapro/app/GymQRScanner';
 
 export default function GymHomePage() {
   const { profile, user } = useGymAuth();
@@ -109,12 +109,12 @@ export default function GymHomePage() {
           onClick={() => setShowCheckIn(true)}
           className="border-orange-500/50 text-orange-500 hover:bg-orange-500/10"
         >
-          <QrCode className="w-5 h-5" />
+          <Scan className="w-5 h-5" />
         </Button>
       </motion.div>
 
-      {/* QR Check-in Modal */}
-      <GymQRCheckIn open={showCheckIn} onOpenChange={setShowCheckIn} />
+      {/* QR Scanner Modal */}
+      <GymQRScanner open={showCheckIn} onOpenChange={setShowCheckIn} />
 
       {/* Stats Cards */}
       <motion.div

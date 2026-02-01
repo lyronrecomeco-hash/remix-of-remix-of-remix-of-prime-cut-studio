@@ -1,16 +1,16 @@
 import { Outlet, Navigate, NavLink, useLocation } from 'react-router-dom';
 import { useGymAuth } from '@/contexts/GymAuthContext';
 import { GymBottomNav } from './GymBottomNav';
-import { Loader2, Home, Dumbbell, CalendarDays, TrendingUp, User, Target, Settings } from 'lucide-react';
+import { Loader2, Home, Dumbbell, CalendarDays, TrendingUp, User, Target, Scan } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+// Desktop sidebar items - NO Config (only via Profile)
 const navItems = [
   { path: '/academiapro/app', icon: Home, label: 'Início' },
   { path: '/academiapro/app/meu-plano', icon: Target, label: 'Meu Plano' },
   { path: '/academiapro/app/treinos', icon: Dumbbell, label: 'Treinos' },
   { path: '/academiapro/app/aulas', icon: CalendarDays, label: 'Aulas' },
   { path: '/academiapro/app/evolucao', icon: TrendingUp, label: 'Evolução' },
-  { path: '/academiapro/app/configuracoes', icon: Settings, label: 'Config' },
   { path: '/academiapro/app/perfil', icon: User, label: 'Perfil' },
 ];
 
