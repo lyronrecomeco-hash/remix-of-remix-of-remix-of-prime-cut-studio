@@ -9,6 +9,7 @@ import {
   Flashlight,
   FlashlightOff
 } from 'lucide-react';
+import jsQR from 'jsqr';
 import { Button } from '@/components/ui/button';
 import { useGymAuth } from '@/contexts/GymAuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,10 +29,12 @@ export function GymQRScanner({ open, onOpenChange }: GymQRScannerProps) {
   const [scanResult, setScanResult] = useState<'success' | 'error' | null>(null);
   const [flashEnabled, setFlashEnabled] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const hasHandledScanRef = useRef(false);
 
   useEffect(() => {
     if (open) {
+      hasHandledScanRef.current = false;
       startCamera();
     } else {
       stopCamera();
@@ -51,7 +54,7 @@ export function GymQRScanner({ open, onOpenChange }: GymQRScannerProps) {
       
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
-        videoRef.current.play();
+        await videoRef.current.play();
       }
       
       setStream(mediaStream);
@@ -64,9 +67,9 @@ export function GymQRScanner({ open, onOpenChange }: GymQRScannerProps) {
   };
 
   const stopCamera = () => {
-    if (scanIntervalRef.current) {
-      clearInterval(scanIntervalRef.current);
-      scanIntervalRef.current = null;
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
     }
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
@@ -77,34 +80,40 @@ export function GymQRScanner({ open, onOpenChange }: GymQRScannerProps) {
   };
 
   const startScanning = () => {
-    // In production, integrate with jsQR library for real QR scanning
-    // For now, simulate QR detection
-    scanIntervalRef.current = setInterval(() => {
-      if (!videoRef.current || !canvasRef.current || !isScanning) {
+    const tick = () => {
+      if (!videoRef.current || !canvasRef.current || !isScanning || scanResult || isProcessing) {
+        rafRef.current = requestAnimationFrame(tick);
         return;
       }
 
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-      if (!ctx || video.readyState !== video.HAVE_ENOUGH_DATA) return;
+      if (!ctx || video.readyState !== video.HAVE_ENOUGH_DATA) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
 
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      // Here you would use jsQR library to scan
-      // const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      // const code = jsQR(imageData.data, imageData.width, imageData.height);
-    }, 200);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: 'attemptBoth',
+      });
 
-    // Demo: simulate successful scan after 3 seconds
-    setTimeout(() => {
-      if (isScanning && !scanResult && !isProcessing) {
-        handleSuccessfulScan('GYM-GENESIS-DEMO');
+      if (code?.data && !hasHandledScanRef.current) {
+        hasHandledScanRef.current = true;
+        void handleSuccessfulScan(code.data);
+        return;
       }
-    }, 3000);
+
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
   };
 
   const handleSuccessfulScan = async (code: string) => {
@@ -120,21 +129,46 @@ export function GymQRScanner({ open, onOpenChange }: GymQRScannerProps) {
         return;
       }
 
+      if (!user?.id) {
+        setScanResult('error');
+        toast.error('Você precisa estar logado');
+        return;
+      }
+
+      // Check if already checked-in today
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(startOfDay);
+      endOfDay.setDate(endOfDay.getDate() + 1);
+
+      const { data: existing } = await supabase
+        .from('gym_check_ins')
+        .select('id, checked_in_at')
+        .eq('user_id', user.id)
+        .gte('checked_in_at', startOfDay.toISOString())
+        .lt('checked_in_at', endOfDay.toISOString())
+        .order('checked_in_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (existing) {
+        toast.info('Você já fez check-in hoje!');
+        setScanResult('success');
+        setTimeout(() => onOpenChange(false), 1500);
+        return;
+      }
+
       // Register check-in
       const { error } = await supabase
         .from('gym_check_ins')
         .insert({
-          user_id: user?.id,
+          user_id: user.id,
           checked_in_at: new Date().toISOString(),
-          check_in_type: 'qr_code'
+          method: 'qr'
         });
 
       if (error) {
-        if (error.code === '23505') {
-          toast.info('Você já fez check-in hoje!');
-        } else {
-          throw error;
-        }
+        throw error;
       } else {
         toast.success('Check-in realizado com sucesso! 💪');
       }
