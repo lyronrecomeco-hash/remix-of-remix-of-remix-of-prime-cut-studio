@@ -9847,6 +9847,48 @@ export type Database = {
           },
         ]
       }
+      gym_theme_settings: {
+        Row: {
+          accent_color: string
+          background_color: string
+          card_color: string
+          created_at: string
+          id: string
+          is_active: boolean
+          primary_color: string
+          secondary_color: string
+          tenant_id: string | null
+          text_color: string
+          updated_at: string
+        }
+        Insert: {
+          accent_color?: string
+          background_color?: string
+          card_color?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          primary_color?: string
+          secondary_color?: string
+          tenant_id?: string | null
+          text_color?: string
+          updated_at?: string
+        }
+        Update: {
+          accent_color?: string
+          background_color?: string
+          card_color?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          primary_color?: string
+          secondary_color?: string
+          tenant_id?: string | null
+          text_color?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       gym_user_roles: {
         Row: {
           created_at: string
