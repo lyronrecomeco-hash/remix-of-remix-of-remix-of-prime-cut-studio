@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { Palette, RotateCcw, Check, Loader2, Image, Building2, Sun, Moon, Droplets, Flame, Leaf, Zap } from 'lucide-react';
+import { Palette, RotateCcw, Check, Loader2, Image, Sun, Moon, Droplets, Flame, Leaf, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -45,7 +45,7 @@ function ColorPicker({ label, description, value, onChange }: ColorPickerProps) 
 }
 
 // Pre-defined themes
-const presetThemes: { name: string; icon: React.ReactNode; colors: Omit<GymThemeSettings, 'id'> }[] = [
+const presetThemes: { name: string; icon: ReactNode; colors: Omit<GymThemeSettings, 'id'> }[] = [
   {
     name: 'Genesis',
     icon: <Flame className="w-5 h-5" />,
@@ -342,7 +342,7 @@ export function GymThemePersonalization() {
                 Restaurar
               </Button>
               <Button 
-                className="flex-1 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
+                className="flex-1"
                 onClick={handleApply}
                 disabled={isSaving}
               >
