@@ -43,6 +43,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { CreateClassModal } from '@/components/academiapro/admin/CreateClassModal';
 
 const WEEKDAYS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 const ITEMS_PER_PAGE = 9;
@@ -52,6 +53,7 @@ export default function GymAdminClasses() {
   const [sessions, setSessions] = useState<any[]>([]);
   const [selectedClass, setSelectedClass] = useState<any>(null);
   const [showSessions, setShowSessions] = useState(false);
+  const [showCreateClass, setShowCreateClass] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -214,11 +216,21 @@ export default function GymAdminClasses() {
             {classes.filter(c => c.is_active).length} aulas ativas de {classes.length} cadastradas
           </p>
         </div>
-        <Button className="bg-orange-500 hover:bg-orange-600 text-white">
+        <Button 
+          onClick={() => setShowCreateClass(true)}
+          className="bg-orange-500 hover:bg-orange-600 text-white"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Nova Aula
         </Button>
       </motion.div>
+
+      {/* Create Class Modal */}
+      <CreateClassModal 
+        open={showCreateClass} 
+        onOpenChange={setShowCreateClass}
+        onSuccess={fetchClasses}
+      />
 
       {/* Search */}
       <motion.div

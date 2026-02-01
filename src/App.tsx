@@ -88,9 +88,11 @@ const GymLoginPage = lazy(() => import("./pages/academiapro/auth/GymLoginPage"))
 const GymHomePage = lazy(() => import("./pages/academiapro/app/GymHomePage"));
 const GymWorkoutsPage = lazy(() => import("./pages/academiapro/app/GymWorkoutsPage"));
 const GymClassesPage = lazy(() => import("./pages/academiapro/app/GymClassesPage"));
-const GymProgressPage = lazy(() => import("./pages/academiapro/app/GymProgressPage"));
+const GymEvolutionPage = lazy(() => import("./pages/academiapro/app/GymEvolutionPage"));
 const GymProfilePage = lazy(() => import("./pages/academiapro/app/GymProfilePage"));
 const GymMyPlanPage = lazy(() => import("./pages/academiapro/app/GymMyPlanPage"));
+const GymWorkoutExecution = lazy(() => import("./pages/academiapro/app/GymWorkoutExecution"));
+const GymEditProfilePage = lazy(() => import("./pages/academiapro/app/GymEditProfilePage"));
 const GymAdminDashboard = lazy(() => import("./pages/academiapro/admin/GymAdminDashboard"));
 const GymAdminStudents = lazy(() => import("./pages/academiapro/admin/GymAdminStudents"));
 const GymAdminWorkouts = lazy(() => import("./pages/academiapro/admin/GymAdminWorkouts"));
@@ -342,10 +344,13 @@ const AppContent = () => {
             <Route path="/academiapro/app" element={<GymAppLayout />}>
               <Route index element={<Suspense fallback={<GymPageLoader />}><GymHomePage /></Suspense>} />
               <Route path="treinos" element={<Suspense fallback={<GymPageLoader />}><GymWorkoutsPage /></Suspense>} />
+              <Route path="treinos/:workoutId" element={<Suspense fallback={<GymPageLoader />}><GymWorkoutsPage /></Suspense>} />
+              <Route path="treinos/:workoutId/executar" element={<Suspense fallback={<GymPageLoader />}><GymWorkoutExecution /></Suspense>} />
               <Route path="aulas" element={<Suspense fallback={<GymPageLoader />}><GymClassesPage /></Suspense>} />
-              <Route path="evolucao" element={<Suspense fallback={<GymPageLoader />}><GymProgressPage /></Suspense>} />
+              <Route path="evolucao" element={<Suspense fallback={<GymPageLoader />}><GymEvolutionPage /></Suspense>} />
               <Route path="meu-plano" element={<Suspense fallback={<GymPageLoader />}><GymMyPlanPage /></Suspense>} />
               <Route path="perfil" element={<Suspense fallback={<GymPageLoader />}><GymProfilePage /></Suspense>} />
+              <Route path="perfil/editar" element={<Suspense fallback={<GymPageLoader />}><GymEditProfilePage /></Suspense>} />
             </Route>
             <Route path="/academiapro/admin" element={<GymAdminLayout />}>
               <Route index element={<Suspense fallback={<GymPageLoader />}><GymAdminDashboard /></Suspense>} />
