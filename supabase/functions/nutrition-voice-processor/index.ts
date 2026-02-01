@@ -5,6 +5,25 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+function jsonResponse(body: unknown, init: ResponseInit = {}) {
+  return new Response(JSON.stringify(body), {
+    ...init,
+    headers: {
+      ...corsHeaders,
+      'Content-Type': 'application/json',
+      ...(init.headers || {}),
+    },
+  });
+}
+
+async function parseMaybeJson(text: string): Promise<any> {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
 interface FoodItem {
   name: string;
   quantity_grams: number;
@@ -69,17 +88,30 @@ serve(async (req) => {
 
       if (!whisperResponse.ok) {
         const errorText = await whisperResponse.text();
-        console.error("[nutrition-voice-processor] Whisper error:", errorText);
-        throw new Error(`Whisper API error: ${whisperResponse.status}`);
+        const parsed = await parseMaybeJson(errorText);
+        const providerMessage = parsed?.error?.message;
+        const providerCode = parsed?.error?.code || parsed?.error?.type;
+
+        console.error("[nutrition-voice-processor] Whisper error:", parsed || errorText);
+
+        // Important: propagate the provider status code (429/401/etc.) so the client can handle gracefully.
+        return jsonResponse(
+          {
+            success: false,
+            error: providerMessage || `Whisper API error: ${whisperResponse.status}`,
+            code: providerCode || null,
+          },
+          { status: whisperResponse.status },
+        );
       }
 
       const transcription = await whisperResponse.json();
       console.log("[nutrition-voice-processor] Transcription:", transcription.text);
 
-      return new Response(JSON.stringify({
+      return jsonResponse({
         success: true,
-        text: transcription.text
-      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        text: transcription.text,
+      });
     }
 
     if (action === 'parse-meal') {
@@ -177,10 +209,10 @@ Referências nutricionais comuns (por porção típica):
         throw new Error('Failed to parse AI response');
       }
 
-      return new Response(JSON.stringify({
+      return jsonResponse({
         success: true,
-        meal: parsedMeal
-      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        meal: parsedMeal,
+      });
     }
 
     if (action === 'nutrition-chat') {
@@ -234,23 +266,23 @@ INSTRUÇÕES:
       const aiResult = await aiResponse.json();
       const response = aiResult.choices[0]?.message?.content;
 
-      return new Response(JSON.stringify({
+      return jsonResponse({
         success: true,
-        response
-      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        response,
+      });
     }
 
-    return new Response(JSON.stringify({
+    return jsonResponse({
       success: false,
       error: 'Invalid action'
-    }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }, { status: 400 });
 
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error("[nutrition-voice-processor] Error:", errorMessage);
-    return new Response(JSON.stringify({
+    return jsonResponse({
       success: false,
       error: errorMessage
-    }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }, { status: 500 });
   }
 });

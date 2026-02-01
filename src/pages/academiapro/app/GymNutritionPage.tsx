@@ -110,7 +110,6 @@ export default function GymNutritionPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showFoodSearch, setShowFoodSearch] = useState(false);
   const [showProgressCharts, setShowProgressCharts] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'meals' | 'progress'>('overview');
 
   // Voice recording states
   const [isProcessingVoice, setIsProcessingVoice] = useState(false);
@@ -119,6 +118,21 @@ export default function GymNutritionPage() {
   const [isSavingMeal, setIsSavingMeal] = useState(false);
 
   const today = format(new Date(), 'yyyy-MM-dd');
+
+  const friendlyFunctionErrorMessage = (err: any, data: any, fallback: string) => {
+    const raw = (data?.error as string | undefined) || (err?.message as string | undefined) || fallback;
+    const status = err?.context?.status || err?.status || data?.status;
+
+    if (status === 429 || /insufficient_quota|quota|429/i.test(raw)) {
+      return 'Limite de uso do serviço de transcrição atingido. Tente novamente em alguns minutos ou ajuste o plano/créditos do provedor.';
+    }
+
+    if (status === 401 || /401|unauthorized/i.test(raw)) {
+      return 'Serviço de transcrição não autorizado. Verifique a configuração do provedor.';
+    }
+
+    return raw;
+  };
 
   useEffect(() => {
     if (user) {
@@ -278,7 +292,9 @@ export default function GymNutritionPage() {
       });
 
       if (transcriptionError || !transcriptionData?.success) {
-        throw new Error(transcriptionData?.error || 'Erro na transcrição');
+        throw new Error(
+          friendlyFunctionErrorMessage(transcriptionError, transcriptionData, 'Erro na transcrição')
+        );
       }
 
       const transcribedText = transcriptionData.text;
@@ -293,7 +309,9 @@ export default function GymNutritionPage() {
       });
 
       if (parseError || !parseData?.success) {
-        throw new Error(parseData?.error || 'Erro ao analisar refeição');
+        throw new Error(
+          (parseData?.error as string | undefined) || (parseError?.message as string | undefined) || 'Erro ao analisar refeição'
+        );
       }
 
       console.log('Parsed meal:', parseData.meal);
@@ -443,7 +461,7 @@ export default function GymNutritionPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="grid grid-cols-2 gap-3"
+          className="grid grid-cols-1 sm:grid-cols-2 gap-3"
         >
           <Card 
             className="bg-card border-border cursor-pointer hover:border-primary/50 transition-colors"
@@ -454,8 +472,8 @@ export default function GymNutritionPage() {
                 <Plus className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="font-medium text-sm text-foreground">Add Manual</p>
-                <p className="text-xs text-muted-foreground">Buscar alimento</p>
+                <p className="font-medium text-sm text-foreground">Adicionar</p>
+                <p className="text-xs text-muted-foreground">Registro manual</p>
               </div>
             </CardContent>
           </Card>
@@ -499,7 +517,7 @@ export default function GymNutritionPage() {
               value={totalProtein}
               goal={goals?.protein_grams || 150}
               progress={proteinProgress}
-              color="bg-blue-500"
+              variant="strong"
               unit="g"
             />
             <MacroCard
@@ -507,7 +525,7 @@ export default function GymNutritionPage() {
               value={totalCarbs}
               goal={goals?.carbs_grams || 200}
               progress={carbsProgress}
-              color="bg-amber-500"
+              variant="medium"
               unit="g"
             />
             <MacroCard
@@ -515,7 +533,7 @@ export default function GymNutritionPage() {
               value={totalFat}
               goal={goals?.fat_grams || 70}
               progress={fatProgress}
-              color="bg-rose-500"
+              variant="soft"
               unit="g"
             />
           </div>
@@ -531,8 +549,8 @@ export default function GymNutritionPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-sky-500/10 flex items-center justify-center">
-                    <Droplets className="w-5 h-5 text-sky-500" />
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Droplets className="w-5 h-5 text-primary" />
                   </div>
                   <div>
                     <p className="font-semibold text-foreground">Hidratação</p>
@@ -541,7 +559,7 @@ export default function GymNutritionPage() {
                     </p>
                   </div>
                 </div>
-                <span className="text-lg font-bold text-sky-500">{Math.round(waterProgress)}%</span>
+                <span className="text-lg font-bold text-primary">{Math.round(waterProgress)}%</span>
               </div>
               
               <div className="relative h-2 bg-muted rounded-full overflow-hidden mb-3">
@@ -549,7 +567,7 @@ export default function GymNutritionPage() {
                   initial={{ width: 0 }}
                   animate={{ width: `${Math.min(waterProgress, 100)}%` }}
                   transition={{ duration: 1, delay: 0.5 }}
-                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-sky-500 to-blue-500 rounded-full"
+                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary to-primary/60 rounded-full"
                 />
               </div>
 
@@ -560,7 +578,7 @@ export default function GymNutritionPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => addWater(ml)}
-                    className="flex-1 border-sky-500/30 text-sky-500 hover:bg-sky-500/10 hover:border-sky-500/50 text-xs"
+                    className="flex-1 border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/50 text-xs"
                   >
                     +{ml}ml
                   </Button>
@@ -568,9 +586,9 @@ export default function GymNutritionPage() {
               </div>
 
               {waterProgress < 50 && (
-                <div className="flex items-center gap-2 mt-3 p-2 bg-amber-500/10 rounded-lg">
-                  <AlertCircle className="w-4 h-4 text-amber-500" />
-                  <span className="text-xs text-amber-500">Beba mais água!</span>
+                <div className="flex items-center gap-2 mt-3 p-2 bg-primary/10 rounded-lg">
+                  <AlertCircle className="w-4 h-4 text-primary" />
+                  <span className="text-xs text-primary">Beba mais água!</span>
                 </div>
               )}
             </CardContent>
@@ -658,7 +676,7 @@ export default function GymNutritionPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end"
+            className="fixed inset-0 bg-foreground/60 backdrop-blur-sm z-50 flex items-end"
             onClick={() => setShowFoodSearch(false)}
           >
             <motion.div
@@ -666,7 +684,7 @@ export default function GymNutritionPage() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="w-full bg-card rounded-t-3xl max-h-[85vh] overflow-hidden"
+              className="w-full bg-card rounded-t-3xl max-h-[90dvh] overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-4 border-b border-border">
@@ -674,7 +692,7 @@ export default function GymNutritionPage() {
                 <h3 className="font-semibold text-lg text-center text-foreground">Adicionar Alimento</h3>
               </div>
 
-              <div className="p-4 space-y-4 overflow-y-auto max-h-[70vh]">
+              <div className="p-4 space-y-4 overflow-y-auto max-h-[calc(90dvh-6.5rem)]">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -801,22 +819,29 @@ function MacroCard({
   value, 
   goal, 
   progress, 
-  color, 
+  variant,
   unit 
 }: { 
   label: string; 
   value: number; 
   goal: number; 
   progress: number; 
-  color: string;
+  variant: 'strong' | 'medium' | 'soft';
   unit: string;
 }) {
+  const indicatorClass =
+    variant === 'strong'
+      ? 'bg-primary'
+      : variant === 'medium'
+        ? 'bg-primary/70'
+        : 'bg-primary/40';
+
   return (
     <Card className="bg-card border-border">
       <CardContent className="p-3">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs text-muted-foreground">{label}</span>
-          <div className={`w-2 h-2 rounded-full ${color}`} />
+          <div className={`w-2 h-2 rounded-full ${indicatorClass}`} />
         </div>
         <p className="text-lg font-bold text-foreground">
           {value.toFixed(0)}
@@ -827,7 +852,7 @@ function MacroCard({
             initial={{ width: 0 }}
             animate={{ width: `${Math.min(progress, 100)}%` }}
             transition={{ duration: 0.8 }}
-            className={`absolute inset-y-0 left-0 rounded-full ${color}`}
+            className={`absolute inset-y-0 left-0 rounded-full ${indicatorClass}`}
           />
         </div>
         <p className="text-[10px] text-muted-foreground mt-1">Meta: {goal}{unit}</p>
