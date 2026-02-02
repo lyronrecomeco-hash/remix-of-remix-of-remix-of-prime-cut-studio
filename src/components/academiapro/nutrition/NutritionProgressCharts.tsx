@@ -66,7 +66,7 @@ export function NutritionProgressCharts({ userId, dailyCalorieGoal }: NutritionP
       
       // Get meal logs for this day
       const { data: meals } = await supabase
-        .from('gym_meal_logs' as any)
+        .from('gym_meal_logs')
         .select('calories, protein_grams, carbs_grams, fat_grams')
         .eq('user_id', userId)
         .gte('logged_at', `${dateStr}T00:00:00`)
@@ -74,17 +74,20 @@ export function NutritionProgressCharts({ userId, dailyCalorieGoal }: NutritionP
       
       // Get hydration logs for this day
       const { data: hydration } = await supabase
-        .from('gym_hydration_logs' as any)
+        .from('gym_hydration_logs')
         .select('amount_ml')
         .eq('user_id', userId)
         .gte('logged_at', `${dateStr}T00:00:00`)
         .lte('logged_at', `${dateStr}T23:59:59`);
       
-      const dayCalories = (meals as any[] || []).reduce((sum, m) => sum + (m.calories || 0), 0);
-      const dayProtein = (meals as any[] || []).reduce((sum, m) => sum + (m.protein_grams || 0), 0);
-      const dayCarbs = (meals as any[] || []).reduce((sum, m) => sum + (m.carbs_grams || 0), 0);
-      const dayFat = (meals as any[] || []).reduce((sum, m) => sum + (m.fat_grams || 0), 0);
-      const dayWater = (hydration as any[] || []).reduce((sum, h) => sum + (h.amount_ml || 0), 0);
+      const mealData = meals || [];
+      const hydrationData = hydration || [];
+      
+      const dayCalories = mealData.reduce((sum, m) => sum + (m.calories || 0), 0);
+      const dayProtein = mealData.reduce((sum, m) => sum + (Number(m.protein_grams) || 0), 0);
+      const dayCarbs = mealData.reduce((sum, m) => sum + (Number(m.carbs_grams) || 0), 0);
+      const dayFat = mealData.reduce((sum, m) => sum + (Number(m.fat_grams) || 0), 0);
+      const dayWater = hydrationData.reduce((sum, h) => sum + (h.amount_ml || 0), 0);
       
       weekData.push({
         date: format(day, 'EEE', { locale: ptBR }),

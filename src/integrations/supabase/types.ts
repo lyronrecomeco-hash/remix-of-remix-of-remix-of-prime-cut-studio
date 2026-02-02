@@ -9387,6 +9387,122 @@ export type Database = {
           },
         ]
       }
+      gym_food_items: {
+        Row: {
+          calories_per_100g: number
+          carbs_per_100g: number
+          category: string
+          created_at: string
+          fat_per_100g: number
+          id: string
+          is_active: boolean
+          name: string
+          protein_per_100g: number
+          updated_at: string
+        }
+        Insert: {
+          calories_per_100g?: number
+          carbs_per_100g?: number
+          category?: string
+          created_at?: string
+          fat_per_100g?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          protein_per_100g?: number
+          updated_at?: string
+        }
+        Update: {
+          calories_per_100g?: number
+          carbs_per_100g?: number
+          category?: string
+          created_at?: string
+          fat_per_100g?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          protein_per_100g?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      gym_hydration_logs: {
+        Row: {
+          amount_ml: number
+          created_at: string
+          id: string
+          logged_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_ml: number
+          created_at?: string
+          id?: string
+          logged_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_ml?: number
+          created_at?: string
+          id?: string
+          logged_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      gym_meal_logs: {
+        Row: {
+          calories: number
+          carbs_grams: number
+          created_at: string
+          fat_grams: number
+          food_item_id: string | null
+          food_name: string
+          id: string
+          logged_at: string
+          meal_type: string
+          protein_grams: number
+          quantity_grams: number
+          user_id: string
+        }
+        Insert: {
+          calories?: number
+          carbs_grams?: number
+          created_at?: string
+          fat_grams?: number
+          food_item_id?: string | null
+          food_name: string
+          id?: string
+          logged_at?: string
+          meal_type?: string
+          protein_grams?: number
+          quantity_grams?: number
+          user_id: string
+        }
+        Update: {
+          calories?: number
+          carbs_grams?: number
+          created_at?: string
+          fat_grams?: number
+          food_item_id?: string | null
+          food_name?: string
+          id?: string
+          logged_at?: string
+          meal_type?: string
+          protein_grams?: number
+          quantity_grams?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_meal_logs_food_item_id_fkey"
+            columns: ["food_item_id"]
+            isOneToOne: false
+            referencedRelation: "gym_food_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gym_muscle_groups: {
         Row: {
           created_at: string
@@ -9438,6 +9554,42 @@ export type Database = {
           title?: string
           type?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      gym_nutrition_goals: {
+        Row: {
+          carbs_grams: number
+          created_at: string
+          daily_calories: number
+          fat_grams: number
+          id: string
+          protein_grams: number
+          updated_at: string
+          user_id: string
+          water_ml: number
+        }
+        Insert: {
+          carbs_grams?: number
+          created_at?: string
+          daily_calories?: number
+          fat_grams?: number
+          id?: string
+          protein_grams?: number
+          updated_at?: string
+          user_id: string
+          water_ml?: number
+        }
+        Update: {
+          carbs_grams?: number
+          created_at?: string
+          daily_calories?: number
+          fat_grams?: number
+          id?: string
+          protein_grams?: number
+          updated_at?: string
+          user_id?: string
+          water_ml?: number
         }
         Relationships: []
       }
