@@ -172,16 +172,65 @@ serve(async (req) => {
       const content = visionResult.choices?.[0]?.message?.content || '';
       console.log("[nutrition-voice-processor] Vision response:", content);
 
+      // Check if AI couldn't identify food
+      if (content.toLowerCase().includes('não consigo') || 
+          content.toLowerCase().includes('não foi possível') ||
+          content.toLowerCase().includes('não há alimentos') ||
+          content.toLowerCase().includes('não contém') ||
+          !content.includes('{')) {
+        return jsonResponse({
+          success: false,
+          error: 'Não foi possível identificar alimentos na foto. Tente tirar uma foto mais clara do prato com os alimentos visíveis.'
+        }, { status: 400 });
+      }
+
       // Extract JSON from response (may be wrapped in markdown)
       let jsonContent = content;
       const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
       if (jsonMatch) {
         jsonContent = jsonMatch[1].trim();
+      } else {
+        // Try to find JSON object directly
+        const jsonStart = content.indexOf('{');
+        const jsonEnd = content.lastIndexOf('}');
+        if (jsonStart !== -1 && jsonEnd !== -1) {
+          jsonContent = content.substring(jsonStart, jsonEnd + 1);
+        }
       }
 
       let parsedMeal: ParsedMeal;
       try {
         parsedMeal = JSON.parse(jsonContent);
+        
+        // Validate required fields
+        if (!parsedMeal.foods || !Array.isArray(parsedMeal.foods)) {
+          throw new Error('Invalid meal structure');
+        }
+        
+        // Ensure all numeric values are valid
+        parsedMeal.foods = parsedMeal.foods.map(food => ({
+          ...food,
+          quantity_grams: Math.round(food.quantity_grams || 100),
+          calories: Math.round(food.calories || 0),
+          protein_grams: Math.round((food.protein_grams || 0) * 10) / 10,
+          carbs_grams: Math.round((food.carbs_grams || 0) * 10) / 10,
+          fat_grams: Math.round((food.fat_grams || 0) * 10) / 10,
+          fiber_grams: Math.round((food.fiber_grams || 0) * 10) / 10,
+          sodium_mg: Math.round(food.sodium_mg || 0),
+          confidence: food.confidence || 0.8
+        }));
+        
+        // Recalculate totals
+        parsedMeal.total_calories = parsedMeal.foods.reduce((sum, f) => sum + f.calories, 0);
+        parsedMeal.total_protein = Math.round(parsedMeal.foods.reduce((sum, f) => sum + f.protein_grams, 0) * 10) / 10;
+        parsedMeal.total_carbs = Math.round(parsedMeal.foods.reduce((sum, f) => sum + f.carbs_grams, 0) * 10) / 10;
+        parsedMeal.total_fat = Math.round(parsedMeal.foods.reduce((sum, f) => sum + f.fat_grams, 0) * 10) / 10;
+        parsedMeal.total_fiber = Math.round(parsedMeal.foods.reduce((sum, f) => sum + f.fiber_grams, 0) * 10) / 10;
+        parsedMeal.total_sodium = Math.round(parsedMeal.foods.reduce((sum, f) => sum + f.sodium_mg, 0));
+        parsedMeal.water_ml = Math.round(parsedMeal.water_ml || 0);
+        parsedMeal.meal_type = parsedMeal.meal_type || 'lunch';
+        parsedMeal.original_text = parsedMeal.original_text || 'Análise de foto';
+        
       } catch (e) {
         console.error("[nutrition-voice-processor] JSON parse error:", e, "Content:", jsonContent);
         return jsonResponse(

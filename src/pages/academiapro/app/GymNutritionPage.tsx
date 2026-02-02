@@ -143,64 +143,112 @@ export default function GymNutritionPage() {
   };
 
   const loadGoals = async () => {
-    const { data } = await supabase
-      .from('gym_nutrition_goals' as any)
-      .select('*')
-      .eq('user_id', user?.id)
-      .single();
+    if (!user?.id) return;
     
-    if (data) {
-      setGoals(data as unknown as NutritionGoals);
-    } else {
-      const defaultGoals = {
-        user_id: user?.id,
-        daily_calories: 2000,
-        protein_grams: 150,
-        carbs_grams: 200,
-        fat_grams: 70,
-        water_ml: 2500
-      };
-      const { data: newGoals } = await supabase
-        .from('gym_nutrition_goals' as any)
-        .insert(defaultGoals)
-        .select()
-        .single();
-      if (newGoals) setGoals(newGoals as unknown as NutritionGoals);
+    try {
+      const { data, error } = await supabase
+        .from('gym_nutrition_goals')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error loading goals:', error);
+        return;
+      }
+      
+      if (data) {
+        setGoals(data as unknown as NutritionGoals);
+      } else {
+        // Create default goals
+        const defaultGoals = {
+          user_id: user.id,
+          daily_calories: 2000,
+          protein_grams: 150,
+          carbs_grams: 200,
+          fat_grams: 70,
+          water_ml: 2500
+        };
+        const { data: newGoals, error: insertError } = await supabase
+          .from('gym_nutrition_goals')
+          .insert(defaultGoals)
+          .select()
+          .single();
+          
+        if (insertError) {
+          console.error('Error creating goals:', insertError);
+        } else if (newGoals) {
+          setGoals(newGoals as unknown as NutritionGoals);
+        }
+      }
+    } catch (err) {
+      console.error('Error in loadGoals:', err);
     }
   };
 
   const loadMealLogs = async () => {
-    const { data } = await supabase
-      .from('gym_meal_logs' as any)
-      .select('*')
-      .eq('user_id', user?.id)
-      .gte('logged_at', `${today}T00:00:00`)
-      .lte('logged_at', `${today}T23:59:59`)
-      .order('logged_at', { ascending: true });
+    if (!user?.id) return;
     
-    if (data) setMealLogs(data as unknown as MealLog[]);
+    try {
+      const { data, error } = await supabase
+        .from('gym_meal_logs')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('logged_at', `${today}T00:00:00`)
+        .lte('logged_at', `${today}T23:59:59`)
+        .order('logged_at', { ascending: true });
+      
+      if (error) {
+        console.error('Error loading meals:', error);
+        return;
+      }
+      
+      if (data) setMealLogs(data as unknown as MealLog[]);
+    } catch (err) {
+      console.error('Error in loadMealLogs:', err);
+    }
   };
 
   const loadHydrationLogs = async () => {
-    const { data } = await supabase
-      .from('gym_hydration_logs' as any)
-      .select('*')
-      .eq('user_id', user?.id)
-      .gte('logged_at', `${today}T00:00:00`)
-      .lte('logged_at', `${today}T23:59:59`)
-      .order('logged_at', { ascending: true });
+    if (!user?.id) return;
     
-    if (data) setHydrationLogs(data as unknown as HydrationLog[]);
+    try {
+      const { data, error } = await supabase
+        .from('gym_hydration_logs')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('logged_at', `${today}T00:00:00`)
+        .lte('logged_at', `${today}T23:59:59`)
+        .order('logged_at', { ascending: true });
+      
+      if (error) {
+        console.error('Error loading hydration:', error);
+        return;
+      }
+      
+      if (data) setHydrationLogs(data as unknown as HydrationLog[]);
+    } catch (err) {
+      console.error('Error in loadHydrationLogs:', err);
+    }
   };
 
   const loadFoodItems = async () => {
-    const { data } = await supabase
-      .from('gym_food_items' as any)
-      .select('*')
-      .eq('is_active', true)
-      .order('name');
-    
-    if (data) setFoodItems(data as unknown as FoodItem[]);
+    try {
+      const { data, error } = await supabase
+        .from('gym_food_items')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
+      
+      if (error) {
+        console.error('Error loading food items:', error);
+        return;
+      }
+      
+      if (data) setFoodItems(data as unknown as FoodItem[]);
+    } catch (err) {
+      console.error('Error in loadFoodItems:', err);
+    }
   };
 
   const filteredFoods = foodItems.filter(food =>
@@ -208,11 +256,14 @@ export default function GymNutritionPage() {
   );
 
   const addMeal = async () => {
-    if (!selectedFood || !quantity) return;
+    if (!selectedFood || !quantity || !user?.id) {
+      toast.error('Selecione um alimento e quantidade');
+      return;
+    }
 
     const multiplier = parseFloat(quantity) / 100;
     const mealData = {
-      user_id: user?.id,
+      user_id: user.id,
       food_item_id: selectedFood.id,
       food_name: selectedFood.name,
       calories: Math.round(selectedFood.calories_per_100g * multiplier),
@@ -223,49 +274,73 @@ export default function GymNutritionPage() {
       meal_type: selectedMealType
     };
 
-    const { error } = await supabase
-      .from('gym_meal_logs' as any)
-      .insert(mealData);
+    try {
+      const { error } = await supabase
+        .from('gym_meal_logs')
+        .insert(mealData);
 
-    if (error) {
+      if (error) {
+        console.error('Error adding meal:', error);
+        toast.error('Erro ao registrar refeição');
+      } else {
+        toast.success('Refeição registrada!');
+        loadMealLogs();
+        setSelectedFood(null);
+        setQuantity('100');
+        setShowFoodSearch(false);
+      }
+    } catch (err) {
+      console.error('Error in addMeal:', err);
       toast.error('Erro ao registrar refeição');
-    } else {
-      toast.success('Refeição registrada!');
-      loadMealLogs();
-      setSelectedFood(null);
-      setQuantity('100');
-      setShowFoodSearch(false);
     }
   };
 
   const addWater = async (amount?: number) => {
+    if (!user?.id) {
+      toast.error('Usuário não autenticado');
+      return;
+    }
+    
     const waterMl = amount || 250;
-    const { error } = await supabase
-      .from('gym_hydration_logs' as any)
-      .insert({
-        user_id: user?.id,
-        amount_ml: waterMl
-      });
+    
+    try {
+      const { error } = await supabase
+        .from('gym_hydration_logs')
+        .insert({
+          user_id: user.id,
+          amount_ml: waterMl
+        });
 
-    if (error) {
+      if (error) {
+        console.error('Error adding water:', error);
+        toast.error('Erro ao registrar água');
+      } else {
+        toast.success(`+${waterMl}ml registrado!`);
+        loadHydrationLogs();
+      }
+    } catch (err) {
+      console.error('Error in addWater:', err);
       toast.error('Erro ao registrar água');
-    } else {
-      toast.success(`+${waterMl}ml registrado!`);
-      loadHydrationLogs();
     }
   };
 
   const deleteMeal = async (mealId: string) => {
-    const { error } = await supabase
-      .from('gym_meal_logs' as any)
-      .delete()
-      .eq('id', mealId);
+    try {
+      const { error } = await supabase
+        .from('gym_meal_logs')
+        .delete()
+        .eq('id', mealId);
 
-    if (error) {
+      if (error) {
+        console.error('Error deleting meal:', error);
+        toast.error('Erro ao excluir refeição');
+      } else {
+        toast.success('Refeição excluída');
+        loadMealLogs();
+      }
+    } catch (err) {
+      console.error('Error in deleteMeal:', err);
       toast.error('Erro ao excluir refeição');
-    } else {
-      toast.success('Refeição excluída');
-      loadMealLogs();
     }
   };
 
@@ -300,32 +375,50 @@ export default function GymNutritionPage() {
   }, []);
 
   const handleConfirmMeal = useCallback(async (meal: ParsedMeal) => {
+    if (!user?.id) {
+      toast.error('Usuário não autenticado');
+      return;
+    }
+    
     setIsSavingMeal(true);
 
     try {
-      for (const food of meal.foods) {
-        await supabase
-          .from('gym_meal_logs' as any)
-          .insert({
-            user_id: user?.id,
-            food_name: food.name,
-            calories: food.calories,
-            protein_grams: food.protein_grams,
-            carbs_grams: food.carbs_grams,
-            fat_grams: food.fat_grams,
-            quantity_grams: food.quantity_grams,
-            meal_type: meal.meal_type
-          });
+      // Insert all foods
+      const mealInserts = meal.foods.map(food => ({
+        user_id: user.id,
+        food_name: food.name,
+        calories: Math.round(food.calories),
+        protein_grams: Math.round(food.protein_grams * 10) / 10,
+        carbs_grams: Math.round(food.carbs_grams * 10) / 10,
+        fat_grams: Math.round(food.fat_grams * 10) / 10,
+        quantity_grams: Math.round(food.quantity_grams),
+        meal_type: meal.meal_type || 'lunch'
+      }));
+      
+      const { error } = await supabase
+        .from('gym_meal_logs')
+        .insert(mealInserts);
+        
+      if (error) {
+        console.error('Error inserting meals:', error);
+        throw error;
       }
 
+      // Add water if detected
       if (meal.water_ml > 0) {
-        await addWater(meal.water_ml);
+        await supabase
+          .from('gym_hydration_logs')
+          .insert({
+            user_id: user.id,
+            amount_ml: Math.round(meal.water_ml)
+          });
       }
 
       toast.success('Refeição registrada com sucesso!');
       setShowMealConfirmation(false);
       setParsedMeal(null);
       loadMealLogs();
+      loadHydrationLogs();
 
     } catch (error: any) {
       console.error('Save meal error:', error);

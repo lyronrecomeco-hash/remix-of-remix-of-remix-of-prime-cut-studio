@@ -3,10 +3,62 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, Image, Loader2, X, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface PhotoMealScannerProps {
   onPhotoAnalyzed: (base64: string) => void;
   isProcessing: boolean;
+}
+
+// Compress and convert image to JPEG base64
+async function processImage(file: File): Promise<{ preview: string; base64: string }> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.onload = () => {
+      // Create canvas for compression
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        reject(new Error('Canvas context not available'));
+        return;
+      }
+      
+      // Max dimensions
+      const MAX_SIZE = 1024;
+      let { width, height } = img;
+      
+      if (width > height && width > MAX_SIZE) {
+        height = (height * MAX_SIZE) / width;
+        width = MAX_SIZE;
+      } else if (height > MAX_SIZE) {
+        width = (width * MAX_SIZE) / height;
+        height = MAX_SIZE;
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      // Draw and compress
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      // Get as JPEG with 80% quality
+      const preview = canvas.toDataURL('image/jpeg', 0.8);
+      const base64 = preview.split(',')[1];
+      
+      resolve({ preview, base64 });
+    };
+    
+    img.onerror = () => reject(new Error('Failed to load image'));
+    
+    // Read file
+    const reader = new FileReader();
+    reader.onload = () => {
+      img.src = reader.result as string;
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
 }
 
 export function PhotoMealScanner({
@@ -15,27 +67,39 @@ export function PhotoMealScanner({
 }: PhotoMealScannerProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [capturedBase64, setCapturedBase64] = useState<string | null>(null);
+  const [isLoadingImage, setIsLoadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  const processFile = useCallback((file: File) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = reader.result as string;
-      setPreviewUrl(result);
-      // Extract base64 without prefix
-      const base64 = result.split(',')[1];
-      setCapturedBase64(base64);
-    };
-    reader.readAsDataURL(file);
-  }, []);
-
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      processFile(file);
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Selecione um arquivo de imagem válido');
+      return;
     }
-  }, [processFile]);
+    
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Imagem muito grande. Máximo 10MB');
+      return;
+    }
+    
+    setIsLoadingImage(true);
+    
+    try {
+      const { preview, base64 } = await processImage(file);
+      setPreviewUrl(preview);
+      setCapturedBase64(base64);
+    } catch (error) {
+      console.error('Error processing image:', error);
+      toast.error('Erro ao processar imagem');
+    } finally {
+      setIsLoadingImage(false);
+    }
+  }, []);
 
   const handleAnalyze = useCallback(() => {
     if (capturedBase64) {
@@ -70,7 +134,7 @@ export function PhotoMealScanner({
       />
 
       <AnimatePresence mode="wait">
-        {isProcessing ? (
+        {isProcessing || isLoadingImage ? (
           <motion.div
             key="processing"
             initial={{ opacity: 0, scale: 0.9 }}
@@ -81,7 +145,9 @@ export function PhotoMealScanner({
             <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center">
               <Loader2 className="w-8 h-8 text-primary animate-spin" />
             </div>
-            <p className="text-sm text-muted-foreground">Analisando foto...</p>
+            <p className="text-sm text-muted-foreground">
+              {isLoadingImage ? 'Carregando...' : 'Analisando foto...'}
+            </p>
           </motion.div>
         ) : previewUrl ? (
           <motion.div
