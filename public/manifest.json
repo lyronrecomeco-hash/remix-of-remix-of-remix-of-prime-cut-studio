@@ -9,7 +9,11 @@
   "theme_color": "#f97316",
   "orientation": "portrait-primary",
   "lang": "pt-BR",
-  "categories": ["fitness", "health", "lifestyle"],
+  "categories": [
+    "fitness",
+    "health",
+    "lifestyle"
+  ],
   "icons": [
     {
       "src": "/icon-192.png",
@@ -36,9 +40,7 @@
       "purpose": "maskable"
     }
   ],
-  "screenshots": [],
   "prefer_related_applications": false,
-  "related_applications": [],
   "shortcuts": [
     {
       "name": "Meus Treinos",
