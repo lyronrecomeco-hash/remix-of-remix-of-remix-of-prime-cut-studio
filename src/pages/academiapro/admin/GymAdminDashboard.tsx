@@ -171,7 +171,14 @@ export default function GymAdminDashboard() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Dashboard</h1>
+        <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
+          {(() => {
+            const hour = new Date().getHours();
+            if (hour >= 5 && hour < 12) return 'Bom dia';
+            if (hour >= 12 && hour < 18) return 'Boa tarde';
+            return 'Boa noite';
+          })()}, Adm.
+        </h1>
         <p className="text-muted-foreground mt-1 text-sm lg:text-base">Visão geral da academia</p>
       </motion.div>
 

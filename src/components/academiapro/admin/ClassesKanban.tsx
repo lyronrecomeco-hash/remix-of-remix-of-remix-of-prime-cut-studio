@@ -39,10 +39,10 @@ interface KanbanColumn {
 }
 
 const COLUMNS: KanbanColumn[] = [
-  { id: 'inactive', title: 'Inativas', color: 'bg-zinc-500' },
+  { id: 'inactive', title: 'Inativas', color: 'bg-muted-foreground' },
   { id: 'draft', title: 'Rascunho', color: 'bg-blue-500' },
   { id: 'active', title: 'Ativas', color: 'bg-green-500' },
-  { id: 'full', title: 'Lotadas', color: 'bg-orange-500' }
+  { id: 'full', title: 'Lotadas', color: 'bg-primary' }
 ];
 
 export default function ClassesKanban() {
@@ -259,13 +259,13 @@ export default function ClassesKanban() {
       cardio: 'bg-red-500/20 text-red-400',
       forca: 'bg-blue-500/20 text-blue-400',
       flexibilidade: 'bg-purple-500/20 text-purple-400',
-      hiit: 'bg-orange-500/20 text-orange-400',
+      hiit: 'bg-primary/20 text-primary',
       funcional: 'bg-cyan-500/20 text-cyan-400',
       danca: 'bg-pink-500/20 text-pink-400',
       luta: 'bg-yellow-500/20 text-yellow-400',
       relaxamento: 'bg-green-500/20 text-green-400'
     };
-    return badges[category] || 'bg-zinc-500/20 text-zinc-400';
+    return badges[category] || 'bg-muted/50 text-muted-foreground';
   };
 
   const getCategoryLabel = (category: string) => {
@@ -286,20 +286,20 @@ export default function ClassesKanban() {
         <div className="flex items-center gap-3">
           <div>
             <h1 className="text-2xl lg:text-3xl font-bold">Aulas Coletivas</h1>
-            <p className="text-zinc-400 mt-1 text-sm">Organize e gerencie suas aulas</p>
+            <p className="text-muted-foreground mt-1 text-sm">Organize e gerencie suas aulas</p>
           </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setShowHelp(true)}
-            className="hover:bg-orange-500/20 text-zinc-400 hover:text-orange-500"
+            className="hover:bg-primary/20 text-muted-foreground hover:text-primary"
           >
             <HelpCircle className="w-5 h-5" />
           </Button>
         </div>
         <Button 
           onClick={() => setShowCreateModal(true)}
-          className="bg-orange-500 hover:bg-orange-600 text-white"
+          className="bg-primary hover:bg-primary/80 text-primary-foreground"
         >
           <Plus className="w-4 h-4 mr-2" />
           Nova Aula
@@ -314,12 +314,12 @@ export default function ClassesKanban() {
 
       {/* Search */}
       <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
         <Input
           placeholder="Buscar aula..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="pl-10 bg-zinc-900 border-zinc-800"
+          className="pl-10 bg-card border-border"
         />
       </div>
 
@@ -328,7 +328,7 @@ export default function ClassesKanban() {
         {COLUMNS.map(column => (
           <div
             key={column.id}
-            className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 min-h-[400px] min-w-[250px]"
+            className="bg-card/50 border border-border rounded-xl p-4 min-h-[400px] min-w-[250px]"
             onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, column.id)}
           >
@@ -343,7 +343,7 @@ export default function ClassesKanban() {
             <div className="space-y-3">
               {isLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 </div>
               ) : (
                 getColumnItems(column.id).map(classItem => (
@@ -354,12 +354,12 @@ export default function ClassesKanban() {
                     animate={{ opacity: 1, scale: 1 }}
                     draggable
                     onDragStart={(e: any) => handleDragStart(e, classItem.id)}
-                    className={`bg-zinc-800 border border-zinc-700 rounded-lg p-3 cursor-grab active:cursor-grabbing hover:border-orange-500/50 transition-colors ${
+                    className={`bg-muted border border-border rounded-lg p-3 cursor-grab active:cursor-grabbing hover:border-primary/50 transition-colors ${
                       draggedItem === classItem.id ? 'opacity-50' : ''
                     }`}
                   >
                     <div className="flex items-start gap-2 mb-2">
-                      <GripVertical className="w-4 h-4 text-zinc-600 mt-0.5 flex-shrink-0" />
+                      <GripVertical className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium text-sm truncate">{classItem.name}</h4>
                         <Badge className={`text-xs mt-1 ${getCategoryBadge(classItem.category)}`}>
@@ -368,7 +368,7 @@ export default function ClassesKanban() {
                       </div>
                     </div>
                     
-                    <div className="space-y-1.5 text-xs text-zinc-400 mb-3 ml-6">
+                    <div className="space-y-1.5 text-xs text-muted-foreground mb-3 ml-6">
                       <div className="flex items-center gap-1.5">
                         <Calendar className="w-3 h-3 flex-shrink-0" />
                         <span className="truncate">{formatDays(classItem.recurring_days)}</span>
@@ -386,7 +386,7 @@ export default function ClassesKanban() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="w-full h-7 text-xs hover:bg-orange-500/20 hover:text-orange-400"
+                      className="w-full h-7 text-xs hover:bg-primary/20 hover:text-primary"
                       onClick={() => openAssignModal(classItem)}
                     >
                       <UserPlus className="w-3 h-3 mr-1" />
@@ -397,7 +397,7 @@ export default function ClassesKanban() {
               )}
 
               {!isLoading && getColumnItems(column.id).length === 0 && (
-                <div className="text-center py-8 text-zinc-500 text-sm">
+                <div className="text-center py-8 text-muted-foreground text-sm">
                   Nenhuma aula
                 </div>
               )}
@@ -408,10 +408,10 @@ export default function ClassesKanban() {
 
       {/* Assign Students Modal */}
       <Dialog open={showAssignModal} onOpenChange={setShowAssignModal}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-md">
+        <DialogContent className="bg-card border-border text-foreground max-w-md">
           <DialogHeader>
             <DialogTitle>Matricular Alunos</DialogTitle>
-            <DialogDescription className="text-zinc-400">
+            <DialogDescription className="text-muted-foreground">
               Selecione os alunos para a aula "{selectedClass?.name}"
             </DialogDescription>
           </DialogHeader>
@@ -423,21 +423,21 @@ export default function ClassesKanban() {
                 onClick={() => toggleStudent(student.user_id)}
                 className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-colors ${
                   selectedStudents.includes(student.user_id)
-                    ? 'bg-orange-500/20 border-orange-500/50'
-                    : 'bg-zinc-800 border-zinc-700 hover:border-zinc-600'
+                    ? 'bg-primary/20 border-primary/50'
+                    : 'bg-muted border-border hover:border-muted-foreground/30'
                 }`}
               >
                 <Avatar className="h-9 w-9">
-                  <AvatarFallback className="bg-zinc-700 text-sm">
+                  <AvatarFallback className="bg-muted-foreground/20 text-sm">
                     {student.full_name?.charAt(0) || 'A'}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 text-left">
                   <p className="font-medium text-sm">{student.full_name}</p>
-                  <p className="text-xs text-zinc-400">{student.email}</p>
+                  <p className="text-xs text-muted-foreground">{student.email}</p>
                 </div>
                 {selectedStudents.includes(student.user_id) && (
-                  <Check className="w-5 h-5 text-orange-500" />
+                  <Check className="w-5 h-5 text-primary" />
                 )}
               </button>
             ))}
@@ -446,13 +446,13 @@ export default function ClassesKanban() {
           <div className="flex gap-3 mt-4">
             <Button
               variant="outline"
-              className="flex-1 border-zinc-700"
+              className="flex-1 border-border"
               onClick={() => setShowAssignModal(false)}
             >
               Cancelar
             </Button>
             <Button
-              className="flex-1 bg-orange-500 hover:bg-orange-600"
+              className="flex-1 bg-primary hover:bg-primary/80"
               onClick={handleAssignStudents}
               disabled={selectedStudents.length === 0}
             >
