@@ -55,7 +55,7 @@ export default function GymWorkoutsPage() {
         className="pt-2"
       >
         <h1 className="text-2xl font-bold">Meus Treinos</h1>
-        <p className="text-zinc-400 text-sm">Seus treinos personalizados</p>
+        <p className="text-muted-foreground text-sm">Seus treinos personalizados</p>
       </motion.div>
 
       {/* Workouts Grid */}
@@ -67,9 +67,9 @@ export default function GymWorkoutsPage() {
       >
         {isLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 animate-pulse">
-              <div className="h-5 bg-zinc-800 rounded w-1/2 mb-2" />
-              <div className="h-4 bg-zinc-800 rounded w-1/3" />
+            <div key={i} className="bg-card border border-border rounded-2xl p-4 animate-pulse">
+              <div className="h-5 bg-muted rounded w-1/2 mb-2" />
+              <div className="h-4 bg-muted rounded w-1/3" />
             </div>
           ))
         ) : workouts.length > 0 ? (
@@ -79,37 +79,37 @@ export default function GymWorkoutsPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 hover:border-zinc-700 transition-all"
+              className="bg-card border border-border rounded-2xl p-4 hover:border-border/80 transition-all"
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-lg truncate">{workout.name}</h3>
-                  <div className="flex items-center gap-2 text-zinc-400 text-sm mt-1">
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm mt-1">
                     <Calendar className="w-4 h-4 flex-shrink-0" />
                     <span className="truncate">{formatDays(workout.day_of_week)}</span>
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0 ml-2">
-                  <span className="text-orange-500 font-medium">
+                  <span className="text-primary font-medium">
                     {workout.gym_user_workout_exercises?.length || 0}
                   </span>
-                  <p className="text-xs text-zinc-400">exercícios</p>
+                  <p className="text-xs text-muted-foreground">exercícios</p>
                 </div>
               </div>
 
               {/* Exercise preview */}
               <div className="flex gap-2 mb-4 overflow-x-auto pb-2 -mx-1 px-1">
                 {workout.gym_user_workout_exercises?.slice(0, 3).map((ex: any, i: number) => (
-                  <div key={i} className="flex-shrink-0 bg-zinc-800/50 rounded-lg px-3 py-2 min-w-[90px]">
-                    <p className="text-xs text-zinc-400 truncate">
+                  <div key={i} className="flex-shrink-0 bg-muted/50 rounded-lg px-3 py-2 min-w-[90px]">
+                    <p className="text-xs text-muted-foreground truncate">
                       {ex.gym_exercises?.name || 'Exercício'}
                     </p>
                     <p className="text-sm font-medium">{ex.sets}x{ex.reps}</p>
                   </div>
                 ))}
                 {workout.gym_user_workout_exercises?.length > 3 && (
-                  <div className="flex-shrink-0 bg-zinc-800/50 rounded-lg px-3 py-2 flex items-center">
-                    <span className="text-sm text-zinc-400">
+                  <div className="flex-shrink-0 bg-muted/50 rounded-lg px-3 py-2 flex items-center">
+                    <span className="text-sm text-muted-foreground">
                       +{workout.gym_user_workout_exercises.length - 3}
                     </span>
                   </div>
@@ -118,13 +118,13 @@ export default function GymWorkoutsPage() {
 
               <div className="flex gap-2">
                 <Link to={`/academiapro/app/treinos/${workout.id}`} className="flex-1">
-                  <Button variant="outline" className="w-full border-zinc-700 hover:bg-zinc-800">
+                  <Button variant="outline" className="w-full border-border hover:bg-muted">
                     <Dumbbell className="w-4 h-4 mr-2" />
                     Detalhes
                   </Button>
                 </Link>
                 <Link to={`/academiapro/app/treinos/${workout.id}/executar`}>
-                  <Button className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 px-4">
+                  <Button className="bg-primary hover:bg-primary/80 px-4">
                     <Play className="w-4 h-4" />
                   </Button>
                 </Link>
@@ -132,10 +132,10 @@ export default function GymWorkoutsPage() {
             </motion.div>
           ))
         ) : (
-          <div className="col-span-full bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center">
-            <Dumbbell className="w-12 h-12 text-zinc-600 mx-auto mb-4" />
+          <div className="col-span-full bg-card border border-border rounded-2xl p-8 text-center">
+            <Dumbbell className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="font-semibold text-lg mb-2">Nenhum treino encontrado</h3>
-            <p className="text-zinc-400 text-sm mb-4">
+            <p className="text-muted-foreground text-sm mb-4">
               Seu instrutor ainda não criou treinos para você
             </p>
           </div>
