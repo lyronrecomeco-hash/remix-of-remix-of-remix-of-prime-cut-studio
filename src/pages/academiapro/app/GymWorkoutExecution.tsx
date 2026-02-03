@@ -144,17 +144,30 @@ export default function GymWorkoutExecution() {
   };
 
   const fetchWorkout = async () => {
-    const { data } = await supabase
-      .from('gym_user_workouts')
-      .select(`*, gym_user_workout_exercises(*, gym_exercises(*))`)
-      .eq('id', workoutId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('gym_user_workouts')
+        .select(`*, gym_user_workout_exercises(*, gym_exercises(*))`)
+        .eq('id', workoutId)
+        .single();
 
-    if (data) {
-      setWorkout(data);
-      setExercises(data.gym_user_workout_exercises || []);
-      setRestTime(60);
-      setTimeRemaining(60);
+      if (error) {
+        console.error('Error fetching workout:', error);
+        toast.error('Treino não encontrado');
+        setIsLoading(false);
+        return;
+      }
+
+      if (data) {
+        setWorkout(data);
+        const exerciseList = data.gym_user_workout_exercises || [];
+        setExercises(exerciseList);
+        setRestTime(60);
+        setTimeRemaining(60);
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      toast.error('Erro ao carregar treino');
     }
     setIsLoading(false);
   };
@@ -259,6 +272,52 @@ export default function GymWorkoutExecution() {
           transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
           className="w-12 h-12 border-3 border-primary border-t-transparent rounded-full"
         />
+      </div>
+    );
+  }
+
+  // No workout found
+  if (!workout) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 text-center">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4"
+        >
+          <Dumbbell className="w-10 h-10 text-muted-foreground" />
+        </motion.div>
+        <h2 className="text-xl font-bold mb-2">Treino não encontrado</h2>
+        <p className="text-muted-foreground mb-6 max-w-xs">
+          Este treino não existe ou não está disponível para você.
+        </p>
+        <Button onClick={() => navigate('/academiapro/app/treinos')} className="gap-2">
+          <ArrowLeft className="w-4 h-4" />
+          Voltar aos Treinos
+        </Button>
+      </div>
+    );
+  }
+
+  // No exercises
+  if (exercises.length === 0) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 text-center">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mb-4"
+        >
+          <Dumbbell className="w-10 h-10 text-primary" />
+        </motion.div>
+        <h2 className="text-xl font-bold mb-2">Treino sem exercícios</h2>
+        <p className="text-muted-foreground mb-6 max-w-xs">
+          Este treino ainda não possui exercícios configurados. Aguarde seu instrutor adicionar os exercícios.
+        </p>
+        <Button onClick={() => navigate('/academiapro/app/treinos')} className="gap-2">
+          <ArrowLeft className="w-4 h-4" />
+          Voltar aos Treinos
+        </Button>
       </div>
     );
   }
