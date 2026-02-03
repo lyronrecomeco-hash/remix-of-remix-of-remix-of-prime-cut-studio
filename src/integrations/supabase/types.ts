@@ -9066,6 +9066,75 @@ export type Database = {
           },
         ]
       }
+      gym_announcement_reads: {
+        Row: {
+          announcement_id: string
+          id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          announcement_id: string
+          id?: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          announcement_id?: string
+          id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      gym_announcements: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          priority: number | null
+          starts_at: string | null
+          target_audience: string | null
+          target_user_ids: string[] | null
+          title: string
+          type: string | null
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          starts_at?: string | null
+          target_audience?: string | null
+          target_user_ids?: string[] | null
+          title: string
+          type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          starts_at?: string | null
+          target_audience?: string | null
+          target_user_ids?: string[] | null
+          title?: string
+          type?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       gym_body_measurements: {
         Row: {
           biceps_left_cm: number | null
@@ -9153,6 +9222,39 @@ export type Database = {
         }
         Relationships: []
       }
+      gym_class_attendance: {
+        Row: {
+          checked_in_at: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          session_id: string
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          checked_in_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          session_id: string
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          checked_in_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          session_id?: string
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       gym_class_bookings: {
         Row: {
           booked_at: string
@@ -9195,6 +9297,7 @@ export type Database = {
         Row: {
           class_id: string
           created_at: string
+          current_attendees: number | null
           id: string
           instructor_id: string | null
           notes: string | null
@@ -9204,6 +9307,7 @@ export type Database = {
         Insert: {
           class_id: string
           created_at?: string
+          current_attendees?: number | null
           id?: string
           instructor_id?: string | null
           notes?: string | null
@@ -9213,6 +9317,7 @@ export type Database = {
         Update: {
           class_id?: string
           created_at?: string
+          current_attendees?: number | null
           id?: string
           instructor_id?: string | null
           notes?: string | null
@@ -9331,6 +9436,45 @@ export type Database = {
           },
         ]
       }
+      gym_exercise_progressions: {
+        Row: {
+          created_at: string
+          current_weight_kg: number | null
+          exercise_id: string | null
+          id: string
+          notes: string | null
+          previous_weight_kg: number | null
+          progression_date: string
+          progression_type: string | null
+          user_id: string
+          workout_exercise_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          current_weight_kg?: number | null
+          exercise_id?: string | null
+          id?: string
+          notes?: string | null
+          previous_weight_kg?: number | null
+          progression_date?: string
+          progression_type?: string | null
+          user_id: string
+          workout_exercise_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          current_weight_kg?: number | null
+          exercise_id?: string | null
+          id?: string
+          notes?: string | null
+          previous_weight_kg?: number | null
+          progression_date?: string
+          progression_type?: string | null
+          user_id?: string
+          workout_exercise_id?: string | null
+        }
+        Relationships: []
+      }
       gym_exercises: {
         Row: {
           created_at: string
@@ -9447,6 +9591,54 @@ export type Database = {
           id?: string
           logged_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      gym_instructors: {
+        Row: {
+          bio: string | null
+          created_at: string
+          cref: string | null
+          email: string | null
+          full_name: string
+          hire_date: string | null
+          id: string
+          is_active: boolean | null
+          phone: string | null
+          photo_url: string | null
+          specialties: string[] | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string
+          cref?: string | null
+          email?: string | null
+          full_name: string
+          hire_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          phone?: string | null
+          photo_url?: string | null
+          specialties?: string[] | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string
+          cref?: string | null
+          email?: string | null
+          full_name?: string
+          hire_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          phone?: string | null
+          photo_url?: string | null
+          specialties?: string[] | null
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -9600,9 +9792,12 @@ export type Database = {
           description: string | null
           due_date: string | null
           id: string
+          notes: string | null
           paid_at: string | null
           payment_method: string | null
           plan_id: string | null
+          receipt_url: string | null
+          reference_month: string | null
           status: string
           updated_at: string
           user_id: string
@@ -9613,9 +9808,12 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          notes?: string | null
           paid_at?: string | null
           payment_method?: string | null
           plan_id?: string | null
+          receipt_url?: string | null
+          reference_month?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -9626,9 +9824,12 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          notes?: string | null
           paid_at?: string | null
           payment_method?: string | null
           plan_id?: string | null
+          receipt_url?: string | null
+          reference_month?: string | null
           status?: string
           updated_at?: string
           user_id?: string
@@ -9684,6 +9885,90 @@ export type Database = {
           },
         ]
       }
+      gym_physical_evaluations: {
+        Row: {
+          blood_pressure_diastolic: number | null
+          blood_pressure_systolic: number | null
+          bmi: number | null
+          body_fat_percentage: number | null
+          chest_cm: number | null
+          created_at: string
+          evaluation_date: string
+          height_cm: number | null
+          hips_cm: number | null
+          id: string
+          instructor_id: string | null
+          left_arm_cm: number | null
+          left_calf_cm: number | null
+          left_thigh_cm: number | null
+          muscle_mass_kg: number | null
+          notes: string | null
+          photos: Json | null
+          resting_heart_rate: number | null
+          right_arm_cm: number | null
+          right_calf_cm: number | null
+          right_thigh_cm: number | null
+          updated_at: string
+          user_id: string
+          waist_cm: number | null
+          weight_kg: number | null
+        }
+        Insert: {
+          blood_pressure_diastolic?: number | null
+          blood_pressure_systolic?: number | null
+          bmi?: number | null
+          body_fat_percentage?: number | null
+          chest_cm?: number | null
+          created_at?: string
+          evaluation_date?: string
+          height_cm?: number | null
+          hips_cm?: number | null
+          id?: string
+          instructor_id?: string | null
+          left_arm_cm?: number | null
+          left_calf_cm?: number | null
+          left_thigh_cm?: number | null
+          muscle_mass_kg?: number | null
+          notes?: string | null
+          photos?: Json | null
+          resting_heart_rate?: number | null
+          right_arm_cm?: number | null
+          right_calf_cm?: number | null
+          right_thigh_cm?: number | null
+          updated_at?: string
+          user_id: string
+          waist_cm?: number | null
+          weight_kg?: number | null
+        }
+        Update: {
+          blood_pressure_diastolic?: number | null
+          blood_pressure_systolic?: number | null
+          bmi?: number | null
+          body_fat_percentage?: number | null
+          chest_cm?: number | null
+          created_at?: string
+          evaluation_date?: string
+          height_cm?: number | null
+          hips_cm?: number | null
+          id?: string
+          instructor_id?: string | null
+          left_arm_cm?: number | null
+          left_calf_cm?: number | null
+          left_thigh_cm?: number | null
+          muscle_mass_kg?: number | null
+          notes?: string | null
+          photos?: Json | null
+          resting_heart_rate?: number | null
+          right_arm_cm?: number | null
+          right_calf_cm?: number | null
+          right_thigh_cm?: number | null
+          updated_at?: string
+          user_id?: string
+          waist_cm?: number | null
+          weight_kg?: number | null
+        }
+        Relationships: []
+      }
       gym_plans: {
         Row: {
           created_at: string
@@ -9733,8 +10018,12 @@ export type Database = {
           goals: string[] | null
           height_cm: number | null
           id: string
+          instructor_id: string | null
+          instructor_notes: string | null
+          last_activity_at: string | null
           medical_restrictions: string | null
           phone: string | null
+          status: string | null
           updated_at: string
           user_id: string
           weight_kg: number | null
@@ -9751,8 +10040,12 @@ export type Database = {
           goals?: string[] | null
           height_cm?: number | null
           id?: string
+          instructor_id?: string | null
+          instructor_notes?: string | null
+          last_activity_at?: string | null
           medical_restrictions?: string | null
           phone?: string | null
+          status?: string | null
           updated_at?: string
           user_id: string
           weight_kg?: number | null
@@ -9769,8 +10062,12 @@ export type Database = {
           goals?: string[] | null
           height_cm?: number | null
           id?: string
+          instructor_id?: string | null
+          instructor_notes?: string | null
+          last_activity_at?: string | null
           medical_restrictions?: string | null
           phone?: string | null
+          status?: string | null
           updated_at?: string
           user_id?: string
           weight_kg?: number | null
@@ -9804,6 +10101,33 @@ export type Database = {
           photo_url?: string
           taken_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      gym_reports_cache: {
+        Row: {
+          data: Json
+          expires_at: string
+          generated_at: string
+          id: string
+          report_period: string
+          report_type: string
+        }
+        Insert: {
+          data: Json
+          expires_at: string
+          generated_at?: string
+          id?: string
+          report_period: string
+          report_type: string
+        }
+        Update: {
+          data?: Json
+          expires_at?: string
+          generated_at?: string
+          id?: string
+          report_period?: string
+          report_type?: string
         }
         Relationships: []
       }
@@ -10067,11 +10391,15 @@ export type Database = {
       }
       gym_user_workout_exercises: {
         Row: {
+          auto_progression: boolean | null
           created_at: string
+          current_weight_kg: number | null
           exercise_id: string
           id: string
+          instructor_notes: string | null
           notes: string | null
           order_index: number
+          progression_increment_kg: number | null
           reps: string | null
           rest_seconds: number | null
           sets: number | null
@@ -10079,11 +10407,15 @@ export type Database = {
           weight_kg: number | null
         }
         Insert: {
+          auto_progression?: boolean | null
           created_at?: string
+          current_weight_kg?: number | null
           exercise_id: string
           id?: string
+          instructor_notes?: string | null
           notes?: string | null
           order_index?: number
+          progression_increment_kg?: number | null
           reps?: string | null
           rest_seconds?: number | null
           sets?: number | null
@@ -10091,11 +10423,15 @@ export type Database = {
           weight_kg?: number | null
         }
         Update: {
+          auto_progression?: boolean | null
           created_at?: string
+          current_weight_kg?: number | null
           exercise_id?: string
           id?: string
+          instructor_notes?: string | null
           notes?: string | null
           order_index?: number
+          progression_increment_kg?: number | null
           reps?: string | null
           rest_seconds?: number | null
           sets?: number | null
@@ -14967,6 +15303,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_bmi: {
+        Args: { height_cm: number; weight_kg: number }
+        Returns: number
+      }
+      can_student_checkin: { Args: { p_user_id: string }; Returns: boolean }
       check_contact_blacklisted: {
         Args: { p_phone: string; p_user_id: string }
         Returns: boolean
