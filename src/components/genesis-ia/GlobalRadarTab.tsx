@@ -26,7 +26,8 @@ import {
   Calendar,
   Tag,
   Eye,
-  Search
+  Search,
+  Settings2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -46,6 +47,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { COUNTRIES as GLOBAL_COUNTRIES, getNichesForCountry, getCountryByCode } from '@/components/affiliate/prospecting/global/globalSearchData';
+import { AutoScanFiltersModal, AutoScanFilters, DEFAULT_AUTO_SCAN_FILTERS } from './radar/AutoScanFiltersModal';
 
 interface RadarOpportunity {
   id: string;
@@ -111,8 +113,63 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
   const [limitReached, setLimitReached] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [maxLeadsLimit, setMaxLeadsLimit] = useState(DEFAULT_LIMIT);
+  const [autoScanFilters, setAutoScanFilters] = useState<AutoScanFilters>(DEFAULT_AUTO_SCAN_FILTERS);
+  const [filtersModalOpen, setFiltersModalOpen] = useState(false);
   const autoScanIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Load auto-scan filters from settings
+  useEffect(() => {
+    const loadFilters = async () => {
+      if (!userId) return;
+      try {
+        const { data } = await supabase
+          .from('admin_settings')
+          .select('settings')
+          .eq('user_id', userId)
+          .eq('setting_type', 'radar_auto_scan_filters')
+          .maybeSingle();
+        
+        if (data?.settings) {
+          setAutoScanFilters({ ...DEFAULT_AUTO_SCAN_FILTERS, ...(data.settings as Partial<AutoScanFilters>) });
+        }
+      } catch (error) {
+        console.error('Error loading auto-scan filters:', error);
+      }
+    };
+    loadFilters();
+  }, [userId]);
+
+  // Save auto-scan filters
+  const saveAutoScanFilters = async (filters: AutoScanFilters) => {
+    setAutoScanFilters(filters);
+    if (!userId) return;
+    
+    try {
+      const { data: existing } = await supabase
+        .from('admin_settings')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('setting_type', 'radar_auto_scan_filters')
+        .maybeSingle();
+
+      if (existing) {
+        await supabase
+          .from('admin_settings')
+          .update({ settings: JSON.parse(JSON.stringify(filters)), updated_at: new Date().toISOString() })
+          .eq('id', existing.id);
+      } else {
+        await supabase
+          .from('admin_settings')
+          .insert([{ user_id: userId, setting_type: 'radar_auto_scan_filters', settings: JSON.parse(JSON.stringify(filters)) }]);
+      }
+      
+      toast.success('Filtros do auto-scan salvos!');
+    } catch (error) {
+      console.error('Error saving auto-scan filters:', error);
+      toast.error('Erro ao salvar filtros');
+    }
+  };
 
   // Filter and Pagination with search
   const filteredOpportunities = useMemo(() => {
@@ -250,8 +307,24 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
     
     setScanning(true);
     try {
+      // Build request body with filters if auto-scan has filters enabled
+      const requestBody: any = { affiliateId };
+      
+      if (isAuto && autoScanFilters.enabled) {
+        // Apply filters for auto-scan
+        if (autoScanFilters.countries.length > 0) {
+          requestBody.countries = autoScanFilters.countries;
+        }
+        if (autoScanFilters.citySizes.length > 0) {
+          requestBody.citySizes = autoScanFilters.citySizes;
+        }
+        if (autoScanFilters.niches.length > 0) {
+          requestBody.niches = autoScanFilters.niches;
+        }
+      }
+      
       const { data, error } = await supabase.functions.invoke('global-radar', {
-        body: { affiliateId },
+        body: requestBody,
       });
 
       if (error) throw error;
@@ -281,7 +354,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
     } finally {
       setScanning(false);
     }
-  }, [affiliateId, scanning, fetchOpportunities, playNotificationSound, limitReached]);
+  }, [affiliateId, scanning, fetchOpportunities, playNotificationSound, limitReached, autoScanFilters, maxLeadsLimit]);
 
   // Auto scan effect
   useEffect(() => {
@@ -563,6 +636,27 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                   onCheckedChange={setAutoScanEnabled}
                 />
               </div>
+
+              {/* Auto-scan filters button */}
+              {autoScanEnabled && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFiltersModalOpen(true)}
+                  className={cn(
+                    "gap-1.5 border-white/20 hover:bg-white/10",
+                    autoScanFilters.enabled ? "text-primary border-primary/50" : "text-white/70"
+                  )}
+                >
+                  <Settings2 className="w-4 h-4" />
+                  Filtros
+                  {autoScanFilters.enabled && (
+                    <Badge variant="secondary" className="h-5 px-1.5 bg-primary/20 text-primary text-[10px]">
+                      {autoScanFilters.countries.length + autoScanFilters.citySizes.length + (autoScanFilters.niches.length > 0 ? autoScanFilters.niches.length : 0)}
+                    </Badge>
+                  )}
+                </Button>
+              )}
 
               <div className="flex items-center gap-2">
                 <Volume2 className={cn("w-4 h-4", soundEnabled ? "text-primary" : "text-white/30")} />
@@ -1167,6 +1261,14 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
           </>
         )}
       </Modal>
+
+      {/* Auto-scan Filters Modal */}
+      <AutoScanFiltersModal
+        open={filtersModalOpen}
+        onOpenChange={setFiltersModalOpen}
+        filters={autoScanFilters}
+        onSave={saveAutoScanFilters}
+      />
     </div>
   );
 };

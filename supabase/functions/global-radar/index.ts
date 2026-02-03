@@ -6,32 +6,130 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Regiões de busca com cidades alvo
-const SEARCH_REGIONS: Record<string, { cities: string[]; countryCode: string; lang: string }> = {
+// Regiões de busca com cidades alvo organizadas por tamanho
+const SEARCH_REGIONS: Record<string, { 
+  cities: { name: string; size: 'large' | 'medium' | 'small' }[]; 
+  countryCode: string; 
+  lang: string 
+}> = {
   'USA': {
-    cities: ['New York', 'Los Angeles', 'Miami', 'Houston', 'Chicago', 'Phoenix', 'San Diego', 'Dallas', 'Austin', 'Denver'],
+    cities: [
+      { name: 'New York', size: 'large' },
+      { name: 'Los Angeles', size: 'large' },
+      { name: 'Chicago', size: 'large' },
+      { name: 'Houston', size: 'large' },
+      { name: 'Miami', size: 'large' },
+      { name: 'Phoenix', size: 'medium' },
+      { name: 'San Diego', size: 'medium' },
+      { name: 'Dallas', size: 'medium' },
+      { name: 'Austin', size: 'medium' },
+      { name: 'Denver', size: 'medium' },
+      { name: 'Portland', size: 'small' },
+      { name: 'Tampa', size: 'small' },
+    ],
     countryCode: 'US',
     lang: 'en',
   },
   'Europe': {
-    cities: ['London', 'Paris', 'Madrid', 'Berlin', 'Rome', 'Amsterdam', 'Barcelona', 'Munich', 'Milan', 'Vienna'],
+    cities: [
+      { name: 'London', size: 'large' },
+      { name: 'Paris', size: 'large' },
+      { name: 'Madrid', size: 'large' },
+      { name: 'Berlin', size: 'large' },
+      { name: 'Rome', size: 'large' },
+      { name: 'Amsterdam', size: 'medium' },
+      { name: 'Barcelona', size: 'medium' },
+      { name: 'Munich', size: 'medium' },
+      { name: 'Milan', size: 'medium' },
+      { name: 'Vienna', size: 'medium' },
+    ],
     countryCode: 'UK',
     lang: 'en',
   },
-  'Brazil': {
-    cities: ['São Paulo', 'Rio de Janeiro', 'Belo Horizonte', 'Curitiba', 'Porto Alegre', 'Salvador', 'Fortaleza', 'Brasília', 'Recife', 'Manaus'],
+  'BR': {
+    cities: [
+      { name: 'São Paulo', size: 'large' },
+      { name: 'Rio de Janeiro', size: 'large' },
+      { name: 'Belo Horizonte', size: 'large' },
+      { name: 'Brasília', size: 'large' },
+      { name: 'Salvador', size: 'large' },
+      { name: 'Curitiba', size: 'medium' },
+      { name: 'Porto Alegre', size: 'medium' },
+      { name: 'Fortaleza', size: 'medium' },
+      { name: 'Recife', size: 'medium' },
+      { name: 'Manaus', size: 'medium' },
+      { name: 'Goiânia', size: 'medium' },
+      { name: 'Campinas', size: 'small' },
+      { name: 'Florianópolis', size: 'small' },
+      { name: 'Vitória', size: 'small' },
+      { name: 'Natal', size: 'small' },
+    ],
     countryCode: 'BR',
     lang: 'pt-BR',
   },
-  'Latin America': {
-    cities: ['Buenos Aires', 'Santiago', 'Lima', 'Bogotá', 'Mexico City', 'Montevideo', 'Quito', 'Caracas', 'Medellín', 'Guadalajara'],
+  'MX': {
+    cities: [
+      { name: 'Mexico City', size: 'large' },
+      { name: 'Guadalajara', size: 'large' },
+      { name: 'Monterrey', size: 'large' },
+      { name: 'Puebla', size: 'medium' },
+      { name: 'Tijuana', size: 'medium' },
+      { name: 'León', size: 'small' },
+      { name: 'Cancún', size: 'small' },
+    ],
     countryCode: 'MX',
     lang: 'es',
   },
-  'Portugal': {
-    cities: ['Lisboa', 'Porto', 'Braga', 'Coimbra', 'Faro', 'Funchal', 'Aveiro', 'Setúbal', 'Leiria', 'Évora'],
+  'AR': {
+    cities: [
+      { name: 'Buenos Aires', size: 'large' },
+      { name: 'Córdoba', size: 'medium' },
+      { name: 'Rosario', size: 'medium' },
+      { name: 'Mendoza', size: 'small' },
+    ],
+    countryCode: 'AR',
+    lang: 'es',
+  },
+  'CO': {
+    cities: [
+      { name: 'Bogotá', size: 'large' },
+      { name: 'Medellín', size: 'large' },
+      { name: 'Cali', size: 'medium' },
+      { name: 'Barranquilla', size: 'medium' },
+    ],
+    countryCode: 'CO',
+    lang: 'es',
+  },
+  'CL': {
+    cities: [
+      { name: 'Santiago', size: 'large' },
+      { name: 'Valparaíso', size: 'medium' },
+      { name: 'Concepción', size: 'small' },
+    ],
+    countryCode: 'CL',
+    lang: 'es',
+  },
+  'PT': {
+    cities: [
+      { name: 'Lisboa', size: 'large' },
+      { name: 'Porto', size: 'medium' },
+      { name: 'Braga', size: 'small' },
+      { name: 'Coimbra', size: 'small' },
+      { name: 'Faro', size: 'small' },
+    ],
     countryCode: 'PT',
     lang: 'pt-PT',
+  },
+  'ES': {
+    cities: [
+      { name: 'Madrid', size: 'large' },
+      { name: 'Barcelona', size: 'large' },
+      { name: 'Valencia', size: 'medium' },
+      { name: 'Sevilla', size: 'medium' },
+      { name: 'Bilbao', size: 'small' },
+    ],
+    countryCode: 'ES',
+    lang: 'es',
   },
 };
 
@@ -46,6 +144,11 @@ const SEARCH_NICHES: Record<string, Record<string, string>> = {
     'tailor': 'tailor alterations',
     'florist': 'flower shop',
     'cleaning': 'cleaning services',
+    'clinic': 'medical clinic near me',
+    'gym': 'fitness gym local',
+    'restaurant': 'restaurant local',
+    'petshop': 'pet shop grooming',
+    'laundry': 'laundry dry cleaning',
   },
   'pt-BR': {
     'barbearia': 'barbearia perto de mim',
@@ -58,6 +161,11 @@ const SEARCH_NICHES: Record<string, Record<string, string>> = {
     'manicure': 'manicure pedicure',
     'costureira': 'costureira consertos',
     'borracharia': 'borracharia',
+    'clinica': 'clínica médica perto',
+    'academia': 'academia musculação',
+    'restaurante': 'restaurante local',
+    'florista': 'floricultura flores',
+    'lavanderia': 'lavanderia roupas',
   },
   'pt-PT': {
     'barbearia': 'barbearia perto',
@@ -66,6 +174,8 @@ const SEARCH_NICHES: Record<string, Record<string, string>> = {
     'padaria': 'padaria pastelaria',
     'florista': 'florista',
     'limpezas': 'empresa limpezas',
+    'clinica': 'clínica médica',
+    'ginasio': 'ginásio fitness',
   },
   'es': {
     'barberia': 'barbería cerca',
@@ -75,6 +185,10 @@ const SEARCH_NICHES: Record<string, Record<string, string>> = {
     'floristeria': 'floristería',
     'plomero': 'plomero servicios',
     'lavanderia': 'lavandería',
+    'clinica': 'clínica médica cerca',
+    'gimnasio': 'gimnasio fitness',
+    'restaurante': 'restaurante local',
+    'veterinaria': 'veterinaria mascotas',
   },
 };
 
@@ -117,6 +231,10 @@ interface RadarRequest {
   region?: string;
   niche?: string;
   maxResults?: number;
+  // New filters for auto-scan
+  countries?: string[];
+  citySizes?: ('large' | 'medium' | 'small')[];
+  niches?: string[];
 }
 
 function calculateOpportunityScore(business: any): number {
@@ -181,7 +299,7 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseKey);
     
-    const { affiliateId, region, niche, maxResults = 10 }: RadarRequest = await req.json();
+    const { affiliateId, region, niche, maxResults = 10, countries, citySizes, niches: nicheFilters }: RadarRequest = await req.json();
 
     if (!affiliateId) {
       throw new Error('affiliateId is required');
@@ -207,24 +325,55 @@ serve(async (req) => {
       console.log(`Using rotating key: ${usedKeyId} (usage: ${rotatingKeys[0].usage_count})`);
     }
 
-    // Selecionar região aleatória se não especificada
-    const regions = Object.keys(SEARCH_REGIONS);
-    const selectedRegion = region || regions[Math.floor(Math.random() * regions.length)];
+    // Filter regions based on countries filter
+    let availableRegions = Object.keys(SEARCH_REGIONS);
+    if (countries && countries.length > 0) {
+      availableRegions = availableRegions.filter(r => countries.includes(r));
+      if (availableRegions.length === 0) {
+        // Fallback to default if no match
+        availableRegions = ['BR'];
+      }
+    }
+
+    // Select random region from filtered list
+    const selectedRegion = region || availableRegions[Math.floor(Math.random() * availableRegions.length)];
     const regionConfig = SEARCH_REGIONS[selectedRegion];
     
     if (!regionConfig) {
       throw new Error(`Invalid region: ${selectedRegion}`);
     }
 
-    // Selecionar cidade aleatória
-    const city = regionConfig.cities[Math.floor(Math.random() * regionConfig.cities.length)];
+    // Filter cities by size if specified
+    let availableCities = regionConfig.cities;
+    if (citySizes && citySizes.length > 0) {
+      availableCities = regionConfig.cities.filter(c => citySizes.includes(c.size));
+      if (availableCities.length === 0) {
+        // Fallback to all cities if no match
+        availableCities = regionConfig.cities;
+      }
+    }
+
+    // Select random city from filtered list
+    const selectedCity = availableCities[Math.floor(Math.random() * availableCities.length)];
+    const city = selectedCity.name;
     
-    // Selecionar nicho aleatório se não especificado
-    const niches = Object.keys(SEARCH_NICHES[regionConfig.lang] || SEARCH_NICHES['en']);
-    const selectedNiche = niche || niches[Math.floor(Math.random() * niches.length)];
-    const searchNiche = (SEARCH_NICHES[regionConfig.lang] || SEARCH_NICHES['en'])[selectedNiche] || selectedNiche;
+    // Select niche - use filter if provided
+    const langNiches = SEARCH_NICHES[regionConfig.lang] || SEARCH_NICHES['en'];
+    let availableNiches = Object.keys(langNiches);
     
-    console.log(`Scanning: ${searchNiche} in ${city}, ${selectedRegion}`);
+    if (nicheFilters && nicheFilters.length > 0) {
+      // Try to match filter niches with available language-specific niches
+      const matchedNiches = availableNiches.filter(n => nicheFilters.includes(n));
+      if (matchedNiches.length > 0) {
+        availableNiches = matchedNiches;
+      }
+    }
+    
+    const selectedNiche = niche || availableNiches[Math.floor(Math.random() * availableNiches.length)];
+    const searchNiche = langNiches[selectedNiche] || selectedNiche;
+    
+    console.log(`Scanning: ${searchNiche} in ${city} (${selectedCity.size}), ${selectedRegion}`);
+    console.log(`Filters applied - Countries: ${countries?.join(',') || 'all'}, City sizes: ${citySizes?.join(',') || 'all'}, Niches: ${nicheFilters?.join(',') || 'all'}`);
 
     // Buscar empresas via Serper
     const searchQuery = `${searchNiche} in ${city}`;
