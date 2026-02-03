@@ -9,6 +9,7 @@ import {
   MapPin,
   CheckCircle2,
   X,
+  XCircle,
   RefreshCw,
   Building2,
   ExternalLink,
@@ -90,7 +91,7 @@ const LEVEL_CONFIG: Record<string, { label: string; color: string; bgColor: stri
   advanced: { label: 'Avançado', color: 'text-cyan-500', bgColor: 'bg-cyan-500/10', icon: '🔵' },
 };
 
-const AUTO_SCAN_INTERVAL = 2 * 60 * 1000; // 2 minutes
+const AUTO_SCAN_INTERVAL = 45 * 1000; // 45 seconds for faster results
 const ITEMS_PER_PAGE = 12;
 const LIMIT_OPTIONS = [25, 50, 100, 200]; // User-selectable limits
 const DEFAULT_LIMIT = 50;
@@ -328,6 +329,10 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
         if (autoScanFilters.niches.length > 0) {
           requestBody.niches = autoScanFilters.niches;
         }
+        // Apply website filter
+        if (autoScanFilters.websiteFilter) {
+          requestBody.websiteFilter = autoScanFilters.websiteFilter;
+        }
       }
       
       const { data, error } = await supabase.functions.invoke('global-radar', {
@@ -381,7 +386,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
     fetchOpportunities();
 
     if (autoScanEnabled) {
-      const initialScan = setTimeout(() => runScan(true), 10000);
+      const initialScan = setTimeout(() => runScan(true), 3000); // 3 seconds initial delay
       
       autoScanIntervalRef.current = setInterval(() => {
         runScan(true);
@@ -926,14 +931,28 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                             </div>
 
                             {/* Digital Presence Status */}
-                            {!opp.has_website && (
-                              <div className="flex items-center gap-2 p-2.5 bg-cyan-500/10 rounded-lg mb-4">
-                                <Globe2 className="w-4 h-4 text-cyan-500 flex-shrink-0" />
-                                <span className="text-xs text-cyan-500 font-medium">
-                                  Sem presença digital — oportunidade máxima
-                                </span>
-                              </div>
-                            )}
+                            <div className={cn(
+                              "flex items-center gap-2 p-2.5 rounded-lg mb-4",
+                              !opp.has_website 
+                                ? "bg-cyan-500/10" 
+                                : "bg-emerald-500/10"
+                            )}>
+                              {!opp.has_website ? (
+                                <>
+                                  <XCircle className="w-4 h-4 text-cyan-500 flex-shrink-0" />
+                                  <span className="text-xs text-cyan-500 font-medium">
+                                    Sem site — Oportunidade máxima
+                                  </span>
+                                </>
+                              ) : (
+                                <>
+                                  <Globe2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                                  <span className="text-xs text-emerald-500 font-medium">
+                                    Possui site — Pode melhorar
+                                  </span>
+                                </>
+                              )}
+                            </div>
 
                             {/* Service Tags */}
                             {opp.service_tags && opp.service_tags.length > 0 && (
@@ -959,7 +978,15 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                                   e.stopPropagation();
                                   if (opp.company_phone) {
                                     const cleanPhone = opp.company_phone.replace(/\D/g, '');
-                                    const phone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+                                    // Map country codes to phone codes
+                                    const countryPhoneCodes: Record<string, string> = {
+                                      'BR': '55', 'USA': '1', 'PT': '351', 'ES': '34',
+                                      'MX': '52', 'AR': '54', 'CO': '57', 'CL': '56',
+                                      'Europe': '44', 'LATAM': '55'
+                                    };
+                                    const countryCode = countryPhoneCodes[opp.company_country || 'BR'] || '55';
+                                    // Only add country code if not already present
+                                    const phone = cleanPhone.startsWith(countryCode) ? cleanPhone : `${countryCode}${cleanPhone}`;
                                     window.open(`https://wa.me/${phone}`, '_blank');
                                   }
                                 }}
@@ -970,7 +997,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                                     ? "text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/30" 
                                     : "text-white/20 cursor-not-allowed"
                                 )}
-                                title={opp.company_phone ? 'Abrir WhatsApp' : 'Telefone não disponível'}
+                                title={opp.company_phone ? `WhatsApp: ${opp.company_phone}` : 'Telefone não disponível'}
                               >
                                 <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
                               </Button>
