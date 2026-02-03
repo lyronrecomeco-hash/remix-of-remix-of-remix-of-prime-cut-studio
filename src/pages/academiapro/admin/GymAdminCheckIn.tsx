@@ -333,98 +333,122 @@ export default function GymAdminCheckIn() {
         </div>
       </motion.div>
 
-      {/* QR Code Modal - Compact Design */}
+      {/* QR Code Modal - Premium Design */}
       <Dialog open={showQRModal} onOpenChange={setShowQRModal}>
-        <DialogContent className="bg-card border-border text-foreground max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base">
-              <QrCode className="w-5 h-5 text-primary" />
-              QR Code da Academia
+        <DialogContent className="bg-gradient-to-b from-card to-card/95 border-border text-foreground max-w-md p-0 overflow-hidden">
+          {/* Header with gradient */}
+          <div className="bg-gradient-to-r from-primary/20 via-primary/10 to-transparent p-6 pb-4">
+            <DialogTitle className="flex items-center gap-3 text-lg font-bold">
+              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                <QrCode className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <span>QR Code da Academia</span>
+                <p className="text-xs font-normal text-muted-foreground mt-0.5">Check-in dos alunos</p>
+              </div>
             </DialogTitle>
-          </DialogHeader>
+          </div>
 
-          <div className="space-y-4">
-            {/* QR Code Preview - Compact */}
-            <div className="bg-background rounded-xl p-4 flex items-center justify-center">
-              {qrCode ? (
-                <img src={qrCode} alt="QR Code" className="w-40 h-40 rounded-lg" />
-              ) : (
-                <div className="w-40 h-40 bg-muted rounded-lg animate-pulse" />
-              )}
+          <div className="p-6 pt-2 space-y-5">
+            {/* QR Code Preview - Premium */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-transparent to-primary/20 rounded-2xl blur-xl opacity-50" />
+              <div className="relative bg-gradient-to-br from-background via-background to-muted/30 rounded-2xl p-6 flex flex-col items-center border border-border/50">
+                {qrCode ? (
+                  <img src={qrCode} alt="QR Code" className="w-48 h-48 rounded-xl shadow-lg" />
+                ) : (
+                  <div className="w-48 h-48 bg-muted rounded-xl animate-pulse" />
+                )}
+                <div className="mt-4 bg-muted/50 rounded-lg px-4 py-2 w-full">
+                  <p className="text-[11px] text-muted-foreground text-center font-mono truncate">{gymCode}</p>
+                </div>
+              </div>
             </div>
 
-            <p className="text-[10px] text-muted-foreground text-center font-mono truncate">{gymCode}</p>
-
-            {/* Color Presets - Compact Grid */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2 text-xs">
-                <Palette className="w-3 h-3 text-muted-foreground" />
-                Cores
+            {/* Color Presets */}
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2 text-sm font-medium">
+                <Palette className="w-4 h-4 text-primary" />
+                Personalizar Cores
               </Label>
-              <div className="grid grid-cols-6 gap-1.5">
+              <div className="grid grid-cols-6 gap-2">
                 {COLOR_PRESETS.map((preset) => (
                   <button
                     key={preset.name}
                     onClick={() => handleColorChange({ dark: preset.dark, light: preset.light })}
                     title={preset.name}
-                    className={`aspect-square rounded-lg border transition-all flex items-center justify-center ${
+                    className={`aspect-square rounded-xl border-2 transition-all flex items-center justify-center hover:scale-105 ${
                       qrColors.dark === preset.dark
-                        ? 'border-primary ring-1 ring-primary'
+                        ? 'border-primary shadow-lg shadow-primary/30'
                         : 'border-border hover:border-muted-foreground'
                     }`}
                   >
                     <div 
-                      className="w-5 h-5 rounded-full"
+                      className="w-6 h-6 rounded-lg shadow-inner"
                       style={{ backgroundColor: preset.dark }}
                     />
                   </button>
                 ))}
               </div>
 
-              {/* Custom Color Inputs - Inline */}
-              <div className="flex gap-2 pt-1">
-                <div className="flex-1 flex items-center gap-1.5">
-                  <input
-                    type="color"
-                    value={qrColors.dark}
-                    onChange={(e) => handleColorChange({ ...qrColors, dark: e.target.value })}
-                    className="w-7 h-7 rounded cursor-pointer border-0"
-                  />
-                  <Input
-                    value={qrColors.dark}
-                    onChange={(e) => handleColorChange({ ...qrColors, dark: e.target.value })}
-                    className="bg-muted border-border text-[10px] h-7 uppercase flex-1"
-                  />
+              {/* Custom Color Inputs */}
+              <div className="flex gap-3 pt-2">
+                <div className="flex-1">
+                  <Label className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1.5 block">QR Code</Label>
+                  <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-2 border border-border/50">
+                    <input
+                      type="color"
+                      value={qrColors.dark}
+                      onChange={(e) => handleColorChange({ ...qrColors, dark: e.target.value })}
+                      className="w-8 h-8 rounded-lg cursor-pointer border-0 bg-transparent"
+                    />
+                    <Input
+                      value={qrColors.dark}
+                      onChange={(e) => handleColorChange({ ...qrColors, dark: e.target.value })}
+                      className="bg-transparent border-0 text-xs h-8 uppercase font-mono p-0"
+                    />
+                  </div>
                 </div>
-                <div className="flex-1 flex items-center gap-1.5">
-                  <input
-                    type="color"
-                    value={qrColors.light}
-                    onChange={(e) => handleColorChange({ ...qrColors, light: e.target.value })}
-                    className="w-7 h-7 rounded cursor-pointer border-0"
-                  />
-                  <Input
-                    value={qrColors.light}
-                    onChange={(e) => handleColorChange({ ...qrColors, light: e.target.value })}
-                    className="bg-muted border-border text-[10px] h-7 uppercase flex-1"
-                  />
+                <div className="flex-1">
+                  <Label className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1.5 block">Fundo</Label>
+                  <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-2 border border-border/50">
+                    <input
+                      type="color"
+                      value={qrColors.light}
+                      onChange={(e) => handleColorChange({ ...qrColors, light: e.target.value })}
+                      className="w-8 h-8 rounded-lg cursor-pointer border-0 bg-transparent"
+                    />
+                    <Input
+                      value={qrColors.light}
+                      onChange={(e) => handleColorChange({ ...qrColors, light: e.target.value })}
+                      className="bg-transparent border-0 text-xs h-8 uppercase font-mono p-0"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Actions */}
-            <div className="flex gap-2">
-              <Button onClick={handleDownloadQR} className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground h-9 text-sm">
-                <Download className="w-4 h-4 mr-1.5" />
-                Baixar
+            <div className="flex gap-3 pt-2">
+              <Button 
+                onClick={handleDownloadQR} 
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground h-12 font-semibold shadow-lg shadow-primary/20"
+              >
+                <Download className="w-5 h-5 mr-2" />
+                Baixar QR Code
               </Button>
-              <Button variant="outline" onClick={handleRefreshQR} className="border-border hover:bg-muted h-9 px-3">
-                <RefreshCw className="w-4 h-4" />
+              <Button 
+                variant="outline" 
+                onClick={handleRefreshQR} 
+                className="border-border hover:bg-muted h-12 w-12 p-0"
+                title="Gerar novo código"
+              >
+                <RefreshCw className="w-5 h-5" />
               </Button>
             </div>
 
-            <p className="text-[10px] text-muted-foreground text-center">
-              Imprima e coloque na recepção
+            <p className="text-xs text-muted-foreground text-center bg-muted/30 rounded-lg py-2 px-4">
+              💡 Imprima este QR Code e coloque na recepção para check-in dos alunos
             </p>
           </div>
         </DialogContent>
