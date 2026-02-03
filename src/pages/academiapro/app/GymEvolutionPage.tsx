@@ -206,16 +206,16 @@ export default function GymEvolutionPage() {
       >
         <div>
           <h1 className="text-2xl font-bold">Minha Evolução</h1>
-          <p className="text-zinc-400 text-sm">Acompanhe seu progresso</p>
+          <p className="text-muted-foreground text-sm">Acompanhe seu progresso</p>
         </div>
         <Dialog open={openAddMeasurement} onOpenChange={setOpenAddMeasurement}>
           <DialogTrigger asChild>
-            <Button className="bg-orange-500 hover:bg-orange-600">
+            <Button className="bg-primary hover:bg-primary/80">
               <Plus className="w-4 h-4 mr-2" />
               Registrar
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-h-[90vh] overflow-y-auto">
+          <DialogContent className="bg-card border-border text-foreground max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Registrar Medidas</DialogTitle>
             </DialogHeader>
@@ -227,7 +227,7 @@ export default function GymEvolutionPage() {
                   step="0.1"
                   value={newMeasurement.weight_kg}
                   onChange={(e) => setNewMeasurement({ ...newMeasurement, weight_kg: e.target.value })}
-                  className="bg-zinc-800 border-zinc-700"
+                  className="bg-muted border-border"
                   placeholder="70.5"
                 />
               </div>
@@ -238,7 +238,7 @@ export default function GymEvolutionPage() {
                   step="0.1"
                   value={newMeasurement.body_fat_percent}
                   onChange={(e) => setNewMeasurement({ ...newMeasurement, body_fat_percent: e.target.value })}
-                  className="bg-zinc-800 border-zinc-700"
+                  className="bg-muted border-border"
                   placeholder="15.0"
                 />
               </div>
@@ -249,7 +249,7 @@ export default function GymEvolutionPage() {
                   step="0.1"
                   value={newMeasurement.chest_cm}
                   onChange={(e) => setNewMeasurement({ ...newMeasurement, chest_cm: e.target.value })}
-                  className="bg-zinc-800 border-zinc-700"
+                  className="bg-muted border-border"
                   placeholder="100"
                 />
               </div>
@@ -260,7 +260,7 @@ export default function GymEvolutionPage() {
                   step="0.1"
                   value={newMeasurement.waist_cm}
                   onChange={(e) => setNewMeasurement({ ...newMeasurement, waist_cm: e.target.value })}
-                  className="bg-zinc-800 border-zinc-700"
+                  className="bg-muted border-border"
                   placeholder="80"
                 />
               </div>
@@ -271,7 +271,7 @@ export default function GymEvolutionPage() {
                   step="0.1"
                   value={newMeasurement.arm_cm}
                   onChange={(e) => setNewMeasurement({ ...newMeasurement, arm_cm: e.target.value })}
-                  className="bg-zinc-800 border-zinc-700"
+                  className="bg-muted border-border"
                   placeholder="35"
                 />
               </div>
@@ -282,14 +282,14 @@ export default function GymEvolutionPage() {
                   step="0.1"
                   value={newMeasurement.thigh_cm}
                   onChange={(e) => setNewMeasurement({ ...newMeasurement, thigh_cm: e.target.value })}
-                  className="bg-zinc-800 border-zinc-700"
+                  className="bg-muted border-border"
                   placeholder="55"
                 />
               </div>
             </div>
             <Button 
               onClick={handleAddMeasurement}
-              className="w-full mt-4 bg-orange-500 hover:bg-orange-600"
+              className="w-full mt-4 bg-primary hover:bg-primary/80"
             >
               Salvar Medidas
             </Button>
@@ -304,30 +304,30 @@ export default function GymEvolutionPage() {
         transition={{ delay: 0.1 }}
         className="grid grid-cols-2 lg:grid-cols-4 gap-3"
       >
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-          <Scale className="w-5 h-5 text-orange-500 mb-2" />
+        <div className="bg-card border border-border rounded-xl p-4">
+          <Scale className="w-5 h-5 text-primary mb-2" />
           <p className="text-2xl font-bold">{latestMeasurement?.weight_kg || '--'}</p>
-          <p className="text-xs text-zinc-400">Peso atual (kg)</p>
+          <p className="text-xs text-muted-foreground">Peso atual (kg)</p>
           {weightChange && (
             <p className={`text-xs mt-1 ${weightChange > 0 ? 'text-red-400' : 'text-green-400'}`}>
               {weightChange > 0 ? '+' : ''}{weightChange.toFixed(1)} kg
             </p>
           )}
         </div>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-          <Activity className="w-5 h-5 text-blue-500 mb-2" />
+        <div className="bg-card border border-border rounded-xl p-4">
+          <Activity className="w-5 h-5 text-secondary mb-2" />
           <p className="text-2xl font-bold">{latestMeasurement?.body_fat_percent || '--'}</p>
-          <p className="text-xs text-zinc-400">Gordura (%)</p>
+          <p className="text-xs text-muted-foreground">Gordura (%)</p>
         </div>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+        <div className="bg-card border border-border rounded-xl p-4">
           <Target className="w-5 h-5 text-green-500 mb-2" />
           <p className="text-2xl font-bold">{workoutStats.thisMonth}</p>
-          <p className="text-xs text-zinc-400">Treinos este mês</p>
+          <p className="text-xs text-muted-foreground">Treinos este mês</p>
         </div>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+        <div className="bg-card border border-border rounded-xl p-4">
           <Trophy className="w-5 h-5 text-yellow-500 mb-2" />
           <p className="text-2xl font-bold">{personalRecords.length}</p>
-          <p className="text-xs text-zinc-400">Recordes pessoais</p>
+          <p className="text-xs text-muted-foreground">Recordes pessoais</p>
         </div>
       </motion.div>
 
@@ -336,15 +336,15 @@ export default function GymEvolutionPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 lg:p-6"
+        className="bg-card border border-border rounded-2xl p-4 lg:p-6"
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold">Gráfico de Evolução</h3>
           <Select value={selectedMetric} onValueChange={setSelectedMetric}>
-            <SelectTrigger className="w-36 bg-zinc-800 border-zinc-700 h-9">
+            <SelectTrigger className="w-36 bg-muted border-border h-9">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-zinc-800 border-zinc-700">
+            <SelectContent className="bg-muted border-border">
               <SelectItem value="weight">Peso</SelectItem>
               <SelectItem value="bodyFat">Gordura</SelectItem>
               <SelectItem value="chest">Peito</SelectItem>
@@ -359,35 +359,35 @@ export default function GymEvolutionPage() {
             <AreaChart data={chartData}>
               <defs>
                 <linearGradient id="colorMetric" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#f97316" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis 
                 dataKey="date" 
-                stroke="#71717a" 
+                stroke="hsl(var(--muted-foreground))" 
                 fontSize={12}
                 tickLine={false}
               />
               <YAxis 
-                stroke="#71717a" 
+                stroke="hsl(var(--muted-foreground))" 
                 fontSize={12}
                 tickLine={false}
                 domain={['auto', 'auto']}
               />
               <Tooltip 
                 contentStyle={{ 
-                  backgroundColor: '#18181b', 
-                  border: '1px solid #27272a',
+                  backgroundColor: 'hsl(var(--card))', 
+                  border: '1px solid hsl(var(--border))',
                   borderRadius: '8px'
                 }}
-                labelStyle={{ color: '#a1a1aa' }}
+                labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
               />
               <Area
                 type="monotone"
                 dataKey={selectedMetric}
-                stroke="#f97316"
+                stroke="hsl(var(--primary))"
                 strokeWidth={2}
                 fill="url(#colorMetric)"
                 name={getMetricLabel(selectedMetric)}
@@ -395,9 +395,9 @@ export default function GymEvolutionPage() {
             </AreaChart>
           </ResponsiveContainer>
         ) : (
-          <div className="h-[250px] flex items-center justify-center text-zinc-500">
+          <div className="h-[250px] flex items-center justify-center text-muted-foreground">
             <div className="text-center">
-              <TrendingUp className="w-12 h-12 mx-auto mb-3 text-zinc-600" />
+              <TrendingUp className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
               <p>Registre suas medidas para ver o gráfico</p>
             </div>
           </div>
@@ -409,7 +409,7 @@ export default function GymEvolutionPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 lg:p-6"
+        className="bg-card border border-border rounded-2xl p-4 lg:p-6"
       >
         <h3 className="font-semibold mb-4 flex items-center gap-2">
           <Trophy className="w-5 h-5 text-yellow-500" />
@@ -421,24 +421,24 @@ export default function GymEvolutionPage() {
             {personalRecords.slice(0, 5).map((pr) => (
               <div 
                 key={pr.id}
-                className="flex items-center justify-between p-3 bg-zinc-800/50 rounded-xl"
+                className="flex items-center justify-between p-3 bg-muted/50 rounded-xl"
               >
                 <div>
                   <p className="font-medium">{pr.gym_exercises?.name}</p>
-                  <p className="text-xs text-zinc-400">
+                  <p className="text-xs text-muted-foreground">
                     {format(new Date(pr.achieved_at), "dd 'de' MMMM", { locale: ptBR })}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-bold text-orange-500">{pr.weight_kg} kg</p>
-                  <p className="text-xs text-zinc-400">{pr.reps} reps</p>
+                  <p className="text-lg font-bold text-primary">{pr.weight_kg} kg</p>
+                  <p className="text-xs text-muted-foreground">{pr.reps} reps</p>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-zinc-500">
-            <Trophy className="w-10 h-10 mx-auto mb-3 text-zinc-600" />
+          <div className="text-center py-8 text-muted-foreground">
+            <Trophy className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
             <p>Nenhum recorde registrado ainda</p>
             <p className="text-sm">Complete seus treinos para registrar PRs!</p>
           </div>

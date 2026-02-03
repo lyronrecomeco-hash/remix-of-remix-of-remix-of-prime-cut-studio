@@ -152,10 +152,10 @@ export default function GymMyPlanPage() {
   if (isLoading) {
     return (
       <div className="p-4 lg:p-0 space-y-4">
-        <div className="h-8 bg-zinc-800 rounded w-48 animate-pulse" />
+        <div className="h-8 bg-muted rounded w-48 animate-pulse" />
         <div className="grid grid-cols-7 gap-2">
           {Array.from({ length: 7 }).map((_, i) => (
-            <div key={i} className="h-32 bg-zinc-800 rounded-xl animate-pulse" />
+            <div key={i} className="h-32 bg-muted rounded-xl animate-pulse" />
           ))}
         </div>
       </div>
@@ -168,15 +168,15 @@ export default function GymMyPlanPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center"
+          className="bg-card border border-border rounded-2xl p-8 text-center"
         >
-          <Calendar className="w-16 h-16 text-zinc-600 mx-auto mb-4" />
+          <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-xl font-semibold mb-2">Nenhum plano encontrado</h2>
-          <p className="text-zinc-400 mb-6">
+          <p className="text-muted-foreground mb-6">
             Seu instrutor ainda não criou um plano personalizado para você.
           </p>
           <Link to="/academiapro/app">
-            <Button variant="outline" className="border-zinc-700">
+            <Button variant="outline" className="border-border">
               Voltar ao início
             </Button>
           </Link>
@@ -193,7 +193,7 @@ export default function GymMyPlanPage() {
         animate={{ opacity: 1, y: 0 }}
       >
         <h1 className="text-2xl font-bold">Meu Plano</h1>
-        <p className="text-zinc-400 text-sm">
+        <p className="text-muted-foreground text-sm">
           Desde {format(new Date(studentPlan.start_date), "d 'de' MMMM", { locale: ptBR })}
         </p>
       </motion.div>
@@ -205,27 +205,27 @@ export default function GymMyPlanPage() {
         transition={{ delay: 0.1 }}
         className="grid grid-cols-2 md:grid-cols-4 gap-3"
       >
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-          <User className="w-5 h-5 text-orange-500 mb-2" />
-          <p className="text-xs text-zinc-400">Instrutor</p>
+        <div className="bg-card border border-border rounded-xl p-4">
+          <User className="w-5 h-5 text-primary mb-2" />
+          <p className="text-xs text-muted-foreground">Instrutor</p>
           <p className="font-medium text-sm truncate">{studentPlan.instructor?.full_name || '-'}</p>
         </div>
         
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-          <Target className="w-5 h-5 text-orange-500 mb-2" />
-          <p className="text-xs text-zinc-400">Objetivos</p>
+        <div className="bg-card border border-border rounded-xl p-4">
+          <Target className="w-5 h-5 text-primary mb-2" />
+          <p className="text-xs text-muted-foreground">Objetivos</p>
           <p className="font-medium text-sm">{studentPlan.goals?.length || 0}</p>
         </div>
         
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-          <Dumbbell className="w-5 h-5 text-orange-500 mb-2" />
-          <p className="text-xs text-zinc-400">Treinos/semana</p>
+        <div className="bg-card border border-border rounded-xl p-4">
+          <Dumbbell className="w-5 h-5 text-primary mb-2" />
+          <p className="text-xs text-muted-foreground">Treinos/semana</p>
           <p className="font-medium text-sm">{workoutSchedule.length}</p>
         </div>
         
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-          <Users className="w-5 h-5 text-orange-500 mb-2" />
-          <p className="text-xs text-zinc-400">Aulas</p>
+        <div className="bg-card border border-border rounded-xl p-4">
+          <Users className="w-5 h-5 text-primary mb-2" />
+          <p className="text-xs text-muted-foreground">Aulas</p>
           <p className="font-medium text-sm">{classEnrollments.length}</p>
         </div>
       </motion.div>
@@ -236,17 +236,17 @@ export default function GymMyPlanPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-zinc-900 border border-zinc-800 rounded-xl p-4"
+          className="bg-card border border-border rounded-xl p-4"
         >
           <h3 className="font-semibold mb-3 flex items-center gap-2">
-            <Target className="w-4 h-4 text-orange-500" />
+            <Target className="w-4 h-4 text-primary" />
             Meus Objetivos
           </h3>
           <div className="flex flex-wrap gap-2">
             {studentPlan.goals.map((goal, i) => (
               <span 
                 key={i}
-                className="px-3 py-1.5 bg-orange-500/10 border border-orange-500/30 rounded-full text-sm text-orange-400"
+                className="px-3 py-1.5 bg-primary/10 border border-primary/30 rounded-full text-sm text-primary"
               >
                 {goal}
               </span>
@@ -262,7 +262,7 @@ export default function GymMyPlanPage() {
         transition={{ delay: 0.3 }}
       >
         <h3 className="font-semibold mb-4 flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-orange-500" />
+          <Calendar className="w-4 h-4 text-primary" />
           Agenda Semanal
         </h3>
         
@@ -278,15 +278,15 @@ export default function GymMyPlanPage() {
                 key={dayIndex}
                 className={`rounded-xl p-3 min-h-[140px] transition-all ${
                   isToday 
-                    ? 'bg-gradient-to-br from-orange-500/20 to-red-600/20 border-2 border-orange-500/50' 
+                    ? 'bg-primary/20 border-2 border-primary/50' 
                     : hasActivities
-                      ? 'bg-zinc-900 border border-zinc-700'
-                      : 'bg-zinc-900/50 border border-zinc-800'
+                      ? 'bg-card border border-border'
+                      : 'bg-card/50 border border-border'
                 }`}
               >
-                <div className={`text-center mb-2 pb-2 border-b ${isToday ? 'border-orange-500/30' : 'border-zinc-800'}`}>
-                  <p className={`text-xs ${isToday ? 'text-orange-400' : 'text-zinc-500'}`}>{dayName}</p>
-                  {isToday && <span className="text-[10px] text-orange-500 font-medium">HOJE</span>}
+                <div className={`text-center mb-2 pb-2 border-b ${isToday ? 'border-primary/30' : 'border-border'}`}>
+                  <p className={`text-xs ${isToday ? 'text-primary' : 'text-muted-foreground'}`}>{dayName}</p>
+                  {isToday && <span className="text-[10px] text-primary font-medium">HOJE</span>}
                 </div>
                 
                 <div className="space-y-2">
@@ -294,31 +294,31 @@ export default function GymMyPlanPage() {
                     <Link 
                       key={`w-${i}`}
                       to={`/academiapro/app/treinos/${ws.workout.id}`}
-                      className="block p-2 bg-orange-500/10 rounded-lg text-xs hover:bg-orange-500/20 transition-colors"
+                      className="block p-2 bg-primary/10 rounded-lg text-xs hover:bg-primary/20 transition-colors"
                     >
-                      <div className="flex items-center gap-1 text-orange-400 mb-1">
+                      <div className="flex items-center gap-1 text-primary mb-1">
                         <Dumbbell className="w-3 h-3" />
                         <span>{ws.preferred_time}</span>
                       </div>
-                      <p className="text-white truncate">{ws.workout.name}</p>
+                      <p className="text-foreground truncate">{ws.workout.name}</p>
                     </Link>
                   ))}
                   
                   {dayData.classes.map((ce, i) => (
                     <div 
                       key={`c-${i}`}
-                      className="p-2 bg-blue-500/10 rounded-lg text-xs"
+                      className="p-2 bg-accent/10 rounded-lg text-xs"
                     >
-                      <div className="flex items-center gap-1 text-blue-400 mb-1">
+                      <div className="flex items-center gap-1 text-accent-foreground mb-1">
                         <Users className="w-3 h-3" />
                         <span>{ce.class.start_time?.slice(0, 5)}</span>
                       </div>
-                      <p className="text-white truncate">{ce.class.name}</p>
+                      <p className="text-foreground truncate">{ce.class.name}</p>
                     </div>
                   ))}
                   
                   {!hasActivities && (
-                    <p className="text-zinc-600 text-xs text-center pt-4">Descanso</p>
+                    <p className="text-muted-foreground text-xs text-center pt-4">Descanso</p>
                   )}
                 </div>
               </div>
@@ -340,15 +340,15 @@ export default function GymMyPlanPage() {
                 key={dayIndex}
                 className={`rounded-xl p-4 ${
                   isToday 
-                    ? 'bg-gradient-to-r from-orange-500/20 to-red-600/20 border border-orange-500/50' 
-                    : 'bg-zinc-900 border border-zinc-800'
+                    ? 'bg-primary/20 border border-primary/50' 
+                    : 'bg-card border border-border'
                 }`}
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <span className={`font-medium ${isToday ? 'text-orange-400' : ''}`}>{dayName}</span>
+                    <span className={`font-medium ${isToday ? 'text-primary' : ''}`}>{dayName}</span>
                     {isToday && (
-                      <span className="text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full">Hoje</span>
+                      <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">Hoje</span>
                     )}
                   </div>
                 </div>
@@ -359,32 +359,32 @@ export default function GymMyPlanPage() {
                       <Link 
                         key={`w-${i}`}
                         to={`/academiapro/app/treinos/${ws.workout.id}`}
-                        className="flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg"
+                        className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                            <Dumbbell className="w-5 h-5 text-orange-500" />
+                          <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
+                            <Dumbbell className="w-5 h-5 text-primary" />
                           </div>
                           <div>
                             <p className="font-medium">{ws.workout.name}</p>
-                            <p className="text-xs text-zinc-400">{ws.preferred_time}</p>
+                            <p className="text-xs text-muted-foreground">{ws.preferred_time}</p>
                           </div>
                         </div>
-                        <ChevronRight className="w-5 h-5 text-zinc-500" />
+                        <ChevronRight className="w-5 h-5 text-muted-foreground" />
                       </Link>
                     ))}
                     
                     {dayData.classes.map((ce, i) => (
                       <div 
                         key={`c-${i}`}
-                        className="flex items-center gap-3 p-3 bg-zinc-800/50 rounded-lg"
+                        className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg"
                       >
-                        <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                          <Users className="w-5 h-5 text-blue-500" />
+                        <div className="w-10 h-10 bg-accent/20 rounded-lg flex items-center justify-center">
+                          <Users className="w-5 h-5 text-accent-foreground" />
                         </div>
                         <div>
                           <p className="font-medium">{ce.class.name}</p>
-                          <p className="text-xs text-zinc-400">
+                          <p className="text-xs text-muted-foreground">
                             {ce.class.start_time?.slice(0, 5)} · {ce.class.duration_minutes}min
                           </p>
                         </div>
@@ -392,7 +392,7 @@ export default function GymMyPlanPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-zinc-500 text-sm">Dia de descanso</p>
+                  <p className="text-muted-foreground text-sm">Dia de descanso</p>
                 )}
               </div>
             );
@@ -406,10 +406,10 @@ export default function GymMyPlanPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-zinc-900 border border-zinc-800 rounded-xl p-4"
+          className="bg-card border border-border rounded-xl p-4"
         >
           <h3 className="font-semibold mb-2">Observações do Instrutor</h3>
-          <p className="text-zinc-400 text-sm">{studentPlan.observations}</p>
+          <p className="text-muted-foreground text-sm">{studentPlan.observations}</p>
         </motion.div>
       )}
     </div>

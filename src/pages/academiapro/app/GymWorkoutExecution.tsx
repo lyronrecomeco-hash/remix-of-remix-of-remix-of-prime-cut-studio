@@ -193,8 +193,8 @@ export default function GymWorkoutExecution() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -202,22 +202,22 @@ export default function GymWorkoutExecution() {
   const currentExercise = exercises[currentExerciseIndex];
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800 px-4 py-3">
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border px-4 py-3">
         <div className="flex items-center justify-between">
           <button onClick={() => navigate(-1)} className="p-2 -ml-2">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="text-center">
             <h1 className="font-semibold">{workout?.name}</h1>
-            <p className="text-xs text-zinc-400">{formatTime(totalTime)} transcorrido</p>
+            <p className="text-xs text-muted-foreground">{formatTime(totalTime)} transcorrido</p>
           </div>
           <button onClick={() => setSoundEnabled(!soundEnabled)} className="p-2 -mr-2">
-            {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5 text-zinc-500" />}
+            {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5 text-muted-foreground" />}
           </button>
         </div>
-        <Progress value={progress} className="mt-3 h-1 bg-zinc-800" />
+        <Progress value={progress} className="mt-3 h-1 bg-muted" />
       </header>
 
       {/* Content */}
@@ -228,17 +228,17 @@ export default function GymWorkoutExecution() {
             animate={{ opacity: 1, y: 0 }}
             className="h-full flex flex-col items-center justify-center text-center"
           >
-            <div className="w-24 h-24 rounded-full bg-orange-500/20 flex items-center justify-center mb-6">
-              <Dumbbell className="w-12 h-12 text-orange-500" />
+            <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center mb-6">
+              <Dumbbell className="w-12 h-12 text-primary" />
             </div>
             <h2 className="text-2xl font-bold mb-2">{workout?.name}</h2>
-            <p className="text-zinc-400 mb-6">
+            <p className="text-muted-foreground mb-6">
               {exercises.length} exercícios • ~{workout?.estimated_duration || 60} min
             </p>
             <div className="grid grid-cols-3 gap-4 mb-8 w-full max-w-xs">
               {exercises.slice(0, 3).map((ex, i) => (
-                <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 text-center">
-                  <p className="text-xs text-zinc-400 truncate">{ex.gym_exercises?.name}</p>
+                <div key={i} className="bg-card border border-border rounded-lg p-3 text-center">
+                  <p className="text-xs text-muted-foreground truncate">{ex.gym_exercises?.name}</p>
                   <p className="font-semibold text-sm">{ex.sets}x{ex.reps}</p>
                 </div>
               ))}
@@ -246,7 +246,7 @@ export default function GymWorkoutExecution() {
             <Button 
               onClick={startWorkout}
               size="lg"
-              className="bg-orange-500 hover:bg-orange-600 text-white px-12"
+              className="bg-primary hover:bg-primary/80 text-primary-foreground px-12"
             >
               <Play className="w-5 h-5 mr-2" />
               Iniciar Treino
@@ -258,9 +258,9 @@ export default function GymWorkoutExecution() {
             animate={{ opacity: 1, scale: 1 }}
             className="h-full flex flex-col items-center justify-center text-center"
           >
-            <p className="text-zinc-400 text-sm mb-4">Descanse</p>
+            <p className="text-muted-foreground text-sm mb-4">Descanse</p>
             <div className="relative mb-6">
-              <div className="w-48 h-48 rounded-full border-4 border-zinc-800 flex items-center justify-center">
+              <div className="w-48 h-48 rounded-full border-4 border-muted flex items-center justify-center">
                 <span className="text-5xl font-bold">{timeRemaining}</span>
               </div>
               <svg className="absolute inset-0 -rotate-90" viewBox="0 0 100 100">
@@ -269,15 +269,15 @@ export default function GymWorkoutExecution() {
                   cy="50"
                   r="46"
                   fill="none"
-                  stroke="#f97316"
+                  stroke="hsl(var(--primary))"
                   strokeWidth="4"
                   strokeDasharray={`${(timeRemaining / restTime) * 289} 289`}
                   strokeLinecap="round"
                 />
               </svg>
             </div>
-            <p className="text-zinc-400 mb-6">
-              Próximo: <span className="text-white font-medium">
+            <p className="text-muted-foreground mb-6">
+              Próximo: <span className="text-foreground font-medium">
                 {currentSet <= currentExercise.sets 
                   ? `Série ${currentSet} de ${currentExercise.sets}`
                   : exercises[currentExerciseIndex + 1]?.gym_exercises?.name || 'Finalizar'
@@ -288,13 +288,13 @@ export default function GymWorkoutExecution() {
               <Button 
                 variant="outline" 
                 onClick={() => setIsRunning(!isRunning)}
-                className="border-zinc-700"
+                className="border-border"
               >
                 {isRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               </Button>
               <Button 
                 onClick={skipRest}
-                className="bg-orange-500 hover:bg-orange-600"
+                className="bg-primary hover:bg-primary/80"
               >
                 Pular descanso
               </Button>
@@ -310,12 +310,12 @@ export default function GymWorkoutExecution() {
               className="space-y-6"
             >
               {/* Exercise Card */}
-              <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+              <div className="bg-card border border-border rounded-2xl p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs text-orange-500 font-medium">
+                  <span className="text-xs text-primary font-medium">
                     Exercício {currentExerciseIndex + 1}/{exercises.length}
                   </span>
-                  <span className="text-xs text-zinc-400">
+                  <span className="text-xs text-muted-foreground">
                     Série {currentSet}/{currentExercise?.sets}
                   </span>
                 </div>
@@ -324,28 +324,28 @@ export default function GymWorkoutExecution() {
                   {currentExercise?.gym_exercises?.name}
                 </h2>
                 
-                <p className="text-zinc-400 text-sm mb-6">
+                <p className="text-muted-foreground text-sm mb-6">
                   {currentExercise?.gym_exercises?.instructions || 'Execute o movimento com controle e boa forma.'}
                 </p>
 
                 {/* Exercise Video/Image Placeholder */}
-                <div className="aspect-video bg-zinc-800 rounded-xl flex items-center justify-center mb-6">
-                  <Dumbbell className="w-16 h-16 text-zinc-600" />
+                <div className="aspect-video bg-muted rounded-xl flex items-center justify-center mb-6">
+                  <Dumbbell className="w-16 h-16 text-muted-foreground" />
                 </div>
 
                 {/* Sets/Reps Info */}
                 <div className="grid grid-cols-3 gap-4 text-center">
-                  <div className="bg-zinc-800/50 rounded-xl p-4">
-                    <p className="text-2xl font-bold text-orange-500">{currentExercise?.sets}</p>
-                    <p className="text-xs text-zinc-400">Séries</p>
+                  <div className="bg-muted/50 rounded-xl p-4">
+                    <p className="text-2xl font-bold text-primary">{currentExercise?.sets}</p>
+                    <p className="text-xs text-muted-foreground">Séries</p>
                   </div>
-                  <div className="bg-zinc-800/50 rounded-xl p-4">
+                  <div className="bg-muted/50 rounded-xl p-4">
                     <p className="text-2xl font-bold">{currentExercise?.reps}</p>
-                    <p className="text-xs text-zinc-400">Repetições</p>
+                    <p className="text-xs text-muted-foreground">Repetições</p>
                   </div>
-                  <div className="bg-zinc-800/50 rounded-xl p-4">
+                  <div className="bg-muted/50 rounded-xl p-4">
                     <p className="text-2xl font-bold">{currentExercise?.weight_kg || '--'}</p>
-                    <p className="text-xs text-zinc-400">Kg</p>
+                    <p className="text-xs text-muted-foreground">Kg</p>
                   </div>
                 </div>
               </div>
@@ -357,10 +357,10 @@ export default function GymWorkoutExecution() {
                     key={i}
                     className={`w-3 h-3 rounded-full transition-all ${
                       completedSets[currentExercise?.id]?.includes(i + 1)
-                        ? 'bg-orange-500'
+                        ? 'bg-primary'
                         : i + 1 === currentSet
-                        ? 'bg-orange-500/50 ring-2 ring-orange-500'
-                        : 'bg-zinc-700'
+                        ? 'bg-primary/50 ring-2 ring-primary'
+                        : 'bg-muted'
                     }`}
                   />
                 ))}
@@ -372,11 +372,11 @@ export default function GymWorkoutExecution() {
 
       {/* Bottom Actions */}
       {workoutStarted && !isResting && (
-        <div className="fixed bottom-0 left-0 right-0 bg-zinc-950/95 backdrop-blur-xl border-t border-zinc-800 p-4 pb-safe">
+        <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-xl border-t border-border p-4 pb-safe">
           <div className="flex gap-3 max-w-lg mx-auto">
             <Button
               variant="outline"
-              className="flex-1 border-zinc-700 h-14"
+              className="flex-1 border-border h-14"
               onClick={() => {
                 if (currentExerciseIndex > 0 || currentSet > 1) {
                   if (currentSet > 1) {
@@ -393,7 +393,7 @@ export default function GymWorkoutExecution() {
               Anterior
             </Button>
             <Button
-              className="flex-[2] bg-orange-500 hover:bg-orange-600 h-14 text-lg font-semibold"
+              className="flex-[2] bg-primary hover:bg-primary/80 h-14 text-lg font-semibold"
               onClick={completeSet}
             >
               <Check className="w-5 h-5 mr-2" />

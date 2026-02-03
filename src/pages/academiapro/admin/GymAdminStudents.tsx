@@ -171,7 +171,7 @@ export default function GymAdminStudents() {
           </Button>
           <Button 
             onClick={() => setIsWizardOpen(true)}
-            className="bg-orange-500 hover:bg-orange-600 text-white"
+            className="bg-primary hover:bg-primary/80 text-primary-foreground"
           >
             <UserPlus className="w-4 h-4 mr-2" />
             Novo Aluno
@@ -254,7 +254,7 @@ export default function GymAdminStudents() {
                         <div className="flex items-center gap-3">
                           <Avatar className="w-10 h-10">
                             <AvatarImage src={student.avatar_url || ''} />
-                            <AvatarFallback className="bg-orange-500 text-white">
+                            <AvatarFallback className="bg-primary text-primary-foreground">
                               {student.full_name?.charAt(0) || 'U'}
                             </AvatarFallback>
                           </Avatar>

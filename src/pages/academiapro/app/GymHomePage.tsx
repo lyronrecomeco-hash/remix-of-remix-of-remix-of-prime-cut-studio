@@ -100,14 +100,14 @@ export default function GymHomePage() {
         className="flex items-center justify-between pt-2"
       >
         <div>
-          <p className="text-zinc-400 text-sm">{greeting()},</p>
+          <p className="text-muted-foreground text-sm">{greeting()},</p>
           <h1 className="text-2xl font-bold">{profile?.full_name?.split(' ')[0] || 'Atleta'}</h1>
         </div>
         <Button 
           variant="outline" 
           size="icon"
           onClick={() => setShowCheckIn(true)}
-          className="border-orange-500/50 text-orange-500 hover:bg-orange-500/10"
+          className="border-primary/50 text-primary hover:bg-primary/10"
         >
           <Scan className="w-5 h-5" />
         </Button>
@@ -123,20 +123,20 @@ export default function GymHomePage() {
         transition={{ delay: 0.1 }}
         className="grid grid-cols-3 gap-3"
       >
-        <div className="bg-orange-500/20 border border-orange-500/30 rounded-xl p-3 text-center">
-          <Flame className="w-5 h-5 text-orange-500 mx-auto mb-1" />
+        <div className="bg-primary/20 border border-primary/30 rounded-xl p-3 text-center">
+          <Flame className="w-5 h-5 text-primary mx-auto mb-1" />
           <p className="text-xl font-bold">{stats.streak}</p>
-          <p className="text-[10px] text-zinc-400">Sequência</p>
+          <p className="text-[10px] text-muted-foreground">Sequência</p>
         </div>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-center">
-          <Dumbbell className="w-5 h-5 text-zinc-400 mx-auto mb-1" />
+        <div className="bg-card border border-border rounded-xl p-3 text-center">
+          <Dumbbell className="w-5 h-5 text-muted-foreground mx-auto mb-1" />
           <p className="text-xl font-bold">{stats.workoutsThisWeek}</p>
-          <p className="text-[10px] text-zinc-400">Esta semana</p>
+          <p className="text-[10px] text-muted-foreground">Esta semana</p>
         </div>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-center">
-          <Trophy className="w-5 h-5 text-zinc-400 mx-auto mb-1" />
+        <div className="bg-card border border-border rounded-xl p-3 text-center">
+          <Trophy className="w-5 h-5 text-muted-foreground mx-auto mb-1" />
           <p className="text-xl font-bold">{stats.totalPRs}</p>
-          <p className="text-[10px] text-zinc-400">PRs</p>
+          <p className="text-[10px] text-muted-foreground">PRs</p>
         </div>
       </motion.div>
 
@@ -148,21 +148,21 @@ export default function GymHomePage() {
       >
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-semibold text-lg">Treino de Hoje</h2>
-          <Link to="/academiapro/app/treinos" className="text-orange-500 text-sm flex items-center gap-1">
+          <Link to="/academiapro/app/treinos" className="text-primary text-sm flex items-center gap-1">
             Ver todos <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
 
         {todayWorkout ? (
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
+          <div className="bg-card border border-border rounded-2xl p-4">
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h3 className="font-semibold text-lg">{todayWorkout.name}</h3>
-                <p className="text-zinc-400 text-sm">
+                <p className="text-muted-foreground text-sm">
                   {todayWorkout.gym_user_workout_exercises?.length || 0} exercícios
                 </p>
               </div>
-              <div className="flex items-center gap-1 text-zinc-400 text-sm">
+              <div className="flex items-center gap-1 text-muted-foreground text-sm">
                 <Timer className="w-4 h-4" />
                 ~60 min
               </div>
@@ -170,8 +170,8 @@ export default function GymHomePage() {
 
             <div className="flex gap-2 mb-4 overflow-x-auto -mx-1 px-1">
               {todayWorkout.gym_user_workout_exercises?.slice(0, 3).map((ex: any, i: number) => (
-                <div key={i} className="flex-shrink-0 flex-1 min-w-[100px] bg-zinc-800/50 rounded-lg p-2">
-                  <p className="text-xs text-zinc-400 truncate">
+                <div key={i} className="flex-shrink-0 flex-1 min-w-[100px] bg-muted/50 rounded-lg p-2">
+                  <p className="text-xs text-muted-foreground truncate">
                     {ex.gym_exercises?.name || 'Exercício'}
                   </p>
                   <p className="text-sm font-medium">{ex.sets}x{ex.reps}</p>
@@ -180,18 +180,18 @@ export default function GymHomePage() {
             </div>
 
             <Link to={`/academiapro/app/treinos/${todayWorkout.id}/executar`}>
-              <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white">
+              <Button className="w-full bg-primary hover:bg-primary/80 text-primary-foreground">
                 <Play className="w-4 h-4 mr-2" />
                 Iniciar Treino
               </Button>
             </Link>
           </div>
         ) : (
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-center">
-            <Dumbbell className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
-            <p className="text-zinc-400 mb-4">Nenhum treino programado para hoje</p>
+          <div className="bg-card border border-border rounded-2xl p-6 text-center">
+            <Dumbbell className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground mb-4">Nenhum treino programado para hoje</p>
             <Link to="/academiapro/app/treinos">
-              <Button variant="outline" className="border-zinc-700 hover:bg-zinc-800">
+              <Button variant="outline" className="border-border hover:bg-muted">
                 Ver meus treinos
               </Button>
             </Link>
@@ -207,31 +207,31 @@ export default function GymHomePage() {
         className="grid grid-cols-2 gap-3"
       >
         <Link to="/academiapro/app/meu-plano">
-          <div className="bg-orange-500/20 border border-orange-500/30 rounded-xl p-4 hover:border-orange-500/50 transition-all h-full">
-            <Target className="w-6 h-6 text-orange-500 mb-2" />
+          <div className="bg-primary/20 border border-primary/30 rounded-xl p-4 hover:border-primary/50 transition-all h-full">
+            <Target className="w-6 h-6 text-primary mb-2" />
             <h3 className="font-medium">Meu Plano</h3>
-            <p className="text-xs text-zinc-400">Agenda personalizada</p>
+            <p className="text-xs text-muted-foreground">Agenda personalizada</p>
           </div>
         </Link>
         <Link to="/academiapro/app/aulas">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-all h-full">
-            <CalendarDays className="w-6 h-6 text-zinc-400 mb-2" />
+          <div className="bg-card border border-border rounded-xl p-4 hover:border-border/80 transition-all h-full">
+            <CalendarDays className="w-6 h-6 text-muted-foreground mb-2" />
             <h3 className="font-medium">Aulas Coletivas</h3>
-            <p className="text-xs text-zinc-400">Agende sua aula</p>
+            <p className="text-xs text-muted-foreground">Agende sua aula</p>
           </div>
         </Link>
         <Link to="/academiapro/app/evolucao">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-all h-full">
-            <TrendingUp className="w-6 h-6 text-zinc-400 mb-2" />
+          <div className="bg-card border border-border rounded-xl p-4 hover:border-border/80 transition-all h-full">
+            <TrendingUp className="w-6 h-6 text-muted-foreground mb-2" />
             <h3 className="font-medium">Minha Evolução</h3>
-            <p className="text-xs text-zinc-400">Veja seu progresso</p>
+            <p className="text-xs text-muted-foreground">Veja seu progresso</p>
           </div>
         </Link>
         <Link to="/academiapro/app/treinos">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-all h-full">
-            <Dumbbell className="w-6 h-6 text-zinc-400 mb-2" />
+          <div className="bg-card border border-border rounded-xl p-4 hover:border-border/80 transition-all h-full">
+            <Dumbbell className="w-6 h-6 text-muted-foreground mb-2" />
             <h3 className="font-medium">Treinos</h3>
-            <p className="text-xs text-zinc-400">Biblioteca de treinos</p>
+            <p className="text-xs text-muted-foreground">Biblioteca de treinos</p>
           </div>
         </Link>
       </motion.div>

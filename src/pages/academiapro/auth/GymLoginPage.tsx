@@ -13,13 +13,13 @@ const AnimatedPerson = () => (
   <motion.div className="relative w-48 h-48">
     {/* Body */}
     <motion.div 
-      className="absolute bottom-8 left-1/2 -translate-x-1/2 w-12 h-24 bg-orange-500 rounded-t-3xl"
+      className="absolute bottom-8 left-1/2 -translate-x-1/2 w-12 h-24 bg-primary rounded-t-3xl"
       animate={{ scaleY: [1, 0.95, 1] }}
       transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
     />
     {/* Head */}
     <motion.div 
-      className="absolute bottom-32 left-1/2 -translate-x-1/2 w-10 h-10 bg-orange-400 rounded-full"
+      className="absolute bottom-32 left-1/2 -translate-x-1/2 w-10 h-10 bg-primary/80 rounded-full"
     />
     {/* Arms with weights */}
     <motion.div 
@@ -29,28 +29,28 @@ const AnimatedPerson = () => (
     >
       {/* Left weight */}
       <div className="flex items-center">
-        <div className="w-4 h-4 bg-zinc-600 rounded" />
-        <div className="w-10 h-2 bg-zinc-500" />
-        <div className="w-4 h-4 bg-zinc-600 rounded" />
+        <div className="w-4 h-4 bg-muted-foreground rounded" />
+        <div className="w-10 h-2 bg-muted" />
+        <div className="w-4 h-4 bg-muted-foreground rounded" />
       </div>
       {/* Bar */}
-      <div className="w-8 h-2 bg-zinc-400 -mx-6" />
+      <div className="w-8 h-2 bg-border -mx-6" />
       {/* Right weight */}
       <div className="flex items-center">
-        <div className="w-4 h-4 bg-zinc-600 rounded" />
-        <div className="w-10 h-2 bg-zinc-500" />
-        <div className="w-4 h-4 bg-zinc-600 rounded" />
+        <div className="w-4 h-4 bg-muted-foreground rounded" />
+        <div className="w-10 h-2 bg-muted" />
+        <div className="w-4 h-4 bg-muted-foreground rounded" />
       </div>
     </motion.div>
     {/* Legs */}
     <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-2">
       <motion.div 
-        className="w-4 h-8 bg-orange-600 rounded-b-lg"
+        className="w-4 h-8 bg-primary/90 rounded-b-lg"
         animate={{ scaleY: [1, 0.9, 1] }}
         transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
       />
       <motion.div 
-        className="w-4 h-8 bg-orange-600 rounded-b-lg"
+        className="w-4 h-8 bg-primary/90 rounded-b-lg"
         animate={{ scaleY: [1, 0.9, 1] }}
         transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut', delay: 0.1 }}
       />
@@ -76,13 +76,13 @@ const FloatingElement = ({ icon: Icon, delay, x, y, size = 24 }: any) => (
     className="absolute"
     style={{ left: x, top: y }}
   >
-    <Icon size={size} className="text-orange-500" />
+    <Icon size={size} className="text-primary" />
   </motion.div>
 );
 
 // Heartbeat line animation
 const HeartbeatLine = () => (
-  <svg className="w-full h-16 text-orange-500/30" viewBox="0 0 400 50">
+  <svg className="w-full h-16 text-primary/30" viewBox="0 0 400 50">
     <motion.path
       d="M0,25 L80,25 L100,10 L120,40 L140,15 L160,35 L180,25 L400,25"
       fill="none"
@@ -98,7 +98,7 @@ const HeartbeatLine = () => (
 // Pulsing circles
 const PulsingCircle = ({ delay, size }: { delay: number; size: number }) => (
   <motion.div
-    className="absolute rounded-full border-2 border-orange-500/20"
+    className="absolute rounded-full border-2 border-primary/20"
     style={{ width: size, height: size }}
     initial={{ scale: 0.8, opacity: 0 }}
     animate={{ 
@@ -150,7 +150,7 @@ export default function GymLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex">
+    <div className="min-h-screen bg-background flex">
       {/* Left side - Form */}
       <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
         <motion.div
@@ -167,19 +167,19 @@ export default function GymLoginPage() {
               transition={{ delay: 0.1 }}
             >
               <motion.div 
-                className="w-12 h-12 rounded-xl bg-orange-500 flex items-center justify-center"
+                className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center"
                 whileHover={{ scale: 1.1, rotate: 10 }}
                 transition={{ type: 'spring', stiffness: 300 }}
               >
-                <Dumbbell className="w-6 h-6 text-white" />
+                <Dumbbell className="w-6 h-6 text-primary-foreground" />
               </motion.div>
               <div>
-                <h1 className="text-xl font-bold text-white">Academia Genesis</h1>
-                <p className="text-zinc-500 text-sm">Sistema de gestão</p>
+                <h1 className="text-xl font-bold text-foreground">Academia Genesis</h1>
+                <p className="text-muted-foreground text-sm">Sistema de gestão</p>
               </div>
             </motion.div>
             <motion.h2 
-              className="text-2xl lg:text-3xl font-bold text-white"
+              className="text-2xl lg:text-3xl font-bold text-foreground"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
@@ -187,7 +187,7 @@ export default function GymLoginPage() {
               Bem-vindo de volta
             </motion.h2>
             <motion.p 
-              className="text-zinc-400 mt-2"
+              className="text-muted-foreground mt-2"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
@@ -204,16 +204,16 @@ export default function GymLoginPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
             >
-              <Label htmlFor="email" className="text-zinc-300 text-sm">Email</Label>
+              <Label htmlFor="email" className="text-foreground/80 text-sm">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="seu@email.com"
-                  className="pl-10 h-12 bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus:border-orange-500 focus:ring-orange-500"
+                  className="pl-10 h-12 bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary"
                   required
                 />
               </div>
@@ -225,22 +225,22 @@ export default function GymLoginPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.5 }}
             >
-              <Label htmlFor="password" className="text-zinc-300 text-sm">Senha</Label>
+              <Label htmlFor="password" className="text-foreground/80 text-sm">Senha</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="pl-10 pr-10 h-12 bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus:border-orange-500 focus:ring-orange-500"
+                  className="pl-10 pr-10 h-12 bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -255,7 +255,7 @@ export default function GymLoginPage() {
               <Button
                 type="submit"
                 disabled={isLoading || authLoading}
-                className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-semibold"
+                className="w-full h-12 bg-primary hover:bg-primary/80 text-primary-foreground font-semibold"
               >
                 {isLoading ? (
                   <>
@@ -270,7 +270,7 @@ export default function GymLoginPage() {
           </form>
 
           <motion.p 
-            className="mt-8 text-center text-zinc-500 text-xs"
+            className="mt-8 text-center text-muted-foreground text-xs"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7 }}
@@ -281,8 +281,8 @@ export default function GymLoginPage() {
       </div>
 
       {/* Right side - Animated Gym Visual */}
-      <div className="hidden lg:flex lg:flex-1 bg-zinc-900 items-center justify-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-red-600/5" />
+      <div className="hidden lg:flex lg:flex-1 bg-card items-center justify-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5" />
         
         {/* Floating gym icons */}
         <FloatingElement icon={Dumbbell} delay={0} x="15%" y="20%" size={32} />
@@ -317,7 +317,7 @@ export default function GymLoginPage() {
           </div>
           
           <motion.h2 
-            className="text-3xl font-bold text-white mb-4"
+            className="text-3xl font-bold text-foreground mb-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
@@ -325,7 +325,7 @@ export default function GymLoginPage() {
             Supere seus limites
           </motion.h2>
           <motion.p 
-            className="text-zinc-400 text-lg max-w-md"
+            className="text-muted-foreground text-lg max-w-md"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
@@ -352,9 +352,9 @@ export default function GymLoginPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.7 + i * 0.1 }}
                 whileHover={{ scale: 1.05, y: -2 }}
-                className="flex items-center gap-2 px-4 py-2 bg-zinc-800/50 rounded-full text-sm text-zinc-300 border border-zinc-700/50"
+                className="flex items-center gap-2 px-4 py-2 bg-muted/50 rounded-full text-sm text-foreground/80 border border-border/50"
               >
-                <feature.icon className="w-4 h-4 text-orange-500" />
+                <feature.icon className="w-4 h-4 text-primary" />
                 {feature.text}
               </motion.div>
             ))}

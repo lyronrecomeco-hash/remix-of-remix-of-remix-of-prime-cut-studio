@@ -132,9 +132,9 @@ export default function GymEditProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800 px-4 py-3">
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border px-4 py-3">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate(-1)} className="p-2 -ml-2">
             <ArrowLeft className="w-5 h-5" />
@@ -151,10 +151,10 @@ export default function GymEditProfilePage() {
           className="flex flex-col items-center"
         >
           <div className="relative">
-            <Avatar className="w-28 h-28 border-4 border-orange-500/50">
+            <Avatar className="w-28 h-28 border-4 border-primary/50">
               <AvatarImage src={avatarUrl} />
-              <AvatarFallback className="bg-zinc-800 text-3xl">
-                {formData.full_name?.charAt(0) || <User className="w-10 h-10 text-zinc-500" />}
+              <AvatarFallback className="bg-muted text-3xl">
+                {formData.full_name?.charAt(0) || <User className="w-10 h-10 text-muted-foreground" />}
               </AvatarFallback>
             </Avatar>
             
@@ -169,7 +169,7 @@ export default function GymEditProfilePage() {
             <button 
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="absolute bottom-0 right-0 w-10 h-10 bg-orange-500 hover:bg-orange-600 rounded-full flex items-center justify-center transition-colors disabled:opacity-50"
+              className="absolute bottom-0 right-0 w-10 h-10 bg-primary hover:bg-primary/80 rounded-full flex items-center justify-center transition-colors disabled:opacity-50"
             >
               {isUploading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -179,7 +179,7 @@ export default function GymEditProfilePage() {
             </button>
           </div>
           
-          <p className="text-sm text-zinc-500 mt-3">
+          <p className="text-sm text-muted-foreground mt-3">
             Toque para alterar a foto
           </p>
         </motion.div>
@@ -191,7 +191,7 @@ export default function GymEditProfilePage() {
           transition={{ delay: 0.1 }}
           className="space-y-4"
         >
-          <h3 className="font-semibold text-sm text-zinc-400 uppercase tracking-wider">
+          <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
             Informações Pessoais
           </h3>
           
@@ -200,7 +200,7 @@ export default function GymEditProfilePage() {
             <Input
               value={formData.full_name}
               onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-              className="bg-zinc-900 border-zinc-800 h-12"
+              className="bg-card border-border h-12"
               placeholder="Seu nome"
             />
           </div>
@@ -210,7 +210,7 @@ export default function GymEditProfilePage() {
             <Input
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="bg-zinc-900 border-zinc-800 h-12"
+              className="bg-card border-border h-12"
               placeholder="(11) 99999-9999"
             />
           </div>
@@ -221,7 +221,7 @@ export default function GymEditProfilePage() {
               type="date"
               value={formData.birth_date}
               onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
-              className="bg-zinc-900 border-zinc-800 h-12"
+              className="bg-card border-border h-12"
             />
           </div>
         </motion.div>
@@ -233,7 +233,7 @@ export default function GymEditProfilePage() {
           transition={{ delay: 0.2 }}
           className="space-y-4"
         >
-          <h3 className="font-semibold text-sm text-zinc-400 uppercase tracking-wider">
+          <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
             Dados Físicos
           </h3>
 
@@ -244,7 +244,7 @@ export default function GymEditProfilePage() {
                 type="number"
                 value={formData.height_cm}
                 onChange={(e) => setFormData({ ...formData, height_cm: e.target.value })}
-                className="bg-zinc-900 border-zinc-800 h-12"
+                className="bg-card border-border h-12"
                 placeholder="175"
               />
             </div>
@@ -254,7 +254,7 @@ export default function GymEditProfilePage() {
                 type="number"
                 value={formData.weight_kg}
                 onChange={(e) => setFormData({ ...formData, weight_kg: e.target.value })}
-                className="bg-zinc-900 border-zinc-800 h-12"
+                className="bg-card border-border h-12"
                 placeholder="70"
               />
             </div>
@@ -268,7 +268,7 @@ export default function GymEditProfilePage() {
           transition={{ delay: 0.3 }}
           className="space-y-4"
         >
-          <h3 className="font-semibold text-sm text-zinc-400 uppercase tracking-wider">
+          <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
             Contato de Emergência
           </h3>
           
@@ -277,7 +277,7 @@ export default function GymEditProfilePage() {
             <Input
               value={formData.emergency_contact}
               onChange={(e) => setFormData({ ...formData, emergency_contact: e.target.value })}
-              className="bg-zinc-900 border-zinc-800 h-12"
+              className="bg-card border-border h-12"
               placeholder="Nome do contato"
             />
           </div>
@@ -287,7 +287,7 @@ export default function GymEditProfilePage() {
             <Input
               value={formData.emergency_phone}
               onChange={(e) => setFormData({ ...formData, emergency_phone: e.target.value })}
-              className="bg-zinc-900 border-zinc-800 h-12"
+              className="bg-card border-border h-12"
               placeholder="(11) 99999-9999"
             />
           </div>
@@ -295,12 +295,12 @@ export default function GymEditProfilePage() {
       </div>
 
       {/* Save Button */}
-      <div className="fixed bottom-0 left-0 right-0 bg-zinc-950/95 backdrop-blur-xl border-t border-zinc-800 p-4 pb-safe">
+      <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-xl border-t border-border p-4 pb-safe">
         <div className="max-w-lg mx-auto">
           <Button
             onClick={handleSave}
             disabled={isLoading || !formData.full_name}
-            className="w-full h-12 bg-orange-500 hover:bg-orange-600"
+            className="w-full h-12 bg-primary hover:bg-primary/80"
           >
             {isLoading ? (
               <>
