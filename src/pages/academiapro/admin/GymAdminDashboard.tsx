@@ -88,25 +88,37 @@ export default function GymAdminDashboard() {
   };
 
   const fetchCheckInTrend = async () => {
-    const days = [];
+    // Optimized: Single query for 7-day range instead of 7 separate queries
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
+    const startDate = subDays(new Date(), 6);
+    startDate.setHours(0, 0, 0, 0);
+
+    const { data } = await supabase
+      .from('gym_check_ins')
+      .select('checked_in_at')
+      .gte('checked_in_at', startDate.toISOString())
+      .lte('checked_in_at', endDate.toISOString());
+
+    // Group by day client-side
+    const dayMap: { [key: string]: number } = {};
     for (let i = 6; i >= 0; i--) {
       const date = subDays(new Date(), i);
-      const dayStart = new Date(date);
-      dayStart.setHours(0, 0, 0, 0);
-      const dayEnd = new Date(date);
-      dayEnd.setHours(23, 59, 59, 999);
-
-      const { count } = await supabase
-        .from('gym_check_ins')
-        .select('id', { count: 'exact' })
-        .gte('checked_in_at', dayStart.toISOString())
-        .lte('checked_in_at', dayEnd.toISOString());
-
-      days.push({
-        day: format(date, 'EEE', { locale: ptBR }),
-        checkIns: count || 0
-      });
+      dayMap[format(date, 'yyyy-MM-dd')] = 0;
     }
+
+    data?.forEach(checkIn => {
+      const day = format(new Date(checkIn.checked_in_at), 'yyyy-MM-dd');
+      if (dayMap[day] !== undefined) {
+        dayMap[day]++;
+      }
+    });
+
+    const days = Object.entries(dayMap).map(([date, count]) => ({
+      day: format(new Date(date), 'EEE', { locale: ptBR }),
+      checkIns: count
+    }));
+
     setCheckInTrend(days);
   };
 

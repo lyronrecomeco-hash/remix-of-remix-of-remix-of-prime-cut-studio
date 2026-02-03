@@ -348,12 +348,12 @@ export default function GymAdminEvaluations() {
         transition={{ delay: 0.1 }}
         className="flex flex-col sm:flex-row gap-4"
       >
-        <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+      <Select value={selectedUserId || "all"} onValueChange={(v) => setSelectedUserId(v === "all" ? "" : v)}>
           <SelectTrigger className="sm:w-64">
             <SelectValue placeholder="Filtrar por aluno" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos os alunos</SelectItem>
+            <SelectItem value="all">Todos os alunos</SelectItem>
             {profiles.map((p) => (
               <SelectItem key={p.user_id} value={p.user_id}>
                 {p.full_name}
