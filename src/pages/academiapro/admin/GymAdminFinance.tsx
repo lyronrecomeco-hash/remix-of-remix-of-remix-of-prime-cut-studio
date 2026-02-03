@@ -210,19 +210,19 @@ export default function GymAdminFinance() {
       >
         <div>
           <h1 className="text-3xl font-bold">Financeiro</h1>
-          <p className="text-zinc-400 mt-1">Controle financeiro completo da academia</p>
+          <p className="text-muted-foreground mt-1">Controle financeiro completo da academia</p>
         </div>
         <Dialog open={openNewPayment} onOpenChange={setOpenNewPayment}>
           <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
+            <Button className="bg-primary hover:bg-primary/80">
               <Plus className="w-4 h-4 mr-2" />
               Nova Cobrança
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
+          <DialogContent className="bg-card border-border text-foreground">
             <DialogHeader>
               <DialogTitle>Nova Cobrança</DialogTitle>
-              <DialogDescription className="text-zinc-400">
+              <DialogDescription className="text-muted-foreground">
                 Criar uma nova cobrança para um aluno
               </DialogDescription>
             </DialogHeader>
@@ -233,10 +233,10 @@ export default function GymAdminFinance() {
                   value={newPayment.user_id}
                   onValueChange={(v) => setNewPayment({ ...newPayment, user_id: v })}
                 >
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700">
+                  <SelectTrigger className="bg-muted border-border">
                     <SelectValue placeholder="Selecione um aluno" />
                   </SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-zinc-700">
+                  <SelectContent className="bg-muted border-border">
                     {students.map((s) => (
                       <SelectItem key={s.user_id} value={s.user_id}>
                         {s.full_name} ({s.email})
@@ -259,10 +259,10 @@ export default function GymAdminFinance() {
                     });
                   }}
                 >
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700">
+                  <SelectTrigger className="bg-muted border-border">
                     <SelectValue placeholder="Selecione um plano" />
                   </SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-zinc-700">
+                  <SelectContent className="bg-muted border-border">
                     {plans.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
                         {p.name} - R$ {(p.price_cents / 100).toFixed(2)}
@@ -282,7 +282,7 @@ export default function GymAdminFinance() {
                     ...newPayment, 
                     amount_cents: Math.round(parseFloat(e.target.value || '0') * 100)
                   })}
-                  className="bg-zinc-800 border-zinc-700"
+                  className="bg-muted border-border"
                   placeholder="0.00"
                 />
               </div>
@@ -293,10 +293,10 @@ export default function GymAdminFinance() {
                   value={newPayment.payment_method}
                   onValueChange={(v) => setNewPayment({ ...newPayment, payment_method: v })}
                 >
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700">
+                  <SelectTrigger className="bg-muted border-border">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-zinc-700">
+                  <SelectContent className="bg-muted border-border">
                     <SelectItem value="pix">PIX</SelectItem>
                     <SelectItem value="credit_card">Cartão de Crédito</SelectItem>
                     <SelectItem value="debit_card">Cartão de Débito</SelectItem>
@@ -311,7 +311,7 @@ export default function GymAdminFinance() {
                 <Input
                   value={newPayment.description}
                   onChange={(e) => setNewPayment({ ...newPayment, description: e.target.value })}
-                  className="bg-zinc-800 border-zinc-700"
+                  className="bg-muted border-border"
                   placeholder="Ex: Mensalidade Janeiro"
                 />
               </div>
@@ -321,13 +321,13 @@ export default function GymAdminFinance() {
                   type="button"
                   variant="outline"
                   onClick={() => setOpenNewPayment(false)}
-                  className="flex-1 border-zinc-700"
+                  className="flex-1 border-border"
                 >
                   Cancelar
                 </Button>
                 <Button
                   onClick={handleCreatePayment}
-                  className="flex-1 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
+                  className="flex-1 bg-primary hover:bg-primary/80"
                 >
                   Criar Cobrança
                 </Button>
@@ -345,18 +345,18 @@ export default function GymAdminFinance() {
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
       >
         {statCards.map((stat, index) => (
-          <div key={stat.label} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+          <div key={stat.label} className="bg-card border border-border rounded-2xl p-6">
             <div className="flex items-start justify-between mb-4">
               <div className={`w-12 h-12 rounded-xl ${stat.iconBg} flex items-center justify-center`}>
                 <stat.icon className={`w-6 h-6 ${stat.iconColor}`} />
               </div>
-              <div className={`flex items-center gap-1 text-sm ${stat.positive ? 'text-emerald-500' : 'text-zinc-400'}`}>
+              <div className={`flex items-center gap-1 text-sm ${stat.positive ? 'text-emerald-500' : 'text-muted-foreground'}`}>
                 {stat.positive && <ArrowUp className="w-4 h-4" />}
                 {stat.change}
               </div>
             </div>
             <p className="text-2xl font-bold">{isLoading ? '--' : stat.value}</p>
-            <p className="text-zinc-400 text-sm mt-1">{stat.label}</p>
+            <p className="text-muted-foreground text-sm mt-1">{stat.label}</p>
           </div>
         ))}
       </motion.div>
@@ -366,16 +366,16 @@ export default function GymAdminFinance() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
-        className="bg-zinc-900 border border-zinc-800 rounded-2xl p-12 text-center"
+        className="bg-card border border-border rounded-2xl p-12 text-center"
       >
-        <Receipt className="w-16 h-16 text-zinc-600 mx-auto mb-4" />
+        <Receipt className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
         <h2 className="text-xl font-semibold mb-2">Histórico de Pagamentos</h2>
-        <p className="text-zinc-400 max-w-md mx-auto mb-4">
+        <p className="text-muted-foreground max-w-md mx-auto mb-4">
           As cobranças criadas aparecerão aqui. Use o botão "Nova Cobrança" para adicionar pagamentos aos alunos.
         </p>
         <Button 
           variant="outline" 
-          className="border-zinc-700"
+          className="border-border"
           onClick={() => setOpenNewPayment(true)}
         >
           <Plus className="w-4 h-4 mr-2" />

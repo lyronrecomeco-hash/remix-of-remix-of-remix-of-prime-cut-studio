@@ -154,9 +154,9 @@ export default function GymClassesPage() {
       case 'cardio': return 'border-red-500/30 bg-red-500/10 text-red-400';
       case 'forca': return 'border-blue-500/30 bg-blue-500/10 text-blue-400';
       case 'flexibilidade': return 'border-purple-500/30 bg-purple-500/10 text-purple-400';
-      case 'hiit': return 'border-orange-500/30 bg-orange-500/10 text-orange-400';
+      case 'hiit': return 'border-primary/30 bg-primary/10 text-primary';
       case 'relaxamento': return 'border-green-500/30 bg-green-500/10 text-green-400';
-      default: return 'border-zinc-700 bg-zinc-800/50 text-zinc-400';
+      default: return 'border-border bg-muted/50 text-muted-foreground';
     }
   };
 
@@ -180,7 +180,7 @@ export default function GymClassesPage() {
         className="pt-2"
       >
         <h1 className="text-xl lg:text-2xl font-bold">Aulas Coletivas</h1>
-        <p className="text-zinc-400 text-sm">Reserve sua vaga nas aulas</p>
+        <p className="text-muted-foreground text-sm">Reserve sua vaga nas aulas</p>
       </motion.div>
 
       {/* Date Selector */}
@@ -333,10 +333,10 @@ export default function GymClassesPage() {
             );
           })
         ) : (
-          <div className="col-span-full bg-zinc-900 border border-zinc-800 rounded-xl p-8 text-center">
-            <CalendarDays className="w-12 h-12 text-zinc-600 mx-auto mb-4" />
+          <div className="col-span-full bg-card border border-border rounded-xl p-8 text-center">
+            <CalendarDays className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="font-semibold text-lg mb-2">Nenhuma aula neste dia</h3>
-            <p className="text-zinc-400 text-sm">
+            <p className="text-muted-foreground text-sm">
               {showOnlyEnrolled ? 'Nenhuma de suas aulas está agendada para este dia' : 'Selecione outra data para ver as aulas disponíveis'}
             </p>
           </div>
@@ -355,11 +355,11 @@ export default function GymClassesPage() {
             size="sm"
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
             disabled={currentPage === 1}
-            className="border-zinc-700"
+            className="border-border"
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <span className="text-sm text-zinc-400">
+          <span className="text-sm text-muted-foreground">
             Página {currentPage} de {totalPages}
           </span>
           <Button
@@ -367,7 +367,7 @@ export default function GymClassesPage() {
             size="sm"
             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
-            className="border-zinc-700"
+            className="border-border"
           >
             <ChevronRight className="w-4 h-4" />
           </Button>

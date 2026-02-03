@@ -28,7 +28,7 @@ interface AttendanceColumn {
 }
 
 const COLUMNS: AttendanceColumn[] = [
-  { id: 'pending', title: 'Aguardando', color: 'bg-zinc-500', icon: Clock },
+  { id: 'pending', title: 'Aguardando', color: 'bg-muted-foreground', icon: Clock },
   { id: 'present', title: 'Presente', color: 'bg-green-500', icon: UserCheck },
   { id: 'absent', title: 'Faltou', color: 'bg-red-500', icon: UserX }
 ];
@@ -172,7 +172,7 @@ export default function AttendanceKanban() {
         <div className="flex items-center gap-3">
           <div>
             <h1 className="text-2xl lg:text-3xl font-bold">Controle de Presença</h1>
-            <p className="text-zinc-400 mt-1 text-sm">
+            <p className="text-muted-foreground mt-1 text-sm">
               Arraste os alunos para registrar presença
             </p>
           </div>
@@ -180,7 +180,7 @@ export default function AttendanceKanban() {
             variant="ghost"
             size="icon"
             onClick={() => setShowHelp(true)}
-            className="hover:bg-orange-500/20 text-zinc-400 hover:text-orange-500"
+            className="hover:bg-primary/20 text-muted-foreground hover:text-primary"
           >
             <HelpCircle className="w-5 h-5" />
           </Button>
@@ -190,7 +190,7 @@ export default function AttendanceKanban() {
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="w-auto bg-zinc-900 border-zinc-800"
+            className="w-auto bg-card border-border"
           />
         </div>
       </div>
@@ -198,18 +198,18 @@ export default function AttendanceKanban() {
       {/* Search */}
       <div className="flex gap-4">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <Input
             placeholder="Buscar aluno..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 bg-zinc-900 border-zinc-800"
+            className="pl-10 bg-card border-border"
           />
         </div>
       </div>
 
       {/* Date Display */}
-      <div className="flex items-center gap-2 text-zinc-400">
+      <div className="flex items-center gap-2 text-muted-foreground">
         <Calendar className="w-5 h-5" />
         <span className="font-medium">
           {format(new Date(selectedDate), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
@@ -223,7 +223,7 @@ export default function AttendanceKanban() {
           return (
             <div
               key={column.id}
-              className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 min-h-[400px]"
+              className="bg-card/50 border border-border rounded-xl p-4 min-h-[400px]"
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, column.id)}
             >
@@ -242,7 +242,7 @@ export default function AttendanceKanban() {
               <div className="space-y-2">
                 {isLoading ? (
                   <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
                   </div>
                 ) : (
                   getColumnItems(column.id).map(attendance => (
@@ -253,14 +253,14 @@ export default function AttendanceKanban() {
                       animate={{ opacity: 1, scale: 1 }}
                       draggable
                       onDragStart={(e: any) => handleDragStart(e, attendance.id)}
-                      className={`bg-zinc-800 border border-zinc-700 rounded-lg p-3 cursor-grab active:cursor-grabbing hover:border-orange-500/50 transition-colors ${
+                      className={`bg-muted border border-border rounded-lg p-3 cursor-grab active:cursor-grabbing hover:border-primary/50 transition-colors ${
                         draggedItem === attendance.id ? 'opacity-50' : ''
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <GripVertical className="w-4 h-4 text-zinc-600 flex-shrink-0" />
+                        <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                         <Avatar className="h-8 w-8 flex-shrink-0">
-                          <AvatarFallback className="bg-zinc-700 text-xs">
+                          <AvatarFallback className="bg-muted-foreground/20 text-xs">
                             {attendance.student.full_name?.charAt(0) || 'A'}
                           </AvatarFallback>
                         </Avatar>
@@ -269,7 +269,7 @@ export default function AttendanceKanban() {
                             {attendance.student.full_name}
                           </p>
                           {attendance.checkIn && (
-                            <p className="text-xs text-zinc-500">
+                            <p className="text-xs text-muted-foreground">
                               Check-in: {format(new Date(attendance.checkIn.checked_in_at), 'HH:mm')}
                             </p>
                           )}
@@ -280,7 +280,7 @@ export default function AttendanceKanban() {
                 )}
 
                 {!isLoading && getColumnItems(column.id).length === 0 && (
-                  <div className="text-center py-8 text-zinc-500 text-sm">
+                  <div className="text-center py-8 text-muted-foreground text-sm">
                     Nenhum aluno
                   </div>
                 )}
@@ -296,23 +296,23 @@ export default function AttendanceKanban() {
         animate={{ opacity: 1, y: 0 }}
         className="grid grid-cols-3 gap-4"
       >
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
+        <div className="bg-card border border-border rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-green-500">
             {getColumnItems('present').length}
           </p>
-          <p className="text-sm text-zinc-400">Presentes</p>
+          <p className="text-sm text-muted-foreground">Presentes</p>
         </div>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
+        <div className="bg-card border border-border rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-red-500">
             {getColumnItems('absent').length}
           </p>
-          <p className="text-sm text-zinc-400">Faltas</p>
+          <p className="text-sm text-muted-foreground">Faltas</p>
         </div>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
-          <p className="text-2xl font-bold text-zinc-400">
+        <div className="bg-card border border-border rounded-xl p-4 text-center">
+          <p className="text-2xl font-bold text-muted-foreground">
             {getColumnItems('pending').length}
           </p>
-          <p className="text-sm text-zinc-400">Aguardando</p>
+          <p className="text-sm text-muted-foreground">Aguardando</p>
         </div>
       </motion.div>
     </div>

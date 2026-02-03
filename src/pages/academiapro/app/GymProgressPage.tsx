@@ -79,8 +79,8 @@ export default function GymProgressPage() {
         transition={{ delay: 0.1 }}
         className="grid grid-cols-2 gap-3"
       >
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-          <div className="flex items-center gap-2 text-zinc-400 mb-2">
+        <div className="bg-card border border-border rounded-xl p-4">
+          <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <Scale className="w-4 h-4" />
             <span className="text-sm">Peso</span>
           </div>
@@ -88,13 +88,13 @@ export default function GymProgressPage() {
             <span className="text-2xl font-bold">
               {latestMeasurement?.weight_kg || profile?.weight_kg || '--'}
             </span>
-            <span className="text-zinc-400 text-sm mb-1">kg</span>
+            <span className="text-muted-foreground text-sm mb-1">kg</span>
             <DiffBadge diff={calcDiff(latestMeasurement?.weight_kg, previousMeasurement?.weight_kg)} />
           </div>
         </div>
 
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-          <div className="flex items-center gap-2 text-zinc-400 mb-2">
+        <div className="bg-card border border-border rounded-xl p-4">
+          <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <Ruler className="w-4 h-4" />
             <span className="text-sm">% Gordura</span>
           </div>
@@ -102,7 +102,7 @@ export default function GymProgressPage() {
             <span className="text-2xl font-bold">
               {latestMeasurement?.body_fat_percent || '--'}
             </span>
-            <span className="text-zinc-400 text-sm mb-1">%</span>
+            <span className="text-muted-foreground text-sm mb-1">%</span>
             <DiffBadge diff={calcDiff(latestMeasurement?.body_fat_percent, previousMeasurement?.body_fat_percent)} />
           </div>
         </div>
@@ -114,11 +114,11 @@ export default function GymProgressPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4"
+          className="bg-card border border-border rounded-2xl p-4"
         >
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold">Medidas Corporais</h2>
-            <span className="text-xs text-zinc-400">
+            <span className="text-xs text-muted-foreground">
               {format(new Date(latestMeasurement.measured_at), "d 'de' MMM", { locale: ptBR })}
             </span>
           </div>
@@ -132,9 +132,9 @@ export default function GymProgressPage() {
               { label: 'Bíceps D', value: latestMeasurement.biceps_right_cm },
               { label: 'Coxa', value: latestMeasurement.thigh_left_cm },
             ].map((item, i) => (
-              <div key={i} className="bg-zinc-800/50 rounded-lg p-3 text-center">
-                <p className="text-xs text-zinc-400 mb-1">{item.label}</p>
-                <p className="font-semibold">{item.value || '--'} <span className="text-xs text-zinc-500">cm</span></p>
+              <div key={i} className="bg-muted/50 rounded-lg p-3 text-center">
+                <p className="text-xs text-muted-foreground mb-1">{item.label}</p>
+                <p className="font-semibold">{item.value || '--'} <span className="text-xs text-muted-foreground">cm</span></p>
               </div>
             ))}
           </div>
@@ -180,10 +180,10 @@ export default function GymProgressPage() {
             ))}
           </div>
         ) : (
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center">
-            <Trophy className="w-12 h-12 text-zinc-600 mx-auto mb-4" />
+          <div className="bg-card border border-border rounded-2xl p-8 text-center">
+            <Trophy className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="font-semibold text-lg mb-2">Nenhum PR registrado</h3>
-            <p className="text-zinc-400 text-sm">
+            <p className="text-muted-foreground text-sm">
               Continue treinando para bater seus primeiros records!
             </p>
           </div>
