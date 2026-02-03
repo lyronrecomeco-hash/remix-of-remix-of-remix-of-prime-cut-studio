@@ -131,7 +131,7 @@ export default function GymAdminDashboard() {
     }
   };
 
-  const COLORS = ['#f97316', '#ef4444', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6'];
+  const COLORS = ['hsl(var(--primary))', '#ef4444', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6'];
 
   const statCards = [
     { 
@@ -171,8 +171,8 @@ export default function GymAdminDashboard() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1 className="text-2xl lg:text-3xl font-bold">Dashboard</h1>
-        <p className="text-zinc-400 mt-1 text-sm lg:text-base">Visão geral da academia</p>
+        <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Dashboard</h1>
+        <p className="text-muted-foreground mt-1 text-sm lg:text-base">Visão geral da academia</p>
       </motion.div>
 
       {/* Stats Grid */}
@@ -183,21 +183,21 @@ export default function GymAdminDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="bg-zinc-900 border border-zinc-800 rounded-xl lg:rounded-2xl p-4 lg:p-6"
+            className="bg-card border border-border rounded-xl lg:rounded-2xl p-4 lg:p-6"
           >
             <div className="flex items-start justify-between mb-3 lg:mb-4">
-              <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-zinc-800 flex items-center justify-center">
-                <stat.icon className="w-5 h-5 lg:w-6 lg:h-6 text-orange-500" />
+              <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-muted flex items-center justify-center">
+                <stat.icon className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
               </div>
-              <div className={`flex items-center gap-1 text-xs lg:text-sm ${stat.positive ? 'text-emerald-500' : 'text-zinc-500'}`}>
+              <div className={`flex items-center gap-1 text-xs lg:text-sm ${stat.positive ? 'text-emerald-500' : 'text-muted-foreground'}`}>
                 {stat.positive ? <ArrowUp className="w-3 h-3 lg:w-4 lg:h-4" /> : <ArrowDown className="w-3 h-3 lg:w-4 lg:h-4" />}
               </div>
             </div>
-            <p className="text-xl lg:text-2xl font-bold">
+            <p className="text-xl lg:text-2xl font-bold text-foreground">
               {isLoading ? '--' : stat.value}
             </p>
-            <p className="text-zinc-400 text-xs lg:text-sm mt-1">{stat.label}</p>
-            <p className="text-zinc-500 text-xs mt-1 truncate">{stat.change}</p>
+            <p className="text-muted-foreground text-xs lg:text-sm mt-1">{stat.label}</p>
+            <p className="text-muted-foreground/70 text-xs mt-1 truncate">{stat.change}</p>
           </motion.div>
         ))}
       </div>
@@ -209,10 +209,10 @@ export default function GymAdminDashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-zinc-900 border border-zinc-800 rounded-xl lg:rounded-2xl p-4 lg:p-6"
+          className="bg-card border border-border rounded-xl lg:rounded-2xl p-4 lg:p-6"
         >
-          <h2 className="font-semibold text-base lg:text-lg mb-4 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-orange-500" />
+          <h2 className="font-semibold text-base lg:text-lg mb-4 flex items-center gap-2 text-foreground">
+            <TrendingUp className="w-5 h-5 text-primary" />
             Check-ins - Últimos 7 dias
           </h2>
           <div className="h-48 lg:h-64">
@@ -220,24 +220,25 @@ export default function GymAdminDashboard() {
               <AreaChart data={checkInTrend}>
                 <defs>
                   <linearGradient id="colorCheckIns" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#f97316" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-                <XAxis dataKey="day" stroke="#71717a" fontSize={12} />
-                <YAxis stroke="#71717a" fontSize={12} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                 <Tooltip 
                   contentStyle={{ 
-                    backgroundColor: '#18181b', 
-                    border: '1px solid #27272a',
-                    borderRadius: '8px'
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                    color: 'hsl(var(--foreground))'
                   }}
                 />
                 <Area 
                   type="monotone" 
                   dataKey="checkIns" 
-                  stroke="#f97316" 
+                  stroke="hsl(var(--primary))" 
                   strokeWidth={2}
                   fillOpacity={1} 
                   fill="url(#colorCheckIns)" 
@@ -253,10 +254,10 @@ export default function GymAdminDashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-zinc-900 border border-zinc-800 rounded-xl lg:rounded-2xl p-4 lg:p-6"
+          className="bg-card border border-border rounded-xl lg:rounded-2xl p-4 lg:p-6"
         >
-          <h2 className="font-semibold text-base lg:text-lg mb-4 flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-orange-500" />
+          <h2 className="font-semibold text-base lg:text-lg mb-4 flex items-center gap-2 text-foreground">
+            <DollarSign className="w-5 h-5 text-primary" />
             Distribuição de Planos
           </h2>
           <div className="h-48 lg:h-64">
@@ -278,18 +279,19 @@ export default function GymAdminDashboard() {
                   </Pie>
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: '#18181b', 
-                      border: '1px solid #27272a',
-                      borderRadius: '8px'
+                      backgroundColor: 'hsl(var(--card))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                      color: 'hsl(var(--foreground))'
                     }}
                   />
                   <Legend 
-                    formatter={(value) => <span className="text-zinc-300 text-sm">{value}</span>}
+                    formatter={(value) => <span className="text-muted-foreground text-sm">{value}</span>}
                   />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-zinc-500">
+              <div className="h-full flex items-center justify-center text-muted-foreground">
                 <p>Nenhuma assinatura ativa</p>
               </div>
             )}
@@ -304,32 +306,32 @@ export default function GymAdminDashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="bg-zinc-900 border border-zinc-800 rounded-xl lg:rounded-2xl p-4 lg:p-6"
+          className="bg-card border border-border rounded-xl lg:rounded-2xl p-4 lg:p-6"
         >
-          <h2 className="font-semibold text-base lg:text-lg mb-4 flex items-center gap-2">
-            <Activity className="w-5 h-5 text-orange-500" />
+          <h2 className="font-semibold text-base lg:text-lg mb-4 flex items-center gap-2 text-foreground">
+            <Activity className="w-5 h-5 text-primary" />
             Check-ins Recentes
           </h2>
           {recentCheckIns.length > 0 ? (
             <div className="space-y-3">
               {recentCheckIns.map((checkIn) => (
-                <div key={checkIn.id} className="flex items-center gap-3 p-3 bg-zinc-800/30 rounded-lg">
-                  <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-sm font-medium">
+                <div key={checkIn.id} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-sm font-medium text-foreground">
                     {checkIn.gym_profiles?.full_name?.charAt(0) || 'U'}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate text-sm lg:text-base">{checkIn.gym_profiles?.full_name || 'Usuário'}</p>
-                    <p className="text-xs text-zinc-400">
+                    <p className="font-medium truncate text-sm lg:text-base text-foreground">{checkIn.gym_profiles?.full_name || 'Usuário'}</p>
+                    <p className="text-xs text-muted-foreground">
                       {format(new Date(checkIn.checked_in_at), "dd/MM 'às' HH:mm", { locale: ptBR })}
                     </p>
                   </div>
-                  <Clock className="w-4 h-4 text-zinc-500 flex-shrink-0" />
+                  <Clock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-zinc-400">
-              <CalendarDays className="w-10 h-10 mx-auto mb-2 text-zinc-600" />
+            <div className="text-center py-8 text-muted-foreground">
+              <CalendarDays className="w-10 h-10 mx-auto mb-2 text-muted-foreground/50" />
               <p className="text-sm">Nenhum check-in hoje</p>
             </div>
           )}
@@ -340,10 +342,10 @@ export default function GymAdminDashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="bg-zinc-900 border border-zinc-800 rounded-xl lg:rounded-2xl p-4 lg:p-6"
+          className="bg-card border border-border rounded-xl lg:rounded-2xl p-4 lg:p-6"
         >
-          <h2 className="font-semibold text-base lg:text-lg mb-4 flex items-center gap-2">
-            <Dumbbell className="w-5 h-5 text-orange-500" />
+          <h2 className="font-semibold text-base lg:text-lg mb-4 flex items-center gap-2 text-foreground">
+            <Dumbbell className="w-5 h-5 text-primary" />
             Ações Rápidas
           </h2>
           <div className="grid grid-cols-2 gap-3">
@@ -356,10 +358,10 @@ export default function GymAdminDashboard() {
               <Link
                 key={i}
                 to={action.path}
-                className="flex items-center gap-3 p-3 lg:p-4 bg-zinc-800/50 rounded-xl hover:bg-zinc-800 transition-colors border border-zinc-700/50"
+                className="flex items-center gap-3 p-3 lg:p-4 bg-muted/50 rounded-xl hover:bg-muted transition-colors border border-border/50"
               >
-                <action.icon className="w-5 h-5 text-orange-500" />
-                <span className="text-xs lg:text-sm font-medium">{action.label}</span>
+                <action.icon className="w-5 h-5 text-primary" />
+                <span className="text-xs lg:text-sm font-medium text-foreground">{action.label}</span>
               </Link>
             ))}
           </div>

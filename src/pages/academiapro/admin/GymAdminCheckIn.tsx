@@ -238,16 +238,16 @@ export default function GymAdminCheckIn() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold">Check-in</h1>
-          <p className="text-zinc-400 mt-1 text-sm">Controle de entrada dos alunos</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Check-in</h1>
+          <p className="text-muted-foreground mt-1 text-sm">Controle de entrada dos alunos</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2">
-            {isEnabled ? <Power className="w-4 h-4 text-green-500" /> : <PowerOff className="w-4 h-4 text-zinc-500" />}
+          <div className="flex items-center gap-2 bg-card border border-border rounded-lg px-4 py-2">
+            {isEnabled ? <Power className="w-4 h-4 text-green-500" /> : <PowerOff className="w-4 h-4 text-muted-foreground" />}
             <Label htmlFor="check-in-toggle" className="text-sm">{isEnabled ? 'Ativo' : 'Desativado'}</Label>
             <Switch id="check-in-toggle" checked={isEnabled} onCheckedChange={setIsEnabled} />
           </div>
-          <Button onClick={() => setShowQRModal(true)} className="bg-orange-500 hover:bg-orange-600">
+          <Button onClick={() => setShowQRModal(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground">
             <QrCode className="w-4 h-4 mr-2" />
             QR Code
           </Button>
@@ -257,18 +257,18 @@ export default function GymAdminCheckIn() {
       {/* Stats Cards */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: 'Hoje', value: stats.today, color: 'text-orange-500' },
-          { label: 'Esta Semana', value: stats.week, color: 'text-white' },
-          { label: 'Este Mês', value: stats.month, color: 'text-white' }
+          { label: 'Hoje', value: stats.today, color: 'text-primary' },
+          { label: 'Esta Semana', value: stats.week, color: 'text-foreground' },
+          { label: 'Este Mês', value: stats.month, color: 'text-foreground' }
         ].map((stat, i) => (
           <motion.div
             key={stat.label}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
-            className="bg-zinc-900 border border-zinc-800 rounded-xl p-4"
+            className="bg-card border border-border rounded-xl p-4"
           >
-            <p className="text-sm text-zinc-400">{stat.label}</p>
+            <p className="text-sm text-muted-foreground">{stat.label}</p>
             <p className={`text-3xl font-bold ${stat.color}`}>{stat.value}</p>
           </motion.div>
         ))}
@@ -276,13 +276,13 @@ export default function GymAdminCheckIn() {
 
       {/* Check-ins List */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+        <div className="bg-card border border-border rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold flex items-center gap-2">
-              <Users className="w-5 h-5 text-orange-500" />
+            <h2 className="font-semibold flex items-center gap-2 text-foreground">
+              <Users className="w-5 h-5 text-primary" />
               Check-ins de Hoje
             </h2>
-            <Badge variant="outline" className="text-orange-400 border-orange-500/50">
+            <Badge variant="outline" className="text-primary border-primary/50">
               {checkIns.length} entradas
             </Badge>
           </div>
@@ -290,7 +290,7 @@ export default function GymAdminCheckIn() {
           <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
             ) : checkIns.length > 0 ? (
               checkIns.map((checkIn) => (
@@ -298,24 +298,24 @@ export default function GymAdminCheckIn() {
                   key={checkIn.id}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-4 flex items-center gap-4"
+                  className="bg-muted/50 border border-border rounded-lg p-4 flex items-center gap-4"
                 >
-                  <Avatar className="h-12 w-12 border border-orange-500/30">
+                  <Avatar className="h-12 w-12 border border-primary/30">
                     <AvatarImage src={checkIn.profile?.avatar_url} />
-                    <AvatarFallback className="bg-orange-500/20 text-orange-500">
+                    <AvatarFallback className="bg-primary/20 text-primary">
                       {checkIn.profile?.full_name?.charAt(0) || '?'}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{checkIn.profile?.full_name || 'Aluno'}</p>
-                    <p className="text-sm text-zinc-400">{checkIn.profile?.email}</p>
+                    <p className="font-medium truncate text-foreground">{checkIn.profile?.full_name || 'Aluno'}</p>
+                    <p className="text-sm text-muted-foreground">{checkIn.profile?.email}</p>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <div className="flex items-center gap-1 text-green-400 text-sm">
                       <CheckCircle2 className="w-4 h-4" />
                       Check-in
                     </div>
-                    <p className="text-xs text-zinc-500 flex items-center gap-1 justify-end">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1 justify-end">
                       <Clock className="w-3 h-3" />
                       {format(new Date(checkIn.checked_in_at), 'HH:mm')}
                     </p>
@@ -323,7 +323,7 @@ export default function GymAdminCheckIn() {
                 </motion.div>
               ))
             ) : (
-              <div className="text-center py-12 text-zinc-500">
+              <div className="text-center py-12 text-muted-foreground">
                 <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
                 <p>Nenhum check-in registrado hoje</p>
                 <p className="text-sm mt-1">Os alunos podem escanear o QR Code para registrar entrada</p>
@@ -335,30 +335,30 @@ export default function GymAdminCheckIn() {
 
       {/* QR Code Modal - Compact Design */}
       <Dialog open={showQRModal} onOpenChange={setShowQRModal}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-sm">
+        <DialogContent className="bg-card border-border text-foreground max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
-              <QrCode className="w-5 h-5 text-orange-500" />
+              <QrCode className="w-5 h-5 text-primary" />
               QR Code da Academia
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
             {/* QR Code Preview - Compact */}
-            <div className="bg-zinc-950 rounded-xl p-4 flex items-center justify-center">
+            <div className="bg-background rounded-xl p-4 flex items-center justify-center">
               {qrCode ? (
                 <img src={qrCode} alt="QR Code" className="w-40 h-40 rounded-lg" />
               ) : (
-                <div className="w-40 h-40 bg-zinc-800 rounded-lg animate-pulse" />
+                <div className="w-40 h-40 bg-muted rounded-lg animate-pulse" />
               )}
             </div>
 
-            <p className="text-[10px] text-zinc-500 text-center font-mono truncate">{gymCode}</p>
+            <p className="text-[10px] text-muted-foreground text-center font-mono truncate">{gymCode}</p>
 
             {/* Color Presets - Compact Grid */}
             <div className="space-y-2">
               <Label className="flex items-center gap-2 text-xs">
-                <Palette className="w-3 h-3 text-zinc-500" />
+                <Palette className="w-3 h-3 text-muted-foreground" />
                 Cores
               </Label>
               <div className="grid grid-cols-6 gap-1.5">
@@ -369,8 +369,8 @@ export default function GymAdminCheckIn() {
                     title={preset.name}
                     className={`aspect-square rounded-lg border transition-all flex items-center justify-center ${
                       qrColors.dark === preset.dark
-                        ? 'border-orange-500 ring-1 ring-orange-500'
-                        : 'border-zinc-700 hover:border-zinc-600'
+                        ? 'border-primary ring-1 ring-primary'
+                        : 'border-border hover:border-muted-foreground'
                     }`}
                   >
                     <div 
@@ -393,7 +393,7 @@ export default function GymAdminCheckIn() {
                   <Input
                     value={qrColors.dark}
                     onChange={(e) => handleColorChange({ ...qrColors, dark: e.target.value })}
-                    className="bg-zinc-800 border-zinc-700 text-[10px] h-7 uppercase flex-1"
+                    className="bg-muted border-border text-[10px] h-7 uppercase flex-1"
                   />
                 </div>
                 <div className="flex-1 flex items-center gap-1.5">
@@ -406,7 +406,7 @@ export default function GymAdminCheckIn() {
                   <Input
                     value={qrColors.light}
                     onChange={(e) => handleColorChange({ ...qrColors, light: e.target.value })}
-                    className="bg-zinc-800 border-zinc-700 text-[10px] h-7 uppercase flex-1"
+                    className="bg-muted border-border text-[10px] h-7 uppercase flex-1"
                   />
                 </div>
               </div>
@@ -414,16 +414,16 @@ export default function GymAdminCheckIn() {
 
             {/* Actions */}
             <div className="flex gap-2">
-              <Button onClick={handleDownloadQR} className="flex-1 bg-orange-500 hover:bg-orange-600 h-9 text-sm">
+              <Button onClick={handleDownloadQR} className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground h-9 text-sm">
                 <Download className="w-4 h-4 mr-1.5" />
                 Baixar
               </Button>
-              <Button variant="outline" onClick={handleRefreshQR} className="border-zinc-700 hover:bg-zinc-800 h-9 px-3">
+              <Button variant="outline" onClick={handleRefreshQR} className="border-border hover:bg-muted h-9 px-3">
                 <RefreshCw className="w-4 h-4" />
               </Button>
             </div>
 
-            <p className="text-[10px] text-zinc-500 text-center">
+            <p className="text-[10px] text-muted-foreground text-center">
               Imprima e coloque na recepção
             </p>
           </div>

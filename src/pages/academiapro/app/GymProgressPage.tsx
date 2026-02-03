@@ -148,8 +148,8 @@ export default function GymProgressPage() {
         transition={{ delay: 0.3 }}
       >
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-semibold flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-orange-500" />
+          <h2 className="font-semibold flex items-center gap-2 text-foreground">
+            <Trophy className="w-5 h-5 text-primary" />
             Records Pessoais
           </h2>
         </div>
@@ -162,19 +162,19 @@ export default function GymProgressPage() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 + index * 0.05 }}
-                className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex items-center justify-between"
+                className="bg-card border border-border rounded-xl p-4 flex items-center justify-between"
               >
                 <div>
-                  <h3 className="font-medium">{pr.gym_exercises?.name || 'Exercício'}</h3>
-                  <div className="flex items-center gap-2 text-zinc-400 text-sm mt-1">
+                  <h3 className="font-medium text-foreground">{pr.gym_exercises?.name || 'Exercício'}</h3>
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm mt-1">
                     <Calendar className="w-3 h-3" />
                     {format(new Date(pr.achieved_at), "d 'de' MMM", { locale: ptBR })}
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="text-xl font-bold text-orange-500">{pr.weight_kg}</span>
-                  <span className="text-zinc-400 text-sm ml-1">kg</span>
-                  <p className="text-xs text-zinc-500">{pr.reps} rep{pr.reps > 1 ? 's' : ''}</p>
+                  <span className="text-xl font-bold text-primary">{pr.weight_kg}</span>
+                  <span className="text-muted-foreground text-sm ml-1">kg</span>
+                  <p className="text-xs text-muted-foreground">{pr.reps} rep{pr.reps > 1 ? 's' : ''}</p>
                 </div>
               </motion.div>
             ))}

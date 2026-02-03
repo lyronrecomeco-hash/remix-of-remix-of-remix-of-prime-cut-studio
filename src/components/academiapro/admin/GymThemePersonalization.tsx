@@ -15,14 +15,14 @@ interface ColorPickerProps {
 
 function ColorPicker({ label, description, value, onChange }: ColorPickerProps) {
   return (
-    <div className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-xl gap-4">
+    <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl gap-4">
       <div className="flex-1 min-w-0">
-        <p className="font-medium">{label}</p>
-        <p className="text-sm text-zinc-400 truncate">{description}</p>
+        <p className="font-medium text-foreground">{label}</p>
+        <p className="text-sm text-muted-foreground truncate">{description}</p>
       </div>
       <div className="flex items-center gap-3">
         <div 
-          className="w-10 h-10 rounded-lg border-2 border-zinc-600 cursor-pointer overflow-hidden"
+          className="w-10 h-10 rounded-lg border-2 border-border cursor-pointer overflow-hidden"
           style={{ backgroundColor: value }}
         >
           <input
@@ -36,7 +36,7 @@ function ColorPicker({ label, description, value, onChange }: ColorPickerProps) 
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-24 px-2 py-1 text-sm bg-zinc-700 border border-zinc-600 rounded-lg text-center font-mono"
+          className="w-24 px-2 py-1 text-sm bg-muted border border-border rounded-lg text-center font-mono text-foreground"
           placeholder="#000000"
         />
       </div>
@@ -157,10 +157,10 @@ export function GymThemePersonalization() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
-        className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6"
+        className="bg-card border border-border rounded-2xl p-6"
       >
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
         </div>
       </motion.div>
     );
@@ -171,25 +171,25 @@ export function GymThemePersonalization() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.15 }}
-      className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6"
+      className="bg-card border border-border rounded-2xl p-6"
     >
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
-          <Palette className="w-5 h-5 text-orange-500" />
+        <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+          <Palette className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h2 className="font-semibold text-lg">Personalização</h2>
-          <p className="text-sm text-zinc-400">Customize o visual do sistema</p>
+          <h2 className="font-semibold text-lg text-foreground">Personalização</h2>
+          <p className="text-sm text-muted-foreground">Customize o visual do sistema</p>
         </div>
       </div>
 
       <div className="space-y-4">
         {/* Preset Themes */}
-        <div className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-xl">
+        <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl">
           <div>
-            <p className="font-medium">Tema do Sistema</p>
-            <p className="text-sm text-zinc-400">Selecione um tema pré-configurado</p>
+            <p className="font-medium text-foreground">Tema do Sistema</p>
+            <p className="text-sm text-muted-foreground">Selecione um tema pré-configurado</p>
           </div>
         </div>
         
@@ -201,14 +201,14 @@ export function GymThemePersonalization() {
               disabled={isSaving}
               className={`relative flex flex-col items-center gap-2 p-3 rounded-xl border transition-all ${
                 selectedTheme === preset.name 
-                  ? 'border-orange-500 ring-2 ring-orange-500/30' 
-                  : 'border-zinc-700 hover:border-zinc-600'
+                  ? 'border-primary ring-2 ring-primary/30' 
+                  : 'border-border hover:border-muted-foreground'
               }`}
               style={{ backgroundColor: preset.colors.card_color }}
             >
               {selectedTheme === preset.name && (
-                <div className="absolute -top-1 -right-1 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
-                  <Check className="w-3 h-3 text-white" />
+                <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                  <Check className="w-3 h-3 text-primary-foreground" />
                 </div>
               )}
               <div 
@@ -228,35 +228,35 @@ export function GymThemePersonalization() {
         </div>
 
         {/* Identity */}
-        <div className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-xl">
+        <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl">
           <div>
-            <p className="font-medium">Nome da Academia</p>
-            <p className="text-sm text-zinc-400">Exibido em todo o sistema</p>
+            <p className="font-medium text-foreground">Nome da Academia</p>
+            <p className="text-sm text-muted-foreground">Exibido em todo o sistema</p>
           </div>
           <Input
             value={gymName}
             onChange={(e) => setGymName(e.target.value)}
-            className="w-40 sm:w-48 bg-zinc-700 border-zinc-600"
+            className="w-40 sm:w-48 bg-muted border-border"
             placeholder="Nome"
           />
         </div>
         
-        <div className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-xl">
+        <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl">
           <div>
-            <p className="font-medium">Logo da Academia</p>
-            <p className="text-sm text-zinc-400">Imagem PNG ou SVG</p>
+            <p className="font-medium text-foreground">Logo da Academia</p>
+            <p className="text-sm text-muted-foreground">Imagem PNG ou SVG</p>
           </div>
-          <Button variant="outline" size="sm" className="border-zinc-600 hover:bg-zinc-700">
+          <Button variant="outline" size="sm" className="border-border hover:bg-muted">
             <Image className="w-4 h-4 mr-2" />
             Alterar
           </Button>
         </div>
 
         {/* Advanced Colors Toggle */}
-        <div className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-xl">
+        <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl">
           <div>
-            <p className="font-medium">Cores Personalizadas</p>
-            <p className="text-sm text-zinc-400">Ajuste cada cor manualmente</p>
+            <p className="font-medium text-foreground">Cores Personalizadas</p>
+            <p className="text-sm text-muted-foreground">Ajuste cada cor manualmente</p>
           </div>
           <Switch
             checked={showAdvancedColors}
@@ -269,7 +269,7 @@ export function GymThemePersonalization() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="space-y-3 pl-4 border-l-2 border-orange-500/30"
+            className="space-y-3 pl-4 border-l-2 border-primary/30"
           >
             <ColorPicker
               label="Cor Primária"
@@ -335,7 +335,7 @@ export function GymThemePersonalization() {
               <Button
                 variant="outline"
                 onClick={handleReset}
-                className="flex-1 border-zinc-700 hover:bg-zinc-800"
+                className="flex-1 border-border hover:bg-muted"
                 disabled={isSaving}
               >
                 <RotateCcw className="w-4 h-4 mr-2" />
