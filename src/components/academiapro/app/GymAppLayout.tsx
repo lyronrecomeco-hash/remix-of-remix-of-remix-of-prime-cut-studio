@@ -21,10 +21,10 @@ export function GymAppLayout() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-10 h-10 animate-spin text-orange-500 mx-auto mb-4" />
-          <p className="text-zinc-400">Carregando...</p>
+          <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Carregando...</p>
         </div>
       </div>
     );
@@ -35,17 +35,17 @@ export function GymAppLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white lg:flex w-full">
+    <div className="min-h-screen bg-background text-foreground lg:flex w-full">
       {/* Desktop Sidebar - FIXED */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:border-r lg:border-zinc-800 lg:fixed lg:inset-y-0 lg:left-0 bg-zinc-950 z-40">
-        <div className="p-6 border-b border-zinc-800">
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:border-r lg:border-border lg:fixed lg:inset-y-0 lg:left-0 bg-background z-40">
+        <div className="p-6 border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center">
-              <Dumbbell className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+              <Dumbbell className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
               <h1 className="font-bold text-lg">Academia Genesis</h1>
-              <p className="text-xs text-zinc-400">App do Aluno</p>
+              <p className="text-xs text-muted-foreground">App do Aluno</p>
             </div>
           </div>
         </div>
@@ -60,8 +60,8 @@ export function GymAppLayout() {
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
                   isActive 
-                    ? "bg-orange-500/20 text-orange-500 border border-orange-500/30" 
-                    : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+                    ? "bg-primary/20 text-primary border border-primary/30" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 )}
               >
                 <item.icon className="w-5 h-5" />

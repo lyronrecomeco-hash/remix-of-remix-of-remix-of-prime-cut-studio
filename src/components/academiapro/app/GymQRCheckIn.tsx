@@ -119,8 +119,8 @@ export function GymQRCheckIn({ open, onOpenChange }: GymQRCheckInProps) {
           ) : (
             <>
               {isLoading ? (
-                <div className="w-48 h-48 rounded-xl bg-zinc-800 flex items-center justify-center">
-                  <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+                <div className="w-48 h-48 rounded-xl bg-muted flex items-center justify-center">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 </div>
               ) : (
                 <motion.div
@@ -139,21 +139,21 @@ export function GymQRCheckIn({ open, onOpenChange }: GymQRCheckInProps) {
                   </div>
                   <button
                     onClick={generateQRCode}
-                    className="absolute -top-2 -right-2 p-2 bg-zinc-800 rounded-full border border-zinc-700 hover:bg-zinc-700"
+                    className="absolute -top-2 -right-2 p-2 bg-muted rounded-full border border-border hover:bg-muted/80"
                   >
                     <RefreshCw className="w-4 h-4" />
                   </button>
                 </motion.div>
               )}
 
-              <p className="text-zinc-400 text-sm text-center mt-4 mb-4">
+              <p className="text-muted-foreground text-sm text-center mt-4 mb-4">
                 Escaneie o QR Code na recepção ou clique abaixo
               </p>
 
               <Button
                 onClick={handleManualCheckIn}
                 disabled={checkInStatus === 'pending'}
-                className="w-full bg-orange-500 hover:bg-orange-600"
+                className="w-full bg-primary hover:bg-primary/80"
               >
                 {checkInStatus === 'pending' ? (
                   <>
