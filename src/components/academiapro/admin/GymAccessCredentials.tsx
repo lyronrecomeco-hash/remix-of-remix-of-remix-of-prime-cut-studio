@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { 
   Copy, 
   Check, 
-  User, 
   Shield, 
   Smartphone, 
   Monitor,
@@ -11,7 +10,9 @@ import {
   Lock,
   ExternalLink,
   MessageSquare,
-  Dumbbell
+  Dumbbell,
+  Sparkles,
+  Star
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -32,7 +33,7 @@ const accesses: AccessInfo[] = [
   {
     type: 'admin',
     title: 'Painel Administrativo',
-    description: 'Acesso completo para gestão da academia',
+    description: 'Gestão completa da academia',
     email: 'admin-academia@gmail.com',
     password: 'academia@2026',
     url: '/academiapro/admin',
@@ -42,9 +43,9 @@ const accesses: AccessInfo[] = [
   {
     type: 'aluno',
     title: 'App do Aluno',
-    description: 'Interface mobile-first para alunos',
-    email: 'admin-academia@gmail.com',
-    password: 'academia@2026',
+    description: 'Interface mobile para alunos',
+    email: 'academiaspot@gmail.com',
+    password: 'academiaspot@2026',
     url: '/academiapro/app',
     icon: Smartphone,
     color: 'from-emerald-500 to-teal-600'
@@ -66,38 +67,70 @@ export function GymAccessCredentials() {
     }
   };
 
-  const generateWhatsAppMessage = () => {
+  const generateFullMessage = () => {
     const baseUrl = window.location.origin;
-    const message = `🏋️ *ACADEMIA GENESIS - ACESSOS*
+    const message = `🏋️‍♂️ *ACADEMIA GENESIS - DEMONSTRAÇÃO*
+━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-━━━━━━━━━━━━━━━━━━━━━
+✨ Conheça o sistema mais completo para gestão de academias!
+
+🎯 *O que você vai encontrar:*
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 🔐 *PAINEL ADMINISTRATIVO*
-📧 Email: admin-academia@gmail.com
-🔑 Senha: academia@2026
-🔗 Link: ${baseUrl}/academiapro/admin
 
-━━━━━━━━━━━━━━━━━━━━━
+Controle total da sua academia na palma da mão!
+
+📊 Dashboard inteligente com métricas em tempo real
+👥 Gestão completa de alunos e instrutores  
+📋 Fichas de treino personalizadas por IA
+📱 Check-in por QR Code
+💰 Controle financeiro integrado
+📈 Relatórios avançados
+🔔 Notificações automáticas
+
+📧 *Email:* admin-academia@gmail.com
+🔑 *Senha:* academia@2026
+🔗 *Acesso:* ${baseUrl}/academiapro/admin
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 📱 *APP DO ALUNO*
-📧 Email: admin-academia@gmail.com
-🔑 Senha: academia@2026
-🔗 Link: ${baseUrl}/academiapro/app
 
-━━━━━━━━━━━━━━━━━━━━━
+Experiência premium para seus alunos!
 
-✨ Sistema completo de gestão de academia
-🚀 Desenvolvido por Genesis Hub`;
+🏃 Treinos interativos com animações
+⏱️ Timer inteligente entre séries
+🎮 Gamificação com conquistas
+📊 Histórico de evolução
+📅 Agendamento de aulas
+💪 Acompanhamento de medidas
+
+📧 *Email:* academiaspot@gmail.com
+🔑 *Senha:* academiaspot@2026
+🔗 *Acesso:* ${baseUrl}/academiapro/app
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ *IMPORTANTE:* Esta é uma demonstração completa do sistema. Explore todas as funcionalidades!
+
+🚀 *Quer esse sistema na sua academia?*
+Entre em contato e transforme sua gestão!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+💎 *Desenvolvido por Genesis Hub*
+🌐 Soluções digitais inteligentes`;
 
     return message;
   };
 
   const copyFullMessage = () => {
-    copyToClipboard(generateWhatsAppMessage(), 'full');
+    copyToClipboard(generateFullMessage(), 'full');
   };
 
   const shareWhatsApp = () => {
-    const message = encodeURIComponent(generateWhatsAppMessage());
+    const message = encodeURIComponent(generateFullMessage());
     window.open(`https://wa.me/?text=${message}`, '_blank');
   };
 
@@ -120,6 +153,15 @@ export function GymAccessCredentials() {
         </DialogHeader>
 
         <div className="space-y-4 mt-4">
+          {/* Demo Badge */}
+          <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl p-3 flex items-center gap-3">
+            <Sparkles className="w-5 h-5 text-amber-500" />
+            <div>
+              <p className="font-medium text-amber-600 dark:text-amber-400">Versão Demonstração</p>
+              <p className="text-xs text-muted-foreground">Explore todas as funcionalidades do sistema</p>
+            </div>
+          </div>
+
           {accesses.map((access, index) => (
             <motion.div
               key={access.type}
@@ -128,11 +170,9 @@ export function GymAccessCredentials() {
               transition={{ delay: index * 0.1 }}
               className="bg-card border border-border rounded-2xl p-5 relative overflow-hidden"
             >
-              {/* Background Gradient */}
               <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${access.color} opacity-10 rounded-full -translate-y-1/2 translate-x-1/2`} />
               
               <div className="relative">
-                {/* Header */}
                 <div className="flex items-start gap-3 mb-4">
                   <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${access.color} flex items-center justify-center flex-shrink-0`}>
                     <access.icon className="w-6 h-6 text-white" />
@@ -143,9 +183,7 @@ export function GymAccessCredentials() {
                   </div>
                 </div>
 
-                {/* Credentials */}
                 <div className="space-y-3 bg-muted/50 rounded-xl p-4">
-                  {/* Email */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <Mail className="w-4 h-4 text-muted-foreground flex-shrink-0" />
@@ -165,7 +203,6 @@ export function GymAccessCredentials() {
                     </Button>
                   </div>
 
-                  {/* Password */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <Lock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
@@ -185,7 +222,6 @@ export function GymAccessCredentials() {
                     </Button>
                   </div>
 
-                  {/* URL */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
@@ -206,7 +242,6 @@ export function GymAccessCredentials() {
                   </div>
                 </div>
 
-                {/* Open Button */}
                 <Button
                   variant="outline"
                   className="w-full mt-3 gap-2"
@@ -221,7 +256,10 @@ export function GymAccessCredentials() {
 
           {/* Share Actions */}
           <div className="border-t border-border pt-4 space-y-3">
-            <p className="text-sm text-muted-foreground text-center">Compartilhar acessos</p>
+            <div className="flex items-center justify-center gap-2 text-muted-foreground">
+              <Star className="w-4 h-4" />
+              <span className="text-sm">Compartilhar demonstração completa</span>
+            </div>
             <div className="flex gap-3">
               <Button
                 variant="outline"
