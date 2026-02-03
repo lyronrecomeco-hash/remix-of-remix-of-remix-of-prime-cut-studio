@@ -231,7 +231,6 @@ interface RadarRequest {
   region?: string;
   niche?: string;
   maxResults?: number;
-  // New filters for auto-scan
   countries?: string[];
   citySizes?: ('large' | 'medium' | 'small')[];
   niches?: string[];
@@ -293,6 +292,8 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const startTime = Date.now();
+
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -300,7 +301,7 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseKey);
     
-    const { affiliateId, region, niche, maxResults = 10, countries, citySizes, niches: nicheFilters, websiteFilter = 'all' }: RadarRequest = await req.json();
+    const { affiliateId, region, niche, maxResults = 15, countries, citySizes, niches: nicheFilters, websiteFilter = 'all' }: RadarRequest = await req.json();
 
     if (!affiliateId) {
       throw new Error('affiliateId is required');
@@ -310,28 +311,11 @@ serve(async (req) => {
       throw new Error('SERPER_API_KEY not configured');
     }
 
-    // Buscar chave com menor uso para rotação
-    let usedKeyId: string | null = null;
-    const { data: rotatingKeys, error: keysError } = await supabase
-      .from('genesis_api_keys')
-      .select('id, usage_count')
-      .eq('provider', 'serper')
-      .eq('is_active', true)
-      .order('usage_count', { ascending: true })
-      .order('priority', { ascending: true })
-      .limit(1);
-
-    if (!keysError && rotatingKeys && rotatingKeys.length > 0) {
-      usedKeyId = rotatingKeys[0].id;
-      console.log(`Using rotating key: ${usedKeyId} (usage: ${rotatingKeys[0].usage_count})`);
-    }
-
     // Filter regions based on countries filter
     let availableRegions = Object.keys(SEARCH_REGIONS);
     if (countries && countries.length > 0) {
       availableRegions = availableRegions.filter(r => countries.includes(r));
       if (availableRegions.length === 0) {
-        // Fallback to default if no match
         availableRegions = ['BR'];
       }
     }
@@ -349,7 +333,6 @@ serve(async (req) => {
     if (citySizes && citySizes.length > 0) {
       availableCities = regionConfig.cities.filter(c => citySizes.includes(c.size));
       if (availableCities.length === 0) {
-        // Fallback to all cities if no match
         availableCities = regionConfig.cities;
       }
     }
@@ -363,7 +346,6 @@ serve(async (req) => {
     let availableNiches = Object.keys(langNiches);
     
     if (nicheFilters && nicheFilters.length > 0) {
-      // Try to match filter niches with available language-specific niches
       const matchedNiches = availableNiches.filter(n => nicheFilters.includes(n));
       if (matchedNiches.length > 0) {
         availableNiches = matchedNiches;
@@ -373,10 +355,9 @@ serve(async (req) => {
     const selectedNiche = niche || availableNiches[Math.floor(Math.random() * availableNiches.length)];
     const searchNiche = langNiches[selectedNiche] || selectedNiche;
     
-    console.log(`Scanning: ${searchNiche} in ${city} (${selectedCity.size}), ${selectedRegion}`);
-    console.log(`Filters applied - Countries: ${countries?.join(',') || 'all'}, City sizes: ${citySizes?.join(',') || 'all'}, Niches: ${nicheFilters?.join(',') || 'all'}, Website: ${websiteFilter}`);
+    console.log(`🔍 [SCAN START] ${searchNiche} em ${city}, ${selectedRegion}`);
 
-    // Buscar empresas via Serper
+    // Search via Serper API
     const searchQuery = `${searchNiche} in ${city}`;
     
     const searchResponse = await fetch('https://google.serper.dev/places', {
@@ -393,27 +374,6 @@ serve(async (req) => {
       }),
     });
 
-    // Incrementar uso da chave após chamada à API
-    if (usedKeyId) {
-      const { data: currentKey } = await supabase
-        .from('genesis_api_keys')
-        .select('usage_count')
-        .eq('id', usedKeyId)
-        .single();
-
-      if (currentKey) {
-        await supabase
-          .from('genesis_api_keys')
-          .update({ 
-            usage_count: (currentKey.usage_count || 0) + 1,
-            last_used_at: new Date().toISOString()
-          })
-          .eq('id', usedKeyId);
-        
-        console.log(`Key ${usedKeyId} usage incremented to ${(currentKey.usage_count || 0) + 1}`);
-      }
-    }
-
     if (!searchResponse.ok) {
       const errorText = await searchResponse.text();
       console.error('Serper API error:', errorText);
@@ -421,90 +381,55 @@ serve(async (req) => {
     }
 
     const searchData = await searchResponse.json();
-    console.log('Serper response sample:', JSON.stringify(searchData).substring(0, 500));
     const places = searchData.places || [];
 
-    // Buscar dados do usuário para o histórico
-    const { data: userData, error: userError } = await supabase
-      .from('genesis_users')
-      .select('id, name, email')
-      .eq('id', affiliateId)
-      .single();
-
-    if (userError) {
-      console.log(`⚠️ User not found for affiliateId ${affiliateId}, using fallback`);
-    } else {
-      console.log(`👤 User found: ${userData?.name} (${userData?.email})`);
-    }
-
-    // Registrar no histórico de pesquisas COM try-catch para não quebrar a função
-    try {
-      const historyRecord = {
-        user_id: affiliateId,
-        user_name: userData?.name || 'Usuário Genesis',
-        user_email: userData?.email || '',
-        search_type: 'radar',
-        search_query: searchQuery,
-        city: city,
-        state: selectedRegion, // Usar 'state' em vez de 'region' para compatibilidade
-        niche: selectedNiche,
-        results_count: places.length,
-        api_key_id: usedKeyId,
-        credits_used: 1
-      };
-
-      console.log('📝 Salvando histórico radar:', JSON.stringify(historyRecord));
-
-      const { error: historyError } = await supabase
-        .from('genesis_search_history')
-        .insert(historyRecord);
-      
-      if (historyError) {
-        console.error('❌ Erro ao salvar histórico radar:', historyError.message, historyError.details);
-      } else {
-        console.log(`✅ Histórico radar salvo: ${places.length} resultados para ${userData?.name || affiliateId}`);
-      }
-    } catch (historyException) {
-      console.error('❌ Exceção ao salvar histórico:', historyException);
-      // Não quebrar a função principal se o histórico falhar
-    }
+    console.log(`📍 [FOUND] ${places.length} negócios em ${city}`);
 
     if (places.length === 0) {
       return new Response(
-        JSON.stringify({ success: true, opportunities: [], message: 'No businesses found' }),
+        JSON.stringify({ 
+          success: true, 
+          opportunities: [], 
+          message: 'No businesses found',
+          scanInfo: { region: selectedRegion, city, niche: selectedNiche, total: 0, qualified: 0 },
+          logs: [`🔍 Vasculhando ${city}...`, `⚠️ Nenhum negócio encontrado`]
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Filtrar e enriquecer resultados
-    const opportunities = [];
-    const debugInfo = [];
+    // Get existing opportunities in BATCH for faster comparison
+    const businessNames = places.map((p: any) => p.title || p.name);
+    const { data: existingOpps } = await supabase
+      .from('global_radar_opportunities')
+      .select('company_name')
+      .eq('affiliate_id', affiliateId)
+      .in('company_name', businessNames);
+
+    const existingNames = new Set((existingOpps || []).map(o => o.company_name));
+    console.log(`📊 [CHECK] ${existingNames.size} já existentes de ${businessNames.length}`);
+
+    // Process and filter opportunities
+    const opportunitiesToInsert = [];
+    const logs: string[] = [
+      `🔍 Vasculhando ${city}, ${selectedRegion}...`,
+      `🎯 Nicho: ${selectedNiche}`,
+      `📍 ${places.length} negócios encontrados`,
+    ];
     
     for (const place of places) {
-      // Pular se já existe
-      const { data: existing } = await supabase
-        .from('global_radar_opportunities')
-        .select('id')
-        .eq('affiliate_id', affiliateId)
-        .eq('company_name', place.title || place.name)
-        .single();
+      const companyName = place.title || place.name;
       
-      if (existing) {
-        debugInfo.push({ name: place.title || place.name, status: 'already_exists' });
+      // Skip if already exists
+      if (existingNames.has(companyName)) {
         continue;
       }
 
       const hasWebsite = !!place.website;
       
       // Apply website filter
-      if (websiteFilter === 'no_website' && hasWebsite) {
-        debugInfo.push({ name: place.title || place.name, status: 'filtered_has_website' });
-        continue;
-      }
-      if (websiteFilter === 'with_website' && !hasWebsite) {
-        debugInfo.push({ name: place.title || place.name, status: 'filtered_no_website' });
-        continue;
-      }
+      if (websiteFilter === 'no_website' && hasWebsite) continue;
+      if (websiteFilter === 'with_website' && !hasWebsite) continue;
       
       const score = calculateOpportunityScore({
         website: place.website,
@@ -512,22 +437,17 @@ serve(async (req) => {
         rating: place.rating,
         reviews_count: place.reviewsCount,
       });
-      
-      console.log(`Business: ${place.title || place.name} | Website: ${hasWebsite} | Rating: ${place.rating} | Reviews: ${place.reviewsCount} | Score: ${score}`);
 
-      // Aceitar todos os negócios com score mínimo de 40 (lowered for better results)
-      if (score < 40) {
-        debugInfo.push({ name: place.title || place.name, score, status: 'low_score' });
-        continue;
-      }
+      // Accept businesses with score >= 40
+      if (score < 40) continue;
 
       const level = getOpportunityLevel(score);
       const values = NICHE_VALUES[selectedNiche] || NICHE_VALUES['default'];
       const multiplier = score >= 80 ? 1.2 : 1.0;
 
-      const opportunity = {
+      opportunitiesToInsert.push({
         affiliate_id: affiliateId,
-        company_name: place.title || place.name,
+        company_name: companyName,
         company_phone: place.phone || null,
         company_website: place.website || null,
         company_address: place.address || null,
@@ -556,36 +476,70 @@ serve(async (req) => {
         search_region: selectedRegion,
         status: 'new',
         is_read: false,
-      };
+      });
+    }
 
-      // Inserir no banco
-      const { data: insertedData, error: insertError } = await supabase
+    // BATCH INSERT for speed
+    let insertedCount = 0;
+    if (opportunitiesToInsert.length > 0) {
+      const { data: inserted, error: insertError } = await supabase
         .from('global_radar_opportunities')
-        .insert(opportunity)
-        .select()
-        .single();
+        .insert(opportunitiesToInsert)
+        .select();
 
       if (insertError) {
-        console.error(`Insert error for ${opportunity.company_name}:`, insertError.message);
+        console.error('Batch insert error:', insertError.message);
       } else {
-        console.log(`Inserted: ${opportunity.company_name} with score ${score}`);
-        opportunities.push(opportunity);
+        insertedCount = inserted?.length || 0;
+        logs.push(`✅ ${insertedCount} oportunidades qualificadas`);
       }
     }
 
-    console.log(`Found ${opportunities.length} new opportunities`);
+    // Log summary
+    const noWebsiteCount = opportunitiesToInsert.filter(o => !o.has_website).length;
+    if (noWebsiteCount > 0) {
+      logs.push(`🔥 ${noWebsiteCount} sem site (alta conversão)`);
+    }
+
+    const elapsed = Date.now() - startTime;
+    logs.push(`⚡ Concluído em ${elapsed}ms`);
+
+    console.log(`✅ [DONE] ${insertedCount} inseridos em ${elapsed}ms`);
+
+    // Save to search history (non-blocking)
+    try {
+      await supabase
+        .from('genesis_search_history')
+        .insert({
+          user_id: affiliateId,
+          user_name: 'Radar Global',
+          user_email: '',
+          search_type: 'radar',
+          search_query: searchQuery,
+          city: city,
+          state: selectedRegion,
+          niche: selectedNiche,
+          results_count: insertedCount,
+          credits_used: 1
+        });
+      console.log('📝 History saved');
+    } catch (historyError) {
+      console.error('History error:', historyError);
+    }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        opportunities,
-        scanned: {
+        opportunities: opportunitiesToInsert,
+        scanInfo: {
           region: selectedRegion,
           city,
           niche: selectedNiche,
           total: places.length,
-          qualified: opportunities.length,
-        }
+          qualified: insertedCount,
+          elapsed,
+        },
+        logs,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
@@ -593,7 +547,11 @@ serve(async (req) => {
   } catch (error) {
     console.error('Global Radar error:', error);
     return new Response(
-      JSON.stringify({ success: false, error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        logs: [`❌ Erro: ${error instanceof Error ? error.message : 'Erro desconhecido'}`]
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
