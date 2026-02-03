@@ -117,8 +117,10 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
   const [maxLeadsLimit, setMaxLeadsLimit] = useState(DEFAULT_LIMIT);
   const [autoScanFilters, setAutoScanFilters] = useState<AutoScanFilters>(DEFAULT_AUTO_SCAN_FILTERS);
   const [filtersModalOpen, setFiltersModalOpen] = useState(false);
+  const [scanLogs, setScanLogs] = useState<string[]>([]);
   const autoScanIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
+  const logsContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Load auto-scan filters from settings
   useEffect(() => {
@@ -314,6 +316,11 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
     }
     
     setScanning(true);
+    
+    // Add initial scanning log
+    const timestamp = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    setScanLogs(prev => [`[${timestamp}] 🔍 Iniciando varredura...`, ...prev.slice(0, 49)]);
+    
     try {
       // Build request body - always apply filters when enabled
       const requestBody: any = { affiliateId };
@@ -343,13 +350,20 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
 
       setLastScanTime(new Date());
 
+      // Process logs from backend
+      if (data?.logs && Array.isArray(data.logs)) {
+        const logTimestamp = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const formattedLogs = data.logs.map((log: string) => `[${logTimestamp}] ${log}`);
+        setScanLogs(prev => [...formattedLogs, ...prev.slice(0, 49 - formattedLogs.length)]);
+      }
+
       if (data?.success && data.opportunities?.length > 0) {
         const highConversion = data.opportunities.filter((o: any) => !o.has_website);
         
         if (highConversion.length > 0) {
           playNotificationSound();
           toast.success(`🌍 ${highConversion.length} oportunidades de alta conversão!`, {
-            description: `${data.scanned?.region} • ${data.scanned?.city}`,
+            description: `${data.scanInfo?.region} • ${data.scanInfo?.city}`,
             duration: 5000,
           });
         }
@@ -360,6 +374,8 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
       }
     } catch (error) {
       console.error('Radar scan error:', error);
+      const timestamp = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      setScanLogs(prev => [`[${timestamp}] ❌ Erro no scan`, ...prev.slice(0, 49)]);
       if (!isAuto) {
         toast.error('Erro ao executar scan global');
       }
@@ -748,6 +764,83 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
               <Badge variant="outline" className="border-primary/50 text-primary">
                 {opportunities.length}/{maxLeadsLimit}
               </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Real-time Scan Logs */}
+      {autoScanEnabled && (
+        <Card className="bg-black/30 border-primary/20 overflow-hidden" style={{ borderRadius: '14px' }}>
+          <CardContent className="p-0">
+            <div className="flex items-center justify-between px-4 py-2.5 bg-primary/10 border-b border-primary/20">
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Radar className="w-4 h-4 text-primary" />
+                  {scanning && (
+                    <motion.div
+                      className="absolute -inset-1 rounded-full border border-primary/50"
+                      animate={{ scale: [1, 1.5, 1], opacity: [1, 0, 1] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    />
+                  )}
+                </div>
+                <span className="text-sm font-medium text-primary">Radar Ativo</span>
+                {scanning && (
+                  <Badge variant="outline" className="border-primary/50 text-primary text-[10px] animate-pulse">
+                    ESCANEANDO
+                  </Badge>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setScanLogs([])}
+                className="h-7 px-2 text-white/40 hover:text-white/70 text-xs"
+              >
+                Limpar logs
+              </Button>
+            </div>
+            <div 
+              ref={logsContainerRef}
+              className="h-32 overflow-y-auto p-3 font-mono text-xs space-y-1"
+              style={{ scrollbarWidth: 'thin' }}
+            >
+              <AnimatePresence mode="popLayout">
+                {scanLogs.length === 0 ? (
+                  <motion.p 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-white/30 italic"
+                  >
+                    Aguardando próximo scan... ({formatTime(nextScanIn)})
+                  </motion.p>
+                ) : (
+                  scanLogs.map((log, i) => (
+                    <motion.p
+                      key={`${log}-${i}`}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className={cn(
+                        "leading-relaxed",
+                        log.includes('✅') && "text-emerald-400",
+                        log.includes('🔥') && "text-cyan-400",
+                        log.includes('❌') && "text-red-400",
+                        log.includes('⚠️') && "text-amber-400",
+                        log.includes('🔍') && "text-primary",
+                        log.includes('📍') && "text-blue-400",
+                        log.includes('🎯') && "text-purple-400",
+                        log.includes('⚡') && "text-yellow-400",
+                        !log.match(/✅|🔥|❌|⚠️|🔍|📍|🎯|⚡/) && "text-white/60"
+                      )}
+                    >
+                      {log}
+                    </motion.p>
+                  ))
+                )}
+              </AnimatePresence>
             </div>
           </CardContent>
         </Card>
