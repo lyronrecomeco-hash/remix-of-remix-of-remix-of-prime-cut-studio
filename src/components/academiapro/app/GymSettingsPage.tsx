@@ -171,7 +171,7 @@ export default function GymSettingsPage() {
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="pt-2">
         <h1 className="text-2xl font-bold">{t('settings')}</h1>
-        <p className="text-zinc-400 text-sm">{t('customize')}</p>
+        <p className="text-muted-foreground text-sm">{t('customize')}</p>
       </motion.div>
 
       {/* PWA Install */}
@@ -180,16 +180,16 @@ export default function GymSettingsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/30 rounded-2xl p-5"
+          className="bg-gradient-to-r from-primary/20 to-secondary/20 border border-primary/30 rounded-2xl p-5"
         >
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center flex-shrink-0">
-              <Smartphone className="w-6 h-6 text-orange-500" />
+            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+              <Smartphone className="w-6 h-6 text-primary" />
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-lg">{t('install_app')}</h3>
-              <p className="text-sm text-zinc-400 mt-1 mb-4">{t('install_desc')}</p>
-              <Button onClick={handleInstallPWA} className="bg-orange-500 hover:bg-orange-600 text-white">
+              <p className="text-sm text-muted-foreground mt-1 mb-4">{t('install_desc')}</p>
+              <Button onClick={handleInstallPWA} className="bg-primary hover:bg-primary/80 text-primary-foreground">
                 <Download className="w-4 h-4 mr-2" />
                 {isIOS ? t('see_instructions') : t('install_now')}
               </Button>
@@ -210,7 +210,7 @@ export default function GymSettingsPage() {
           </div>
           <div>
             <p className="font-medium text-green-400">{t('app_installed')}</p>
-            <p className="text-sm text-zinc-400">{t('using_installed')}</p>
+            <p className="text-sm text-muted-foreground">{t('using_installed')}</p>
           </div>
         </motion.div>
       )}
@@ -220,21 +220,21 @@ export default function GymSettingsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden"
+        className="bg-card border border-border rounded-2xl overflow-hidden"
       >
-        <div className="px-4 py-3 border-b border-zinc-800">
-          <h3 className="font-medium text-sm text-zinc-400">{t('preferences')}</h3>
+        <div className="px-4 py-3 border-b border-border">
+          <h3 className="font-medium text-sm text-muted-foreground">{t('preferences')}</h3>
         </div>
         {settingsItems.map((item, index) => (
           <div
             key={item.key}
-            className={`flex items-center justify-between p-4 ${index < settingsItems.length - 1 ? 'border-b border-zinc-800' : ''}`}
+            className={`flex items-center justify-between p-4 ${index < settingsItems.length - 1 ? 'border-b border-border' : ''}`}
           >
             <div className="flex items-center gap-3">
-              <item.icon className="w-5 h-5 text-zinc-400" />
+              <item.icon className="w-5 h-5 text-muted-foreground" />
               <div>
                 <p className="font-medium text-sm">{item.label}</p>
-                <p className="text-xs text-zinc-500">{item.description}</p>
+                <p className="text-xs text-muted-foreground">{item.description}</p>
               </div>
             </div>
             <Switch 
@@ -250,47 +250,47 @@ export default function GymSettingsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden"
+        className="bg-card border border-border rounded-2xl overflow-hidden"
       >
-        <div className="px-4 py-3 border-b border-zinc-800">
-          <h3 className="font-medium text-sm text-zinc-400">{t('general')}</h3>
+        <div className="px-4 py-3 border-b border-border">
+          <h3 className="font-medium text-sm text-muted-foreground">{t('general')}</h3>
         </div>
         
-        <button onClick={() => setShowPrivacyModal(true)} className="w-full flex items-center justify-between p-4 hover:bg-zinc-800/50 transition-colors border-b border-zinc-800">
+        <button onClick={() => setShowPrivacyModal(true)} className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b border-border">
           <div className="flex items-center gap-3">
-            <Shield className="w-5 h-5 text-zinc-400" />
+            <Shield className="w-5 h-5 text-muted-foreground" />
             <span className="text-sm">{t('privacy')}</span>
           </div>
-          <ChevronRight className="w-4 h-4 text-zinc-600" />
+          <ChevronRight className="w-4 h-4 text-muted-foreground" />
         </button>
         
-        <button onClick={() => setShowLanguageModal(true)} className="w-full flex items-center justify-between p-4 hover:bg-zinc-800/50 transition-colors border-b border-zinc-800">
+        <button onClick={() => setShowLanguageModal(true)} className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b border-border">
           <div className="flex items-center gap-3">
-            <Globe className="w-5 h-5 text-zinc-400" />
+            <Globe className="w-5 h-5 text-muted-foreground" />
             <span className="text-sm">{t('language')}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-zinc-500">{currentLangDisplay?.flag} {currentLangDisplay?.name}</span>
-            <ChevronRight className="w-4 h-4 text-zinc-600" />
+            <span className="text-sm text-muted-foreground">{currentLangDisplay?.flag} {currentLangDisplay?.name}</span>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
           </div>
         </button>
         
-        <button onClick={() => setShowHelpModal(true)} className="w-full flex items-center justify-between p-4 hover:bg-zinc-800/50 transition-colors border-b border-zinc-800">
+        <button onClick={() => setShowHelpModal(true)} className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b border-border">
           <div className="flex items-center gap-3">
-            <HelpCircle className="w-5 h-5 text-zinc-400" />
+            <HelpCircle className="w-5 h-5 text-muted-foreground" />
             <span className="text-sm">{t('help_support')}</span>
           </div>
-          <ChevronRight className="w-4 h-4 text-zinc-600" />
+          <ChevronRight className="w-4 h-4 text-muted-foreground" />
         </button>
         
-        <button onClick={() => setShowAboutModal(true)} className="w-full flex items-center justify-between p-4 hover:bg-zinc-800/50 transition-colors">
+        <button onClick={() => setShowAboutModal(true)} className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
           <div className="flex items-center gap-3">
-            <Info className="w-5 h-5 text-zinc-400" />
+            <Info className="w-5 h-5 text-muted-foreground" />
             <span className="text-sm">{t('about_app')}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-zinc-500">v1.0.0</span>
-            <ChevronRight className="w-4 h-4 text-zinc-600" />
+            <span className="text-sm text-muted-foreground">v1.0.0</span>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
           </div>
         </button>
       </motion.div>
@@ -300,35 +300,35 @@ export default function GymSettingsPage() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
-        className="text-center text-xs text-zinc-600 pb-4"
+        className="text-center text-xs text-muted-foreground pb-4"
       >
         Academia Genesis App v1.0.0 • Powered by Genesis Hub
       </motion.p>
 
       {/* iOS Install Modal */}
       <Dialog open={showIOSModal} onOpenChange={setShowIOSModal}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-sm">
+        <DialogContent className="bg-card border-border text-foreground max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
-                <Smartphone className="w-5 h-5 text-orange-500" />
+              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                <Smartphone className="w-5 h-5 text-primary" />
               </div>
               Instalar no iOS
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-muted-foreground">
               Siga os passos abaixo para instalar o app no seu iPhone ou iPad:
             </p>
             <div className="space-y-3">
               {['Toque no ícone de Compartilhar na barra inferior do Safari', 'Role para baixo e toque em "Adicionar à Tela de Início"', 'Toque em "Adicionar" no canto superior direito'].map((step, i) => (
-                <div key={i} className="flex items-start gap-3 p-3 bg-zinc-800/50 rounded-lg">
-                  <span className="w-6 h-6 rounded-full bg-orange-500 text-white text-xs flex items-center justify-center font-bold flex-shrink-0">{i + 1}</span>
+                <div key={i} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                  <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold flex-shrink-0">{i + 1}</span>
                   <p className="text-sm">{step}</p>
                 </div>
               ))}
             </div>
-            <Button onClick={() => setShowIOSModal(false)} className="w-full bg-orange-500 hover:bg-orange-600">
+            <Button onClick={() => setShowIOSModal(false)} className="w-full bg-primary hover:bg-primary/80">
               {t('understood')}
             </Button>
           </div>
@@ -337,11 +337,11 @@ export default function GymSettingsPage() {
 
       {/* Language Modal */}
       <Dialog open={showLanguageModal} onOpenChange={setShowLanguageModal}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-sm">
+        <DialogContent className="bg-card border-border text-foreground max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
-                <Globe className="w-5 h-5 text-orange-500" />
+              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                <Globe className="w-5 h-5 text-primary" />
               </div>
               {t('choose_language')}
             </DialogTitle>
@@ -353,15 +353,15 @@ export default function GymSettingsPage() {
                 onClick={() => handleLanguageChange(lang.code)}
                 className={`w-full flex items-center justify-between p-4 rounded-xl transition-colors ${
                   currentLanguage === lang.code 
-                    ? 'bg-orange-500/20 border border-orange-500/50' 
-                    : 'bg-zinc-800/50 hover:bg-zinc-800 border border-transparent'
+                    ? 'bg-primary/20 border border-primary/50' 
+                    : 'bg-muted/50 hover:bg-muted border border-transparent'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">{lang.flag}</span>
                   <span className="text-sm font-medium">{lang.name}</span>
                 </div>
-                {currentLanguage === lang.code && <Check className="w-5 h-5 text-orange-500" />}
+                {currentLanguage === lang.code && <Check className="w-5 h-5 text-primary" />}
               </button>
             ))}
           </div>
@@ -370,23 +370,23 @@ export default function GymSettingsPage() {
 
       {/* Help & Support Modal */}
       <Dialog open={showHelpModal} onOpenChange={setShowHelpModal}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-sm">
+        <DialogContent className="bg-card border-border text-foreground max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
-                <HelpCircle className="w-5 h-5 text-orange-500" />
+              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                <HelpCircle className="w-5 h-5 text-primary" />
               </div>
               {t('help_support')}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-muted-foreground">
               Precisa de ajuda? Nossa equipe está pronta para atendê-lo! Entre em contato pelo WhatsApp.
             </p>
-            <div className="bg-zinc-800/50 rounded-xl p-4 space-y-2">
+            <div className="bg-muted/50 rounded-xl p-4 space-y-2">
               <p className="text-sm font-medium">{t('support_hours')}:</p>
-              <p className="text-xs text-zinc-400">Segunda a Sexta: 8h às 20h</p>
-              <p className="text-xs text-zinc-400">Sábado: 8h às 14h</p>
+              <p className="text-xs text-muted-foreground">Segunda a Sexta: 8h às 20h</p>
+              <p className="text-xs text-muted-foreground">Sábado: 8h às 14h</p>
             </div>
             <Button onClick={openWhatsApp} className="w-full bg-green-600 hover:bg-green-700">
               <MessageCircle className="w-4 h-4 mr-2" />
@@ -398,36 +398,36 @@ export default function GymSettingsPage() {
 
       {/* About App Modal */}
       <Dialog open={showAboutModal} onOpenChange={setShowAboutModal}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-sm">
+        <DialogContent className="bg-card border-border text-foreground max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
-                <Info className="w-5 h-5 text-orange-500" />
+              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                <Info className="w-5 h-5 text-primary" />
               </div>
               {t('about_app')}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="text-center py-4">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 mx-auto flex items-center justify-center mb-4">
-                <span className="text-3xl font-bold text-white">G</span>
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-secondary mx-auto flex items-center justify-center mb-4">
+                <span className="text-3xl font-bold text-primary-foreground">G</span>
               </div>
               <h3 className="text-xl font-bold">Academia Genesis</h3>
-              <p className="text-sm text-zinc-400">Versão 1.0.0</p>
+              <p className="text-sm text-muted-foreground">Versão 1.0.0</p>
             </div>
-            <div className="bg-zinc-800/50 rounded-xl p-4 space-y-3 text-sm">
-              <p className="text-zinc-300">
+            <div className="bg-muted/50 rounded-xl p-4 space-y-3 text-sm">
+              <p className="text-foreground/80">
                 O Academia Genesis é uma plataforma completa de gestão fitness.
               </p>
-              <div className="space-y-2 text-zinc-400">
+              <div className="space-y-2 text-muted-foreground">
                 <p>✓ Treinos personalizados</p>
                 <p>✓ Aulas coletivas com agendamento</p>
                 <p>✓ Check-in via QR Code</p>
                 <p>✓ Acompanhamento de evolução</p>
               </div>
             </div>
-            <p className="text-center text-xs text-zinc-500">© 2024 Genesis Hub</p>
-            <Button onClick={() => setShowAboutModal(false)} className="w-full bg-orange-500 hover:bg-orange-600">
+            <p className="text-center text-xs text-muted-foreground">© 2024 Genesis Hub</p>
+            <Button onClick={() => setShowAboutModal(false)} className="w-full bg-primary hover:bg-primary/80">
               {t('close')}
             </Button>
           </div>
@@ -436,11 +436,11 @@ export default function GymSettingsPage() {
 
       {/* Privacy Modal */}
       <Dialog open={showPrivacyModal} onOpenChange={setShowPrivacyModal}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-sm max-h-[80vh] overflow-y-auto">
+        <DialogContent className="bg-card border-border text-foreground max-w-sm max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-orange-500" />
+              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                <Shield className="w-5 h-5 text-primary" />
               </div>
               {t('privacy')}
             </DialogTitle>
@@ -453,11 +453,11 @@ export default function GymSettingsPage() {
               { title: 'Segurança', desc: 'Utilizamos criptografia e práticas de segurança avançadas.' }
             ].map((item, i) => (
               <div key={i} className="space-y-2">
-                <h4 className="font-semibold text-orange-400">{item.title}</h4>
-                <p className="text-zinc-400">{item.desc}</p>
+                <h4 className="font-semibold text-primary">{item.title}</h4>
+                <p className="text-muted-foreground">{item.desc}</p>
               </div>
             ))}
-            <Button onClick={() => setShowPrivacyModal(false)} className="w-full bg-orange-500 hover:bg-orange-600">
+            <Button onClick={() => setShowPrivacyModal(false)} className="w-full bg-primary hover:bg-primary/80">
               {t('understood')}
             </Button>
           </div>

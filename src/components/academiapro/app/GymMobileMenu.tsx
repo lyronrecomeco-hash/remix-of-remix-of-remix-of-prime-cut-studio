@@ -21,7 +21,7 @@ export function GymMobileMenu() {
   const location = useLocation();
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/95 backdrop-blur-xl border-t border-zinc-800">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border">
       <div className="flex items-center h-16 px-2 max-w-lg mx-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path || 
@@ -33,7 +33,7 @@ export function GymMobileMenu() {
               to={item.path}
               className={cn(
                 "flex-1 flex flex-col items-center justify-center gap-1 py-2 relative",
-                isActive ? "text-orange-500" : "text-zinc-500"
+                isActive ? "text-primary" : "text-muted-foreground"
               )}
             >
               <item.icon className={cn("w-5 h-5", isActive && "scale-110")} />
@@ -41,7 +41,7 @@ export function GymMobileMenu() {
               {isActive && (
                 <motion.div
                   layoutId="gymActiveTab"
-                  className="absolute -top-px left-1/2 -translate-x-1/2 w-8 h-0.5 bg-orange-500 rounded-full"
+                  className="absolute -top-px left-1/2 -translate-x-1/2 w-8 h-0.5 bg-primary rounded-full"
                   transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                 />
               )}

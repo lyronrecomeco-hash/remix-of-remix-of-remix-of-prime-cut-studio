@@ -381,14 +381,14 @@ export function GymQRScanner({ open, onOpenChange }: GymQRScannerProps) {
                   ? 'border-green-500' 
                   : scanResult === 'error'
                   ? 'border-red-500'
-                  : 'border-orange-500'
+                  : 'border-primary'
               }`}
             >
               {/* Corner accents */}
-              <div className="absolute -top-1 -left-1 w-10 h-10 border-t-4 border-l-4 border-orange-500 rounded-tl-2xl" />
-              <div className="absolute -top-1 -right-1 w-10 h-10 border-t-4 border-r-4 border-orange-500 rounded-tr-2xl" />
-              <div className="absolute -bottom-1 -left-1 w-10 h-10 border-b-4 border-l-4 border-orange-500 rounded-bl-2xl" />
-              <div className="absolute -bottom-1 -right-1 w-10 h-10 border-b-4 border-r-4 border-orange-500 rounded-br-2xl" />
+              <div className="absolute -top-1 -left-1 w-10 h-10 border-t-4 border-l-4 border-primary rounded-tl-2xl" />
+              <div className="absolute -top-1 -right-1 w-10 h-10 border-t-4 border-r-4 border-primary rounded-tr-2xl" />
+              <div className="absolute -bottom-1 -left-1 w-10 h-10 border-b-4 border-l-4 border-primary rounded-bl-2xl" />
+              <div className="absolute -bottom-1 -right-1 w-10 h-10 border-b-4 border-r-4 border-primary rounded-br-2xl" />
 
               {/* Scanning animation */}
               {!scanResult && !isLoading && (
@@ -401,14 +401,14 @@ export function GymQRScanner({ open, onOpenChange }: GymQRScannerProps) {
                     repeatType: 'reverse',
                     ease: 'linear'
                   }}
-                  className="absolute left-4 right-4 h-1 bg-gradient-to-r from-transparent via-orange-500 to-transparent rounded-full"
+                  className="absolute left-4 right-4 h-1 bg-gradient-to-r from-transparent via-primary to-transparent rounded-full"
                 />
               )}
 
               {/* Loading state */}
               {isLoading && (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Loader2 className="w-12 h-12 text-orange-500 animate-spin" />
+                  <Loader2 className="w-12 h-12 text-primary animate-spin" />
                 </div>
               )}
 
@@ -468,15 +468,15 @@ export function GymQRScanner({ open, onOpenChange }: GymQRScannerProps) {
                   className="space-y-2"
                 >
                   <p className="text-red-400 font-semibold text-lg">QR Code inválido</p>
-                  <p className="text-zinc-400 text-sm">Escaneie o código da academia</p>
+                  <p className="text-muted-foreground text-sm">Escaneie o código da academia</p>
                 </motion.div>
               ) : (
                 <div className="space-y-3">
                   <div className="flex items-center justify-center gap-2">
-                    <Scan className="w-6 h-6 text-orange-500" />
+                    <Scan className="w-6 h-6 text-primary" />
                     <span className="text-lg font-medium">{statusMessage}</span>
                   </div>
-                  <p className="text-zinc-400 text-sm">
+                  <p className="text-muted-foreground text-sm">
                     Escaneie o código na recepção para registrar sua entrada
                   </p>
                 </div>
