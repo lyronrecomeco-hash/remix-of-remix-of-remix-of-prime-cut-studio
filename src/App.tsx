@@ -102,8 +102,13 @@ const GymAdminFinance = lazy(() => import("./pages/academiapro/admin/GymAdminFin
 const GymAdminSettings = lazy(() => import("./pages/academiapro/admin/GymAdminSettings"));
 const GymAdminAttendance = lazy(() => import("./pages/academiapro/admin/GymAdminAttendance"));
 const GymAdminCheckIn = lazy(() => import("./pages/academiapro/admin/GymAdminCheckIn"));
+const GymAdminInstructors = lazy(() => import("./pages/academiapro/admin/GymAdminInstructors"));
+const GymAdminEvaluations = lazy(() => import("./pages/academiapro/admin/GymAdminEvaluations"));
+const GymAdminReports = lazy(() => import("./pages/academiapro/admin/GymAdminReports"));
+const GymAdminAnnouncements = lazy(() => import("./pages/academiapro/admin/GymAdminAnnouncements"));
 const GymSettingsAppPage = lazy(() => import("./pages/academiapro/app/GymSettingsAppPage"));
 const GymNutritionPage = lazy(() => import("./pages/academiapro/app/GymNutritionPage"));
+const GymAnnouncementsPage = lazy(() => import("./pages/academiapro/app/GymAnnouncementsPage"));
 // QueryClient com retry logic e cache otimizado
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -370,16 +375,20 @@ const AppContent = () => {
                 <Route path="perfil/editar" element={<Suspense fallback={<GymPageLoader />}><GymEditProfilePage /></Suspense>} />
                 <Route path="configuracoes" element={<Suspense fallback={<GymPageLoader />}><GymSettingsAppPage /></Suspense>} />
                 <Route path="nutricao" element={<Suspense fallback={<GymPageLoader />}><GymNutritionPage /></Suspense>} />
+                <Route path="avisos" element={<Suspense fallback={<GymPageLoader />}><GymAnnouncementsPage /></Suspense>} />
               </Route>
 
               <Route path="admin" element={<GymAdminLayout />}>
                 <Route index element={<Suspense fallback={<GymPageLoader />}><GymAdminDashboard /></Suspense>} />
                 <Route path="alunos" element={<Suspense fallback={<GymPageLoader />}><GymAdminStudents /></Suspense>} />
+                <Route path="instrutores" element={<Suspense fallback={<GymPageLoader />}><GymAdminInstructors /></Suspense>} />
                 <Route path="treinos" element={<Suspense fallback={<GymPageLoader />}><GymAdminWorkouts /></Suspense>} />
                 <Route path="aulas" element={<Suspense fallback={<GymPageLoader />}><GymAdminClasses /></Suspense>} />
                 <Route path="checkin" element={<Suspense fallback={<GymPageLoader />}><GymAdminCheckIn /></Suspense>} />
-                <Route path="presenca" element={<Suspense fallback={<GymPageLoader />}><GymAdminAttendance /></Suspense>} />
+                <Route path="avaliacoes" element={<Suspense fallback={<GymPageLoader />}><GymAdminEvaluations /></Suspense>} />
                 <Route path="financeiro" element={<Suspense fallback={<GymPageLoader />}><GymAdminFinance /></Suspense>} />
+                <Route path="relatorios" element={<Suspense fallback={<GymPageLoader />}><GymAdminReports /></Suspense>} />
+                <Route path="comunicacao" element={<Suspense fallback={<GymPageLoader />}><GymAdminAnnouncements /></Suspense>} />
                 <Route path="configuracoes" element={<Suspense fallback={<GymPageLoader />}><GymAdminSettings /></Suspense>} />
               </Route>
             </Route>
