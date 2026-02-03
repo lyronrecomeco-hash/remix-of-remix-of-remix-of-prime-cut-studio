@@ -27,7 +27,8 @@ import {
   Tag,
   Eye,
   Search,
-  Settings2
+  Settings2,
+  Phone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -637,26 +638,24 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                 />
               </div>
 
-              {/* Auto-scan filters button */}
-              {autoScanEnabled && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setFiltersModalOpen(true)}
-                  className={cn(
-                    "gap-1.5 border-white/20 hover:bg-white/10",
-                    autoScanFilters.enabled ? "text-primary border-primary/50" : "text-white/70"
-                  )}
-                >
-                  <Settings2 className="w-4 h-4" />
-                  Filtros
-                  {autoScanFilters.enabled && (
-                    <Badge variant="secondary" className="h-5 px-1.5 bg-primary/20 text-primary text-[10px]">
-                      {autoScanFilters.countries.length + autoScanFilters.citySizes.length + (autoScanFilters.niches.length > 0 ? autoScanFilters.niches.length : 0)}
-                    </Badge>
-                  )}
-                </Button>
-              )}
+              {/* Auto-scan filters button - always visible */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setFiltersModalOpen(true)}
+                className={cn(
+                  "gap-1.5 border-white/20 hover:bg-white/10",
+                  autoScanFilters.enabled ? "text-primary border-primary/50" : "text-white/70"
+                )}
+              >
+                <Settings2 className="w-4 h-4" />
+                Filtros
+                {autoScanFilters.enabled && (
+                  <Badge variant="secondary" className="h-5 px-1.5 bg-primary/20 text-primary text-[10px]">
+                    {autoScanFilters.countries.length + autoScanFilters.citySizes.length + (autoScanFilters.niches.length > 0 ? autoScanFilters.niches.length : 0)}
+                  </Badge>
+                )}
+              </Button>
 
               <div className="flex items-center gap-2">
                 <Volume2 className={cn("w-4 h-4", soundEnabled ? "text-primary" : "text-white/30")} />
@@ -895,12 +894,18 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                               </p>
                             )}
 
-                            {/* Location */}
+                            {/* Location & Contact */}
                             <div className="space-y-1.5 mb-3">
                               <p className="text-xs text-white/50 flex items-center gap-1.5">
                                 <MapPin className="w-3 h-3 flex-shrink-0 text-white/30" />
                                 <span className="truncate">{opp.company_address || opp.company_city || 'Localização não informada'}</span>
                               </p>
+                              {opp.company_phone && (
+                                <p className="text-xs text-white/50 flex items-center gap-1.5">
+                                  <Phone className="w-3 h-3 flex-shrink-0 text-emerald-500/70" />
+                                  <span className="truncate">{opp.company_phone}</span>
+                                </p>
+                              )}
                             </div>
 
                             {/* Digital Presence Status */}

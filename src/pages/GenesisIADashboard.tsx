@@ -37,7 +37,9 @@ import {
   Navigation,
   Compass,
   Layers,
-  Box
+  Box,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import genesisLogo from "@/assets/genesis-logo.png";
 import { supabase } from "@/integrations/supabase/client";
@@ -107,6 +109,7 @@ const GenesisIADashboard = () => {
   const [isAccountBlocked, setIsAccountBlocked] = useState(false);
   const [blockReason, setBlockReason] = useState<string>('');
   const [restrictedModal, setRestrictedModal] = useState<{ open: boolean; label: string; id: string }>({ open: false, label: '', id: '' });
+  const [isDockCollapsed, setIsDockCollapsed] = useState(false);
   
   const { isMenuAllowed } = useMenuPermissions();
   
@@ -906,52 +909,87 @@ const GenesisIADashboard = () => {
 
             {/* Dock Menu */}
             <div className="fixed bottom-4 sm:bottom-8 left-0 right-0 flex justify-center z-50 px-4">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
-                className={`flex items-center bg-white/5 backdrop-blur-xl border border-white/10 ${config.dock.shadow} w-auto max-w-full overflow-x-auto`}
-                style={{
-                  gap: 'clamp(8px, 2vw, 16px)',
-                  padding: 'clamp(8px, 2vw, 12px) clamp(12px, 3vw, 16px)',
-                  borderRadius: config.dock.borderRadius,
-                }}
-              >
-                {dockItems.map((item, index) => {
-                  const isActive = !item.onClick && activeTab === item.tabId;
-                  const isRestricted = item.tabId && !isMenuAllowed(item.tabId);
-                  
-                  return (
+              <AnimatePresence mode="wait">
+                {isDockCollapsed ? (
+                  <motion.button
+                    key="collapsed"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    onClick={() => setIsDockCollapsed(false)}
+                    className="w-12 h-12 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
+                  >
+                    <ChevronUp className="w-5 h-5 text-white/70" />
+                  </motion.button>
+                ) : (
+                  <motion.div
+                    key="expanded"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
+                    className={`flex items-center bg-white/5 backdrop-blur-xl border border-white/10 ${config.dock.shadow} w-auto max-w-full overflow-x-auto`}
+                    style={{
+                      gap: 'clamp(8px, 2vw, 16px)',
+                      padding: 'clamp(8px, 2vw, 12px) clamp(12px, 3vw, 16px)',
+                      borderRadius: config.dock.borderRadius,
+                    }}
+                  >
+                    {/* Collapse toggle */}
                     <motion.button
-                      key={index}
-                      onClick={item.onClick || (() => handleDockNavigate(item.tabId!, item.label))}
+                      onClick={() => setIsDockCollapsed(true)}
                       className="relative rounded-xl flex items-center justify-center transition-colors flex-shrink-0"
                       style={{
                         width: 'clamp(36px, 8vw, 48px)',
                         height: 'clamp(36px, 8vw, 48px)',
-                        backgroundColor: isActive ? `${config.dock.activeColor}20` : 'transparent',
-                        opacity: isRestricted ? 0.5 : 1,
                       }}
                       whileHover={{ scale: 1.15, y: -8 }}
                       whileTap={{ scale: 0.95 }}
                       transition={{ type: "spring", stiffness: 400, damping: 17 }}
                     >
-                      <item.icon 
+                      <ChevronDown 
                         className="w-5 h-5 sm:w-6 sm:h-6"
-                        style={{ 
-                          color: isActive ? config.dock.activeColor : config.dock.inactiveColor,
-                        }} 
+                        style={{ color: config.dock.inactiveColor }} 
                       />
-                      {isActive && !isRestricted && (
-                        <div 
-                          className="absolute bottom-1 sm:bottom-1.5 w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full"
-                          style={{ backgroundColor: config.dock.activeColor }}
-                        />
-                      )}
                     </motion.button>
-                  );
-                })}
-              </motion.div>
+                    
+                    {dockItems.map((item, index) => {
+                      const isActive = !item.onClick && activeTab === item.tabId;
+                      const isRestricted = item.tabId && !isMenuAllowed(item.tabId);
+                      
+                      return (
+                        <motion.button
+                          key={index}
+                          onClick={item.onClick || (() => handleDockNavigate(item.tabId!, item.label))}
+                          className="relative rounded-xl flex items-center justify-center transition-colors flex-shrink-0"
+                          style={{
+                            width: 'clamp(36px, 8vw, 48px)',
+                            height: 'clamp(36px, 8vw, 48px)',
+                            backgroundColor: isActive ? `${config.dock.activeColor}20` : 'transparent',
+                            opacity: isRestricted ? 0.5 : 1,
+                          }}
+                          whileHover={{ scale: 1.15, y: -8 }}
+                          whileTap={{ scale: 0.95 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                        >
+                          <item.icon 
+                            className="w-5 h-5 sm:w-6 sm:h-6"
+                            style={{ 
+                              color: isActive ? config.dock.activeColor : config.dock.inactiveColor,
+                            }} 
+                          />
+                          {isActive && !isRestricted && (
+                            <div 
+                              className="absolute bottom-1 sm:bottom-1.5 w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full"
+                              style={{ backgroundColor: config.dock.activeColor }}
+                            />
+                          )}
+                        </motion.button>
+                      );
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Edit Mode Indicator */}
