@@ -27,6 +27,7 @@ export interface AutoScanFilters {
   countries: string[];
   citySizes: ('large' | 'medium' | 'small')[];
   niches: string[];
+  websiteFilter: 'all' | 'no_website' | 'with_website';
   enabled: boolean;
 }
 
@@ -75,10 +76,18 @@ const AVAILABLE_NICHES = [
   { id: 'lavanderia', name: 'Lavanderia', icon: '🧺' },
 ];
 
+// Opções de filtro de website
+const WEBSITE_FILTER_OPTIONS = [
+  { id: 'no_website', name: 'Sem site', description: 'Máxima oportunidade', icon: '🎯' },
+  { id: 'with_website', name: 'Com site', description: 'Já possuem presença', icon: '🌐' },
+  { id: 'all', name: 'Todos', description: 'Com e sem site', icon: '📊' },
+];
+
 export const DEFAULT_AUTO_SCAN_FILTERS: AutoScanFilters = {
   countries: ['BR'],
   citySizes: ['large', 'medium'],
   niches: [],
+  websiteFilter: 'no_website',
   enabled: false,
 };
 
@@ -241,6 +250,45 @@ export function AutoScanFiltersModal({
                       </div>
                       <span className="text-sm font-semibold text-white">{size.name}</span>
                       <span className="text-[10px] text-white/50">{size.description}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <Separator className="bg-white/10" />
+
+            {/* Filtro de Website */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Globe2 className="w-4 h-4 text-cyan-500" />
+                <Label className="text-sm font-semibold text-white">Presença Digital</Label>
+              </div>
+              <p className="text-xs text-white/50">
+                Empresas sem site são oportunidades máximas para serviços digitais
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {WEBSITE_FILTER_OPTIONS.map((option) => {
+                  const isSelected = localFilters.websiteFilter === option.id;
+                  return (
+                    <button
+                      key={option.id}
+                      onClick={() => setLocalFilters(prev => ({ ...prev, websiteFilter: option.id as AutoScanFilters['websiteFilter'] }))}
+                      className={`
+                        flex flex-col items-start gap-1 p-4 rounded-xl border transition-all text-left
+                        ${
+                          isSelected
+                            ? 'bg-cyan-500/20 border-cyan-500/50'
+                            : 'bg-white/5 border-white/10 hover:bg-white/10'
+                        }
+                      `}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <span className="text-xl">{option.icon}</span>
+                        {isSelected && <Check className="w-4 h-4 text-cyan-500" />}
+                      </div>
+                      <span className="text-sm font-semibold text-white">{option.name}</span>
+                      <span className="text-[10px] text-white/50">{option.description}</span>
                     </button>
                   );
                 })}

@@ -235,6 +235,7 @@ interface RadarRequest {
   countries?: string[];
   citySizes?: ('large' | 'medium' | 'small')[];
   niches?: string[];
+  websiteFilter?: 'all' | 'no_website' | 'with_website';
 }
 
 function calculateOpportunityScore(business: any): number {
@@ -299,7 +300,7 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseKey);
     
-    const { affiliateId, region, niche, maxResults = 10, countries, citySizes, niches: nicheFilters }: RadarRequest = await req.json();
+    const { affiliateId, region, niche, maxResults = 10, countries, citySizes, niches: nicheFilters, websiteFilter = 'all' }: RadarRequest = await req.json();
 
     if (!affiliateId) {
       throw new Error('affiliateId is required');
@@ -373,7 +374,7 @@ serve(async (req) => {
     const searchNiche = langNiches[selectedNiche] || selectedNiche;
     
     console.log(`Scanning: ${searchNiche} in ${city} (${selectedCity.size}), ${selectedRegion}`);
-    console.log(`Filters applied - Countries: ${countries?.join(',') || 'all'}, City sizes: ${citySizes?.join(',') || 'all'}, Niches: ${nicheFilters?.join(',') || 'all'}`);
+    console.log(`Filters applied - Countries: ${countries?.join(',') || 'all'}, City sizes: ${citySizes?.join(',') || 'all'}, Niches: ${nicheFilters?.join(',') || 'all'}, Website: ${websiteFilter}`);
 
     // Buscar empresas via Serper
     const searchQuery = `${searchNiche} in ${city}`;
@@ -494,6 +495,17 @@ serve(async (req) => {
       }
 
       const hasWebsite = !!place.website;
+      
+      // Apply website filter
+      if (websiteFilter === 'no_website' && hasWebsite) {
+        debugInfo.push({ name: place.title || place.name, status: 'filtered_has_website' });
+        continue;
+      }
+      if (websiteFilter === 'with_website' && !hasWebsite) {
+        debugInfo.push({ name: place.title || place.name, status: 'filtered_no_website' });
+        continue;
+      }
+      
       const score = calculateOpportunityScore({
         website: place.website,
         phone: place.phone,
@@ -503,8 +515,8 @@ serve(async (req) => {
       
       console.log(`Business: ${place.title || place.name} | Website: ${hasWebsite} | Rating: ${place.rating} | Reviews: ${place.reviewsCount} | Score: ${score}`);
 
-      // Aceitar todos os negócios com score mínimo de 50
-      if (score < 50) {
+      // Aceitar todos os negócios com score mínimo de 40 (lowered for better results)
+      if (score < 40) {
         debugInfo.push({ name: place.title || place.name, score, status: 'low_score' });
         continue;
       }
