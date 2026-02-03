@@ -54,7 +54,7 @@ export default function GymProfilePage() {
         animate={{ opacity: 1, y: 0 }}
         className="pt-2"
       >
-        <h1 className="text-2xl font-bold">Meu Perfil</h1>
+        <h1 className="text-2xl font-bold text-foreground">Meu Perfil</h1>
       </motion.div>
 
       {/* Profile Card */}
@@ -62,18 +62,18 @@ export default function GymProfilePage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6"
+        className="bg-card border border-border rounded-2xl p-6"
       >
         <div className="flex items-center gap-4 mb-6">
-          <Avatar className="w-20 h-20 border-2 border-orange-500">
+          <Avatar className="w-20 h-20 border-2 border-primary">
             <AvatarImage src={profile?.avatar_url || ''} />
-            <AvatarFallback className="bg-orange-500/20 text-orange-500 text-xl">
+            <AvatarFallback className="bg-primary/20 text-primary text-xl">
               {profile?.full_name?.charAt(0) || 'U'}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <h2 className="text-xl font-bold truncate">{profile?.full_name || 'Usuário'}</h2>
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-orange-500/20 text-orange-500">
+            <h2 className="text-xl font-bold truncate text-foreground">{profile?.full_name || 'Usuário'}</h2>
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-primary/20 text-primary">
               {getRoleLabel()}
             </span>
           </div>
@@ -81,19 +81,19 @@ export default function GymProfilePage() {
             variant="outline" 
             size="icon"
             onClick={() => navigate('/academiapro/app/perfil/editar')}
-            className="border-zinc-700 hover:bg-zinc-800"
+            className="border-border hover:bg-muted"
           >
             <Edit className="w-4 h-4" />
           </Button>
         </div>
 
         <div className="space-y-3">
-          <div className="flex items-center gap-3 text-zinc-400">
+          <div className="flex items-center gap-3 text-muted-foreground">
             <Mail className="w-5 h-5 flex-shrink-0" />
             <span className="text-sm truncate">{profile?.email}</span>
           </div>
           {profile?.phone && (
-            <div className="flex items-center gap-3 text-zinc-400">
+            <div className="flex items-center gap-3 text-muted-foreground">
               <Phone className="w-5 h-5 flex-shrink-0" />
               <span className="text-sm">{profile.phone}</span>
             </div>
@@ -108,20 +108,20 @@ export default function GymProfilePage() {
         transition={{ delay: 0.2 }}
         className="grid grid-cols-3 gap-3"
       >
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
-          <Ruler className="w-5 h-5 text-zinc-400 mx-auto mb-1" />
-          <p className="text-lg font-bold">{profile?.height_cm || '--'}</p>
-          <p className="text-xs text-zinc-400">cm altura</p>
+        <div className="bg-card border border-border rounded-xl p-4 text-center">
+          <Ruler className="w-5 h-5 text-muted-foreground mx-auto mb-1" />
+          <p className="text-lg font-bold text-foreground">{profile?.height_cm || '--'}</p>
+          <p className="text-xs text-muted-foreground">cm altura</p>
         </div>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
-          <Scale className="w-5 h-5 text-zinc-400 mx-auto mb-1" />
-          <p className="text-lg font-bold">{profile?.weight_kg || '--'}</p>
-          <p className="text-xs text-zinc-400">kg peso</p>
+        <div className="bg-card border border-border rounded-xl p-4 text-center">
+          <Scale className="w-5 h-5 text-muted-foreground mx-auto mb-1" />
+          <p className="text-lg font-bold text-foreground">{profile?.weight_kg || '--'}</p>
+          <p className="text-xs text-muted-foreground">kg peso</p>
         </div>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
-          <Target className="w-5 h-5 text-zinc-400 mx-auto mb-1" />
-          <p className="text-lg font-bold">{profile?.goals?.length || 0}</p>
-          <p className="text-xs text-zinc-400">objetivos</p>
+        <div className="bg-card border border-border rounded-xl p-4 text-center">
+          <Target className="w-5 h-5 text-muted-foreground mx-auto mb-1" />
+          <p className="text-lg font-bold text-foreground">{profile?.goals?.length || 0}</p>
+          <p className="text-xs text-muted-foreground">objetivos</p>
         </div>
       </motion.div>
 
@@ -130,21 +130,21 @@ export default function GymProfilePage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden"
+        className="bg-card border border-border rounded-2xl overflow-hidden"
       >
         {menuItems.map((item, index) => (
           <button
             key={item.path}
             onClick={() => navigate(item.path)}
-            className={`w-full flex items-center justify-between p-4 hover:bg-zinc-800/50 transition-colors ${
-              index < menuItems.length - 1 ? 'border-b border-zinc-800' : ''
+            className={`w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors ${
+              index < menuItems.length - 1 ? 'border-b border-border' : ''
             }`}
           >
             <div className="flex items-center gap-3">
-              <item.icon className="w-5 h-5 text-zinc-400" />
-              <span>{item.label}</span>
+              <item.icon className="w-5 h-5 text-muted-foreground" />
+              <span className="text-foreground">{item.label}</span>
             </div>
-            <ChevronRight className="w-5 h-5 text-zinc-600" />
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
           </button>
         ))}
       </motion.div>
@@ -158,7 +158,7 @@ export default function GymProfilePage() {
         >
           <Button
             variant="outline"
-            className="w-full border-orange-500/50 text-orange-500 hover:bg-orange-500/10"
+            className="w-full border-primary/50 text-primary hover:bg-primary/10"
             onClick={() => navigate('/academiapro/admin')}
           >
             Acessar Painel Administrativo

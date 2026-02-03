@@ -199,8 +199,8 @@ export default function GymClassesPage() {
               onClick={() => { setSelectedDate(day); setCurrentPage(1); }}
               className={`flex-shrink-0 flex flex-col items-center justify-center w-14 h-16 rounded-xl transition-all ${
                 isSelected
-                  ? 'bg-orange-500 text-white'
-                  : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:border-orange-500/50'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-card border border-border text-muted-foreground hover:border-primary/50'
               }`}
             >
               <span className="text-xs uppercase">
@@ -208,7 +208,7 @@ export default function GymClassesPage() {
               </span>
               <span className="text-lg font-bold">{format(day, 'd')}</span>
               {isToday && !isSelected && (
-                <span className="w-1 h-1 rounded-full bg-orange-500 mt-0.5" />
+                <span className="w-1 h-1 rounded-full bg-primary mt-0.5" />
               )}
             </button>
           );
@@ -226,7 +226,7 @@ export default function GymClassesPage() {
             variant={showOnlyEnrolled ? 'default' : 'outline'}
             size="sm"
             onClick={() => { setShowOnlyEnrolled(!showOnlyEnrolled); setCurrentPage(1); }}
-            className={showOnlyEnrolled ? 'bg-orange-500 hover:bg-orange-600' : 'border-zinc-700'}
+            className={showOnlyEnrolled ? 'bg-primary hover:bg-primary/90' : 'border-border'}
           >
             <Filter className="w-4 h-4 mr-2" />
             {showOnlyEnrolled ? 'Mostrando minhas aulas' : 'Mostrar apenas minhas aulas'}
@@ -243,10 +243,10 @@ export default function GymClassesPage() {
       >
         {isLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 animate-pulse">
-              <div className="h-5 bg-zinc-800 rounded w-1/2 mb-2" />
-              <div className="h-4 bg-zinc-800 rounded w-1/3 mb-4" />
-              <div className="h-10 bg-zinc-800 rounded" />
+            <div key={i} className="bg-card border border-border rounded-xl p-4 animate-pulse">
+              <div className="h-5 bg-muted rounded w-1/2 mb-2" />
+              <div className="h-4 bg-muted rounded w-1/3 mb-4" />
+              <div className="h-10 bg-muted rounded" />
             </div>
           ))
         ) : paginatedSessions.length > 0 ? (
@@ -264,20 +264,20 @@ export default function GymClassesPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className={`bg-zinc-900 border rounded-xl p-4 ${
-                  isBooked ? 'border-orange-500/50' : isEnrolled ? 'border-green-500/30' : 'border-zinc-800'
+                className={`bg-card border rounded-xl p-4 ${
+                  isBooked ? 'border-primary/50' : isEnrolled ? 'border-green-500/30' : 'border-border'
                 }`}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-base truncate">{session.gym_classes?.name}</h3>
+                    <h3 className="font-semibold text-base truncate text-foreground">{session.gym_classes?.name}</h3>
                     <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs mt-1 border ${categoryColor}`}>
                       {session.gym_classes?.category || 'Geral'}
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1 ml-2">
                     {isBooked && (
-                      <span className="flex items-center gap-1 text-xs text-orange-500 bg-orange-500/10 px-2 py-1 rounded-full">
+                      <span className="flex items-center gap-1 text-xs text-primary bg-primary/10 px-2 py-1 rounded-full">
                         <Check className="w-3 h-3" />
                         Reservado
                       </span>
@@ -290,23 +290,23 @@ export default function GymClassesPage() {
                   </div>
                 </div>
 
-                <p className="text-zinc-400 text-sm mb-3 line-clamp-2">
+                <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
                   {session.gym_classes?.description || 'Aula coletiva da academia'}
                 </p>
 
                 <div className="grid grid-cols-2 gap-2 mb-4 text-sm">
-                  <div className="flex items-center gap-2 text-zinc-400">
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <Clock className="w-4 h-4 flex-shrink-0" />
                     <span>{format(new Date(session.scheduled_at), 'HH:mm')}</span>
-                    <span className="text-zinc-600">({session.gym_classes?.duration_minutes || 60}min)</span>
+                    <span className="text-muted-foreground/60">({session.gym_classes?.duration_minutes || 60}min)</span>
                   </div>
-                  <div className="flex items-center gap-2 text-zinc-400">
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <Users className="w-4 h-4 flex-shrink-0" />
-                    <span className={bookingsCount >= maxCapacity * 0.8 ? 'text-orange-400' : ''}>
+                    <span className={bookingsCount >= maxCapacity * 0.8 ? 'text-primary' : ''}>
                       {bookingsCount}/{maxCapacity}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-zinc-400 col-span-2">
+                  <div className="flex items-center gap-2 text-muted-foreground col-span-2">
                     <MapPin className="w-4 h-4 flex-shrink-0" />
                     <span className="truncate">{session.gym_classes?.location || 'Sala 1'}</span>
                   </div>
@@ -322,7 +322,7 @@ export default function GymClassesPage() {
                   </Button>
                 ) : (
                   <Button 
-                    className="w-full bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-50"
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50"
                     disabled={isFull}
                     onClick={() => handleBookClass(session.id)}
                   >

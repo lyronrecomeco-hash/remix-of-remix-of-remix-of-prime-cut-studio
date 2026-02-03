@@ -8,10 +8,10 @@ export function GymAdminLayout() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-10 h-10 animate-spin text-orange-500 mx-auto mb-4" />
-          <p className="text-zinc-400">Carregando...</p>
+          <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Carregando...</p>
         </div>
       </div>
     );
@@ -26,7 +26,7 @@ export function GymAdminLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex">
+    <div className="min-h-screen bg-background text-foreground flex">
       <GymAdminSidebar />
       {/* Main Content - Scrollable only, sidebar stays fixed */}
       <main className="flex-1 lg:ml-64 overflow-auto min-h-screen">
