@@ -14,6 +14,7 @@ import {
   Activity,
   Target
 } from 'lucide-react';
+import { GymAccessCredentials } from '@/components/academiapro/admin/GymAccessCredentials';
 import { supabase } from '@/integrations/supabase/client';
 import { format, subDays, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -182,7 +183,9 @@ export default function GymAdminDashboard() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
+        className="flex items-start justify-between"
       >
+        <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
             {(() => {
               const hour = new Date().getHours();
@@ -191,7 +194,9 @@ export default function GymAdminDashboard() {
               return 'Boa noite, Admin 🌙';
             })()}
           </h1>
-        <p className="text-muted-foreground mt-1 text-sm lg:text-base">Visão geral da academia</p>
+          <p className="text-muted-foreground mt-1 text-sm lg:text-base">Visão geral da academia</p>
+        </div>
+        <GymAccessCredentials />
       </motion.div>
 
       {/* Stats Grid */}
