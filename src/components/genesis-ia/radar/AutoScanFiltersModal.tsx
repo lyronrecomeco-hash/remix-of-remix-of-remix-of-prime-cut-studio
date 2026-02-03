@@ -20,6 +20,7 @@ import {
   Save,
   X,
   Check,
+  Play,
 } from 'lucide-react';
 
 export interface AutoScanFilters {
@@ -153,9 +154,9 @@ export function AutoScanFiltersModal({
               <Filter className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <span className="block text-white">Filtros Avançados do Auto-Scan</span>
+              <span className="block text-white">Configure os Filtros do Auto-Scan</span>
               <span className="text-xs text-muted-foreground font-normal">
-                Configure quais tipos de leads o radar vai buscar automaticamente
+                Defina países, tamanho de cidade e nichos. Ao salvar, o auto-scan será ativado.
               </span>
             </div>
           </DialogTitle>
@@ -325,8 +326,8 @@ export function AutoScanFiltersModal({
               Cancelar
             </Button>
             <Button onClick={handleSave} className="gap-2">
-              <Save className="w-4 h-4" />
-              Salvar Filtros
+              <Play className="w-4 h-4" />
+              Salvar e Ativar Auto-Scan
             </Button>
           </div>
         </div>

@@ -141,8 +141,8 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
     loadFilters();
   }, [userId]);
 
-  // Save auto-scan filters
-  const saveAutoScanFilters = async (filters: AutoScanFilters) => {
+  // Save auto-scan filters and optionally enable auto-scan
+  const saveAutoScanFilters = async (filters: AutoScanFilters, enableAutoScan = false) => {
     setAutoScanFilters(filters);
     if (!userId) return;
     
@@ -166,6 +166,12 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
       }
       
       toast.success('Filtros do auto-scan salvos!');
+      
+      // Enable auto-scan after filters are saved
+      if (enableAutoScan && filters.enabled) {
+        setAutoScanEnabled(true);
+        toast.success('Auto-scan ativado com os filtros configurados!');
+      }
     } catch (error) {
       console.error('Error saving auto-scan filters:', error);
       toast.error('Erro ao salvar filtros');
@@ -294,7 +300,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
     }
   }, [affiliateId, filterNoWebsite, autoScanEnabled, maxLeadsLimit]);
 
-  // Run scan
+  // Run scan - always applies filters when enabled
   const runScan = useCallback(async (isAuto = false) => {
     if (scanning || !affiliateId) return;
     
@@ -308,11 +314,11 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
     
     setScanning(true);
     try {
-      // Build request body with filters if auto-scan has filters enabled
+      // Build request body - always apply filters when enabled
       const requestBody: any = { affiliateId };
       
-      if (isAuto && autoScanFilters.enabled) {
-        // Apply filters for auto-scan
+      if (autoScanFilters.enabled) {
+        // Apply filters to all scans (auto and manual)
         if (autoScanFilters.countries.length > 0) {
           requestBody.countries = autoScanFilters.countries;
         }
@@ -356,6 +362,17 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
       setScanning(false);
     }
   }, [affiliateId, scanning, fetchOpportunities, playNotificationSound, limitReached, autoScanFilters, maxLeadsLimit]);
+
+  // Handle auto-scan toggle - show filters modal first if enabling
+  const handleAutoScanToggle = (enabled: boolean) => {
+    if (enabled && !autoScanFilters.enabled) {
+      // Open filters modal before enabling auto-scan
+      setFiltersModalOpen(true);
+      toast.info('Configure os filtros antes de ativar o auto-scan');
+    } else {
+      setAutoScanEnabled(enabled);
+    }
+  };
 
   // Auto scan effect
   useEffect(() => {
@@ -634,7 +651,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                 <span className="text-sm text-white/50">Auto-Scan</span>
                 <Switch
                   checked={autoScanEnabled}
-                  onCheckedChange={setAutoScanEnabled}
+                  onCheckedChange={handleAutoScanToggle}
                 />
               </div>
 
@@ -1272,7 +1289,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
         open={filtersModalOpen}
         onOpenChange={setFiltersModalOpen}
         filters={autoScanFilters}
-        onSave={saveAutoScanFilters}
+        onSave={(filters) => saveAutoScanFilters(filters, !autoScanEnabled)}
       />
     </div>
   );
