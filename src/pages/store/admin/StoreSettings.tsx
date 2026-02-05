@@ -158,7 +158,7 @@ export default function StoreSettingsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -168,13 +168,13 @@ export default function StoreSettingsPage() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-white">Configurações</h1>
-          <p className="text-slate-400 mt-1">Personalize sua loja virtual</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Configurações</h1>
+          <p className="text-gray-500 mt-1">Personalize sua loja virtual</p>
         </div>
         <Button 
           onClick={handleSave}
           disabled={!hasChanges || saveSettingsMutation.isPending}
-          className="bg-blue-600 hover:bg-blue-700"
+          className="bg-blue-600 hover:bg-blue-700 text-white"
         >
           <Save className="w-4 h-4 mr-2" />
           {saveSettingsMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
@@ -182,20 +182,20 @@ export default function StoreSettingsPage() {
       </div>
 
       <Tabs defaultValue="store" className="space-y-6">
-        <TabsList className="bg-slate-800/50 border border-slate-700">
-          <TabsTrigger value="store" className="data-[state=active]:bg-blue-600">
+        <TabsList className="bg-gray-100 border border-gray-200 p-1">
+          <TabsTrigger value="store" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm">
             <Store className="w-4 h-4 mr-2" />
             Loja
           </TabsTrigger>
-          <TabsTrigger value="contact" className="data-[state=active]:bg-blue-600">
+          <TabsTrigger value="contact" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm">
             <MessageSquare className="w-4 h-4 mr-2" />
             Contato
           </TabsTrigger>
-          <TabsTrigger value="appearance" className="data-[state=active]:bg-blue-600">
+          <TabsTrigger value="appearance" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm">
             <Palette className="w-4 h-4 mr-2" />
             Aparência
           </TabsTrigger>
-          <TabsTrigger value="advanced" className="data-[state=active]:bg-blue-600">
+          <TabsTrigger value="advanced" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm">
             <Shield className="w-4 h-4 mr-2" />
             Avançado
           </TabsTrigger>
@@ -205,33 +205,33 @@ export default function StoreSettingsPage() {
         <TabsContent value="store">
           <div className="grid lg:grid-cols-2 gap-6">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-              <Card className="bg-slate-800/50 border-slate-700/50">
+              <Card className="bg-white border-gray-200">
                 <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <Store className="w-5 h-5" />
+                  <CardTitle className="text-gray-900 flex items-center gap-2">
+                    <Store className="w-5 h-5 text-blue-600" />
                     Informações da Loja
                   </CardTitle>
-                  <CardDescription className="text-slate-400">
+                  <CardDescription className="text-gray-500">
                     Configure as informações básicas da sua loja
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label className="text-slate-300">Nome da Loja</Label>
+                    <Label className="text-gray-700">Nome da Loja</Label>
                     <Input
                       value={settings.store_name}
                       onChange={(e) => handleChange('store_name', e.target.value)}
-                      className="bg-slate-900/50 border-slate-600 text-white"
+                      className="bg-gray-50 border-gray-200 text-gray-900"
                       placeholder="Ex: Minha Loja Virtual"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-slate-300">Descrição</Label>
+                    <Label className="text-gray-700">Descrição</Label>
                     <Textarea
                       value={settings.store_description || ''}
                       onChange={(e) => handleChange('store_description', e.target.value)}
-                      className="bg-slate-900/50 border-slate-600 text-white"
+                      className="bg-gray-50 border-gray-200 text-gray-900"
                       placeholder="Descreva sua loja em poucas palavras..."
                       rows={3}
                     />
@@ -241,33 +241,33 @@ export default function StoreSettingsPage() {
             </motion.div>
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-              <Card className="bg-slate-800/50 border-slate-700/50">
+              <Card className="bg-white border-gray-200">
                 <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <Image className="w-5 h-5" />
+                  <CardTitle className="text-gray-900 flex items-center gap-2">
+                    <Image className="w-5 h-5 text-blue-600" />
                     Imagens
                   </CardTitle>
-                  <CardDescription className="text-slate-400">
+                  <CardDescription className="text-gray-500">
                     Logo e banner da sua loja
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label className="text-slate-300">URL do Logo</Label>
+                    <Label className="text-gray-700">URL do Logo</Label>
                     <Input
                       value={settings.store_logo || ''}
                       onChange={(e) => handleChange('store_logo', e.target.value)}
-                      className="bg-slate-900/50 border-slate-600 text-white"
+                      className="bg-gray-50 border-gray-200 text-gray-900"
                       placeholder="https://exemplo.com/logo.png"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-slate-300">URL do Banner</Label>
+                    <Label className="text-gray-700">URL do Banner</Label>
                     <Input
                       value={settings.store_banner || ''}
                       onChange={(e) => handleChange('store_banner', e.target.value)}
-                      className="bg-slate-900/50 border-slate-600 text-white"
+                      className="bg-gray-50 border-gray-200 text-gray-900"
                       placeholder="https://exemplo.com/banner.png"
                     />
                   </div>
@@ -276,7 +276,7 @@ export default function StoreSettingsPage() {
                     <div className="grid grid-cols-2 gap-4 pt-4">
                       {settings.store_logo && (
                         <div className="space-y-2">
-                          <p className="text-xs text-slate-400">Logo Preview</p>
+                          <p className="text-xs text-gray-500">Logo Preview</p>
                           <img 
                             src={settings.store_logo} 
                             alt="Logo" 
@@ -286,7 +286,7 @@ export default function StoreSettingsPage() {
                       )}
                       {settings.store_banner && (
                         <div className="space-y-2">
-                          <p className="text-xs text-slate-400">Banner Preview</p>
+                          <p className="text-xs text-gray-500">Banner Preview</p>
                           <img 
                             src={settings.store_banner} 
                             alt="Banner" 
@@ -306,68 +306,68 @@ export default function StoreSettingsPage() {
         <TabsContent value="contact">
           <div className="grid lg:grid-cols-2 gap-6">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-              <Card className="bg-slate-800/50 border-slate-700/50">
+              <Card className="bg-white border-gray-200">
                 <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <Phone className="w-5 h-5 text-green-400" />
+                  <CardTitle className="text-gray-900 flex items-center gap-2">
+                    <Phone className="w-5 h-5 text-green-600" />
                     WhatsApp
                   </CardTitle>
-                  <CardDescription className="text-slate-400">
+                  <CardDescription className="text-gray-500">
                     Configure a integração com WhatsApp
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label className="text-slate-300">Número do WhatsApp</Label>
+                    <Label className="text-gray-700">Número do WhatsApp</Label>
                     <Input
                       value={settings.whatsapp_number}
                       onChange={(e) => handleChange('whatsapp_number', e.target.value)}
-                      className="bg-slate-900/50 border-slate-600 text-white"
+                      className="bg-gray-50 border-gray-200 text-gray-900"
                       placeholder="5511999999999"
                     />
-                    <p className="text-xs text-slate-500">Apenas números, com DDD e código do país</p>
+                    <p className="text-xs text-gray-500">Apenas números, com DDD e código do país</p>
                   </div>
                 </CardContent>
               </Card>
             </motion.div>
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-              <Card className="bg-slate-800/50 border-slate-700/50">
+              <Card className="bg-white border-gray-200">
                 <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <MapPin className="w-5 h-5 text-red-400" />
+                  <CardTitle className="text-gray-900 flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-red-600" />
                     Localização
                   </CardTitle>
-                  <CardDescription className="text-slate-400">
+                  <CardDescription className="text-gray-500">
                     Endereço da sua loja
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label className="text-slate-300">Endereço</Label>
+                    <Label className="text-gray-700">Endereço</Label>
                     <Input
                       value={settings.address || ''}
                       onChange={(e) => handleChange('address', e.target.value)}
-                      className="bg-slate-900/50 border-slate-600 text-white"
+                      className="bg-gray-50 border-gray-200 text-gray-900"
                       placeholder="Rua, número, bairro"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-slate-300">Cidade</Label>
+                      <Label className="text-gray-700">Cidade</Label>
                       <Input
                         value={settings.city || ''}
                         onChange={(e) => handleChange('city', e.target.value)}
-                        className="bg-slate-900/50 border-slate-600 text-white"
+                        className="bg-gray-50 border-gray-200 text-gray-900"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-slate-300">Estado</Label>
+                      <Label className="text-gray-700">Estado</Label>
                       <Input
                         value={settings.state || ''}
                         onChange={(e) => handleChange('state', e.target.value)}
-                        className="bg-slate-900/50 border-slate-600 text-white"
+                        className="bg-gray-50 border-gray-200 text-gray-900"
                         placeholder="UF"
                         maxLength={2}
                       />
@@ -382,63 +382,75 @@ export default function StoreSettingsPage() {
         {/* Appearance Tab */}
         <TabsContent value="appearance">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <Card className="bg-slate-800/50 border-slate-700/50">
+            <Card className="bg-white border-gray-200">
               <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Palette className="w-5 h-5" />
+                <CardTitle className="text-gray-900 flex items-center gap-2">
+                  <Palette className="w-5 h-5 text-purple-600" />
                   Cores da Loja
                 </CardTitle>
-                <CardDescription className="text-slate-400">
+                <CardDescription className="text-gray-500">
                   Personalize as cores da sua loja
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label className="text-slate-300">Cor Primária</Label>
+                    <Label className="text-gray-700">Cor Primária</Label>
                     <div className="flex gap-3">
                       <Input
                         type="color"
                         value={settings.primary_color || '#3b82f6'}
                         onChange={(e) => handleChange('primary_color', e.target.value)}
-                        className="w-16 h-10 p-1 bg-slate-900/50 border-slate-600 cursor-pointer"
+                        className="w-16 h-10 p-1 bg-gray-50 border-gray-200 cursor-pointer"
                       />
                       <Input
                         value={settings.primary_color || '#3b82f6'}
                         onChange={(e) => handleChange('primary_color', e.target.value)}
-                        className="bg-slate-900/50 border-slate-600 text-white"
+                        className="bg-gray-50 border-gray-200 text-gray-900"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-slate-300">Cor Secundária</Label>
+                    <Label className="text-gray-700">Cor Secundária</Label>
                     <div className="flex gap-3">
                       <Input
                         type="color"
                         value={settings.secondary_color || '#06b6d4'}
                         onChange={(e) => handleChange('secondary_color', e.target.value)}
-                        className="w-16 h-10 p-1 bg-slate-900/50 border-slate-600 cursor-pointer"
+                        className="w-16 h-10 p-1 bg-gray-50 border-gray-200 cursor-pointer"
                       />
                       <Input
                         value={settings.secondary_color || '#06b6d4'}
                         onChange={(e) => handleChange('secondary_color', e.target.value)}
-                        className="bg-slate-900/50 border-slate-600 text-white"
+                        className="bg-gray-50 border-gray-200 text-gray-900"
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Preview */}
-                <div className="p-6 bg-slate-900/50 rounded-xl">
-                  <p className="text-sm text-slate-400 mb-4">Preview</p>
+                <div className="p-6 rounded-xl bg-gray-50 border border-gray-200">
+                  <p className="text-sm text-gray-500 mb-4">Preview das cores</p>
                   <div className="flex gap-4">
-                    <Button style={{ backgroundColor: settings.primary_color }}>
-                      Botão Primário
-                    </Button>
-                    <Button style={{ backgroundColor: settings.secondary_color }}>
-                      Botão Secundário
-                    </Button>
+                    <div 
+                      className="w-20 h-20 rounded-xl shadow-lg flex items-center justify-center"
+                      style={{ backgroundColor: settings.primary_color }}
+                    >
+                      <span className="text-white text-xs font-medium">Primária</span>
+                    </div>
+                    <div 
+                      className="w-20 h-20 rounded-xl shadow-lg flex items-center justify-center"
+                      style={{ backgroundColor: settings.secondary_color }}
+                    >
+                      <span className="text-white text-xs font-medium">Secundária</span>
+                    </div>
+                    <div 
+                      className="flex-1 h-20 rounded-xl shadow-lg flex items-center justify-center"
+                      style={{ background: `linear-gradient(135deg, ${settings.primary_color}, ${settings.secondary_color})` }}
+                    >
+                      <span className="text-white text-sm font-medium">Gradiente</span>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -449,23 +461,40 @@ export default function StoreSettingsPage() {
         {/* Advanced Tab */}
         <TabsContent value="advanced">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <Card className="bg-slate-800/50 border-slate-700/50">
+            <Card className="bg-white border-gray-200">
               <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Shield className="w-5 h-5" />
+                <CardTitle className="text-gray-900 flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-orange-600" />
                   Configurações Avançadas
                 </CardTitle>
+                <CardDescription className="text-gray-500">
+                  Opções avançadas da loja
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="flex items-center justify-between p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
                   <div>
-                    <p className="text-white font-medium">Loja Ativa</p>
-                    <p className="text-sm text-slate-400">Desativar a loja temporariamente para manutenção</p>
+                    <p className="font-medium text-gray-900">Loja Ativa</p>
+                    <p className="text-sm text-gray-500">
+                      Quando desativada, a loja não será exibida publicamente
+                    </p>
                   </div>
                   <Switch
                     checked={settings.is_active}
                     onCheckedChange={(checked) => handleChange('is_active', checked)}
                   />
+                </div>
+
+                <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                  <div className="flex items-start gap-3">
+                    <Globe className="w-5 h-5 text-yellow-600 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-yellow-800">Domínio Personalizado</p>
+                      <p className="text-sm text-yellow-700 mt-1">
+                        Em breve você poderá configurar um domínio personalizado para sua loja.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

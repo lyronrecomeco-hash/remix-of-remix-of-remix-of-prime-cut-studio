@@ -8,7 +8,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -28,11 +27,11 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 const statusConfig = {
-  new: { label: 'Novo', color: 'bg-blue-500', icon: Clock },
-  contacted: { label: 'Contatado', color: 'bg-yellow-500', icon: Phone },
-  negotiating: { label: 'Negociando', color: 'bg-purple-500', icon: MessageSquare },
-  converted: { label: 'Convertido', color: 'bg-green-500', icon: CheckCircle2 },
-  lost: { label: 'Perdido', color: 'bg-red-500', icon: XCircle },
+  new: { label: 'Novo', color: 'bg-blue-100 text-blue-700', icon: Clock },
+  contacted: { label: 'Contatado', color: 'bg-yellow-100 text-yellow-700', icon: Phone },
+  negotiating: { label: 'Negociando', color: 'bg-purple-100 text-purple-700', icon: MessageSquare },
+  converted: { label: 'Convertido', color: 'bg-green-100 text-green-700', icon: CheckCircle2 },
+  lost: { label: 'Perdido', color: 'bg-red-100 text-red-700', icon: XCircle },
 };
 
 export default function StoreLeads() {
@@ -140,8 +139,8 @@ export default function StoreLeads() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-white">Leads</h1>
-          <p className="text-slate-400 mt-1">Gerencie os interessados nos seus produtos</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Leads</h1>
+          <p className="text-gray-500 mt-1">Gerencie os interessados nos seus produtos</p>
         </div>
       </div>
 
@@ -149,6 +148,8 @@ export default function StoreLeads() {
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {Object.entries(statusConfig).map(([key, config], index) => {
           const StatusIcon = config.icon;
+          const bgColor = config.color.split(' ')[0];
+          const textColor = config.color.split(' ')[1];
           return (
             <motion.div
               key={key}
@@ -157,19 +158,19 @@ export default function StoreLeads() {
               transition={{ delay: index * 0.1 }}
             >
               <Card 
-                className={`bg-slate-800/50 border-slate-700/50 cursor-pointer hover:bg-slate-800/70 transition-colors ${
+                className={`bg-white border-gray-200 cursor-pointer hover:shadow-lg transition-all ${
                   statusFilter === key ? 'ring-2 ring-blue-500' : ''
                 }`}
                 onClick={() => setStatusFilter(statusFilter === key ? 'all' : key)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 ${config.color}/20 rounded-lg`}>
-                      <StatusIcon className={`w-5 h-5 ${config.color.replace('bg-', 'text-')}`} />
+                    <div className={`p-2 ${bgColor} rounded-lg`}>
+                      <StatusIcon className={`w-5 h-5 ${textColor}`} />
                     </div>
                     <div>
-                      <p className="text-xs text-slate-400">{config.label}</p>
-                      <p className="text-xl font-bold text-white">{leadsByStatus[key as keyof typeof leadsByStatus]}</p>
+                      <p className="text-xs text-gray-500">{config.label}</p>
+                      <p className="text-xl font-bold text-gray-900">{leadsByStatus[key as keyof typeof leadsByStatus]}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -180,23 +181,23 @@ export default function StoreLeads() {
       </div>
 
       {/* Search & Filter */}
-      <Card className="bg-slate-800/50 border-slate-700/50">
+      <Card className="bg-white border-gray-200">
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
                 placeholder="Buscar por nome, telefone ou CPF..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-slate-900/50 border-slate-600 text-white"
+                className="pl-10 bg-gray-50 border-gray-200 text-gray-900"
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px] bg-slate-900/50 border-slate-600 text-white">
+              <SelectTrigger className="w-[180px] bg-gray-50 border-gray-200 text-gray-900">
                 <SelectValue placeholder="Filtrar status" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700">
+              <SelectContent className="bg-white border-gray-200">
                 <SelectItem value="all">Todos</SelectItem>
                 {Object.entries(statusConfig).map(([key, config]) => (
                   <SelectItem key={key} value={key}>{config.label}</SelectItem>
@@ -208,29 +209,29 @@ export default function StoreLeads() {
       </Card>
 
       {/* Leads Table */}
-      <Card className="bg-slate-800/50 border-slate-700/50">
+      <Card className="bg-white border-gray-200">
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <MessageSquare className="w-5 h-5" />
+          <CardTitle className="text-gray-900 flex items-center gap-2">
+            <MessageSquare className="w-5 h-5 text-blue-600" />
             Leads ({filteredLeads?.length || 0})
           </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8">
-              <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
+              <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-slate-700">
-                    <TableHead className="text-slate-400">Lead</TableHead>
-                    <TableHead className="text-slate-400">Produto</TableHead>
-                    <TableHead className="text-slate-400">Contato</TableHead>
-                    <TableHead className="text-slate-400 text-center">Status</TableHead>
-                    <TableHead className="text-slate-400">Data</TableHead>
-                    <TableHead className="text-slate-400 text-right">Ações</TableHead>
+                  <TableRow className="border-gray-200">
+                    <TableHead className="text-gray-600">Lead</TableHead>
+                    <TableHead className="text-gray-600">Produto</TableHead>
+                    <TableHead className="text-gray-600">Contato</TableHead>
+                    <TableHead className="text-gray-600 text-center">Status</TableHead>
+                    <TableHead className="text-gray-600">Data</TableHead>
+                    <TableHead className="text-gray-600 text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -244,12 +245,12 @@ export default function StoreLeads() {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -10 }}
                           transition={{ delay: index * 0.05 }}
-                          className="border-slate-700/50"
+                          className="border-gray-100 hover:bg-gray-50"
                         >
                           <TableCell>
                             <div>
-                              <p className="text-white font-medium">{lead.name}</p>
-                              <p className="text-xs text-slate-400">{lead.cpf || '-'}</p>
+                              <p className="text-gray-900 font-medium">{lead.name}</p>
+                              <p className="text-xs text-gray-500">{lead.cpf || '-'}</p>
                             </div>
                           </TableCell>
                           <TableCell>
@@ -261,23 +262,23 @@ export default function StoreLeads() {
                                   className="w-8 h-8 rounded object-cover"
                                 />
                               ) : (
-                                <div className="w-8 h-8 bg-slate-700 rounded flex items-center justify-center">
-                                  <Package className="w-4 h-4 text-slate-500" />
+                                <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center">
+                                  <Package className="w-4 h-4 text-gray-400" />
                                 </div>
                               )}
-                              <span className="text-slate-300 text-sm">
+                              <span className="text-gray-700 text-sm">
                                 {lead.store_products?.name || '-'}
                               </span>
                             </div>
                           </TableCell>
                           <TableCell>
                             <div className="space-y-1">
-                              <div className="flex items-center gap-1 text-sm text-slate-400">
+                              <div className="flex items-center gap-1 text-sm text-gray-600">
                                 <Phone className="w-3 h-3" />
                                 {lead.phone || '-'}
                               </div>
                               {lead.address && (
-                                <div className="flex items-center gap-1 text-xs text-slate-500">
+                                <div className="flex items-center gap-1 text-xs text-gray-500">
                                   <MapPin className="w-3 h-3" />
                                   {lead.address}
                                 </div>
@@ -285,19 +286,18 @@ export default function StoreLeads() {
                             </div>
                           </TableCell>
                           <TableCell className="text-center">
-                            <Badge className={`${status.color} text-white`}>
+                            <Badge className={status.color}>
                               {status.label}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-slate-400 text-sm">
+                          <TableCell className="text-gray-600 text-sm">
                             {lead.created_at ? format(new Date(lead.created_at), 'dd/MM/yy HH:mm', { locale: ptBR }) : '-'}
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-2">
                               <Button
                                 size="sm"
-                                variant="outline"
-                                className="border-green-500/50 text-green-400 hover:bg-green-500/10"
+                                className="bg-green-600 hover:bg-green-700 text-white"
                                 onClick={() => lead.phone && openWhatsApp(lead.phone, lead.name)}
                                 disabled={!lead.phone}
                               >
@@ -306,7 +306,7 @@ export default function StoreLeads() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="border-slate-600"
+                                className="border-gray-300 text-gray-700 hover:bg-gray-100"
                                 onClick={() => {
                                   setSelectedLead(lead);
                                   setDetailsDialog(true);
@@ -325,8 +325,8 @@ export default function StoreLeads() {
 
               {filteredLeads?.length === 0 && (
                 <div className="text-center py-12">
-                  <MessageSquare className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-                  <p className="text-slate-400">Nenhum lead encontrado</p>
+                  <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">Nenhum lead encontrado</p>
                 </div>
               )}
             </div>
@@ -336,35 +336,35 @@ export default function StoreLeads() {
 
       {/* Lead Details Dialog */}
       <Dialog open={detailsDialog} onOpenChange={setDetailsDialog}>
-        <DialogContent className="bg-slate-900 border-slate-700 max-w-lg">
+        <DialogContent className="bg-white border-gray-200 max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-white">Detalhes do Lead</DialogTitle>
+            <DialogTitle className="text-gray-900">Detalhes do Lead</DialogTitle>
           </DialogHeader>
 
           {selectedLead && (
             <div className="space-y-4">
               {/* Lead Info */}
-              <div className="p-4 bg-slate-800/50 rounded-lg space-y-3">
+              <div className="p-4 bg-gray-50 rounded-lg space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-white">{selectedLead.name}</h3>
-                  <Badge className={`${statusConfig[selectedLead.status as keyof typeof statusConfig]?.color || 'bg-gray-500'} text-white`}>
+                  <h3 className="text-lg font-semibold text-gray-900">{selectedLead.name}</h3>
+                  <Badge className={statusConfig[selectedLead.status as keyof typeof statusConfig]?.color || 'bg-gray-100 text-gray-700'}>
                     {statusConfig[selectedLead.status as keyof typeof statusConfig]?.label || selectedLead.status}
                   </Badge>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <p className="text-slate-400">CPF</p>
-                    <p className="text-white">{selectedLead.cpf || '-'}</p>
+                    <p className="text-gray-500">CPF</p>
+                    <p className="text-gray-900">{selectedLead.cpf || '-'}</p>
                   </div>
                   <div>
-                    <p className="text-slate-400">Telefone</p>
-                    <p className="text-white">{selectedLead.phone || '-'}</p>
+                    <p className="text-gray-500">Telefone</p>
+                    <p className="text-gray-900">{selectedLead.phone || '-'}</p>
                   </div>
                   {selectedLead.address && (
                     <div className="col-span-2">
-                      <p className="text-slate-400">Endereço</p>
-                      <p className="text-white">{selectedLead.address}</p>
+                      <p className="text-gray-500">Endereço</p>
+                      <p className="text-gray-900">{selectedLead.address}</p>
                     </div>
                   )}
                 </div>
@@ -372,8 +372,8 @@ export default function StoreLeads() {
 
               {/* Product Interest */}
               {selectedLead.store_products && (
-                <div className="p-4 bg-slate-800/50 rounded-lg">
-                  <p className="text-sm text-slate-400 mb-2">Produto de Interesse</p>
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-blue-600 mb-2">Produto de Interesse</p>
                   <div className="flex items-center gap-3">
                     {selectedLead.store_products.images?.[0] ? (
                       <img 
@@ -382,26 +382,26 @@ export default function StoreLeads() {
                         className="w-12 h-12 rounded-lg object-cover"
                       />
                     ) : (
-                      <div className="w-12 h-12 bg-slate-700 rounded-lg flex items-center justify-center">
-                        <Package className="w-6 h-6 text-slate-500" />
+                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Package className="w-6 h-6 text-blue-400" />
                       </div>
                     )}
-                    <p className="text-white font-medium">{selectedLead.store_products.name}</p>
+                    <p className="text-gray-900 font-medium">{selectedLead.store_products.name}</p>
                   </div>
                 </div>
               )}
 
               {/* Message */}
               {selectedLead.message && (
-                <div className="p-4 bg-slate-800/50 rounded-lg">
-                  <p className="text-sm text-slate-400 mb-2">Mensagem</p>
-                  <p className="text-white">{selectedLead.message}</p>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-500 mb-2">Mensagem</p>
+                  <p className="text-gray-900">{selectedLead.message}</p>
                 </div>
               )}
 
               {/* Status Update */}
               <div className="space-y-2">
-                <Label className="text-slate-300">Atualizar Status</Label>
+                <Label className="text-gray-700">Atualizar Status</Label>
                 <Select 
                   value={selectedLead.status || 'new'}
                   onValueChange={(value) => {
@@ -409,10 +409,10 @@ export default function StoreLeads() {
                     setSelectedLead({ ...selectedLead, status: value });
                   }}
                 >
-                  <SelectTrigger className="bg-slate-800 border-slate-600 text-white">
+                  <SelectTrigger className="bg-gray-50 border-gray-200 text-gray-900">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectContent className="bg-white border-gray-200">
                     {Object.entries(statusConfig).map(([key, config]) => (
                       <SelectItem key={key} value={key}>{config.label}</SelectItem>
                     ))}
@@ -421,9 +421,9 @@ export default function StoreLeads() {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3 pt-4 border-t border-slate-700">
+              <div className="flex gap-3 pt-2">
                 <Button
-                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                   onClick={() => selectedLead.phone && openWhatsApp(selectedLead.phone, selectedLead.name)}
                   disabled={!selectedLead.phone}
                 >
@@ -432,7 +432,8 @@ export default function StoreLeads() {
                 </Button>
                 {selectedLead.status !== 'converted' && (
                   <Button
-                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                    variant="outline"
+                    className="flex-1 border-blue-300 text-blue-600 hover:bg-blue-50"
                     onClick={() => convertToCustomerMutation.mutate(selectedLead)}
                     disabled={convertToCustomerMutation.isPending}
                   >
