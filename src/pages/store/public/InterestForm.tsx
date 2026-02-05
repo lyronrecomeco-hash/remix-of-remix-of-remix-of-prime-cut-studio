@@ -104,7 +104,6 @@ export default function InterestForm() {
     e.preventDefault();
     setErrors({});
 
-    // Validate
     const cleanCPF = formData.cpf.replace(/\D/g, '');
     const cleanPhone = formData.phone.replace(/\D/g, '');
     
@@ -127,7 +126,6 @@ export default function InterestForm() {
 
     setIsSubmitting(true);
     try {
-      // Save lead to database
       const { error: leadError } = await supabase
         .from('store_leads')
         .insert({
@@ -142,7 +140,6 @@ export default function InterestForm() {
 
       if (leadError) throw leadError;
 
-      // Get store settings for WhatsApp number
       const { data: settings } = await supabase
         .from('store_settings')
         .select('whatsapp_number')
@@ -151,7 +148,6 @@ export default function InterestForm() {
 
       const whatsappNumber = settings?.whatsapp_number || '5500000000000';
       
-      // Create WhatsApp message
       const message = `*Novo Interesse em Produto*
       
 📦 *Produto:* ${product!.name}
@@ -169,7 +165,6 @@ ${formData.message ? `💬 *Mensagem:* ${formData.message}` : ''}`;
       
       setIsSuccess(true);
       
-      // Wait a bit then redirect
       setTimeout(() => {
         window.open(whatsappUrl, '_blank');
       }, 1500);
@@ -184,8 +179,8 @@ ${formData.message ? `💬 *Mensagem:* ${formData.message}` : ''}`;
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <Loader2 className="w-10 h-10 animate-spin text-blue-500" />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
       </div>
     );
   }
@@ -196,20 +191,20 @@ ${formData.message ? `💬 *Mensagem:* ${formData.message}` : ''}`;
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="text-center"
+          className="text-center bg-white rounded-2xl p-8 shadow-lg max-w-md w-full"
         >
-          <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Check className="w-10 h-10 text-emerald-400" />
+          <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Check className="w-10 h-10 text-emerald-500" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Interesse Enviado!</h1>
-          <p className="text-slate-400 mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Interesse Enviado!</h1>
+          <p className="text-gray-500 mb-6">
             Você será redirecionado para o WhatsApp do vendedor.
           </p>
-          <Button onClick={() => navigate('/loja')} variant="outline" className="border-slate-700">
+          <Button onClick={() => navigate('/loja')} variant="outline" className="border-gray-200">
             Voltar para a Loja
           </Button>
         </motion.div>
@@ -218,24 +213,24 @@ ${formData.message ? `💬 *Mensagem:* ${formData.message}` : ''}`;
   }
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-xl border-b border-slate-800">
+      <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate(`/loja/produto/${slug}`)}
-              className="text-slate-400"
+              className="text-gray-600"
             >
               <ChevronLeft className="w-6 h-6" />
             </Button>
             <Link to="/loja" className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20">
                 <Store className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-white hidden sm:block">Minha Loja</span>
+              <span className="text-xl font-bold text-gray-900 hidden sm:block">Minha Loja</span>
             </Link>
           </div>
         </div>
@@ -247,7 +242,7 @@ ${formData.message ? `💬 *Mensagem:* ${formData.message}` : ''}`;
           animate={{ opacity: 1, y: 0 }}
         >
           {/* Product Summary */}
-          <Card className="bg-slate-900/50 border-slate-700/50 mb-6">
+          <Card className="bg-white border-gray-100 mb-6">
             <CardContent className="p-4">
               <div className="flex items-center gap-4">
                 {product.image_url ? (
@@ -257,31 +252,31 @@ ${formData.message ? `💬 *Mensagem:* ${formData.message}` : ''}`;
                     className="w-20 h-20 rounded-lg object-cover"
                   />
                 ) : (
-                  <div className="w-20 h-20 rounded-lg bg-slate-800 flex items-center justify-center">
-                    <ShoppingBag className="w-8 h-8 text-slate-600" />
+                  <div className="w-20 h-20 rounded-lg bg-gray-100 flex items-center justify-center">
+                    <ShoppingBag className="w-8 h-8 text-gray-300" />
                   </div>
                 )}
                 <div>
-                  <p className="text-sm text-slate-400">{product.brand || 'Produto'}</p>
-                  <h2 className="font-semibold text-white">{product.name}</h2>
-                  <p className="text-xl font-bold text-blue-400">{formatCurrency(product.price)}</p>
+                  <p className="text-sm text-gray-500">{product.brand || 'Produto'}</p>
+                  <h2 className="font-semibold text-gray-900">{product.name}</h2>
+                  <p className="text-xl font-bold text-blue-600">{formatCurrency(product.price)}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Form */}
-          <Card className="bg-slate-900/50 border-slate-700/50">
+          <Card className="bg-white border-gray-100">
             <CardContent className="p-6">
-              <h1 className="text-xl font-bold text-white mb-2">Tenho Interesse</h1>
-              <p className="text-slate-400 mb-6">
+              <h1 className="text-xl font-bold text-gray-900 mb-2">Tenho Interesse</h1>
+              <p className="text-gray-500 mb-6">
                 Preencha seus dados e entraremos em contato pelo WhatsApp.
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-slate-500" />
+                  <Label htmlFor="name" className="flex items-center gap-2 text-gray-700">
+                    <User className="w-4 h-4 text-gray-400" />
                     Nome Completo *
                   </Label>
                   <Input
@@ -289,14 +284,14 @@ ${formData.message ? `💬 *Mensagem:* ${formData.message}` : ''}`;
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Seu nome"
-                    className="bg-slate-800/50 border-slate-700"
+                    className="bg-gray-50 border-gray-200"
                   />
-                  {errors.name && <p className="text-red-400 text-sm">{errors.name}</p>}
+                  {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="cpf" className="flex items-center gap-2">
-                    <CreditCard className="w-4 h-4 text-slate-500" />
+                  <Label htmlFor="cpf" className="flex items-center gap-2 text-gray-700">
+                    <CreditCard className="w-4 h-4 text-gray-400" />
                     CPF *
                   </Label>
                   <Input
@@ -305,14 +300,14 @@ ${formData.message ? `💬 *Mensagem:* ${formData.message}` : ''}`;
                     onChange={(e) => setFormData({ ...formData, cpf: formatCPF(e.target.value) })}
                     placeholder="000.000.000-00"
                     maxLength={14}
-                    className="bg-slate-800/50 border-slate-700"
+                    className="bg-gray-50 border-gray-200"
                   />
-                  {errors.cpf && <p className="text-red-400 text-sm">{errors.cpf}</p>}
+                  {errors.cpf && <p className="text-red-500 text-sm">{errors.cpf}</p>}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-slate-500" />
+                  <Label htmlFor="phone" className="flex items-center gap-2 text-gray-700">
+                    <Phone className="w-4 h-4 text-gray-400" />
                     Telefone/WhatsApp *
                   </Label>
                   <Input
@@ -321,14 +316,14 @@ ${formData.message ? `💬 *Mensagem:* ${formData.message}` : ''}`;
                     onChange={(e) => setFormData({ ...formData, phone: formatPhone(e.target.value) })}
                     placeholder="(00) 00000-0000"
                     maxLength={15}
-                    className="bg-slate-800/50 border-slate-700"
+                    className="bg-gray-50 border-gray-200"
                   />
-                  {errors.phone && <p className="text-red-400 text-sm">{errors.phone}</p>}
+                  {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="address" className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-slate-500" />
+                  <Label htmlFor="address" className="flex items-center gap-2 text-gray-700">
+                    <MapPin className="w-4 h-4 text-gray-400" />
                     Endereço Completo *
                   </Label>
                   <Textarea
@@ -336,19 +331,19 @@ ${formData.message ? `💬 *Mensagem:* ${formData.message}` : ''}`;
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     placeholder="Rua, número, bairro, cidade - Estado"
-                    className="bg-slate-800/50 border-slate-700"
+                    className="bg-gray-50 border-gray-200"
                   />
-                  {errors.address && <p className="text-red-400 text-sm">{errors.address}</p>}
+                  {errors.address && <p className="text-red-500 text-sm">{errors.address}</p>}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="message">Mensagem (opcional)</Label>
+                  <Label htmlFor="message" className="text-gray-700">Mensagem (opcional)</Label>
                   <Textarea
                     id="message"
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     placeholder="Alguma dúvida ou observação?"
-                    className="bg-slate-800/50 border-slate-700"
+                    className="bg-gray-50 border-gray-200"
                   />
                 </div>
 
@@ -356,7 +351,7 @@ ${formData.message ? `💬 *Mensagem:* ${formData.message}` : ''}`;
                   type="submit"
                   size="lg"
                   disabled={isSubmitting}
-                  className="w-full bg-emerald-600 hover:bg-emerald-500 h-12 gap-2"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 h-12 gap-2"
                 >
                   {isSubmitting ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -368,7 +363,7 @@ ${formData.message ? `💬 *Mensagem:* ${formData.message}` : ''}`;
                   )}
                 </Button>
 
-                <p className="text-center text-xs text-slate-500">
+                <p className="text-center text-xs text-gray-400">
                   Ao enviar, você concorda em ser contatado pelo vendedor via WhatsApp.
                 </p>
               </form>

@@ -23,8 +23,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
   PieChart,
   Pie,
   Cell
@@ -63,19 +61,16 @@ export default function StoreAdminDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      // Fetch products count
       const { count: productsCount } = await supabase
         .from('store_products')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user!.id);
 
-      // Fetch customers count
       const { count: customersCount } = await supabase
         .from('store_customers')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user!.id);
 
-      // Fetch sales
       const { data: sales } = await supabase
         .from('store_sales')
         .select('total, created_at, status')
@@ -83,19 +78,16 @@ export default function StoreAdminDashboard() {
 
       const totalRevenue = sales?.reduce((acc, sale) => acc + Number(sale.total), 0) || 0;
 
-      // Fetch pending installments
       const { count: pendingInstallments } = await supabase
         .from('store_installments')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'pending');
 
-      // Fetch overdue installments
       const { count: overdueInstallments } = await supabase
         .from('store_installments')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'overdue');
 
-      // Fetch low stock products
       const { data: lowStock } = await supabase
         .from('store_products')
         .select('id, stock_quantity, min_stock_alert')
@@ -103,14 +95,12 @@ export default function StoreAdminDashboard() {
 
       const lowStockCount = lowStock?.filter(p => p.stock_quantity <= p.min_stock_alert).length || 0;
 
-      // Fetch new leads
       const { count: newLeads } = await supabase
         .from('store_leads')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user!.id)
         .eq('status', 'new');
 
-      // Generate mock sales chart data
       const mockSalesData = [
         { name: 'Jan', vendas: 4200 },
         { name: 'Fev', vendas: 3800 },
@@ -152,33 +142,29 @@ export default function StoreAdminDashboard() {
       title: 'Produtos',
       value: stats.totalProducts,
       icon: Package,
-      color: 'from-blue-500 to-blue-600',
-      iconBg: 'bg-blue-500/10',
-      iconColor: 'text-blue-400'
+      iconBg: 'bg-blue-50',
+      iconColor: 'text-blue-600'
     },
     {
       title: 'Clientes',
       value: stats.totalCustomers,
       icon: Users,
-      color: 'from-cyan-500 to-cyan-600',
-      iconBg: 'bg-cyan-500/10',
-      iconColor: 'text-cyan-400'
+      iconBg: 'bg-cyan-50',
+      iconColor: 'text-cyan-600'
     },
     {
       title: 'Vendas',
       value: stats.totalSales,
       icon: ShoppingCart,
-      color: 'from-emerald-500 to-emerald-600',
-      iconBg: 'bg-emerald-500/10',
-      iconColor: 'text-emerald-400'
+      iconBg: 'bg-emerald-50',
+      iconColor: 'text-emerald-600'
     },
     {
       title: 'Faturamento',
       value: formatCurrency(stats.totalRevenue),
       icon: DollarSign,
-      color: 'from-amber-500 to-amber-600',
-      iconBg: 'bg-amber-500/10',
-      iconColor: 'text-amber-400'
+      iconBg: 'bg-amber-50',
+      iconColor: 'text-amber-600'
     },
   ];
 
@@ -187,29 +173,29 @@ export default function StoreAdminDashboard() {
       title: 'Parcelas Pendentes',
       value: stats.pendingInstallments,
       icon: Clock,
-      color: 'text-amber-400',
-      bg: 'bg-amber-500/10'
+      color: 'text-amber-600',
+      bg: 'bg-amber-50'
     },
     {
       title: 'Parcelas Vencidas',
       value: stats.overdueInstallments,
       icon: AlertTriangle,
-      color: 'text-red-400',
-      bg: 'bg-red-500/10'
+      color: 'text-red-600',
+      bg: 'bg-red-50'
     },
     {
       title: 'Estoque Baixo',
       value: stats.lowStockProducts,
       icon: TrendingDown,
-      color: 'text-orange-400',
-      bg: 'bg-orange-500/10'
+      color: 'text-orange-600',
+      bg: 'bg-orange-50'
     },
     {
       title: 'Novos Leads',
       value: stats.newLeads,
       icon: Eye,
-      color: 'text-blue-400',
-      bg: 'bg-blue-500/10'
+      color: 'text-blue-600',
+      bg: 'bg-blue-50'
     },
   ];
 
@@ -217,8 +203,8 @@ export default function StoreAdminDashboard() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-        <p className="text-slate-400">Visão geral do seu negócio</p>
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <p className="text-gray-500">Visão geral do seu negócio</p>
       </div>
 
       {/* Main Stats */}
@@ -230,12 +216,12 @@ export default function StoreAdminDashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
           >
-            <Card className="bg-slate-900/50 border-slate-700/50 hover:border-slate-600/50 transition-colors">
+            <Card className="bg-white border-gray-100 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-50 transition-all">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-sm text-slate-400">{stat.title}</p>
-                    <p className="text-2xl font-bold text-white mt-1">{stat.value}</p>
+                    <p className="text-sm text-gray-500">{stat.title}</p>
+                    <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
                   </div>
                   <div className={`p-3 rounded-xl ${stat.iconBg}`}>
                     <stat.icon className={`w-6 h-6 ${stat.iconColor}`} />
@@ -256,15 +242,15 @@ export default function StoreAdminDashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 + index * 0.1 }}
           >
-            <Card className="bg-slate-900/50 border-slate-700/50">
+            <Card className="bg-white border-gray-100">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div className={`p-2 rounded-lg ${alert.bg}`}>
                     <alert.icon className={`w-5 h-5 ${alert.color}`} />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-white">{alert.value}</p>
-                    <p className="text-xs text-slate-400">{alert.title}</p>
+                    <p className="text-2xl font-bold text-gray-900">{alert.value}</p>
+                    <p className="text-xs text-gray-500">{alert.title}</p>
                   </div>
                 </div>
               </CardContent>
@@ -282,10 +268,10 @@ export default function StoreAdminDashboard() {
           transition={{ delay: 0.5 }}
           className="lg:col-span-2"
         >
-          <Card className="bg-slate-900/50 border-slate-700/50">
+          <Card className="bg-white border-gray-100">
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-blue-400" />
+              <CardTitle className="text-gray-900 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-blue-600" />
                 Vendas por Mês
               </CardTitle>
             </CardHeader>
@@ -295,18 +281,19 @@ export default function StoreAdminDashboard() {
                   <AreaChart data={salesData}>
                     <defs>
                       <linearGradient id="colorVendas" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
+                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.2}/>
                         <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                    <XAxis dataKey="name" stroke="#64748b" />
-                    <YAxis stroke="#64748b" tickFormatter={(value) => `R$${value/1000}k`} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                    <XAxis dataKey="name" stroke="#9CA3AF" />
+                    <YAxis stroke="#9CA3AF" tickFormatter={(value) => `R$${value/1000}k`} />
                     <Tooltip 
                       contentStyle={{ 
-                        backgroundColor: '#1e293b', 
-                        border: '1px solid #334155',
-                        borderRadius: '8px'
+                        backgroundColor: '#fff', 
+                        border: '1px solid #E5E7EB',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                       }}
                       formatter={(value: number) => [formatCurrency(value), 'Vendas']}
                     />
@@ -331,9 +318,9 @@ export default function StoreAdminDashboard() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
         >
-          <Card className="bg-slate-900/50 border-slate-700/50">
+          <Card className="bg-white border-gray-100">
             <CardHeader>
-              <CardTitle className="text-white">Vendas por Categoria</CardTitle>
+              <CardTitle className="text-gray-900">Vendas por Categoria</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-[300px]">
@@ -354,9 +341,10 @@ export default function StoreAdminDashboard() {
                     </Pie>
                     <Tooltip 
                       contentStyle={{ 
-                        backgroundColor: '#1e293b', 
-                        border: '1px solid #334155',
-                        borderRadius: '8px'
+                        backgroundColor: '#fff', 
+                        border: '1px solid #E5E7EB',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                       }}
                       formatter={(value: number) => [`${value}%`, 'Participação']}
                     />
@@ -370,7 +358,7 @@ export default function StoreAdminDashboard() {
                       className="w-3 h-3 rounded-full" 
                       style={{ backgroundColor: COLORS[index % COLORS.length] }}
                     />
-                    <span className="text-xs text-slate-400">{entry.name}</span>
+                    <span className="text-xs text-gray-500">{entry.name}</span>
                   </div>
                 ))}
               </div>

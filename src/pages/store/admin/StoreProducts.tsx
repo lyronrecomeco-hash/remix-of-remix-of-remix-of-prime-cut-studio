@@ -296,12 +296,12 @@ export default function StoreProducts() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Produtos</h1>
-          <p className="text-slate-400">Gerencie seus produtos</p>
+          <h1 className="text-2xl font-bold text-gray-900">Produtos</h1>
+          <p className="text-gray-500">Gerencie seus produtos</p>
         </div>
         <Button
           onClick={() => handleOpenModal()}
-          className="bg-blue-600 hover:bg-blue-500 gap-2"
+          className="bg-blue-600 hover:bg-blue-700 gap-2"
         >
           <Plus className="w-4 h-4" />
           Novo Produto
@@ -310,25 +310,25 @@ export default function StoreProducts() {
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
         <Input
           placeholder="Buscar produtos..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10 bg-slate-900/50 border-slate-700 text-white"
+          className="pl-10 bg-white border-gray-200 text-gray-900"
         />
       </div>
 
       {/* Products Grid */}
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
         </div>
       ) : filteredProducts.length === 0 ? (
-        <Card className="bg-slate-900/50 border-slate-700/50">
+        <Card className="bg-white border-gray-100">
           <CardContent className="py-12 text-center">
-            <Package className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-            <p className="text-slate-400">Nenhum produto encontrado</p>
+            <Package className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500">Nenhum produto encontrado</p>
             <Button
               onClick={() => handleOpenModal()}
               variant="outline"
@@ -347,8 +347,8 @@ export default function StoreProducts() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
             >
-              <Card className="bg-slate-900/50 border-slate-700/50 hover:border-slate-600/50 transition-all group overflow-hidden">
-                <div className="aspect-square bg-slate-800/50 relative">
+              <Card className="bg-white border-gray-100 hover:border-blue-200 hover:shadow-lg transition-all group overflow-hidden">
+                <div className="aspect-square bg-gray-50 relative">
                   {product.image_url ? (
                     <img
                       src={product.image_url}
@@ -357,29 +357,29 @@ export default function StoreProducts() {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <ImageIcon className="w-12 h-12 text-slate-600" />
+                      <ImageIcon className="w-12 h-12 text-gray-300" />
                     </div>
                   )}
                   {!product.is_active && (
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                      <span className="text-slate-400 text-sm">Inativo</span>
+                    <div className="absolute inset-0 bg-gray-900/60 flex items-center justify-center">
+                      <span className="text-white text-sm">Inativo</span>
                     </div>
                   )}
                   {product.stock_quantity <= product.min_stock_alert && (
-                    <div className="absolute top-2 left-2 px-2 py-1 bg-red-500/90 text-white text-xs rounded-md">
+                    <div className="absolute top-2 left-2 px-2 py-1 bg-red-500 text-white text-xs rounded-md">
                       Estoque baixo
                     </div>
                   )}
                 </div>
                 <CardContent className="p-4">
-                  <h3 className="font-semibold text-white truncate">{product.name}</h3>
-                  <p className="text-sm text-slate-400 truncate">{product.brand || 'Sem marca'}</p>
+                  <h3 className="font-semibold text-gray-900 truncate">{product.name}</h3>
+                  <p className="text-sm text-gray-500 truncate">{product.brand || 'Sem marca'}</p>
                   <div className="flex items-center justify-between mt-3">
                     <div>
-                      <p className="text-lg font-bold text-blue-400">
+                      <p className="text-lg font-bold text-blue-600">
                         {formatCurrency(product.price)}
                       </p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-gray-400">
                         Estoque: {product.stock_quantity}
                       </p>
                     </div>
@@ -388,7 +388,7 @@ export default function StoreProducts() {
                         size="icon"
                         variant="ghost"
                         onClick={() => handleOpenModal(product)}
-                        className="h-8 w-8 text-slate-400 hover:text-white"
+                        className="h-8 w-8 text-gray-400 hover:text-gray-900"
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
@@ -399,7 +399,7 @@ export default function StoreProducts() {
                           setSelectedProduct(product);
                           setIsDeleteDialogOpen(true);
                         }}
-                        className="h-8 w-8 text-slate-400 hover:text-red-400"
+                        className="h-8 w-8 text-gray-400 hover:text-red-500"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -414,9 +414,9 @@ export default function StoreProducts() {
 
       {/* Product Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-white border-gray-100 text-gray-900 max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-gray-900">
               {selectedProduct ? 'Editar Produto' : 'Novo Produto'}
             </DialogTitle>
           </DialogHeader>
@@ -424,35 +424,35 @@ export default function StoreProducts() {
           <div className="space-y-4 mt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Nome *</Label>
+                <Label className="text-gray-700">Nome *</Label>
                 <Input
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Nome do produto"
-                  className="bg-slate-800 border-slate-700"
+                  className="bg-gray-50 border-gray-200"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Marca</Label>
+                <Label className="text-gray-700">Marca</Label>
                 <Input
                   value={formData.brand}
                   onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
                   placeholder="Ex: Samsung, LG..."
-                  className="bg-slate-800 border-slate-700"
+                  className="bg-gray-50 border-gray-200"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>Descrição</Label>
+                <Label className="text-gray-700">Descrição</Label>
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
                   onClick={handleGenerateAI}
                   disabled={isGeneratingAI}
-                  className="text-blue-400 hover:text-blue-300 gap-2"
+                  className="text-blue-600 hover:text-blue-700 gap-2"
                 >
                   {isGeneratingAI ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -466,77 +466,77 @@ export default function StoreProducts() {
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Descrição do produto..."
-                className="bg-slate-800 border-slate-700 min-h-[100px]"
+                className="bg-gray-50 border-gray-200 min-h-[100px]"
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Preço *</Label>
+                <Label className="text-gray-700">Preço *</Label>
                 <Input
                   type="number"
                   step="0.01"
                   value={formData.price}
                   onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                   placeholder="0,00"
-                  className="bg-slate-800 border-slate-700"
+                  className="bg-gray-50 border-gray-200"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Preço Original (Opcional)</Label>
+                <Label className="text-gray-700">Preço Original (Opcional)</Label>
                 <Input
                   type="number"
                   step="0.01"
                   value={formData.original_price}
                   onChange={(e) => setFormData({ ...formData, original_price: e.target.value })}
                   placeholder="0,00"
-                  className="bg-slate-800 border-slate-700"
+                  className="bg-gray-50 border-gray-200"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label>SKU</Label>
+                <Label className="text-gray-700">SKU</Label>
                 <Input
                   value={formData.sku}
                   onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                   placeholder="SKU-001"
-                  className="bg-slate-800 border-slate-700"
+                  className="bg-gray-50 border-gray-200"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Estoque</Label>
+                <Label className="text-gray-700">Estoque</Label>
                 <Input
                   type="number"
                   value={formData.stock_quantity}
                   onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
                   placeholder="0"
-                  className="bg-slate-800 border-slate-700"
+                  className="bg-gray-50 border-gray-200"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Alerta Mínimo</Label>
+                <Label className="text-gray-700">Alerta Mínimo</Label>
                 <Input
                   type="number"
                   value={formData.min_stock_alert}
                   onChange={(e) => setFormData({ ...formData, min_stock_alert: e.target.value })}
                   placeholder="5"
-                  className="bg-slate-800 border-slate-700"
+                  className="bg-gray-50 border-gray-200"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label>Categoria</Label>
+              <Label className="text-gray-700">Categoria</Label>
               <Select
                 value={formData.category_id}
                 onValueChange={(value) => setFormData({ ...formData, category_id: value })}
               >
-                <SelectTrigger className="bg-slate-800 border-slate-700">
+                <SelectTrigger className="bg-gray-50 border-gray-200">
                   <SelectValue placeholder="Selecione uma categoria" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectContent className="bg-white border-gray-200">
                   {categories.map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
@@ -547,30 +547,30 @@ export default function StoreProducts() {
             </div>
 
             <div className="space-y-2">
-              <Label>URL da Imagem</Label>
+              <Label className="text-gray-700">URL da Imagem</Label>
               <Input
                 value={formData.image_url}
                 onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
                 placeholder="https://..."
-                className="bg-slate-800 border-slate-700"
+                className="bg-gray-50 border-gray-200"
               />
             </div>
 
-            <div className="flex items-center justify-between pt-4 border-t border-slate-700">
+            <div className="flex items-center justify-between pt-4 border-t border-gray-100">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <Switch
                     checked={formData.is_active}
                     onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
                   />
-                  <Label>Ativo</Label>
+                  <Label className="text-gray-700">Ativo</Label>
                 </div>
                 <div className="flex items-center gap-2">
                   <Switch
                     checked={formData.is_featured}
                     onCheckedChange={(checked) => setFormData({ ...formData, is_featured: checked })}
                   />
-                  <Label>Destaque</Label>
+                  <Label className="text-gray-700">Destaque</Label>
                 </div>
               </div>
             </div>
@@ -579,14 +579,14 @@ export default function StoreProducts() {
               <Button
                 variant="outline"
                 onClick={() => setIsModalOpen(false)}
-                className="border-slate-700"
+                className="border-gray-200"
               >
                 Cancelar
               </Button>
               <Button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="bg-blue-600 hover:bg-blue-500"
+                className="bg-blue-600 hover:bg-blue-700"
               >
                 {isSaving ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -601,16 +601,16 @@ export default function StoreProducts() {
 
       {/* Delete Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent className="bg-slate-900 border-slate-700">
+        <AlertDialogContent className="bg-white border-gray-100">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">Excluir Produto</AlertDialogTitle>
-            <AlertDialogDescription className="text-slate-400">
+            <AlertDialogTitle className="text-gray-900">Excluir Produto</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-500">
               Tem certeza que deseja excluir "{selectedProduct?.name}"? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-slate-700">Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-500">
+            <AlertDialogCancel className="border-gray-200">Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
