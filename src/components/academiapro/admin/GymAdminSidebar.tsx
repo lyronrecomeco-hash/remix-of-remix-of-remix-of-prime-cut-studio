@@ -10,7 +10,8 @@ import {
   Menu,
   X,
   UserCheck,
-  QrCode
+  QrCode,
+  Plug
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useGymAuth } from '@/contexts/GymAuthContext';
@@ -28,6 +29,7 @@ const navItems = [
   { path: '/academiapro/admin/financeiro', icon: CreditCard, label: 'Financeiro' },
   { path: '/academiapro/admin/relatorios', icon: LayoutDashboard, label: 'Relatórios' },
   { path: '/academiapro/admin/comunicacao', icon: Settings, label: 'Comunicação' },
+  { path: '/academiapro/admin/integracoes', icon: Plug, label: 'Integrações' },
   { path: '/academiapro/admin/configuracoes', icon: Settings, label: 'Configurações' },
 ];
 

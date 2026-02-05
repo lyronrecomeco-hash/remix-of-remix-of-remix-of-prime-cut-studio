@@ -109,6 +109,7 @@ const GymAdminAnnouncements = lazy(() => import("./pages/academiapro/admin/GymAd
 const GymSettingsAppPage = lazy(() => import("./pages/academiapro/app/GymSettingsAppPage"));
 const GymNutritionPage = lazy(() => import("./pages/academiapro/app/GymNutritionPage"));
 const GymAnnouncementsPage = lazy(() => import("./pages/academiapro/app/GymAnnouncementsPage"));
+const GymAdminIntegrations = lazy(() => import("./pages/academiapro/admin/GymAdminIntegrations"));
 // QueryClient com retry logic e cache otimizado
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -389,6 +390,7 @@ const AppContent = () => {
                 <Route path="financeiro" element={<Suspense fallback={<GymPageLoader />}><GymAdminFinance /></Suspense>} />
                 <Route path="relatorios" element={<Suspense fallback={<GymPageLoader />}><GymAdminReports /></Suspense>} />
                 <Route path="comunicacao" element={<Suspense fallback={<GymPageLoader />}><GymAdminAnnouncements /></Suspense>} />
+                <Route path="integracoes" element={<Suspense fallback={<GymPageLoader />}><GymAdminIntegrations /></Suspense>} />
                 <Route path="configuracoes" element={<Suspense fallback={<GymPageLoader />}><GymAdminSettings /></Suspense>} />
               </Route>
             </Route>
