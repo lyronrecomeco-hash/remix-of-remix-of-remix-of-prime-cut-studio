@@ -12307,6 +12307,500 @@ export type Database = {
         }
         Relationships: []
       }
+      store_admin_users: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          is_active: boolean | null
+          last_login: string | null
+          name: string
+          role: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          is_active?: boolean | null
+          last_login?: string | null
+          name: string
+          role?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          last_login?: string | null
+          name?: string
+          role?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      store_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+          slug: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+          slug: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      store_customers: {
+        Row: {
+          address: string | null
+          birth_date: string | null
+          cep: string | null
+          city: string | null
+          cpf: string
+          created_at: string | null
+          credit_limit: number | null
+          credit_score: Database["public"]["Enums"]["store_credit_score"] | null
+          email: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          notes: string | null
+          phone: string | null
+          state: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          birth_date?: string | null
+          cep?: string | null
+          city?: string | null
+          cpf: string
+          created_at?: string | null
+          credit_limit?: number | null
+          credit_score?:
+            | Database["public"]["Enums"]["store_credit_score"]
+            | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          state?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          birth_date?: string | null
+          cep?: string | null
+          city?: string | null
+          cpf?: string
+          created_at?: string | null
+          credit_limit?: number | null
+          credit_score?:
+            | Database["public"]["Enums"]["store_credit_score"]
+            | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          state?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      store_installments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          customer_id: string | null
+          due_date: string
+          id: string
+          installment_number: number
+          notes: string | null
+          paid_date: string | null
+          sale_id: string
+          status: Database["public"]["Enums"]["store_installment_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          customer_id?: string | null
+          due_date: string
+          id?: string
+          installment_number: number
+          notes?: string | null
+          paid_date?: string | null
+          sale_id: string
+          status?:
+            | Database["public"]["Enums"]["store_installment_status"]
+            | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          customer_id?: string | null
+          due_date?: string
+          id?: string
+          installment_number?: number
+          notes?: string | null
+          paid_date?: string | null
+          sale_id?: string
+          status?:
+            | Database["public"]["Enums"]["store_installment_status"]
+            | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_installments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "store_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_installments_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "store_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_leads: {
+        Row: {
+          address: string | null
+          contacted_at: string | null
+          cpf: string | null
+          created_at: string | null
+          id: string
+          message: string | null
+          name: string
+          phone: string | null
+          product_id: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          contacted_at?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          name: string
+          phone?: string | null
+          product_id?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          contacted_at?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          name?: string
+          phone?: string | null
+          product_id?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_leads_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "store_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_products: {
+        Row: {
+          brand: string | null
+          category_id: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          images: string[] | null
+          is_active: boolean | null
+          is_featured: boolean | null
+          min_stock_alert: number | null
+          name: string
+          original_price: number | null
+          price: number
+          sku: string | null
+          slug: string
+          specifications: Json | null
+          stock_quantity: number | null
+          updated_at: string | null
+          user_id: string
+          views_count: number | null
+        }
+        Insert: {
+          brand?: string | null
+          category_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          images?: string[] | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          min_stock_alert?: number | null
+          name: string
+          original_price?: number | null
+          price?: number
+          sku?: string | null
+          slug: string
+          specifications?: Json | null
+          stock_quantity?: number | null
+          updated_at?: string | null
+          user_id: string
+          views_count?: number | null
+        }
+        Update: {
+          brand?: string | null
+          category_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          images?: string[] | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          min_stock_alert?: number | null
+          name?: string
+          original_price?: number | null
+          price?: number
+          sku?: string | null
+          slug?: string
+          specifications?: Json | null
+          stock_quantity?: number | null
+          updated_at?: string | null
+          user_id?: string
+          views_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "store_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_sale_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          product_id: string | null
+          product_name: string
+          product_sku: string | null
+          quantity: number
+          sale_id: string
+          total_price: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          product_id?: string | null
+          product_name: string
+          product_sku?: string | null
+          quantity?: number
+          sale_id: string
+          total_price: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          product_id?: string | null
+          product_name?: string
+          product_sku?: string | null
+          quantity?: number
+          sale_id?: string
+          total_price?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_sale_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "store_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_sale_items_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "store_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_sales: {
+        Row: {
+          created_at: string | null
+          customer_id: string | null
+          delivered_at: string | null
+          discount: number | null
+          down_payment: number | null
+          id: string
+          installments_count: number | null
+          notes: string | null
+          payment_method: string | null
+          sale_number: string
+          status: Database["public"]["Enums"]["store_sale_status"] | null
+          subtotal: number
+          total: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id?: string | null
+          delivered_at?: string | null
+          discount?: number | null
+          down_payment?: number | null
+          id?: string
+          installments_count?: number | null
+          notes?: string | null
+          payment_method?: string | null
+          sale_number: string
+          status?: Database["public"]["Enums"]["store_sale_status"] | null
+          subtotal?: number
+          total?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string | null
+          delivered_at?: string | null
+          discount?: number | null
+          down_payment?: number | null
+          id?: string
+          installments_count?: number | null
+          notes?: string | null
+          payment_method?: string | null
+          sale_number?: string
+          status?: Database["public"]["Enums"]["store_sale_status"] | null
+          subtotal?: number
+          total?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_sales_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "store_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_settings: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          primary_color: string | null
+          secondary_color: string | null
+          state: string | null
+          store_banner: string | null
+          store_description: string | null
+          store_logo: string | null
+          store_name: string
+          updated_at: string | null
+          user_id: string
+          whatsapp_number: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          state?: string | null
+          store_banner?: string | null
+          store_description?: string | null
+          store_logo?: string | null
+          store_name?: string
+          updated_at?: string | null
+          user_id: string
+          whatsapp_number: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          state?: string | null
+          store_banner?: string | null
+          store_description?: string | null
+          store_logo?: string | null
+          store_name?: string
+          updated_at?: string | null
+          user_id?: string
+          whatsapp_number?: string
+        }
+        Relationships: []
+      }
       subscription_plans: {
         Row: {
           billing_cycle: string
@@ -15347,6 +15841,7 @@ export type Database = {
         Returns: boolean
       }
       generate_payment_code: { Args: never; Returns: string }
+      generate_sale_number: { Args: never; Returns: string }
       genesis_calculate_health_score: {
         Args: { p_instance_id: string }
         Returns: number
@@ -15623,6 +16118,9 @@ export type Database = {
       pix_type: "cpf" | "cnpj" | "email" | "phone" | "random"
       proposal_status: "draft" | "sent" | "accepted" | "cancelled"
       referral_status: "pending" | "confirmed" | "cancelled" | "paid"
+      store_credit_score: "excellent" | "good" | "regular" | "bad"
+      store_installment_status: "pending" | "paid" | "overdue" | "cancelled"
+      store_sale_status: "pending" | "approved" | "delivered" | "cancelled"
       withdrawal_status: "pending" | "processing" | "completed" | "rejected"
     }
     CompositeTypes: {
@@ -15773,6 +16271,9 @@ export const Constants = {
       pix_type: ["cpf", "cnpj", "email", "phone", "random"],
       proposal_status: ["draft", "sent", "accepted", "cancelled"],
       referral_status: ["pending", "confirmed", "cancelled", "paid"],
+      store_credit_score: ["excellent", "good", "regular", "bad"],
+      store_installment_status: ["pending", "paid", "overdue", "cancelled"],
+      store_sale_status: ["pending", "approved", "delivered", "cancelled"],
       withdrawal_status: ["pending", "processing", "completed", "rejected"],
     },
   },
