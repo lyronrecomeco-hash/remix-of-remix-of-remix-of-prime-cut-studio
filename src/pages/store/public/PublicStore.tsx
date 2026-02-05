@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -9,20 +9,21 @@ import {
   ChevronLeft,
   Heart,
   Star,
-  Tag,
   Loader2,
   Menu,
   X,
   MapPin,
   Clock,
   Phone,
-  Percent,
-  Sparkles,
-  TrendingUp
+  Truck,
+  Shield,
+  CreditCard,
+  Headphones,
+  Package,
+  Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -50,102 +51,148 @@ const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 };
 
-// Hero Slider Data
 const heroSlides = [
   {
     id: 1,
-    title: 'Novidades que você vai amar',
-    subtitle: 'Confira os lançamentos da semana',
-    buttonText: 'Ver Novidades',
-    gradient: 'from-rose-500 via-pink-500 to-purple-600',
-    icon: Sparkles,
+    title: 'Novidades Incríveis',
+    subtitle: 'Descubra os lançamentos que vão transformar seu dia a dia',
+    buttonText: 'Explorar Agora',
+    bgImage: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1920&q=80',
   },
   {
     id: 2,
-    title: 'Ofertas Imperdíveis',
-    subtitle: 'Até 50% OFF em produtos selecionados',
-    buttonText: 'Aproveitar',
-    gradient: 'from-emerald-500 via-teal-500 to-cyan-600',
-    icon: Percent,
+    title: 'Ofertas Especiais',
+    subtitle: 'Até 50% de desconto em produtos selecionados',
+    buttonText: 'Ver Ofertas',
+    bgImage: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=1920&q=80',
   },
   {
     id: 3,
-    title: 'Mais Vendidos',
-    subtitle: 'Os produtos favoritos dos clientes',
-    buttonText: 'Conferir',
-    gradient: 'from-amber-500 via-orange-500 to-red-500',
-    icon: TrendingUp,
+    title: 'Qualidade Premium',
+    subtitle: 'Os melhores produtos com garantia de satisfação',
+    buttonText: 'Conhecer',
+    bgImage: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1920&q=80',
   },
 ];
 
-function ProductCard({ product, index, featured = false }: { product: Product; index: number; featured?: boolean }) {
+function ProductCard({ product, index }: { product: Product; index: number }) {
   const navigate = useNavigate();
-  const discount = product.original_price ? Math.round(((product.original_price - product.price) / product.original_price) * 100) : 0;
+  const discount = product.original_price 
+    ? Math.round(((product.original_price - product.price) / product.original_price) * 100) 
+    : 0;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
-      className="group cursor-pointer"
-      onClick={() => navigate(`/loja/produto/${product.slug}`)}
+      transition={{ delay: index * 0.05, duration: 0.4 }}
+      className="group"
     >
-      <Card className="bg-white border-0 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden rounded-2xl">
-        <div className="relative aspect-square bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
+      <div 
+        onClick={() => navigate(`/loja/produto/${product.slug}`)}
+        className="cursor-pointer bg-white rounded-2xl overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_40px_rgba(0,0,0,0.12)] transition-all duration-500 border border-gray-100/50"
+      >
+        {/* Image Container */}
+        <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
           {product.image_url ? (
             <img
               src={product.image_url}
               alt={product.name}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <ShoppingBag className="w-16 h-16 text-gray-200" />
+              <Package className="w-16 h-16 text-gray-200" />
             </div>
           )}
           
-          {/* Discount Badge */}
-          {discount > 0 && (
-            <div className="absolute top-3 left-3 px-2.5 py-1 bg-red-500 text-white text-xs font-bold rounded-full shadow-lg">
-              -{discount}%
-            </div>
-          )}
-          
-          {/* Featured Badge */}
-          {featured && (
-            <div className="absolute top-3 right-3 p-2 bg-amber-400 rounded-full shadow-lg">
-              <Star className="w-4 h-4 text-white fill-white" />
-            </div>
-          )}
-
-          {/* Hover Overlay */}
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-          
-          {/* Quick Action */}
-          <button className="absolute bottom-3 right-3 p-3 bg-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 hover:bg-blue-600 hover:text-white">
-            <Heart className="w-5 h-5" />
-          </button>
-        </div>
-        
-        <CardContent className="p-4">
-          {product.brand && (
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">{product.brand}</p>
-          )}
-          <h3 className="font-semibold text-gray-900 line-clamp-2 mb-2 group-hover:text-blue-600 transition-colors">
-            {product.name}
-          </h3>
-          <div className="flex items-end gap-2">
-            <span className="text-xl font-bold text-gray-900">{formatCurrency(product.price)}</span>
-            {product.original_price && (
-              <span className="text-sm text-gray-400 line-through">{formatCurrency(product.original_price)}</span>
+          {/* Badges */}
+          <div className="absolute top-3 left-3 flex flex-col gap-2">
+            {discount > 0 && (
+              <span className="inline-flex items-center px-2.5 py-1 bg-rose-500 text-white text-xs font-bold rounded-lg shadow-lg">
+                -{discount}%
+              </span>
+            )}
+            {product.is_featured && (
+              <span className="inline-flex items-center px-2.5 py-1 bg-amber-500 text-white text-xs font-bold rounded-lg shadow-lg">
+                <Star className="w-3 h-3 mr-1 fill-current" />
+                Top
+              </span>
             )}
           </div>
-          <p className="text-xs text-emerald-600 font-medium mt-2">
-            ou 12x de {formatCurrency(product.price / 12)}
-          </p>
-        </CardContent>
-      </Card>
+
+          {/* Wishlist Button */}
+          <button className="absolute top-3 right-3 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-rose-50 hover:text-rose-500">
+            <Heart className="w-4 h-4" />
+          </button>
+
+          {/* Quick View Overlay */}
+          <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+            <Button 
+              size="sm" 
+              className="w-full bg-white text-gray-900 hover:bg-gray-100 font-semibold rounded-xl h-10"
+            >
+              Ver Detalhes
+            </Button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-4">
+          {product.brand && (
+            <p className="text-[11px] font-semibold text-blue-600 uppercase tracking-wider mb-1">
+              {product.brand}
+            </p>
+          )}
+          <h3 className="font-semibold text-gray-900 text-sm leading-snug line-clamp-2 mb-3 min-h-[2.5rem] group-hover:text-blue-600 transition-colors">
+            {product.name}
+          </h3>
+          
+          <div className="space-y-1">
+            {product.original_price && (
+              <p className="text-xs text-gray-400 line-through">
+                {formatCurrency(product.original_price)}
+              </p>
+            )}
+            <p className="text-xl font-bold text-gray-900">
+              {formatCurrency(product.price)}
+            </p>
+            <p className="text-[11px] text-gray-500">
+              ou <span className="font-semibold text-emerald-600">12x de {formatCurrency(product.price / 12)}</span>
+            </p>
+          </div>
+        </div>
+      </div>
     </motion.div>
+  );
+}
+
+function CategoryCard({ category, index, onClick }: { category: Category; index: number; onClick: () => void }) {
+  return (
+    <motion.button
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: index * 0.05 }}
+      onClick={onClick}
+      className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 aspect-[4/3] p-5 text-left shadow-lg hover:shadow-2xl transition-all duration-500"
+    >
+      {category.image_url && (
+        <img 
+          src={category.image_url} 
+          alt={category.name}
+          className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-50 group-hover:scale-110 transition-all duration-700"
+        />
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+      <div className="relative z-10 h-full flex flex-col justify-end">
+        <h3 className="text-white font-bold text-lg leading-tight mb-1 group-hover:translate-x-1 transition-transform">
+          {category.name}
+        </h3>
+        <p className="text-white/60 text-xs flex items-center gap-1 group-hover:text-white/80 transition-colors">
+          Explorar <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+        </p>
+      </div>
+    </motion.button>
   );
 }
 
@@ -160,11 +207,10 @@ export default function PublicStore() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // Auto-slide
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
-    }, 5000);
+    }, 6000);
     return () => clearInterval(timer);
   }, []);
 
@@ -183,20 +229,12 @@ export default function PublicStore() {
 
   const fetchData = async () => {
     try {
-      const { data: categoriesData } = await supabase
-        .from('store_categories')
-        .select('*')
-        .eq('is_active', true)
-        .order('display_order');
-
-      const { data: productsData } = await supabase
-        .from('store_products')
-        .select('*')
-        .eq('is_active', true)
-        .order('is_featured', { ascending: false });
-
-      setCategories(categoriesData || []);
-      setProducts(productsData || []);
+      const [categoriesRes, productsRes] = await Promise.all([
+        supabase.from('store_categories').select('*').eq('is_active', true).order('display_order'),
+        supabase.from('store_products').select('*').eq('is_active', true).order('is_featured', { ascending: false })
+      ]);
+      setCategories(categoriesRes.data || []);
+      setProducts(productsRes.data || []);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -212,122 +250,112 @@ export default function PublicStore() {
   });
 
   const featuredProducts = filteredProducts.filter(p => p.is_featured);
-  const regularProducts = filteredProducts.filter(p => !p.is_featured);
-
-  const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
-  const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-500 font-medium">Carregando loja...</p>
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center animate-pulse">
+            <Store className="w-8 h-8 text-white" />
+          </div>
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600 mx-auto" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#FAFAFA]">
+      {/* Top Bar */}
+      <div className="bg-slate-900 text-white py-2 text-center text-xs font-medium tracking-wide">
+        <div className="flex items-center justify-center gap-2">
+          <Truck className="w-4 h-4" />
+          <span>Frete grátis para compras acima de R$ 299</span>
+          <span className="mx-2">•</span>
+          <span className="hidden sm:inline">Parcele em até 12x sem juros</span>
+        </div>
+      </div>
+
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-lg border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4">
+      <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-16 gap-4">
-            {/* Mobile Menu */}
+            {/* Mobile Menu Toggle */}
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden text-gray-600"
+              className="lg:hidden -ml-2"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </Button>
 
             {/* Logo */}
-            <Link to="/loja" className="flex items-center gap-3 shrink-0">
-              <div className="w-11 h-11 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/25">
-                <Store className="w-6 h-6 text-white" />
+            <Link to="/loja" className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20">
+                <Store className="w-5 h-5 text-white" />
               </div>
               <div className="hidden sm:block">
-                <span className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                  Minha Loja
-                </span>
-                <p className="text-[10px] text-gray-400 font-medium -mt-0.5">Os melhores produtos</p>
+                <h1 className="text-lg font-bold text-gray-900 leading-none">Minha Loja</h1>
+                <p className="text-[10px] text-gray-400 font-medium">Os melhores produtos</p>
               </div>
             </Link>
 
-            {/* Search */}
-            <div className="hidden md:flex flex-1 max-w-xl">
+            {/* Desktop Search */}
+            <div className="hidden md:flex flex-1 max-w-lg mx-8">
               <div className="relative w-full">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
                   placeholder="O que você está procurando?"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-5 pr-14 h-12 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500/20 rounded-full text-gray-900 placeholder:text-gray-400 shadow-sm"
+                  className="pl-11 pr-4 h-11 bg-gray-50 border-gray-200 rounded-xl text-sm focus:bg-white focus:border-blue-300 focus:ring-blue-100 transition-all"
                 />
-                <Button 
-                  size="icon" 
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-blue-600 hover:bg-blue-700 shadow-md"
-                >
-                  <Search className="w-4 h-4" />
-                </Button>
               </div>
             </div>
 
+            {/* Desktop Nav */}
+            <nav className="hidden lg:flex items-center gap-6">
+              <button
+                onClick={() => { setSelectedCategory(null); navigate('/loja'); }}
+                className={`text-sm font-medium transition-colors ${!selectedCategory ? 'text-blue-600' : 'text-gray-600 hover:text-gray-900'}`}
+              >
+                Início
+              </button>
+              {categories.slice(0, 4).map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => { setSelectedCategory(cat.id); navigate(`/loja/categoria/${cat.slug}`); }}
+                  className={`text-sm font-medium transition-colors ${selectedCategory === cat.id ? 'text-blue-600' : 'text-gray-600 hover:text-gray-900'}`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </nav>
+
             {/* Actions */}
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-full">
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" className="text-gray-500 hover:text-rose-500 rounded-xl">
                 <Heart className="w-5 h-5" />
               </Button>
-              <Button variant="ghost" size="icon" className="text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full relative">
+              <Button variant="ghost" size="icon" className="text-gray-500 hover:text-blue-600 rounded-xl relative">
                 <ShoppingBag className="w-5 h-5" />
-                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-blue-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                  0
-                </span>
               </Button>
             </div>
           </div>
 
           {/* Mobile Search */}
-          <div className="md:hidden pb-4">
+          <div className="md:hidden pb-3">
             <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
                 placeholder="Buscar produtos..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-12 h-12 bg-gray-50 border-0 rounded-full text-gray-900 placeholder:text-gray-400"
+                className="pl-11 h-11 bg-gray-50 border-gray-200 rounded-xl text-sm"
               />
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             </div>
           </div>
-
-          {/* Categories */}
-          <nav className="hidden lg:flex items-center gap-1 py-3 overflow-x-auto scrollbar-hide">
-            <button
-              onClick={() => { setSelectedCategory(null); navigate('/loja'); }}
-              className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
-                selectedCategory === null
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`}
-            >
-              Todos
-            </button>
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => { setSelectedCategory(category.id); navigate(`/loja/categoria/${category.slug}`); }}
-                className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
-                  selectedCategory === category.id
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                {category.name}
-              </button>
-            ))}
-          </nav>
         </div>
       </header>
 
@@ -335,30 +363,25 @@ export default function PublicStore() {
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="lg:hidden fixed inset-x-0 top-[72px] bg-white border-b shadow-xl z-40 max-h-[60vh] overflow-y-auto"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="lg:hidden bg-white border-b shadow-lg overflow-hidden"
           >
-            <div className="p-4 space-y-2">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-2">Categorias</p>
+            <div className="p-4 space-y-1">
               <button
                 onClick={() => { setSelectedCategory(null); navigate('/loja'); setMobileMenuOpen(false); }}
-                className={`w-full text-left px-4 py-3 rounded-xl transition-all font-medium ${
-                  selectedCategory === null ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-100'
-                }`}
+                className={`w-full text-left px-4 py-3 rounded-xl font-medium transition-all ${!selectedCategory ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'}`}
               >
                 Todos os Produtos
               </button>
-              {categories.map((category) => (
+              {categories.map((cat) => (
                 <button
-                  key={category.id}
-                  onClick={() => { setSelectedCategory(category.id); navigate(`/loja/categoria/${category.slug}`); setMobileMenuOpen(false); }}
-                  className={`w-full text-left px-4 py-3 rounded-xl transition-all font-medium ${
-                    selectedCategory === category.id ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-100'
-                  }`}
+                  key={cat.id}
+                  onClick={() => { setSelectedCategory(cat.id); navigate(`/loja/categoria/${cat.slug}`); setMobileMenuOpen(false); }}
+                  className={`w-full text-left px-4 py-3 rounded-xl font-medium transition-all ${selectedCategory === cat.id ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'}`}
                 >
-                  {category.name}
+                  {cat.name}
                 </button>
               ))}
             </div>
@@ -366,216 +389,246 @@ export default function PublicStore() {
         )}
       </AnimatePresence>
 
-      <main className="max-w-7xl mx-auto px-4 py-6">
+      <main>
         {/* Hero Slider */}
         {!searchTerm && !selectedCategory && (
-          <section className="mb-10">
-            <div className="relative overflow-hidden rounded-3xl h-[280px] md:h-[380px]">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentSlide}
-                  initial={{ opacity: 0, x: 100 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -100 }}
-                  transition={{ duration: 0.5 }}
-                  className={`absolute inset-0 bg-gradient-to-br ${heroSlides[currentSlide].gradient} p-8 md:p-12 flex items-center`}
-                >
-                  <div className="relative z-10 max-w-lg">
+          <section className="relative h-[420px] md:h-[520px] overflow-hidden">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentSlide}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.8 }}
+                className="absolute inset-0"
+              >
+                <img
+                  src={heroSlides[currentSlide].bgImage}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
+                
+                <div className="absolute inset-0 flex items-center">
+                  <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full">
                     <motion.div
-                      initial={{ opacity: 0, y: 20 }}
+                      initial={{ opacity: 0, y: 40 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.2 }}
+                      transition={{ delay: 0.3, duration: 0.6 }}
+                      className="max-w-xl"
                     >
-                      <Badge className="mb-4 bg-white/20 text-white border-0 backdrop-blur-sm px-4 py-1.5">
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Destaque
+                      <Badge className="mb-4 bg-white/10 text-white border-white/20 backdrop-blur-sm">
+                        <Zap className="w-3 h-3 mr-1" />
+                        Novidade
                       </Badge>
-                    </motion.div>
-                    <motion.h1
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3 }}
-                      className="text-3xl md:text-5xl font-bold text-white mb-4 leading-tight"
-                    >
-                      {heroSlides[currentSlide].title}
-                    </motion.h1>
-                    <motion.p
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 }}
-                      className="text-white/90 text-lg mb-6"
-                    >
-                      {heroSlides[currentSlide].subtitle}
-                    </motion.p>
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.5 }}
-                    >
-                      <Button className="bg-white text-gray-900 hover:bg-gray-100 font-semibold px-8 py-6 rounded-full shadow-lg">
+                      <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight">
+                        {heroSlides[currentSlide].title}
+                      </h2>
+                      <p className="text-lg text-white/80 mb-8 max-w-md">
+                        {heroSlides[currentSlide].subtitle}
+                      </p>
+                      <Button 
+                        size="lg" 
+                        className="bg-white text-gray-900 hover:bg-gray-100 font-semibold px-8 rounded-xl shadow-2xl"
+                      >
                         {heroSlides[currentSlide].buttonText}
                         <ChevronRight className="w-5 h-5 ml-2" />
                       </Button>
                     </motion.div>
                   </div>
-                  
-                  {/* Decorative Elements */}
-                  <div className="absolute right-0 bottom-0 w-1/2 h-full opacity-20">
-                    <div className="absolute right-10 top-1/2 -translate-y-1/2 w-64 h-64 bg-white rounded-full blur-3xl" />
+                </div>
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Slider Controls */}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3">
+              {heroSlides.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentSlide(idx)}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentSlide ? 'w-8 bg-white' : 'w-3 bg-white/40 hover:bg-white/60'}`}
+                />
+              ))}
+            </div>
+
+            <button
+              onClick={() => setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length)}
+              className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <button
+              onClick={() => setCurrentSlide((prev) => (prev + 1) % heroSlides.length)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          </section>
+        )}
+
+        {/* Trust Badges */}
+        {!searchTerm && !selectedCategory && (
+          <section className="bg-white border-y border-gray-100">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {[
+                  { icon: Truck, title: 'Entrega Rápida', desc: 'Para todo o Brasil' },
+                  { icon: Shield, title: 'Compra Segura', desc: '100% protegido' },
+                  { icon: CreditCard, title: 'Parcele em 12x', desc: 'Sem juros' },
+                  { icon: Headphones, title: 'Suporte 24h', desc: 'Sempre disponível' },
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                      <item.icon className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 text-sm">{item.title}</p>
+                      <p className="text-xs text-gray-500">{item.desc}</p>
+                    </div>
                   </div>
-                </motion.div>
-              </AnimatePresence>
-
-              {/* Slider Controls */}
-              <button
-                onClick={prevSlide}
-                className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full text-white transition-all"
-              >
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-              <button
-                onClick={nextSlide}
-                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full text-white transition-all"
-              >
-                <ChevronRight className="w-6 h-6" />
-              </button>
-
-              {/* Dots */}
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
-                {heroSlides.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentSlide(index)}
-                    className={`h-2 rounded-full transition-all ${
-                      index === currentSlide ? 'w-8 bg-white' : 'w-2 bg-white/50'
-                    }`}
-                  />
                 ))}
               </div>
             </div>
           </section>
         )}
 
-        {/* Categories Grid */}
-        {!searchTerm && categories.length > 0 && !selectedCategory && (
-          <section className="mb-10">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Categorias</h2>
-              <Button variant="ghost" className="text-blue-600 hover:text-blue-700">
-                Ver todas <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
-            </div>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
-              {categories.slice(0, 6).map((category, index) => (
-                <motion.button
-                  key={category.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.05 }}
-                  onClick={() => { setSelectedCategory(category.id); navigate(`/loja/categoria/${category.slug}`); }}
-                  className="group p-4 bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all text-center"
-                >
-                  <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center group-hover:from-blue-100 group-hover:to-indigo-100 transition-colors">
-                    <Tag className="w-7 h-7 text-blue-600" />
-                  </div>
-                  <p className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors line-clamp-1">
-                    {category.name}
-                  </p>
-                </motion.button>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Featured Products */}
-        {featuredProducts.length > 0 && !searchTerm && (
-          <section className="mb-10">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-100 rounded-xl">
-                  <Star className="w-6 h-6 text-amber-500 fill-amber-500" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+          {/* Categories */}
+          {!searchTerm && categories.length > 0 && !selectedCategory && (
+            <section className="mb-14">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Categorias</h2>
+                  <p className="text-sm text-gray-500 mt-1">Explore por categoria</p>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900">Destaques</h2>
               </div>
-              <Button variant="ghost" className="text-blue-600 hover:text-blue-700">
-                Ver todos <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-              {featuredProducts.slice(0, 4).map((product, index) => (
-                <ProductCard key={product.id} product={product} index={index} featured />
-              ))}
-            </div>
-          </section>
-        )}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {categories.slice(0, 4).map((category, index) => (
+                  <CategoryCard
+                    key={category.id}
+                    category={category}
+                    index={index}
+                    onClick={() => { setSelectedCategory(category.id); navigate(`/loja/categoria/${category.slug}`); }}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
 
-        {/* All Products */}
-        <section>
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                {selectedCategory
-                  ? categories.find(c => c.id === selectedCategory)?.name
-                  : searchTerm
-                  ? `Resultados para "${searchTerm}"`
-                  : 'Todos os Produtos'
-                }
-              </h2>
-              <p className="text-sm text-gray-500 mt-1">
-                {filteredProducts.length} produto(s) encontrado(s)
-              </p>
-            </div>
-          </div>
+          {/* Featured Products */}
+          {featuredProducts.length > 0 && !searchTerm && !selectedCategory && (
+            <section className="mb-14">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+                    <h2 className="text-2xl font-bold text-gray-900">Destaques</h2>
+                  </div>
+                  <p className="text-sm text-gray-500">Os produtos mais amados pelos clientes</p>
+                </div>
+                <Button variant="ghost" className="text-blue-600 hover:text-blue-700 font-semibold">
+                  Ver todos <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                {featuredProducts.slice(0, 4).map((product, index) => (
+                  <ProductCard key={product.id} product={product} index={index} />
+                ))}
+              </div>
+            </section>
+          )}
 
-          {filteredProducts.length === 0 ? (
-            <Card className="bg-white border-0 shadow-sm">
-              <CardContent className="py-20 text-center">
-                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center">
-                  <ShoppingBag className="w-12 h-12 text-gray-300" />
+          {/* All Products */}
+          <section>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {selectedCategory
+                    ? categories.find(c => c.id === selectedCategory)?.name
+                    : searchTerm
+                    ? `Resultados para "${searchTerm}"`
+                    : 'Todos os Produtos'
+                  }
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  {filteredProducts.length} produto{filteredProducts.length !== 1 ? 's' : ''} encontrado{filteredProducts.length !== 1 ? 's' : ''}
+                </p>
+              </div>
+              {selectedCategory && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => { setSelectedCategory(null); navigate('/loja'); }}
+                  className="text-sm"
+                >
+                  Limpar filtro
+                </Button>
+              )}
+            </div>
+
+            {filteredProducts.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-100 p-16 text-center">
+                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center">
+                  <ShoppingBag className="w-10 h-10 text-gray-300" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">Nenhum produto encontrado</h3>
-                <p className="text-gray-500 mb-6">Tente buscar por outro termo ou explore nossas categorias.</p>
+                <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                  Não encontramos produtos com esses critérios. Tente buscar por outro termo ou explore nossas categorias.
+                </p>
                 <Button onClick={() => { setSearchTerm(''); setSelectedCategory(null); navigate('/loja'); }}>
                   Ver todos os produtos
                 </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-              {(searchTerm ? filteredProducts : regularProducts).map((product, index) => (
-                <ProductCard key={product.id} product={product} index={index} />
-              ))}
-            </div>
-          )}
-        </section>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+                {filteredProducts.map((product, index) => (
+                  <ProductCard key={product.id} product={product} index={index} />
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-100 mt-16">
-        <div className="max-w-7xl mx-auto px-4 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="md:col-span-2">
+      <footer className="bg-slate-900 text-white mt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          {/* Main Footer */}
+          <div className="py-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="lg:col-span-1">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/25">
+                <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center">
                   <Store className="w-6 h-6 text-white" />
                 </div>
-                <span className="text-2xl font-bold text-gray-900">Minha Loja</span>
+                <span className="text-xl font-bold">Minha Loja</span>
               </div>
-              <p className="text-gray-500 max-w-md">
-                Sua loja virtual com os melhores produtos e preços do mercado. Qualidade garantida e atendimento personalizado.
+              <p className="text-slate-400 text-sm leading-relaxed">
+                Sua loja online de confiança. Qualidade, preços justos e atendimento que você merece.
               </p>
             </div>
+
             <div>
-              <h4 className="font-semibold text-gray-900 mb-4">Links Úteis</h4>
-              <ul className="space-y-3 text-gray-500">
-                <li><a href="#" className="hover:text-blue-600 transition-colors">Sobre nós</a></li>
-                <li><a href="#" className="hover:text-blue-600 transition-colors">Política de Privacidade</a></li>
-                <li><a href="#" className="hover:text-blue-600 transition-colors">Termos de Uso</a></li>
+              <h4 className="font-semibold mb-4 text-white">Institucional</h4>
+              <ul className="space-y-3 text-sm text-slate-400">
+                <li><a href="#" className="hover:text-white transition-colors">Sobre nós</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Política de Privacidade</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Termos de Uso</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Trabalhe Conosco</a></li>
               </ul>
             </div>
+
             <div>
-              <h4 className="font-semibold text-gray-900 mb-4">Contato</h4>
-              <ul className="space-y-3 text-gray-500">
+              <h4 className="font-semibold mb-4 text-white">Ajuda</h4>
+              <ul className="space-y-3 text-sm text-slate-400">
+                <li><a href="#" className="hover:text-white transition-colors">Central de Ajuda</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Trocas e Devoluções</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Formas de Pagamento</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Rastrear Pedido</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-4 text-white">Contato</h4>
+              <ul className="space-y-3 text-sm text-slate-400">
                 <li className="flex items-center gap-2">
                   <Phone className="w-4 h-4" />
                   (00) 00000-0000
@@ -591,7 +644,9 @@ export default function PublicStore() {
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-100 mt-8 pt-8 text-center text-sm text-gray-400">
+
+          {/* Copyright */}
+          <div className="border-t border-slate-800 py-6 text-center text-sm text-slate-500">
             © {new Date().getFullYear()} Minha Loja. Todos os direitos reservados.
           </div>
         </div>
