@@ -190,12 +190,12 @@ export default function StoreCategories() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Categorias</h1>
-          <p className="text-slate-400">Organize seus produtos por categorias</p>
+          <h1 className="text-2xl font-bold text-gray-900">Categorias</h1>
+          <p className="text-gray-500">Organize seus produtos por categorias</p>
         </div>
         <Button
           onClick={() => handleOpenModal()}
-          className="bg-blue-600 hover:bg-blue-500 gap-2"
+          className="bg-blue-600 hover:bg-blue-700 gap-2"
         >
           <Plus className="w-4 h-4" />
           Nova Categoria
@@ -204,25 +204,25 @@ export default function StoreCategories() {
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
         <Input
           placeholder="Buscar categorias..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10 bg-slate-900/50 border-slate-700 text-white"
+          className="pl-10 bg-white border-gray-200 text-gray-900"
         />
       </div>
 
       {/* Categories List */}
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
         </div>
       ) : filteredCategories.length === 0 ? (
-        <Card className="bg-slate-900/50 border-slate-700/50">
+        <Card className="bg-white border-gray-100">
           <CardContent className="py-12 text-center">
-            <FolderTree className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-            <p className="text-slate-400">Nenhuma categoria encontrada</p>
+            <FolderTree className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500">Nenhuma categoria encontrada</p>
             <Button
               onClick={() => handleOpenModal()}
               variant="outline"
@@ -241,10 +241,10 @@ export default function StoreCategories() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
             >
-              <Card className="bg-slate-900/50 border-slate-700/50 hover:border-slate-600/50 transition-all">
+              <Card className="bg-white border-gray-100 hover:border-blue-200 hover:shadow-lg transition-all">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-4">
-                    <div className="text-slate-600 cursor-grab">
+                    <div className="text-gray-300 cursor-grab">
                       <GripVertical className="w-5 h-5" />
                     </div>
                     
@@ -255,24 +255,24 @@ export default function StoreCategories() {
                         className="w-16 h-16 rounded-lg object-cover"
                       />
                     ) : (
-                      <div className="w-16 h-16 rounded-lg bg-slate-800 flex items-center justify-center">
-                        <FolderTree className="w-6 h-6 text-slate-600" />
+                      <div className="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center">
+                        <FolderTree className="w-6 h-6 text-gray-400" />
                       </div>
                     )}
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-white truncate">{category.name}</h3>
+                        <h3 className="font-semibold text-gray-900 truncate">{category.name}</h3>
                         {!category.is_active && (
-                          <span className="px-2 py-0.5 bg-slate-700 text-slate-400 text-xs rounded">
+                          <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs rounded">
                             Inativo
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-slate-400 truncate">
+                      <p className="text-sm text-gray-500 truncate">
                         {category.description || 'Sem descrição'}
                       </p>
-                      <p className="text-xs text-slate-500 mt-1">
+                      <p className="text-xs text-gray-400 mt-1">
                         Slug: {category.slug}
                       </p>
                     </div>
@@ -282,7 +282,7 @@ export default function StoreCategories() {
                         size="icon"
                         variant="ghost"
                         onClick={() => handleOpenModal(category)}
-                        className="text-slate-400 hover:text-white"
+                        className="text-gray-400 hover:text-gray-900"
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
@@ -293,7 +293,7 @@ export default function StoreCategories() {
                           setSelectedCategory(category);
                           setIsDeleteDialogOpen(true);
                         }}
-                        className="text-slate-400 hover:text-red-400"
+                        className="text-gray-400 hover:text-red-500"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -308,41 +308,41 @@ export default function StoreCategories() {
 
       {/* Category Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="bg-slate-900 border-slate-700 text-white">
+        <DialogContent className="bg-white border-gray-100 text-gray-900">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-gray-900">
               {selectedCategory ? 'Editar Categoria' : 'Nova Categoria'}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 mt-4">
             <div className="space-y-2">
-              <Label>Nome *</Label>
+              <Label className="text-gray-700">Nome *</Label>
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Nome da categoria"
-                className="bg-slate-800 border-slate-700"
+                className="bg-gray-50 border-gray-200"
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Descrição</Label>
+              <Label className="text-gray-700">Descrição</Label>
               <Textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Descrição da categoria..."
-                className="bg-slate-800 border-slate-700"
+                className="bg-gray-50 border-gray-200"
               />
             </div>
 
             <div className="space-y-2">
-              <Label>URL da Imagem</Label>
+              <Label className="text-gray-700">URL da Imagem</Label>
               <Input
                 value={formData.image_url}
                 onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
                 placeholder="https://..."
-                className="bg-slate-800 border-slate-700"
+                className="bg-gray-50 border-gray-200"
               />
             </div>
 
@@ -351,21 +351,21 @@ export default function StoreCategories() {
                 checked={formData.is_active}
                 onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
               />
-              <Label>Categoria ativa</Label>
+              <Label className="text-gray-700">Categoria ativa</Label>
             </div>
 
             <div className="flex gap-3 justify-end pt-4">
               <Button
                 variant="outline"
                 onClick={() => setIsModalOpen(false)}
-                className="border-slate-700"
+                className="border-gray-200"
               >
                 Cancelar
               </Button>
               <Button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="bg-blue-600 hover:bg-blue-500"
+                className="bg-blue-600 hover:bg-blue-700"
               >
                 {isSaving ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -380,16 +380,16 @@ export default function StoreCategories() {
 
       {/* Delete Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent className="bg-slate-900 border-slate-700">
+        <AlertDialogContent className="bg-white border-gray-100">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">Excluir Categoria</AlertDialogTitle>
-            <AlertDialogDescription className="text-slate-400">
+            <AlertDialogTitle className="text-gray-900">Excluir Categoria</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-500">
               Tem certeza que deseja excluir "{selectedCategory?.name}"? Os produtos desta categoria ficarão sem categoria.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-slate-700">Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-500">
+            <AlertDialogCancel className="border-gray-200">Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>

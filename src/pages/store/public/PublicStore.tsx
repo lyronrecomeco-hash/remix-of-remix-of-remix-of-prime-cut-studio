@@ -1,20 +1,24 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Store,
   Search,
   ShoppingBag,
   ChevronRight,
+  ChevronLeft,
   Heart,
   Star,
   Tag,
   Loader2,
   Menu,
   X,
-  Grid3X3,
-  List,
-  SlidersHorizontal
+  MapPin,
+  Clock,
+  Phone,
+  Percent,
+  Sparkles,
+  TrendingUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,6 +50,105 @@ const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 };
 
+// Hero Slider Data
+const heroSlides = [
+  {
+    id: 1,
+    title: 'Novidades que você vai amar',
+    subtitle: 'Confira os lançamentos da semana',
+    buttonText: 'Ver Novidades',
+    gradient: 'from-rose-500 via-pink-500 to-purple-600',
+    icon: Sparkles,
+  },
+  {
+    id: 2,
+    title: 'Ofertas Imperdíveis',
+    subtitle: 'Até 50% OFF em produtos selecionados',
+    buttonText: 'Aproveitar',
+    gradient: 'from-emerald-500 via-teal-500 to-cyan-600',
+    icon: Percent,
+  },
+  {
+    id: 3,
+    title: 'Mais Vendidos',
+    subtitle: 'Os produtos favoritos dos clientes',
+    buttonText: 'Conferir',
+    gradient: 'from-amber-500 via-orange-500 to-red-500',
+    icon: TrendingUp,
+  },
+];
+
+function ProductCard({ product, index, featured = false }: { product: Product; index: number; featured?: boolean }) {
+  const navigate = useNavigate();
+  const discount = product.original_price ? Math.round(((product.original_price - product.price) / product.original_price) * 100) : 0;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05 }}
+      className="group cursor-pointer"
+      onClick={() => navigate(`/loja/produto/${product.slug}`)}
+    >
+      <Card className="bg-white border-0 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden rounded-2xl">
+        <div className="relative aspect-square bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
+          {product.image_url ? (
+            <img
+              src={product.image_url}
+              alt={product.name}
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <ShoppingBag className="w-16 h-16 text-gray-200" />
+            </div>
+          )}
+          
+          {/* Discount Badge */}
+          {discount > 0 && (
+            <div className="absolute top-3 left-3 px-2.5 py-1 bg-red-500 text-white text-xs font-bold rounded-full shadow-lg">
+              -{discount}%
+            </div>
+          )}
+          
+          {/* Featured Badge */}
+          {featured && (
+            <div className="absolute top-3 right-3 p-2 bg-amber-400 rounded-full shadow-lg">
+              <Star className="w-4 h-4 text-white fill-white" />
+            </div>
+          )}
+
+          {/* Hover Overlay */}
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+          
+          {/* Quick Action */}
+          <button className="absolute bottom-3 right-3 p-3 bg-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 hover:bg-blue-600 hover:text-white">
+            <Heart className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <CardContent className="p-4">
+          {product.brand && (
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">{product.brand}</p>
+          )}
+          <h3 className="font-semibold text-gray-900 line-clamp-2 mb-2 group-hover:text-blue-600 transition-colors">
+            {product.name}
+          </h3>
+          <div className="flex items-end gap-2">
+            <span className="text-xl font-bold text-gray-900">{formatCurrency(product.price)}</span>
+            {product.original_price && (
+              <span className="text-sm text-gray-400 line-through">{formatCurrency(product.original_price)}</span>
+            )}
+          </div>
+          <p className="text-xs text-emerald-600 font-medium mt-2">
+            ou 12x de {formatCurrency(product.price / 12)}
+          </p>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
+
 export default function PublicStore() {
   const { categorySlug } = useParams();
   const navigate = useNavigate();
@@ -55,6 +158,15 @@ export default function PublicStore() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Auto-slide
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -102,12 +214,15 @@ export default function PublicStore() {
   const featuredProducts = filteredProducts.filter(p => p.is_featured);
   const regularProducts = filteredProducts.filter(p => !p.is_featured);
 
+  const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+  const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-500">Carregando...</p>
+          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-500 font-medium">Carregando loja...</p>
         </div>
       </div>
     );
@@ -115,17 +230,11 @@ export default function PublicStore() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top Banner */}
-      <div className="bg-blue-600 text-white text-center py-2 text-sm font-medium">
-        🚚 Frete Grátis acima de R$ 199 | Parcele em até 12x sem juros
-      </div>
-
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-100">
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-lg border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4">
-          {/* Main Header */}
           <div className="flex items-center justify-between h-16 gap-4">
-            {/* Mobile Menu Button */}
+            {/* Mobile Menu */}
             <Button
               variant="ghost"
               size="icon"
@@ -136,188 +245,243 @@ export default function PublicStore() {
             </Button>
 
             {/* Logo */}
-            <Link to="/loja" className="flex items-center gap-2 shrink-0">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20">
-                <Store className="w-5 h-5 text-white" />
+            <Link to="/loja" className="flex items-center gap-3 shrink-0">
+              <div className="w-11 h-11 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/25">
+                <Store className="w-6 h-6 text-white" />
               </div>
               <div className="hidden sm:block">
-                <span className="text-xl font-bold text-gray-900">Minha Loja</span>
-                <p className="text-[10px] text-gray-500 -mt-1">Sua vitrine virtual</p>
+                <span className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                  Minha Loja
+                </span>
+                <p className="text-[10px] text-gray-400 font-medium -mt-0.5">Os melhores produtos</p>
               </div>
             </Link>
 
-            {/* Search Bar - Desktop */}
-            <div className="hidden md:flex flex-1 max-w-2xl">
+            {/* Search */}
+            <div className="hidden md:flex flex-1 max-w-xl">
               <div className="relative w-full">
                 <Input
                   placeholder="O que você está procurando?"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-4 pr-12 h-11 bg-gray-50 border-gray-200 focus:bg-white focus:border-blue-500 rounded-full text-gray-900 placeholder:text-gray-400"
+                  className="pl-5 pr-14 h-12 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500/20 rounded-full text-gray-900 placeholder:text-gray-400 shadow-sm"
                 />
                 <Button 
                   size="icon" 
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-blue-600 hover:bg-blue-700"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-blue-600 hover:bg-blue-700 shadow-md"
                 >
                   <Search className="w-4 h-4" />
                 </Button>
               </div>
             </div>
 
-            {/* Right Actions */}
+            {/* Actions */}
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="text-gray-600 hover:text-blue-600">
+              <Button variant="ghost" size="icon" className="text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-full">
                 <Heart className="w-5 h-5" />
               </Button>
-              <Button variant="ghost" size="icon" className="text-gray-600 hover:text-blue-600 relative">
+              <Button variant="ghost" size="icon" className="text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full relative">
                 <ShoppingBag className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 text-white text-xs rounded-full flex items-center justify-center">
+                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-blue-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                   0
                 </span>
               </Button>
             </div>
           </div>
 
-          {/* Search Bar - Mobile */}
-          <div className="md:hidden pb-3">
+          {/* Mobile Search */}
+          <div className="md:hidden pb-4">
             <div className="relative">
               <Input
                 placeholder="Buscar produtos..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 h-10 bg-gray-50 border-gray-200 focus:bg-white focus:border-blue-500 rounded-full text-gray-900 placeholder:text-gray-400"
+                className="pl-12 h-12 bg-gray-50 border-0 rounded-full text-gray-900 placeholder:text-gray-400"
               />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             </div>
           </div>
 
-          {/* Categories Nav - Desktop */}
-          <nav className="hidden lg:flex items-center gap-1 py-2 overflow-x-auto scrollbar-hide">
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setSelectedCategory(null);
-                navigate('/loja');
-              }}
-              className={`text-sm font-medium px-4 py-2 rounded-full transition-all ${
+          {/* Categories */}
+          <nav className="hidden lg:flex items-center gap-1 py-3 overflow-x-auto scrollbar-hide">
+            <button
+              onClick={() => { setSelectedCategory(null); navigate('/loja'); }}
+              className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
                 selectedCategory === null
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
               Todos
-            </Button>
+            </button>
             {categories.map((category) => (
-              <Button
+              <button
                 key={category.id}
-                variant="ghost"
-                onClick={() => {
-                  setSelectedCategory(category.id);
-                  navigate(`/loja/categoria/${category.slug}`);
-                }}
-                className={`text-sm font-medium px-4 py-2 rounded-full transition-all whitespace-nowrap ${
+                onClick={() => { setSelectedCategory(category.id); navigate(`/loja/categoria/${category.slug}`); }}
+                className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
                   selectedCategory === category.id
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
               >
                 {category.name}
-              </Button>
+              </button>
             ))}
           </nav>
         </div>
       </header>
 
       {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="lg:hidden fixed inset-x-0 top-[120px] bg-white border-b shadow-lg z-40 max-h-[60vh] overflow-y-auto"
-        >
-          <div className="p-4 space-y-2">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Categorias</p>
-            <button
-              onClick={() => {
-                setSelectedCategory(null);
-                navigate('/loja');
-                setMobileMenuOpen(false);
-              }}
-              className={`w-full text-left px-4 py-3 rounded-xl transition-all ${
-                selectedCategory === null
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              Todos os Produtos
-            </button>
-            {categories.map((category) => (
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="lg:hidden fixed inset-x-0 top-[72px] bg-white border-b shadow-xl z-40 max-h-[60vh] overflow-y-auto"
+          >
+            <div className="p-4 space-y-2">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-2">Categorias</p>
               <button
-                key={category.id}
-                onClick={() => {
-                  setSelectedCategory(category.id);
-                  navigate(`/loja/categoria/${category.slug}`);
-                  setMobileMenuOpen(false);
-                }}
-                className={`w-full text-left px-4 py-3 rounded-xl transition-all ${
-                  selectedCategory === category.id
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
+                onClick={() => { setSelectedCategory(null); navigate('/loja'); setMobileMenuOpen(false); }}
+                className={`w-full text-left px-4 py-3 rounded-xl transition-all font-medium ${
+                  selectedCategory === null ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
-                {category.name}
+                Todos os Produtos
               </button>
-            ))}
-          </div>
-        </motion.div>
-      )}
+              {categories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => { setSelectedCategory(category.id); navigate(`/loja/categoria/${category.slug}`); setMobileMenuOpen(false); }}
+                  className={`w-full text-left px-4 py-3 rounded-xl transition-all font-medium ${
+                    selectedCategory === category.id ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  {category.name}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
-        {/* Hero Banner */}
+        {/* Hero Slider */}
         {!searchTerm && !selectedCategory && (
-          <section className="mb-8">
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 p-8 md:p-12">
-              <div className="relative z-10 max-w-lg">
-                <Badge className="mb-4 bg-white/20 text-white border-0">🔥 Novidades</Badge>
-                <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">
-                  Encontre os melhores produtos
-                </h1>
-                <p className="text-blue-100 mb-6">
-                  Qualidade garantida, preços incríveis e atendimento personalizado.
-                </p>
-                <Button className="bg-white text-blue-600 hover:bg-gray-100 font-semibold px-6">
-                  Ver Ofertas
-                  <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
-              </div>
-              <div className="absolute right-0 bottom-0 opacity-10">
-                <ShoppingBag className="w-64 h-64" />
+          <section className="mb-10">
+            <div className="relative overflow-hidden rounded-3xl h-[280px] md:h-[380px]">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentSlide}
+                  initial={{ opacity: 0, x: 100 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -100 }}
+                  transition={{ duration: 0.5 }}
+                  className={`absolute inset-0 bg-gradient-to-br ${heroSlides[currentSlide].gradient} p-8 md:p-12 flex items-center`}
+                >
+                  <div className="relative z-10 max-w-lg">
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      {(() => {
+                        const IconComponent = heroSlides[currentSlide].icon;
+                        return (
+                          <Badge className="mb-4 bg-white/20 text-white border-0 backdrop-blur-sm px-4 py-1.5">
+                            <IconComponent className="w-4 h-4 mr-2" />
+                        Destaque
+                      </Badge>
+                    </motion.div>
+                    <motion.h1
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                      className="text-3xl md:text-5xl font-bold text-white mb-4 leading-tight"
+                    >
+                      {heroSlides[currentSlide].title}
+                    </motion.h1>
+                    <motion.p
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 }}
+                      className="text-white/90 text-lg mb-6"
+                    >
+                      {heroSlides[currentSlide].subtitle}
+                    </motion.p>
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 }}
+                    >
+                      <Button className="bg-white text-gray-900 hover:bg-gray-100 font-semibold px-8 py-6 rounded-full shadow-lg">
+                        {heroSlides[currentSlide].buttonText}
+                        <ChevronRight className="w-5 h-5 ml-2" />
+                      </Button>
+                    </motion.div>
+                  </div>
+                  
+                  {/* Decorative Elements */}
+                  <div className="absolute right-0 bottom-0 w-1/2 h-full opacity-20">
+                    <div className="absolute right-10 top-1/2 -translate-y-1/2 w-64 h-64 bg-white rounded-full blur-3xl" />
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+
+              {/* Slider Controls */}
+              <button
+                onClick={prevSlide}
+                className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full text-white transition-all"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <button
+                onClick={nextSlide}
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full text-white transition-all"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+
+              {/* Dots */}
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+                {heroSlides.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentSlide(index)}
+                    className={`h-2 rounded-full transition-all ${
+                      index === currentSlide ? 'w-8 bg-white' : 'w-2 bg-white/50'
+                    }`}
+                  />
+                ))}
               </div>
             </div>
           </section>
         )}
 
-        {/* Categories Quick Access */}
+        {/* Categories Grid */}
         {!searchTerm && categories.length > 0 && !selectedCategory && (
-          <section className="mb-8">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Categorias</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          <section className="mb-10">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Categorias</h2>
+              <Button variant="ghost" className="text-blue-600 hover:text-blue-700">
+                Ver todas <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
               {categories.slice(0, 6).map((category, index) => (
                 <motion.button
                   key={category.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: index * 0.05 }}
-                  onClick={() => {
-                    setSelectedCategory(category.id);
-                    navigate(`/loja/categoria/${category.slug}`);
-                  }}
-                  className="group p-4 bg-white rounded-xl border border-gray-100 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-100/50 transition-all text-center"
+                  onClick={() => { setSelectedCategory(category.id); navigate(`/loja/categoria/${category.slug}`); }}
+                  className="group p-4 bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all text-center"
                 >
-                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                    <Tag className="w-6 h-6 text-blue-600" />
+                  <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center group-hover:from-blue-100 group-hover:to-indigo-100 transition-colors">
+                    <Tag className="w-7 h-7 text-blue-600" />
                   </div>
-                  <p className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">
+                  <p className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors line-clamp-1">
                     {category.name}
                   </p>
                 </motion.button>
@@ -328,17 +492,19 @@ export default function PublicStore() {
 
         {/* Featured Products */}
         {featuredProducts.length > 0 && !searchTerm && (
-          <section className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
-                <h2 className="text-lg font-bold text-gray-900">Destaques</h2>
+          <section className="mb-10">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-100 rounded-xl">
+                  <Star className="w-6 h-6 text-amber-500 fill-amber-500" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900">Destaques</h2>
               </div>
-              <Button variant="ghost" className="text-blue-600 hover:text-blue-700 text-sm">
+              <Button variant="ghost" className="text-blue-600 hover:text-blue-700">
                 Ver todos <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
               {featuredProducts.slice(0, 4).map((product, index) => (
                 <ProductCard key={product.id} product={product} index={index} featured />
               ))}
@@ -348,9 +514,9 @@ export default function PublicStore() {
 
         {/* All Products */}
         <section>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-lg font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-gray-900">
                 {selectedCategory
                   ? categories.find(c => c.id === selectedCategory)?.name
                   : searchTerm
@@ -358,39 +524,27 @@ export default function PublicStore() {
                   : 'Todos os Produtos'
                 }
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 mt-1">
                 {filteredProducts.length} produto(s) encontrado(s)
               </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" className="hidden md:flex border-gray-200">
-                <Grid3X3 className="w-4 h-4 text-gray-500" />
-              </Button>
-              <Button variant="outline" size="icon" className="hidden md:flex border-gray-200">
-                <List className="w-4 h-4 text-gray-500" />
-              </Button>
-              <Button variant="outline" size="sm" className="border-gray-200 text-gray-600">
-                <SlidersHorizontal className="w-4 h-4 mr-2" />
-                Filtrar
-              </Button>
             </div>
           </div>
 
           {filteredProducts.length === 0 ? (
-            <Card className="bg-white border-gray-100">
-              <CardContent className="py-16 text-center">
-                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                  <ShoppingBag className="w-10 h-10 text-gray-400" />
+            <Card className="bg-white border-0 shadow-sm">
+              <CardContent className="py-20 text-center">
+                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center">
+                  <ShoppingBag className="w-12 h-12 text-gray-300" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Nenhum produto encontrado</h3>
-                <p className="text-gray-500 mb-4">Tente buscar por outro termo ou explore nossas categorias.</p>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Nenhum produto encontrado</h3>
+                <p className="text-gray-500 mb-6">Tente buscar por outro termo ou explore nossas categorias.</p>
                 <Button onClick={() => { setSearchTerm(''); setSelectedCategory(null); navigate('/loja'); }}>
                   Ver todos os produtos
                 </Button>
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
               {(searchTerm ? filteredProducts : regularProducts).map((product, index) => (
                 <ProductCard key={product.id} product={product} index={index} />
               ))}
@@ -400,134 +554,51 @@ export default function PublicStore() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-100 mt-12">
+      <footer className="bg-white border-t border-gray-100 mt-16">
         <div className="max-w-7xl mx-auto px-4 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center">
-                  <Store className="w-5 h-5 text-white" />
+            <div className="md:col-span-2">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/25">
+                  <Store className="w-6 h-6 text-white" />
                 </div>
-                <span className="text-xl font-bold text-gray-900">Minha Loja</span>
+                <span className="text-2xl font-bold text-gray-900">Minha Loja</span>
               </div>
-              <p className="text-gray-500 text-sm">
-                Sua vitrine virtual com os melhores produtos e preços do mercado.
+              <p className="text-gray-500 max-w-md">
+                Sua loja virtual com os melhores produtos e preços do mercado. Qualidade garantida e atendimento personalizado.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-900 mb-4">Institucional</h4>
-              <ul className="space-y-2 text-sm text-gray-500">
-                <li><a href="#" className="hover:text-blue-600">Sobre nós</a></li>
-                <li><a href="#" className="hover:text-blue-600">Política de Privacidade</a></li>
-                <li><a href="#" className="hover:text-blue-600">Termos de Uso</a></li>
+              <h4 className="font-semibold text-gray-900 mb-4">Links Úteis</h4>
+              <ul className="space-y-3 text-gray-500">
+                <li><a href="#" className="hover:text-blue-600 transition-colors">Sobre nós</a></li>
+                <li><a href="#" className="hover:text-blue-600 transition-colors">Política de Privacidade</a></li>
+                <li><a href="#" className="hover:text-blue-600 transition-colors">Termos de Uso</a></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-900 mb-4">Atendimento</h4>
-              <ul className="space-y-2 text-sm text-gray-500">
-                <li><a href="#" className="hover:text-blue-600">Fale Conosco</a></li>
-                <li><a href="#" className="hover:text-blue-600">Trocas e Devoluções</a></li>
-                <li><a href="#" className="hover:text-blue-600">FAQ</a></li>
+              <h4 className="font-semibold text-gray-900 mb-4">Contato</h4>
+              <ul className="space-y-3 text-gray-500">
+                <li className="flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  (00) 00000-0000
+                </li>
+                <li className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  Sua Cidade, UF
+                </li>
+                <li className="flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Seg-Sex: 9h às 18h
+                </li>
               </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-4">Pagamento</h4>
-              <div className="flex flex-wrap gap-2">
-                <div className="px-3 py-2 bg-gray-100 rounded text-xs font-medium text-gray-600">PIX</div>
-                <div className="px-3 py-2 bg-gray-100 rounded text-xs font-medium text-gray-600">Crediário</div>
-                <div className="px-3 py-2 bg-gray-100 rounded text-xs font-medium text-gray-600">Cartão</div>
-              </div>
             </div>
           </div>
-          <div className="border-t border-gray-100 mt-8 pt-8 text-center">
-            <p className="text-gray-400 text-sm">
-              © 2024 Minha Loja. Todos os direitos reservados.
-            </p>
+          <div className="border-t border-gray-100 mt-8 pt-8 text-center text-sm text-gray-400">
+            © {new Date().getFullYear()} Minha Loja. Todos os direitos reservados.
           </div>
         </div>
       </footer>
     </div>
-  );
-}
-
-function ProductCard({ product, index, featured = false }: { product: Product; index: number; featured?: boolean }) {
-  const navigate = useNavigate();
-  const discount = product.original_price
-    ? Math.round((1 - product.price / product.original_price) * 100)
-    : 0;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.03 }}
-    >
-      <Card
-        className="bg-white border-gray-100 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-100/30 transition-all cursor-pointer group overflow-hidden"
-        onClick={() => navigate(`/loja/produto/${product.slug}`)}
-      >
-        <div className={`relative ${featured ? 'aspect-square' : 'aspect-[4/5]'} bg-gray-50`}>
-          {product.image_url ? (
-            <img
-              src={product.image_url}
-              alt={product.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <ShoppingBag className="w-12 h-12 text-gray-300" />
-            </div>
-          )}
-
-          {discount > 0 && (
-            <Badge className="absolute top-2 left-2 bg-red-500 text-white border-0 font-bold">
-              -{discount}%
-            </Badge>
-          )}
-
-          {featured && (
-            <Badge className="absolute top-2 right-2 bg-amber-500 text-white border-0">
-              <Star className="w-3 h-3 mr-1 fill-white" />
-              Destaque
-            </Badge>
-          )}
-
-          <button className="absolute top-2 right-2 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-white">
-            <Heart className="w-4 h-4 text-gray-600 hover:text-red-500" />
-          </button>
-        </div>
-
-        <CardContent className="p-4">
-          {product.brand && (
-            <p className="text-xs text-gray-400 mb-1 uppercase tracking-wider">{product.brand}</p>
-          )}
-          <h3 className="font-medium text-gray-900 text-sm line-clamp-2 mb-3 min-h-[40px] group-hover:text-blue-600 transition-colors">
-            {product.name}
-          </h3>
-          <div className="space-y-1">
-            {product.original_price && (
-              <p className="text-xs text-gray-400 line-through">
-                {formatCurrency(product.original_price)}
-              </p>
-            )}
-            <p className="text-xl font-bold text-blue-600">
-              {formatCurrency(product.price)}
-            </p>
-            <p className="text-xs text-gray-500">
-              ou 12x de {formatCurrency(product.price / 12)}
-            </p>
-          </div>
-          <Button
-            className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-medium"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/loja/interesse/${product.slug}`);
-            }}
-          >
-            Tenho Interesse
-          </Button>
-        </CardContent>
-      </Card>
-    </motion.div>
   );
 }
