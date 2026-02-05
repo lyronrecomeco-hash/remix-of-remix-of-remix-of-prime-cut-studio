@@ -83,19 +83,19 @@ export default function StoreCrediario() {
 
   const getInstallmentStatus = (installment: any) => {
     if (installment.status === 'paid') {
-      return { label: 'Pago', variant: 'default' as const, color: 'bg-green-500' };
+      return { label: 'Pago', variant: 'default' as const, color: 'bg-green-100 text-green-700' };
     }
     if (isPast(new Date(installment.due_date)) && !isToday(new Date(installment.due_date))) {
-      return { label: 'Atrasado', variant: 'destructive' as const, color: 'bg-red-500' };
+      return { label: 'Atrasado', variant: 'destructive' as const, color: 'bg-red-100 text-red-700' };
     }
     if (isToday(new Date(installment.due_date))) {
-      return { label: 'Vence Hoje', variant: 'outline' as const, color: 'bg-yellow-500', isWarning: true };
+      return { label: 'Vence Hoje', variant: 'outline' as const, color: 'bg-yellow-100 text-yellow-700', isWarning: true };
     }
     const sevenDaysFromNow = addDays(new Date(), 7);
     if (new Date(installment.due_date) <= sevenDaysFromNow) {
-      return { label: 'Próximo', variant: 'outline' as const, color: 'bg-blue-500' };
+      return { label: 'Próximo', variant: 'outline' as const, color: 'bg-blue-100 text-blue-700' };
     }
-    return { label: 'Pendente', variant: 'secondary' as const, color: 'bg-slate-500' };
+    return { label: 'Pendente', variant: 'secondary' as const, color: 'bg-gray-100 text-gray-700' };
   };
 
   const filteredInstallments = installments?.filter(installment => {
@@ -135,7 +135,7 @@ export default function StoreCrediario() {
     const totalInstallments = sale?.installments_count || 1;
 
     // Header
-    doc.setFillColor(30, 41, 59);
+    doc.setFillColor(59, 130, 246);
     doc.rect(0, 0, 210, 40, 'F');
     
     doc.setTextColor(255, 255, 255);
@@ -215,8 +215,8 @@ export default function StoreCrediario() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-white">Crediário</h1>
-          <p className="text-slate-400 mt-1">Gerencie as parcelas dos seus clientes</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Crediário</h1>
+          <p className="text-gray-500 mt-1">Gerencie as parcelas dos seus clientes</p>
         </div>
       </div>
 
@@ -227,15 +227,15 @@ export default function StoreCrediario() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Card className="bg-slate-800/50 border-slate-700/50">
+          <Card className="bg-white border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-500/20 rounded-lg">
-                  <Receipt className="w-5 h-5 text-blue-400" />
+                <div className="p-2 bg-blue-50 rounded-lg">
+                  <Receipt className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400">Total Parcelas</p>
-                  <p className="text-xl font-bold text-white">{stats.total}</p>
+                  <p className="text-xs text-gray-500">Total Parcelas</p>
+                  <p className="text-xl font-bold text-gray-900">{stats.total}</p>
                 </div>
               </div>
             </CardContent>
@@ -247,16 +247,16 @@ export default function StoreCrediario() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Card className="bg-slate-800/50 border-slate-700/50">
+          <Card className="bg-white border-gray-200 hover:border-yellow-300 hover:shadow-lg transition-all">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-yellow-500/20 rounded-lg">
-                  <Clock className="w-5 h-5 text-yellow-400" />
+                <div className="p-2 bg-yellow-50 rounded-lg">
+                  <Clock className="w-5 h-5 text-yellow-600" />
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400">Pendentes</p>
-                  <p className="text-xl font-bold text-yellow-400">{stats.pending}</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-gray-500">Pendentes</p>
+                  <p className="text-xl font-bold text-yellow-600">{stats.pending}</p>
+                  <p className="text-xs text-gray-400">
                     R$ {stats.totalPending.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
                 </div>
@@ -270,17 +270,21 @@ export default function StoreCrediario() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <Card className="bg-slate-800/50 border-slate-700/50 cursor-pointer hover:bg-slate-800/70"
-                onClick={() => setStatusFilter(statusFilter === 'overdue' ? 'all' : 'overdue')}>
+          <Card 
+            className={`bg-white border-gray-200 cursor-pointer hover:border-red-300 hover:shadow-lg transition-all ${
+              statusFilter === 'overdue' ? 'ring-2 ring-red-500' : ''
+            }`}
+            onClick={() => setStatusFilter(statusFilter === 'overdue' ? 'all' : 'overdue')}
+          >
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-500/20 rounded-lg">
-                  <AlertTriangle className="w-5 h-5 text-red-400" />
+                <div className="p-2 bg-red-50 rounded-lg">
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400">Atrasadas</p>
-                  <p className="text-xl font-bold text-red-400">{stats.overdue}</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-gray-500">Atrasadas</p>
+                  <p className="text-xl font-bold text-red-600">{stats.overdue}</p>
+                  <p className="text-xs text-gray-400">
                     R$ {stats.totalOverdue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
                 </div>
@@ -294,15 +298,15 @@ export default function StoreCrediario() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
-          <Card className="bg-slate-800/50 border-slate-700/50">
+          <Card className="bg-white border-gray-200 hover:border-green-300 hover:shadow-lg transition-all">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-500/20 rounded-lg">
-                  <CheckCircle2 className="w-5 h-5 text-green-400" />
+                <div className="p-2 bg-green-50 rounded-lg">
+                  <CheckCircle2 className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400">Pagas</p>
-                  <p className="text-xl font-bold text-green-400">{stats.paid}</p>
+                  <p className="text-xs text-gray-500">Pagas</p>
+                  <p className="text-xl font-bold text-green-600">{stats.paid}</p>
                 </div>
               </div>
             </CardContent>
@@ -311,23 +315,23 @@ export default function StoreCrediario() {
       </div>
 
       {/* Search & Filter */}
-      <Card className="bg-slate-800/50 border-slate-700/50">
+      <Card className="bg-white border-gray-200">
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
                 placeholder="Buscar por cliente, CPF ou número da venda..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-slate-900/50 border-slate-600 text-white"
+                className="pl-10 bg-gray-50 border-gray-200 text-gray-900"
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px] bg-slate-900/50 border-slate-600 text-white">
+              <SelectTrigger className="w-[180px] bg-gray-50 border-gray-200 text-gray-900">
                 <SelectValue placeholder="Filtrar status" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700">
+              <SelectContent className="bg-white border-gray-200">
                 <SelectItem value="all">Todas</SelectItem>
                 <SelectItem value="pending">Pendentes</SelectItem>
                 <SelectItem value="overdue">Atrasadas</SelectItem>
@@ -339,30 +343,30 @@ export default function StoreCrediario() {
       </Card>
 
       {/* Installments Table */}
-      <Card className="bg-slate-800/50 border-slate-700/50">
+      <Card className="bg-white border-gray-200">
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <Receipt className="w-5 h-5" />
+          <CardTitle className="text-gray-900 flex items-center gap-2">
+            <Receipt className="w-5 h-5 text-blue-600" />
             Parcelas ({filteredInstallments?.length || 0})
           </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8">
-              <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
+              <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-slate-700">
-                    <TableHead className="text-slate-400">Cliente</TableHead>
-                    <TableHead className="text-slate-400">Venda</TableHead>
-                    <TableHead className="text-slate-400 text-center">Parcela</TableHead>
-                    <TableHead className="text-slate-400 text-right">Valor</TableHead>
-                    <TableHead className="text-slate-400">Vencimento</TableHead>
-                    <TableHead className="text-slate-400 text-center">Status</TableHead>
-                    <TableHead className="text-slate-400 text-right">Ações</TableHead>
+                  <TableRow className="border-gray-200">
+                    <TableHead className="text-gray-600">Cliente</TableHead>
+                    <TableHead className="text-gray-600">Venda</TableHead>
+                    <TableHead className="text-gray-600 text-center">Parcela</TableHead>
+                    <TableHead className="text-gray-600 text-right">Valor</TableHead>
+                    <TableHead className="text-gray-600">Vencimento</TableHead>
+                    <TableHead className="text-gray-600 text-center">Status</TableHead>
+                    <TableHead className="text-gray-600 text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -378,53 +382,50 @@ export default function StoreCrediario() {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -10 }}
                           transition={{ delay: index * 0.03 }}
-                          className="border-slate-700/50"
+                          className="border-gray-100 hover:bg-gray-50"
                         >
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">
-                                <User className="w-4 h-4 text-slate-400" />
+                              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                                <User className="w-4 h-4 text-gray-500" />
                               </div>
                               <div>
-                                <p className="text-white font-medium">{customer?.name || '-'}</p>
-                                <p className="text-xs text-slate-400">{customer?.cpf}</p>
+                                <p className="text-gray-900 font-medium">{customer?.name || '-'}</p>
+                                <p className="text-xs text-gray-500">{customer?.cpf}</p>
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell className="text-slate-300">
+                          <TableCell className="text-gray-700">
                             #{installment.store_sales?.sale_number}
                           </TableCell>
                           <TableCell className="text-center">
-                            <span className="text-white font-medium">
+                            <span className="text-gray-900 font-medium">
                               {installment.installment_number}/{totalInstallments}
                             </span>
                           </TableCell>
-                          <TableCell className="text-right text-white font-medium">
+                          <TableCell className="text-right text-gray-900 font-medium">
                             R$ {(installment.amount || 0).toFixed(2)}
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-2 text-slate-300">
+                            <div className="flex items-center gap-2 text-gray-700">
                               <Calendar className="w-4 h-4" />
                               {format(new Date(installment.due_date), 'dd/MM/yyyy')}
                             </div>
                           </TableCell>
                           <TableCell className="text-center">
-                            <Badge 
-                              variant={status.variant}
-                              className={status.isWarning ? 'border-yellow-500 text-yellow-500' : ''}
-                            >
+                            <Badge className={status.color}>
                               {status.label}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-2">
-                              {installment.status !== 'paid' && (
+                              {installment.status === 'pending' && (
                                 <Button
                                   size="sm"
-                                  className="bg-green-600 hover:bg-green-700"
-                                  onClick={() => updateInstallmentMutation.mutate({
-                                    id: installment.id,
-                                    status: 'paid'
+                                  className="bg-green-600 hover:bg-green-700 text-white"
+                                  onClick={() => updateInstallmentMutation.mutate({ 
+                                    id: installment.id, 
+                                    status: 'paid' 
                                   })}
                                 >
                                   <CheckCircle2 className="w-4 h-4" />
@@ -433,7 +434,7 @@ export default function StoreCrediario() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="border-slate-600"
+                                className="border-gray-300 text-gray-700 hover:bg-gray-100"
                                 onClick={() => generateReceipt(installment)}
                               >
                                 <Download className="w-4 h-4" />
@@ -441,7 +442,7 @@ export default function StoreCrediario() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="border-slate-600"
+                                className="border-gray-300 text-gray-700 hover:bg-gray-100"
                                 onClick={() => {
                                   setSelectedInstallment(installment);
                                   setDetailsDialog(true);
@@ -460,8 +461,8 @@ export default function StoreCrediario() {
 
               {filteredInstallments?.length === 0 && (
                 <div className="text-center py-12">
-                  <Receipt className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-                  <p className="text-slate-400">Nenhuma parcela encontrada</p>
+                  <Receipt className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">Nenhuma parcela encontrada</p>
                 </div>
               )}
             </div>
@@ -471,78 +472,79 @@ export default function StoreCrediario() {
 
       {/* Details Dialog */}
       <Dialog open={detailsDialog} onOpenChange={setDetailsDialog}>
-        <DialogContent className="bg-slate-900 border-slate-700 max-w-lg">
+        <DialogContent className="bg-white border-gray-200 max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-white flex items-center gap-2">
-              <FileText className="w-5 h-5" />
-              Detalhes da Parcela
-            </DialogTitle>
+            <DialogTitle className="text-gray-900">Detalhes da Parcela</DialogTitle>
           </DialogHeader>
 
           {selectedInstallment && (
             <div className="space-y-4">
               {/* Customer Info */}
-              <div className="p-4 bg-slate-800/50 rounded-lg">
-                <h3 className="text-sm font-semibold text-slate-400 mb-2">Cliente</h3>
-                <p className="text-white font-medium">
-                  {selectedInstallment.store_sales?.store_customers?.name}
-                </p>
-                <p className="text-sm text-slate-400">
-                  CPF: {selectedInstallment.store_sales?.store_customers?.cpf}
-                </p>
-                <p className="text-sm text-slate-400">
-                  Tel: {selectedInstallment.store_sales?.store_customers?.phone}
-                </p>
-              </div>
-
-              {/* Installment Info */}
-              <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-slate-400">Parcela</span>
-                  <span className="text-white font-bold text-lg">
-                    {selectedInstallment.installment_number}/{selectedInstallment.store_sales?.installments_count || 1}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-slate-400">Valor</span>
-                  <span className="text-2xl font-bold text-blue-400">
-                    R$ {(selectedInstallment.amount || 0).toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Vencimento</span>
-                  <span className="text-white">
-                    {format(new Date(selectedInstallment.due_date), 'dd/MM/yyyy')}
-                  </span>
+              <div className="p-4 bg-gray-50 rounded-lg space-y-3">
+                <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Cliente
+                </h3>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-gray-500">Nome</p>
+                    <p className="text-gray-900 font-medium">
+                      {selectedInstallment.store_sales?.store_customers?.name || '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">CPF</p>
+                    <p className="text-gray-900">
+                      {selectedInstallment.store_sales?.store_customers?.cpf || '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Telefone</p>
+                    <p className="text-gray-900">
+                      {selectedInstallment.store_sales?.store_customers?.phone || '-'}
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              {/* Status */}
-              <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg">
-                <span className="text-slate-400">Status</span>
-                <Badge 
-                  variant={getInstallmentStatus(selectedInstallment).variant}
-                  className={getInstallmentStatus(selectedInstallment).isWarning ? 'border-yellow-500 text-yellow-500' : ''}
-                >
-                  {getInstallmentStatus(selectedInstallment).label}
-                </Badge>
+              {/* Installment Details */}
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <p className="text-sm text-blue-600">Parcela</p>
+                    <p className="text-2xl font-bold text-blue-700">
+                      {selectedInstallment.installment_number}/{selectedInstallment.store_sales?.installments_count || 1}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-blue-600">Valor</p>
+                    <p className="text-2xl font-bold text-blue-700">
+                      R$ {(selectedInstallment.amount || 0).toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <div>
+                    <p className="text-blue-600">Vencimento</p>
+                    <p className="text-blue-900 font-medium">
+                      {format(new Date(selectedInstallment.due_date), 'dd/MM/yyyy')}
+                    </p>
+                  </div>
+                  <Badge className={getInstallmentStatus(selectedInstallment).color}>
+                    {getInstallmentStatus(selectedInstallment).label}
+                  </Badge>
+                </div>
               </div>
-
-              {selectedInstallment.paid_date && (
-                <p className="text-sm text-green-400 text-center">
-                  ✓ Pago em {format(new Date(selectedInstallment.paid_date), 'dd/MM/yyyy HH:mm')}
-                </p>
-              )}
 
               {/* Actions */}
-              <div className="flex gap-3 pt-4 border-t border-slate-700">
-                {selectedInstallment.status !== 'paid' && (
+              <div className="flex gap-3">
+                {selectedInstallment.status === 'pending' && (
                   <Button
-                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                     onClick={() => {
-                      updateInstallmentMutation.mutate({
-                        id: selectedInstallment.id,
-                        status: 'paid'
+                      updateInstallmentMutation.mutate({ 
+                        id: selectedInstallment.id, 
+                        status: 'paid' 
                       });
                       setDetailsDialog(false);
                     }}
@@ -553,10 +555,10 @@ export default function StoreCrediario() {
                 )}
                 <Button
                   variant="outline"
-                  className="flex-1 border-slate-600"
+                  className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-100"
                   onClick={() => generateReceipt(selectedInstallment)}
                 >
-                  <Download className="w-4 h-4 mr-2" />
+                  <FileText className="w-4 h-4 mr-2" />
                   Gerar Recibo
                 </Button>
               </div>

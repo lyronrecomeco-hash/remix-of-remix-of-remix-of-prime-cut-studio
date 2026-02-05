@@ -386,11 +386,8 @@ export default function PublicStore() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.2 }}
                     >
-                      {(() => {
-                        const IconComponent = heroSlides[currentSlide].icon;
-                        return (
-                          <Badge className="mb-4 bg-white/20 text-white border-0 backdrop-blur-sm px-4 py-1.5">
-                            <IconComponent className="w-4 h-4 mr-2" />
+                      <Badge className="mb-4 bg-white/20 text-white border-0 backdrop-blur-sm px-4 py-1.5">
+                        <Sparkles className="w-4 h-4 mr-2" />
                         Destaque
                       </Badge>
                     </motion.div>
