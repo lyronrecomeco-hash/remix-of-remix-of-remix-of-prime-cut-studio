@@ -14,6 +14,7 @@ import { GymAuthProvider } from "@/contexts/GymAuthContext";
 import { GymAppLayout } from "@/components/academiapro/app/GymAppLayout";
 import { GymAdminLayout } from "@/components/academiapro/admin/GymAdminLayout";
 import { GymThemeBootstrap } from "@/components/academiapro/theme/GymThemeBootstrap";
+import { StoreAdminLayout } from "@/components/store/admin/StoreAdminLayout";
 import { useSecurityProtection } from "@/hooks/useSecurityProtection";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -76,6 +77,21 @@ const PortfolioPage = lazy(() => import("./pages/portfolio/[slug]"));
 const ContractSignature = lazy(() => import("./pages/ContractSignature"));
 const PromoPage = lazy(() => import("./pages/PromoPage"));
 const DivulgacaoPage = lazy(() => import("./pages/DivulgacaoPage"));
+// Store Pages
+const PublicStore = lazy(() => import("./pages/store/public/PublicStore"));
+const ProductDetail = lazy(() => import("./pages/store/public/ProductDetail"));
+const InterestForm = lazy(() => import("./pages/store/public/InterestForm"));
+const StoreAdminLogin = lazy(() => import("./pages/store/admin/StoreAdminLogin"));
+const StoreAdminDashboard = lazy(() => import("./pages/store/admin/StoreAdminDashboard"));
+const StoreProducts = lazy(() => import("./pages/store/admin/StoreProducts"));
+const StoreCategories = lazy(() => import("./pages/store/admin/StoreCategories"));
+const StoreStock = lazy(() => import("./pages/store/admin/StoreStock"));
+const StoreCustomers = lazy(() => import("./pages/store/admin/StoreCustomers"));
+const StoreSales = lazy(() => import("./pages/store/admin/StoreSales"));
+const StoreCrediario = lazy(() => import("./pages/store/admin/StoreCrediario"));
+const StoreLeads = lazy(() => import("./pages/store/admin/StoreLeads"));
+const StoreReports = lazy(() => import("./pages/store/admin/StoreReports"));
+const StoreSettingsPage = lazy(() => import("./pages/store/admin/StoreSettings"));
 const Inscricao = lazy(() => import("./pages/Inscricao"));
 // Checkout Pages
 const CheckoutPage = lazy(() => import("./pages/checkout/CheckoutPage"));
@@ -343,6 +359,23 @@ const AppContent = () => {
             <Route path="/promo/:codigo" element={<PromoPage />} />
             {/* Divulgação Page */}
             <Route path="/divul" element={<DivulgacaoPage />} />
+            {/* Loja Virtual Routes */}
+            <Route path="/loja" element={<Suspense fallback={<PageLoader />}><PublicStore /></Suspense>} />
+            <Route path="/loja/produto/:slug" element={<Suspense fallback={<PageLoader />}><ProductDetail /></Suspense>} />
+            <Route path="/loja/interesse/:slug" element={<Suspense fallback={<PageLoader />}><InterestForm /></Suspense>} />
+            <Route path="/loja/admin/login" element={<Suspense fallback={<PageLoader />}><StoreAdminLogin /></Suspense>} />
+            <Route path="/loja/admin" element={<StoreAdminLayout />}>
+              <Route index element={<Suspense fallback={<PageLoader />}><StoreAdminDashboard /></Suspense>} />
+              <Route path="produtos" element={<Suspense fallback={<PageLoader />}><StoreProducts /></Suspense>} />
+              <Route path="categorias" element={<Suspense fallback={<PageLoader />}><StoreCategories /></Suspense>} />
+              <Route path="estoque" element={<Suspense fallback={<PageLoader />}><StoreStock /></Suspense>} />
+              <Route path="clientes" element={<Suspense fallback={<PageLoader />}><StoreCustomers /></Suspense>} />
+              <Route path="vendas" element={<Suspense fallback={<PageLoader />}><StoreSales /></Suspense>} />
+              <Route path="crediario" element={<Suspense fallback={<PageLoader />}><StoreCrediario /></Suspense>} />
+              <Route path="leads" element={<Suspense fallback={<PageLoader />}><StoreLeads /></Suspense>} />
+              <Route path="relatorios" element={<Suspense fallback={<PageLoader />}><StoreReports /></Suspense>} />
+              <Route path="configuracoes" element={<Suspense fallback={<PageLoader />}><StoreSettingsPage /></Suspense>} />
+            </Route>
             {/* Inscrição Parceiros */}
             <Route path="/inscricao" element={<Inscricao />} />
             {/* Checkout Routes - Static routes first, dynamic last */}
