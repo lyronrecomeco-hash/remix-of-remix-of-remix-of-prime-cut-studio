@@ -14,7 +14,6 @@ import {
   LogOut,
   Menu,
   X,
-  ChevronDown,
   MessageSquare,
   Boxes
 } from 'lucide-react';
@@ -48,14 +47,14 @@ export function StoreAdminSidebar() {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="p-6 border-b border-slate-700/50">
+      <div className="p-6 border-b border-gray-100">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20">
             <Store className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="font-bold text-white">Minha Loja</h1>
-            <p className="text-xs text-slate-400">Painel Administrativo</p>
+            <h1 className="font-bold text-gray-900">Minha Loja</h1>
+            <p className="text-xs text-gray-500">Painel Administrativo</p>
           </div>
         </div>
       </div>
@@ -72,8 +71,8 @@ export function StoreAdminSidebar() {
               cn(
                 'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200',
                 isActive
-                  ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                  ? 'bg-blue-50 text-blue-600 border border-blue-100'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               )
             }
           >
@@ -84,15 +83,15 @@ export function StoreAdminSidebar() {
       </nav>
 
       {/* User & Logout */}
-      <div className="p-4 border-t border-slate-700/50">
-        <div className="px-4 py-3 mb-2">
-          <p className="text-xs text-slate-500">Logado como</p>
-          <p className="text-sm text-slate-300 truncate">{user?.email}</p>
+      <div className="p-4 border-t border-gray-100">
+        <div className="px-4 py-3 mb-2 bg-gray-50 rounded-xl">
+          <p className="text-xs text-gray-400">Logado como</p>
+          <p className="text-sm text-gray-700 font-medium truncate">{user?.email}</p>
         </div>
         <Button
           variant="ghost"
           onClick={handleLogout}
-          className="w-full justify-start gap-3 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+          className="w-full justify-start gap-3 text-red-500 hover:text-red-600 hover:bg-red-50"
         >
           <LogOut className="w-5 h-5" />
           Sair
@@ -104,19 +103,19 @@ export function StoreAdminSidebar() {
   return (
     <>
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-xl border-b border-slate-700/50 px-4 py-3">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-b border-gray-100 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
               <Store className="w-4 h-4 text-white" />
             </div>
-            <span className="font-semibold text-white">Minha Loja</span>
+            <span className="font-semibold text-gray-900">Minha Loja</span>
           </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsMobileOpen(!isMobileOpen)}
-            className="text-slate-400"
+            className="text-gray-600"
           >
             {isMobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </Button>
@@ -132,14 +131,14 @@ export function StoreAdminSidebar() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMobileOpen(false)}
-              className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+              className="lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
             />
             <motion.div
               initial={{ x: -300 }}
               animate={{ x: 0 }}
               exit={{ x: -300 }}
               transition={{ type: 'spring', damping: 25 }}
-              className="lg:hidden fixed left-0 top-0 bottom-0 w-72 bg-slate-900 border-r border-slate-700/50 z-50 pt-16"
+              className="lg:hidden fixed left-0 top-0 bottom-0 w-72 bg-white border-r border-gray-100 z-50 pt-16 shadow-xl"
             >
               <SidebarContent />
             </motion.div>
@@ -148,7 +147,7 @@ export function StoreAdminSidebar() {
       </AnimatePresence>
 
       {/* Desktop Sidebar */}
-      <div className="hidden lg:block fixed left-0 top-0 bottom-0 w-64 bg-slate-900/95 backdrop-blur-xl border-r border-slate-700/50 z-40">
+      <div className="hidden lg:block fixed left-0 top-0 bottom-0 w-64 bg-white/95 backdrop-blur-xl border-r border-gray-100 z-40">
         <SidebarContent />
       </div>
     </>

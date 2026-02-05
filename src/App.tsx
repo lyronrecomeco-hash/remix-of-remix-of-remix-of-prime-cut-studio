@@ -15,6 +15,7 @@ import { GymAppLayout } from "@/components/academiapro/app/GymAppLayout";
 import { GymAdminLayout } from "@/components/academiapro/admin/GymAdminLayout";
 import { GymThemeBootstrap } from "@/components/academiapro/theme/GymThemeBootstrap";
 import { StoreAdminLayout } from "@/components/store/admin/StoreAdminLayout";
+import { StoreWrapper } from "@/components/store/StoreWrapper";
 import { useSecurityProtection } from "@/hooks/useSecurityProtection";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -360,21 +361,24 @@ const AppContent = () => {
             {/* Divulgação Page */}
             <Route path="/divul" element={<DivulgacaoPage />} />
             {/* Loja Virtual Routes */}
-            <Route path="/loja" element={<Suspense fallback={<PageLoader />}><PublicStore /></Suspense>} />
-            <Route path="/loja/produto/:slug" element={<Suspense fallback={<PageLoader />}><ProductDetail /></Suspense>} />
-            <Route path="/loja/interesse/:slug" element={<Suspense fallback={<PageLoader />}><InterestForm /></Suspense>} />
-            <Route path="/loja/admin/login" element={<Suspense fallback={<PageLoader />}><StoreAdminLogin /></Suspense>} />
-            <Route path="/loja/admin" element={<StoreAdminLayout />}>
-              <Route index element={<Suspense fallback={<PageLoader />}><StoreAdminDashboard /></Suspense>} />
-              <Route path="produtos" element={<Suspense fallback={<PageLoader />}><StoreProducts /></Suspense>} />
-              <Route path="categorias" element={<Suspense fallback={<PageLoader />}><StoreCategories /></Suspense>} />
-              <Route path="estoque" element={<Suspense fallback={<PageLoader />}><StoreStock /></Suspense>} />
-              <Route path="clientes" element={<Suspense fallback={<PageLoader />}><StoreCustomers /></Suspense>} />
-              <Route path="vendas" element={<Suspense fallback={<PageLoader />}><StoreSales /></Suspense>} />
-              <Route path="crediario" element={<Suspense fallback={<PageLoader />}><StoreCrediario /></Suspense>} />
-              <Route path="leads" element={<Suspense fallback={<PageLoader />}><StoreLeads /></Suspense>} />
-              <Route path="relatorios" element={<Suspense fallback={<PageLoader />}><StoreReports /></Suspense>} />
-              <Route path="configuracoes" element={<Suspense fallback={<PageLoader />}><StoreSettingsPage /></Suspense>} />
+            <Route path="/loja" element={<StoreWrapper />}>
+              <Route index element={<Suspense fallback={<PageLoader />}><PublicStore /></Suspense>} />
+              <Route path="categoria/:categorySlug" element={<Suspense fallback={<PageLoader />}><PublicStore /></Suspense>} />
+              <Route path="produto/:slug" element={<Suspense fallback={<PageLoader />}><ProductDetail /></Suspense>} />
+              <Route path="interesse/:slug" element={<Suspense fallback={<PageLoader />}><InterestForm /></Suspense>} />
+              <Route path="admin/login" element={<Suspense fallback={<PageLoader />}><StoreAdminLogin /></Suspense>} />
+              <Route path="admin" element={<StoreAdminLayout />}>
+                <Route index element={<Suspense fallback={<PageLoader />}><StoreAdminDashboard /></Suspense>} />
+                <Route path="produtos" element={<Suspense fallback={<PageLoader />}><StoreProducts /></Suspense>} />
+                <Route path="categorias" element={<Suspense fallback={<PageLoader />}><StoreCategories /></Suspense>} />
+                <Route path="estoque" element={<Suspense fallback={<PageLoader />}><StoreStock /></Suspense>} />
+                <Route path="clientes" element={<Suspense fallback={<PageLoader />}><StoreCustomers /></Suspense>} />
+                <Route path="vendas" element={<Suspense fallback={<PageLoader />}><StoreSales /></Suspense>} />
+                <Route path="crediario" element={<Suspense fallback={<PageLoader />}><StoreCrediario /></Suspense>} />
+                <Route path="leads" element={<Suspense fallback={<PageLoader />}><StoreLeads /></Suspense>} />
+                <Route path="relatorios" element={<Suspense fallback={<PageLoader />}><StoreReports /></Suspense>} />
+                <Route path="configuracoes" element={<Suspense fallback={<PageLoader />}><StoreSettingsPage /></Suspense>} />
+              </Route>
             </Route>
             {/* Inscrição Parceiros */}
             <Route path="/inscricao" element={<Inscricao />} />
