@@ -13018,6 +13018,7 @@ export type Database = {
       }
       telbot_users: {
         Row: {
+          conversation_state: Json | null
           created_at: string
           first_name: string | null
           id: string
@@ -13031,6 +13032,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          conversation_state?: Json | null
           created_at?: string
           first_name?: string | null
           id?: string
@@ -13044,6 +13046,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          conversation_state?: Json | null
           created_at?: string
           first_name?: string | null
           id?: string
