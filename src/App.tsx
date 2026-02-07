@@ -127,6 +127,8 @@ const GymSettingsAppPage = lazy(() => import("./pages/academiapro/app/GymSetting
 const GymNutritionPage = lazy(() => import("./pages/academiapro/app/GymNutritionPage"));
 const GymAnnouncementsPage = lazy(() => import("./pages/academiapro/app/GymAnnouncementsPage"));
 const GymAdminIntegrations = lazy(() => import("./pages/academiapro/admin/GymAdminIntegrations"));
+// TelBot Panel
+const TelBotPanel = lazy(() => import("./pages/TelBotPanel"));
 // QueryClient com retry logic e cache otimizado
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -360,6 +362,8 @@ const AppContent = () => {
             <Route path="/promo/:codigo" element={<PromoPage />} />
             {/* Divulgação Page */}
             <Route path="/divul" element={<DivulgacaoPage />} />
+            {/* TelBot Panel */}
+            <Route path="/telbot" element={<TelBotPanel />} />
             {/* Loja Virtual Routes */}
             <Route path="/loja" element={<StoreWrapper />}>
               <Route index element={<Suspense fallback={<PageLoader />}><PublicStore /></Suspense>} />

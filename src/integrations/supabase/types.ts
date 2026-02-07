@@ -12873,6 +12873,191 @@ export type Database = {
         }
         Relationships: []
       }
+      telbot_alerts: {
+        Row: {
+          alert_message: string
+          alert_type: string
+          delivered: boolean | null
+          id: string
+          monitoring_id: string | null
+          sent_at: string
+          telegram_user_id: number
+        }
+        Insert: {
+          alert_message: string
+          alert_type: string
+          delivered?: boolean | null
+          id?: string
+          monitoring_id?: string | null
+          sent_at?: string
+          telegram_user_id: number
+        }
+        Update: {
+          alert_message?: string
+          alert_type?: string
+          delivered?: boolean | null
+          id?: string
+          monitoring_id?: string | null
+          sent_at?: string
+          telegram_user_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telbot_alerts_monitoring_id_fkey"
+            columns: ["monitoring_id"]
+            isOneToOne: false
+            referencedRelation: "telbot_monitoring"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      telbot_logs: {
+        Row: {
+          command: string | null
+          created_at: string
+          id: string
+          log_type: string
+          message: string
+          metadata: Json | null
+          telegram_user_id: number | null
+        }
+        Insert: {
+          command?: string | null
+          created_at?: string
+          id?: string
+          log_type: string
+          message: string
+          metadata?: Json | null
+          telegram_user_id?: number | null
+        }
+        Update: {
+          command?: string | null
+          created_at?: string
+          id?: string
+          log_type?: string
+          message?: string
+          metadata?: Json | null
+          telegram_user_id?: number | null
+        }
+        Relationships: []
+      }
+      telbot_monitoring: {
+        Row: {
+          check_count: number | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          last_alert_at: string | null
+          last_checked_at: string | null
+          monitor_type: string
+          monitor_value: string
+          telegram_user_id: number
+          updated_at: string
+        }
+        Insert: {
+          check_count?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_alert_at?: string | null
+          last_checked_at?: string | null
+          monitor_type: string
+          monitor_value: string
+          telegram_user_id: number
+          updated_at?: string
+        }
+        Update: {
+          check_count?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_alert_at?: string | null
+          last_checked_at?: string | null
+          monitor_type?: string
+          monitor_value?: string
+          telegram_user_id?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      telbot_queries: {
+        Row: {
+          ai_response: string | null
+          created_at: string
+          fraud_type: string | null
+          id: string
+          query_input: string
+          query_type: string
+          response_data: Json | null
+          risk_level: string | null
+          telegram_user_id: number
+        }
+        Insert: {
+          ai_response?: string | null
+          created_at?: string
+          fraud_type?: string | null
+          id?: string
+          query_input: string
+          query_type: string
+          response_data?: Json | null
+          risk_level?: string | null
+          telegram_user_id: number
+        }
+        Update: {
+          ai_response?: string | null
+          created_at?: string
+          fraud_type?: string | null
+          id?: string
+          query_input?: string
+          query_type?: string
+          response_data?: Json | null
+          risk_level?: string | null
+          telegram_user_id?: number
+        }
+        Relationships: []
+      }
+      telbot_users: {
+        Row: {
+          created_at: string
+          first_name: string | null
+          id: string
+          is_active: boolean | null
+          is_blocked: boolean | null
+          last_activity_at: string | null
+          last_name: string | null
+          telegram_id: number
+          telegram_username: string | null
+          total_queries: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_blocked?: boolean | null
+          last_activity_at?: string | null
+          last_name?: string | null
+          telegram_id: number
+          telegram_username?: string | null
+          total_queries?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_blocked?: boolean | null
+          last_activity_at?: string | null
+          last_name?: string | null
+          telegram_id?: number
+          telegram_username?: string | null
+          total_queries?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tenants: {
         Row: {
           created_at: string

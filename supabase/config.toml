@@ -74,3 +74,9 @@ verify_jwt = false
 
 [functions.enrich-lead-complete]
 verify_jwt = false
+
+[functions.telegram-bot]
+verify_jwt = false
+
+[functions.telegram-bot-setup]
+verify_jwt = false
