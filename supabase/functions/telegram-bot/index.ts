@@ -37,11 +37,15 @@ interface TelegramUpdate {
 async function sendMessage(token: string, chatId: number, text: string, replyMarkup?: any) {
   const body: any = { chat_id: chatId, text, parse_mode: "HTML" };
   if (replyMarkup) body.reply_markup = replyMarkup;
-  await fetch(`${TELEGRAM_API}${token}/sendMessage`, {
+  const res = await fetch(`${TELEGRAM_API}${token}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+  if (!res.ok) {
+    const err = await res.text();
+    console.error("sendMessage error:", err);
+  }
 }
 
 async function answerCallback(token: string, callbackId: string, text?: string) {
@@ -60,6 +64,23 @@ async function editMessage(token: string, chatId: number, messageId: number, tex
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+}
+
+// ─── DB-based user state ─────────────────────────────────────────────
+async function getUserState(supabase: any, telegramId: number): Promise<{ action: string; step: string } | null> {
+  const { data } = await supabase
+    .from("telbot_users")
+    .select("conversation_state")
+    .eq("telegram_id", telegramId)
+    .single();
+  return data?.conversation_state || null;
+}
+
+async function setUserState(supabase: any, telegramId: number, state: { action: string; step: string } | null) {
+  await supabase
+    .from("telbot_users")
+    .update({ conversation_state: state })
+    .eq("telegram_id", telegramId);
 }
 
 // ─── Main menu keyboard ─────────────────────────────────────────────
@@ -83,6 +104,14 @@ function mainMenuKeyboard() {
         { text: "🏦 Listar Bancos", callback_data: "query_bancos" },
       ],
       [
+        { text: "📧 Consultar Email", callback_data: "query_email" },
+        { text: "🌐 Consultar Domínio", callback_data: "query_dominio" },
+      ],
+      [
+        { text: "🚗 Consultar Placa", callback_data: "query_placa" },
+        { text: "📊 Consultar IBGE", callback_data: "query_ibge" },
+      ],
+      [
         { text: "🔔 Monitoramento", callback_data: "monitoring" },
         { text: "📋 Meu Histórico", callback_data: "history" },
       ],
@@ -99,11 +128,8 @@ function mainMenuKeyboard() {
 function validateCPF(cpf: string): { valid: boolean; formatted: string; digits: string } {
   const digits = cpf.replace(/\D/g, "");
   if (digits.length !== 11) return { valid: false, formatted: cpf, digits };
-
-  // Check for all same digits
   if (/^(\d)\1{10}$/.test(digits)) return { valid: false, formatted: cpf, digits };
 
-  // Validate check digits
   let sum = 0;
   for (let i = 0; i < 9; i++) sum += parseInt(digits[i]) * (10 - i);
   let remainder = (sum * 10) % 11;
@@ -124,7 +150,6 @@ function validateCPF(cpf: string): { valid: boolean; formatted: string; digits: 
 function validateCNPJ(cnpj: string): { valid: boolean; formatted: string; digits: string } {
   const digits = cnpj.replace(/\D/g, "");
   if (digits.length !== 14) return { valid: false, formatted: cnpj, digits };
-
   if (/^(\d)\1{13}$/.test(digits)) return { valid: false, formatted: cnpj, digits };
 
   const weights1 = [5,4,3,2,9,8,7,6,5,4,3,2];
@@ -152,15 +177,13 @@ async function lookupCNPJ(cnpj: string): Promise<string> {
   const validation = validateCNPJ(digits);
 
   if (!validation.valid) {
-    return `❌ <b>CNPJ Inválido</b>\n\nO CNPJ informado não possui um formato válido. Verifique e tente novamente.`;
+    return `❌ <b>CNPJ Inválido</b>\n\nO CNPJ informado não possui formato válido.`;
   }
 
   try {
     const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`);
     if (!res.ok) {
-      if (res.status === 404) {
-        return `❌ <b>CNPJ não encontrado</b>\n\nO CNPJ <code>${validation.formatted}</code> não foi encontrado na base da Receita Federal.`;
-      }
+      if (res.status === 404) return `❌ <b>CNPJ não encontrado:</b> <code>${validation.formatted}</code>`;
       throw new Error(`API status ${res.status}`);
     }
 
@@ -168,36 +191,28 @@ async function lookupCNPJ(cnpj: string): Promise<string> {
     const situacao = d.descricao_situacao_cadastral || "N/A";
     const situacaoEmoji = situacao === "ATIVA" ? "🟢" : situacao === "BAIXADA" ? "🔴" : "🟡";
 
-    let text = `🏢 <b>Consulta CNPJ - Dados Reais</b>\n`;
-    text += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+    let text = `🏢 <b>CNPJ - Dados da Receita Federal</b>\n━━━━━━━━━━━━━━━━━━━━\n\n`;
     text += `📋 <b>CNPJ:</b> <code>${validation.formatted}</code>\n`;
     text += `🏷️ <b>Razão Social:</b> ${d.razao_social || "N/A"}\n`;
     text += `🏪 <b>Nome Fantasia:</b> ${d.nome_fantasia || "Não informado"}\n\n`;
     text += `${situacaoEmoji} <b>Situação:</b> ${situacao}\n`;
-    text += `📅 <b>Data Situação:</b> ${d.data_situacao_cadastral || "N/A"}\n`;
-    text += `📅 <b>Abertura:</b> ${d.data_inicio_atividade || "N/A"}\n\n`;
+    text += `📅 <b>Abertura:</b> ${d.data_inicio_atividade || "N/A"}\n`;
     text += `🔢 <b>Natureza Jurídica:</b> ${d.natureza_juridica || "N/A"}\n`;
     text += `📊 <b>Porte:</b> ${d.porte || "N/A"}\n`;
     text += `💰 <b>Capital Social:</b> R$ ${d.capital_social ? Number(d.capital_social).toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : "N/A"}\n\n`;
 
     if (d.cnae_fiscal_descricao) {
-      text += `🏭 <b>CNAE Principal:</b> ${d.cnae_fiscal} - ${d.cnae_fiscal_descricao}\n\n`;
+      text += `🏭 <b>CNAE:</b> ${d.cnae_fiscal} - ${d.cnae_fiscal_descricao}\n\n`;
     }
 
     if (d.logradouro) {
-      text += `📍 <b>Endereço:</b>\n`;
-      text += `   ${d.descricao_tipo_de_logradouro || ""} ${d.logradouro}, ${d.numero || "S/N"}`;
+      text += `📍 <b>Endereço:</b>\n   ${d.descricao_tipo_de_logradouro || ""} ${d.logradouro}, ${d.numero || "S/N"}`;
       if (d.complemento) text += `, ${d.complemento}`;
-      text += `\n   ${d.bairro || ""} - ${d.municipio || ""}/${d.uf || ""}\n`;
-      text += `   CEP: ${d.cep || "N/A"}\n\n`;
+      text += `\n   ${d.bairro || ""} - ${d.municipio || ""}/${d.uf || ""}\n   CEP: ${d.cep || "N/A"}\n\n`;
     }
 
-    if (d.ddd_telefone_1) {
-      text += `📞 <b>Telefone:</b> ${d.ddd_telefone_1}\n`;
-    }
-    if (d.email) {
-      text += `📧 <b>Email:</b> ${d.email}\n`;
-    }
+    if (d.ddd_telefone_1) text += `📞 <b>Telefone:</b> ${d.ddd_telefone_1}\n`;
+    if (d.email) text += `📧 <b>Email:</b> ${d.email}\n`;
 
     if (d.qsa && d.qsa.length > 0) {
       text += `\n👥 <b>Quadro Societário:</b>\n`;
@@ -208,65 +223,53 @@ async function lookupCNPJ(cnpj: string): Promise<string> {
     }
 
     if (d.opcao_pelo_simples !== null) {
-      text += `\n📊 <b>Simples Nacional:</b> ${d.opcao_pelo_simples ? "✅ Optante" : "❌ Não optante"}\n`;
+      text += `\n📊 <b>Simples Nacional:</b> ${d.opcao_pelo_simples ? "✅ Optante" : "❌ Não"}\n`;
     }
     if (d.opcao_pelo_mei !== null) {
       text += `📊 <b>MEI:</b> ${d.opcao_pelo_mei ? "✅ Sim" : "❌ Não"}\n`;
     }
 
-    // Risk assessment
+    // Risk alerts
     text += `\n━━━━━━━━━━━━━━━━━━━━\n`;
-    if (situacao !== "ATIVA") {
-      text += `⚠️ <b>ALERTA:</b> Empresa NÃO está ativa! Situação: ${situacao}\n`;
-    }
-    if (d.capital_social && Number(d.capital_social) < 1000) {
-      text += `⚠️ <b>ALERTA:</b> Capital social muito baixo (R$ ${Number(d.capital_social).toFixed(2)})\n`;
-    }
+    if (situacao !== "ATIVA") text += `⚠️ Empresa NÃO ativa: ${situacao}\n`;
+    if (d.capital_social && Number(d.capital_social) < 1000) text += `⚠️ Capital social muito baixo\n`;
     const abertura = d.data_inicio_atividade ? new Date(d.data_inicio_atividade) : null;
-    if (abertura) {
-      const diffMonths = (Date.now() - abertura.getTime()) / (1000 * 60 * 60 * 24 * 30);
-      if (diffMonths < 6) {
-        text += `⚠️ <b>ALERTA:</b> Empresa aberta há menos de 6 meses\n`;
-      }
-    }
+    if (abertura && (Date.now() - abertura.getTime()) / (1000*60*60*24*30) < 6) text += `⚠️ Empresa < 6 meses\n`;
 
-    text += `\n✅ <i>Dados obtidos da Receita Federal via BrasilAPI</i>`;
+    text += `\n✅ <i>Receita Federal via BrasilAPI</i>`;
     return text;
   } catch (e) {
-    console.error("CNPJ lookup error:", e);
-    return `⚠️ Erro ao consultar CNPJ. Tente novamente em instantes.`;
+    console.error("CNPJ error:", e);
+    return `⚠️ Erro ao consultar CNPJ. Tente novamente.`;
   }
 }
 
 // ─── BrasilAPI: CEP Lookup ───────────────────────────────────────────
 async function lookupCEP(cep: string): Promise<string> {
   const digits = cep.replace(/\D/g, "");
-  if (digits.length !== 8) {
-    return `❌ <b>CEP Inválido</b>\n\nInforme um CEP com 8 dígitos.`;
-  }
+  if (digits.length !== 8) return `❌ <b>CEP Inválido</b>\n\nInforme um CEP com 8 dígitos.`;
 
   try {
     const res = await fetch(`https://brasilapi.com.br/api/cep/v2/${digits}`);
     if (!res.ok) {
       if (res.status === 404) return `❌ <b>CEP não encontrado:</b> <code>${digits}</code>`;
-      throw new Error(`API status ${res.status}`);
+      throw new Error(`status ${res.status}`);
     }
     const d = await res.json();
-    let text = `📍 <b>Consulta CEP - Dados Reais</b>\n`;
-    text += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+    let text = `📍 <b>Consulta CEP</b>\n━━━━━━━━━━━━━━━━━━━━\n\n`;
     text += `📮 <b>CEP:</b> <code>${digits.slice(0,5)}-${digits.slice(5)}</code>\n`;
     text += `📌 <b>Logradouro:</b> ${d.street || "N/A"}\n`;
     text += `🏘️ <b>Bairro:</b> ${d.neighborhood || "N/A"}\n`;
     text += `🏙️ <b>Cidade:</b> ${d.city || "N/A"}\n`;
     text += `🗺️ <b>Estado:</b> ${d.state || "N/A"}\n`;
     if (d.location?.coordinates?.latitude) {
-      text += `\n🌐 <b>Coordenadas:</b>\n   Lat: ${d.location.coordinates.latitude}\n   Lng: ${d.location.coordinates.longitude}\n`;
+      text += `\n🌐 <b>Coordenadas:</b> ${d.location.coordinates.latitude}, ${d.location.coordinates.longitude}\n`;
     }
-    text += `\n✅ <i>Dados obtidos via BrasilAPI</i>`;
+    text += `\n✅ <i>BrasilAPI</i>`;
     return text;
   } catch (e) {
-    console.error("CEP lookup error:", e);
-    return `⚠️ Erro ao consultar CEP. Tente novamente.`;
+    console.error("CEP error:", e);
+    return `⚠️ Erro ao consultar CEP.`;
   }
 }
 
@@ -277,9 +280,7 @@ async function lookupDDD(ddd: string): Promise<{ state: string; cities: string[]
     if (!res.ok) return null;
     const d = await res.json();
     return { state: d.state || "N/A", cities: d.cities || [] };
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
 
 // ─── BrasilAPI: Bank List ────────────────────────────────────────────
@@ -290,37 +291,240 @@ async function lookupBancos(): Promise<string> {
     const banks = await res.json();
     const mainBanks = banks.filter((b: any) => b.code && b.fullName).slice(0, 20);
 
-    let text = `🏦 <b>Bancos Registrados no Brasil</b>\n`;
-    text += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+    let text = `🏦 <b>Bancos do Brasil</b>\n━━━━━━━━━━━━━━━━━━━━\n\n`;
     text += `📊 <b>Total:</b> ${banks.length} instituições\n\n`;
-    text += `<b>Principais bancos:</b>\n`;
     mainBanks.forEach((b: any) => {
       text += `   ${b.code} - ${b.fullName?.substring(0, 40)}\n`;
     });
     text += `\n... e mais ${banks.length - 20} instituições\n`;
-    text += `\n✅ <i>Dados do Banco Central via BrasilAPI</i>`;
+    text += `\n✅ <i>Banco Central via BrasilAPI</i>`;
     return text;
   } catch (e) {
-    console.error("Banks lookup error:", e);
-    return `⚠️ Erro ao consultar bancos. Tente novamente.`;
+    console.error("Banks error:", e);
+    return `⚠️ Erro ao consultar bancos.`;
   }
+}
+
+// ─── BrasilAPI: IBGE City Lookup ─────────────────────────────────────
+async function lookupIBGE(cityName: string): Promise<string> {
+  try {
+    // Search for municipalities
+    const res = await fetch(`https://brasilapi.com.br/api/ibge/municipios/v1/${encodeURIComponent(cityName)}?providers=dados-abertos-br,gov,wikipedia`);
+    if (!res.ok) throw new Error(`status ${res.status}`);
+    const data = await res.json();
+    
+    if (!data || (Array.isArray(data) && data.length === 0)) {
+      // Try as UF (state code)
+      const ufRes = await fetch(`https://brasilapi.com.br/api/ibge/uf/v1/${encodeURIComponent(cityName)}`);
+      if (ufRes.ok) {
+        const ufData = await ufRes.json();
+        let text = `📊 <b>IBGE - Estado</b>\n━━━━━━━━━━━━━━━━━━━━\n\n`;
+        text += `🏳️ <b>Nome:</b> ${ufData.nome || "N/A"}\n`;
+        text += `🔤 <b>Sigla:</b> ${ufData.sigla || "N/A"}\n`;
+        text += `🔢 <b>Código IBGE:</b> ${ufData.id || "N/A"}\n`;
+        text += `🗺️ <b>Região:</b> ${ufData.regiao?.nome || "N/A"}\n`;
+        text += `\n✅ <i>IBGE via BrasilAPI</i>`;
+        return text;
+      }
+      return `❌ Nenhum resultado para "${cityName}". Tente o nome da cidade ou sigla do estado (ex: SP, RJ).`;
+    }
+
+    let text = `📊 <b>IBGE - Municípios</b>\n━━━━━━━━━━━━━━━━━━━━\n\n`;
+    const items = Array.isArray(data) ? data.slice(0, 10) : [data];
+    items.forEach((m: any) => {
+      text += `🏙️ <b>${m.nome || "N/A"}</b>\n`;
+      text += `   Código IBGE: ${m.codigo_ibge || "N/A"}\n\n`;
+    });
+    if (Array.isArray(data) && data.length > 10) {
+      text += `... e mais ${data.length - 10} municípios\n`;
+    }
+    text += `✅ <i>IBGE via BrasilAPI</i>`;
+    return text;
+  } catch (e) {
+    console.error("IBGE error:", e);
+    return `⚠️ Erro ao consultar IBGE. Tente com nome completo da cidade ou sigla do estado.`;
+  }
+}
+
+// ─── Vehicle Plate Lookup (FIPE + format analysis) ───────────────────
+async function lookupPlaca(placa: string): Promise<string> {
+  const p = placa.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const mercosulRegex = /^[A-Z]{3}[0-9][A-Z][0-9]{2}$/;
+  const antigoRegex = /^[A-Z]{3}[0-9]{4}$/;
+  
+  let text = `🚗 <b>Consulta de Placa</b>\n━━━━━━━━━━━━━━━━━━━━\n\n`;
+  text += `🔤 <b>Placa:</b> <code>${p}</code>\n\n`;
+
+  if (mercosulRegex.test(p)) {
+    text += `✅ <b>Formato:</b> Mercosul (padrão atual)\n`;
+    text += `🌎 <b>Padrão:</b> Brasil/Argentina/Uruguai/Paraguai\n\n`;
+  } else if (antigoRegex.test(p)) {
+    text += `✅ <b>Formato:</b> Antigo (3 letras + 4 números)\n\n`;
+  } else {
+    text += `❌ <b>Formato inválido</b>\nUse: ABC1D23 (Mercosul) ou ABC1234 (antigo)\n`;
+    return text;
+  }
+
+  // Identify state by first letter group
+  const stateMap: Record<string, string> = {
+    A: "PR/SC/RS", B: "PR/SC/RS", C: "PR/SC/RS", D: "MG", E: "SP", F: "SP",
+    G: "SP", H: "SP", I: "MS/MT", J: "GO/TO", K: "DF", L: "RJ", M: "RJ",
+    N: "ES", O: "BA/SE", P: "BA/SE", Q: "AL/PE", R: "CE/RN/PB",
+    S: "PI/MA", T: "PA/AM/AP", U: "AC/RO/RR",
+  };
+  
+  const firstLetter = p[0];
+  text += `📍 <b>Região provável:</b> ${stateMap[firstLetter] || "Não identificada"}\n\n`;
+
+  // Try to get FIPE info for the brand
+  text += `━━━━━━━━━━━━━━━━━━━━\n`;
+  text += `🔍 <b>Verificações:</b>\n\n`;
+  text += `• Formato da placa: ${mercosulRegex.test(p) ? "✅ Válido (Mercosul)" : "✅ Válido (Antigo)"}\n`;
+  text += `• Região identificada: ${stateMap[firstLetter] ? "✅" : "⚠️"}\n\n`;
+  
+  text += `💡 <b>Para consulta completa do veículo:</b>\n`;
+  text += `• <b>Detran</b> do seu estado\n`;
+  text += `• <b>SINESP Cidadão</b> (app oficial)\n`;
+  text += `• <b>Consulta Pública DENATRAN</b>\n\n`;
+  text += `✅ <i>Análise de formato de placa</i>`;
+  return text;
+}
+
+// ─── Domain/Website Analysis ─────────────────────────────────────────
+async function analyzeDomain(domain: string): Promise<string> {
+  let cleanDomain = domain.replace(/^https?:\/\//, "").split("/")[0].toLowerCase();
+  
+  let text = `🌐 <b>Análise de Domínio</b>\n━━━━━━━━━━━━━━━━━━━━\n\n`;
+  text += `🔗 <b>Domínio:</b> <code>${cleanDomain}</code>\n\n`;
+
+  // DNS check
+  try {
+    const dnsRes = await fetch(`https://dns.google/resolve?name=${cleanDomain}&type=A`);
+    if (dnsRes.ok) {
+      const dnsData = await dnsRes.json();
+      if (dnsData.Answer && dnsData.Answer.length > 0) {
+        text += `✅ <b>DNS Ativo:</b> Sim\n`;
+        text += `📡 <b>IPs:</b>\n`;
+        dnsData.Answer.slice(0, 3).forEach((a: any) => {
+          text += `   • ${a.data}\n`;
+        });
+      } else {
+        text += `❌ <b>DNS:</b> Sem registros A\n`;
+      }
+    }
+  } catch { text += `⚠️ Não foi possível verificar DNS\n`; }
+
+  // SSL Check  
+  try {
+    const sslRes = await fetch(`https://${cleanDomain}`, { method: "HEAD", redirect: "follow" });
+    text += `\n🔒 <b>HTTPS:</b> ${sslRes.ok ? "✅ Ativo" : "⚠️ Problemas"}\n`;
+    text += `📡 <b>Status:</b> ${sslRes.status}\n`;
+    
+    const server = sslRes.headers.get("server");
+    if (server) text += `🖥️ <b>Servidor:</b> ${server}\n`;
+    
+    const poweredBy = sslRes.headers.get("x-powered-by");
+    if (poweredBy) text += `⚙️ <b>Tecnologia:</b> ${poweredBy}\n`;
+  } catch {
+    text += `\n❌ <b>HTTPS:</b> Site inacessível ou sem HTTPS\n`;
+  }
+
+  // WHOIS-like check via other APIs
+  const tld = cleanDomain.split(".").pop();
+  const isBR = cleanDomain.endsWith(".br");
+  
+  text += `\n━━━━━━━━━━━━━━━━━━━━\n`;
+  text += `🔍 <b>Análise:</b>\n\n`;
+  text += `🌍 <b>TLD:</b> .${tld}\n`;
+  text += `🇧🇷 <b>Domínio BR:</b> ${isBR ? "✅ Sim" : "❌ Não"}\n`;
+  
+  // Suspicious TLD check
+  const suspiciousTLDs = [".xyz", ".top", ".club", ".buzz", ".work", ".click", ".tk", ".ml", ".ga", ".cf"];
+  if (suspiciousTLDs.some(s => cleanDomain.endsWith(s))) {
+    text += `⚠️ <b>ALERTA:</b> TLD frequentemente usada em golpes\n`;
+  }
+  
+  // Check if it mimics known brands
+  const brands = ["banco", "itau", "bradesco", "santander", "caixa", "nubank", "picpay", "mercadopago", "gov", "correios", "serasa"];
+  const matchedBrand = brands.find(b => cleanDomain.includes(b) && !cleanDomain.endsWith(".gov.br") && !cleanDomain.endsWith(".com.br"));
+  if (matchedBrand) {
+    text += `🔴 <b>ALERTA:</b> Contém "${matchedBrand}" mas NÃO é domínio oficial!\n`;
+  }
+
+  text += `\n✅ <i>Análise de domínio</i>`;
+  return text;
+}
+
+// ─── Email Analysis ──────────────────────────────────────────────────
+async function analyzeEmail(email: string): Promise<string> {
+  let text = `📧 <b>Análise de Email</b>\n━━━━━━━━━━━━━━━━━━━━\n\n`;
+  text += `📧 <b>Email:</b> <code>${email}</code>\n\n`;
+
+  // Basic validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    text += `❌ <b>Formato inválido!</b>\n`;
+    return text;
+  }
+
+  const [localPart, domain] = email.split("@");
+  text += `👤 <b>Usuário:</b> ${localPart}\n`;
+  text += `🌐 <b>Domínio:</b> ${domain}\n\n`;
+
+  // Check domain reputation
+  const trustedDomains = ["gmail.com", "outlook.com", "hotmail.com", "yahoo.com", "icloud.com", "protonmail.com", "live.com", "uol.com.br", "bol.com.br", "terra.com.br", "globo.com"];
+  const disposableDomains = ["tempmail.com", "guerrillamail.com", "10minutemail.com", "throwaway.email", "mailinator.com", "yopmail.com", "temp-mail.org", "fakeinbox.com"];
+  
+  text += `━━━━━━━━━━━━━━━━━━━━\n`;
+  text += `🔍 <b>Verificações:</b>\n\n`;
+  
+  if (trustedDomains.includes(domain)) {
+    text += `✅ Provedor confiável (${domain})\n`;
+  } else if (disposableDomains.some(d => domain.includes(d))) {
+    text += `🔴 Email temporário/descartável!\n`;
+    text += `⚠️ Frequentemente usado em fraudes\n`;
+  } else {
+    text += `🟡 Provedor personalizado - verificação manual necessária\n`;
+  }
+
+  // Check MX records
+  try {
+    const mxRes = await fetch(`https://dns.google/resolve?name=${domain}&type=MX`);
+    if (mxRes.ok) {
+      const mxData = await mxRes.json();
+      if (mxData.Answer && mxData.Answer.length > 0) {
+        text += `✅ Domínio recebe emails (MX configurado)\n`;
+        text += `📬 <b>Servidor de email:</b> ${mxData.Answer[0]?.data?.split(" ").pop() || "N/A"}\n`;
+      } else {
+        text += `❌ Domínio NÃO recebe emails (sem MX)\n`;
+        text += `⚠️ Este email provavelmente é inválido!\n`;
+      }
+    }
+  } catch {
+    text += `⚠️ Não foi possível verificar MX\n`;
+  }
+
+  // Pattern analysis
+  if (localPart.length <= 2) text += `⚠️ Nome de usuário muito curto\n`;
+  if (/^\d+$/.test(localPart)) text += `🟡 Apenas números no nome (gerado automaticamente?)\n`;
+  if (localPart.includes("+")) text += `ℹ️ Email com alias (+) detectado\n`;
+
+  text += `\n✅ <i>Análise de email</i>`;
+  return text;
 }
 
 // ─── Phone Analysis ──────────────────────────────────────────────────
 async function analyzePhone(phone: string): Promise<string> {
   const digits = phone.replace(/\D/g, "");
 
-  let text = `📱 <b>Análise de Telefone</b>\n`;
-  text += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+  let text = `📱 <b>Análise de Telefone</b>\n━━━━━━━━━━━━━━━━━━━━\n\n`;
   text += `📞 <b>Número:</b> <code>${phone}</code>\n`;
 
-  // Validate format
   if (digits.length < 10 || digits.length > 13) {
-    text += `\n❌ <b>Formato inválido.</b> Informe um número com DDD (10 ou 11 dígitos).`;
+    text += `\n❌ Formato inválido. Informe com DDD (10 ou 11 dígitos).`;
     return text;
   }
 
-  // Extract DDD
   const startIndex = digits.startsWith("55") ? 2 : 0;
   const ddd = digits.substring(startIndex, startIndex + 2);
   const number = digits.substring(startIndex + 2);
@@ -329,41 +533,26 @@ async function analyzePhone(phone: string): Promise<string> {
   text += `📍 <b>DDD:</b> ${ddd}\n`;
   text += `📲 <b>Tipo:</b> ${isMobile ? "📱 Celular" : "☎️ Fixo"}\n`;
 
-  // Lookup DDD region
   const dddInfo = await lookupDDD(ddd);
   if (dddInfo) {
     text += `🗺️ <b>Estado:</b> ${dddInfo.state}\n`;
     if (dddInfo.cities.length > 0) {
-      const citiesPreview = dddInfo.cities.slice(0, 5).join(", ");
-      text += `🏙️ <b>Cidades:</b> ${citiesPreview}`;
+      text += `🏙️ <b>Cidades:</b> ${dddInfo.cities.slice(0, 5).join(", ")}`;
       if (dddInfo.cities.length > 5) text += ` e +${dddInfo.cities.length - 5}`;
       text += `\n`;
     }
   }
 
-  // Known spam/fraud DDD patterns
   const spamDDDs = ["0300", "0500", "0800", "0900"];
   const isSpamDDD = spamDDDs.some(s => digits.startsWith(s));
-  const isSAC = digits.startsWith("0800");
 
-  text += `\n━━━━━━━━━━━━━━━━━━━━\n`;
-  text += `🔍 <b>Indicadores:</b>\n\n`;
+  text += `\n━━━━━━━━━━━━━━━━━━━━\n🔍 <b>Indicadores:</b>\n\n`;
+  if (digits.startsWith("0800")) text += `✅ Número 0800 (gratuito) - geralmente legítimo\n`;
+  else if (isSpamDDD) text += `⚠️ Prefixo de telemarketing - possível spam\n`;
+  if (isMobile) text += `📱 Celular com 9º dígito - formato válido\n`;
+  if (!dddInfo && !isSpamDDD) text += `⚠️ DDD ${ddd} não reconhecido\n`;
 
-  if (isSAC) {
-    text += `✅ Número 0800 (SAC/Gratuito) - geralmente legítimo\n`;
-  } else if (isSpamDDD) {
-    text += `⚠️ Prefixo de telemarketing/serviços - possível spam\n`;
-  }
-
-  if (isMobile) {
-    text += `📱 Celular com 9º dígito - formato válido\n`;
-  }
-
-  if (!dddInfo && !isSpamDDD) {
-    text += `⚠️ DDD ${ddd} não reconhecido - pode ser número virtual\n`;
-  }
-
-  text += `\n✅ <i>Dados de DDD obtidos via BrasilAPI</i>`;
+  text += `\n✅ <i>DDD via BrasilAPI</i>`;
   return text;
 }
 
@@ -372,23 +561,18 @@ function analyzeCPFFormat(cpf: string): string {
   const validation = validateCPF(cpf);
   const digits = validation.digits;
 
-  let text = `🔍 <b>Consulta CPF</b>\n`;
-  text += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+  let text = `🔍 <b>Consulta CPF</b>\n━━━━━━━━━━━━━━━━━━━━\n\n`;
   text += `📋 <b>CPF:</b> <code>${validation.formatted}</code>\n\n`;
 
   if (!validation.valid) {
-    text += `❌ <b>CPF INVÁLIDO!</b>\n\n`;
-    text += `O número informado NÃO é um CPF válido.\n`;
-    text += `Dígitos verificadores não conferem.\n\n`;
-    text += `🚦 <b>NÍVEL DE RISCO: ALTO</b>\n`;
-    text += `🎯 <b>TIPO:</b> CPF com formato inválido\n\n`;
-    text += `⚠️ Se alguém forneceu este CPF para você, é um forte indicativo de fraude.\n`;
+    text += `❌ <b>CPF INVÁLIDO!</b>\nDígitos verificadores não conferem.\n\n`;
+    text += `🚦 <b>RISCO: ALTO</b>\n`;
+    text += `⚠️ Se alguém forneceu este CPF, é indicativo de fraude.\n`;
     return text;
   }
 
   text += `✅ <b>CPF matematicamente válido</b>\n\n`;
 
-  // Extract info from CPF
   const regionDigit = parseInt(digits[8]);
   const regions: Record<number, string> = {
     0: "RS", 1: "DF/GO/MS/MT/TO", 2: "AC/AM/AP/PA/RO/RR",
@@ -397,128 +581,67 @@ function analyzeCPFFormat(cpf: string): string {
   };
 
   text += `🗺️ <b>Região fiscal:</b> ${regions[regionDigit] || "N/A"} (dígito ${regionDigit})\n\n`;
-
-  text += `━━━━━━━━━━━━━━━━━━━━\n`;
-  text += `🔍 <b>Análise de Segurança:</b>\n\n`;
-  text += `✅ Formato numérico válido\n`;
-  text += `✅ Dígitos verificadores corretos\n`;
-  text += `📍 Região fiscal identificada: ${regions[regionDigit]}\n\n`;
-
-  text += `⚠️ <b>Nota:</b> A validação confirma que o CPF possui formato correto, mas não garante que está ativo na Receita Federal. Para consultas oficiais, acesse o site da Receita Federal.\n\n`;
-  text += `💡 <b>Dicas de Proteção:</b>\n`;
-  text += `• Nunca compartilhe seu CPF em sites não confiáveis\n`;
-  text += `• Monitore seu CPF regularmente no Registrato (Banco Central)\n`;
-  text += `• Ative alertas de uso no SPC/Serasa\n`;
+  text += `━━━━━━━━━━━━━━━━━━━━\n🔍 <b>Análise:</b>\n\n`;
+  text += `✅ Formato válido\n✅ Dígitos verificadores corretos\n`;
+  text += `📍 Região fiscal: ${regions[regionDigit]}\n\n`;
+  text += `💡 <b>Proteção:</b>\n`;
+  text += `• Nunca compartilhe CPF em sites duvidosos\n`;
+  text += `• Monitore no Registrato (Banco Central)\n`;
+  text += `• Ative alertas no SPC/Serasa\n`;
 
   return text;
 }
 
 // ─── Link Analysis ───────────────────────────────────────────────────
 async function analyzeLink(url: string): Promise<{ text: string; riskData: string }> {
-  let analysisText = `🔗 <b>Análise de Link</b>\n`;
-  analysisText += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+  let analysisText = `🔗 <b>Análise de Link</b>\n━━━━━━━━━━━━━━━━━━━━\n\n`;
   analysisText += `🌐 <b>URL:</b> <code>${url.substring(0, 100)}</code>\n\n`;
 
   const indicators: string[] = [];
   let riskScore = 0;
-
-  // Normalize URL
   let fullUrl = url;
-  if (!url.startsWith("http://") && !url.startsWith("https://")) {
-    fullUrl = "https://" + url;
-  }
+  if (!url.startsWith("http://") && !url.startsWith("https://")) fullUrl = "https://" + url;
 
   try {
     const urlObj = new URL(fullUrl);
     const domain = urlObj.hostname.toLowerCase();
 
     analysisText += `📍 <b>Domínio:</b> ${domain}\n`;
-    analysisText += `🔒 <b>Protocolo:</b> ${urlObj.protocol === "https:" ? "✅ HTTPS" : "⚠️ HTTP (inseguro)"}\n\n`;
+    analysisText += `🔒 <b>Protocolo:</b> ${urlObj.protocol === "https:" ? "✅ HTTPS" : "⚠️ HTTP"}\n\n`;
 
-    // Check for IP-based URLs
-    if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(domain)) {
-      indicators.push("🔴 URL usa endereço IP em vez de domínio");
-      riskScore += 30;
-    }
+    if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(domain)) { indicators.push("🔴 URL usa IP"); riskScore += 30; }
+    
+    const suspiciousTLDs = [".xyz", ".top", ".club", ".buzz", ".work", ".click", ".tk", ".ml", ".ga", ".cf"];
+    if (suspiciousTLDs.some(tld => domain.endsWith(tld))) { indicators.push("🟡 TLD suspeita"); riskScore += 20; }
 
-    // Check for suspicious TLDs
-    const suspiciousTLDs = [".xyz", ".top", ".club", ".buzz", ".work", ".click", ".link", ".tk", ".ml", ".ga", ".cf"];
-    if (suspiciousTLDs.some(tld => domain.endsWith(tld))) {
-      indicators.push("🟡 Domínio com extensão suspeita");
-      riskScore += 20;
-    }
+    const brands = ["banco", "itau", "bradesco", "santander", "caixa", "nubank", "picpay", "mercadopago", "gov", "correios", "serasa"];
+    const matched = brands.find(b => domain.includes(b) && !domain.endsWith(".gov.br") && !domain.endsWith(".com.br"));
+    if (matched) { indicators.push(`🔴 Possível imitação de "${matched}"`); riskScore += 40; }
 
-    // Check for typosquatting patterns
-    const knownBrands = ["banco", "itau", "bradesco", "santander", "caixa", "nubank", "picpay", "mercadopago", "gov", "correios", "receita", "detran", "serasa"];
-    const matchedBrand = knownBrands.find(b => domain.includes(b) && !domain.endsWith(".gov.br") && !domain.endsWith(".com.br"));
-    if (matchedBrand) {
-      indicators.push(`🔴 Possível imitação de "${matchedBrand}" - domínio não oficial`);
-      riskScore += 40;
-    }
+    if (domain.split(".").length - 2 > 2) { indicators.push("🟡 Muitos subdomínios"); riskScore += 15; }
 
-    // Check for excessive subdomains
-    const subdomains = domain.split(".").length - 2;
-    if (subdomains > 2) {
-      indicators.push("🟡 URL com muitos subdomínios (tática de phishing)");
-      riskScore += 15;
-    }
+    const shorteners = ["bit.ly", "t.co", "goo.gl", "tinyurl.com", "is.gd", "ow.ly"];
+    if (shorteners.some(s => domain.includes(s))) { indicators.push("🟡 URL encurtada"); riskScore += 10; }
 
-    // Check for URL shorteners
-    const shorteners = ["bit.ly", "t.co", "goo.gl", "tinyurl.com", "is.gd", "v.gd", "ow.ly", "shorturl.at"];
-    if (shorteners.some(s => domain.includes(s))) {
-      indicators.push("🟡 URL encurtada - destino real desconhecido");
-      riskScore += 10;
-    }
+    if (urlObj.protocol !== "https:") { indicators.push("🟡 Sem HTTPS"); riskScore += 15; }
 
-    // Check HTTP protocol
-    if (urlObj.protocol !== "https:") {
-      indicators.push("🟡 Sem HTTPS - conexão não criptografada");
-      riskScore += 15;
-    }
+    const suspicious = ["login", "signin", "verify", "confirm", "update", "secure", "account", "banking", "wallet"];
+    if (suspicious.some(p => urlObj.pathname.toLowerCase().includes(p))) { indicators.push("🟡 Termos sensíveis na URL"); riskScore += 15; }
 
-    // Check for suspicious paths
-    const suspiciousPatterns = ["login", "signin", "verify", "confirm", "update", "secure", "account", "banking", "wallet"];
-    const pathLower = urlObj.pathname.toLowerCase();
-    if (suspiciousPatterns.some(p => pathLower.includes(p))) {
-      indicators.push("🟡 URL contém termos sensíveis no caminho (login/verify/account)");
-      riskScore += 15;
-    }
+    if (fullUrl.includes("@")) { indicators.push("🔴 URL com @ (phishing)"); riskScore += 35; }
 
-    // Check for @ in URL (credential phishing)
-    if (fullUrl.includes("@")) {
-      indicators.push("🔴 URL contém @ - técnica clássica de phishing");
-      riskScore += 35;
-    }
-
-    // Try to reach the URL
     try {
       const controller = new AbortController();
       setTimeout(() => controller.abort(), 5000);
-      const headRes = await fetch(fullUrl, {
-        method: "HEAD",
-        redirect: "manual",
-        signal: controller.signal,
-      });
+      const headRes = await fetch(fullUrl, { method: "HEAD", redirect: "manual", signal: controller.signal });
       analysisText += `📡 <b>Status:</b> ${headRes.status}\n`;
       if (headRes.status >= 300 && headRes.status < 400) {
-        const redirectTo = headRes.headers.get("location");
-        indicators.push(`🟡 Redireciona para: ${redirectTo?.substring(0, 50) || "desconhecido"}`);
+        indicators.push(`🟡 Redireciona para: ${headRes.headers.get("location")?.substring(0, 50) || "?"}`);
         riskScore += 10;
       }
-      if (headRes.status === 404) {
-        indicators.push("⚪ Página não encontrada (404)");
-      }
-    } catch {
-      indicators.push("⚠️ Não foi possível acessar o link");
-      riskScore += 5;
-    }
+    } catch { indicators.push("⚠️ Link inacessível"); riskScore += 5; }
+  } catch { indicators.push("🔴 URL inválida"); riskScore += 50; }
 
-  } catch {
-    indicators.push("🔴 URL com formato inválido");
-    riskScore += 50;
-  }
-
-  // Build risk level
   let riskLevel: string;
   let riskEmoji: string;
   if (riskScore >= 50) { riskLevel = "CRÍTICO"; riskEmoji = "🔴"; }
@@ -526,47 +649,38 @@ async function analyzeLink(url: string): Promise<{ text: string; riskData: strin
   else if (riskScore >= 15) { riskLevel = "MÉDIO"; riskEmoji = "🟡"; }
   else { riskLevel = "BAIXO"; riskEmoji = "🟢"; }
 
-  analysisText += `\n${riskEmoji} <b>NÍVEL DE RISCO: ${riskLevel}</b> (score: ${riskScore}/100)\n\n`;
-
+  analysisText += `\n${riskEmoji} <b>RISCO: ${riskLevel}</b> (${riskScore}/100)\n\n`;
   if (indicators.length > 0) {
-    analysisText += `🔍 <b>Indicadores Encontrados:</b>\n`;
+    analysisText += `🔍 <b>Indicadores:</b>\n`;
     indicators.forEach(i => { analysisText += `   ${i}\n`; });
   } else {
-    analysisText += `✅ Nenhum indicador negativo encontrado\n`;
+    analysisText += `✅ Nenhum indicador negativo\n`;
   }
-
-  analysisText += `\n💡 <b>Dicas:</b>\n`;
-  analysisText += `• Sempre verifique o domínio antes de inserir dados\n`;
-  analysisText += `• Sites oficiais de bancos usam .com.br\n`;
-  analysisText += `• Desconfie de links encurtados em mensagens\n`;
 
   return { text: analysisText, riskData: riskLevel };
 }
 
-// ─── AI Analysis (enhanced with real data context) ───────────────────
+// ─── AI Analysis ─────────────────────────────────────────────────────
 async function analyzeWithAI(queryType: string, input: string, realDataContext?: string): Promise<{
-  riskLevel: string;
-  fraudType: string;
-  response: string;
+  riskLevel: string; fraudType: string; response: string;
 }> {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   if (!LOVABLE_API_KEY) {
-    return {
-      riskLevel: "indefinido",
-      fraudType: "sem_analise",
-      response: "⚠️ Sistema de IA temporariamente indisponível.",
-    };
+    return { riskLevel: "indefinido", fraudType: "sem_analise", response: "⚠️ IA temporariamente indisponível." };
   }
 
-  const contextNote = realDataContext ? `\n\nDados reais obtidos via API:\n${realDataContext}` : "";
+  const contextNote = realDataContext ? `\n\nDados reais obtidos:\n${realDataContext}` : "";
 
   const prompts: Record<string, string> = {
-    cpf: `Analise este CPF para riscos de fraude: ${input}.${contextNote}\n\nForneça uma análise de segurança considerando: uso indevido, clonagem, empréstimos fraudulentos. Dê dicas práticas de proteção.`,
-    cnpj: `Analise esta empresa para riscos de fraude baseado nos dados reais obtidos:\n${input}${contextNote}\n\nAvalie: empresa fantasma, golpes conhecidos, sinais de alerta nos dados cadastrais.`,
-    nome: `Pesquise e analise possíveis riscos associados ao nome: "${input}".\n\nConsidere: perfis falsos, golpistas conhecidos, padrões de fraude por engenharia social. Dê orientações de como verificar a identidade de alguém.`,
-    telefone: `Analise este telefone para riscos de golpe: ${input}.${contextNote}\n\nConsidere: golpes por WhatsApp, ligações fraudulentas, SMS phishing, clonagem de número.`,
-    link: `Analise esta URL para riscos de segurança: ${input}.${contextNote}\n\nConsidere: phishing, malware, sites falsos, engenharia social.`,
-    message: `Analise esta mensagem e avalie se parece ser um golpe/fraude:\n\n"${input}"\n\nConsidere: engenharia social, promessas falsas, urgência artificial, padrões de golpes conhecidos no Brasil.`,
+    cpf: `Analise este CPF: ${input}.${contextNote}\n\nForneça análise de segurança: uso indevido, clonagem, empréstimos fraudulentos. Dicas de proteção.`,
+    cnpj: `Analise esta empresa (dados reais):\n${input}${contextNote}\n\nAvalie: empresa fantasma, golpes, sinais de alerta.`,
+    nome: `Analise possíveis riscos do nome "${input}". Considere: perfis falsos, engenharia social. Orientações de verificação de identidade.`,
+    telefone: `Analise telefone: ${input}.${contextNote}\n\nConsidere: golpes WhatsApp, ligações fraudulentas, clonagem.`,
+    link: `Analise URL: ${input}.${contextNote}\n\nConsidere: phishing, malware, sites falsos.`,
+    message: `Analise se é golpe:\n\n"${input}"\n\nConsidere: engenharia social, promessas falsas, urgência artificial, golpes BR.`,
+    email: `Analise este email: ${input}.${contextNote}\n\nConsidere: email falso, phishing, spam, legitimidade do domínio.`,
+    dominio: `Analise este domínio: ${input}.${contextNote}\n\nConsidere: site falso, phishing, reputação, segurança.`,
+    placa: `Analise esta placa: ${input}.${contextNote}\n\nDê informações sobre golpes envolvendo veículos: clonagem, adulteração.`,
   };
 
   try {
@@ -577,31 +691,28 @@ async function analyzeWithAI(queryType: string, input: string, realDataContext?:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-flash",
         messages: [
           {
             role: "system",
             content: `Você é um especialista em segurança digital e prevenção de fraudes no Brasil. 
-Sempre responda em português brasileiro, de forma clara e direta.
-Formato OBRIGATÓRIO:
+Responda em PT-BR, direto e claro.
+Formato:
 🚦 NÍVEL DE RISCO: [BAIXO/MÉDIO/ALTO/CRÍTICO]
 🎯 TIPO: [tipo do golpe ou "Nenhum identificado"]
-📝 ANÁLISE: [explicação clara, máximo 3 parágrafos]
-💡 DICAS: [2-3 dicas práticas de proteção]`,
+📝 ANÁLISE: [explicação, max 3 parágrafos]
+💡 DICAS: [2-3 dicas práticas]`,
           },
           { role: "user", content: prompts[queryType] || prompts.message },
         ],
         temperature: 0.3,
+        max_tokens: 1000,
       }),
     });
 
     if (!res.ok) {
       console.error("AI error:", res.status);
-      return {
-        riskLevel: "indefinido",
-        fraudType: "erro_analise",
-        response: "⚠️ Análise de IA indisponível no momento.",
-      };
+      return { riskLevel: "indefinido", fraudType: "erro", response: "⚠️ IA indisponível." };
     }
 
     const data = await res.json();
@@ -619,13 +730,10 @@ Formato OBRIGATÓRIO:
 
     return { riskLevel, fraudType, response: content };
   } catch (e) {
-    console.error("AI analysis error:", e);
-    return { riskLevel: "indefinido", fraudType: "erro", response: "⚠️ Erro na análise de IA." };
+    console.error("AI error:", e);
+    return { riskLevel: "indefinido", fraudType: "erro", response: "⚠️ Erro na IA." };
   }
 }
-
-// ─── User state for multi-step flows ─────────────────────────────────
-const userStates = new Map<number, { action: string; step: string }>();
 
 // ─── MAIN SERVER ─────────────────────────────────────────────────────
 serve(async (req) => {
@@ -645,7 +753,7 @@ serve(async (req) => {
 
   try {
     const update: TelegramUpdate = await req.json();
-    console.log("Update:", JSON.stringify(update).substring(0, 300));
+    console.log("Update:", JSON.stringify(update).substring(0, 500));
 
     // ─── Handle callback queries ────────────────────────────────────
     if (update.callback_query) {
@@ -657,23 +765,21 @@ serve(async (req) => {
       await answerCallback(BOT_TOKEN, cb.id);
 
       await supabase.from("telbot_logs").insert({
-        log_type: "command",
-        telegram_user_id: userId,
-        command: data,
-        message: `Callback: ${data}`,
+        log_type: "command", telegram_user_id: userId,
+        command: data, message: `Callback: ${data}`,
       });
 
       // ── Query type callbacks ──
       if (data.startsWith("query_")) {
         const queryType = data.replace("query_", "");
         const labels: Record<string, string> = {
-          cpf: "CPF (11 dígitos)",
-          cnpj: "CNPJ (14 dígitos)",
-          nome: "Nome completo",
-          telefone: "Telefone com DDD",
-          link: "link/URL completa",
-          message: "mensagem suspeita",
-          cep: "CEP (8 dígitos)",
+          cpf: "CPF (11 dígitos)", cnpj: "CNPJ (14 dígitos)",
+          nome: "Nome completo", telefone: "Telefone com DDD",
+          link: "link/URL completa", message: "mensagem suspeita",
+          cep: "CEP (8 dígitos)", email: "endereço de email",
+          dominio: "domínio do site (ex: google.com)",
+          placa: "placa do veículo (ex: ABC1D23)",
+          ibge: "nome da cidade ou sigla do estado",
         };
 
         // Bancos don't need input
@@ -684,23 +790,26 @@ serve(async (req) => {
             inline_keyboard: [[{ text: "◀️ Menu Principal", callback_data: "main_menu" }]],
           });
           await supabase.from("telbot_queries").insert({
-            telegram_user_id: userId,
-            query_type: "bancos",
-            query_input: "lista_bancos",
-            risk_level: "baixo",
-            fraud_type: "consulta",
-            ai_response: "Listagem de bancos",
+            telegram_user_id: userId, query_type: "bancos",
+            query_input: "lista_bancos", risk_level: "baixo",
+            fraud_type: "consulta", ai_response: "Listagem de bancos",
           });
           return new Response("OK");
         }
 
-        userStates.set(userId, { action: `query_${queryType}`, step: "waiting_input" });
+        // Set state in DB (persists between requests!)
+        await supabase.from("telbot_users").upsert({
+          telegram_id: userId,
+          telegram_username: cb.from.username || null,
+          first_name: cb.from.first_name,
+          last_name: cb.from.last_name || null,
+          last_activity_at: new Date().toISOString(),
+          conversation_state: { action: `query_${queryType}`, step: "waiting_input" },
+        }, { onConflict: "telegram_id" });
 
         await editMessage(
-          BOT_TOKEN,
-          chatId,
-          cb.message.message_id,
-          `🔍 <b>Consulta de ${labels[queryType] || queryType}</b>\n\nEnvie o ${labels[queryType] || "dado"} que deseja consultar:`,
+          BOT_TOKEN, chatId, cb.message.message_id,
+          `🔍 <b>Consulta de ${labels[queryType] || queryType}</b>\n\n📝 Envie o <b>${labels[queryType] || "dado"}</b> que deseja consultar:`,
         );
         return new Response("OK");
       }
@@ -708,18 +817,18 @@ serve(async (req) => {
       // ── Monitoring callbacks ──
       if (data === "monitoring") {
         await editMessage(BOT_TOKEN, chatId, cb.message.message_id,
-          "🔔 <b>Monitoramento</b>\n\nEscolha uma opção:", {
+          "🔔 <b>Monitoramento</b>\n\nEscolha:", {
             inline_keyboard: [
               [
-                { text: "➕ Cadastrar CPF", callback_data: "mon_add_cpf" },
-                { text: "➕ Cadastrar CNPJ", callback_data: "mon_add_cnpj" },
+                { text: "➕ CPF", callback_data: "mon_add_cpf" },
+                { text: "➕ CNPJ", callback_data: "mon_add_cnpj" },
               ],
               [
-                { text: "➕ Cadastrar Nome", callback_data: "mon_add_nome" },
-                { text: "📋 Meus Monitoramentos", callback_data: "mon_list" },
+                { text: "➕ Nome", callback_data: "mon_add_nome" },
+                { text: "📋 Listar", callback_data: "mon_list" },
               ],
               [
-                { text: "🗑️ Remover Monitoramento", callback_data: "mon_remove" },
+                { text: "🗑️ Remover", callback_data: "mon_remove" },
                 { text: "◀️ Voltar", callback_data: "main_menu" },
               ],
             ],
@@ -729,29 +838,27 @@ serve(async (req) => {
 
       if (data.startsWith("mon_add_")) {
         const monType = data.replace("mon_add_", "");
-        userStates.set(userId, { action: `monitor_${monType}`, step: "waiting_input" });
+        await setUserState(supabase, userId, { action: `monitor_${monType}`, step: "waiting_input" });
         await editMessage(BOT_TOKEN, chatId, cb.message.message_id,
-          `🔔 <b>Cadastrar Monitoramento de ${monType.toUpperCase()}</b>\n\nEnvie o ${monType.toUpperCase()} que deseja monitorar:`);
+          `🔔 <b>Monitorar ${monType.toUpperCase()}</b>\n\nEnvie o ${monType.toUpperCase()} que deseja monitorar:`);
         return new Response("OK");
       }
 
       if (data === "mon_remove") {
-        userStates.set(userId, { action: "monitor_remove", step: "waiting_input" });
+        await setUserState(supabase, userId, { action: "monitor_remove", step: "waiting_input" });
         const { data: monitors } = await supabase
-          .from("telbot_monitoring")
-          .select("*")
-          .eq("telegram_user_id", userId)
-          .eq("is_active", true);
+          .from("telbot_monitoring").select("*")
+          .eq("telegram_user_id", userId).eq("is_active", true);
 
         if (!monitors || monitors.length === 0) {
           await editMessage(BOT_TOKEN, chatId, cb.message.message_id,
-            "📋 Nenhum monitoramento ativo para remover.", {
+            "📋 Nenhum monitoramento ativo.", {
               inline_keyboard: [[{ text: "◀️ Voltar", callback_data: "monitoring" }]],
             });
           return new Response("OK");
         }
 
-        let text = "🗑️ <b>Remover Monitoramento</b>\n\nEnvie o número do item:\n\n";
+        let text = "🗑️ <b>Remover Monitoramento</b>\n\nEnvie o número:\n\n";
         monitors.forEach((m: any, i: number) => {
           text += `${i + 1}. ${m.monitor_type.toUpperCase()}: ${m.monitor_value}\n`;
         });
@@ -761,16 +868,13 @@ serve(async (req) => {
 
       if (data === "mon_list") {
         const { data: monitors } = await supabase
-          .from("telbot_monitoring")
-          .select("*")
-          .eq("telegram_user_id", userId)
-          .eq("is_active", true)
-          .order("created_at", { ascending: false })
-          .limit(10);
+          .from("telbot_monitoring").select("*")
+          .eq("telegram_user_id", userId).eq("is_active", true)
+          .order("created_at", { ascending: false }).limit(10);
 
-        let text = "📋 <b>Seus Monitoramentos Ativos</b>\n\n";
+        let text = "📋 <b>Monitoramentos Ativos</b>\n\n";
         if (!monitors || monitors.length === 0) {
-          text += "Nenhum monitoramento ativo.\nUse o menu para cadastrar um.";
+          text += "Nenhum ativo. Use o menu para cadastrar.";
         } else {
           monitors.forEach((m: any, i: number) => {
             text += `${i + 1}. <b>${m.monitor_type.toUpperCase()}</b>: ${m.monitor_value}\n   ✅ Verificações: ${m.check_count}\n\n`;
@@ -784,52 +888,50 @@ serve(async (req) => {
 
       if (data === "history") {
         const { data: queries } = await supabase
-          .from("telbot_queries")
-          .select("*")
+          .from("telbot_queries").select("*")
           .eq("telegram_user_id", userId)
-          .order("created_at", { ascending: false })
-          .limit(10);
+          .order("created_at", { ascending: false }).limit(10);
 
-        let text = "📋 <b>Seu Histórico de Consultas</b>\n\n";
+        let text = "📋 <b>Histórico</b>\n\n";
         if (!queries || queries.length === 0) {
-          text += "Nenhuma consulta realizada ainda.";
+          text += "Nenhuma consulta realizada.";
         } else {
-          const riskEmoji: Record<string, string> = { baixo: "🟢", medio: "🟡", alto: "🟠", critico: "🔴" };
+          const re: Record<string, string> = { baixo: "🟢", medio: "🟡", alto: "🟠", critico: "🔴" };
           queries.forEach((q: any, i: number) => {
-            const emoji = riskEmoji[q.risk_level] || "⚪";
+            const emoji = re[q.risk_level] || "⚪";
             const date = new Date(q.created_at).toLocaleDateString("pt-BR");
             text += `${i + 1}. ${emoji} <b>${q.query_type.toUpperCase()}</b> - ${q.query_input.substring(0, 25)}\n   📅 ${date} | Risco: ${q.risk_level || "N/A"}\n\n`;
           });
         }
         await editMessage(BOT_TOKEN, chatId, cb.message.message_id, text, {
-          inline_keyboard: [[{ text: "◀️ Menu Principal", callback_data: "main_menu" }]],
+          inline_keyboard: [[{ text: "◀️ Menu", callback_data: "main_menu" }]],
         });
         return new Response("OK");
       }
 
       if (data === "help") {
         await editMessage(BOT_TOKEN, chatId, cb.message.message_id,
-          `ℹ️ <b>Como usar o Bot Anti-Fraude</b>\n\n` +
-          `🔍 <b>Consultas Reais:</b>\n` +
-          `• <b>CPF</b> - Validação matemática + região fiscal\n` +
-          `• <b>CNPJ</b> - Dados completos da Receita Federal\n` +
-          `• <b>Telefone</b> - DDD, região, tipo de número\n` +
-          `• <b>CEP</b> - Endereço completo com coordenadas\n` +
-          `• <b>Bancos</b> - Lista oficial do Banco Central\n\n` +
-          `🤖 <b>Análise por IA:</b>\n` +
-          `• Links suspeitos (phishing, malware)\n` +
-          `• Mensagens de golpe\n` +
-          `• Nomes (verificação de perfis)\n\n` +
-          `🔔 <b>Monitoramento:</b> Receba alertas automáticos\n\n` +
-          `<b>Comandos:</b> /start /menu /ajuda`,
-          { inline_keyboard: [[{ text: "◀️ Menu Principal", callback_data: "main_menu" }]] });
+          `ℹ️ <b>Ajuda</b>\n\n` +
+          `🔍 <b>Consultas com dados reais:</b>\n` +
+          `• CPF - Validação + região fiscal\n` +
+          `• CNPJ - Receita Federal completo\n` +
+          `• Telefone - DDD, região, tipo\n` +
+          `• CEP - Endereço + coordenadas\n` +
+          `• Email - Validação MX + reputação\n` +
+          `• Domínio - DNS, SSL, segurança\n` +
+          `• Placa - Formato + região\n` +
+          `• IBGE - Municípios + estados\n` +
+          `• Bancos - Lista Banco Central\n\n` +
+          `🤖 <b>IA:</b> Links, mensagens, nomes\n` +
+          `🔔 <b>Monitoramento:</b> Alertas automáticos`,
+          { inline_keyboard: [[{ text: "◀️ Menu", callback_data: "main_menu" }]] });
         return new Response("OK");
       }
 
       if (data === "main_menu") {
-        userStates.delete(userId);
+        await setUserState(supabase, userId, null);
         await editMessage(BOT_TOKEN, chatId, cb.message.message_id,
-          "🛡️ <b>Bot Anti-Fraude</b>\n\nEscolha uma opção:", mainMenuKeyboard());
+          "🛡️ <b>Bot Anti-Fraude</b>\n\nEscolha:", mainMenuKeyboard());
         return new Response("OK");
       }
 
@@ -854,56 +956,51 @@ serve(async (req) => {
 
       // Commands
       if (text === "/start" || text === "/menu") {
-        userStates.delete(userId);
+        await setUserState(supabase, userId, null);
         await supabase.from("telbot_logs").insert({
           log_type: "command", telegram_user_id: userId, command: text,
-          message: `User ${msg.from.first_name} started bot`,
+          message: `User ${msg.from.first_name} started`,
         });
         await sendMessage(BOT_TOKEN, chatId,
           `🛡️ <b>Bot Anti-Fraude Genesis</b>\n\nOlá, <b>${msg.from.first_name}</b>! 👋\n\n` +
           `Sou seu assistente de segurança digital com <b>dados reais</b> e <b>IA avançada</b>.\n\n` +
-          `📊 <b>Consultas com dados reais:</b>\n` +
-          `• CNPJ → Receita Federal\n` +
-          `• CEP → Correios\n` +
-          `• Telefone → Banco Central\n` +
-          `• Bancos → Bacen\n\n` +
-          `🤖 <b>Análise inteligente:</b>\n` +
-          `• CPF, Links, Mensagens, Nomes\n\n` +
+          `📊 <b>12 tipos de consulta:</b>\n` +
+          `CPF • CNPJ • Telefone • CEP • Email\nDomínio • Placa • IBGE • Bancos\nNome • Link • Mensagem\n\n` +
           `Escolha uma opção:`, mainMenuKeyboard());
         return new Response("OK");
       }
 
       if (text === "/ajuda") {
         await sendMessage(BOT_TOKEN, chatId,
-          `ℹ️ <b>Ajuda Rápida</b>\n\n/start - Menu principal\n/menu - Abrir menu\n/ajuda - Esta mensagem\n\nOu use os botões interativos!`);
+          `ℹ️ /start - Menu\n/menu - Menu\n/ajuda - Ajuda\n\nOu use os botões!`);
         return new Response("OK");
       }
 
-      // Handle user input based on state
-      const state = userStates.get(userId);
+      // Handle user input based on DB state
+      const state = await getUserState(supabase, userId);
+      
       if (state && state.step === "waiting_input") {
-        userStates.delete(userId);
+        // Clear state immediately to prevent double processing
+        await setUserState(supabase, userId, null);
+        
         const queryType = state.action.replace("query_", "").replace("monitor_", "");
 
         // ── Monitoring: Remove ──
         if (state.action === "monitor_remove") {
           const idx = parseInt(text) - 1;
           const { data: monitors } = await supabase
-            .from("telbot_monitoring")
-            .select("*")
-            .eq("telegram_user_id", userId)
-            .eq("is_active", true);
+            .from("telbot_monitoring").select("*")
+            .eq("telegram_user_id", userId).eq("is_active", true);
 
           if (monitors && monitors[idx]) {
             await supabase.from("telbot_monitoring")
-              .update({ is_active: false })
-              .eq("id", monitors[idx].id);
+              .update({ is_active: false }).eq("id", monitors[idx].id);
             await sendMessage(BOT_TOKEN, chatId,
-              `✅ Monitoramento removido: <b>${monitors[idx].monitor_type.toUpperCase()}</b> - ${monitors[idx].monitor_value}`,
-              { inline_keyboard: [[{ text: "◀️ Menu Principal", callback_data: "main_menu" }]] });
+              `✅ Removido: <b>${monitors[idx].monitor_type.toUpperCase()}</b> - ${monitors[idx].monitor_value}`,
+              { inline_keyboard: [[{ text: "◀️ Menu", callback_data: "main_menu" }]] });
           } else {
-            await sendMessage(BOT_TOKEN, chatId, "❌ Número inválido. Tente novamente.",
-              { inline_keyboard: [[{ text: "◀️ Menu Principal", callback_data: "main_menu" }]] });
+            await sendMessage(BOT_TOKEN, chatId, "❌ Número inválido.",
+              { inline_keyboard: [[{ text: "◀️ Menu", callback_data: "main_menu" }]] });
           }
           return new Response("OK");
         }
@@ -911,114 +1008,116 @@ serve(async (req) => {
         // ── Monitoring: Add ──
         if (state.action.startsWith("monitor_")) {
           await supabase.from("telbot_monitoring").insert({
-            telegram_user_id: userId,
-            monitor_type: queryType,
-            monitor_value: text,
-            is_active: true,
-          });
-          await supabase.from("telbot_logs").insert({
-            log_type: "info", telegram_user_id: userId, command: "monitor_add",
-            message: `Added monitoring: ${queryType}: ${text}`,
+            telegram_user_id: userId, monitor_type: queryType,
+            monitor_value: text, is_active: true,
           });
           await sendMessage(BOT_TOKEN, chatId,
-            `✅ <b>Monitoramento Ativado!</b>\n\n📌 Tipo: <b>${queryType.toUpperCase()}</b>\n📌 Valor: <b>${text}</b>\n\nVocê receberá alertas automáticos.`,
-            { inline_keyboard: [[{ text: "◀️ Menu Principal", callback_data: "main_menu" }]] });
+            `✅ <b>Monitoramento Ativado!</b>\n\n📌 ${queryType.toUpperCase()}: <b>${text}</b>`,
+            { inline_keyboard: [[{ text: "◀️ Menu", callback_data: "main_menu" }]] });
           return new Response("OK");
         }
 
-        // ── Queries with real data ──
+        // ── QUERIES WITH REAL DATA ──
         await sendMessage(BOT_TOKEN, chatId, "⏳ Processando consulta... Aguarde.");
 
         let responseText = "";
         let riskLevel = "baixo";
         let fraudType = "consulta";
 
+        console.log(`Processing query: ${queryType} -> ${text.substring(0, 50)}`);
+
         switch (queryType) {
           case "cnpj": {
             responseText = await lookupCNPJ(text);
-            // Also get AI analysis with the real data
-            const aiAnalysis = await analyzeWithAI("cnpj", text, responseText);
-            responseText += `\n\n🤖 <b>Análise de IA:</b>\n${aiAnalysis.response}`;
-            riskLevel = aiAnalysis.riskLevel;
-            fraudType = aiAnalysis.fraudType;
+            const ai = await analyzeWithAI("cnpj", text, responseText);
+            responseText += `\n\n🤖 <b>IA:</b>\n${ai.response}`;
+            riskLevel = ai.riskLevel; fraudType = ai.fraudType;
             break;
           }
-
           case "cpf": {
             responseText = analyzeCPFFormat(text);
-            const aiCpf = await analyzeWithAI("cpf", text, responseText);
-            responseText += `\n\n🤖 <b>Análise de IA:</b>\n${aiCpf.response}`;
-            riskLevel = aiCpf.riskLevel;
-            fraudType = aiCpf.fraudType;
+            const ai = await analyzeWithAI("cpf", text, responseText);
+            responseText += `\n\n🤖 <b>IA:</b>\n${ai.response}`;
+            riskLevel = ai.riskLevel; fraudType = ai.fraudType;
             break;
           }
-
           case "telefone": {
             responseText = await analyzePhone(text);
-            const aiPhone = await analyzeWithAI("telefone", text, responseText);
-            responseText += `\n\n🤖 <b>Análise de IA:</b>\n${aiPhone.response}`;
-            riskLevel = aiPhone.riskLevel;
-            fraudType = aiPhone.fraudType;
+            const ai = await analyzeWithAI("telefone", text, responseText);
+            responseText += `\n\n🤖 <b>IA:</b>\n${ai.response}`;
+            riskLevel = ai.riskLevel; fraudType = ai.fraudType;
             break;
           }
-
           case "cep": {
             responseText = await lookupCEP(text);
-            riskLevel = "baixo";
-            fraudType = "consulta_cep";
+            riskLevel = "baixo"; fraudType = "consulta_cep";
             break;
           }
-
           case "link": {
             const linkResult = await analyzeLink(text);
             responseText = linkResult.text;
-            const aiLink = await analyzeWithAI("link", text, responseText);
-            responseText += `\n\n🤖 <b>Análise de IA:</b>\n${aiLink.response}`;
-            riskLevel = aiLink.riskLevel || linkResult.riskData.toLowerCase();
-            fraudType = aiLink.fraudType;
+            const ai = await analyzeWithAI("link", text, responseText);
+            responseText += `\n\n🤖 <b>IA:</b>\n${ai.response}`;
+            riskLevel = ai.riskLevel || linkResult.riskData.toLowerCase();
+            fraudType = ai.fraudType;
             break;
           }
-
           case "nome": {
-            const aiNome = await analyzeWithAI("nome", text);
-            responseText = `👤 <b>Consulta por Nome</b>\n━━━━━━━━━━━━━━━━━━━━\n\n🔍 <b>Nome:</b> ${text}\n\n${aiNome.response}`;
-            riskLevel = aiNome.riskLevel;
-            fraudType = aiNome.fraudType;
+            const ai = await analyzeWithAI("nome", text);
+            responseText = `👤 <b>Consulta por Nome</b>\n━━━━━━━━━━━━━━━━━━━━\n\n🔍 <b>Nome:</b> ${text}\n\n${ai.response}`;
+            riskLevel = ai.riskLevel; fraudType = ai.fraudType;
             break;
           }
-
           case "message": {
-            const aiMsg = await analyzeWithAI("message", text);
-            responseText = `💬 <b>Análise de Mensagem</b>\n━━━━━━━━━━━━━━━━━━━━\n\n📝 <b>Mensagem:</b>\n<i>"${text.substring(0, 200)}"</i>\n\n${aiMsg.response}`;
-            riskLevel = aiMsg.riskLevel;
-            fraudType = aiMsg.fraudType;
+            const ai = await analyzeWithAI("message", text);
+            responseText = `💬 <b>Análise de Mensagem</b>\n━━━━━━━━━━━━━━━━━━━━\n\n📝 <i>"${text.substring(0, 200)}"</i>\n\n${ai.response}`;
+            riskLevel = ai.riskLevel; fraudType = ai.fraudType;
             break;
           }
-
+          case "email": {
+            responseText = await analyzeEmail(text);
+            const ai = await analyzeWithAI("email", text, responseText);
+            responseText += `\n\n🤖 <b>IA:</b>\n${ai.response}`;
+            riskLevel = ai.riskLevel; fraudType = ai.fraudType;
+            break;
+          }
+          case "dominio": {
+            responseText = await analyzeDomain(text);
+            const ai = await analyzeWithAI("dominio", text, responseText);
+            responseText += `\n\n🤖 <b>IA:</b>\n${ai.response}`;
+            riskLevel = ai.riskLevel; fraudType = ai.fraudType;
+            break;
+          }
+          case "placa": {
+            responseText = await lookupPlaca(text);
+            const ai = await analyzeWithAI("placa", text, responseText);
+            responseText += `\n\n🤖 <b>IA:</b>\n${ai.response}`;
+            riskLevel = ai.riskLevel; fraudType = ai.fraudType;
+            break;
+          }
+          case "ibge": {
+            responseText = await lookupIBGE(text);
+            riskLevel = "baixo"; fraudType = "consulta_ibge";
+            break;
+          }
           default: {
-            const aiDefault = await analyzeWithAI("message", text);
-            responseText = aiDefault.response;
-            riskLevel = aiDefault.riskLevel;
-            fraudType = aiDefault.fraudType;
+            const ai = await analyzeWithAI("message", text);
+            responseText = ai.response;
+            riskLevel = ai.riskLevel; fraudType = ai.fraudType;
           }
         }
 
-        // Save query to DB
+        // Save query
         await supabase.from("telbot_queries").insert({
-          telegram_user_id: userId,
-          query_type: queryType,
-          query_input: text.substring(0, 500),
-          risk_level: riskLevel,
-          fraud_type: fraudType,
-          ai_response: responseText.substring(0, 4000),
+          telegram_user_id: userId, query_type: queryType,
+          query_input: text.substring(0, 500), risk_level: riskLevel,
+          fraud_type: fraudType, ai_response: responseText.substring(0, 4000),
         });
 
-        // Update user stats
+        // Update stats
         const { data: userData } = await supabase
-          .from("telbot_users")
-          .select("total_queries")
-          .eq("telegram_id", userId)
-          .single();
+          .from("telbot_users").select("total_queries")
+          .eq("telegram_id", userId).single();
         if (userData) {
           await supabase.from("telbot_users")
             .update({ total_queries: (userData.total_queries || 0) + 1 })
@@ -1032,28 +1131,24 @@ serve(async (req) => {
           metadata: { risk_level: riskLevel, fraud_type: fraudType },
         });
 
-        // Send response (split if too long for Telegram's 4096 char limit)
+        // Send (split if too long)
         if (responseText.length > 4000) {
-          const parts = [];
+          const parts: string[] = [];
           let remaining = responseText;
           while (remaining.length > 0) {
-            if (remaining.length <= 4000) {
-              parts.push(remaining);
-              break;
-            }
+            if (remaining.length <= 4000) { parts.push(remaining); break; }
             let splitAt = remaining.lastIndexOf("\n", 4000);
             if (splitAt < 1000) splitAt = 4000;
             parts.push(remaining.substring(0, splitAt));
             remaining = remaining.substring(splitAt);
           }
           for (let i = 0; i < parts.length; i++) {
-            const isLast = i === parts.length - 1;
             await sendMessage(BOT_TOKEN, chatId, parts[i],
-              isLast ? { inline_keyboard: [[{ text: "◀️ Menu Principal", callback_data: "main_menu" }]] } : undefined);
+              i === parts.length - 1 ? { inline_keyboard: [[{ text: "◀️ Menu", callback_data: "main_menu" }]] } : undefined);
           }
         } else {
           await sendMessage(BOT_TOKEN, chatId, responseText, {
-            inline_keyboard: [[{ text: "◀️ Menu Principal", callback_data: "main_menu" }]],
+            inline_keyboard: [[{ text: "◀️ Menu", callback_data: "main_menu" }]],
           });
         }
 
@@ -1062,7 +1157,7 @@ serve(async (req) => {
 
       // Default: show menu
       await sendMessage(BOT_TOKEN, chatId,
-        `Use /menu para abrir o menu interativo ou escolha uma opção:`, mainMenuKeyboard());
+        `Use /menu ou escolha:`, mainMenuKeyboard());
     }
 
     return new Response("OK");
