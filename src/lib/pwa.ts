@@ -69,7 +69,7 @@ export async function subscribeToPush(registration: ServiceWorkerRegistration): 
       return null;
     }
 
-    const subscription = await registration.pushManager.subscribe({
+    const subscription = await (registration as any).pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
     });
