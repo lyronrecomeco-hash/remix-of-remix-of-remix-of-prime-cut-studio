@@ -25,15 +25,24 @@ interface TelegramUpdate {
   };
 }
 
+interface AnalysisSection {
+  title: string;
+  icon: string;
+  content: string;
+}
+
+interface AnalysisResult {
+  summary: string;
+  trend_score: number; // 0-100
+  saturation: string;
+  sections: AnalysisSection[];
+}
+
 interface UserState {
-  step: string; // "idle" | "awaiting_request" | "awaiting_confirmation" | "processing"
+  step: string;
   pending_request?: string;
-  parsed_task?: {
-    tema: string;
-    segmento: string;
-    objetivo: string;
-    tipo_insight: string;
-  };
+  parsed_task?: { tema: string; segmento: string; objetivo: string; tipo_insight: string };
+  last_analysis?: AnalysisResult;
 }
 
 // ─── Telegram Helpers ────────────────────────────────────────────────
@@ -65,6 +74,14 @@ async function answerCallback(token: string, callbackId: string, text?: string) 
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ callback_query_id: callbackId, text }),
   });
+}
+
+async function deleteMessage(token: string, chatId: number, messageId: number) {
+  await fetch(`${TELEGRAM_API}${token}/deleteMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, message_id: messageId }),
+  }).catch(() => {});
 }
 
 // ─── DB State Management ─────────────────────────────────────────────
@@ -102,7 +119,52 @@ async function ensureUser(supabase: any, from: { id: number; first_name: string;
   }
 }
 
-// ─── AI: Parse user request into structured task ─────────────────────
+async function logInteraction(supabase: any, userId: number, command: string, message: string) {
+  try {
+    await supabase.from("telbot_logs").insert({
+      log_type: "command",
+      telegram_user_id: userId,
+      command,
+      message,
+    });
+  } catch (e) {
+    console.error("Log error:", e);
+  }
+}
+
+// ─── SERPER: Real-time Google Search Intelligence ────────────────────
+async function searchGoogle(query: string, type: "search" | "news" | "trends" = "search"): Promise<any[]> {
+  const SERPER_KEY = Deno.env.get("SERPER_API_KEY");
+  if (!SERPER_KEY) return [];
+
+  try {
+    const endpoint = type === "news"
+      ? "https://google.serper.dev/news"
+      : "https://google.serper.dev/search";
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "X-API-KEY": SERPER_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        q: query,
+        gl: "br",
+        hl: "pt-br",
+        num: 10,
+      }),
+    });
+
+    if (!res.ok) return [];
+    const data = await res.json();
+
+    if (type === "news") return data.news || [];
+    return data.organic || [];
+  } catch (e) {
+    console.error("Serper error:", e);
+    return [];
+  }
+}
+
+// ─── AI: Parse user request ──────────────────────────────────────────
 async function parseRequest(userMessage: string): Promise<{ tema: string; segmento: string; objetivo: string; tipo_insight: string }> {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   if (!LOVABLE_API_KEY) {
@@ -118,35 +180,57 @@ async function parseRequest(userMessage: string): Promise<{ tema: string; segmen
         messages: [
           {
             role: "system",
-            content: `Você é um parser de solicitações. Extraia da mensagem do usuário:
-- tema: o assunto central
-- segmento: setor ou nicho de mercado
-- objetivo: o que o usuário quer descobrir
-- tipo_insight: tipo de resultado esperado (oportunidades, análise competitiva, tendências, etc.)
-Responda APENAS em JSON válido com essas 4 chaves, sem markdown.`,
+            content: `Extraia da mensagem: tema, segmento, objetivo, tipo_insight. Responda APENAS em JSON válido com essas 4 chaves, sem markdown.`,
           },
           { role: "user", content: userMessage },
         ],
-        temperature: 0.2,
-        max_tokens: 300,
+        temperature: 0.1,
+        max_tokens: 200,
       }),
     });
 
-    if (!res.ok) throw new Error(`AI status ${res.status}`);
+    if (!res.ok) throw new Error(`AI ${res.status}`);
     const data = await res.json();
     const content = data.choices?.[0]?.message?.content || "";
-    const cleaned = content.replace(/```json\n?/g, "").replace(/```/g, "").trim();
-    return JSON.parse(cleaned);
+    return JSON.parse(content.replace(/```json\n?/g, "").replace(/```/g, "").trim());
   } catch (e) {
     console.error("Parse error:", e);
     return { tema: userMessage, segmento: "Geral", objetivo: "Análise exploratória", tipo_insight: "Oportunidades" };
   }
 }
 
-// ─── AI: Execute full strategic analysis ─────────────────────────────
-async function executeAnalysis(task: { tema: string; segmento: string; objetivo: string; tipo_insight: string }): Promise<string> {
+// ─── AI: Full Analysis with Real Data ────────────────────────────────
+async function executeAnalysis(task: { tema: string; segmento: string; objetivo: string; tipo_insight: string }): Promise<AnalysisResult> {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  if (!LOVABLE_API_KEY) return "⚠️ Serviço de inteligência temporariamente indisponível.";
+
+  // 1. Collect real data from Google
+  const [searchResults, newsResults, trendResults] = await Promise.all([
+    searchGoogle(`${task.tema} ${task.segmento} mercado tendências 2025`),
+    searchGoogle(`${task.tema} ${task.segmento}`, "news"),
+    searchGoogle(`${task.tema} ${task.segmento} crescimento oportunidade startup`),
+  ]);
+
+  // Build context from real data
+  const searchContext = searchResults.slice(0, 5).map((r: any) =>
+    `• ${r.title}: ${r.snippet || ""}`
+  ).join("\n");
+
+  const newsContext = newsResults.slice(0, 5).map((r: any) =>
+    `• [${r.date || "Recente"}] ${r.title}: ${r.snippet || ""}`
+  ).join("\n");
+
+  const trendContext = trendResults.slice(0, 5).map((r: any) =>
+    `• ${r.title}: ${r.snippet || ""}`
+  ).join("\n");
+
+  if (!LOVABLE_API_KEY) {
+    return {
+      summary: "Serviço indisponível",
+      trend_score: 0,
+      saturation: "N/A",
+      sections: [{ title: "Erro", icon: "⚠️", content: "API indisponível." }],
+    };
+  }
 
   try {
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -157,88 +241,171 @@ async function executeAnalysis(task: { tema: string; segmento: string; objetivo:
         messages: [
           {
             role: "system",
-            content: `Você é uma unidade de inteligência estratégica de mercado. 
-Sua função é executar análises profundas e retornar insights acionáveis.
+            content: `Você é um analista de inteligência de mercado de elite.
+Analise os dados reais coletados do Google e gere insights acionáveis.
 
-REGRAS ABSOLUTAS:
-- Nunca invente dados. Baseie-se em conhecimento real de mercado, tendências verificáveis e padrões conhecidos.
-- Seja específico. Cite exemplos reais de empresas, ferramentas, movimentos de mercado quando possível.
-- Linguagem direta, sem rodeios, sem emojis excessivos.
-- Formato OBRIGATÓRIO de resposta (use exatamente este formato HTML):
+RESPONDA EXCLUSIVAMENTE em JSON válido com esta estrutura:
+{
+  "summary": "Resumo em 1-2 frases diretas do cenário",
+  "trend_score": número de 0 a 100 (potencial de tendência),
+  "saturation": "Baixo" | "Médio" | "Alto" | "Crítico",
+  "sections": [
+    {
+      "title": "VISÃO GERAL",
+      "icon": "🎯",
+      "content": "Texto conciso, máximo 3-4 linhas. Dados objetivos."
+    },
+    {
+      "title": "TENDÊNCIAS ATIVAS",
+      "icon": "📈",
+      "content": "3-5 bullet points com tendências reais detectadas. Use • para cada item."
+    },
+    {
+      "title": "GAPS DE MERCADO",
+      "icon": "🔍",
+      "content": "3-5 bullet points com falhas/oportunidades detectadas. Use • para cada item."
+    },
+    {
+      "title": "OPORTUNIDADES",
+      "icon": "💡",
+      "content": "3-5 ideias práticas e específicas. Use • para cada item."
+    },
+    {
+      "title": "CONCORRÊNCIA",
+      "icon": "⚔️",
+      "content": "Players identificados e nível de competição. Conciso."
+    },
+    {
+      "title": "AÇÃO RECOMENDADA",
+      "icon": "🚀",
+      "content": "1-2 frases com a direção estratégica principal."
+    }
+  ]
+}
 
-<b>━━━━━━━━━━━━━━━━━━━</b>
-<b>ANÁLISE CONCLUÍDA</b>
-<b>━━━━━━━━━━━━━━━━━━━</b>
-
-<b>VISÃO GERAL</b>
-[Resumo direto do cenário identificado em 2-3 parágrafos]
-
-<b>MOVIMENTOS DE MERCADO</b>
-[O que está crescendo ou mudando - 3 a 5 pontos concretos]
-
-<b>PROBLEMAS NÃO RESOLVIDOS</b>
-[Falhas atuais que representam oportunidade - 3 a 5 pontos]
-
-<b>OPORTUNIDADES PRÁTICAS</b>
-[Possibilidades reais de produto ou serviço - 3 a 5 pontos com detalhamento]
-
-<b>NÍVEL DE SATURAÇÃO</b>
-[Classificação objetiva: Baixo / Médio / Alto / Muito Alto, com justificativa]
-
-<b>DIREÇÃO ESTRATÉGICA</b>
-[Caminho recomendado com base nos dados - 2 a 3 parágrafos]
-
-<b>━━━━━━━━━━━━━━━━━━━</b>`,
+REGRAS:
+- Conteúdo de cada seção: MÁXIMO 400 caracteres
+- Seja específico: cite nomes de empresas, ferramentas, números quando possível
+- Sem enrolação, sem introduções genéricas
+- Baseie-se nos dados reais fornecidos abaixo
+- Sem markdown, sem HTML, apenas texto puro no content`,
           },
           {
             role: "user",
-            content: `Execute análise estratégica completa:
+            content: `SOLICITAÇÃO:
+Tema: ${task.tema}
+Segmento: ${task.segmento}
+Objetivo: ${task.objetivo}
 
-TEMA: ${task.tema}
-SEGMENTO: ${task.segmento}  
-OBJETIVO: ${task.objetivo}
-TIPO DE INSIGHT: ${task.tipo_insight}
+DADOS COLETADOS DO GOOGLE:
 
-Analise com profundidade. Considere:
-- Cenário atual do mercado brasileiro e global
-- Players existentes e gaps de mercado
-- Tendências emergentes
-- Dores reais do público-alvo
-- Modelos de negócio viáveis
-- Barreiras de entrada e vantagens competitivas possíveis`,
+[RESULTADOS DE BUSCA]
+${searchContext || "Nenhum resultado encontrado"}
+
+[NOTÍCIAS RECENTES]
+${newsContext || "Nenhuma notícia encontrada"}
+
+[TENDÊNCIAS E OPORTUNIDADES]
+${trendContext || "Nenhuma tendência encontrada"}`,
           },
         ],
-        temperature: 0.4,
-        max_tokens: 4000,
+        temperature: 0.3,
+        max_tokens: 2500,
       }),
     });
 
     if (!res.ok) {
-      if (res.status === 429) return "⚠️ Sistema sobrecarregado. Tente novamente em alguns minutos.";
-      if (res.status === 402) return "⚠️ Créditos de processamento esgotados.";
-      throw new Error(`AI status ${res.status}`);
+      const status = res.status;
+      return {
+        summary: status === 429 ? "Rate limit atingido" : status === 402 ? "Créditos esgotados" : "Erro no processamento",
+        trend_score: 0,
+        saturation: "N/A",
+        sections: [{ title: "Erro", icon: "⚠️", content: `Código: ${status}. Tente novamente.` }],
+      };
     }
 
     const data = await res.json();
-    return data.choices?.[0]?.message?.content || "⚠️ Não foi possível gerar a análise.";
+    const content = data.choices?.[0]?.message?.content || "";
+    const cleaned = content.replace(/```json\n?/g, "").replace(/```/g, "").trim();
+    return JSON.parse(cleaned);
   } catch (e) {
     console.error("Analysis error:", e);
-    return "⚠️ Erro no processamento. Tente novamente.";
+    return {
+      summary: "Erro ao processar análise",
+      trend_score: 0,
+      saturation: "N/A",
+      sections: [{ title: "Erro", icon: "⚠️", content: "Falha no processamento. Tente novamente." }],
+    };
   }
 }
 
-// ─── Log interaction ─────────────────────────────────────────────────
-async function logInteraction(supabase: any, userId: number, command: string, message: string) {
-  try {
-    await supabase.from("telbot_logs").insert({
-      log_type: "command",
-      telegram_user_id: userId,
-      command,
-      message,
-    });
-  } catch (e) {
-    console.error("Log error:", e);
+// ─── Render: Compact Summary Card ────────────────────────────────────
+function renderSummaryCard(analysis: AnalysisResult, task: { tema: string; segmento: string }): string {
+  const bar = getTrendBar(analysis.trend_score);
+  const satIcon = getSaturationIcon(analysis.saturation);
+
+  return `<b>━━ RELATÓRIO ━━━━━━━━━━</b>
+
+<b>📋 ${task.tema.toUpperCase()}</b>
+<i>${task.segmento}</i>
+
+${analysis.summary}
+
+<b>Potencial:</b> ${bar} ${analysis.trend_score}/100
+<b>Saturação:</b> ${satIcon} ${analysis.saturation}
+
+<i>Use os botões abaixo para explorar cada seção:</i>`;
+}
+
+function getTrendBar(score: number): string {
+  const filled = Math.round(score / 10);
+  return "▓".repeat(filled) + "░".repeat(10 - filled);
+}
+
+function getSaturationIcon(level: string): string {
+  switch (level.toLowerCase()) {
+    case "baixo": return "🟢";
+    case "médio": return "🟡";
+    case "alto": return "🟠";
+    case "crítico": return "🔴";
+    default: return "⚪";
   }
+}
+
+// ─── Render: Section Buttons ─────────────────────────────────────────
+function getSectionButtons(sections: AnalysisSection[]): any {
+  const rows = sections.map((s, i) => [{
+    text: `${s.icon} ${s.title}`,
+    callback_data: `section_${i}`,
+  }]);
+
+  // Add action row
+  rows.push([
+    { text: "🔄 Nova Análise", callback_data: "new_analysis" },
+    { text: "📄 Relatório Completo", callback_data: "full_report" },
+  ]);
+
+  return { inline_keyboard: rows };
+}
+
+// ─── Render: Section Detail ──────────────────────────────────────────
+function renderSection(section: AnalysisSection): string {
+  return `<b>${section.icon} ${section.title}</b>\n\n${section.content}`;
+}
+
+// ─── Render: Full Report ─────────────────────────────────────────────
+function renderFullReport(analysis: AnalysisResult, task: { tema: string }): string {
+  const bar = getTrendBar(analysis.trend_score);
+  let report = `<b>━━━━━━━━━━━━━━━━━━━</b>\n<b>RELATÓRIO COMPLETO</b>\n<b>━━━━━━━━━━━━━━━━━━━</b>\n\n`;
+  report += `<b>📋 ${task.tema.toUpperCase()}</b>\n`;
+  report += `Potencial: ${bar} ${analysis.trend_score}/100\n\n`;
+
+  for (const s of analysis.sections) {
+    report += `<b>${s.icon} ${s.title}</b>\n${s.content}\n\n`;
+  }
+
+  report += `<b>━━━━━━━━━━━━━━━━━━━</b>`;
+  return report;
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -250,10 +417,7 @@ serve(async (req) => {
   }
 
   const BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN");
-  if (!BOT_TOKEN) {
-    console.error("TELEGRAM_BOT_TOKEN not configured");
-    return new Response("Bot token missing", { status: 500 });
-  }
+  if (!BOT_TOKEN) return new Response("Bot token missing", { status: 500 });
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -263,7 +427,7 @@ serve(async (req) => {
     const update: TelegramUpdate = await req.json();
     console.log("Update:", JSON.stringify(update).substring(0, 300));
 
-    // ═══ CALLBACK QUERIES (Confirm / Cancel buttons) ═════════════════
+    // ═══ CALLBACK QUERIES ════════════════════════════════════════════
     if (update.callback_query) {
       const cb = update.callback_query;
       const chatId = cb.message.chat.id;
@@ -271,74 +435,110 @@ serve(async (req) => {
       const action = cb.data;
 
       await answerCallback(BOT_TOKEN, cb.id);
+      const state = await getUserState(supabase, userId);
 
+      // ── Section buttons ──
+      if (action.startsWith("section_") && state.last_analysis) {
+        const idx = parseInt(action.split("_")[1]);
+        const section = state.last_analysis.sections[idx];
+        if (section) {
+          await sendMessage(BOT_TOKEN, chatId, renderSection(section), {
+            inline_keyboard: [[
+              { text: "◀️ Voltar", callback_data: "back_to_summary" },
+              { text: "📄 Completo", callback_data: "full_report" },
+            ]],
+          });
+        }
+        return new Response("OK");
+      }
+
+      // ── Back to summary ──
+      if (action === "back_to_summary" && state.last_analysis && state.parsed_task) {
+        await sendMessage(
+          BOT_TOKEN, chatId,
+          renderSummaryCard(state.last_analysis, state.parsed_task),
+          getSectionButtons(state.last_analysis.sections),
+        );
+        return new Response("OK");
+      }
+
+      // ── Full report ──
+      if (action === "full_report" && state.last_analysis && state.parsed_task) {
+        const report = renderFullReport(state.last_analysis, state.parsed_task);
+        if (report.length > 4000) {
+          const mid = report.lastIndexOf("\n", 4000);
+          await sendMessage(BOT_TOKEN, chatId, report.substring(0, mid > 0 ? mid : 4000));
+          await sendMessage(BOT_TOKEN, chatId, report.substring(mid > 0 ? mid : 4000));
+        } else {
+          await sendMessage(BOT_TOKEN, chatId, report);
+        }
+        await sendMessage(BOT_TOKEN, chatId, "Descreva a próxima análise quando desejar.", {
+          inline_keyboard: [[{ text: "🔄 Nova Análise", callback_data: "new_analysis" }]],
+        });
+        return new Response("OK");
+      }
+
+      // ── New analysis ──
+      if (action === "new_analysis") {
+        await setUserState(supabase, userId, { step: "awaiting_request" });
+        await sendMessage(BOT_TOKEN, chatId, "Descreva qual análise deseja executar.");
+        return new Response("OK");
+      }
+
+      // ── Confirm analysis ──
       if (action === "confirm_analysis") {
-        const state = await getUserState(supabase, userId);
         if (!state.parsed_task) {
-          await sendMessage(BOT_TOKEN, chatId, "⚠️ Nenhuma solicitação pendente. Envie uma nova.");
+          await sendMessage(BOT_TOKEN, chatId, "⚠️ Nenhuma solicitação pendente.");
           await setUserState(supabase, userId, { step: "awaiting_request" });
           return new Response("OK");
         }
 
-        // Update state to processing
         await setUserState(supabase, userId, { ...state, step: "processing" });
-        await logInteraction(supabase, userId, "confirm_analysis", JSON.stringify(state.parsed_task));
+        await logInteraction(supabase, userId, "confirm", JSON.stringify(state.parsed_task));
 
-        // Send progress messages
-        const statusMsg = await sendMessage(BOT_TOKEN, chatId, "⏳ Executando coleta de dados...");
+        // Progress messages
+        const statusMsg = await sendMessage(BOT_TOKEN, chatId, "⏳ Coletando dados do Google...");
         const statusData = await statusMsg.json().catch(() => null);
         const statusMsgId = statusData?.result?.message_id;
 
-        // Simulate real processing stages with actual delays
         const stages = [
-          "📡 Analisando padrões de mercado...",
-          "🔍 Estruturando oportunidades...",
-          "📊 Finalizando relatório...",
+          "📡 Analisando tendências de mercado...",
+          "🔍 Cruzando dados de concorrência...",
+          "📊 Gerando insights estratégicos...",
         ];
 
         for (const stage of stages) {
-          await new Promise(r => setTimeout(r, 2000));
-          if (statusMsgId) {
-            await editMessage(BOT_TOKEN, chatId, statusMsgId, stage);
-          }
+          await new Promise(r => setTimeout(r, 1500));
+          if (statusMsgId) await editMessage(BOT_TOKEN, chatId, statusMsgId, stage);
         }
 
-        // Execute real AI analysis
-        const result = await executeAnalysis(state.parsed_task);
+        // Execute real analysis with Google data
+        const analysis = await executeAnalysis(state.parsed_task);
 
-        // Delete status message
-        if (statusMsgId) {
-          await fetch(`${TELEGRAM_API}${BOT_TOKEN}/deleteMessage`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ chat_id: chatId, message_id: statusMsgId }),
-          }).catch(() => {});
-        }
+        // Delete progress message
+        if (statusMsgId) await deleteMessage(BOT_TOKEN, chatId, statusMsgId);
 
-        // Send final report
-        // Telegram has 4096 char limit, split if needed
-        if (result.length > 4000) {
-          const mid = result.lastIndexOf("\n", 4000);
-          const part1 = result.substring(0, mid > 0 ? mid : 4000);
-          const part2 = result.substring(mid > 0 ? mid : 4000);
-          await sendMessage(BOT_TOKEN, chatId, part1);
-          await sendMessage(BOT_TOKEN, chatId, part2);
-        } else {
-          await sendMessage(BOT_TOKEN, chatId, result);
-        }
+        // Save analysis in state for button navigation
+        await setUserState(supabase, userId, {
+          step: "viewing_results",
+          parsed_task: state.parsed_task,
+          last_analysis: analysis,
+        });
 
-        // Reset state
-        await setUserState(supabase, userId, { step: "awaiting_request" });
+        // Send compact summary card with section buttons
+        await sendMessage(
+          BOT_TOKEN, chatId,
+          renderSummaryCard(analysis, state.parsed_task),
+          getSectionButtons(analysis.sections),
+        );
 
-        // Follow-up
-        await sendMessage(BOT_TOKEN, chatId, "Descreva a próxima análise quando desejar.");
         return new Response("OK");
       }
 
+      // ── Cancel analysis ──
       if (action === "cancel_analysis") {
         await setUserState(supabase, userId, { step: "awaiting_request" });
-        await logInteraction(supabase, userId, "cancel_analysis", "Cancelled");
-        await sendMessage(BOT_TOKEN, chatId, "Solicitação cancelada.\n\nDescreva uma nova análise quando desejar.");
+        await sendMessage(BOT_TOKEN, chatId, "Cancelado. Descreva uma nova análise quando desejar.");
         return new Response("OK");
       }
 
@@ -354,57 +554,59 @@ serve(async (req) => {
     const text = msg.text.trim();
     const firstName = msg.from.first_name || "Operador";
 
-    // Ensure user exists in DB
     await ensureUser(supabase, msg.from);
 
-    // ── /start ──────────────────────────────────────────────────────
+    // ── /start ──
     if (text === "/start") {
       await setUserState(supabase, userId, { step: "awaiting_request" });
-      await logInteraction(supabase, userId, "/start", "Session started");
-      await sendMessage(
-        BOT_TOKEN,
-        chatId,
-        `Olá, ${firstName}!\n\nDescreva qual análise você deseja executar.`
-      );
+      await logInteraction(supabase, userId, "/start", "init");
+      await sendMessage(BOT_TOKEN, chatId, `Olá, ${firstName}!\n\nDescreva qual análise você deseja executar.`);
       return new Response("OK");
     }
 
-    // ── Any other text: process as analysis request ─────────────────
     const state = await getUserState(supabase, userId);
 
-    // If not started yet, auto-start
+    // Auto-start if idle
     if (state.step === "idle") {
       await setUserState(supabase, userId, { step: "awaiting_request" });
     }
 
-    // If already processing, ignore
+    // Block if processing
     if (state.step === "processing") {
-      await sendMessage(BOT_TOKEN, chatId, "⏳ Análise em andamento. Aguarde a conclusão.");
+      await sendMessage(BOT_TOKEN, chatId, "⏳ Análise em andamento. Aguarde.");
       return new Response("OK");
     }
 
-    // Parse and confirm
-    await logInteraction(supabase, userId, "analysis_request", text);
-
+    // Parse request
+    await logInteraction(supabase, userId, "request", text);
     const parsed = await parseRequest(text);
 
-    // Save state with pending task
     await setUserState(supabase, userId, {
       step: "awaiting_confirmation",
       pending_request: text,
       parsed_task: parsed,
     });
 
-    // Send confirmation
-    const confirmText = `Solicitação identificada.\n\nSerá realizada uma análise completa envolvendo:\n\n• Mapeamento de demanda\n• Identificação de dores de mercado\n• Avaliação de concorrência\n• Oportunidades estratégicas\n\n<b>Tema:</b> ${parsed.tema}\n<b>Segmento:</b> ${parsed.segmento}\n<b>Objetivo:</b> ${parsed.objetivo}\n\nConfirma a execução?`;
+    // Compact confirmation
+    const confirmText = `<b>📋 Análise identificada</b>
+
+<b>Tema:</b> ${parsed.tema}
+<b>Segmento:</b> ${parsed.segmento}
+<b>Objetivo:</b> ${parsed.objetivo}
+
+<b>Será executado:</b>
+• Coleta Google em tempo real
+• Análise de tendências
+• Mapeamento de concorrência
+• Identificação de oportunidades
+
+Confirma?`;
 
     await sendMessage(BOT_TOKEN, chatId, confirmText, {
-      inline_keyboard: [
-        [
-          { text: "CONFIRMAR", callback_data: "confirm_analysis" },
-          { text: "CANCELAR", callback_data: "cancel_analysis" },
-        ],
-      ],
+      inline_keyboard: [[
+        { text: "✅ CONFIRMAR", callback_data: "confirm_analysis" },
+        { text: "❌ CANCELAR", callback_data: "cancel_analysis" },
+      ]],
     });
 
     return new Response("OK");
