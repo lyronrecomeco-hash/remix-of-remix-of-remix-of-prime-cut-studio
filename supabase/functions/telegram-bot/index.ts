@@ -229,12 +229,16 @@ Analise com profundidade. Considere:
 
 // ─── Log interaction ─────────────────────────────────────────────────
 async function logInteraction(supabase: any, userId: number, command: string, message: string) {
-  await supabase.from("telbot_logs").insert({
-    log_type: "command",
-    telegram_user_id: userId,
-    command,
-    message,
-  }).catch((e: any) => console.error("Log error:", e));
+  try {
+    await supabase.from("telbot_logs").insert({
+      log_type: "command",
+      telegram_user_id: userId,
+      command,
+      message,
+    });
+  } catch (e) {
+    console.error("Log error:", e);
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════════
