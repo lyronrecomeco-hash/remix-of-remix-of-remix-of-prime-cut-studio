@@ -105,6 +105,7 @@ const GenesisIADashboard = () => {
   const [editingText, setEditingText] = useState<TextElementData | null>(null);
   const [showWelcome, setShowWelcome] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSantiagoAdmin, setIsSantiagoAdmin] = useState(false);
   const [showDevModal, setShowDevModal] = useState(false);
   const [isAccountBlocked, setIsAccountBlocked] = useState(false);
   const [blockReason, setBlockReason] = useState<string>('');
