@@ -169,10 +169,12 @@ const GenesisIADashboard = () => {
 
     // Verificar role do usuário (super_admin) - FORÇADO POR EMAIL
     const SUPER_ADMIN_EMAIL = 'lyronrp@gmail.com';
+    const SANTIAGO_ADMIN_EMAIL = 'santiagoadmin@gmail.com';
     const isSuperAdminByEmail = user.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+    const isSantiagoAdmin = user.email?.toLowerCase() === SANTIAGO_ADMIN_EMAIL.toLowerCase();
     
-    // Só é admin se o email for exatamente o super_admin
-    setIsAdmin(isSuperAdminByEmail);
+    // Santiago é admin mas sem API Keys
+    setIsAdmin(isSuperAdminByEmail || isSantiagoAdmin);
 
     let { data: affiliate } = await supabase
       .from('affiliates')
