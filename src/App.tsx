@@ -349,6 +349,7 @@ const AppContent = () => {
             {/* Redirect antigo genesis-ia para novo /login */}
             <Route path="/genesis-ia" element={<GenesisIALogin />} />
             <Route path="/genesis-ia/dashboard" element={<GenesisIADashboard />} />
+            <Route path="/baixar-genesis" element={<Suspense fallback={<PageLoader />}><BaixarGenesis /></Suspense>} />
             {/* Petshop Demo */}
             <Route path="/petshop" element={<PetshopPage />} />
             <Route path="/petshop-primo" element={<PetshopPrimoPage />} />
