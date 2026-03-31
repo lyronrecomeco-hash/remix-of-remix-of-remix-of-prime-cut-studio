@@ -122,8 +122,6 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
   const [currentPage, setCurrentPage] = useState(1);
   const [isRefunding, setIsRefunding] = useState(false);
   const [showRefundConfirm, setShowRefundConfirm] = useState(false);
-  const [refundPixKey, setRefundPixKey] = useState('');
-  const [refundPixKeyType, setRefundPixKeyType] = useState<'CPF' | 'CNPJ' | 'EMAIL' | 'TELEFONE' | 'CHAVE_ALEATORIA'>('CPF');
   const ITEMS_PER_PAGE = 10;
 
   useEffect(() => {
