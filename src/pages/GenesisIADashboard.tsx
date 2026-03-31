@@ -176,6 +176,7 @@ const GenesisIADashboard = () => {
     
     // Santiago é admin mas sem API Keys
     setIsAdmin(isSuperAdminByEmail || isSantiagoAdmin);
+    setIsSantiagoAdmin(isSantiagoAdmin);
 
     let { data: affiliate } = await supabase
       .from('affiliates')
