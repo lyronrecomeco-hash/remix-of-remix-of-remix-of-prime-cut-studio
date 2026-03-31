@@ -312,7 +312,7 @@ const GenesisIADashboard = () => {
 
   const adminDockItems: DockItem[] = isAdmin ? [
     { icon: CreditCard, label: 'Pagamentos', tabId: 'payments' },
-    { icon: Key, label: 'API Keys', tabId: 'api-keys' },
+    ...(!isSantiagoAdmin ? [{ icon: Key, label: 'API Keys', tabId: 'api-keys' as ActiveTab }] : []),
     { icon: ClipboardList, label: 'Inscrições', tabId: 'partner-applications' },
   ] : [];
 
