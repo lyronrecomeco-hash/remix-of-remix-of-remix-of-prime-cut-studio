@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
+import { useSiteTexts } from '@/pages/GenesisCommercial';
 import { 
   Sparkles, 
   Zap, 
@@ -144,6 +145,7 @@ const GenesisWhyChoose = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
   const [activeFeature, setActiveFeature] = useState('ai');
+  const texts = useSiteTexts();
 
   // Auto-rotate feature tabs every 4s
   useEffect(() => {
@@ -185,15 +187,15 @@ const GenesisWhyChoose = () => {
             className="inline-flex items-center gap-2.5 px-5 py-2 mb-8 text-sm font-medium rounded-full bg-primary/10 border border-primary/20 text-primary"
           >
             <Sparkles className="w-4 h-4" />
-            Diferenciais
+            {texts.whyChoose.badge}
           </motion.div>
 
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-foreground tracking-tight">
-            Por que escolher o <span className="text-primary">Genesis Hub</span>?
+            {texts.whyChoose.title} <span className="text-primary">{texts.whyChoose.highlight}</span>?
           </h2>
 
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Não somos apenas mais um gerador de sites. Somos a plataforma completa para criar, evoluir e escalar seu negócio digital.
+            {texts.whyChoose.subtitle}
           </p>
         </motion.div>
 

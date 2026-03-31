@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useSiteTexts } from '@/pages/GenesisCommercial';
 
 interface RealLead {
   id: string;
@@ -160,6 +161,7 @@ const GenesisCommercialRadar = () => {
   const [leads, setLeads] = useState<RealLead[]>([]);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const texts = useSiteTexts();
 
   // Shuffle locations on mount
   const shuffledLocationIndices = useMemo(() => {
@@ -301,13 +303,13 @@ const GenesisCommercialRadar = () => {
         >
           <Badge variant="outline" className="mb-4 px-4 py-1.5 text-sm border-primary/30 text-primary bg-primary/5">
             <Sparkles className="w-4 h-4 mr-2" />
-            Clientes Prontos para Fechar Negócio
+            {texts.radar.badge}
           </Badge>
           <h2 className="text-3xl md:text-4xl font-black text-foreground mb-4">
-            Veja oportunidades <span className="text-primary">reais</span>
+            {texts.radar.title} <span className="text-primary">{texts.radar.highlight}</span>
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Empresas esperando por você. Assine e tenha acesso completo aos contatos.
+            {texts.radar.subtitle}
           </p>
         </motion.div>
 
@@ -467,7 +469,7 @@ const GenesisCommercialRadar = () => {
           </div>
           <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20">
             <Link to="/genesis" className="flex items-center gap-2">
-              Desbloquear Acesso
+              {texts.radar.ctaText}
               <ArrowRight className="w-4 h-4" />
             </Link>
           </Button>

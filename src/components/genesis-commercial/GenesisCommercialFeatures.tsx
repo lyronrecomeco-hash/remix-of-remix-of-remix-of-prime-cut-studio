@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { MessageSquare, MousePointer, Palette, Rocket, Sparkles } from 'lucide-react';
+import { useSiteTexts } from '@/pages/GenesisCommercial';
 
 type Step = {
   icon: React.ComponentType<{ className?: string }>;
@@ -9,225 +10,91 @@ type Step = {
   description: string;
 };
 
-const steps: Step[] = [
-  {
-    icon: MessageSquare,
-    number: '1',
-    title: 'Descreva sua ideia',
-    description:
-      'Conte o que você quer criar. Nossa IA interpreta e estrutura tudo automaticamente.',
-  },
-  {
-    icon: Palette,
-    number: '2',
-    title: 'Personalize o visual',
-    description:
-      'Escolha cores, fontes e estilo. Seu projeto já nasce com identidade profissional.',
-  },
-  {
-    icon: MousePointer,
-    number: '3',
-    title: 'Gere instantaneamente',
-    description:
-      'Com um clique, seu SaaS está pronto — páginas, fluxos e estrutura completa.',
-  },
-  {
-    icon: Rocket,
-    number: '4',
-    title: 'Lance e monetize',
-    description:
-      'Publique, conecte pagamentos e comece a faturar com seu produto digital.',
-  },
-];
+const stepIcons = [MessageSquare, Palette, MousePointer, Rocket];
 
 const GenesisCommercialFeatures = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
   const [activeStep, setActiveStep] = useState(0);
+  const texts = useSiteTexts();
 
-  const cards = useMemo(
-    () =>
-      steps.map((s, idx) => ({
-        ...s,
-        align: idx % 2 === 0 ? 'left' : 'right',
-        idx,
-      })),
-    []
-  );
+  const steps: Step[] = [
+    { icon: stepIcons[0], number: '1', title: texts.features.step1Title, description: texts.features.step1Description },
+    { icon: stepIcons[1], number: '2', title: texts.features.step2Title, description: texts.features.step2Description },
+    { icon: stepIcons[2], number: '3', title: texts.features.step3Title, description: texts.features.step3Description },
+    { icon: stepIcons[3], number: '4', title: texts.features.step4Title, description: texts.features.step4Description },
+  ];
 
-  // Auto-advance animation
+  const cards = useMemo(() => steps.map((s, idx) => ({ ...s, align: idx % 2 === 0 ? 'left' : 'right', idx })), [texts.features]);
+
   useEffect(() => {
     if (!isInView) return;
-    const interval = setInterval(() => {
-      setActiveStep((prev) => (prev + 1) % steps.length);
-    }, 3500);
+    const interval = setInterval(() => setActiveStep(prev => (prev + 1) % steps.length), 3500);
     return () => clearInterval(interval);
-  }, [isInView]);
+  }, [isInView, steps.length]);
 
   return (
-    <section 
-      id="recursos" 
-      ref={ref} 
-      className="py-24 md:py-32 relative overflow-hidden bg-background"
-    >
-      {/* Background */}
+    <section id="recursos" ref={ref} className="py-24 md:py-32 relative overflow-hidden bg-background">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.12),transparent_60%)]" />
         <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(hsl(var(--border))_1px,transparent_1px),linear-gradient(90deg,hsl(var(--border))_1px,transparent_1px)] [background-size:80px_80px]" />
       </div>
 
       <div className="container px-4 relative z-10 max-w-6xl mx-auto">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.7 }}
-          className="text-center mb-20"
-        >
-          <motion.div 
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={isInView ? { scale: 1, opacity: 1 } : {}}
-            transition={{ delay: 0.1 }}
-            className="inline-flex items-center gap-2.5 px-5 py-2 mb-8 text-sm font-medium rounded-full bg-primary/10 border border-primary/20 text-primary"
-          >
+        <motion.div initial={{ opacity: 0, y: 30 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.7 }} className="text-center mb-20">
+          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={isInView ? { scale: 1, opacity: 1 } : {}} transition={{ delay: 0.1 }} className="inline-flex items-center gap-2.5 px-5 py-2 mb-8 text-sm font-medium rounded-full bg-primary/10 border border-primary/20 text-primary">
             <Sparkles className="w-4 h-4" />
-            Como Funciona
+            {texts.features.badge}
           </motion.div>
           
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-foreground tracking-tight">
-            Do zero ao SaaS em <span className="text-primary">minutos</span>
+            {texts.features.title} <span className="text-primary">{texts.features.highlight}</span>
           </h2>
           
-          <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-            Um processo simples, guiado e 100% visual — sem código, sem complicação.
-          </p>
+          <p className="text-lg text-muted-foreground max-w-xl mx-auto">{texts.features.subtitle}</p>
         </motion.div>
 
-        {/* Timeline */}
         <div className="relative mx-auto max-w-5xl">
-          {/* center vertical line */}
           <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-border/70" />
-
           <div className="space-y-8 md:space-y-12">
             {cards.map((step) => {
               const Icon = step.icon;
               const isActive = step.idx === activeStep;
               const isLeft = step.align === 'left';
 
-              return (
+              const cardContent = (
                 <motion.div
-                  key={step.number}
-                  initial={{ opacity: 0, y: 24 }}
-                  animate={isInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.5, delay: step.idx * 0.08 }}
-                  className="relative"
+                  animate={isActive ? { y: -4, scale: 1.02 } : { y: 0, scale: 1 }}
+                  transition={{ duration: 0.4 }}
+                  className={
+                    'relative rounded-2xl border bg-card/60 backdrop-blur-md p-6 w-full max-w-md cursor-pointer ' +
+                    (isActive ? 'border-primary/50 shadow-[0_0_0_1px_hsl(var(--primary)/0.25),0_20px_40px_-20px_hsl(var(--primary)/0.35)]' : 'border-border/60')
+                  }
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-0">
-                    {/* Left card slot */}
-                    <div className="md:pr-8 flex justify-end">
-                      {isLeft ? (
-                        <motion.div
-                          animate={isActive ? { y: -4, scale: 1.02 } : { y: 0, scale: 1 }}
-                          transition={{ duration: 0.4 }}
-                          className={
-                            'relative rounded-2xl border bg-card/60 backdrop-blur-md p-6 w-full max-w-md cursor-pointer ' +
-                            (isActive
-                              ? 'border-primary/50 shadow-[0_0_0_1px_hsl(var(--primary)/0.25),0_20px_40px_-20px_hsl(var(--primary)/0.35)]'
-                              : 'border-border/60')
-                          }
-                        >
-                          <div className="flex items-start gap-4">
-                            <div className={
-                              'shrink-0 w-12 h-12 rounded-xl flex items-center justify-center border transition-colors duration-300 ' +
-                              (isActive ? 'bg-primary/15 border-primary/25' : 'bg-muted/30 border-border/60')
-                            }>
-                              <Icon className={
-                                'w-6 h-6 transition-colors duration-300 ' + (isActive ? 'text-primary' : 'text-muted-foreground')
-                              } />
-                            </div>
-                            <div className="min-w-0">
-                              <h3 className="text-lg font-semibold text-foreground">
-                                {step.title}
-                              </h3>
-                              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                                {step.description}
-                              </p>
-                            </div>
-                          </div>
-                        </motion.div>
-                      ) : (
-                        <div className="hidden md:block" />
-                      )}
+                  <div className="flex items-start gap-4">
+                    <div className={'shrink-0 w-12 h-12 rounded-xl flex items-center justify-center border transition-colors duration-300 ' + (isActive ? 'bg-primary/15 border-primary/25' : 'bg-muted/30 border-border/60')}>
+                      <Icon className={'w-6 h-6 transition-colors duration-300 ' + (isActive ? 'text-primary' : 'text-muted-foreground')} />
                     </div>
-
-                    {/* Center marker */}
-                    <div className="hidden md:flex flex-col items-center relative">
-                      {/* horizontal connector line */}
-                      <div
-                        className={
-                          'absolute top-1/2 -translate-y-1/2 h-px w-8 transition-colors duration-300 ' +
-                          (isActive ? 'bg-primary/60' : 'bg-border/40') + ' ' +
-                          (isLeft ? '-left-8' : '-right-8')
-                        }
-                      />
-                      <motion.div
-                        animate={isActive ? { scale: [1, 1.15, 1] } : { scale: 1 }}
-                        transition={{ duration: 1.8, repeat: isActive ? Infinity : 0 }}
-                        className={
-                          'relative w-12 h-12 rounded-full grid place-items-center border bg-background z-10 transition-all duration-300 ' +
-                          (isActive
-                            ? 'border-primary/50 shadow-[0_0_24px_hsl(var(--primary)/0.4)]'
-                            : 'border-border/70')
-                        }
-                      >
-                        <span className={
-                          'text-sm font-semibold transition-colors duration-300 ' +
-                          (isActive ? 'text-primary' : 'text-muted-foreground')
-                        }>
-                          {step.number}
-                        </span>
-                      </motion.div>
-                    </div>
-
-                    {/* Right card slot */}
-                    <div className="md:pl-8 flex justify-start">
-                      {!isLeft ? (
-                        <motion.div
-                          animate={isActive ? { y: -4, scale: 1.02 } : { y: 0, scale: 1 }}
-                          transition={{ duration: 0.4 }}
-                          className={
-                            'relative rounded-2xl border bg-card/60 backdrop-blur-md p-6 w-full max-w-md cursor-pointer ' +
-                            (isActive
-                              ? 'border-primary/50 shadow-[0_0_0_1px_hsl(var(--primary)/0.25),0_20px_40px_-20px_hsl(var(--primary)/0.35)]'
-                              : 'border-border/60')
-                          }
-                        >
-                          <div className="flex items-start gap-4">
-                            <div className={
-                              'shrink-0 w-12 h-12 rounded-xl flex items-center justify-center border transition-colors duration-300 ' +
-                              (isActive ? 'bg-primary/15 border-primary/25' : 'bg-muted/30 border-border/60')
-                            }>
-                              <Icon className={
-                                'w-6 h-6 transition-colors duration-300 ' + (isActive ? 'text-primary' : 'text-muted-foreground')
-                              } />
-                            </div>
-                            <div className="min-w-0">
-                              <h3 className="text-lg font-semibold text-foreground">
-                                {step.title}
-                              </h3>
-                              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                                {step.description}
-                              </p>
-                            </div>
-                          </div>
-                        </motion.div>
-                      ) : (
-                        <div className="hidden md:block" />
-                      )}
+                    <div className="min-w-0">
+                      <h3 className="text-lg font-semibold text-foreground">{step.title}</h3>
+                      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.description}</p>
                     </div>
                   </div>
+                </motion.div>
+              );
 
-                  {/* Mobile: show number badge */}
+              return (
+                <motion.div key={step.number} initial={{ opacity: 0, y: 24 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.5, delay: step.idx * 0.08 }} className="relative">
+                  <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-0">
+                    <div className="md:pr-8 flex justify-end">{isLeft ? cardContent : <div className="hidden md:block" />}</div>
+                    <div className="hidden md:flex flex-col items-center relative">
+                      <div className={'absolute top-1/2 -translate-y-1/2 h-px w-8 transition-colors duration-300 ' + (isActive ? 'bg-primary/60' : 'bg-border/40') + ' ' + (isLeft ? '-left-8' : '-right-8')} />
+                      <motion.div animate={isActive ? { scale: [1, 1.15, 1] } : { scale: 1 }} transition={{ duration: 1.8, repeat: isActive ? Infinity : 0 }} className={'relative w-12 h-12 rounded-full grid place-items-center border bg-background z-10 transition-all duration-300 ' + (isActive ? 'border-primary/50 shadow-[0_0_24px_hsl(var(--primary)/0.4)]' : 'border-border/70')}>
+                        <span className={'text-sm font-semibold transition-colors duration-300 ' + (isActive ? 'text-primary' : 'text-muted-foreground')}>{step.number}</span>
+                      </motion.div>
+                    </div>
+                    <div className="md:pl-8 flex justify-start">{!isLeft ? cardContent : <div className="hidden md:block" />}</div>
+                  </div>
                   <div className="md:hidden absolute -left-2 top-6 w-8 h-8 rounded-full grid place-items-center border bg-background border-border">
                     <span className="text-xs font-semibold text-muted-foreground">{step.number}</span>
                   </div>
@@ -236,17 +103,9 @@ const GenesisCommercialFeatures = () => {
             })}
           </div>
 
-          {/* Progress indicator */}
           <div className="mt-12 flex items-center justify-center gap-2">
             {steps.map((_, idx) => (
-              <motion.div
-                key={idx}
-                animate={idx === activeStep ? { scale: 1.3 } : { scale: 1 }}
-                className={
-                  'w-2 h-2 rounded-full transition-colors duration-300 ' +
-                  (idx === activeStep ? 'bg-primary' : idx < activeStep ? 'bg-primary/50' : 'bg-border')
-                }
-              />
+              <motion.div key={idx} animate={idx === activeStep ? { scale: 1.3 } : { scale: 1 }} className={'w-2 h-2 rounded-full transition-colors duration-300 ' + (idx === activeStep ? 'bg-primary' : idx < activeStep ? 'bg-primary/50' : 'bg-border')} />
             ))}
           </div>
         </div>
