@@ -161,6 +161,7 @@ const GenesisCommercialRadar = () => {
   const [leads, setLeads] = useState<RealLead[]>([]);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const texts = useSiteTexts();
 
   // Shuffle locations on mount
   const shuffledLocationIndices = useMemo(() => {
