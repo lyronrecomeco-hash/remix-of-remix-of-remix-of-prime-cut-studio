@@ -1,9 +1,9 @@
 /**
- * Seção de Configuração de Planos - Design Padronizado Genesis
+ * Seção de Configuração de Planos - Com URL de Checkout Cakto
  */
 
 import React, { useState, useEffect } from 'react';
-import { Save, Loader2, Crown, Info } from 'lucide-react';
+import { Save, Loader2, Crown, Info, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 
@@ -25,6 +25,7 @@ interface Plan {
   discount_percentage: number | null;
   tagline: string | null;
   features: string[];
+  checkout_url: string | null;
 }
 
 export function PlansConfigSection() {
@@ -50,6 +51,7 @@ export function PlansConfigSection() {
       setPlans(data?.map(p => ({
         ...p,
         features: Array.isArray(p.features) ? p.features as string[] : [],
+        checkout_url: (p as any).checkout_url || null,
       })) || []);
     } catch (error) {
       console.error('Error loading plans:', error);
@@ -62,10 +64,7 @@ export function PlansConfigSection() {
   function handleChange(planId: string, field: keyof Plan, value: any) {
     setEditedPlans(prev => ({
       ...prev,
-      [planId]: {
-        ...prev[planId],
-        [field]: value,
-      },
+      [planId]: { ...prev[planId], [field]: value },
     }));
   }
 
@@ -88,6 +87,7 @@ export function PlansConfigSection() {
       if (edits.is_popular !== undefined) updateData.is_popular = edits.is_popular;
       if (edits.discount_percentage !== undefined) updateData.discount_percentage = edits.discount_percentage;
       if (edits.tagline !== undefined) updateData.tagline = edits.tagline;
+      if (edits.checkout_url !== undefined) updateData.checkout_url = edits.checkout_url;
 
       const { error } = await supabase
         .from('checkout_plans')
@@ -132,17 +132,15 @@ export function PlansConfigSection() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-foreground">Configurar Planos</h3>
           <p className="text-sm text-muted-foreground">
-            Defina os valores dos planos comercial e promocional
+            Valores e links de checkout Cakto
           </p>
         </div>
       </div>
 
-      {/* Plans Grid - Standardized Design */}
       <div className="grid gap-4 md:grid-cols-3">
         {plans.map((plan, index) => {
           const hasChanges = editedPlans[plan.id] && Object.keys(editedPlans[plan.id]).length > 0;
@@ -161,7 +159,6 @@ export function PlansConfigSection() {
                 isPopular ? 'border-blue-500/50 ring-1 ring-blue-500/30' : 'border-white/10'
               )}
             >
-              {/* Popular Badge */}
               {isPopular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
                   <span className="bg-blue-500 text-white text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1 uppercase tracking-wider">
@@ -171,7 +168,6 @@ export function PlansConfigSection() {
                 </div>
               )}
 
-              {/* Plan Header */}
               <div className="mb-5 text-center">
                 <h4 className="text-base font-semibold text-foreground mb-1">
                   {plan.display_name}
@@ -181,7 +177,6 @@ export function PlansConfigSection() {
                 </p>
               </div>
 
-              {/* Form Fields */}
               <div className="space-y-4">
                 {/* Price Commercial */}
                 <div className="space-y-1.5">
@@ -238,6 +233,21 @@ export function PlansConfigSection() {
                   />
                 </div>
 
+                {/* Checkout URL - NEW */}
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                    <ExternalLink className="w-3 h-3" />
+                    Link Checkout Cakto
+                  </Label>
+                  <Input
+                    type="url"
+                    value={getEditedValue(plan.id, 'checkout_url', plan.checkout_url || '')}
+                    onChange={(e) => handleChange(plan.id, 'checkout_url', e.target.value)}
+                    placeholder="https://pay.cakto.com.br/..."
+                    className="h-10 bg-white/5 border-white/10 text-sm"
+                  />
+                </div>
+
                 {/* Is Popular */}
                 <div className="flex items-center justify-between pt-2 border-t border-white/10">
                   <Label className="text-xs text-muted-foreground">Marcar como Popular</Label>
@@ -256,15 +266,9 @@ export function PlansConfigSection() {
                     size="sm"
                   >
                     {isSaving ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Salvando...
-                      </>
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</>
                     ) : (
-                      <>
-                        <Save className="w-4 h-4 mr-2" />
-                        Salvar Alterações
-                      </>
+                      <><Save className="w-4 h-4 mr-2" /> Salvar Alterações</>
                     )}
                   </Button>
                 )}
@@ -274,17 +278,17 @@ export function PlansConfigSection() {
         })}
       </div>
 
-      {/* Info Card */}
       <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
         <div className="flex items-start gap-3">
           <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
             <Info className="w-4 h-4 text-blue-400" />
           </div>
           <div className="text-sm">
-            <p className="font-medium text-foreground mb-1">Sincronização Automática</p>
+            <p className="font-medium text-foreground mb-1">Como funciona o checkout</p>
             <p className="text-muted-foreground text-xs">
-              Os valores configurados aqui são usados automaticamente na página comercial 
-              e nas páginas promocionais. Alterações são aplicadas imediatamente.
+              Configure o Link Checkout Cakto em cada plano. Quando o cliente clicar em 
+              "Assinar" no site, será redirecionado para o checkout da Cakto. Após o pagamento, 
+              o cliente retorna automaticamente para criar seu acesso.
             </p>
           </div>
         </div>
