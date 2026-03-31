@@ -303,13 +303,13 @@ const GenesisCommercialRadar = () => {
         >
           <Badge variant="outline" className="mb-4 px-4 py-1.5 text-sm border-primary/30 text-primary bg-primary/5">
             <Sparkles className="w-4 h-4 mr-2" />
-            Clientes Prontos para Fechar Negócio
+            {texts.radar.badge}
           </Badge>
           <h2 className="text-3xl md:text-4xl font-black text-foreground mb-4">
-            Veja oportunidades <span className="text-primary">reais</span>
+            {texts.radar.title} <span className="text-primary">{texts.radar.highlight}</span>
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Empresas esperando por você. Assine e tenha acesso completo aos contatos.
+            {texts.radar.subtitle}
           </p>
         </motion.div>
 
