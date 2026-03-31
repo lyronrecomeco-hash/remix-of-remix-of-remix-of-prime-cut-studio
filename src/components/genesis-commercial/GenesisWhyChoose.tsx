@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
+import { useSiteTexts } from '@/pages/GenesisCommercial';
 import { 
   Sparkles, 
   Zap, 
