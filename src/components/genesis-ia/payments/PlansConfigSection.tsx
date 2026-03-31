@@ -51,7 +51,7 @@ export function PlansConfigSection() {
       setPlans(data?.map(p => ({
         ...p,
         features: Array.isArray(p.features) ? p.features as string[] : [],
-        checkout_url: (p as any).checkout_url || null,
+        checkout_url: p.checkout_url || null,
       })) || []);
     } catch (error) {
       console.error('Error loading plans:', error);
