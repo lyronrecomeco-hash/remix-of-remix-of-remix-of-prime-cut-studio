@@ -469,7 +469,7 @@ const GenesisCommercialRadar = () => {
           </div>
           <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20">
             <Link to="/genesis" className="flex items-center gap-2">
-              Desbloquear Acesso
+              {texts.radar.ctaText}
               <ArrowRight className="w-4 h-4" />
             </Link>
           </Button>
