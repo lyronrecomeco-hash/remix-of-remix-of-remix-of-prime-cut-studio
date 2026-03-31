@@ -1,3 +1,4 @@
+import { useSiteCustomization } from '@/hooks/useSiteCustomization';
 import GenesisCommercialHeader from '@/components/genesis-commercial/GenesisCommercialHeader';
 import GenesisCommercialHero from '@/components/genesis-commercial/GenesisCommercialHero';
 import GenesisCommercialResources from '@/components/genesis-commercial/GenesisCommercialResources';
@@ -9,27 +10,34 @@ import GenesisCommercialPricing from '@/components/genesis-commercial/GenesisCom
 import GenesisCommercialFAQ from '@/components/genesis-commercial/GenesisCommercialFAQ';
 import GenesisCommercialFooter from '@/components/genesis-commercial/GenesisCommercialFooter';
 import InteractiveBackground from '@/components/genesis-commercial/InteractiveBackground';
+import { createContext, useContext } from 'react';
+import type { SiteCustomization } from '@/types/siteCustomization';
+import { DEFAULT_CUSTOMIZATION } from '@/types/siteCustomization';
+
+export const SiteCustomizationContext = createContext<SiteCustomization>(DEFAULT_CUSTOMIZATION);
+export const useSiteTexts = () => useContext(SiteCustomizationContext);
 
 const GenesisCommercial = () => {
+  const { customization, loading } = useSiteCustomization();
+
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden relative">
-      {/* Interactive particle background */}
-      <InteractiveBackground />
-      
-      {/* Content */}
-      <div className="relative z-10">
-        <GenesisCommercialHeader />
-        <GenesisCommercialHero />
-        <GenesisCommercialResources />
-        <GenesisCommercialRadar />
-        <GenesisCommercialFeatures />
-        <GenesisWhyChoose />
-        <GenesisCommercialPartnerships />
-        <GenesisCommercialPricing />
-        <GenesisCommercialFAQ />
-        <GenesisCommercialFooter />
+    <SiteCustomizationContext.Provider value={customization}>
+      <div className="min-h-screen bg-background overflow-x-hidden relative">
+        <InteractiveBackground />
+        <div className="relative z-10">
+          <GenesisCommercialHeader />
+          <GenesisCommercialHero />
+          <GenesisCommercialResources />
+          <GenesisCommercialRadar />
+          <GenesisCommercialFeatures />
+          <GenesisWhyChoose />
+          <GenesisCommercialPartnerships />
+          <GenesisCommercialPricing />
+          <GenesisCommercialFAQ />
+          <GenesisCommercialFooter />
+        </div>
       </div>
-    </div>
+    </SiteCustomizationContext.Provider>
   );
 };
 
