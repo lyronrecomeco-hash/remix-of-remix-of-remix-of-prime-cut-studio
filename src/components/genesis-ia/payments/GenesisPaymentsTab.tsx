@@ -43,7 +43,6 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { GatewayConfigSection } from './GatewayConfigSection';
 import { PlansConfigSection } from './PlansConfigSection';
-import { WithdrawalsManagementTab } from './WithdrawalsManagementTab';
 import { CommissionsConfigTab } from './CommissionsConfigTab';
 import {
   Pagination,

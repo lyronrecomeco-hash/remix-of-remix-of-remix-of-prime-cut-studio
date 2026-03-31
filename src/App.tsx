@@ -137,6 +137,9 @@ const AppContent = () => {
             {/* Download */}
             <Route path="/baixar-genesis" element={<BaixarGenesis />} />
 
+            {/* Cakto Return - post-payment */}
+            <Route path="/cakto-return" element={<CaktoReturn />} />
+
             {/* Petshop */}
             <Route path="/petshop" element={<PetshopPage />} />
             <Route path="/petshop-primo" element={<PetshopPrimoPage />} />
