@@ -686,13 +686,12 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
 
               {/* Instructions */}
               <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 space-y-2">
-                <h4 className="text-sm font-semibold text-blue-300">Como configurar no AbacatePay:</h4>
+                <h4 className="text-sm font-semibold text-blue-300">Como configurar na Cakto:</h4>
                 <ol className="text-xs text-white/60 space-y-1 list-decimal list-inside">
-                  <li>Acesse o painel da AbacatePay</li>
-                  <li>Vá em Configurações → Webhooks</li>
-                  <li>Cole a URL acima no campo "URL de destino"</li>
-                  <li>Cole o Secret no campo "Secret" (ou use query param ?secret=...)</li>
-                  <li>Selecione o evento: <code className="px-1 py-0.5 rounded bg-white/10">billing.paid</code></li>
+                  <li>Acesse o <a href="https://app.cakto.com.br" target="_blank" className="text-blue-400 hover:underline">Painel Cakto</a></li>
+                  <li>Vá em Integrações → Webhooks</li>
+                  <li>Cole a URL acima no campo de destino</li>
+                  <li>Selecione os eventos: <code className="px-1 py-0.5 rounded bg-white/10">purchase_approved</code>, <code className="px-1 py-0.5 rounded bg-white/10">purchase_refused</code>, <code className="px-1 py-0.5 rounded bg-white/10">purchase_refunded</code></li>
                   <li>Salve as configurações</li>
                 </ol>
               </div>
