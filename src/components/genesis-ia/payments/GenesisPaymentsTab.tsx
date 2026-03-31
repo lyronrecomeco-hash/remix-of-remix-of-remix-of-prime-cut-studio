@@ -122,8 +122,6 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
   const [currentPage, setCurrentPage] = useState(1);
   const [isRefunding, setIsRefunding] = useState(false);
   const [showRefundConfirm, setShowRefundConfirm] = useState(false);
-  const [refundPixKey, setRefundPixKey] = useState('');
-  const [refundPixKeyType, setRefundPixKeyType] = useState<'CPF' | 'CNPJ' | 'EMAIL' | 'TELEFONE' | 'CHAVE_ALEATORIA'>('CPF');
   const ITEMS_PER_PAGE = 10;
 
   useEffect(() => {
@@ -273,29 +271,10 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
   const handleRefund = async () => {
     if (!selectedPayment) return;
     
-    // Determine if this is a MisticPay payment (requires PIX key)
-    const isMisticPay = (selectedPayment as any).gateway === 'misticpay';
-    
-    // For MisticPay, require PIX key and type
-    if (isMisticPay && (!refundPixKey || !refundPixKeyType)) {
-      toast.error('Informe a chave PIX e o tipo para reembolso MisticPay');
-      return;
-    }
-    
     setIsRefunding(true);
     try {
-      const body: { paymentCode: string; pixKey?: string; pixKeyType?: string } = { 
-        paymentCode: selectedPayment.payment_code 
-      };
-      
-      // Add PIX key info for MisticPay
-      if (isMisticPay && refundPixKey && refundPixKeyType) {
-        body.pixKey = refundPixKey;
-        body.pixKeyType = refundPixKeyType;
-      }
-      
       const { data, error } = await supabase.functions.invoke('checkout-refund-payment', {
-        body
+        body: { paymentCode: selectedPayment.payment_code }
       });
 
       if (error) {
@@ -312,8 +291,6 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
       toast.success('Reembolso processado com sucesso!');
       setShowRefundConfirm(false);
       setSelectedPayment(null);
-      setRefundPixKey('');
-      setRefundPixKeyType('CPF');
       loadData();
     } catch (err) {
       console.error('Refund exception:', err);
@@ -364,7 +341,7 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
     setCurrentPage(1);
   }, [searchTerm, statusFilter]);
 
-  const webhookUrl = 'https://genesishub.cloud/functions/v1/checkout-webhook';
+  const webhookUrl = `https://xeloigymjjeejvicadar.supabase.co/functions/v1/cakto-webhook`;
 
   if (isLoading) {
     return (
@@ -389,7 +366,7 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
               <CreditCard className="w-6 h-6 text-emerald-400" />
               Gerenciamento de Pagamentos
             </h1>
-            <p className="text-sm text-white/60">AbacatePay • Checkout Seguro</p>
+            <p className="text-sm text-white/60">Cakto • Checkout Seguro</p>
           </div>
         </div>
         <Button onClick={loadData} variant="outline" size="sm">
@@ -686,13 +663,12 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
 
               {/* Instructions */}
               <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 space-y-2">
-                <h4 className="text-sm font-semibold text-blue-300">Como configurar no AbacatePay:</h4>
+                <h4 className="text-sm font-semibold text-blue-300">Como configurar na Cakto:</h4>
                 <ol className="text-xs text-white/60 space-y-1 list-decimal list-inside">
-                  <li>Acesse o painel da AbacatePay</li>
-                  <li>Vá em Configurações → Webhooks</li>
-                  <li>Cole a URL acima no campo "URL de destino"</li>
-                  <li>Cole o Secret no campo "Secret" (ou use query param ?secret=...)</li>
-                  <li>Selecione o evento: <code className="px-1 py-0.5 rounded bg-white/10">billing.paid</code></li>
+                  <li>Acesse o <a href="https://app.cakto.com.br" target="_blank" className="text-blue-400 hover:underline">Painel Cakto</a></li>
+                  <li>Vá em Integrações → Webhooks</li>
+                  <li>Cole a URL acima no campo de destino</li>
+                  <li>Selecione os eventos: <code className="px-1 py-0.5 rounded bg-white/10">purchase_approved</code>, <code className="px-1 py-0.5 rounded bg-white/10">purchase_refused</code>, <code className="px-1 py-0.5 rounded bg-white/10">purchase_refunded</code></li>
                   <li>Salve as configurações</li>
                 </ol>
               </div>
@@ -815,53 +791,11 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
                       </div>
                     </div>
                     
-                    {/* MisticPay PIX Key Input */}
-                    {selectedPayment.gateway === 'misticpay' && (
-                      <div className="space-y-3 p-3 rounded-lg bg-white/5 border border-white/10">
-                        <p className="text-sm text-amber-400 font-medium">
-                          ⚠️ Informe a chave PIX do destinatário para o estorno:
-                        </p>
-                        <div className="space-y-2">
-                          <label className="text-xs text-white/50">Tipo da Chave PIX</label>
-                          <select
-                            value={refundPixKeyType}
-                            onChange={(e) => setRefundPixKeyType(e.target.value as any)}
-                            className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm"
-                          >
-                            <option value="CPF">CPF</option>
-                            <option value="CNPJ">CNPJ</option>
-                            <option value="EMAIL">E-mail</option>
-                            <option value="TELEFONE">Telefone</option>
-                            <option value="CHAVE_ALEATORIA">Chave Aleatória</option>
-                          </select>
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-xs text-white/50">Chave PIX</label>
-                          <Input
-                            value={refundPixKey}
-                            onChange={(e) => setRefundPixKey(e.target.value)}
-                            placeholder={
-                              refundPixKeyType === 'CPF' ? '000.000.000-00' :
-                              refundPixKeyType === 'CNPJ' ? '00.000.000/0000-00' :
-                              refundPixKeyType === 'EMAIL' ? 'email@exemplo.com' :
-                              refundPixKeyType === 'TELEFONE' ? '+5511999999999' :
-                              'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
-                            }
-                            className="bg-white/10 border-white/20"
-                          />
-                        </div>
-                      </div>
-                    )}
-                    
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
                         className="flex-1"
-                        onClick={() => {
-                          setShowRefundConfirm(false);
-                          setRefundPixKey('');
-                          setRefundPixKeyType('CPF');
-                        }}
+                        onClick={() => setShowRefundConfirm(false)}
                         disabled={isRefunding}
                       >
                         Cancelar
@@ -870,7 +804,7 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
                         variant="destructive"
                         className="flex-1"
                         onClick={handleRefund}
-                        disabled={isRefunding || (selectedPayment.gateway === 'misticpay' && !refundPixKey)}
+                        disabled={isRefunding}
                       >
                         {isRefunding ? (
                           <>

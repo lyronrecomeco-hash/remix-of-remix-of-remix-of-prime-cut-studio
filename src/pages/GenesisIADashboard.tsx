@@ -300,11 +300,14 @@ const GenesisIADashboard = () => {
     | { icon: React.ElementType; label: string; tabId: ActiveTab; onClick?: never }
     | { icon: React.ElementType; label: string; onClick: () => void; tabId?: never };
 
+  const isSuperAdmin = userEmail.toLowerCase() === 'lyronrp@gmail.com';
+  
   const baseDockItems: DockItem[] = [
     { icon: Home, label: 'Início', tabId: 'dashboard' },
     { icon: Grid3X3, label: 'Biblioteca', tabId: 'criar-projetos' },
     { icon: FileText, label: 'Contratos', tabId: 'contracts' },
-    { icon: Gift, label: 'Promo', tabId: 'promocional' },
+    // Promo visível apenas para lyronrp@gmail.com
+    ...(isSuperAdmin ? [{ icon: Gift, label: 'Promo', tabId: 'promocional' as ActiveTab }] : []),
     // Usuários só para admin
     ...(isAdmin ? [{ icon: Users, label: 'Usuários', tabId: 'users' as ActiveTab }] : []),
     { icon: LayoutDashboard, label: 'Financeiro', tabId: 'financial' },
