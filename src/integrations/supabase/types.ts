@@ -1793,6 +1793,8 @@ export type Database = {
           api_key_configured: boolean
           asaas_access_token_hash: string | null
           asaas_wallet_id: string | null
+          cakto_client_id_hash: string | null
+          cakto_client_secret_hash: string | null
           created_at: string
           gateway: string
           id: string
@@ -1808,6 +1810,8 @@ export type Database = {
           api_key_configured?: boolean
           asaas_access_token_hash?: string | null
           asaas_wallet_id?: string | null
+          cakto_client_id_hash?: string | null
+          cakto_client_secret_hash?: string | null
           created_at?: string
           gateway: string
           id?: string
@@ -1823,6 +1827,8 @@ export type Database = {
           api_key_configured?: boolean
           asaas_access_token_hash?: string | null
           asaas_wallet_id?: string | null
+          cakto_client_id_hash?: string | null
+          cakto_client_secret_hash?: string | null
           created_at?: string
           gateway?: string
           id?: string
@@ -1877,6 +1883,8 @@ export type Database = {
           abacatepay_url: string | null
           amount_cents: number
           asaas_payment_id: string | null
+          cakto_checkout_url: string | null
+          cakto_order_id: string | null
           card_brand: string | null
           card_last_four: string | null
           created_at: string
@@ -1907,6 +1915,8 @@ export type Database = {
           abacatepay_url?: string | null
           amount_cents: number
           asaas_payment_id?: string | null
+          cakto_checkout_url?: string | null
+          cakto_order_id?: string | null
           card_brand?: string | null
           card_last_four?: string | null
           created_at?: string
@@ -1937,6 +1947,8 @@ export type Database = {
           abacatepay_url?: string | null
           amount_cents?: number
           asaas_payment_id?: string | null
+          cakto_checkout_url?: string | null
+          cakto_order_id?: string | null
           card_brand?: string | null
           card_last_four?: string | null
           created_at?: string
@@ -1988,6 +2000,7 @@ export type Database = {
       }
       checkout_plans: {
         Row: {
+          checkout_url: string | null
           created_at: string | null
           discount_percentage: number | null
           display_name: string
@@ -2003,6 +2016,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          checkout_url?: string | null
           created_at?: string | null
           discount_percentage?: number | null
           display_name: string
@@ -2018,6 +2032,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          checkout_url?: string | null
           created_at?: string | null
           discount_percentage?: number | null
           display_name?: string
