@@ -69,6 +69,7 @@ const ClinicaEsteticaPage = lazy(() => import("./pages/ClinicaEsteticaPage"));
 const ClinicaEsteticaAgendarPage = lazy(() => import("./pages/ClinicaEsteticaAgendarPage"));
 const GenesisIALogin = lazy(() => import("./pages/GenesisIALogin"));
 const GenesisIADashboard = lazy(() => import("./pages/GenesisIADashboard"));
+const BaixarGenesis = lazy(() => import("./pages/BaixarGenesis"));
 const PetshopPage = lazy(() => import("./pages/petshop"));
 const PetshopPrimoPage = lazy(() => import("./pages/petshop-primo"));
 const PetshopMonPage = lazy(() => import("./pages/petshop-mon"));
