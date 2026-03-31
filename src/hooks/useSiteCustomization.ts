@@ -1,56 +1,50 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import type { SiteCustomization } from '@/components/genesis-ia/settings/SiteCustomizationSection';
+import { SiteCustomization, DEFAULT_CUSTOMIZATION } from '@/types/siteCustomization';
 
-const DEFAULT_CUSTOMIZATION: SiteCustomization = {
-  header: {
-    title: 'Genesis Hub',
-    subtitle: '',
-  },
-  hero: {
-    badge: '🚀 Plataforma #1 em Automação Inteligente',
-    title: 'Transforme seu negócio com',
-    highlight: 'Inteligência Artificial',
-    subtitle: 'A plataforma mais completa para automação de atendimento, geração de leads e gestão inteligente do seu negócio.',
-    ctaText: 'Começar Agora',
-    ctaSecondaryText: 'Ver Demonstração',
-  },
-  pricing: {
-    title: 'Planos e Preços',
-    subtitle: 'Escolha o plano ideal para o seu negócio',
-  },
-  footer: {
-    description: 'A plataforma mais completa para automação e gestão inteligente do seu negócio.',
-    copyright: '© 2025 Genesis Hub. Todos os direitos reservados.',
-  },
-};
+function deepMerge(defaults: any, overrides: any): any {
+  const result = { ...defaults };
+  for (const key in overrides) {
+    if (
+      overrides[key] &&
+      typeof overrides[key] === 'object' &&
+      !Array.isArray(overrides[key]) &&
+      defaults[key] &&
+      typeof defaults[key] === 'object'
+    ) {
+      result[key] = deepMerge(defaults[key], overrides[key]);
+    } else if (overrides[key] !== undefined) {
+      result[key] = overrides[key];
+    }
+  }
+  return result;
+}
 
 export function useSiteCustomization() {
   const [customization, setCustomization] = useState<SiteCustomization>(DEFAULT_CUSTOMIZATION);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadCustomization();
-  }, []);
+    const load = async () => {
+      try {
+        const { data } = await supabase
+          .from('admin_settings')
+          .select('settings')
+          .eq('setting_type', 'site_customization')
+          .is('user_id', null)
+          .maybeSingle();
 
-  const loadCustomization = async () => {
-    try {
-      const { data } = await supabase
-        .from('admin_settings')
-        .select('settings')
-        .eq('setting_type', 'site_customization')
-        .is('user_id', null)
-        .maybeSingle();
-
-      if (data?.settings) {
-        setCustomization({ ...DEFAULT_CUSTOMIZATION, ...(data.settings as Partial<SiteCustomization>) });
+        if (data?.settings) {
+          setCustomization(deepMerge(DEFAULT_CUSTOMIZATION, data.settings));
+        }
+      } catch (error) {
+        console.error('Error loading site customization:', error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error loading site customization:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+    load();
+  }, []);
 
   return { customization, loading };
 }
