@@ -389,7 +389,7 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
               <CreditCard className="w-6 h-6 text-emerald-400" />
               Gerenciamento de Pagamentos
             </h1>
-            <p className="text-sm text-white/60">AbacatePay • Checkout Seguro</p>
+            <p className="text-sm text-white/60">Cakto • Checkout Seguro</p>
           </div>
         </div>
         <Button onClick={loadData} variant="outline" size="sm">
