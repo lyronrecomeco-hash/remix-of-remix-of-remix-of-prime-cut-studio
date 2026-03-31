@@ -3,21 +3,18 @@ import {
   Settings, 
   Save,
   Loader2,
-  MessageSquare,
-  Globe,
   Bell,
   Shield,
-  FileText,
-  Edit3,
-  Copy,
-  Check
+  Globe,
+  Palette,
+  Lock
 } from 'lucide-react';
 import { GenesisPasswordModal } from './GenesisPasswordModal';
 import { SubscriptionBillingCardIA } from './billing';
+import { SiteCustomizationSection } from './settings/SiteCustomizationSection';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -29,17 +26,12 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Modal, ModalBody, ModalFooter } from '@/components/ui/modal';
 
 interface GenesisSettingsTabProps {
   userId: string;
 }
 
 interface GenesisSettings {
-  baseMessage: string;
-  proposalTemplate: string;
-  includeCompanyName: boolean;
-  includeContactName: boolean;
   notificationsEnabled: boolean;
   soundEnabled: boolean;
   emailNotifications: boolean;
@@ -51,37 +43,6 @@ interface GenesisSettings {
 }
 
 const DEFAULT_SETTINGS: GenesisSettings = {
-  baseMessage: `Olá {nome_contato}!
-
-Sou da Genesis IA e encontramos sua empresa {nome_empresa} em nossa análise de mercado.
-
-Notamos que há uma grande oportunidade de crescimento para seu negócio através da transformação digital.
-
-Gostaríamos de apresentar uma proposta personalizada que pode aumentar significativamente seus resultados.
-
-Podemos conversar?`,
-  proposalTemplate: `# Proposta Comercial - {nome_empresa}
-
-## Análise do Mercado
-Com base em nossa análise, identificamos as seguintes oportunidades:
-
-{pontos_analise}
-
-## Solução Proposta
-{descricao_solucao}
-
-## Investimento
-Valor: R$ {valor_proposta}
-
-## Próximos Passos
-1. Reunião de alinhamento
-2. Apresentação detalhada
-3. Início do projeto
-
-Atenciosamente,
-Equipe Genesis IA`,
-  includeCompanyName: true,
-  includeContactName: true,
   notificationsEnabled: true,
   soundEnabled: true,
   emailNotifications: false,
@@ -92,19 +53,22 @@ Equipe Genesis IA`,
   compactMode: false,
 };
 
-const VARIABLES_MESSAGE = ['{nome_contato}', '{nome_empresa}', '{niche}'];
-const VARIABLES_PROPOSAL = ['{nome_empresa}', '{valor_proposta}', '{pontos_analise}', '{descricao_solucao}'];
+type CategoryId = 'billing' | 'notifications' | 'radar' | 'security' | 'site';
+
+const categories = [
+  { id: 'billing' as CategoryId, icon: Settings, label: 'Fatura', color: 'bg-emerald-500/20 text-emerald-400' },
+  { id: 'notifications' as CategoryId, icon: Bell, label: 'Notificações', color: 'bg-amber-500/20 text-amber-400' },
+  { id: 'radar' as CategoryId, icon: Globe, label: 'Radar', color: 'bg-cyan-500/20 text-cyan-400' },
+  { id: 'security' as CategoryId, icon: Shield, label: 'Segurança', color: 'bg-rose-500/20 text-rose-400' },
+  { id: 'site' as CategoryId, icon: Palette, label: 'Site', color: 'bg-purple-500/20 text-purple-400' },
+];
 
 export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
   const [settings, setSettings] = useState<GenesisSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [messageModalOpen, setMessageModalOpen] = useState(false);
-  const [proposalModalOpen, setProposalModalOpen] = useState(false);
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
-  const [tempMessage, setTempMessage] = useState('');
-  const [tempProposal, setTempProposal] = useState('');
-  const [copiedVar, setCopiedVar] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<CategoryId>('billing');
   const [subscription, setSubscription] = useState<{
     plan: string;
     plan_name: string | null;
@@ -113,11 +77,21 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
     expires_at: string | null;
   } | null>(null);
   const [isPromoUser, setIsPromoUser] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     loadSettings();
     loadSubscription();
+    checkAdmin();
   }, [userId]);
+
+  const checkAdmin = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const ADMIN_EMAILS = ['lyronrp@gmail.com', 'santiagoadmin@gmail.com'];
+      setIsAdmin(ADMIN_EMAILS.includes(user.email?.toLowerCase() || ''));
+    }
+  };
 
   const loadSettings = async () => {
     try {
@@ -154,7 +128,6 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
         });
       }
 
-      // Check if user came from promo
       const { data: promoData } = await supabase
         .from('promo_referrals')
         .select('id')
@@ -210,34 +183,6 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
-  const openMessageModal = () => {
-    setTempMessage(settings.baseMessage);
-    setMessageModalOpen(true);
-  };
-
-  const openProposalModal = () => {
-    setTempProposal(settings.proposalTemplate);
-    setProposalModalOpen(true);
-  };
-
-  const saveMessageTemplate = () => {
-    updateSetting('baseMessage', tempMessage);
-    setMessageModalOpen(false);
-    toast.success('Mensagem base atualizada!');
-  };
-
-  const saveProposalTemplate = () => {
-    updateSetting('proposalTemplate', tempProposal);
-    setProposalModalOpen(false);
-    toast.success('Template de proposta atualizado!');
-  };
-
-  const copyVariable = (variable: string) => {
-    navigator.clipboard.writeText(variable);
-    setCopiedVar(variable);
-    setTimeout(() => setCopiedVar(null), 2000);
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -245,6 +190,9 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
       </div>
     );
   }
+
+  // Filter categories - Site only for admins
+  const visibleCategories = categories.filter(c => c.id !== 'site' || isAdmin);
 
   return (
     <div className="space-y-6">
@@ -256,300 +204,177 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
           </div>
           <div>
             <h2 className="text-2xl font-bold text-white">Configurações</h2>
-            <p className="text-sm text-white/50">Personalize sua experiência no Genesis IA</p>
+            <p className="text-sm text-white/50">Personalize sua experiência</p>
           </div>
         </div>
-        <Button onClick={saveSettings} disabled={saving} size="lg" className="gap-2">
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          Salvar Alterações
-        </Button>
+        {activeCategory !== 'site' && (
+          <Button onClick={saveSettings} disabled={saving} size="lg" className="gap-2">
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            Salvar
+          </Button>
+        )}
       </div>
 
-      {/* Templates Section */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-medium text-white/50 uppercase tracking-wider">Templates</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Mensagem Base Card */}
-          <Card className="bg-white/5 border-white/10 hover:border-blue-500/30 transition-colors cursor-pointer group" style={{ borderRadius: '14px' }} onClick={openMessageModal}>
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                    <MessageSquare className="w-5 h-5 text-blue-400" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-white">Mensagem Base</h4>
-                    <p className="text-xs text-white/50 mt-0.5">Template para primeiro contato</p>
-                  </div>
-                </div>
-                <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity text-white/50 hover:text-white hover:bg-white/10">
-                  <Edit3 className="w-4 h-4" />
-                </Button>
-              </div>
-              <div className="mt-4 p-3 bg-white/5 rounded-lg border border-white/5">
-                <p className="text-xs text-white/50 line-clamp-3 font-mono">
-                  {settings.baseMessage.slice(0, 120)}...
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Template Proposta Card */}
-          <Card className="bg-white/5 border-white/10 hover:border-emerald-500/30 transition-colors cursor-pointer group" style={{ borderRadius: '14px' }} onClick={openProposalModal}>
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-emerald-400" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-white">Template de Proposta</h4>
-                    <p className="text-xs text-white/50 mt-0.5">Modelo para propostas comerciais</p>
-                  </div>
-                </div>
-                <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity text-white/50 hover:text-white hover:bg-white/10">
-                  <Edit3 className="w-4 h-4" />
-                </Button>
-              </div>
-              <div className="mt-4 p-3 bg-white/5 rounded-lg border border-white/5">
-                <p className="text-xs text-white/50 line-clamp-3 font-mono">
-                  {settings.proposalTemplate.slice(0, 120)}...
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Category Navigation - Side by side like Academia */}
+      <div className="overflow-x-auto pb-2 scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
+        <div className="flex gap-1.5 sm:gap-2 min-w-max">
+          {visibleCategories.map((cat) => {
+            const Icon = cat.icon;
+            const isActive = activeCategory === cat.id;
+            
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setActiveCategory(cat.id)}
+                className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 sm:py-2.5 border transition-all duration-200 flex-shrink-0 ${
+                  isActive 
+                    ? 'bg-primary/20 border-primary/40 text-white' 
+                    : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
+                }`}
+                style={{ borderRadius: '10px' }}
+              >
+                <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span className="text-xs sm:text-sm font-medium">{cat.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Billing Section */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-medium text-white/50 uppercase tracking-wider">Fatura e Assinatura</h3>
-        <SubscriptionBillingCardIA
-          userId={userId}
-          plan={subscription?.plan || 'free'}
-          planName={subscription?.plan_name || undefined}
-          status={subscription?.status || 'inactive'}
-          startedAt={subscription?.started_at || undefined}
-          expiresAt={subscription?.expires_at || undefined}
-          isPromoUser={isPromoUser}
-          onRenewed={loadSubscription}
-        />
-      </div>
+      {/* Category Content */}
+      {activeCategory === 'billing' && (
+        <div className="space-y-3">
+          <SubscriptionBillingCardIA
+            userId={userId}
+            plan={subscription?.plan || 'free'}
+            planName={subscription?.plan_name || undefined}
+            status={subscription?.status || 'inactive'}
+            startedAt={subscription?.started_at || undefined}
+            expiresAt={subscription?.expires_at || undefined}
+            isPromoUser={isPromoUser}
+            onRenewed={loadSubscription}
+          />
+        </div>
+      )}
 
-      {/* Settings Grid */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-medium text-white/50 uppercase tracking-wider">Preferências</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Notificações */}
-          <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
-            <CardContent className="p-5 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                  <Bell className="w-4 h-4 text-amber-400" />
-                </div>
-                <h4 className="font-semibold text-white text-sm">Notificações</h4>
+      {activeCategory === 'notifications' && (
+        <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
+          <CardContent className="p-5 space-y-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-9 h-9 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                <Bell className="w-4 h-4 text-amber-400" />
               </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs text-white/50">Ativar notificações</Label>
-                  <Switch
-                    checked={settings.notificationsEnabled}
-                    onCheckedChange={(v) => updateSetting('notificationsEnabled', v)}
-                  />
-                </div>
-                <Separator className="bg-white/10" />
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs text-white/50">Sons</Label>
-                  <Switch
-                    checked={settings.soundEnabled}
-                    onCheckedChange={(v) => updateSetting('soundEnabled', v)}
-                  />
-                </div>
-                <Separator className="bg-white/10" />
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs text-white/50">E-mail</Label>
-                  <Switch
-                    checked={settings.emailNotifications}
-                    onCheckedChange={(v) => updateSetting('emailNotifications', v)}
-                  />
-                </div>
+              <h4 className="font-semibold text-white">Notificações</h4>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm text-white/70">Ativar notificações</Label>
+                <Switch
+                  checked={settings.notificationsEnabled}
+                  onCheckedChange={(v) => updateSetting('notificationsEnabled', v)}
+                />
               </div>
-            </CardContent>
-          </Card>
+              <Separator className="bg-white/10" />
+              <div className="flex items-center justify-between">
+                <Label className="text-sm text-white/70">Sons</Label>
+                <Switch
+                  checked={settings.soundEnabled}
+                  onCheckedChange={(v) => updateSetting('soundEnabled', v)}
+                />
+              </div>
+              <Separator className="bg-white/10" />
+              <div className="flex items-center justify-between">
+                <Label className="text-sm text-white/70">E-mail</Label>
+                <Switch
+                  checked={settings.emailNotifications}
+                  onCheckedChange={(v) => updateSetting('emailNotifications', v)}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-          {/* Radar Global */}
-          <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
-            <CardContent className="p-5 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-cyan-500/20 flex items-center justify-center">
-                  <Globe className="w-4 h-4 text-cyan-400" />
-                </div>
-                <h4 className="font-semibold text-white text-sm">Radar Global</h4>
+      {activeCategory === 'radar' && (
+        <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
+          <CardContent className="p-5 space-y-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-9 h-9 rounded-lg bg-cyan-500/20 flex items-center justify-center">
+                <Globe className="w-4 h-4 text-cyan-400" />
               </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs text-white/50">Scan automático</Label>
-                  <Switch
-                    checked={settings.radarAutoScan}
-                    onCheckedChange={(v) => updateSetting('radarAutoScan', v)}
-                  />
-                </div>
-                <Separator className="bg-white/10" />
-                <div className="space-y-2">
-                  <Label className="text-xs text-white/50">Intervalo</Label>
-                  <Select
-                    value={String(settings.radarInterval)}
-                    onValueChange={(v) => updateSetting('radarInterval', Number(v))}
-                  >
-                    <SelectTrigger className="h-8 text-xs bg-white/5 border-white/10">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">1 minuto</SelectItem>
-                      <SelectItem value="2">2 minutos</SelectItem>
-                      <SelectItem value="5">5 minutos</SelectItem>
-                      <SelectItem value="10">10 minutos</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <h4 className="font-semibold text-white">Radar Global</h4>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm text-white/70">Scan automático</Label>
+                <Switch
+                  checked={settings.radarAutoScan}
+                  onCheckedChange={(v) => updateSetting('radarAutoScan', v)}
+                />
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Segurança */}
-          <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
-            <CardContent className="p-5 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-rose-500/20 flex items-center justify-center">
-                  <Shield className="w-4 h-4 text-rose-400" />
-                </div>
-                <h4 className="font-semibold text-white text-sm">Segurança</h4>
-              </div>
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <Label className="text-xs text-white/50">Sessão ativa</Label>
-                  <p className="text-xs font-medium text-white">
-                    {new Date().toLocaleDateString('pt-BR')}
-                  </p>
-                </div>
-                <Separator className="bg-white/10" />
-                <div className="space-y-1">
-                  <Label className="text-xs text-white/50">ID do usuário</Label>
-                  <p className="text-xs font-mono text-white/70">
-                    {userId.slice(0, 12)}...
-                  </p>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setPasswordModalOpen(true)}
-                  className="w-full h-8 text-xs mt-2 border-white/20 text-white/70 hover:text-white hover:bg-white/10"
+              <Separator className="bg-white/10" />
+              <div className="space-y-2">
+                <Label className="text-sm text-white/70">Intervalo de scan</Label>
+                <Select
+                  value={String(settings.radarInterval)}
+                  onValueChange={(v) => updateSetting('radarInterval', Number(v))}
                 >
-                  Alterar Senha
-                </Button>
+                  <SelectTrigger className="h-10 bg-white/5 border-white/10">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 minuto</SelectItem>
+                    <SelectItem value="2">2 minutos</SelectItem>
+                    <SelectItem value="5">5 minutos</SelectItem>
+                    <SelectItem value="10">10 minutos</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Message Template Modal */}
-      <Modal isOpen={messageModalOpen} onClose={() => setMessageModalOpen(false)} title="Editar Mensagem Base" size="lg">
-        <ModalBody>
-          <div className="space-y-4">
-            <div>
-              <Label className="text-sm font-medium text-foreground">Variáveis Disponíveis</Label>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {VARIABLES_MESSAGE.map((v) => (
-                  <button
-                    key={v}
-                    onClick={() => copyVariable(v)}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 hover:bg-primary/20 text-primary text-xs rounded-md transition-colors font-mono"
-                  >
-                    {copiedVar === v ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                    {v}
-                  </button>
-                ))}
+      {activeCategory === 'security' && (
+        <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
+          <CardContent className="p-5 space-y-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-9 h-9 rounded-lg bg-rose-500/20 flex items-center justify-center">
+                <Shield className="w-4 h-4 text-rose-400" />
               </div>
+              <h4 className="font-semibold text-white">Segurança</h4>
             </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground">Mensagem</Label>
-              <Textarea
-                value={tempMessage}
-                onChange={(e) => setTempMessage(e.target.value)}
-                placeholder="Escreva sua mensagem base..."
-                className="min-h-[300px] font-mono text-sm"
-              />
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={settings.includeCompanyName}
-                  onCheckedChange={(v) => updateSetting('includeCompanyName', v)}
-                />
-                <Label className="text-sm">Incluir nome da empresa</Label>
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <Label className="text-sm text-white/70">Sessão ativa</Label>
+                <p className="text-sm font-medium text-white">
+                  {new Date().toLocaleDateString('pt-BR')}
+                </p>
               </div>
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={settings.includeContactName}
-                  onCheckedChange={(v) => updateSetting('includeContactName', v)}
-                />
-                <Label className="text-sm">Incluir nome do contato</Label>
+              <Separator className="bg-white/10" />
+              <div className="space-y-1">
+                <Label className="text-sm text-white/70">ID do usuário</Label>
+                <p className="text-xs font-mono text-white/70">
+                  {userId.slice(0, 12)}...
+                </p>
               </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setPasswordModalOpen(true)}
+                className="w-full h-10 border-white/20 text-white/70 hover:text-white hover:bg-white/10 gap-2"
+              >
+                <Lock className="w-4 h-4" />
+                Alterar Senha
+              </Button>
             </div>
-          </div>
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="ghost" onClick={() => setMessageModalOpen(false)}>
-            Cancelar
-          </Button>
-          <Button onClick={saveMessageTemplate} className="gap-2">
-            <Save className="w-4 h-4" />
-            Salvar Template
-          </Button>
-        </ModalFooter>
-      </Modal>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Proposal Template Modal */}
-      <Modal isOpen={proposalModalOpen} onClose={() => setProposalModalOpen(false)} title="Editar Template de Proposta" size="lg">
-        <ModalBody>
-          <div className="space-y-4">
-            <div>
-              <Label className="text-sm font-medium text-foreground">Variáveis Disponíveis</Label>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {VARIABLES_PROPOSAL.map((v) => (
-                  <button
-                    key={v}
-                    onClick={() => copyVariable(v)}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 hover:bg-primary/20 text-primary text-xs rounded-md transition-colors font-mono"
-                  >
-                    {copiedVar === v ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                    {v}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground">Template (Suporta Markdown)</Label>
-              <Textarea
-                value={tempProposal}
-                onChange={(e) => setTempProposal(e.target.value)}
-                placeholder="Escreva o template da proposta..."
-                className="min-h-[350px] font-mono text-sm"
-              />
-            </div>
-          </div>
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="ghost" onClick={() => setProposalModalOpen(false)}>
-            Cancelar
-          </Button>
-          <Button onClick={saveProposalTemplate} className="gap-2">
-            <Save className="w-4 h-4" />
-            Salvar Template
-          </Button>
-        </ModalFooter>
-      </Modal>
+      {activeCategory === 'site' && isAdmin && (
+        <SiteCustomizationSection />
+      )}
 
       {/* Password Change Modal */}
       <GenesisPasswordModal 
