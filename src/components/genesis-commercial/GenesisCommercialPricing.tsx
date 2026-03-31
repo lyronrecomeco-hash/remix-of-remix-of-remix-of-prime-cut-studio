@@ -44,7 +44,7 @@ const usePlans = () => {
           discountPercentage: p.discount_percentage,
           isPopular: p.is_popular,
           features: Array.isArray(p.features) ? p.features as string[] : [],
-          checkoutUrl: (p as any).checkout_url || null,
+          checkoutUrl: p.checkout_url || null,
         })));
       }
       setIsLoading(false);
