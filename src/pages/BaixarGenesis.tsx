@@ -6,6 +6,7 @@ import JSZip from "jszip";
 import { saveAs } from "file-saver";
 
 const features = [
+  "Site comercial completo (Landing Page)",
   "Login com autenticação PHP/MySQL",
   "Dashboard completo com glassmorphism",
   "Scanner IA, Radar Global, Propostas",
@@ -43,7 +44,7 @@ function isLoggedIn() {
 
 function requireLogin() {
     if (!isLoggedIn()) {
-        header('Location: index.php');
+        header('Location: login.php');
         exit;
     }
 }
@@ -60,7 +61,412 @@ function jsonResponse($data, $code = 200) {
 }
 ?>`;
 
-const INDEX_PHP = `<?php
+const LANDING_PHP = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genesis Hub - Seu Hub de Automação</title>
+    <meta name="description" content="Crie, Gerencie e Escale. Radar de prospecção com IA, automação de WhatsApp, gerador de páginas e contratos — tudo em um só lugar.">
+    <link rel="stylesheet" href="assets/css/landing.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="floating-header">
+        <div class="header-inner">
+            <a href="index.php" class="header-logo">
+                <div class="logo-icon-header">G</div>
+                <span class="logo-text">Genesis Hub</span>
+            </a>
+            <div class="header-sep"></div>
+            <nav class="header-nav">
+                <a href="#inicio" class="nav-link">Início</a>
+                <a href="#recursos" class="nav-link">Recursos</a>
+                <a href="#como-funciona" class="nav-link">Como Funciona</a>
+                <a href="#planos" class="nav-link">Planos</a>
+            </nav>
+            <button class="mobile-menu-btn" onclick="toggleMobile()">☰</button>
+        </div>
+    </header>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="#inicio" onclick="toggleMobile()">Início</a>
+        <a href="#recursos" onclick="toggleMobile()">Recursos</a>
+        <a href="#como-funciona" onclick="toggleMobile()">Como Funciona</a>
+        <a href="#planos" onclick="toggleMobile()">Planos</a>
+    </div>
+
+    <!-- Hero -->
+    <section id="inicio" class="hero-section">
+        <div class="hero-bg"></div>
+        <div class="container hero-content">
+            <div class="trust-badge">
+                <span class="pulse-dot"></span>
+                <span>Assine e comece a fechar negócios hoje</span>
+            </div>
+
+            <h1 class="hero-title">
+                Seu Hub de Automação<br>
+                <span class="hero-typed" id="typedText"></span><span class="cursor-blink">|</span>
+            </h1>
+
+            <p class="hero-subtitle">
+                Radar de prospecção com IA, automação de WhatsApp, gerador de páginas e contratos — tudo em um só lugar.
+            </p>
+
+            <div class="hero-cta">
+                <a href="#planos" class="btn btn-primary btn-lg">
+                    ✨ Assinar Agora →
+                </a>
+                <a href="#planos" class="btn btn-outline btn-lg">
+                    Ver Planos
+                </a>
+            </div>
+
+            <div class="trust-points">
+                <span>✅ Setup em 5 minutos</span>
+                <span>✅ Suporte 24h</span>
+                <span>✅ Cancele quando quiser</span>
+            </div>
+
+            <!-- Dashboard Mockup -->
+            <div class="mockup-wrapper">
+                <div class="mockup-glow"></div>
+                <div class="mockup-frame">
+                    <div class="mockup-bar">
+                        <div class="mockup-dots">
+                            <span class="dot red"></span>
+                            <span class="dot yellow"></span>
+                            <span class="dot green"></span>
+                        </div>
+                        <div class="mockup-url">genesis-ia.app/dashboard</div>
+                    </div>
+                    <div class="mockup-screen">
+                        <div class="mock-sidebar">
+                            <div class="mock-logo">G</div>
+                            <div class="mock-nav-items">
+                                <div class="mock-nav active">📊 Dashboard</div>
+                                <div class="mock-nav">🔍 Scanner IA</div>
+                                <div class="mock-nav">📡 Radar</div>
+                                <div class="mock-nav">📋 Propostas</div>
+                                <div class="mock-nav">📚 Biblioteca</div>
+                                <div class="mock-nav">📄 Contratos</div>
+                                <div class="mock-nav">💰 Financeiro</div>
+                            </div>
+                        </div>
+                        <div class="mock-main">
+                            <div class="mock-stats">
+                                <div class="mock-stat"><span class="mock-stat-val">247</span><span class="mock-stat-lbl">Prospects</span></div>
+                                <div class="mock-stat"><span class="mock-stat-val">18</span><span class="mock-stat-lbl">Contratos</span></div>
+                                <div class="mock-stat"><span class="mock-stat-val">R$ 12.4k</span><span class="mock-stat-lbl">Receita</span></div>
+                                <div class="mock-stat"><span class="mock-stat-val">5</span><span class="mock-stat-lbl">Propostas</span></div>
+                            </div>
+                            <div class="mock-chart">
+                                <div class="chart-bar" style="height:40%"></div>
+                                <div class="chart-bar" style="height:65%"></div>
+                                <div class="chart-bar" style="height:45%"></div>
+                                <div class="chart-bar" style="height:80%"></div>
+                                <div class="chart-bar" style="height:55%"></div>
+                                <div class="chart-bar" style="height:70%"></div>
+                                <div class="chart-bar" style="height:90%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Resources -->
+    <section id="recursos" class="section">
+        <div class="container">
+            <div class="section-badge">⚡ Recursos</div>
+            <h2 class="section-title">Tudo para você <span class="text-accent">vender mais</span></h2>
+
+            <div class="resources-grid">
+                <div class="resource-card active">
+                    <div class="resource-icon">📡</div>
+                    <h3>Radar de Prospecção</h3>
+                    <p>Encontre empresas prontas para comprar. A IA analisa, qualifica e entrega leads quentes.</p>
+                </div>
+                <div class="resource-card">
+                    <div class="resource-icon">📄</div>
+                    <h3>Propostas com IA</h3>
+                    <p>Crie propostas personalizadas em segundos. Argumentos que convencem e fecham.</p>
+                </div>
+                <div class="resource-card">
+                    <div class="resource-icon">🎓</div>
+                    <h3>Academia de Vendas</h3>
+                    <p>Treinamentos práticos, simuladores de objeções e scripts de ligação prontos.</p>
+                </div>
+            </div>
+
+            <div class="section-extra">
+                <span>✨ E muito mais...</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Radar Showcase -->
+    <section class="section section-alt">
+        <div class="container">
+            <div class="section-badge">✨ Clientes Prontos para Fechar Negócio</div>
+            <h2 class="section-title">Veja oportunidades <span class="text-accent">reais</span></h2>
+            <p class="section-desc">Empresas esperando por você. Assine e tenha acesso completo aos contatos.</p>
+
+            <div class="radar-scroll" id="radarScroll">
+                <div class="radar-track">
+                    <div class="lead-card"><div class="lead-head"><span class="lead-emoji">💈</span><div><strong>Barbearia Premium</strong><span class="lead-niche">Barbearia</span></div></div><div class="lead-values"><div><small>VALOR ESTIMADO</small><strong>R$ 600</strong></div><div><small>RECORRÊNCIA</small><strong class="text-green">+R$ 50/mês</strong></div></div><div class="lead-blur"><span>🔒 Assine para ver</span></div></div>
+                    <div class="lead-card"><div class="lead-head"><span class="lead-emoji">🍽️</span><div><strong>Restaurante Sabor</strong><span class="lead-niche">Restaurante</span></div></div><div class="lead-values"><div><small>VALOR ESTIMADO</small><strong>R$ 1.200</strong></div><div><small>RECORRÊNCIA</small><strong class="text-green">+R$ 80/mês</strong></div></div><div class="lead-blur"><span>🔒 Assine para ver</span></div></div>
+                    <div class="lead-card"><div class="lead-head"><span class="lead-emoji">🏥</span><div><strong>Clínica Bem Estar</strong><span class="lead-niche">Clínica</span></div></div><div class="lead-values"><div><small>VALOR ESTIMADO</small><strong>R$ 2.000</strong></div><div><small>RECORRÊNCIA</small><strong class="text-green">+R$ 150/mês</strong></div></div><div class="lead-blur"><span>🔒 Assine para ver</span></div></div>
+                    <div class="lead-card"><div class="lead-head"><span class="lead-emoji">🐾</span><div><strong>Pet Center Amigo</strong><span class="lead-niche">Pet Shop</span></div></div><div class="lead-values"><div><small>VALOR ESTIMADO</small><strong>R$ 900</strong></div><div><small>RECORRÊNCIA</small><strong class="text-green">+R$ 70/mês</strong></div></div><div class="lead-blur"><span>🔒 Assine para ver</span></div></div>
+                    <div class="lead-card"><div class="lead-head"><span class="lead-emoji">💇</span><div><strong>Salão Beleza Total</strong><span class="lead-niche">Salão</span></div></div><div class="lead-values"><div><small>VALOR ESTIMADO</small><strong>R$ 700</strong></div><div><small>RECORRÊNCIA</small><strong class="text-green">+R$ 55/mês</strong></div></div><div class="lead-blur"><span>🔒 Assine para ver</span></div></div>
+                    <div class="lead-card"><div class="lead-head"><span class="lead-emoji">🏋️</span><div><strong>Studio Fitness Pro</strong><span class="lead-niche">Academia</span></div></div><div class="lead-values"><div><small>VALOR ESTIMADO</small><strong>R$ 800</strong></div><div><small>RECORRÊNCIA</small><strong class="text-green">+R$ 90/mês</strong></div></div><div class="lead-blur"><span>🔒 Assine para ver</span></div></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it works -->
+    <section id="como-funciona" class="section">
+        <div class="container">
+            <div class="section-badge">✨ Como Funciona</div>
+            <h2 class="section-title">Do zero ao SaaS em <span class="text-accent">minutos</span></h2>
+            <p class="section-desc">Um processo simples, guiado e 100% visual — sem código, sem complicação.</p>
+
+            <div class="steps-timeline">
+                <div class="step-item">
+                    <div class="step-number">1</div>
+                    <div class="step-card">
+                        <div class="step-icon">💬</div>
+                        <h3>Descreva sua ideia</h3>
+                        <p>Conte o que você quer criar. Nossa IA interpreta e estrutura tudo automaticamente.</p>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <div class="step-card">
+                        <div class="step-icon">🎨</div>
+                        <h3>Personalize o visual</h3>
+                        <p>Escolha cores, fontes e estilo. Seu projeto já nasce com identidade profissional.</p>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <div class="step-card">
+                        <div class="step-icon">🖱️</div>
+                        <h3>Gere instantaneamente</h3>
+                        <p>Com um clique, seu SaaS está pronto — páginas, fluxos e estrutura completa.</p>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">4</div>
+                    <div class="step-card">
+                        <div class="step-icon">🚀</div>
+                        <h3>Lance e monetize</h3>
+                        <p>Publique, conecte pagamentos e comece a faturar com seu produto digital.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Choose -->
+    <section class="section section-alt">
+        <div class="container">
+            <div class="section-badge">✨ Diferenciais</div>
+            <h2 class="section-title">Por que escolher o <span class="text-accent">Genesis Hub</span>?</h2>
+            <p class="section-desc">Não somos apenas mais um gerador de sites. Somos a plataforma completa para criar, evoluir e escalar seu negócio digital.</p>
+
+            <div class="why-grid">
+                <div class="why-card why-card-main">
+                    <div class="why-icon">🤖</div>
+                    <h3>IA contextual</h3>
+                    <p>Entendemos seu nicho, público e objetivos — e geramos estruturas otimizadas para cada cenário.</p>
+                    <span class="why-tag">Prompts inteligentes</span>
+                </div>
+                <div class="why-card">
+                    <div class="why-icon">⚡</div>
+                    <h3>Evolução contínua</h3>
+                    <p>Itere sobre projetos existentes sem recriar do zero. Versões, histórico e rollback.</p>
+                    <span class="why-tag">Versões ilimitadas</span>
+                </div>
+                <div class="why-card">
+                    <div class="why-icon">🎨</div>
+                    <h3>Design system</h3>
+                    <p>Paletas, tipografia e espaçamentos harmonizados — visual profissional sem esforço.</p>
+                    <span class="why-tag">Zero design skills</span>
+                </div>
+                <div class="why-card">
+                    <div class="why-icon">📊</div>
+                    <h3>Analytics nativo</h3>
+                    <p>Métricas, conversões e performance em tempo real direto do seu painel Genesis.</p>
+                    <span class="why-tag">Dados ao vivo</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Partnerships -->
+    <section id="parcerias" class="section">
+        <div class="container">
+            <div class="section-badge">✨ Nossas Parcerias</div>
+            <h2 class="section-title">Conectados com as <span class="text-accent">melhores tecnologias</span></h2>
+            <p class="section-desc">Parcerias estratégicas que garantem qualidade, performance e inovação contínua.</p>
+
+            <div class="partners-grid">
+                <div class="partner-card">
+                    <div class="partner-logo-box">L</div>
+                    <h3>Parceria com Lovable</h3>
+                    <p class="partner-sub">Desenvolvimento Acelerado</p>
+                    <p>Integração completa com a plataforma Lovable para desenvolvimento e deploy automático de projetos.</p>
+                    <div class="partner-badge">✨ Bônus Exclusivo! — 10 créditos grátis na Lovable</div>
+                    <ul class="partner-benefits">
+                        <li>✅ Deploy automático de projetos</li>
+                        <li>✅ Hospedagem profissional incluída</li>
+                        <li>✅ Atualizações em tempo real</li>
+                    </ul>
+                </div>
+                <div class="partner-card">
+                    <div class="partner-logo-box">G</div>
+                    <h3>Parceria com Google</h3>
+                    <p class="partner-sub">Infraestrutura de Classe Mundial</p>
+                    <p>Potencializado pela infraestrutura e IA do Google para máxima performance e confiabilidade.</p>
+                    <div class="partner-badge">✨ Tecnologia Google — IA avançada e infraestrutura cloud</div>
+                    <ul class="partner-benefits">
+                        <li>✅ Google AI e Machine Learning</li>
+                        <li>✅ Infraestrutura cloud confiável</li>
+                        <li>✅ Escalabilidade garantida</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="trust-bar">
+                <span>🛡️ Segurança Certificada</span>
+                <span>🤖 IA de Última Geração</span>
+                <span>☁️ Cloud Enterprise</span>
+                <span>⚡ 99.9% Uptime</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section id="planos" class="section section-alt">
+        <div class="container">
+            <h2 class="section-title" style="font-style:italic">Escolha o plano ideal para você</h2>
+            <p class="section-desc">Planos flexíveis para todas as necessidades</p>
+
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h3>Mensal</h3>
+                    <p class="pricing-tagline">Teste sem compromisso</p>
+                    <div class="pricing-price">R$ 97<span>/mês</span></div>
+                    <ul class="pricing-features">
+                        <li>✅ Radar de Prospecção</li>
+                        <li>✅ Gerador de Propostas</li>
+                        <li>✅ Biblioteca de Projetos</li>
+                        <li>✅ Academia de Vendas</li>
+                        <li>✅ Suporte via WhatsApp</li>
+                    </ul>
+                    <a href="login.php" class="btn btn-outline btn-block">Assinar Mensal</a>
+                </div>
+                <div class="pricing-card pricing-popular">
+                    <div class="popular-badge">MAIS POPULAR</div>
+                    <h3>Trimestral</h3>
+                    <p class="pricing-tagline">Mais economia</p>
+                    <div class="pricing-old">de R$ 291</div>
+                    <div class="pricing-price accent">R$ 247<span>/3 meses</span></div>
+                    <ul class="pricing-features">
+                        <li>✅ Tudo do Mensal</li>
+                        <li>✅ Prioridade no suporte</li>
+                        <li>✅ Templates premium</li>
+                        <li>✅ Contratos ilimitados</li>
+                        <li>✅ Multi-idioma</li>
+                    </ul>
+                    <div class="discount-badge">15% de desconto</div>
+                    <a href="login.php" class="btn btn-primary btn-block">Assinar Trimestral</a>
+                </div>
+                <div class="pricing-card">
+                    <h3>Anual</h3>
+                    <p class="pricing-tagline">Melhor custo-benefício</p>
+                    <div class="pricing-old">de R$ 1.164</div>
+                    <div class="pricing-price">R$ 797<span>/ano</span></div>
+                    <ul class="pricing-features">
+                        <li>✅ Tudo do Trimestral</li>
+                        <li>✅ Acesso vitalício a updates</li>
+                        <li>✅ Consultoria 1-on-1</li>
+                        <li>✅ White-label</li>
+                        <li>✅ API ilimitada</li>
+                    </ul>
+                    <div class="discount-badge">32% de desconto</div>
+                    <a href="login.php" class="btn btn-outline btn-block">Assinar Anual</a>
+                </div>
+            </div>
+
+            <div class="trust-bar" style="margin-top:32px">
+                <span>🛡️ Garantia 7 dias</span>
+                <span>⭐ +3.500 clientes satisfeitos</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq" class="section">
+        <div class="container" style="max-width:800px">
+            <div class="section-badge">❓ Tire Suas Dúvidas</div>
+            <h2 class="section-title">Perguntas <span class="text-accent">Frequentes</span></h2>
+
+            <div class="faq-list">
+                <div class="faq-item open">
+                    <button class="faq-question" onclick="toggleFaq(this)">Quanto tempo leva para começar a usar? <span class="faq-arrow">▼</span></button>
+                    <div class="faq-answer">Imediatamente! Após o pagamento, você recebe acesso total ao painel em menos de 1 minuto.</div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFaq(this)">Preciso ter experiência com vendas ou tecnologia? <span class="faq-arrow">▼</span></button>
+                    <div class="faq-answer">Não! O Genesis Hub foi criado para quem está começando. A Academia Genesis inclui treinamentos de vendas do zero.</div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFaq(this)">Como funciona a busca de clientes? <span class="faq-arrow">▼</span></button>
+                    <div class="faq-answer">O Radar de Prospecção varre empresas por cidade e nicho, mostra quais não têm site e gera propostas automáticas com IA.</div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFaq(this)">E se eu não conseguir vender? <span class="faq-arrow">▼</span></button>
+                    <div class="faq-answer">Garantia incondicional de 7 dias. Se não gostar, devolvemos 100% do valor — sem perguntas.</div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFaq(this)">Consigo atender clientes de qualquer lugar? <span class="faq-arrow">▼</span></button>
+                    <div class="faq-answer">Sim! O painel funciona 100% online. Você pode prospectar em qualquer cidade do Brasil e até internacionalmente.</div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFaq(this)">O que está incluso no plano? <span class="faq-arrow">▼</span></button>
+                    <div class="faq-answer">Acesso completo a: Radar de Prospecção com IA, Gerador de Propostas, Biblioteca de Projetos, Academia de Vendas, Gestão de Contratos e suporte via WhatsApp.</div>
+                </div>
+            </div>
+
+            <div class="faq-cta">
+                <p><strong>Ainda tem dúvidas?</strong> Nossa equipe responde em até 24h</p>
+                <a href="https://wa.me/5511999999999" target="_blank" class="btn btn-primary">💬 Falar no WhatsApp</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="landing-footer">
+        <div class="container footer-inner">
+            <a href="index.php" class="header-logo">
+                <div class="logo-icon-header">G</div>
+                <span class="logo-text">Genesis Hub</span>
+            </a>
+            <p>© 2025 GENESIS HUB. Transformando ideias em realidade.</p>
+        </div>
+    </footer>
+
+    <script src="assets/js/landing.js"></script>
+</body>
+</html>`;
+
+const LOGIN_PHP = `<?php
 require_once 'config.php';
 
 if (isLoggedIn()) {
@@ -276,7 +682,7 @@ if ($userRole === 'super_admin' || $userRole === 'admin') {
 const LOGOUT_PHP = `<?php
 session_start();
 session_destroy();
-header('Location: index.php');
+header('Location: login.php');
 exit;
 ?>`;
 
@@ -295,8 +701,8 @@ $success = false;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $pdo = new PDO("mysql:host=$host;charset=utf8mb4", $user, $pass, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-        $pdo->exec("CREATE DATABASE IF NOT EXISTS \`$name\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-        $pdo->exec("USE \`$name\`");
+        $pdo->exec("CREATE DATABASE IF NOT EXISTS \\\`$name\\\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+        $pdo->exec("USE \\\`$name\\\`");
 
         $sql = "
         CREATE TABLE IF NOT EXISTS users (
@@ -411,8 +817,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$admin_name, $admin_email, $hash]);
 
         // Update config.php
-        $config = "<?php\\ndefine('DB_HOST', '$host');\\ndefine('DB_NAME', '$name');\\ndefine('DB_USER', '$user');\\ndefine('DB_PASS', '$pass');\\ndefine('APP_NAME', 'Genesis Hub');\\ndefine('APP_VERSION', '1.0.0');\\n\\nsession_start();\\n\\ntry {\\n    \\$pdo = new PDO(\\"mysql:host=\\".DB_HOST.\\";dbname=\\".DB_NAME.\\";charset=utf8mb4\\", DB_USER, DB_PASS, [\\n        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,\\n        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC\\n    ]);\\n} catch(PDOException \\$e) {\\n    die(\\"Erro de conexão: \\" . \\$e->getMessage());\\n}\\n\\nfunction isLoggedIn() { return isset(\\$_SESSION['user_id']); }\\nfunction requireLogin() { if (!isLoggedIn()) { header('Location: index.php'); exit; } }\\nfunction sanitize(\\$str) { return htmlspecialchars(trim(\\$str), ENT_QUOTES, 'UTF-8'); }\\nfunction jsonResponse(\\$data, \\$code = 200) { http_response_code(\\$code); header('Content-Type: application/json'); echo json_encode(\\$data); exit; }\\n?>";
-        file_put_contents('config.php', $config);
+        $configContent = '<?php' . PHP_EOL;
+        $configContent .= "define('DB_HOST', '$host');" . PHP_EOL;
+        $configContent .= "define('DB_NAME', '$name');" . PHP_EOL;
+        $configContent .= "define('DB_USER', '$user');" . PHP_EOL;
+        $configContent .= "define('DB_PASS', '$pass');" . PHP_EOL;
+        $configContent .= "define('APP_NAME', 'Genesis Hub');" . PHP_EOL;
+        $configContent .= "define('APP_VERSION', '1.0.0');" . PHP_EOL . PHP_EOL;
+        $configContent .= 'session_start();' . PHP_EOL . PHP_EOL;
+        $configContent .= 'try {' . PHP_EOL;
+        $configContent .= '    $pdo = new PDO("mysql:host=".DB_HOST.";dbname=".DB_NAME.";charset=utf8mb4", DB_USER, DB_PASS, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);' . PHP_EOL;
+        $configContent .= '} catch(PDOException $e) { die("Erro: " . $e->getMessage()); }' . PHP_EOL . PHP_EOL;
+        $configContent .= 'function isLoggedIn() { return isset($_SESSION["user_id"]); }' . PHP_EOL;
+        $configContent .= 'function requireLogin() { if (!isLoggedIn()) { header("Location: login.php"); exit; } }' . PHP_EOL;
+        $configContent .= 'function sanitize($str) { return htmlspecialchars(trim($str), ENT_QUOTES, "UTF-8"); }' . PHP_EOL;
+        $configContent .= 'function jsonResponse($data, $code = 200) { http_response_code($code); header("Content-Type: application/json"); echo json_encode($data); exit; }' . PHP_EOL;
+        $configContent .= '?>';
+        file_put_contents('config.php', $configContent);
 
         $success = true;
     } catch(Exception $e) {
@@ -440,7 +861,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php if ($success): ?>
                 <div class="alert alert-success">
                     ✅ Instalação concluída!<br>
-                    <a href="index.php" class="btn btn-primary btn-block" style="margin-top:12px">Ir para Login</a>
+                    <a href="login.php" class="btn btn-primary btn-block" style="margin-top:12px">Ir para Login</a>
                 </div>
             <?php else: ?>
                 <?php if ($error): ?>
@@ -464,7 +885,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </body>
 </html>`;
 
-const STYLE_CSS = `/* Genesis Hub - CSS */
+const STYLE_CSS = `/* Genesis Hub - Dashboard & Login CSS */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
@@ -517,6 +938,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .btn-block { width: 100%; }
 .btn-sm { padding: 6px 12px; font-size: 12px; }
 .btn-danger { background: var(--danger); color: #fff; }
+.btn-lg { padding: 14px 28px; font-size: 16px; }
 
 .alert { padding: 12px 16px; border-radius: 8px; font-size: 14px; margin-bottom: 16px; }
 .alert-error { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
@@ -572,9 +994,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .card-title { font-size: 16px; font-weight: 600; }
 
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 100; }
-.modal { width: 100%; max-width: 480px; padding: 24px; }
-
 /* Dock */
 .dock-menu { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15,23,42,0.95); backdrop-filter: blur(20px); border-top: 1px solid var(--border-glass); padding: 8px; z-index: 50; justify-content: space-around; }
 .dock-item { padding: 8px 16px; border-radius: 12px; text-decoration: none; font-size: 20px; transition: all .2s; }
@@ -588,7 +1007,266 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 }
 `;
 
-const APP_JS = `// Genesis Hub - App JS
+const LANDING_CSS = `/* Genesis Hub - Landing Page CSS */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+    --bg: #0a0e1a;
+    --bg-card: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
+    --text: #f1f5f9;
+    --text-sec: #94a3b8;
+    --text-muted: #64748b;
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --accent-glow: rgba(59,130,246,0.15);
+    --green: #22c55e;
+}
+
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+.container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+a { color: inherit; text-decoration: none; }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 24px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all .2s; text-decoration: none; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-sec); }
+.btn-outline:hover { background: rgba(255,255,255,0.05); }
+.btn-lg { padding: 16px 32px; font-size: 16px; border-radius: 12px; }
+.btn-block { width: 100%; }
+
+/* Header */
+.floating-header { position: fixed; top: 16px; left: 0; right: 0; z-index: 100; display: flex; justify-content: center; padding: 0 16px; }
+.header-inner { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; background: rgba(15,23,42,0.8); backdrop-filter: blur(20px); border: 1px solid var(--border); }
+.header-logo { display: flex; align-items: center; gap: 8px; padding: 0 8px; }
+.logo-icon-header { width: 32px; height: 32px; border-radius: 8px; background: var(--accent-glow); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--accent); font-size: 14px; }
+.logo-text { font-weight: 700; font-size: 14px; }
+.header-sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
+.header-nav { display: flex; align-items: center; }
+.nav-link { padding: 8px 16px; font-size: 14px; color: var(--text-sec); border-radius: 999px; transition: all .2s; }
+.nav-link:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+.mobile-menu-btn { display: none; background: none; border: none; color: var(--text); font-size: 20px; cursor: pointer; padding: 4px 8px; }
+.mobile-menu { display: none; position: fixed; top: 72px; left: 16px; right: 16px; z-index: 99; background: rgba(15,23,42,0.95); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 16px; padding: 16px; flex-direction: column; gap: 4px; }
+.mobile-menu.open { display: flex; }
+.mobile-menu a { padding: 12px 16px; color: var(--text-sec); border-radius: 12px; font-size: 14px; }
+.mobile-menu a:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+
+@media (max-width: 768px) {
+    .header-nav, .header-sep { display: none; }
+    .mobile-menu-btn { display: block; }
+    .logo-text { display: none; }
+}
+
+/* Hero */
+.hero-section { min-height: 100vh; display: flex; flex-direction: column; position: relative; padding-top: 100px; }
+.hero-bg { position: absolute; inset: 0; background: radial-gradient(ellipse at top, var(--accent-glow), transparent 60%); pointer-events: none; }
+.hero-content { position: relative; z-index: 1; text-align: center; flex: 1; }
+.trust-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; border-radius: 999px; background: var(--bg-card); border: 1px solid var(--border); font-size: 13px; color: var(--text-sec); margin-bottom: 24px; }
+.pulse-dot { position: relative; width: 8px; height: 8px; }
+.pulse-dot::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
+.pulse-dot::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: var(--accent); }
+@keyframes pulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(2); opacity: 0; } }
+
+.hero-title { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 900; line-height: 1.1; margin-bottom: 20px; }
+.hero-typed { color: var(--accent); }
+.cursor-blink { color: rgba(59,130,246,0.5); animation: blink .6s infinite; }
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+.hero-subtitle { font-size: 16px; color: var(--text-sec); max-width: 600px; margin: 0 auto 32px; line-height: 1.6; }
+.hero-cta { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-bottom: 24px; }
+.trust-points { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; font-size: 13px; color: var(--text-sec); margin-bottom: 48px; }
+
+/* Mockup */
+.mockup-wrapper { position: relative; max-width: 900px; margin: 0 auto; }
+.mockup-glow { position: absolute; inset: -40px; background: radial-gradient(ellipse, var(--accent-glow), transparent 70%); border-radius: 40px; filter: blur(40px); opacity: 0.6; }
+.mockup-frame { position: relative; background: #0f172a; border-radius: 16px; border: 4px solid rgba(255,255,255,0.1); overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+.mockup-bar { display: flex; align-items: center; padding: 10px 16px; background: #0f172a; border-bottom: 1px solid var(--border); }
+.mockup-dots { display: flex; gap: 6px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.dot.red { background: #ef4444; }
+.dot.yellow { background: #f59e0b; }
+.dot.green { background: #22c55e; }
+.mockup-url { flex: 1; text-align: center; padding: 4px 16px; background: rgba(255,255,255,0.05); border-radius: 8px; font-size: 12px; color: var(--text-muted); }
+.mockup-screen { display: flex; height: 300px; }
+.mock-sidebar { width: 180px; border-right: 1px solid var(--border); padding: 12px; flex-shrink: 0; }
+.mock-logo { width: 28px; height: 28px; border-radius: 6px; background: var(--accent-glow); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--accent); font-size: 12px; margin-bottom: 12px; }
+.mock-nav-items { display: flex; flex-direction: column; gap: 2px; }
+.mock-nav { padding: 6px 8px; border-radius: 6px; font-size: 11px; color: var(--text-muted); }
+.mock-nav.active { background: var(--accent-glow); color: var(--accent); }
+.mock-main { flex: 1; padding: 16px; }
+.mock-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+.mock-stat { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 8px; text-align: center; }
+.mock-stat-val { display: block; font-size: 14px; font-weight: 700; }
+.mock-stat-lbl { display: block; font-size: 9px; color: var(--text-muted); margin-top: 2px; }
+.mock-chart { display: flex; align-items: flex-end; justify-content: center; gap: 6px; height: 120px; padding: 8px; }
+.chart-bar { width: 24px; border-radius: 4px 4px 0 0; background: linear-gradient(to top, rgba(59,130,246,0.4), var(--accent)); }
+
+@media (max-width: 768px) {
+    .mock-sidebar { display: none; }
+    .mock-stats { grid-template-columns: repeat(2, 1fr); }
+    .mockup-screen { height: 200px; }
+}
+
+/* Sections */
+.section { padding: 80px 0; position: relative; }
+.section-alt { background: rgba(255,255,255,0.02); }
+.section-badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px; background: var(--accent-glow); border: 1px solid rgba(59,130,246,0.2); font-size: 13px; font-weight: 600; color: var(--accent); margin-bottom: 16px; }
+.section-title { font-size: clamp(1.5rem, 4vw, 2.5rem); font-weight: 900; margin-bottom: 12px; }
+.section-desc { color: var(--text-sec); max-width: 600px; margin: 0 auto 40px; }
+.text-accent { color: var(--accent); }
+.text-green { color: var(--green); }
+.section-extra { text-align: center; margin-top: 32px; }
+.section-extra span { padding: 12px 24px; border-radius: 999px; background: rgba(59,130,246,0.05); border: 1px solid rgba(59,130,246,0.15); font-weight: 700; color: var(--accent); font-size: 16px; }
+
+/* Resources */
+.resources-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.resource-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; transition: all .3s; cursor: pointer; }
+.resource-card:hover, .resource-card.active { background: var(--accent-glow); border-color: rgba(59,130,246,0.3); }
+.resource-icon { font-size: 28px; margin-bottom: 12px; }
+.resource-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.resource-card p { font-size: 14px; color: var(--text-sec); line-height: 1.5; }
+
+/* Radar */
+.radar-scroll { overflow: hidden; position: relative; }
+.radar-scroll::before, .radar-scroll::after { content: ''; position: absolute; top: 0; bottom: 0; width: 60px; z-index: 2; pointer-events: none; }
+.radar-scroll::before { left: 0; background: linear-gradient(to right, var(--bg), transparent); }
+.radar-scroll::after { right: 0; background: linear-gradient(to left, rgba(255,255,255,0.02), transparent); }
+.radar-track { display: flex; gap: 16px; animation: scrollCards 30s linear infinite; width: max-content; }
+@keyframes scrollCards { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+.lead-card { flex-shrink: 0; width: 300px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+.lead-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.lead-emoji { font-size: 24px; width: 44px; height: 44px; border-radius: 12px; background: var(--accent-glow); display: flex; align-items: center; justify-content: center; }
+.lead-head strong { display: block; font-size: 14px; }
+.lead-niche { font-size: 12px; color: var(--text-muted); }
+.lead-values { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.lead-values small { display: block; font-size: 10px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
+.lead-values strong { font-size: 16px; }
+.lead-blur { position: relative; background: rgba(255,255,255,0.03); border-radius: 8px; padding: 8px; text-align: center; }
+.lead-blur span { font-size: 12px; color: var(--text-muted); }
+
+/* Steps */
+.steps-timeline { display: grid; gap: 24px; max-width: 600px; margin: 0 auto; }
+.step-item { display: flex; gap: 16px; align-items: flex-start; }
+.step-number { width: 40px; height: 40px; border-radius: 50%; background: var(--bg-card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--accent); flex-shrink: 0; }
+.step-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; flex: 1; }
+.step-icon { font-size: 24px; margin-bottom: 8px; }
+.step-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+.step-card p { font-size: 14px; color: var(--text-sec); line-height: 1.5; }
+
+/* Why Choose */
+.why-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.why-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; transition: all .3s; }
+.why-card:hover { border-color: rgba(59,130,246,0.3); }
+.why-card-main { grid-column: span 2; }
+@media (max-width: 768px) { .why-card-main { grid-column: span 1; } }
+.why-icon { font-size: 28px; margin-bottom: 12px; }
+.why-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.why-card p { font-size: 14px; color: var(--text-sec); line-height: 1.5; margin-bottom: 12px; }
+.why-tag { display: inline-block; padding: 4px 12px; border-radius: 999px; background: var(--accent-glow); border: 1px solid rgba(59,130,246,0.2); font-size: 12px; color: var(--accent); font-weight: 600; }
+
+/* Partners */
+.partners-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; max-width: 900px; margin: 0 auto 32px; }
+.partner-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; transition: all .3s; }
+.partner-card:hover { border-color: rgba(59,130,246,0.3); }
+.partner-logo-box { width: 48px; height: 48px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; color: var(--accent); margin-bottom: 16px; }
+.partner-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.partner-sub { color: var(--accent); font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+.partner-card > p { font-size: 14px; color: var(--text-sec); margin-bottom: 12px; line-height: 1.5; }
+.partner-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: var(--accent-glow); border: 1px solid rgba(59,130,246,0.2); font-size: 12px; color: var(--accent); font-weight: 600; margin-bottom: 16px; }
+.partner-benefits { list-style: none; padding: 0; }
+.partner-benefits li { padding: 6px 0; font-size: 14px; color: var(--text-sec); }
+
+.trust-bar { display: flex; flex-wrap: wrap; gap: 24px; justify-content: center; font-size: 14px; color: var(--text-sec); }
+
+/* Pricing */
+.pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; max-width: 950px; margin: 0 auto; }
+.pricing-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 32px 24px; text-align: center; position: relative; transition: all .3s; }
+.pricing-card:hover { border-color: rgba(59,130,246,0.3); }
+.pricing-popular { border: 2px solid rgba(59,130,246,0.4); background: linear-gradient(to bottom, var(--accent-glow), var(--bg-card)); transform: scale(1.02); box-shadow: 0 20px 40px rgba(59,130,246,0.1); }
+.popular-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; padding: 4px 16px; border-radius: 999px; }
+.pricing-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.pricing-tagline { font-size: 14px; color: var(--text-muted); margin-bottom: 16px; }
+.pricing-old { font-size: 14px; color: var(--text-muted); text-decoration: line-through; margin-bottom: 4px; }
+.pricing-price { font-size: 36px; font-weight: 900; margin-bottom: 24px; }
+.pricing-price.accent { color: var(--accent); }
+.pricing-price span { font-size: 14px; font-weight: 400; color: var(--text-sec); }
+.pricing-features { list-style: none; padding: 0; text-align: left; margin-bottom: 20px; }
+.pricing-features li { padding: 8px 0; font-size: 14px; color: var(--text-sec); border-bottom: 1px solid rgba(255,255,255,0.04); }
+.pricing-features li:last-child { border: none; }
+.discount-badge { display: inline-block; padding: 4px 12px; border-radius: 999px; background: var(--accent-glow); font-size: 12px; color: var(--accent); font-weight: 600; margin-bottom: 16px; }
+
+/* FAQ */
+.faq-list { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+.faq-item { border-bottom: 1px solid rgba(255,255,255,0.06); }
+.faq-item:last-child { border: none; }
+.faq-question { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 16px 0; background: none; border: none; color: var(--text); font-size: 14px; font-weight: 500; cursor: pointer; text-align: left; }
+.faq-question:hover { color: var(--accent); }
+.faq-arrow { font-size: 12px; transition: transform .2s; }
+.faq-item.open .faq-arrow { transform: rotate(180deg); color: var(--accent); }
+.faq-answer { display: none; padding: 0 0 16px; font-size: 14px; color: var(--text-sec); line-height: 1.6; }
+.faq-item.open .faq-answer { display: block; }
+.faq-cta { text-align: center; margin-top: 40px; padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; }
+.faq-cta p { margin-bottom: 12px; color: var(--text-sec); font-size: 14px; }
+
+/* Footer */
+.landing-footer { border-top: 1px solid var(--border); padding: 24px 0; }
+.footer-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.footer-inner p { font-size: 13px; color: var(--text-muted); }
+
+/* Smooth scroll */
+html { scroll-behavior: smooth; }
+`;
+
+const LANDING_JS = `// Genesis Hub - Landing Page JS
+
+// Typing effect
+document.addEventListener('DOMContentLoaded', function() {
+    var text = 'Crie, Gerencie e Escale';
+    var el = document.getElementById('typedText');
+    var i = 0;
+    var timer = setInterval(function() {
+        if (i <= text.length) {
+            el.textContent = text.slice(0, i);
+            i++;
+        } else {
+            clearInterval(timer);
+        }
+    }, 50);
+});
+
+// Mobile menu
+function toggleMobile() {
+    var menu = document.getElementById('mobileMenu');
+    menu.classList.toggle('open');
+}
+
+// FAQ toggle
+function toggleFaq(btn) {
+    var item = btn.parentElement;
+    var wasOpen = item.classList.contains('open');
+    // Close all
+    document.querySelectorAll('.faq-item').forEach(function(el) {
+        el.classList.remove('open');
+    });
+    // Toggle clicked
+    if (!wasOpen) {
+        item.classList.add('open');
+    }
+}
+
+// Smooth scroll for anchors
+document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
+    anchor.addEventListener('click', function(e) {
+        var target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+            e.preventDefault();
+            target.scrollIntoView({ behavior: 'smooth' });
+        }
+    });
+});
+`;
+
+const APP_JS = `// Genesis Hub - Dashboard JS
 document.addEventListener('DOMContentLoaded', function() {
     // Auto-hide alerts
     document.querySelectorAll('.alert').forEach(function(el) {
@@ -634,7 +1312,7 @@ const MODULE_SCANNER = `<div class="card glass">
 
 const MODULE_RADAR = `<div class="card glass">
     <div class="card-header"><h3 class="card-title">📡 Radar Global</h3></div>
-    <p style="color:var(--text-secondary);padding:20px">Módulo de radar para monitoramento de oportunidades em tempo real. Configure filtros por nicho, região e score mínimo.</p>
+    <p style="color:var(--text-secondary);padding:20px">Módulo de radar para monitoramento de oportunidades em tempo real.</p>
     <?php
     $stmt = $pdo->query("SELECT niche, COUNT(*) as total, AVG(score) as avg_score FROM prospects GROUP BY niche ORDER BY total DESC");
     $niches = $stmt->fetchAll();
@@ -681,7 +1359,7 @@ const MODULE_PROPOSALS = `<div class="card glass">
 
 const MODULE_LIBRARY = `<div class="card glass">
     <div class="card-header"><h3 class="card-title">📚 Biblioteca</h3></div>
-    <p style="color:var(--text-secondary);padding:20px">Gerencie seus materiais de marketing, templates de propostas, modelos de contratos e documentos úteis.</p>
+    <p style="color:var(--text-secondary);padding:20px">Gerencie seus materiais de marketing, templates e documentos.</p>
     <div class="empty-state"><p>Nenhum material cadastrado ainda.</p></div>
 </div>`;
 
@@ -896,6 +1574,7 @@ const HTACCESS = `RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^install$ install.php [L]
+RewriteRule ^login$ login.php [L]
 
 # Security
 Options -Indexes
@@ -913,22 +1592,26 @@ const README = `# Genesis Hub PHP
 2. Acesse: seusite.com/install.php
 3. Preencha os dados do banco MySQL e do admin
 4. Clique em "Instalar"
-5. Acesse: seusite.com (login)
+5. Acesse: seusite.com (site comercial)
+6. Acesse: seusite.com/login.php (login do painel)
+
+## Estrutura
+- index.php - Site Comercial (Landing Page)
+- login.php - Login
+- dashboard.php - Painel principal
+- install.php - Instalador
+- config.php - Configurações do banco
+- modules/ - Módulos do dashboard
+- assets/css/landing.css - Estilos da landing
+- assets/css/style.css - Estilos do painel
+- assets/js/landing.js - Scripts da landing
+- assets/js/app.js - Scripts do painel
+- api/ - Endpoints
 
 ## Requisitos
 - PHP 7.4+
 - MySQL 5.7+
 - mod_rewrite habilitado
-
-## Estrutura
-- index.php - Login
-- dashboard.php - Painel principal
-- install.php - Instalador
-- config.php - Configurações do banco
-- modules/ - Módulos do dashboard
-- assets/css/ - Estilos
-- assets/js/ - Scripts
-- api/ - Endpoints
 
 ## Login padrão
 - Email: admin@genesis.com
@@ -940,18 +1623,26 @@ const README = `# Genesis Hub PHP
 async function generateZip() {
   const zip = new JSZip();
 
+  // Root files
   zip.file("config.php", CONFIG_PHP);
-  zip.file("index.php", INDEX_PHP);
+  zip.file("index.php", LANDING_PHP);
+  zip.file("login.php", LOGIN_PHP);
   zip.file("dashboard.php", DASHBOARD_PHP);
   zip.file("logout.php", LOGOUT_PHP);
   zip.file("install.php", INSTALL_PHP);
   zip.file(".htaccess", HTACCESS);
   zip.file("README.md", README);
 
+  // Assets
   const assets = zip.folder("assets")!;
-  assets.folder("css")!.file("style.css", STYLE_CSS);
-  assets.folder("js")!.file("app.js", APP_JS);
+  const css = assets.folder("css")!;
+  css.file("style.css", STYLE_CSS);
+  css.file("landing.css", LANDING_CSS);
+  const js = assets.folder("js")!;
+  js.file("app.js", APP_JS);
+  js.file("landing.js", LANDING_JS);
 
+  // Modules
   const modules = zip.folder("modules")!;
   modules.file("scanner.php", MODULE_SCANNER);
   modules.file("radar.php", MODULE_RADAR);
@@ -966,6 +1657,7 @@ async function generateZip() {
   modules.file("admin-payments.php", MODULE_ADMIN_PAYMENTS);
   modules.file("admin-apikeys.php", MODULE_ADMIN_APIKEYS);
 
+  // API
   const api = zip.folder("api")!;
   api.file("settings.php", API_SETTINGS);
 
