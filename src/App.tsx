@@ -25,6 +25,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const GenesisIALogin = lazy(() => import("./pages/GenesisIALogin"));
 const GenesisIADashboard = lazy(() => import("./pages/GenesisIADashboard"));
 const BaixarGenesis = lazy(() => import("./pages/BaixarGenesis"));
+const CaktoReturn = lazy(() => import("./pages/CaktoReturn"));
 const PetshopPage = lazy(() => import("./pages/petshop"));
 const PetshopPrimoPage = lazy(() => import("./pages/petshop-primo"));
 const PetshopMonPage = lazy(() => import("./pages/petshop-mon"));
@@ -135,6 +136,9 @@ const AppContent = () => {
 
             {/* Download */}
             <Route path="/baixar-genesis" element={<BaixarGenesis />} />
+
+            {/* Cakto Return - post-payment */}
+            <Route path="/cakto-return" element={<CaktoReturn />} />
 
             {/* Petshop */}
             <Route path="/petshop" element={<PetshopPage />} />

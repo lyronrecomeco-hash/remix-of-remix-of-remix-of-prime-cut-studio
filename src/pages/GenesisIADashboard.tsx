@@ -105,6 +105,7 @@ const GenesisIADashboard = () => {
   const [editingText, setEditingText] = useState<TextElementData | null>(null);
   const [showWelcome, setShowWelcome] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSantiagoAdmin, setIsSantiagoAdmin] = useState(false);
   const [showDevModal, setShowDevModal] = useState(false);
   const [isAccountBlocked, setIsAccountBlocked] = useState(false);
   const [blockReason, setBlockReason] = useState<string>('');
@@ -169,10 +170,13 @@ const GenesisIADashboard = () => {
 
     // Verificar role do usuário (super_admin) - FORÇADO POR EMAIL
     const SUPER_ADMIN_EMAIL = 'lyronrp@gmail.com';
+    const SANTIAGO_ADMIN_EMAIL = 'santiagoadmin@gmail.com';
     const isSuperAdminByEmail = user.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+    const isSantiagoAdmin = user.email?.toLowerCase() === SANTIAGO_ADMIN_EMAIL.toLowerCase();
     
-    // Só é admin se o email for exatamente o super_admin
-    setIsAdmin(isSuperAdminByEmail);
+    // Santiago é admin mas sem API Keys
+    setIsAdmin(isSuperAdminByEmail || isSantiagoAdmin);
+    setIsSantiagoAdmin(isSantiagoAdmin);
 
     let { data: affiliate } = await supabase
       .from('affiliates')
@@ -308,7 +312,7 @@ const GenesisIADashboard = () => {
 
   const adminDockItems: DockItem[] = isAdmin ? [
     { icon: CreditCard, label: 'Pagamentos', tabId: 'payments' },
-    { icon: Key, label: 'API Keys', tabId: 'api-keys' },
+    ...(!isSantiagoAdmin ? [{ icon: Key, label: 'API Keys', tabId: 'api-keys' as ActiveTab }] : []),
     { icon: ClipboardList, label: 'Inscrições', tabId: 'partner-applications' },
   ] : [];
 

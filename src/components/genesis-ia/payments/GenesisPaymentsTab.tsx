@@ -43,7 +43,6 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { GatewayConfigSection } from './GatewayConfigSection';
 import { PlansConfigSection } from './PlansConfigSection';
-import { WithdrawalsManagementTab } from './WithdrawalsManagementTab';
 import { CommissionsConfigTab } from './CommissionsConfigTab';
 import {
   Pagination,
@@ -462,19 +461,13 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-7 w-full max-w-3xl">
+        <TabsList className="grid grid-cols-5 w-full max-w-3xl">
           <TabsTrigger value="payments">Pagamentos</TabsTrigger>
-          <TabsTrigger value="withdrawals">Saques</TabsTrigger>
           <TabsTrigger value="commissions">Comissões</TabsTrigger>
           <TabsTrigger value="plans">Planos</TabsTrigger>
           <TabsTrigger value="gateway">Gateway</TabsTrigger>
           <TabsTrigger value="webhook">Webhook</TabsTrigger>
-          <TabsTrigger value="test">Teste PIX</TabsTrigger>
         </TabsList>
-
-        <TabsContent value="withdrawals" className="mt-6">
-          <WithdrawalsManagementTab />
-        </TabsContent>
 
         <TabsContent value="commissions" className="mt-6">
           <CommissionsConfigTab />
@@ -707,51 +700,7 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
           </Card>
         </TabsContent>
 
-        {/* Test Tab */}
-        <TabsContent value="test" className="space-y-4">
-          <Card className="bg-white/5 border-white/10">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-white">
-                <Zap className="w-5 h-5 text-emerald-400" />
-                Link de Teste - R$ 1,00
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-white/60">
-                Use este link para testar o checkout com um pagamento real de R$ 1,00 via PIX.
-              </p>
-
-              <div className="flex gap-2">
-                <Input
-                  value="https://genesishub.cloud/checkout?amount=100&description=Teste%20PIX%20-%20R%241"
-                  readOnly
-                  className="font-mono text-xs bg-white/5 border-white/10"
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => copyToClipboard('https://genesishub.cloud/checkout?amount=100&description=Teste%20PIX%20-%20R%241', 'Link')}
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => window.open('/checkout?amount=100&description=Teste%20PIX%20-%20R%241', '_blank')}
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </Button>
-              </div>
-
-              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                <h4 className="text-sm font-semibold text-emerald-300 mb-2">Link PIX R$ 1,00</h4>
-                <code className="text-xs text-white/70 break-all">
-                  {window.location.origin}/checkout?amount=100&description=Teste%20PIX%20-%20R%241
-                </code>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        {/* Test Tab removed */}
       </Tabs>
 
       {/* Payment Detail Modal */}
