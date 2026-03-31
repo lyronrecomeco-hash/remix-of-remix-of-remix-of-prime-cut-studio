@@ -273,29 +273,10 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
   const handleRefund = async () => {
     if (!selectedPayment) return;
     
-    // Determine if this is a MisticPay payment (requires PIX key)
-    const isMisticPay = (selectedPayment as any).gateway === 'misticpay';
-    
-    // For MisticPay, require PIX key and type
-    if (isMisticPay && (!refundPixKey || !refundPixKeyType)) {
-      toast.error('Informe a chave PIX e o tipo para reembolso MisticPay');
-      return;
-    }
-    
     setIsRefunding(true);
     try {
-      const body: { paymentCode: string; pixKey?: string; pixKeyType?: string } = { 
-        paymentCode: selectedPayment.payment_code 
-      };
-      
-      // Add PIX key info for MisticPay
-      if (isMisticPay && refundPixKey && refundPixKeyType) {
-        body.pixKey = refundPixKey;
-        body.pixKeyType = refundPixKeyType;
-      }
-      
       const { data, error } = await supabase.functions.invoke('checkout-refund-payment', {
-        body
+        body: { paymentCode: selectedPayment.payment_code }
       });
 
       if (error) {
@@ -312,8 +293,6 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
       toast.success('Reembolso processado com sucesso!');
       setShowRefundConfirm(false);
       setSelectedPayment(null);
-      setRefundPixKey('');
-      setRefundPixKeyType('CPF');
       loadData();
     } catch (err) {
       console.error('Refund exception:', err);
