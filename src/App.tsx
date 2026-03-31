@@ -19,7 +19,7 @@ import { Suspense, lazy, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { toast as notify } from "sonner";
 
-// Lazy loading de páginas para code splitting
+// Lazy loading de páginas
 const GenesisCommercial = lazy(() => import("./pages/GenesisCommercial"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const GenesisIALogin = lazy(() => import("./pages/GenesisIALogin"));
@@ -30,6 +30,7 @@ const PetshopPrimoPage = lazy(() => import("./pages/petshop-primo"));
 const PetshopMonPage = lazy(() => import("./pages/petshop-mon"));
 const CasapetPage = lazy(() => import("./pages/casapet"));
 const StarpetshopPage = lazy(() => import("./pages/starpetshop"));
+
 // QueryClient com retry logic e cache otimizado
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -54,20 +55,6 @@ const PageLoader = () => (
   </div>
 );
 
-// Loading component específico para Academia Genesis
-const GymPageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-background">
-    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-  </div>
-);
-
-const GymThemeGate = () => (
-  <>
-    <GymThemeBootstrap />
-    <Outlet />
-  </>
-);
-
 // Register Service Worker for PWA
 const registerServiceWorker = async () => {
   if ('serviceWorker' in navigator) {
@@ -77,39 +64,21 @@ const registerServiceWorker = async () => {
       });
       console.log('Service Worker registered:', registration.scope);
       
-      // Check for updates
       registration.addEventListener('updatefound', () => {
         const newWorker = registration.installing;
         if (newWorker) {
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
               console.log('New content available, please refresh.');
-              // Auto-activate new service worker
               newWorker.postMessage({ type: 'SKIP_WAITING' });
             }
           });
         }
       });
 
-      // Listen for messages from service worker
       navigator.serviceWorker.addEventListener('message', (event) => {
         if (event.data?.type === 'SW_UPDATED') {
           console.log('SW Updated to version:', event.data.version);
-
-          // Evita recarregamentos inesperados (especialmente no CRM)
-          const isCrm = window.location.pathname.startsWith('/crmpainel');
-          if (isCrm) {
-            notify('Atualização disponível', {
-              description: 'Clique para atualizar quando for conveniente.',
-              action: {
-                label: 'Atualizar',
-                onClick: () => window.location.reload(),
-              },
-            });
-            return;
-          }
-
-          // Para o restante do app, mantém atualização manual (sem auto reload)
           notify('Atualização disponível', {
             description: 'Clique para atualizar.',
             action: {
@@ -120,7 +89,6 @@ const registerServiceWorker = async () => {
         }
       });
 
-      // Check for updates (menos agressivo para evitar interrupções)
       setInterval(() => {
         registration.update();
       }, 10 * 60 * 1000);
@@ -147,47 +115,6 @@ const AppContent = () => {
     requestNotificationPermission();
   }, []);
 
-  // Check if accessing via docs subdomain
-  const isDocsSubdomain = window.location.hostname === 'docs.genesishub.cloud';
-  const isAffiliateSubdomain = window.location.hostname === 'parceiros.genesishub.cloud';
-
-  // If on docs subdomain, show only the Docs page
-  if (isDocsSubdomain) {
-    return (
-      <>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="*" element={<Docs />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </>
-    );
-  }
-
-  // If on affiliate subdomain, show only affiliate pages
-  if (isAffiliateSubdomain) {
-    return (
-      <>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/" element={<AffiliateLogin />} />
-              <Route path="/login" element={<AffiliateLogin />} />
-              <Route path="/painel" element={<AffiliatePanel />} />
-              <Route path="*" element={<AffiliateLogin />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </>
-    );
-  }
-
   return (
     <>
       <Toaster />
@@ -196,147 +123,27 @@ const AppContent = () => {
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>
+            {/* Site Comercial */}
             <Route path="/" element={<GenesisCommercial />} />
-            <Route path="/barbearia" element={<Index />} />
-            <Route path="/agendar" element={<Booking />} />
-            <Route path="/agendamento-direto" element={<BookingDirect />} />
-            <Route path="/meus-agendamentos" element={<MyAppointments />} />
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin" element={
-              <ProtectedRoute>
-                <AdminPanel />
-              </ProtectedRoute>
-            } />
-            <Route path="/avaliar" element={<FeedbackPage />} />
-            <Route path="/owner" element={<OwnerPanel />} />
-            <Route path="/proposta/:slug" element={<ProposalPage />} />
-            <Route path="/email-confirmado" element={<EmailConfirmed />} />
-            <Route path="/confirmar-email" element={<ConfirmarEmail />} />
-            <Route path="/redefinir-senha" element={<RedefinirSenha />} />
-            <Route path="/termos" element={<TermosDeUso />} />
-            <Route path="/privacidade" element={<PoliticaDePrivacidade />} />
-            <Route path="/docs" element={<Docs />} />
-            <Route path="/docs/whatsapp-api" element={<WADocsPage />} />
-            <Route path="/afiliado/login" element={<AffiliateLogin />} />
-            <Route path="/afiliado" element={<AffiliatePanel />} />
-            {/* Genesis Hub Routes */}
-            <Route path="/genesis/login" element={<GenesisLogin />} />
-            <Route path="/genesis" element={<GenesisPanel />} />
-            <Route path="/genesis/docs" element={<FlowBuilderDocs />} />
-            <Route path="/instrucoes" element={<Instrucoes />} />
-            <Route path="/venda-genesis" element={<GenesisVenda />} />
-            <Route path="/venda-genesis/ferramentas" element={<VendaFerramentas />} />
-            <Route path="/venda-genesis/empresas" element={<VendaEmpresas />} />
-            <Route path="/venda-genesis/agentes-ia" element={<VendaAgentesIA />} />
-            <Route path="/cof" element={<CofPage />} />
-            <Route path="/script" element={<ScriptDownload />} />
-            <Route path="/sobre" element={<Sobre />} />
-            <Route path="/status" element={<StatusPage />} />
-            <Route path="/doc-prospeccao" element={<DocProspeccao />} />
-            <Route path="/demo/:code" element={<DemoPage />} />
-            <Route path="/demo/:code/agendar" element={<DemoBookingPage />} />
-            <Route path="/academia" element={<AcademiaPage />} />
-            <Route path="/academia/:code" element={<AcademiaPage />} />
-            <Route path="/academia/matricula" element={<AcademiaMatriculaPage />} />
-            <Route path="/academia/:code/matricula" element={<AcademiaMatriculaPage />} />
-            <Route path="/clinica-estetica" element={<ClinicaEsteticaPage />} />
-            <Route path="/clinica-estetica/:code" element={<ClinicaEsteticaPage />} />
-            <Route path="/clinica-estetica/agendar" element={<ClinicaEsteticaAgendarPage />} />
-            <Route path="/clinica-estetica/:code/agendar" element={<ClinicaEsteticaAgendarPage />} />
-            {/* Genesis IA Routes - Nova rota /login */}
+
+            {/* Genesis IA - Login e Dashboard */}
             <Route path="/login" element={<GenesisIALogin />} />
             <Route path="/login/dashboard" element={<GenesisIADashboard />} />
-            {/* Redirect antigo genesis-ia para novo /login */}
+            {/* Redirects antigos */}
             <Route path="/genesis-ia" element={<GenesisIALogin />} />
             <Route path="/genesis-ia/dashboard" element={<GenesisIADashboard />} />
-            <Route path="/baixar-genesis" element={<Suspense fallback={<PageLoader />}><BaixarGenesis /></Suspense>} />
-            {/* Petshop Demo */}
+
+            {/* Download */}
+            <Route path="/baixar-genesis" element={<BaixarGenesis />} />
+
+            {/* Petshop */}
             <Route path="/petshop" element={<PetshopPage />} />
             <Route path="/petshop-primo" element={<PetshopPrimoPage />} />
             <Route path="/petshop-mon" element={<PetshopMonPage />} />
             <Route path="/casapet" element={<CasapetPage />} />
             <Route path="/starpetshop" element={<StarpetshopPage />} />
-            {/* Dynamic Portfolio Routes */}
-            <Route path="/p/:slug" element={<PortfolioPage />} />
-            {/* Contract Signature */}
-            <Route path="/contratos/assinar/:hash" element={<ContractSignature />} />
-            {/* Promo Page */}
-            <Route path="/promo/:codigo" element={<PromoPage />} />
-            {/* Divulgação Page */}
-            <Route path="/divul" element={<DivulgacaoPage />} />
-            {/* TelBot Panel */}
-            <Route path="/telbot" element={<TelBotPanel />} />
-            {/* Loja Virtual Routes */}
-            <Route path="/loja" element={<StoreWrapper />}>
-              <Route index element={<Suspense fallback={<PageLoader />}><PublicStore /></Suspense>} />
-              <Route path="categoria/:categorySlug" element={<Suspense fallback={<PageLoader />}><PublicStore /></Suspense>} />
-              <Route path="produto/:slug" element={<Suspense fallback={<PageLoader />}><ProductDetail /></Suspense>} />
-              <Route path="interesse/:slug" element={<Suspense fallback={<PageLoader />}><InterestForm /></Suspense>} />
-              <Route path="admin/login" element={<Suspense fallback={<PageLoader />}><StoreAdminLogin /></Suspense>} />
-              <Route path="admin" element={<StoreAdminLayout />}>
-                <Route index element={<Suspense fallback={<PageLoader />}><StoreAdminDashboard /></Suspense>} />
-                <Route path="produtos" element={<Suspense fallback={<PageLoader />}><StoreProducts /></Suspense>} />
-                <Route path="categorias" element={<Suspense fallback={<PageLoader />}><StoreCategories /></Suspense>} />
-                <Route path="estoque" element={<Suspense fallback={<PageLoader />}><StoreStock /></Suspense>} />
-                <Route path="clientes" element={<Suspense fallback={<PageLoader />}><StoreCustomers /></Suspense>} />
-                <Route path="vendas" element={<Suspense fallback={<PageLoader />}><StoreSales /></Suspense>} />
-                <Route path="crediario" element={<Suspense fallback={<PageLoader />}><StoreCrediario /></Suspense>} />
-                <Route path="leads" element={<Suspense fallback={<PageLoader />}><StoreLeads /></Suspense>} />
-                <Route path="relatorios" element={<Suspense fallback={<PageLoader />}><StoreReports /></Suspense>} />
-                <Route path="configuracoes" element={<Suspense fallback={<PageLoader />}><StoreSettingsPage /></Suspense>} />
-              </Route>
-            </Route>
-            {/* Inscrição Parceiros */}
-            <Route path="/inscricao" element={<Inscricao />} />
-            {/* Checkout Routes - Static routes first, dynamic last */}
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
-            <Route path="/checkout/pending" element={<CheckoutPendingPage />} />
-            <Route path="/checkout/error" element={<CheckoutErrorPage />} />
-            <Route path="/checkout/complete" element={<CheckoutCompletePage />} />
-            <Route path="/checkout/:code" element={<PaymentCodePage />} />
-            {/* Academia Genesis Routes - theme must apply globally to login/admin/aluno */}
-            <Route path="/academiapro" element={<GymThemeGate />}>
-              <Route index element={<Navigate to="auth/login" replace />} />
-              <Route
-                path="auth/login"
-                element={
-                  <Suspense fallback={<GymPageLoader />}>
-                    <GymLoginPage />
-                  </Suspense>
-                }
-              />
 
-              <Route path="app" element={<GymAppLayout />}>
-                <Route index element={<Suspense fallback={<GymPageLoader />}><GymHomePage /></Suspense>} />
-                <Route path="treinos" element={<Suspense fallback={<GymPageLoader />}><GymWorkoutsPage /></Suspense>} />
-                <Route path="treinos/:workoutId" element={<Suspense fallback={<GymPageLoader />}><GymWorkoutsPage /></Suspense>} />
-                <Route path="treinos/:workoutId/executar" element={<Suspense fallback={<GymPageLoader />}><GymWorkoutExecution /></Suspense>} />
-                <Route path="aulas" element={<Suspense fallback={<GymPageLoader />}><GymClassesPage /></Suspense>} />
-                <Route path="evolucao" element={<Suspense fallback={<GymPageLoader />}><GymEvolutionPage /></Suspense>} />
-                <Route path="meu-plano" element={<Suspense fallback={<GymPageLoader />}><GymMyPlanPage /></Suspense>} />
-                <Route path="perfil" element={<Suspense fallback={<GymPageLoader />}><GymProfilePage /></Suspense>} />
-                <Route path="perfil/editar" element={<Suspense fallback={<GymPageLoader />}><GymEditProfilePage /></Suspense>} />
-                <Route path="configuracoes" element={<Suspense fallback={<GymPageLoader />}><GymSettingsAppPage /></Suspense>} />
-                <Route path="nutricao" element={<Suspense fallback={<GymPageLoader />}><GymNutritionPage /></Suspense>} />
-                <Route path="avisos" element={<Suspense fallback={<GymPageLoader />}><GymAnnouncementsPage /></Suspense>} />
-              </Route>
-
-              <Route path="admin" element={<GymAdminLayout />}>
-                <Route index element={<Suspense fallback={<GymPageLoader />}><GymAdminDashboard /></Suspense>} />
-                <Route path="alunos" element={<Suspense fallback={<GymPageLoader />}><GymAdminStudents /></Suspense>} />
-                <Route path="instrutores" element={<Suspense fallback={<GymPageLoader />}><GymAdminInstructors /></Suspense>} />
-                <Route path="treinos" element={<Suspense fallback={<GymPageLoader />}><GymAdminWorkouts /></Suspense>} />
-                <Route path="aulas" element={<Suspense fallback={<GymPageLoader />}><GymAdminClasses /></Suspense>} />
-                <Route path="checkin" element={<Suspense fallback={<GymPageLoader />}><GymAdminCheckIn /></Suspense>} />
-                <Route path="avaliacoes" element={<Suspense fallback={<GymPageLoader />}><GymAdminEvaluations /></Suspense>} />
-                <Route path="financeiro" element={<Suspense fallback={<GymPageLoader />}><GymAdminFinance /></Suspense>} />
-                <Route path="relatorios" element={<Suspense fallback={<GymPageLoader />}><GymAdminReports /></Suspense>} />
-                <Route path="comunicacao" element={<Suspense fallback={<GymPageLoader />}><GymAdminAnnouncements /></Suspense>} />
-                <Route path="integracoes" element={<Suspense fallback={<GymPageLoader />}><GymAdminIntegrations /></Suspense>} />
-                <Route path="configuracoes" element={<Suspense fallback={<GymPageLoader />}><GymAdminSettings /></Suspense>} />
-              </Route>
-            </Route>
+            {/* 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
@@ -351,22 +158,20 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <GenesisAuthProvider>
-          <GymAuthProvider>
-            <SubscriptionProvider>
-              <AppProvider>
-                <GalleryProvider>
-                  <FeedbackProvider>
-                    <NotificationProvider>
-                      <TooltipProvider>
-                        <PresenceTracker />
-                        <AppContent />
-                      </TooltipProvider>
-                    </NotificationProvider>
-                  </FeedbackProvider>
-                </GalleryProvider>
-              </AppProvider>
-            </SubscriptionProvider>
-          </GymAuthProvider>
+          <SubscriptionProvider>
+            <AppProvider>
+              <GalleryProvider>
+                <FeedbackProvider>
+                  <NotificationProvider>
+                    <TooltipProvider>
+                      <PresenceTracker />
+                      <AppContent />
+                    </TooltipProvider>
+                  </NotificationProvider>
+                </FeedbackProvider>
+              </GalleryProvider>
+            </AppProvider>
+          </SubscriptionProvider>
         </GenesisAuthProvider>
       </AuthProvider>
     </QueryClientProvider>
