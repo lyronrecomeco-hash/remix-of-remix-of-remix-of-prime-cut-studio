@@ -415,7 +415,7 @@ export function LeadEnrichmentPanel({ data, isLoading, error, onRefresh }: LeadE
             )}
             
             {/* Serviços Recomendados */}
-            {scoring.recommendedServices && scoring.recommendedServices.length > 0 && (
+            {scoring.recommendedServices && Array.isArray(scoring.recommendedServices) && scoring.recommendedServices.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-emerald-400 mb-1.5 flex items-center gap-1">
                   <Target className="w-3 h-3" /> Serviços recomendados
@@ -423,7 +423,7 @@ export function LeadEnrichmentPanel({ data, isLoading, error, onRefresh }: LeadE
                 <div className="flex flex-wrap gap-1">
                   {scoring.recommendedServices.map((service, i) => (
                     <Badge key={i} variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
-                      {service}
+                      {typeof service === 'string' ? service : JSON.stringify(service)}
                     </Badge>
                   ))}
                 </div>
