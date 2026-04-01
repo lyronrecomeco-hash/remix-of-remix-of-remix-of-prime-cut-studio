@@ -68,6 +68,7 @@ const CaktoReturn = () => {
           name: name || undefined,
           phone: phoneParam || undefined,
           planId: planIdParam || undefined,
+          userType: userTypeParam || undefined,
         },
       });
 
