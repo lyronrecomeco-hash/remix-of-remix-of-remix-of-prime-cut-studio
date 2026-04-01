@@ -16,9 +16,9 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { email, password, name, phone, planId } = await req.json();
+    const { email, password, name, phone, planId, userType } = await req.json();
 
-    console.log('[cakto-activate] Request:', { email: email?.substring(0, 3) + '***', planId });
+    console.log('[cakto-activate] Request:', { email: email?.substring(0, 3) + '***', planId, userType });
 
     if (!email || !password) {
       return new Response(
@@ -97,8 +97,18 @@ serve(async (req) => {
     let maxInstances = 3;
     let maxFlows = 10;
     let planSlug = 'starter';
-
-    if (planId) {
+    
+    // Check if this is a "mentorado" trial
+    const isMentorado = userType === 'mentorado';
+    
+    if (isMentorado) {
+      // Mentorados Santiago get 3-day trial
+      durationMonths = 0; // Will use days instead
+      planName = 'Mentorado Santiago (Trial)';
+      planSlug = 'starter';
+      maxInstances = 3;
+      maxFlows = 10;
+    } else if (planId) {
       const { data: plan } = await supabase
         .from('checkout_plans')
         .select('name, duration_months, features')
@@ -128,34 +138,71 @@ serve(async (req) => {
       .eq('auth_user_id', authUserId)
       .maybeSingle();
 
+    let genesisUserId: string;
+
     if (!existingGenesisUser) {
-      await supabase.from('genesis_users').insert({
-        auth_user_id: authUserId,
-        name: displayName,
-        email: sanitizedEmail,
-        phone: phone || null,
-        is_active: true,
-      });
+      const { data: newGenesisUser, error: insertError } = await supabase
+        .from('genesis_users')
+        .insert({
+          auth_user_id: authUserId,
+          name: displayName,
+          email: sanitizedEmail,
+          phone: phone || null,
+          is_active: true,
+        })
+        .select('id')
+        .single();
+
+      if (insertError || !newGenesisUser) {
+        console.error('[cakto-activate] Error creating genesis_user:', insertError);
+        return new Response(
+          JSON.stringify({ error: 'Erro ao criar perfil' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      genesisUserId = newGenesisUser.id;
     } else {
       await supabase
         .from('genesis_users')
         .update({ is_active: true, name: displayName })
         .eq('auth_user_id', authUserId);
+      genesisUserId = existingGenesisUser.id;
     }
 
-    // 4. Upsert genesis_subscriptions
-    const expiresAt = new Date();
-    expiresAt.setMonth(expiresAt.getMonth() + durationMonths);
+    console.log('[cakto-activate] Genesis user ID:', genesisUserId);
+
+    // 4. Upsert genesis_subscriptions using genesis_users.id
+    let expiresAt: Date;
+    if (isMentorado) {
+      // 3-day trial
+      expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 3);
+    } else {
+      expiresAt = new Date();
+      expiresAt.setMonth(expiresAt.getMonth() + durationMonths);
+    }
+
+    const subscriptionData = {
+      plan: planSlug as any,
+      plan_name: planName,
+      status: isMentorado ? 'trial' : 'active',
+      max_instances: maxInstances,
+      max_flows: maxFlows,
+      user_type: isMentorado ? 'mentorado' : (userType || 'client'),
+      started_at: new Date().toISOString(),
+      expires_at: expiresAt.toISOString(),
+      updated_at: new Date().toISOString(),
+    };
 
     const { data: existingSub } = await supabase
       .from('genesis_subscriptions')
       .select('id, expires_at')
-      .eq('user_id', authUserId)
+      .eq('user_id', genesisUserId)
       .maybeSingle();
 
     if (existingSub) {
       let newExpiresAt = expiresAt;
-      if (existingSub.expires_at && new Date(existingSub.expires_at) > new Date()) {
+      if (!isMentorado && existingSub.expires_at && new Date(existingSub.expires_at) > new Date()) {
         const curr = new Date(existingSub.expires_at);
         curr.setMonth(curr.getMonth() + durationMonths);
         newExpiresAt = curr;
@@ -163,37 +210,25 @@ serve(async (req) => {
 
       await supabase
         .from('genesis_subscriptions')
-        .update({
-          plan: planSlug,
-          plan_name: planName,
-          status: 'active',
-          max_instances: maxInstances,
-          max_flows: maxFlows,
-          started_at: new Date().toISOString(),
-          expires_at: newExpiresAt.toISOString(),
-          updated_at: new Date().toISOString(),
-        })
+        .update({ ...subscriptionData, expires_at: newExpiresAt.toISOString() })
         .eq('id', existingSub.id);
     } else {
       await supabase.from('genesis_subscriptions').insert({
-        user_id: authUserId,
-        plan: planSlug,
-        plan_name: planName,
-        status: 'active',
-        max_instances: maxInstances,
-        max_flows: maxFlows,
-        started_at: new Date().toISOString(),
-        expires_at: expiresAt.toISOString(),
+        user_id: genesisUserId,
+        ...subscriptionData,
       });
     }
 
-    console.log('[cakto-activate] Success:', { authUserId, planSlug, durationMonths });
+    console.log('[cakto-activate] Success:', { authUserId, genesisUserId, planSlug, isMentorado });
 
     return new Response(
       JSON.stringify({
         success: true,
         userId: authUserId,
+        genesisUserId,
         plan: planName,
+        isTrial: isMentorado,
+        trialDays: isMentorado ? 3 : undefined,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

@@ -21,7 +21,8 @@ import {
   Timer,
   MonitorSmartphone,
   Clock,
-  KeyRound
+  KeyRound,
+  Star
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -104,7 +105,7 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
     name: string;
     email: string;
     password: string;
-    userType: 'client' | 'influencer' | 'partner';
+    userType: 'client' | 'influencer' | 'partner' | 'mentorado';
   } | null>(null);
   
   const [formData, setFormData] = useState({
@@ -114,13 +115,14 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
     phone: '',
     company_name: '',
     is_active: true,
-    user_type: 'client' as 'client' | 'influencer' | 'partner',
+    user_type: 'client' as 'client' | 'influencer' | 'partner' | 'mentorado',
   });
 
   const USER_TYPE_CONFIG = {
     client: { label: 'Cliente', icon: Crown, className: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
     influencer: { label: 'Influencer', icon: Sparkles, className: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
     partner: { label: 'Parceiro', icon: Handshake, className: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
+    mentorado: { label: 'Mentorado Santiago', icon: Star, className: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
   };
 
   const fetchUsers = useCallback(async () => {
@@ -248,7 +250,7 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
   const onlineCount = users.filter(u => isReallyOnline(u.auth_user_id)).length;
 
   const resetForm = () => {
-    setFormData({ name: '', email: '', password: '', phone: '', company_name: '', is_active: true, user_type: 'client' });
+    setFormData({ name: '', email: '', password: '', phone: '', company_name: '', is_active: true, user_type: 'client' as 'client' | 'influencer' | 'partner' | 'mentorado' });
     setEditingUser(null);
     setShowPassword(false);
   };
@@ -310,26 +312,32 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
           });
           if (error) throw error;
 
-          // Criar subscription se for influencer ou partner (sem pagamento)
-          if (formData.user_type !== 'client') {
-            const { data: newGenesisUser } = await supabase
-              .from('genesis_users')
-              .select('id')
-              .eq('auth_user_id', authData.user.id)
-              .single();
+            // Criar subscription se não for client (sem pagamento)
+            if (formData.user_type !== 'client') {
+              const { data: newGenesisUser } = await supabase
+                .from('genesis_users')
+                .select('id')
+                .eq('auth_user_id', authData.user.id)
+                .single();
 
-            if (newGenesisUser) {
-              await supabase.from('genesis_subscriptions').insert([{
-                user_id: newGenesisUser.id,
-                plan: 'starter',
-                plan_name: formData.user_type === 'influencer' ? 'Influencer' : 'Parceiro',
-                status: 'active',
-                user_type: formData.user_type,
-                started_at: new Date().toISOString(),
-                expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-              }]);
+              if (newGenesisUser) {
+                const isMentorado = formData.user_type === 'mentorado';
+                const expiresAt = isMentorado
+                  ? new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) // 3 dias
+                  : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 ano
+
+                await supabase.from('genesis_subscriptions').insert([{
+                  user_id: newGenesisUser.id,
+                  plan: 'starter',
+                  plan_name: isMentorado ? 'Mentorado Santiago (Trial)' : 
+                    formData.user_type === 'influencer' ? 'Influencer' : 'Parceiro',
+                  status: isMentorado ? 'trial' : 'active',
+                  user_type: formData.user_type,
+                  started_at: new Date().toISOString(),
+                  expires_at: expiresAt.toISOString(),
+                }]);
+              }
             }
-          }
 
           // Mostrar modal de boas-vindas
           setCreatedUserData({
@@ -584,7 +592,7 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
                 <Label>Tipo de Usuário *</Label>
                 <Select
                   value={formData.user_type}
-                  onValueChange={(value) => setFormData(p => ({ ...p, user_type: value as 'client' | 'influencer' | 'partner' }))}
+                  onValueChange={(value) => setFormData(p => ({ ...p, user_type: value as 'client' | 'influencer' | 'partner' | 'mentorado' }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o tipo" />
@@ -593,9 +601,13 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
                     <SelectItem value="client">👑 Cliente (Pagante)</SelectItem>
                     <SelectItem value="influencer">✨ Influencer (Promocional)</SelectItem>
                     <SelectItem value="partner">🤝 Parceiro (Promocional)</SelectItem>
+                    <SelectItem value="mentorado">🎓 Mentorado Santiago (3 dias)</SelectItem>
                   </SelectContent>
                 </Select>
-                {formData.user_type !== 'client' && (
+                {formData.user_type === 'mentorado' && (
+                  <p className="text-xs text-amber-400">Acesso de teste: 3 dias. Após expirar, o acesso será bloqueado.</p>
+                )}
+                {(formData.user_type === 'influencer' || formData.user_type === 'partner') && (
                   <p className="text-xs text-emerald-400">Acesso promocional: 1 ano sem pagamento</p>
                 )}
               </div>

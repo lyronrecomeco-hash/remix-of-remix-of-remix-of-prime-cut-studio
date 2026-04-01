@@ -73,6 +73,7 @@ import { GenesisOnboardingGuide } from "@/components/genesis-ia/GenesisOnboardin
 import { ApiKeysTab } from "@/components/genesis-ia/api-keys";
 import { DevelopmentModal } from "@/components/genesis-ia/modals";
 import { AccountBlockedModal } from "@/components/genesis/AccountBlockedModal";
+import { TrialExpiredModal } from "@/components/genesis/TrialExpiredModal";
 import PartnerApplications from "@/components/admin/PartnerApplications";
 
 import GenesisBackground from "@/components/genesis-ia/GenesisBackground";
@@ -108,6 +109,7 @@ const GenesisIADashboard = () => {
   const [isSantiagoAdmin, setIsSantiagoAdmin] = useState(false);
   const [showDevModal, setShowDevModal] = useState(false);
   const [isAccountBlocked, setIsAccountBlocked] = useState(false);
+  const [isTrialExpired, setIsTrialExpired] = useState(false);
   const [blockReason, setBlockReason] = useState<string>('');
   const [restrictedModal, setRestrictedModal] = useState<{ open: boolean; label: string; id: string }>({ open: false, label: '', id: '' });
   const [isDockCollapsed, setIsDockCollapsed] = useState(false);
@@ -147,17 +149,26 @@ const GenesisIADashboard = () => {
      console.warn('Genesis user not found, using auth_user_id as fallback');
    }
    
-   // Check subscription status for blocked
+   // Check subscription status for blocked or trial expired
    if (genesisUserId) {
      const { data: subscription } = await supabase
        .from('genesis_subscriptions')
-       .select('status, plan_name')
+       .select('status, plan_name, user_type, expires_at')
        .eq('user_id', genesisUserId)
        .maybeSingle();
      
      if (subscription?.status === 'blocked') {
        setIsAccountBlocked(true);
        setBlockReason(subscription.plan_name || 'Conta bloqueada');
+     }
+     
+     // Check if trial (mentorado) has expired
+     if (
+       (subscription?.status === 'trial' || subscription?.user_type === 'mentorado') &&
+       subscription?.expires_at &&
+       new Date(subscription.expires_at) < new Date()
+     ) {
+       setIsTrialExpired(true);
      }
    }
 
@@ -1025,6 +1036,16 @@ const GenesisIADashboard = () => {
             <AccountBlockedModal 
               isOpen={isAccountBlocked}
               reason={blockReason}
+            />
+            
+            {/* Trial Expired Modal */}
+            <TrialExpiredModal
+              isOpen={isTrialExpired && !isAccountBlocked}
+              userId={authUserId}
+              onSuccess={() => {
+                setIsTrialExpired(false);
+                checkAuth();
+              }}
             />
 
             {/* Restricted Access Modal */}

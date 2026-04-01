@@ -24,10 +24,11 @@ const CaktoReturn = () => {
   const [alreadyExists, setAlreadyExists] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const emailParam = searchParams.get('email') || '';
-  const nameParam = searchParams.get('name') || searchParams.get('first_name') || '';
-  const phoneParam = searchParams.get('phone') || '';
-  const planIdParam = searchParams.get('plan_id') || '';
+  const emailParam = searchParams.get('email') || searchParams.get('customer_email') || '';
+  const nameParam = searchParams.get('name') || searchParams.get('first_name') || searchParams.get('customer_name') || '';
+  const phoneParam = searchParams.get('phone') || searchParams.get('customer_phone') || '';
+  const planIdParam = searchParams.get('plan_id') || searchParams.get('planId') || '';
+  const userTypeParam = searchParams.get('user_type') || '';
 
   useEffect(() => {
     if (emailParam) setEmail(emailParam);
@@ -67,6 +68,7 @@ const CaktoReturn = () => {
           name: name || undefined,
           phone: phoneParam || undefined,
           planId: planIdParam || undefined,
+          userType: userTypeParam || undefined,
         },
       });
 
