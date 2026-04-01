@@ -20,6 +20,14 @@ export const useSiteTexts = () => useContext(SiteCustomizationContext);
 const GenesisCommercial = () => {
   const { customization, loading } = useSiteCustomization();
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
   return (
     <SiteCustomizationContext.Provider value={customization}>
       <div className="min-h-screen bg-background overflow-x-hidden relative">
