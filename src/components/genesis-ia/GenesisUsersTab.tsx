@@ -121,6 +121,7 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
     client: { label: 'Cliente', icon: Crown, className: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
     influencer: { label: 'Influencer', icon: Sparkles, className: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
     partner: { label: 'Parceiro', icon: Handshake, className: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
+    mentorado: { label: 'Mentorado Santiago', icon: Star, className: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
   };
 
   const fetchUsers = useCallback(async () => {
