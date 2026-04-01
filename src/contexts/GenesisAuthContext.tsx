@@ -181,7 +181,7 @@ export function GenesisAuthProvider({ children }: { children: ReactNode }) {
         .from('genesis_subscriptions')
         .select('*')
         .eq('user_id', userData.id)
-        .single();
+        .maybeSingle();
 
       setSubscription(subscriptionData as GenesisSubscription | null);
 
