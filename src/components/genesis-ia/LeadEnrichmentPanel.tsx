@@ -445,22 +445,22 @@ export function LeadEnrichmentPanel({ data, isLoading, error, onRefresh }: LeadE
             {/* SWOT simplificado */}
             {scoring.aiAnalysis && (
               <div className="grid grid-cols-2 gap-2 pt-1">
-                {scoring.aiAnalysis.strengths && scoring.aiAnalysis.strengths.length > 0 && (
+                {scoring.aiAnalysis.strengths && Array.isArray(scoring.aiAnalysis.strengths) && scoring.aiAnalysis.strengths.length > 0 && (
                   <div className="text-[10px] bg-emerald-500/10 rounded p-1.5">
                     <span className="text-emerald-400 font-medium">Forças:</span>
                     <ul className="text-muted-foreground mt-0.5">
                       {scoring.aiAnalysis.strengths.slice(0, 2).map((s, i) => (
-                        <li key={i}>• {s}</li>
+                        <li key={i}>• {typeof s === 'string' ? s : JSON.stringify(s)}</li>
                       ))}
                     </ul>
                   </div>
                 )}
-                {scoring.aiAnalysis.opportunities && scoring.aiAnalysis.opportunities.length > 0 && (
+                {scoring.aiAnalysis.opportunities && Array.isArray(scoring.aiAnalysis.opportunities) && scoring.aiAnalysis.opportunities.length > 0 && (
                   <div className="text-[10px] bg-blue-500/10 rounded p-1.5">
                     <span className="text-blue-400 font-medium">Oportunidades:</span>
                     <ul className="text-muted-foreground mt-0.5">
                       {scoring.aiAnalysis.opportunities.slice(0, 2).map((o, i) => (
-                        <li key={i}>• {o}</li>
+                        <li key={i}>• {typeof o === 'string' ? o : JSON.stringify(o)}</li>
                       ))}
                     </ul>
                   </div>
