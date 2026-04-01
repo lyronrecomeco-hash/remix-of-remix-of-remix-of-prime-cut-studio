@@ -381,6 +381,83 @@ serve(async (req) => {
     // Fallback: AbacatePay
     const abacateConfig = gatewayConfigs?.find(c => c.gateway === 'abacatepay');
 
+    // Cakto config (redirect-based)
+    const caktoConfig = gatewayConfigs?.find(c => c.gateway === 'cakto');
+
+    // ============= CAKTO REDIRECT FLOW =============
+    if (caktoConfig && caktoConfig.cakto_client_id_hash && caktoConfig.cakto_client_secret_hash) {
+      console.log('[Cakto] Gateway configured, using redirect flow');
+
+      let checkoutUrl: string | null = null;
+
+      if (body.planId) {
+        const { data: planData } = await supabase
+          .from('checkout_plans')
+          .select('checkout_url, name, display_name')
+          .eq('id', body.planId)
+          .maybeSingle();
+        if (planData?.checkout_url) {
+          checkoutUrl = planData.checkout_url;
+          console.log(`[Cakto] Found checkout_url for plan ${planData.name}: ${checkoutUrl}`);
+        }
+      }
+
+      if (!checkoutUrl) {
+        const { data: planByPrice } = await supabase
+          .from('checkout_plans')
+          .select('checkout_url, name')
+          .eq('price_cents', priceCents)
+          .eq('is_active', true)
+          .maybeSingle();
+        if (planByPrice?.checkout_url) {
+          checkoutUrl = planByPrice.checkout_url;
+          console.log(`[Cakto] Matched by price: ${checkoutUrl}`);
+        }
+      }
+
+      if (!checkoutUrl) {
+        return new Response(
+          JSON.stringify({ error: 'Nenhum checkout Cakto configurado para este plano.' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const caktoUrl = new URL(checkoutUrl);
+      if (body.customer.email) caktoUrl.searchParams.set('email', body.customer.email);
+      if (body.customer.firstName) caktoUrl.searchParams.set('name', `${body.customer.firstName} ${body.customer.lastName || ''}`.trim());
+
+      // Upsert customer
+      const { data: existCust } = await supabase
+        .from('checkout_customers').select('id').eq('cpf', cleanCpf).maybeSingle();
+      let custId = existCust?.id;
+      if (!custId) {
+        const { data: nc } = await supabase.from('checkout_customers').insert({
+          first_name: body.customer.firstName, last_name: body.customer.lastName,
+          cpf: cleanCpf, phone: cleanPhone, phone_country_code: body.customer.phoneCountryCode,
+          email: body.customer.email,
+        }).select('id').single();
+        custId = nc?.id;
+      }
+
+      const paymentCode = `CAKTO-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      await supabase.from('checkout_payments').insert({
+        payment_code: paymentCode, customer_id: custId || null, amount_cents: priceCents,
+        description: body.description, payment_method: body.paymentMethod || 'PIX',
+        gateway: 'cakto', cakto_checkout_url: caktoUrl.toString(), status: 'pending',
+        expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+        metadata: body.metadata, plan_id: body.planId || null,
+        promo_link_id: body.promoLinkId || null, source: body.source || 'direct',
+      });
+
+      console.log('[Cakto] Redirect payment created:', paymentCode);
+
+      return new Response(
+        JSON.stringify({ success: true, paymentCode, gateway: 'cakto', caktoCheckoutUrl: caktoUrl.toString() }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // ============= NON-CAKTO HYBRID ROUTING =============
     // Hybrid routing based on payment method
     if (body.paymentMethod === 'PIX') {
       // PIX: Prefer MisticPay, fallback to Asaas, then AbacatePay

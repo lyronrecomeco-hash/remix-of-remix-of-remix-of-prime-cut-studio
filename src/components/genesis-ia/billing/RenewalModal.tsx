@@ -176,11 +176,20 @@ export function RenewalModal({
             isUpgrade,
             isPromoUser,
           },
+          planId: selectedPlan.id,
         },
       });
 
       if (error) {
         throw new Error(error.message || 'Erro ao criar pagamento');
+      }
+
+      // Handle Cakto redirect flow
+      if (data?.gateway === 'cakto' && data?.caktoCheckoutUrl) {
+        toast.success('Redirecionando para o checkout...', { description: 'Você será levado à página de pagamento.' });
+        window.open(data.caktoCheckoutUrl, '_blank');
+        onClose();
+        return;
       }
 
       if (!data?.paymentCode || !data?.pixBrCode) {
