@@ -592,7 +592,7 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
                 <Label>Tipo de Usuário *</Label>
                 <Select
                   value={formData.user_type}
-                  onValueChange={(value) => setFormData(p => ({ ...p, user_type: value as 'client' | 'influencer' | 'partner' }))}
+                  onValueChange={(value) => setFormData(p => ({ ...p, user_type: value as 'client' | 'influencer' | 'partner' | 'mentorado' }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o tipo" />
@@ -601,9 +601,13 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
                     <SelectItem value="client">👑 Cliente (Pagante)</SelectItem>
                     <SelectItem value="influencer">✨ Influencer (Promocional)</SelectItem>
                     <SelectItem value="partner">🤝 Parceiro (Promocional)</SelectItem>
+                    <SelectItem value="mentorado">🎓 Mentorado Santiago (3 dias)</SelectItem>
                   </SelectContent>
                 </Select>
-                {formData.user_type !== 'client' && (
+                {formData.user_type === 'mentorado' && (
+                  <p className="text-xs text-amber-400">Acesso de teste: 3 dias. Após expirar, o acesso será bloqueado.</p>
+                )}
+                {(formData.user_type === 'influencer' || formData.user_type === 'partner') && (
                   <p className="text-xs text-emerald-400">Acesso promocional: 1 ano sem pagamento</p>
                 )}
               </div>
