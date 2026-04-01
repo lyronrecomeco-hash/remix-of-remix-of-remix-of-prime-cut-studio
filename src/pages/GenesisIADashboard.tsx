@@ -109,6 +109,7 @@ const GenesisIADashboard = () => {
   const [isSantiagoAdmin, setIsSantiagoAdmin] = useState(false);
   const [showDevModal, setShowDevModal] = useState(false);
   const [isAccountBlocked, setIsAccountBlocked] = useState(false);
+  const [isTrialExpired, setIsTrialExpired] = useState(false);
   const [blockReason, setBlockReason] = useState<string>('');
   const [restrictedModal, setRestrictedModal] = useState<{ open: boolean; label: string; id: string }>({ open: false, label: '', id: '' });
   const [isDockCollapsed, setIsDockCollapsed] = useState(false);
