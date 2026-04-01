@@ -21,8 +21,8 @@ import {
   Timer,
   MonitorSmartphone,
   Clock,
-  KeyRound
-} from 'lucide-react';
+  KeyRound,
+  Star
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
