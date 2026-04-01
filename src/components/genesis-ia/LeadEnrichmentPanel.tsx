@@ -398,7 +398,7 @@ export function LeadEnrichmentPanel({ data, isLoading, error, onRefresh }: LeadE
         >
           <div className="pt-2 space-y-3">
             {/* Pain Points */}
-            {scoring.painPoints && scoring.painPoints.length > 0 && (
+            {scoring.painPoints && Array.isArray(scoring.painPoints) && scoring.painPoints.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-red-400 mb-1.5 flex items-center gap-1">
                   <AlertTriangle className="w-3 h-3" /> Dores identificadas
@@ -407,7 +407,7 @@ export function LeadEnrichmentPanel({ data, isLoading, error, onRefresh }: LeadE
                   {scoring.painPoints.map((pain, i) => (
                     <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
                       <span className="text-red-400 mt-0.5">•</span>
-                      {pain}
+                      {typeof pain === 'string' ? pain : JSON.stringify(pain)}
                     </li>
                   ))}
                 </ul>
