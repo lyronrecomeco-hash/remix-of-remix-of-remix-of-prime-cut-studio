@@ -33,7 +33,7 @@ interface WelcomeCredentialsModalProps {
     name: string;
     email: string;
     password: string;
-    userType: 'client' | 'influencer' | 'partner';
+    userType: 'client' | 'influencer' | 'partner' | 'mentorado';
   };
 }
 
@@ -41,6 +41,7 @@ const USER_TYPE_LABELS = {
   client: 'Cliente',
   influencer: 'Influencer',
   partner: 'Parceiro',
+  mentorado: 'Mentorado Santiago',
 };
 
 const USER_TYPE_COLORS = {

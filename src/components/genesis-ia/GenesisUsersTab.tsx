@@ -249,7 +249,7 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
   const onlineCount = users.filter(u => isReallyOnline(u.auth_user_id)).length;
 
   const resetForm = () => {
-    setFormData({ name: '', email: '', password: '', phone: '', company_name: '', is_active: true, user_type: 'client' });
+    setFormData({ name: '', email: '', password: '', phone: '', company_name: '', is_active: true, user_type: 'client' as 'client' | 'influencer' | 'partner' | 'mentorado' });
     setEditingUser(null);
     setShowPassword(false);
   };
