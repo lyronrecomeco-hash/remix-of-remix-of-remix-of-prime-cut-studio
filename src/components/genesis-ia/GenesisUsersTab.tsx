@@ -104,7 +104,7 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
     name: string;
     email: string;
     password: string;
-    userType: 'client' | 'influencer' | 'partner';
+    userType: 'client' | 'influencer' | 'partner' | 'mentorado';
   } | null>(null);
   
   const [formData, setFormData] = useState({
@@ -114,7 +114,7 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
     phone: '',
     company_name: '',
     is_active: true,
-    user_type: 'client' as 'client' | 'influencer' | 'partner',
+    user_type: 'client' as 'client' | 'influencer' | 'partner' | 'mentorado',
   });
 
   const USER_TYPE_CONFIG = {
