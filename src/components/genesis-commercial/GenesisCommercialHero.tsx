@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
 import { ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import DashboardPreviewMockup from './DashboardPreviewMockup';
@@ -84,11 +83,11 @@ const GenesisCommercialHero = () => {
                 size="lg" 
                 className="w-full sm:w-auto text-sm md:text-base px-6 md:px-8 py-5 md:py-6 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 group font-semibold"
               >
-                <Link to="/genesis" className="flex items-center justify-center gap-2">
+                <a href="#planos" onClick={(e) => { e.preventDefault(); document.getElementById('planos')?.scrollIntoView({ behavior: 'smooth' }); }} className="flex items-center justify-center gap-2">
                   <Sparkles className="w-4 h-4 md:w-5 md:h-5" />
                   {texts.hero.ctaText}
                   <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
+                </a>
               </Button>
             </motion.div>
             <Button 

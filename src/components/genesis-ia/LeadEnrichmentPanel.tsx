@@ -398,7 +398,7 @@ export function LeadEnrichmentPanel({ data, isLoading, error, onRefresh }: LeadE
         >
           <div className="pt-2 space-y-3">
             {/* Pain Points */}
-            {scoring.painPoints && scoring.painPoints.length > 0 && (
+            {scoring.painPoints && Array.isArray(scoring.painPoints) && scoring.painPoints.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-red-400 mb-1.5 flex items-center gap-1">
                   <AlertTriangle className="w-3 h-3" /> Dores identificadas
@@ -407,7 +407,7 @@ export function LeadEnrichmentPanel({ data, isLoading, error, onRefresh }: LeadE
                   {scoring.painPoints.map((pain, i) => (
                     <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
                       <span className="text-red-400 mt-0.5">•</span>
-                      {pain}
+                      {typeof pain === 'string' ? pain : JSON.stringify(pain)}
                     </li>
                   ))}
                 </ul>
@@ -415,7 +415,7 @@ export function LeadEnrichmentPanel({ data, isLoading, error, onRefresh }: LeadE
             )}
             
             {/* Serviços Recomendados */}
-            {scoring.recommendedServices && scoring.recommendedServices.length > 0 && (
+            {scoring.recommendedServices && Array.isArray(scoring.recommendedServices) && scoring.recommendedServices.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-emerald-400 mb-1.5 flex items-center gap-1">
                   <Target className="w-3 h-3" /> Serviços recomendados
@@ -423,7 +423,7 @@ export function LeadEnrichmentPanel({ data, isLoading, error, onRefresh }: LeadE
                 <div className="flex flex-wrap gap-1">
                   {scoring.recommendedServices.map((service, i) => (
                     <Badge key={i} variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
-                      {service}
+                      {typeof service === 'string' ? service : JSON.stringify(service)}
                     </Badge>
                   ))}
                 </div>
@@ -445,22 +445,22 @@ export function LeadEnrichmentPanel({ data, isLoading, error, onRefresh }: LeadE
             {/* SWOT simplificado */}
             {scoring.aiAnalysis && (
               <div className="grid grid-cols-2 gap-2 pt-1">
-                {scoring.aiAnalysis.strengths && scoring.aiAnalysis.strengths.length > 0 && (
+                {scoring.aiAnalysis.strengths && Array.isArray(scoring.aiAnalysis.strengths) && scoring.aiAnalysis.strengths.length > 0 && (
                   <div className="text-[10px] bg-emerald-500/10 rounded p-1.5">
                     <span className="text-emerald-400 font-medium">Forças:</span>
                     <ul className="text-muted-foreground mt-0.5">
                       {scoring.aiAnalysis.strengths.slice(0, 2).map((s, i) => (
-                        <li key={i}>• {s}</li>
+                        <li key={i}>• {typeof s === 'string' ? s : JSON.stringify(s)}</li>
                       ))}
                     </ul>
                   </div>
                 )}
-                {scoring.aiAnalysis.opportunities && scoring.aiAnalysis.opportunities.length > 0 && (
+                {scoring.aiAnalysis.opportunities && Array.isArray(scoring.aiAnalysis.opportunities) && scoring.aiAnalysis.opportunities.length > 0 && (
                   <div className="text-[10px] bg-blue-500/10 rounded p-1.5">
                     <span className="text-blue-400 font-medium">Oportunidades:</span>
                     <ul className="text-muted-foreground mt-0.5">
                       {scoring.aiAnalysis.opportunities.slice(0, 2).map((o, i) => (
-                        <li key={i}>• {o}</li>
+                        <li key={i}>• {typeof o === 'string' ? o : JSON.stringify(o)}</li>
                       ))}
                     </ul>
                   </div>

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Sparkles, MapPin, Phone, ArrowRight, Lock, TrendingUp, DollarSign, Globe, Search, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Link } from 'react-router-dom';
+
 import { supabase } from '@/integrations/supabase/client';
 import { useSiteTexts } from '@/pages/GenesisCommercial';
 
@@ -467,11 +467,11 @@ const GenesisCommercialRadar = () => {
             <Lock className="w-4 h-4" />
             <span>Assine para desbloquear todos os contatos e começar a fechar negócios</span>
           </div>
-          <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20">
-            <Link to="/genesis" className="flex items-center gap-2">
+          <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20" onClick={() => document.getElementById('planos')?.scrollIntoView({ behavior: 'smooth' })}>
+            <span className="flex items-center gap-2">
               {texts.radar.ctaText}
               <ArrowRight className="w-4 h-4" />
-            </Link>
+            </span>
           </Button>
         </motion.div>
       </div>

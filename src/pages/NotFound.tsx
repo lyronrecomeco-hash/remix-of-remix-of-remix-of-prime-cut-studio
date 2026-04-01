@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { useLocation, Link } from 'react-router-dom';
 import { useEffect } from 'react';
-import { Home, Scissors, ArrowLeft } from 'lucide-react';
+import { Home, ArrowLeft, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const NotFound = () => {
@@ -27,7 +27,7 @@ const NotFound = () => {
             animate={{ rotate: [0, 10, -10, 0] }}
             transition={{ duration: 2, repeat: Infinity }}
           >
-            <Scissors className="w-12 h-12 text-primary" />
+            <Zap className="w-12 h-12 text-primary" />
           </motion.div>
         </div>
         
@@ -45,9 +45,9 @@ const NotFound = () => {
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg">
-            <Link to="/agendar">
+            <Link to="/login">
               <ArrowLeft className="w-4 h-4" />
-              Agendar Horário
+              Ir para Login
             </Link>
           </Button>
         </div>

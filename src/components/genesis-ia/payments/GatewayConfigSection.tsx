@@ -27,6 +27,8 @@ export function GatewayConfigSection() {
   const [isSaving, setIsSaving] = useState(false);
   const [isConfigured, setIsConfigured] = useState(false);
   const [configId, setConfigId] = useState<string | null>(null);
+  const [maskedClientId, setMaskedClientId] = useState('');
+  const [maskedSecret, setMaskedSecret] = useState('');
   
   const [clientId, setClientId] = useState('');
   const [clientSecret, setClientSecret] = useState('');
@@ -53,6 +55,15 @@ export function GatewayConfigSection() {
       if (data) {
         setConfigId(data.id);
         setIsConfigured(data.api_key_configured);
+        // Show censored versions of credentials
+        if (data.cakto_client_id_hash) {
+          const hash = data.cakto_client_id_hash as string;
+          setMaskedClientId(`${hash.substring(0, 6)}••••••••${hash.substring(hash.length - 4)}`);
+        }
+        if (data.cakto_client_secret_hash) {
+          const hash = data.cakto_client_secret_hash as string;
+          setMaskedSecret(`${hash.substring(0, 6)}••••••••${hash.substring(hash.length - 4)}`);
+        }
       }
     } catch (error) {
       console.error('Error loading config:', error);
@@ -140,6 +151,27 @@ export function GatewayConfigSection() {
               )}
             </Badge>
           </div>
+
+          {/* Show configured credentials (censored) */}
+          {isConfigured && (maskedClientId || maskedSecret) && (
+            <div className="p-3 rounded-xl bg-white/5 border border-white/10 space-y-2">
+              <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                <Shield className="w-3.5 h-3.5" /> Credenciais salvas (censuradas)
+              </p>
+              {maskedClientId && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Client ID:</span>
+                  <code className="text-xs font-mono text-foreground/70 bg-white/5 px-2 py-0.5 rounded">{maskedClientId}</code>
+                </div>
+              )}
+              {maskedSecret && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Client Secret:</span>
+                  <code className="text-xs font-mono text-foreground/70 bg-white/5 px-2 py-0.5 rounded">{maskedSecret}</code>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Credentials Form */}
           <div className="space-y-4">
