@@ -176,6 +176,7 @@ export function RenewalModal({
             isUpgrade,
             isPromoUser,
           },
+          planId: selectedPlan.id,
         },
       });
 
