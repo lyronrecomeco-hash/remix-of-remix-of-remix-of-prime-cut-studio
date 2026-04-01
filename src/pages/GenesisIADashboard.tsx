@@ -149,17 +149,26 @@ const GenesisIADashboard = () => {
      console.warn('Genesis user not found, using auth_user_id as fallback');
    }
    
-   // Check subscription status for blocked
+   // Check subscription status for blocked or trial expired
    if (genesisUserId) {
      const { data: subscription } = await supabase
        .from('genesis_subscriptions')
-       .select('status, plan_name')
+       .select('status, plan_name, user_type, expires_at')
        .eq('user_id', genesisUserId)
        .maybeSingle();
      
      if (subscription?.status === 'blocked') {
        setIsAccountBlocked(true);
        setBlockReason(subscription.plan_name || 'Conta bloqueada');
+     }
+     
+     // Check if trial (mentorado) has expired
+     if (
+       (subscription?.status === 'trial' || subscription?.user_type === 'mentorado') &&
+       subscription?.expires_at &&
+       new Date(subscription.expires_at) < new Date()
+     ) {
+       setIsTrialExpired(true);
      }
    }
 
