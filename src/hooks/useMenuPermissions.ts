@@ -124,18 +124,33 @@ export const useManageMenuPermissions = () => {
   ): Promise<boolean> => {
     setSaving(true);
     try {
-      const upserts = Object.entries(permissions).map(([menuId, isAllowed]) => ({
-        user_id: userId,
-        menu_id: menuId,
-        is_allowed: isAllowed,
-        updated_at: new Date().toISOString()
-      }));
+      // Process each permission individually to avoid upsert issues
+      for (const [menuId, isAllowed] of Object.entries(permissions)) {
+        const { data: existing } = await supabase
+          .from('user_menu_permissions' as any)
+          .select('id')
+          .eq('user_id', userId)
+          .eq('menu_id', menuId)
+          .maybeSingle() as { data: { id: string } | null; error: any };
 
-      const { error } = await supabase
-        .from('user_menu_permissions' as any)
-        .upsert(upserts, { onConflict: 'user_id,menu_id' });
+        if (existing) {
+          const { error } = await supabase
+            .from('user_menu_permissions' as any)
+            .update({ is_allowed: isAllowed, updated_at: new Date().toISOString() })
+            .eq('id', existing.id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from('user_menu_permissions' as any)
+            .insert({
+              user_id: userId,
+              menu_id: menuId,
+              is_allowed: isAllowed,
+            });
+          if (error) throw error;
+        }
+      }
 
-      if (error) throw error;
       return true;
     } catch (error) {
       console.error('Error setting multiple permissions:', error);
