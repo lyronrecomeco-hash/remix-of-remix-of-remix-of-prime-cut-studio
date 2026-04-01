@@ -1037,6 +1037,16 @@ const GenesisIADashboard = () => {
               isOpen={isAccountBlocked}
               reason={blockReason}
             />
+            
+            {/* Trial Expired Modal */}
+            <TrialExpiredModal
+              isOpen={isTrialExpired && !isAccountBlocked}
+              userId={authUserId}
+              onSuccess={() => {
+                setIsTrialExpired(false);
+                checkAuth();
+              }}
+            />
 
             {/* Restricted Access Modal */}
             <RestrictedAccessModal
