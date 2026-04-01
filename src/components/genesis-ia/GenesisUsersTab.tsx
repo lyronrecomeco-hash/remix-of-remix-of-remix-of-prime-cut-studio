@@ -312,26 +312,32 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
           });
           if (error) throw error;
 
-          // Criar subscription se for influencer ou partner (sem pagamento)
-          if (formData.user_type !== 'client') {
-            const { data: newGenesisUser } = await supabase
-              .from('genesis_users')
-              .select('id')
-              .eq('auth_user_id', authData.user.id)
-              .single();
+            // Criar subscription se não for client (sem pagamento)
+            if (formData.user_type !== 'client') {
+              const { data: newGenesisUser } = await supabase
+                .from('genesis_users')
+                .select('id')
+                .eq('auth_user_id', authData.user.id)
+                .single();
 
-            if (newGenesisUser) {
-              await supabase.from('genesis_subscriptions').insert([{
-                user_id: newGenesisUser.id,
-                plan: 'starter',
-                plan_name: formData.user_type === 'influencer' ? 'Influencer' : 'Parceiro',
-                status: 'active',
-                user_type: formData.user_type,
-                started_at: new Date().toISOString(),
-                expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-              }]);
+              if (newGenesisUser) {
+                const isMentorado = formData.user_type === 'mentorado';
+                const expiresAt = isMentorado
+                  ? new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) // 3 dias
+                  : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 ano
+
+                await supabase.from('genesis_subscriptions').insert([{
+                  user_id: newGenesisUser.id,
+                  plan: 'starter',
+                  plan_name: isMentorado ? 'Mentorado Santiago (Trial)' : 
+                    formData.user_type === 'influencer' ? 'Influencer' : 'Parceiro',
+                  status: isMentorado ? 'trial' : 'active',
+                  user_type: formData.user_type,
+                  started_at: new Date().toISOString(),
+                  expires_at: expiresAt.toISOString(),
+                }]);
+              }
             }
-          }
 
           // Mostrar modal de boas-vindas
           setCreatedUserData({
