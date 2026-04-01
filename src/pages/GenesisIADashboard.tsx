@@ -73,6 +73,7 @@ import { GenesisOnboardingGuide } from "@/components/genesis-ia/GenesisOnboardin
 import { ApiKeysTab } from "@/components/genesis-ia/api-keys";
 import { DevelopmentModal } from "@/components/genesis-ia/modals";
 import { AccountBlockedModal } from "@/components/genesis/AccountBlockedModal";
+import { TrialExpiredModal } from "@/components/genesis/TrialExpiredModal";
 import PartnerApplications from "@/components/admin/PartnerApplications";
 
 import GenesisBackground from "@/components/genesis-ia/GenesisBackground";
