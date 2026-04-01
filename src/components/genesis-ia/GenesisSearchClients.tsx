@@ -270,14 +270,74 @@ export const GenesisSearchClients = ({ userId, onAccepted }: GenesisSearchClient
     toast.success(`${filtered.length} empresas na área selecionada`);
   };
 
-  const handleAcceptProject = (result: SearchResult) => {
-    toast.success(`Projeto ${result.name} aceito!`);
-    // Close modal
-    setDetailModalOpen(false);
-    setSelectedBusiness(null);
-    // Navigate to accepted proposals
-    if (onAccepted) {
-      setTimeout(() => onAccepted(), 300);
+  const handleAcceptProject = async (result: SearchResult) => {
+    try {
+      // Get or create affiliate record for this user
+      const { data: affiliateData } = await supabase
+        .from('affiliates')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      let affiliateId = affiliateData?.id;
+
+      if (!affiliateId) {
+        // Create minimal affiliate record
+        const { data: newAffiliate, error: affErr } = await supabase
+          .from('affiliates')
+          .insert({
+            user_id: userId,
+            name: 'Consultor Genesis',
+            email: 'auto@genesis.hub',
+            whatsapp: '0',
+            password_hash: 'auto',
+            affiliate_code: `GEN${Date.now().toString(36).toUpperCase()}`,
+          })
+          .select('id')
+          .single();
+
+        if (affErr || !newAffiliate) {
+          toast.error('Erro ao preparar proposta');
+          return;
+        }
+        affiliateId = newAffiliate.id;
+      }
+
+      // Save to affiliate_proposals as accepted
+      const { error: proposalErr } = await supabase
+        .from('affiliate_proposals')
+        .insert({
+          affiliate_id: affiliateId,
+          company_name: result.name,
+          company_email: result.email || null,
+          company_phone: result.phone || null,
+          contact_name: result.name,
+          status: 'accepted' as any,
+          accepted_at: new Date().toISOString(),
+          notes: `Aceito via Scanner IA - ${result.address || ''}`,
+          questionnaire_answers: {
+            niche: result.niche || result.category || '',
+            website: result.website || '',
+            rating: result.rating || 0,
+            address: result.address || '',
+          },
+        });
+
+      if (proposalErr) {
+        console.error('Error saving proposal:', proposalErr);
+        toast.error('Erro ao salvar proposta');
+        return;
+      }
+
+      toast.success(`Projeto ${result.name} aceito e salvo!`);
+      setDetailModalOpen(false);
+      setSelectedBusiness(null);
+      if (onAccepted) {
+        setTimeout(() => onAccepted(), 300);
+      }
+    } catch (err) {
+      console.error('Error accepting project:', err);
+      toast.error('Erro ao aceitar projeto');
     }
   };
 
