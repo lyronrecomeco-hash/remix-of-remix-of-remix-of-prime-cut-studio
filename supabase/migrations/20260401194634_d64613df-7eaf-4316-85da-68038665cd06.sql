@@ -1,0 +1,2 @@
+ALTER TABLE public.checkout_gateway_config DROP CONSTRAINT IF EXISTS checkout_gateway_config_gateway_check;
+ALTER TABLE public.checkout_gateway_config ADD CONSTRAINT checkout_gateway_config_gateway_check CHECK (gateway = ANY (ARRAY['abacatepay'::text, 'asaas'::text, 'misticpay'::text, 'cakto'::text]));
