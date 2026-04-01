@@ -6,7 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Simple encryption for API keys (XOR with a secret key)
+const CAKTO_TOKEN_URL = 'https://api.cakto.com.br/public_api/token/';
+
 function encryptApiKey(apiKey: string, userId: string): string {
   const secret = `${userId}-genesis-gateway-2024`;
   let result = '';
@@ -26,7 +27,6 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify JWT
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
       return new Response(
@@ -45,14 +45,6 @@ serve(async (req) => {
       );
     }
 
-    // Check if user is admin (lyronrp@gmail.com)
-    if (user.email !== 'lyronrp@gmail.com') {
-      return new Response(
-        JSON.stringify({ error: 'Acesso negado' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     const body = await req.json();
     const { gateway, apiKey, sandboxMode, clientId, clientSecret } = body;
 
@@ -63,7 +55,7 @@ serve(async (req) => {
       );
     }
 
-    if (!['abacatepay', 'asaas', 'misticpay'].includes(gateway)) {
+    if (!['abacatepay', 'asaas', 'misticpay', 'cakto'].includes(gateway)) {
       return new Response(
         JSON.stringify({ error: 'Gateway inválido' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -71,10 +63,10 @@ serve(async (req) => {
     }
 
     // Validate required fields based on gateway
-    if (gateway === 'misticpay') {
+    if (gateway === 'misticpay' || gateway === 'cakto') {
       if (!clientId || !clientSecret) {
         return new Response(
-          JSON.stringify({ error: 'Client ID e Client Secret são obrigatórios para MisticPay' }),
+          JSON.stringify({ error: `Client ID e Client Secret são obrigatórios para ${gateway}` }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -89,49 +81,54 @@ serve(async (req) => {
 
     console.log(`Saving ${gateway} credentials for user:`, user.id);
 
-    // Test the API key/credentials first
     let isValid = false;
 
-    if (gateway === 'misticpay') {
-      // MisticPay requires IP whitelisting, so we skip API validation
-      // and trust the user's credentials. They will be tested on first payment.
+    if (gateway === 'cakto') {
+      // Validate Cakto credentials via OAuth2 token endpoint
+      try {
+        const response = await fetch(CAKTO_TOKEN_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            client_id: clientId,
+            client_secret: clientSecret,
+          }),
+        });
+
+        if (response.ok) {
+          isValid = true;
+          const data = await response.json();
+          console.log(`Cakto auth valid, token expires in ${data.expires_in}s`);
+        } else {
+          const errorText = await response.text();
+          console.log('Cakto auth failed:', response.status, errorText);
+        }
+      } catch (e) {
+        console.error('Cakto auth error:', e);
+      }
+    } else if (gateway === 'misticpay') {
       console.log('MisticPay credentials saved without API validation (IP whitelisting required)');
       isValid = true;
     } else if (gateway === 'asaas') {
       const baseUrl = sandboxMode 
         ? 'https://api-sandbox.asaas.com/v3' 
         : 'https://api.asaas.com/v3';
-
       try {
         const testResponse = await fetch(`${baseUrl}/customers?limit=1`, {
-          headers: {
-            'access_token': apiKey,
-            'Content-Type': 'application/json',
-          },
+          headers: { 'access_token': apiKey, 'Content-Type': 'application/json' },
         });
-
         isValid = testResponse.ok;
-        if (!isValid) {
-          const errorData = await testResponse.json();
-          console.log('Asaas API test failed:', errorData);
-        }
+        if (!isValid) console.log('Asaas API test failed:', await testResponse.json());
       } catch (e) {
         console.error('Asaas API test error:', e);
       }
     } else if (gateway === 'abacatepay') {
       try {
         const testResponse = await fetch('https://api.abacatepay.com/v1/billing/list', {
-          headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
         });
-
         isValid = testResponse.ok;
-        if (!isValid) {
-          const errorData = await testResponse.json();
-          console.log('AbacatePay API test failed:', errorData);
-        }
+        if (!isValid) console.log('AbacatePay API test failed:', await testResponse.json());
       } catch (e) {
         console.error('AbacatePay API test error:', e);
       }
@@ -146,7 +143,6 @@ serve(async (req) => {
 
     console.log(`${gateway} credentials validated successfully`);
 
-    // Prepare upsert data based on gateway
     const upsertData: Record<string, unknown> = {
       user_id: user.id,
       gateway,
@@ -155,22 +151,29 @@ serve(async (req) => {
       updated_at: new Date().toISOString(),
     };
 
-    if (gateway === 'misticpay') {
+    if (gateway === 'cakto') {
+      upsertData.cakto_client_id_hash = encryptApiKey(clientId, user.id);
+      upsertData.cakto_client_secret_hash = encryptApiKey(clientSecret, user.id);
+      upsertData.asaas_access_token_hash = null;
+      upsertData.misticpay_client_id_hash = null;
+      upsertData.misticpay_client_secret_hash = null;
+    } else if (gateway === 'misticpay') {
       upsertData.misticpay_client_id_hash = encryptApiKey(clientId, user.id);
       upsertData.misticpay_client_secret_hash = encryptApiKey(clientSecret, user.id);
       upsertData.asaas_access_token_hash = null;
+      upsertData.cakto_client_id_hash = null;
+      upsertData.cakto_client_secret_hash = null;
     } else {
       upsertData.asaas_access_token_hash = encryptApiKey(apiKey, user.id);
       upsertData.misticpay_client_id_hash = null;
       upsertData.misticpay_client_secret_hash = null;
+      upsertData.cakto_client_id_hash = null;
+      upsertData.cakto_client_secret_hash = null;
     }
 
-    // Upsert the gateway config
     const { error: upsertError } = await supabase
       .from('checkout_gateway_config')
-      .upsert(upsertData, {
-        onConflict: 'user_id,gateway',
-      });
+      .upsert(upsertData, { onConflict: 'user_id,gateway' });
 
     if (upsertError) {
       console.error('Error upserting config:', upsertError);
@@ -183,10 +186,7 @@ serve(async (req) => {
     console.log(`${gateway} configuration saved successfully`);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: 'Configuração salva com sucesso!',
-      }),
+      JSON.stringify({ success: true, message: 'Configuração salva com sucesso!' }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
