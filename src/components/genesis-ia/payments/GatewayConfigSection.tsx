@@ -27,6 +27,8 @@ export function GatewayConfigSection() {
   const [isSaving, setIsSaving] = useState(false);
   const [isConfigured, setIsConfigured] = useState(false);
   const [configId, setConfigId] = useState<string | null>(null);
+  const [maskedClientId, setMaskedClientId] = useState('');
+  const [maskedSecret, setMaskedSecret] = useState('');
   
   const [clientId, setClientId] = useState('');
   const [clientSecret, setClientSecret] = useState('');
@@ -53,6 +55,15 @@ export function GatewayConfigSection() {
       if (data) {
         setConfigId(data.id);
         setIsConfigured(data.api_key_configured);
+        // Show censored versions of credentials
+        if (data.cakto_client_id_hash) {
+          const hash = data.cakto_client_id_hash as string;
+          setMaskedClientId(`${hash.substring(0, 6)}••••••••${hash.substring(hash.length - 4)}`);
+        }
+        if (data.cakto_client_secret_hash) {
+          const hash = data.cakto_client_secret_hash as string;
+          setMaskedSecret(`${hash.substring(0, 6)}••••••••${hash.substring(hash.length - 4)}`);
+        }
       }
     } catch (error) {
       console.error('Error loading config:', error);
