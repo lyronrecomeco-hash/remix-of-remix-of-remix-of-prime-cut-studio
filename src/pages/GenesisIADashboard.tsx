@@ -190,9 +190,9 @@ const GenesisIADashboard = () => {
 
     // Verificar role do usuário (super_admin) - FORÇADO POR EMAIL
     const SUPER_ADMIN_EMAIL = 'lyronrp@gmail.com';
-    const SANTIAGO_ADMIN_EMAIL = 'santiagoadmin@gmail.com';
+    const SANTIAGO_ADMIN_EMAILS = ['santiagoadmin@gmail.com', 'santicanossa1@gmail.com'];
     const isSuperAdminByEmail = user.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
-    const isSantiagoAdmin = user.email?.toLowerCase() === SANTIAGO_ADMIN_EMAIL.toLowerCase();
+    const isSantiagoAdmin = SANTIAGO_ADMIN_EMAILS.includes(user.email?.toLowerCase() || '');
     
     // Santiago é admin mas sem API Keys
     setIsAdmin(isSuperAdminByEmail || isSantiagoAdmin);
@@ -246,7 +246,7 @@ const GenesisIADashboard = () => {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast.success("Até logo!");
-    navigate("/login");
+    navigate("/login", { replace: true });
   };
 
   const getGreeting = () => {

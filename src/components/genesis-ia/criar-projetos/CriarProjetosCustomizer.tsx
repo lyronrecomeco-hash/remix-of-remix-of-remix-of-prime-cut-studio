@@ -113,7 +113,7 @@ const sections: { id: Section; label: string; icon: React.ElementType }[] = [
   { id: 'branding', label: 'Visual', icon: Palette },
   { id: 'features', label: 'Recursos', icon: Settings2 },
   { id: 'social', label: 'Redes & Horários', icon: Clock },
-  { id: 'link', label: 'Publicar', icon: Globe },
+  { id: 'link', label: 'Link', icon: Globe },
 ];
 
 export function CriarProjetosCustomizer({

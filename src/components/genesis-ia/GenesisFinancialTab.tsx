@@ -48,34 +48,57 @@ interface GenesisFinancialTabProps {
   userEmail?: string;
 }
 
-// Conta especial com dados financeiros reais simulados para produção de conteúdo
+// Contas especiais com dados financeiros simulados
 const CONTENT_ACCOUNT_EMAIL = "lyronrecomeco@gmail.com";
+const SANTIAGO_ACCOUNT_EMAILS = ["santiagoadmin@gmail.com", "santicanossa1@gmail.com"];
 
 // Métricas SaaS estratégicas - operação consolidada com 32 contratos ativos
-// MRR: R$14.256 | ARR: R$171.072 | Ticket médio: R$445,50 | Churn: 2.8%
 const CONTENT_ACCOUNT_FINANCIAL_DATA = {
-  totalRevenue: 89470, // Receita acumulada 6 meses
-  thisMonth: 18340, // Receita do mês (renovações + novos)
-  lastMonth: 15890, // Mês anterior
-  growth: 15.42, // Crescimento MoM sustentável
-  directSubscriptions: 52680, // 59% orgânico/indicação
-  promoSubscriptions: 24150, // 27% via links promo
-  contractsRevenue: 12640, // 14% upsell/enterprise
-  activeSubscriptions: 32, // Contratos ativos
-  signedContracts: 32, // Total de contratos
+  totalRevenue: 89470,
+  thisMonth: 18340,
+  lastMonth: 15890,
+  growth: 15.42,
+  directSubscriptions: 52680,
+  promoSubscriptions: 24150,
+  contractsRevenue: 12640,
+  activeSubscriptions: 32,
+  signedContracts: 32,
   referrals: 47,
   convertedReferrals: 19,
   revenueHistory: [
-    { month: 'Ago', receita: 8420 },   // 12 contratos
-    { month: 'Set', receita: 10890 },  // 17 contratos (+5)
-    { month: 'Out', receita: 13240 },  // 22 contratos (+5)
-    { month: 'Nov', receita: 15890 },  // 27 contratos (+5)
-    { month: 'Dez', receita: 17560 },  // 30 contratos (+3)
-    { month: 'Jan', receita: 18340 },  // 32 contratos (+2)
+    { month: 'Ago', receita: 8420 },
+    { month: 'Set', receita: 10890 },
+    { month: 'Out', receita: 13240 },
+    { month: 'Nov', receita: 15890 },
+    { month: 'Dez', receita: 17560 },
+    { month: 'Jan', receita: 18340 },
   ],
 };
 
-// Contratos SaaS reais - empresas de diversos nichos
+// Dados financeiros do Santiago
+const SANTIAGO_FINANCIAL_DATA = {
+  totalRevenue: 37642.80,
+  thisMonth: 4890.00,
+  lastMonth: 3720.50,
+  growth: 31.4,
+  directSubscriptions: 18920.00,
+  promoSubscriptions: 11280.30,
+  contractsRevenue: 7442.50,
+  activeSubscriptions: 14,
+  signedContracts: 18,
+  referrals: 0,
+  convertedReferrals: 0,
+  revenueHistory: [
+    { month: 'Nov', receita: 2140 },
+    { month: 'Dez', receita: 3890 },
+    { month: 'Jan', receita: 5240 },
+    { month: 'Fev', receita: 4670 },
+    { month: 'Mar', receita: 3720 },
+    { month: 'Abr', receita: 4890 },
+  ],
+};
+
+// Contratos SaaS reais
 const CONTENT_ACCOUNT_CONTRACTS = [
   { id: 1, client: 'Barbearia Premium Cuts', value: 297, date: '2026-01-26', status: 'signed' },
   { id: 2, client: 'Clínica Odonto Smile', value: 697, date: '2026-01-25', status: 'signed' },
@@ -111,13 +134,36 @@ const CONTENT_ACCOUNT_CONTRACTS = [
   { id: 32, client: 'Cervejaria Artesanal', value: 697, date: '2025-12-15', status: 'signed' },
 ];
 
+const SANTIAGO_CONTRACTS = [
+  { id: 101, client: 'Barbearia Kings Cut', value: 297, date: '2026-03-28', status: 'signed' },
+  { id: 102, client: 'Pizzaria Don Massimo', value: 497, date: '2026-03-25', status: 'signed' },
+  { id: 103, client: 'Clínica Sorriso Perfeito', value: 697, date: '2026-03-22', status: 'signed' },
+  { id: 104, client: 'Pet Shop Patinhas', value: 297, date: '2026-03-18', status: 'signed' },
+  { id: 105, client: 'Studio Fitness Pro', value: 997, date: '2026-03-15', status: 'signed' },
+  { id: 106, client: 'Restaurante Tempero Caseiro', value: 497, date: '2026-03-10', status: 'signed' },
+  { id: 107, client: 'Salão Glamour Hair', value: 297, date: '2026-03-05', status: 'signed' },
+  { id: 108, client: 'Auto Mecânica Express', value: 697, date: '2026-02-28', status: 'signed' },
+  { id: 109, client: 'Loja Street Wear', value: 297, date: '2026-02-22', status: 'signed' },
+  { id: 110, client: 'Hamburgueria Smoke & Fire', value: 497, date: '2026-02-18', status: 'signed' },
+  { id: 111, client: 'Clínica Vet Amigos', value: 697, date: '2026-02-12', status: 'signed' },
+  { id: 112, client: 'Padaria Artesanal Grão', value: 297, date: '2026-02-05', status: 'signed' },
+  { id: 113, client: 'Estúdio de Pilates Zen', value: 997, date: '2026-01-28', status: 'signed' },
+  { id: 114, client: 'Açaí & Bowls Tropical', value: 297, date: '2026-01-20', status: 'signed' },
+  { id: 115, client: 'Escritório Advocacia JR', value: 1297, date: '2026-01-15', status: 'signed' },
+  { id: 116, client: 'Cafeteria Aroma', value: 297, date: '2026-01-08', status: 'signed' },
+  { id: 117, client: 'Barbearia Old School SP', value: 297, date: '2025-12-28', status: 'signed' },
+  { id: 118, client: 'Consultório Dra. Mariana', value: 697, date: '2025-12-15', status: 'signed' },
+];
+
 export function GenesisFinancialTab({ userId, userEmail }: GenesisFinancialTabProps) {
   const { data: realData, isLoading, period, setPeriod } = useFinancialData(userId);
 
-  // Conta de conteúdo usa dados financeiros próprios
+  // Conta de conteúdo ou Santiago usam dados próprios
   const isContentAccount = userEmail === CONTENT_ACCOUNT_EMAIL;
-  const data = isContentAccount ? CONTENT_ACCOUNT_FINANCIAL_DATA : realData;
-  const contracts = isContentAccount ? CONTENT_ACCOUNT_CONTRACTS : [];
+  const isSantiagoAccount = SANTIAGO_ACCOUNT_EMAILS.includes(userEmail?.toLowerCase() || '');
+  const isSpecialAccount = isContentAccount || isSantiagoAccount;
+  const data = isContentAccount ? CONTENT_ACCOUNT_FINANCIAL_DATA : isSantiagoAccount ? SANTIAGO_FINANCIAL_DATA : realData;
+  const contracts = isContentAccount ? CONTENT_ACCOUNT_CONTRACTS : isSantiagoAccount ? SANTIAGO_CONTRACTS : [];
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -140,7 +186,7 @@ export function GenesisFinancialTab({ userId, userEmail }: GenesisFinancialTabPr
     visible: { opacity: 1, y: 0 }
   };
 
-  if (isLoading && !isContentAccount) {
+  if (isLoading && !isSpecialAccount) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -161,8 +207,8 @@ export function GenesisFinancialTab({ userId, userEmail }: GenesisFinancialTabPr
   }));
 
   // Métricas de indicações
-  const referrals = isContentAccount ? CONTENT_ACCOUNT_FINANCIAL_DATA.referrals : 0;
-  const convertedReferrals = isContentAccount ? CONTENT_ACCOUNT_FINANCIAL_DATA.convertedReferrals : 0;
+  const referrals = isSpecialAccount ? (data as any).referrals || 0 : 0;
+  const convertedReferrals = isSpecialAccount ? (data as any).convertedReferrals || 0 : 0;
 
   return (
     <TooltipProvider>

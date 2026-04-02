@@ -40,6 +40,7 @@ type FilterTab = 'all' | 'apps' | 'sites';
 
 // Projetos mockados para conta de conteúdo
 const MOCK_DATA_EMAIL = "lyronrecomeco@gmail.com";
+const SANTIAGO_EMAILS = ["santiagoadmin@gmail.com", "santicanossa1@gmail.com"];
 const MOCKED_PROJECTS: ProjectConfig[] = [
   {
     id: 'mock-1',
@@ -171,6 +172,112 @@ const MOCKED_PROJECTS: ProjectConfig[] = [
   },
 ];
 
+// Projetos mock do Santiago - nichos tendenciosos
+const SANTIAGO_PROJECTS: ProjectConfig[] = [
+  {
+    id: 'santiago-1',
+    affiliate_id: 'santiago',
+    template_slug: 'barbearia-premium',
+    template_name: 'Barbearia Kings Cut',
+    unique_code: 'BARB901',
+    custom_slug: 'kings-cut',
+    config: { businessName: 'Kings Cut Barbearia', phone: '11999001122' },
+    is_active: true,
+    views_count: 1243,
+    created_at: '2026-02-15T10:00:00Z',
+    updated_at: '2026-03-30T14:30:00Z',
+    client_name: 'Kings Cut Barbearia',
+    category: 'servicos',
+    platform: 'lovable',
+    last_prompt: '# Projeto: Kings Cut Barbearia\n\nSite profissional para barbearia premium com agendamento online, galeria de cortes, perfil dos barbeiros e integração com WhatsApp.\n\n## Stack: React + Tailwind + Supabase\n## Plataforma: Lovable\n\nDesign dark com tons dourados, identidade visual masculina e moderna.',
+  },
+  {
+    id: 'santiago-2',
+    affiliate_id: 'santiago',
+    template_slug: 'pizzaria-moderna',
+    template_name: 'Don Massimo Pizzaria',
+    unique_code: 'PIZZA902',
+    custom_slug: 'don-massimo',
+    config: { businessName: 'Don Massimo', phone: '11988776655' },
+    is_active: true,
+    views_count: 892,
+    created_at: '2026-02-10T09:00:00Z',
+    updated_at: '2026-03-28T16:00:00Z',
+    client_name: 'Don Massimo Pizzaria',
+    category: 'gastronomia',
+    platform: 'lovable',
+    last_prompt: '# Projeto: Don Massimo Pizzaria\n\nCardápio digital interativo com pedidos via WhatsApp, sistema de delivery e rastreamento.\n\n## Stack: React + Tailwind\n## Plataforma: Lovable\n\nDesign vermelho e preto, estilo italiano clássico com toque moderno.',
+  },
+  {
+    id: 'santiago-3',
+    affiliate_id: 'santiago',
+    template_slug: 'clinica-odonto',
+    template_name: 'Sorriso Perfeito Clínica',
+    unique_code: 'DENT903',
+    custom_slug: 'sorriso-perfeito',
+    config: { businessName: 'Sorriso Perfeito', phone: '11977665544' },
+    is_active: true,
+    views_count: 567,
+    created_at: '2026-01-28T11:00:00Z',
+    updated_at: '2026-03-25T10:00:00Z',
+    client_name: 'Clínica Sorriso Perfeito',
+    category: 'saude',
+    platform: 'bolt',
+    last_prompt: '# Projeto: Clínica Sorriso Perfeito\n\nSite institucional para clínica odontológica com agendamento, tratamentos disponíveis e depoimentos.\n\n## Stack: React + Tailwind\n## Plataforma: Bolt\n\nDesign clean azul e branco, transmitindo confiança e profissionalismo.',
+  },
+  {
+    id: 'santiago-4',
+    affiliate_id: 'santiago',
+    template_slug: 'academia-fitness',
+    template_name: 'Fitness Pro Studio',
+    unique_code: 'FIT904',
+    custom_slug: 'fitness-pro',
+    config: { businessName: 'Fitness Pro', phone: '11966554433' },
+    is_active: true,
+    views_count: 1089,
+    created_at: '2026-01-20T08:00:00Z',
+    updated_at: '2026-03-22T12:00:00Z',
+    client_name: 'Studio Fitness Pro',
+    category: 'fitness',
+    platform: 'lovable',
+    last_prompt: '# Projeto: Studio Fitness Pro\n\nPlataforma completa para academia com aulas, personal trainer, planos e check-in digital.\n\n## Stack: React + Tailwind + Supabase\n## Plataforma: Lovable\n\nDesign escuro com neon verde, energia e performance.',
+  },
+  {
+    id: 'santiago-5',
+    affiliate_id: 'santiago',
+    template_slug: 'restaurante-gourmet',
+    template_name: 'Tempero Caseiro',
+    unique_code: 'REST905',
+    custom_slug: 'tempero-caseiro',
+    config: { businessName: 'Tempero Caseiro', phone: '11955443322' },
+    is_active: true,
+    views_count: 734,
+    created_at: '2026-01-12T14:00:00Z',
+    updated_at: '2026-03-18T09:00:00Z',
+    client_name: 'Restaurante Tempero Caseiro',
+    category: 'gastronomia',
+    platform: 'lovable',
+    last_prompt: '# Projeto: Restaurante Tempero Caseiro\n\nSite com cardápio digital, reservas online e programa de fidelidade.\n\n## Stack: React + Tailwind\n## Plataforma: Lovable\n\nDesign acolhedor com tons terrosos e fotos de alta qualidade.',
+  },
+  {
+    id: 'santiago-6',
+    affiliate_id: 'santiago',
+    template_slug: 'petshop-animal',
+    template_name: 'Patinhas Pet Shop',
+    unique_code: 'PET906',
+    custom_slug: 'patinhas-pet',
+    config: { businessName: 'Patinhas', phone: '11944332211' },
+    is_active: true,
+    views_count: 456,
+    created_at: '2026-01-05T10:00:00Z',
+    updated_at: '2026-03-15T11:00:00Z',
+    client_name: 'Pet Shop Patinhas',
+    category: 'pets',
+    platform: 'v0',
+    last_prompt: '# Projeto: Pet Shop Patinhas\n\nE-commerce para pet shop com agendamento de banho e tosa, produtos e delivery.\n\n## Stack: React + Tailwind\n## Plataforma: v0\n\nDesign colorido e divertido com mascote personalizado.',
+  },
+];
+
 export function ProjectLibrary({ affiliateId, onEdit, onCreateNew, onBack }: ProjectLibraryProps) {
   const [projects, setProjects] = useState<ProjectConfig[]>([]);
   const [loading, setLoading] = useState(true);
@@ -231,7 +338,8 @@ export function ProjectLibrary({ affiliateId, onEdit, onCreateNew, onBack }: Pro
       .single();
     
     const isMocked = affiliateData?.email === MOCK_DATA_EMAIL;
-    setIsMockedAccount(isMocked);
+    const isSantiago = SANTIAGO_EMAILS.includes(affiliateData?.email?.toLowerCase() || '');
+    setIsMockedAccount(isMocked || isSantiago);
     
     const { data, error } = await supabase
       .from('affiliate_template_configs')
@@ -242,16 +350,16 @@ export function ProjectLibrary({ affiliateId, onEdit, onCreateNew, onBack }: Pro
     if (error) {
       console.error('Error loading projects:', error);
       toast.error('Erro ao carregar projetos');
-      // Se for conta mockada, usa os projetos mock mesmo com erro
-      if (isMocked) {
-        setProjects(MOCKED_PROJECTS);
-      }
+      if (isMocked) setProjects(MOCKED_PROJECTS);
+      else if (isSantiago) setProjects(SANTIAGO_PROJECTS);
     } else {
-      // Para conta mockada, combina projetos reais com mockados
+      const realProjects = data as ProjectConfig[];
       if (isMocked) {
-        setProjects([...MOCKED_PROJECTS, ...(data as ProjectConfig[])]);
+        setProjects([...MOCKED_PROJECTS, ...realProjects]);
+      } else if (isSantiago) {
+        setProjects([...SANTIAGO_PROJECTS, ...realProjects]);
       } else {
-        setProjects(data as ProjectConfig[]);
+        setProjects(realProjects);
       }
     }
     setLoading(false);
