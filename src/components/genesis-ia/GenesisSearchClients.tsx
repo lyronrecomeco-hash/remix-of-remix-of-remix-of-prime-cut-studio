@@ -77,6 +77,7 @@ interface SearchResult {
 
 interface GenesisSearchClientsProps {
   userId: string;
+  affiliateId?: string | null;
   onAccepted?: () => void;
 }
 
