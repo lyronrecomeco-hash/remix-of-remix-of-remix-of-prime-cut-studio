@@ -4725,7 +4725,7 @@ export type Database = {
           date: string
           id: string
           instance_id: string
-          integration_id: string
+          integration_id: string | null
           pix_expired: number | null
           pix_generated: number | null
           purchases_approved: number | null
@@ -4744,7 +4744,7 @@ export type Database = {
           date: string
           id?: string
           instance_id: string
-          integration_id: string
+          integration_id?: string | null
           pix_expired?: number | null
           pix_generated?: number | null
           purchases_approved?: number | null
@@ -4763,7 +4763,7 @@ export type Database = {
           date?: string
           id?: string
           instance_id?: string
-          integration_id?: string
+          integration_id?: string | null
           pix_expired?: number | null
           pix_generated?: number | null
           purchases_approved?: number | null
