@@ -171,7 +171,7 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
       {filteredProposals.length === 0 ? (
         <Card className="border-white/10 bg-white/5">
           <CardContent className="py-12 text-center">
-            <Target className="w-12 h-12 mx-auto text-muted-foreground/30 mb-4" />
+            <Target className="w-12 h-12 mx-auto text-white/20 mb-4" />
             <h3 className="text-lg font-medium text-muted-foreground mb-2">
               {searchTerm ? 'Nenhuma proposta encontrada' : 'Nenhuma proposta aceita ainda'}
             </h3>
