@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Sparkles, Copy, Check, Loader2, Palette, Type, Globe, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Sparkles, Copy, Check, Loader2, Palette, Type, Globe, MessageSquare, Monitor } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,6 +8,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { TemplateModel } from './templateModels';
 import { generateTemplatePrompt } from './generateTemplatePrompt';
+
+// Import AI icons
+import lovableIcon from '@/assets/ai-icons/lovable.ico';
+import cursorIcon from '@/assets/ai-icons/cursor.png';
+import v0Icon from '@/assets/ai-icons/v0.svg';
+import boltIcon from '@/assets/ai-icons/bolt.svg';
+import windsurfIcon from '@/assets/ai-icons/windsurf.svg';
 
 interface TemplateQuickFormProps {
   template: TemplateModel;
@@ -25,7 +32,16 @@ export interface TemplateFormData {
   slogan: string;
   language: string;
   additionalDescription: string;
+  targetAI: string;
 }
+
+const AI_TARGETS = [
+  { id: 'lovable', name: 'Lovable', icon: lovableIcon },
+  { id: 'cursor', name: 'Cursor', icon: cursorIcon },
+  { id: 'v0', name: 'v0 (Vercel)', icon: v0Icon },
+  { id: 'bolt', name: 'Bolt.new', icon: boltIcon },
+  { id: 'windsurf', name: 'Windsurf', icon: windsurfIcon },
+];
 
 const LANGUAGES = [
   { code: 'pt-BR', label: 'Portugues (Brasil)' },
@@ -66,6 +82,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
     slogan: '',
     language: 'Portugues (Brasil)',
     additionalDescription: '',
+    targetAI: 'lovable',
   });
 
   const [generatedPrompt, setGeneratedPrompt] = useState<string | null>(null);
@@ -80,12 +97,12 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
 
   const handleGenerate = () => {
     setGenerating(true);
-    // Simulate a more thorough generation process
     setTimeout(() => {
       const prompt = generateTemplatePrompt(template, formData);
       setGeneratedPrompt(prompt);
       setGenerating(false);
-      toast.success('Prompt profissional gerado!', { description: 'Copie e cole na Lovable ou na plataforma de IA desejada.' });
+      const aiName = AI_TARGETS.find(a => a.id === formData.targetAI)?.name || formData.targetAI;
+      toast.success('Prompt profissional gerado!', { description: `Otimizado para ${aiName}. Copie e cole na plataforma.` });
     }, 2500);
   };
 
@@ -99,7 +116,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
 
   return (
     <div className="space-y-0 px-1 sm:px-0">
-      {/* Header - same style as TemplateModelSelector */}
+      {/* Header */}
       <div className="flex items-center justify-between p-3 sm:p-4 rounded-t-xl bg-white/5 border border-white/10 border-b-0">
         <div className="flex items-center gap-2 sm:gap-3">
           <Button
@@ -158,6 +175,46 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
               exit={{ opacity: 0, y: -10 }}
               className="space-y-5"
             >
+              {/* Target AI Selector */}
+              <div className="space-y-3">
+                <label className="flex items-center gap-2 text-xs sm:text-sm font-medium">
+                  <Monitor className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
+                  IA de Destino
+                </label>
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-2.5">
+                  {AI_TARGETS.map((ai, index) => {
+                    const isSelected = formData.targetAI === ai.id;
+                    return (
+                      <motion.button
+                        key={ai.id}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: index * 0.03 }}
+                        onClick={() => updateField('targetAI', ai.id)}
+                        className={`relative p-2.5 sm:p-3 rounded-xl border transition-all ${
+                          isSelected
+                            ? 'bg-primary/10 border-primary/50 ring-2 ring-primary/30'
+                            : 'bg-white/5 border-white/10 hover:border-white/20'
+                        }`}
+                      >
+                        <div className="flex flex-col items-center gap-1.5 sm:gap-2">
+                          <img src={ai.icon} alt={ai.name} className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-contain" />
+                          <p className="text-[10px] sm:text-xs font-medium">{ai.name}</p>
+                        </div>
+                        {isSelected && (
+                          <div className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-primary flex items-center justify-center">
+                            <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-primary-foreground" />
+                          </div>
+                        )}
+                      </motion.button>
+                    );
+                  })}
+                </div>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">
+                  💡 Prompt otimizado para <span className="text-primary font-medium">{AI_TARGETS.find(a => a.id === formData.targetAI)?.name}</span>
+                </p>
+              </div>
+
               {/* Identity */}
               <div className="space-y-3">
                 <label className="flex items-center gap-2 text-xs sm:text-sm font-medium">
@@ -171,7 +228,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                       value={formData.businessName}
                       onChange={e => updateField('businessName', e.target.value)}
                       placeholder="Ex: Pizzaria do Joao"
-                      className="h-10 text-sm bg-muted/30 border-border focus:border-primary/50"
+                      className="h-10 text-sm bg-white/5 border-white/10 focus:border-primary/50 placeholder:text-white/30"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -180,7 +237,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                       value={formData.cityState}
                       onChange={e => updateField('cityState', e.target.value)}
                       placeholder="Ex: Sao Paulo, SP"
-                      className="h-10 text-sm bg-muted/30 border-border focus:border-primary/50"
+                      className="h-10 text-sm bg-white/5 border-white/10 focus:border-primary/50 placeholder:text-white/30"
                     />
                   </div>
                 </div>
@@ -190,12 +247,12 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                     value={formData.slogan}
                     onChange={e => updateField('slogan', e.target.value)}
                     placeholder="Ex: O melhor sabor da cidade"
-                    className="h-10 text-sm bg-muted/30 border-border focus:border-primary/50"
+                    className="h-10 text-sm bg-white/5 border-white/10 focus:border-primary/50 placeholder:text-white/30"
                   />
                 </div>
               </div>
 
-              {/* Color Palette - Card Selection */}
+              {/* Color Palette */}
               <div className="space-y-3">
                 <label className="flex items-center gap-2 text-xs sm:text-sm font-medium">
                   <Palette className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
@@ -217,7 +274,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                         className={`relative p-2.5 sm:p-3 rounded-xl border transition-all ${
                           isSelected
                             ? 'bg-primary/10 border-primary/50 ring-2 ring-primary/30'
-                            : 'bg-muted/30 border-border hover:border-primary/30'
+                            : 'bg-white/5 border-white/10 hover:border-white/20'
                         }`}
                       >
                         <div className="flex flex-col items-center gap-1.5 sm:gap-2">
@@ -236,8 +293,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                     );
                   })}
                 </div>
-                {/* Custom Colors */}
-                <div className="flex gap-3 p-2.5 rounded-lg bg-muted/30 border border-border">
+                <div className="flex gap-3 p-2.5 rounded-lg bg-white/5 border border-white/10">
                   <div className="flex items-center gap-2 flex-1">
                     <span className="text-[10px] sm:text-xs text-muted-foreground">Primaria:</span>
                     <input type="color" value={formData.primaryColor} onChange={e => updateField('primaryColor', e.target.value)} className="w-7 h-7 rounded cursor-pointer border-0" />
@@ -251,7 +307,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                 </div>
               </div>
 
-              {/* Typography - Card Selection */}
+              {/* Typography */}
               <div className="space-y-3">
                 <label className="flex items-center gap-2 text-xs sm:text-sm font-medium">
                   <Type className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
@@ -270,7 +326,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                         className={`relative p-2 sm:p-2.5 rounded-lg border text-center transition-all ${
                           isSelected
                             ? 'bg-primary/10 border-primary/50 ring-2 ring-primary/30'
-                            : 'bg-muted/30 border-border hover:border-primary/30'
+                            : 'bg-white/5 border-white/10 hover:border-white/20'
                         }`}
                         style={{ fontFamily: font }}
                       >
@@ -286,7 +342,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                 </div>
               </div>
 
-              {/* Language - Card Selection */}
+              {/* Language */}
               <div className="space-y-3">
                 <label className="flex items-center gap-2 text-xs sm:text-sm font-medium">
                   <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
@@ -305,7 +361,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                         className={`relative p-2 sm:p-2.5 rounded-lg border text-center transition-all ${
                           isSelected
                             ? 'bg-primary/10 border-primary/50 ring-2 ring-primary/30'
-                            : 'bg-muted/30 border-border hover:border-primary/30'
+                            : 'bg-white/5 border-white/10 hover:border-white/20'
                         }`}
                       >
                         <p className="text-[10px] sm:text-xs font-medium truncate">{lang.label}</p>
@@ -327,13 +383,13 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                   value={formData.additionalDescription}
                   onChange={e => updateField('additionalDescription', e.target.value)}
                   placeholder="Descreva informacoes extras, funcionalidades especificas, estilo visual desejado..."
-                  className="min-h-[80px] text-sm resize-none bg-muted/30 border-border focus:border-primary/50"
+                  className="min-h-[80px] text-sm resize-none bg-white/5 border-white/10 focus:border-primary/50 placeholder:text-white/30"
                   rows={3}
                 />
               </div>
 
               {/* Generate Button */}
-              <div className="pt-2 border-t border-border">
+              <div className="pt-2 border-t border-white/10">
                 <Button
                   onClick={handleGenerate}
                   disabled={!canGenerate || generating}
@@ -347,7 +403,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4" />
-                      Gerar Prompt
+                      Gerar Prompt para {AI_TARGETS.find(a => a.id === formData.targetAI)?.name}
                     </>
                   )}
                 </Button>

@@ -7,8 +7,18 @@ export function generateTemplatePrompt(template: TemplateModel, form: TemplateFo
 
   const languageInstructions = getLanguageInstructions(form.language);
 
+  const aiName = (form as any).targetAI || 'lovable';
+  const AI_PLATFORMS: Record<string, string> = {
+    lovable: 'Lovable (React + Vite + Tailwind + Shadcn/UI)',
+    cursor: 'Cursor IDE (React + Vite + Tailwind)',
+    v0: 'v0 by Vercel (Next.js + Shadcn/UI)',
+    bolt: 'Bolt.new (Full-stack IA Environment)',
+    windsurf: 'Windsurf IDE (Codeium AI)',
+  };
+  const platformLabel = AI_PLATFORMS[aiName] || AI_PLATFORMS.lovable;
+
   return `# 🚀 PROJETO COMPLETO: ${form.businessName.toUpperCase()} — ${template.name.toUpperCase()}
-# 📋 Plataforma de destino: **Lovable** (React + Vite + Tailwind + Shadcn/UI)
+# 📋 Plataforma de destino: **${platformLabel}**
 
 ---
 
