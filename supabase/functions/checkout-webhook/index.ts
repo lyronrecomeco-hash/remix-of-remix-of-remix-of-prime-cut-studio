@@ -56,27 +56,179 @@ serve(async (req) => {
     let eventType: string = '';
     let newStatus: string = 'pending';
 
-    // Check if this is a Cakto webhook (has event field like purchase_approved, pix_generated, etc.)
-    const caktoEventTypes = ['pix_generated', 'purchase_approved', 'purchase_refused', 'purchase_refunded', 'initiate_checkout', 'checkout_abandonment', 'pix_expired', 'purchase_chargeback'];
-    const possibleCaktoEvent = body.event || body.type || body.event_type;
+    // Check if this is a Cakto webhook - support both English and Portuguese event names
+    const caktoEventMap: Record<string, string> = {
+      // Portuguese (as sent by Cakto API)
+      'pix_gerado': 'pix_generated',
+      'compra_aprovada': 'purchase_approved',
+      'compra_recusada': 'purchase_refused',
+      'compra_reembolsada': 'purchase_refunded',
+      'compra_chargeback': 'purchase_chargeback',
+      'checkout_iniciado': 'initiate_checkout',
+      'carrinho_abandonado': 'checkout_abandonment',
+      'pix_expirado': 'pix_expired',
+      'boleto_gerado': 'boleto_generated',
+      'boleto_expirado': 'boleto_expired',
+      'assinatura_ativa': 'subscription_active',
+      'assinatura_cancelada': 'subscription_cancelled',
+      'assinatura_atrasada': 'subscription_overdue',
+      'waiting_payment': 'pix_generated',
+      // English
+      'initiate_checkout': 'initiate_checkout',
+      'pix_generated': 'pix_generated',
+      'pix_expired': 'pix_expired',
+      'purchase_approved': 'purchase_approved',
+      'purchase_refused': 'purchase_refused',
+      'purchase_refunded': 'purchase_refunded',
+      'purchase_chargeback': 'purchase_chargeback',
+      'checkout_abandonment': 'checkout_abandonment',
+      'boleto_generated': 'boleto_generated',
+      'boleto_expired': 'boleto_expired',
+      'subscription_active': 'subscription_active',
+      'subscription_cancelled': 'subscription_cancelled',
+      'subscription_overdue': 'subscription_overdue',
+    };
+    const rawCaktoEvent = body.event || body.type || body.event_type;
+    // Also detect Cakto by presence of data.offer or data.product or data.subscription
+    const hasCaktoStructure = body.data?.offer || body.data?.product || body.data?.subscription || body.data?.pix;
+    const normalizedCaktoEvent = rawCaktoEvent ? caktoEventMap[rawCaktoEvent] : null;
     
-    if (possibleCaktoEvent && caktoEventTypes.includes(possibleCaktoEvent)) {
+    if (normalizedCaktoEvent || (hasCaktoStructure && rawCaktoEvent)) {
+      const possibleCaktoEvent = normalizedCaktoEvent || rawCaktoEvent;
       gateway = 'cakto';
       
-      // Extract order/transaction ID from Cakto payload
-      paymentId = body.id || body.transaction_id || body.order_id || body.checkout_id || null;
-      
-      // Also try nested order data
-      const caktoOrder = body.order || body.data || {};
-      if (!paymentId) {
-        paymentId = caktoOrder.id || caktoOrder.transaction_id || null;
+      // Cakto sends data nested under body.data
+      const caktoData = body.data || body;
+      paymentId = caktoData.id || caktoData.refId || body.id || body.transaction_id || body.order_id || null;
+
+      console.log(`[Cakto Webhook] Event: ${possibleCaktoEvent} (raw: ${rawCaktoEvent}), PaymentId: ${paymentId}`);
+
+      // Extract customer & product data from real Cakto payload structure
+      const caktoCustomer = caktoData.customer || body.customer || {};
+      const caktoProduct = caktoData.product || body.product || {};
+      const caktoOffer = caktoData.offer || body.offer || {};
+      const caktoSubscription = caktoData.subscription || {};
+      const orderValue = caktoData.amount || caktoData.baseAmount || caktoOffer.price || null;
+
+      // ========= LOG TO genesis_cakto_events =========
+      try {
+        // Find instance_id linked to this user/integration
+        let caktoInstanceId: string | null = null;
+        
+        // Try finding by customer email in genesis_users -> genesis_instances
+        const customerEmail = (caktoCustomer.email || body.email || '').toLowerCase();
+        if (customerEmail) {
+          const { data: gUser } = await supabase
+            .from('genesis_users')
+            .select('id')
+            .eq('email', customerEmail)
+            .maybeSingle();
+          
+          if (gUser) {
+            const { data: gInstance } = await supabase
+              .from('genesis_instances')
+              .select('id')
+              .eq('user_id', gUser.id)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            if (gInstance) caktoInstanceId = gInstance.id;
+          }
+        }
+
+        // If no instance found, try getting any active instance
+        if (!caktoInstanceId) {
+          const { data: anyInstance } = await supabase
+            .from('genesis_instances')
+            .select('id')
+            .eq('status', 'connected')
+            .limit(1)
+            .maybeSingle();
+          if (anyInstance) caktoInstanceId = anyInstance.id;
+        }
+
+        if (caktoInstanceId) {
+          const eventInsert = {
+            instance_id: caktoInstanceId,
+            event_type: possibleCaktoEvent,
+            external_id: paymentId || crypto.randomUUID(),
+            customer_name: caktoCustomer.name || `${caktoCustomer.first_name || ''} ${caktoCustomer.last_name || ''}`.trim() || null,
+            customer_email: customerEmail || null,
+            customer_phone: caktoCustomer.phone || caktoCustomer.cellphone || null,
+            product_id: caktoProduct.id || caktoProduct.external_id || null,
+            product_name: caktoProduct.name || caktoProduct.title || null,
+            offer_id: caktoOffer.id || caktoOffer.external_id || null,
+            offer_name: caktoOffer.name || caktoOffer.title || null,
+            order_value: orderValue ? Number(orderValue) : null,
+            currency: caktoOffer.currency || body.currency || 'BRL',
+            raw_payload: body,
+            processed: false,
+          };
+
+          await supabase.from('genesis_cakto_events').insert(eventInsert);
+          console.log(`[Cakto Events] Logged event: ${possibleCaktoEvent} for instance ${caktoInstanceId}`);
+
+          // ========= UPDATE genesis_cakto_analytics =========
+          const today = new Date().toISOString().split('T')[0];
+          const analyticsField: Record<string, string> = {
+            initiate_checkout: 'checkouts_started',
+            purchase_approved: 'purchases_approved',
+            purchase_refused: 'purchases_refused',
+            purchase_refunded: 'purchases_refunded',
+            purchase_chargeback: 'purchases_chargeback',
+            checkout_abandonment: 'cart_abandonments',
+            pix_generated: 'pix_generated',
+            pix_expired: 'pix_expired',
+          };
+
+          const fieldToUpdate = analyticsField[possibleCaktoEvent];
+          if (fieldToUpdate) {
+            // Upsert analytics row for today
+            const { data: existingAnalytics } = await supabase
+              .from('genesis_cakto_analytics')
+              .select('id, ' + fieldToUpdate + ', total_revenue')
+              .eq('instance_id', caktoInstanceId)
+              .eq('date', today)
+              .maybeSingle();
+
+            if (existingAnalytics) {
+              const updateObj: Record<string, unknown> = {
+                [fieldToUpdate]: (existingAnalytics[fieldToUpdate as keyof typeof existingAnalytics] as number || 0) + 1,
+                updated_at: new Date().toISOString(),
+              };
+              if (possibleCaktoEvent === 'purchase_approved' && orderValue) {
+                updateObj.total_revenue = (Number(existingAnalytics.total_revenue) || 0) + Number(orderValue) / 100;
+              }
+              await supabase
+                .from('genesis_cakto_analytics')
+                .update(updateObj)
+                .eq('id', existingAnalytics.id);
+            } else {
+              const insertObj: Record<string, unknown> = {
+                instance_id: caktoInstanceId,
+                integration_id: caktoInstanceId,
+                date: today,
+                [fieldToUpdate]: 1,
+              };
+              if (possibleCaktoEvent === 'purchase_approved' && orderValue) {
+                insertObj.total_revenue = Number(orderValue) / 100;
+              }
+              await supabase.from('genesis_cakto_analytics').insert(insertObj);
+            }
+            console.log(`[Cakto Analytics] Updated ${fieldToUpdate} for ${today}`);
+          }
+        }
+      } catch (caktoLogError) {
+        console.error('[Cakto Events] Error logging event:', caktoLogError);
+        // Don't fail the webhook
       }
 
-      console.log(`[Cakto Webhook] Event: ${possibleCaktoEvent}, PaymentId: ${paymentId}`);
-
+      // Map to payment status
       switch (possibleCaktoEvent) {
         case 'pix_generated':
-          eventType = 'pix_generated';
+        case 'boleto_generated':
+        case 'initiate_checkout':
+          eventType = possibleCaktoEvent;
           newStatus = 'pending';
           break;
         case 'purchase_approved':
@@ -94,6 +246,15 @@ serve(async (req) => {
         case 'purchase_chargeback':
           newStatus = 'refunded';
           eventType = 'payment_chargeback';
+          break;
+        case 'pix_expired':
+        case 'boleto_expired':
+          newStatus = 'expired';
+          eventType = 'payment_expired';
+          break;
+        case 'checkout_abandonment':
+          eventType = 'checkout_abandonment';
+          newStatus = 'pending';
           break;
         default:
           eventType = possibleCaktoEvent;
