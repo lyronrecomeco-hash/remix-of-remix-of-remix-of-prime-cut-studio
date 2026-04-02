@@ -3,208 +3,256 @@ import { TemplateFormData } from './TemplateQuickForm';
 
 export function generateTemplatePrompt(template: TemplateModel, form: TemplateFormData): string {
   const isApp = template.category === 'app';
-  const projectType = isApp ? 'aplicação web (SPA)' : 'site profissional';
+  const projectType = isApp ? 'aplicação web completa (SPA)' : 'site profissional e moderno';
 
   const languageInstructions = getLanguageInstructions(form.language);
 
-  return `# PROJETO: ${form.businessName.toUpperCase()} — ${template.name.toUpperCase()}
-
-## CONTEXTO
-Você é um desenvolvedor sênior full-stack. Crie um ${projectType} completo, funcional e pronto para produção para "${form.businessName}", no segmento de ${template.name}.
-${form.cityState ? `Localização: ${form.cityState}.` : ''}
-${form.slogan ? `Slogan: "${form.slogan}"` : ''}
+  return `# 🚀 PROJETO COMPLETO: ${form.businessName.toUpperCase()} — ${template.name.toUpperCase()}
+# 📋 Plataforma de destino: **Lovable** (React + Vite + Tailwind + Shadcn/UI)
 
 ---
 
-## IDENTIDADE VISUAL
+## 1. CONTEXTO DO PROJETO
 
-### Paleta de Cores
-- Cor Primária: ${form.primaryColor}
-- Cor Secundária: ${form.secondaryColor}
-- Tema Base: Dark mode como padrão, com opção de light mode
-- Garantir contraste adequado WCAG AA em todas as combinações
+Você é um desenvolvedor sênior full-stack especializado em criar ${projectType}s de alta qualidade. Crie um projeto **100% completo, funcional e pronto para produção** para **"${form.businessName}"**, no segmento de **${template.name}**.
 
-### Tipografia
-- Família Principal: ${form.typography}
-- Hierarquia: H1 a H6 bem definidos, com pesos distintos
-- Body: 16px base, line-height 1.6
+${form.cityState ? `📍 **Localização**: ${form.cityState}` : ''}
+${form.slogan ? `💬 **Slogan**: "${form.slogan}"` : ''}
 
-### Estilo Visual
-- Moderno, limpo e profissional
-- Bordas arredondadas (border-radius: 8-16px)
-- Sombras sutis para profundidade
-- Espaçamentos consistentes usando sistema de 4px/8px
-- Micro-animações suaves (hover, focus, transitions 200-300ms)
-- Sem exageros visuais, sem neon, sem gradientes chamativos
+**IMPORTANTE**: Este projeto deve parecer feito por uma agência profissional. Sem atalhos, sem placeholders genéricos, sem "Lorem Ipsum". Use textos realistas e profissionais no idioma selecionado.
 
 ---
 
-## ESTRUTURA DE PÁGINAS
+## 2. IDENTIDADE VISUAL COMPLETA
 
-Implementar as seguintes páginas/seções:
-${template.suggestedPages.map(p => `- ${p}`).join('\n')}
+### 🎨 Paleta de Cores
+- **Cor Primária**: ${form.primaryColor}
+- **Cor Secundária**: ${form.secondaryColor}
+- **Tema Base**: Dark mode como padrão, com toggle para light mode
+- **Variações**: Gerar tons claros e escuros automaticamente a partir das cores primária/secundária
+- **Contraste**: Garantir WCAG AA em todas as combinações de texto/fundo
+- **Gradientes**: Usar gradientes sutis baseados nas cores primárias para CTAs e headers
 
-### Navegação
-- Header fixo/sticky com logo + menu
-- Menu responsivo (hamburger no mobile com overlay suave)
-- Active state visual no item de menu atual
-- Scroll suave entre seções (scroll-behavior: smooth)
-- Footer completo com links, redes sociais e informações de contato
+### ✏️ Tipografia
+- **Família Principal**: ${form.typography}
+- **Hierarquia completa**:
+  - H1: 2.5rem (40px), bold, tracking tight
+  - H2: 2rem (32px), semibold
+  - H3: 1.5rem (24px), semibold
+  - H4: 1.25rem (20px), medium
+  - Body: 1rem (16px), regular, line-height 1.7
+  - Small: 0.875rem (14px), regular
+  - Caption: 0.75rem (12px), medium
+- **Importar a fonte**: Via Google Fonts com font-display: swap
+
+### 🎯 Design System
+- **Bordas**: border-radius 8px para cards, 12px para modais, 9999px para pills
+- **Sombras**: 3 níveis (sm, md, lg) usando HSL com opacidade
+- **Espaçamentos**: Sistema de 4px/8px (p-1, p-2, p-4, p-6, p-8)
+- **Animações**: Framer Motion para transições de página (200-300ms), hover states suaves
+- **Glassmorphism**: Usar backdrop-blur e transparências para cards sobre backgrounds
+- **Ícones**: Lucide React exclusivamente, tamanhos consistentes (w-4 h-4 para inline, w-5 h-5 para botões, w-6 h-6 para features)
 
 ---
 
-## OBJETIVOS DO PROJETO
+## 3. ESTRUTURA DE PÁGINAS E NAVEGAÇÃO
 
-O projeto deve atender fielmente a estes objetivos:
-${template.objectives.map(o => `- ${o}`).join('\n')}
+### Páginas obrigatórias:
+${template.suggestedPages.map((p, i) => `${i + 1}. **${p}** — implementação completa com todos os estados`).join('\n')}
 
----
-
-## FUNCIONALIDADES OBRIGATÓRIAS
-
-Cada funcionalidade deve ser implementada de forma completa e funcional:
-
-${template.suggestedFeatures.map(f => `### ${f}
-- Implementação completa com estados de loading, error e empty
-- Design responsivo e consistente com o design system
-- Acessibilidade (aria-labels, keyboard navigation)
-- Feedback visual em todas as interações`).join('\n\n')}
+### Sistema de Navegação
+- **Header**: Sticky com blur de fundo, logo à esquerda, menu centralizado, CTA à direita
+- **Menu Mobile**: Hamburger com overlay animado (slide da direita), links com ícones
+- **Active State**: Indicador visual no item de menu atual (underline animada ou cor)
+- **Scroll**: scroll-behavior smooth, scroll-spy para highlights de seção
+- **Footer**: Completo com 3-4 colunas (Sobre, Links, Contato, Redes Sociais)
+- **Breadcrumbs**: Em páginas internas quando aplicável
+- **Back to Top**: Botão flutuante que aparece após scroll
 
 ---
 
-## STACK TÉCNICA
+## 4. OBJETIVOS DE NEGÓCIO
 
-### Frontend
-- React 18 + TypeScript (strict mode)
-- Vite 5 como bundler
-- Tailwind CSS v3 para estilização
-- Shadcn/UI como base de componentes
-- Framer Motion para animações
-- Lucide React para ícones
-- React Hook Form + Zod para formulários
-- React Router DOM para rotas
+O projeto deve atender a estes objetivos estratégicos:
+${template.objectives.map(o => `- ✅ ${o}`).join('\n')}
+
+---
+
+## 5. FUNCIONALIDADES — IMPLEMENTAÇÃO DETALHADA
+
+Cada funcionalidade deve ser **100% funcional** com todos os estados:
+
+${template.suggestedFeatures.map((f, i) => `### 5.${i + 1}. ${f}
+- **Estados**: loading (skeleton), empty (ilustração + mensagem), error (retry button), success
+- **Responsividade**: Adaptar layout para mobile, tablet e desktop
+- **Acessibilidade**: aria-labels, keyboard navigation, focus indicators
+- **Validação**: Formulários com React Hook Form + Zod, mensagens de erro inline
+- **Feedback**: Toast notifications para ações, confirmação para ações destrutivas
+- **Performance**: Lazy loading quando abaixo do fold`).join('\n\n')}
+
+---
+
+## 6. STACK TÉCNICA OBRIGATÓRIA
+
+### Frontend (Lovable)
+- **React 18** com TypeScript strict mode
+- **Vite 5** como bundler
+- **Tailwind CSS v3** para toda estilização (sem CSS modules, sem styled-components)
+- **Shadcn/UI** como base de componentes (Button, Card, Dialog, Input, Select, Toast, etc.)
+- **Framer Motion** para todas as animações e transições
+- **Lucide React** para iconografia
+- **React Hook Form + Zod** para formulários e validação
+- **React Router DOM** para navegação entre páginas
+- **Recharts** para gráficos quando necessário
+- **date-fns** para formatação de datas
+
+${isApp ? `### Backend (Supabase — via Lovable Cloud)
+- **Autenticação**: Supabase Auth com email/senha
+- **Database**: PostgreSQL com tabelas normalizadas e RLS policies
+- **Edge Functions**: Para lógica server-side e integrações
+- **Storage**: Para uploads de arquivos/imagens
+- **Realtime**: Para funcionalidades em tempo real quando aplicável
+
+### Tabelas Sugeridas
+- users/profiles (dados do usuário)
+- Tabelas específicas do nicho baseadas nas funcionalidades
+- Logs/analytics para acompanhamento
+` : ''}
 
 ### Padrões de Código
-- Componentes pequenos, focados e reutilizáveis
+- Componentes **pequenos, focados e reutilizáveis** (máx 150 linhas)
 - Custom hooks para lógica compartilhada
-- Tipagem TypeScript estrita (sem \`any\`)
-- Organização por feature (pasta por funcionalidade)
-- Separação clara: components/ hooks/ utils/ types/
-- Código limpo, bem formatado e comentado onde necessário
+- TypeScript estrito — **zero \`any\`**
+- Organização por feature: \`/components/[feature]/\`
+- Separação clara: \`components/ hooks/ utils/ types/ lib/\`
+- Naming: PascalCase para componentes, camelCase para funções, UPPER_CASE para constantes
 
-${isApp ? `### Backend (se aplicável)
-- Supabase como BaaS
-- Autenticação com Supabase Auth
-- Database PostgreSQL com RLS policies
-- Edge Functions para lógica server-side
-- Storage para uploads de arquivos
-` : ''}
 ---
 
-## RESPONSIVIDADE
+## 7. RESPONSIVIDADE COMPLETA
 
 ### Breakpoints
-- Mobile: 320px — 480px
-- Tablet: 481px — 768px
-- Desktop: 769px — 1024px
-- Large: 1025px+
+| Dispositivo | Range | Abordagem |
+|------------|-------|-----------|
+| Mobile | 320px — 480px | Layout vertical, touch-first |
+| Tablet | 481px — 768px | Grid 2 colunas, menus adaptados |
+| Desktop | 769px — 1024px | Layout completo, 3+ colunas |
+| Large | 1025px+ | Max-width container, espaçamento generoso |
 
-### Regras
-- Mobile-first approach obrigatório
-- Touch targets mínimo 44x44px em mobile
-- Imagens otimizadas por viewport (srcset quando possível)
+### Regras Obrigatórias
+- **Mobile-first** approach em todo CSS
+- Touch targets mínimo **44x44px** em mobile
 - Nenhum scroll horizontal acidental
-- Teste visual em todas as dimensões
+- Imagens responsivas com aspect-ratio
+- Tipografia fluida com clamp() quando necessário
+- Menu hamburger no mobile com overlay suave
 
 ---
 
-## SEO & PERFORMANCE
+## 8. SEO & PERFORMANCE
 
-### SEO
-- Meta tags completas (title, description, og:image, og:title)
-- Semantic HTML5 (header, main, nav, section, article, footer)
-- Heading hierarchy correto (único H1 por página)
-- Alt text em todas as imagens
-- Schema.org JSON-LD para o tipo de negócio
-- Sitemap e robots.txt
+### SEO Técnico
+- **Meta tags**: title (<60 chars), description (<160 chars), og:image, og:title, og:description
+- **HTML Semântico**: header, main, nav, section, article, aside, footer
+- **Heading hierarchy**: Único H1 por página, H2-H6 sequenciais
+- **Alt text**: Em 100% das imagens
+- **JSON-LD**: Schema.org para LocalBusiness ou tipo apropriado
+- **Canonical**: Tags em todas as páginas
 
 ### Performance
-- Lazy loading em imagens abaixo do fold
-- Code splitting por rota (React.lazy + Suspense)
-- Otimização de bundle (tree shaking)
-- Fontes com font-display: swap
-- Target: Lighthouse > 90 em todas as métricas
-
----
-
-## QUALIDADE
-
-### Checklist obrigatório antes de entregar:
-- [ ] Todas as páginas implementadas e navegáveis
-- [ ] 100% responsivo (mobile, tablet, desktop)
-- [ ] Formulários com validação visual e mensagens de erro
-- [ ] Botão WhatsApp/CTA principal funcionando
-- [ ] SEO básico implementado
-- [ ] Zero erros no console do browser
-- [ ] Animações suaves e não intrusivas
-- [ ] Loading states em todas as ações assíncronas
-- [ ] Empty states informativos
-- [ ] Acessibilidade básica (keyboard nav, aria-labels)
-- [ ] Código TypeScript sem erros de tipo
+- **Lazy loading**: Todas as imagens abaixo do fold
+- **Code splitting**: React.lazy + Suspense por rota
+- **Font loading**: font-display: swap
+- **Bundle**: Tree shaking automático do Vite
+- **Target**: Lighthouse > 90 em Performance, Accessibility, Best Practices, SEO
 
 ---
 
 ${languageInstructions}
 
-${form.additionalDescription ? `## REQUISITOS ADICIONAIS DO CLIENTE
+---
+
+${form.additionalDescription ? `## 9. REQUISITOS ADICIONAIS DO CLIENTE
 
 ${form.additionalDescription}
 
----` : ''}
+---
+
+## 10. CHECKLIST DE QUALIDADE` : '## 9. CHECKLIST DE QUALIDADE'}
+
+Antes de finalizar, verificar TODOS os itens:
+
+- [ ] Todas as páginas implementadas e navegáveis
+- [ ] 100% responsivo (testar em 320px, 768px, 1024px, 1440px)
+- [ ] Formulários com validação visual e mensagens de erro claras
+- [ ] CTA principal funcionando (WhatsApp, agendamento, etc.)
+- [ ] SEO básico implementado (meta tags, schema, alt texts)
+- [ ] Zero erros no console do browser
+- [ ] Animações suaves e não intrusivas (sem janks)
+- [ ] Loading states em todas as ações assíncronas
+- [ ] Empty states informativos com call-to-action
+- [ ] Acessibilidade (keyboard nav, aria-labels, contraste)
+- [ ] TypeScript sem erros de tipo
+- [ ] Dark/Light mode funcionando
+- [ ] Textos realistas no idioma selecionado (não Lorem Ipsum)
+- [ ] Imagens com lazy loading e alt text
+
+---
 
 ## INSTRUÇÃO FINAL
 
-Gere o projeto completo seguindo TODAS as especificações acima. Comece pela estrutura base (layout, navegação, design system) e implemente cada funcionalidade de forma incremental. Priorize UX sobre complexidade técnica. Use placeholders realistas para textos e imagens. O resultado deve parecer um produto profissional pronto para um cliente real.`.trim();
+Gere o projeto **COMPLETO** seguindo **TODAS** as especificações acima. Comece pela estrutura base (layout, design system, navegação) e implemente cada funcionalidade incrementalmente. 
+
+**Prioridades**:
+1. Design System e Layout base
+2. Navegação e rotas
+3. Páginas principais com conteúdo realista
+4. Formulários e interações
+5. SEO e otimizações
+6. Polish final (animações, micro-interações)
+
+O resultado deve parecer um **produto profissional** pronto para um cliente real. Use placeholders de alta qualidade para imagens (Unsplash URLs quando possível).`.trim();
 }
 
 function getLanguageInstructions(language: string): string {
   const map: Record<string, string> = {
-    'Português (Brasil)': `## IDIOMA E LOCALIZAÇÃO
-- Todo o conteúdo do site em Português Brasileiro
+    'Portugues (Brasil)': `## IDIOMA E LOCALIZAÇÃO
+- Todo o conteúdo do site em **Português Brasileiro**
 - Tom: profissional mas acessível, levemente informal
-- CTAs persuasivos e diretos (ex: "Faça seu pedido", "Agende agora")
-- Formatação brasileira: datas (dd/mm/aaaa), moeda (R$), telefone (+55)`,
+- CTAs persuasivos: "Faça seu pedido", "Agende agora", "Fale conosco"
+- Formatação BR: datas (dd/mm/aaaa), moeda (R$), telefone (+55 XX XXXXX-XXXX)
+- Botão WhatsApp flutuante com número formatado`,
 
-    'Português (Portugal)': `## IDIOMA E LOCALIZAÇÃO
-- Todo o conteúdo em Português de Portugal
+    'Portugues (Portugal)': `## IDIOMA E LOCALIZAÇÃO
+- Todo o conteúdo em **Português de Portugal**
 - Tom: formal e profissional
 - Formatação portuguesa: datas (dd/mm/aaaa), moeda (€)`,
 
     'English (US)': `## LANGUAGE & LOCALIZATION
-- All content in American English
+- All content in **American English**
 - Tone: professional, confident, results-oriented
 - US formatting: dates (mm/dd/yyyy), currency ($), phone format`,
 
-    'Español': `## IDIOMA Y LOCALIZACIÓN
-- Todo el contenido en Español
+    'Espanol': `## IDIOMA Y LOCALIZACIÓN
+- Todo el contenido en **Español**
 - Tono: profesional, cercano y persuasivo
 - Formato: fechas (dd/mm/aaaa), moneda según país`,
 
-    'Français': `## LANGUE ET LOCALISATION
-- Tout le contenu en Français
+    'Francais': `## LANGUE ET LOCALISATION
+- Tout le contenu en **Français**
 - Ton: professionnel et élégant
 - Format français: dates (jj/mm/aaaa), devise (€)`,
 
     'Italiano': `## LINGUA E LOCALIZZAZIONE
-- Tutto il contenuto in Italiano
+- Tutto il contenuto in **Italiano**
 - Tono: professionale ed elegante
 - Formato italiano: date (gg/mm/aaaa), valuta (€)`,
 
     'Deutsch': `## SPRACHE UND LOKALISIERUNG
-- Alle Inhalte auf Deutsch
+- Alle Inhalte auf **Deutsch**
 - Ton: professionell und vertrauenswürdig
 - Deutsches Format: Datum (TT.MM.JJJJ), Währung (€)`,
   };
 
-  return map[language] || map['Português (Brasil)'];
+  return map[language] || map['Portugues (Brasil)'];
 }
