@@ -241,68 +241,7 @@ export function ContractDetail({ contractId, onBack }: ContractDetailProps) {
     }
   };
 
-  const handleSignAsContracted = async () => {
-    if (!contract) return;
-    
-    setSigningAsContracted(true);
-    
-    try {
-      // Check if already signed
-      const existingContractedSig = signatures.find(s => s.signer_type === 'contracted');
-      if (existingContractedSig?.signed_at) {
-        toast.info('Você já assinou este contrato.');
-        return;
-      }
-
-      // Add signature as contracted party
-      const { error: signError } = await supabase
-        .from('contract_signatures')
-        .insert({
-          contract_id: contract.id,
-          signer_type: 'contracted',
-          signer_name: contract.contracted_name,
-          signer_document: contract.contracted_document,
-          signature_method: 'panel',
-          signed_at: new Date().toISOString(),
-          user_agent: navigator.userAgent,
-        });
-
-      if (signError) throw signError;
-
-      // Log the action
-      await supabase
-        .from('contract_audit_logs')
-        .insert({
-          contract_id: contract.id,
-          action: 'contracted_signature_added',
-          actor_type: 'contracted',
-          actor_name: contract.contracted_name,
-          details: {
-            signature_method: 'panel'
-          }
-        });
-
-      // Check if contractor also signed
-      const hasContractorSig = signatures.some(s => s.signer_type === 'contractor' && s.signed_at);
-      const newStatus = hasContractorSig ? 'signed' : 'partially_signed';
-
-      await supabase
-        .from('contracts')
-        .update({ status: newStatus })
-        .eq('id', contract.id);
-
-      setContract(prev => prev ? { ...prev, status: newStatus } : null);
-      toast.success('Contrato assinado com sucesso!');
-      
-      // Refresh signatures
-      fetchSignatures();
-    } catch (error) {
-      console.error('Error signing:', error);
-      toast.error('Erro ao assinar contrato');
-    } finally {
-      setSigningAsContracted(false);
-    }
-  };
+  // Signature functionality removed
 
   const getSignatureUrl = () => {
     if (!contract) return '';
