@@ -153,7 +153,7 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
               placeholder="Buscar proposta..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 bg-muted/30 border-border"
+              className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/40"
             />
           </div>
           <Button
