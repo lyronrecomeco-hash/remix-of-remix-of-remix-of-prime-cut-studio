@@ -37,26 +37,18 @@ export function LovableConnectButton({ prompt, projectName }: LovableConnectButt
   // Referral link with 10 free credits
   const LOVABLE_REFERRAL_LINK = 'https://lovable.dev/invite/G0FY6YR';
   
-  // Build Lovable URL with auto-submit
-  const buildLovableUrl = () => {
-    const encodedPrompt = encodeURIComponent(prompt);
-    return `https://lovable.dev/?autosubmit=true#prompt=${encodedPrompt}`;
-  };
-
   const handleCopyAndOpen = async () => {
     try {
       await navigator.clipboard.writeText(prompt);
       setCopied(true);
-      toast.success('Prompt copiado! Abrindo Lovable com 10 créditos grátis...');
+      toast.success('Prompt copiado! Abra a Lovable e cole o prompt para criar seu projeto.');
       
-      // First time users go to referral link, returning users go to auto-submit
-      // We use referral link to ensure they get the bonus credits
+      // Abre o referral link sem auto-deploy
       setTimeout(() => {
         window.open(LOVABLE_REFERRAL_LINK, '_blank');
         setCopied(false);
       }, 500);
     } catch (err) {
-      // Fallback: just open referral link even if copy fails
       toast.info('Abrindo Lovable...');
       window.open(LOVABLE_REFERRAL_LINK, '_blank');
     }
