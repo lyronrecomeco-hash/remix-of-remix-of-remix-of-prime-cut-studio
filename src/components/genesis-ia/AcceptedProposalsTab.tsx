@@ -266,7 +266,7 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
                         <Button
                           size="sm"
                           variant="outline"
-                          className="border-border hover:bg-muted/50"
+                          className="border-white/10 text-white/70 hover:text-white hover:bg-white/10"
                           onClick={() => openGoogle(proposal.company_name)}
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
