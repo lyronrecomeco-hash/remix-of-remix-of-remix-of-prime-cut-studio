@@ -492,7 +492,10 @@ export function GenesisFinancialTab({ userId, userEmail }: GenesisFinancialTabPr
                 </div>
                 <div className="flex-1">
                   <p className="text-2xl font-bold text-white">
-                    {referrals > 0 ? Math.round((convertedReferrals / referrals) * 100) : 0}%
+                    {isSantiagoAccount 
+                      ? `${data.signedContracts > 0 ? Math.round((data.activeSubscriptions / data.signedContracts) * 100) : 0}%`
+                      : `${referrals > 0 ? Math.round((convertedReferrals / referrals) * 100) : 0}%`
+                    }
                   </p>
                   <p className="text-sm text-white/50">Taxa de Conversão</p>
                 </div>
