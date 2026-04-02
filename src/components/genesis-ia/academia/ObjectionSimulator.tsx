@@ -210,20 +210,33 @@ export const ObjectionSimulator = () => {
 
       // Add client response
       if (data.clientResponse) {
+        const clientContent = typeof data.clientResponse === 'object' 
+          ? JSON.stringify(data.clientResponse) 
+          : String(data.clientResponse);
         setMessages(prev => [...prev, {
           id: Date.now().toString() + '-client',
           role: 'client',
-          content: data.clientResponse
+          content: clientContent
         }]);
       }
 
-      // Add feedback
+      // Add feedback - ensure it's always a string
       if (data.feedback) {
+        const feedbackContent = typeof data.feedback === 'object'
+          ? Object.entries(data.feedback).map(([key, value]) => {
+              const label = key === 'pontos_fortes' ? '✅ Pontos Fortes' 
+                : key === 'pontos_a_melhorar' ? '⚠️ Pontos a Melhorar'
+                : key === 'sugestoes' ? '💡 Sugestões'
+                : key;
+              const val = Array.isArray(value) ? value.join('\n• ') : String(value);
+              return `${label}:\n• ${val}`;
+            }).join('\n\n')
+          : String(data.feedback);
         setTimeout(() => {
           setMessages(prev => [...prev, {
             id: Date.now().toString() + '-feedback',
             role: 'feedback',
-            content: data.feedback
+            content: feedbackContent
           }]);
         }, 500);
       }

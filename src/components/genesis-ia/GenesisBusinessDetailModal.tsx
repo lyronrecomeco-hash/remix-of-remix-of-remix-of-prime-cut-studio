@@ -103,7 +103,7 @@ export const GenesisBusinessDetailModal = ({
 
   const googlePlaceUrl = business.place_id 
     ? `https://www.google.com/maps/place/?q=place_id:${business.place_id}`
-    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(business.name + ' ' + business.address)}`;
+    : `https://www.google.com/search?q=${encodeURIComponent(business.name + ' ' + (business.city || business.address || ''))}`;
 
   const copyToClipboard = async (text: string, field: string) => {
     try {
@@ -321,7 +321,7 @@ export const GenesisBusinessDetailModal = ({
                 onClick={() => window.open(googlePlaceUrl, '_blank')}
               >
                 <ExternalLink className="w-3.5 h-3.5" />
-                Pesquisar no Google
+                Ver perfil google
               </Button>
             </div>
 
