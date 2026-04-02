@@ -87,15 +87,25 @@ export function useFinancialData(userId?: string): UseFinancialDataReturn {
           setPayments([]);
         }
 
-        // Buscar contratos do usuário (por user_id ou affiliate)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const contractsResult: { data: any[] | null } = await (supabase as any)
-          .from('contracts')
-          .select('total_value, created_at, status')
-          .eq('created_by', userId)
-          .eq('status', 'signed');
+        // Buscar contratos assinados do usuário (por affiliate_id)
+        // Primeiro buscar o affiliate_id do usuario
+        const { data: affiliateData } = await supabase
+          .from('affiliates')
+          .select('id')
+          .eq('user_id', userId)
+          .maybeSingle();
 
-        setContracts(contractsResult.data || []);
+        if (affiliateData?.id) {
+          const { data: contractsData } = await supabase
+            .from('contracts')
+            .select('total_value, created_at, status')
+            .eq('affiliate_id', affiliateData.id)
+            .eq('status', 'signed');
+
+          setContracts(contractsData || []);
+        } else {
+          setContracts([]);
+        }
 
         // Buscar assinaturas ativas do usuário
         const { data: genesisUserData } = await supabase
