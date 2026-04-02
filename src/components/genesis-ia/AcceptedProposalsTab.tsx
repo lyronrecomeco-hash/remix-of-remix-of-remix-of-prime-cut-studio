@@ -243,7 +243,7 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
                           </div>
                         )}
                         {qa.website && String(qa.website) !== '' && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2 text-sm text-white/50">
                             <Globe className="w-3.5 h-3.5 shrink-0" />
                             <a href={String(qa.website)} target="_blank" rel="noopener noreferrer" className="line-clamp-1 hover:text-primary transition-colors">
                               {String(qa.website)}
