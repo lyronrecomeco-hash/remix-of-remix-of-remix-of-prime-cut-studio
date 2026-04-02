@@ -1371,7 +1371,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                 variant="outline"
                 onClick={() => {
                   const searchQuery = `${selectedOpportunity.company_name} ${selectedOpportunity.company_city || selectedOpportunity.company_address || ''}`.trim();
-                  window.open(`https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`, '_blank');
+                  window.open(`https://www.google.com/maps/search/${encodeURIComponent(searchQuery)}`, '_blank');
                 }}
                 className="gap-2 border-white/20 hover:bg-white/10"
               >
