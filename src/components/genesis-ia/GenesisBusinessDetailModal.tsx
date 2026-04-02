@@ -321,7 +321,7 @@ export const GenesisBusinessDetailModal = ({
                 onClick={() => window.open(googlePlaceUrl, '_blank')}
               >
                 <ExternalLink className="w-3.5 h-3.5" />
-                Pesquisar no Google
+                Ver perfil google
               </Button>
             </div>
 

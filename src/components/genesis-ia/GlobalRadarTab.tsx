@@ -1370,12 +1370,13 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
               <Button
                 variant="outline"
                 onClick={() => {
-                  window.open(`https://www.google.com/search?q=${encodeURIComponent(selectedOpportunity.company_name)}`, '_blank');
+                  const searchQuery = `${selectedOpportunity.company_name} ${selectedOpportunity.company_city || selectedOpportunity.company_address || ''}`.trim();
+                  window.open(`https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`, '_blank');
                 }}
                 className="gap-2 border-white/20 hover:bg-white/10"
               >
                 <ExternalLink className="w-4 h-4" />
-                Pesquisar no Google
+                Ver perfil google
               </Button>
               
               <Button
