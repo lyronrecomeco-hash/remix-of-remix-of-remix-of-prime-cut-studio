@@ -190,7 +190,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                     value={formData.slogan}
                     onChange={e => updateField('slogan', e.target.value)}
                     placeholder="Ex: O melhor sabor da cidade"
-                    className="h-10 text-sm"
+                    className="h-10 text-sm bg-muted/30 border-border focus:border-primary/50"
                   />
                 </div>
               </div>
