@@ -116,7 +116,7 @@ export function useCaktoAnalytics(instanceId: string, integrationId?: string, pe
       setData({
         ...totals,
         conversion_rate: conversionRate,
-        daily: (analytics || []) as CaktoAnalytics[],
+        daily: (analytics || []) as unknown as CaktoAnalytics[],
       });
     } catch (err) {
       console.error('Error fetching Cakto analytics:', err);

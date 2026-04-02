@@ -123,6 +123,9 @@ const ALL_EVENT_TYPES: CaktoEventType[] = [
   'checkout_abandonment',
   'boleto_generated',
   'boleto_expired',
+  'subscription_active',
+  'subscription_cancelled',
+  'subscription_overdue',
 ];
 
 export function CaktoAutomationModal({ 
