@@ -117,9 +117,20 @@ export function PlansConfigSection() {
     return (cents / 100).toFixed(2).replace('.', ',');
   }
 
+  function formatOptionalCurrency(cents: number | null | undefined): string {
+    if (cents === null || cents === undefined) return '';
+    return formatCurrency(cents);
+  }
+
   function parseCurrency(value: string): number {
     const clean = value.replace(/[^\d,]/g, '').replace(',', '.');
     return Math.round(parseFloat(clean || '0') * 100);
+  }
+
+  function parseOptionalCurrency(value: string): number | null {
+    const clean = value.replace(/[^\d,]/g, '').trim();
+    if (!clean) return null;
+    return parseCurrency(value);
   }
 
   if (isLoading) {
