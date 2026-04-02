@@ -180,7 +180,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                       value={formData.cityState}
                       onChange={e => updateField('cityState', e.target.value)}
                       placeholder="Ex: Sao Paulo, SP"
-                      className="h-9 text-xs sm:text-sm"
+                      className="h-10 text-sm"
                     />
                   </div>
                 </div>
