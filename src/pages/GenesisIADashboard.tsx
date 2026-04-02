@@ -246,7 +246,7 @@ const GenesisIADashboard = () => {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast.success("Até logo!");
-    navigate("/login");
+    navigate("/login", { replace: true });
   };
 
   const getGreeting = () => {

@@ -88,7 +88,7 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
   const checkAdmin = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      const ADMIN_EMAILS = ['lyronrp@gmail.com', 'santiagoadmin@gmail.com'];
+      const ADMIN_EMAILS = ['lyronrp@gmail.com', 'santiagoadmin@gmail.com', 'santicanossa1@gmail.com'];
       setIsAdmin(ADMIN_EMAILS.includes(user.email?.toLowerCase() || ''));
     }
   };
