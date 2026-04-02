@@ -207,8 +207,8 @@ export function GenesisFinancialTab({ userId, userEmail }: GenesisFinancialTabPr
   }));
 
   // Métricas de indicações
-  const referrals = isContentAccount ? CONTENT_ACCOUNT_FINANCIAL_DATA.referrals : 0;
-  const convertedReferrals = isContentAccount ? CONTENT_ACCOUNT_FINANCIAL_DATA.convertedReferrals : 0;
+  const referrals = isSpecialAccount ? (data as any).referrals || 0 : 0;
+  const convertedReferrals = isSpecialAccount ? (data as any).convertedReferrals || 0 : 0;
 
   return (
     <TooltipProvider>
