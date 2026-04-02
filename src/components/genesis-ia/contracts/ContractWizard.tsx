@@ -314,14 +314,13 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                 />
               </div>
               <div className="space-y-2">
-                <Label>Telefone/WhatsApp *</Label>
+                <Label>Telefone</Label>
                 <Input
                   value={formData.contractor_phone}
                   onChange={(e) => updateField('contractor_phone', e.target.value)}
                   placeholder="(00) 00000-0000"
-                  className="bg-white/5 border-white/10"
+                  className="bg-card/60 border-border/60 focus:border-primary/50"
                 />
-                <p className="text-[10px] text-muted-foreground">O contrato será enviado automaticamente para este número</p>
               </div>
             </div>
           </div>
