@@ -40,6 +40,7 @@ type FilterTab = 'all' | 'apps' | 'sites';
 
 // Projetos mockados para conta de conteúdo
 const MOCK_DATA_EMAIL = "lyronrecomeco@gmail.com";
+const SANTIAGO_EMAILS = ["santiagoadmin@gmail.com", "santicanossa1@gmail.com"];
 const MOCKED_PROJECTS: ProjectConfig[] = [
   {
     id: 'mock-1',
