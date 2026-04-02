@@ -504,8 +504,8 @@ export function GenesisFinancialTab({ userId, userEmail }: GenesisFinancialTabPr
           </Card>
         </motion.div>
 
-        {/* Contracts List (only for content account) */}
-        {isContentAccount && contracts.length > 0 && (
+        {/* Contracts List */}
+        {(isContentAccount || isSantiagoAccount) && contracts.length > 0 && (
           <motion.div variants={itemVariants}>
             <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
               <CardHeader className="pb-2 px-5 pt-5">
