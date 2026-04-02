@@ -175,7 +175,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-[10px] sm:text-xs text-muted-foreground">Cidade / Estado</Label>
+                    <Label className="text-xs sm:text-sm text-muted-foreground">Cidade / Estado</Label>
                     <Input
                       value={formData.cityState}
                       onChange={e => updateField('cityState', e.target.value)}
