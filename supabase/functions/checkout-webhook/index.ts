@@ -97,17 +97,18 @@ serve(async (req) => {
       const possibleCaktoEvent = normalizedCaktoEvent || rawCaktoEvent;
       gateway = 'cakto';
       
-      const caktoOrder = body.order || body.data || body;
-      paymentId = body.id || body.transaction_id || body.order_id || body.checkout_id 
-        || caktoOrder.id || caktoOrder.transaction_id || null;
+      // Cakto sends data nested under body.data
+      const caktoData = body.data || body;
+      paymentId = caktoData.id || caktoData.refId || body.id || body.transaction_id || body.order_id || null;
 
-      console.log(`[Cakto Webhook] Event: ${possibleCaktoEvent}, PaymentId: ${paymentId}`);
+      console.log(`[Cakto Webhook] Event: ${possibleCaktoEvent} (raw: ${rawCaktoEvent}), PaymentId: ${paymentId}`);
 
-      // Extract customer & product data from Cakto payload
-      const caktoCustomer = body.customer || caktoOrder.customer || {};
-      const caktoProduct = body.product || caktoOrder.product || {};
-      const caktoOffer = body.offer || caktoOrder.offer || {};
-      const orderValue = body.value || body.amount || caktoOrder.value || caktoOrder.amount || null;
+      // Extract customer & product data from real Cakto payload structure
+      const caktoCustomer = caktoData.customer || body.customer || {};
+      const caktoProduct = caktoData.product || body.product || {};
+      const caktoOffer = caktoData.offer || body.offer || {};
+      const caktoSubscription = caktoData.subscription || {};
+      const orderValue = caktoData.amount || caktoData.baseAmount || caktoOffer.price || null;
 
       // ========= LOG TO genesis_cakto_events =========
       try {
