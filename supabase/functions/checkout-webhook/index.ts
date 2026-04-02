@@ -211,7 +211,7 @@ serve(async (req) => {
                 [fieldToUpdate]: 1,
               };
               if (possibleCaktoEvent === 'purchase_approved' && orderValue) {
-                insertObj.total_revenue = Number(orderValue) / 100;
+                insertObj.total_revenue = Number(orderValue);
               }
               await supabase.from('genesis_cakto_analytics').insert(insertObj);
             }
