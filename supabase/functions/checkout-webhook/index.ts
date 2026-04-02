@@ -51,13 +51,56 @@ serve(async (req) => {
     console.log('Webhook received:', JSON.stringify(body, null, 2));
 
     // Detect webhook source and extract payment info
-    let gateway: 'abacatepay' | 'asaas' | 'misticpay' = 'abacatepay';
+    let gateway: 'abacatepay' | 'asaas' | 'misticpay' | 'cakto' = 'abacatepay';
     let paymentId: string | null = null;
     let eventType: string = '';
     let newStatus: string = 'pending';
 
+    // Check if this is a Cakto webhook (has event field like purchase_approved, pix_generated, etc.)
+    const caktoEventTypes = ['pix_generated', 'purchase_approved', 'purchase_refused', 'purchase_refunded', 'initiate_checkout', 'checkout_abandonment', 'pix_expired', 'purchase_chargeback'];
+    const possibleCaktoEvent = body.event || body.type || body.event_type;
+    
+    if (possibleCaktoEvent && caktoEventTypes.includes(possibleCaktoEvent)) {
+      gateway = 'cakto';
+      
+      // Extract order/transaction ID from Cakto payload
+      paymentId = body.id || body.transaction_id || body.order_id || body.checkout_id || null;
+      
+      // Also try nested order data
+      const caktoOrder = body.order || body.data || {};
+      if (!paymentId) {
+        paymentId = caktoOrder.id || caktoOrder.transaction_id || null;
+      }
+
+      console.log(`[Cakto Webhook] Event: ${possibleCaktoEvent}, PaymentId: ${paymentId}`);
+
+      switch (possibleCaktoEvent) {
+        case 'pix_generated':
+          eventType = 'pix_generated';
+          newStatus = 'pending';
+          break;
+        case 'purchase_approved':
+          newStatus = 'paid';
+          eventType = 'payment_confirmed';
+          break;
+        case 'purchase_refused':
+          newStatus = 'failed';
+          eventType = 'payment_failed';
+          break;
+        case 'purchase_refunded':
+          newStatus = 'refunded';
+          eventType = 'payment_refunded';
+          break;
+        case 'purchase_chargeback':
+          newStatus = 'refunded';
+          eventType = 'payment_chargeback';
+          break;
+        default:
+          eventType = possibleCaktoEvent;
+      }
+    }
     // Check if this is a MisticPay webhook (has transactionId, transactionType, and transactionMethod)
-    if (body.transactionId && body.transactionType && body.transactionMethod === 'PIX') {
+    else if (body.transactionId && body.transactionType && body.transactionMethod === 'PIX') {
       gateway = 'misticpay';
       paymentId = String(body.transactionId);
       const misticStatus = body.status;
