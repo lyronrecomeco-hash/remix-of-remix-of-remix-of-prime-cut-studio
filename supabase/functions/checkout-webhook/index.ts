@@ -374,18 +374,66 @@ serve(async (req) => {
             }
           }
 
-          // 3. Find genesis_user by email
-          const { data: genesisUser } = await supabase
+          // 3. Find or create genesis_user by email
+          let genesisUser: { id: string; auth_user_id: string | null } | null = null;
+          
+          const { data: existingGenesisUser } = await supabase
             .from('genesis_users')
             .select('id, auth_user_id')
             .eq('email', customer.email.toLowerCase())
-            .single();
+            .maybeSingle();
+
+          if (existingGenesisUser) {
+            genesisUser = existingGenesisUser;
+            console.log('[Subscription Activation] Found genesis_user:', genesisUser.id);
+          } else {
+            // Auto-create auth user + genesis_user when payment confirmed
+            console.log('[Subscription Activation] Creating user for:', customer.email);
+            
+            // Create auth user with temporary password (user will set real password on /cakto-return)
+            const tempPassword = crypto.randomUUID().substring(0, 16) + 'A1!';
+            const displayName = `${customer.first_name} ${customer.last_name}`.trim() || customer.email.split('@')[0];
+            
+            const { data: newAuthUser, error: authError } = await supabase.auth.admin.createUser({
+              email: customer.email.toLowerCase(),
+              password: tempPassword,
+              email_confirm: true,
+              user_metadata: {
+                name: displayName,
+                phone: customer.phone || null,
+                source: 'cakto_webhook',
+                needs_password_reset: true,
+              },
+            });
+
+            if (authError || !newAuthUser.user) {
+              console.error('[Subscription Activation] Error creating auth user:', authError);
+            } else {
+              // Create genesis_user
+              const { data: newGenesisUser, error: guError } = await supabase
+                .from('genesis_users')
+                .insert({
+                  auth_user_id: newAuthUser.user.id,
+                  name: displayName,
+                  email: customer.email.toLowerCase(),
+                  phone: customer.phone || null,
+                  is_active: true,
+                })
+                .select('id, auth_user_id')
+                .single();
+              
+              if (guError) {
+                console.error('[Subscription Activation] Error creating genesis_user:', guError);
+              } else {
+                genesisUser = newGenesisUser;
+                console.log('[Subscription Activation] Created auth + genesis user:', genesisUser.id);
+              }
+            }
+          }
 
           if (!genesisUser) {
-            console.log('[Subscription Activation] Genesis user not found for email:', customer.email);
-            // User will be created when they set their password via checkout-activate-user
+            console.log('[Subscription Activation] Could not find or create user, skipping');
           } else {
-            console.log('[Subscription Activation] Found genesis_user:', genesisUser.id);
 
             // 4. Calculate expiration date
             const now = new Date();
