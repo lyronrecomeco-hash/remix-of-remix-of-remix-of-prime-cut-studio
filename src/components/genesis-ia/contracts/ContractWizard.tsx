@@ -238,35 +238,9 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
 
       if (error) throw error;
 
-      // Enviar contrato via WhatsApp automaticamente se tiver telefone
-      if (formData.contractor_phone) {
-        const signatureUrl = `${window.location.origin}/contratos/assinar/${signatureHash}`;
-        
-        try {
-          await supabase.functions.invoke('send-contract-whatsapp', {
-            body: {
-              phone: formData.contractor_phone,
-              contractorName: formData.contractor_name,
-              contractNumber: contractNumber,
-              signatureUrl: signatureUrl,
-              serviceName: formData.service_type,
-              totalValue: parseFloat(formData.total_value.replace(/[^\d.,]/g, '').replace(',', '.'))
-            }
-          });
-          toast.success('Contrato criado e enviado via WhatsApp!', {
-            description: `Número: ${contractNumber}`
-          });
-        } catch (whatsappError) {
-          console.error('Error sending WhatsApp:', whatsappError);
-          toast.success('Contrato criado com sucesso!', {
-            description: `Número: ${contractNumber}`
-          });
-        }
-      } else {
-        toast.success('Contrato criado com sucesso!', {
-          description: `Número: ${contractNumber}`
-        });
-      }
+      toast.success('Contrato criado com sucesso!', {
+        description: `Número: ${contractNumber}`
+      });
       
       onComplete();
     } catch (error) {
