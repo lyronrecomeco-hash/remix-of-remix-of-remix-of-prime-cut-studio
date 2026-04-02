@@ -112,6 +112,9 @@ const GenesisIADashboard = () => {
   const [isAccountBlocked, setIsAccountBlocked] = useState(false);
   const [isTrialExpired, setIsTrialExpired] = useState(false);
   const [blockReason, setBlockReason] = useState<string>('');
+  const [trialExpiresAt, setTrialExpiresAt] = useState<string | null>(null);
+  const [isTrialUser, setIsTrialUser] = useState(false);
+  const [showTrialModal, setShowTrialModal] = useState(false);
   const [restrictedModal, setRestrictedModal] = useState<{ open: boolean; label: string; id: string }>({ open: false, label: '', id: '' });
   const [isDockCollapsed, setIsDockCollapsed] = useState(false);
   
