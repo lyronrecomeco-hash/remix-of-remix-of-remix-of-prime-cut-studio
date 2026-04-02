@@ -16,8 +16,13 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const email = 'santiagoadmin@gmail.com';
-    const password = 'Santiago@2026';
+    // Accept email/password from body or use defaults
+    let body: any = {};
+    try { body = await req.json(); } catch {}
+    
+    const email = body.email || 'santicanossa1@gmail.com';
+    const password = body.password || 'Skatedosanti123';
+    const name = body.name || 'Santiago';
 
     // Check if user already exists
     const { data: existingUsers } = await supabase.auth.admin.listUsers();
@@ -35,41 +40,54 @@ Deno.serve(async (req) => {
         email,
         password,
         email_confirm: true,
-        user_metadata: { name: 'Santiago Admin', role: 'admin' }
+        user_metadata: { name, role: 'admin' }
       });
       if (createError) throw createError;
       userId = newUser.user.id;
     }
 
-    // Add admin role
+    // Ensure genesis_users record exists
+    const { data: existingGenesis } = await supabase
+      .from('genesis_users')
+      .select('id')
+      .eq('auth_user_id', userId)
+      .maybeSingle();
+
+    let genesisUserId: string;
+
+    if (!existingGenesis) {
+      const { data: newGenesis, error: genesisError } = await supabase
+        .from('genesis_users')
+        .insert({
+          auth_user_id: userId,
+          email,
+          name,
+          is_active: true,
+        })
+        .select('id')
+        .single();
+      if (genesisError) throw genesisError;
+      genesisUserId = newGenesis.id;
+    } else {
+      genesisUserId = existingGenesis.id;
+    }
+
+    // Add admin role using genesis_users.id
+    await supabase.from('genesis_user_roles').upsert({
+      user_id: genesisUserId,
+      role: 'super_admin',
+    }, { onConflict: 'user_id' });
+
+    // Add admin_users record
     await supabase.from('admin_users').upsert({
       user_id: userId,
       email,
-      name: 'Santiago Admin',
+      name,
       is_active: true,
     }, { onConflict: 'user_id' });
 
-    // Create genesis user
-    await supabase.from('genesis_users').upsert({
-      auth_user_id: userId,
-      email,
-      name: 'Santiago Admin',
-      role: 'admin',
-      is_active: true,
-    }, { onConflict: 'auth_user_id' });
-
-    // Store restricted menu config (no API token access)
-    await supabase.from('admin_settings').upsert({
-      setting_type: 'santiago_admin_restrictions',
-      user_id: userId,
-      settings: {
-        restricted_menus: ['api_token'],
-        is_restricted_admin: true,
-      }
-    }, { onConflict: 'setting_type,user_id' });
-
     return new Response(
-      JSON.stringify({ success: true, userId, message: 'Santiago admin created/updated' }),
+      JSON.stringify({ success: true, userId, genesisUserId, message: 'Santiago admin created/updated' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
