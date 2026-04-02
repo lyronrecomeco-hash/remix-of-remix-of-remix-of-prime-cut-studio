@@ -11,6 +11,11 @@
  * - purchase_refunded: Reembolso
  * - purchase_chargeback: Chargeback
  * - checkout_abandonment: Carrinho abandonado
+ * - boleto_generated: Boleto gerado
+ * - boleto_expired: Boleto expirado
+ * - subscription_active: Assinatura ativa
+ * - subscription_cancelled: Assinatura cancelada
+ * - subscription_overdue: Assinatura atrasada
  */
 
 // Tipos de eventos suportados pela Cakto
@@ -24,7 +29,10 @@ export type CaktoEventType =
   | 'purchase_chargeback'
   | 'checkout_abandonment'
   | 'boleto_generated'
-  | 'boleto_expired';
+  | 'boleto_expired'
+  | 'subscription_active'
+  | 'subscription_cancelled'
+  | 'subscription_overdue';
 
 // Labels para cada tipo de evento
 export const CAKTO_EVENT_LABELS: Record<CaktoEventType, string> = {
@@ -38,6 +46,9 @@ export const CAKTO_EVENT_LABELS: Record<CaktoEventType, string> = {
   checkout_abandonment: 'Carrinho Abandonado',
   boleto_generated: 'Boleto Gerado',
   boleto_expired: 'Boleto Expirado',
+  subscription_active: 'Assinatura Ativa',
+  subscription_cancelled: 'Assinatura Cancelada',
+  subscription_overdue: 'Assinatura Atrasada',
 };
 
 // Ícones/cores para cada tipo de evento
@@ -52,6 +63,9 @@ export const CAKTO_EVENT_COLORS: Record<CaktoEventType, { bg: string; text: stri
   checkout_abandonment: { bg: 'bg-yellow-500/10', text: 'text-yellow-600', border: 'border-yellow-500/20' },
   boleto_generated: { bg: 'bg-indigo-500/10', text: 'text-indigo-600', border: 'border-indigo-500/20' },
   boleto_expired: { bg: 'bg-gray-500/10', text: 'text-gray-600', border: 'border-gray-500/20' },
+  subscription_active: { bg: 'bg-emerald-500/10', text: 'text-emerald-600', border: 'border-emerald-500/20' },
+  subscription_cancelled: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20' },
+  subscription_overdue: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20' },
 };
 
 // Interface para evento Cakto
@@ -113,6 +127,9 @@ export interface CaktoAnalytics {
   purchases_refunded: number;
   purchases_chargeback: number;
   cart_abandonments: number;
+  subscriptions_active: number;
+  subscriptions_cancelled: number;
+  subscriptions_overdue: number;
   total_revenue: number;
   created_at: string;
   updated_at: string;

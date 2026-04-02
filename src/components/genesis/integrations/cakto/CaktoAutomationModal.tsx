@@ -107,6 +107,9 @@ const EVENT_ICONS: Record<CaktoEventType, typeof ShoppingCart> = {
   checkout_abandonment: Clock,
   boleto_generated: CreditCard,
   boleto_expired: XCircle,
+  subscription_active: CheckCircle2,
+  subscription_cancelled: XCircle,
+  subscription_overdue: AlertTriangle,
 };
 
 const ALL_EVENT_TYPES: CaktoEventType[] = [
@@ -120,6 +123,9 @@ const ALL_EVENT_TYPES: CaktoEventType[] = [
   'checkout_abandonment',
   'boleto_generated',
   'boleto_expired',
+  'subscription_active',
+  'subscription_cancelled',
+  'subscription_overdue',
 ];
 
 export function CaktoAutomationModal({ 

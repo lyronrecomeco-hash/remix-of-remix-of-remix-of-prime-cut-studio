@@ -14,6 +14,9 @@ interface AnalyticsData {
   purchases_refused: number;
   purchases_refunded: number;
   cart_abandonments: number;
+  subscriptions_active: number;
+  subscriptions_cancelled: number;
+  subscriptions_overdue: number;
   total_revenue: number;
   conversion_rate: number;
   daily: CaktoAnalytics[];
@@ -79,6 +82,9 @@ export function useCaktoAnalytics(instanceId: string, integrationId?: string, pe
             purchases_refused: 0,
             purchases_refunded: 0,
             cart_abandonments: 0,
+            subscriptions_active: 0,
+            subscriptions_cancelled: 0,
+            subscriptions_overdue: 0,
             total_revenue: 0,
             conversion_rate: 0,
             daily: [],
@@ -96,6 +102,9 @@ export function useCaktoAnalytics(instanceId: string, integrationId?: string, pe
           purchases_refused: acc.purchases_refused + (day.purchases_refused || 0),
           purchases_refunded: acc.purchases_refunded + (day.purchases_refunded || 0),
           cart_abandonments: acc.cart_abandonments + (day.cart_abandonments || 0),
+          subscriptions_active: acc.subscriptions_active + ((day as any).subscriptions_active || 0),
+          subscriptions_cancelled: acc.subscriptions_cancelled + ((day as any).subscriptions_cancelled || 0),
+          subscriptions_overdue: acc.subscriptions_overdue + ((day as any).subscriptions_overdue || 0),
           total_revenue: acc.total_revenue + Number(day.total_revenue || 0),
         }),
         {
@@ -104,6 +113,9 @@ export function useCaktoAnalytics(instanceId: string, integrationId?: string, pe
           purchases_refused: 0,
           purchases_refunded: 0,
           cart_abandonments: 0,
+          subscriptions_active: 0,
+          subscriptions_cancelled: 0,
+          subscriptions_overdue: 0,
           total_revenue: 0,
         }
       );
@@ -116,7 +128,7 @@ export function useCaktoAnalytics(instanceId: string, integrationId?: string, pe
       setData({
         ...totals,
         conversion_rate: conversionRate,
-        daily: (analytics || []) as CaktoAnalytics[],
+        daily: (analytics || []) as unknown as CaktoAnalytics[],
       });
     } catch (err) {
       console.error('Error fetching Cakto analytics:', err);

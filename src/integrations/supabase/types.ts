@@ -4732,6 +4732,9 @@ export type Database = {
           purchases_chargeback: number | null
           purchases_refunded: number | null
           purchases_refused: number | null
+          subscriptions_active: number
+          subscriptions_cancelled: number
+          subscriptions_overdue: number
           total_revenue: number | null
           updated_at: string | null
         }
@@ -4751,6 +4754,9 @@ export type Database = {
           purchases_chargeback?: number | null
           purchases_refunded?: number | null
           purchases_refused?: number | null
+          subscriptions_active?: number
+          subscriptions_cancelled?: number
+          subscriptions_overdue?: number
           total_revenue?: number | null
           updated_at?: string | null
         }
@@ -4770,6 +4776,9 @@ export type Database = {
           purchases_chargeback?: number | null
           purchases_refunded?: number | null
           purchases_refused?: number | null
+          subscriptions_active?: number
+          subscriptions_cancelled?: number
+          subscriptions_overdue?: number
           total_revenue?: number | null
           updated_at?: string | null
         }
