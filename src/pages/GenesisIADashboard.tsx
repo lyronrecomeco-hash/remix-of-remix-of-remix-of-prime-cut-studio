@@ -869,8 +869,14 @@ const GenesisIADashboard = () => {
                   </div>
 
                   {/* Welcome badge removed - using hero section instead */}
-                </div>
-              </div>
+                  
+                  {/* Trial Countdown for Mentorado users */}
+                  {isTrialUser && trialExpiresAt && !isTrialExpired && (
+                    <TrialCountdownBadge 
+                      expiresAt={trialExpiresAt} 
+                      onClick={() => setShowTrialModal(true)} 
+                    />
+                  )}
             </header>
 
             {/* WelcomeToast removed - using hero section instead */}
