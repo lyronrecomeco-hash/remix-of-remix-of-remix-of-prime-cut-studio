@@ -56,15 +56,45 @@ serve(async (req) => {
     let eventType: string = '';
     let newStatus: string = 'pending';
 
-    // Check if this is a Cakto webhook
-    const caktoEventTypes = [
-      'initiate_checkout', 'pix_generated', 'pix_expired',
-      'purchase_approved', 'purchase_refused', 'purchase_refunded', 'purchase_chargeback',
-      'checkout_abandonment', 'boleto_generated', 'boleto_expired',
-    ];
-    const possibleCaktoEvent = body.event || body.type || body.event_type;
+    // Check if this is a Cakto webhook - support both English and Portuguese event names
+    const caktoEventMap: Record<string, string> = {
+      // Portuguese (as sent by Cakto API)
+      'pix_gerado': 'pix_generated',
+      'compra_aprovada': 'purchase_approved',
+      'compra_recusada': 'purchase_refused',
+      'compra_reembolsada': 'purchase_refunded',
+      'compra_chargeback': 'purchase_chargeback',
+      'checkout_iniciado': 'initiate_checkout',
+      'carrinho_abandonado': 'checkout_abandonment',
+      'pix_expirado': 'pix_expired',
+      'boleto_gerado': 'boleto_generated',
+      'boleto_expirado': 'boleto_expired',
+      'assinatura_ativa': 'subscription_active',
+      'assinatura_cancelada': 'subscription_cancelled',
+      'assinatura_atrasada': 'subscription_overdue',
+      'waiting_payment': 'pix_generated',
+      // English
+      'initiate_checkout': 'initiate_checkout',
+      'pix_generated': 'pix_generated',
+      'pix_expired': 'pix_expired',
+      'purchase_approved': 'purchase_approved',
+      'purchase_refused': 'purchase_refused',
+      'purchase_refunded': 'purchase_refunded',
+      'purchase_chargeback': 'purchase_chargeback',
+      'checkout_abandonment': 'checkout_abandonment',
+      'boleto_generated': 'boleto_generated',
+      'boleto_expired': 'boleto_expired',
+      'subscription_active': 'subscription_active',
+      'subscription_cancelled': 'subscription_cancelled',
+      'subscription_overdue': 'subscription_overdue',
+    };
+    const rawCaktoEvent = body.event || body.type || body.event_type;
+    // Also detect Cakto by presence of data.offer or data.product or data.subscription
+    const hasCaktoStructure = body.data?.offer || body.data?.product || body.data?.subscription || body.data?.pix;
+    const normalizedCaktoEvent = rawCaktoEvent ? caktoEventMap[rawCaktoEvent] : null;
     
-    if (possibleCaktoEvent && caktoEventTypes.includes(possibleCaktoEvent)) {
+    if (normalizedCaktoEvent || (hasCaktoStructure && rawCaktoEvent)) {
+      const possibleCaktoEvent = normalizedCaktoEvent || rawCaktoEvent;
       gateway = 'cakto';
       
       const caktoOrder = body.order || body.data || body;
