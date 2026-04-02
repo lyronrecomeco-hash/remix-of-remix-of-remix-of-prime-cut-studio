@@ -102,6 +102,9 @@ export function useCaktoAnalytics(instanceId: string, integrationId?: string, pe
           purchases_refused: acc.purchases_refused + (day.purchases_refused || 0),
           purchases_refunded: acc.purchases_refunded + (day.purchases_refunded || 0),
           cart_abandonments: acc.cart_abandonments + (day.cart_abandonments || 0),
+          subscriptions_active: acc.subscriptions_active + ((day as any).subscriptions_active || 0),
+          subscriptions_cancelled: acc.subscriptions_cancelled + ((day as any).subscriptions_cancelled || 0),
+          subscriptions_overdue: acc.subscriptions_overdue + ((day as any).subscriptions_overdue || 0),
           total_revenue: acc.total_revenue + Number(day.total_revenue || 0),
         }),
         {
@@ -110,6 +113,9 @@ export function useCaktoAnalytics(instanceId: string, integrationId?: string, pe
           purchases_refused: 0,
           purchases_refunded: 0,
           cart_abandonments: 0,
+          subscriptions_active: 0,
+          subscriptions_cancelled: 0,
+          subscriptions_overdue: 0,
           total_revenue: 0,
         }
       );
