@@ -113,7 +113,7 @@ export function GenesisSupportChat() {
             </div>
 
             {/* Messages */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3 min-h-[380px] max-h-[460px]">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3 min-h-[460px] max-h-[540px]">
               {messages.length === 0 && (
                 <div className="text-center py-10">
                   <Bot className="w-12 h-12 mx-auto text-primary/30 mb-3" />
