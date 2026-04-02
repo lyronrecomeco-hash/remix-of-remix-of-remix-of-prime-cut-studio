@@ -186,8 +186,12 @@ serve(async (req) => {
             processed: false,
           };
 
-          await supabase.from('genesis_cakto_events').insert(eventInsert);
-          console.log(`[Cakto Events] Logged event: ${possibleCaktoEvent} for instance ${caktoInstanceId}`);
+          const { error: eventInsertError } = await supabase.from('genesis_cakto_events').insert(eventInsert);
+          if (eventInsertError) {
+            console.error(`[Cakto Events] INSERT ERROR:`, JSON.stringify(eventInsertError));
+          } else {
+            console.log(`[Cakto Events] Logged event: ${possibleCaktoEvent} for instance ${caktoInstanceId}`);
+          }
 
           // ========= UPDATE genesis_cakto_analytics =========
           const today = new Date().toISOString().split('T')[0];
