@@ -211,7 +211,7 @@ serve(async (req) => {
             } else {
               const insertObj: Record<string, unknown> = {
                 instance_id: caktoInstanceId,
-                integration_id: caktoInstanceId,
+                integration_id: null,
                 date: today,
                 [fieldToUpdate]: 1,
               };
