@@ -341,7 +341,7 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
     setCurrentPage(1);
   }, [searchTerm, statusFilter]);
 
-  const webhookUrl = `https://xeloigymjjeejvicadar.supabase.co/functions/v1/cakto-webhook`;
+  const webhookUrl = `https://xeloigymjjeejvicadar.supabase.co/functions/v1/checkout-webhook`;
 
   if (isLoading) {
     return (
