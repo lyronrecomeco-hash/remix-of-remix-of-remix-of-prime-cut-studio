@@ -204,7 +204,7 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
                             <Building2 className="w-5 h-5 text-primary" />
                           </div>
                           <div>
-                            <h3 className="font-semibold text-foreground text-sm line-clamp-1">
+                            <h3 className="font-semibold text-white text-sm line-clamp-1">
                               {proposal.company_name}
                             </h3>
                             {qa.niche && (
