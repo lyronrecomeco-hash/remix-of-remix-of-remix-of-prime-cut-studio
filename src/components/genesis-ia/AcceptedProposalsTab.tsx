@@ -175,7 +175,7 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
             <h3 className="text-lg font-medium text-white/70 mb-2">
               {searchTerm ? 'Nenhuma proposta encontrada' : 'Nenhuma proposta aceita ainda'}
             </h3>
-            <p className="text-sm text-muted-foreground/60">
+            <p className="text-sm text-white/40">
               {searchTerm 
                 ? 'Tente outro termo de busca' 
                 : 'Aceite oportunidades em Encontrar Cliente para vê-las aqui'}
