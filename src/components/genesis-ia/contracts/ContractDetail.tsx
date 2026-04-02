@@ -7,7 +7,6 @@ import {
   FileText,
   Download,
   Copy,
-  ExternalLink,
   User,
   Briefcase,
   Calendar,
@@ -17,12 +16,8 @@ import {
   Clock,
   XCircle,
   Loader2,
-  Link2,
-  FileSignature,
-  Shield,
   Sparkles,
   RefreshCw,
-  PenLine
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
