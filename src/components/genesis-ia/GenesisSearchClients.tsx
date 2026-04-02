@@ -138,7 +138,7 @@ function getNicheIcon(niche?: string): string {
   return NICHE_ICONS['default'];
 }
 
-export const GenesisSearchClients = ({ userId, onAccepted }: GenesisSearchClientsProps) => {
+export const GenesisSearchClients = ({ userId, affiliateId: passedAffiliateId, onAccepted }: GenesisSearchClientsProps) => {
   const [countryCode, setCountryCode] = useState('BR');
   const [state, setState] = useState('');
   const [city, setCity] = useState('');
