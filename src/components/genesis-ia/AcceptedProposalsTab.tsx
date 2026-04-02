@@ -195,7 +195,7 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: index * 0.05 }}
                 >
-                  <Card className="border-border hover:border-primary/30 bg-muted/10 transition-all duration-200">
+                  <Card className="border-white/10 hover:border-primary/30 bg-white/5 transition-all duration-200">
                     <CardContent className="p-5">
                       {/* Header */}
                       <div className="flex items-start justify-between mb-4">
