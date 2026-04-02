@@ -350,7 +350,7 @@ export function ContractDetail({ contractId, onBack }: ContractDetailProps) {
     });
   };
 
-  const contractedHasSigned = signatures.some(s => s.signer_type === 'contracted' && s.signed_at);
+  // Signature check removed
 
   if (loading || !contract) {
     return (
