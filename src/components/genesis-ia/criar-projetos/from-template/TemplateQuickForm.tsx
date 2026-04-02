@@ -201,7 +201,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                   <Palette className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
                   Paleta de Cores
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-2.5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
                   {COLOR_PRESETS.map((preset, index) => {
                     const isSelected = formData.primaryColor === preset.primary;
                     return (
