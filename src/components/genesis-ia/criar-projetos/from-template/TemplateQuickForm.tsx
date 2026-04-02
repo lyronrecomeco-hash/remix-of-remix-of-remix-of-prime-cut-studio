@@ -337,7 +337,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                 <Button
                   onClick={handleGenerate}
                   disabled={!canGenerate || generating}
-                  className="w-full h-10 sm:h-11 text-xs sm:text-sm gap-2"
+                  className="w-full h-11 sm:h-12 text-sm gap-2 font-semibold"
                 >
                   {generating ? (
                     <>
