@@ -94,7 +94,7 @@ export function LovableConnectButton({ prompt, projectName }: LovableConnectButt
               </motion.span>
             </h4>
             <p className="text-xs text-muted-foreground">
-              Deploy automático ao abrir
+              Copie o prompt e cole na Lovable
             </p>
           </div>
         </div>

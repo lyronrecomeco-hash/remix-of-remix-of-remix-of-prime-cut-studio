@@ -178,7 +178,7 @@ export function StepPreview({ onComplete, affiliateId }: StepPreviewProps) {
         {/* Title */}
         <div className="text-center">
           <h3 className="text-base sm:text-lg font-bold text-foreground mb-0.5 sm:mb-1">
-            Gerando Prompt Ultra-Completo
+            Gerando seu projeto...
           </h3>
           <p className="text-[10px] sm:text-xs text-muted-foreground">
             Processando suas configurações...

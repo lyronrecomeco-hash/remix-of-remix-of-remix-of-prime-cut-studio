@@ -90,7 +90,11 @@ export function CreationMethodModal({
                 </p>
               </div>
             </div>
-          </motion.button>
+            {/* Locked badge */}
+            <div className="absolute top-2 right-2 text-[9px] bg-white/10 text-muted-foreground px-1.5 py-0.5 rounded-full">
+              Em breve
+            </div>
+          </motion.div>
 
           {/* From Scratch Option */}
           <motion.button
