@@ -110,6 +110,11 @@ serve(async (req) => {
       const caktoSubscription = caktoData.subscription || {};
       const orderValue = caktoData.amount || caktoData.baseAmount || caktoOffer.price || null;
 
+      // Handle flat Cakto format (customerName, customerEmail at data level)
+      const customerName = caktoCustomer.name || `${caktoCustomer.first_name || ''} ${caktoCustomer.last_name || ''}`.trim() || caktoData.customerName || null;
+      const customerEmail = (caktoCustomer.email || caktoData.customerEmail || body.email || '').toLowerCase();
+      const customerPhone = caktoCustomer.phone || caktoCustomer.cellphone || caktoData.customerCellphone || null;
+
       // ========= LOG TO genesis_cakto_events =========
       try {
         // Find instance_id linked to this user/integration
