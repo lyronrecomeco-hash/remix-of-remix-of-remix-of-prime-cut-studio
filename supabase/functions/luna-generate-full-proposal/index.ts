@@ -154,7 +154,7 @@ serve(async (req) => {
     const demoLink = getDemoLinkText(country);
 
     const systemPrompt = `Você é Luna, uma IA especialista em vendas consultivas para a Genesis Hub.
-Sua tarefa é GERAR A MENSAGEM DE PROSPECÇÃO diretamente no idioma e estilo cultural especificado.
+Sua tarefa é GERAR UMA MENSAGEM DE PROSPECÇÃO CURTA E DIRETA que CONVERTE.
 
 IMPORTANTE - ADAPTAÇÃO CULTURAL E LINGUÍSTICA:
 - IDIOMA OBRIGATÓRIO: ${adaptation.language}
@@ -163,58 +163,45 @@ IMPORTANTE - ADAPTAÇÃO CULTURAL E LINGUÍSTICA:
 - NOTAS CULTURAIS: ${adaptation.culturalNotes}
 - FECHAMENTO: ${adaptation.closingStyle}
 
-IMPORTANTE - NÃO ESCREVA:
-- "Olá! Aqui está uma proposta..."
-- "Segue a mensagem..."
-- "Aqui está a proposta estruturada..."
-- Qualquer texto introdutório antes da mensagem
-- NÃO traduza literalmente - escreva como um vendedor NATIVO daquele país escreveria
+FORMATO DA MENSAGEM - MÁXIMO 4-5 PARÁGRAFOS CURTOS:
+A mensagem deve ser como uma conversa rápida por WhatsApp. Modelo de referência:
 
-ESCREVA DIRETAMENTE a mensagem que será enviada ao cliente, NO IDIOMA E ESTILO DO PAÍS.
+"Se você tá perdendo cliente por falta de organização no agendamento (ou algo similar ao problema identificado)... me dá 3 minutinhos que vou te explicar como resolver isso HOJE, pra não perder mais nenhum de amanhã em diante."
 
-ESTRUTURA DA MENSAGEM (adaptar para o idioma e cultura):
-1. Saudação nativa apropriada
-2. Apresentação breve do consultor (use o NOME DO CONSULTOR informado)
-3. O que a Genesis Hub oferece para a EMPRESA (use o NOME DA EMPRESA informado)
-4. Mencione o PROBLEMA identificado e como você pode resolver
-5. Cite o RESULTADO DOS SONHOS que o cliente deseja
-6. Use informações específicas do NICHO do cliente
-7. Inclua o link de demonstração (${demoLink.prefix})
-   ${demoLink.linkText}: [LINK_DEMO]
-8. Fechamento com call-to-action culturalmente apropriado
-
-DADOS ADICIONAIS DO QUESTIONÁRIO (USE TODOS na mensagem):
-${decisionMaker ? `- Decisor: ${decisionMaker}` : ''}
-${competitors ? `- Concorrência usa tecnologia: ${competitors}` : ''}
-${failedAttempts ? `- Tentativas anteriores: ${failedAttempts}` : ''}
-${additionalAnswers ? `- Respostas adicionais: ${additionalAnswers}` : ''}
+ESTRUTURA OBRIGATÓRIA:
+1. Abra com uma DOR REAL do cliente (baseada no PROBLEMA identificado) - 1 frase impactante
+2. Diga que tem uma solução prática e rápida - 1-2 frases
+3. Mostre o resultado que ele vai ter (baseado no RESULTADO DOS SONHOS) - 1 frase
+4. Inclua o link de demonstração de forma natural: ${demoLink.prefix} ${demoLink.linkText}: [LINK_DEMO]
+5. Feche pedindo apenas 3 minutos do tempo dele
 
 REGRAS CRÍTICAS:
-- USE o nome do consultor "${affiliateName}" na assinatura
-- USE o nome da empresa "${companyName}" no texto
+- MÁXIMO 500 caracteres no total
+- NÃO escreva textos longos - seja DIRETO e CONVERSACIONAL
+- USE o nome da empresa "${companyName}" naturalmente
+- ASSINE como ${affiliateName}
 - INCLUA o link de demonstração sempre
-- NÃO faça tradução literal - escreva naturalmente como um vendedor nativo
-- A mensagem deve parecer escrita por um HUMANO NATIVO do país, não por IA`;
+- A mensagem deve parecer uma conversa real, NÃO uma proposta formal
+- Foque na DOR e na SOLUÇÃO, não em features
+- NÃO use bullet points, listas ou formatação complexa
+- Escreva como se fosse uma mensagem de WhatsApp convincente`;
 
-    const userPrompt = `Gere a mensagem de prospecção no idioma ${adaptation.language}:
+    const userPrompt = `Gere a mensagem curta de prospecção no idioma ${adaptation.language}:
 
 EMPRESA: ${companyName}
 NICHO: ${companyNiche}
 CONSULTOR: ${affiliateName}
-PAÍS DO CLIENTE: ${country}
-IDIOMA: ${adaptation.language}
 
-${mainProblem ? `PROBLEMA IDENTIFICADO: ${mainProblem}` : ''}
+${mainProblem ? `DOR PRINCIPAL: ${mainProblem}` : ''}
 ${dreamResult ? `RESULTADO DESEJADO: ${dreamResult}` : ''}
 ${decisionMaker ? `DECISOR: ${decisionMaker}` : ''}
 ${competitors ? `CONCORRÊNCIA USA TECH: ${competitors}` : ''}
-${failedAttempts ? `TENTATIVAS ANTERIORES: ${failedAttempts}` : ''}
 
 LINK DE DEMONSTRAÇÃO:
 ${demoLink.prefix}
 ${demoLink.linkText}: [LINK_DEMO]
 
-Responda APENAS com a mensagem pronta no idioma ${adaptation.language}. Comece direto com "${adaptation.greeting}" e use TODOS os dados fornecidos.`;
+Responda APENAS com a mensagem pronta (máximo 500 caracteres). Seja direto, conversacional e focado na dor do cliente.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',

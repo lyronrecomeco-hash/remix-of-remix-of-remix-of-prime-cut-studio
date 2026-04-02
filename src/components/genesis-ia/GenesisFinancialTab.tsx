@@ -492,7 +492,10 @@ export function GenesisFinancialTab({ userId, userEmail }: GenesisFinancialTabPr
                 </div>
                 <div className="flex-1">
                   <p className="text-2xl font-bold text-white">
-                    {referrals > 0 ? Math.round((convertedReferrals / referrals) * 100) : 0}%
+                    {isSantiagoAccount 
+                      ? `${data.signedContracts > 0 ? Math.round((data.activeSubscriptions / data.signedContracts) * 100) : 0}%`
+                      : `${referrals > 0 ? Math.round((convertedReferrals / referrals) * 100) : 0}%`
+                    }
                   </p>
                   <p className="text-sm text-white/50">Taxa de Conversão</p>
                 </div>
@@ -501,8 +504,8 @@ export function GenesisFinancialTab({ userId, userEmail }: GenesisFinancialTabPr
           </Card>
         </motion.div>
 
-        {/* Contracts List (only for content account) */}
-        {isContentAccount && contracts.length > 0 && (
+        {/* Contracts List */}
+        {(isContentAccount || isSantiagoAccount) && contracts.length > 0 && (
           <motion.div variants={itemVariants}>
             <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
               <CardHeader className="pb-2 px-5 pt-5">

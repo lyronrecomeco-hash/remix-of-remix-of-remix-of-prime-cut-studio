@@ -10,7 +10,7 @@ import {
   Clock,
   Sparkles,
   FileText,
-  X,
+  Check,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -61,6 +61,7 @@ interface ProjectCardProps {
 export function ProjectCard({ project, index, onEdit, onEvolve, onDelete }: ProjectCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [showPromptModal, setShowPromptModal] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const copyLink = () => {
     const route = project.custom_slug || project.unique_code;
@@ -102,16 +103,21 @@ export function ProjectCard({ project, index, onEdit, onEvolve, onDelete }: Proj
       const latest = project.evolution_history[project.evolution_history.length - 1];
       if (latest?.prompt) return latest.prompt;
     }
-    // Fallback to last_prompt
+    // Fallback to last_prompt (this is the full generated prompt)
     if (project.last_prompt) return project.last_prompt;
-    // Generate basic info from config
+    // Fallback to config prompt
     const cfg = project.config || {};
-    return `Projeto: ${project.client_name || project.template_name}\nPlataforma: ${platformInfo.label}\nTemplate: ${project.template_slug}\n\nNenhum prompt detalhado disponível para este projeto.`;
+    if (cfg.generatedPrompt) return cfg.generatedPrompt;
+    if (cfg.prompt) return cfg.prompt;
+    // Generate basic info
+    return `Projeto: ${project.client_name || project.template_name}\nPlataforma: ${platformInfo.label}\nTemplate: ${project.template_slug}\n\nNenhum prompt disponível para este projeto.`;
   };
 
   const copyPrompt = () => {
     navigator.clipboard.writeText(getPromptContent());
+    setCopied(true);
     toast.success('Prompt copiado!');
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -222,26 +228,72 @@ export function ProjectCard({ project, index, onEdit, onEvolve, onDelete }: Proj
 
       {/* Prompt Modal */}
       <Dialog open={showPromptModal} onOpenChange={setShowPromptModal}>
-        <DialogContent className="bg-card border-white/10 max-w-2xl max-h-[80vh]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base">
-              <FileText className="w-5 h-5 text-blue-400" />
-              {project.client_name || project.template_name}
-            </DialogTitle>
-          </DialogHeader>
+        <DialogContent className="bg-[hsl(222,47%,8%)] border-white/10 max-w-3xl max-h-[85vh] p-0 gap-0 overflow-hidden">
+          {/* Modal Header */}
+          <div className="px-6 pt-6 pb-4 border-b border-white/10">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-3 text-lg">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-xl">
+                  {getTemplateIcon(project.template_slug)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-semibold truncate">
+                    {project.client_name || project.template_name}
+                  </p>
+                  <p className="text-xs text-white/40 font-normal mt-0.5">
+                    {platformInfo.label} • Criado em {createdDate}
+                  </p>
+                </div>
+              </DialogTitle>
+            </DialogHeader>
+          </div>
+
+          {/* Prompt Content */}
           <ScrollArea className="max-h-[55vh]">
-            <pre className="text-xs text-foreground/90 whitespace-pre-wrap font-mono bg-white/5 rounded-lg p-4 border border-white/10 leading-relaxed">
-              {getPromptContent()}
-            </pre>
+            <div className="px-6 py-5">
+              <pre className="text-[13px] text-white/85 whitespace-pre-wrap font-mono leading-relaxed">
+                {getPromptContent()}
+              </pre>
+            </div>
           </ScrollArea>
-          <div className="flex items-center justify-end gap-2 pt-2">
-            <Button variant="ghost" size="sm" onClick={() => setShowPromptModal(false)}>
-              Fechar
-            </Button>
-            <Button size="sm" onClick={copyPrompt} className="gap-1.5 bg-blue-500 hover:bg-blue-600">
-              <Copy className="w-3.5 h-3.5" />
-              Copiar Prompt
-            </Button>
+
+          {/* Modal Footer */}
+          <div className="px-6 py-4 border-t border-white/10 flex items-center justify-between gap-3">
+            <p className="text-xs text-white/30">
+              Prompt gerado do projeto
+            </p>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowPromptModal(false)}
+                className="text-white/50 hover:text-white hover:bg-white/5"
+              >
+                Fechar
+              </Button>
+              <Button 
+                size="sm" 
+                onClick={copyPrompt} 
+                className={cn(
+                  "gap-1.5 min-w-[140px] transition-all",
+                  copied 
+                    ? "bg-emerald-500 hover:bg-emerald-600 text-white" 
+                    : "bg-blue-500 hover:bg-blue-600 text-white"
+                )}
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-3.5 h-3.5" />
+                    Copiado!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    Copiar Prompt
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

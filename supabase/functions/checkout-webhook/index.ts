@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-webhook-secret, asaas-access-token',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-webhook-secret, asaas-access-token, x-cakto-signature',
 };
 
 // Plan mapping configuration
@@ -51,13 +51,56 @@ serve(async (req) => {
     console.log('Webhook received:', JSON.stringify(body, null, 2));
 
     // Detect webhook source and extract payment info
-    let gateway: 'abacatepay' | 'asaas' | 'misticpay' = 'abacatepay';
+    let gateway: 'abacatepay' | 'asaas' | 'misticpay' | 'cakto' = 'abacatepay';
     let paymentId: string | null = null;
     let eventType: string = '';
     let newStatus: string = 'pending';
 
+    // Check if this is a Cakto webhook (has event field like purchase_approved, pix_generated, etc.)
+    const caktoEventTypes = ['pix_generated', 'purchase_approved', 'purchase_refused', 'purchase_refunded', 'initiate_checkout', 'checkout_abandonment', 'pix_expired', 'purchase_chargeback'];
+    const possibleCaktoEvent = body.event || body.type || body.event_type;
+    
+    if (possibleCaktoEvent && caktoEventTypes.includes(possibleCaktoEvent)) {
+      gateway = 'cakto';
+      
+      // Extract order/transaction ID from Cakto payload
+      paymentId = body.id || body.transaction_id || body.order_id || body.checkout_id || null;
+      
+      // Also try nested order data
+      const caktoOrder = body.order || body.data || {};
+      if (!paymentId) {
+        paymentId = caktoOrder.id || caktoOrder.transaction_id || null;
+      }
+
+      console.log(`[Cakto Webhook] Event: ${possibleCaktoEvent}, PaymentId: ${paymentId}`);
+
+      switch (possibleCaktoEvent) {
+        case 'pix_generated':
+          eventType = 'pix_generated';
+          newStatus = 'pending';
+          break;
+        case 'purchase_approved':
+          newStatus = 'paid';
+          eventType = 'payment_confirmed';
+          break;
+        case 'purchase_refused':
+          newStatus = 'failed';
+          eventType = 'payment_failed';
+          break;
+        case 'purchase_refunded':
+          newStatus = 'refunded';
+          eventType = 'payment_refunded';
+          break;
+        case 'purchase_chargeback':
+          newStatus = 'refunded';
+          eventType = 'payment_chargeback';
+          break;
+        default:
+          eventType = possibleCaktoEvent;
+      }
+    }
     // Check if this is a MisticPay webhook (has transactionId, transactionType, and transactionMethod)
-    if (body.transactionId && body.transactionType && body.transactionMethod === 'PIX') {
+    else if (body.transactionId && body.transactionType && body.transactionMethod === 'PIX') {
       gateway = 'misticpay';
       paymentId = String(body.transactionId);
       const misticStatus = body.status;
@@ -185,7 +228,40 @@ serve(async (req) => {
 
     // Find payment by gateway-specific ID
     let payment;
-    if (gateway === 'misticpay') {
+    if (gateway === 'cakto') {
+      // For Cakto, try to find by cakto_order_id first, then by payment_code
+      const { data, error } = await supabase
+        .from('checkout_payments')
+        .select('id, status, payment_code, plan_id, customer_id, promo_link_id, amount_cents')
+        .or(`cakto_order_id.eq.${paymentId},payment_code.ilike.%${paymentId}%`)
+        .maybeSingle();
+      payment = data;
+      if (error) console.log('Cakto payment lookup error:', error);
+      
+      // If not found by order_id, try extracting customer email and finding by that
+      if (!payment && body.customer?.email) {
+        const customerEmail = (body.customer?.email || '').toLowerCase();
+        console.log('[Cakto Webhook] Payment not found by ID, trying by customer email:', customerEmail);
+        
+        const { data: customerData } = await supabase
+          .from('checkout_customers')
+          .select('id')
+          .eq('email', customerEmail)
+          .maybeSingle();
+        
+        if (customerData) {
+          const { data: paymentByCustomer } = await supabase
+            .from('checkout_payments')
+            .select('id, status, payment_code, plan_id, customer_id, promo_link_id, amount_cents')
+            .eq('customer_id', customerData.id)
+            .eq('gateway', 'cakto')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          payment = paymentByCustomer;
+        }
+      }
+    } else if (gateway === 'misticpay') {
       const { data, error } = await supabase
         .from('checkout_payments')
         .select('id, status, payment_code, plan_id, customer_id, promo_link_id, amount_cents')
