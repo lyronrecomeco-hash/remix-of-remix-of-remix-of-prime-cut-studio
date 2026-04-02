@@ -395,7 +395,6 @@ export function ContractDetail({ contractId, onBack }: ContractDetailProps) {
       <Tabs defaultValue="details" className="w-full">
         <TabsList className="w-full justify-start bg-card/50 border overflow-x-auto">
           <TabsTrigger value="details" className="text-xs sm:text-sm">Detalhes</TabsTrigger>
-          <TabsTrigger value="signatures" className="text-xs sm:text-sm">Assinaturas</TabsTrigger>
           <TabsTrigger value="preview" className="text-xs sm:text-sm">Visualizar</TabsTrigger>
         </TabsList>
 
