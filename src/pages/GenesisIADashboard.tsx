@@ -83,6 +83,8 @@ import { HelpCenterTab } from "@/components/genesis-ia/help";
 import { useMenuPermissions } from "@/hooks/useMenuPermissions";
 import { RestrictedAccessModal } from "@/components/admin/RestrictedAccessModal";
 import { GenesisSupportChat } from "@/components/genesis-ia/support/GenesisSupportChat";
+import { TrialCountdownBadge } from "@/components/genesis-ia/trial/TrialCountdownBadge";
+import { TrialInfoModal } from "@/components/genesis-ia/trial/TrialInfoModal";
 
 type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional' | 'payments' | 'page-builder' | 'academia' | 'proposals' | 'sprint-mission' | 'api-keys' | 'viral-saas' | 'partner-applications' | 'help';
 
@@ -112,6 +114,9 @@ const GenesisIADashboard = () => {
   const [isAccountBlocked, setIsAccountBlocked] = useState(false);
   const [isTrialExpired, setIsTrialExpired] = useState(false);
   const [blockReason, setBlockReason] = useState<string>('');
+  const [trialExpiresAt, setTrialExpiresAt] = useState<string | null>(null);
+  const [isTrialUser, setIsTrialUser] = useState(false);
+  const [showTrialModal, setShowTrialModal] = useState(false);
   const [restrictedModal, setRestrictedModal] = useState<{ open: boolean; label: string; id: string }>({ open: false, label: '', id: '' });
   const [isDockCollapsed, setIsDockCollapsed] = useState(false);
   
@@ -163,14 +168,17 @@ const GenesisIADashboard = () => {
        setBlockReason(subscription.plan_name || 'Conta bloqueada');
      }
      
-     // Check if trial (mentorado) has expired
-     if (
-       (subscription?.status === 'trial' || subscription?.user_type === 'mentorado') &&
-       subscription?.expires_at &&
-       new Date(subscription.expires_at) < new Date()
-     ) {
-       setIsTrialExpired(true);
-     }
+      // Check if trial (mentorado) has expired
+      if (
+        (subscription?.status === 'trial' || subscription?.user_type === 'mentorado') &&
+        subscription?.expires_at
+      ) {
+        setIsTrialUser(true);
+        setTrialExpiresAt(subscription.expires_at);
+        if (new Date(subscription.expires_at) < new Date()) {
+          setIsTrialExpired(true);
+        }
+      }
    }
 
     // Usar primeiro nome do genesis_users, ou do metadata, ou do email
@@ -863,6 +871,14 @@ const GenesisIADashboard = () => {
                   </div>
 
                   {/* Welcome badge removed - using hero section instead */}
+                  
+                  {/* Trial Countdown for Mentorado users */}
+                  {isTrialUser && trialExpiresAt && !isTrialExpired && (
+                    <TrialCountdownBadge 
+                      expiresAt={trialExpiresAt} 
+                      onClick={() => setShowTrialModal(true)} 
+                    />
+                  )}
                 </div>
               </div>
             </header>
@@ -1057,6 +1073,15 @@ const GenesisIADashboard = () => {
               menuId={restrictedModal.id}
             />
             <GenesisSupportChat />
+            
+            {/* Trial Info Modal */}
+            {isTrialUser && trialExpiresAt && (
+              <TrialInfoModal
+                isOpen={showTrialModal}
+                onClose={() => setShowTrialModal(false)}
+                expiresAt={trialExpiresAt}
+              />
+            )}
           </div>
         );
       }}

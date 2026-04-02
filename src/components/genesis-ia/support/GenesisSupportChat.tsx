@@ -1,12 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Send, Loader2, Bot } from 'lucide-react';
+import { ChevronDown, Send, Loader2, Bot, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import ReactMarkdown from 'react-markdown';
+
+const WHATSAPP_SUPPORT_NUMBER = '5527920005215';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  hasWhatsAppButton?: boolean;
 }
 
 export function GenesisSupportChat() {
@@ -40,7 +44,14 @@ export function GenesisSupportChat() {
       if (error) throw error;
 
       const reply = data?.reply || 'Desculpe, não consegui processar sua mensagem. Tente novamente.';
-      setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: reply }]);
+      const hasWhatsApp = data?.hasWhatsAppButton || false;
+      
+      setMessages(prev => [...prev, { 
+        id: (Date.now() + 1).toString(), 
+        role: 'assistant', 
+        content: reply,
+        hasWhatsAppButton: hasWhatsApp,
+      }]);
     } catch (err) {
       console.error('Support chat error:', err);
       setMessages(prev => [...prev, {
@@ -77,13 +88,13 @@ export function GenesisSupportChat() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-5 right-5 z-50 w-[340px] sm:w-[380px] max-h-[520px] rounded-2xl border border-border bg-card shadow-2xl flex flex-col overflow-hidden"
+            className="fixed bottom-5 right-5 z-50 w-[360px] sm:w-[400px] max-h-[620px] rounded-2xl border border-border bg-card shadow-2xl flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                  <Bot className="w-4 h-4 text-primary" />
+                <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Bot className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-foreground leading-tight">Genesis IA</p>
@@ -102,10 +113,10 @@ export function GenesisSupportChat() {
             </div>
 
             {/* Messages */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3 min-h-[300px] max-h-[380px]">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3 min-h-[380px] max-h-[460px]">
               {messages.length === 0 && (
-                <div className="text-center py-8">
-                  <Bot className="w-10 h-10 mx-auto text-primary/30 mb-3" />
+                <div className="text-center py-10">
+                  <Bot className="w-12 h-12 mx-auto text-primary/30 mb-3" />
                   <p className="text-xs text-muted-foreground">
                     Olá! Sou a Genesis IA.<br />
                     Como posso ajudar?
@@ -115,12 +126,29 @@ export function GenesisSupportChat() {
 
               {messages.map((msg) => (
                 <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] px-3 py-2 rounded-2xl text-xs leading-relaxed ${
+                  <div className={`max-w-[85%] rounded-2xl text-xs leading-relaxed ${
                     msg.role === 'user'
-                      ? 'bg-primary text-primary-foreground rounded-br-md'
-                      : 'bg-muted text-foreground rounded-bl-md'
+                      ? 'bg-primary text-primary-foreground rounded-br-md px-3 py-2'
+                      : 'bg-muted text-foreground rounded-bl-md px-3 py-2'
                   }`}>
-                    {msg.content}
+                    {msg.role === 'assistant' ? (
+                      <div className="prose prose-sm prose-invert max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5 [&_h1]:text-sm [&_h2]:text-xs [&_h3]:text-xs [&_strong]:text-foreground [&_a]:text-primary [&_code]:text-[10px] [&_code]:bg-black/20 [&_code]:px-1 [&_code]:rounded text-xs">
+                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      </div>
+                    ) : (
+                      msg.content
+                    )}
+                    {msg.hasWhatsAppButton && (
+                      <a
+                        href={`https://wa.me/${WHATSAPP_SUPPORT_NUMBER}?text=Ol%C3%A1%2C%20preciso%20de%20suporte%20Genesis%20Hub`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors text-xs font-medium"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        Falar com suporte via WhatsApp
+                      </a>
+                    )}
                   </div>
                 </div>
               ))}
@@ -146,12 +174,12 @@ export function GenesisSupportChat() {
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && sendMessage()}
                   placeholder="Envie uma mensagem..."
-                  className="flex-1 h-9 px-3 rounded-xl bg-muted border border-border text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+                  className="flex-1 h-10 px-3 rounded-xl bg-muted border border-border text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
                 />
                 <button
                   onClick={sendMessage}
                   disabled={!input.trim() || isLoading}
-                  className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors disabled:opacity-50"
+                  className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors disabled:opacity-50"
                 >
                   {isLoading ? (
                     <Loader2 className="w-4 h-4 text-primary-foreground animate-spin" />

@@ -80,11 +80,13 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
 
   const handleGenerate = () => {
     setGenerating(true);
+    // Simulate a more thorough generation process
     setTimeout(() => {
       const prompt = generateTemplatePrompt(template, formData);
       setGeneratedPrompt(prompt);
       setGenerating(false);
-    }, 600);
+      toast.success('Prompt profissional gerado!', { description: 'Copie e cole na Lovable ou na plataforma de IA desejada.' });
+    }, 2500);
   };
 
   const handleCopy = async () => {
@@ -123,7 +125,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
       </div>
 
       {/* Body */}
-      <div className="p-3 sm:p-4 lg:p-5 rounded-b-xl bg-white/5 border border-white/10 border-t-0">
+      <div className="p-4 sm:p-5 lg:p-6 rounded-b-xl bg-white/5 border border-white/10 border-t-0">
         <AnimatePresence mode="wait">
           {generatedPrompt ? (
             <motion.div
@@ -134,7 +136,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
               className="space-y-3"
             >
               <div className="relative">
-                <pre className="w-full max-h-[400px] overflow-auto p-3 sm:p-4 rounded-lg bg-muted/50 border border-border text-[10px] sm:text-xs text-muted-foreground font-mono whitespace-pre-wrap leading-relaxed">
+                <pre className="w-full max-h-[500px] overflow-auto p-4 sm:p-5 rounded-lg bg-muted/50 border border-border text-[11px] sm:text-xs text-muted-foreground font-mono whitespace-pre-wrap leading-relaxed">
                   {generatedPrompt}
                 </pre>
               </div>
@@ -162,33 +164,33 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                   <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
                   Identidade
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="space-y-1.5">
-                    <Label className="text-[10px] sm:text-xs text-muted-foreground">Nome do Negocio *</Label>
+                    <Label className="text-xs sm:text-sm text-muted-foreground">Nome do Negocio *</Label>
                     <Input
                       value={formData.businessName}
                       onChange={e => updateField('businessName', e.target.value)}
                       placeholder="Ex: Pizzaria do Joao"
-                      className="h-9 text-xs sm:text-sm"
+                      className="h-10 text-sm"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-[10px] sm:text-xs text-muted-foreground">Cidade / Estado</Label>
+                    <Label className="text-xs sm:text-sm text-muted-foreground">Cidade / Estado</Label>
                     <Input
                       value={formData.cityState}
                       onChange={e => updateField('cityState', e.target.value)}
                       placeholder="Ex: Sao Paulo, SP"
-                      className="h-9 text-xs sm:text-sm"
+                      className="h-10 text-sm"
                     />
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-[10px] sm:text-xs text-muted-foreground">Slogan (opcional)</Label>
+                  <Label className="text-xs sm:text-sm text-muted-foreground">Slogan (opcional)</Label>
                   <Input
                     value={formData.slogan}
                     onChange={e => updateField('slogan', e.target.value)}
                     placeholder="Ex: O melhor sabor da cidade"
-                    className="h-9 text-xs sm:text-sm"
+                    className="h-10 text-sm"
                   />
                 </div>
               </div>
@@ -199,7 +201,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                   <Palette className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
                   Paleta de Cores
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-2.5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
                   {COLOR_PRESETS.map((preset, index) => {
                     const isSelected = formData.primaryColor === preset.primary;
                     return (
@@ -255,7 +257,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                   <Type className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
                   Tipografia
                 </label>
-                <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 sm:gap-2">
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-2.5">
                   {TYPOGRAPHIES.slice(0, 10).map((font, index) => {
                     const isSelected = formData.typography === font;
                     return (
@@ -290,7 +292,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                   <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
                   Idioma
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
                   {LANGUAGES.map((lang, index) => {
                     const isSelected = formData.language === lang.label;
                     return (
@@ -320,13 +322,13 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
 
               {/* Additional Description */}
               <div className="space-y-1.5">
-                <Label className="text-[10px] sm:text-xs text-muted-foreground">Descricao adicional (opcional)</Label>
+                <Label className="text-xs sm:text-sm text-muted-foreground">Descricao adicional (opcional)</Label>
                 <Textarea
                   value={formData.additionalDescription}
                   onChange={e => updateField('additionalDescription', e.target.value)}
                   placeholder="Descreva informacoes extras, funcionalidades especificas, estilo visual desejado..."
-                  className="min-h-[60px] text-xs sm:text-sm resize-none"
-                  rows={2}
+                  className="min-h-[80px] text-sm resize-none"
+                  rows={3}
                 />
               </div>
 
@@ -335,7 +337,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                 <Button
                   onClick={handleGenerate}
                   disabled={!canGenerate || generating}
-                  className="w-full h-10 sm:h-11 text-xs sm:text-sm gap-2"
+                  className="w-full h-11 sm:h-12 text-sm gap-2 font-semibold"
                 >
                   {generating ? (
                     <>

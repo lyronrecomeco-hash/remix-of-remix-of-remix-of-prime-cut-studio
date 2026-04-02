@@ -296,49 +296,21 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
         if (error) throw error;
         toast.success('Usuário atualizado');
       } else {
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: formData.email,
-          password: formData.password,
-        });
-        if (authError) throw authError;
-        if (authData.user) {
-          const { error } = await supabase.from('genesis_users').insert({
-            auth_user_id: authData.user.id,
+        // Use edge function to create user WITHOUT auto-login
+        const { data: createData, error: createError } = await supabase.functions.invoke('genesis-admin-create-user', {
+          body: {
             email: formData.email,
+            password: formData.password,
             name: formData.name,
             phone: formData.phone || null,
             company_name: formData.company_name || null,
             is_active: formData.is_active,
-          });
-          if (error) throw error;
-
-            // Criar subscription se não for client (sem pagamento)
-            if (formData.user_type !== 'client') {
-              const { data: newGenesisUser } = await supabase
-                .from('genesis_users')
-                .select('id')
-                .eq('auth_user_id', authData.user.id)
-                .single();
-
-              if (newGenesisUser) {
-                const isMentorado = formData.user_type === 'mentorado';
-                const expiresAt = isMentorado
-                  ? new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) // 3 dias
-                  : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 ano
-
-                await supabase.from('genesis_subscriptions').insert([{
-                  user_id: newGenesisUser.id,
-                  plan: 'starter',
-                  plan_name: isMentorado ? 'Mentorado Santiago (Trial)' : 
-                    formData.user_type === 'influencer' ? 'Influencer' : 'Parceiro',
-                  status: isMentorado ? 'trial' : 'active',
-                  user_type: formData.user_type,
-                  started_at: new Date().toISOString(),
-                  expires_at: expiresAt.toISOString(),
-                }]);
-              }
-            }
-
+            user_type: formData.user_type,
+          }
+        });
+        if (createError) throw createError;
+        if (createData?.error) throw new Error(createData.error);
+        if (createData?.success) {
           // Mostrar modal de boas-vindas
           setCreatedUserData({
             name: formData.name,
