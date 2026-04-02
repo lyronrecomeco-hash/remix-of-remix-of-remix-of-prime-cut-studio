@@ -877,6 +877,8 @@ const GenesisIADashboard = () => {
                       onClick={() => setShowTrialModal(true)} 
                     />
                   )}
+                </div>
+              </div>
             </header>
 
             {/* WelcomeToast removed - using hero section instead */}
