@@ -1056,6 +1056,7 @@ const GenesisIADashboard = () => {
               menuLabel={restrictedModal.label}
               menuId={restrictedModal.id}
             />
+            <GenesisSupportChat />
           </div>
         );
       }}
