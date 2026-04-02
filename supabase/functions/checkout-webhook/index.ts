@@ -121,7 +121,6 @@ serve(async (req) => {
         let caktoInstanceId: string | null = null;
         
         // Try finding by customer email in genesis_users -> genesis_instances
-        const customerEmail = (caktoCustomer.email || body.email || '').toLowerCase();
         if (customerEmail) {
           const { data: gUser } = await supabase
             .from('genesis_users')
@@ -141,7 +140,20 @@ serve(async (req) => {
           }
         }
 
-        // If no instance found, try getting any instance (regardless of status)
+        // If no instance found, try getting any instance with cakto integration
+        if (!caktoInstanceId) {
+          const { data: caktoIntegration } = await supabase
+            .from('genesis_instance_integrations')
+            .select('instance_id')
+            .eq('provider', 'cakto')
+            .eq('status', 'connected')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (caktoIntegration) caktoInstanceId = caktoIntegration.instance_id;
+        }
+
+        // Fallback: any instance
         if (!caktoInstanceId) {
           const { data: anyInstance } = await supabase
             .from('genesis_instances')
@@ -152,7 +164,6 @@ serve(async (req) => {
           if (anyInstance) caktoInstanceId = anyInstance.id;
         }
 
-        // Last resort: use a deterministic UUID so events are still logged
         if (!caktoInstanceId) {
           console.log('[Cakto Events] No instance found, skipping event log');
         }
@@ -162,9 +173,9 @@ serve(async (req) => {
             instance_id: caktoInstanceId,
             event_type: possibleCaktoEvent,
             external_id: paymentId || crypto.randomUUID(),
-            customer_name: caktoCustomer.name || `${caktoCustomer.first_name || ''} ${caktoCustomer.last_name || ''}`.trim() || null,
+            customer_name: customerName,
             customer_email: customerEmail || null,
-            customer_phone: caktoCustomer.phone || caktoCustomer.cellphone || null,
+            customer_phone: customerPhone,
             product_id: caktoProduct.id || caktoProduct.external_id || null,
             product_name: caktoProduct.name || caktoProduct.title || null,
             offer_id: caktoOffer.id || caktoOffer.external_id || null,
