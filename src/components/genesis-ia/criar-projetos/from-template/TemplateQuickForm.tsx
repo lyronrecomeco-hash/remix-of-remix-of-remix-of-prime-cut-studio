@@ -327,8 +327,8 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                   value={formData.additionalDescription}
                   onChange={e => updateField('additionalDescription', e.target.value)}
                   placeholder="Descreva informacoes extras, funcionalidades especificas, estilo visual desejado..."
-                  className="min-h-[60px] text-xs sm:text-sm resize-none"
-                  rows={2}
+                  className="min-h-[80px] text-sm resize-none"
+                  rows={3}
                 />
               </div>
 
