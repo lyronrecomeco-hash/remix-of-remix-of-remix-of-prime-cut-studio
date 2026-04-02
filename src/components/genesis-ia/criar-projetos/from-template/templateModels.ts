@@ -21,6 +21,16 @@ import imgChurrascaria from '@/assets/templates/churrascaria.jpg';
 import imgOficina from '@/assets/templates/oficina.jpg';
 import imgFloricultura from '@/assets/templates/floricultura.jpg';
 import imgLandingPage from '@/assets/templates/landing-page.jpg';
+import imgYogaStudio from '@/assets/templates/yoga-studio.jpg';
+import imgCoworking from '@/assets/templates/coworking.jpg';
+import imgAdvocacia from '@/assets/templates/advocacia.jpg';
+import imgPsicologo from '@/assets/templates/psicologo.jpg';
+import imgClinicaEstetica from '@/assets/templates/clinica-estetica.jpg';
+import imgFotografo from '@/assets/templates/fotografo.jpg';
+import imgLavanderia from '@/assets/templates/lavanderia.jpg';
+import imgCervejaria from '@/assets/templates/cervejaria.jpg';
+import imgOtica from '@/assets/templates/otica.jpg';
+import imgContabilidade from '@/assets/templates/contabilidade.jpg';
 
 export type TemplateCategory = 'site' | 'app';
 
@@ -41,6 +51,7 @@ export const TEMPLATE_CATEGORIES: { id: TemplateCategory; label: string }[] = [
 ];
 
 export const TEMPLATE_MODELS: TemplateModel[] = [
+  // ========== ALIMENTAÇÃO ==========
   {
     id: 'pizzaria',
     name: 'Pizzaria',
@@ -54,32 +65,12 @@ export const TEMPLATE_MODELS: TemplateModel[] = [
   {
     id: 'hamburgueria',
     name: 'Hamburgueria',
-    description: 'Menu interativo e delivery para hamburguerias',
+    description: 'Menu interativo e delivery',
     image: imgHamburgueria,
     category: 'site',
     suggestedPages: ['Home', 'Cardapio', 'Combos', 'Sobre', 'Contato'],
     suggestedFeatures: ['Cardapio visual com fotos HD', 'Sistema de combos', 'Botao WhatsApp flutuante', 'Integracao delivery', 'Galeria de ambiente', 'Reviews'],
     objectives: ['Apresentar cardapio gourmet', 'Receber pedidos online', 'Destacar combos', 'Mostrar ambiente', 'Captar clientes'],
-  },
-  {
-    id: 'barbearia',
-    name: 'Barbearia',
-    description: 'Agendamento online e portfolio',
-    image: imgBarbearia,
-    category: 'site',
-    suggestedPages: ['Home', 'Servicos', 'Profissionais', 'Agendamento', 'Galeria', 'Contato'],
-    suggestedFeatures: ['Sistema de agendamento', 'Perfil dos barbeiros', 'Galeria de trabalhos', 'Botao WhatsApp flutuante', 'Reviews', 'Programa de fidelidade'],
-    objectives: ['Agendamento online', 'Apresentar servicos e precos', 'Mostrar equipe', 'Captar clientes locais', 'Fidelizar clientes'],
-  },
-  {
-    id: 'cafeteria',
-    name: 'Cafeteria',
-    description: 'Vitrine digital e fidelidade para cafeterias',
-    image: imgCafeteria,
-    category: 'site',
-    suggestedPages: ['Home', 'Cardapio', 'Sobre', 'Galeria', 'Contato'],
-    suggestedFeatures: ['Cardapio com fotos', 'Programa de fidelidade', 'Botao WhatsApp', 'Galeria do ambiente', 'Horarios de funcionamento', 'Eventos especiais'],
-    objectives: ['Mostrar cardapio completo', 'Fidelizar clientes', 'Apresentar ambiente', 'Promover eventos', 'Captar clientes locais'],
   },
   {
     id: 'restaurante',
@@ -94,11 +85,11 @@ export const TEMPLATE_MODELS: TemplateModel[] = [
   {
     id: 'sushi',
     name: 'Sushi / Japonesa',
-    description: 'Cardapio japones e pedidos online',
+    description: 'Cardapio japones e pedidos',
     image: imgSushi,
     category: 'site',
     suggestedPages: ['Home', 'Cardapio', 'Combos', 'Delivery', 'Sobre', 'Contato'],
-    suggestedFeatures: ['Cardapio japones com fotos', 'Sistema de combos', 'Pedidos online', 'Botao WhatsApp', 'Galeria do ambiente', 'Avaliacoes'],
+    suggestedFeatures: ['Cardapio japones com fotos', 'Sistema de combos', 'Pedidos online', 'Botao WhatsApp', 'Galeria', 'Avaliacoes'],
     objectives: ['Apresentar cardapio japones', 'Receber pedidos delivery', 'Destacar combos', 'Mostrar ambiente', 'Captar clientes'],
   },
   {
@@ -108,8 +99,18 @@ export const TEMPLATE_MODELS: TemplateModel[] = [
     image: imgChurrascaria,
     category: 'site',
     suggestedPages: ['Home', 'Cardapio', 'Rodizio', 'Reservas', 'Galeria', 'Contato'],
-    suggestedFeatures: ['Cardapio de carnes', 'Sistema de reservas', 'Galeria do salao', 'Botao WhatsApp', 'Eventos e confraternizacoes', 'Avaliacoes'],
-    objectives: ['Mostrar cardapio de carnes', 'Aceitar reservas online', 'Promover rodizio', 'Apresentar estrutura', 'Eventos corporativos'],
+    suggestedFeatures: ['Cardapio de carnes', 'Sistema de reservas', 'Galeria do salao', 'Botao WhatsApp', 'Eventos e confraternizacoes'],
+    objectives: ['Mostrar cardapio', 'Aceitar reservas online', 'Promover rodizio', 'Apresentar estrutura', 'Eventos corporativos'],
+  },
+  {
+    id: 'cafeteria',
+    name: 'Cafeteria',
+    description: 'Vitrine digital e fidelidade',
+    image: imgCafeteria,
+    category: 'site',
+    suggestedPages: ['Home', 'Cardapio', 'Sobre', 'Galeria', 'Contato'],
+    suggestedFeatures: ['Cardapio com fotos', 'Programa de fidelidade', 'Botao WhatsApp', 'Galeria do ambiente', 'Horarios de funcionamento'],
+    objectives: ['Mostrar cardapio completo', 'Fidelizar clientes', 'Apresentar ambiente', 'Promover eventos', 'Captar clientes locais'],
   },
   {
     id: 'sorveteria',
@@ -119,7 +120,7 @@ export const TEMPLATE_MODELS: TemplateModel[] = [
     category: 'site',
     suggestedPages: ['Home', 'Cardapio', 'Sabores', 'Promocoes', 'Contato'],
     suggestedFeatures: ['Cardapio de sabores', 'Combos e promocoes', 'Pedidos via WhatsApp', 'Galeria de produtos', 'Programa fidelidade'],
-    objectives: ['Mostrar sabores disponiveis', 'Receber pedidos', 'Promover combos', 'Fidelizar clientes', 'Captar clientes locais'],
+    objectives: ['Mostrar sabores', 'Receber pedidos', 'Promover combos', 'Fidelizar clientes', 'Captar clientes locais'],
   },
   {
     id: 'padaria',
@@ -129,27 +130,29 @@ export const TEMPLATE_MODELS: TemplateModel[] = [
     category: 'site',
     suggestedPages: ['Home', 'Produtos', 'Encomendas', 'Galeria', 'Sobre', 'Contato'],
     suggestedFeatures: ['Catalogo de produtos', 'Sistema de encomendas', 'Galeria de bolos', 'Botao WhatsApp', 'Horarios de funcionamento'],
-    objectives: ['Mostrar produtos artesanais', 'Receber encomendas', 'Apresentar especialidades', 'Captar clientes locais', 'Promover produtos sazonais'],
+    objectives: ['Mostrar produtos artesanais', 'Receber encomendas', 'Apresentar especialidades', 'Captar clientes', 'Promover produtos sazonais'],
   },
   {
-    id: 'petshop',
-    name: 'Petshop',
-    description: 'Servicos para pets e agendamento',
-    image: imgPetshop,
+    id: 'cervejaria',
+    name: 'Cervejaria Artesanal',
+    description: 'Bar e cervejaria craft',
+    image: imgCervejaria,
     category: 'site',
-    suggestedPages: ['Home', 'Servicos', 'Produtos', 'Agendamento', 'Sobre', 'Contato'],
-    suggestedFeatures: ['Agendamento de banho e tosa', 'Catalogo de produtos', 'Galeria de pets', 'Botao WhatsApp', 'Dicas e cuidados'],
-    objectives: ['Agendar banho e tosa', 'Mostrar servicos', 'Vender produtos', 'Programa fidelidade', 'Informar sobre veterinaria'],
+    suggestedPages: ['Home', 'Cervejas', 'Cardapio', 'Eventos', 'Sobre', 'Contato'],
+    suggestedFeatures: ['Catalogo de cervejas', 'Menu de petiscos', 'Agenda de eventos', 'Botao WhatsApp', 'Galeria do ambiente'],
+    objectives: ['Apresentar cervejas artesanais', 'Promover eventos', 'Reservas online', 'Captar clientes', 'Mostrar ambiente'],
   },
+
+  // ========== BELEZA & ESTÉTICA ==========
   {
-    id: 'academia',
-    name: 'Academia',
-    description: 'Planos, treinos e matriculas',
-    image: imgAcademia,
+    id: 'barbearia',
+    name: 'Barbearia',
+    description: 'Agendamento online e portfolio',
+    image: imgBarbearia,
     category: 'site',
-    suggestedPages: ['Home', 'Planos', 'Estrutura', 'Aulas', 'Horarios', 'Contato'],
-    suggestedFeatures: ['Tabela de planos e precos', 'Tour virtual', 'Calendario de aulas', 'Botao WhatsApp', 'Depoimentos de alunos'],
-    objectives: ['Captar novos alunos', 'Mostrar planos', 'Apresentar estrutura', 'Informar horarios', 'Promover aulas especiais'],
+    suggestedPages: ['Home', 'Servicos', 'Profissionais', 'Agendamento', 'Galeria', 'Contato'],
+    suggestedFeatures: ['Sistema de agendamento', 'Perfil dos barbeiros', 'Galeria de trabalhos', 'Botao WhatsApp flutuante', 'Reviews'],
+    objectives: ['Agendamento online', 'Apresentar servicos e precos', 'Mostrar equipe', 'Captar clientes locais', 'Fidelizar clientes'],
   },
   {
     id: 'salao-beleza',
@@ -168,12 +171,24 @@ export const TEMPLATE_MODELS: TemplateModel[] = [
     image: imgNailDesigner,
     category: 'site',
     suggestedPages: ['Home', 'Servicos', 'Portfolio', 'Agendamento', 'Contato'],
-    suggestedFeatures: ['Galeria de trabalhos', 'Agendamento online', 'Catalogo de servicos', 'Botao WhatsApp', 'Depoimentos de clientes'],
-    objectives: ['Mostrar portfolio de unhas', 'Agendar online', 'Apresentar servicos', 'Captar clientes', 'Fidelizar com promocoes'],
+    suggestedFeatures: ['Galeria de trabalhos', 'Agendamento online', 'Catalogo de servicos', 'Botao WhatsApp', 'Depoimentos'],
+    objectives: ['Mostrar portfolio', 'Agendar online', 'Apresentar servicos', 'Captar clientes', 'Fidelizar com promocoes'],
   },
   {
+    id: 'clinica-estetica',
+    name: 'Clinica Estetica',
+    description: 'Procedimentos esteticos e agendamento',
+    image: imgClinicaEstetica,
+    category: 'site',
+    suggestedPages: ['Home', 'Procedimentos', 'Antes e Depois', 'Equipe', 'Agendamento', 'Contato'],
+    suggestedFeatures: ['Lista de procedimentos', 'Galeria antes/depois', 'Agendamento online', 'Perfil profissional', 'Depoimentos', 'Convenios'],
+    objectives: ['Agendar procedimentos', 'Mostrar resultados', 'Gerar confianca', 'Captar clientes', 'Informar sobre tratamentos'],
+  },
+
+  // ========== SAÚDE ==========
+  {
     id: 'clinica',
-    name: 'Clinica / Saude',
+    name: 'Clinica Medica',
     description: 'Agendamento medico e servicos',
     image: imgClinica,
     category: 'site',
@@ -188,29 +203,73 @@ export const TEMPLATE_MODELS: TemplateModel[] = [
     image: imgDentista,
     category: 'site',
     suggestedPages: ['Home', 'Tratamentos', 'Equipe', 'Agendamento', 'Blog', 'Contato'],
-    suggestedFeatures: ['Agendamento online', 'Lista de tratamentos', 'Antes e depois', 'Botao WhatsApp', 'Convenios aceitos', 'Blog de saude bucal'],
+    suggestedFeatures: ['Agendamento online', 'Lista de tratamentos', 'Antes e depois', 'Botao WhatsApp', 'Convenios aceitos', 'Blog'],
     objectives: ['Agendar consultas', 'Mostrar tratamentos', 'Gerar confianca', 'Informar convenios', 'Educar pacientes'],
   },
   {
-    id: 'tattoo',
-    name: 'Studio Tattoo',
-    description: 'Portfolio de tatuagens e agendamento',
-    image: imgTattoo,
+    id: 'psicologo',
+    name: 'Psicologo / Terapeuta',
+    description: 'Consultas e atendimento online',
+    image: imgPsicologo,
     category: 'site',
-    suggestedPages: ['Home', 'Portfolio', 'Artistas', 'Estilos', 'Agendamento', 'Contato'],
-    suggestedFeatures: ['Galeria de trabalhos', 'Perfil dos artistas', 'Agendamento online', 'Botao WhatsApp', 'Cuidados pos-tattoo'],
-    objectives: ['Mostrar portfolio', 'Apresentar artistas', 'Agendar sessoes', 'Captar clientes', 'Informar cuidados'],
+    suggestedPages: ['Home', 'Sobre', 'Especialidades', 'Agendamento', 'Blog', 'Contato'],
+    suggestedFeatures: ['Agendamento online', 'Atendimento presencial e online', 'Perfil profissional', 'Blog com artigos', 'Botao WhatsApp'],
+    objectives: ['Agendar consultas', 'Apresentar abordagem terapeutica', 'Gerar confianca', 'Educar pacientes', 'Atendimento remoto'],
   },
   {
-    id: 'imobiliaria',
-    name: 'Imobiliaria',
-    description: 'Catalogo de imoveis e contato',
-    image: imgImobiliaria,
+    id: 'yoga-studio',
+    name: 'Yoga / Pilates',
+    description: 'Aulas, horarios e matriculas',
+    image: imgYogaStudio,
     category: 'site',
-    suggestedPages: ['Home', 'Imoveis', 'Venda', 'Aluguel', 'Corretores', 'Contato'],
-    suggestedFeatures: ['Catalogo de imoveis com filtros', 'Busca avancada', 'Tour virtual', 'Botao WhatsApp', 'Mapa de localizacao', 'Formulario de interesse'],
-    objectives: ['Mostrar imoveis disponiveis', 'Captar leads', 'Facilitar contato com corretor', 'Filtrar por tipo/preco', 'Apresentar construtora'],
+    suggestedPages: ['Home', 'Modalidades', 'Horarios', 'Instrutores', 'Planos', 'Contato'],
+    suggestedFeatures: ['Grade de horarios', 'Planos e precos', 'Perfil dos instrutores', 'Galeria do espaco', 'Botao WhatsApp', 'Aulas experimentais'],
+    objectives: ['Captar novos alunos', 'Mostrar modalidades', 'Informar horarios', 'Vender planos', 'Aula experimental'],
   },
+
+  // ========== SERVIÇOS ==========
+  {
+    id: 'advocacia',
+    name: 'Escritorio de Advocacia',
+    description: 'Servicos juridicos e consultas',
+    image: imgAdvocacia,
+    category: 'site',
+    suggestedPages: ['Home', 'Areas de Atuacao', 'Equipe', 'Blog', 'Contato'],
+    suggestedFeatures: ['Areas de atuacao detalhadas', 'Perfil dos advogados', 'Blog juridico', 'Formulario de consulta', 'Botao WhatsApp'],
+    objectives: ['Apresentar areas juridicas', 'Gerar autoridade', 'Captar clientes', 'Educar com conteudo', 'Facilitar contato'],
+  },
+  {
+    id: 'contabilidade',
+    name: 'Contabilidade',
+    description: 'Servicos contabeis e consultoria',
+    image: imgContabilidade,
+    category: 'site',
+    suggestedPages: ['Home', 'Servicos', 'Planos', 'Blog', 'Sobre', 'Contato'],
+    suggestedFeatures: ['Lista de servicos', 'Tabela de planos', 'Blog fiscal', 'Calculadoras online', 'Botao WhatsApp', 'Depoimentos'],
+    objectives: ['Apresentar servicos', 'Vender planos', 'Gerar confianca', 'Educar com conteudo', 'Captar empresas'],
+  },
+  {
+    id: 'fotografo',
+    name: 'Fotografo / Videomaker',
+    description: 'Portfolio e orcamentos',
+    image: imgFotografo,
+    category: 'site',
+    suggestedPages: ['Home', 'Portfolio', 'Servicos', 'Pacotes', 'Sobre', 'Contato'],
+    suggestedFeatures: ['Galeria de portfolio', 'Pacotes de servicos', 'Formulario de orcamento', 'Botao WhatsApp', 'Depoimentos'],
+    objectives: ['Mostrar portfolio', 'Apresentar pacotes', 'Gerar orcamentos', 'Captar clientes', 'Exibir trabalhos recentes'],
+  },
+  {
+    id: 'coworking',
+    name: 'Coworking / Espaco',
+    description: 'Planos, salas e reservas',
+    image: imgCoworking,
+    category: 'site',
+    suggestedPages: ['Home', 'Espacos', 'Planos', 'Reservas', 'Galeria', 'Contato'],
+    suggestedFeatures: ['Catalogo de espacos', 'Tabela de planos', 'Tour virtual', 'Reserva online', 'Botao WhatsApp'],
+    objectives: ['Apresentar espacos', 'Vender planos', 'Reserva de salas', 'Mostrar estrutura', 'Captar empresas'],
+  },
+
+  // ========== AUTOMOTIVO ==========
   {
     id: 'lava-car',
     name: 'Lava Car',
@@ -228,9 +287,23 @@ export const TEMPLATE_MODELS: TemplateModel[] = [
     image: imgOficina,
     category: 'site',
     suggestedPages: ['Home', 'Servicos', 'Orcamento', 'Sobre', 'Galeria', 'Contato'],
-    suggestedFeatures: ['Lista de servicos', 'Formulario de orcamento', 'Galeria de trabalhos', 'Botao WhatsApp', 'Depoimentos', 'Mapa'],
+    suggestedFeatures: ['Lista de servicos', 'Formulario de orcamento', 'Galeria de trabalhos', 'Botao WhatsApp', 'Depoimentos'],
     objectives: ['Apresentar servicos', 'Gerar orcamentos', 'Captar clientes locais', 'Mostrar credibilidade', 'Facilitar contato'],
   },
+
+  // ========== PETS ==========
+  {
+    id: 'petshop',
+    name: 'Petshop',
+    description: 'Servicos para pets e agendamento',
+    image: imgPetshop,
+    category: 'site',
+    suggestedPages: ['Home', 'Servicos', 'Produtos', 'Agendamento', 'Sobre', 'Contato'],
+    suggestedFeatures: ['Agendamento de banho e tosa', 'Catalogo de produtos', 'Galeria de pets', 'Botao WhatsApp', 'Dicas e cuidados'],
+    objectives: ['Agendar banho e tosa', 'Mostrar servicos', 'Vender produtos', 'Programa fidelidade', 'Informar sobre veterinaria'],
+  },
+
+  // ========== VAREJO ==========
   {
     id: 'floricultura',
     name: 'Floricultura',
@@ -238,9 +311,67 @@ export const TEMPLATE_MODELS: TemplateModel[] = [
     image: imgFloricultura,
     category: 'site',
     suggestedPages: ['Home', 'Catalogo', 'Ocasioes', 'Delivery', 'Sobre', 'Contato'],
-    suggestedFeatures: ['Catalogo de arranjos', 'Pedidos por ocasiao', 'Delivery de flores', 'Botao WhatsApp', 'Galeria de arranjos'],
-    objectives: ['Vender arranjos online', 'Delivery de flores', 'Catalogo por ocasiao', 'Captar clientes', 'Presentes e datas especiais'],
+    suggestedFeatures: ['Catalogo de arranjos', 'Pedidos por ocasiao', 'Delivery de flores', 'Botao WhatsApp', 'Galeria'],
+    objectives: ['Vender arranjos online', 'Delivery de flores', 'Catalogo por ocasiao', 'Captar clientes', 'Datas especiais'],
   },
+  {
+    id: 'otica',
+    name: 'Otica',
+    description: 'Catalogo de armacoes e lentes',
+    image: imgOtica,
+    category: 'site',
+    suggestedPages: ['Home', 'Armacoes', 'Lentes', 'Exame de Vista', 'Marcas', 'Contato'],
+    suggestedFeatures: ['Catalogo de armacoes', 'Agendamento de exame', 'Marcas disponiveis', 'Botao WhatsApp', 'Filtros por estilo'],
+    objectives: ['Mostrar armacoes', 'Agendar exames', 'Apresentar marcas', 'Captar clientes', 'Promover ofertas'],
+  },
+  {
+    id: 'lavanderia',
+    name: 'Lavanderia',
+    description: 'Servicos de lavagem e delivery',
+    image: imgLavanderia,
+    category: 'site',
+    suggestedPages: ['Home', 'Servicos', 'Precos', 'Delivery', 'Sobre', 'Contato'],
+    suggestedFeatures: ['Lista de servicos e precos', 'Servico de coleta/entrega', 'Planos mensais', 'Botao WhatsApp', 'Agendamento'],
+    objectives: ['Apresentar servicos', 'Coleta e entrega', 'Vender planos', 'Captar clientes', 'Fidelizar'],
+  },
+
+  // ========== ARTE & CULTURA ==========
+  {
+    id: 'tattoo',
+    name: 'Studio Tattoo',
+    description: 'Portfolio de tatuagens e agendamento',
+    image: imgTattoo,
+    category: 'site',
+    suggestedPages: ['Home', 'Portfolio', 'Artistas', 'Estilos', 'Agendamento', 'Contato'],
+    suggestedFeatures: ['Galeria de trabalhos', 'Perfil dos artistas', 'Agendamento online', 'Botao WhatsApp', 'Cuidados pos-tattoo'],
+    objectives: ['Mostrar portfolio', 'Apresentar artistas', 'Agendar sessoes', 'Captar clientes', 'Informar cuidados'],
+  },
+
+  // ========== IMOBILIÁRIO ==========
+  {
+    id: 'imobiliaria',
+    name: 'Imobiliaria',
+    description: 'Catalogo de imoveis e contato',
+    image: imgImobiliaria,
+    category: 'site',
+    suggestedPages: ['Home', 'Imoveis', 'Venda', 'Aluguel', 'Corretores', 'Contato'],
+    suggestedFeatures: ['Catalogo com filtros', 'Busca avancada', 'Tour virtual', 'Botao WhatsApp', 'Mapa', 'Formulario de interesse'],
+    objectives: ['Mostrar imoveis', 'Captar leads', 'Facilitar contato', 'Filtrar por tipo/preco', 'Apresentar construtora'],
+  },
+
+  // ========== FITNESS ==========
+  {
+    id: 'academia',
+    name: 'Academia / CrossFit',
+    description: 'Planos, treinos e matriculas',
+    image: imgAcademia,
+    category: 'site',
+    suggestedPages: ['Home', 'Planos', 'Estrutura', 'Aulas', 'Horarios', 'Contato'],
+    suggestedFeatures: ['Tabela de planos e precos', 'Tour virtual', 'Calendario de aulas', 'Botao WhatsApp', 'Depoimentos'],
+    objectives: ['Captar novos alunos', 'Mostrar planos', 'Apresentar estrutura', 'Informar horarios', 'Promover aulas especiais'],
+  },
+
+  // ========== LANDING & MARKETING ==========
   {
     id: 'landing-page',
     name: 'Landing Page',
@@ -251,6 +382,8 @@ export const TEMPLATE_MODELS: TemplateModel[] = [
     suggestedFeatures: ['Hero section impactante', 'Secao de beneficios', 'Depoimentos', 'Tabela de precos', 'FAQ', 'Formulario de captura'],
     objectives: ['Captar leads', 'Vender produto/servico', 'Gerar conversoes', 'Apresentar beneficios', 'Construir autoridade'],
   },
+
+  // ========== APPS ==========
   {
     id: 'ecommerce',
     name: 'E-commerce',
@@ -258,7 +391,7 @@ export const TEMPLATE_MODELS: TemplateModel[] = [
     image: imgEcommerce,
     category: 'app',
     suggestedPages: ['Home', 'Produtos', 'Categorias', 'Carrinho', 'Checkout', 'Minha Conta', 'Contato'],
-    suggestedFeatures: ['Catalogo com busca e filtros', 'Carrinho e checkout', 'Pagamento integrado', 'Painel admin', 'Gestao de estoque', 'Cupons e descontos'],
+    suggestedFeatures: ['Catalogo com busca e filtros', 'Carrinho e checkout', 'Pagamento integrado', 'Painel admin', 'Gestao de estoque', 'Cupons'],
     objectives: ['Vender produtos online', 'Gestao de pedidos', 'Integrar pagamentos', 'Dashboard de vendas', 'Marketing e promocoes'],
   },
   {
