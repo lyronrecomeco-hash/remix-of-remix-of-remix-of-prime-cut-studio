@@ -278,35 +278,35 @@ export const GenesisSearchClients = ({ userId, affiliateId: passedAffiliateId, o
 
   const handleAcceptProject = async (result: SearchResult) => {
     try {
-      // Get or create affiliate record for this user
-      const { data: affiliateData } = await supabase
-        .from('affiliates')
-        .select('id')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      let affiliateId = affiliateData?.id;
+      let affiliateId = passedAffiliateId || null;
 
       if (!affiliateId) {
-        // Create minimal affiliate record
-        const { data: newAffiliate, error: affErr } = await supabase
+        // Try to find existing affiliate
+        const { data: affiliateData } = await supabase
           .from('affiliates')
-          .insert({
-            user_id: userId,
-            name: 'Consultor Genesis',
-            email: 'auto@genesis.hub',
-            whatsapp: '0',
-            password_hash: 'auto',
-            affiliate_code: `GEN${Date.now().toString(36).toUpperCase()}`,
-          })
           .select('id')
-          .single();
+          .eq('user_id', userId)
+          .maybeSingle();
 
-        if (affErr || !newAffiliate) {
-          toast.error('Erro ao preparar proposta');
-          return;
+        affiliateId = affiliateData?.id || null;
+      }
+
+      if (!affiliateId) {
+        // Try with auth user id
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: affiliateData } = await supabase
+            .from('affiliates')
+            .select('id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          affiliateId = affiliateData?.id || null;
         }
-        affiliateId = newAffiliate.id;
+      }
+
+      if (!affiliateId) {
+        toast.error('Erro: perfil de consultor não encontrado');
+        return;
       }
 
       // Save to affiliate_proposals as accepted
