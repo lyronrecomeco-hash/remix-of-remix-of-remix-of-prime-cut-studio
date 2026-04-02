@@ -296,12 +296,21 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
         if (error) throw error;
         toast.success('Usuário atualizado');
       } else {
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: formData.email,
-          password: formData.password,
+        // Use edge function to create user WITHOUT auto-login
+        const { data: createData, error: createError } = await supabase.functions.invoke('genesis-admin-create-user', {
+          body: {
+            email: formData.email,
+            password: formData.password,
+            name: formData.name,
+            phone: formData.phone || null,
+            company_name: formData.company_name || null,
+            is_active: formData.is_active,
+            user_type: formData.user_type,
+          }
         });
-        if (authError) throw authError;
-        if (authData.user) {
+        if (createError) throw createError;
+        if (createData?.error) throw new Error(createData.error);
+        if (createData?.success) {
           const { error } = await supabase.from('genesis_users').insert({
             auth_user_id: authData.user.id,
             email: formData.email,
