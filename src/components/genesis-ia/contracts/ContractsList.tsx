@@ -105,6 +105,15 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
 
   const fetchContracts = async () => {
     try {
+      // Check if Santiago account
+      const { data: affiliateData } = await supabase
+        .from('affiliates')
+        .select('email')
+        .eq('id', affiliateId)
+        .single();
+      
+      const isSantiago = SANTIAGO_EMAILS.includes(affiliateData?.email?.toLowerCase() || '');
+
       const { data, error } = await supabase
         .from('contracts')
         .select('id, contract_number, title, status, contractor_name, contractor_document, contracted_name, contracted_document, total_value, created_at, service_type, service_modality, generated_content')
@@ -112,7 +121,13 @@ export function ContractsList({ affiliateId, onCreateNew, onViewContract }: Cont
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setContracts(data || []);
+      
+      const realContracts = data || [];
+      if (isSantiago) {
+        setContracts([...SANTIAGO_MOCK_CONTRACTS, ...realContracts]);
+      } else {
+        setContracts(realContracts);
+      }
     } catch (error) {
       console.error('Error fetching contracts:', error);
       toast.error('Erro ao carregar contratos');
