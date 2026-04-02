@@ -169,7 +169,7 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
 
       {/* Proposals Grid */}
       {filteredProposals.length === 0 ? (
-        <Card className="border-border bg-muted/20">
+        <Card className="border-white/10 bg-white/5">
           <CardContent className="py-12 text-center">
             <Target className="w-12 h-12 mx-auto text-muted-foreground/30 mb-4" />
             <h3 className="text-lg font-medium text-muted-foreground mb-2">
