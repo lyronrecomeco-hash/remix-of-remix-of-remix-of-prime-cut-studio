@@ -171,7 +171,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                       value={formData.businessName}
                       onChange={e => updateField('businessName', e.target.value)}
                       placeholder="Ex: Pizzaria do Joao"
-                      className="h-9 text-xs sm:text-sm"
+                      className="h-10 text-sm"
                     />
                   </div>
                   <div className="space-y-1.5">
