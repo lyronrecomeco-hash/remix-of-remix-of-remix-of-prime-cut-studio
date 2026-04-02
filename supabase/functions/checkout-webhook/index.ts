@@ -218,7 +218,8 @@ serve(async (req) => {
               if (possibleCaktoEvent === 'purchase_approved' && orderValue) {
                 insertObj.total_revenue = Number(orderValue);
               }
-              await supabase.from('genesis_cakto_analytics').insert(insertObj);
+              const { error: analyticsInsertErr } = await supabase.from('genesis_cakto_analytics').insert(insertObj);
+              if (analyticsInsertErr) console.error('[Cakto Analytics] Insert error:', analyticsInsertErr);
             }
             console.log(`[Cakto Analytics] Updated ${fieldToUpdate} for ${today}`);
           }
