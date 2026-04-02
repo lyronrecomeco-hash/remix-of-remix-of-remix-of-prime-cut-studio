@@ -141,7 +141,7 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
             <Target className="w-5 h-5 text-primary" />
             Propostas Aceitas
           </h2>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-white/50 mt-1">
             {proposals.length} proposta{proposals.length !== 1 ? 's' : ''} aceita{proposals.length !== 1 ? 's' : ''}
           </p>
         </div>
