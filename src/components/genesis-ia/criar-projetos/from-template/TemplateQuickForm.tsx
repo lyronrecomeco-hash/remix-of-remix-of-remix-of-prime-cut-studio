@@ -125,7 +125,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
       </div>
 
       {/* Body */}
-      <div className="p-3 sm:p-4 lg:p-5 rounded-b-xl bg-white/5 border border-white/10 border-t-0">
+      <div className="p-4 sm:p-5 lg:p-6 rounded-b-xl bg-white/5 border border-white/10 border-t-0">
         <AnimatePresence mode="wait">
           {generatedPrompt ? (
             <motion.div
