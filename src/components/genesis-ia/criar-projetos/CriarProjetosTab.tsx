@@ -72,7 +72,7 @@ export function CriarProjetosTab({ affiliateId, userId, onBack }: CriarProjetosT
 
   const handleSelectTemplateMethod = () => {
     setShowMethodModal(false);
-    setView('select');
+    setView('from-template');
   };
 
   const handleStartFromScratch = () => {
