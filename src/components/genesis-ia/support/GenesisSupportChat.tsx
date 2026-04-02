@@ -88,7 +88,7 @@ export function GenesisSupportChat() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-5 right-5 z-50 w-[360px] sm:w-[400px] max-h-[620px] rounded-2xl border border-border bg-card shadow-2xl flex flex-col overflow-hidden"
+            className="fixed bottom-5 right-5 z-50 w-[360px] sm:w-[400px] max-h-[720px] rounded-2xl border border-border bg-card shadow-2xl flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
@@ -113,7 +113,7 @@ export function GenesisSupportChat() {
             </div>
 
             {/* Messages */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3 min-h-[380px] max-h-[460px]">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3 min-h-[460px] max-h-[540px]">
               {messages.length === 0 && (
                 <div className="text-center py-10">
                   <Bot className="w-12 h-12 mx-auto text-primary/30 mb-3" />

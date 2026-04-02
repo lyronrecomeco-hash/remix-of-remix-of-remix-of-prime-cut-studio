@@ -171,7 +171,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                       value={formData.businessName}
                       onChange={e => updateField('businessName', e.target.value)}
                       placeholder="Ex: Pizzaria do Joao"
-                      className="h-10 text-sm"
+                      className="h-10 text-sm bg-muted/30 border-border focus:border-primary/50"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -180,7 +180,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                       value={formData.cityState}
                       onChange={e => updateField('cityState', e.target.value)}
                       placeholder="Ex: Sao Paulo, SP"
-                      className="h-10 text-sm"
+                      className="h-10 text-sm bg-muted/30 border-border focus:border-primary/50"
                     />
                   </div>
                 </div>
@@ -190,7 +190,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                     value={formData.slogan}
                     onChange={e => updateField('slogan', e.target.value)}
                     placeholder="Ex: O melhor sabor da cidade"
-                    className="h-10 text-sm"
+                    className="h-10 text-sm bg-muted/30 border-border focus:border-primary/50"
                   />
                 </div>
               </div>
@@ -327,7 +327,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                   value={formData.additionalDescription}
                   onChange={e => updateField('additionalDescription', e.target.value)}
                   placeholder="Descreva informacoes extras, funcionalidades especificas, estilo visual desejado..."
-                  className="min-h-[80px] text-sm resize-none"
+                  className="min-h-[80px] text-sm resize-none bg-muted/30 border-border focus:border-primary/50"
                   rows={3}
                 />
               </div>
