@@ -89,7 +89,7 @@ interface Signature {
 const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   draft: { label: 'Rascunho', color: 'bg-white/10 text-white/60 border-white/20', icon: FileText },
   pending_signature: { label: 'Aguardando Assinatura', color: 'bg-primary/20 text-primary border-primary/30', icon: Clock },
-  partially_signed: { label: 'Parcialmente Assinado', color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30', icon: FileSignature },
+  partially_signed: { label: 'Parcialmente Assinado', color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30', icon: Clock },
   signed: { label: 'Assinado', color: 'bg-primary/20 text-primary border-primary/30', icon: CheckCircle2 },
   cancelled: { label: 'Cancelado', color: 'bg-destructive/20 text-destructive border-destructive/30', icon: XCircle },
 };
