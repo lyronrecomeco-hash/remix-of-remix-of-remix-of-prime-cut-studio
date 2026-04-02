@@ -292,7 +292,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                   <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
                   Idioma
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
                   {LANGUAGES.map((lang, index) => {
                     const isSelected = formData.language === lang.label;
                     return (
