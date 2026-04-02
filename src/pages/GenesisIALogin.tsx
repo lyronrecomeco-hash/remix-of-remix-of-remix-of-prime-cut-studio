@@ -187,7 +187,7 @@ const GenesisIALogin = () => {
             p_ip_address: userIp
           });
 
-          if (ipResult?.blocked) {
+          if (ipResult && typeof ipResult === 'object' && 'blocked' in ipResult && (ipResult as any).blocked) {
             await supabase.auth.signOut();
             toast.error("Conta bloqueada por acesso de múltiplos dispositivos. Entre em contato com o suporte.");
             return;
