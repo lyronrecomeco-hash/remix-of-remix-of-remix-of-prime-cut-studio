@@ -137,30 +137,30 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
       {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+          <h2 className="text-xl font-semibold text-white flex items-center gap-2">
             <Target className="w-5 h-5 text-primary" />
             Propostas Aceitas
           </h2>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-white/50 mt-1">
             {proposals.length} proposta{proposals.length !== 1 ? 's' : ''} aceita{proposals.length !== 1 ? 's' : ''}
           </p>
         </div>
 
         <div className="flex gap-2 w-full sm:w-auto">
           <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
             <Input
               placeholder="Buscar proposta..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 bg-muted/30 border-border"
+              className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/40"
             />
           </div>
           <Button
             variant="outline"
             size="icon"
             onClick={fetchProposals}
-            className="border-border hover:bg-muted/50"
+            className="border-white/10 text-white/70 hover:text-white hover:bg-white/10"
           >
             <RefreshCw className="w-4 h-4" />
           </Button>
@@ -169,13 +169,13 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
 
       {/* Proposals Grid */}
       {filteredProposals.length === 0 ? (
-        <Card className="border-border bg-muted/20">
+        <Card className="border-white/10 bg-white/5">
           <CardContent className="py-12 text-center">
-            <Target className="w-12 h-12 mx-auto text-muted-foreground/30 mb-4" />
-            <h3 className="text-lg font-medium text-muted-foreground mb-2">
+            <Target className="w-12 h-12 mx-auto text-white/20 mb-4" />
+            <h3 className="text-lg font-medium text-white/70 mb-2">
               {searchTerm ? 'Nenhuma proposta encontrada' : 'Nenhuma proposta aceita ainda'}
             </h3>
-            <p className="text-sm text-muted-foreground/60">
+            <p className="text-sm text-white/40">
               {searchTerm 
                 ? 'Tente outro termo de busca' 
                 : 'Aceite oportunidades em Encontrar Cliente para vê-las aqui'}
@@ -195,7 +195,7 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: index * 0.05 }}
                 >
-                  <Card className="border-border hover:border-primary/30 bg-muted/10 transition-all duration-200">
+                  <Card className="border-white/10 hover:border-primary/30 bg-white/5 transition-all duration-200">
                     <CardContent className="p-5">
                       {/* Header */}
                       <div className="flex items-start justify-between mb-4">
@@ -204,7 +204,7 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
                             <Building2 className="w-5 h-5 text-primary" />
                           </div>
                           <div>
-                            <h3 className="font-semibold text-foreground text-sm line-clamp-1">
+                            <h3 className="font-semibold text-white text-sm line-clamp-1">
                               {proposal.company_name}
                             </h3>
                             {qa.niche && (
@@ -225,25 +225,25 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
                       {/* Info */}
                       <div className="space-y-2 mb-4">
                         {qa.address && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2 text-sm text-white/50">
                             <MapPin className="w-3.5 h-3.5 shrink-0" />
                             <span className="line-clamp-1">{String(qa.address)}</span>
                           </div>
                         )}
                         {proposal.company_phone && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2 text-sm text-white/50">
                             <Phone className="w-3.5 h-3.5 shrink-0" />
                             <span>{proposal.company_phone}</span>
                           </div>
                         )}
                         {proposal.company_email && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2 text-sm text-white/50">
                             <Mail className="w-3.5 h-3.5 shrink-0" />
                             <span className="line-clamp-1">{proposal.company_email}</span>
                           </div>
                         )}
                         {qa.website && String(qa.website) !== '' && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2 text-sm text-white/50">
                             <Globe className="w-3.5 h-3.5 shrink-0" />
                             <a href={String(qa.website)} target="_blank" rel="noopener noreferrer" className="line-clamp-1 hover:text-primary transition-colors">
                               {String(qa.website)}
@@ -257,7 +257,7 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
                         <Button
                           size="sm"
                           variant="outline"
-                          className="flex-1 border-border hover:bg-muted/50 gap-1.5"
+                          className="flex-1 border-white/10 text-white/70 hover:text-white hover:bg-white/10 gap-1.5"
                           onClick={() => openWhatsApp(proposal.company_phone, proposal.company_name)}
                         >
                           <MessageCircle className="w-3.5 h-3.5" />
@@ -266,7 +266,7 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
                         <Button
                           size="sm"
                           variant="outline"
-                          className="border-border hover:bg-muted/50"
+                          className="border-white/10 text-white/70 hover:text-white hover:bg-white/10"
                           onClick={() => openGoogle(proposal.company_name)}
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
