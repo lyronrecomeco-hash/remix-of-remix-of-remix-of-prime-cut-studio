@@ -197,7 +197,7 @@ serve(async (req) => {
                 updated_at: new Date().toISOString(),
               };
               if (possibleCaktoEvent === 'purchase_approved' && orderValue) {
-                updateObj.total_revenue = (Number(existingAnalytics.total_revenue) || 0) + Number(orderValue) / 100;
+                updateObj.total_revenue = (Number(existingAnalytics.total_revenue) || 0) + Number(orderValue);
               }
               await supabase
                 .from('genesis_cakto_analytics')
