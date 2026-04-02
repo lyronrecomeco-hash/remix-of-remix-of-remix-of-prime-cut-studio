@@ -228,19 +228,19 @@ export function ProjectCard({ project, index, onEdit, onEvolve, onDelete }: Proj
 
       {/* Prompt Modal */}
       <Dialog open={showPromptModal} onOpenChange={setShowPromptModal}>
-        <DialogContent className="bg-[hsl(222,47%,8%)] border-white/10 max-w-3xl max-h-[85vh] p-0 gap-0 overflow-hidden">
+        <DialogContent className="bg-card border-border max-w-3xl max-h-[85vh] p-0 gap-0 overflow-hidden rounded-2xl">
           {/* Modal Header */}
-          <div className="px-6 pt-6 pb-4 border-b border-white/10">
+          <div className="px-6 pt-6 pb-4 border-b border-border">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-3 text-lg">
-                <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-xl">
+                <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center text-xl">
                   {getTemplateIcon(project.template_slug)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-white font-semibold truncate">
+                  <p className="text-foreground font-semibold truncate">
                     {project.client_name || project.template_name}
                   </p>
-                  <p className="text-xs text-white/40 font-normal mt-0.5">
+                  <p className="text-xs text-muted-foreground font-normal mt-0.5">
                     {platformInfo.label} • Criado em {createdDate}
                   </p>
                 </div>
@@ -251,15 +251,15 @@ export function ProjectCard({ project, index, onEdit, onEvolve, onDelete }: Proj
           {/* Prompt Content */}
           <ScrollArea className="max-h-[55vh]">
             <div className="px-6 py-5">
-              <pre className="text-[13px] text-white/85 whitespace-pre-wrap font-mono leading-relaxed">
+              <pre className="text-[13px] text-foreground/85 whitespace-pre-wrap font-mono leading-relaxed bg-muted/30 rounded-xl p-4 border border-border">
                 {getPromptContent()}
               </pre>
             </div>
           </ScrollArea>
 
           {/* Modal Footer */}
-          <div className="px-6 py-4 border-t border-white/10 flex items-center justify-between gap-3">
-            <p className="text-xs text-white/30">
+          <div className="px-6 py-4 border-t border-border flex items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">
               Prompt gerado do projeto
             </p>
             <div className="flex items-center gap-2">
@@ -267,7 +267,7 @@ export function ProjectCard({ project, index, onEdit, onEvolve, onDelete }: Proj
                 variant="ghost" 
                 size="sm" 
                 onClick={() => setShowPromptModal(false)}
-                className="text-white/50 hover:text-white hover:bg-white/5"
+                className="text-muted-foreground hover:text-foreground"
               >
                 Fechar
               </Button>
@@ -278,7 +278,7 @@ export function ProjectCard({ project, index, onEdit, onEvolve, onDelete }: Proj
                   "gap-1.5 min-w-[140px] transition-all",
                   copied 
                     ? "bg-emerald-500 hover:bg-emerald-600 text-white" 
-                    : "bg-blue-500 hover:bg-blue-600 text-white"
+                    : "bg-primary hover:bg-primary/90 text-primary-foreground"
                 )}
               >
                 {copied ? (
