@@ -176,6 +176,21 @@ export function CriarProjetosTab({ affiliateId, userId, onBack }: CriarProjetosT
             />
           </motion.div>
         )}
+
+        {view === 'from-template' && (
+          <motion.div
+            key="from-template"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <TemplateModelSelector
+              onBack={() => setView('library')}
+              onComplete={() => setView('library')}
+              affiliateId={effectiveId}
+            />
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>
   );
