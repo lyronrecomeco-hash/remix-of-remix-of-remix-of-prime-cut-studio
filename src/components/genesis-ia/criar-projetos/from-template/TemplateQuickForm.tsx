@@ -164,7 +164,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                   <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
                   Identidade
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="space-y-1.5">
                     <Label className="text-[10px] sm:text-xs text-muted-foreground">Nome do Negocio *</Label>
                     <Input
