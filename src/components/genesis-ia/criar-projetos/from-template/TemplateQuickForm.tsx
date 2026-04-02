@@ -136,7 +136,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
               className="space-y-3"
             >
               <div className="relative">
-                <pre className="w-full max-h-[400px] overflow-auto p-3 sm:p-4 rounded-lg bg-muted/50 border border-border text-[10px] sm:text-xs text-muted-foreground font-mono whitespace-pre-wrap leading-relaxed">
+                <pre className="w-full max-h-[500px] overflow-auto p-4 sm:p-5 rounded-lg bg-muted/50 border border-border text-[11px] sm:text-xs text-muted-foreground font-mono whitespace-pre-wrap leading-relaxed">
                   {generatedPrompt}
                 </pre>
               </div>
