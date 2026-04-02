@@ -136,15 +136,20 @@ serve(async (req) => {
           }
         }
 
-        // If no instance found, try getting any active instance
+        // If no instance found, try getting any instance (regardless of status)
         if (!caktoInstanceId) {
           const { data: anyInstance } = await supabase
             .from('genesis_instances')
             .select('id')
-            .eq('status', 'connected')
+            .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle();
           if (anyInstance) caktoInstanceId = anyInstance.id;
+        }
+
+        // Last resort: use a deterministic UUID so events are still logged
+        if (!caktoInstanceId) {
+          console.log('[Cakto Events] No instance found, skipping event log');
         }
 
         if (caktoInstanceId) {
