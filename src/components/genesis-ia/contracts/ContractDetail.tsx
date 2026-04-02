@@ -7,7 +7,6 @@ import {
   FileText,
   Download,
   Copy,
-  ExternalLink,
   User,
   Briefcase,
   Calendar,
@@ -17,16 +16,11 @@ import {
   Clock,
   XCircle,
   Loader2,
-  Link2,
-  FileSignature,
-  Shield,
   Sparkles,
   RefreshCw,
-  PenLine
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -95,7 +89,7 @@ interface Signature {
 const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   draft: { label: 'Rascunho', color: 'bg-white/10 text-white/60 border-white/20', icon: FileText },
   pending_signature: { label: 'Aguardando Assinatura', color: 'bg-primary/20 text-primary border-primary/30', icon: Clock },
-  partially_signed: { label: 'Parcialmente Assinado', color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30', icon: FileSignature },
+  partially_signed: { label: 'Parcialmente Assinado', color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30', icon: Clock },
   signed: { label: 'Assinado', color: 'bg-primary/20 text-primary border-primary/30', icon: CheckCircle2 },
   cancelled: { label: 'Cancelado', color: 'bg-destructive/20 text-destructive border-destructive/30', icon: XCircle },
 };
@@ -105,7 +99,7 @@ export function ContractDetail({ contractId, onBack }: ContractDetailProps) {
   const [signatures, setSignatures] = useState<Signature[]>([]);
   const [loading, setLoading] = useState(true);
   const [generatingContent, setGeneratingContent] = useState(false);
-  const [signingAsContracted, setSigningAsContracted] = useState(false);
+  // signingAsContracted removed
 
   useEffect(() => {
     fetchContract();
@@ -241,78 +235,9 @@ export function ContractDetail({ contractId, onBack }: ContractDetailProps) {
     }
   };
 
-  const handleSignAsContracted = async () => {
-    if (!contract) return;
-    
-    setSigningAsContracted(true);
-    
-    try {
-      // Check if already signed
-      const existingContractedSig = signatures.find(s => s.signer_type === 'contracted');
-      if (existingContractedSig?.signed_at) {
-        toast.info('Você já assinou este contrato.');
-        return;
-      }
+  // Signature functionality removed
 
-      // Add signature as contracted party
-      const { error: signError } = await supabase
-        .from('contract_signatures')
-        .insert({
-          contract_id: contract.id,
-          signer_type: 'contracted',
-          signer_name: contract.contracted_name,
-          signer_document: contract.contracted_document,
-          signature_method: 'panel',
-          signed_at: new Date().toISOString(),
-          user_agent: navigator.userAgent,
-        });
-
-      if (signError) throw signError;
-
-      // Log the action
-      await supabase
-        .from('contract_audit_logs')
-        .insert({
-          contract_id: contract.id,
-          action: 'contracted_signature_added',
-          actor_type: 'contracted',
-          actor_name: contract.contracted_name,
-          details: {
-            signature_method: 'panel'
-          }
-        });
-
-      // Check if contractor also signed
-      const hasContractorSig = signatures.some(s => s.signer_type === 'contractor' && s.signed_at);
-      const newStatus = hasContractorSig ? 'signed' : 'partially_signed';
-
-      await supabase
-        .from('contracts')
-        .update({ status: newStatus })
-        .eq('id', contract.id);
-
-      setContract(prev => prev ? { ...prev, status: newStatus } : null);
-      toast.success('Contrato assinado com sucesso!');
-      
-      // Refresh signatures
-      fetchSignatures();
-    } catch (error) {
-      console.error('Error signing:', error);
-      toast.error('Erro ao assinar contrato');
-    } finally {
-      setSigningAsContracted(false);
-    }
-  };
-
-  const getSignatureUrl = () => {
-    if (!contract) return '';
-    return `${window.location.origin}/contratos/assinar/${contract.signature_hash}`;
-  };
-
-  const copySignatureLink = () => {
-    navigator.clipboard.writeText(getSignatureUrl());
-    toast.success('Link de assinatura copiado!');
-  };
+  // Signature URL removed
 
   const handleCopyContract = () => {
     if (!contract?.generated_content) {
@@ -419,7 +344,7 @@ export function ContractDetail({ contractId, onBack }: ContractDetailProps) {
     });
   };
 
-  const contractedHasSigned = signatures.some(s => s.signer_type === 'contracted' && s.signed_at);
+  // Signature check removed
 
   if (loading || !contract) {
     return (
@@ -449,10 +374,6 @@ export function ContractDetail({ contractId, onBack }: ContractDetailProps) {
         </div>
         
         <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="outline" size="sm" className="gap-2 text-xs" onClick={copySignatureLink}>
-            <Link2 className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">Copiar Link</span>
-          </Button>
           <Button variant="outline" size="sm" className="gap-2 text-xs" onClick={handleDownloadPDF}>
             <Download className="w-3 h-3 sm:w-4 sm:h-4" />
             PDF
@@ -468,7 +389,6 @@ export function ContractDetail({ contractId, onBack }: ContractDetailProps) {
       <Tabs defaultValue="details" className="w-full">
         <TabsList className="w-full justify-start bg-card/50 border overflow-x-auto">
           <TabsTrigger value="details" className="text-xs sm:text-sm">Detalhes</TabsTrigger>
-          <TabsTrigger value="signatures" className="text-xs sm:text-sm">Assinaturas</TabsTrigger>
           <TabsTrigger value="preview" className="text-xs sm:text-sm">Visualizar</TabsTrigger>
         </TabsList>
 
@@ -592,85 +512,7 @@ export function ContractDetail({ contractId, onBack }: ContractDetailProps) {
           </div>
         </TabsContent>
 
-        <TabsContent value="signatures" className="mt-4">
-          <div className="p-4 sm:p-6 rounded-xl border bg-gradient-to-br from-card to-card/80 space-y-4">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <h3 className="font-semibold text-foreground text-sm sm:text-base">Assinaturas</h3>
-              {!contractedHasSigned && (
-                <Button
-                  onClick={handleSignAsContracted}
-                  disabled={signingAsContracted}
-                  size="sm"
-                  className="gap-2 bg-gradient-to-r from-blue-500 to-indigo-600"
-                >
-                  {signingAsContracted ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <PenLine className="w-4 h-4" />
-                  )}
-                  Assinar como Contratado
-                </Button>
-              )}
-            </div>
-            
-            {signatures.length === 0 ? (
-              <div className="text-center py-6 sm:py-8">
-                <FileSignature className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 text-muted-foreground/50" />
-                <p className="text-xs sm:text-sm text-muted-foreground">Nenhuma assinatura registrada</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {signatures.map((sig) => (
-                  <div key={sig.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${
-                        sig.signed_at ? 'bg-emerald-500/20' : 'bg-amber-500/20'
-                      }`}>
-                        {sig.signed_at ? (
-                          <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-400" />
-                        ) : (
-                          <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-amber-400" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-xs sm:text-sm font-medium">{sig.signer_name}</p>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground">
-                          {sig.signer_type === 'contractor' ? 'Contratante' : 'Contratado'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      {sig.signed_at ? (
-                        <p className="text-[10px] sm:text-xs text-muted-foreground">
-                          {format(new Date(sig.signed_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                        </p>
-                      ) : (
-                        <Badge variant="outline" className="text-[10px] sm:text-xs">Pendente</Badge>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <Separator className="my-4 sm:my-6" />
-
-            <div className="space-y-3">
-              <h4 className="text-xs sm:text-sm font-medium">Link para assinatura do Contratante</h4>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 p-2 sm:p-3 rounded-lg bg-muted/30 font-mono text-[10px] sm:text-xs truncate">
-                  {getSignatureUrl()}
-                </div>
-                <Button variant="outline" size="sm" onClick={copySignatureLink}>
-                  <Copy className="w-3 h-3 sm:w-4 sm:h-4" />
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => window.open(getSignatureUrl(), '_blank')}>
-                  <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </TabsContent>
+        {/* Signatures tab removed */}
 
         <TabsContent value="preview" className="mt-4">
           {generatingContent ? (

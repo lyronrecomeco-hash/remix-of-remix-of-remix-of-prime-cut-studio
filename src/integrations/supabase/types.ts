@@ -10887,6 +10887,33 @@ export type Database = {
         }
         Relationships: []
       }
+      login_ip_tracking: {
+        Row: {
+          first_seen_at: string | null
+          id: string
+          ip_address: string
+          last_seen_at: string | null
+          login_count: number | null
+          user_id: string
+        }
+        Insert: {
+          first_seen_at?: string | null
+          id?: string
+          ip_address: string
+          last_seen_at?: string | null
+          login_count?: number | null
+          user_id: string
+        }
+        Update: {
+          first_seen_at?: string | null
+          id?: string
+          ip_address?: string
+          last_seen_at?: string | null
+          login_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       marketing_campaigns: {
         Row: {
           ai_prompt: string | null
@@ -16274,6 +16301,10 @@ export type Database = {
       }
       select_pool_instance: { Args: { p_campaign_id: string }; Returns: string }
       tenant_matches: { Args: { p_tenant: string }; Returns: boolean }
+      track_login_ip: {
+        Args: { p_ip_address: string; p_user_id: string }
+        Returns: Json
+      }
       update_flow_lifecycle_status: {
         Args: {
           p_flow_id: string

@@ -317,8 +317,8 @@ const GenesisIADashboard = () => {
     { icon: Home, label: 'Início', tabId: 'dashboard' },
     { icon: Grid3X3, label: 'Biblioteca', tabId: 'criar-projetos' },
     { icon: FileText, label: 'Contratos', tabId: 'contracts' },
-    // Promo visível apenas para lyronrp@gmail.com
-    ...(isSuperAdmin ? [{ icon: Gift, label: 'Promo', tabId: 'promocional' as ActiveTab }] : []),
+    // Promo visível apenas para lyronrp@gmail.com e Santiago
+    ...((isSuperAdmin || isSantiagoAdmin) ? [{ icon: Gift, label: 'Promo', tabId: 'promocional' as ActiveTab }] : []),
     // Usuários só para admin
     ...(isAdmin ? [{ icon: Users, label: 'Usuários', tabId: 'users' as ActiveTab }] : []),
     { icon: LayoutDashboard, label: 'Financeiro', tabId: 'financial' },

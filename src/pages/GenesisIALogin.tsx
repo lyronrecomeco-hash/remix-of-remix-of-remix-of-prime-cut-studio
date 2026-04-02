@@ -165,7 +165,7 @@ const GenesisIALogin = () => {
     setIsLoading(true);
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
@@ -173,6 +173,29 @@ const GenesisIALogin = () => {
       if (error) {
         toast.error("Credenciais inválidas");
         return;
+      }
+
+      // Track IP for security - get public IP
+      if (authData?.user?.id) {
+        try {
+          const ipRes = await fetch('https://api.ipify.org?format=json');
+          const ipData = await ipRes.json();
+          const userIp = ipData?.ip || 'unknown';
+          
+          const { data: ipResult } = await supabase.rpc('track_login_ip', {
+            p_user_id: authData.user.id,
+            p_ip_address: userIp
+          });
+
+          if (ipResult && typeof ipResult === 'object' && 'blocked' in ipResult && (ipResult as any).blocked) {
+            await supabase.auth.signOut();
+            toast.error("Conta bloqueada por acesso de múltiplos dispositivos. Entre em contato com o suporte.");
+            return;
+          }
+        } catch (ipError) {
+          console.error('IP tracking error:', ipError);
+          // Don't block login if IP tracking fails
+        }
       }
 
       toast.success("Bem-vindo ao Genesis Hub!");
