@@ -105,7 +105,7 @@ export function ContractDetail({ contractId, onBack }: ContractDetailProps) {
   const [signatures, setSignatures] = useState<Signature[]>([]);
   const [loading, setLoading] = useState(true);
   const [generatingContent, setGeneratingContent] = useState(false);
-  const [signingAsContracted, setSigningAsContracted] = useState(false);
+  // signingAsContracted removed
 
   useEffect(() => {
     fetchContract();
