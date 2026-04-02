@@ -526,47 +526,51 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
       )}
 
       <Dialog open={isModalOpen} onOpenChange={(o) => { setIsModalOpen(o); if (!o) resetForm(); }}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{editingUser ? 'Editar' : 'Novo'} Usuário</DialogTitle>
             <DialogDescription>{editingUser ? 'Atualize os dados' : 'Preencha os dados'}</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Nome *</Label>
-              <Input value={formData.name} onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))} />
-            </div>
-            <div className="space-y-2">
-              <Label>Email *</Label>
-              <Input type="email" value={formData.email} onChange={(e) => setFormData(p => ({ ...p, email: e.target.value }))} disabled={!!editingUser} />
+          <div className="space-y-3 py-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Nome *</Label>
+                <Input className="h-9" value={formData.name} onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Email *</Label>
+                <Input className="h-9" type="email" value={formData.email} onChange={(e) => setFormData(p => ({ ...p, email: e.target.value }))} disabled={!!editingUser} />
+              </div>
             </div>
             {!editingUser && (
-              <div className="space-y-2">
-                <Label>Senha *</Label>
+              <div className="space-y-1">
+                <Label className="text-xs">Senha *</Label>
                 <div className="relative">
-                  <Input type={showPassword ? 'text' : 'password'} value={formData.password} onChange={(e) => setFormData(p => ({ ...p, password: e.target.value }))} />
+                  <Input className="h-9" type={showPassword ? 'text' : 'password'} value={formData.password} onChange={(e) => setFormData(p => ({ ...p, password: e.target.value }))} />
                   <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowPassword(!showPassword)}>
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                   </Button>
                 </div>
               </div>
             )}
-            <div className="space-y-2">
-              <Label>Telefone</Label>
-              <Input value={formData.phone} onChange={(e) => setFormData(p => ({ ...p, phone: e.target.value }))} />
-            </div>
-            <div className="space-y-2">
-              <Label>Empresa</Label>
-              <Input value={formData.company_name} onChange={(e) => setFormData(p => ({ ...p, company_name: e.target.value }))} />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Telefone</Label>
+                <Input className="h-9" value={formData.phone} onChange={(e) => setFormData(p => ({ ...p, phone: e.target.value }))} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Empresa</Label>
+                <Input className="h-9" value={formData.company_name} onChange={(e) => setFormData(p => ({ ...p, company_name: e.target.value }))} />
+              </div>
             </div>
             {!editingUser && (
-              <div className="space-y-2">
-                <Label>Tipo de Usuário *</Label>
+              <div className="space-y-1">
+                <Label className="text-xs">Tipo *</Label>
                 <Select
                   value={formData.user_type}
                   onValueChange={(value) => setFormData(p => ({ ...p, user_type: value as 'client' | 'influencer' | 'partner' | 'mentorado' }))}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-9">
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
@@ -577,21 +581,21 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
                   </SelectContent>
                 </Select>
                 {formData.user_type === 'mentorado' && (
-                  <p className="text-xs text-amber-400">Acesso de teste: 3 dias. Após expirar, o acesso será bloqueado.</p>
+                  <p className="text-[11px] text-amber-400">Acesso de teste: 3 dias</p>
                 )}
                 {(formData.user_type === 'influencer' || formData.user_type === 'partner') && (
-                  <p className="text-xs text-emerald-400">Acesso promocional: 1 ano sem pagamento</p>
+                  <p className="text-[11px] text-emerald-400">Acesso promocional: 1 ano</p>
                 )}
               </div>
             )}
             <div className="flex items-center justify-between">
-              <Label>Ativo</Label>
+              <Label className="text-xs">Ativo</Label>
               <Switch checked={formData.is_active} onCheckedChange={(c) => setFormData(p => ({ ...p, is_active: c }))} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={saving}>{saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}{editingUser ? 'Salvar' : 'Criar'}</Button>
+            <Button variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
+            <Button size="sm" onClick={handleSave} disabled={saving}>{saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}{editingUser ? 'Salvar' : 'Criar'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
