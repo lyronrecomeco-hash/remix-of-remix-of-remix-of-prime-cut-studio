@@ -209,8 +209,9 @@ export function PlansConfigSection() {
                   </Label>
                   <Input
                     type="text"
-                    value={formatCurrency(getEditedValue(plan.id, 'promo_price_cents', plan.promo_price_cents || plan.price_cents))}
-                    onChange={(e) => handleChange(plan.id, 'promo_price_cents', parseCurrency(e.target.value))}
+                    value={formatOptionalCurrency(getEditedValue(plan.id, 'promo_price_cents', plan.promo_price_cents))}
+                    onChange={(e) => handleChange(plan.id, 'promo_price_cents', parseOptionalCurrency(e.target.value))}
+                    placeholder="Ex: 97,00"
                     className="h-10 bg-white/5 border-white/10 text-center font-mono"
                   />
                 </div>

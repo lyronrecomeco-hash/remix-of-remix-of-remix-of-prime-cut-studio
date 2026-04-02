@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState, type ElementType } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -6,11 +6,26 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { 
-  Shield, Home, Grid3X3, FileText, Gift,
-  Loader2, Save, Radar, Search, HelpCircle, Settings,
-  Wifi, WifiOff, Monitor, Clock, Timer, MapPin,
-  MonitorSmartphone, Activity
+import {
+  Shield,
+  Home,
+  Grid3X3,
+  FileText,
+  Gift,
+  Loader2,
+  Save,
+  Radar,
+  Search,
+  HelpCircle,
+  Settings,
+  Wifi,
+  WifiOff,
+  Clock,
+  Timer,
+  MonitorSmartphone,
+  Activity,
+  MousePointerClick,
+  SearchCode,
 } from 'lucide-react';
 import { useManageMenuPermissions } from '@/hooks/useMenuPermissions';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,26 +43,26 @@ const MENU_ITEMS = [
   { id: 'settings', label: 'Configurações', icon: Settings, description: 'Configurações do sistema' },
 ];
 
-interface UserPresenceData {
+type UserPresenceData = {
   is_online: boolean;
   last_seen_at: string | null;
   last_login_at: string | null;
   current_page: string | null;
   device_info: string | null;
   session_started_at: string | null;
-}
+};
+
+type PresenceDetails = {
+  userAgent?: string;
+  viewport?: string;
+  currentAction?: string | null;
+  lastSearch?: string | null;
+  lastClick?: string | null;
+};
 
 const PAGE_LABELS: Record<string, string> = {
-  'dashboard': 'Painel Principal',
-  'prospects': 'Scanner IA',
-  'radar': 'Radar Global',
-  'criar-projetos': 'Biblioteca',
-  'contracts': 'Contratos',
-  'promocional': 'Promocional',
-  'help': 'Central de Ajuda',
-  'settings': 'Configurações',
-  'payments': 'Pagamentos',
-  'users': 'Usuários',
+  '/login/dashboard': 'Dashboard',
+  '/login/dashboard/': 'Dashboard',
 };
 
 interface UserPermissionsModalProps {
@@ -60,6 +75,30 @@ interface UserPermissionsModalProps {
   } | null;
 }
 
+function parsePresenceDetails(deviceInfo: string | null): PresenceDetails {
+  if (!deviceInfo) return {};
+  try {
+    const parsed = JSON.parse(deviceInfo) as PresenceDetails;
+    return typeof parsed === 'object' && parsed ? parsed : {};
+  } catch {
+    return { userAgent: deviceInfo };
+  }
+}
+
+function formatTime(time: string | null): string {
+  if (!time) return 'Nunca';
+  try {
+    return formatDistanceToNow(new Date(time), { addSuffix: true, locale: ptBR });
+  } catch {
+    return 'Inválido';
+  }
+}
+
+function formatPage(page: string | null) {
+  if (!page) return 'Desconhecida';
+  return PAGE_LABELS[page] || page;
+}
+
 export const UserPermissionsModal = ({ open, onOpenChange, user }: UserPermissionsModalProps) => {
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -68,98 +107,101 @@ export const UserPermissionsModal = ({ open, onOpenChange, user }: UserPermissio
   const { getUserPermissions, setMultiplePermissions, saving } = useManageMenuPermissions();
 
   useEffect(() => {
-    if (open && user) {
-      loadPermissions();
-      loadPresence();
+    if (!open || !user) return;
 
-      // Realtime presence subscription
-      const channel = supabase
-        .channel(`user-presence-${user.user_id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'user_presence',
-            filter: `user_id=eq.${user.user_id}`
-          },
-          (payload) => {
-            const newData = payload.new as Record<string, unknown>;
-            if (newData) {
-              setPresence({
-                is_online: newData.is_online as boolean,
-                last_seen_at: newData.last_seen_at as string | null,
-                last_login_at: newData.last_login_at as string | null,
-                current_page: newData.current_page as string | null,
-                device_info: newData.device_info as string | null,
-                session_started_at: newData.session_started_at as string | null,
-              });
-            }
-          }
-        )
-        .subscribe();
+    const loadPermissions = async () => {
+      setIsLoading(true);
+      const perms = await getUserPermissions(user.user_id);
+      const initialPerms: Record<string, boolean> = {};
+      MENU_ITEMS.forEach((item) => {
+        initialPerms[item.id] = perms[item.id] !== undefined ? perms[item.id] : true;
+      });
+      setPermissions(initialPerms);
+      setIsLoading(false);
+    };
 
-      // Poll every 10s for accuracy
-      const interval = setInterval(loadPresence, 10000);
-
-      return () => {
-        supabase.removeChannel(channel);
-        clearInterval(interval);
-      };
-    }
-  }, [open, user]);
-
-  const loadPresence = async () => {
-    if (!user) return;
-    setPresenceLoading(true);
-    try {
+    const loadPresence = async () => {
+      setPresenceLoading(true);
       const { data } = await supabase
         .from('user_presence')
         .select('*')
         .eq('user_id', user.user_id)
         .maybeSingle();
 
-      setPresence(data ? {
-        is_online: data.is_online,
-        last_seen_at: data.last_seen_at,
-        last_login_at: data.last_login_at,
-        current_page: data.current_page,
-        device_info: data.device_info,
-        session_started_at: data.session_started_at,
-      } : null);
-    } catch (err) {
-      console.error('Error loading presence:', err);
-    } finally {
+      setPresence(
+        data
+          ? {
+              is_online: Boolean(data.is_online),
+              last_seen_at: data.last_seen_at,
+              last_login_at: data.last_login_at,
+              current_page: data.current_page,
+              device_info: data.device_info,
+              session_started_at: data.session_started_at,
+            }
+          : null,
+      );
       setPresenceLoading(false);
-    }
-  };
+    };
 
-  const loadPermissions = async () => {
-    if (!user) return;
-    setIsLoading(true);
-    const perms = await getUserPermissions(user.user_id);
-    const initialPerms: Record<string, boolean> = {};
-    MENU_ITEMS.forEach(item => {
-      initialPerms[item.id] = perms[item.id] !== undefined ? perms[item.id] : true;
-    });
-    setPermissions(initialPerms);
-    setIsLoading(false);
-  };
+    loadPermissions();
+    loadPresence();
+
+    const channel = supabase
+      .channel(`user-presence-${user.user_id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_presence',
+          filter: `user_id=eq.${user.user_id}`,
+        },
+        (payload) => {
+          const newData = payload.new as Record<string, unknown>;
+          if (!newData) return;
+          setPresence({
+            is_online: Boolean(newData.is_online),
+            last_seen_at: (newData.last_seen_at as string | null) ?? null,
+            last_login_at: (newData.last_login_at as string | null) ?? null,
+            current_page: (newData.current_page as string | null) ?? null,
+            device_info: (newData.device_info as string | null) ?? null,
+            session_started_at: (newData.session_started_at as string | null) ?? null,
+          });
+        },
+      )
+      .subscribe();
+
+    const interval = setInterval(loadPresence, 10000);
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
+  }, [open, user, getUserPermissions]);
+
+  const details = useMemo(() => parsePresenceDetails(presence?.device_info ?? null), [presence?.device_info]);
+  const online = Boolean(presence?.is_online && presence.last_seen_at && new Date(presence.last_seen_at).getTime() > Date.now() - 2 * 60 * 1000);
+  const allowedCount = Object.values(permissions).filter(Boolean).length;
+  const deniedCount = MENU_ITEMS.length - allowedCount;
 
   const handleToggle = (menuId: string) => {
-    setPermissions(prev => ({ ...prev, [menuId]: !prev[menuId] }));
+    setPermissions((prev) => ({ ...prev, [menuId]: !prev[menuId] }));
   };
 
   const handleSelectAll = () => {
-    const allAllowed: Record<string, boolean> = {};
-    MENU_ITEMS.forEach(item => { allAllowed[item.id] = true; });
-    setPermissions(allAllowed);
+    const next: Record<string, boolean> = {};
+    MENU_ITEMS.forEach((item) => {
+      next[item.id] = true;
+    });
+    setPermissions(next);
   };
 
   const handleDeselectAll = () => {
-    const allDenied: Record<string, boolean> = {};
-    MENU_ITEMS.forEach(item => { allDenied[item.id] = false; });
-    setPermissions(allDenied);
+    const next: Record<string, boolean> = {};
+    MENU_ITEMS.forEach((item) => {
+      next[item.id] = false;
+    });
+    setPermissions(next);
   };
 
   const handleSave = async () => {
@@ -173,27 +215,6 @@ export const UserPermissionsModal = ({ open, onOpenChange, user }: UserPermissio
     }
   };
 
-  const isReallyOnline = (): boolean => {
-    if (!presence?.is_online || !presence.last_seen_at) return false;
-    return new Date(presence.last_seen_at).getTime() > Date.now() - 2 * 60 * 1000;
-  };
-
-  const formatTime = (time: string | null): string => {
-    if (!time) return 'Nunca';
-    try {
-      return formatDistanceToNow(new Date(time), { addSuffix: true, locale: ptBR });
-    } catch { return 'Inválido'; }
-  };
-
-  const getPageLabel = (page: string | null): string => {
-    if (!page) return 'Desconhecida';
-    return PAGE_LABELS[page] || page;
-  };
-
-  const allowedCount = Object.values(permissions).filter(Boolean).length;
-  const deniedCount = MENU_ITEMS.length - allowedCount;
-  const online = isReallyOnline();
-
   if (!user) return null;
 
   return (
@@ -205,9 +226,7 @@ export const UserPermissionsModal = ({ open, onOpenChange, user }: UserPermissio
               <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
                 <Shield className="w-5 h-5 text-primary" />
               </div>
-              {online && (
-                <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[hsl(222,20%,8%)] animate-pulse" />
-              )}
+              {online && <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-background animate-pulse" />}
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -225,9 +244,7 @@ export const UserPermissionsModal = ({ open, onOpenChange, user }: UserPermissio
               <p className="text-sm text-muted-foreground font-normal mt-0.5">{user.email}</p>
             </div>
           </DialogTitle>
-          <DialogDescription className="sr-only">
-            Visualize atividade e configure permissões do usuário
-          </DialogDescription>
+          <DialogDescription className="sr-only">Visualize atividade e configure permissões do usuário</DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="activity" className="flex-1 flex flex-col">
@@ -240,75 +257,43 @@ export const UserPermissionsModal = ({ open, onOpenChange, user }: UserPermissio
             </TabsTrigger>
           </TabsList>
 
-          {/* ─── ACTIVITY TAB ─── */}
           <TabsContent value="activity" className="flex-1 mt-0">
-            <ScrollArea className="max-h-[400px]">
+            <ScrollArea className="max-h-[420px]">
               <div className="px-6 py-4 space-y-4">
                 {presenceLoading ? (
                   <div className="flex items-center justify-center py-12">
                     <Loader2 className="w-6 h-6 animate-spin text-primary" />
                   </div>
                 ) : !presence ? (
-                  <div className="text-center py-12 text-muted-foreground text-sm">
-                    Nenhum dado de atividade registrado
-                  </div>
+                  <div className="text-center py-12 text-muted-foreground text-sm">Nenhum dado de atividade registrado</div>
                 ) : (
                   <>
-                    {/* Status Banner */}
                     <div className={`p-4 rounded-xl border ${online ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-white/5 border-white/10'}`}>
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${online ? 'bg-emerald-500/20' : 'bg-white/10'}`}>
                           {online ? <Wifi className="w-5 h-5 text-emerald-400" /> : <WifiOff className="w-5 h-5 text-white/40" />}
                         </div>
                         <div>
-                          <p className={`font-medium text-sm ${online ? 'text-emerald-400' : 'text-white/60'}`}>
-                            {online ? 'Ativo agora' : 'Offline'}
-                          </p>
+                          <p className={`font-medium text-sm ${online ? 'text-emerald-400' : 'text-white/60'}`}>{online ? 'Ativo agora' : 'Offline'}</p>
                           <p className="text-xs text-muted-foreground">
-                            {online && presence.current_page
-                              ? `Navegando: ${getPageLabel(presence.current_page)}`
-                              : `Último acesso: ${formatTime(presence.last_seen_at)}`
-                            }
+                            {details.currentAction || (online ? 'Navegando no sistema' : `Último acesso ${formatTime(presence.last_seen_at)}`)}
                           </p>
                         </div>
                       </div>
                     </div>
 
-                    {/* Activity Details */}
                     <div className="grid grid-cols-2 gap-3">
-                      <ActivityCard
-                        icon={MapPin}
-                        label="Página Atual"
-                        value={online ? getPageLabel(presence.current_page) : 'Nenhuma'}
-                        active={online}
-                      />
-                      <ActivityCard
-                        icon={MonitorSmartphone}
-                        label="Dispositivo"
-                        value={presence.device_info || 'Desconhecido'}
-                        active={false}
-                      />
-                      <ActivityCard
-                        icon={Timer}
-                        label="Último Acesso"
-                        value={formatTime(presence.last_seen_at)}
-                        active={false}
-                      />
-                      <ActivityCard
-                        icon={Clock}
-                        label="Último Login"
-                        value={formatTime(presence.last_login_at)}
-                        active={false}
-                      />
+                      <ActivityCard icon={MonitorSmartphone} label="Página Atual" value={formatPage(presence.current_page)} active={online} />
+                      <ActivityCard icon={Timer} label="Último Acesso" value={formatTime(presence.last_seen_at)} active={false} />
+                      <ActivityCard icon={Clock} label="Último Login" value={formatTime(presence.last_login_at)} active={false} />
+                      <ActivityCard icon={SearchCode} label="Última Pesquisa" value={details.lastSearch || 'Nenhuma'} active={Boolean(details.lastSearch)} />
+                      <ActivityCard icon={MousePointerClick} label="Última Ação" value={details.lastClick || details.currentAction || 'Nenhuma'} active={Boolean(details.lastClick || details.currentAction)} />
+                      <ActivityCard icon={Activity} label="Dispositivo" value={details.viewport ? `${details.viewport} • ${details.userAgent || 'Navegador'}` : details.userAgent || 'Desconhecido'} active={false} />
                     </div>
 
-                    {/* Session Info */}
                     {online && presence.session_started_at && (
-                      <div className="p-3 rounded-xl bg-primary/5 border border-primary/20">
-                        <div className="flex items-center gap-2 text-xs text-primary">
-                          <Activity className="w-3.5 h-3.5" />
-                          <span>Sessão iniciada {formatTime(presence.session_started_at)}</span>
-                        </div>
+                      <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 text-xs text-primary">
+                        Sessão iniciada {formatTime(presence.session_started_at)}
                       </div>
                     )}
                   </>
@@ -317,9 +302,7 @@ export const UserPermissionsModal = ({ open, onOpenChange, user }: UserPermissio
             </ScrollArea>
           </TabsContent>
 
-          {/* ─── PERMISSIONS TAB ─── */}
           <TabsContent value="permissions" className="flex-1 mt-0">
-            {/* Stats Bar */}
             <div className="px-6 py-3 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
               <div className="flex items-center gap-4 text-sm">
                 <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
@@ -330,12 +313,8 @@ export const UserPermissionsModal = ({ open, onOpenChange, user }: UserPermissio
                 </Badge>
               </div>
               <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={handleSelectAll} className="text-xs h-7">
-                  Permitir Todos
-                </Button>
-                <Button variant="ghost" size="sm" onClick={handleDeselectAll} className="text-xs h-7 text-red-400 hover:text-red-300">
-                  Bloquear Todos
-                </Button>
+                <Button variant="ghost" size="sm" onClick={handleSelectAll} className="text-xs h-7">Permitir Todos</Button>
+                <Button variant="ghost" size="sm" onClick={handleDeselectAll} className="text-xs h-7 text-red-400 hover:text-red-300">Bloquear Todos</Button>
               </div>
             </div>
 
@@ -353,17 +332,9 @@ export const UserPermissionsModal = ({ open, onOpenChange, user }: UserPermissio
                       <div
                         key={item.id}
                         onClick={() => handleToggle(item.id)}
-                        className={`flex items-center gap-4 p-3 rounded-xl cursor-pointer transition-all ${
-                          isAllowed
-                            ? 'bg-white/5 border border-emerald-500/20 hover:border-emerald-500/40'
-                            : 'bg-red-500/5 border border-red-500/20 hover:border-red-500/40'
-                        }`}
+                        className={`flex items-center gap-4 p-3 rounded-xl cursor-pointer transition-all ${isAllowed ? 'bg-white/5 border border-emerald-500/20 hover:border-emerald-500/40' : 'bg-red-500/5 border border-red-500/20 hover:border-red-500/40'}`}
                       >
-                        <Checkbox
-                          checked={isAllowed}
-                          onCheckedChange={() => handleToggle(item.id)}
-                          className={isAllowed ? 'border-emerald-500 data-[state=checked]:bg-emerald-500' : 'border-red-500'}
-                        />
+                        <Checkbox checked={isAllowed} onCheckedChange={() => handleToggle(item.id)} className={isAllowed ? 'border-emerald-500 data-[state=checked]:bg-emerald-500' : 'border-red-500'} />
                         <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${isAllowed ? 'bg-primary/20' : 'bg-red-500/20'}`}>
                           <Icon className={`w-4 h-4 ${isAllowed ? 'text-primary' : 'text-red-400'}`} />
                         </div>
@@ -371,14 +342,7 @@ export const UserPermissionsModal = ({ open, onOpenChange, user }: UserPermissio
                           <p className={`text-sm font-medium ${isAllowed ? 'text-foreground' : 'text-red-400'}`}>{item.label}</p>
                           <p className="text-xs text-muted-foreground truncate">{item.description}</p>
                         </div>
-                        <Badge
-                          variant="outline"
-                          className={`shrink-0 text-[10px] ${
-                            isAllowed
-                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                              : 'bg-red-500/10 text-red-400 border-red-500/30'
-                          }`}
-                        >
+                        <Badge variant="outline" className={`shrink-0 text-[10px] ${isAllowed ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-red-500/10 text-red-400 border-red-500/30'}`}>
                           {isAllowed ? 'Permitido' : 'Bloqueado'}
                         </Badge>
                       </div>
@@ -402,14 +366,24 @@ export const UserPermissionsModal = ({ open, onOpenChange, user }: UserPermissio
   );
 };
 
-function ActivityCard({ icon: Icon, label, value, active }: { icon: React.ElementType; label: string; value: string; active: boolean }) {
+function ActivityCard({
+  icon: Icon,
+  label,
+  value,
+  active,
+}: {
+  icon: ElementType;
+  label: string;
+  value: string;
+  active: boolean;
+}) {
   return (
     <div className="p-3 rounded-xl bg-white/5 border border-white/10">
       <div className="flex items-center gap-2 mb-1.5">
         <Icon className={`w-3.5 h-3.5 ${active ? 'text-emerald-400' : 'text-muted-foreground'}`} />
         <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
       </div>
-      <p className={`text-sm font-medium truncate ${active ? 'text-emerald-400' : 'text-foreground'}`}>{value}</p>
+      <p className={`text-sm font-medium break-words ${active ? 'text-emerald-400' : 'text-foreground'}`}>{value}</p>
     </div>
   );
 }
