@@ -718,8 +718,8 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
       {/* Current Step Content */}
       <div className="p-4 sm:p-6 rounded-xl border bg-gradient-to-br from-card to-card/80">
         <div className="flex items-center gap-3 mb-4 sm:mb-6">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-600/20 flex items-center justify-center flex-shrink-0">
-            <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+            <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
           </div>
           <div className="min-w-0">
             <h3 className="font-semibold text-foreground text-sm sm:text-base">{currentStepData.title}</h3>
@@ -750,7 +750,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
         <Button 
           onClick={handleNext} 
           disabled={generating}
-          className="gap-2 flex-1 sm:flex-none bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+          className="gap-2 flex-1 sm:flex-none bg-primary hover:bg-primary/90"
         >
           {generating ? (
             <>
