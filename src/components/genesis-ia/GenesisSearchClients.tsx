@@ -195,7 +195,7 @@ export const GenesisSearchClients = ({ userId, onAccepted }: GenesisSearchClient
           city: searchCity, 
           countryCode, 
           niche, 
-          maxResults: 15,
+          maxResults: 20,
           affiliateName: 'Consultor Genesis',
           affiliateId: userId // Passa o userId para salvar histórico
         },
