@@ -80,11 +80,13 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
 
   const handleGenerate = () => {
     setGenerating(true);
+    // Simulate a more thorough generation process
     setTimeout(() => {
       const prompt = generateTemplatePrompt(template, formData);
       setGeneratedPrompt(prompt);
       setGenerating(false);
-    }, 600);
+      toast.success('Prompt profissional gerado!', { description: 'Copie e cole na Lovable ou na plataforma de IA desejada.' });
+    }, 2500);
   };
 
   const handleCopy = async () => {
