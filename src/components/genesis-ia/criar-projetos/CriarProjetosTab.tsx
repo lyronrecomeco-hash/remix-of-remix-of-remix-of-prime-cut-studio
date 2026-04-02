@@ -7,6 +7,7 @@ import { ProjectLibrary } from '../library/ProjectLibrary';
 import { ProjectConfig } from '../library/ProjectCard';
 import { CreationMethodModal } from './from-scratch/CreationMethodModal';
 import { FromScratchWizard } from './from-scratch/FromScratchWizard';
+import { TemplateModelSelector } from './from-template/TemplateModelSelector';
 
 interface CriarProjetosTabProps {
   affiliateId: string | null;
@@ -14,7 +15,7 @@ interface CriarProjetosTabProps {
   onBack: () => void;
 }
 
-type View = 'library' | 'select' | 'customize' | 'from-scratch';
+type View = 'library' | 'select' | 'customize' | 'from-scratch' | 'from-template';
 
 export function CriarProjetosTab({ affiliateId, userId, onBack }: CriarProjetosTabProps) {
   const [view, setView] = useState<View>('library');
