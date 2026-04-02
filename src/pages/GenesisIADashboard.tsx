@@ -166,14 +166,17 @@ const GenesisIADashboard = () => {
        setBlockReason(subscription.plan_name || 'Conta bloqueada');
      }
      
-     // Check if trial (mentorado) has expired
-     if (
-       (subscription?.status === 'trial' || subscription?.user_type === 'mentorado') &&
-       subscription?.expires_at &&
-       new Date(subscription.expires_at) < new Date()
-     ) {
-       setIsTrialExpired(true);
-     }
+      // Check if trial (mentorado) has expired
+      if (
+        (subscription?.status === 'trial' || subscription?.user_type === 'mentorado') &&
+        subscription?.expires_at
+      ) {
+        setIsTrialUser(true);
+        setTrialExpiresAt(subscription.expires_at);
+        if (new Date(subscription.expires_at) < new Date()) {
+          setIsTrialExpired(true);
+        }
+      }
    }
 
     // Usar primeiro nome do genesis_users, ou do metadata, ou do email
