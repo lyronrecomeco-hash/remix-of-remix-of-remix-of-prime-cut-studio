@@ -160,7 +160,7 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
             variant="outline"
             size="icon"
             onClick={fetchProposals}
-            className="border-border hover:bg-muted/50"
+            className="border-white/10 text-white/70 hover:text-white hover:bg-white/10"
           >
             <RefreshCw className="w-4 h-4" />
           </Button>
