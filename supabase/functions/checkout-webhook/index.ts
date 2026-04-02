@@ -159,8 +159,8 @@ serve(async (req) => {
             product_name: caktoProduct.name || caktoProduct.title || null,
             offer_id: caktoOffer.id || caktoOffer.external_id || null,
             offer_name: caktoOffer.name || caktoOffer.title || null,
-            order_value: orderValue ? Number(orderValue) / 100 : null,
-            currency: body.currency || caktoOrder.currency || 'BRL',
+            order_value: orderValue ? Number(orderValue) : null,
+            currency: caktoOffer.currency || body.currency || 'BRL',
             raw_payload: body,
             processed: false,
           };
