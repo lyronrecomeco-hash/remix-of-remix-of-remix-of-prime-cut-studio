@@ -243,15 +243,7 @@ export function ContractDetail({ contractId, onBack }: ContractDetailProps) {
 
   // Signature functionality removed
 
-  const getSignatureUrl = () => {
-    if (!contract) return '';
-    return `${window.location.origin}/contratos/assinar/${contract.signature_hash}`;
-  };
-
-  const copySignatureLink = () => {
-    navigator.clipboard.writeText(getSignatureUrl());
-    toast.success('Link de assinatura copiado!');
-  };
+  // Signature URL removed
 
   const handleCopyContract = () => {
     if (!contract?.generated_content) {
