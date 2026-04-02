@@ -1251,7 +1251,17 @@ function extractDomain(url: string): string | undefined {
   if (!url) return undefined;
   
   try {
-    const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
+    const fullUrl = url.startsWith('http') ? url : `https://${url}`;
+    const urlObj = new URL(fullUrl);
+    const hostname = urlObj.hostname.toLowerCase();
+    
+    // Preserve full URL for social media profiles
+    if (hostname.includes('instagram.com') || hostname.includes('facebook.com') || 
+        hostname.includes('fb.com') || hostname.includes('fb.me') ||
+        hostname.includes('linkedin.com') || hostname.includes('tiktok.com')) {
+      return fullUrl;
+    }
+    
     return urlObj.hostname.replace(/^www\./, '');
   } catch {
     return undefined;

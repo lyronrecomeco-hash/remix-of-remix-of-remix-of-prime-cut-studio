@@ -82,6 +82,7 @@ import { FileText, Gift, CreditCard, Code2, Rocket, Key, ClipboardList, HelpCirc
 import { HelpCenterTab } from "@/components/genesis-ia/help";
 import { useMenuPermissions } from "@/hooks/useMenuPermissions";
 import { RestrictedAccessModal } from "@/components/admin/RestrictedAccessModal";
+import { GenesisSupportChat } from "@/components/genesis-ia/support/GenesisSupportChat";
 
 type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional' | 'payments' | 'page-builder' | 'academia' | 'proposals' | 'sprint-mission' | 'api-keys' | 'viral-saas' | 'partner-applications' | 'help';
 
@@ -713,7 +714,7 @@ const GenesisIADashboard = () => {
     if (activeTab === 'dashboard') return renderDashboard(ctx);
     
     if (activeTab === 'prospects') {
-      return <GenesisSearchClients userId={userId} onAccepted={() => setActiveTab('accepted_proposals')} />;
+      return <GenesisSearchClients userId={userId} affiliateId={affiliateId} onAccepted={() => setActiveTab('accepted_proposals')} />;
     }
 
     if (activeTab === 'radar') {
@@ -1055,6 +1056,7 @@ const GenesisIADashboard = () => {
               menuLabel={restrictedModal.label}
               menuId={restrictedModal.id}
             />
+            <GenesisSupportChat />
           </div>
         );
       }}

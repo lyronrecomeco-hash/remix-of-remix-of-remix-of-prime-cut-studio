@@ -31,6 +31,16 @@ import imgLavanderia from '@/assets/templates/lavanderia.jpg';
 import imgCervejaria from '@/assets/templates/cervejaria.jpg';
 import imgOtica from '@/assets/templates/otica.jpg';
 import imgContabilidade from '@/assets/templates/contabilidade.jpg';
+import imgDeliveryApp from '@/assets/templates/delivery-app.jpg';
+import imgFitnessApp from '@/assets/templates/fitness-app.jpg';
+import imgPetshopApp from '@/assets/templates/petshop-app.jpg';
+import imgImobiliariaApp from '@/assets/templates/imobiliaria-app.jpg';
+import imgVeterinario from '@/assets/templates/veterinario.jpg';
+import imgFunilaria from '@/assets/templates/funilaria.jpg';
+import imgCrmApp from '@/assets/templates/crm-app.jpg';
+import imgEscolaMusica from '@/assets/templates/escola-musica.jpg';
+import imgConstrutora from '@/assets/templates/construtora.jpg';
+import imgAgenciaViagens from '@/assets/templates/agencia-viagens.jpg';
 
 export type TemplateCategory = 'site' | 'app';
 
@@ -51,7 +61,7 @@ export const TEMPLATE_CATEGORIES: { id: TemplateCategory; label: string }[] = [
 ];
 
 export const TEMPLATE_MODELS: TemplateModel[] = [
-  // ========== ALIMENTAÇÃO ==========
+  // ========== ALIMENTAÇÃO - SITES ==========
   {
     id: 'pizzaria',
     name: 'Pizzaria',
@@ -217,6 +227,16 @@ export const TEMPLATE_MODELS: TemplateModel[] = [
     objectives: ['Agendar consultas', 'Apresentar abordagem terapeutica', 'Gerar confianca', 'Educar pacientes', 'Atendimento remoto'],
   },
   {
+    id: 'veterinario',
+    name: 'Veterinario',
+    description: 'Clinica veterinaria e consultas',
+    image: imgVeterinario,
+    category: 'site',
+    suggestedPages: ['Home', 'Servicos', 'Equipe', 'Emergencia', 'Agendamento', 'Contato'],
+    suggestedFeatures: ['Agendamento de consultas', 'Servicos veterinarios', 'Plantao 24h', 'Galeria de pacientes', 'Botao WhatsApp', 'Dicas de cuidados'],
+    objectives: ['Agendar consultas', 'Apresentar servicos', 'Atendimento de emergencia', 'Gerar confianca', 'Captar clientes'],
+  },
+  {
     id: 'yoga-studio',
     name: 'Yoga / Pilates',
     description: 'Aulas, horarios e matriculas',
@@ -268,6 +288,36 @@ export const TEMPLATE_MODELS: TemplateModel[] = [
     suggestedFeatures: ['Catalogo de espacos', 'Tabela de planos', 'Tour virtual', 'Reserva online', 'Botao WhatsApp'],
     objectives: ['Apresentar espacos', 'Vender planos', 'Reserva de salas', 'Mostrar estrutura', 'Captar empresas'],
   },
+  {
+    id: 'construtora',
+    name: 'Construtora / Engenharia',
+    description: 'Projetos, obras e orcamentos',
+    image: imgConstrutora,
+    category: 'site',
+    suggestedPages: ['Home', 'Projetos', 'Servicos', 'Portfolio', 'Sobre', 'Contato'],
+    suggestedFeatures: ['Galeria de projetos', 'Lista de servicos', 'Formulario de orcamento', 'Depoimentos', 'Botao WhatsApp', 'Certificacoes'],
+    objectives: ['Apresentar projetos', 'Gerar orcamentos', 'Mostrar portfolio', 'Captar clientes', 'Gerar credibilidade'],
+  },
+  {
+    id: 'escola-musica',
+    name: 'Escola de Musica',
+    description: 'Aulas, instrumentos e matriculas',
+    image: imgEscolaMusica,
+    category: 'site',
+    suggestedPages: ['Home', 'Cursos', 'Professores', 'Horarios', 'Matricula', 'Contato'],
+    suggestedFeatures: ['Catalogo de cursos', 'Perfil dos professores', 'Grade de horarios', 'Formulario de matricula', 'Galeria de eventos', 'Botao WhatsApp'],
+    objectives: ['Captar novos alunos', 'Apresentar cursos', 'Mostrar professores', 'Facilitar matricula', 'Promover eventos'],
+  },
+  {
+    id: 'agencia-viagens',
+    name: 'Agencia de Viagens',
+    description: 'Pacotes turisticos e reservas',
+    image: imgAgenciaViagens,
+    category: 'site',
+    suggestedPages: ['Home', 'Destinos', 'Pacotes', 'Promocoes', 'Blog', 'Contato'],
+    suggestedFeatures: ['Catalogo de destinos', 'Pacotes com precos', 'Formulario de reserva', 'Blog de viagens', 'Botao WhatsApp', 'Depoimentos'],
+    objectives: ['Vender pacotes', 'Mostrar destinos', 'Captar leads', 'Promover ofertas', 'Gerar confianca'],
+  },
 
   // ========== AUTOMOTIVO ==========
   {
@@ -289,6 +339,16 @@ export const TEMPLATE_MODELS: TemplateModel[] = [
     suggestedPages: ['Home', 'Servicos', 'Orcamento', 'Sobre', 'Galeria', 'Contato'],
     suggestedFeatures: ['Lista de servicos', 'Formulario de orcamento', 'Galeria de trabalhos', 'Botao WhatsApp', 'Depoimentos'],
     objectives: ['Apresentar servicos', 'Gerar orcamentos', 'Captar clientes locais', 'Mostrar credibilidade', 'Facilitar contato'],
+  },
+  {
+    id: 'funilaria',
+    name: 'Funilaria / Pintura',
+    description: 'Reparos automotivos e orcamentos',
+    image: imgFunilaria,
+    category: 'site',
+    suggestedPages: ['Home', 'Servicos', 'Antes e Depois', 'Orcamento', 'Sobre', 'Contato'],
+    suggestedFeatures: ['Galeria antes/depois', 'Lista de servicos', 'Formulario de orcamento', 'Botao WhatsApp', 'Depoimentos', 'Parcerias com seguradoras'],
+    objectives: ['Mostrar resultados', 'Gerar orcamentos', 'Parcerias com seguradoras', 'Captar clientes', 'Apresentar servicos'],
   },
 
   // ========== PETS ==========
@@ -403,5 +463,55 @@ export const TEMPLATE_MODELS: TemplateModel[] = [
     suggestedPages: ['Home', 'Servicos', 'Agenda', 'Meus Agendamentos', 'Perfil', 'Admin'],
     suggestedFeatures: ['Calendario interativo', 'Gestao de horarios', 'Notificacoes WhatsApp/email', 'Dashboard admin', 'Relatorios', 'Avaliacoes'],
     objectives: ['Automatizar agendamentos', 'Reduzir faltas', 'Gestao de profissionais', 'Relatorios de performance', 'Integrar WhatsApp'],
+  },
+  {
+    id: 'delivery-app',
+    name: 'App de Delivery',
+    description: 'Pedidos online e rastreamento',
+    image: imgDeliveryApp,
+    category: 'app',
+    suggestedPages: ['Home', 'Cardapio', 'Carrinho', 'Rastreamento', 'Historico', 'Perfil'],
+    suggestedFeatures: ['Cardapio digital', 'Carrinho de compras', 'Rastreamento em tempo real', 'Pagamento online', 'Notificacoes push', 'Historico de pedidos'],
+    objectives: ['Receber pedidos online', 'Rastrear entregas', 'Pagamento integrado', 'Fidelizar clientes', 'Dashboard do restaurante'],
+  },
+  {
+    id: 'fitness-app',
+    name: 'App Fitness / Treino',
+    description: 'Treinos, progresso e planos',
+    image: imgFitnessApp,
+    category: 'app',
+    suggestedPages: ['Home', 'Treinos', 'Progresso', 'Dieta', 'Perfil', 'Planos'],
+    suggestedFeatures: ['Biblioteca de exercicios', 'Planos de treino', 'Tracking de progresso', 'Graficos de evolucao', 'Timer de treino', 'Planos alimentares'],
+    objectives: ['Treinos personalizados', 'Acompanhar progresso', 'Planos alimentares', 'Fidelizar alunos', 'Dashboard do personal'],
+  },
+  {
+    id: 'petshop-app',
+    name: 'App Pet Care',
+    description: 'Gestao de pets e agendamento',
+    image: imgPetshopApp,
+    category: 'app',
+    suggestedPages: ['Home', 'Meus Pets', 'Agendamento', 'Vacinacao', 'Loja', 'Perfil'],
+    suggestedFeatures: ['Perfil dos pets', 'Agendamento de servicos', 'Carteira de vacinacao', 'Loja virtual', 'Notificacoes de lembretes', 'Historico veterinario'],
+    objectives: ['Gerenciar pets', 'Agendar banho e tosa', 'Controle de vacinacao', 'Vender produtos', 'Fidelizar clientes'],
+  },
+  {
+    id: 'imobiliaria-app',
+    name: 'App Imobiliario',
+    description: 'Busca de imoveis e visitas',
+    image: imgImobiliariaApp,
+    category: 'app',
+    suggestedPages: ['Home', 'Busca', 'Favoritos', 'Mapa', 'Agendamento de Visita', 'Perfil'],
+    suggestedFeatures: ['Busca com filtros avancados', 'Mapa interativo', 'Tour virtual 360', 'Favoritos', 'Agendamento de visitas', 'Chat com corretor'],
+    objectives: ['Buscar imoveis', 'Agendar visitas', 'Tour virtual', 'Chat com corretores', 'Gestao de favoritos'],
+  },
+  {
+    id: 'crm-app',
+    name: 'App CRM / Gestao',
+    description: 'Gestao de clientes e vendas',
+    image: imgCrmApp,
+    category: 'app',
+    suggestedPages: ['Dashboard', 'Clientes', 'Pipeline', 'Tarefas', 'Relatorios', 'Configuracoes'],
+    suggestedFeatures: ['Pipeline de vendas', 'Cadastro de clientes', 'Gestao de tarefas', 'Relatorios e graficos', 'Integracao WhatsApp', 'Notificacoes'],
+    objectives: ['Gerenciar clientes', 'Pipeline de vendas', 'Acompanhar tarefas', 'Relatorios de performance', 'Automatizar follow-ups'],
   },
 ];
