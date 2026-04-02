@@ -225,7 +225,7 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
                       {/* Info */}
                       <div className="space-y-2 mb-4">
                         {qa.address && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2 text-sm text-white/50">
                             <MapPin className="w-3.5 h-3.5 shrink-0" />
                             <span className="line-clamp-1">{String(qa.address)}</span>
                           </div>
