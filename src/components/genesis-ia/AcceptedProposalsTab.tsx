@@ -237,7 +237,7 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
                           </div>
                         )}
                         {proposal.company_email && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2 text-sm text-white/50">
                             <Mail className="w-3.5 h-3.5 shrink-0" />
                             <span className="line-clamp-1">{proposal.company_email}</span>
                           </div>
