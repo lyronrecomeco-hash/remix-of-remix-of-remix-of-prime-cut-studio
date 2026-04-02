@@ -1073,6 +1073,15 @@ const GenesisIADashboard = () => {
               menuId={restrictedModal.id}
             />
             <GenesisSupportChat />
+            
+            {/* Trial Info Modal */}
+            {isTrialUser && trialExpiresAt && (
+              <TrialInfoModal
+                isOpen={showTrialModal}
+                onClose={() => setShowTrialModal(false)}
+                expiresAt={trialExpiresAt}
+              />
+            )}
           </div>
         );
       }}
