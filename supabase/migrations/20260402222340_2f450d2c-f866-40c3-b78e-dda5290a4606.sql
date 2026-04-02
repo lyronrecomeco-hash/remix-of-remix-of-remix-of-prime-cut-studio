@@ -1,0 +1,2 @@
+DROP POLICY IF EXISTS "Service role full access analytics" ON public.genesis_cakto_analytics;
+CREATE POLICY "Service role full access analytics" ON public.genesis_cakto_analytics FOR ALL USING (true) WITH CHECK (true);

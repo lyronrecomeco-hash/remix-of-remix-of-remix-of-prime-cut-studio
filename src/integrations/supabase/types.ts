@@ -4717,42 +4717,57 @@ export type Database = {
       }
       genesis_cakto_analytics: {
         Row: {
+          boleto_expired: number | null
+          boleto_generated: number | null
           cart_abandonments: number | null
           checkouts_started: number | null
           created_at: string | null
           date: string
           id: string
           instance_id: string
-          integration_id: string
+          integration_id: string | null
+          pix_expired: number | null
+          pix_generated: number | null
           purchases_approved: number | null
+          purchases_chargeback: number | null
           purchases_refunded: number | null
           purchases_refused: number | null
           total_revenue: number | null
           updated_at: string | null
         }
         Insert: {
+          boleto_expired?: number | null
+          boleto_generated?: number | null
           cart_abandonments?: number | null
           checkouts_started?: number | null
           created_at?: string | null
           date: string
           id?: string
           instance_id: string
-          integration_id: string
+          integration_id?: string | null
+          pix_expired?: number | null
+          pix_generated?: number | null
           purchases_approved?: number | null
+          purchases_chargeback?: number | null
           purchases_refunded?: number | null
           purchases_refused?: number | null
           total_revenue?: number | null
           updated_at?: string | null
         }
         Update: {
+          boleto_expired?: number | null
+          boleto_generated?: number | null
           cart_abandonments?: number | null
           checkouts_started?: number | null
           created_at?: string | null
           date?: string
           id?: string
           instance_id?: string
-          integration_id?: string
+          integration_id?: string | null
+          pix_expired?: number | null
+          pix_generated?: number | null
           purchases_approved?: number | null
+          purchases_chargeback?: number | null
           purchases_refunded?: number | null
           purchases_refused?: number | null
           total_revenue?: number | null

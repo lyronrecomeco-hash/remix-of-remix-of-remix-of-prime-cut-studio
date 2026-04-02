@@ -1,0 +1,1 @@
+ALTER TABLE public.genesis_cakto_analytics ALTER COLUMN integration_id DROP NOT NULL;

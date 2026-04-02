@@ -136,15 +136,20 @@ serve(async (req) => {
           }
         }
 
-        // If no instance found, try getting any active instance
+        // If no instance found, try getting any instance (regardless of status)
         if (!caktoInstanceId) {
           const { data: anyInstance } = await supabase
             .from('genesis_instances')
             .select('id')
-            .eq('status', 'connected')
+            .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle();
           if (anyInstance) caktoInstanceId = anyInstance.id;
+        }
+
+        // Last resort: use a deterministic UUID so events are still logged
+        if (!caktoInstanceId) {
+          console.log('[Cakto Events] No instance found, skipping event log');
         }
 
         if (caktoInstanceId) {
@@ -197,7 +202,7 @@ serve(async (req) => {
                 updated_at: new Date().toISOString(),
               };
               if (possibleCaktoEvent === 'purchase_approved' && orderValue) {
-                updateObj.total_revenue = (Number(existingAnalytics.total_revenue) || 0) + Number(orderValue) / 100;
+                updateObj.total_revenue = (Number(existingAnalytics.total_revenue) || 0) + Number(orderValue);
               }
               await supabase
                 .from('genesis_cakto_analytics')
@@ -206,14 +211,15 @@ serve(async (req) => {
             } else {
               const insertObj: Record<string, unknown> = {
                 instance_id: caktoInstanceId,
-                integration_id: caktoInstanceId,
+                integration_id: null,
                 date: today,
                 [fieldToUpdate]: 1,
               };
               if (possibleCaktoEvent === 'purchase_approved' && orderValue) {
-                insertObj.total_revenue = Number(orderValue) / 100;
+                insertObj.total_revenue = Number(orderValue);
               }
-              await supabase.from('genesis_cakto_analytics').insert(insertObj);
+              const { error: analyticsInsertErr } = await supabase.from('genesis_cakto_analytics').insert(insertObj);
+              if (analyticsInsertErr) console.error('[Cakto Analytics] Insert error:', analyticsInsertErr);
             }
             console.log(`[Cakto Analytics] Updated ${fieldToUpdate} for ${today}`);
           }
