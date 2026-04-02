@@ -257,7 +257,7 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
                         <Button
                           size="sm"
                           variant="outline"
-                          className="flex-1 border-border hover:bg-muted/50 gap-1.5"
+                          className="flex-1 border-white/10 text-white/70 hover:text-white hover:bg-white/10 gap-1.5"
                           onClick={() => openWhatsApp(proposal.company_phone, proposal.company_name)}
                         >
                           <MessageCircle className="w-3.5 h-3.5" />
