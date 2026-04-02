@@ -231,7 +231,7 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
                           </div>
                         )}
                         {proposal.company_phone && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2 text-sm text-white/50">
                             <Phone className="w-3.5 h-3.5 shrink-0" />
                             <span>{proposal.company_phone}</span>
                           </div>
