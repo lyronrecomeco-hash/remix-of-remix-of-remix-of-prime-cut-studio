@@ -14,6 +14,9 @@ interface AnalyticsData {
   purchases_refused: number;
   purchases_refunded: number;
   cart_abandonments: number;
+  subscriptions_active: number;
+  subscriptions_cancelled: number;
+  subscriptions_overdue: number;
   total_revenue: number;
   conversion_rate: number;
   daily: CaktoAnalytics[];

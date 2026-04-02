@@ -184,6 +184,9 @@ serve(async (req) => {
             checkout_abandonment: 'cart_abandonments',
             pix_generated: 'pix_generated',
             pix_expired: 'pix_expired',
+            subscription_active: 'subscriptions_active',
+            subscription_cancelled: 'subscriptions_cancelled',
+            subscription_overdue: 'subscriptions_overdue',
           };
 
           const fieldToUpdate = analyticsField[possibleCaktoEvent];
