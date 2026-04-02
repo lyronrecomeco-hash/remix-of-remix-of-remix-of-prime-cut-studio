@@ -322,7 +322,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
 
               {/* Additional Description */}
               <div className="space-y-1.5">
-                <Label className="text-[10px] sm:text-xs text-muted-foreground">Descricao adicional (opcional)</Label>
+                <Label className="text-xs sm:text-sm text-muted-foreground">Descricao adicional (opcional)</Label>
                 <Textarea
                   value={formData.additionalDescription}
                   onChange={e => updateField('additionalDescription', e.target.value)}
