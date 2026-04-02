@@ -69,12 +69,13 @@ export function CreationMethodModal({
 
         {/* Options - Genesis Style */}
         <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-          {/* Template Option - Bloqueado */}
-          <motion.div
+          {/* Template Option - Ativo */}
+          <motion.button
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
-            className="relative p-4 sm:p-5 rounded-xl bg-white/5 border border-white/10 text-left opacity-40 cursor-not-allowed select-none"
+            onClick={onSelectTemplate}
+            className="group relative p-4 sm:p-5 rounded-xl bg-white/5 border border-white/10 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 text-left"
           >
             <div className="flex items-start gap-3 sm:gap-4">
               <div className="flex-shrink-0 w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -90,11 +91,7 @@ export function CreationMethodModal({
                 </p>
               </div>
             </div>
-            {/* Locked badge */}
-            <div className="absolute top-2 right-2 text-[9px] bg-white/10 text-muted-foreground px-1.5 py-0.5 rounded-full">
-              Em breve
-            </div>
-          </motion.div>
+          </motion.button>
 
           {/* From Scratch Option */}
           <motion.button

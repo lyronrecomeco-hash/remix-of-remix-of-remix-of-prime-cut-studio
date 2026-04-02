@@ -7,6 +7,7 @@ import { ProjectLibrary } from '../library/ProjectLibrary';
 import { ProjectConfig } from '../library/ProjectCard';
 import { CreationMethodModal } from './from-scratch/CreationMethodModal';
 import { FromScratchWizard } from './from-scratch/FromScratchWizard';
+import { TemplateModelSelector } from './from-template/TemplateModelSelector';
 
 interface CriarProjetosTabProps {
   affiliateId: string | null;
@@ -14,7 +15,7 @@ interface CriarProjetosTabProps {
   onBack: () => void;
 }
 
-type View = 'library' | 'select' | 'customize' | 'from-scratch';
+type View = 'library' | 'select' | 'customize' | 'from-scratch' | 'from-template';
 
 export function CriarProjetosTab({ affiliateId, userId, onBack }: CriarProjetosTabProps) {
   const [view, setView] = useState<View>('library');
@@ -71,7 +72,7 @@ export function CriarProjetosTab({ affiliateId, userId, onBack }: CriarProjetosT
 
   const handleSelectTemplateMethod = () => {
     setShowMethodModal(false);
-    setView('select');
+    setView('from-template');
   };
 
   const handleStartFromScratch = () => {
@@ -171,6 +172,21 @@ export function CriarProjetosTab({ affiliateId, userId, onBack }: CriarProjetosT
             <FromScratchWizard
               onBack={handleFromScratchBack}
               onComplete={handleFromScratchComplete}
+              affiliateId={effectiveId}
+            />
+          </motion.div>
+        )}
+
+        {view === 'from-template' && (
+          <motion.div
+            key="from-template"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <TemplateModelSelector
+              onBack={() => setView('library')}
+              onComplete={() => setView('library')}
               affiliateId={effectiveId}
             />
           </motion.div>
