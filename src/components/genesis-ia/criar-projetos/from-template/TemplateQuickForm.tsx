@@ -185,7 +185,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-[10px] sm:text-xs text-muted-foreground">Slogan (opcional)</Label>
+                  <Label className="text-xs sm:text-sm text-muted-foreground">Slogan (opcional)</Label>
                   <Input
                     value={formData.slogan}
                     onChange={e => updateField('slogan', e.target.value)}
