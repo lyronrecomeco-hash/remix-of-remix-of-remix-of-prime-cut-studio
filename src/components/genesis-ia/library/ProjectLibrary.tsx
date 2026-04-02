@@ -338,7 +338,8 @@ export function ProjectLibrary({ affiliateId, onEdit, onCreateNew, onBack }: Pro
       .single();
     
     const isMocked = affiliateData?.email === MOCK_DATA_EMAIL;
-    setIsMockedAccount(isMocked);
+    const isSantiago = SANTIAGO_EMAILS.includes(affiliateData?.email?.toLowerCase() || '');
+    setIsMockedAccount(isMocked || isSantiago);
     
     const { data, error } = await supabase
       .from('affiliate_template_configs')
@@ -349,16 +350,16 @@ export function ProjectLibrary({ affiliateId, onEdit, onCreateNew, onBack }: Pro
     if (error) {
       console.error('Error loading projects:', error);
       toast.error('Erro ao carregar projetos');
-      // Se for conta mockada, usa os projetos mock mesmo com erro
-      if (isMocked) {
-        setProjects(MOCKED_PROJECTS);
-      }
+      if (isMocked) setProjects(MOCKED_PROJECTS);
+      else if (isSantiago) setProjects(SANTIAGO_PROJECTS);
     } else {
-      // Para conta mockada, combina projetos reais com mockados
+      const realProjects = data as ProjectConfig[];
       if (isMocked) {
-        setProjects([...MOCKED_PROJECTS, ...(data as ProjectConfig[])]);
+        setProjects([...MOCKED_PROJECTS, ...realProjects]);
+      } else if (isSantiago) {
+        setProjects([...SANTIAGO_PROJECTS, ...realProjects]);
       } else {
-        setProjects(data as ProjectConfig[]);
+        setProjects(realProjects);
       }
     }
     setLoading(false);
