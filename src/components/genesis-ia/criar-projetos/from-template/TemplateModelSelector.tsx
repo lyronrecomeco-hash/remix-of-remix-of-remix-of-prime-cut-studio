@@ -20,17 +20,6 @@ export function TemplateModelSelector({ onBack, onComplete, affiliateId }: Templ
     ? TEMPLATE_MODELS
     : TEMPLATE_MODELS.filter(t => t.category === selectedCategory);
 
-  if (showForm && selectedTemplate) {
-    return (
-      <TemplateQuickForm
-        template={selectedTemplate}
-        onBack={() => setShowForm(false)}
-        onComplete={onComplete}
-        affiliateId={affiliateId}
-      />
-    );
-  }
-
   return (
     <div className="space-y-0 px-1 sm:px-0">
       {/* Header */}
@@ -59,10 +48,10 @@ export function TemplateModelSelector({ onBack, onComplete, affiliateId }: Templ
       </div>
 
       {/* Category Filter */}
-      <div className="flex gap-1.5 px-3 sm:px-4 py-2 bg-white/5 border-x border-white/10">
+      <div className="flex gap-1.5 px-3 sm:px-4 py-2 bg-white/5 border-x border-white/10 overflow-x-auto">
         <button
           onClick={() => setSelectedCategory('all')}
-          className={`px-3 py-1 rounded-full text-[10px] sm:text-xs font-medium transition-colors ${
+          className={`px-3 py-1 rounded-full text-[10px] sm:text-xs font-medium transition-colors whitespace-nowrap ${
             selectedCategory === 'all'
               ? 'bg-primary text-primary-foreground'
               : 'bg-white/5 text-muted-foreground hover:bg-white/10'
@@ -74,7 +63,7 @@ export function TemplateModelSelector({ onBack, onComplete, affiliateId }: Templ
           <button
             key={cat.id}
             onClick={() => setSelectedCategory(cat.id)}
-            className={`px-3 py-1 rounded-full text-[10px] sm:text-xs font-medium transition-colors ${
+            className={`px-3 py-1 rounded-full text-[10px] sm:text-xs font-medium transition-colors whitespace-nowrap ${
               selectedCategory === cat.id
                 ? 'bg-primary text-primary-foreground'
                 : 'bg-white/5 text-muted-foreground hover:bg-white/10'
@@ -170,6 +159,18 @@ export function TemplateModelSelector({ onBack, onComplete, affiliateId }: Templ
           </Button>
         </div>
       </div>
+
+      {/* Form Modal Overlay */}
+      <AnimatePresence>
+        {showForm && selectedTemplate && (
+          <TemplateQuickForm
+            template={selectedTemplate}
+            onBack={() => setShowForm(false)}
+            onComplete={onComplete}
+            affiliateId={affiliateId}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
