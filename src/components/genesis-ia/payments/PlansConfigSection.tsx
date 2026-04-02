@@ -117,9 +117,20 @@ export function PlansConfigSection() {
     return (cents / 100).toFixed(2).replace('.', ',');
   }
 
+  function formatOptionalCurrency(cents: number | null | undefined): string {
+    if (cents === null || cents === undefined) return '';
+    return formatCurrency(cents);
+  }
+
   function parseCurrency(value: string): number {
     const clean = value.replace(/[^\d,]/g, '').replace(',', '.');
     return Math.round(parseFloat(clean || '0') * 100);
+  }
+
+  function parseOptionalCurrency(value: string): number | null {
+    const clean = value.replace(/[^\d,]/g, '').trim();
+    if (!clean) return null;
+    return parseCurrency(value);
   }
 
   if (isLoading) {
@@ -198,8 +209,9 @@ export function PlansConfigSection() {
                   </Label>
                   <Input
                     type="text"
-                    value={formatCurrency(getEditedValue(plan.id, 'promo_price_cents', plan.promo_price_cents || plan.price_cents))}
-                    onChange={(e) => handleChange(plan.id, 'promo_price_cents', parseCurrency(e.target.value))}
+                    value={formatOptionalCurrency(getEditedValue(plan.id, 'promo_price_cents', plan.promo_price_cents))}
+                    onChange={(e) => handleChange(plan.id, 'promo_price_cents', parseOptionalCurrency(e.target.value))}
+                    placeholder="Ex: 97,00"
                     className="h-10 bg-white/5 border-white/10 text-center font-mono"
                   />
                 </div>
