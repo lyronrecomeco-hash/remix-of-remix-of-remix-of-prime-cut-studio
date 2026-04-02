@@ -137,7 +137,7 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
       {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+          <h2 className="text-xl font-semibold text-white flex items-center gap-2">
             <Target className="w-5 h-5 text-primary" />
             Propostas Aceitas
           </h2>
