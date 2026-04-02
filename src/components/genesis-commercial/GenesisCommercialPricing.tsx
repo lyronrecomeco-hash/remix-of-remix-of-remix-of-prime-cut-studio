@@ -33,19 +33,24 @@ const usePlans = () => {
         .order('duration_months', { ascending: true });
 
       if (data) {
-        setPlans(data.map(p => ({
-          id: p.id,
-          name: p.name,
-          displayName: p.display_name,
-          tagline: p.tagline,
-          priceCents: p.price_cents,
-          originalPriceCents: p.discount_percentage ? Math.round(p.price_cents / (1 - p.discount_percentage / 100)) : null,
-          period: p.duration_months === 1 ? '/mês' : p.duration_months === 3 ? '/3 meses' : '/ano',
-          discountPercentage: p.discount_percentage,
-          isPopular: p.is_popular,
-          features: Array.isArray(p.features) ? p.features as string[] : [],
-          checkoutUrl: p.checkout_url || null,
-        })));
+        setPlans(data.map(p => {
+          const hasPromo = p.promo_price_cents && p.promo_price_cents > 0;
+          const displayPrice = hasPromo ? p.promo_price_cents : p.price_cents;
+          const originalPrice = hasPromo ? p.price_cents : (p.discount_percentage ? Math.round(p.price_cents / (1 - p.discount_percentage / 100)) : null);
+          return {
+            id: p.id,
+            name: p.name,
+            displayName: p.display_name,
+            tagline: p.tagline,
+            priceCents: displayPrice,
+            originalPriceCents: originalPrice,
+            period: p.duration_months === 1 ? '/mês' : p.duration_months === 3 ? '/3 meses' : '/ano',
+            discountPercentage: p.discount_percentage,
+            isPopular: p.is_popular,
+            features: Array.isArray(p.features) ? p.features as string[] : [],
+            checkoutUrl: p.checkout_url || null,
+          };
+        }));
       }
       setIsLoading(false);
     }
