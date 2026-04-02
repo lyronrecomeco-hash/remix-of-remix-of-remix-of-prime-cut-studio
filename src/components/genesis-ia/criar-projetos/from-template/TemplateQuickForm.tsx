@@ -257,7 +257,7 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
                   <Type className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
                   Tipografia
                 </label>
-                <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 sm:gap-2">
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-2.5">
                   {TYPOGRAPHIES.slice(0, 10).map((font, index) => {
                     const isSelected = formData.typography === font;
                     return (
