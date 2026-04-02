@@ -57,6 +57,7 @@ interface SearchResult {
   localTime?: string;
   latitude?: number;
   longitude?: number;
+  place_id?: string;
   opportunityLevel?: 'basic' | 'intermediate' | 'advanced';
   estimatedValueMin?: number;
   estimatedValueMax?: number;
@@ -68,6 +69,10 @@ interface SearchResult {
   needsEcommerce?: boolean;
   needsChatbot?: boolean;
   aiDescription?: string;
+  generatedMessage?: string;
+  city?: string;
+  state?: string;
+  country?: string;
 }
 
 interface GenesisSearchClientsProps {
