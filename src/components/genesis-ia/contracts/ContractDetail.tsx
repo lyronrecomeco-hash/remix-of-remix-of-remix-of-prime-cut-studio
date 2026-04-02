@@ -380,10 +380,6 @@ export function ContractDetail({ contractId, onBack }: ContractDetailProps) {
         </div>
         
         <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="outline" size="sm" className="gap-2 text-xs" onClick={copySignatureLink}>
-            <Link2 className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">Copiar Link</span>
-          </Button>
           <Button variant="outline" size="sm" className="gap-2 text-xs" onClick={handleDownloadPDF}>
             <Download className="w-3 h-3 sm:w-4 sm:h-4" />
             PDF
