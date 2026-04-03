@@ -10681,6 +10681,167 @@ export type Database = {
         }
         Relationships: []
       }
+      hot_offer_saves: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          offer_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          offer_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          offer_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hot_offer_saves_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "hot_offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hot_offer_searches: {
+        Row: {
+          created_at: string
+          filters: Json | null
+          id: string
+          niche: string | null
+          query: string
+          results_count: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          filters?: Json | null
+          id?: string
+          niche?: string | null
+          query: string
+          results_count?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          filters?: Json | null
+          id?: string
+          niche?: string | null
+          query?: string
+          results_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      hot_offers: {
+        Row: {
+          advertiser_name: string | null
+          ai_blueprint: Json | null
+          angle: string | null
+          closing_chance: number | null
+          copy: string | null
+          country: string | null
+          created_at: string
+          creative_url: string | null
+          cta_text: string | null
+          days_active: number | null
+          engagement_score: number | null
+          first_seen_at: string | null
+          format: string | null
+          headline: string
+          heat_score: number
+          hook: string | null
+          id: string
+          ideal_niches: string[] | null
+          is_active: boolean | null
+          landing_url: string | null
+          language: string | null
+          last_seen_at: string | null
+          mental_trigger: string | null
+          niche: string
+          platform: string
+          promise: string | null
+          recurrence_count: number | null
+          suggested_ticket: number | null
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          advertiser_name?: string | null
+          ai_blueprint?: Json | null
+          angle?: string | null
+          closing_chance?: number | null
+          copy?: string | null
+          country?: string | null
+          created_at?: string
+          creative_url?: string | null
+          cta_text?: string | null
+          days_active?: number | null
+          engagement_score?: number | null
+          first_seen_at?: string | null
+          format?: string | null
+          headline: string
+          heat_score?: number
+          hook?: string | null
+          id?: string
+          ideal_niches?: string[] | null
+          is_active?: boolean | null
+          landing_url?: string | null
+          language?: string | null
+          last_seen_at?: string | null
+          mental_trigger?: string | null
+          niche: string
+          platform?: string
+          promise?: string | null
+          recurrence_count?: number | null
+          suggested_ticket?: number | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          advertiser_name?: string | null
+          ai_blueprint?: Json | null
+          angle?: string | null
+          closing_chance?: number | null
+          copy?: string | null
+          country?: string | null
+          created_at?: string
+          creative_url?: string | null
+          cta_text?: string | null
+          days_active?: number | null
+          engagement_score?: number | null
+          first_seen_at?: string | null
+          format?: string | null
+          headline?: string
+          heat_score?: number
+          hook?: string | null
+          id?: string
+          ideal_niches?: string[] | null
+          is_active?: boolean | null
+          landing_url?: string | null
+          language?: string | null
+          last_seen_at?: string | null
+          mental_trigger?: string | null
+          niche?: string
+          platform?: string
+          promise?: string | null
+          recurrence_count?: number | null
+          suggested_ticket?: number | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       intent_templates: {
         Row: {
           allowed_variables: Json | null
