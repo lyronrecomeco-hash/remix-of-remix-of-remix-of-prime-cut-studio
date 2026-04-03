@@ -135,20 +135,13 @@ const PetshopContact = ({ onScheduleClick }: PetshopContactProps) => {
                 <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2" />
               </Button>
               <Button
-                asChild
                 variant="outline"
                 size="lg"
-                className="border-2 border-white/20 bg-white/5 text-white hover:bg-white hover:text-petshop-dark h-12 sm:h-14 text-sm sm:text-base rounded-xl sm:rounded-2xl transition-all"
+                className="border-2 border-white/20 bg-white/5 text-white hover:bg-white hover:text-petshop-dark h-12 sm:h-14 text-sm sm:text-base rounded-xl sm:rounded-2xl transition-all cursor-default opacity-60"
+                disabled
               >
-                <a
-                  href="https://wa.me/5581998409073"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2"
-                >
-                  <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-                  WhatsApp
-                </a>
+                <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                WhatsApp (Demo)
               </Button>
             </div>
           </motion.div>
