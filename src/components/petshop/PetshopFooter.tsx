@@ -92,27 +92,21 @@ const PetshopFooter = () => {
             <h4 className="font-bold text-white text-sm sm:text-base mb-3 sm:mb-4">Contato</h4>
             <ul className="space-y-2 sm:space-y-3">
               <li>
-                <a 
-                  href="https://wa.me/5581998409073" 
-                  className="flex items-center gap-2 text-white/60 hover:text-petshop-orange transition-colors text-xs sm:text-sm"
-                >
+                <span className="flex items-center gap-2 text-white/60 text-xs sm:text-sm">
                   <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span>(81) 99840-9073</span>
-                </a>
+                  <span>(00) 00000-0000</span>
+                </span>
               </li>
               <li>
-                <a 
-                  href="mailto:contato@seuxodo.com.br" 
-                  className="flex items-center gap-2 text-white/60 hover:text-petshop-orange transition-colors text-xs sm:text-sm"
-                >
+                <span className="flex items-center gap-2 text-white/60 text-xs sm:text-sm">
                   <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="truncate">contato@seuxodo.com.br</span>
-                </a>
+                  <span className="truncate">contato@demopetshop.com</span>
+                </span>
               </li>
               <li>
                 <span className="flex items-start gap-2 text-white/60 text-xs sm:text-sm">
                   <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 mt-0.5 flex-shrink-0" />
-                  <span>Estr. de Belém, 1273<br />Campo Grande, Recife</span>
+                  <span>Rua Exemplo, 123<br />Centro, São Paulo</span>
                 </span>
               </li>
             </ul>
