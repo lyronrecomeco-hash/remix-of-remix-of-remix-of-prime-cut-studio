@@ -95,7 +95,7 @@ export function LovableConnectButton({ prompt, projectName }: LovableConnectButt
               </motion.span>
             </h4>
             <p className="text-xs text-muted-foreground">
-              Copie o prompt e cole na Lovable
+              Um clique e seu projeto começa a ser criado
             </p>
           </div>
         </div>
