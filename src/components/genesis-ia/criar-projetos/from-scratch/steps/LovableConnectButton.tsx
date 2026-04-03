@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ExternalLink, Sparkles, Copy, Check, Gift, Rocket, Zap } from 'lucide-react';
+import { ExternalLink, Sparkles, Check, Gift, Rocket, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { buildLovableUrl } from '@/utils/lovable-build-url';
 import { toast } from 'sonner';
 
 // Official Lovable logo (heart icon)
