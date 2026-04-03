@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ExternalLink, Sparkles, Copy, Check, Gift, Rocket, Zap } from 'lucide-react';
+import { ExternalLink, Sparkles, Check, Gift, Rocket, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { buildLovableUrl } from '@/utils/lovable-build-url';
+
 
 // Official Lovable logo (heart icon)
 const LovableLogo = ({ className = 'w-6 h-6' }: { className?: string }) => (
@@ -39,18 +40,18 @@ export function LovableConnectButton({ prompt, projectName }: LovableConnectButt
   
   const handleCopyAndOpen = async () => {
     try {
-      await navigator.clipboard.writeText(prompt);
       setCopied(true);
-      toast.success('Prompt copiado! Abra a Lovable e cole o prompt para criar seu projeto.');
       
-      // Abre o referral link sem auto-deploy
+      // Open Lovable with the prompt auto-submitted (Build with URL)
+      const buildUrl = buildLovableUrl(prompt);
       setTimeout(() => {
-        window.open(LOVABLE_REFERRAL_LINK, '_blank');
+        window.open(buildUrl, '_blank');
         setCopied(false);
-      }, 500);
+      }, 300);
     } catch (err) {
-      toast.info('Abrindo Lovable...');
+      // Fallback: open referral link
       window.open(LOVABLE_REFERRAL_LINK, '_blank');
+      setCopied(false);
     }
   };
 
@@ -94,7 +95,7 @@ export function LovableConnectButton({ prompt, projectName }: LovableConnectButt
               </motion.span>
             </h4>
             <p className="text-xs text-muted-foreground">
-              Copie o prompt e cole na Lovable
+              Um clique e seu projeto começa a ser criado
             </p>
           </div>
         </div>
@@ -124,12 +125,12 @@ export function LovableConnectButton({ prompt, projectName }: LovableConnectButt
             {copied ? (
               <>
                 <Check className="w-4 h-4 mr-2" />
-                Copiado! Abrindo...
+                Abrindo Lovable...
               </>
             ) : (
               <>
                 <Rocket className="w-4 h-4 mr-2" />
-                Criar Projeto na Lovable
+                Criar Projeto com 1 Clique
               </>
             )}
           </Button>
@@ -169,15 +170,15 @@ export function LovableConnectButton({ prompt, projectName }: LovableConnectButt
               <div className="mt-4 pt-4 border-t border-border/50 space-y-2">
                 <div className="flex items-start gap-2 text-xs text-muted-foreground">
                   <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 text-[10px] font-bold">1</span>
-                  <span>Clique em "Copiar & Abrir Lovable"</span>
+                  <span>Clique em "Criar Projeto com 1 Clique"</span>
                 </div>
                 <div className="flex items-start gap-2 text-xs text-muted-foreground">
                   <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 text-[10px] font-bold">2</span>
-                  <span>Crie uma conta ou faça login (10 créditos grátis!)</span>
+                  <span>Faça login na Lovable (ou crie uma conta)</span>
                 </div>
                 <div className="flex items-start gap-2 text-xs text-muted-foreground">
                   <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 text-[10px] font-bold">3</span>
-                  <span>Cole o prompt no chat e veja sua ideia virar realidade</span>
+                  <span>O prompt já será enviado automaticamente — é só aguardar!</span>
                 </div>
                 <button
                   onClick={() => setIsExpanded(false)}
