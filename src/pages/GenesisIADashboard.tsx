@@ -276,6 +276,7 @@ const GenesisIADashboard = () => {
       case 'viral-saas': return 'SaaS Virais';
       case 'partner-applications': return 'Inscrições';
       case 'help': return 'Central de Ajuda';
+      case 'oferta-quente': return 'Oferta Quente';
       default: return null;
     }
   };
