@@ -52,7 +52,7 @@ const PetshopAbout = () => {
                   </div>
                   <div>
                     <p className="font-bold text-petshop-dark text-xs sm:text-sm">Melhor Petshop</p>
-                    <p className="text-petshop-gray text-[10px] sm:text-xs">Recife 2023</p>
+                    <p className="text-petshop-gray text-[10px] sm:text-xs">Demonstração</p>
                   </div>
                 </div>
               </motion.div>

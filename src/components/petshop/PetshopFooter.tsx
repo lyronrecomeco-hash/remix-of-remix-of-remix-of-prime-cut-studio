@@ -36,22 +36,19 @@ const PetshopFooter = () => {
                 <span className="text-xl sm:text-2xl">🐾</span>
               </motion.div>
               <div>
-                <h3 className="text-lg sm:text-xl font-bold text-white">Seu Xodó</h3>
-                <p className="text-[10px] sm:text-xs text-petshop-orange font-semibold">PETSHOP & VET</p>
+                <h3 className="text-lg sm:text-xl font-bold text-white">Demo PetShop</h3>
+                <p className="text-[10px] sm:text-xs text-petshop-orange font-semibold">DEMONSTRAÇÃO</p>
               </div>
             </div>
             <p className="text-white/60 text-xs sm:text-sm mb-4 sm:mb-6 leading-relaxed max-w-xs">
-              Cuidando do seu melhor amigo com amor e carinho há mais de 10 anos. 🐕❤️
+              Modelo de demonstração do sistema completo para petshops. 🐕❤️
             </p>
-            <a
-              href="https://www.instagram.com/seuxodo.petshop/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all shadow-lg hover:shadow-xl"
+            <span
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-full text-xs sm:text-sm font-semibold opacity-60"
             >
               <Instagram className="w-4 h-4" />
-              @seuxodo.petshop
-            </a>
+              @demopetshop
+            </span>
           </div>
 
           {/* Services */}
@@ -95,27 +92,21 @@ const PetshopFooter = () => {
             <h4 className="font-bold text-white text-sm sm:text-base mb-3 sm:mb-4">Contato</h4>
             <ul className="space-y-2 sm:space-y-3">
               <li>
-                <a 
-                  href="https://wa.me/5581998409073" 
-                  className="flex items-center gap-2 text-white/60 hover:text-petshop-orange transition-colors text-xs sm:text-sm"
-                >
+                <span className="flex items-center gap-2 text-white/60 text-xs sm:text-sm">
                   <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span>(81) 99840-9073</span>
-                </a>
+                  <span>(00) 00000-0000</span>
+                </span>
               </li>
               <li>
-                <a 
-                  href="mailto:contato@seuxodo.com.br" 
-                  className="flex items-center gap-2 text-white/60 hover:text-petshop-orange transition-colors text-xs sm:text-sm"
-                >
+                <span className="flex items-center gap-2 text-white/60 text-xs sm:text-sm">
                   <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="truncate">contato@seuxodo.com.br</span>
-                </a>
+                  <span className="truncate">contato@demopetshop.com</span>
+                </span>
               </li>
               <li>
                 <span className="flex items-start gap-2 text-white/60 text-xs sm:text-sm">
                   <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 mt-0.5 flex-shrink-0" />
-                  <span>Estr. de Belém, 1273<br />Campo Grande, Recife</span>
+                  <span>Rua Exemplo, 123<br />Centro, São Paulo</span>
                 </span>
               </li>
             </ul>
@@ -126,7 +117,7 @@ const PetshopFooter = () => {
         <div className="pt-6 sm:pt-8 border-t border-white/10">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
             <p className="text-[10px] sm:text-sm text-white/40 text-center sm:text-left">
-              © {new Date().getFullYear()} Seu Xodó Petshop. Todos os direitos reservados.
+              © {new Date().getFullYear()} Demo PetShop. Todos os direitos reservados.
             </p>
             <div className="flex items-center gap-1 text-[10px] sm:text-sm text-white/40">
               <span>Feito com</span>

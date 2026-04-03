@@ -731,10 +731,11 @@ export const GenesisSearchClients = ({ userId, affiliateId: passedAffiliateId, o
                         size="sm"
                         disabled={!result.phone}
                         onClick={() => {
-                          if (result.phone) {
+          if (result.phone) {
                             const cleanPhone = result.phone.replace(/\D/g, '');
                             const phone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
-                            window.open(`https://wa.me/${phone}`, '_blank');
+                            const msg = encodeURIComponent(`Olá! Vi o ${result.name || 'seu negócio'} e gostaria de conversar sobre uma oportunidade. Posso te apresentar?`);
+                            window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
                           }
                         }}
                         className={cn(

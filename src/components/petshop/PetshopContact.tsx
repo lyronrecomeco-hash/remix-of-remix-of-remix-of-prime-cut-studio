@@ -16,32 +16,32 @@ const PetshopContact = ({ onScheduleClick }: PetshopContactProps) => {
     {
       icon: Phone,
       title: 'Telefone',
-      value: '(81) 99840-9073',
-      subtitle: 'WhatsApp disponível',
-      href: 'https://wa.me/5581998409073',
+      value: '(00) 00000-0000',
+      subtitle: 'Demonstração',
+      href: null,
       color: 'from-green-500 to-emerald-500',
     },
     {
       icon: Mail,
       title: 'E-mail',
-      value: 'contato@seuxodo.com.br',
-      subtitle: 'Resposta em 24h',
-      href: 'mailto:contato@seuxodo.com.br',
+      value: 'contato@demopetshop.com',
+      subtitle: 'Demonstração',
+      href: null,
       color: 'from-blue-500 to-indigo-500',
     },
     {
       icon: MapPin,
       title: 'Endereço',
-      value: 'Estr. de Belém, 1273',
-      subtitle: 'Campo Grande, Recife',
-      href: 'https://www.google.com/maps/dir/?api=1&destination=Estr.+de+Belém,+1273+-+Campo+Grande,+Recife+-+PE',
+      value: 'Rua Exemplo, 123',
+      subtitle: 'Centro, São Paulo',
+      href: null,
       color: 'from-rose-500 to-pink-500',
     },
     {
       icon: Clock,
       title: 'Horário',
-      value: 'Seg à Sex: 7h às 19h',
-      subtitle: 'Sáb: 7h às 17h',
+      value: 'Seg à Sex: 8h às 18h',
+      subtitle: 'Sáb: 8h às 14h',
       href: null,
       color: 'from-amber-500 to-orange-500',
     },
@@ -75,7 +75,7 @@ const PetshopContact = ({ onScheduleClick }: PetshopContactProps) => {
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-4 sm:mb-6 leading-tight">
               Venha conhecer o{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-petshop-orange to-amber-400">
-                Seu Xodó
+                Demo PetShop
               </span>
             </h2>
             
@@ -135,20 +135,13 @@ const PetshopContact = ({ onScheduleClick }: PetshopContactProps) => {
                 <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2" />
               </Button>
               <Button
-                asChild
                 variant="outline"
                 size="lg"
-                className="border-2 border-white/20 bg-white/5 text-white hover:bg-white hover:text-petshop-dark h-12 sm:h-14 text-sm sm:text-base rounded-xl sm:rounded-2xl transition-all"
+                className="border-2 border-white/20 bg-white/5 text-white hover:bg-white hover:text-petshop-dark h-12 sm:h-14 text-sm sm:text-base rounded-xl sm:rounded-2xl transition-all cursor-default opacity-60"
+                disabled
               >
-                <a
-                  href="https://wa.me/5581998409073"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2"
-                >
-                  <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-                  WhatsApp
-                </a>
+                <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                WhatsApp (Demo)
               </Button>
             </div>
           </motion.div>
@@ -161,36 +154,26 @@ const PetshopContact = ({ onScheduleClick }: PetshopContactProps) => {
             className="relative"
           >
             <div className="bg-white rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
-              <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3949.9!2d-34.94!3d-8.08!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zOCwwOCdTIDM0wrA1Nic!5e0!3m2!1spt-BR!2sbr!4v1705000000000!5m2!1spt-BR!2sbr"
-                width="100%"
-                height="250"
-                className="sm:h-[300px]"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title="Localização Seu Xodó Petshop"
-              />
+              <div className="w-full h-[250px] sm:h-[300px] bg-gradient-to-br from-petshop-orange/10 to-amber-100 flex items-center justify-center">
+                <div className="text-center">
+                  <MapPin className="w-12 h-12 text-petshop-orange mx-auto mb-3" />
+                  <p className="text-petshop-dark font-semibold">Localização Demo</p>
+                  <p className="text-petshop-gray text-sm">Centro, São Paulo - SP</p>
+                </div>
+              </div>
               <div className="p-4 sm:p-6">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-petshop-orange to-amber-500 rounded-xl flex items-center justify-center">
                     <span className="text-xl sm:text-2xl">🐾</span>
                   </div>
                   <div>
-                    <h3 className="font-bold text-petshop-dark text-base sm:text-lg">Seu Xodó Petshop</h3>
-                    <p className="text-petshop-gray text-xs sm:text-sm">Campo Grande, Recife - PE</p>
+                    <h3 className="font-bold text-petshop-dark text-base sm:text-lg">Demo PetShop</h3>
+                    <p className="text-petshop-gray text-xs sm:text-sm">Centro, São Paulo - SP</p>
                   </div>
                 </div>
-                <a
-                  href="https://www.google.com/maps/dir/?api=1&destination=Estr.+de+Belém,+1273+-+Campo+Grande,+Recife+-+PE"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-petshop-orange font-semibold text-sm hover:underline group"
-                >
-                  Ver rotas no Google Maps
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </a>
+                <span className="flex items-center gap-2 text-petshop-orange font-semibold text-sm">
+                  Endereço de demonstração
+                </span>
               </div>
             </div>
 
