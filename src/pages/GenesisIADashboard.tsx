@@ -301,6 +301,7 @@ const GenesisIADashboard = () => {
         'partner-applications': 'Inscrições',
         'help': 'Central de Ajuda',
         'settings': 'Configurações',
+        'oferta-quente': 'Oferta Quente',
       };
       setRestrictedModal({ open: true, label: labelMap[tabId] || tabId, id: tabId });
       return;
