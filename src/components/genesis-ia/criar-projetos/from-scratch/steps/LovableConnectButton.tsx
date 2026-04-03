@@ -130,7 +130,7 @@ export function LovableConnectButton({ prompt, projectName }: LovableConnectButt
             ) : (
               <>
                 <Rocket className="w-4 h-4 mr-2" />
-                Criar Projeto na Lovable
+                Criar Projeto com 1 Clique
               </>
             )}
           </Button>
