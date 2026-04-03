@@ -170,15 +170,15 @@ export function LovableConnectButton({ prompt, projectName }: LovableConnectButt
               <div className="mt-4 pt-4 border-t border-border/50 space-y-2">
                 <div className="flex items-start gap-2 text-xs text-muted-foreground">
                   <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 text-[10px] font-bold">1</span>
-                  <span>Clique em "Copiar & Abrir Lovable"</span>
+                  <span>Clique em "Criar Projeto com 1 Clique"</span>
                 </div>
                 <div className="flex items-start gap-2 text-xs text-muted-foreground">
                   <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 text-[10px] font-bold">2</span>
-                  <span>Crie uma conta ou faça login (10 créditos grátis!)</span>
+                  <span>Faça login na Lovable (ou crie uma conta)</span>
                 </div>
                 <div className="flex items-start gap-2 text-xs text-muted-foreground">
                   <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 text-[10px] font-bold">3</span>
-                  <span>Cole o prompt no chat e veja sua ideia virar realidade</span>
+                  <span>O prompt já será enviado automaticamente — é só aguardar!</span>
                 </div>
                 <button
                   onClick={() => setIsExpanded(false)}
