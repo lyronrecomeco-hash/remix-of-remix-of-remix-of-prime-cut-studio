@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ExternalLink, Sparkles, Check, Gift, Rocket, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { buildLovableUrl } from '@/utils/lovable-build-url';
-import { toast } from 'sonner';
+
 
 // Official Lovable logo (heart icon)
 const LovableLogo = ({ className = 'w-6 h-6' }: { className?: string }) => (
