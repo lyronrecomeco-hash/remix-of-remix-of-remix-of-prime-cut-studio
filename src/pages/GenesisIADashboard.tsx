@@ -820,6 +820,10 @@ const GenesisIADashboard = () => {
       return <HelpCenterTab />;
     }
 
+    if (activeTab === 'oferta-quente') {
+      return <OfertaQuenteTab onBack={() => setActiveTab('dashboard')} />;
+    }
+
     return null;
   };
 
