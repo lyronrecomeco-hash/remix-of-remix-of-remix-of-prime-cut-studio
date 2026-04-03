@@ -40,18 +40,18 @@ export function LovableConnectButton({ prompt, projectName }: LovableConnectButt
   
   const handleCopyAndOpen = async () => {
     try {
-      await navigator.clipboard.writeText(prompt);
       setCopied(true);
-      toast.success('Prompt copiado! Abra a Lovable e cole o prompt para criar seu projeto.');
       
-      // Abre o referral link sem auto-deploy
+      // Open Lovable with the prompt auto-submitted (Build with URL)
+      const buildUrl = buildLovableUrl(prompt);
       setTimeout(() => {
-        window.open(LOVABLE_REFERRAL_LINK, '_blank');
+        window.open(buildUrl, '_blank');
         setCopied(false);
-      }, 500);
+      }, 300);
     } catch (err) {
-      toast.info('Abrindo Lovable...');
+      // Fallback: open referral link
       window.open(LOVABLE_REFERRAL_LINK, '_blank');
+      setCopied(false);
     }
   };
 
