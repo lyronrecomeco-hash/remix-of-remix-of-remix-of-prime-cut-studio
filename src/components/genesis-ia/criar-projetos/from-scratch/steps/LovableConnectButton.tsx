@@ -125,7 +125,7 @@ export function LovableConnectButton({ prompt, projectName }: LovableConnectButt
             {copied ? (
               <>
                 <Check className="w-4 h-4 mr-2" />
-                Copiado! Abrindo...
+                Abrindo Lovable...
               </>
             ) : (
               <>
