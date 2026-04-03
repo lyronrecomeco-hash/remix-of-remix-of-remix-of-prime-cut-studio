@@ -53,18 +53,18 @@ const PetshopHeader = ({ onScheduleClick, onMyAppointmentsClick }: PetshopHeader
       <div className="bg-gradient-to-r from-petshop-orange via-orange-500 to-petshop-orange text-white py-2 text-xs sm:text-sm">
         <div className="container mx-auto px-3 sm:px-4">
           <div className="flex justify-between items-center">
-            <a href="https://wa.me/5581998409073" className="flex items-center gap-1.5 sm:gap-2 hover:underline font-medium">
+            <span className="flex items-center gap-1.5 sm:gap-2 font-medium">
               <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="hidden xs:inline">(81) 99840-9073</span>
-              <span className="xs:hidden">WhatsApp</span>
-            </a>
+              <span className="hidden xs:inline">Demo PetShop</span>
+              <span className="xs:hidden">Demo</span>
+            </span>
           <div className="hidden sm:flex items-center gap-2 text-white/90">
               <Clock className="w-4 h-4" />
-              <span>Seg à Sex 7h às 19h, Sáb 7h às 17h</span>
+              <span>Seg à Sex 8h às 18h, Sáb 8h às 14h</span>
             </div>
             <div className="flex items-center gap-1.5 text-white/90 sm:hidden">
               <Clock className="w-3.5 h-3.5" />
-              <span>7h-19h</span>
+              <span>8h-18h</span>
             </div>
           </div>
         </div>
