@@ -36,8 +36,8 @@ const PetshopFooter = () => {
                 <span className="text-xl sm:text-2xl">🐾</span>
               </motion.div>
               <div>
-                <h3 className="text-lg sm:text-xl font-bold text-white">Seu Xodó</h3>
-                <p className="text-[10px] sm:text-xs text-petshop-orange font-semibold">PETSHOP & VET</p>
+                <h3 className="text-lg sm:text-xl font-bold text-white">Demo PetShop</h3>
+                <p className="text-[10px] sm:text-xs text-petshop-orange font-semibold">DEMONSTRAÇÃO</p>
               </div>
             </div>
             <p className="text-white/60 text-xs sm:text-sm mb-4 sm:mb-6 leading-relaxed max-w-xs">
